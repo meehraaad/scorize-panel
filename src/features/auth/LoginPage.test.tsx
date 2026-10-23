@@ -35,8 +35,15 @@ describe('login', () => {
     renderAt('/login');
     await user.type(await screen.findByLabelText('شماره موبایل یا ایمیل'), '09120000000');
     await user.click(screen.getByRole('button', { name: 'ادامه' }));
-    await user.type(await screen.findByLabelText('کد تأیید'), '000000');
-    expect(await screen.findByRole('alert')).toHaveTextContent('کد وارد شده اشتباه است.');
+    const code = await screen.findByLabelText('کد تأیید');
+    await user.type(code, '000000');
+    expect(await screen.findByRole('alert')).toHaveTextContent('کد درست نیست.');
+    expect(code).toHaveAttribute('aria-invalid', 'true');
+
+    // The wrong code is selected, so typing replaces it, and hides the error.
+    await user.type(code, '1', { initialSelectionStart: 0, initialSelectionEnd: 6 });
+    expect(code).toHaveValue('1');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('logs in with email and password', async () => {
@@ -47,7 +54,7 @@ describe('login', () => {
       'sara.ahmadi@scorize.local',
     );
     await user.click(screen.getByRole('button', { name: 'ادامه' }));
-    await user.type(await screen.findByLabelText('رمز عبور'), 'password123');
+    await user.type(await screen.findByLabelText('گذرواژه'), 'password123');
     await user.click(screen.getByRole('button', { name: 'ورود' }));
     expect(await screen.findByRole('heading', { name: 'سلام سارا' })).toBeInTheDocument();
   });
@@ -61,11 +68,38 @@ describe('login', () => {
     await user.type(await screen.findByLabelText('نام'), 'علی');
     await user.type(screen.getByLabelText('نام خانوادگی'), 'رضایی');
     await user.type(screen.getByLabelText('ایمیل'), 'ali@example.com');
-    expect(screen.getByLabelText('شماره موبایل')).toHaveAttribute('readonly');
-    await user.click(screen.getByRole('button', { name: 'دریافت کد تأیید' }));
+    // The number the user started with is locked: shown in the text, not asked again.
+    expect(screen.queryByLabelText('شماره موبایل')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ارسال کد تأیید' }));
 
     await user.type(await screen.findByLabelText('کد تأیید'), MOCK_OTP);
+    expect(await screen.findByRole('heading', { name: 'خوش آمدید علی' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ورود به پنل من' }));
     expect(await screen.findByRole('heading', { name: 'سلام علی' })).toBeInTheDocument();
+  });
+
+  it('asks a new email sign-up for a mobile number', async () => {
+    const user = userEvent.setup();
+    renderAt('/login');
+    await user.type(await screen.findByLabelText('شماره موبایل یا ایمیل'), 'new@example.com');
+    await user.click(screen.getByRole('button', { name: 'ادامه' }));
+    expect(await screen.findByLabelText('شماره موبایل')).toBeInTheDocument();
+    expect(screen.queryByLabelText('ایمیل')).not.toBeInTheDocument();
+  });
+
+  it('switches an email account to SMS login', async () => {
+    const user = userEvent.setup();
+    renderAt('/login');
+    await user.type(
+      await screen.findByLabelText('شماره موبایل یا ایمیل'),
+      'sara.ahmadi@scorize.local',
+    );
+    await user.click(screen.getByRole('button', { name: 'ادامه' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'ورود با کد پیامکی به‌جای گذرواژه' }),
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent('شماره موبایل حسابتان');
+    expect(screen.getByLabelText('شماره موبایل یا ایمیل')).toHaveValue('');
   });
 
   it('rejects input that is neither a mobile number nor an email, without calling the server', async () => {

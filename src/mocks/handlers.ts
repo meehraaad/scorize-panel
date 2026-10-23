@@ -8,7 +8,8 @@ import type { SessionUser } from '@/lib/auth/session';
  *
  * Mock accounts (SMS code 123456, password password123):
  *   09120000000 / sara.ahmadi@scorize.local    applicant only
- *   09120000001 / maryam.kazemi@scorize.local  staff: supervisor + writer
+ *   09120000001 / maryam.kazemi@scorize.local  staff: supervisor + writer (panel switcher)
+ *   09120000002 / nima.rostami@scorize.local   staff: sales only (no switcher)
  */
 
 export const MOCK_OTP = '123456';
@@ -42,6 +43,19 @@ const users: MockUser[] = [
     staff: { id: 7, full_name: 'مریم کاظمی', team: 1 },
     is_superuser: false,
     permissions: [{ codename: 'can_write_sop' }],
+    group_permissions: [],
+  },
+  {
+    // One work panel: goes straight to it, no switcher.
+    id: 3,
+    first_name: 'نیما',
+    last_name: 'رستمی',
+    email: 'nima.rostami@scorize.local',
+    phone_number: '09120000002',
+    password: MOCK_PASSWORD,
+    staff: { id: 8, full_name: 'نیما رستمی', team: 0 },
+    is_superuser: false,
+    permissions: [],
     group_permissions: [],
   },
 ];

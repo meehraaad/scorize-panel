@@ -12,11 +12,12 @@ const CSRF_BOOTSTRAP_URL = '/profile/authentication/login/';
 
 let pending: Promise<void> | null = null;
 
-export function ensureCsrfCookie(): Promise<void> {
+export function ensureCsrfCookie(signal?: AbortSignal): Promise<void> {
   if (readCookie('csrftoken')) return Promise.resolve();
   pending ??= fetch(CSRF_BOOTSTRAP_URL, {
     credentials: 'same-origin',
     redirect: 'manual',
+    ...(signal ? { signal } : {}),
     headers: { Accept: 'text/html' },
   })
     .then(() => undefined)

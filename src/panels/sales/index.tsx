@@ -6,6 +6,9 @@ export const salesPanel: PanelDefinition = {
   id: 'sales',
   path: 'sales',
   name: 'panels.sales.name',
+  description: 'panels.sales.description',
+  icon: 'phone',
+  tone: 'warn',
   navLabel: 'panels.sales.nav.label',
   navigation: [
     {

@@ -17,11 +17,18 @@ export interface NavItem {
   icon: IconName;
 }
 
+/** Colour of a panel's icon tile in the switcher and the chooser. */
+export type PanelTone = 'primary' | 'info' | 'warn' | 'neutral';
+
 export interface PanelDefinition {
   id: Role;
   /** URL segment under /panel/ ('' for the applicant panel at /panel/). */
   path: string;
   name: ParseKeys;
+  /** One line on what the panel is for (switcher, chooser). */
+  description: ParseKeys;
+  icon: IconName;
+  tone: PanelTone;
   navLabel: ParseKeys;
   navigation: readonly NavItem[];
   /** Child routes, relative to `path`. Pages must be lazy (see lazyPage). */

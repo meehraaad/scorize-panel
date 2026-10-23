@@ -6,6 +6,9 @@ export const supervisorPanel: PanelDefinition = {
   id: 'supervisor',
   path: 'supervisor',
   name: 'panels.supervisor.name',
+  description: 'panels.supervisor.description',
+  icon: 'fileCheck',
+  tone: 'primary',
   navLabel: 'panels.supervisor.nav.label',
   navigation: [
     {

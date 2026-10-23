@@ -15,15 +15,15 @@ export function StepHeader({ title, children }: { title: string; children?: Reac
   }, [title]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
       <h1
         ref={heading}
         tabIndex={-1}
-        className="m-0 font-display text-2xl leading-snug font-bold outline-none"
+        className="m-0 font-display text-[26px] leading-[1.4] font-bold outline-none lg:text-[32px]"
       >
         {title}
       </h1>
-      {children && <p className="m-0 text-[15px] leading-7 text-text-2">{children}</p>}
+      {children && <p className="m-0 text-base leading-[1.8] text-text-2">{children}</p>}
     </div>
   );
 }

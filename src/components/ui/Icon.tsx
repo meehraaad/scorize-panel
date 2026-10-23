@@ -82,6 +82,33 @@ const PATHS = {
     </>
   ),
   check: <path d="M20 6 9 17l-5-5" />,
+  chevronDown: <path d="m6 9 6 6 6-6" />,
+  fileCheck: (
+    <>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6M9 15l2 2 4-4" />
+    </>
+  ),
+  pen: (
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </>
+  ),
+  /** Points to the end of the line (right in LTR, left in RTL): "next", "continue". */
+  chevronEnd: <path d="m9 18 6-6-6-6" />,
+  /** Points to the start of the line: "back". */
+  chevronStart: <path d="m15 18-6-6 6-6" />,
+  alert: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v5M12 16h.01" />
+    </>
+  ),
+  shield: <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z" />,
+  phone: (
+    <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z" />
+  ),
   eye: (
     <>
       <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
@@ -97,6 +124,9 @@ const PATHS = {
 } as const;
 
 export type IconName = keyof typeof PATHS;
+
+/** Drawn for LTR; mirrored in RTL so they keep pointing the right way. */
+const DIRECTIONAL: ReadonlySet<IconName> = new Set(['chevronEnd', 'chevronStart']);
 
 interface IconProps {
   name: IconName;
@@ -117,7 +147,7 @@ export function Icon({ name, size = 20, className }: IconProps) {
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
-      className={className}
+      className={DIRECTIONAL.has(name) ? `rtl:-scale-x-100 ${className ?? ''}` : className}
     >
       {PATHS[name]}
     </svg>

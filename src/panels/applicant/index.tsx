@@ -7,6 +7,9 @@ export const applicantPanel: PanelDefinition = {
   id: 'applicant',
   path: '',
   name: 'panels.applicant.name',
+  description: 'panels.applicant.description',
+  icon: 'user',
+  tone: 'neutral',
   navLabel: 'panels.applicant.nav.label',
   navigation: [
     {

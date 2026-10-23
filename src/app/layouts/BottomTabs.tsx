@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink, useLocation } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { logout } from '@/lib/auth/logout';
 import { panelHref, type PanelDefinition } from '@/panels/types';
@@ -13,11 +13,10 @@ const sheetItemClass = 'flex min-h-12 items-center gap-3 rounded-2xl px-3 text-b
 
 interface Props {
   panel: PanelDefinition;
-  panels: PanelDefinition[];
 }
 
 /** Mobile/tablet navigation (< lg). The "More" sheet is a native <dialog>: focus trap and Esc for free. */
-export function BottomTabs({ panel, panels }: Props) {
+export function BottomTabs({ panel }: Props) {
   const { t } = useTranslation();
   const sheet = useRef<HTMLDialogElement>(null);
   const { pathname } = useLocation();
@@ -108,32 +107,6 @@ export function BottomTabs({ panel, panels }: Props) {
             </NavLink>
           ))}
 
-          {panels.length > 1 && (
-            <nav
-              aria-label={t('account.panels')}
-              className="flex flex-col gap-1 border-t border-hair pt-2"
-            >
-              <span className="px-3 py-1 text-xs font-medium text-text-2">
-                {t('account.panels')}
-              </span>
-              {panels.map((item) => {
-                const current = item.id === panel.id;
-                return (
-                  <Link
-                    key={item.id}
-                    to={panelHref(item)}
-                    onClick={close}
-                    aria-current={current ? 'page' : undefined}
-                    className={`${sheetItemClass} ${current ? 'text-primary-text' : 'text-text'}`}
-                  >
-                    <span className="flex-1">{t(item.name)}</span>
-                    {current && <Icon name="check" size={18} />}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
-
           <div className="flex flex-col gap-1 border-t border-hair pt-2">
             <NavLink
               to="/account"
@@ -155,7 +128,11 @@ export function BottomTabs({ panel, panels }: Props) {
               <Icon name="settings" />
               {t('account.settings')}
             </NavLink>
-            <button type="button" onClick={logout} className={`${sheetItemClass} text-danger`}>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className={`${sheetItemClass} text-danger`}
+            >
               <Icon name="logout" />
               {t('account.logout')}
             </button>

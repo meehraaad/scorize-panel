@@ -73,8 +73,10 @@ export function getRoles(user: SessionUser): Role[] {
   ) {
     roles.push('sales');
   }
-  // Every account has the applicant panel: without a contract it shows the guest state (V7 design).
-  roles.push('applicant');
+  // The applicant panel: everyone without a work panel (no contract = the guest state, V7 design),
+  // and staff who also have an applicant file of their own. Until whoami sends `applicant`
+  // (backend-changes.md, R1) that can't be known, so staff see only their work panels.
+  if (roles.length === 0 || user.applicant) roles.push('applicant');
 
   return roles;
 }

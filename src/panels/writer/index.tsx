@@ -6,6 +6,9 @@ export const writerPanel: PanelDefinition = {
   id: 'writer',
   path: 'writer',
   name: 'panels.writer.name',
+  description: 'panels.writer.description',
+  icon: 'pen',
+  tone: 'info',
   navLabel: 'panels.writer.nav.label',
   navigation: [
     {

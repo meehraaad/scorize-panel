@@ -3,23 +3,24 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { logout } from '@/lib/auth/logout';
+import { applicantPanel } from '@/panels/applicant';
+import { panelHref } from '@/panels/types';
 import type { SessionUser } from '@/lib/auth/session';
-import { panelHref, type PanelDefinition } from '@/panels/types';
 
 interface Props {
   user: SessionUser;
-  panel: PanelDefinition;
-  panels: PanelDefinition[];
+  /** Staff: a quiet link to the panel as a regular customer (it isn't one of their panels). */
+  customerLink: boolean;
 }
 
 const itemClass =
   'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-[15px] text-text hover:bg-canvas';
 
 /**
- * Account button + dropdown (desktop and mobile header): who is logged in, panel switcher for
- * people with several roles, settings, logout. Disclosure pattern: Esc and outside click close it.
+ * Account button + dropdown (desktop and mobile header): who is logged in, settings, logout.
+ * Switching panels is the PanelSwitcher beside the logo. Disclosure pattern: Esc and outside click close it.
  */
-export function AccountMenu({ user, panel, panels }: Props) {
+export function AccountMenu({ user, customerLink }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -84,31 +85,6 @@ export function AccountMenu({ user, panel, panels }: Props) {
             )}
           </div>
 
-          {panels.length > 1 && (
-            <nav
-              aria-label={t('account.panels')}
-              className="flex flex-col gap-1 border-t border-hair pt-1"
-            >
-              <span className="px-3 pt-2 pb-1 text-xs font-medium text-text-2">
-                {t('account.panels')}
-              </span>
-              {panels.map((item) => {
-                const current = item.id === panel.id;
-                return (
-                  <Link
-                    key={item.id}
-                    to={panelHref(item)}
-                    aria-current={current ? 'page' : undefined}
-                    className={`${itemClass} ${current ? 'font-semibold text-primary-text' : ''}`}
-                  >
-                    <span className="flex-1">{t(item.name)}</span>
-                    {current && <Icon name="check" size={18} />}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
-
           <div className="flex flex-col gap-1 border-t border-hair pt-1">
             <Link to="/account" className={itemClass}>
               <Icon name="user" />
@@ -118,7 +94,17 @@ export function AccountMenu({ user, panel, panels }: Props) {
               <Icon name="settings" />
               {t('account.settings')}
             </Link>
-            <button type="button" onClick={logout} className={`${itemClass} text-danger`}>
+            {customerLink && (
+              <Link to={panelHref(applicantPanel)} className={`${itemClass} text-text-2`}>
+                <Icon name="home" />
+                {t('account.asCustomer')}
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className={`${itemClass} text-danger`}
+            >
               <Icon name="logout" />
               {t('account.logout')}
             </button>

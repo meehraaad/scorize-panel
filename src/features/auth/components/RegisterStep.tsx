@@ -1,14 +1,16 @@
 import { useState, type SubmitEvent } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
-import type { Identifier, RegistrationDetails } from '../api';
+import { formatPhone } from '@/lib/site';
+import type { Identifier as IdentifierValue, RegistrationDetails } from '../api';
 import { normalizeEmail, normalizePhone } from '../identifier';
 import { StepHeader } from './StepHeader';
+import { BackButton, Identifier, SignupProgress, TermsNote } from './StepParts';
 
 interface Props {
-  identifier: Identifier;
+  identifier: IdentifierValue;
   /** Field names Django rejected (its messages are not shown; ours are translated). */
   serverErrors: string[];
   pending: boolean;
@@ -21,7 +23,8 @@ type Field = keyof RegistrationDetails;
 export function RegisterStep({ identifier, serverErrors, pending, onSubmit, onBack }: Props) {
   const { t } = useTranslation('auth');
   const format = useFormat();
-  // The identifier the user started with is locked: Django keeps it from the first step anyway.
+  // The identifier the user started with is locked (Django keeps it from the first step anyway),
+  // so it is shown in the subtitle and only the other one is asked for.
   const [values, setValues] = useState<RegistrationDetails>({
     first_name: '',
     last_name: '',
@@ -69,16 +72,29 @@ export function RegisterStep({ identifier, serverErrors, pending, onSubmit, onBa
     });
   };
 
+  const isPhone = identifier.type === 'phone';
+
   return (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-6">
-      <StepHeader title={t('register.title')}>
-        {t('register.subtitle', {
-          identifier:
-            identifier.type === 'phone' ? format.digits(identifier.value) : identifier.value,
-        })}
-      </StepHeader>
-      <div className="grid gap-5 sm:grid-cols-2">
+    <form noValidate onSubmit={submit} className="flex flex-col gap-[22px]">
+      <BackButton onClick={onBack}>
+        {t(isPhone ? 'otp.changePhone' : 'password.changeEmail')}
+      </BackButton>
+      <div className="flex flex-col gap-2.5">
+        <SignupProgress current={1} />
+        <StepHeader title={t('register.title')}>
+          <Trans
+            ns="auth"
+            i18nKey="register.subtitle"
+            values={{
+              identifier: isPhone ? format.digits(formatPhone(identifier.value)) : identifier.value,
+            }}
+            components={{ id: <Identifier /> }}
+          />
+        </StepHeader>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
         <TextField
+          size="lg"
           label={t('register.firstName')}
           error={errorFor('first_name')}
           name="given-name"
@@ -89,6 +105,7 @@ export function RegisterStep({ identifier, serverErrors, pending, onSubmit, onBa
           onBlur={blur('first_name')}
         />
         <TextField
+          size="lg"
           label={t('register.lastName')}
           error={errorFor('last_name')}
           name="family-name"
@@ -98,44 +115,50 @@ export function RegisterStep({ identifier, serverErrors, pending, onSubmit, onBa
           onBlur={blur('last_name')}
         />
       </div>
-      <TextField
-        label={t('register.email')}
-        error={errorFor('email')}
-        name="email"
-        type="email"
-        dir="ltr"
-        autoComplete="email"
-        autoCapitalize="off"
-        spellCheck={false}
-        readOnly={identifier.type === 'email'}
-        value={values.email}
-        onChange={update('email')}
-        onBlur={blur('email')}
-      />
-      <TextField
-        label={t('register.phone')}
-        hint={t('register.phoneHint')}
-        error={errorFor('phone_number')}
-        name="tel"
-        type="tel"
-        dir="ltr"
-        inputMode="tel"
-        autoComplete="tel-national"
-        readOnly={identifier.type === 'phone'}
-        value={values.phone_number}
-        onChange={update('phone_number')}
-        onBlur={blur('phone_number')}
-      />
-      <Button type="submit" disabled={pending} aria-busy={pending} className="w-full">
+      {isPhone ? (
+        <TextField
+          size="lg"
+          label={t('register.email')}
+          hint={t('register.emailHint')}
+          error={errorFor('email')}
+          name="email"
+          type="email"
+          dir="ltr"
+          autoComplete="email"
+          autoCapitalize="off"
+          spellCheck={false}
+          placeholder={t('register.emailPlaceholder')}
+          value={values.email}
+          onChange={update('email')}
+          onBlur={blur('email')}
+        />
+      ) : (
+        <TextField
+          size="lg"
+          label={t('register.phone')}
+          hint={t('register.phoneHint')}
+          error={errorFor('phone_number')}
+          name="tel"
+          type="tel"
+          dir="ltr"
+          inputMode="tel"
+          autoComplete="tel-national"
+          placeholder={t('identify.placeholder')}
+          value={values.phone_number}
+          onChange={update('phone_number')}
+          onBlur={blur('phone_number')}
+        />
+      )}
+      {/* Django rejected the locked identifier (e.g. taken): say so, since it has no field here. */}
+      {serverErrors.includes(isPhone ? 'phone_number' : 'email') && (
+        <p role="alert" className="m-0 text-sm text-danger">
+          {t(isPhone ? 'register.serverErrors.phone_number' : 'register.serverErrors.email')}
+        </p>
+      )}
+      <Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="w-full">
         {t('register.submit')}
       </Button>
-      <button
-        type="button"
-        onClick={onBack}
-        className="min-h-11 self-start text-[15px] text-text-2 hover:text-text"
-      >
-        {t('register.back')}
-      </button>
+      <TermsNote i18nKey="register.terms" />
     </form>
   );
 }

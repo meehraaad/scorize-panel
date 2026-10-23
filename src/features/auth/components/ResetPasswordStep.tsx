@@ -27,6 +27,7 @@ export function ResetPasswordStep({ pending, onSubmit }: Props) {
     <form noValidate onSubmit={submit} className="flex flex-col gap-6">
       <StepHeader title={t('reset.title')}>{t('reset.subtitle')}</StepHeader>
       <TextField
+        size="lg"
         label={t('reset.password')}
         hint={t('reset.hint')}
         error={error === 'required' ? t('password.required') : undefined}
@@ -42,6 +43,7 @@ export function ResetPasswordStep({ pending, onSubmit }: Props) {
         }}
       />
       <TextField
+        size="lg"
         label={t('reset.confirm')}
         error={error === 'mismatch' ? t('reset.mismatch') : undefined}
         name="confirm-password"
@@ -54,7 +56,7 @@ export function ResetPasswordStep({ pending, onSubmit }: Props) {
           setError(null);
         }}
       />
-      <Button type="submit" disabled={pending} aria-busy={pending} className="w-full">
+      <Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="w-full">
         {t('reset.submit')}
       </Button>
     </form>

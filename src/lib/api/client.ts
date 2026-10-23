@@ -11,6 +11,12 @@ import { readCookie } from './cookies';
 
 export const API_BASE = '/api';
 
+/**
+ * A request that hangs this long fails as a NetworkError, so a stalled mobile connection shows
+ * "check your internet" instead of a button that spins forever.
+ */
+export const REQUEST_TIMEOUT_MS = 20_000;
+
 /** Django answered with an error status. */
 export class ApiError extends Error {
   constructor(
@@ -22,7 +28,7 @@ export class ApiError extends Error {
   }
 }
 
-/** The request never reached Django (offline, DNS, timeout, blocked). */
+/** The request never reached Django, or got no answer in time (offline, DNS, timeout, blocked). */
 export class NetworkError extends Error {
   constructor(cause: unknown) {
     super('Network request failed', { cause });
@@ -52,22 +58,23 @@ export async function request(
   const headers = new Headers({ Accept: 'application/json', 'Accept-Language': i18n.language });
   const isForm = body instanceof FormData;
   if (body !== undefined && !isForm) headers.set('Content-Type', 'application/json');
-  if (method !== 'GET') {
-    await ensureCsrfCookie();
-    headers.set('X-CSRFToken', readCookie('csrftoken') ?? '');
-  }
-
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   let response: Response;
   try {
+    if (method !== 'GET') {
+      await ensureCsrfCookie(timeout);
+      headers.set('X-CSRFToken', readCookie('csrftoken') ?? '');
+    }
     response = await fetch(url, {
       method,
       headers,
       credentials: 'same-origin',
-      ...(signal ? { signal } : {}),
+      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
       ...(body === undefined ? {} : { body: isForm ? body : JSON.stringify(body) }),
     });
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    // Cancelled by the caller (React Query, unmount): not a failure. A timeout is.
+    if (signal?.aborted) throw error;
     throw new NetworkError(error);
   }
 

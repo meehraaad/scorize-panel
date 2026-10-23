@@ -18,7 +18,9 @@ export type Step =
   | { name: 'register'; identifier: Identifier }
   | { name: 'resetSent'; email: string }
   | { name: 'resetPassword'; token: string }
-  | { name: 'resetDone' };
+  | { name: 'resetDone' }
+  /** Account just created: a short "start here" before entering the panel. */
+  | { name: 'welcome'; firstName: string };
 
 export type AuthMessage = ParseKeys<'auth'>;
 
@@ -169,6 +171,10 @@ export function useAuthFlow({
           step.purpose === 'register'
             ? await authApi.register(otp, step.names)
             : await authApi.verifyOtp(otp);
+        if (step.purpose === 'register' && SUCCESS_CODES.includes(result.code)) {
+          go({ name: 'welcome', firstName: step.names.first_name });
+          return;
+        }
         if (await handleCommon(result)) return;
         switch (result.code) {
           case AuthCode.INVALID_OTP:
@@ -286,6 +292,21 @@ export function useAuthFlow({
     /** Back to the first step, keeping what the user typed. */
     restart: (initial = '') => {
       go({ name: 'identify', initial });
+    },
+
+    /** Email accounts log in with a password; an SMS code needs the mobile number instead. */
+    useSms: () => {
+      go({ name: 'identify', initial: '' }, { tone: 'info', message: 'identify.useMobile' });
+    },
+
+    /** After the welcome step. */
+    enterPanel: () => {
+      run(finish);
+    },
+
+    /** The user is fixing their input: hide the last error. */
+    clearFeedback: () => {
+      setFeedback(null);
     },
   };
 

@@ -9,10 +9,13 @@ src/
 │   ├── App.tsx            Providers: React Query, theme, router, PWA update prompt
 │   ├── router.tsx         Route map: /login, /start, shared pages, one tree per panel
 │   ├── ErrorPage.tsx      Layout-level error page, in-panel SectionError, 404
+│   ├── ChoosePanelPage    /choose: which panel to start in (several panels)
 │   └── layouts/
-│       ├── AuthLayout     Pages outside panels (login, sign-up, reset; later terms, inactive)
+│       ├── AuthLayout     Pages outside panels (login, sign-up, reset; later terms, inactive):
+│       │                  form beside the trust wall (TrustWall, trustContent.ts)
 │       ├── PanelLayout    Frame shared by every panel: header + panel menu, account menu, tabs
-│       ├── AccountMenu    Who is logged in, panel switcher, settings, logout
+│       ├── PanelSwitcher  "Panel X ▾" beside the logo (several panels only), PanelTile
+│       ├── AccountMenu    Who is logged in, settings, logout
 │       ├── BottomTabs     Mobile bar (≤ 4 tabs + "More" sheet with the rest)
 │       └── SharedLayout   /account and /settings, shown inside the last-used panel
 ├── panels/                One folder per panel: its navigation and its routes
@@ -30,6 +33,7 @@ src/
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
 │   ├── i18n/              i18next setup, locales config, Intl formatters (Jalali dates)
 │   ├── router/            lazyPage(): page chunk + its dictionaries in parallel
+│   ├── site.ts            Links to main-site pages and the support phone
 │   └── theme/             Light / dark / system theme
 ├── locales/<lang>/        Dictionaries: common.json + one per feature namespace. fa is the source
 ├── styles/                tokens.css (design tokens), index.css (Tailwind + base)
@@ -48,12 +52,18 @@ ESLint (`no-restricted-imports` in `eslint.config.js`) enforces this; tests are 
 
 - `lib/auth/roles.ts` turns `whoami` into roles with the same rules as the Django site
   (`is_seller`, `is_executer`, `can_write_*`, …). Several roles at once are normal.
-- `panels/registry.ts` lists every panel. A user sees the panels their roles allow; one with
-  several gets a switcher in the account menu and the "More" sheet, and the header names the panel.
+- `panels/registry.ts` lists every panel. A user sees the panels their roles allow.
 - Each panel route has a loader: no session → login; no role → `/start`. The API still checks
   every request; this only keeps people out of UI they can't use.
-- `/start` sends a user to their last-used panel (if still allowed), else the first in registry
-  order, so staff land in their work panel.
+- The applicant panel is listed for everyone without a work panel, plus staff with an applicant
+  file of their own (needs R1 in whoami; until then staff see only their work panels). Anyone may
+  still open it as a regular customer: a quiet link on the chooser and in the account menu.
+- One panel: no switcher, `/start` goes straight to it. Several: the dark "Panel X ▾" switcher
+  beside the logo (`PanelSwitcher`: dropdown on desktop, bottom sheet on phones) lists them and
+  sets where to land after login: last used (default), always one panel, or always ask.
+- `/start` sends a user with several panels to the pinned panel, else the last used one; with no
+  last panel yet (first login on this device) or "always ask", to `/choose` (`ChoosePanelPage`).
+  Each card there opens its panel.
 - Adding a panel: a folder in `src/panels/` exporting a `PanelDefinition`, one line in
   `registry.ts`, its role in `roles.ts`, its strings under `panels.<id>` in every `common.json`.
 
@@ -95,6 +105,10 @@ option existed.
 - The user picks `system | light | dark` (Settings). The choice is stored in `localStorage`, and a tiny
   script in `index.html` applies it **before first paint**, so the page never flashes the wrong theme.
 - `dark:` variants follow `data-theme`, not the OS setting directly.
+- Something that is light in both themes (the paper admission letters on the login page) sets
+  `data-theme="light"` on itself, so the tokens inside resolve to their light values.
+- The wordmark (`components/ui/Logo`) is the main site's: Arial Black, "rize" in the primary colour.
+  It uses the installed Arial Black, else the font file Django already serves under `/static/`.
 
 ## i18n
 

@@ -21,7 +21,8 @@
         "applications": "Applications",
         "documents": "Documents",
         "tickets": "Tickets"
-      }
+      },
+      "description": "Your own file as an applicant"
     },
     "supervisor": {
       "name": "Supervisor panel",
@@ -36,7 +37,8 @@
         "today": "Today",
         "files": "Files",
         "tickets": "Tickets"
-      }
+      },
+      "description": "Applicant files, applications, tickets"
     },
     "writer": {
       "name": "Writing panel",
@@ -48,7 +50,8 @@
       "tabs": {
         "queue": "Orders",
         "tickets": "Tickets"
-      }
+      },
+      "description": "Statements of purpose, CVs and recommendation letters"
     },
     "sales": {
       "name": "Sales panel",
@@ -60,7 +63,8 @@
       "tabs": {
         "leads": "Leads",
         "customers": "Customers"
-      }
+      },
+      "description": "Leads, consultations, offers and contracts"
     }
   },
   "tabs": {
@@ -72,11 +76,11 @@
   },
   "account": {
     "menu": "Account",
-    "panels": "Your panels",
     "current": "Current panel",
     "profile": "Account",
     "settings": "Settings",
-    "logout": "Log out"
+    "logout": "Log out",
+    "asCustomer": "Customer view"
   },
   "more": {
     "title": "More",
@@ -115,5 +119,78 @@
   "update": {
     "available": "A new version of the panel is ready.",
     "reload": "Update"
+  },
+  "auth": {
+    "homeLink": "Scorize home page",
+    "backToSite": "Back to the website",
+    "support": "Support:",
+    "troubleLoggingIn": "Trouble logging in?",
+    "copyright": "© Scorize"
+  },
+  "trust": {
+    "label": "Why Scorize",
+    "live": "Admissions this season",
+    "headline": "New admissions every week, from the universities you want too",
+    "lettersLabel": "Sample admission letters of Scorize applicants",
+    "admitted": "Admitted",
+    "applicant": "{{name}} · {{degree}}",
+    "degree": {
+      "bachelor": "Bachelor's",
+      "master": "Master's",
+      "phd": "PhD"
+    },
+    "stats": {
+      "admissions": "admissions",
+      "countries": "destination countries",
+      "years": "years of experience"
+    },
+    "journeyLabel": "The Scorize applicant panel",
+    "journeyHeadline": "From consultation to visa, follow every step of your case in one panel",
+    "journey": {
+      "consultation": {
+        "title": "Consultation",
+        "text": "Choosing a country, field and university"
+      },
+      "contract": {
+        "title": "Contract",
+        "text": "Services and payment, clear and online"
+      },
+      "documents": {
+        "title": "Documents and writing",
+        "text": "SOP, CV and recommendation letters"
+      },
+      "apply": {
+        "title": "Applications",
+        "text": "Submitting and following up"
+      },
+      "admission": {
+        "title": "Admission",
+        "text": "Every university's result, right here"
+      },
+      "visa": {
+        "title": "Visa",
+        "text": "Visa documents and embassy appointment"
+      }
+    },
+    "security": "Secure login with a one-time code. Your case is visible only to you and the team handling it."
+  },
+  "switcher": {
+    "title": "Your panels",
+    "who": "{{name}} · panels: {{count}}",
+    "startLabel": "Open after login",
+    "start": {
+      "last": "The last panel I used",
+      "always": "Always the {{panel}}",
+      "ask": "Always ask"
+    }
+  },
+  "chooser": {
+    "title": "Hi {{name}}, which panel shall we start with today?",
+    "titleNoName": "Which panel shall we start with today?",
+    "subtitle": "You work in {{count}} panels. Switch between them any time with the button next to the logo.",
+    "legend": "Panels",
+    "skipNextTime": "Next time, go straight to the last panel I used",
+    "ownFile": "My own file as an applicant",
+    "asCustomer": "Open the panel as a regular customer"
   }
 }

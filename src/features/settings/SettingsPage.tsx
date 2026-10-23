@@ -59,7 +59,7 @@ export default function SettingsPage() {
       </Card>
 
       <div>
-        <button type="button" onClick={logout} className={buttonClass('danger')}>
+        <button type="button" onClick={() => void logout()} className={buttonClass('danger')}>
           {t('account.logout')}
         </button>
       </div>

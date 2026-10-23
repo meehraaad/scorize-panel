@@ -33,6 +33,10 @@
   --hero: #1b1020;
   --on-hero: #ffffff;
   --on-hero-2: #bdb4c3;
+  --hero-raised: rgb(255 255 255 / 0.08);
+  --hero-line: rgb(255 255 255 / 0.12);
+  --live: #7fd8a6;
+  --hero-accent: #f2a9d6; /* primary, lightened to stay readable on the dark hero */
 
   --danger: #b42318;
   --danger-tint: #fdecea;
@@ -40,6 +44,8 @@
   --warn-tint: #fff3d6;
   --good: #11683d;
   --good-tint: #e3f6ec;
+  --info: #1f4e8c;
+  --info-tint: #e7effd;
   --urgent: #a15c00;
   --neutral: #4e4655;
   --neutral-tint: #f1edf3;
@@ -73,6 +79,10 @@
   --hero: #251729;
   --on-hero: #ffffff;
   --on-hero-2: #bdb4c3;
+  --hero-raised: rgb(255 255 255 / 0.08);
+  --hero-line: rgb(255 255 255 / 0.12);
+  --live: #7fd8a6;
+  --hero-accent: #f2a9d6;
 
   --danger: #ff9b9b;
   --danger-tint: rgb(255 120 120 / 0.12);
@@ -80,6 +90,8 @@
   --warn-tint: rgb(240 185 78 / 0.16);
   --good: #7fd8a6;
   --good-tint: rgb(90 200 140 / 0.16);
+  --info: #9cc0f5;
+  --info-tint: rgb(120 160 240 / 0.16);
   --urgent: #f0b94e;
   --neutral: #d4ccd9;
   --neutral-tint: rgb(255 255 255 / 0.08);

@@ -1,10 +1,12 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { TextField } from '@/components/ui/TextField';
 import type { Identifier } from '../api';
 import { parseIdentifier } from '../identifier';
 import { StepHeader } from './StepHeader';
+import { StepNote, TermsNote } from './StepParts';
 
 interface Props {
   initial: string;
@@ -25,11 +27,13 @@ export function IdentifyStep({ initial, pending, onSubmit }: Props) {
   };
 
   return (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-6">
+    <form noValidate onSubmit={submit} className="flex flex-col gap-7">
       <StepHeader title={t('identify.title')}>{t('identify.subtitle')}</StepHeader>
       <TextField
+        size="lg"
         label={t('identify.label')}
-        hint={t('identify.hint')}
+        // Tells the user what happens next: an SMS code, or their password.
+        hint={t(value.includes('@') ? 'identify.hintEmail' : 'identify.hintPhone')}
         error={error ? t('identify.invalid') : undefined}
         name="username"
         type="text"
@@ -40,6 +44,7 @@ export function IdentifyStep({ initial, pending, onSubmit }: Props) {
         autoCorrect="off"
         spellCheck={false}
         autoFocus
+        placeholder={t('identify.placeholder')}
         value={value}
         onChange={(event) => {
           setValue(event.target.value);
@@ -47,9 +52,14 @@ export function IdentifyStep({ initial, pending, onSubmit }: Props) {
         }}
         className="text-start"
       />
-      <Button type="submit" disabled={pending} aria-busy={pending} className="w-full">
+      <Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="w-full">
         {t('identify.submit')}
+        <Icon name="chevronEnd" size={18} />
       </Button>
+      <StepNote icon="lock" tone="good">
+        {t('identify.privacy')}
+      </StepNote>
+      <TermsNote i18nKey="identify.terms" />
     </form>
   );
 }

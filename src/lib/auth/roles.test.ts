@@ -21,14 +21,14 @@ const staff = (team: number, extra: Partial<SessionUser> = {}): SessionUser => (
 });
 
 describe('roles', () => {
-  it('gives every account the applicant panel', () => {
+  it('gives an account with no work panel the applicant panel', () => {
     expect(getRoles(base)).toEqual(['applicant']);
   });
 
   it('maps teams like Django (sales and support are sellers)', () => {
-    expect(getRoles(staff(Team.SALES))).toEqual(['sales', 'applicant']);
-    expect(getRoles(staff(Team.SUPPORT))).toEqual(['sales', 'applicant']);
-    expect(getRoles(staff(Team.EXECUTIVE))).toEqual(['supervisor', 'applicant']);
+    expect(getRoles(staff(Team.SALES))).toEqual(['sales']);
+    expect(getRoles(staff(Team.SUPPORT))).toEqual(['sales']);
+    expect(getRoles(staff(Team.EXECUTIVE))).toEqual(['supervisor']);
   });
 
   it('needs an email to be a seller, like User.is_seller', () => {
@@ -39,12 +39,12 @@ describe('roles', () => {
     const writer = staff(Team.WRITING, {
       group_permissions: [{ name: 'Writers', permissions: [{ codename: 'can_write_cv' }] }],
     });
-    expect(getRoles(writer)).toEqual(['writer', 'applicant']);
+    expect(getRoles(writer)).toEqual(['writer']);
   });
 
   it('supports several roles at once', () => {
     const user = staff(Team.EXECUTIVE, { permissions: [{ codename: 'can_write_sop' }] });
-    expect(getRoles(user)).toEqual(['supervisor', 'writer', 'applicant']);
+    expect(getRoles(user)).toEqual(['supervisor', 'writer']);
   });
 
   it('ignores inactive staff', () => {
@@ -55,9 +55,16 @@ describe('roles', () => {
     ).toEqual(['applicant']);
   });
 
+  it('adds the applicant panel for staff with their own applicant file', () => {
+    const user = staff(Team.SALES, {
+      applicant: { contract_status: 1, accepted_the_terms: true },
+    });
+    expect(getRoles(user)).toEqual(['sales', 'applicant']);
+  });
+
   it('treats superusers as having every permission', () => {
     const admin = { ...base, is_superuser: true };
     expect(hasPermission(admin, 'anything')).toBe(true);
-    expect(getRoles(admin)).toEqual(['supervisor', 'writer', 'sales', 'applicant']);
+    expect(getRoles(admin)).toEqual(['supervisor', 'writer', 'sales']);
   });
 });

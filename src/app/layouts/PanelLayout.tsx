@@ -1,13 +1,16 @@
+import { Logo } from '@/components/ui/Logo';
 import { Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { PageLoader } from '@/components/ui/PageLoader';
 import { loginHref, useSession } from '@/lib/auth/session';
+import { applicantPanel } from '@/panels/applicant';
 import { panelsFor, rememberPanel } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { AccountMenu } from './AccountMenu';
 import { BottomTabs } from './BottomTabs';
+import { PanelSwitcher } from './PanelSwitcher';
 
 const navLink = ({ isActive }: { isActive: boolean }) =>
   `inline-flex h-10 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors ${
@@ -15,8 +18,8 @@ const navLink = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 /**
- * Shared frame of every panel: header with the panel's own menu, account menu with the panel
- * switcher, page area, and mobile bottom tabs. Only the navigation differs between panels.
+ * Shared frame of every panel: header with the panel switcher (several panels only), the panel's
+ * own menu and the account menu, page area, and mobile bottom tabs. Only the navigation differs between panels.
  */
 export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const { t } = useTranslation();
@@ -34,6 +37,10 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   }
 
   const panels = panelsFor(user);
+  // Staff viewing the panel as a regular customer: it isn't one of their panels, so list it too
+  // (as the current one) and the switcher is their way back to work.
+  const listed = panels.includes(panel) ? panels : [...panels, panel];
+  const customerLink = !panels.includes(applicantPanel) && panel !== applicantPanel;
 
   return (
     <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0">
@@ -49,21 +56,12 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
           <Link
             to={panelHref(panel)}
             aria-label={t('app.homeLink')}
-            className="flex items-center gap-2.5 text-text"
+            className="flex min-h-11 items-center"
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-[11px] bg-primary font-display text-[17px] font-bold text-on-primary">
-              S
-            </span>
-            <span dir="ltr" className="text-[19px] font-bold tracking-tight">
-              {t('app.name')}
-            </span>
+            <Logo className="text-base sm:text-xl" />
           </Link>
-          {/* With several panels, always show which one this is. */}
-          {panels.length > 1 && (
-            <span className="truncate rounded-full bg-neutral-tint px-3 py-1 text-sm font-medium text-neutral">
-              {t(panel.name)}
-            </span>
-          )}
+          {/* Several panels: which one this is, and the way to the others. */}
+          <PanelSwitcher user={user} panel={panel} panels={listed} />
         </div>
 
         <nav aria-label={t(panel.navLabel)} className="hidden gap-1 lg:flex">
@@ -87,7 +85,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
           >
             <Icon name="bell" />
           </button>
-          <AccountMenu user={user} panel={panel} panels={panels} />
+          <AccountMenu user={user} customerLink={customerLink} />
         </div>
       </header>
 
@@ -97,7 +95,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
         </Suspense>
       </main>
 
-      <BottomTabs panel={panel} panels={panels} />
+      <BottomTabs panel={panel} />
     </div>
   );
 }

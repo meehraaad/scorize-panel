@@ -10,7 +10,7 @@ import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage } from '@/lib/router/lazyPage';
-import { PANELS, canOpen, preferredPanel } from '@/panels/registry';
+import { PANELS, canOpen, panelsFor, startTarget } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
@@ -20,12 +20,15 @@ import { BootFallback, SharedLayout } from './layouts/SharedLayout';
 /*
  * Route map
  *   /login                 AuthLayout   login, sign-up, password reset
- *   /start                 →            the user's preferred panel (after login)
+ *   /start                 →            after login: the user's panel, or /choose
+ *   /choose                             which panel to start in (several panels, first time or "ask")
  *   /account, /settings    PanelLayout  shared pages, shown inside the last-used panel
  *   /, /supervisor, …      PanelLayout  one route tree per panel (src/panels/*), guarded by role
  *
  * Every panel's pages sit under a SectionError boundary, so a failing page keeps the header and menus.
  */
+
+const CHOOSE_PATH = '/choose';
 
 // Loaders run in parallel, so each one asks for the session; React Query sends a single request.
 const currentUser = () => queryClient.query({ ...sessionQuery, staleTime: 'static' });
@@ -86,8 +89,22 @@ export const routes: RouteObject[] = [
     path: 'start',
     loader: async ({ request }) => {
       const user = await currentUser();
-      return user ? redirect(panelHref(preferredPanel(user))) : toLogin(request);
+      if (!user) return toLogin(request);
+      const target = startTarget(user);
+      return redirect(target === 'choose' ? CHOOSE_PATH : panelHref(target));
     },
+    HydrateFallback: BootFallback,
+  },
+  {
+    path: 'choose',
+    loader: async ({ request }) => {
+      const user = await currentUser();
+      if (!user) return toLogin(request);
+      // One panel: nothing to choose.
+      return panelsFor(user).length < 2 ? redirect(START_PATH) : null;
+    },
+    ...lazyPage(() => import('./ChoosePanelPage')),
+    ErrorBoundary: ErrorPage,
     HydrateFallback: BootFallback,
   },
   {
