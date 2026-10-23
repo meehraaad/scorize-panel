@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F6F4F7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F0A12" media="(prefers-color-scheme: dark)" />
+    <meta name="robots" content="noindex" />
+    <!-- Paths are relative to Vite's base (/panel/), which Vite prepends at build time. -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Scorize</title>
+    <!--
+      Runs before first paint so the page never flashes the wrong theme or text direction.
+      Keep in sync with src/lib/theme/theme.ts, src/lib/i18n/config.ts and src/lib/auth/session.ts.
+    -->
+    <script>
+      (function () {
+        var d = document.documentElement;
+        try {
+          var lang = localStorage.getItem('scorize.lang');
+          if (lang === 'en') {
+            d.lang = 'en';
+            d.dir = 'ltr';
+          }
+          var theme = localStorage.getItem('scorize.theme') || 'system';
+          if (theme === 'system') {
+            theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          d.dataset.theme = theme;
+        } catch (e) {}
+        // Start the session check while the JS bundle downloads (no request waterfall).
+        // Added from JS because Vite would prefix an <link href="/api/..."> with /panel/.
+        var preload = document.createElement('link');
+        preload.rel = 'preload';
+        preload.as = 'fetch';
+        preload.crossOrigin = 'anonymous';
+        preload.href = '/api/profile/auth/v1/whoami/';
+        document.head.appendChild(preload);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Scorize needs JavaScript. / برای استفاده از پنل، جاوااسکریپت را فعال کنید.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

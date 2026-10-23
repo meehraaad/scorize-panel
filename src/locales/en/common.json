@@ -1,0 +1,119 @@
+{
+  "app": {
+    "name": "Scorize",
+    "homeLink": "Scorize, panel home",
+    "skipToContent": "Skip to main content"
+  },
+  "panels": {
+    "applicant": {
+      "name": "Applicant panel",
+      "nav": {
+        "label": "Applicant panel menu",
+        "home": "My case",
+        "applications": "Applications & results",
+        "documents": "Documents & writing",
+        "tickets": "Tickets",
+        "contract": "Contract & payments",
+        "services": "Other services"
+      },
+      "tabs": {
+        "home": "Home",
+        "applications": "Applications",
+        "documents": "Documents",
+        "tickets": "Tickets"
+      }
+    },
+    "supervisor": {
+      "name": "Supervisor panel",
+      "nav": {
+        "label": "Supervisor panel menu",
+        "today": "Today",
+        "files": "All files",
+        "tickets": "Tickets",
+        "reports": "Reports"
+      },
+      "tabs": {
+        "today": "Today",
+        "files": "Files",
+        "tickets": "Tickets"
+      }
+    },
+    "writer": {
+      "name": "Writing panel",
+      "nav": {
+        "label": "Writing panel menu",
+        "queue": "Writing orders",
+        "tickets": "Writing tickets"
+      },
+      "tabs": {
+        "queue": "Orders",
+        "tickets": "Tickets"
+      }
+    },
+    "sales": {
+      "name": "Sales panel",
+      "nav": {
+        "label": "Sales panel menu",
+        "leads": "Leads",
+        "customers": "Customers"
+      },
+      "tabs": {
+        "leads": "Leads",
+        "customers": "Customers"
+      }
+    }
+  },
+  "tabs": {
+    "label": "Main menu",
+    "more": "More"
+  },
+  "header": {
+    "notifications": "Notifications"
+  },
+  "account": {
+    "menu": "Account",
+    "panels": "Your panels",
+    "current": "Current panel",
+    "profile": "Account",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "more": {
+    "title": "More",
+    "close": "Close"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language"
+  },
+  "theme": {
+    "system": "Match device",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "home": {
+    "greeting": "Hi {{name}}",
+    "greetingNoName": "Hi"
+  },
+  "page": {
+    "comingSoon": "This page is coming soon in the new design."
+  },
+  "status": {
+    "loading": "Loading…"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "body": "The page didn't load. Check your connection and try again.",
+    "sectionTitle": "This section didn't load",
+    "sectionBody": "Check your connection and try again. The rest of the panel still works.",
+    "retry": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The address may be wrong, or the page has moved.",
+    "backHome": "Back to home"
+  },
+  "update": {
+    "available": "A new version of the panel is ready.",
+    "reload": "Update"
+  }
+}

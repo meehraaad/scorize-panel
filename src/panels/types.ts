@@ -1,0 +1,34 @@
+import type { ParseKeys } from 'i18next';
+import type { RouteObject } from 'react-router';
+import type { IconName } from '@/components/ui/Icon';
+import type { Role } from '@/lib/auth/roles';
+
+/**
+ * One list per panel drives its desktop top nav, mobile bottom tabs and "More" sheet,
+ * so a section is added in one place. Labels are dictionary keys, never text.
+ */
+export interface NavItem {
+  id: string;
+  /** Relative to the panel root; '' is the panel's home. */
+  to: string;
+  label: ParseKeys;
+  /** Short label for the mobile bottom bar (max 4 tabs); items without it go in the "More" sheet. */
+  tab?: ParseKeys;
+  icon: IconName;
+}
+
+export interface PanelDefinition {
+  id: Role;
+  /** URL segment under /panel/ ('' for the applicant panel at /panel/). */
+  path: string;
+  name: ParseKeys;
+  navLabel: ParseKeys;
+  navigation: readonly NavItem[];
+  /** Child routes, relative to `path`. Pages must be lazy (see lazyPage). */
+  routes: RouteObject[];
+}
+
+/** Router path of a panel page, e.g. panelHref(supervisor, 'files') → '/supervisor/files'. */
+export function panelHref(panel: Pick<PanelDefinition, 'path'>, to = '') {
+  return `/${[panel.path, to].filter(Boolean).join('/')}`;
+}
