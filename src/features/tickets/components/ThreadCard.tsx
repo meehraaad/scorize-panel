@@ -39,9 +39,11 @@ export function ThreadCard({
       ? t('thread.writing.title', { department })
       : t('thread.supervisor.title');
   const subtitle =
-    thread.team.length > 0
-      ? t(`thread.${thread.department}.subtitle`, { names })
-      : t(`thread.${thread.department}.noTeam`);
+    config.viewer === 'staff'
+      ? t(`thread.${thread.department}.staffSubtitle`, { names })
+      : thread.team.length > 0
+        ? t(`thread.${thread.department}.subtitle`, { names })
+        : t(`thread.${thread.department}.noTeam`);
 
   const tabs = threads
     .filter((item) => item.department === 'writing' && item.writing)

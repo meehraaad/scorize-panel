@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { daysUntil, isPast } from '@/lib/dates';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import { eventQuery, type EventDetail } from './api';
 import { NotFound } from './components/NotFound';
 
@@ -62,7 +63,7 @@ function Event({ id }: { id: number }) {
                   : t('event.videoText')}
               </p>
               {data.video_url ? (
-                <a href={data.video_url} className={buttonClass('outline', 'self-start')}>
+                <a href={safeHref(data.video_url)} className={buttonClass('outline', 'self-start')}>
                   {t('event.download')}
                 </a>
               ) : (
@@ -100,7 +101,7 @@ function JoinCard({ event, kind }: { event: EventDetail; kind: string }) {
       </span>
       {!held &&
         (event.join_url ? (
-          <a href={event.join_url} className={buttonClass('primary', 'mt-1 self-start')}>
+          <a href={safeHref(event.join_url)} className={buttonClass('primary', 'mt-1 self-start')}>
             {t('event.join', { kind })}
           </a>
         ) : (

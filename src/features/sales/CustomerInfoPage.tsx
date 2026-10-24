@@ -13,6 +13,7 @@ import { PageColumns } from '@/components/ui/PageColumns';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import {
   infoQuery,
   useSaveInfo,
@@ -52,7 +53,7 @@ export default function CustomerInfoPage() {
           <SectionCard id="info-tablet" variant="panel" title={t('info.tablet.title')}>
             <p className="m-0 text-sm leading-7 text-neutral">{t('info.tablet.text')}</p>
             <a
-              href={data.tablet_url}
+              href={safeHref(data.tablet_url)}
               target="_blank"
               rel="noreferrer"
               className={buttonClass('outline', 'self-start')}

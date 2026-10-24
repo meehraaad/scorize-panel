@@ -5,6 +5,7 @@ import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { StepList } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import type { WritingOrder } from '../api';
 
 const STEPS = ['form', 'writing', 'ready'] as const;
@@ -80,7 +81,11 @@ function Order({ order }: { order: WritingOrder }) {
         {order.step === 'ready' && (
           <>
             {order.file_url && (
-              <a href={order.file_url} download className={buttonClass('primary', 'flex-auto')}>
+              <a
+                href={safeHref(order.file_url)}
+                download
+                className={buttonClass('primary', 'flex-auto')}
+              >
                 {t('writing.download', { name })}
               </a>
             )}

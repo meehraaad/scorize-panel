@@ -13,6 +13,7 @@ import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
+import { safeHref } from '@/lib/url';
 import {
   paymentsQuery,
   usePaymentAction,
@@ -188,7 +189,7 @@ function PaymentDetail({
         <div className="flex flex-col gap-3 rounded-2xl bg-warn-tint p-4">
           <span className="text-sm font-semibold text-warn">{t('payments.receipt.waiting')}</span>
           <a
-            href={payment.receipt.url}
+            href={safeHref(payment.receipt.url)}
             target="_blank"
             rel="noreferrer"
             className={buttonClass('outline', 'self-start text-sm')}

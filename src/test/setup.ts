@@ -4,7 +4,9 @@ import { afterEach } from 'vitest';
 import '@/lib/i18n';
 
 // Integration tests load lazy page chunks through Vite's transform: allow more than the 1 s default.
-configure({ asyncUtilTimeout: 5000 });
+// On a 4-core laptop running every file in parallel, a cold chunk can take over 5 s; the test
+// itself still fails at testTimeout (vitest.config.ts) if something never appears.
+configure({ asyncUtilTimeout: 12_000 });
 
 afterEach(() => {
   cleanup();

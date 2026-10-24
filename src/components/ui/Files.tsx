@@ -1,4 +1,5 @@
 import type { ChangeEvent, ReactNode } from 'react';
+import { safeHref } from '@/lib/url';
 import { buttonClass } from './buttonStyles';
 import { Icon } from './Icon';
 import { IconButton } from './IconButton';
@@ -154,7 +155,7 @@ export function FileTile({
           {ext}
         </span>
         <a
-          href={href}
+          href={safeHref(href)}
           target="_blank"
           rel="noopener"
           className="flex min-w-0 flex-1 flex-col gap-0.5 text-text"

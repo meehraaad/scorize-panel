@@ -5,6 +5,7 @@ import { applicantHandlers, resetApplicantMocks } from './applicant';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { salesCustomerHandlers } from './salesCustomer';
 import { managerHandlers, resetManagerMocks } from './salesManager';
+import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
 import { resetTaskMocks, taskHandlers } from './tasks';
 import { storage } from './session';
 
@@ -15,7 +16,8 @@ import { storage } from './session';
  *
  * Mock accounts (SMS code 123456, password password123):
  *   09120000000 / sara.ahmadi@scorize.local    applicant only
- *   09120000001 / maryam.kazemi@scorize.local  staff: supervisor + writer (panel switcher)
+ *   09120000001 / maryam.kazemi@scorize.local  staff: supervisor + writer (panel switcher); her
+ *                                               cases and tasks: src/mocks/supervisor.ts
  *   09120000002 / nima.rostami@scorize.local   staff: sales only (no switcher)
  *   09120000003 / reza.kamrani@scorize.local   staff: sales manager (sales panel + manager section)
  */
@@ -230,6 +232,7 @@ export const handlers = [
   ...salesCustomerHandlers,
   ...managerHandlers,
   ...taskHandlers,
+  ...supervisorHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -241,4 +244,5 @@ export function resetMockSession() {
   resetSalesMocks();
   resetTaskMocks();
   resetManagerMocks();
+  resetSupervisorMocks();
 }

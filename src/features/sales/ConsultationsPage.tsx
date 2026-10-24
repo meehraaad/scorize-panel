@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
+import { safeHref } from '@/lib/url';
 import { consultationsQuery, type Consultation, type ConsultationRange } from './api';
 import { customerPath, salesPath } from './paths';
 
@@ -187,7 +188,7 @@ function ConsultationRow({ item, status }: { item: Consultation; status: Status 
         )}
         {item.meeting_url && (
           <a
-            href={item.meeting_url}
+            href={safeHref(item.meeting_url)}
             target="_blank"
             rel="noreferrer"
             aria-label={action(t('consultations.link'))}

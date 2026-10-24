@@ -1,0 +1,231 @@
+import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '@/lib/api/client';
+import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
+import type { Colleague } from '@/lib/tasks/api';
+
+/** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
+export const MANAGER_PERMISSION = 'can_assign_to_seller';
+const MANAGER_API = `${SALES_API}/manager`;
+const MANAGER_KEY = [...SALES_KEY, 'manager'] as const;
+
+export type AssignMode = 'round_robin' | 'least_load' | 'match';
+export type Escalation = 'alert' | 'next' | 'both';
+
+export interface AssignSettings {
+  on: boolean;
+  mode: AssignMode;
+  /** What happens when a lead isn't called within the team goal. */
+  escalation: Escalation;
+}
+
+export interface SellerLoad {
+  /** SupportStaff id. */
+  id: number;
+  name: string;
+  status: 'available' | 'busy' | 'away';
+  /** `busy`: in a session until then. */
+  busy_until: string | null;
+  open: number;
+  /** Open leads with no answered contact yet. */
+  uncalled: number;
+  /** Median minutes to the first call this week. */
+  response_minutes: number;
+}
+
+export interface UnassignedLead {
+  lead: number;
+  customer: number;
+  name: string;
+  degree: Degree | null;
+  countries: string[];
+  cause: string;
+  score: number;
+  created_at: string;
+  /** The seller automatic assignment would pick. */
+  suggested: number;
+}
+
+export interface AssignData {
+  settings: AssignSettings;
+  sellers: SellerLoad[];
+  queue: UnassignedLead[];
+}
+
+export const assignQuery = queryOptions({
+  queryKey: [...MANAGER_KEY, 'assign'],
+  queryFn: ({ signal }) => api<AssignData>(`${MANAGER_API}/assign/`, { signal }),
+  refetchInterval: 60_000,
+});
+
+export function useAssignSettings() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (settings: AssignSettings) =>
+      api(`${MANAGER_API}/assign/settings/`, { method: 'PUT', body: settings }),
+    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
+  });
+}
+
+/**
+ * Gives leads to sellers with the existing staff endpoint (SaleLeadViewSet.assign_staff, one
+ * request per lead), so manual assignment works today.
+ */
+export function useAssignLeads() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (assignments: { lead: number; seller: number }[]) =>
+      Promise.all(
+        assignments.map(({ lead, seller }) =>
+          api(`/profile/staff/v1/sale-leads/${String(lead)}/assign_staff/`, {
+            method: 'PATCH',
+            body: { assigned_staff: seller },
+          }),
+        ),
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
+export type DraftTerm =
+  'services' | 'degree' | 'applies' | 'period' | 'amount' | 'instalments' | 'language';
+
+export interface ContractDraft {
+  id: number;
+  customer: number;
+  name: string;
+  created_at: string;
+  /** One line for the list ("Admission + visa · Italy · 120 million toman"). */
+  summary: string;
+  seller: string;
+  /** Percent. */
+  discount: number;
+  /** Under the name: field, countries, seller, source. */
+  meta: string;
+  /** Values localized by the server. */
+  terms: { key: DraftTerm; value: string }[];
+  /** Automatic checks: price list, open debts, discount over the seller's limit… */
+  checks: { ok: boolean; text: string }[];
+  note: string;
+}
+
+export const approvalsQuery = queryOptions({
+  queryKey: [...MANAGER_KEY, 'approvals'],
+  queryFn: ({ signal }) =>
+    api<{ drafts: ContractDraft[] }>(`${MANAGER_API}/approvals/`, { signal }),
+});
+
+export type ApprovalAction = 'approve' | 'return' | 'reject';
+
+/** Approve (opens in the customer's panel), return to the seller, or reject; S36. */
+export function useDecideDraft() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      action,
+      comment,
+    }: {
+      id: number;
+      action: ApprovalAction;
+      comment: string;
+    }) =>
+      api(`${MANAGER_API}/approvals/${String(id)}/`, {
+        method: 'POST',
+        body: { action, comment },
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
+export type TeamRange = 'month' | 'last' | 'quarter';
+
+export type TeamAlert =
+  | { kind: 'unattended'; seller: string; count: number }
+  | { kind: 'draft'; customer: string; discount: number }
+  | { kind: 'no_offer'; count: number };
+
+export interface TeamData {
+  /** First day of the range. */
+  from: string;
+  won: number;
+  target: number;
+  days_left: number;
+  sales: number;
+  /** Change against the previous range, 0.18 = +18%. */
+  sales_change: number;
+  conversion: number;
+  conversion_before: number;
+  first_call_minutes: number;
+  sellers: {
+    id: number;
+    name: string;
+    won: number;
+    target: number;
+    sales: number;
+    conversion: number;
+    first_call_minutes: number;
+    overdue: number;
+  }[];
+  alerts: TeamAlert[];
+  sources: { source: LeadSource | 'referral'; leads: number; won: number; sales: number }[];
+}
+
+export const teamQuery = (range: TeamRange) =>
+  queryOptions({
+    queryKey: [...MANAGER_KEY, 'team', range],
+    queryFn: ({ signal }) => api<TeamData>(`${MANAGER_API}/team/?range=${range}`, { signal }),
+    placeholderData: keepPreviousData,
+  });
+
+/** The same report as a spreadsheet (S38). */
+export const teamExportHref = (range: TeamRange) =>
+  `/api${MANAGER_API}/team/export/?range=${range}`;
+
+export type HealthTeam = 'all' | 'sales' | 'supervisors';
+
+export interface HealthData {
+  /** Each with the last four weeks, oldest first. */
+  on_time: { value: number; target: number; weeks: number[] };
+  overdue: { value: number; over_two_days: number; weeks: number[] };
+  orphans: { value: number; customers: number; files: number; weeks: number[] };
+  automatic: { value: number; weeks: number[] };
+  people: {
+    id: number;
+    name: string;
+    role: 'sales' | 'supervisor';
+    on_time: number;
+    overdue: number;
+    orphans: number;
+    snoozed: number;
+    oldest_days: number | null;
+  }[];
+  oldest: {
+    task: number;
+    text: string;
+    person: string;
+    context: string;
+    owner: { id: number; name: string };
+    days: number;
+  }[];
+  colleagues: Colleague[];
+}
+
+export const healthQuery = (team: HealthTeam) =>
+  queryOptions({
+    queryKey: [...MANAGER_KEY, 'health', team],
+    queryFn: ({ signal }) => api<HealthData>(`${MANAGER_API}/follow-ups/?team=${team}`, { signal }),
+    placeholderData: keepPreviousData,
+  });
+
+/** Nudge the owner of an overdue task, or hand it to someone else (T12). */
+export function useManageTask() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ task, assignee }: { task: number; assignee?: number }) =>
+      api(`/staff/v1/tasks/${String(task)}/${assignee ? 'reassign' : 'remind'}/`, {
+        method: 'POST',
+        body: assignee ? { assignee } : {},
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
+  });
+}

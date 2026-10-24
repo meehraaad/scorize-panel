@@ -32,7 +32,7 @@ export function ThreadMessages({ config, thread }: { config: TicketsConfig; thre
       <div className="min-h-0 flex-1">
         <EmptyState
           variant="padded"
-          title={t('emptyTitle')}
+          title={t(config.viewer === 'staff' ? 'staffEmptyTitle' : 'emptyTitle')}
           icon="chat"
           action={
             <Button
@@ -45,7 +45,7 @@ export function ThreadMessages({ config, thread }: { config: TicketsConfig; thre
             </Button>
           }
         >
-          {t('empty')}
+          {t(config.viewer === 'staff' ? 'staffEmpty' : 'empty')}
         </EmptyState>
       </div>
     );
@@ -123,14 +123,17 @@ function Message({
       attachment={message.attachment}
       status={mine ? (message.seen ? t('seen') : t('sent')) : undefined}
       footer={
-        !mine &&
+        // Under staff replies: the applicant rates them; staff see the score given.
+        message.role !== null &&
         !auto && (
           <TicketRating
             value={message.rating}
             max={MAX_RATING}
             prompt={t('rate')}
             ratedLabel={
-              message.rating === null ? '' : t('rated', { n: f.number(message.rating), max })
+              message.rating === null
+                ? ''
+                : t(canRate ? 'rated' : 'ratedByApplicant', { n: f.number(message.rating), max })
             }
             starLabel={(score) => t('star', { n: f.number(score), max })}
             disabled={rating}

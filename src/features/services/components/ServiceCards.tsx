@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
+import { safeHref } from '@/lib/url';
 import type { ServicesData } from '../api';
 
 const ROW = 'flex items-center gap-3 px-5 py-3.5 shadow-[inset_0_1px_0_var(--hair)] lg:px-7';
@@ -56,7 +57,7 @@ export function PackagesCard({ data }: { data: ServicesData }) {
               )}
             </span>
           </span>
-          <a href={data.offer.url} className={buttonClass('outline')}>
+          <a href={safeHref(data.offer.url)} className={buttonClass('outline')}>
             {t('packages.offer')}
           </a>
         </div>
@@ -199,7 +200,7 @@ export function EventsCard({ data }: { data: ServicesData }) {
                   </Link>
                 ) : (
                   <a
-                    href={action.href}
+                    href={safeHref(action.href)}
                     className={buttonClass(action.primary ? 'primary' : 'outline', 'max-sm:w-full')}
                   >
                     {action.label}

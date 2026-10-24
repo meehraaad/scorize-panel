@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon';
 import { StepBar } from '@/components/ui/Progress';
 import { SectionHeading } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import type { VisaResult, VisaStatus } from '../api';
 
 const STEPS = [0, 1, 2, 3] as const;
@@ -91,7 +92,7 @@ function VisaCard({ visa }: { visa: VisaResult }) {
             <dt className="text-[13px] text-text-2">{t('visa.proof')}</dt>
             <dd className="m-0">
               <a
-                href={visa.appointment_proof}
+                href={safeHref(visa.appointment_proof)}
                 download
                 className="-my-2.5 inline-flex min-h-11 items-center gap-1.5 text-[15px] font-semibold text-primary-text"
               >

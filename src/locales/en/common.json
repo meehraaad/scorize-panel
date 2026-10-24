@@ -31,12 +31,14 @@
         "today": "Today",
         "files": "All files",
         "tickets": "Tickets",
-        "reports": "Reports"
+        "reports": "Reports",
+        "tasks": "My tasks"
       },
       "tabs": {
         "today": "Today",
         "files": "Files",
-        "tickets": "Tickets"
+        "tickets": "Tickets",
+        "tasks": "Tasks"
       },
       "description": "Applicant files, applications, tickets"
     },

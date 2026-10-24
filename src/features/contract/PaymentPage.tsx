@@ -14,6 +14,7 @@ import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import { paymentQuery, useStartOnlinePayment, type PaymentData, type PaymentStatus } from './api';
 import { ReceiptForm } from './components/ReceiptForm';
 
@@ -86,7 +87,7 @@ function Payment({ id }: { id: number }) {
           <p className="m-0 text-sm leading-7 text-text-2">{t('payment.review.text')}</p>
           {data.receipt && (
             <a
-              href={data.receipt.url}
+              href={safeHref(data.receipt.url)}
               target="_blank"
               rel="noopener"
               className={buttonClass('outline')}

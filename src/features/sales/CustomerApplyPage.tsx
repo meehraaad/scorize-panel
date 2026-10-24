@@ -7,6 +7,7 @@ import { PageColumns } from '@/components/ui/PageColumns';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import { applyQuery, type ApplyFile } from './api';
 import { useCustomerId } from './useCustomerId';
 
@@ -99,7 +100,7 @@ export default function CustomerApplyPage() {
             title={t('apply.contract')}
             end={
               contract.file_url && (
-                <a href={contract.file_url} className="text-sm text-primary-text">
+                <a href={safeHref(contract.file_url)} className="text-sm text-primary-text">
                   {t('apply.download')}
                 </a>
               )

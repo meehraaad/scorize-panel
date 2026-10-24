@@ -28,7 +28,8 @@ src/
 │   ├── writer/            /panel/writer/
 │   └── sales/             /panel/sales/
 ├── features/<section>/    Pages and their logic (auth, home, settings, …): Page.tsx (default
-│                          export), components/, api.ts, hooks. Used by panels.
+│                          export), components/, api.ts (or api/ with one file per page and
+│                          an index.ts once it passes ~400 lines), hooks. Used by panels.
 ├── components/            Shared UI; components/ui/ = design-system primitives,
 │                          components/tickets/ = conversation blocks (any panel),
 │                          components/applicant/ = applicant-panel pieces several pages share and
@@ -43,6 +44,7 @@ src/
 │   │                      message links (WhatsApp/Telegram/SMS), receipt confirmation
 │   ├── tasks/             Panel-neutral staff tasks (StaffToDo): my follow-up / request / team queue
 │   ├── dates.ts           Whole days until / between dates
+│   ├── applications.ts    An application's result, approval and fee names (applicant + supervisor pages)
 │   ├── account/           Every panel's account: notifications (the header's bell), channels, login details
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
 │   ├── i18n/              i18next setup, locales config, Intl formatters (Jalali dates)
@@ -82,7 +84,7 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `FileDrop`, `PickedFile`, `FileTile`                          | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully                                                                                           |
 | `TagList`, `Chip`, `Avatar`, `StarRating`                     | Tags with optional remove, status pills, initials, 1–5 rating                                                                                                                                                       |
 | `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass` | Actions (44px touch targets; icon-only ones require `aria-label`)                                                                                                                                                   |
-| `Notice`, `InlineConfirm`, `TextField`, `Icon`, `Card`        | Messages, in-place confirmation, inputs (one line, several lines), icons, a bare card                                                                                                                               |
+| `Notice`, `InlineConfirm`, `TextField`, `Icon`, `Card`        | Messages (`error`, `info`, `success`, `warn`: something to fix first), in-place confirmation, inputs (one line, several lines), icons, a bare card                                                                  |
 | `BackLink`                                                    | "← Back" above a sub-page's title (writing forms, payment)                                                                                                                                                          |
 | `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)       | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                                                                                                             |
 | `LinkTile`, `TileGrid`                                        | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid (`dense`: 2 on phones)                                                                                                  |
@@ -118,7 +120,10 @@ sheet, for side-column content on phones).
 tabs and the FAQ in a sheet; `tickets` dictionary, `TicketsConfig`: endpoint, page
 path, `viewer: applicant | staff`) ← `panels/<panel>/` (passes its config; the applicant panel's is
 `panels/applicant/tickets.ts`). Writing tickets are threads of the same page, not a copy. The
-supervisor and writer panels add their own endpoint (one applicant's threads) and `viewer: 'staff'`.
+supervisor panel passes one applicant's threads with `viewer: 'staff'` and `embedded` (inside the
+case file: no page header, no full-screen chat; `panels/supervisor/CaseTicketsPage.tsx`). Staff pick no
+priority, see the applicant's rating under staff replies, no FAQ or opening hours, and their own
+thread subtitle and empty state. The writer panel will do the same.
 
 Helpers used with them: `lib/progress.ts` (`percentOf`, `stepState`), `lib/files.ts` (`checkFile`,
 `extensionOf`), `lib/text.ts` (Persian digits, phone numbers, initials).
@@ -133,7 +138,8 @@ than copying its markup into the feature, and add it to the gallery.
 
 `features/sales/` holds every sales page (Today, Leads, Board, My month, My consultations, the customer
 pages: `CustomerLayout` with its sub-tabs summary / purchases / payments / details / application file,
-the offer page; later the manager pages), `api.ts` with one response per page, and
+the offer page; later the manager pages), `api/` with one response per page (a file per page
+or tab, re-exported by `api/index.ts`), and
 `paths.ts` (the panel's URLs, since features can't import panels). Shared vocabulary (stages, sources,
 scores) is in `lib/sales/`; tasks in `lib/tasks/` (the supervisor panel uses them too). "Call" buttons
 open the customer page with `?log=call`, so every call ends in the log dialog; `?log=meeting&reservation=`
@@ -144,6 +150,22 @@ hides it from others and the route's loader sends them back. Backend items: back
 `features/tasks/` is the panel-neutral "Today's tasks" page (my follow-ups, requests to me, team
 queue), configured per panel with `TasksConfig` (`panels/sales/TasksPage.tsx`), like tickets. Its API
 and the "new task" hook are in `lib/tasks/`.
+
+### Supervisor panel (canvas V1 supervisor screens and V5 "today", in the V6 look)
+
+`features/supervisor/` holds every supervisor page: Today (`TodayPage`: the dark deadline board for
+the next 14 days, the cases waiting on the supervisor, links by stage), All files (`CasesPage`: by
+stage, search, email-bot filter, selection → export of applications as CSV) and the case file
+(`CaseLayout`: dark summary card, the email bot's problems with links to fix them, tabs, the stage
+dialog) with its tabs: overview (progress, contract, instalments, open tasks + new task, latest
+activity), documents (accept an upload or send it back with a reason, request a document, writing
+orders, research interests), email and applications (bot on/off, applications with the side editor
+`ApplicationDialog`, professor emails, login details), tickets (the shared page, see above) and
+activity. `InboxPage` lists every case's supervisors' thread, waiting ones first. `api/` has one
+response per screen (a file per screen, keys and stages in `api/common.ts`); `paths.ts` the panel's URLs. "My tasks" is the shared tasks page with
+`panel: 'supervisor'` (`panels/supervisor/TasksPage.tsx`). Reports has no design yet. Mock: Maryam
+(09120000001), `src/mocks/supervisor.ts` (her tasks in `src/mocks/tasks.ts`). Backend items:
+backend-changes.md SV.
 
 ### Locked sections (applicant panel, canvas V7)
 
@@ -191,6 +213,17 @@ home page (`components/applicant/NpsCard`). Dev: `localStorage['scorize.mock.gat
 - `ErrorPage` is the last resort when a layout itself fails. Both offer reload (fixes stale chunks
   after a deploy).
 - Unknown URLs show the 404 inside the panel that matched.
+
+### Security
+
+- Auth is the Django session cookie (HttpOnly); unsafe requests send the CSRF token (`lib/api/`).
+- Links and redirects built from API data go through `safeHref` (`lib/url.ts`): only http(s) and
+  same-origin paths, so a stored `javascript:` URL never runs. `FileTile` and `IconLink` do it
+  themselves; a raw `<a href={…}>` with server data must call it.
+- `security-headers.conf` (included in every nginx location) sets the CSP and the other headers.
+  The CSP allows only the panel's own files plus the inline boot script of `index.html` by hash:
+  editing that script means updating the hash (`src/app/csp.test.ts` fails and prints it). HSTS is
+  set where TLS ends (backend-changes.md A8).
 
 ## Decisions
 

@@ -22,13 +22,23 @@ const DEPARTMENTS = ['supervisor', 'writing'] as const;
 /**
  * Tickets: one conversation per department (supervisor; each writing department), switched by
  * address. Design: canvas V6 "تیکت‌ها" and "تیکت نگارش" (AppTickets, AppWTicket).
+ * `embedded`: inside another page that has its own title (a staff panel's case file): no page
+ * header and no full-screen chat layout on phones.
  */
-export function TicketsPage({ config }: { config: TicketsConfig }) {
+export function TicketsPage({
+  config,
+  embedded = false,
+}: {
+  config: TicketsConfig;
+  embedded?: boolean;
+}) {
   const { t } = useTranslation('tickets');
   const f = useFormat();
   const segment = useParams()['*'] ?? '';
   const { data } = useSuspenseQuery(ticketsQuery(config));
 
+  if ((!data || data.threads.length === 0) && embedded)
+    return <EmptyState variant="card">{t('noThreads')}</EmptyState>;
   if (!data || data.threads.length === 0)
     return (
       <PageStack>
@@ -79,6 +89,35 @@ export function TicketsPage({ config }: { config: TicketsConfig }) {
     </p>
   );
 
+  const columns = (
+    <PageColumns
+      fill={!embedded}
+      asideLabel={t('aside')}
+      main={<ThreadCard key={thread.id} config={config} threads={threads} thread={thread} />}
+      aside={
+        // Staff see no FAQ and no opening hours: those are for applicants.
+        config.viewer === 'applicant' || faqs.length > 0 ? (
+          <>
+            {faqs.length > 0 && (
+              <SectionCard variant="panel" id="tickets-faq" title={t('faq')}>
+                <FaqList items={faqs} openId={faqs[0]?.id} />
+              </SectionCard>
+            )}
+            {config.viewer === 'applicant' && <Card className="p-5 lg:p-6">{hours}</Card>}
+          </>
+        ) : undefined
+      }
+    />
+  );
+
+  if (embedded)
+    return (
+      <div className="flex flex-col gap-4 lg:gap-7">
+        {departments.length > 1 && <ThreadSwitch label={t('departments')} items={departments} />}
+        {columns}
+      </div>
+    );
+
   // Phones: a chat screen. The conversation fills the space between the header and the bottom
   // tabs; FAQ and opening hours move into a sheet behind the help button.
   return (
@@ -110,21 +149,7 @@ export function TicketsPage({ config }: { config: TicketsConfig }) {
           </div>
         }
       />
-      <PageColumns
-        fill
-        asideLabel={t('aside')}
-        main={<ThreadCard key={thread.id} config={config} threads={threads} thread={thread} />}
-        aside={
-          <>
-            {faqs.length > 0 && (
-              <SectionCard variant="panel" id="tickets-faq" title={t('faq')}>
-                <FaqList items={faqs} openId={faqs[0]?.id} />
-              </SectionCard>
-            )}
-            <Card className="p-5 lg:p-6">{hours}</Card>
-          </>
-        }
-      />
+      {columns}
     </PageFill>
   );
 }

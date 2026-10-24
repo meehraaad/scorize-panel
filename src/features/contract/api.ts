@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { ApiError, api } from '@/lib/api/client';
 import type { ContractFeature } from '@/lib/applicant/access';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
+import { safeHref } from '@/lib/url';
 
 /**
  * "Contract & payment" of the applicant panel and the payment page (one invoice: an instalment or
@@ -174,8 +175,16 @@ export function useSaveProfileField() {
 /** Starts an online payment; the browser then leaves for the bank gateway. */
 export function useStartOnlinePayment() {
   return useMutation({
-    mutationFn: (id: number) =>
-      api<{ redirect_url: string }>(`${BASE}/payments/${String(id)}/online/`, { method: 'POST' }),
+    mutationFn: async (id: number) => {
+      const { redirect_url } = await api<{ redirect_url: string }>(
+        `${BASE}/payments/${String(id)}/online/`,
+        { method: 'POST' },
+      );
+      // Never navigate to a javascript: or data: URL, even one the API sent.
+      const target = safeHref(redirect_url);
+      if (!target) throw new Error('Unsafe payment redirect');
+      return { redirect_url: target };
+    },
   });
 }
 

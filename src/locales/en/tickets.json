@@ -23,12 +23,14 @@
     "supervisor": {
       "title": "Your case supervisors",
       "subtitle": "{{names}} · Your message goes to every supervisor on your case",
-      "noTeam": "Your message goes to the supervisors on your case"
+      "noTeam": "Your message goes to the supervisors on your case",
+      "staffSubtitle": "{{names}} · The applicant sees every supervisor’s messages in one conversation"
     },
     "writing": {
       "title": "Writing team · {{department}}",
       "subtitle": "Writer: {{names}}",
-      "noTeam": "No writer has been assigned yet. Your message reaches the writing department."
+      "noTeam": "No writer has been assigned yet. Your message reaches the writing department.",
+      "staffSubtitle": "Writer: {{names}} · The applicant’s conversation with the writing team"
     }
   },
   "messages": "Messages",
@@ -87,5 +89,9 @@
     "thanks": "Thank you for following up."
   },
   "emptyTitle": "You haven't sent a message yet",
-  "writeFirst": "Write your first message"
+  "writeFirst": "Write your first message",
+  "ratedByApplicant": "Applicant’s rating: {{n}} of {{max}}",
+  "noThreads": "No conversation has been opened for this case yet.",
+  "staffEmptyTitle": "No messages yet",
+  "staffEmpty": "Write the first message to the applicant; they get an SMS about it."
 }

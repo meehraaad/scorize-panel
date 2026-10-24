@@ -7,12 +7,14 @@ import type {
   TaskChange,
   TasksOverview,
 } from '@/lib/tasks/api';
-import { notFound } from './session';
-import { SELLER, failed, newId, stateOrError } from './sales';
+import { notFound, storage } from './session';
+import { SELLER, failed, newId, stateOrError, type SalesState } from './sales';
+import { SUPERVISOR, SUPERVISOR_NAME, addCaseTask } from './supervisor';
 
 /**
- * Fake staff tasks (docs/backend-changes.md T1–T12) for the seller: follow-ups, colleagues'
- * requests, the team queue. Tasks created about a customer also show on that customer's page.
+ * Fake staff tasks (docs/backend-changes.md T1–T12) for the seller and the supervisor: follow-ups,
+ * colleagues' requests, the team queue. Tasks created about a customer (or an applicant) also show
+ * on that person's page.
  */
 
 const TASKS = '/api/staff/v1/tasks';
@@ -182,16 +184,149 @@ function tasksState(): TasksState {
   };
 }
 
-let tasks: TasksState | null = null;
+/** Maryam's tasks in the supervisor panel (`?panel=supervisor`): about her applicants' cases. */
+function supervisorTasksState(): TasksState {
+  const person = (id: number, name: string, context: string) => ({ id, name, context });
+  const details: RequestDetail[] = [
+    {
+      id: 211,
+      from: { name: 'نیما رستمی', role: 'فروش' },
+      created_at: ago(5 * HOUR),
+      text: 'زهرا موسوی خدمات ویزا را خرید؛ وقت سفارت را با او هماهنگ کن',
+      person: { id: 1224, name: 'زهرا موسوی' },
+      due_at: todayAt(17),
+      status: 'sent',
+      comments: 0,
+      body: 'قرارداد ویزا امروز ثبت شد. لطفاً برای گرفتن وقت سفارت سوئد با او تماس بگیرید.',
+      watchers: [],
+      thread: [],
+    },
+  ];
+  return {
+    overview: {
+      on_time: { week: 0.92, last_week: 0.84, target: 0.9 },
+      orphans: [
+        { id: 1198, name: 'لیلا امینی' },
+        { id: 1210, name: 'رضا حسینی' },
+      ],
+      mine: [
+        {
+          id: 111,
+          text: 'فی Stanford را پرداخت کن؛ ددلاین ۵ روز دیگر است',
+          due_at: ago(3 * HOUR),
+          person: person(1215, 'مهسا جعفری', 'در حال اپلای · آمریکا'),
+          source: 'system',
+          snoozed: 0,
+          step: null,
+          action: 'open',
+          note: '',
+          suggested_next: 'رسید پرداخت را در پرونده بگذار',
+        },
+        {
+          id: 112,
+          text: 'بررسی SOP نسخه‌ی دوم',
+          due_at: ago(2 * HOUR),
+          person: person(1240, 'سارا محمدی', 'در حال اپلای · کانادا، آلمان'),
+          source: 'me',
+          snoozed: 1,
+          step: null,
+          action: 'open',
+          note: '',
+          suggested_next: 'نظرها را برای تیم نگارش بفرست',
+        },
+        {
+          id: 113,
+          text: 'به سؤال علی درباره‌ی گواهی موقت پاسخ بده',
+          due_at: todayAt(16),
+          person: person(1219, 'علی نوری', 'تکمیل مدارک · آلمان'),
+          source: 'system',
+          snoozed: 0,
+          step: null,
+          action: 'message',
+          note: '',
+          suggested_next: '',
+        },
+      ],
+      tomorrow: 4,
+      done_today: 3,
+      requests: details.map(
+        ({ body: _body, watchers: _watchers, thread: _thread, ...request }) => request,
+      ),
+      team: [
+        {
+          id: 311,
+          team: 'documents',
+          automatic: true,
+          text: 'ترجمه‌ی رسمی ریزنمرات دو هفته است نرسیده',
+          person: { id: 1238, name: 'امیرحسین رضایی' },
+          queued_at: ago(DAY),
+          taken: null,
+        },
+      ],
+      sent: [
+        {
+          id: 411,
+          text: 'نسخه‌ی دوم SOP نگار احمدی',
+          to: { team: 'writing' },
+          at: ago(2 * DAY),
+          status: 'in_progress',
+        },
+      ],
+      colleagues: [
+        { id: 23, name: 'علی رضایی', role: 'سوپروایزر' },
+        { id: 22, name: 'الهام رضوی', role: 'سرپرست تیم نگارش' },
+        { id: 8, name: 'نیما رستمی', role: 'فروش' },
+      ],
+    },
+    details: new Map(details.map((detail) => [detail.id, detail])),
+  };
+}
 
-function tasksOrError() {
+let tasks: TasksState | null = null;
+let supervisorTasks: TasksState | null = null;
+
+interface TasksContext {
+  tasks: TasksState;
+  /** The logged-in staff member's name (owner and author of what they create). */
+  me: string;
+  /** Records a task about a person on that person's page. */
+  onPerson: (task: NewTask, owner: string | null) => void;
+}
+
+function tasksOrError(): TasksContext | Response {
+  if (storage.get() === SUPERVISOR) {
+    supervisorTasks ??= supervisorTasksState();
+    return { tasks: supervisorTasks, me: SUPERVISOR_NAME, onPerson: addCaseTask };
+  }
   const data = stateOrError();
   if (failed(data)) return data;
   tasks ??= tasksState();
-  return { sales: data, tasks };
+  return { tasks, me: SELLER, onPerson: (task, owner) => addCustomerTask(data, task, owner) };
 }
 
-function applyChange(state: TasksState, id: number, change: TaskChange): Response | null {
+function addCustomerTask(sales: SalesState, task: NewTask, owner: string | null) {
+  if (task.user === null) return;
+  const list = sales.tasks.get(task.user) ?? [];
+  list.push({
+    id: newId(),
+    kind: task.kind,
+    status: task.kind === 'mine' ? 'open' : task.kind === 'request' ? 'sent' : 'queued',
+    text: task.text,
+    due_at: task.due_at,
+    owner,
+    creator: SELLER,
+    team: task.team ?? null,
+    automatic: false,
+  });
+  sales.tasks.set(task.user, list);
+}
+
+function applyChange(
+  state: TasksState,
+  id: number,
+  change: TaskChange,
+  me: string,
+): Response | null {
   const { overview, details } = state;
   const task = overview.mine.find((item) => item.id === id);
   const request = overview.requests.find((item) => item.id === id);
@@ -265,7 +400,7 @@ function applyChange(state: TasksState, id: number, change: TaskChange): Respons
       if (!request || !detail) return notFound();
       detail.thread.push({
         id: newId(),
-        author: SELLER,
+        author: me,
         mine: true,
         at: new Date().toISOString(),
         text: change.text,
@@ -304,7 +439,12 @@ export const taskHandlers = [
     const kind = CHANGE_KIND[String(params.action)];
     if (!kind) return notFound();
     const body = (await request.json().catch(() => ({}))) as object;
-    const error = applyChange(data.tasks, Number(params.id), { kind, ...body } as TaskChange);
+    const error = applyChange(
+      data.tasks,
+      Number(params.id),
+      { kind, ...body } as TaskChange,
+      data.me,
+    );
     return error ?? new HttpResponse(null, { status: 204 });
   }),
 
@@ -323,25 +463,12 @@ export const taskHandlers = [
         at: new Date().toISOString(),
         status: task.kind === 'team' ? 'queued' : 'sent',
       });
-    if (task.user !== null) {
-      const list = data.sales.tasks.get(task.user) ?? [];
-      list.push({
-        id: newId(),
-        kind: task.kind,
-        status: task.kind === 'mine' ? 'open' : task.kind === 'request' ? 'sent' : 'queued',
-        text: task.text,
-        due_at: task.due_at,
-        owner: task.kind === 'mine' ? SELLER : (colleague?.name ?? null),
-        creator: SELLER,
-        team: task.team ?? null,
-        automatic: false,
-      });
-      data.sales.tasks.set(task.user, list);
-    }
+    data.onPerson(task, task.kind === 'mine' ? data.me : (colleague?.name ?? null));
     return new HttpResponse(null, { status: 201 });
   }),
 ];
 
 export function resetTaskMocks() {
   tasks = null;
+  supervisorTasks = null;
 }

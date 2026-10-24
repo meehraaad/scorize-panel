@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextAreaField } from '@/components/ui/TextField';
 import { isolate, useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import { packageQuery, useReviewPackage, type PackageDetail } from './api';
 import { NotFound } from './components/NotFound';
 
@@ -51,7 +52,7 @@ function Package({ id }: { id: number }) {
               {current && (
                 <>
                   <a
-                    href={current.url}
+                    href={safeHref(current.url)}
                     target="_blank"
                     rel="noopener"
                     aria-label={t('package.play', { title: current.title })}

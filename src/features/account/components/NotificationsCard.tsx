@@ -8,6 +8,7 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Notice } from '@/components/ui/Notice';
 import { notificationsQuery, useMarkRead, type Notification } from '@/lib/account/api';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 
 const PANEL_BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -118,7 +119,7 @@ function Item({ item, onOpen }: { item: Notification; onOpen: () => void }) {
           {body}
         </Link>
       ) : (
-        <a href={item.url} onClick={onOpen} className={`${row} hover:bg-canvas`}>
+        <a href={safeHref(item.url)} onClick={onOpen} className={`${row} hover:bg-canvas`}>
           {body}
         </a>
       )}

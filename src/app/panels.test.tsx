@@ -49,7 +49,9 @@ describe('panels', () => {
     loginAs(MARYAM);
     localStorage.setItem('scorize.panel', 'supervisor');
     const router = renderApp('/start');
-    expect(await screen.findByRole('heading', { name: 'امروز' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /^سلام مریم، .* پرونده منتظر شماست$/ }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/supervisor');
   });
 

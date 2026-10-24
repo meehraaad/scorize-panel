@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
+import type { ApplicationResult, Approval, FeePayment } from '@/lib/applications';
 
 /**
  * "Applications & results" of the applicant panel. Shapes: docs/backend-changes.md H5–H7.
@@ -9,22 +10,7 @@ import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
  * those are paged by the server.
  */
 
-/** ApplicationResult.Status, named. */
-export type ApplicationResult =
-  | 'incomplete_documents'
-  | 'rejected'
-  | 'pending'
-  | 'waiting_for_portal'
-  | 'accepted'
-  | 'submitted'
-  | 'completed'
-  | 'waiting_for_recommendation';
-
-/** ApplicationResult.ApplicantApprovalStatus, named. */
-export type Approval = 'pending' | 'approved' | 'rejected';
-
-/** ApplicationResult.PaymentStatus, named. */
-export type FeePayment = 'pending' | 'paid' | 'waived';
+export type { ApplicationResult, Approval, FeePayment } from '@/lib/applications';
 
 export interface Application {
   id: number;

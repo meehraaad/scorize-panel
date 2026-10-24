@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { safeHref } from '@/lib/url';
 import { Icon, type IconName } from './Icon';
 
 interface IconButtonProps extends Omit<ComponentProps<'button'>, 'children'> {
@@ -43,6 +44,7 @@ export function IconLink({
   tone = 'default',
   iconSize = 20,
   className = '',
+  href,
   ...props
 }: Omit<ComponentProps<'a'>, 'children'> & {
   icon: IconName;
@@ -53,6 +55,7 @@ export function IconLink({
   return (
     <a
       className={`flex size-11 flex-none items-center justify-center rounded-full hover:bg-canvas ${TONES[tone]} ${className}`}
+      href={safeHref(href)}
       {...props}
     >
       <Icon name={icon} size={iconSize} />

@@ -117,6 +117,7 @@ export default function ComponentsPage() {
             <Notice tone="info">پیام اطلاع‌رسانی</Notice>
             <Notice tone="success">ذخیره شد.</Notice>
             <Notice tone="error">ارسال نشد. دوباره امتحان کنید.</Notice>
+            <Notice tone="warn">ربات نمی‌تواند برای این متقاضی ایمیل بفرستد.</Notice>
           </div>
           {confirm ? (
             <InlineConfirm

@@ -7,6 +7,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { Switch } from '@/components/ui/Switch';
 import { CHANNELS, useUpdateAccount, type AccountData, type Channel } from '@/lib/account/api';
 import { formatPhone } from '@/lib/site';
+import { safeHref } from '@/lib/url';
 
 /** Which channels carry notifications (they're always kept in the panel too). */
 export function ChannelsCard({ account }: { account: AccountData }) {
@@ -56,7 +57,7 @@ export function ChannelsCard({ account }: { account: AccountData }) {
             <span className="text-[13px] text-text-2">{t('channels.botText')}</span>
           </span>
           <a
-            href={account.telegram.connect_url}
+            href={safeHref(account.telegram.connect_url)}
             target="_blank"
             rel="noopener"
             className={buttonClass('primary')}

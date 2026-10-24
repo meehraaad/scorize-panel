@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
+import { safeHref } from '@/lib/url';
 
 /** Within this many pixels of the end counts as "at the newest message". */
 const NEAR_END = 32;
@@ -175,7 +176,7 @@ export function MessageBubble({
         </p>
         {attachment && (
           <a
-            href={attachment.url}
+            href={safeHref(attachment.url)}
             target="_blank"
             rel="noopener"
             className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full px-3.5 text-[13px] text-text shadow-[inset_0_0_0_1px_var(--line-2)]"

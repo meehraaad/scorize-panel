@@ -1,0 +1,363 @@
+{
+  "dash": "—",
+  "close": "Close",
+  "cancel": "Cancel",
+  "free": "Free",
+  "saveError": "Couldn't save. Check your internet connection and try again.",
+  "fileNumber": "File #{{n}}",
+  "docs": "Documents: {{uploaded}} of {{required}}",
+  "docsShort": "{{uploaded}} of {{required}}",
+  "stage": {
+    "documents": "Collecting documents",
+    "writing": "Writing SOP and CV",
+    "applying": "Applying",
+    "admitted": "Admitted",
+    "visa": "Visa",
+    "on_hold": "On hold",
+    "closed": "Closed"
+  },
+  "stageHint": {
+    "documents": "The applicant hasn't sent every document yet.",
+    "writing": "The writing team is working on the SOP and CV.",
+    "applying": "Applications are being filed and the email bot is running.",
+    "admitted": "At least one admission is recorded.",
+    "visa": "Embassy and visa work is under way.",
+    "on_hold": "Work is paused, at the applicant's request or for an unpaid instalment.",
+    "closed": "The contract is over and the file is closed."
+  },
+  "writingState": {
+    "waiting_info": "Waiting for details",
+    "writing": "Being written",
+    "final": "Final"
+  },
+  "writingType": {
+    "sop": "Statement of purpose",
+    "cv": "CV",
+    "recommendation": "Recommendation letter",
+    "ps": "Personal statement",
+    "ds": "Diversity statement",
+    "pl": "Professor list"
+  },
+  "result": {
+    "none": "Not sent yet",
+    "pending": "Being prepared",
+    "incomplete_documents": "Documents incomplete",
+    "waiting_for_recommendation": "Waiting for a recommendation",
+    "waiting_for_portal": "Waiting for the portal",
+    "completed": "Ready to submit",
+    "submitted": "Submitted, awaiting result",
+    "accepted": "Admitted",
+    "rejected": "Rejected"
+  },
+  "approval": {
+    "pending": "Waiting for the applicant",
+    "approved": "Approved by the applicant",
+    "rejected": "Declined by the applicant"
+  },
+  "payment": {
+    "pending": "Unpaid",
+    "paid": "Paid",
+    "waived": "No fee"
+  },
+  "bot": {
+    "on": "On",
+    "off": "Off",
+    "active": "The email bot is running",
+    "stopped": "The email bot is stopped",
+    "today": "{{sent}} of {{limit}} emails sent today",
+    "account": "Sending account:",
+    "stop": "Stop the bot",
+    "start": "Start the bot",
+    "blocked": "The bot can't start until the problems at the top of the file are fixed.",
+    "problems": {
+      "title": "The bot can't send emails for this applicant",
+      "few_texts": "{{have}} email texts saved; at least {{need}} are needed.",
+      "no_cv": "No CV uploaded yet.",
+      "no_interests": "No research interests recorded.",
+      "no_account": "No Gmail sending account set up."
+    },
+    "fix": {
+      "few_texts": "Add email texts",
+      "no_cv": "Go to documents",
+      "no_interests": "See interests",
+      "no_account": "Login details"
+    }
+  },
+  "today": {
+    "title": "Hi {{name}}, {{n}} files are waiting on you",
+    "titleClear": "Hi {{name}}, no files are waiting on you",
+    "subtitle": "{{n}} deadlines fall in the next 7 days. Start at the top of the board.",
+    "subtitleCalm": "No urgent deadlines in the next 7 days.",
+    "allCases": "All files",
+    "byStage": "Files by stage",
+    "board": {
+      "title": "Upcoming deadlines",
+      "window": "Next 14 days",
+      "daysUnit": "days",
+      "empty": "No deadlines in the next 14 days.",
+      "status": {
+        "fee_unpaid": "Fee unpaid",
+        "ready": "Ready to submit",
+        "waiting_approval": "Waiting for the applicant",
+        "sop_missing": "SOP not ready",
+        "submitted": "Submitted"
+      }
+    },
+    "waiting": {
+      "title": "Files waiting on you",
+      "subtitle": "The most urgent work is at the top.",
+      "urgent": "Urgent:",
+      "nextDeadline": "Next deadline",
+      "daysLeft": "{{n}} days",
+      "emptyTitle": "All clear",
+      "empty": "Nothing is waiting on you right now. A file that needs something will show up here."
+    }
+  },
+  "cases": {
+    "title": "All files",
+    "subtitle": "{{n}} files you supervise. Select an applicant's name to open the file.",
+    "list": "Files",
+    "stageFilter": "File stage",
+    "all": "All",
+    "search": "Search files",
+    "searchPlaceholder": "Name, file number or email",
+    "bot": "Email bot",
+    "botAll": "All",
+    "selectAll": "Select every file on this page",
+    "select": "Select {{name}}",
+    "selection": "Selected files",
+    "selected": "{{n}} files selected",
+    "export": "Export applications",
+    "clear": "Clear selection",
+    "empty": "No files match these filters.",
+    "pager": "Showing {{from}}–{{to}} of {{total}} files",
+    "open": "Open {{name}}'s file",
+    "column": {
+      "applicant": "Applicant",
+      "stage": "Stage",
+      "contract": "Contract",
+      "cv": "CV",
+      "sop": "SOP",
+      "bot": "Email bot",
+      "docs": "Documents",
+      "activity": "Last activity",
+      "open": "Open"
+    }
+  },
+  "case": {
+    "back": "All files",
+    "summary": "File summary",
+    "supervisors": "Supervisor: {{names}}",
+    "consultant": "Consultant: {{name}}",
+    "message": "Send a ticket",
+    "changeStage": "Change file stage",
+    "missingTitle": "File not found",
+    "missing": "This file doesn't exist, or you aren't one of its supervisors.",
+    "toList": "Go to all files",
+    "tabs": {
+      "label": "File sections",
+      "overview": "Overview",
+      "documents": "File and documents",
+      "applications": "Email and applications",
+      "tickets": "Tickets",
+      "activity": "Activity",
+      "waitingReview": "documents waiting for review",
+      "unread": "unread messages"
+    }
+  },
+  "stageDialog": {
+    "title": "Change file stage",
+    "legend": "New stage",
+    "note": "Note (optional)",
+    "noteHint": "Goes into the file's activity; the applicant doesn't see it.",
+    "save": "Save stage"
+  },
+  "overview": {
+    "aside": "Tasks and activity",
+    "progress": {
+      "label": "Application progress",
+      "suggested": "Suggested applications",
+      "applied": "Applications filed",
+      "accepted": "Admissions",
+      "emails": "Emails sent",
+      "of": "of {{n}}"
+    },
+    "contract": {
+      "title": "Contract",
+      "left": "{{left}} of {{total}} contract days left",
+      "passed": "{{n}}% passed",
+      "start": "Start date",
+      "end": "End date",
+      "total": "Contract total",
+      "phone": "Phone",
+      "email": "Email",
+      "files": "Contract files"
+    },
+    "installments": {
+      "title": "Instalments",
+      "clear": "Nothing overdue",
+      "overdue": "Has an overdue instalment",
+      "empty": "No instalments set for this contract.",
+      "prepayment": "Prepayment",
+      "number": "Instalment {{n}}",
+      "status": {
+        "paid": "Paid",
+        "due": "Due",
+        "overdue": "Overdue",
+        "upcoming": "Upcoming"
+      }
+    },
+    "tasks": {
+      "title": "Open tasks",
+      "add": "Add a task",
+      "empty": "No open tasks for this applicant. Set a next step so the file isn't forgotten.",
+      "due": "Due {{when}}",
+      "late": "Overdue; was due {{when}}",
+      "all": "All my tasks"
+    },
+    "activity": {
+      "title": "Latest activity",
+      "all": "All activity"
+    }
+  },
+  "taskDialog": {
+    "title": "New task about this applicant",
+    "text": "What needs doing?",
+    "placeholder": "For example: review the second SOP draft",
+    "due": "Due",
+    "save": "Save task"
+  },
+  "documents": {
+    "aside": "Research interests",
+    "title": "Requested documents",
+    "subtitle": "{{done}} of {{total}} documents received",
+    "request": "Request a document",
+    "empty": "No documents have been requested from the applicant yet.",
+    "deadline": "Due {{date}}",
+    "uploaded": "Uploaded {{when}}",
+    "returnedNote": "Sent back: {{note}}",
+    "approve": "Accept",
+    "approveLabel": "Accept {{name}}",
+    "return": "Send back",
+    "returnLabel": "Send back {{name}}",
+    "returnReason": "Why is it going back?",
+    "returnHint": "The applicant sees this note and uploads a new file.",
+    "returnConfirm": "Send the document back",
+    "state": {
+      "missing": "Not received",
+      "review": "Waiting for review",
+      "approved": "Accepted",
+      "returned": "Sent back"
+    },
+    "writing": {
+      "title": "Writing",
+      "writer": "Writer: {{name}}",
+      "noWriter": "No writer assigned yet",
+      "file": "Final file ({{date}})",
+      "step": {
+        "form": "Waiting for the applicant's form",
+        "writing": "Being written",
+        "ready": "Delivered"
+      }
+    },
+    "interests": {
+      "title": "Research interests",
+      "empty": "The applicant hasn't recorded any research interests yet.",
+      "hint": "The email bot finds professors with these keywords. The applicant edits them in their own panel."
+    }
+  },
+  "requestDialog": {
+    "title": "Request a document",
+    "subtitle": "The applicant gets an SMS and uploads it in their panel.",
+    "name": "Document name",
+    "namePlaceholder": "For example: official transcript translation",
+    "deadline": "Deadline (optional)",
+    "note": "Note for the applicant (optional)",
+    "save": "Send request"
+  },
+  "applications": {
+    "views": "What to show",
+    "view": {
+      "applications": "Applications",
+      "emails": "Professor emails",
+      "logins": "Login details"
+    },
+    "add": "Add application",
+    "applies": "{{used}} of the contract's {{total}} applications used",
+    "empty": "No applications recorded yet.",
+    "past": "Passed",
+    "daysLeft": "{{n}} days left",
+    "edit": "Edit",
+    "editLabel": "Edit the {{name}} application",
+    "column": {
+      "university": "University",
+      "program": "Programme and degree",
+      "deadline": "Deadline",
+      "fee": "Application fee",
+      "result": "Result",
+      "approval": "Applicant approval",
+      "edit": "Edit"
+    }
+  },
+  "appDialog": {
+    "newTitle": "Add application",
+    "editTitle": "Edit application",
+    "university": "University",
+    "degree": "Degree",
+    "program": "Programme",
+    "deadline": "Deadline",
+    "currency": "Fee currency",
+    "noFee": "No fee",
+    "fee": "Fee amount",
+    "feeInvalid": "Write the amount as a number.",
+    "payment": "Fee payment",
+    "result": "Result",
+    "note": "Note for the applicant (optional)",
+    "noteHint": "Shown under this application in the applicant's panel.",
+    "save": "Save changes",
+    "delete": "Delete application",
+    "deleteConfirm": "Delete the {{name}} application?"
+  },
+  "emails": {
+    "replied": "{{n}} professors replied",
+    "empty": "The bot hasn't sent any emails yet.",
+    "pager": "Page {{page}} of {{pages}}",
+    "status": {
+      "queued": "Queued",
+      "sent": "Sent",
+      "reminded": "Reminded",
+      "replied": "Replied",
+      "bounced": "Bounced"
+    }
+  },
+  "logins": {
+    "hint": "The accounts we made for the applications. They stay in the applicant's panel after the file closes.",
+    "empty": "No application accounts have been made yet.",
+    "hidden": "••••••••",
+    "show": "Show {{label}}",
+    "hide": "Hide {{label}}",
+    "copy": "Copy {{label}}",
+    "copied": "{{label}} copied"
+  },
+  "activity": {
+    "title": "Activity",
+    "empty": "No activity recorded yet.",
+    "pager": "Page {{page}} of {{pages}}"
+  },
+  "inbox": {
+    "title": "Tickets",
+    "subtitle": "{{n}} conversations are waiting for your reply.",
+    "subtitleClear": "You've answered every message.",
+    "filter": "Show",
+    "waiting": "Waiting for reply",
+    "all": "All",
+    "list": "Conversations",
+    "urgent": "Very urgent",
+    "you": "You: {{text}}",
+    "from": "{{name}}: {{text}}",
+    "waitingSince": "Waiting since {{when}}",
+    "unread": "unread messages",
+    "emptyTitle": "Nothing waiting",
+    "empty": "New messages from applicants show up here."
+  }
+}

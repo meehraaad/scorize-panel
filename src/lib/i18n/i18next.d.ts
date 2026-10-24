@@ -9,6 +9,7 @@ import type documents from '@/locales/fa/documents.json';
 import type gates from '@/locales/fa/gates.json';
 import type home from '@/locales/fa/home.json';
 import type services from '@/locales/fa/services.json';
+import type supervisor from '@/locales/fa/supervisor.json';
 import type sales from '@/locales/fa/sales.json';
 import type tasks from '@/locales/fa/tasks.json';
 import type tickets from '@/locales/fa/tickets.json';
@@ -36,6 +37,7 @@ declare module 'i18next' {
       gates: typeof gates;
       sales: typeof sales;
       tasks: typeof tasks;
+      supervisor: typeof supervisor;
     };
   }
 }

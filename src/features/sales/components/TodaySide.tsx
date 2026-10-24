@@ -9,6 +9,7 @@ import { Badge, SectionCard } from '@/components/ui/SectionCard';
 import { percentOf } from '@/lib/progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
+import { safeHref } from '@/lib/url';
 import type { MonthSummary, PendingReceipt, TodayConsultation, TodayData } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';
@@ -154,7 +155,7 @@ export function ReceiptsCard({ receipts }: { receipts: PendingReceipt[] }) {
               </span>
               <span className="flex gap-2">
                 <a
-                  href={receipt.receipt_url}
+                  href={safeHref(receipt.receipt_url)}
                   target="_blank"
                   rel="noreferrer"
                   aria-label={t('today.receipts.viewName', { name: receipt.name })}
