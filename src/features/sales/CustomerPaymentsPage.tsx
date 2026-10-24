@@ -98,7 +98,10 @@ export default function CustomerPaymentsPage() {
                         <button
                           type="button"
                           aria-pressed={current}
-                          aria-label={t('payments.open', { id: f.digits(String(row.id)), what: row.what })}
+                          aria-label={t('payments.open', {
+                            id: f.digits(String(row.id)),
+                            what: row.what,
+                          })}
                           onClick={() => pick(row)}
                           className="inline-flex min-h-11 items-center font-semibold text-primary-text tabular-nums hover:underline"
                         >
