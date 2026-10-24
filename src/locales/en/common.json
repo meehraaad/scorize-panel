@@ -273,5 +273,28 @@
       "back": "Back to the panel",
       "consult": "Book a consultation"
     }
+  },
+  "datePicker": {
+    "choose": "Choose a date",
+    "chooseTime": "Choose a date and time",
+    "dialog": "Calendar",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
+    "previousYears": "Earlier years",
+    "nextYears": "Later years",
+    "pickMonth": "Choose month and year",
+    "pickYear": "Choose a year",
+    "today": "Today",
+    "clear": "Clear",
+    "clearLabel": "Clear {{label}}",
+    "done": "Done",
+    "close": "Close",
+    "time": "Time",
+    "hour": "Hour",
+    "minute": "Minute",
+    "gregorian": "Same as {{date}}",
+    "weekend": "Weekend"
   }
 }

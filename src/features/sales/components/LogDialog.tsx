@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { Notice } from '@/components/ui/Notice';
-import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   LOST_REASONS,
@@ -237,11 +237,12 @@ export function LogDialog({
           />
         )}
         {asksFollowUp && follow === 'other' && (
-          <TextField
-            type="datetime-local"
+          <DatePicker
+            time
+            only="future"
             label={t('customer.logDialog.followDate')}
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={setDate}
             error={checked && !followAt ? t('customer.logDialog.followDate') : undefined}
           />
         )}

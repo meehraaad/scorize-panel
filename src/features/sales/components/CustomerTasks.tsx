@@ -2,6 +2,7 @@ import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -192,11 +193,12 @@ function NewTaskForm({ customer, name }: { customer: CustomerData; name: string 
         }))}
       />
       {when === 'other' && (
-        <TextField
-          type="datetime-local"
+        <DatePicker
+          time
+          only="future"
           label={t('customer.newTask.date')}
           value={date}
-          onChange={(event) => setDate(event.target.value)}
+          onChange={setDate}
           error={missing && !dueAt ? t('customer.newTask.date') : undefined}
         />
       )}

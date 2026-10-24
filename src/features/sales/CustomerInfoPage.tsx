@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { SelectField } from '@/components/ui/Choices';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { Notice } from '@/components/ui/Notice';
@@ -143,11 +144,12 @@ function PersonalCard({ info }: { info: CustomerInfo }) {
             onChange={(event) => set(key)(event.target.value)}
           />
         ))}
-        <TextField
-          type="date"
+        <DatePicker
+          only="past"
+          clearable
           label={t('info.personal.birth_date')}
           value={form.birth_date}
-          onChange={(event) => set('birth_date')(event.target.value)}
+          onChange={set('birth_date')}
         />
         {PERSONAL_CHOICE.map((key) => (
           <SelectField
@@ -311,11 +313,12 @@ function ExamsCard({ info }: { info: CustomerInfo }) {
             inputMode="decimal"
             onChange={(event) => list.set(index, { score: event.target.value })}
           />
-          <TextField
-            type="date"
+          <DatePicker
+            only="past"
+            clearable
             label={t('info.exams.date')}
             value={row.date}
-            onChange={(event) => list.set(index, { date: event.target.value })}
+            onChange={(date) => list.set(index, { date })}
           />
           <IconButton
             icon="trash"

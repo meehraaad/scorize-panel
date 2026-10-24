@@ -273,5 +273,28 @@
       "back": "بازگشت به پنل",
       "consult": "رزرو مشاوره"
     }
+  },
+  "datePicker": {
+    "choose": "انتخاب تاریخ",
+    "chooseTime": "انتخاب تاریخ و ساعت",
+    "dialog": "تقویم",
+    "previousMonth": "ماه قبل",
+    "nextMonth": "ماه بعد",
+    "previousYear": "سال قبل",
+    "nextYear": "سال بعد",
+    "previousYears": "سال‌های قبل",
+    "nextYears": "سال‌های بعد",
+    "pickMonth": "انتخاب ماه و سال",
+    "pickYear": "انتخاب سال",
+    "today": "امروز",
+    "clear": "پاک کردن",
+    "clearLabel": "پاک کردن {{label}}",
+    "done": "تأیید",
+    "close": "بستن",
+    "time": "ساعت",
+    "hour": "ساعت",
+    "minute": "دقیقه",
+    "gregorian": "مطابق با {{date}}",
+    "weekend": "تعطیل"
   }
 }

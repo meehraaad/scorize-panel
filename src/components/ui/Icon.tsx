@@ -186,6 +186,12 @@ const PATHS = {
     </>
   ),
   moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
+  calendar: (
+    <>
+      <rect x="3" y="4.5" width="18" height="16.5" rx="2.5" />
+      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof PATHS;

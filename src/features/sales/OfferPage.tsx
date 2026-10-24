@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Icon } from '@/components/ui/Icon';
 import { Notice } from '@/components/ui/Notice';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
@@ -152,12 +153,11 @@ export default function OfferPage() {
                   value={String(offer.applies)}
                   onChange={(event) => set('applies', Number(event.target.value))}
                 />
-                <TextField
-                  type="date"
+                <DatePicker
+                  only="future"
                   label={t('offer.start')}
                   value={offer.start}
-                  onChange={(event) => set('start', event.target.value)}
-                  hint={offer.start ? f.date(offer.start) : undefined}
+                  onChange={(value) => set('start', value)}
                 />
                 <SelectField
                   label={t('offer.months')}
@@ -175,11 +175,12 @@ export default function OfferPage() {
                   value={offer.language_score}
                   onChange={(event) => set('language_score', event.target.value)}
                 />
-                <TextField
-                  type="date"
+                <DatePicker
+                  only="future"
+                  clearable
                   label={t('offer.languageDeadline')}
                   value={offer.language_deadline}
-                  onChange={(event) => set('language_deadline', event.target.value)}
+                  onChange={(value) => set('language_deadline', value)}
                 />
               </div>
               <div className="flex flex-col gap-2.5">

@@ -12,6 +12,7 @@ import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField, TogglePill } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FileDrop, FileTile, PickedFile } from '@/components/ui/Files';
@@ -59,6 +60,8 @@ export default function ComponentsPage() {
   const [when, setWhen] = useState('tomorrow');
   const [toggle, setToggle] = useState(false);
   const [dialog, setDialog] = useState(false);
+  const [day, setDay] = useState('');
+  const [moment, setMoment] = useState('');
 
   const steps = ['قرارداد', 'نگارش', 'مدارک', 'اپلای', 'نتایج', 'ویزا'].map((label) => ({
     key: label,
@@ -437,6 +440,16 @@ export default function ComponentsPage() {
               options={[{ value: 'a', label: 'گزینه' }]}
             />
             <TextAreaField label="TextAreaField" placeholder="چه گفت؟" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DatePicker label="DatePicker" value={day} onChange={setDay} clearable />
+              <DatePicker
+                label="DatePicker time only=future"
+                value={moment}
+                onChange={setMoment}
+                time
+                only="future"
+              />
+            </div>
             <Button variant="outline" className="self-start" onClick={() => setDialog(true)}>
               باز کردن Dialog
             </Button>
