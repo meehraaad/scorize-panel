@@ -21,12 +21,15 @@ import {
   TODO_TYPE,
   djangoDate,
   fullName,
+  MAX_PAGE_SIZE,
   myStaffId,
   nextPage,
   type DjangoContact,
   type DjangoContactWrite,
   type DjangoTodoWrite,
+  type DjangoEducation,
   type DjangoExamScore,
+  type DjangoExperience,
   type DjangoHistoryItem,
   type DjangoLead,
   type DjangoPersonal,
@@ -89,8 +92,16 @@ export interface CustomerData {
   };
   /** Why the score is what it is, localized labels. */
   score_factors: { label: string; points: number }[];
-  /** Scorize applicants with a similar background (Experience, same as crm user_report). */
-  similar: { background: string; count: number; universities: string[] } | null;
+  /**
+   * Admissions of Scorize applicants with a similar background (ExperienceViewSet, as on the crm
+   * user page): `count` successful ones, `universities` the first few, `background` the customer's
+   * highest education degree they were matched on.
+   */
+  similar: {
+    background: { degree: Degree; field: string | null; gpa: number };
+    count: number;
+    universities: string[];
+  } | null;
   profile: ProfileItem[];
   purchases: { label: string; status: 'paid' | 'pending' | 'failed' }[];
   /** Wallet credit, toman. */
@@ -129,6 +140,31 @@ const asMilitary = (value: number | null) =>
   value === 1 || value === 2 || value === 3 || value === 4 ? value : null;
 const asDegree = (value: number | null) =>
   value !== null && value >= 0 && value <= 6 ? (value as Degree) : null;
+
+/** Distinct universities shown under "similar admissions". */
+const SIMILAR_UNIVERSITIES = 6;
+
+function similarOf(
+  education: DjangoEducation[],
+  experiences: Page<DjangoExperience>,
+): CustomerData['similar'] {
+  const top = education.reduce<DjangoEducation | null>(
+    (best, item) => (best === null || item.degree > best.degree ? item : best),
+    null,
+  );
+  const degree = asDegree(top?.degree ?? null);
+  if (!top || degree === null || experiences.count === 0) return null;
+  const universities = [...new Set(experiences.results.map((item) => item.university_name.trim()))];
+  return {
+    background: {
+      degree,
+      field: top.study_field ? (top.study_field.name_persian ?? top.study_field.name) : null,
+      gpa: top.gpa,
+    },
+    count: experiences.count,
+    universities: universities.filter(Boolean).slice(0, SIMILAR_UNIVERSITIES),
+  };
+}
 
 function profileOf(
   personal: DjangoPersonal | null,
@@ -188,19 +224,25 @@ const PURCHASE_STATUS = {
  * The customer page from Django's existing staff endpoints (the user, their details, newest lead,
  * invoices, payments, open tasks and colleagues) until `customers/<id>/` ships (S15). Not there
  * yet: the lead's stage beyond "new / contacted" (S3), the automatic score and its factors (S5),
- * ready messages (S7) and similar admissions (ExperienceViewSet isn't routed).
+ * and ready messages (S7).
  */
 async function fetchCustomer(id: number, signal?: AbortSignal): Promise<CustomerData> {
-  const [user, personal, info, exams, invoices, payments, tasks, peers] = await Promise.all([
-    api<DjangoUserDetail>(`${userApi(id)}/`, { signal }),
-    api<DjangoPersonal[]>(`${userApi(id)}/personal-information/`, { signal }),
-    api<DjangoUserInfo[]>(`${userApi(id)}/info/`, { signal }),
-    api<DjangoExamScore[]>(`${userApi(id)}/exam-scores/`, { signal }),
-    api<Page<DjangoUserInvoice>>(`${userApi(id)}/invoices/?ordering=-id&page_size=5`, { signal }),
-    api<Page<unknown>>(`${userApi(id)}/payments/?page_size=1`, { signal }),
-    personTasks(id, signal),
-    colleagues(signal),
-  ]);
+  const [user, personal, info, exams, education, similar, invoices, payments, tasks, peers] =
+    await Promise.all([
+      api<DjangoUserDetail>(`${userApi(id)}/`, { signal }),
+      api<DjangoPersonal[]>(`${userApi(id)}/personal-information/`, { signal }),
+      api<DjangoUserInfo[]>(`${userApi(id)}/info/`, { signal }),
+      api<DjangoExamScore[]>(`${userApi(id)}/exam-scores/`, { signal }),
+      api<DjangoEducation[]>(`${userApi(id)}/education-degrees/`, { signal }),
+      api<Page<DjangoExperience>>(
+        `${userApi(id)}/experiences/?is_successful=True&ordering=-id&page_size=${String(MAX_PAGE_SIZE)}`,
+        { signal },
+      ),
+      api<Page<DjangoUserInvoice>>(`${userApi(id)}/invoices/?ordering=-id&page_size=5`, { signal }),
+      api<Page<unknown>>(`${userApi(id)}/payments/?page_size=1`, { signal }),
+      personTasks(id, signal),
+      colleagues(signal),
+    ]);
   const lead = await newestLead(user, signal);
   const details = personal[0] ?? null;
   const userInfo = info[0] ?? null;
@@ -230,7 +272,7 @@ async function fetchCustomer(id: number, signal?: AbortSignal): Promise<Customer
       budget: asBudget(details?.budget ?? null),
     },
     score_factors: [],
-    similar: null,
+    similar: similarOf(education, similar),
     profile: profileOf(details, userInfo, exams),
     purchases: invoices.results.map((item) => ({
       label: invoiceTitle(item, item.payment),

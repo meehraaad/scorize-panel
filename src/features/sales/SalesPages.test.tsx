@@ -110,6 +110,19 @@ describe('sales panel, seller pages', () => {
     expect(await within(history).findByText('قرار شد بورسیه‌ها را بفرستم')).toBeInTheDocument();
   });
 
+  it('customer: similar admissions from ExperienceViewSet', async () => {
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    const similar = await screen.findByRole('region', { name: 'برای قانع کردن مشتری' });
+    // Bachelor's in computer engineering, GPA 16.2, wants a master's: 4 successful matches.
+    expect(within(similar).getByText(/^۴ متقاضی/)).toHaveTextContent(
+      'کارشناسی مهندسی کامپیوتر، معدل ۱۶٫۲',
+    );
+    const universities = within(similar)
+      .getAllByRole('listitem')
+      .map((item) => item.textContent);
+    expect(universities).toEqual(['University of Toronto', 'University of Waterloo', 'TU Munich']);
+  });
+
   it('customer: asks a colleague for something', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);

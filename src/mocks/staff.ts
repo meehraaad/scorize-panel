@@ -9,6 +9,7 @@ import {
   type DjangoContact,
   type DjangoCountry,
   type DjangoEducation,
+  type DjangoExperience,
   type DjangoExam,
   type DjangoExamScore,
   type DjangoHistoryItem,
@@ -643,6 +644,29 @@ function seedTodos(userOf: (id: number) => DjangoUser): DjangoTodo[] {
   ];
 }
 
+/** Past admissions (apply.Experience), shared by every customer: ExperienceViewSet matches them. */
+const EXPERIENCES: DjangoExperience[] = [
+  ['University of Toronto', 0, 2, 1, 16.8, 0, true],
+  ['TU Munich', 1, 2, 1, 15.9, 0, true],
+  ['University of Waterloo', 0, 2, 1, 17.5, 0, true],
+  ['TU Delft', 2, 2, 1, 14.4, 3, true],
+  ['University of Toronto', 0, 2, 1, 16.1, 0, true],
+  ['Politecnico di Milano', 3, 2, 1, 15.2, 0, false],
+  ['KTH', 5, 3, 2, 17.9, 0, true],
+].map(([university, country, degree, originDegree, gpa, field, successful], index) => ({
+  id: index + 1,
+  university_name: university as string,
+  country: COUNTRIES[country as number] as DjangoCountry,
+  degree: degree as number,
+  is_successful: successful as boolean,
+  origin_degree: originDegree as number,
+  origin_gpa: gpa as number,
+  origin_study_field: STUDY_FIELDS[field as number] as DjangoStudyField,
+}));
+
+/** settings.EXPERIENCE_GAP_TOLERANCE */
+const GPA_TOLERANCE = 3;
+
 let db: StaffDb | null = null;
 const data = () => (db ??= staffDb());
 
@@ -1093,6 +1117,30 @@ export const staffHandlers = [
   ...nested('info', () => data().info, userInfoOf, { unique: true }),
   ...nested('education-degrees', () => data().education, educationOf, { destroy: true }),
   ...nested('exam-scores', () => data().examScores, examScoreOf, { destroy: true }),
+
+  // Similar admissions (ExperienceViewSet): an education degree's origin degree, field and GPA
+  // (± tolerance) for the degree the user wants; none without both. Filter: `is_successful`.
+  http.get(`${STAFF}/users/:user/experiences/`, ({ params, request }) => {
+    const error = sellerOrError();
+    if (error) return error;
+    if (!userOrNotFound(params.user)) return notFound();
+    const wanted = ofUser(data().personal, params.user)[0]?.desired_degree ?? null;
+    const degrees = ofUser(data().education, params.user);
+    const successful = new URL(request.url).searchParams.get('is_successful');
+    const list = EXPERIENCES.filter(
+      (item) =>
+        wanted !== null &&
+        item.degree === wanted &&
+        (successful === null || String(item.is_successful) === successful.toLowerCase()) &&
+        degrees.some(
+          (education) =>
+            education.degree === item.origin_degree &&
+            Math.abs(education.gpa - item.origin_gpa) <= GPA_TOLERANCE &&
+            (!education.study_field || education.study_field.id === item.origin_study_field.id),
+        ),
+    ).sort((a, b) => b.id - a.id);
+    return paginate(request, list);
+  }),
 
   // Payments and invoices (PaymentViewSet, InvoiceViewSet).
   http.get(`${STAFF}/users/:user/payments/`, ({ params, request }) => {

@@ -357,7 +357,9 @@
     },
     "similar": {
       "title": "To win the customer over",
-      "text": "{{n}} Scorize applicants with a background like {{name}}'s ({{background}}) got offers from these universities:"
+      "text": "{{n}} Scorize applicants with a background like {{name}}'s ({{background}}) got offers from these universities:",
+      "background": "{{degree}} in {{field}}, GPA {{gpa}}",
+      "backgroundNoField": "{{degree}}, GPA {{gpa}}"
     },
     "profile": {
       "title": "Profile",

@@ -350,6 +350,23 @@ export interface DjangoEducation {
   gpa: number;
 }
 
+/**
+ * DExperienceSerializer (users/<id>/experiences/): a past admission of a Scorize applicant whose
+ * origin degree, field (or a sub-field) and GPA (±EXPERIENCE_GAP_TOLERANCE, 3) match one of the
+ * user's education degrees, for the degree the user wants. Empty without personal information or
+ * education degrees. Only the fields the panel reads.
+ */
+export interface DjangoExperience {
+  id: number;
+  university_name: string;
+  country: DjangoCountry;
+  degree: number;
+  is_successful: boolean;
+  origin_degree: number;
+  origin_gpa: number;
+  origin_study_field: DjangoStudyField;
+}
+
 /** DExamScoreSerializer (users/<id>/exam-scores/). */
 export interface DjangoExamScore {
   id: number;

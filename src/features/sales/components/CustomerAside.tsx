@@ -69,7 +69,16 @@ export function CustomerAside({ customer }: { customer: CustomerData }) {
             {t('customer.similar.text', {
               n: f.number(customer.similar.count),
               name: first,
-              background: customer.similar.background,
+              background: t(
+                customer.similar.background.field
+                  ? 'customer.similar.background'
+                  : 'customer.similar.backgroundNoField',
+                {
+                  degree: tc(`degree.${customer.similar.background.degree}`),
+                  field: customer.similar.background.field,
+                  gpa: f.number(customer.similar.background.gpa),
+                },
+              ),
             })}
           </p>
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
