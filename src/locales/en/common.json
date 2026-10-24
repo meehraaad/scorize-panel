@@ -10,11 +10,11 @@
       "nav": {
         "label": "Applicant panel menu",
         "home": "My case",
-        "applications": "Applications & results",
-        "documents": "Documents & writing",
+        "applications": "Applications",
+        "documents": "Documents",
         "tickets": "Tickets",
-        "contract": "Contract & payments",
-        "services": "Other services"
+        "contract": "Contract",
+        "services": "Services"
       },
       "tabs": {
         "home": "Home",
@@ -94,11 +94,9 @@
   "theme": {
     "system": "Match device",
     "light": "Light",
-    "dark": "Dark"
-  },
-  "home": {
-    "greeting": "Hi {{name}}",
-    "greetingNoName": "Hi"
+    "dark": "Dark",
+    "toDark": "Switch to dark theme",
+    "toLight": "Switch to light theme"
   },
   "page": {
     "comingSoon": "This page is coming soon in the new design."
@@ -192,5 +190,83 @@
     "skipNextTime": "Next time, go straight to the last panel I used",
     "ownFile": "My own file as an applicant",
     "asCustomer": "Open the panel as a regular customer"
+  },
+  "degree": {
+    "0": "High school diploma",
+    "1": "Bachelor's",
+    "2": "Master's",
+    "3": "PhD",
+    "4": "College",
+    "5": "School",
+    "6": "Visa"
+  },
+  "pager": {
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "lock": {
+    "preview": "Preview · sample data, not your case",
+    "navItem": "{{name}} (opens once you have a contract)",
+    "section": {
+      "applications": "Applications, results and professor emails",
+      "documents": "Document uploads, SOP and CV forms and the writing team's files",
+      "tickets": "Direct conversation with your case supervisors",
+      "contract": "Contract details, instalments and online payment"
+    },
+    "guest": {
+      "label": "This section is locked",
+      "kicker": "Panel preview",
+      "title": "{{section}} open for you once your contract is signed",
+      "text": "What you see below is a sample, so you know what your panel will look like. To start, talk to our advisors.",
+      "call": "Ask an advisor to call",
+      "consult": "Book an application consultation"
+    },
+    "pending": {
+      "label": "Contract in review",
+      "kicker": "Contract in review",
+      "title": "Your contract is registered and being reviewed",
+      "text": "Once it's approved, {{section}} will open and you'll get an SMS that your case has started. Nothing to do until then."
+    },
+    "noservice": {
+      "label": "Not in your contract",
+      "kicker": "Not in your contract",
+      "title": "Admission services aren't in your contract",
+      "text": "Your current contract doesn't include admission services. Add them, and our team searches and applies to universities with you too.",
+      "request": "Ask to add it to your contract"
+    },
+    "ended": {
+      "label": "Contract ended",
+      "kicker": "Contract ended",
+      "title": "This case is closed and read-only",
+      "text": "For your next degree or new services, we're here for you.",
+      "consult": "Book a consultation for your next degree"
+    },
+    "call": {
+      "title": "Ask an advisor to call",
+      "text": "Our advisors will call you and talk through the right path for you. It's free.",
+      "close": "Close",
+      "phone": "Phone number",
+      "phoneError": "Enter a mobile number starting with 09, 11 digits.",
+      "topics": "What would you like to talk about?",
+      "topic": {
+        "admission": "Applications and admission",
+        "visa": "Visa",
+        "turkey": "Free Turkey application",
+        "writing": "SOP and CV writing"
+      },
+      "time": "When should we call?",
+      "times": {
+        "morning": "Morning",
+        "noon": "Midday",
+        "evening": "Evening"
+      },
+      "submit": "Request a call",
+      "sending": "Sending…",
+      "error": "Your request wasn't sent. Check your internet connection and try again.",
+      "doneTitle": "Your request is in",
+      "doneText": "One of our advisors will call {{phone}} during working hours. Meanwhile, you can book a consultation.",
+      "back": "Back to the panel",
+      "consult": "Book a consultation"
+    }
   }
 }

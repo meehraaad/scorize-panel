@@ -39,3 +39,6 @@ if (!('showModal' in HTMLDialogElement.prototype)) {
     },
   });
 }
+
+// jsdom doesn't lay out pages, so it has no scrollIntoView.
+Element.prototype.scrollIntoView = () => {};

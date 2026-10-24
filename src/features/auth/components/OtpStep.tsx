@@ -2,11 +2,11 @@ import { useEffect, useId, useRef, useState, type SubmitEvent } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { OtpInput } from '@/components/ui/OtpInput';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { formatPhone } from '@/lib/site';
 import { OTP_LENGTH, OTP_LIFETIME_SECONDS } from '../codes';
 import { toLatinDigits } from '../identifier';
-import { OtpInput } from './OtpInput';
 import { StepHeader } from './StepHeader';
 import { BackButton, Identifier, SignupProgress, StepNote } from './StepParts';
 
@@ -124,6 +124,7 @@ export function OtpStep({
           {t('otp.label')}
         </label>
         <OtpInput
+          length={OTP_LENGTH}
           ref={input}
           id={inputId}
           name="otp"

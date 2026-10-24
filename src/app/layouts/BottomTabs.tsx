@@ -13,10 +13,12 @@ const sheetItemClass = 'flex min-h-12 items-center gap-3 rounded-2xl px-3 text-b
 
 interface Props {
   panel: PanelDefinition;
+  /** Ids of nav items shown with a lock (PanelDefinition.useLockedNav). */
+  locked: ReadonlySet<string>;
 }
 
 /** Mobile/tablet navigation (< lg). The "More" sheet is a native <dialog>: focus trap and Esc for free. */
-export function BottomTabs({ panel }: Props) {
+export function BottomTabs({ panel, locked }: Props) {
   const { t } = useTranslation();
   const sheet = useRef<HTMLDialogElement>(null);
   const { pathname } = useLocation();
@@ -43,13 +45,21 @@ export function BottomTabs({ panel }: Props) {
             className={({ isActive }) =>
               `${tabClass} ${isActive ? 'text-primary-text' : 'text-text-2'}`
             }
+            aria-label={
+              locked.has(item.id) && item.tab ? t('lock.navItem', { name: t(item.tab) }) : undefined
+            }
           >
             {({ isActive }) => (
               <>
                 <span
-                  className={`flex h-8 w-14 items-center justify-center rounded-full ${isActive ? 'bg-tint' : ''}`}
+                  className={`relative flex h-8 w-14 items-center justify-center rounded-full ${isActive ? 'bg-tint' : ''}`}
                 >
                   <Icon name={item.icon} />
+                  {locked.has(item.id) && (
+                    <span className="absolute end-2 -top-1 flex size-[18px] items-center justify-center rounded-full bg-surface text-text-2 shadow-[0_0_0_1px_var(--line-2)]">
+                      <Icon name="lock" size={10} />
+                    </span>
+                  )}
                 </span>
                 {item.tab && t(item.tab)}
               </>
@@ -101,9 +111,17 @@ export function BottomTabs({ panel }: Props) {
               className={({ isActive }) =>
                 `${sheetItemClass} ${isActive ? 'bg-tint text-primary-text' : 'text-text'}`
               }
+              aria-label={
+                locked.has(item.id) ? t('lock.navItem', { name: t(item.label) }) : undefined
+              }
             >
               <Icon name={item.icon} />
               {t(item.label)}
+              {locked.has(item.id) && (
+                <span className="ms-auto inline-flex text-text-3">
+                  <Icon name="lock" size={16} />
+                </span>
+              )}
             </NavLink>
           ))}
 

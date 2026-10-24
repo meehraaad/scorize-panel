@@ -22,6 +22,7 @@
   --line-2: rgb(27 16 32 / 0.14);
   --line-3: rgb(27 16 32 / 0.3);
   --track: #efeaf1;
+  --row-highlight: #fdf7fb; /* list rows that wait for the user */
 
   --primary: #951768; /* filled buttons, badges */
   --primary-hover: #7a1250;
@@ -37,6 +38,8 @@
   --hero-line: rgb(255 255 255 / 0.12);
   --live: #7fd8a6;
   --hero-accent: #f2a9d6; /* primary, lightened to stay readable on the dark hero */
+  --on-hero-3: #8f8597; /* upcoming steps on the hero */
+  --hero-current: #f0b94e; /* the current step on the hero */
 
   --danger: #b42318;
   --danger-tint: #fdecea;
@@ -68,6 +71,7 @@
   --line-2: rgb(255 255 255 / 0.14);
   --line-3: rgb(255 255 255 / 0.28);
   --track: rgb(255 255 255 / 0.1);
+  --row-highlight: rgb(149 23 104 / 0.1);
 
   --primary: #951768;
   --primary-hover: #a81d78;
@@ -83,6 +87,8 @@
   --hero-line: rgb(255 255 255 / 0.12);
   --live: #7fd8a6;
   --hero-accent: #f2a9d6;
+  --on-hero-3: #8f8597;
+  --hero-current: #f0b94e;
 
   --danger: #ff9b9b;
   --danger-tint: rgb(255 120 120 / 0.12);

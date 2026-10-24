@@ -42,6 +42,25 @@ export default tseslint.config(
         {
           mode: 'jsx-only',
           'jsx-attributes': { include: ['aria-label', 'title', 'alt', 'placeholder'] },
+          // The plugin's defaults, plus `text`: useFormText's lookup (src/features/writing).
+          callees: {
+            exclude: [
+              'i18n(ext)?',
+              't',
+              'text',
+              'require',
+              'addEventListener',
+              'removeEventListener',
+              'postMessage',
+              'getElementById',
+              'dispatch',
+              'commit',
+              'includes',
+              'indexOf',
+              'endsWith',
+              'startsWith',
+            ],
+          },
         },
       ],
     },

@@ -1,0 +1,126 @@
+{
+  "title": "Free Turkey application",
+  "badge": "TR",
+  "steps": "Turkey application steps",
+  "step": {
+    "docs": "Requirements & documents",
+    "review": "Team review",
+    "sign": "Pledge",
+    "start": "Applications start"
+  },
+  "start": {
+    "title": "Apply to universities in Turkey, with no service fee",
+    "text": "The university pays our service fee, not you. Just send your documents and, once they're approved, sign the pledge.",
+    "how": "How it works",
+    "howStep": {
+      "upload": {
+        "title": "Upload your documents",
+        "text": "The list depends on your degree."
+      },
+      "review": {
+        "title": "Our team reviews them",
+        "text": "Something missing? We tell you what and why."
+      },
+      "sign": {
+        "title": "Sign the pledge",
+        "text": "Right here in the panel, with an SMS code."
+      }
+    },
+    "form": "A few quick questions",
+    "formText": "So we can show the documents you need.",
+    "degree": "Degree you want",
+    "field": "Field of study",
+    "gpa": "GPA of your last degree",
+    "gpaHint": "Out of 20, like 17.25",
+    "term": "When you want to start",
+    "termHint": "e.g. Fall 2027",
+    "required": "Fill in this field.",
+    "gpaError": "Enter a GPA between 0 and 20.",
+    "submit": "Next: upload documents",
+    "sending": "Saving…",
+    "error": "Not saved. Check your internet connection and try again."
+  },
+  "docs": {
+    "title": "Upload your documents for Turkey",
+    "subtitle": "The list below is for a {{degree}} degree.",
+    "reviewTitle": "Your documents are being reviewed",
+    "reviewSubtitle": "{{approved}} of {{total}} documents approved.",
+    "reviewRejected": "{{n}} need to be uploaded again.",
+    "label": "Documents for Turkey",
+    "progress": "{{done}} of {{total}}",
+    "progressApproved": "{{done}} of {{total}} approved",
+    "optional": "Optional",
+    "status": {
+      "uploaded": "Uploaded · {{file}}",
+      "review": "In review",
+      "approved": "Approved",
+      "rejected": "Upload again"
+    },
+    "upload": "Upload",
+    "reupload": "Upload again",
+    "replace": "Change file",
+    "uploadLabel": "Upload {{name}}",
+    "uploading": "Uploading…",
+    "noteLabel": "From the team:",
+    "tooBig": "This file is {{size}}. The limit is {{max}}.",
+    "badType": "This file type isn't accepted. Choose a PDF, or a JPG or PNG photo.",
+    "uploadError": "Not uploaded. Try again.",
+    "footer": "Once you send them, our team reviews your documents and lets you know by SMS.",
+    "reviewFooter": "Once every document is approved, the pledge appears in your panel.",
+    "submit": "Send for review",
+    "resubmit": "Send again",
+    "sending": "Sending…",
+    "incomplete": "Upload every required document first.",
+    "submitError": "Not sent. Check your internet connection and try again.",
+    "waiting": "Our team is reviewing them. We'll let you know by SMS."
+  },
+  "sign": {
+    "approved": "All documents approved",
+    "title": "Pledge for the free Turkey application",
+    "text": "Read it and sign with an SMS code. Your case starts as soon as you sign.",
+    "summary": "Pledge summary",
+    "fact": {
+      "country": {
+        "label": "Country",
+        "value": "Turkey"
+      },
+      "services": {
+        "label": "Services",
+        "value": "University applications"
+      },
+      "fee": {
+        "label": "Service fee for you",
+        "value": "Free"
+      },
+      "duty": {
+        "label": "Main commitment",
+        "value": "Final enrolment through Scorize"
+      }
+    },
+    "textLabel": "Pledge text",
+    "accept": "I've read the pledge and accept it.",
+    "acceptFirst": "First confirm you've read the text.",
+    "sendCode": "Text a code to {{phone}}",
+    "codeLabel": "Code texted to {{phone}}",
+    "resendIn": "Resend the code in {{time}}",
+    "resend": "Resend the code",
+    "sendError": "The code wasn't sent. Try again in a moment.",
+    "codeIncomplete": "Enter all {{length}} digits of the code.",
+    "wrongCode": "That code is wrong or has expired. Try again or get a new code.",
+    "submit": "Sign and start my case",
+    "signing": "Signing…",
+    "error": "Not signed. Check your internet connection and try again.",
+    "record": "The time of signing, your phone number and the text's version are kept in your case."
+  },
+  "done": {
+    "title": "Your Turkey case has started",
+    "text": "Your pledge is recorded and a copy is in “Contract & payment”. Your case supervisor will contact you soon and start applying to universities.",
+    "next": "What happens next",
+    "nextStep": {
+      "call": "Your case supervisor calls you.",
+      "apply": "Suitable universities are suggested and applied to.",
+      "approve": "You see and approve every application in the panel."
+    },
+    "home": "Go to my case"
+  }
+}

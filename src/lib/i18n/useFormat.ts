@@ -16,11 +16,62 @@ export function useFormat() {
     const dateShort = new Intl.DateTimeFormat(tag, { month: 'long', day: 'numeric' });
     const number = new Intl.NumberFormat(tag);
     const relative = new Intl.RelativeTimeFormat(tag, { numeric: 'auto' });
+    const time = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit' });
+    const weekday = new Intl.DateTimeFormat(tag, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+    const list = new Intl.ListFormat(tag, { type: 'conjunction' });
+    const gregorian = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
 
     return {
       date: (value: Date | string) => date.format(new Date(value)),
       dateShort: (value: Date | string) => dateShort.format(new Date(value)),
+      /**
+       * The same date as universities publish it ("23 Nov 2026"), for locales whose calendar
+       * isn't Gregorian; null where `date` already is.
+       */
+      gregorian: (value: Date | string) =>
+        tag.includes('-ca-') ? gregorian.format(new Date(value)) : null,
+      /** "12 Azar 1405, 09:30". */
+      dateTime: (value: Date | string) =>
+        `${date.format(new Date(value))} · ${time.format(new Date(value))}`,
+      /** "Monday 28 Mehr" (day separators in a conversation). */
+      weekday: (value: Date | string) => weekday.format(new Date(value)),
+      /** "16:48". */
+      time: (value: Date | string) => time.format(new Date(value)),
       number: (value: number) => number.format(value),
+      /**
+       * "Canada and Germany". Persian is joined by hand: CLDR puts a comma before «و»
+       * («الف، ب، و ج»), which Persian writing doesn't use («الف، ب و ج»).
+       */
+      list: (values: string[]) =>
+        locale === 'fa' && values.length > 1
+          ? `${values.slice(0, -1).join('، ')} و ${values.at(-1) ?? ''}`
+          : list.format(values),
+      /** "125 Canadian dollars": the currency spelled out, as people say it. */
+      moneyName: (value: number, currency: string) =>
+        new Intl.NumberFormat(tag, {
+          style: 'currency',
+          currency,
+          currencyDisplay: 'name',
+          maximumFractionDigits: 0,
+        }).format(value),
+      /** "2 hours ago" within a day, else "yesterday, 18:20" / "3 days ago, 18:20". */
+      timeAgo: (value: Date | string) => {
+        const then = new Date(value);
+        const minutes = Math.round((then.getTime() - Date.now()) / 60_000);
+        if (minutes > -1) return relative.format(0, 'second');
+        if (minutes > -60) return relative.format(minutes, 'minute');
+        if (minutes > -24 * 60) return relative.format(Math.round(minutes / 60), 'hour');
+        const days = Math.round(minutes / (24 * 60));
+        return `${relative.format(days, 'day')} ${time.format(then)}`;
+      },
       money: (value: number, currency: string) =>
         new Intl.NumberFormat(tag, {
           style: 'currency',
@@ -28,8 +79,28 @@ export function useFormat() {
           maximumFractionDigits: 0,
         }).format(value),
       relativeDays: (days: number) => relative.format(days, 'day'),
+      /** "2.4 megabytes", "350 kilobytes". */
+      fileSize: (bytes: number) => {
+        const megabytes = bytes / (1024 * 1024);
+        const [value, unit] =
+          megabytes >= 0.1 ? [megabytes, 'megabyte'] : [bytes / 1024, 'kilobyte'];
+        return new Intl.NumberFormat(tag, {
+          style: 'unit',
+          unit,
+          unitDisplay: 'long',
+          maximumFractionDigits: 1,
+        }).format(value);
+      },
       /** Digits inside a string (phone numbers, codes) in the locale's numerals. */
       digits: (value: string) => value.replace(/\d/g, (digit) => number.format(Number(digit))),
     };
-  }, [tag]);
+  }, [locale, tag]);
+}
+
+/**
+ * Wraps text the user typed (or any text of unknown direction) in Unicode isolates before it goes
+ * into a translated sentence, so "«Machine Learning» …" keeps its order inside Persian.
+ */
+export function isolate(text: string) {
+  return `⁨${text}⁩`;
 }

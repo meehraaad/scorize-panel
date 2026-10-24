@@ -75,10 +75,11 @@ export function PanelSwitcher({ user, panel, panels }: Props) {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => (open ? close() : show())}
-        className="inline-flex h-11 max-w-full items-center gap-2 rounded-full bg-hero ps-3.5 pe-3 text-[15px] font-semibold text-on-hero transition-colors hover:bg-hero/85"
+        className="inline-flex h-11 max-w-full items-center gap-2 rounded-full bg-canvas ps-3 pe-2.5 text-[13px] font-semibold text-text shadow-[inset_0_0_0_1px_var(--hair)] transition-colors hover:bg-tint hover:text-primary-text lg:h-10 lg:max-w-32 xl:max-w-none"
       >
+        <span aria-hidden="true" className="size-1.5 flex-none rounded-full bg-primary" />
         <span className="truncate">{t(panel.name)}</span>
-        <Icon name="chevronDown" size={16} className="flex-none" />
+        <Icon name="chevronDown" size={15} className="flex-none opacity-60" />
       </button>
 
       <dialog

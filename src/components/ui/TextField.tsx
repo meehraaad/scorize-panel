@@ -10,6 +10,8 @@ interface TextFieldProps extends Omit<ComponentProps<'input'>, 'size'> {
   labelAside?: ReactNode;
   /** `lg`: the large fields of the login page. */
   size?: 'md' | 'lg';
+  /** The label is read by screen readers only (the row already shows it, e.g. a details list). */
+  hideLabel?: boolean;
 }
 
 const SIZES = {
@@ -28,6 +30,7 @@ export function TextField({
   trailing,
   labelAside,
   size = 'md',
+  hideLabel = false,
   id,
   className = '',
   ...props
@@ -39,12 +42,18 @@ export function TextField({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={inputId} className="text-[15px] font-medium text-text">
+      {hideLabel ? (
+        <label htmlFor={inputId} className="sr-only">
           {label}
         </label>
-        {labelAside}
-      </div>
+      ) : (
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor={inputId} className="text-[15px] font-medium text-text">
+            {label}
+          </label>
+          {labelAside}
+        </div>
+      )}
       <div className="relative flex items-center">
         <input
           id={inputId}

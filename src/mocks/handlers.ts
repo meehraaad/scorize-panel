@@ -1,5 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import type { SessionUser } from '@/lib/auth/session';
+import { applicantHandlers, resetApplicantMocks } from './applicant';
+import { storage } from './session';
 
 /**
  * Fake Django for working on the panel without a backend (VITE_API_MOCKS=true) and for tests.
@@ -14,7 +16,6 @@ import type { SessionUser } from '@/lib/auth/session';
 
 export const MOCK_OTP = '123456';
 const MOCK_PASSWORD = 'password123';
-const SESSION_KEY = 'scorize.mock.session';
 
 interface MockUser extends SessionUser {
   password: string;
@@ -63,14 +64,6 @@ const users: MockUser[] = [
 // Server-side login state (Django keeps this in the session).
 let flow: { email?: string; phone?: string; otpSentAt?: number; tries: number } | null = null;
 
-const storage = {
-  get: () => Number(globalThis.localStorage.getItem(SESSION_KEY)) || null,
-  set: (id: number | null) => {
-    if (id) globalThis.localStorage.setItem(SESSION_KEY, String(id));
-    else globalThis.localStorage.removeItem(SESSION_KEY);
-  },
-};
-
 const code = (value: number, status = 200, extra: object = {}) =>
   HttpResponse.json({ code: value, ...extra }, { status });
 
@@ -83,7 +76,6 @@ const login = (user: MockUser) => {
 };
 
 const AUTH = '/profile/authentication';
-
 export const handlers = [
   http.get('/api/profile/auth/v1/whoami/', () => {
     const user = users.find((candidate) => candidate.id === storage.get());
@@ -107,6 +99,7 @@ export const handlers = [
 
   http.get(`${AUTH}/logout/`, () => {
     storage.set(null);
+    resetApplicantMocks();
     return HttpResponse.redirect('/', 302);
   }),
 
@@ -207,10 +200,13 @@ export const handlers = [
       return code(5, 400, { errors: { password: ['invalid'] } });
     return code(21);
   }),
+
+  ...applicantHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
 export function resetMockSession() {
   storage.set(null);
   flow = null;
+  resetApplicantMocks();
 }

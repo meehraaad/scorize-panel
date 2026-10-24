@@ -14,6 +14,8 @@ src/
 │       ├── AuthLayout     Pages outside panels (login, sign-up, reset; later terms, inactive):
 │       │                  form beside the trust wall (TrustWall, trustContent.ts)
 │       ├── PanelLayout    Frame shared by every panel: header + panel menu, account menu, tabs
+│       ├── PanelFooter    Small footer: language + theme switches, copyright (bottom of screen on
+│       │                  short pages, after the content on long ones; hidden on phones in PageFill)
 │       ├── PanelSwitcher  "Panel X ▾" beside the logo (several panels only), PanelTile
 │       ├── AccountMenu    Who is logged in, settings, logout
 │       ├── BottomTabs     Mobile bar (≤ 4 tabs + "More" sheet with the rest)
@@ -27,9 +29,17 @@ src/
 │   └── sales/             /panel/sales/
 ├── features/<section>/    Pages and their logic (auth, home, settings, …): Page.tsx (default
 │                          export), components/, api.ts, hooks. Used by panels.
-├── components/            Shared UI; components/ui/ = design-system primitives
+├── components/            Shared UI; components/ui/ = design-system primitives,
+│                          components/tickets/ = conversation blocks (any panel),
+│                          components/applicant/ = applicant-panel pieces several pages share and
+│                          that talk to the API (SectionLock, CallRequestButton; canvas V7)
 ├── lib/                   Infrastructure (bottom layer)
 │   ├── api/               fetch client (session cookie + CSRF), React Query client
+│   ├── applicant/         Shared by applicant pages: query-key prefix, approve/reject an application,
+│   │                      the tickets endpoint (tickets page + home card), access
+│   │                      (which sections are locked) and the call request
+│   ├── tickets/           Panel-neutral ticket API: types, queries, send/rate/seen hooks, day grouping
+│   ├── dates.ts           Whole days until / between dates
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
 │   ├── i18n/              i18next setup, locales config, Intl formatters (Jalali dates)
 │   ├── router/            lazyPage(): page chunk + its dictionaries in parallel
@@ -37,9 +47,10 @@ src/
 │   └── theme/             Light / dark / system theme
 ├── locales/<lang>/        Dictionaries: common.json + one per feature namespace. fa is the source
 ├── styles/                tokens.css (design tokens), index.css (Tailwind + base)
-├── mocks/                 MSW fake Django for `pnpm dev:mock` and tests
+├── mocks/                 MSW fake Django for `pnpm dev:mock` and tests (handlers.ts: auth;
+│                          applicant.ts: applicant-panel API; session.ts: who is logged in)
 ├── pwa/                   Service-worker registration + update prompt
-└── test/                  Vitest setup, MSW server, renderApp()
+└── test/                  Vitest setup, MSW server, renderApp() (vitest.node-globals.ts: Node's FormData/File)
 ```
 
 ### Layers
@@ -47,6 +58,79 @@ src/
 `lib` + `components` ← `features` ← `panels` ← `app`. A layer imports only from layers to its
 left, and a feature never imports another feature (shared code moves to `lib` or `components`).
 ESLint (`no-restricted-imports` in `eslint.config.js`) enforces this; tests are exempt.
+
+### Shared blocks (`components/ui/`)
+
+Pages are put together from shared blocks, so a section looks and behaves the same everywhere and
+a change is made once. A feature keeps only what is specific to it (its data, its wording, its
+rules); anything that looks the same on two pages becomes a block. Blocks take ready-made text and
+numbers as props (no fetching, no dictionary of their own), so any panel can use them.
+
+| Block                                                         | Use it for                                                                                                                |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `PageStack`, `PageColumns`                                    | Page body: header + sections; main column with a side `<aside>` that drops under it on phones                             |
+| `PageHeader`                                                  | The page's h1, subtitle and actions (sets the document title)                                                             |
+| `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`   | A titled card (a region named by its h2); a section title above several cards or a toolbar                                |
+| `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`    | "Nothing here yet" with a next step; loading rows                                                                         |
+| `ProgressBar`, `StepBar`, `StepList`, `StepDot`               | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                           |
+| `StatGrid`                                                    | A row of number tiles                                                                                                     |
+| `FilterTabs`, `SearchField`, `Pager`                          | List toolbars and paging                                                                                                  |
+| `FileDrop`, `PickedFile`, `FileTile`                          | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully |
+| `TagList`, `Chip`, `Avatar`, `StarRating`                     | Tags with optional remove, status pills, initials, 1–5 rating                                                             |
+| `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass` | Actions (44px touch targets; icon-only ones require `aria-label`)                                                         |
+| `Notice`, `InlineConfirm`, `TextField`, `Icon`, `Card`        | Messages, in-place confirmation, inputs, icons, a bare card                                                               |
+| `BackLink`                                                    | "← Back" above a sub-page's title (writing forms, payment)                                                                |
+| `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)       | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                   |
+| `LinkTile`, `TileGrid`                                        | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid                               |
+| `OtpInput`                                                    | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge  |
+
+Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
+panel that shows tickets:
+
+| Block                                            | Use it for                                                                                                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MessageThread`, `MessageBubble`, `DaySeparator` | A conversation in its own scroll box, kept at the newest message ("show earlier" keeps the reader's place); own vs other side, tag, file, seen, a footer slot |
+| `Composer`                                       | Writing a message: text, priority radios, a must-accept box, attach (`FileDrop compact`), send                                                                |
+| `ThreadHeader`                                   | Top of a conversation card: stacked avatars, title, subtitle                                                                                                  |
+| `ThreadSwitch`, `ThreadTabs`                     | Links between conversations: segmented (departments), pills (writing departments)                                                                             |
+| `FaqList`                                        | Questions that open to their answer (`<details>`)                                                                                                             |
+| `TicketRating`                                   | Stars under a staff reply, then the given score (`StarRating`, `StarScore`)                                                                                   |
+
+Block extensions made for them: `Avatar stacked`, `FileDrop compact` (icon only on phones),
+`StarScore`, `Icon filled`, the `clock`, `help` and `send` icons. For chat-like pages: `PageFill`
+(fills the screen between header and bottom tabs on phones, using `--panel-top` / `--panel-bottom`
+from PanelLayout), `PageColumns fill` (side column hidden on phones), `PageHeader compact` (no
+subtitle on phones) and `SheetButton` (`components/ui/Sheet.tsx`: a round button that opens a bottom
+sheet, for side-column content on phones).
+
+### Tickets across panels
+
+`lib/tickets` (API and hooks, given an endpoint and a query-key prefix) ← `components/tickets`
+(blocks) ← `features/tickets` (the page: a chat screen on phones with the composer above the bottom
+tabs and the FAQ in a sheet; `tickets` dictionary, `TicketsConfig`: endpoint, page
+path, `viewer: applicant | staff`) ← `panels/<panel>/` (passes its config; the applicant panel's is
+`panels/applicant/tickets.ts`). Writing tickets are threads of the same page, not a copy. The
+supervisor and writer panels add their own endpoint (one applicant's threads) and `viewer: 'staff'`.
+
+Helpers used with them: `lib/progress.ts` (`percentOf`, `stepState`), `lib/files.ts` (`checkFile`,
+`extensionOf`), `lib/text.ts` (Persian digits, phone numbers, initials).
+
+**See and tweak them:** `pnpm dev:mock`, then open `/panel/dev/components`: every block with sample
+data, with light/dark and fa/en (RTL/LTR) switches. The page exists only in dev builds.
+
+When a new screen needs something a block can't do, extend the block (a prop or a variant) rather
+than copying its markup into the feature, and add it to the gallery.
+
+### Locked sections (applicant panel, canvas V7)
+
+Every account has the applicant panel. `GET /applicant/v1/access/` (`lib/applicant/access.ts`) says
+whether the user has an active contract, one in review, none, or an ended one, and its services.
+`lockOf(access, section)` turns that into a lock per section; the panel's `useLockedNav` marks
+locked items in the menus. A locked page renders `SectionLock` (`components/applicant/`): the
+banner for the reason, and under it the page's own blocks fed with sample data from the feature's
+`preview.ts` (texts from its dictionary), faded and `inert`. An ended contract shows the real case
+under the banner. Dev: `localStorage['scorize.mock.access']` = `pending` / `noservice` / `ended`
+switches the mock user's state (log in as Maryam for a guest).
 
 ### Panels and roles
 
@@ -121,7 +205,9 @@ option existed.
 - Adding a language: add it to `LOCALES` in `src/lib/i18n/config.ts`, add
   `src/locales/<lang>/*.json`, and update the pre-paint script in `index.html` if it is LTR/RTL.
 - Adding a namespace (for a large feature): add it to `NAMESPACES`, create the JSON in every language,
-  and add it to the `CustomTypeOptions` resources in `src/lib/i18n/i18next.d.ts`.
+  add it to the `CustomTypeOptions` resources in `src/lib/i18n/i18next.d.ts`, and pass it to the page's
+  `lazyPage(…, ['<namespace>'])`. Then delete `node_modules/.vitest-cache`: Vitest's module cache keeps
+  the old `import.meta.glob` file list, so tests would not see the new dictionary.
 
 ## Performance budget
 

@@ -22,3 +22,9 @@ export function buttonClass(
 ) {
   return `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full transition-colors disabled:opacity-50 ${SIZES[size]} ${VARIANTS[variant]} ${className}`;
 }
+
+/** A pill tab (filters, form tabs): raised when active. Also used by links (NavLink). */
+export const tabClass = (active: boolean) =>
+  `inline-flex h-11 flex-none items-center gap-2 rounded-full px-4 text-[15px] font-medium whitespace-nowrap ${
+    active ? 'bg-surface text-text shadow-panel' : 'text-text-2 hover:text-text'
+  }`;

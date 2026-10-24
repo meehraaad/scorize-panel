@@ -28,6 +28,7 @@
   --color-line-2: var(--line-2);
   --color-line-3: var(--line-3);
   --color-track: var(--track);
+  --color-row-highlight: var(--row-highlight);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-on-primary: var(--on-primary);
@@ -41,6 +42,8 @@
   --color-hero-line: var(--hero-line);
   --color-live: var(--live);
   --color-hero-accent: var(--hero-accent);
+  --color-on-hero-3: var(--on-hero-3);
+  --color-hero-current: var(--hero-current);
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
   --color-warn: var(--warn);

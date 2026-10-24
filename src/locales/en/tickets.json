@@ -1,0 +1,89 @@
+{
+  "title": "Tickets",
+  "subtitle": {
+    "supervisor": "Your conversation with your case team. We reply Saturday to Thursday.",
+    "writing": "Talk to the writing team about your documents. Write corrections down clearly and in full."
+  },
+  "departments": "Department",
+  "department": {
+    "supervisor": "Supervisor",
+    "writing": "Writing & search"
+  },
+  "writingTabs": "Writing departments",
+  "writingLead": "Writing department",
+  "writing": {
+    "sop": "Statement of purpose",
+    "cv": "CV",
+    "recommendation": "Recommendation letter",
+    "ps": "Personal statement",
+    "ds": "Diversity statement",
+    "pl": "Professor list & search"
+  },
+  "thread": {
+    "supervisor": {
+      "title": "Your case supervisors",
+      "subtitle": "{{names}} · Your message goes to every supervisor on your case",
+      "noTeam": "Your message goes to the supervisors on your case"
+    },
+    "writing": {
+      "title": "Writing team · {{department}}",
+      "subtitle": "Writer: {{names}}",
+      "noTeam": "No writer has been assigned yet. Your message reaches the writing department."
+    }
+  },
+  "messages": "Messages",
+  "earlier": "Show earlier messages",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "you": "You",
+  "role": {
+    "supervisor": "Supervisor",
+    "consultant": "Consultant",
+    "writer": "Writer",
+    "support": "Support"
+  },
+  "tag": {
+    "urgent": "Very urgent",
+    "auto": "Automatic reply"
+  },
+  "seen": "Seen",
+  "sent": "Sent",
+  "rate": "Rate this reply",
+  "star": "Rate {{n}} out of {{max}}",
+  "rated": "Your rating: {{n}} out of {{max}}",
+  "empty": "No messages in this conversation yet. Write your question and the team will reply.",
+  "loadError": "The messages didn't load. Check your internet connection and open the page again.",
+  "composer": {
+    "label": "Message",
+    "placeholder": "Write your message…",
+    "priority": "Priority",
+    "attach": "Attach a file",
+    "remove": "Remove the attached file",
+    "ready": "{{size}} · sent with the message",
+    "tooBig": "This file is {{size}}. The limit is {{max}}; choose a smaller file.",
+    "badType": "This file type isn't accepted. Choose a PDF, a JPG or PNG photo, or a Word file.",
+    "urgentRules": "“Very urgent” is only for things like <b>an interview link that doesn't work during the interview</b> or <b>getting a document in close to a deadline</b>. These tickets are answered outside working hours too. Questions like “How many emails have been sent so far?” don't count as urgent.",
+    "accept": "I agree",
+    "send": "Send",
+    "sendError": "Your message wasn't sent. Check your internet connection and send it again."
+  },
+  "priority": {
+    "0": "Low",
+    "1": "Medium",
+    "2": "High",
+    "3": "Very urgent"
+  },
+  "aside": "Ticket help",
+  "help": "Questions and opening hours",
+  "close": "Close",
+  "faq": "Before you ask, the answer may be here",
+  "hours": "We can't reply on Fridays. Messages sent on Friday are answered on Saturday morning. Only “very urgent” tickets are the exception.",
+  "noFile": "Tickets open once you have a contract. Then you can talk to your case team right here.",
+  "consult": "Book a consultation",
+  "preview": {
+    "supervisor": "Case supervisor",
+    "question": "Hi, when will the University of Toronto decision come out?",
+    "answer": "Hi, usually by the end of March. As soon as it arrives, we'll let you know here and by SMS.",
+    "thanks": "Thank you for following up."
+  }
+}

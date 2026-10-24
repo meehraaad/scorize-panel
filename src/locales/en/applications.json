@@ -1,0 +1,129 @@
+{
+  "title": "Applications & results",
+  "subtitle": "Your supervisor adds each application and you approve it. Results are updated here.",
+  "noteLabel": "Supervisor's note:",
+  "stats": {
+    "label": "Applications summary",
+    "done": "Applications made",
+    "doneUnit": "of {{total}}",
+    "awaiting": "Waiting for your approval",
+    "inReview": "In progress",
+    "accepted": "Admissions",
+    "unitApply": "applications",
+    "unitUniversity": "universities"
+  },
+  "list": {
+    "title": "Applications",
+    "search": "Search university or programme",
+    "searchPlaceholder": "University or programme",
+    "filters": "Filter applications",
+    "range": "{{from}}–{{to}} of {{total}} applications",
+    "count": "Applications: {{total}}",
+    "none": "No applications yet. Your supervisor adds them here after the university search.",
+    "emptyFilter": "No applications in this group.",
+    "emptySearch": "No applications match “{{query}}”.",
+    "clearSearch": "Clear search",
+    "showAll": "Show all applications"
+  },
+  "filter": {
+    "all": "All",
+    "awaiting": "Waiting for you",
+    "inReview": "In progress",
+    "accepted": "Accepted",
+    "rejected": "Rejected"
+  },
+  "column": {
+    "university": "University & programme",
+    "deadline": "Deadline",
+    "fee": "Application fee",
+    "result": "Result",
+    "approval": "Your approval"
+  },
+  "daysLeft": "{{n}} days left",
+  "noDeadline": "No deadline",
+  "noFee": "No fee",
+  "payment": {
+    "pending": "Not paid",
+    "paid": "Paid",
+    "waived": "Waived"
+  },
+  "result": {
+    "incomplete_documents": "Documents missing",
+    "rejected": "Rejected",
+    "pending": "Under review",
+    "waiting_for_portal": "Waiting for the portal to open",
+    "accepted": "Accepted",
+    "submitted": "Submitted",
+    "completed": "Application complete",
+    "waiting_for_recommendation": "Waiting for recommendations / official scores",
+    "none": "Not started yet"
+  },
+  "approval": {
+    "approve": "Approve",
+    "approveAria": "Approve application to {{university}}",
+    "reject": "Reject",
+    "rejectAria": "Reject application to {{university}}",
+    "confirm": "Reject the application to {{university}}? It won't be submitted.",
+    "confirmYes": "Reject application",
+    "confirmNo": "Cancel",
+    "approved": "You approved",
+    "rejected": "You rejected",
+    "error": "That didn't go through. Check your internet connection and try again."
+  },
+  "note": {
+    "show": "Supervisor's note",
+    "hide": "Hide note"
+  },
+  "offer": {
+    "title": "Congratulations! Your admission is in",
+    "question": "May Scorize show this admission on its website, with your first name?",
+    "no": "No, thanks",
+    "yes": "Yes, show it"
+  },
+  "visa": {
+    "title": "Visa results",
+    "place": "Destination: {{destination}} · Embassy: {{embassy}}",
+    "steps": "Visa steps",
+    "step": {
+      "0": "Embassy appointment",
+      "1": "Embassy interview",
+      "2": "Waiting for the result",
+      "3": "Visa issued"
+    },
+    "status": {
+      "getting_appointment": "Getting an embassy appointment",
+      "pending_appointment": "Waiting for the embassy interview",
+      "pending_result": "Waiting for the visa result",
+      "granted": "Visa granted",
+      "refused": "Visa refused",
+      "missed_appointment": "You missed the embassy interview",
+      "canceled_appointment": "Embassy interview cancelled"
+    },
+    "appointment": "Embassy interview",
+    "resolved": "Result announced",
+    "unknown": "Not known yet",
+    "proof": "Appointment confirmation",
+    "download": "Download file"
+  },
+  "professors": {
+    "title": "Emails to professors",
+    "subtitle": "Professors we emailed for you, matched to your research interests.",
+    "sent": "emails sent",
+    "replied": "replies",
+    "page": "Page {{page}} of {{pages}}",
+    "empty": "No emails to professors yet.",
+    "error": "The email list didn't load. Check your internet connection.",
+    "retry": "Try again",
+    "column": {
+      "university": "University",
+      "department": "Department",
+      "interests": "Professor's research interests",
+      "status": "Status"
+    },
+    "status": {
+      "sent": "Sent",
+      "reminded": "Reminder sent",
+      "replied": "Replied"
+    }
+  }
+}

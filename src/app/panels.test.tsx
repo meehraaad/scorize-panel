@@ -108,14 +108,16 @@ describe('panels', () => {
   it('keeps people out of panels they have no role for', async () => {
     loginAs(SARA);
     const router = renderApp('/supervisor/files');
-    expect(await screen.findByRole('heading', { name: 'سلام سارا' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام سارا، پرونده‌ی شما در مرحله‌ی اپلای است' }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
 
   it('shows no panel switcher to someone with one panel', async () => {
     loginAs(SARA);
     renderApp('/');
-    await screen.findByRole('heading', { name: 'سلام سارا' });
+    await screen.findByRole('heading', { name: 'سلام سارا، پرونده‌ی شما در مرحله‌ی اپلای است' });
     expect(
       within(screen.getByRole('banner')).queryByRole('button', { name: 'پنل متقاضی' }),
     ).toBeNull();
@@ -129,7 +131,7 @@ describe('panels', () => {
 
     await user.click(screen.getByRole('button', { name: 'حساب کاربری' }));
     await user.click(screen.getByRole('link', { name: 'پنل کاربر عادی' }));
-    expect(await screen.findByRole('heading', { name: 'سلام نیما' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'سلام نیما، به اسکورایز خوش آمدید' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
 
     // Not one of his panels, but listed while he is in it, so he can get back.

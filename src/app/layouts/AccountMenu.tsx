@@ -66,7 +66,7 @@ export function AccountMenu({ user, customerLink }: Props) {
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex size-11 items-center justify-center rounded-full bg-tint text-base font-bold text-primary-text"
+        className="inline-flex size-11 items-center justify-center rounded-full bg-hero font-display text-[15px] font-bold text-hero-accent shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--line-2)] transition-shadow hover:shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--primary)]"
       >
         {initial}
       </button>

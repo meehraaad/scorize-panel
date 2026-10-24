@@ -1,0 +1,190 @@
+{
+  "title": "Contract & payment",
+  "subtitle": "Your contract, its instalments and the details we need for applications and the embassy.",
+  "aside": "Contract documents and help",
+  "amount": "{{amount}} toman",
+  "hero": {
+    "label": "Contract summary",
+    "number": "Contract no. {{number}} · {{holder}}",
+    "turkey": "Free Turkey application",
+    "status": {
+      "active": "Active",
+      "ended": "Ended"
+    },
+    "countries": "Countries",
+    "degrees": "Degrees",
+    "applies": "Applications",
+    "appliesValue": "{{n}} applications",
+    "total": "Contract total",
+    "duration": "Length",
+    "months": "{{n}} months",
+    "services": "Services",
+    "fee": "Service fee",
+    "free": "Free",
+    "pledge": "Pledge",
+    "pledgeSigned": "Signed with SMS code · {{date}}",
+    "time": "Contract time",
+    "daysLeft": "{{left}} of {{total}} days left"
+  },
+  "feature": {
+    "admission": "Admission",
+    "writing": "Writing",
+    "visa": "Visa"
+  },
+  "installments": {
+    "title": "Instalments",
+    "subtitle": "Each instalment has a fixed date or falls due after a step of your case.",
+    "paid": "Paid",
+    "left": "Left to pay",
+    "progress": "{{percent}}% of the contract paid",
+    "prepayment": "Prepayment",
+    "number": "Instalment {{n}}",
+    "condition": "Due: {{text}}",
+    "dueDate": "Pay by: {{date}}",
+    "paidOn": "Paid {{date}}",
+    "status": {
+      "paid": "Paid",
+      "due": "Due now",
+      "review": "Receipt in review",
+      "upcoming": "Not paid"
+    },
+    "payOnline": "Pay online",
+    "uploadReceipt": "Upload receipt",
+    "details": "Payment details",
+    "free": "This contract is free for you and has no instalments. The university pays for the services.",
+    "empty": "No instalments are recorded for this contract yet."
+  },
+  "profile": {
+    "title": "Your details",
+    "subtitle": "Needed for university and embassy forms. Every change is recorded in your case.",
+    "missing": "{{n}} missing",
+    "empty": "Not entered",
+    "field": {
+      "file_id": "Case number",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "national_id": "National ID",
+      "birth_date": "Date of birth",
+      "passport_name": "Name in passport (English)",
+      "postal_code": "Postal code",
+      "home_phone": "Home phone",
+      "address_en": "Address in English",
+      "relative_name": "Name of a close relative",
+      "relative_phone": "Relative's phone",
+      "relative_email": "Relative's email"
+    },
+    "edit": "Edit",
+    "add": "Add",
+    "editLabel": "Edit {{field}}",
+    "addLabel": "Add {{field}}",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "saved": "“{{field}}” saved.",
+    "error": {
+      "required": "Fill in this field.",
+      "email": "Enter a valid email, like name@example.com.",
+      "mobile": "Enter a mobile number starting with 09, 11 digits.",
+      "phone": "Enter the number with its area code, like 03132000000.",
+      "tenDigits": "This number has 10 digits.",
+      "latin": "Write it in English letters.",
+      "server": "Not saved. Check the value and try again."
+    }
+  },
+  "files": {
+    "title": "Contract documents",
+    "kind": {
+      "contract": "Signed contract",
+      "customer_form": "Customer conditions form",
+      "terms": "Terms and conditions"
+    },
+    "meta": {
+      "contract": "Signed · {{date}}",
+      "customer_form": "{{date}}",
+      "terms": "Accepted · {{date}}"
+    },
+    "download": "Download {{name}}"
+  },
+  "help": {
+    "title": "A question about your contract or an instalment?",
+    "withConsultant": "Your consultant, {{name}}, follows up instalments. Ask in a ticket.",
+    "text": "Ask in a ticket; our team will answer.",
+    "send": "Send a ticket"
+  },
+  "payment": {
+    "title": "Payment details",
+    "back": "Back",
+    "invalid": "This payment wasn't found. The link may be old.",
+    "toContract": "Go to contract & payment",
+    "status": {
+      "unpaid": "Awaiting payment",
+      "review": "Receipt waiting for review",
+      "declined": "Receipt declined",
+      "paid": "Paid"
+    },
+    "items": "Items",
+    "total": "Full value",
+    "credit": "Credit used",
+    "method": "Payment method",
+    "methodName": {
+      "online": "Online payment",
+      "receipt": "Bank transfer with receipt"
+    },
+    "created": "Created",
+    "seller": "Seller",
+    "paidAt": "Paid on",
+    "amount": "Amount to pay",
+    "payOnline": "Pay {{amount}} toman online",
+    "redirecting": "Going to the payment gateway…",
+    "toReceipt": "Pay by card transfer and upload the receipt",
+    "gateway": "Paid through a secure bank gateway",
+    "onlineError": "Couldn't reach the payment gateway. Try again in a moment.",
+    "declined": {
+      "title": "Your receipt wasn't accepted",
+      "text": "Upload the correct receipt again, or pay online."
+    },
+    "receipt": {
+      "title": "Pay with a receipt",
+      "subtitle": "Transfer the amount to the account below and upload the receipt.",
+      "card": "Card number",
+      "iban": "IBAN (Sheba)",
+      "copy": "Copy",
+      "copyLabel": "Copy {{name}}",
+      "copied": "Copied",
+      "holder": "Account holder:",
+      "file": "Receipt file",
+      "choose": "Choose the receipt file",
+      "dropHint": "or drop it here",
+      "dropHintTouch": "from your gallery or files",
+      "hint": "PDF or a clear photo (JPG or PNG), up to {{size}}.",
+      "ready": "{{size}} · ready to send",
+      "remove": "Remove the receipt file",
+      "tooBig": "This file is {{size}}. The limit is {{max}}; choose a smaller file.",
+      "badType": "This file type isn't accepted. Choose a PDF, or a JPG or PNG photo.",
+      "pickFirst": "Choose the receipt file first.",
+      "toOnline": "Switch to online payment",
+      "submit": "Upload receipt",
+      "sending": "Uploading…",
+      "error": "The receipt wasn't uploaded. Check your internet connection and try again."
+    },
+    "review": {
+      "title": "We received your receipt",
+      "text": "The sales team will check it and let you know by SMS.",
+      "view": "View the uploaded receipt"
+    },
+    "paid": {
+      "title": "This payment is complete",
+      "text": "Paid on {{date}}. Thank you."
+    }
+  },
+  "preview": {
+    "holder": "Your name",
+    "country1": "Canada",
+    "country2": "Germany",
+    "prepayment": "Prepayment",
+    "afterForms": "After your forms are done",
+    "afterAdmission": "After an admission",
+    "afterVisa": "After the visa"
+  }
+}

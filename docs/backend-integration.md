@@ -47,6 +47,14 @@ password-reset {token, password, password_confirmation}        (link from the re
 | `GET /api/profile/auth/v1/whoami/`   | Session check (403 when logged out) and user name           |
 | `GET /profile/authentication/login/` | Only to obtain the `csrftoken` cookie before login (see A9) |
 
+Planned, mocked until Django ships them (backend-changes.md H1–H21), all under `/api/applicant/v1/`:
+`overview/` (home), `applications/` and `professor-emails/` (applications page), `documents/`
+(documents page), `applications/<id>/approval/`, `applications/<id>/showcase/`,
+`documents/<id>/upload/`, `documents/files/<id>/`, `research-interests/`, `writing/sop/` and
+`writing/sop/final/` (SOP form), `tickets/`, `tickets/<thread>/messages/`,
+`tickets/<thread>/seen/`, `tickets/<thread>/messages/<id>/rating/` (`<thread>` = `supervisor` or
+`writing/<type>`).
+
 Keep `src/mocks/handlers.ts` in sync with every endpoint the panel uses.
 
 ## Conventions for new API endpoints

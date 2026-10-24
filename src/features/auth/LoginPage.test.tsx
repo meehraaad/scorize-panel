@@ -56,7 +56,9 @@ describe('login', () => {
     await user.click(screen.getByRole('button', { name: 'ادامه' }));
     await user.type(await screen.findByLabelText('گذرواژه'), 'password123');
     await user.click(screen.getByRole('button', { name: 'ورود' }));
-    expect(await screen.findByRole('heading', { name: 'سلام سارا' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام سارا، پرونده‌ی شما در مرحله‌ی اپلای است' }),
+    ).toBeInTheDocument();
   });
 
   it('signs up a new phone number', async () => {
@@ -75,7 +77,7 @@ describe('login', () => {
     await user.type(await screen.findByLabelText('کد تأیید'), MOCK_OTP);
     expect(await screen.findByRole('heading', { name: 'خوش آمدید علی' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ورود به پنل من' }));
-    expect(await screen.findByRole('heading', { name: 'سلام علی' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'سلام علی، به اسکورایز خوش آمدید' })).toBeInTheDocument();
   });
 
   it('asks a new email sign-up for a mobile number', async () => {

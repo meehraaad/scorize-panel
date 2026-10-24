@@ -11,8 +11,9 @@ versions V6/V7 for the applicant panel.
 
 - `docs/architecture.md`: folder layout, every tech decision, theming, i18n, performance budget
 - `docs/backend-integration.md`: how the panel talks to Django today (auth flow, endpoints)
-- `docs/backend-changes.md`: every change the redesign needs in Django. **Do not edit the scorize repo**;
-  add needed backend changes to this list instead
+- `docs/backend-changes.md`: every change the redesign needs in Django. **Do not edit or connect anything
+  in the scorize repo** until the migration: the old site must keep working as it is. Add needed backend
+  changes to this list instead
 
 ## Hard rules
 
@@ -24,7 +25,9 @@ versions V6/V7 for the applicant panel.
 - **Panels**: navigation and routes live in `src/panels/<panel>/`; layouts in `src/app/layouts/`.
   Every page is lazy (`lazyPage`). Layers are enforced by ESLint (see docs/architecture.md).
 - **API calls** go through `api()` in `src/lib/api/client.ts` and React Query. Mirror each new
-  endpoint in `src/mocks/handlers.ts`.
+  endpoint in `src/mocks/` (`handlers.ts` for auth, `applicant.ts` for the applicant panel).
+- **Build pages from shared blocks** (`src/components/ui/`, listed in docs/architecture.md, previewed
+  at `/dev/components` in dev). Don't copy a block's markup into a feature: extend the block instead.
 - Accessible markup: real `<button>`/`<a>`, `aria-label` on icon-only buttons, touch targets ≥ 44px.
 
 ## Commands

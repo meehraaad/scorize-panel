@@ -15,7 +15,17 @@ export const DJANGO_LANGUAGE_COOKIE = 'django_language';
  * `common` ships with the app; every other namespace belongs to one feature and is loaded with that
  * feature's route (see `page()` in src/app/router.tsx).
  */
-export const NAMESPACES = ['common', 'auth'] as const;
+export const NAMESPACES = [
+  'common',
+  'auth',
+  'home',
+  'applications',
+  'documents',
+  'writing',
+  'tickets',
+  'contract',
+  'turkey',
+] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
 export function isLocale(value: unknown): value is Locale {

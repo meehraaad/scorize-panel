@@ -1,0 +1,278 @@
+{
+  "title": "Hi {{name}}, your case is at the {{stage}} stage",
+  "titleNoName": "Hi, your case is at the {{stage}} stage",
+  "summary": "Applications sent: {{submitted}}. Admissions: {{accepted}}.",
+  "summaryTodos": "Small tasks waiting for you: {{n}}.",
+  "guest": {
+    "title": "Hi {{name}}, welcome to Scorize",
+    "titleNoName": "Hi, welcome to Scorize",
+    "subtitle": "Your panel is ready. Once you sign a contract, your case moves forward here, step by step.",
+    "hero": {
+      "label": "Your path with Scorize",
+      "kicker": "Your path with Scorize",
+      "title": "From the first consultation to the visa, all in one panel",
+      "text": "A dedicated supervisor, applications you can follow, professional writing, and deadlines that never slip.",
+      "steps": "How we work together"
+    },
+    "step": {
+      "consult": {
+        "name": "Consultation & contract",
+        "hint": "We find the right path and country for you."
+      },
+      "writing": {
+        "name": "Writing",
+        "hint": "Our team writes your SOP and CV."
+      },
+      "documents": {
+        "name": "Documents",
+        "hint": "An exact list of documents, each with its deadline."
+      },
+      "apply": {
+        "name": "Applications",
+        "hint": "You see and approve every application."
+      },
+      "results": {
+        "name": "Results",
+        "hint": "Decisions are announced right here."
+      },
+      "visa": {
+        "name": "Visa",
+        "hint": "From the embassy appointment to the visa."
+      }
+    },
+    "previews": {
+      "title": "Your panel after the contract",
+      "subtitle": "See each section with sample data.",
+      "see": "See the preview",
+      "locked": "Locked until you sign a contract"
+    },
+    "preview": {
+      "applications": {
+        "title": "Applications & results",
+        "text": "Approve applications and see decisions right here."
+      },
+      "documents": {
+        "title": "Documents & writing",
+        "text": "Uploads with deadlines, and the writing team's finished files."
+      },
+      "tickets": {
+        "title": "Tickets with your supervisor",
+        "text": "Talk directly with your case team."
+      },
+      "contract": {
+        "title": "Contract & payment",
+        "text": "Instalments and online payment at a glance."
+      }
+    },
+    "open": {
+      "title": "Open to you right now",
+      "subtitle": "These don't need a contract.",
+      "consult": {
+        "title": "Consultation",
+        "text": "Book a session with our application advisors."
+      },
+      "services": {
+        "title": "Events and courses",
+        "text": "Free webinars, and preparation for language tests and applications."
+      },
+      "estimate": {
+        "title": "Admission chances",
+        "text": "See where your record gives you the best chances."
+      },
+      "samples": {
+        "title": "Admission samples",
+        "text": "Admissions Scorize applicants have received."
+      }
+    },
+    "pending": {
+      "title": "Hi {{name}}, your contract is registered",
+      "titleNoName": "Hi, your contract is registered",
+      "subtitle": "Our team is reviewing your contract. Once it's approved, you'll get an SMS that your case has started.",
+      "kicker": "Contract in review",
+      "contract": "{{features}} contract · {{countries}}",
+      "contractShort": "Your contract",
+      "text": "Nothing else to do. Once it's active, your supervisors and consultant will be in touch.",
+      "steps": "Starting your case",
+      "step": {
+        "registered": "Contract registered",
+        "review": "Review and approval",
+        "start": "Case starts",
+        "call": "Your team calls you"
+      },
+      "previews": "Sections opening soon",
+      "previewsSubtitle": "Until your contract is active, see each section's preview."
+    },
+    "consult": "Book an application consultation",
+    "call": "Ask an advisor to call",
+    "turkey": {
+      "title": "Free Turkey application",
+      "badge": "TR",
+      "free": "No service fee",
+      "text": "Upload your documents; once the team approves them, you sign the pledge here and applications to Turkish universities begin.",
+      "start": "Start the Turkey application",
+      "continue": "Continue the Turkey application",
+      "state": {
+        "docs": "You haven't sent your documents yet.",
+        "review": "Your documents are being reviewed.",
+        "sign": "Every document is approved; the pledge is waiting for your signature."
+      }
+    }
+  },
+  "hero": {
+    "label": "Case card",
+    "file": "Case {{id}}",
+    "contract": "{{features}} contract",
+    "applies": "{{degrees}} · {{used}} of {{total}} applications in your contract",
+    "timeLeft": "Time left on your contract",
+    "days": "{{left}} of {{total}} days",
+    "stages": "Case stages"
+  },
+  "feature": {
+    "admission": "Admission",
+    "writing": "writing",
+    "visa": "visa"
+  },
+  "stage": {
+    "contract": {
+      "name": "Contract",
+      "status": "Case started"
+    },
+    "writing": {
+      "name": "Writing",
+      "status": "Writing"
+    },
+    "documents": {
+      "name": "Documents",
+      "status": "Collecting documents"
+    },
+    "apply": {
+      "name": "Applying",
+      "status": "Applying"
+    },
+    "results": {
+      "name": "Results",
+      "status": "Waiting for results"
+    },
+    "visa": {
+      "name": "Visa",
+      "status": "Getting your visa"
+    }
+  },
+  "writingType": {
+    "sop": "statement of purpose",
+    "cv": "CV",
+    "recommendation": "recommendation letter",
+    "ps": "personal statement",
+    "ds": "diversity statement",
+    "pl": "proposal"
+  },
+  "role": {
+    "supervisor": "Supervisor",
+    "consultant": "Consultant",
+    "writer": "Writer",
+    "support": "Support"
+  },
+  "todos": {
+    "title": "Waiting for you",
+    "count": "{{n}} items",
+    "empty": "Nothing is waiting for you right now. New tasks show up here.",
+    "error": "That didn't go through. Check your internet connection and try again.",
+    "deadline": "Deadline {{date}}",
+    "fee": "Fee {{fee}}",
+    "approve": {
+      "title": "Approve your application to {{university}}",
+      "accept": "Approve application",
+      "acceptAria": "Approve application to {{university}}",
+      "reject": "Reject",
+      "rejectAria": "Reject application to {{university}}",
+      "confirm": "Reject the application to {{university}}? It will be removed from your list.",
+      "confirmYes": "Reject application",
+      "confirmNo": "Cancel"
+    },
+    "upload": {
+      "title": "Upload your {{document}}",
+      "meta": "Upload by {{date}}",
+      "urgent": "only {{days}} days left",
+      "action": "Upload file"
+    },
+    "form": {
+      "title": "Fill in the {{writing}} form",
+      "meta": "Writing your {{writing}} starts once you submit the form",
+      "action": "Fill in form"
+    },
+    "pay": {
+      "title": "Pay instalment {{number}}",
+      "meta": "Pay online or upload a receipt",
+      "action": "Pay instalment"
+    }
+  },
+  "ticket": {
+    "title": "Latest ticket messages",
+    "new": "{{n}} new",
+    "all": "All tickets",
+    "you": "You",
+    "unread": "Unread",
+    "empty": "No tickets yet. If you have a question, send your case team a ticket.",
+    "rate": "Rate this reply",
+    "star": "Rate {{n}} out of {{max}}",
+    "rated": "Your rating: {{n}} out of {{max}}",
+    "replyLabel": "Quick reply to {{name}}",
+    "replyPlaceholder": "Reply to {{name}}…",
+    "send": "Send",
+    "sendError": "Your message wasn't sent. Check your internet connection and send it again."
+  },
+  "deadlines": {
+    "title": "Upcoming deadlines",
+    "all": "All applications",
+    "daysLeft": "days left",
+    "feePaid": "Fee {{fee}} · paid",
+    "feeUnpaid": "Fee {{fee}} · not paid",
+    "aria": "{{university}}, {{days}} days left, {{status}}",
+    "empty": "No deadlines on your case yet.",
+    "status": {
+      "awaiting_approval": "Waiting for your approval",
+      "ready": "Ready to submit",
+      "in_progress": "Being prepared",
+      "submitted": "Submitted",
+      "accepted": "Accepted",
+      "rejected": "Rejected"
+    }
+  },
+  "aside": "Case summary",
+  "installment": {
+    "title": "Next instalment",
+    "due": "Due now",
+    "upcoming": "Upcoming",
+    "toman": "toman",
+    "label": "Instalment {{number}}",
+    "payOnline": "Pay online",
+    "uploadReceipt": "Upload receipt",
+    "progress": "{{paid}} of {{count}} instalments paid · details"
+  },
+  "documents": {
+    "title": "Documents",
+    "progress": "{{uploaded}} of {{required}}",
+    "waiting": "Documents waiting for upload: {{n}}.",
+    "nextDue": "Nearest deadline: {{date}}.",
+    "complete": "All documents are uploaded.",
+    "go": "Go to documents"
+  },
+  "writing": {
+    "title": "Writing",
+    "step": {
+      "1": "Your details",
+      "2": "Writing",
+      "3": "Ready to download"
+    },
+    "status": {
+      "1": "Waiting for your details",
+      "2": "Being written",
+      "3": "Ready to download"
+    }
+  },
+  "team": {
+    "title": "Your case team",
+    "send": "Send the team a ticket",
+    "hours": "We reply Saturday to Thursday. Tickets sent on Friday are answered on Saturday."
+  }
+}

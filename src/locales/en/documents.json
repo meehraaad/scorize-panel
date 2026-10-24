@@ -1,0 +1,97 @@
+{
+  "title": "Documents & writing",
+  "summary": "You've sent {{uploaded}} of {{required}} documents.",
+  "summaryPending": "Still to send: {{n}}.",
+  "required": {
+    "title": "Documents we need",
+    "hint": "A PDF or a clear photo (JPG or PNG). Up to {{size}} per file.",
+    "progress": "{{uploaded}} of {{required}}",
+    "deadline": "Due {{date}}",
+    "daysLeft": "{{n}} days left",
+    "overdue": "Overdue",
+    "noDeadline": "No deadline",
+    "noteLabel": "Supervisor:",
+    "choose": "Choose a file",
+    "dropHint": "or drop it here",
+    "dropHintTouch": "from your gallery or files",
+    "ready": "{{size}} · ready to send",
+    "remove": "Remove the file chosen for {{name}}",
+    "tooBig": "This file is {{size}}. The limit is {{max}}; choose a smaller file.",
+    "badType": "This file type isn't accepted. Choose a PDF, or a JPG or PNG photo.",
+    "footer": "Your supervisor is notified when you send.",
+    "submit": "Send files: {{n}}",
+    "submitNone": "Send files",
+    "sending": "Sending…",
+    "pickFirst": "Choose a file for one of the documents first.",
+    "sent": "Files sent. Your supervisor has been notified.",
+    "failed": "Files not sent: {{n}}. They're still chosen; send them again.",
+    "complete": "You've sent every document we need. If we need another, it shows up here."
+  },
+  "files": {
+    "title": "Sent documents",
+    "count": "Files: {{n}}",
+    "uploaded": "Uploaded {{date}}",
+    "fromTeam": "From the writing team · {{date}}",
+    "download": "Download {{name}}",
+    "delete": "Delete {{name}}",
+    "confirm": "Delete {{name}}? You'll need to send it again.",
+    "confirmYes": "Delete file",
+    "confirmNo": "Cancel",
+    "deleteError": "The file wasn't deleted. Try again.",
+    "empty": "You haven't sent any files yet."
+  },
+  "aside": "Writing and research interests",
+  "writing": {
+    "title": "Writing",
+    "subtitle": "Included in your contract",
+    "name": {
+      "sop": "Statement of purpose (SOP)",
+      "cv": "CV",
+      "recommendation": "Recommendation letter",
+      "ps": "Personal statement (PS)",
+      "ds": "Diversity statement (DS)",
+      "pl": "Proposal"
+    },
+    "status": {
+      "form": "Waiting for you",
+      "writing": "Being written",
+      "ready": "Ready"
+    },
+    "steps": "Writing steps",
+    "step": {
+      "form": "Your details in the form",
+      "writing": "Written by the team",
+      "ready": "Ready to download"
+    },
+    "note": {
+      "form": "Writing starts once you submit the form.",
+      "writing": "The writing team is on it. You'll get a text message when it's ready.",
+      "ready": "The final version was delivered on {{date}}. If you need changes, request a revision."
+    },
+    "fillForm": "Fill in the form",
+    "viewForm": "View the form",
+    "download": "Download {{name}}",
+    "revise": "Request a revision"
+  },
+  "interests": {
+    "title": "Research interests",
+    "subtitle": "The email bot finds professors with these. Write them in English.",
+    "list": "Your research interests",
+    "remove": "Remove {{name}}",
+    "add": "Add a research interest",
+    "placeholder": "e.g. Reinforcement Learning",
+    "submit": "Add",
+    "duplicate": "“{{name}}” is already in the list.",
+    "tooLong": "Use at most {{max}} characters.",
+    "empty": "No interests yet. Add a few topics so we can find matching professors.",
+    "error": "Not saved. Check your internet connection and try again."
+  },
+  "preview": {
+    "transcript": "Bachelor's transcript (official translation)",
+    "recommendation": "Second recommendation letter",
+    "passport": "Passport",
+    "language": "IELTS certificate",
+    "degree": "Bachelor's degree certificate",
+    "universities": "Suggested universities list"
+  }
+}

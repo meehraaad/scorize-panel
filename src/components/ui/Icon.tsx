@@ -68,6 +68,7 @@ const PATHS = {
     </>
   ),
   close: <path d="M18 6 6 18M6 6l12 12" />,
+  plus: <path d="M12 5v14M5 12h14" />,
   folder: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
   chart: (
     <>
@@ -95,10 +96,67 @@ const PATHS = {
       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
     </>
   ),
+  upload: (
+    <>
+      <path d="M12 16V4" />
+      <path d="m7 9 5-5 5 5" />
+      <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+    </>
+  ),
+  paperclip: (
+    <path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" />
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 4v12" />
+      <path d="m7 11 5 5 5-5" />
+      <path d="M4 20h16" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M4 7h16" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" />
+      <path d="M9 7V4h6v3" />
+    </>
+  ),
+  star: <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" />,
+  play: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M10 8l6 4-6 4z" />
+    </>
+  ),
   /** Points to the end of the line (right in LTR, left in RTL): "next", "continue". */
   chevronEnd: <path d="m9 18 6-6-6-6" />,
   /** Points to the start of the line: "back". */
   chevronStart: <path d="m15 18-6-6 6-6" />,
+  help: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01" />
+    </>
+  ),
+  /** Paper plane pointing to the end of the line: "send". */
+  send: (
+    <>
+      <path d="M22 2 11 13" />
+      <path d="M22 2 15 22l-4-9-9-4z" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
   alert: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -121,26 +179,35 @@ const PATHS = {
       <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M2 2l20 20" />
     </>
   ),
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </>
+  ),
+  moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
 } as const;
 
 export type IconName = keyof typeof PATHS;
 
 /** Drawn for LTR; mirrored in RTL so they keep pointing the right way. */
-const DIRECTIONAL: ReadonlySet<IconName> = new Set(['chevronEnd', 'chevronStart']);
+const DIRECTIONAL: ReadonlySet<IconName> = new Set(['chevronEnd', 'chevronStart', 'send']);
 
 interface IconProps {
   name: IconName;
   size?: number;
-  className?: string;
+  className?: string | undefined;
+  /** Filled with the text colour (a given star) instead of outlined. */
+  filled?: boolean;
 }
 
-export function Icon({ name, size = 20, className }: IconProps) {
+export function Icon({ name, size = 20, className, filled = false }: IconProps) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth={1.8}
       strokeLinecap="round"

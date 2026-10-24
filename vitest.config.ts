@@ -5,7 +5,7 @@ export default defineConfig((env) =>
   mergeConfig(viteConfig(env), {
     test: {
       environment: 'jsdom',
-      setupFiles: ['./src/test/setup.ts'],
+      setupFiles: ['./vitest.node-globals.ts', './src/test/setup.ts'],
       css: false,
       testTimeout: 20_000,
     },

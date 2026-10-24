@@ -24,6 +24,7 @@ import { BootFallback, SharedLayout } from './layouts/SharedLayout';
  *   /choose                             which panel to start in (several panels, first time or "ask")
  *   /account, /settings    PanelLayout  shared pages, shown inside the last-used panel
  *   /, /supervisor, …      PanelLayout  one route tree per panel (src/panels/*), guarded by role
+ *   /dev/components                     shared blocks gallery (dev builds only)
  *
  * Every panel's pages sit under a SectionError boundary, so a failing page keeps the header and menus.
  */
@@ -123,6 +124,16 @@ export const routes: RouteObject[] = [
     ],
   },
   ...PANELS.map(panelRoutes),
+  // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
+  ...(import.meta.env.DEV
+    ? [
+        {
+          path: 'dev/components',
+          ...lazyPage(() => import('./dev/ComponentsPage')),
+          HydrateFallback: BootFallback,
+        },
+      ]
+    : []),
 ];
 
 export const createRouter = () =>

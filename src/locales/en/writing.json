@@ -1,0 +1,409 @@
+{
+  "back": "Documents & writing",
+  "tabs": {
+    "label": "Your writing orders",
+    "sop": "Statement of purpose (SOP)",
+    "cv": "CV",
+    "ticket": "Writing ticket"
+  },
+  "save": {
+    "saving": "Saving…",
+    "saved": "Saved · {{time}}",
+    "unsaved": "Changes not saved yet",
+    "failed": "Not saved. Check your internet connection.",
+    "retry": "Save again"
+  },
+  "progress": "{{answered}} of {{total}} questions",
+  "stepOf": "Section {{n}} of {{total}}",
+  "sectionsNav": "Form sections",
+  "sectionCount": "{{answered}} of {{total}}",
+  "sectionDone": "Complete",
+  "sectionAnswered": "{{answered}} of {{total}} questions answered",
+  "inProgress": "In progress",
+  "edit": "Edit",
+  "start": "Start",
+  "continue": "Continue",
+  "openSection": "{{action}}: {{section}}",
+  "previous": "Previous section",
+  "next": "Save and next section",
+  "close": "Save and close",
+  "optional": "(optional)",
+  "chars": "{{n}} characters",
+  "nothingYet": "Nothing written yet",
+  "requiredError": "Answer this question to submit the form.",
+  "final": {
+    "save": "Save",
+    "submit": "Submit",
+    "missing": "Required questions without an answer: {{n}}. We've opened the first one for you.",
+    "confirm": "Submit the form? You can't edit it afterwards, and the writing starts.",
+    "confirmYes": "Submit",
+    "confirmNo": "Cancel",
+    "error": "The form wasn't submitted. Check your internet connection and try again.",
+    "doneText": "Writing started on {{date}}. Your answers are read-only now; for any change, write in the writing ticket."
+  },
+  "tipsTitle": "Read before you write",
+  "phone": {
+    "title": "Phone number for coordination",
+    "text": "Your writer uses this number to coordinate with you.",
+    "label": "Phone number",
+    "save": "Save",
+    "saved": "Number saved.",
+    "invalid": "Write a mobile number like 09123456789.",
+    "error": "The number wasn't saved. Try again."
+  },
+  "sop": {
+    "title": "Statement of purpose details",
+    "subtitle": "No need to write everything in full. Key points and hints are enough; your writer makes it personal.",
+    "tips": {
+      "0": "Some details, like your papers and skills, stay close to what you write; others we drop or add to make the text more personal.",
+      "1": "We don't write about your country or returning to Iran; that's for the embassy, not the university.",
+      "2": "The statement is written for your first-choice programme. Very different programmes need separate statements.",
+      "3": "We'll call you to coordinate after you submit."
+    },
+    "section": {
+      "education": {
+        "title": "Education",
+        "description": "Current degree, universities and grades"
+      },
+      "goal": {
+        "title": "What you're applying for",
+        "description": "Programme, university and country you want"
+      },
+      "story": {
+        "title": "Your story and motivation",
+        "description": "Why this field, which skills, what goal"
+      },
+      "experience": {
+        "title": "Experience and projects",
+        "description": "Courses and projects, work, papers, thesis"
+      },
+      "career": {
+        "title": "Career plans",
+        "description": "What job do you see yourself doing in this field?"
+      }
+    },
+    "field": {
+      "grade": "Degree you're applying for",
+      "field_of_study": "Current field of study",
+      "university_1": "Bachelor's university",
+      "Rate_1": "Bachelor's GPA",
+      "university_2": "Master's university",
+      "Rate_2": "Master's GPA",
+      "university_3": "PhD university",
+      "Rate_3": "PhD GPA",
+      "field_of_study_for_apply": "Programme and degree you're applying for",
+      "university_for_apply": "Target university",
+      "city_for_apply": "Target country",
+      "general_sop": "Type of statement",
+      "reason": "Why do you love this field?",
+      "interest": "Your background and skills",
+      "reason_to_continuation": "Short- and long-term goals and research interests",
+      "university_reason": "Why this university or professor?",
+      "project": "Successful courses and projects",
+      "internship": "Work, TA, RA or internships",
+      "essay": "Papers and research projects",
+      "thesis": "Thesis or final project",
+      "job": "Career plans"
+    },
+    "help": {
+      "university_2": "Leave empty if you haven't done a master's.",
+      "field_of_study_for_apply": "For example: Master's · Computer Science",
+      "university_for_apply": "Leave empty if you haven't decided yet.",
+      "general_sop": "A general statement works for several universities; a specific one is tailored to your target university.",
+      "reason": "Tell us how you got interested in it. Childhood and school matter little, but they give us ideas.",
+      "interest": "Your favourite courses and good grades. Which skills make you a good fit for this field?",
+      "reason_to_continuation": "For example: “I want to research clean energy”. Say why this goal matters to you.",
+      "university_reason": "If you have a professor in mind, add their page and say what your work shares. Leave empty if you're applying to several universities.",
+      "project": "Which courses and projects went well during your studies? Add your good grades.",
+      "internship": "What exactly was your role, and what did it add to your knowledge and skills?",
+      "essay": "What was your role in each? Leave empty if you have none.",
+      "thesis": "Add its English title or abstract. Leave empty if you have none.",
+      "job": "What job do you see yourself doing in this field?"
+    },
+    "noOrder": "A statement of purpose isn't part of your contract.",
+    "doneTitle": "Your statement of purpose details are submitted",
+    "finalNote": "Answer the required questions to submit. After submitting you can't edit, and the writing starts.",
+    "option": {
+      "grade": {
+        "1": "Bachelor's",
+        "2": "Master's",
+        "3": "Second master's",
+        "4": "PhD",
+        "5": "Second PhD",
+        "6": "Postdoc"
+      },
+      "generalSop": {
+        "false": "For my target university",
+        "true": "General, for several universities"
+      }
+    }
+  },
+  "progressSections": "{{answered}} of {{total}} sections",
+  "entries": "Entries: {{n}}",
+  "choose": "Choose",
+  "list": {
+    "untitled": "Entry {{n}}",
+    "present": "Present",
+    "done": "Done",
+    "edit": "Edit {{name}}",
+    "removeNamed": "Remove {{name}}",
+    "confirmRemove": "Remove “{{name}}”?",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "incomplete": "This entry isn't complete; edit it to finish.",
+    "required": "Add at least one entry to submit the form.",
+    "none": "No entries."
+  },
+  "photo": {
+    "choose": "Choose a photo",
+    "replace": "Change photo",
+    "uploading": "Uploading…",
+    "needed": "You can't submit the form until you send a passport photo.",
+    "required": "A passport photo is needed to submit the form.",
+    "badType": "Only JPG or PNG photos are accepted.",
+    "tooBig": "This photo is {{size}}. The limit is {{max}}; choose a smaller one.",
+    "error": "The photo wasn't sent. Check your internet connection and try again."
+  },
+  "interests": {
+    "none": "You haven't added research interests yet.",
+    "edit": "Edit in Documents & writing"
+  },
+  "cv": {
+    "title": "CV details",
+    "subtitle": "Write specialist details (thesis title, course names, …) in English. Answers save automatically, so nothing is lost if your connection drops.",
+    "noOrder": "A CV isn't part of your contract.",
+    "doneTitle": "Your CV details are submitted",
+    "finalNote": "To submit, add a passport photo and fill in the required sections. After submitting you can't edit.",
+    "tips": {
+      "0": "European and North American CVs look different. For Europe, a front-facing photo without glasses is needed.",
+      "1": "If your CV is thin, we'll ask for more details (with your permission) to make it richer.",
+      "2": "One round of edits, within a week of delivery. Write the changes in the writing ticket.",
+      "3": "It takes 7 working days. Your CV is written in LaTeX; you get the PDF and an editing link."
+    },
+    "section": {
+      "personal": {
+        "title": "Personal details",
+        "description": "Name, date of birth, contact, and where the CV is for"
+      },
+      "photo": {
+        "title": "Passport photo",
+        "description": "Needed to submit the form"
+      },
+      "education": {
+        "title": "Education",
+        "description": "Degrees, universities and GPAs"
+      },
+      "tests": {
+        "title": "Language tests",
+        "description": "IELTS, TOEFL, GRE, …"
+      },
+      "publications": {
+        "title": "Papers and books",
+        "description": "Published or submitted papers, books you wrote or translated"
+      },
+      "work": {
+        "title": "Work experience",
+        "description": "Jobs, internships, TA and RA"
+      },
+      "contact": {
+        "title": "Contact links",
+        "description": "LinkedIn, GitHub, website"
+      },
+      "awards": {
+        "title": "Honours and awards",
+        "description": "Olympiad medals, exam ranks, championships"
+      },
+      "courses": {
+        "title": "Selected courses",
+        "description": "3 to 5 courses with good grades"
+      },
+      "certificates": {
+        "title": "Courses and certificates",
+        "description": "Online and in-person classes"
+      },
+      "memberships": {
+        "title": "Memberships",
+        "description": "Associations and groups"
+      },
+      "skills": {
+        "title": "Skills and hobbies",
+        "description": "Scientific · Personal · Extracurricular"
+      },
+      "references": {
+        "title": "References",
+        "description": "2 to 3 professors or employers"
+      },
+      "interests": {
+        "title": "Research interests",
+        "description": "Taken from your file"
+      }
+    },
+    "field": {
+      "template": "Where is the CV for?",
+      "name": "Name & Surname",
+      "sex": "Sex",
+      "date_of_birth": "Date of Birth",
+      "phone_number": "Phone Number",
+      "email": "Email Address",
+      "city": "Address of Residence",
+      "pass_photo": "Passport photo",
+      "educations": "Education",
+      "english_tests": "Language tests",
+      "publications": "Publications",
+      "books": "Books you wrote or translated",
+      "work_experiences": "Work Experience",
+      "contact_info": "Contact Info",
+      "appreciations": "Honors & Awards",
+      "courses": "Selected Courses",
+      "certificates": "Certificates",
+      "memberships": "Memberships",
+      "scientific_skills": "Scientific Skills",
+      "personal_skills": "Personal Skills",
+      "extracurricular_activities": "Extracurricular Activities",
+      "cv_references": "References",
+      "research_interests": "Research interests"
+    },
+    "help": {
+      "template": "The two look different and can't stand in for each other.",
+      "city": "City and country you live in, in English. For example: Isfahan, Iran",
+      "pass_photo": "Front-facing, well lit, no glasses; JPG or PNG up to 5 MB.",
+      "research_interests": "The email bot and your CV writer use this list.",
+      "scientific_skills": "Programming languages, software, lab methods, … in English.",
+      "personal_skills": "For example: Teamwork, Public speaking",
+      "extracurricular_activities": "Sport, music, volunteering, …",
+      "work_experiences": {
+        "description": "What you did there, briefly and in English (up to 256 characters)."
+      },
+      "english_tests": {
+        "description": "Listening, Reading, Writing, Speaking"
+      }
+    },
+    "option": {
+      "template": {
+        "na": "USA and Canada",
+        "eu": "Europe"
+      },
+      "sex": {
+        "1": "Male",
+        "2": "Female"
+      },
+      "level": {
+        "1": "PhD",
+        "2": "MSc",
+        "3": "BSc",
+        "4": "Pre-university (year 12)",
+        "5": "High School Diploma"
+      },
+      "publicationStatus": {
+        "p": "Published",
+        "a": "Accepted",
+        "ur": "Under Review",
+        "s": "Submitted",
+        "us": "Under Submission",
+        "up": "Under Preparation"
+      },
+      "bookStatus": {
+        "p": "Published",
+        "b": "Book in Print",
+        "up": "Under Preparation"
+      },
+      "translation": {
+        "false": "Written",
+        "true": "Translated"
+      }
+    },
+    "item": {
+      "educations": {
+        "level": "Education Level",
+        "name": "University / School",
+        "study_field": "Field of Study",
+        "gpa": "GPA",
+        "start_date": "Starting Date",
+        "end_date": "Ending Date",
+        "city": "City",
+        "thesis_title": "Thesis Title",
+        "thesis_supervisor": "Thesis Supervisor"
+      },
+      "english_tests": {
+        "title": "Test",
+        "score": "Score",
+        "date_of_receipt": "Date",
+        "description": "Sub-scores"
+      },
+      "publications": {
+        "title": "Title",
+        "authors": "Authors",
+        "journal": "Journal / Conference",
+        "status": "Paper Status",
+        "published_date": "Publication Date",
+        "hyperlink": "Hyperlink or DOI",
+        "description": "More details"
+      },
+      "books": {
+        "title": "Title",
+        "authors": "Authors",
+        "is_translation": "Written or translated",
+        "translators": "Translators",
+        "publication": "Publisher",
+        "status": "Status",
+        "publication_date": "Publication Date",
+        "isbn": "ISBN"
+      },
+      "work_experiences": {
+        "position": "Your Position",
+        "place": "Work Place",
+        "start_date": "Starting Date",
+        "end_date": "Ending Date",
+        "city": "City",
+        "description": "Description"
+      },
+      "contact_info": {
+        "title": "Title",
+        "info": "Address or link"
+      },
+      "appreciations": {
+        "title": "Title",
+        "place": "Awarded by",
+        "date": "Date"
+      },
+      "courses": {
+        "title": "Course Name",
+        "grade": "Grade",
+        "professor_name": "Professor Name",
+        "description": "Description"
+      },
+      "certificates": {
+        "title": "Title",
+        "place_of_issue": "Place of Issue",
+        "date_of_issue": "Date of Issue"
+      },
+      "memberships": {
+        "name": "Organization Name",
+        "city": "City",
+        "start_date": "Starting Date",
+        "end_date": "Ending Date",
+        "description": "Description"
+      },
+      "cv_references": {
+        "professor_name": "Name",
+        "position": "Position",
+        "university_name": "University or Organization",
+        "department_name": "Department",
+        "email": "Academic / Work Email"
+      }
+    },
+    "add": {
+      "educations": "Add a degree",
+      "english_tests": "Add a language test",
+      "publications": "Add a paper",
+      "books": "Add a book",
+      "work_experiences": "Add work experience",
+      "contact_info": "Add a contact link",
+      "appreciations": "Add an award",
+      "courses": "Add a course",
+      "certificates": "Add a certificate",
+      "memberships": "Add a membership",
+      "cv_references": "Add a reference"
+    }
+  }
+}

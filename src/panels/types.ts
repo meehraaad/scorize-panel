@@ -33,7 +33,16 @@ export interface PanelDefinition {
   navigation: readonly NavItem[];
   /** Child routes, relative to `path`. Pages must be lazy (see lazyPage). */
   routes: RouteObject[];
+  /**
+   * A hook: ids of nav items to show with a lock (still reachable: the page explains why and
+   * shows a preview). The applicant panel locks its sections until there is a contract.
+   */
+  useLockedNav?: () => ReadonlySet<string>;
 }
+
+const NO_LOCKS: ReadonlySet<string> = new Set();
+/** For panels without locks. */
+export const useNoLockedNav = () => NO_LOCKS;
 
 /** Router path of a panel page, e.g. panelHref(supervisor, 'files') → '/supervisor/files'. */
 export function panelHref(panel: Pick<PanelDefinition, 'path'>, to = '') {

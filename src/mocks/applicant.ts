@@ -1,0 +1,1559 @@
+import { http, HttpResponse } from 'msw';
+import type {
+  Application,
+  ApplicationsData,
+  ProfessorEmail,
+  ProfessorEmailPage,
+  VisaResult,
+} from '@/features/applications/api';
+import type { ContractData, PaymentData, ProfileField } from '@/features/contract/api';
+import type { CaseFile, DocumentsData, RequiredDocument } from '@/features/documents/api';
+import type { AccessState, ApplicantAccess, CallRequest } from '@/lib/applicant/access';
+import type { TurkeyAnswers, TurkeyCase, TurkeyDocument } from '@/features/turkey/api';
+import type { ApplicantOverview, ApplicationSummary } from '@/features/home/api';
+import type { WritingForm } from '@/features/writing/api';
+import type {
+  Faq,
+  MessagePage,
+  Priority,
+  TicketMessage,
+  TicketThread,
+  TicketsOverview,
+} from '@/lib/tickets/api';
+import { cvForm } from '@/features/writing/cvForm';
+import {
+  isField,
+  missingInForm,
+  type Answers,
+  type FormSpec,
+  type FormType,
+} from '@/features/writing/formSpec';
+import { sopForm } from '@/features/writing/sopForm';
+import { forbidden, notFound, storage } from './session';
+
+/**
+ * Fake applicant-panel API (docs/backend-changes.md H1–H35). Only Sara (user 1) has a case; anyone
+ * else gets 404, like Django for a user without an Applicant. Her applications and documents are
+ * the one source for the home page's deadlines, progress and tasks too, so a change shows up on
+ * every page.
+ */
+
+const SARA = 1;
+const BASE = '/api/applicant/v1';
+
+const daysFromNow = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString();
+const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
+
+const app = (
+  id: number,
+  university: string,
+  program: string,
+  deadlineInDays: number,
+  approval: Application['approval'],
+  result: Application['result'],
+  fee: Application['fee'],
+  payment: Application['payment'],
+  extra: Partial<Application> = {},
+): Application => ({
+  id,
+  university,
+  degree: 2,
+  program,
+  deadline: daysFromNow(deadlineInDays),
+  result,
+  approval,
+  fee,
+  payment,
+  supervisor_note: null,
+  showcase: null,
+  ...extra,
+});
+
+const cad = (amount: number) => ({ amount, currency: 'CAD' });
+
+function saraApplications(): Application[] {
+  return [
+    app(
+      102,
+      'McGill University',
+      'Computer Science',
+      32,
+      'pending',
+      'completed',
+      cad(120),
+      'pending',
+    ),
+    app(
+      104,
+      'University of Waterloo',
+      'Data Science',
+      48,
+      'pending',
+      'completed',
+      cad(125),
+      'pending',
+    ),
+    app(105, 'TU Munich', 'Informatics', -21, 'approved', 'accepted', null, 'waived', {
+      supervisor_note:
+        'نامه‌ی پذیرش در ایمیل شما آمده. مهلت قبول پیشنهاد ۱۵ آذر است. برای قسط «بعد از پذیرش» هم پیامک دریافت می‌کنید.',
+    }),
+    app(
+      101,
+      'University of Toronto',
+      'Computer Science',
+      18,
+      'approved',
+      'completed',
+      cad(125),
+      'pending',
+    ),
+    app(103, 'UBC', 'Data Science', 32, 'approved', 'submitted', cad(168), 'paid'),
+    app(
+      106,
+      'RWTH Aachen',
+      'Data Science',
+      -21,
+      'approved',
+      'waiting_for_recommendation',
+      { amount: 75, currency: 'EUR' },
+      'paid',
+      {
+        supervisor_note:
+          'یکی از دو توصیه‌نامه هنوز ارسال نشده. لطفاً به استاد دومتان یادآوری کنید.',
+      },
+    ),
+    app(
+      107,
+      'University of Edinburgh',
+      'Artificial Intelligence',
+      -11,
+      'approved',
+      'rejected',
+      { amount: 90, currency: 'GBP' },
+      'paid',
+    ),
+    app(
+      108,
+      'University of Alberta',
+      'Computing Science',
+      60,
+      'approved',
+      'incomplete_documents',
+      cad(125),
+      'paid',
+      {
+        supervisor_note:
+          'برای این اپلای ریز نمرات با ترجمه‌ی رسمی لازم است. بعد از آپلود، اپلای را ارسال می‌کنیم.',
+      },
+    ),
+    app(109, 'TU Berlin', 'Computer Science', -30, 'approved', 'accepted', null, 'waived', {
+      showcase: true,
+    }),
+    app(
+      110,
+      'Concordia University',
+      'Computer Science',
+      70,
+      'approved',
+      'waiting_for_portal',
+      cad(100),
+      'pending',
+    ),
+    app(
+      111,
+      'Simon Fraser University',
+      'Computing Science',
+      55,
+      'approved',
+      'pending',
+      cad(125),
+      'paid',
+    ),
+    app(112, 'University of Ottawa', 'Computer Science', 40, 'rejected', null, cad(110), null),
+  ];
+}
+
+function saraVisa(): VisaResult[] {
+  const appointment = new Date(Date.now() + 40 * 86_400_000);
+  appointment.setHours(9, 30, 0, 0);
+  return [
+    {
+      id: 1,
+      title: 'ویزای تحصیلی آلمان',
+      destination: 'آلمان',
+      embassy: 'ترکیه (آنکارا)',
+      status: 'pending_appointment',
+      appointment_at: appointment.toISOString(),
+      resolved_at: null,
+      appointment_proof: '#',
+      note: 'اصل پاسپورت، نامه‌ی پذیرش و مدرک Blocked Account را همراه داشته باشید. ۳۰ دقیقه زودتر برسید.',
+    },
+  ];
+}
+
+/** 86 emails, 9 replies, like the design. */
+function saraProfessorEmails(): ProfessorEmail[] {
+  const pool: Omit<ProfessorEmail, 'id' | 'status'>[] = [
+    {
+      university: 'University of Toronto',
+      department: 'Computer Science',
+      interests: ['Machine Learning', 'Computer Vision', 'Robotics'],
+    },
+    {
+      university: 'McGill University',
+      department: 'Electrical & Computer Eng.',
+      interests: ['Deep Learning', 'Signal Processing'],
+    },
+    {
+      university: 'TU Munich',
+      department: 'Informatics',
+      interests: ['Data Mining', 'Graph Learning', 'NLP'],
+    },
+    {
+      university: 'University of Waterloo',
+      department: 'Statistics',
+      interests: ['Bayesian Methods', 'Causal Inference'],
+    },
+    {
+      university: 'UBC',
+      department: 'Computer Science',
+      interests: ['Reinforcement Learning', 'Optimization'],
+    },
+  ];
+  return Array.from({ length: 86 }, (_, index) => ({
+    id: index + 1,
+    ...(pool[index % pool.length] as (typeof pool)[number]),
+    status: index % 10 === 0 ? 'replied' : index % 3 === 1 ? 'reminded' : 'sent',
+  }));
+}
+
+function saraDocuments(): Omit<DocumentsData, 'progress'> {
+  const file = (
+    id: number,
+    name: string,
+    ext: string,
+    daysAgo: number,
+    source: CaseFile['source'] = 'me',
+    canDelete = false,
+  ): CaseFile => ({
+    id,
+    name,
+    url: '#',
+    ext,
+    uploaded_at: daysFromNow(-daysAgo),
+    source,
+    can_delete: canDelete,
+  });
+  return {
+    required: [
+      { id: 21, name: 'ریز نمرات کارشناسی (ترجمه‌ی رسمی)', deadline: daysFromNow(3), note: null },
+      {
+        id: 22,
+        name: 'توصیه‌نامه‌ی دوم',
+        deadline: daysFromNow(18),
+        note: 'نسخه‌ی قبلی امضا نداشت. لطفاً نسخه‌ی امضاشده روی سربرگ دانشگاه را بفرستید.',
+      },
+    ],
+    files: [
+      file(1, 'پاسپورت', 'PDF', 20, 'me', true),
+      file(2, 'مدرک زبان IELTS', 'PDF', 1, 'me', true),
+      file(3, 'عکس پرسنلی', 'JPG', 20, 'me', true),
+      file(4, 'دانشنامه‌ی کارشناسی', 'PDF', 18),
+      file(5, 'توصیه‌نامه‌ی اول', 'PDF', 14),
+      file(6, 'سوابق کاری', 'PDF', 12),
+      file(7, 'کارت ملی', 'JPG', 30),
+      file(8, 'شناسنامه', 'PDF', 30),
+      file(9, 'لیست دانشگاه‌های پیشنهادی', 'PDF', 10, 'team'),
+      file(10, 'لیست اساتید', 'PDF', 7, 'team'),
+    ],
+    writing: [
+      { type: 'sop', step: 'form', delivered_at: null, file_url: null },
+      { type: 'cv', step: 'form', delivered_at: null, file_url: null },
+    ],
+    interests: ['Machine Learning', 'Computer Vision', 'Graph Neural Networks', 'Explainable AI'],
+  };
+}
+
+function saraSop(): WritingForm {
+  return {
+    is_final: false,
+    final_at: null,
+    updated_at: hoursAgo(26),
+    contact_phone: '09120000000',
+    orders: ['sop', 'cv'],
+    answers: {
+      grade: 1,
+      field_of_study: 'مهندسی کامپیوتر',
+      university_1: 'صنعتی اصفهان',
+      Rate_1: '۱۷٫۲۵',
+      field_of_study_for_apply: "Master's · Computer Science",
+      university_for_apply: 'University of Toronto',
+      city_for_apply: 'کانادا',
+      general_sop: false,
+      reason:
+        'از ترم دوم با درس برنامه‌نویسی پیشرفته علاقه‌مند شدم. پروژه‌ی پایان ترم یک سیستم تشخیص پلاک بود که برای اولین بار نشان داد یادگیری ماشین چطور مسئله‌های واقعی را حل می‌کند.',
+      interest:
+        'درس‌های هوش مصنوعی (۱۹)، ساختمان داده (۱۸٫۵) و آمار و احتمال (۱۸). به Python و PyTorch مسلط هستم.',
+    },
+  };
+}
+
+/** The CV half filled in: personal details, one degree and one test; no photo yet. */
+function saraCv(): WritingForm {
+  return {
+    is_final: false,
+    final_at: null,
+    updated_at: hoursAgo(3),
+    contact_phone: '09120000000',
+    orders: ['sop', 'cv'],
+    answers: {
+      template: 'na',
+      name: 'Sara Ahmadi',
+      sex: 2,
+      date_of_birth: '1999-04-12',
+      phone_number: '+989120000000',
+      email: 'sara.ahmadi@scorize.local',
+      city: 'Isfahan, Iran',
+      pass_photo: null,
+      educations: [
+        {
+          id: 1,
+          level: 3,
+          name: 'Isfahan University of Technology',
+          study_field: 'Computer Engineering',
+          gpa: '17.25',
+          start_date: '2017-09',
+          end_date: '2021-07',
+          city: 'Isfahan',
+          thesis_title: 'License plate recognition with deep learning',
+          thesis_supervisor: 'Dr. Karimi',
+        },
+      ],
+      english_tests: [
+        {
+          id: 1,
+          title: 'IELTS Academic',
+          score: '6.5',
+          date_of_receipt: '2026-09',
+          description: 'L 7, R 7, W 6.5, S 6',
+        },
+      ],
+      scientific_skills: 'Python, PyTorch, C++, Git, LaTeX',
+    },
+  };
+}
+
+const SPECS: Record<FormType, FormSpec> = { sop: sopForm, cv: cvForm };
+const isFormType = (value: unknown): value is FormType => value === 'sop' || value === 'cv';
+
+/**
+ * Answers Django would refuse: names the form doesn't have, text longer than its column, or a
+ * list that isn't a list of entries. Read-only parts (photo, research interests) can't be sent.
+ */
+function invalidAnswers(spec: FormSpec, answers: Answers) {
+  const parts = new Map(
+    spec.sections.flatMap((section) => section.parts).map((part) => [part.name, part]),
+  );
+  return Object.entries(answers).filter(([name, value]) => {
+    const part = parts.get(name);
+    if (!part || part.kind === 'photo' || part.kind === 'interests') return true;
+    if (part.kind === 'list') {
+      if (!Array.isArray(value)) return true;
+      return value.some((item) => {
+        if (typeof item !== 'object') return true;
+        return Object.entries(item).some(([field, entry]) => {
+          if (field === 'id') return false;
+          const spec = part.fields.find((candidate) => candidate.name === field);
+          return (
+            !spec || (typeof entry === 'string' && entry.length > (spec.maxLength ?? Infinity))
+          );
+        });
+      });
+    }
+    return (
+      isField(part) && typeof value === 'string' && value.length > (part.maxLength ?? Infinity)
+    );
+  });
+}
+
+/** List entries get ids once stored, like Django's related rows. */
+let nextEntryId = 1000;
+function storeLists(answers: Answers) {
+  for (const value of Object.values(answers))
+    if (Array.isArray(value))
+      for (const item of value)
+        if (typeof item === 'object' && item.id === undefined) item.id = nextEntryId++;
+  return answers;
+}
+
+/** Required documents that get a task on the home page: due this soon. */
+const UPLOAD_TODO_DAYS = 14;
+
+/** What the applicant sees for one application on the home page (server-side mapping). */
+function summary(item: Application): ApplicationSummary {
+  const status: ApplicationSummary['status'] =
+    item.approval === 'pending'
+      ? 'awaiting_approval'
+      : item.approval === 'rejected' || item.result === 'rejected'
+        ? 'rejected'
+        : item.result === 'accepted'
+          ? 'accepted'
+          : item.result === 'submitted'
+            ? 'submitted'
+            : item.result === 'completed'
+              ? 'ready'
+              : 'in_progress';
+  return {
+    id: item.id,
+    university: item.university,
+    degree: item.degree,
+    program: item.program,
+    deadline: item.deadline,
+    status,
+    fee: item.fee,
+    fee_paid: item.payment === 'paid' || item.payment === 'waived',
+  };
+}
+
+interface SaraState {
+  applications: Application[];
+  documents: Omit<DocumentsData, 'progress'>;
+  writing: Record<FormType, WritingForm>;
+  /** Uploaded file id → the required document it answers (asked for again if deleted). */
+  answers: Map<number, RequiredDocument>;
+  visa: VisaResult[];
+  professors: ProfessorEmail[];
+  /** One conversation per department (SupervisorTicket rows; SopResumeTicket rows per order). */
+  threads: MockThread[];
+  contract: ContractData;
+  /** Invoices: the contract's instalments and purchases from "other services". */
+  payments: PaymentData[];
+}
+
+function saraState(): SaraState {
+  return {
+    applications: saraApplications(),
+    documents: saraDocuments(),
+    writing: { sop: saraSop(), cv: saraCv() },
+    answers: new Map(),
+    visa: saraVisa(),
+    professors: saraProfessorEmails(),
+    threads: saraThreads(),
+    contract: saraContract(),
+    payments: saraPayments(),
+  };
+}
+
+// region Contract and payments (H22–H27)
+
+const SARA_FILE = 1240;
+const SELLER = 'نیلوفر شریفی';
+/** Placeholders until the team gives the real account (docs/backend-changes.md, content). */
+const BANK = {
+  card: 'XXXX XXXX XXXX XXXX',
+  iban: 'IR00 0000 0000 0000 0000 0000 00',
+  holder: 'شرکت اسکورایز',
+};
+
+function saraContract(): ContractData {
+  return {
+    number: SARA_FILE,
+    holder: 'سارا احمدی',
+    kind: 'standard',
+    status: 'active',
+    features: ['admission', 'writing', 'visa'],
+    countries: ['کانادا', 'آلمان'],
+    degrees: [2],
+    applies_total: 15,
+    total_amount: 180_000_000,
+    start_date: daysFromNow(-241),
+    end_date: daysFromNow(124),
+    pledge_signed_at: null,
+    installments: [
+      {
+        id: 1,
+        number: 0,
+        amount: 60_000_000,
+        status: 'paid',
+        due_date: null,
+        condition: 'پیش‌پرداخت',
+        note: null,
+        paid_at: daysFromNow(-241),
+        payment_id: 505,
+      },
+      {
+        id: 2,
+        number: 1,
+        amount: 30_000_000,
+        status: 'paid',
+        due_date: daysFromNow(-150),
+        condition: null,
+        note: null,
+        paid_at: daysFromNow(-151),
+        payment_id: 506,
+      },
+      {
+        id: 3,
+        number: 2,
+        amount: 45_000_000,
+        status: 'due',
+        due_date: null,
+        condition: 'بعد از پذیرش',
+        note: 'پذیرش TU Munich ثبت شد',
+        paid_at: null,
+        payment_id: 501,
+      },
+      {
+        id: 4,
+        number: 3,
+        amount: 45_000_000,
+        status: 'upcoming',
+        due_date: null,
+        condition: 'بعد از دریافت ویزا',
+        note: null,
+        paid_at: null,
+        payment_id: null,
+      },
+    ],
+    profile: {
+      file_id: String(SARA_FILE),
+      name: 'سارا احمدی',
+      email: 'sara.ahmadi@scorize.local',
+      phone: '09120000000',
+      national_id: '1270000000',
+      birth_date: '1998-04-12',
+      passport_name: 'Sara Ahmadi',
+      postal_code: null,
+      home_phone: '03132000000',
+      address_en: 'No. 12, Bahar St., Isfahan',
+      relative_name: 'مریم احمدی',
+      relative_phone: '09130000000',
+      relative_email: null,
+    },
+    editable: [
+      'phone',
+      'national_id',
+      'passport_name',
+      'postal_code',
+      'home_phone',
+      'address_en',
+      'relative_name',
+      'relative_phone',
+      'relative_email',
+    ],
+    files: [
+      { id: 1, kind: 'contract', url: '#', ext: 'PDF', date: daysFromNow(-241) },
+      { id: 2, kind: 'customer_form', url: '#', ext: 'PDF', date: daysFromNow(-241) },
+      { id: 3, kind: 'terms', url: '#', ext: 'HTML', date: daysFromNow(-241) },
+    ],
+    consultant: SELLER,
+  };
+}
+
+const invoice = (id: number, extra: Partial<PaymentData>): PaymentData => ({
+  id,
+  status: 'unpaid',
+  method: null,
+  installment: null,
+  items: [],
+  total: 0,
+  credit_used: 0,
+  amount: 0,
+  created_at: hoursAgo(26),
+  paid_at: null,
+  seller: SELLER,
+  receipt: null,
+  decline_reason: null,
+  bank: BANK,
+  ...extra,
+});
+
+/** Django writes item labels in the user's language; the fake writes Persian. */
+const fa = (value: number) => value.toLocaleString('fa-IR', { useGrouping: false });
+
+const instalmentInvoice = (
+  id: number,
+  number: number,
+  amount: number,
+  extra: Partial<PaymentData> = {},
+) =>
+  invoice(id, {
+    installment: number,
+    items: [
+      {
+        label:
+          number === 0
+            ? `پیش‌پرداخت قرارداد ${fa(SARA_FILE)}`
+            : `قسط ${fa(number)} قرارداد ${fa(SARA_FILE)}`,
+        amount,
+      },
+    ],
+    total: amount,
+    amount,
+    ...extra,
+  });
+
+/**
+ * 501: the due instalment. 502–504: a services purchase in each other state, to see every design
+ * state with `pnpm dev:mock` (/payments/502 online, 503 receipt in review, 504 receipt declined).
+ */
+function saraPayments(): PaymentData[] {
+  const services = [
+    { label: 'رزرو مشاوره', amount: 800_000 },
+    { label: 'سفارش نگارش', amount: 405_000 },
+  ];
+  return [
+    instalmentInvoice(501, 2, 45_000_000),
+    invoice(502, { items: services, total: 1_205_000, credit_used: 5_000, amount: 1_200_000 }),
+    invoice(503, {
+      status: 'review',
+      method: 'receipt',
+      items: services,
+      total: 1_205_000,
+      credit_used: 5_000,
+      amount: 1_200_000,
+      receipt: { url: '#', uploaded_at: hoursAgo(3) },
+    }),
+    invoice(504, {
+      status: 'declined',
+      method: 'receipt',
+      items: services,
+      total: 1_205_000,
+      credit_used: 5_000,
+      amount: 1_200_000,
+      receipt: { url: '#', uploaded_at: hoursAgo(30) },
+      decline_reason: 'مبلغ رسید با فاکتور یکی نبود.',
+    }),
+    instalmentInvoice(505, 0, 60_000_000, {
+      status: 'paid',
+      method: 'online',
+      paid_at: daysFromNow(-241),
+    }),
+    instalmentInvoice(506, 1, 30_000_000, {
+      status: 'paid',
+      method: 'receipt',
+      paid_at: daysFromNow(-151),
+    }),
+  ];
+}
+
+/** Same checks as the panel's form; Django validates again with its own messages. */
+const PROFILE_CHECKS: Partial<Record<ProfileField, RegExp>> = {
+  phone: /^09\d{9}$/,
+  relative_phone: /^09\d{9}$/,
+  national_id: /^\d{10}$/,
+  postal_code: /^\d{10}$/,
+  home_phone: /^0\d{10}$/,
+  relative_email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+};
+
+/** The instalment an invoice settles. */
+const installmentOf = (state: SaraState, payment: PaymentData) =>
+  state.contract.installments.find((item) => item.payment_id === payment.id);
+
+// endregion
+
+// region Tickets (H17–H21)
+
+interface MockThread extends Omit<TicketThread, 'unread'> {
+  messages: TicketMessage[];
+}
+
+/** Small on purpose, so "show earlier messages" appears with the sample data (Django: 20). */
+const TICKET_PAGE = 5;
+
+/** `days` ago (0 = today) at a clock time, so the conversation falls on known days. */
+const at = (days: number, hour: number, minute: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  date.setHours(hour, minute, 0, 0);
+  return date.toISOString();
+};
+const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+
+const SARA_NAME = 'سارا احمدی';
+
+function ticket(
+  id: number,
+  from: { name: string; role: TicketMessage['role'] } | 'me',
+  sent_at: string,
+  text: string,
+  extra: Partial<TicketMessage> = {},
+): TicketMessage {
+  const mine = from === 'me';
+  return {
+    id,
+    mine,
+    author: mine ? SARA_NAME : from.name,
+    role: mine ? null : from.role,
+    sent_at,
+    text,
+    priority: 1,
+    attachment: null,
+    seen: true,
+    rating: null,
+    auto: false,
+    ...extra,
+  };
+}
+
+const MARYAM = { name: 'مریم کاظمی', role: 'supervisor' as const };
+const HOSSEIN = { name: 'حسین رحیمی', role: 'supervisor' as const };
+const ELHAM = { name: 'الهام رضوی', role: 'writer' as const };
+const file = (name: string) => ({ name, url: '#' });
+
+function saraThreads(): MockThread[] {
+  return [
+    {
+      id: 'supervisor',
+      department: 'supervisor',
+      writing: null,
+      team: [MARYAM, HOSSEIN],
+      messages: [
+        ticket(1, 'me', at(12, 11, 0), 'سلام. فرم اطلاعات انگیزه‌نامه را از کجا پر کنم؟'),
+        ticket(
+          2,
+          MARYAM,
+          at(12, 13, 20),
+          'سلام سارا، از صفحه‌ی «مدارک و نگارش»، کارت انگیزه‌نامه. پیش‌نویس خودکار ذخیره می‌شود.',
+          { rating: 4 },
+        ),
+        ticket(
+          3,
+          'me',
+          at(3, 10, 12),
+          'سلام. توصیه‌نامه‌ی دوم را از دکتر احمدی گرفتم. همین را آپلود کنم یا باید روی سربرگ باشد؟',
+        ),
+        ticket(
+          4,
+          MARYAM,
+          at(3, 10, 12),
+          'سلام، تا ساعت ۱۴ در جلسه هستم و بعد از آن پاسخ می‌دهم. برای موارد فوری، اولویت «خیلی ضروری» را انتخاب کنید.',
+          { auto: true },
+        ),
+        ticket(
+          5,
+          MARYAM,
+          at(3, 14, 30),
+          'حتماً روی سربرگ دانشگاه و با امضا باشد. نمونه‌ی درست را پیوست کردم.',
+          { attachment: file('recommendation-sample.pdf'), rating: 5 },
+        ),
+        ticket(
+          6,
+          'me',
+          minutesAgo(40),
+          'نمره‌ی آیلتس من ۶.۵ شد. کارنامه را پیوست کردم. برای تورنتو کافی است؟',
+          { attachment: file('IELTS-result.pdf') },
+        ),
+        ticket(
+          7,
+          HOSSEIN,
+          minutesAgo(20),
+          'بله، برای تورنتو کافی است. برای McGill هم نمره‌ی Writing باید حداقل ۶.۵ باشد که هست. کارنامه را در پرونده ثبت کردم.',
+          { seen: false },
+        ),
+      ],
+    },
+    // One thread per writing order of the contract (Sara: SOP and CV). No writer on the SOP yet.
+    { id: 'writing/sop', department: 'writing', writing: 'sop', team: [], messages: [] },
+    {
+      id: 'writing/cv',
+      department: 'writing',
+      writing: 'cv',
+      team: [ELHAM],
+      messages: [
+        ticket(
+          101,
+          ELHAM,
+          at(4, 11, 5),
+          'نسخه‌ی اول رزومه آماده شد و در بخش مدارک قرار گرفت. اگر ایرادی هست، موارد را مکتوب بنویسید.',
+          { attachment: file('Sara-Ahmadi-CV-v1.pdf'), rating: 4 },
+        ),
+        ticket(
+          102,
+          'me',
+          at(4, 18, 40),
+          'در بخش مقاله‌ها، تاریخ انتشار مقاله‌ی دوم باید 2024 باشد. ایمیل دکتر احمدی هم اشتباه درج شده است.',
+        ),
+        ticket(103, ELHAM, minutesAgo(90), 'هر دو مورد اصلاح شد. نسخه‌ی نهایی برایتان آپلود شد.', {
+          attachment: file('Sara-Ahmadi-CV-final.pdf'),
+          seen: false,
+        }),
+      ],
+    },
+  ];
+}
+
+/** Placeholders: the real questions and answers come from the team (FAQ rows in Django). */
+const FAQS: Faq[] = [
+  {
+    id: 1,
+    department: 'supervisor',
+    question: 'تا الان چند ایمیل برای استادها فرستاده شده؟',
+    answer:
+      'تعداد ایمیل‌ها و پاسخ استادها را در صفحه‌ی «اپلای‌ها و نتایج»، بخش ایمیل به استادها ببینید.',
+  },
+  {
+    id: 2,
+    department: 'supervisor',
+    question: 'چه زمانی نتیجه‌ی اپلای مشخص می‌شود؟',
+    answer: '[پاسخ: از تیم پشتیبانی]',
+  },
+  {
+    id: 3,
+    department: 'supervisor',
+    question: 'اپلیکیشن فی را چطور پرداخت کنم؟',
+    answer: '[پاسخ: از تیم پشتیبانی]',
+  },
+  {
+    id: 4,
+    department: 'supervisor',
+    question: 'چطور مدرکی را که اشتباه آپلود کرده‌ام عوض کنم؟',
+    answer: '[پاسخ: از تیم پشتیبانی]',
+  },
+  {
+    id: 5,
+    department: 'supervisor',
+    question: 'پاسخ تیکت‌ها چقدر طول می‌کشد؟',
+    answer: '[پاسخ: از تیم پشتیبانی]',
+  },
+  {
+    id: 6,
+    department: 'writing',
+    question: 'تا چه مدت بعد از تحویل می‌توانم اصلاح بخواهم؟',
+    answer: '[پاسخ: از تیم نگارش]',
+  },
+  {
+    id: 7,
+    department: 'writing',
+    question: 'نسخه‌ی نهایی را از کجا دانلود کنم؟',
+    answer: '[پاسخ: از تیم نگارش]',
+  },
+];
+
+const unreadOf = (thread: MockThread) =>
+  thread.messages.filter((message) => !message.mine && !message.seen).length;
+
+const isPriority = (value: number): value is Priority => [0, 1, 2, 3].includes(value);
+
+/** `:type` present → a writing thread, else the supervisors'. */
+const threadIdOf = (params: Record<string, string | readonly string[] | undefined>) =>
+  typeof params.type === 'string' ? `writing/${params.type}` : 'supervisor';
+
+function threadOrError(params: Record<string, string | readonly string[] | undefined>) {
+  const state = caseOrError();
+  if (failed(state)) return state;
+  return state.threads.find((thread) => thread.id === threadIdOf(params)) ?? notFound();
+}
+
+const THREADS = [`${BASE}/tickets/supervisor`, `${BASE}/tickets/writing/:type`];
+
+const ticketHandlers = [
+  http.get(`${BASE}/tickets/`, () => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const body: TicketsOverview = {
+      threads: state.threads.map((thread) => {
+        const { messages: _messages, ...rest } = thread;
+        return { ...rest, unread: unreadOf(thread) };
+      }),
+      faqs: FAQS,
+    };
+    return HttpResponse.json(body);
+  }),
+
+  ...THREADS.flatMap((path) => [
+    // Newest page first; `before` = the oldest message id already shown.
+    http.get(`${path}/messages/`, ({ params, request }) => {
+      const thread = threadOrError(params);
+      if (thread instanceof Response) return thread;
+      const before = Number(new URL(request.url).searchParams.get('before')) || Infinity;
+      const older = thread.messages.filter((message) => message.id < before);
+      const body: MessagePage = {
+        messages: older.slice(-TICKET_PAGE),
+        has_more: older.length > TICKET_PAGE,
+      };
+      return HttpResponse.json(body);
+    }),
+
+    http.post(`${path}/messages/`, async ({ params, request }) => {
+      const thread = threadOrError(params);
+      if (thread instanceof Response) return thread;
+      const form = await request.formData();
+      const text = form.get('message');
+      const priority = Number(form.get('priority') ?? 1);
+      const attachment = form.get('attachment');
+      if (typeof text !== 'string' || !text.trim())
+        return HttpResponse.json({ message: ['required'] }, { status: 400 });
+      if (!isPriority(priority))
+        return HttpResponse.json({ priority: ['invalid'] }, { status: 400 });
+      if (attachment instanceof File && attachment.size > 10 * 1024 * 1024)
+        return HttpResponse.json({ attachment: ['too_big'] }, { status: 400 });
+      const ids = thread.messages.map((message) => message.id);
+      const message = ticket(
+        Math.max(thread.id === 'supervisor' ? 0 : 100, ...ids) + 1,
+        'me',
+        new Date().toISOString(),
+        text.trim(),
+        {
+          priority,
+          seen: false,
+          attachment: attachment instanceof File ? file(attachment.name) : null,
+        },
+      );
+      // Writing back means the sender read the thread.
+      thread.messages.forEach((item) => {
+        if (!item.mine) item.seen = true;
+      });
+      thread.messages.push(message);
+      return HttpResponse.json(message, { status: 201 });
+    }),
+
+    http.post(`${path}/seen/`, ({ params }) => {
+      const thread = threadOrError(params);
+      if (thread instanceof Response) return thread;
+      thread.messages.forEach((message) => {
+        if (!message.mine) message.seen = true;
+      });
+      return new HttpResponse(null, { status: 204 });
+    }),
+
+    http.post(`${path}/messages/:id/rating/`, async ({ params, request }) => {
+      const thread = threadOrError(params);
+      if (thread instanceof Response) return thread;
+      const message = thread.messages.find((item) => item.id === Number(params.id));
+      if (!message || message.mine || message.auto) return notFound();
+      const { score } = (await request.json()) as { score: number };
+      if (!(score >= 1 && score <= 5))
+        return HttpResponse.json({ score: ['invalid'] }, { status: 400 });
+      message.rating = score;
+      return new HttpResponse(null, { status: 204 });
+    }),
+  ]),
+];
+
+// endregion
+
+const WRITING_STEP = { form: 1, writing: 2, ready: 3 } as const;
+
+/** Uploaded own files count as delivered required documents. */
+const progressOf = (state: SaraState) => {
+  const uploaded = state.documents.files.filter((item) => item.source === 'me').length;
+  return { uploaded, required: uploaded + state.documents.required.length };
+};
+
+function overviewOf(state: SaraState): ApplicantOverview {
+  const now = Date.now();
+  const upcoming = state.applications
+    .map(summary)
+    .filter(
+      (item) =>
+        item.deadline !== null &&
+        new Date(item.deadline).getTime() > now &&
+        item.status !== 'rejected' &&
+        item.status !== 'accepted',
+    )
+    .sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? ''));
+  return {
+    file: {
+      applicant_id: 1240,
+      features: ['admission', 'writing', 'visa'],
+      countries: ['کانادا', 'آلمان'],
+      degrees: [2],
+      applies_used: state.applications.length,
+      applies_total: 15,
+      start_date: daysFromNow(-241),
+      end_date: daysFromNow(124),
+      stage: 'apply',
+    },
+    stats: {
+      submitted: state.applications.length,
+      accepted: state.applications.filter((item) => item.result === 'accepted').length,
+    },
+    todos: [
+      ...state.applications
+        .filter((item) => item.approval === 'pending')
+        .map((item) => ({
+          kind: 'approve' as const,
+          id: `approve-${String(item.id)}`,
+          application: summary(item),
+        })),
+      ...state.documents.required
+        .filter(
+          (item) =>
+            item.deadline !== null &&
+            new Date(item.deadline).getTime() - now < UPLOAD_TODO_DAYS * 86_400_000,
+        )
+        .map((item) => ({
+          kind: 'upload' as const,
+          id: `upload-${String(item.id)}`,
+          document: item.name,
+          due_date: item.deadline,
+        })),
+      ...(state.documents.writing ?? [])
+        .filter((item) => item.step === 'form')
+        .map((item) => ({ kind: 'form' as const, id: `form-${item.type}`, writing: item.type })),
+    ],
+    ticket: (() => {
+      const supervisor = state.threads.find((thread) => thread.id === 'supervisor');
+      return supervisor
+        ? { unread: unreadOf(supervisor), messages: supervisor.messages.slice(-2) }
+        : null;
+    })(),
+    deadlines: upcoming.slice(0, 4),
+    // The first instalment still to pay, from the same contract the contract page shows.
+    installment: (() => {
+      const all = state.contract.installments;
+      const next = all.find((item) => item.status !== 'paid');
+      if (!next) return null;
+      return {
+        number: next.number,
+        count: all.length,
+        paid_count: all.filter((item) => item.status === 'paid').length,
+        amount: next.amount,
+        is_due: next.status === 'due',
+        condition:
+          [next.condition, next.note && `(${next.note})`].filter(Boolean).join(' ') || null,
+        payment_id: next.status === 'due' ? next.payment_id : null,
+      };
+    })(),
+    documents: {
+      ...progressOf(state),
+      next_due:
+        state.documents.required
+          .map((item) => item.deadline)
+          .filter((deadline) => deadline !== null)
+          .sort()[0] ?? null,
+    },
+    writing: (state.documents.writing ?? []).map((item) => ({
+      type: item.type,
+      step: WRITING_STEP[item.step],
+    })),
+    team: [
+      { name: 'مریم کاظمی', role: 'supervisor' },
+      { name: 'حسین رحیمی', role: 'supervisor' },
+      { name: 'نیلوفر شریفی', role: 'consultant' },
+    ],
+  };
+}
+
+let sara: SaraState | null = null;
+
+/** The logged-in user's case, or a 403/404 response. Rebuilt per login so dates stay current. */
+function caseOrError(): SaraState | Response {
+  const user = storage.get();
+  if (!user) return forbidden();
+  if (user !== SARA) return notFound();
+  sara ??= saraState();
+  return sara;
+}
+
+const failed = (value: SaraState | Response): value is Response => value instanceof Response;
+
+/**
+ * Dev knob for the locked previews (canvas V7): `localStorage['scorize.mock.access']` set to
+ * `pending` or `ended` changes the logged-in user's state; `noservice` keeps Sara active without
+ * admission services. Without it Sara is active and everyone else a guest.
+ */
+export const MOCK_ACCESS_KEY = 'scorize.mock.access';
+
+function accessOf(user: number): ApplicantAccess {
+  const knob = globalThis.localStorage.getItem(MOCK_ACCESS_KEY);
+  const sara = user === SARA;
+  const features: ApplicantAccess['features'] =
+    knob === 'noservice' ? ['writing', 'visa'] : ['admission', 'writing', 'visa'];
+  const state: AccessState =
+    knob === 'pending' || knob === 'ended' ? knob : sara ? 'active' : 'guest';
+  // A registered contract (in review) already has its services and countries.
+  const contract = state !== 'guest';
+  return {
+    state,
+    features: !contract ? [] : state === 'pending' ? ['admission', 'writing'] : features,
+    countries: contract ? ['کانادا', 'آلمان'] : [],
+    phone: sara ? '09120000000' : null,
+    turkey: (() => {
+      const step = turkeyCases.get(user)?.step;
+      return step === 'docs' || step === 'review' || step === 'sign' ? step : null;
+    })(),
+  };
+}
+
+// region Free Turkey application (H30–H35)
+
+/** The code the fake "texts" for the pledge. */
+export const MOCK_PLEDGE_CODE = '12345';
+
+/** Each user's Turkey request (any account may start one). */
+const turkeyCases = new Map<number, TurkeyCase>();
+
+const TURKEY_DOCS: Record<TurkeyAnswers['degree'], [string, string, boolean][]> = {
+  1: [
+    ['پاسپورت', 'PDF یا عکس واضح صفحه‌ی اول', true],
+    ['دیپلم و پیش‌دانشگاهی (ترجمه‌ی رسمی)', 'PDF', true],
+    ['ریز نمرات دبیرستان (ترجمه‌ی رسمی)', 'PDF، همه‌ی صفحه‌ها در یک فایل', true],
+    ['عکس پرسنلی', 'JPG یا PNG، زمینه‌ی روشن', true],
+    ['مدرک زبان (اگر دارید)', 'IELTS، TOEFL، Duolingo', false],
+  ],
+  2: [
+    ['پاسپورت', 'PDF یا عکس واضح صفحه‌ی اول', true],
+    ['دانشنامه‌ی کارشناسی (ترجمه‌ی رسمی)', 'PDF', true],
+    ['ریز نمرات کارشناسی (ترجمه‌ی رسمی)', 'PDF، همه‌ی صفحه‌ها در یک فایل', true],
+    ['عکس پرسنلی', 'JPG یا PNG، زمینه‌ی روشن', true],
+    ['مدرک زبان (اگر دارید)', 'IELTS، TOEFL، Duolingo', false],
+  ],
+  3: [
+    ['پاسپورت', 'PDF یا عکس واضح صفحه‌ی اول', true],
+    ['دانشنامه‌ی کارشناسی ارشد (ترجمه‌ی رسمی)', 'PDF', true],
+    ['ریز نمرات کارشناسی ارشد (ترجمه‌ی رسمی)', 'PDF، همه‌ی صفحه‌ها در یک فایل', true],
+    ['رزومه', 'PDF', true],
+    ['عکس پرسنلی', 'JPG یا PNG، زمینه‌ی روشن', true],
+    ['مدرک زبان (اگر دارید)', 'IELTS، TOEFL، Duolingo', false],
+  ],
+};
+
+/** Placeholder clauses until the legal team writes the pledge (docs/backend-changes.md C8). */
+const PLEDGE = {
+  version: '1405-draft',
+  clauses: [
+    { title: '۱. موضوع قرارداد', text: '[متن بند از تیم حقوقی]' },
+    { title: '۲. تعهدات اسکورایز', text: '[متن بند از تیم حقوقی]' },
+    { title: '۳. تعهدات متقاضی: ثبت‌نام نهایی از طریق اسکورایز', text: '[متن بند از تیم حقوقی]' },
+    { title: '۴. انصراف یا ثبت‌نام مستقیم', text: '[متن بند و پیامد آن از تیم حقوقی]' },
+  ],
+  code_length: MOCK_PLEDGE_CODE.length,
+};
+
+function turkeyOf(user: number): TurkeyCase {
+  let found = turkeyCases.get(user);
+  if (!found) {
+    found = {
+      step: 'start',
+      answers: null,
+      documents: [],
+      pledge: null,
+      phone: user === SARA ? '0912•••0000' : '0912•••0001',
+    };
+    turkeyCases.set(user, found);
+  }
+  return found;
+}
+
+/** Whether the fake team has sent the transcript back once (it approves the second upload). */
+const transcriptReturned = new Set<number>();
+
+/**
+ * The fake team reviews at once: the first transcript is sent back with a note, everything else is
+ * approved. Once all required documents are approved, the pledge opens.
+ */
+function reviewTurkey(user: number, found: TurkeyCase) {
+  for (const doc of found.documents) {
+    if (doc.status !== 'uploaded') continue;
+    if (doc.name.startsWith('ریز نمرات') && !transcriptReturned.has(user)) {
+      transcriptReturned.add(user);
+      Object.assign(doc, {
+        status: 'rejected',
+        note: 'صفحه‌ی دوم ریز نمرات در فایل نبود. لطفاً همه‌ی صفحه‌ها را در یک PDF بفرستید.',
+      });
+    } else Object.assign(doc, { status: 'approved', note: null });
+  }
+  const done = found.documents.every((doc) => !doc.required || doc.status === 'approved');
+  Object.assign(found, done ? { step: 'sign', pledge: PLEDGE } : { step: 'review' });
+}
+
+const turkeyHandlers = [
+  http.get(`${BASE}/turkey/`, () => {
+    const user = storage.get();
+    return user ? HttpResponse.json(turkeyOf(user)) : forbidden();
+  }),
+
+  http.post(`${BASE}/turkey/start/`, async ({ request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = turkeyOf(user);
+    if (found.step !== 'start') return HttpResponse.json({ detail: 'Started.' }, { status: 409 });
+    const answers = (await request.json()) as TurkeyAnswers;
+    if (![1, 2, 3].includes(answers.degree) || !answers.field.trim() || !answers.start_term.trim())
+      return HttpResponse.json({ detail: 'Invalid.' }, { status: 400 });
+    found.answers = answers;
+    found.documents = TURKEY_DOCS[answers.degree].map(
+      ([name, hint, required], index): TurkeyDocument => ({
+        id: index + 1,
+        name,
+        hint,
+        required,
+        status: 'missing',
+        file_name: null,
+        note: null,
+      }),
+    );
+    found.step = 'docs';
+    return new HttpResponse(null, { status: 201 });
+  }),
+
+  http.post(`${BASE}/turkey/documents/:id/upload/`, async ({ params, request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = turkeyOf(user);
+    const doc = found.documents.find((item) => item.id === Number(params.id));
+    if (!doc) return notFound();
+    if (doc.status === 'review' || doc.status === 'approved')
+      return HttpResponse.json({ detail: 'Locked.' }, { status: 409 });
+    const file = (await request.formData()).get('file');
+    if (!(file instanceof File) || file.size > 10 * 1024 * 1024)
+      return HttpResponse.json({ file: ['invalid'] }, { status: 400 });
+    Object.assign(doc, { status: 'uploaded', file_name: file.name, note: null });
+    return new HttpResponse(null, { status: 201 });
+  }),
+
+  http.post(`${BASE}/turkey/submit/`, () => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = turkeyOf(user);
+    if (found.step !== 'docs' && found.step !== 'review')
+      return HttpResponse.json({ detail: 'Not now.' }, { status: 409 });
+    if (
+      found.documents.some(
+        (doc) => doc.required && (doc.status === 'missing' || doc.status === 'rejected'),
+      )
+    )
+      return HttpResponse.json({ detail: 'Missing documents.' }, { status: 400 });
+    reviewTurkey(user, found);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/turkey/pledge/send-code/`, () => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    if (turkeyOf(user).step !== 'sign')
+      return HttpResponse.json({ detail: 'Not now.' }, { status: 409 });
+    return HttpResponse.json({ resend_in: 120 });
+  }),
+
+  http.post(`${BASE}/turkey/pledge/sign/`, async ({ request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = turkeyOf(user);
+    if (found.step !== 'sign') return HttpResponse.json({ detail: 'Not now.' }, { status: 409 });
+    const { code } = (await request.json()) as { code: string; version: string };
+    if (code !== MOCK_PLEDGE_CODE) return HttpResponse.json({ code: ['invalid'] }, { status: 400 });
+    // Django would create the applicant file and a free `turkey` contract here; the fake only
+    // records the step (the rest of the panel keeps showing Sara's or a guest's data).
+    Object.assign(found, { step: 'done', pledge: null });
+    return new HttpResponse(null, { status: 204 });
+  }),
+];
+
+// endregion
+
+/** Call requests sent from the panel (leads for the sales team), newest last. */
+export const callRequests: CallRequest[] = [];
+
+export const applicantHandlers = [
+  // Any logged-in user: guests get the panel too (locked previews).
+  http.get(`${BASE}/access/`, () => {
+    const user = storage.get();
+    return user ? HttpResponse.json(accessOf(user)) : forbidden();
+  }),
+
+  http.post(`${BASE}/call-request/`, async ({ request }) => {
+    if (!storage.get()) return forbidden();
+    const body = (await request.json()) as CallRequest;
+    if (!/^09\d{9}$/.test(body.phone))
+      return HttpResponse.json({ phone: ['invalid'] }, { status: 400 });
+    callRequests.push(body);
+    return new HttpResponse(null, { status: 201 });
+  }),
+
+  http.get(`${BASE}/overview/`, () => {
+    const state = caseOrError();
+    return failed(state) ? state : HttpResponse.json(overviewOf(state));
+  }),
+
+  http.get(`${BASE}/applications/`, () => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const data: ApplicationsData = {
+      applies: { used: state.applications.length, total: 15 },
+      results: state.applications,
+      visa: state.visa,
+    };
+    return HttpResponse.json(data);
+  }),
+
+  http.post(`${BASE}/applications/:id/approval/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const item = state.applications.find((candidate) => candidate.id === Number(params.id));
+    if (!item) return notFound();
+    if (item.approval !== 'pending')
+      return HttpResponse.json({ detail: 'Already decided.' }, { status: 409 });
+    const { approved } = (await request.json()) as { approved: boolean };
+    item.approval = approved ? 'approved' : 'rejected';
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/applications/:id/showcase/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const item = state.applications.find((candidate) => candidate.id === Number(params.id));
+    if (item?.result !== 'accepted') return notFound();
+    const { allowed } = (await request.json()) as { allowed: boolean };
+    item.showcase = allowed;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/professor-emails/`, ({ request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const params = new URL(request.url).searchParams;
+    const page = Number(params.get('page') ?? 1);
+    const size = Math.min(50, Number(params.get('page_size') ?? 15));
+    const pages = Math.max(1, Math.ceil(state.professors.length / size));
+    if (!(page >= 1 && page <= pages))
+      return HttpResponse.json({ detail: 'Invalid page.' }, { status: 404 });
+    const link = (target: number) =>
+      target >= 1 && target <= pages
+        ? `${BASE}/professor-emails/?page=${String(target)}&page_size=${String(size)}`
+        : null;
+    const data: ProfessorEmailPage = {
+      count: state.professors.length,
+      replied: state.professors.filter((item) => item.status === 'replied').length,
+      next: link(page + 1),
+      previous: link(page - 1),
+      results: state.professors.slice((page - 1) * size, page * size),
+    };
+    return HttpResponse.json(data);
+  }),
+
+  http.get(`${BASE}/documents/`, () => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const data: DocumentsData = { progress: progressOf(state), ...state.documents };
+    return HttpResponse.json(data);
+  }),
+
+  http.post(`${BASE}/documents/:id/upload/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const required = state.documents.required.find((item) => item.id === Number(params.id));
+    if (!required) return notFound();
+    const upload = (await request.formData()).get('file');
+    if (!(upload instanceof File) || upload.size > 10 * 1024 * 1024)
+      return HttpResponse.json({ file: ['invalid'] }, { status: 400 });
+    state.documents.required = state.documents.required.filter((item) => item !== required);
+    const id = Math.max(0, ...state.documents.files.map((item) => item.id)) + 1;
+    state.documents.files.unshift({
+      id,
+      name: required.name,
+      url: '#',
+      ext: (upload.name.split('.').pop() ?? 'pdf').toUpperCase(),
+      uploaded_at: new Date().toISOString(),
+      source: 'me',
+      can_delete: true,
+    });
+    state.answers.set(id, { ...required, note: null });
+    return new HttpResponse(null, { status: 201 });
+  }),
+
+  http.delete(`${BASE}/documents/files/:id/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const target = state.documents.files.find((item) => item.id === Number(params.id));
+    if (!target) return notFound();
+    if (!target.can_delete) return HttpResponse.json({ detail: 'Reviewed.' }, { status: 403 });
+    state.documents.files = state.documents.files.filter((item) => item !== target);
+    // Removing the file of a required document asks for it again, like Django clearing the field.
+    state.documents.required.push(
+      state.answers.get(target.id) ?? {
+        id: 100 + target.id,
+        name: target.name,
+        deadline: null,
+        note: null,
+      },
+    );
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put(`${BASE}/research-interests/`, async ({ request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const { interests } = (await request.json()) as { interests?: unknown };
+    if (
+      !Array.isArray(interests) ||
+      interests.length > 20 ||
+      !interests.every((item) => typeof item === 'string' && item.trim() && item.length <= 64)
+    )
+      return HttpResponse.json({ interests: ['invalid'] }, { status: 400 });
+    state.documents.interests = interests as string[];
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Writing information forms (SOP, CV): H12–H16. 404 for a type the contract doesn't include.
+  http.get(`${BASE}/writing/:type/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    if (!isFormType(params.type)) return notFound();
+    const form = state.writing[params.type];
+    // The CV shows the research interests from the documents page (read-only here).
+    const extra = params.type === 'cv' ? { research_interests: state.documents.interests } : {};
+    return HttpResponse.json({ ...form, answers: { ...form.answers, ...extra } });
+  }),
+
+  http.patch(`${BASE}/writing/:type/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    if (!isFormType(params.type)) return notFound();
+    const form = state.writing[params.type];
+    if (form.is_final) return HttpResponse.json({ detail: 'Final.' }, { status: 409 });
+    const body = (await request.json()) as { answers?: Answers; contact_phone?: string };
+    const invalid = invalidAnswers(SPECS[params.type], body.answers ?? {});
+    if (invalid.length)
+      return HttpResponse.json(
+        { answers: Object.fromEntries(invalid.map(([name]) => [name, ['invalid']])) },
+        { status: 400 },
+      );
+    if (body.contact_phone !== undefined && !/^09\d{9}$/.test(body.contact_phone))
+      return HttpResponse.json({ contact_phone: ['invalid'] }, { status: 400 });
+    form.answers = { ...form.answers, ...storeLists(body.answers ?? {}) };
+    // One number per order in Django: both forms show it.
+    if (body.contact_phone !== undefined)
+      for (const other of Object.values(state.writing)) other.contact_phone = body.contact_phone;
+    form.updated_at = new Date().toISOString();
+    return HttpResponse.json({ updated_at: form.updated_at });
+  }),
+
+  http.post(`${BASE}/writing/cv/pass_photo/`, async ({ request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const form = state.writing.cv;
+    if (form.is_final) return HttpResponse.json({ detail: 'Final.' }, { status: 409 });
+    const photo = (await request.formData()).get('pass_photo');
+    if (!(photo instanceof File) || !['image/jpeg', 'image/png'].includes(photo.type))
+      return HttpResponse.json({ pass_photo: ['invalid'] }, { status: 400 });
+    // A small placeholder picture stands for the stored file.
+    const url =
+      'data:image/svg+xml,' +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 110"><rect width="88" height="110" fill="#efeaf1"/><circle cx="44" cy="42" r="18" fill="#a69fad"/><rect x="18" y="68" width="52" height="34" rx="17" fill="#a69fad"/></svg>',
+      );
+    form.answers = { ...form.answers, pass_photo: url };
+    form.updated_at = new Date().toISOString();
+    return HttpResponse.json({ url, updated_at: form.updated_at }, { status: 201 });
+  }),
+
+  http.post(`${BASE}/writing/:type/final/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    if (!isFormType(params.type)) return notFound();
+    const type = params.type;
+    const form = state.writing[type];
+    if (form.is_final) return HttpResponse.json({ detail: 'Final.' }, { status: 409 });
+    const { answers = {} } = (await request.json()) as { answers?: Answers };
+    // The page sends every answer, read-only ones included: Django ignores those.
+    const { pass_photo: _photo, research_interests: _interests, ...editable } = answers;
+    if (invalidAnswers(SPECS[type], editable).length)
+      return HttpResponse.json({ detail: 'Invalid answers.' }, { status: 400 });
+    const merged = { ...form.answers, ...storeLists(editable) };
+    const missing = missingInForm(SPECS[type], merged).map((item) => item.key);
+    if (missing.length) return HttpResponse.json({ missing }, { status: 400 });
+    const now = new Date().toISOString();
+    state.writing[type] = {
+      ...form,
+      answers: merged,
+      is_final: true,
+      final_at: now,
+      updated_at: now,
+    };
+    state.documents.writing = (state.documents.writing ?? []).map((item) =>
+      item.type === type ? { ...item, step: 'writing' } : item,
+    );
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/contract/`, () => {
+    const state = caseOrError();
+    return failed(state) ? state : HttpResponse.json(state.contract);
+  }),
+
+  http.patch(`${BASE}/profile/`, async ({ request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const body = (await request.json()) as Partial<Record<ProfileField, unknown>>;
+    const errors: Record<string, string[]> = {};
+    for (const [key, value] of Object.entries(body)) {
+      const field = key as ProfileField;
+      const check = PROFILE_CHECKS[field];
+      if (
+        !state.contract.editable.includes(field) ||
+        typeof value !== 'string' ||
+        !value.trim() ||
+        (check && !check.test(value))
+      )
+        errors[key] = ['invalid'];
+    }
+    if (Object.keys(errors).length) return HttpResponse.json(errors, { status: 400 });
+    Object.assign(state.contract.profile, body);
+    return HttpResponse.json(body);
+  }),
+
+  http.get(`${BASE}/payments/:id/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const payment = state.payments.find((item) => item.id === Number(params.id));
+    return payment ? HttpResponse.json(payment) : notFound();
+  }),
+
+  // Django would answer the gateway's address; the fake pays at once and sends the browser back
+  // to the payment page, like the gateway's callback does.
+  http.post(`${BASE}/payments/:id/online/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const payment = state.payments.find((item) => item.id === Number(params.id));
+    if (!payment) return notFound();
+    if (payment.status === 'paid' || payment.status === 'review')
+      return HttpResponse.json({ detail: 'Not payable.' }, { status: 409 });
+    const now = new Date().toISOString();
+    Object.assign(payment, { status: 'paid', method: 'online', paid_at: now, receipt: null });
+    const installment = installmentOf(state, payment);
+    if (installment) Object.assign(installment, { status: 'paid', paid_at: now });
+    return HttpResponse.json({
+      redirect_url: `${import.meta.env.BASE_URL}payments/${String(payment.id)}`,
+    });
+  }),
+
+  http.post(`${BASE}/payments/:id/receipt/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const payment = state.payments.find((item) => item.id === Number(params.id));
+    if (!payment) return notFound();
+    if (payment.status === 'paid' || payment.status === 'review')
+      return HttpResponse.json({ detail: 'Not payable.' }, { status: 409 });
+    const receipt = (await request.formData()).get('receipt');
+    if (
+      !(receipt instanceof File) ||
+      receipt.size > 10 * 1024 * 1024 ||
+      !['application/pdf', 'image/jpeg', 'image/png'].includes(receipt.type)
+    )
+      return HttpResponse.json({ receipt: ['invalid'] }, { status: 400 });
+    Object.assign(payment, {
+      status: 'review',
+      method: 'receipt',
+      decline_reason: null,
+      receipt: { url: '#', uploaded_at: new Date().toISOString() },
+    });
+    const installment = installmentOf(state, payment);
+    if (installment) installment.status = 'review';
+    return new HttpResponse(null, { status: 201 });
+  }),
+
+  ...ticketHandlers,
+  ...turkeyHandlers,
+];
+
+/** Forget Sara's changes (tests, logout). */
+export function resetApplicantMocks() {
+  sara = null;
+  callRequests.length = 0;
+  turkeyCases.clear();
+  transcriptReturned.clear();
+}

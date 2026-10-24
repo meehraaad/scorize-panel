@@ -1,0 +1,409 @@
+{
+  "back": "مدارک و نگارش",
+  "tabs": {
+    "label": "سفارش‌های نگارش شما",
+    "sop": "انگیزه‌نامه (SOP)",
+    "cv": "رزومه (CV)",
+    "ticket": "تیکت نگارش"
+  },
+  "save": {
+    "saving": "در حال ذخیره…",
+    "saved": "ذخیره شد · {{time}}",
+    "unsaved": "تغییرات هنوز ذخیره نشده",
+    "failed": "ذخیره نشد. اتصال اینترنت را بررسی کنید.",
+    "retry": "ذخیره‌ی دوباره"
+  },
+  "progress": "{{answered}} از {{total}} سؤال",
+  "stepOf": "بخش {{n}} از {{total}}",
+  "sectionsNav": "بخش‌های فرم",
+  "sectionCount": "{{answered}} از {{total}}",
+  "sectionDone": "کامل",
+  "sectionAnswered": "{{answered}} از {{total}} سؤال پاسخ داده شده",
+  "inProgress": "در حال پر کردن",
+  "edit": "ویرایش",
+  "start": "شروع",
+  "continue": "ادامه",
+  "openSection": "{{action}}: {{section}}",
+  "previous": "بخش قبلی",
+  "next": "ذخیره و بخش بعدی",
+  "close": "ذخیره و بستن",
+  "optional": "(اختیاری)",
+  "chars": "{{n}} نویسه",
+  "nothingYet": "هنوز چیزی ننوشته‌اید",
+  "requiredError": "برای ثبت نهایی به این سؤال پاسخ دهید.",
+  "final": {
+    "save": "ذخیره",
+    "submit": "ثبت نهایی",
+    "missing": "{{n}} سؤال اجباری بی‌پاسخ مانده است. اولین مورد را برایتان باز کردیم.",
+    "confirm": "ثبت نهایی شود؟ بعد از آن امکان ویرایش نیست و نگارش شروع می‌شود.",
+    "confirmYes": "ثبت نهایی",
+    "confirmNo": "انصراف",
+    "error": "ثبت نهایی انجام نشد. اتصال اینترنت را بررسی کنید و دوباره امتحان کنید.",
+    "doneText": "نگارش از {{date}} شروع شده است. پاسخ‌ها فقط برای مشاهده‌اند؛ برای هر تغییری در تیکت نگارش بنویسید."
+  },
+  "tipsTitle": "پیش از نوشتن بخوانید",
+  "phone": {
+    "title": "شماره‌ی تماس برای هماهنگی",
+    "text": "نویسنده حین نگارش با این شماره با شما هماهنگ می‌کند.",
+    "label": "شماره‌ی تماس",
+    "save": "ثبت",
+    "saved": "شماره ثبت شد.",
+    "invalid": "شماره‌ی موبایل را مثل ۰۹۱۲۳۴۵۶۷۸۹ بنویسید.",
+    "error": "شماره ثبت نشد. دوباره امتحان کنید."
+  },
+  "sop": {
+    "title": "اطلاعات انگیزه‌نامه",
+    "subtitle": "نیازی نیست همه‌چیز را مفصل بنویسید. سرنخ‌ها و نکته‌های کلیدی کافی است؛ نویسنده بقیه را شخصی‌سازی می‌کند.",
+    "tips": {
+      "0": "بعضی اطلاعات مثل توضیح مقاله‌ها و مهارت‌ها را زیاد تغییر نمی‌دهیم؛ بعضی را حذف و بعضی را اضافه می‌کنیم تا متن شخصی‌تر شود.",
+      "1": "از کشور و بازگشت به ایران صحبت نمی‌کنیم؛ این موضوع سفارت است، نه دانشگاه.",
+      "2": "انگیزه‌نامه برای رشته‌ی اولویت شما نوشته می‌شود. برای رشته‌های خیلی متفاوت، انگیزه‌نامه‌ی جدا لازم است.",
+      "3": "بعد از ثبت نهایی برای هماهنگی با شما تماس می‌گیریم."
+    },
+    "section": {
+      "education": {
+        "title": "سوابق تحصیلی",
+        "description": "مقطع فعلی، دانشگاه‌ها و معدل‌ها"
+      },
+      "goal": {
+        "title": "هدف اپلای",
+        "description": "رشته، دانشگاه و کشوری که می‌خواهید"
+      },
+      "story": {
+        "title": "داستان و انگیزه‌ی شما",
+        "description": "چرا این رشته، چه مهارت‌هایی و چه هدفی"
+      },
+      "experience": {
+        "title": "تجربه‌ها و پروژه‌ها",
+        "description": "درس‌ها و پروژه‌ها، سوابق کاری، مقاله‌ها، پایان‌نامه"
+      },
+      "career": {
+        "title": "آینده‌ی شغلی",
+        "description": "چه شغلی در این رشته برای خودتان در نظر دارید؟"
+      }
+    },
+    "field": {
+      "grade": "مقطعی که برایش اپلای می‌کنید",
+      "field_of_study": "رشته‌ی تحصیلی فعلی",
+      "university_1": "دانشگاه کارشناسی",
+      "Rate_1": "معدل کارشناسی",
+      "university_2": "دانشگاه کارشناسی ارشد",
+      "Rate_2": "معدل کارشناسی ارشد",
+      "university_3": "دانشگاه دکترا",
+      "Rate_3": "معدل دکترا",
+      "field_of_study_for_apply": "رشته و مقطعی که برایش اپلای می‌کنید",
+      "university_for_apply": "دانشگاه هدف",
+      "city_for_apply": "کشور هدف",
+      "general_sop": "نوع انگیزه‌نامه",
+      "reason": "چرا این رشته را دوست دارید؟",
+      "interest": "پیش‌زمینه و مهارت‌های شما",
+      "reason_to_continuation": "اهداف کوتاه‌مدت و بلندمدت و علاقه‌ی پژوهشی",
+      "university_reason": "چرا این دانشگاه یا استاد را انتخاب کردید؟",
+      "project": "درس‌ها و پروژه‌های موفق",
+      "internship": "سوابق کاری، TA، RA یا کارآموزی",
+      "essay": "مقاله‌ها و پروژه‌های پژوهشی",
+      "thesis": "پایان‌نامه یا پروژه‌ی پایانی",
+      "job": "آینده‌ی شغلی"
+    },
+    "help": {
+      "university_2": "اگر ارشد نخوانده‌اید، خالی بگذارید.",
+      "field_of_study_for_apply": "مثلاً: کارشناسی ارشد · Computer Science",
+      "university_for_apply": "اگر هنوز تصمیم قطعی نگرفته‌اید، خالی بگذارید.",
+      "general_sop": "انگیزه‌نامه‌ی عمومی برای چند دانشگاه قابل استفاده است؛ نسخه‌ی مخصوص، برای دانشگاه هدف شخصی می‌شود.",
+      "reason": "داستان علاقه‌مند شدنتان به این رشته را بگویید. صحبت از کودکی و دبیرستان اهمیت زیادی ندارد، اما به ما ایده می‌دهد.",
+      "interest": "درس‌های مورد علاقه و نمره‌های خوب‌تان را بگویید. چه مهارت‌هایی شما را برای این رشته مناسب می‌کند؟",
+      "reason_to_continuation": "مثلاً: «هدف من تحقیق در زمینه‌ی انرژی‌های پاک است». بگویید چرا این هدف برای شما مهم است.",
+      "university_reason": "اگر استاد مشخصی دارید، لینک صفحه‌اش را بگذارید و بگویید کارتان چه اشتراکی دارد. اگر برای چند دانشگاه اپلای می‌کنید، خالی بگذارید.",
+      "project": "چه درس‌ها و پروژه‌های موفقی در طول تحصیل داشتید؟ نمره‌های خوب‌تان را هم بنویسید.",
+      "internship": "نقش شما دقیقاً چه بود و از نظر علمی و مهارتی چه چیزی به تجربه‌تان اضافه کرد؟",
+      "essay": "نقش شما در هر کدام چه بود؟ اگر مقاله یا کار پژوهشی ندارید، خالی بگذارید.",
+      "thesis": "عنوان یا چکیده‌ی انگلیسی را هم بگذارید. اگر پایان‌نامه ندارید، خالی بگذارید.",
+      "job": "چه شغلی در آینده‌ی این رشته برای خودتان در نظر دارید؟"
+    },
+    "noOrder": "انگیزه‌نامه جزو خدمات قرارداد شما نیست.",
+    "doneTitle": "اطلاعات انگیزه‌نامه ثبت نهایی شد",
+    "finalNote": "برای ثبت نهایی به سؤال‌های اجباری پاسخ دهید. بعد از ثبت نهایی امکان ویرایش نیست و نگارش شروع می‌شود.",
+    "option": {
+      "grade": {
+        "1": "کارشناسی",
+        "2": "کارشناسی ارشد",
+        "3": "ارشد مجدد",
+        "4": "دکترا",
+        "5": "دکترای مجدد",
+        "6": "پست‌داک"
+      },
+      "generalSop": {
+        "false": "مخصوص دانشگاه هدف",
+        "true": "عمومی، برای چند دانشگاه"
+      }
+    }
+  },
+  "progressSections": "{{answered}} از {{total}} بخش",
+  "entries": "{{n}} مورد",
+  "choose": "انتخاب کنید",
+  "list": {
+    "untitled": "مورد {{n}}",
+    "present": "تاکنون",
+    "done": "تأیید",
+    "edit": "ویرایش {{name}}",
+    "removeNamed": "حذف {{name}}",
+    "confirmRemove": "«{{name}}» حذف شود؟",
+    "remove": "حذف",
+    "cancel": "انصراف",
+    "incomplete": "این مورد کامل نیست؛ برای تکمیل، ویرایشش کنید.",
+    "required": "برای ثبت نهایی حداقل یک مورد اضافه کنید.",
+    "none": "موردی ثبت نشده است."
+  },
+  "photo": {
+    "choose": "انتخاب عکس",
+    "replace": "تغییر عکس",
+    "uploading": "در حال ارسال…",
+    "needed": "تا عکس پرسنلی را نفرستید، ثبت نهایی ممکن نیست.",
+    "required": "برای ثبت نهایی عکس پرسنلی لازم است.",
+    "badType": "فقط عکس JPG یا PNG پذیرفته می‌شود.",
+    "tooBig": "این عکس {{size}} است. حداکثر {{max}} مجاز است؛ عکس کوچک‌تری انتخاب کنید.",
+    "error": "عکس ارسال نشد. اتصال اینترنت را بررسی کنید و دوباره امتحان کنید."
+  },
+  "interests": {
+    "none": "هنوز علاقه‌ی پژوهشی ثبت نکرده‌اید.",
+    "edit": "ویرایش در «مدارک و نگارش»"
+  },
+  "cv": {
+    "title": "اطلاعات رزومه",
+    "subtitle": "اطلاعات تخصصی (عنوان پایان‌نامه، نام درس‌ها و …) را حتماً به انگلیسی بنویسید. پاسخ‌ها خودکار ذخیره می‌شوند تا با قطع اینترنت چیزی از دست نرود.",
+    "noOrder": "رزومه جزو خدمات قرارداد شما نیست.",
+    "doneTitle": "اطلاعات رزومه ثبت نهایی شد",
+    "finalNote": "برای ثبت نهایی، عکس پرسنلی و بخش‌های اجباری لازم است. بعد از ثبت نهایی امکان ویرایش نیست.",
+    "tips": {
+      "0": "رزومه‌ی اروپا و آمریکا/کانادا طراحی متفاوتی دارند. برای اروپا عکس تمام‌رخ و بدون عینک لازم است.",
+      "1": "اگر رزومه خالی باشد، با اجازه‌ی شما اطلاعات تکمیلی می‌خواهیم تا پربار شود.",
+      "2": "ویرایش یک بار و تا یک هفته پس از تحویل انجام می‌شود. موارد را مکتوب در تیکت نگارش بنویسید.",
+      "3": "آماده‌سازی ۷ روز کاری طول می‌کشد. رزومه با LaTeX نوشته می‌شود و فایل PDF و لینک ویرایش برایتان ارسال می‌شود."
+    },
+    "section": {
+      "personal": {
+        "title": "اطلاعات شخصی",
+        "description": "نام، تاریخ تولد و راه تماس، و اینکه رزومه برای کجاست"
+      },
+      "photo": {
+        "title": "عکس پرسنلی",
+        "description": "برای ثبت نهایی لازم است"
+      },
+      "education": {
+        "title": "تحصیلات",
+        "description": "مقطع‌ها، دانشگاه‌ها و معدل‌ها"
+      },
+      "tests": {
+        "title": "آزمون‌های زبان",
+        "description": "IELTS، TOEFL، GRE و …"
+      },
+      "publications": {
+        "title": "مقاله‌ها و کتاب‌ها",
+        "description": "مقاله‌های چاپ‌شده یا در دست داوری، کتاب‌های نوشته یا ترجمه‌شده"
+      },
+      "work": {
+        "title": "سوابق کاری",
+        "description": "شغل‌ها، کارآموزی، TA و RA"
+      },
+      "contact": {
+        "title": "راه‌های ارتباطی",
+        "description": "LinkedIn، GitHub، وب‌سایت"
+      },
+      "awards": {
+        "title": "جوایز و افتخارات",
+        "description": "مدال المپیاد، رتبه‌ی کنکور، قهرمانی"
+      },
+      "courses": {
+        "title": "درس‌های منتخب",
+        "description": "۳ تا ۵ درس با نمره‌ی خوب"
+      },
+      "certificates": {
+        "title": "دوره‌ها و گواهی‌نامه‌ها",
+        "description": "کلاس‌های آنلاین و حضوری"
+      },
+      "memberships": {
+        "title": "عضویت‌ها",
+        "description": "انجمن‌ها و گروه‌ها"
+      },
+      "skills": {
+        "title": "مهارت‌ها و سرگرمی‌ها",
+        "description": "Scientific · Personal · Extracurricular"
+      },
+      "references": {
+        "title": "توصیه‌کننده‌ها",
+        "description": "۲ تا ۳ استاد یا کارفرما"
+      },
+      "interests": {
+        "title": "علاقه‌های پژوهشی",
+        "description": "از پرونده‌ی شما خوانده می‌شود"
+      }
+    },
+    "field": {
+      "template": "رزومه را برای کجا لازم دارید؟",
+      "name": "Name & Surname",
+      "sex": "Sex",
+      "date_of_birth": "Date of Birth",
+      "phone_number": "Phone Number",
+      "email": "Email Address",
+      "city": "Address of Residence",
+      "pass_photo": "عکس پرسنلی",
+      "educations": "تحصیلات",
+      "english_tests": "آزمون‌های زبان",
+      "publications": "Publications",
+      "books": "کتاب‌های نوشته یا ترجمه‌شده",
+      "work_experiences": "Work Experience",
+      "contact_info": "Contact Info",
+      "appreciations": "Honors & Awards",
+      "courses": "Selected Courses",
+      "certificates": "Certificates",
+      "memberships": "Memberships",
+      "scientific_skills": "Scientific Skills",
+      "personal_skills": "Personal Skills",
+      "extracurricular_activities": "Extracurricular Activities",
+      "cv_references": "References",
+      "research_interests": "علاقه‌های پژوهشی"
+    },
+    "help": {
+      "template": "طراحی و رنگ‌بندی این دو متفاوت است و جای هم استفاده نمی‌شوند.",
+      "city": "شهر و کشور محل زندگی، به انگلیسی. مثلاً: Isfahan, Iran",
+      "pass_photo": "عکس تمام‌رخ، روشن و بدون عینک؛ JPG یا PNG تا ۵ مگابایت.",
+      "research_interests": "ربات ایمیل و نویسنده‌ی رزومه از همین فهرست استفاده می‌کنند.",
+      "scientific_skills": "زبان‌های برنامه‌نویسی، نرم‌افزارها، روش‌های آزمایشگاهی و … به انگلیسی.",
+      "personal_skills": "مثلاً: Teamwork, Public speaking",
+      "extracurricular_activities": "ورزش، موسیقی، کار داوطلبانه و …",
+      "work_experiences": {
+        "description": "کاری که آن‌جا انجام دادید، کوتاه و به انگلیسی (حداکثر ۲۵۶ نویسه)."
+      },
+      "english_tests": {
+        "description": "Listening, Reading, Writing, Speaking"
+      }
+    },
+    "option": {
+      "template": {
+        "na": "آمریکا و کانادا",
+        "eu": "اروپا"
+      },
+      "sex": {
+        "1": "Male",
+        "2": "Female"
+      },
+      "level": {
+        "1": "PhD",
+        "2": "MSc",
+        "3": "BSc",
+        "4": "پیش‌دانشگاهی (سال ۱۲ام)",
+        "5": "High School Diploma"
+      },
+      "publicationStatus": {
+        "p": "Published",
+        "a": "Accepted",
+        "ur": "Under Review",
+        "s": "Submitted",
+        "us": "Under Submission",
+        "up": "Under Preparation"
+      },
+      "bookStatus": {
+        "p": "Published",
+        "b": "Book in Print",
+        "up": "Under Preparation"
+      },
+      "translation": {
+        "false": "تألیف",
+        "true": "ترجمه"
+      }
+    },
+    "item": {
+      "educations": {
+        "level": "Education Level",
+        "name": "University / School",
+        "study_field": "Field of Study",
+        "gpa": "GPA",
+        "start_date": "Starting Date",
+        "end_date": "Ending Date",
+        "city": "City",
+        "thesis_title": "Thesis Title",
+        "thesis_supervisor": "Thesis Supervisor"
+      },
+      "english_tests": {
+        "title": "Test",
+        "score": "Score",
+        "date_of_receipt": "Date",
+        "description": "Sub-scores"
+      },
+      "publications": {
+        "title": "Title",
+        "authors": "Authors",
+        "journal": "Journal / Conference",
+        "status": "Paper Status",
+        "published_date": "Publication Date",
+        "hyperlink": "Hyperlink or DOI",
+        "description": "More details"
+      },
+      "books": {
+        "title": "Title",
+        "authors": "Authors",
+        "is_translation": "تألیف یا ترجمه",
+        "translators": "Translators",
+        "publication": "Publisher",
+        "status": "Status",
+        "publication_date": "Publication Date",
+        "isbn": "ISBN"
+      },
+      "work_experiences": {
+        "position": "Your Position",
+        "place": "Work Place",
+        "start_date": "Starting Date",
+        "end_date": "Ending Date",
+        "city": "City",
+        "description": "Description"
+      },
+      "contact_info": {
+        "title": "Title",
+        "info": "Address or link"
+      },
+      "appreciations": {
+        "title": "Title",
+        "place": "Awarded by",
+        "date": "Date"
+      },
+      "courses": {
+        "title": "Course Name",
+        "grade": "Grade",
+        "professor_name": "Professor Name",
+        "description": "Description"
+      },
+      "certificates": {
+        "title": "Title",
+        "place_of_issue": "Place of Issue",
+        "date_of_issue": "Date of Issue"
+      },
+      "memberships": {
+        "name": "Organization Name",
+        "city": "City",
+        "start_date": "Starting Date",
+        "end_date": "Ending Date",
+        "description": "Description"
+      },
+      "cv_references": {
+        "professor_name": "Name",
+        "position": "Position",
+        "university_name": "University or Organization",
+        "department_name": "Department",
+        "email": "Academic / Work Email"
+      }
+    },
+    "add": {
+      "educations": "افزودن مقطع تحصیلی",
+      "english_tests": "افزودن آزمون زبان",
+      "publications": "افزودن مقاله",
+      "books": "افزودن کتاب",
+      "work_experiences": "افزودن سابقه‌ی کاری",
+      "contact_info": "افزودن راه ارتباطی",
+      "appreciations": "افزودن جایزه",
+      "courses": "افزودن درس",
+      "certificates": "افزودن گواهی‌نامه",
+      "memberships": "افزودن عضویت",
+      "cv_references": "افزودن توصیه‌کننده"
+    }
+  }
+}
