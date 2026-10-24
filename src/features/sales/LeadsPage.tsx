@@ -91,11 +91,13 @@ export default function LeadsPage() {
           label={t('leads.stageFilter')}
           value={stage}
           onChange={setStage}
-          options={FILTERS.map((value) => ({
-            value,
-            label: value === 'all' ? t('leads.all') : t(`stage.${value}`),
-            ...(data ? { count: f.number(data.counts[value]) } : {}),
-          }))}
+          options={FILTERS.filter((value) => !data || data.supports.stages.includes(value)).map(
+            (value) => ({
+              value,
+              label: value === 'all' ? t('leads.all') : t(`stage.${value}`),
+              ...(data ? { count: f.number(data.counts[value]) } : {}),
+            }),
+          )}
         />
         <div className="flex flex-wrap items-center gap-2.5">
           <SearchField
@@ -114,25 +116,29 @@ export default function LeadsPage() {
               ...SOURCES.map((value) => ({ value, label: t(`source.${value}`) })),
             ]}
           />
-          <SelectField
-            inline
-            label={t('leads.band')}
-            value={band}
-            onChange={refilter(setBand)}
-            options={[
-              { value: 'all', label: t('leads.allBands') },
-              ...SCORE_BANDS.map((value) => ({ value, label: t(`leads.bandOption.${value}`) })),
-            ]}
-          />
-          <TogglePill
-            label={t('leads.overdueOnly')}
-            checked={overdue}
-            onChange={refilter(setOverdue)}
-          />
+          {data?.supports.band !== false && (
+            <SelectField
+              inline
+              label={t('leads.band')}
+              value={band}
+              onChange={refilter(setBand)}
+              options={[
+                { value: 'all', label: t('leads.allBands') },
+                ...SCORE_BANDS.map((value) => ({ value, label: t(`leads.bandOption.${value}`) })),
+              ]}
+            />
+          )}
+          {data?.supports.overdue !== false && (
+            <TogglePill
+              label={t('leads.overdueOnly')}
+              checked={overdue}
+              onChange={refilter(setOverdue)}
+            />
+          )}
         </div>
 
         <Card aria-busy={isPending || isPlaceholderData}>
-          {selected.size > 0 && (
+          {selected.size > 0 && data?.supports.bulk && (
             <BulkBar ids={[...selected]} onDone={() => setSelected(new Set())} />
           )}
           {!data ? (
@@ -140,7 +146,12 @@ export default function LeadsPage() {
           ) : data.results.length === 0 ? (
             <EmptyState variant="padded">{t('leads.empty')}</EmptyState>
           ) : (
-            <LeadTable rows={data.results} selected={selected} onSelect={setSelected} />
+            <LeadTable
+              rows={data.results}
+              selected={selected}
+              onSelect={setSelected}
+              selectable={data.supports.bulk}
+            />
           )}
           {data && data.count > 0 && (
             <Pager
@@ -169,6 +180,7 @@ function LeadStats({ stats }: { stats: LeadsData['stats'] }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
+  const { overdue, first_call_minutes: firstCall } = stats;
   return (
     <StatGrid
       label={t('leads.stats.label')}
@@ -189,21 +201,31 @@ function LeadStats({ stats }: { stats: LeadsData['stats'] }) {
           value: f.number(stats.today),
           note: t('leads.stats.beforeNoon', { n: f.number(stats.today_before_noon) }),
         },
-        {
-          label: t('leads.stats.overdue'),
-          value: f.number(stats.overdue),
-          tone: stats.overdue > 0 ? 'urgent' : 'default',
-          note:
-            stats.overdue > 0
-              ? t('leads.stats.maxOverdue', { n: f.number(stats.max_overdue_days) })
-              : t('leads.stats.noneOverdue'),
-        },
-        {
-          label: t('leads.stats.firstCall'),
-          value: f.number(stats.first_call_minutes),
-          tone: stats.first_call_minutes > FIRST_CALL_TARGET_MINUTES ? 'urgent' : 'good',
-          note: t('leads.stats.target', { n: f.number(FIRST_CALL_TARGET_MINUTES) }),
-        },
+        // Unknown until the server stores follow-ups and first calls (S3, S6).
+        ...(overdue === null
+          ? []
+          : [
+              {
+                label: t('leads.stats.overdue'),
+                value: f.number(overdue),
+                tone: overdue > 0 ? ('urgent' as const) : ('default' as const),
+                note:
+                  overdue > 0
+                    ? t('leads.stats.maxOverdue', { n: f.number(stats.max_overdue_days) })
+                    : t('leads.stats.noneOverdue'),
+              },
+            ]),
+        ...(firstCall === null
+          ? []
+          : [
+              {
+                label: t('leads.stats.firstCall'),
+                value: f.number(firstCall),
+                tone:
+                  firstCall > FIRST_CALL_TARGET_MINUTES ? ('urgent' as const) : ('good' as const),
+                note: t('leads.stats.target', { n: f.number(FIRST_CALL_TARGET_MINUTES) }),
+              },
+            ]),
       ]}
     />
   );

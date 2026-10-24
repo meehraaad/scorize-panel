@@ -30,7 +30,7 @@ export function TasksPage({ config }: { config: TasksConfig }) {
       <PageHeader
         title={t('title')}
         subtitle={t(`subtitle.${config.person}`)}
-        actions={<OnTime onTime={data.on_time} />}
+        actions={data.on_time && <OnTime onTime={data.on_time} />}
       />
       <ViewTabs
         value={view}

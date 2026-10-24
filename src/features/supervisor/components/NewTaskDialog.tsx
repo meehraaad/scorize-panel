@@ -24,7 +24,7 @@ export function NewTaskDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('supervisor');
-  const create = useCreateTask(caseKey(caseId));
+  const create = useCreateTask(caseKey(caseId), 'supervisor');
   const [text, setText] = useState('');
   const [due, setDue] = useState('');
   const dueAt = fromLocalInput(due);

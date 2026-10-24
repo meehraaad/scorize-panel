@@ -104,6 +104,9 @@ export function LogDialog({
         email_summary: email,
         ...(message && chosen ? { template: chosen.id } : {}),
         ...(start?.reservation ? { reservation: start.reservation } : {}),
+        follow_up_text: noAnswer
+          ? t('customer.logDialog.retryTask')
+          : notes.trim() || t('customer.logDialog.followTask'),
       },
       { onSuccess: onClose },
     );
@@ -179,9 +182,15 @@ export function LogDialog({
             }))}
           />
         )}
-        {noAnswer && <Notice tone="info">{t('customer.logDialog.noAnswer')}</Notice>}
+        {noAnswer && (
+          <Notice tone="info">
+            {customer.supports.no_answer_sms
+              ? t('customer.logDialog.noAnswer')
+              : t('customer.logDialog.noAnswerToday')}
+          </Notice>
+        )}
 
-        {talked && lead && (
+        {talked && lead && customer.supports.stages && (
           <SelectField
             label={t('customer.logDialog.nextStage')}
             value={stage}

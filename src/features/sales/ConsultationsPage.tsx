@@ -155,11 +155,13 @@ function ConsultationRow({ item, status }: { item: Consultation; status: Status 
           {item.name}
         </Link>
         <span className="text-sm text-text-2">
-          {t('consultations.meta', {
-            type: item.type.name,
-            mode: t(`mode.${item.mode}`),
-            minutes: f.number(item.minutes),
-          })}
+          {item.minutes === null
+            ? t('consultations.metaShort', { type: item.type.name, mode: t(`mode.${item.mode}`) })
+            : t('consultations.meta', {
+                type: item.type.name,
+                mode: t(`mode.${item.mode}`),
+                minutes: f.number(item.minutes),
+              })}
         </span>
       </span>
       <Chip tone={STATUS_TONE[status]} small>

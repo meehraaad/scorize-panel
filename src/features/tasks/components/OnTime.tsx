@@ -3,7 +3,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import type { TasksOverview } from '@/lib/tasks/api';
 
 /** "86% on time this week": the team's measure instead of per-task penalties. */
-export function OnTime({ onTime }: { onTime: TasksOverview['on_time'] }) {
+export function OnTime({ onTime }: { onTime: NonNullable<TasksOverview['on_time']> }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const percent = (share: number) => t('percent', { n: f.number(Math.round(share * 100)) });

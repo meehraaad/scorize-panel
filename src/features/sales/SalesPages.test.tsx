@@ -47,19 +47,23 @@ describe('sales panel, seller pages', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('leads: filters by stage and moves selected leads to another stage', async () => {
+  // Leads are Django's SaleLead (src/mocks/staff.ts): "new" = not called yet, "contacted" = called.
+  // Later stages, scores and bulk changes wait for S3, S5, S13.
+  it('leads: new and contacted from Django, with search', async () => {
     const user = userEvent.setup();
     renderApp('/sales/leads?stage=new');
     const table = await screen.findByRole('table');
-    expect(within(table).getAllByRole('row')).toHaveLength(6); // header + 5 new leads
+    expect(within(table).getAllByRole('row')).toHaveLength(11); // header + 10 not called yet
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    const tabs = screen.getByRole('group', { name: 'مرحله' });
+    expect(within(tabs).getAllByRole('button')).toHaveLength(3); // all, new, contacted
 
-    await user.click(screen.getByRole('checkbox', { name: 'انتخاب کیانا رضوی' }));
-    await user.click(screen.getByRole('checkbox', { name: 'انتخاب پویا عسگری' }));
-    expect(screen.getByText('۲ لید انتخاب شده')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'اعمال' }));
-    // Both moved to "contacted": four new leads left, minus Kiana and Pouya.
-    expect(await screen.findByText('نمایش ۳ از ۳ لید')).toBeInTheDocument();
-    expect(screen.queryByText('کیانا رضوی')).not.toBeInTheDocument();
+    await user.type(screen.getByRole('searchbox', { name: 'جستجوی لید' }), 'کیانا');
+    expect(await screen.findByText('نمایش ۱ از ۱ لید')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'کیانا رضوی' })).toHaveAttribute(
+      'href',
+      '/sales/customers/101',
+    );
   });
 
   it('leads: adds a lead by hand and opens the customer', async () => {
@@ -79,40 +83,44 @@ describe('sales panel, seller pages', () => {
     renderApp(`/sales/customers/${String(ERFAN)}?log=call`);
     const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
     await user.click(within(dialog).getByRole('radio', { name: 'جواب نداد' }));
-    expect(within(dialog).getByText(/پیامک «تماس بی‌پاسخ» خودکار/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/یک پیگیری برای فردا ساخته می‌شود/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
 
     const history = await screen.findByRole('region', { name: 'تاریخچه' });
     // One was already there (a week ago).
-    expect(await within(history).findAllByText('تماس بی‌پاسخ · نیما رستمی')).toHaveLength(2);
+    await waitFor(() =>
+      expect(within(history).getAllByText('تماس بی‌پاسخ · نیما رستمی')).toHaveLength(2),
+    );
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    // The retry tomorrow is a task about him.
+    const tasks = screen.getByRole('region', { name: 'کارهای باز عرفان' });
+    expect(await within(tasks).findByText('تماس دوباره؛ قبلی بی‌پاسخ ماند')).toBeInTheDocument();
   });
 
-  it('customer: closing a lead needs a reason', async () => {
+  it('customer: a talked call goes to the history; no stage move until Django has stages', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
     await user.click(await screen.findByRole('button', { name: 'تماس و ثبت' }));
     const dialog = await screen.findByRole('dialog');
-    await user.selectOptions(within(dialog).getByLabelText('مرحله‌ی بعدی'), 'lost');
-    expect(within(dialog).queryByRole('group', { name: 'پیگیری بعدی' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'ثبت و بستن لید' }));
-    expect(within(dialog).getByLabelText('علت از دست رفتن (اجباری)')).toBeInvalid();
+    expect(within(dialog).queryByLabelText('مرحله‌ی بعدی')).not.toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('یادداشت'), 'قرار شد بورسیه‌ها را بفرستم');
+    await user.click(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
 
-    await user.selectOptions(within(dialog).getByLabelText('علت از دست رفتن (اجباری)'), 'budget');
-    await user.click(screen.getByRole('button', { name: 'ثبت و بستن لید' }));
-    expect(await screen.findByText('از دست رفت: بودجه کافی نیست')).toBeInTheDocument();
+    const history = await screen.findByRole('region', { name: 'تاریخچه' });
+    expect(await within(history).findByText('قرار شد بورسیه‌ها را بفرستم')).toBeInTheDocument();
   });
 
   it('customer: asks a colleague for something', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
     const tasks = await screen.findByRole('region', { name: 'کارهای باز عرفان' });
-    expect(within(tasks).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(tasks).getAllByRole('listitem')).toHaveLength(4);
+    const sent = within(tasks).getAllByText('فرستاده شد').length;
     await user.type(within(tasks).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
     await user.click(within(tasks).getByRole('radio', { name: 'یک همکار' }));
     await user.click(within(tasks).getByRole('button', { name: 'فرستادن درخواست به همکار' }));
     expect(await within(tasks).findByText('نمونه‌ی پذیرش هلند')).toBeInTheDocument();
-    expect(within(tasks).getAllByText('فرستاده شد')).toHaveLength(1);
+    expect(within(tasks).getAllByText('فرستاده شد')).toHaveLength(sent + 1);
   });
 
   it('board: deals by stage', async () => {

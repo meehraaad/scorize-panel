@@ -238,7 +238,7 @@ function PaymentDetail({
               label: t(`payments.methodOption.${value}`),
             }))}
           />
-          {payment.method === 'receipt' && (
+          {payment.method === 'receipt' && wallets.length > 0 && (
             <SelectField
               label={t('payments.wallet')}
               value={String(payment.wallet)}
@@ -258,14 +258,16 @@ function PaymentDetail({
             >
               {t('payments.sendFactor')}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                void navigator.clipboard.writeText(payment.pay_url).then(() => setCopied(true));
-              }}
-            >
-              {copied ? t('payments.copied') : t('payments.copyLink')}
-            </Button>
+            {payment.pay_url && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  void navigator.clipboard.writeText(payment.pay_url).then(() => setCopied(true));
+                }}
+              >
+                {copied ? t('payments.copied') : t('payments.copyLink')}
+              </Button>
+            )}
           </div>
           {payment.factor && (
             <span className="text-xs leading-6 text-text-2">

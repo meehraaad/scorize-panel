@@ -42,7 +42,10 @@ src/
 │   ├── tickets/           Panel-neutral ticket API: types, queries, send/rate/seen hooks, day grouping
 │   ├── sales/             Shared by sales pages: lead stages, sources, lost reasons, score bands,
 │   │                      message links (WhatsApp/Telegram/SMS), receipt confirmation
-│   ├── tasks/             Panel-neutral staff tasks (StaffToDo): my follow-up / request / team queue
+│   ├── tasks/             Panel-neutral staff tasks (StaffToDo): my follow-up / request / team queue;
+│   │                      django.ts runs the sales panel's tasks on Django's existing todos/ API
+│   ├── staff/             Django's existing staff REST API (/api/profile/staff/v1/): serializer
+│   │                      types, pagination, the logged-in staff id (backend-integration.md)
 │   ├── dates.ts           Whole days until / between dates
 │   ├── applications.ts    An application's result, approval and fee names (applicant + supervisor pages)
 │   ├── account/           Every panel's account: notifications (the header's bell), channels, login details
@@ -54,7 +57,8 @@ src/
 ├── locales/<lang>/        Dictionaries: common.json + one per feature namespace. fa is the source
 ├── styles/                tokens.css (design tokens), index.css (Tailwind + base)
 ├── mocks/                 MSW fake Django for `pnpm dev:mock` and tests (handlers.ts: auth;
-│                          applicant.ts: applicant-panel API; session.ts: who is logged in)
+│                          applicant.ts: applicant-panel API; staff.ts: Django's existing staff
+│                          API, which the planned sales mocks build on; session.ts: who is logged in)
 ├── pwa/                   Service-worker registration + update prompt
 └── test/                  Vitest setup, MSW server, renderApp() (vitest.node-globals.ts: Node's FormData/File)
 ```
@@ -149,7 +153,14 @@ hides it from others and the route's loader sends them back. Backend items: back
 
 `features/tasks/` is the panel-neutral "Today's tasks" page (my follow-ups, requests to me, team
 queue), configured per panel with `TasksConfig` (`panels/sales/TasksPage.tsx`), like tickets. Its API
-and the "new task" hook are in `lib/tasks/`.
+and the "new task" hook are in `lib/tasks/`: the sales panel's tasks run on Django's existing
+StaffToDo API (`lib/tasks/django.ts`), the supervisor panel's on the planned endpoint.
+
+Connected pages: the customer page and its history, purchases, payments and details tabs, the
+leads list, "my consultations" and tasks read and write Django's existing staff API
+(`lib/staff/api.ts`) through adapters in each page's `queryFn`; what that API can't hold yet is
+hidden (`LeadsData.supports`, `CustomerData.supports`) rather than sent nowhere. The table is in
+backend-integration.md "Existing staff API".
 
 ### Supervisor panel (canvas V1 supervisor screens and V5 "today", in the V6 look)
 

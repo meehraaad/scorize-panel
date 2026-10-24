@@ -38,12 +38,13 @@ export function useSalesFormat() {
     minutes: (n: number) => t('minutes', { n: f.number(n) }),
     /**
      * When to follow up, and whether it is late: "Now" for a lead nobody called, "2 days overdue",
-     * "Today 11:00", or a date.
+     * "Today 11:00", or a date. `dateOnly`: the server keeps no time (StaffToDo), so no clock.
      */
     due: (
       followUp: string | null,
       stage: LeadStage,
       contacted: boolean,
+      dateOnly = false,
     ): { text: string; urgent: boolean } => {
       if (stage === 'new' && !contacted) return { text: t('due.now'), urgent: true };
       if (!followUp || stage === 'won' || stage === 'lost')
@@ -52,10 +53,15 @@ export function useSalesFormat() {
       if (late > 0) return { text: t('due.overdue', { n: f.number(late) }), urgent: true };
       if (late === 0) {
         const past = new Date(followUp).getTime() < Date.now();
-        return { text: t('due.today', { time: f.time(followUp) }), urgent: past };
+        return {
+          text: dateOnly ? t('due.todayDay') : t('due.today', { time: f.time(followUp) }),
+          urgent: past,
+        };
       }
       return {
-        text: t('due.later', { date: f.dateShort(followUp), time: f.time(followUp) }),
+        text: dateOnly
+          ? f.dateShort(followUp)
+          : t('due.later', { date: f.dateShort(followUp), time: f.time(followUp) }),
         urgent: false,
       };
     },

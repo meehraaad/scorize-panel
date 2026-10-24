@@ -16,10 +16,13 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     localStorage.setItem('scorize.mock.session', String(NIMA));
   });
 
-  it('payments: confirms a receipt and texts an invoice', async () => {
+  // Django names a payment after its invoices (PaymentViewSet).
+  const WRITING = 'نگارش انگیزه‌نامه (ارشد)، نگارش رزومه';
+
+  it('payments: confirms a receipt; a pending online payment has its link', async () => {
     const user = userEvent.setup();
     renderApp(`${ERFAN}/payments`);
-    const detail = await screen.findByRole('region', { name: 'نگارش انگیزه‌نامه و رزومه' });
+    const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'تأیید رسید' }));
     expect(await within(detail).findByText('پرداخت کامل شد.')).toBeInTheDocument();
 
@@ -27,15 +30,15 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
       screen.getByRole('button', { name: 'پرداخت شماره‌ی ۴۹۰۲، بسته‌ی نمونه انگیزه‌نامه‌ها' }),
     );
     const pending = await screen.findByRole('region', { name: 'بسته‌ی نمونه انگیزه‌نامه‌ها' });
-    expect(within(pending).getByText(/مشتری لینک را باز نکرده/)).toBeInTheDocument();
+    expect(within(pending).getByRole('button', { name: 'کپی لینک پرداخت' })).toBeInTheDocument();
     await user.click(within(pending).getByRole('button', { name: 'ارسال فاکتور با پیامک' }));
-    expect(await within(pending).findByText(/آخرین ارسال فاکتور: اکنون/)).toBeInTheDocument();
+    expect(within(pending).queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('payments: declining a receipt asks first', async () => {
     const user = userEvent.setup();
     renderApp(`${ERFAN}/payments`);
-    const detail = await screen.findByRole('region', { name: 'نگارش انگیزه‌نامه و رزومه' });
+    const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
     await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
     expect(await within(detail).findByText(/منتظر آپلود دوباره‌ی مشتری/)).toBeInTheDocument();
@@ -69,6 +72,34 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(await within(personal).findByText('ذخیره شد')).toBeInTheDocument();
   });
 
+  it('purchases: one row per Django invoice, by kind', async () => {
+    renderApp(`${ERFAN}/purchases`);
+    const writing = await screen.findByRole('region', { name: 'نگارش' });
+    expect(within(writing).getByText('نگارش رزومه')).toBeInTheDocument();
+    const consultations = screen.getByRole('region', { name: 'مشاوره‌ها' });
+    // The paid session and the failed attempt.
+    expect(within(consultations).getAllByText('مشاوره‌ی اپلای ارشد')).toHaveLength(2);
+    expect(within(consultations).getByText('پرداخت ناموفق')).toBeInTheDocument();
+  });
+
+  it('details: countries are found by name; an unknown one is reported', async () => {
+    const user = userEvent.setup();
+    renderApp(`${ERFAN}/info`);
+    const goal = await screen.findByRole('region', { name: 'هدف و شرایط' });
+    const countries = within(goal).getByLabelText('کشورهای مورد نظر');
+    expect(countries).toHaveValue('هلند، آلمان');
+    await user.clear(countries);
+    await user.type(countries, 'هلند، Atlantis');
+    await user.click(within(goal).getByRole('button', { name: 'ذخیره' }));
+    expect(await within(goal).findByText(/«Atlantis» پیدا نشد/)).toBeInTheDocument();
+
+    await user.clear(countries);
+    await user.type(countries, 'هلند، canada');
+    await user.click(within(goal).getByRole('button', { name: 'ذخیره' }));
+    expect(await within(goal).findByText('ذخیره شد')).toBeInTheDocument();
+    expect(countries).toHaveValue('هلند، canada');
+  });
+
   it('application file is read-only', async () => {
     renderApp(`${ERFAN}/apply`);
     expect(await screen.findByText(/فقط خواندنی/)).toBeInTheDocument();
@@ -91,7 +122,6 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     );
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
     expect(router.state.location.pathname).toBe(ERFAN);
-    expect(screen.getAllByText('پیش‌نویس، منتظر مدیر').length).toBeGreaterThan(0);
   });
 });
 

@@ -32,7 +32,7 @@ export function DoneDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
-  const change = useTaskChange();
+  const change = useTaskChange(config.panel);
   const [outcome, setOutcome] = useState<TaskOutcome>('talked');
   const [note, setNote] = useState(task?.note ?? '');
   const [next, setNext] = useState(task?.suggested_next ?? '');
@@ -65,7 +65,7 @@ export function DoneDialog({
       open={task !== null}
       onClose={onClose}
       title={t('done.title')}
-      subtitle={task && `${task.text} · ${task.person.name}`}
+      subtitle={task && [task.text, task.person?.name].filter(Boolean).join(' · ')}
       closeLabel={t('close')}
       footer={
         <>

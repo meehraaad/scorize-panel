@@ -12,9 +12,10 @@ import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
-import { useFormat } from '@/lib/i18n/useFormat';
+import { CHOICES } from '@/lib/staff/api';
 import { safeHref } from '@/lib/url';
 import {
+  UnknownNameError,
   infoQuery,
   useSaveInfo,
   type CustomerInfo,
@@ -28,6 +29,40 @@ import { useCustomerId } from './useCustomerId';
 
 const PERSONAL_TEXT = ['first_name', 'last_name', 'father_name', 'city', 'work_years'] as const;
 const PERSONAL_CHOICE = ['gender', 'marital', 'military'] as const;
+type ChoiceKey = (typeof PERSONAL_CHOICE)[number] | 'budget';
+
+/** A model choice's options (Django's codes), labelled from the dictionary. */
+function useChoices() {
+  const { t } = useTranslation('sales');
+  const { t: tc } = useTranslation('common');
+  const empty = { value: '', label: t('info.choose') };
+  const options: Record<ChoiceKey, Option[]> = {
+    gender: CHOICES.gender.map((code) => ({
+      value: String(code),
+      label: t(`info.choice.gender.${code}`),
+    })),
+    marital: CHOICES.marital.map((code) => ({
+      value: String(code),
+      label: t(`info.choice.marital.${code}`),
+    })),
+    military: CHOICES.military.map((code) => ({
+      value: String(code),
+      label: t(`info.choice.military.${code}`),
+    })),
+    budget: CHOICES.budget.map((code) => ({
+      value: String(code),
+      label: t(`info.choice.budget.${code}`),
+    })),
+  };
+  return {
+    of: (key: ChoiceKey) => [empty, ...options[key]],
+    degree: [
+      empty,
+      ...CHOICES.degree.map((code) => ({ value: String(code), label: tc(`degree.${code}`) })),
+    ],
+    list: (list: Option[]) => [empty, ...list],
+  };
+}
 
 /**
  * The customer's details, editable by the seller section by section (the forms of crm
@@ -78,33 +113,23 @@ function InfoForm({
   id,
   title,
   end,
-  updatedAt,
   section,
   children,
 }: {
   id: string;
   title: string;
   end?: ReactNode;
-  updatedAt: string;
   section: () => InfoSection;
   children: ReactNode;
 }) {
   const { t } = useTranslation('sales');
-  const f = useFormat();
   const save = useSaveInfo(useCustomerId());
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     save.mutate(section());
   };
   return (
-    <SectionCard
-      id={id}
-      variant="panel"
-      size="lg"
-      title={title}
-      subtitle={t('info.saved', { when: f.timeAgo(updatedAt) })}
-      end={end}
-    >
+    <SectionCard id={id} variant="panel" size="lg" title={title} end={end}>
       <form noValidate onSubmit={submit} className="flex flex-col gap-4">
         {children}
         <div className="flex flex-wrap items-center gap-3">
@@ -113,19 +138,21 @@ function InfoForm({
           </Button>
           {save.isSuccess && <span className="text-sm text-good">{t('info.done')}</span>}
         </div>
-        {save.isError && <Notice tone="error">{t('error')}</Notice>}
+        {save.error && (
+          <Notice tone="error">
+            {save.error instanceof UnknownNameError
+              ? t('info.notFound', { value: save.error.value })
+              : t('error')}
+          </Notice>
+        )}
       </form>
     </SectionCard>
   );
 }
 
-const choiceOptions = (options: Option[], empty: string) => [
-  { value: '', label: empty },
-  ...options,
-];
-
 function PersonalCard({ info }: { info: CustomerInfo }) {
   const { t } = useTranslation('sales');
+  const choices = useChoices();
   const [form, setForm] = useState(info.personal);
   const set = (key: keyof CustomerInfo['personal']) => (value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -133,7 +160,6 @@ function PersonalCard({ info }: { info: CustomerInfo }) {
     <InfoForm
       id="info-personal"
       title={t('info.personal.title')}
-      updatedAt={info.updated_at}
       section={() => ({ personal: form })}
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -158,7 +184,7 @@ function PersonalCard({ info }: { info: CustomerInfo }) {
             label={t(`info.personal.${key}`)}
             value={form[key]}
             onChange={set(key)}
-            options={choiceOptions(info.choices[key], t('info.choose'))}
+            options={choices.of(key)}
           />
         ))}
       </div>
@@ -168,31 +194,28 @@ function PersonalCard({ info }: { info: CustomerInfo }) {
 
 function GoalCard({ info }: { info: CustomerInfo }) {
   const { t } = useTranslation('sales');
+  const choices = useChoices();
   const [form, setForm] = useState(info.goal);
   const set = (key: keyof CustomerInfo['goal']) => (value: string) =>
     setForm((current) => ({ ...current, [key]: value }));
   return (
-    <InfoForm
-      id="info-goal"
-      title={t('info.goal.title')}
-      updatedAt={info.updated_at}
-      section={() => ({ goal: form })}
-    >
+    <InfoForm id="info-goal" title={t('info.goal.title')} section={() => ({ goal: form })}>
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField
           label={t('info.goal.wanted_degree')}
           value={form.wanted_degree}
           onChange={set('wanted_degree')}
-          options={choiceOptions(info.choices.degree, t('info.choose'))}
+          options={choices.degree}
         />
         <SelectField
           label={t('info.goal.budget')}
           value={form.budget}
           onChange={set('budget')}
-          options={choiceOptions(info.choices.budget, t('info.choose'))}
+          options={choices.of('budget')}
         />
         <TextField
           label={t('info.goal.countries')}
+          hint={t('info.goal.countriesHint')}
           value={form.countries}
           onChange={(event) => set('countries')(event.target.value)}
         />
@@ -220,6 +243,7 @@ function useRows<T>(initial: T[], blank: T) {
 
 function EducationCard({ info }: { info: CustomerInfo }) {
   const { t } = useTranslation('sales');
+  const choices = useChoices();
   const list = useRows<EducationEntry>(info.education, {
     degree: '',
     field: '',
@@ -230,7 +254,6 @@ function EducationCard({ info }: { info: CustomerInfo }) {
     <InfoForm
       id="info-education"
       title={t('info.education.title')}
-      updatedAt={info.updated_at}
       section={() => ({ education: list.rows })}
       end={
         <Button variant="outline" className="h-11 px-4 text-sm" onClick={list.add}>
@@ -249,7 +272,7 @@ function EducationCard({ info }: { info: CustomerInfo }) {
             label={t('info.education.degree')}
             value={row.degree}
             onChange={(degree) => list.set(index, { degree })}
-            options={choiceOptions(info.choices.degree, t('info.choose'))}
+            options={choices.degree}
           />
           <TextField
             label={t('info.education.field')}
@@ -281,12 +304,12 @@ function EducationCard({ info }: { info: CustomerInfo }) {
 
 function ExamsCard({ info }: { info: CustomerInfo }) {
   const { t } = useTranslation('sales');
+  const choices = useChoices();
   const list = useRows<ExamEntry>(info.exams, { exam: '', score: '', date: '' });
   return (
     <InfoForm
       id="info-exams"
       title={t('info.exams.title')}
-      updatedAt={info.updated_at}
       section={() => ({ exams: list.rows })}
       end={
         <Button variant="outline" className="h-11 px-4 text-sm" onClick={list.add}>
@@ -305,7 +328,7 @@ function ExamsCard({ info }: { info: CustomerInfo }) {
             label={t('info.exams.exam')}
             value={row.exam}
             onChange={(exam) => list.set(index, { exam })}
-            options={choiceOptions(info.choices.exam, t('info.choose'))}
+            options={choices.list(info.exams_list)}
           />
           <TextField
             label={t('info.exams.score')}

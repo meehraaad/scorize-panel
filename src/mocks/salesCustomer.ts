@@ -1,37 +1,35 @@
 import { http, HttpResponse } from 'msw';
 import type {
   ApplyFile,
-  CustomerInfo,
-  InfoSection,
   NewSale,
   Offer,
   OfferData,
-  PaymentRow,
   Product,
-  PurchasesData,
   SaleQuote,
 } from '@/features/sales/api';
 import { notFound } from './session';
-import { ERFAN, failed, newId, stateOrError, type MockCustomer, type SalesState } from './sales';
+import { ERFAN, failed, stateOrError, type SalesState } from './sales';
+import { addPayment, staffData } from './staff';
 
 /**
- * Fake customer sub-tabs, product sale and offer (docs/backend-changes.md S21–S33), on the same
- * state as src/mocks/sales.ts. Erfan (105) has the design's data; other customers start empty.
+ * Fake planned customer endpoints (docs/backend-changes.md S24–S33): the application file, product
+ * sale, invoice SMS and offer. Payments, purchases and details come from Django's existing staff
+ * API (src/mocks/staff.ts); a sale made here is written there, so the payments tab shows it.
  */
 
 const BASE = '/api/sales/v1';
 const DAY = 86_400_000;
-const daysAgo = (days: number) => new Date(Date.now() - days * DAY).toISOString();
 const inDays = (days: number, hour: number) => {
   const date = new Date(Date.now() + days * DAY);
   date.setHours(hour, 0, 0, 0);
   return date.toISOString();
 };
 
-const WALLETS = [
-  { id: 1, name: 'حساب شرکت · بانک اول' },
-  { id: 2, name: 'حساب شرکت · بانک دوم' },
-];
+/** finance.Wallet ids a card transfer can go to. */
+const WALLETS = [1, 2];
+
+const paymentExists = (id: unknown) =>
+  staffData().payments.some((row) => row.data.id === Number(id));
 
 const PRODUCTS: Product[] = [
   {
@@ -148,253 +146,6 @@ function quoteOf(items: number[], code?: string): SaleQuote {
   return { subtotal, discount, total: subtotal - discount, discount_error: null };
 }
 
-const payment = (
-  id: number,
-  what: string,
-  lines: [string, number][],
-  status: PaymentRow['status'],
-  method: PaymentRow['method'],
-  days: number,
-  extra: Partial<PaymentRow> = {},
-): PaymentRow => ({
-  id,
-  what,
-  amount: lines.reduce((sum, [, amount]) => sum + amount, 0),
-  method,
-  status,
-  created_at: daysAgo(days),
-  lines: lines.map(([label, amount]) => ({ label, amount })),
-  wallet: 1,
-  reference: null,
-  receipt: null,
-  factor: null,
-  pay_url: `https://scorize.com/panel/payments/${String(id)}`,
-  ...extra,
-});
-
-function paymentsOf(data: SalesState, id: number): PaymentRow[] {
-  let list = data.payments.get(id);
-  if (!list) {
-    list =
-      id === ERFAN
-        ? [
-            payment(
-              5021,
-              'نگارش انگیزه‌نامه و رزومه',
-              [
-                ['نگارش انگیزه‌نامه (ارشد)', 6_000_000],
-                ['نگارش رزومه', 3_500_000],
-              ],
-              'pending_receipt',
-              'receipt',
-              0,
-              {
-                receipt: {
-                  url: '#',
-                  uploaded_at: new Date(Date.now() - 2 * 3_600_000).toISOString(),
-                },
-              },
-            ),
-            payment(
-              4988,
-              'مشاوره‌ی اپلای ارشد',
-              [['مشاوره‌ی اپلای ارشد · ۳۰ دقیقه', 1_500_000]],
-              'paid',
-              'online',
-              6,
-              { reference: '000483920115' },
-            ),
-            payment(
-              4970,
-              'مشاوره‌ی اپلای ارشد',
-              [['مشاوره‌ی اپلای ارشد · ۳۰ دقیقه', 1_500_000]],
-              'failed',
-              'online',
-              8,
-            ),
-            payment(
-              4902,
-              'بسته‌ی نمونه انگیزه‌نامه‌ها',
-              [['بسته‌ی نمونه انگیزه‌نامه‌های ارشد', 1_500_000]],
-              'pending',
-              'online',
-              1,
-              {
-                factor: { sent_at: daysAgo(1), opened: false },
-              },
-            ),
-          ]
-        : [];
-    data.payments.set(id, list);
-  }
-  return list;
-}
-
-function purchasesOf(data: SalesState, id: number): PurchasesData {
-  const erfan = id === ERFAN;
-  const sold = paymentsOf(data, id)
-    .filter((row) => !erfan || row.id > 5021)
-    .map((row) => ({
-      id: row.id,
-      category:
-        PRODUCTS.find((product) => product.title === row.lines[0]?.label)?.category ?? 'package',
-      title: row.what,
-      detail: row.lines.map((line) => line.label).join('، '),
-      amount: row.amount,
-      status:
-        row.status === 'paid' || row.status === 'paid_by_receipt'
-          ? ('paid' as const)
-          : row.status === 'failed'
-            ? ('failed' as const)
-            : ('pending' as const),
-      at: row.created_at,
-      session: null,
-    }));
-  const items: PurchasesData['items'] = erfan
-    ? [
-        {
-          id: 4988,
-          category: 'consultation',
-          title: 'مشاوره‌ی اپلای ارشد · ۳۰ دقیقه',
-          detail: 'آنلاین · مشاور: حسین رحیمی',
-          amount: 1_500_000,
-          status: 'paid',
-          at: daysAgo(6),
-          session: { reservation: 9, starts_at: daysAgo(5), logged: true },
-        },
-        {
-          id: 4970,
-          category: 'consultation',
-          title: 'مشاوره‌ی اپلای ارشد · ۳۰ دقیقه',
-          detail: 'خرید ناموفق · درگاه خطا داد',
-          amount: 1_500_000,
-          status: 'failed',
-          at: daysAgo(8),
-          session: null,
-        },
-        {
-          id: 4310,
-          category: 'event',
-          title: 'وبینار «اپلای هلند ۲۰۲۷»',
-          detail: 'لایسنس SpotPlayer فعال',
-          amount: 600_000,
-          status: 'paid',
-          at: daysAgo(22),
-          session: null,
-        },
-        {
-          id: 4122,
-          category: 'package',
-          title: 'بسته‌ی «نمونه انگیزه‌نامه‌های ارشد»',
-          detail: 'دانلودی',
-          amount: 1_500_000,
-          status: 'paid',
-          at: daysAgo(36),
-          session: null,
-        },
-        ...sold,
-      ]
-    : sold;
-  const paid = items.filter((item) => item.status === 'paid');
-  const fails = items.filter((item) => item.status === 'failed');
-  return {
-    total: paid.reduce((sum, item) => sum + item.amount, 0),
-    sessions: {
-      held: items.filter(
-        (item) => item.session && new Date(item.session.starts_at).getTime() < Date.now(),
-      ).length,
-      upcoming: items.filter(
-        (item) => item.session && new Date(item.session.starts_at).getTime() >= Date.now(),
-      ).length,
-    },
-    failed: fails.length ? { count: fails.length, last_at: fails[0]?.at ?? '' } : null,
-    items,
-  };
-}
-
-const CHOICES: CustomerInfo['choices'] = {
-  gender: [
-    { value: 'm', label: 'آقا' },
-    { value: 'f', label: 'خانم' },
-  ],
-  marital: [
-    { value: 'single', label: 'مجرد' },
-    { value: 'married', label: 'متأهل' },
-  ],
-  military: [
-    { value: 'exempt_study', label: 'معافیت تحصیلی' },
-    { value: 'done', label: 'پایان خدمت' },
-    { value: 'exempt', label: 'معافیت دائم' },
-  ],
-  budget: [
-    { value: '1', label: 'کمتر از ۵۰۰ میلیون تومان' },
-    { value: '2', label: 'بین ۵۰۰ میلیون تا ۱ میلیارد تومان' },
-    { value: '3', label: 'بیشتر از ۱ میلیارد تومان' },
-  ],
-  degree: [
-    { value: '0', label: 'دیپلم' },
-    { value: '1', label: 'کارشناسی' },
-    { value: '2', label: 'کارشناسی ارشد' },
-    { value: '3', label: 'دکترا' },
-  ],
-  exam: [
-    { value: 'ielts', label: 'IELTS Academic' },
-    { value: 'toefl', label: 'TOEFL iBT' },
-    { value: 'gre', label: 'GRE' },
-  ],
-};
-
-function infoOf(data: SalesState, item: MockCustomer): CustomerInfo {
-  let info = data.info.get(item.id);
-  if (!info) {
-    const [first = '', ...rest] = item.name.split(' ');
-    const erfan = item.id === ERFAN;
-    info = {
-      personal: {
-        first_name: first,
-        last_name: rest.join(' '),
-        father_name: erfan ? 'مهدی' : '',
-        birth_date: erfan ? '2001-07-03' : '',
-        gender: erfan ? 'm' : '',
-        marital: erfan ? 'single' : '',
-        military: erfan ? 'exempt_study' : '',
-        city: erfan ? 'شیراز' : '',
-        work_years: erfan ? '2' : '',
-      },
-      goal: {
-        wanted_degree: item.degree === null ? '' : String(item.degree),
-        budget: erfan ? '2' : '',
-        countries: item.countries.join('، '),
-        language: erfan ? 'آیلتس ۶٫۵' : '',
-      },
-      education: erfan
-        ? [
-            {
-              id: 1,
-              degree: '1',
-              field: 'مهندسی کامپیوتر',
-              university: 'دانشگاه شیراز',
-              gpa: '16.2',
-            },
-            {
-              id: 2,
-              degree: '0',
-              field: 'ریاضی فیزیک',
-              university: 'دبیرستان علامه طباطبایی',
-              gpa: '18.7',
-            },
-          ]
-        : [],
-      exams: erfan ? [{ id: 1, exam: 'ielts', score: '6.5', date: '2026-08-01' }] : [],
-      choices: CHOICES,
-      tablet_url: '#',
-      updated_at: daysAgo(3),
-    };
-    data.info.set(item.id, info);
-  }
-  return info;
-}
-
 const ERFAN_FILE: ApplyFile = {
   status: 'در حال اپلای',
   applies: { used: 4, total: 6 },
@@ -461,93 +212,22 @@ const customerOrError = (data: SalesState, id: unknown) =>
   data.customers.find((item) => item.id === Number(id)) ?? null;
 
 export const salesCustomerHandlers = [
-  http.get(`${BASE}/customers/:id/purchases/`, ({ params }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const item = customerOrError(data, params.id);
-    return item ? HttpResponse.json(purchasesOf(data, item.id)) : notFound();
-  }),
-
-  http.get(`${BASE}/customers/:id/payments/`, ({ params }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const item = customerOrError(data, params.id);
-    return item
-      ? HttpResponse.json({ wallets: WALLETS, results: paymentsOf(data, item.id) })
-      : notFound();
-  }),
-
-  // Existing Django endpoints (PaymentViewSet.decline_receipt / change_method).
-  http.patch('/api/profile/staff/v1/users/:user/payments/:id/decline_receipt/', ({ params }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const row = paymentsOf(data, Number(params.user)).find((item) => item.id === Number(params.id));
-    if (row?.status !== 'pending_receipt')
-      return HttpResponse.json(
-        { message: 'رسید پرداخت در انتظار تایید وجود ندارد!' },
-        { status: 400 },
-      );
-    row.status = 'receipt_declined';
-    return HttpResponse.json({ message: 'رسید پرداخت با موفقیت رد شد.' });
-  }),
-
-  http.patch(
-    '/api/profile/staff/v1/users/:user/payments/:id/change_method/:method/',
-    ({ params }) => {
-      const data = stateOrError();
-      if (failed(data)) return data;
-      const row = paymentsOf(data, Number(params.user)).find(
-        (item) => item.id === Number(params.id),
-      );
-      if (row?.status !== 'pending')
-        return HttpResponse.json({ message: 'روش پرداخت قابل تغییر نیست!' }, { status: 400 });
-      row.method = params.method === '1' ? 'receipt' : 'online';
-      return HttpResponse.json({ message: 'روش پرداخت با موفقیت تغییر کرد.' });
-    },
-  ),
-
+  // Planned (S24, S25): text the invoice, choose the destination account. Django doesn't report
+  // either back yet, so the payments tab doesn't show them.
   http.post(`${BASE}/payments/:id/factor/`, ({ params }) => {
     const data = stateOrError();
     if (failed(data)) return data;
-    const row = [...data.payments.values()].flat().find((item) => item.id === Number(params.id));
-    if (!row) return notFound();
-    row.factor = { sent_at: new Date().toISOString(), opened: false };
-    return new HttpResponse(null, { status: 204 });
+    return paymentExists(params.id) ? new HttpResponse(null, { status: 204 }) : notFound();
   }),
 
   http.patch(`${BASE}/payments/:id/`, async ({ params, request }) => {
     const data = stateOrError();
     if (failed(data)) return data;
-    const row = [...data.payments.values()].flat().find((item) => item.id === Number(params.id));
-    if (!row) return notFound();
+    if (!paymentExists(params.id)) return notFound();
     const { wallet } = (await request.json()) as { wallet: number };
-    if (!WALLETS.some((item) => item.id === wallet))
-      return HttpResponse.json({ wallet: ['invalid'] }, { status: 400 });
-    row.wallet = wallet;
-    return HttpResponse.json(row);
-  }),
-
-  http.get(`${BASE}/customers/:id/info/`, ({ params }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const item = customerOrError(data, params.id);
-    return item ? HttpResponse.json(infoOf(data, item)) : notFound();
-  }),
-
-  http.patch(`${BASE}/customers/:id/info/`, async ({ params, request }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const item = customerOrError(data, params.id);
-    if (!item) return notFound();
-    const section = (await request.json()) as InfoSection;
-    const info = infoOf(data, item);
-    Object.assign(info, section, { updated_at: new Date().toISOString() });
-    // New rows get ids, like Django would.
-    info.education = info.education.map((row) => ({ ...row, id: row.id ?? newId() }));
-    info.exams = info.exams.map((row) => ({ ...row, id: row.id ?? newId() }));
-    if (section.personal)
-      item.name = `${section.personal.first_name} ${section.personal.last_name}`.trim();
-    return HttpResponse.json(info);
+    return WALLETS.includes(wallet)
+      ? new HttpResponse(null, { status: 204 })
+      : HttpResponse.json({ wallet: ['invalid'] }, { status: 400 });
   }),
 
   http.get(`${BASE}/customers/:id/apply/`, ({ params }) => {
@@ -576,22 +256,16 @@ export const salesCustomerHandlers = [
     const sale = (await request.json()) as NewSale;
     const chosen = PRODUCTS.filter((product) => sale.products.includes(product.id));
     if (chosen.length === 0) return HttpResponse.json({ products: ['required'] }, { status: 400 });
-    const quote = quoteOf(sale.products, sale.discount_code);
-    const id = newId();
-    const lines: [string, number][] = chosen.map((product) => [product.title, product.price]);
-    if (quote.discount) lines.push(['تخفیف', -quote.discount]);
-    paymentsOf(data, item.id).unshift(
-      payment(
-        id,
-        chosen.map((product) => product.title).join('، '),
-        lines,
-        'pending',
-        sale.method,
-        0,
-        {
-          factor: { sent_at: new Date().toISOString(), opened: false },
-        },
-      ),
+    // Django keeps one invoice per product; a discount lowers the invoices' amounts.
+    const { total, subtotal } = quoteOf(sale.products, sale.discount_code);
+    const id = addPayment(
+      item.id,
+      chosen.map((product) => ({
+        title: product.title,
+        price: Math.round((product.price * total) / (subtotal || 1)),
+        category: product.category,
+      })),
+      sale.method,
     );
     return HttpResponse.json({ payment: id }, { status: 201 });
   }),
