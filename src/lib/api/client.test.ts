@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { NetworkError, request } from './client';
+import { NetworkError, REQUEST_TIMEOUT_MS, request } from './client';
 
 /** fetch that never answers, only rejects when its signal aborts. */
 function hangingFetch() {
@@ -25,6 +25,20 @@ describe('request', () => {
     const pending = request('/api/slow/');
     timeout.abort(new DOMException('timed out', 'TimeoutError'));
     await expect(pending).rejects.toBeInstanceOf(NetworkError);
+  });
+
+  it('gives uploads extra time for their size', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }));
+    document.cookie = 'csrftoken=test';
+    const body = new FormData();
+    body.append('file', new Blob([new Uint8Array(3_200_000)]), 'scan.pdf');
+    body.append('note', 'x');
+    await request('/api/upload/', { method: 'POST', body });
+    await request('/api/plain/', { method: 'POST', body: { a: 1 } });
+    expect(timeout).toHaveBeenNthCalledWith(1, REQUEST_TIMEOUT_MS + 100_000);
+    expect(timeout).toHaveBeenNthCalledWith(2, REQUEST_TIMEOUT_MS);
+    document.cookie = 'csrftoken=; max-age=0';
   });
 
   it('passes a caller cancel through unchanged', async () => {
