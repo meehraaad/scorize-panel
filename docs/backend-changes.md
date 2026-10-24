@@ -311,12 +311,12 @@ panel's adapters; each is useful on its own, before the bigger items above.
 
 ## Production wiring
 
-| #   | Change                                                                                                                            | Status                                                      |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| P1  | Add the `scorize-panel` service to `docker-compose.yml` (`ghcr.io/shamrad/scorize-panel:latest`, port 8080, healthcheck built in) | ☐                                                           |
-| P2  | Main nginx: route `/panel/` to `scorize-panel`, everything else to Django unchanged                                               | ☐                                                           |
-| P3  | Add **drf-spectacular** (`/api/schema/`) so the panel can generate TypeScript types                                               | ☐                                                           |
-| C8  | The Turkey pledge text, clause by clause, from the legal team (served in H30 `pledge`, versioned)                                 | The mock shows placeholder clauses                          | ☐   |
-| C9  | The Turkey document list per degree (bachelor's, master's, PhD), with a short hint each, from the Turkey team (H31)               | The mock's list follows the design                          | ☐   |
-| C10 | The wallet credit for a package review (H42 `review_credit`)                                                                      | The mock shows 50,000 toman                                 | ☐   |
-| C11 | The NPS credit (H48) and the current terms text for the terms gate (H45)                                                          | The mock shows 5,000 toman (as the design) and sample terms | ☐   |
+| #   | Change                                                                                                                                             | Status                                                      |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| P1  | Add the `scorize-panel` service to `docker-compose.yml` (`ghcr.io/shamrad/scorize-panel:latest`, port 8080, healthcheck built in)                  | ☐                                                           |
+| P2  | Main nginx: route `/panel/` to `scorize-panel` **on port 8080** (the image runs nginx as non-root, so not 80), everything else to Django unchanged | ☐                                                           |
+| P3  | Add **drf-spectacular** (`/api/schema/`) so the panel can generate TypeScript types                                                                | ☐                                                           |
+| C8  | The Turkey pledge text, clause by clause, from the legal team (served in H30 `pledge`, versioned)                                                  | The mock shows placeholder clauses                          | ☐   |
+| C9  | The Turkey document list per degree (bachelor's, master's, PhD), with a short hint each, from the Turkey team (H31)                                | The mock's list follows the design                          | ☐   |
+| C10 | The wallet credit for a package review (H42 `review_credit`)                                                                                       | The mock shows 50,000 toman                                 | ☐   |
+| C11 | The NPS credit (H48) and the current terms text for the terms gate (H45)                                                                           | The mock shows 5,000 toman (as the design) and sample terms | ☐   |
