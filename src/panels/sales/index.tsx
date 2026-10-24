@@ -1,5 +1,16 @@
-import { boardQuery, customerQuery, monthQuery, todayQuery } from '@/features/sales/api';
+import { redirect } from 'react-router';
+import {
+  MANAGER_PERMISSION,
+  approvalsQuery,
+  assignQuery,
+  boardQuery,
+  customerQuery,
+  monthQuery,
+  todayQuery,
+} from '@/features/sales/api';
 import { queryClient } from '@/lib/api/queryClient';
+import { hasPermission } from '@/lib/auth/roles';
+import { sessionQuery } from '@/lib/auth/session';
 import { lazyPage } from '@/lib/router/lazyPage';
 import { tasksQuery } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
@@ -9,6 +20,12 @@ const prefetch = (load: () => Promise<unknown>) => () => {
   load().catch(() => undefined);
   return null;
 };
+
+/** Sellers without the manager's permission are sent back to the panel's home. */
+async function managerOnly() {
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+  return user && hasPermission(user, MANAGER_PERMISSION) ? null : redirect('/sales');
+}
 
 /** Sales and support teams (User.is_seller). Design: canvas "Scorize Seller Panel". */
 export const salesPanel: PanelDefinition = {
@@ -47,6 +64,13 @@ export const salesPanel: PanelDefinition = {
       label: 'panels.sales.nav.month',
       tab: 'panels.sales.tabs.month',
       icon: 'chart',
+    },
+    {
+      id: 'manager',
+      to: 'manager',
+      label: 'panels.sales.nav.manager',
+      icon: 'settings',
+      permission: MANAGER_PERMISSION,
     },
   ],
   routes: [
@@ -92,6 +116,29 @@ export const salesPanel: PanelDefinition = {
     {
       path: 'customers/:id/offer',
       ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales']),
+    },
+    // The sales manager's section (nav item and routes need can_assign_to_seller).
+    {
+      path: 'manager',
+      loader: managerOnly,
+      ...lazyPage(() => import('@/features/sales/manager/ManagerLayout'), ['sales']),
+      children: [
+        {
+          index: true,
+          loader: prefetch(() => queryClient.query(assignQuery)),
+          ...lazyPage(() => import('@/features/sales/manager/AssignPage')),
+        },
+        {
+          path: 'approvals',
+          loader: prefetch(() => queryClient.query(approvalsQuery)),
+          ...lazyPage(() => import('@/features/sales/manager/ApprovalsPage')),
+        },
+        { path: 'team', ...lazyPage(() => import('@/features/sales/manager/TeamPage')) },
+        {
+          path: 'follow-ups',
+          ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage')),
+        },
+      ],
     },
     {
       path: 'tasks',

@@ -6,8 +6,8 @@ interface ProgressBarProps {
   value: number;
   /** `sm` 6px (forms, hero), `md` 8px (cards). */
   size?: 'sm' | 'md';
-  /** `onHero`: light bar on the dark case card; `good`: money paid, things done. */
-  tone?: 'primary' | 'good' | 'onHero';
+  /** `onHero`: light bar on the dark case card; `good`: money paid, things done; `warn`: too much. */
+  tone?: 'primary' | 'good' | 'warn' | 'onHero';
   /** Read by screen readers. Without it the bar is decoration next to a visible "3 of 5". */
   label?: string;
   className?: string;
@@ -23,7 +23,12 @@ export function ProgressBar({
 }: ProgressBarProps) {
   const height = size === 'sm' ? 'h-1.5' : 'h-2';
   const track = tone === 'onHero' ? 'bg-hero-line' : 'bg-track';
-  const fill = { primary: 'bg-primary', good: 'bg-good', onHero: 'bg-on-hero' }[tone];
+  const fill = {
+    primary: 'bg-primary',
+    good: 'bg-good',
+    warn: 'bg-hero-current',
+    onHero: 'bg-on-hero',
+  }[tone];
   const a11y = label
     ? {
         role: 'progressbar',

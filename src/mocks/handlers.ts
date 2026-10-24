@@ -3,6 +3,7 @@ import type { SessionUser } from '@/lib/auth/session';
 import { applicantHandlers, resetApplicantMocks } from './applicant';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { salesCustomerHandlers } from './salesCustomer';
+import { managerHandlers, resetManagerMocks } from './salesManager';
 import { resetTaskMocks, taskHandlers } from './tasks';
 import { storage } from './session';
 
@@ -15,6 +16,7 @@ import { storage } from './session';
  *   09120000000 / sara.ahmadi@scorize.local    applicant only
  *   09120000001 / maryam.kazemi@scorize.local  staff: supervisor + writer (panel switcher)
  *   09120000002 / nima.rostami@scorize.local   staff: sales only (no switcher)
+ *   09120000003 / reza.kamrani@scorize.local   staff: sales manager (sales panel + manager section)
  */
 
 export const MOCK_OTP = '123456';
@@ -62,6 +64,19 @@ const users: MockUser[] = [
     permissions: [],
     group_permissions: [],
   },
+  {
+    // Sales manager: the sales panel with its manager section.
+    id: 4,
+    first_name: 'رضا',
+    last_name: 'کامرانی',
+    email: 'reza.kamrani@scorize.local',
+    phone_number: '09120000003',
+    password: MOCK_PASSWORD,
+    staff: { id: 9, full_name: 'رضا کامرانی', team: 0 },
+    is_superuser: false,
+    permissions: [{ codename: 'can_assign_to_seller' }],
+    group_permissions: [],
+  },
 ];
 
 // Server-side login state (Django keeps this in the session).
@@ -105,6 +120,7 @@ export const handlers = [
     resetApplicantMocks();
     resetSalesMocks();
     resetTaskMocks();
+    resetManagerMocks();
     return HttpResponse.redirect('/', 302);
   }),
 
@@ -209,6 +225,7 @@ export const handlers = [
   ...applicantHandlers,
   ...salesHandlers,
   ...salesCustomerHandlers,
+  ...managerHandlers,
   ...taskHandlers,
 ];
 
@@ -219,4 +236,5 @@ export function resetMockSession() {
   resetApplicantMocks();
   resetSalesMocks();
   resetTaskMocks();
+  resetManagerMocks();
 }

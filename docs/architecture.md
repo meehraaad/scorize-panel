@@ -134,7 +134,9 @@ the offer page; later the manager pages), `api.ts` with one response per page, a
 `paths.ts` (the panel's URLs, since features can't import panels). Shared vocabulary (stages, sources,
 scores) is in `lib/sales/`; tasks in `lib/tasks/` (the supervisor panel uses them too). "Call" buttons
 open the customer page with `?log=call`, so every call ends in the log dialog; `?log=meeting&reservation=`
-logs a consultation session; `?sell=<category>` opens the product sale. Mock seller: Nima (09120000002). Backend items: backend-changes.md S, T.
+logs a consultation session; `?sell=<category>` opens the product sale. Mock seller: Nima (09120000002); sales manager: Reza (09120000003). The manager section
+(`features/sales/manager/`) is a nav item with `permission: 'can_assign_to_seller'`: `NavItem.permission`
+hides it from others and the route's loader sends them back. Backend items: backend-changes.md S, T.
 
 `features/tasks/` is the panel-neutral "Today's tasks" page (my follow-ups, requests to me, team
 queue), configured per panel with `TasksConfig` (`panels/sales/TasksPage.tsx`), like tickets. Its API

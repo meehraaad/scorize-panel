@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { hasPermission } from '@/lib/auth/roles';
 import { loginHref, useSession } from '@/lib/auth/session';
 import { applicantPanel } from '@/panels/applicant';
 import { panelsFor, rememberPanel } from '@/panels/registry';
@@ -42,6 +43,13 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
     return <Navigate to={loginHref(here)} replace />;
   }
 
+  // Sections the user's permissions allow (the manager's section only for managers).
+  const visible = {
+    ...panel,
+    navigation: panel.navigation.filter(
+      (item) => !item.permission || hasPermission(user, item.permission),
+    ),
+  };
   const panels = panelsFor(user);
   // Staff viewing the panel as a regular customer: it isn't one of their panels, so list it too
   // (as the current one) and the switcher is their way back to work.
@@ -77,7 +85,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
           </div>
 
           <nav aria-label={t(panel.navLabel)} className="hidden items-center gap-0.5 lg:flex">
-            {panel.navigation.map((item) => (
+            {visible.navigation.map((item) => (
               <NavLink
                 key={item.id}
                 to={panelHref(panel, item.to)}
@@ -125,7 +133,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
 
       <PanelFooter />
 
-      <BottomTabs panel={panel} locked={locked} />
+      <BottomTabs panel={visible} locked={locked} />
     </div>
   );
 }

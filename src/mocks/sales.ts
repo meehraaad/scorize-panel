@@ -37,7 +37,8 @@ import { forbidden, notFound, storage } from './session';
  * One list of customers feeds every page, so a logged call shows up on Today, Leads and the board.
  */
 
-const SELLERS = new Set([3]);
+/** Nima (seller) and Reza (sales manager). */
+const SELLERS = new Set([3, 4]);
 const BASE = '/api/sales/v1';
 export const SELLER = 'نیما رستمی';
 

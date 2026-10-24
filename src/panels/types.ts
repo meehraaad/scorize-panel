@@ -15,6 +15,11 @@ export interface NavItem {
   /** Short label for the mobile bottom bar (max 4 tabs); items without it go in the "More" sheet. */
   tab?: ParseKeys;
   icon: IconName;
+  /**
+   * Shown only to users with this Django permission (superusers have all), e.g. the sales
+   * manager's section. The section's routes check it too.
+   */
+  permission?: string;
 }
 
 /** Colour of a panel's icon tile in the switcher and the chooser. */

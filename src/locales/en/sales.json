@@ -786,5 +786,176 @@
       "save": "Draft saved.",
       "send": "Offer sent to the customer."
     }
+  },
+  "manager": {
+    "nav": "Sales management sections",
+    "section": {
+      "assign": "Lead assignment",
+      "approvals": "Contract approvals",
+      "team": "Team and lead sources",
+      "followUps": "Follow-up health"
+    },
+    "assign": {
+      "title": "{{n}} leads have no owner",
+      "titleNone": "Every lead has an owner",
+      "subtitle": "The oldest has waited {{age}}. With automatic assignment this queue stays empty.",
+      "auto": "Automatic assignment",
+      "autoText": "Each new lead goes to an available seller straight away, with a notification.",
+      "mode": "Method",
+      "modeOption": {
+        "round_robin": "Round robin",
+        "least_load": "Lowest workload",
+        "match": "By country and degree"
+      },
+      "escalation": "If nobody calls within 15 minutes",
+      "escalationOption": {
+        "alert": "Alert me",
+        "next": "Give it to the next seller",
+        "both": "Both"
+      },
+      "sellers": "Sellers' workload right now",
+      "status": {
+        "available": "Available",
+        "busy": "In a session",
+        "away": "On leave"
+      },
+      "busyUntil": "In a session until {{time}}",
+      "open": "Open leads",
+      "uncalled": "Not called",
+      "response": "Median response",
+      "queue": "Unassigned queue",
+      "all": "Assign all as suggested",
+      "empty": "No unassigned leads.",
+      "sellerFor": "Seller for {{name}}",
+      "suggested": "{{name}} (suggested)",
+      "assign": "Assign"
+    },
+    "approvals": {
+      "title": "{{n}} contract drafts are waiting for you",
+      "titleNone": "No drafts waiting",
+      "subtitle": "Once approved, the contract opens in the customer's panel as \"under review\" and they get an SMS.",
+      "empty": "Every draft has been reviewed.",
+      "list": "Drafts",
+      "discount": "{{n}}% discount",
+      "customer": "Customer's sales page",
+      "contract": "Contract",
+      "term": {
+        "services": "Services",
+        "degree": "Degree and country",
+        "applies": "Applications",
+        "period": "Length",
+        "amount": "Amount",
+        "instalments": "Instalments",
+        "language": "Language score"
+      },
+      "checks": "Automatic checks",
+      "ok": "OK:",
+      "warn": "Check:",
+      "note": "Seller's note",
+      "comment": "Note for the seller (required to return or reject)",
+      "commentPlaceholder": "E.g. bring the discount to 10% and send it again",
+      "commentRequired": "Write a note to return or reject.",
+      "approve": "Approve and send to the customer's panel",
+      "return": "Return to the seller",
+      "reject": "Reject {{name}}'s draft"
+    },
+    "team": {
+      "title": "Sales team · {{month}}",
+      "subtitle": "{{won}} contracts of a {{target}} target. First-call speed affects conversion most.",
+      "range": "Range",
+      "rangeOption": {
+        "month": "This month",
+        "last": "Last month",
+        "quarter": "Last 3 months"
+      },
+      "export": "Export to Excel",
+      "kpis": "Team summary",
+      "won": "Contracts",
+      "wonNote": "of {{target}} target · {{days}} working days left",
+      "sales": "Sales",
+      "up": "{{n}} more than the period before",
+      "down": "{{n}} less than the period before",
+      "conversion": "Lead conversion",
+      "before": "Period before: {{n}}",
+      "firstCall": "Median first call",
+      "goal": "Goal: {{n}}",
+      "leaderboard": "Seller ranking",
+      "column": {
+        "rank": "#",
+        "seller": "Seller",
+        "won": "Contracts of target",
+        "sales": "Sales",
+        "conversion": "Conversion",
+        "firstCall": "First call",
+        "overdue": "Overdue follow-ups"
+      },
+      "ofTarget": "{{won}} of {{target}}",
+      "alerts": "Needs your attention",
+      "alert": {
+        "unattended": "{{seller}} is unavailable and {{n}} of their hot leads have waited over an hour.",
+        "draft": "{{customer}}'s contract draft with a {{n}}% discount is waiting for you.",
+        "no_offer": "{{n}} people bought a consultation this week and have no offer yet."
+      },
+      "alertAction": {
+        "unattended": "Move to others",
+        "draft": "Review the draft",
+        "no_offer": "See the list"
+      },
+      "sources": "Which lead sources sell?",
+      "sourcesHint": "For marketing: move campaign budget to the high-converting sources",
+      "sourceColumn": {
+        "source": "Source",
+        "leads": "Leads",
+        "won": "Contracts",
+        "rate": "Conversion",
+        "sales": "Sales"
+      },
+      "referral": "Referral from a former applicant"
+    },
+    "health": {
+      "title": "{{n}} customers and files without a next step",
+      "subtitle": "Instead of penalties per task, see each person's follow-up habits here: share on time, overdue, and people forgotten.",
+      "team": "Team",
+      "teamOption": {
+        "all": "Sales and supervisors",
+        "sales": "Sales only",
+        "supervisors": "Supervisors only"
+      },
+      "kpis": "Follow-up indicators",
+      "kpi": {
+        "onTime": "Follow-ups on time",
+        "overdue": "Overdue right now",
+        "orphans": "Without a next step",
+        "automatic": "Automatic follow-ups"
+      },
+      "onTimeNote": "Goal {{n}}",
+      "overdueNote": "{{n}} over 2 days",
+      "orphansNote": "{{customers}} sales customers · {{files}} files",
+      "automaticNote": "Of all follow-ups this week",
+      "trend": "Four weeks: {{list}}",
+      "people": "Each person, this week",
+      "peopleHint": "Sorted from the lowest share on time",
+      "column": {
+        "person": "Person",
+        "role": "Role",
+        "onTime": "On time",
+        "overdue": "Overdue",
+        "orphans": "No next step",
+        "snoozed": "Pushed back 2+ times",
+        "oldest": "Oldest"
+      },
+      "role": {
+        "sales": "Sales",
+        "supervisor": "Supervisor"
+      },
+      "oldest": "Oldest overdue",
+      "oldestHint": "Hand them to someone else or send a reminder",
+      "owner": "{{person}} · {{about}} · owner: {{owner}}",
+      "remind": "Remind {{name}}",
+      "reminded": "Reminder sent",
+      "handOver": "Hand to someone else",
+      "handTo": "To",
+      "hand": "Hand over"
+    }
   }
 }
