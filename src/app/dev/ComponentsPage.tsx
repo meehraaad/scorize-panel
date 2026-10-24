@@ -10,7 +10,9 @@ import { TicketRating } from '@/components/tickets/TicketRating';
 import { Avatar } from '@/components/ui/Avatar';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
+import { ChoiceGroup, SelectField, TextAreaField, TogglePill } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
+import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FileDrop, FileTile, PickedFile } from '@/components/ui/Files';
 import { FilterTabs, SearchField } from '@/components/ui/Filters';
@@ -53,6 +55,10 @@ export default function ComponentsPage() {
   const [accepted, setAccepted] = useState(false);
   const [attached, setAttached] = useState<File | null>(null);
   const [rated, setRated] = useState<number | null>(null);
+  const [outcome, setOutcome] = useState<'talked' | 'no_answer'>('talked');
+  const [when, setWhen] = useState('tomorrow');
+  const [toggle, setToggle] = useState(false);
+  const [dialog, setDialog] = useState(false);
 
   const steps = ['قرارداد', 'نگارش', 'مدارک', 'اپلای', 'نتایج', 'ویزا'].map((label) => ({
     key: label,
@@ -387,6 +393,63 @@ export default function ComponentsPage() {
               aria-label="OtpInput"
             />
             <BackLink to="/dev/components">بازگشت (BackLink)</BackLink>
+          </div>
+        </Group>
+
+        <Group name="Choices, Dialog (sales panel forms)">
+          <div className="flex max-w-xl flex-col gap-5">
+            <ChoiceGroup
+              legend="ChoiceGroup (pills)"
+              value={when}
+              onChange={setWhen}
+              options={[
+                { value: 'evening', label: 'امروز عصر' },
+                { value: 'tomorrow', label: 'فردا' },
+                { value: 'week', label: 'هفته‌ی بعد' },
+              ]}
+              hint="یک پیگیری برای شما ساخته می‌شود."
+            />
+            <ChoiceGroup
+              legend="ChoiceGroup (tiles)"
+              look="tiles"
+              value={outcome}
+              onChange={setOutcome}
+              options={[
+                { value: 'talked', label: 'صحبت کردیم', hint: 'با یک خط توضیح' },
+                { value: 'no_answer', label: 'جواب نداد' },
+              ]}
+            />
+            <div className="flex flex-wrap items-center gap-2.5">
+              <SelectField
+                inline
+                label="SelectField inline"
+                value="all"
+                onChange={() => undefined}
+                options={[{ value: 'all', label: 'همه' }]}
+              />
+              <TogglePill label="TogglePill" checked={toggle} onChange={setToggle} />
+            </div>
+            <SelectField
+              label="SelectField"
+              hint="راهنما"
+              value="a"
+              onChange={() => undefined}
+              options={[{ value: 'a', label: 'گزینه' }]}
+            />
+            <TextAreaField label="TextAreaField" placeholder="چه گفت؟" />
+            <Button variant="outline" className="self-start" onClick={() => setDialog(true)}>
+              باز کردن Dialog
+            </Button>
+            <Dialog
+              open={dialog}
+              onClose={() => setDialog(false)}
+              title="Dialog"
+              subtitle="پایین صفحه روی موبایل، کنار صفحه روی دسکتاپ"
+              closeLabel="بستن"
+              footer={<Button onClick={() => setDialog(false)}>ثبت</Button>}
+            >
+              <TextAreaField label="یادداشت" />
+            </Dialog>
           </div>
         </Group>
 

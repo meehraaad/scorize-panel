@@ -77,7 +77,9 @@ describe('login', () => {
     await user.type(await screen.findByLabelText('کد تأیید'), MOCK_OTP);
     expect(await screen.findByRole('heading', { name: 'خوش آمدید علی' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ورود به پنل من' }));
-    expect(await screen.findByRole('heading', { name: 'سلام علی، به اسکورایز خوش آمدید' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام علی، به اسکورایز خوش آمدید' }),
+    ).toBeInTheDocument();
   });
 
   it('asks a new email sign-up for a mobile number', async () => {

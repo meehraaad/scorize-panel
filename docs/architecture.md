@@ -39,6 +39,9 @@ src/
 │   │                      the tickets endpoint (tickets page + home card), access
 │   │                      (which sections are locked) and the call request
 │   ├── tickets/           Panel-neutral ticket API: types, queries, send/rate/seen hooks, day grouping
+│   ├── sales/             Shared by sales pages: lead stages, sources, lost reasons, score bands,
+│   │                      message links (WhatsApp/Telegram/SMS), receipt confirmation
+│   ├── tasks/             Panel-neutral staff tasks (StaffToDo): my follow-up / request / team queue
 │   ├── dates.ts           Whole days until / between dates
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
 │   ├── i18n/              i18next setup, locales config, Intl formatters (Jalali dates)
@@ -82,6 +85,8 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `BackLink`                                                    | "← Back" above a sub-page's title (writing forms, payment)                                                                |
 | `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)       | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                   |
 | `LinkTile`, `TileGrid`                                        | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid                               |
+| `ChoiceGroup`, `TogglePill`, `SelectField`, `TextAreaField`   | One-of-a-few radios as pills or tiles, a checkbox pill, labelled select (or `inline` in a toolbar), multi-line field      |
+| `Dialog`                                                      | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). Parent controls `open`                 |
 | `OtpInput`                                                    | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge  |
 
 Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
@@ -120,6 +125,15 @@ data, with light/dark and fa/en (RTL/LTR) switches. The page exists only in dev 
 
 When a new screen needs something a block can't do, extend the block (a prop or a variant) rather
 than copying its markup into the feature, and add it to the gallery.
+
+### Sales panel (canvas "Scorize Seller Panel")
+
+`features/sales/` holds every sales page (Today, Leads, Board, Customer, My month, My consultations;
+later the customer sub-tabs, offer and manager pages), `api.ts` with one response per page, and
+`paths.ts` (the panel's URLs, since features can't import panels). Shared vocabulary (stages, sources,
+scores) is in `lib/sales/`; tasks in `lib/tasks/` (the supervisor panel uses them too). "Call" buttons
+open the customer page with `?log=call`, so every call ends in the log dialog; `?log=meeting&reservation=`
+logs a consultation session. Mock seller: Nima (09120000002). Backend items: backend-changes.md S, T.
 
 ### Locked sections (applicant panel, canvas V7)
 

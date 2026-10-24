@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import type { SessionUser } from '@/lib/auth/session';
 import { applicantHandlers, resetApplicantMocks } from './applicant';
+import { resetSalesMocks, salesHandlers } from './sales';
 import { storage } from './session';
 
 /**
@@ -100,6 +101,7 @@ export const handlers = [
   http.get(`${AUTH}/logout/`, () => {
     storage.set(null);
     resetApplicantMocks();
+    resetSalesMocks();
     return HttpResponse.redirect('/', 302);
   }),
 
@@ -202,6 +204,7 @@ export const handlers = [
   }),
 
   ...applicantHandlers,
+  ...salesHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -209,4 +212,5 @@ export function resetMockSession() {
   storage.set(null);
   flow = null;
   resetApplicantMocks();
+  resetSalesMocks();
 }

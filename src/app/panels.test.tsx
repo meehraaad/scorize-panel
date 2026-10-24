@@ -92,7 +92,7 @@ describe('panels', () => {
   it('sends staff with one work panel straight to it, with no switcher', async () => {
     loginAs(NIMA);
     const router = renderApp('/start');
-    expect(await screen.findByRole('heading', { name: 'لیدها' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^سلام نیما، / })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sales');
     expect(
       within(screen.getByRole('banner')).queryByRole('button', { name: 'پنل فروش' }),
@@ -101,7 +101,7 @@ describe('panels', () => {
     // Nothing to choose either.
     cleanup();
     const again = renderApp('/choose');
-    await screen.findByRole('heading', { name: 'لیدها' });
+    await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(again.state.location.pathname).toBe('/sales');
   });
 
@@ -127,11 +127,13 @@ describe('panels', () => {
     const user = userEvent.setup();
     loginAs(NIMA);
     const router = renderApp('/sales');
-    await screen.findByRole('heading', { name: 'لیدها' });
+    await screen.findByRole('heading', { name: /^سلام نیما، / });
 
     await user.click(screen.getByRole('button', { name: 'حساب کاربری' }));
     await user.click(screen.getByRole('link', { name: 'پنل کاربر عادی' }));
-    expect(await screen.findByRole('heading', { name: 'سلام نیما، به اسکورایز خوش آمدید' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام نیما، به اسکورایز خوش آمدید' }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
 
     // Not one of his panels, but listed while he is in it, so he can get back.
@@ -143,7 +145,7 @@ describe('panels', () => {
         name: /پنل فروش/,
       }),
     );
-    expect(await screen.findByRole('heading', { name: 'لیدها' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^سلام نیما، / })).toBeInTheDocument();
   });
 
   it('logs out for real: the session is gone', async () => {

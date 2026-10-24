@@ -11,6 +11,8 @@ export interface Stat {
   value: string;
   /** Small text after the number ("of 15", "applications"). */
   unit?: string;
+  /** A line under the number ("oldest: 33 minutes", "team goal: 15"). */
+  note?: string;
   tone?: keyof typeof TONES;
 }
 
@@ -33,6 +35,7 @@ export function StatGrid({ label, stats }: { label: string; stats: readonly Stat
               </span>
               {stat.unit && <span className="text-sm text-text-2">{stat.unit}</span>}
             </dd>
+            {stat.note && <dd className="m-0 text-[13px] text-text-2">{stat.note}</dd>}
           </div>
         ))}
       </dl>

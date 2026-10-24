@@ -57,14 +57,19 @@
       "name": "Sales panel",
       "nav": {
         "label": "Sales panel menu",
+        "today": "Today",
         "leads": "Leads",
-        "customers": "Customers"
+        "board": "Sales board",
+        "month": "My month"
       },
       "tabs": {
+        "today": "Today",
         "leads": "Leads",
-        "customers": "Customers"
+        "board": "Board",
+        "month": "My month"
       },
-      "description": "Leads, consultations, offers and contracts"
+      "description": "Leads, consultations, offers and contracts",
+      "tasks": "My tasks"
     }
   },
   "tabs": {
