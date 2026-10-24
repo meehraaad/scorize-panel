@@ -1,8 +1,8 @@
 import { Icon } from './Icon';
 
 /**
- * A list of short English labels (research interests, topics). With `onRemove`, each tag gets a
- * remove button (44px hit area inside the chip).
+ * A list of short labels (research interests, topics, countries). With `onRemove`, each tag gets a
+ * remove button (44px hit area inside the chip). `latin`: English labels, laid out left to right.
  */
 export function TagList({
   label,
@@ -12,6 +12,7 @@ export function TagList({
   removeLabel,
   onRemove,
   disabled = false,
+  latin = true,
 }: {
   label: string;
   tags: readonly string[];
@@ -21,6 +22,7 @@ export function TagList({
   removeLabel?: (tag: string) => string;
   onRemove?: (tag: string) => void;
   disabled?: boolean;
+  latin?: boolean;
 }) {
   const look = tone === 'primary' ? 'bg-tint text-primary-text' : 'bg-neutral-tint text-neutral';
   const height = size === 'sm' ? 'h-[26px] text-xs' : 'h-9 text-sm';
@@ -29,8 +31,8 @@ export function TagList({
   return (
     <ul
       aria-label={label}
-      dir="ltr"
-      className={`m-0 flex list-none flex-wrap justify-end p-0 ${size === 'sm' ? 'gap-1.5' : 'gap-2'}`}
+      dir={latin ? 'ltr' : undefined}
+      className={`m-0 flex list-none flex-wrap p-0 ${latin ? 'justify-end' : ''} ${size === 'sm' ? 'gap-1.5' : 'gap-2'}`}
     >
       {tags.map((tag) => (
         <li

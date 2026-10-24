@@ -14,6 +14,8 @@ export function useFormat() {
   return useMemo(() => {
     const date = new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'long', day: 'numeric' });
     const dateShort = new Intl.DateTimeFormat(tag, { month: 'long', day: 'numeric' });
+    const monthOnly = new Intl.DateTimeFormat(tag, { month: 'long' });
+    const yearOnly = new Intl.DateTimeFormat(tag, { year: 'numeric' });
     const number = new Intl.NumberFormat(tag);
     const relative = new Intl.RelativeTimeFormat(tag, { numeric: 'auto' });
     const time = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit' });
@@ -43,6 +45,9 @@ export function useFormat() {
           month: parts.find((part) => part.type === 'month')?.value ?? '',
         };
       },
+      /** "Aban 1405" (month first: CLDR puts the year first in Persian). */
+      monthYear: (value: Date | string) =>
+        `${monthOnly.format(new Date(value))} ${yearOnly.format(new Date(value))}`,
       /**
        * The same date as universities publish it ("23 Nov 2026"), for locales whose calendar
        * isn't Gregorian; null where `date` already is.

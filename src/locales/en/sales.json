@@ -1,0 +1,961 @@
+{
+  "stage": {
+    "new": "New",
+    "contacted": "Contacted",
+    "consulted": "Consulted",
+    "offer": "Offer sent",
+    "draft": "Draft, waiting for manager",
+    "won": "Contract signed",
+    "lost": "Lost"
+  },
+  "stageShort": {
+    "new": "New",
+    "contacted": "Contacted",
+    "consulted": "Consulted",
+    "offer": "Offer",
+    "draft": "Draft",
+    "won": "Contract",
+    "lost": "Lost"
+  },
+  "source": {
+    "failed_purchase": "Failed purchase (live)",
+    "call_request": "Call request from the panel",
+    "chance_estimate": "Admission chance estimate",
+    "campaign": "Campaign and webinar",
+    "consultation": "Purchased consultation",
+    "manual": "Added by hand"
+  },
+  "lost": {
+    "budget": "Budget not enough",
+    "competitor": "Signed with another agency",
+    "gave_up": "Gave up on moving abroad",
+    "later": "Not the right time, later",
+    "no_answer": "Doesn't answer"
+  },
+  "band": {
+    "hot": "Hot",
+    "warm": "Warm",
+    "cold": "Cold"
+  },
+  "score": "{{band}} · {{score}}",
+  "channel": {
+    "call": "Phone call",
+    "whatsapp": "WhatsApp",
+    "telegram": "Telegram",
+    "sms": "SMS",
+    "meeting": "Consultation session"
+  },
+  "call": "Call",
+  "callName": "Call {{name}}",
+  "messageTo": "{{channel}} to {{name}}",
+  "mode": {
+    "online": "Online",
+    "in_person": "In person"
+  },
+  "millionToman": "{{n}} million toman",
+  "toman": "{{amount}} toman",
+  "percent": "{{n}}%",
+  "minutes": "{{n}} minutes",
+  "due": {
+    "now": "Now",
+    "overdue": "{{n}} days overdue",
+    "today": "Today {{time}}",
+    "later": "{{date}} · {{time}}",
+    "none": "—"
+  },
+  "noContact": "not called yet",
+  "lastContact": "Last contact: {{text}}",
+  "lastContactAgo": "{{when}} · {{text}}",
+  "close": "Close",
+  "cancel": "Cancel",
+  "error": "That didn't work. Please try again.",
+  "today": {
+    "title": "Hi {{name}}, {{n}} leads are waiting for your call",
+    "titleClear": "Hi {{name}}, no leads are waiting",
+    "subtitle": "{{n}} leads arrived less than 15 minutes ago. The sooner you call, the better the chance of a contract.",
+    "subtitleCalm": "{{n}} people on today's call list. Order: new leads, then overdue follow-ups, then score.",
+    "newLead": "Add a lead",
+    "hot": {
+      "eyebrow": "Call right now",
+      "title": "New leads, by waiting time",
+      "goal": "Team goal: call within {{n}} minutes",
+      "waiting": "minutes waiting",
+      "waitingFor": "waiting since {{time}}",
+      "source": "Source: {{source}}"
+    },
+    "list": {
+      "title": "Today's call list",
+      "all": "All leads",
+      "filter": "Filter the call list",
+      "tab": {
+        "all": "All",
+        "new": "New leads",
+        "today": "Follow up today",
+        "overdue": "Overdue"
+      },
+      "dueNew": "New · not called yet",
+      "dueToday": "Follow up today {{time}}",
+      "stage": "Stage: {{stage}}",
+      "order": "Order: new leads, then overdue follow-ups, then by score.",
+      "empty": "Nobody is on today's call list."
+    },
+    "tasks": {
+      "title": "My tasks",
+      "all": "All tasks",
+      "overdue": "Overdue",
+      "requests": "Colleague requests",
+      "team": "Team queue",
+      "label": "My tasks: {{overdue}} overdue, {{requests}} requests from colleagues, {{team}} in the team queue"
+    },
+    "consultations": {
+      "title": "Today's consultations",
+      "all": "All consultations",
+      "type": "{{type}} · {{mode}}",
+      "log": "Log session",
+      "logName": "Log the session with {{name}}",
+      "prepare": "Prepare",
+      "prepareName": "Prepare for the consultation with {{name}}",
+      "logged": "Logged",
+      "empty": "No consultations today."
+    },
+    "receipts": {
+      "title": "Receipts to confirm",
+      "view": "View receipt",
+      "viewName": "View {{name}}'s receipt",
+      "confirm": "Confirm",
+      "confirmName": "Confirm {{name}}'s receipt",
+      "what": "{{what}} · {{method}} · {{when}}",
+      "method": {
+        "card": "Card transfer",
+        "iban": "Bank transfer (IBAN)"
+      },
+      "empty": "No receipts waiting.",
+      "error": "The receipt wasn't confirmed. Please try again."
+    },
+    "month": {
+      "title": "My month",
+      "details": "Details",
+      "won": "Contracts signed",
+      "ofTarget": "of {{n}} target",
+      "left": "{{days}} working days left · {{drafts}} drafts waiting for the manager",
+      "conversion": "Conversion",
+      "firstCall": "Median time to first call"
+    },
+    "upsell": {
+      "title": "Cross-sell opportunities",
+      "subtitle": "Customers ready for their next purchase, found from their files.",
+      "admitted": {
+        "tag": "Admitted",
+        "title": "{{name}} got an offer from {{university}}",
+        "meta": "Application-only contract · no visa services",
+        "action": "Offer visa services"
+      },
+      "ending": {
+        "tag": "Contract ending",
+        "title": "{{name}}'s contract ends in {{days}} days",
+        "meta": "{{n}} offers so far · next degree or an extension",
+        "action": "Offer an extension"
+      },
+      "no_contract": {
+        "tag": "Consultation, no contract",
+        "title": "{{n}} people bought a consultation this week and have no contract",
+        "action": "See the list"
+      }
+    }
+  },
+  "leads": {
+    "title": "My leads",
+    "subtitle": "{{n}} leads. Each has a stage and a follow-up date, so nobody is forgotten.",
+    "add": "Add a lead",
+    "stats": {
+      "label": "Leads summary",
+      "newWaiting": "New, not called",
+      "oldest": "Oldest: {{age}}",
+      "noneWaiting": "Everyone has been called",
+      "today": "Follow up today",
+      "beforeNoon": "{{n}} before noon",
+      "overdue": "Overdue follow-ups",
+      "maxOverdue": "Longest: {{n}} days",
+      "noneOverdue": "Nothing overdue",
+      "firstCall": "Median time to first call",
+      "target": "Team goal: {{n}} minutes"
+    },
+    "stageFilter": "Stage",
+    "all": "All",
+    "search": "Search leads",
+    "searchPlaceholder": "Name, phone or email",
+    "source": "Source",
+    "allSources": "All sources",
+    "band": "Score",
+    "allBands": "All",
+    "bandOption": {
+      "hot": "Hot (70+)",
+      "warm": "Warm (45–69)",
+      "cold": "Cold (under 45)"
+    },
+    "overdueOnly": "Overdue only",
+    "list": "Leads list",
+    "column": {
+      "customer": "Customer",
+      "source": "Source and reason",
+      "score": "Score",
+      "stage": "Stage",
+      "next": "Next follow-up",
+      "actions": "Action"
+    },
+    "select": "Select {{name}}",
+    "selectAll": "Select all on this page",
+    "selected": "{{n}} leads selected",
+    "bulk": {
+      "label": "Act on the selected leads",
+      "stage": "Change stage",
+      "followUp": "Set follow-up",
+      "apply": "Apply",
+      "clear": "Clear selection",
+      "stageTo": "New stage",
+      "when": "Follow-up time"
+    },
+    "pager": "Showing {{shown}} of {{total}} leads",
+    "empty": "No leads match these filters.",
+    "lostWhy": "Reason: {{reason}}",
+    "new": {
+      "title": "Add a lead",
+      "subtitle": "A customer you found yourself: a referral, a walk-in or a call.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Mobile number",
+      "note": "Where did they come from?",
+      "notePlaceholder": "E.g. referred by a former applicant",
+      "save": "Add and open the customer page",
+      "phoneInvalid": "That mobile number isn't valid (09…).",
+      "phoneExists": "This number is already registered.",
+      "nameRequired": "Enter a first name."
+    }
+  },
+  "board": {
+    "title": "Sales board",
+    "subtitle": "Open deals: {{value}}. Orange cards have sat in one stage for more than {{days}} days.",
+    "listView": "List view",
+    "noValue": "Not valued yet",
+    "more": "+ {{n}} more leads",
+    "stale": "more than {{n}} days in this stage",
+    "age": {
+      "minutes": "{{n}} min",
+      "hours": "{{n}} h",
+      "days": "{{n}} days"
+    },
+    "paid": "{{amount}} paid",
+    "next": {
+      "call_now": "Call now",
+      "manager": "Manager is reviewing",
+      "receipt": "Receipt to confirm"
+    },
+    "lost": {
+      "title": "Lost this month · {{n}} deals",
+      "note": "A deal can't be closed without a reason",
+      "item": "{{reason}} · {{n}}"
+    }
+  },
+  "customer": {
+    "back": "My leads",
+    "summary": "Customer summary",
+    "budget": "budget {{budget}}",
+    "meta": "Source: {{source}} · Seller: {{seller}}",
+    "followUp": "Next follow-up",
+    "noFollowUp": "Not set",
+    "lostBecause": "Lost: {{reason}}",
+    "log": "Call and log",
+    "stages": "Sales stages",
+    "tasks": {
+      "title": "{{name}}'s open tasks",
+      "all": "All my tasks",
+      "empty": "No open tasks about this customer.",
+      "meta": {
+        "mine": "{{due}} · next step · me",
+        "request": "From {{creator}} to {{owner}} · due {{due}}",
+        "team": "{{auto}}{{team}} · not taken · due {{due}}"
+      },
+      "automatic": "Automatic · ",
+      "status": {
+        "open": "My follow-up",
+        "sent": "Sent",
+        "seen": "Seen",
+        "in_progress": "In progress",
+        "done": "Done",
+        "rejected": "Refused",
+        "queued": "In team queue"
+      }
+    },
+    "team": {
+      "writing": "Writing team",
+      "language": "Language team",
+      "documents": "Documents team",
+      "finance": "Finance"
+    },
+    "newTask": {
+      "label": "New task about {{name}}",
+      "for": "For",
+      "forOption": {
+        "mine": "Me",
+        "request": "A colleague",
+        "team": "A team"
+      },
+      "peer": "Which colleague?",
+      "peerOption": "{{name}} · {{role}}",
+      "peerHint": "They get an SMS. When they mark it seen or done, you're told.",
+      "team": "Which team?",
+      "teamHint": "Goes to the team's queue; whoever takes it owns it.",
+      "when": "When",
+      "whenOption": {
+        "hour": "In 1 hour",
+        "evening": "This evening",
+        "tomorrow": "Tomorrow 10:00",
+        "other": "Another date"
+      },
+      "date": "Date and time",
+      "cta": {
+        "mine": "Set a reminder for me",
+        "request": "Send the request",
+        "team": "Send to the team queue"
+      },
+      "placeholder": {
+        "mine": "E.g. send the instalment offer",
+        "request": "E.g. set up a second consultation",
+        "team": "E.g. prepare a sample SOP"
+      },
+      "required": "Write what needs to be done.",
+      "created": "Task created."
+    },
+    "history": {
+      "title": "History",
+      "subtitle": "Calls, messages, sessions, purchases and payments in one place",
+      "note": "Quick note",
+      "notePlaceholder": "E.g. his father pays; he'll answer by the end of the week",
+      "save": "Save",
+      "more": "Older entries",
+      "empty": "Nothing recorded yet.",
+      "event": {
+        "call": "Phone call · {{author}}",
+        "no_answer": "Unanswered call · {{author}}",
+        "message": "{{channel}} message · {{author}}",
+        "meeting": "Consultation session · {{author}}",
+        "note": "Note · {{author}}",
+        "payment": "Bought {{title}}",
+        "payment_failed": "Payment failed",
+        "lead": "Lead created and given to {{author}}"
+      },
+      "system": "System",
+      "stageTag": "Stage: {{stage}}"
+    },
+    "score": {
+      "title": "Lead score",
+      "of": "of 100",
+      "factors": "Score factors",
+      "note": "Automatic, from the file and the customer's behaviour. Replaces the manual \"chance of signing\"."
+    },
+    "similar": {
+      "title": "To win the customer over",
+      "text": "{{n}} Scorize applicants with a background like {{name}}'s ({{background}}) got offers from these universities:"
+    },
+    "profile": {
+      "title": "Profile",
+      "key": {
+        "current_degree": "Current degree",
+        "wanted_degree": "Wanted degree",
+        "gpa": "GPA",
+        "language": "Language",
+        "countries": "Countries",
+        "budget": "Budget",
+        "city": "City",
+        "military": "Military service",
+        "referral": "How they found us"
+      }
+    },
+    "purchases": {
+      "title": "Purchases and payments",
+      "status": {
+        "paid": "Paid",
+        "pending": "Awaiting payment",
+        "failed": "Failed"
+      },
+      "credit": "Wallet credit",
+      "none": "No purchases yet."
+    },
+    "logDialog": {
+      "title": "Log contact with {{name}}",
+      "subtitle": "Lead: {{source}} · current stage: {{stage}}",
+      "channel": "How?",
+      "template": "Ready message",
+      "templateHint": "The customer's and seller's names are filled in. \"Send\" opens the app and records it in the history.",
+      "outcome": "Call outcome",
+      "outcomeOption": {
+        "talked": "We talked",
+        "no_answer": "No answer",
+        "call_later": "Call back later",
+        "wrong_number": "Wrong number"
+      },
+      "noAnswer": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
+      "nextStage": "Next stage",
+      "keepStage": "Stay in \"{{stage}}\"",
+      "lostReason": "Reason for losing (required)",
+      "notes": "Notes",
+      "notesPlaceholder": "What did they say? What matters to them? What worries them?",
+      "followUp": "Next follow-up",
+      "followOption": {
+        "evening": "This evening",
+        "tomorrow": "Tomorrow",
+        "three": "In 3 days",
+        "week": "Next week",
+        "other": "Another date"
+      },
+      "followNote": "A follow-up is made for you: {{when}}",
+      "followDate": "Follow-up date and time",
+      "emailSummary": "Email a summary of the call to the customer",
+      "send": "Send and record",
+      "save": "Save and set follow-up",
+      "saveLost": "Save and close the lead",
+      "choose": "Choose",
+      "followWhen": "{{day}}, {{time}}"
+    },
+    "tabs": {
+      "label": "Customer page sections",
+      "summary": "Summary",
+      "purchases": "Purchases and consultations",
+      "payments": "Payments",
+      "info": "Details",
+      "apply": "Application file"
+    },
+    "newSale": {
+      "label": "New sale",
+      "product": "Sell a product",
+      "productHint": "Consultation, package, writing, webinar; payment link or receipt",
+      "offer": "Contract offer",
+      "offerHint": "Application, visa, writing; a draft for the manager to approve"
+    }
+  },
+  "month": {
+    "title": "My month · {{month}}",
+    "subtitle": "{{n}} more contracts to the target. At your current conversion, that's about {{leads}} new leads.",
+    "subtitleDone": "You reached this month's target.",
+    "goal": "Monthly target",
+    "won": "Contracts signed",
+    "ofTarget": "of {{n}} target",
+    "progress": "{{won}} of {{target}} contracts",
+    "marker": "Yellow line: where you should be today ({{percent}} of the month gone). {{days}} working days left.",
+    "sales": "Sales",
+    "commission": "Estimated commission",
+    "commissionUnset": "Rate not set",
+    "drafts": "Waiting for manager",
+    "rank": "Team rank",
+    "rankValue": "{{position}} of {{of}}",
+    "funnel": {
+      "title": "My sales funnel",
+      "drop": "Biggest drop: after \"{{from}}\", before \"{{to}}\"",
+      "step": {
+        "leads": "Leads",
+        "reached": "Reached",
+        "consulted": "Consulted",
+        "offered": "Offer",
+        "won": "Contract"
+      },
+      "rate": "Lead to contract: {{mine}} · team average: {{team}}"
+    },
+    "speed": {
+      "title": "First-call speed",
+      "subtitle": "Median minutes from a new lead to the first call, by week",
+      "week": "Week {{n}}",
+      "value": "{{n}} m",
+      "goal": "Goal {{n}} minutes",
+      "chart": "{{list}}. Goal {{goal}} minutes.",
+      "item": "week {{n}}: {{minutes}} minutes"
+    },
+    "sources": {
+      "title": "Which leads became contracts for me?",
+      "subtitle": "Call high-converting leads first",
+      "source": "Source",
+      "leads": "Leads",
+      "won": "Contracts",
+      "rate": "Rate"
+    }
+  },
+  "consultations": {
+    "back": "Today",
+    "title": "My consultations",
+    "subtitle": "Consultations assigned to you.",
+    "unlogged": "{{n}} past consultations have no session logged yet.",
+    "range": "Range",
+    "rangeOption": {
+      "today": "Today",
+      "week": "This week",
+      "past": "Past",
+      "all": "All"
+    },
+    "type": "Type",
+    "allTypes": "All",
+    "unloggedOnly": "Not logged only",
+    "count": "{{n}} consultations",
+    "meta": "{{type}} · {{mode}} · {{minutes}} minutes",
+    "status": {
+      "need": "Session not logged",
+      "done": "Session logged",
+      "soon": "Within 30 minutes",
+      "upcoming": "Upcoming · paid"
+    },
+    "log": "Log session",
+    "remind": "Reminder message",
+    "remindText": "Hi {{name}}, a reminder that your {{type}} is on {{when}}. Scorize",
+    "link": "Session link",
+    "customer": "Customer page",
+    "actionsFor": "{{action}}: {{name}}",
+    "empty": "No consultations in this range."
+  },
+  "purchases": {
+    "stats": "Purchases summary",
+    "total": "Total purchases",
+    "sessions": "Consultations",
+    "sessionsValue": "{{held}} held · {{upcoming}} upcoming",
+    "failed": "Recent failed payments",
+    "group": {
+      "consultation": "Consultations",
+      "writing": "Writing",
+      "product": "Products and webinars"
+    },
+    "add": {
+      "consultation": "Book a consultation",
+      "writing": "Sell writing",
+      "product": "Sell a product"
+    },
+    "empty": "No purchases yet.",
+    "free": "Free",
+    "status": {
+      "logged": "Held · session logged",
+      "held": "Held · session not logged",
+      "upcoming": "Upcoming · paid",
+      "paid": "Paid",
+      "pending": "Awaiting payment",
+      "failed": "Payment failed"
+    },
+    "logSession": "Log session"
+  },
+  "payments": {
+    "title": "Payments",
+    "detail": "Payment details",
+    "empty": "This customer has no payments yet.",
+    "column": {
+      "number": "No.",
+      "what": "For",
+      "amount": "Amount",
+      "method": "Method",
+      "status": "Status",
+      "date": "Date"
+    },
+    "open": "Payment number {{id}}, {{what}}",
+    "method": {
+      "online": "Online",
+      "receipt": "Card transfer"
+    },
+    "status": {
+      "pending": "Being paid",
+      "paid": "Paid",
+      "paid_by_receipt": "Paid by receipt",
+      "expired": "Expired",
+      "failed": "Failed",
+      "pending_receipt": "Receipt to review",
+      "receipt_declined": "Receipt declined"
+    },
+    "payable": "Amount to pay",
+    "receipt": {
+      "waiting": "Receipt uploaded · waiting for your review",
+      "view": "View receipt",
+      "meta": "To \"{{wallet}}\" · {{when}}",
+      "confirm": "Confirm receipt",
+      "decline": "Decline receipt",
+      "declineConfirm": "Decline the receipt? The customer gets an SMS to upload it again.",
+      "declineNote": "Declining sends the customer an automatic SMS to upload again."
+    },
+    "methodLabel": "Payment method",
+    "methodOption": {
+      "online": "Online payment link",
+      "receipt": "Card transfer with receipt"
+    },
+    "wallet": "Destination account (for receipts)",
+    "sendFactor": "Text the invoice",
+    "copyLink": "Copy payment link",
+    "copied": "Link copied",
+    "factorOpened": "Invoice last sent {{when}} · the customer opened the link",
+    "factorNotOpened": "Invoice last sent {{when}} · the customer hasn't opened the link",
+    "paid": "Paid in full.",
+    "paidRef": "Paid in full. Reference: {{reference}}",
+    "declinedNote": "Receipt declined; waiting for the customer to upload again."
+  },
+  "info": {
+    "aside": "About the details",
+    "saved": "Last saved {{when}}",
+    "save": "Save",
+    "done": "Saved",
+    "choose": "Choose",
+    "personal": {
+      "title": "Personal details",
+      "first_name": "First name",
+      "last_name": "Last name",
+      "father_name": "Father's name",
+      "birth_date": "Date of birth",
+      "gender": "Gender",
+      "marital": "Marital status",
+      "military": "Military service",
+      "city": "City",
+      "work_years": "Work experience (years)"
+    },
+    "goal": {
+      "title": "Goal and situation",
+      "wanted_degree": "Wanted degree",
+      "budget": "Budget (application, study, living)",
+      "countries": "Wanted countries",
+      "language": "Current language level"
+    },
+    "education": {
+      "title": "Education",
+      "add": "Degree",
+      "row": "Degree {{n}}",
+      "degree": "Degree",
+      "field": "Field",
+      "university": "University",
+      "gpa": "GPA",
+      "remove": "Remove degree {{n}}"
+    },
+    "exams": {
+      "title": "Test scores",
+      "add": "Test",
+      "row": "Test {{n}}",
+      "exam": "Test",
+      "score": "Score",
+      "date": "Date",
+      "remove": "Remove test {{n}}"
+    },
+    "tablet": {
+      "title": "Customer in the office?",
+      "text": "Open the tablet form so they fill in their details, education and scores themselves. This page updates on its own.",
+      "open": "Open the tablet form"
+    },
+    "similar": {
+      "title": "Similar cases",
+      "text": "Each change to degree or GPA updates the list of applicants with a similar background in the summary.",
+      "link": "See in the summary"
+    }
+  },
+  "apply": {
+    "none": "This customer has no application file yet.",
+    "readOnly": "Read only. The supervisor runs the file; if something is needed, send them a request from \"New task\".",
+    "stats": "File summary",
+    "fileStatus": "File status",
+    "applies": "Applications done",
+    "admissions": "Offers",
+    "emails": "Emails sent",
+    "of": "of {{n}}",
+    "contract": "Contract",
+    "download": "Download contract",
+    "active": "Active",
+    "ended": "Ended",
+    "period": "{{start}} to {{end}}",
+    "row": {
+      "status": "Contract status",
+      "features": "Services",
+      "period": "Start and end",
+      "degree": "Degree and countries",
+      "supervisors": "Supervisors",
+      "consultant": "Consultant"
+    },
+    "feature": {
+      "admission": "Admission",
+      "visa": "Visa",
+      "writing": "Writing"
+    },
+    "applications": "Offers and application fees",
+    "noApplications": "No applications yet.",
+    "feePaid": "fee paid",
+    "feeUnpaid": "fee not paid",
+    "status": {
+      "ready": "Ready to submit",
+      "submitted": "Waiting for result",
+      "accepted": "Offer",
+      "rejected": "Rejected"
+    }
+  },
+  "sell": {
+    "title": "Sell a product to {{name}}",
+    "subtitle": "Without leaving the panel; the payment is made in the customer's name",
+    "category": "Product type",
+    "categoryOption": {
+      "consultation": "Consultation",
+      "writing": "Writing",
+      "package": "Packages",
+      "event": "Webinars and events"
+    },
+    "nothingPicked": "Pick at least one product.",
+    "slot": "Time for {{product}}",
+    "slotRequired": "Pick a consultation time.",
+    "slotOption": "{{when}} · {{consultant}}",
+    "code": "Discount code",
+    "apply": "Apply",
+    "codeError": {
+      "invalid": "This code isn't valid.",
+      "used_by_user": "The customer has already used this code.",
+      "max_use_exceeded": "This code has run out."
+    },
+    "credit": "Use wallet credit (balance: {{amount}})",
+    "discount": "Discount: {{amount}}",
+    "total": "Total",
+    "method": "How will the customer pay?",
+    "methodOption": {
+      "online": "Online payment link",
+      "receipt": "Card transfer with receipt"
+    },
+    "methodHint": {
+      "online": "The gateway link goes by SMS",
+      "receipt": "The customer uploads the receipt in their panel"
+    },
+    "submitOnline": "Create the payment and text the invoice",
+    "submitReceipt": "Create the payment and send the account details"
+  },
+  "offer": {
+    "title": "Offer for {{name}}",
+    "subtitle": "Build the offer. Send just the offer, or send the contract draft to the manager; once approved it opens in the customer's panel.",
+    "features": "1. Contract services",
+    "featureHint": {
+      "admission": "Choosing universities, applying, professor email bot, following up results",
+      "visa": "Embassy file, appointment, interview preparation",
+      "writing": "Motivation letter, CV and recommendations for every application"
+    },
+    "details": "2. Details",
+    "degree": "Degree",
+    "applies": "Number of applications",
+    "start": "Start date",
+    "months": "Contract length",
+    "monthsOption": "{{n}} months",
+    "languageScore": "Required language score",
+    "languageDeadline": "Language score deadline",
+    "countries": "Countries",
+    "removeCountry": "Remove {{country}}",
+    "addCountry": "Add a country",
+    "price": "3. Price and instalments",
+    "base": "Base price (from the services)",
+    "discount": "Discount",
+    "noDiscount": "No discount",
+    "discountManager": "{{n}} (manager approval)",
+    "managerNeeded": "A discount above {{n}} needs the sales manager's approval. The offer also goes to the manager before the customer sees it.",
+    "instalments": "Instalments",
+    "once": "One payment",
+    "count": "{{n}} instalments",
+    "plan": {
+      "number": "No.",
+      "due": "Due",
+      "amount": "Amount",
+      "atSigning": "At signing"
+    },
+    "note": "4. Note for the manager",
+    "noteLabel": "Only the sales manager sees this",
+    "preview": "What the customer sees in their panel",
+    "contractOf": "{{features}} contract",
+    "summary": "{{degree}} · {{countries}} · {{applies}} applications · {{months}} months",
+    "planOnce": "One payment at signing",
+    "planNote": "{{n}} instalments · first {{first}} at signing",
+    "flow": {
+      "title": "Contract path",
+      "draft": {
+        "title": "Draft",
+        "text": "You build it"
+      },
+      "manager": {
+        "title": "Sales manager approval",
+        "text": "Checks price, discount and terms"
+      },
+      "panel": {
+        "title": "In the customer's panel",
+        "text": "\"Contract under review\" and an SMS to the customer"
+      },
+      "signed": {
+        "title": "Signed and first instalment",
+        "text": "With the first instalment paid, the file goes to a supervisor"
+      }
+    },
+    "submit": "Send the contract draft for approval",
+    "send": "Send only the offer to the customer (SMS and WhatsApp)",
+    "save": "Save draft",
+    "incomplete": "Pick at least one service and one country.",
+    "done": {
+      "save": "Draft saved.",
+      "send": "Offer sent to the customer."
+    }
+  },
+  "manager": {
+    "nav": "Sales management sections",
+    "section": {
+      "assign": "Lead assignment",
+      "approvals": "Contract approvals",
+      "team": "Team and lead sources",
+      "followUps": "Follow-up health"
+    },
+    "assign": {
+      "title": "{{n}} leads have no owner",
+      "titleNone": "Every lead has an owner",
+      "subtitle": "The oldest has waited {{age}}. With automatic assignment this queue stays empty.",
+      "auto": "Automatic assignment",
+      "autoText": "Each new lead goes to an available seller straight away, with a notification.",
+      "mode": "Method",
+      "modeOption": {
+        "round_robin": "Round robin",
+        "least_load": "Lowest workload",
+        "match": "By country and degree"
+      },
+      "escalation": "If nobody calls within 15 minutes",
+      "escalationOption": {
+        "alert": "Alert me",
+        "next": "Give it to the next seller",
+        "both": "Both"
+      },
+      "sellers": "Sellers' workload right now",
+      "status": {
+        "available": "Available",
+        "busy": "In a session",
+        "away": "On leave"
+      },
+      "busyUntil": "In a session until {{time}}",
+      "open": "Open leads",
+      "uncalled": "Not called",
+      "response": "Median response",
+      "queue": "Unassigned queue",
+      "all": "Assign all as suggested",
+      "empty": "No unassigned leads.",
+      "sellerFor": "Seller for {{name}}",
+      "suggested": "{{name}} (suggested)",
+      "assign": "Assign"
+    },
+    "approvals": {
+      "title": "{{n}} contract drafts are waiting for you",
+      "titleNone": "No drafts waiting",
+      "subtitle": "Once approved, the contract opens in the customer's panel as \"under review\" and they get an SMS.",
+      "empty": "Every draft has been reviewed.",
+      "list": "Drafts",
+      "discount": "{{n}}% discount",
+      "customer": "Customer's sales page",
+      "contract": "Contract",
+      "term": {
+        "services": "Services",
+        "degree": "Degree and country",
+        "applies": "Applications",
+        "period": "Length",
+        "amount": "Amount",
+        "instalments": "Instalments",
+        "language": "Language score"
+      },
+      "checks": "Automatic checks",
+      "ok": "OK:",
+      "warn": "Check:",
+      "note": "Seller's note",
+      "comment": "Note for the seller (required to return or reject)",
+      "commentPlaceholder": "E.g. bring the discount to 10% and send it again",
+      "commentRequired": "Write a note to return or reject.",
+      "approve": "Approve and send to the customer's panel",
+      "return": "Return to the seller",
+      "reject": "Reject {{name}}'s draft"
+    },
+    "team": {
+      "title": "Sales team · {{month}}",
+      "subtitle": "{{won}} contracts of a {{target}} target. First-call speed affects conversion most.",
+      "range": "Range",
+      "rangeOption": {
+        "month": "This month",
+        "last": "Last month",
+        "quarter": "Last 3 months"
+      },
+      "export": "Export to Excel",
+      "kpis": "Team summary",
+      "won": "Contracts",
+      "wonNote": "of {{target}} target · {{days}} working days left",
+      "sales": "Sales",
+      "up": "{{n}} more than the period before",
+      "down": "{{n}} less than the period before",
+      "conversion": "Lead conversion",
+      "before": "Period before: {{n}}",
+      "firstCall": "Median first call",
+      "goal": "Goal: {{n}}",
+      "leaderboard": "Seller ranking",
+      "column": {
+        "rank": "#",
+        "seller": "Seller",
+        "won": "Contracts of target",
+        "sales": "Sales",
+        "conversion": "Conversion",
+        "firstCall": "First call",
+        "overdue": "Overdue follow-ups"
+      },
+      "ofTarget": "{{won}} of {{target}}",
+      "alerts": "Needs your attention",
+      "alert": {
+        "unattended": "{{seller}} is unavailable and {{n}} of their hot leads have waited over an hour.",
+        "draft": "{{customer}}'s contract draft with a {{n}}% discount is waiting for you.",
+        "no_offer": "{{n}} people bought a consultation this week and have no offer yet."
+      },
+      "alertAction": {
+        "unattended": "Move to others",
+        "draft": "Review the draft",
+        "no_offer": "See the list"
+      },
+      "sources": "Which lead sources sell?",
+      "sourcesHint": "For marketing: move campaign budget to the high-converting sources",
+      "sourceColumn": {
+        "source": "Source",
+        "leads": "Leads",
+        "won": "Contracts",
+        "rate": "Conversion",
+        "sales": "Sales"
+      },
+      "referral": "Referral from a former applicant"
+    },
+    "health": {
+      "title": "{{n}} customers and files without a next step",
+      "subtitle": "Instead of penalties per task, see each person's follow-up habits here: share on time, overdue, and people forgotten.",
+      "team": "Team",
+      "teamOption": {
+        "all": "Sales and supervisors",
+        "sales": "Sales only",
+        "supervisors": "Supervisors only"
+      },
+      "kpis": "Follow-up indicators",
+      "kpi": {
+        "onTime": "Follow-ups on time",
+        "overdue": "Overdue right now",
+        "orphans": "Without a next step",
+        "automatic": "Automatic follow-ups"
+      },
+      "onTimeNote": "Goal {{n}}",
+      "overdueNote": "{{n}} over 2 days",
+      "orphansNote": "{{customers}} sales customers · {{files}} files",
+      "automaticNote": "Of all follow-ups this week",
+      "trend": "Four weeks: {{list}}",
+      "people": "Each person, this week",
+      "peopleHint": "Sorted from the lowest share on time",
+      "column": {
+        "person": "Person",
+        "role": "Role",
+        "onTime": "On time",
+        "overdue": "Overdue",
+        "orphans": "No next step",
+        "snoozed": "Pushed back 2+ times",
+        "oldest": "Oldest"
+      },
+      "role": {
+        "sales": "Sales",
+        "supervisor": "Supervisor"
+      },
+      "oldest": "Oldest overdue",
+      "oldestHint": "Hand them to someone else or send a reminder",
+      "owner": "{{person}} · {{about}} · owner: {{owner}}",
+      "remind": "Remind {{name}}",
+      "reminded": "Reminder sent",
+      "handOver": "Hand to someone else",
+      "handTo": "To",
+      "hand": "Hand over"
+    }
+  }
+}

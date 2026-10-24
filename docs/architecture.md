@@ -39,6 +39,9 @@ src/
 │   │                      the tickets endpoint (tickets page + home card), access
 │   │                      (which sections are locked) and the call request
 │   ├── tickets/           Panel-neutral ticket API: types, queries, send/rate/seen hooks, day grouping
+│   ├── sales/             Shared by sales pages: lead stages, sources, lost reasons, score bands,
+│   │                      message links (WhatsApp/Telegram/SMS), receipt confirmation
+│   ├── tasks/             Panel-neutral staff tasks (StaffToDo): my follow-up / request / team queue
 │   ├── dates.ts           Whole days until / between dates
 │   ├── account/           Every panel's account: notifications (the header's bell), channels, login details
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
@@ -67,24 +70,27 @@ a change is made once. A feature keeps only what is specific to it (its data, it
 rules); anything that looks the same on two pages becomes a block. Blocks take ready-made text and
 numbers as props (no fetching, no dictionary of their own), so any panel can use them.
 
-| Block                                                                   | Use it for                                                                                                                |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `PageStack`, `PageColumns`                                              | Page body: header + sections; main column with a side `<aside>` that drops under it on phones                             |
-| `PageHeader`                                                            | The page's h1, subtitle and actions (sets the document title)                                                             |
-| `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`             | A titled card (a region named by its h2); a section title above several cards or a toolbar                                |
-| `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`              | "Nothing here yet" with a next step; loading rows                                                                         |
-| `ProgressBar`, `StepBar`, `StepList`, `StepDot`                         | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                           |
-| `StatGrid`                                                              | A row of number tiles                                                                                                     |
-| `FilterTabs`, `SearchField`, `Pager`                                    | List toolbars and paging                                                                                                  |
-| `FileDrop`, `PickedFile`, `FileTile`                                    | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully |
-| `TagList`, `Chip`, `Avatar`, `StarRating`                               | Tags with optional remove, status pills, initials, 1–5 rating                                                             |
-| `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass`           | Actions (44px touch targets; icon-only ones require `aria-label`)                                                         |
-| `Notice`, `InlineConfirm`, `TextField`, `TextAreaField`, `Icon`, `Card` | Messages, in-place confirmation, inputs (one line, several lines), icons, a bare card                                     |
-| `BackLink`                                                              | "← Back" above a sub-page's title (writing forms, payment)                                                                |
-| `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)                 | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                   |
-| `LinkTile`, `TileGrid`                                                  | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid (`dense`: 2 on phones)        |
-| `OtpInput`                                                              | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge  |
-| `Switch`                                                                | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                    |
+| Block                                                         | Use it for                                                                                                                                                                                                          |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageStack`, `PageColumns`                                    | Page body: header + sections; main column with a side `<aside>` that drops under it on phones                                                                                                                       |
+| `PageHeader`                                                  | The page's h1, subtitle and actions (sets the document title)                                                                                                                                                       |
+| `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`   | A titled card (a region named by its h2); a section title above several cards or a toolbar                                                                                                                          |
+| `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`    | "Nothing here yet" with a next step; loading rows                                                                                                                                                                   |
+| `ProgressBar`, `StepBar`, `StepList`, `StepDot`               | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                                                                                                                     |
+| `StatGrid`                                                    | A row of number tiles                                                                                                                                                                                               |
+| `FilterTabs`, `SearchField`, `Pager`                          | List toolbars and paging                                                                                                                                                                                            |
+| `FileDrop`, `PickedFile`, `FileTile`                          | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully                                                                                           |
+| `TagList`, `Chip`, `Avatar`, `StarRating`                     | Tags with optional remove, status pills, initials, 1–5 rating                                                                                                                                                       |
+| `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass` | Actions (44px touch targets; icon-only ones require `aria-label`)                                                                                                                                                   |
+| `Notice`, `InlineConfirm`, `TextField`, `Icon`, `Card`        | Messages, in-place confirmation, inputs (one line, several lines), icons, a bare card                                                                                                                               |
+| `BackLink`                                                    | "← Back" above a sub-page's title (writing forms, payment)                                                                                                                                                          |
+| `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)       | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                                                                                                             |
+| `LinkTile`, `TileGrid`                                        | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid (`dense`: 2 on phones)                                                                                                  |
+| `ChoiceGroup`, `TogglePill`, `SelectField`, `TextAreaField`   | One-of-a-few radios as pills or tiles, a checkbox pill, labelled select (or `inline` in a toolbar), multi-line field                                                                                                |
+| `DatePicker`                                                  | A date (or date and time) in the user's calendar: Jalali in Persian, Gregorian in English (`lib/calendar.ts`), with month/year views, keyboard use, `only="future"/"past"`. Use it instead of `<input type="date">` |
+| `Dialog`                                                      | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). Parent controls `open`                                                                                                           |
+| `OtpInput`                                                    | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                            |
+| `Switch`                                                      | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                              |
 
 Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
 panel that shows tickets:
@@ -122,6 +128,22 @@ data, with light/dark and fa/en (RTL/LTR) switches. The page exists only in dev 
 
 When a new screen needs something a block can't do, extend the block (a prop or a variant) rather
 than copying its markup into the feature, and add it to the gallery.
+
+### Sales panel (canvas "Scorize Seller Panel")
+
+`features/sales/` holds every sales page (Today, Leads, Board, My month, My consultations, the customer
+pages: `CustomerLayout` with its sub-tabs summary / purchases / payments / details / application file,
+the offer page; later the manager pages), `api.ts` with one response per page, and
+`paths.ts` (the panel's URLs, since features can't import panels). Shared vocabulary (stages, sources,
+scores) is in `lib/sales/`; tasks in `lib/tasks/` (the supervisor panel uses them too). "Call" buttons
+open the customer page with `?log=call`, so every call ends in the log dialog; `?log=meeting&reservation=`
+logs a consultation session; `?sell=<category>` opens the product sale. Mock seller: Nima (09120000002); sales manager: Reza (09120000003). The manager section
+(`features/sales/manager/`) is a nav item with `permission: 'can_assign_to_seller'`: `NavItem.permission`
+hides it from others and the route's loader sends them back. Backend items: backend-changes.md S, T.
+
+`features/tasks/` is the panel-neutral "Today's tasks" page (my follow-ups, requests to me, team
+queue), configured per panel with `TasksConfig` (`panels/sales/TasksPage.tsx`), like tickets. Its API
+and the "new task" hook are in `lib/tasks/`.
 
 ### Locked sections (applicant panel, canvas V7)
 

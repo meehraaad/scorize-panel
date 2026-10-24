@@ -5,11 +5,17 @@ interface IconButtonProps extends Omit<ComponentProps<'button'>, 'children'> {
   icon: IconName;
   /** Required: an icon alone has no name for screen readers. */
   'aria-label': string;
-  tone?: 'default' | 'danger' | 'muted';
+  tone?: keyof typeof TONES;
   iconSize?: number;
 }
 
-const TONES = { default: 'text-text', danger: 'text-danger', muted: 'text-text-2' } as const;
+/** `inherit`: the colour of the text around it (on the dark hero). */
+const TONES = {
+  default: 'text-text',
+  danger: 'text-danger',
+  muted: 'text-text-2',
+  inherit: '',
+} as const;
 
 /** Round icon-only button with a 44px touch target (edit, delete, remove, close). */
 export function IconButton({
@@ -41,7 +47,7 @@ export function IconLink({
 }: Omit<ComponentProps<'a'>, 'children'> & {
   icon: IconName;
   'aria-label': string;
-  tone?: 'default' | 'danger' | 'muted';
+  tone?: keyof typeof TONES;
   iconSize?: number;
 }) {
   return (
