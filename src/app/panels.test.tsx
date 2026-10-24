@@ -94,7 +94,10 @@ describe('panels', () => {
       await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/writer');
-    expect(localStorage.getItem('scorize.panel')).toBe('writer');
+    // Saved by an effect, which can run just after the page shows (seen on a slow CI runner).
+    await waitFor(() => {
+      expect(localStorage.getItem('scorize.panel')).toBe('writer');
+    });
   });
 
   it('sends staff with one work panel straight to it, with no switcher', async () => {
