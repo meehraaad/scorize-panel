@@ -6,6 +6,7 @@ import type contract from '@/locales/fa/contract.json';
 import type documents from '@/locales/fa/documents.json';
 import type home from '@/locales/fa/home.json';
 import type sales from '@/locales/fa/sales.json';
+import type tasks from '@/locales/fa/tasks.json';
 import type tickets from '@/locales/fa/tickets.json';
 import type turkey from '@/locales/fa/turkey.json';
 import type writing from '@/locales/fa/writing.json';
@@ -26,6 +27,7 @@ declare module 'i18next' {
       contract: typeof contract;
       turkey: typeof turkey;
       sales: typeof sales;
+      tasks: typeof tasks;
     };
   }
 }

@@ -1,0 +1,203 @@
+{
+  "back": "Today",
+  "title": "Today's tasks",
+  "subtitle": {
+    "customer": "Create new tasks on the customer's own page. This page is for seeing and doing them.",
+    "applicant": "Create new tasks on the applicant's own file. This page is for seeing and doing them."
+  },
+  "aside": "New task and my requests",
+  "close": "Close",
+  "cancel": "Cancel",
+  "error": "That didn't work. Please try again.",
+  "percent": "{{n}}%",
+  "onTime": {
+    "label": "On time this week",
+    "note": "Last week {{last}} · team goal {{target}}"
+  },
+  "views": "Sections",
+  "view": {
+    "mine": {
+      "label": "My follow-ups",
+      "hint": "People waiting for me"
+    },
+    "requests": {
+      "label": "Requests to me",
+      "hint": "What colleagues asked of me"
+    },
+    "team": {
+      "label": "Team queue",
+      "hint": "Whoever takes it first"
+    }
+  },
+  "orphans": {
+    "title": {
+      "customer": "{{n}} active customers have no next step",
+      "applicant": "{{n}} active files have no next step"
+    },
+    "text": {
+      "customer": "No follow-up was set after the last call. These are the customers who get lost.",
+      "applicant": "No open task for them; they may be forgotten."
+    },
+    "action": "Set a next step"
+  },
+  "mine": {
+    "empty": "No follow-ups for today.",
+    "group": {
+      "late": "Overdue",
+      "now": "Now",
+      "today": "Rest of today"
+    },
+    "daysLate": "{{n}} days",
+    "late": "late",
+    "source": {
+      "system": "Automatic · system",
+      "me": "My reminder",
+      "chain": "Next step"
+    },
+    "snoozed": "Pushed back {{n}} times",
+    "step": {
+      "customer": "Step {{n}} with this customer",
+      "applicant": "Step {{n}} of this file"
+    },
+    "action": {
+      "call": "Call",
+      "message": "Message"
+    },
+    "done": "Done",
+    "doneFor": "Done: {{text}}",
+    "snooze": "Push back",
+    "snoozeLabel": "Push the follow-up back",
+    "snoozeOption": {
+      "tomorrow": "Tomorrow 10:00",
+      "week": "Next week",
+      "twoHours": "In 2 hours"
+    },
+    "reason": "Reason",
+    "reasonOption": {
+      "customer_later": "Customer asked for later",
+      "waiting": "Waiting for a document or answer",
+      "no_time": "Didn't get to it"
+    },
+    "tomorrow": "Tomorrow: {{n}} follow-ups",
+    "doneToday": "Done today: {{n}}"
+  },
+  "done": {
+    "title": "Follow-up done",
+    "outcome": "What happened?",
+    "outcomeOption": {
+      "customer": {
+        "talked": "We talked",
+        "no_answer": "No answer",
+        "messaged": "I sent a message",
+        "later": "Customer said later"
+      },
+      "applicant": {
+        "talked": "Done, the applicant knows",
+        "no_answer": "The applicant didn't answer",
+        "messaged": "Waiting for the applicant",
+        "later": "Needs another colleague"
+      }
+    },
+    "note": "Note",
+    "noteHint": {
+      "customer": "Recorded in the customer's history",
+      "applicant": "Recorded in the file's history"
+    },
+    "next": "Next step",
+    "suggested": "Suggested by the system; you can change it",
+    "nextRequired": "Write the next step, or say why none is needed.",
+    "when": "When",
+    "whenOption": {
+      "evening": "This evening",
+      "tomorrow": "Tomorrow 10:00",
+      "three": "In 3 days",
+      "week": "Next week"
+    },
+    "noNext": {
+      "customer": "This customer needs no further follow-up",
+      "applicant": "This applicant needs no follow-up for now"
+    },
+    "needNext": "No, a next step is needed",
+    "why": {
+      "customer": "Why is no follow-up needed?",
+      "applicant": "Why is no follow-up needed?"
+    },
+    "end": {
+      "won": "Signed a contract",
+      "lost": "Lost",
+      "finished": "Finished, waiting for nothing"
+    },
+    "saveNext": "Save and set the next step",
+    "saveClose": "Save and close the follow-up"
+  },
+  "status": {
+    "open": "Open",
+    "sent": "New",
+    "seen": "Seen",
+    "in_progress": "In progress",
+    "done": "Done",
+    "rejected": "Refused",
+    "queued": "Queued"
+  },
+  "requests": {
+    "empty": "No requests from colleagues.",
+    "about": "About",
+    "due": "Due: {{when}}",
+    "comments": "{{n}} messages",
+    "open": "Open",
+    "openFor": "Open: {{text}}",
+    "cta": {
+      "sent": "Seen, starting",
+      "seen": "Start",
+      "in_progress": "Done"
+    },
+    "loading": "Request",
+    "from": "From {{name}} ({{role}}) to you · {{when}}",
+    "watchers": "Watching: {{names}}",
+    "steps": "Request status",
+    "thread": "Conversation",
+    "noThread": "No messages yet.",
+    "message": "Message to {{name}}",
+    "send": "Send",
+    "doneTell": "Done, tell {{name}}",
+    "refuseWithReason": "Refuse with a reason",
+    "refuse": "Refuse request",
+    "reason": "Why can't it be done? (for the requester)"
+  },
+  "team": {
+    "note": "Tasks given to a team, not a person. The first to press \"I'll take it\" owns it and it leaves the queue for everyone else.",
+    "empty": "The team queue is empty.",
+    "waiting": "Queued {{when}}",
+    "claim": "I'll take it",
+    "claimFor": "I'll take it: {{text}}",
+    "taken": {
+      "me": "Taken; it moved to My follow-ups",
+      "other": "A colleague took it"
+    },
+    "name": {
+      "sales": "Sales team",
+      "writing": "Writing team",
+      "language": "Language team",
+      "documents": "Documents team",
+      "finance": "Finance"
+    }
+  },
+  "internal": {
+    "title": "New task",
+    "text": {
+      "customer": "Create a task about a customer on their page so it's in their history too. For internal work not about a person:",
+      "applicant": "Create a task about an applicant on their file so it's in their history too. For internal work not about a person:"
+    },
+    "open": "Internal request to a colleague",
+    "what": "What needs doing?",
+    "required": "Write what is needed.",
+    "to": "Which colleague?",
+    "due": "Due",
+    "send": "Send request"
+  },
+  "sent": {
+    "title": "Requests I sent",
+    "empty": "You haven't sent any requests.",
+    "to": "To {{to}} · {{when}}"
+  }
+}

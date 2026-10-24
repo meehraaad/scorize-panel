@@ -5,7 +5,7 @@ import { SelectField } from '@/components/ui/Choices';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useBulkLeads, type BulkChange } from '../api';
-import { quickWhen, type QuickWhen } from '../when';
+import { quickWhen, type QuickWhen } from '@/lib/when';
 
 const STAGE_CHOICES = ['new', 'contacted', 'consulted', 'offer'] as const;
 const WHEN_CHOICES = ['tomorrow', 'three', 'week'] as const satisfies readonly QuickWhen[];

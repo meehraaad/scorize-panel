@@ -136,6 +136,10 @@ scores) is in `lib/sales/`; tasks in `lib/tasks/` (the supervisor panel uses the
 open the customer page with `?log=call`, so every call ends in the log dialog; `?log=meeting&reservation=`
 logs a consultation session; `?sell=<category>` opens the product sale. Mock seller: Nima (09120000002). Backend items: backend-changes.md S, T.
 
+`features/tasks/` is the panel-neutral "Today's tasks" page (my follow-ups, requests to me, team
+queue), configured per panel with `TasksConfig` (`panels/sales/TasksPage.tsx`), like tickets. Its API
+and the "new task" hook are in `lib/tasks/`.
+
 ### Locked sections (applicant panel, canvas V7)
 
 Every account has the applicant panel. `GET /applicant/v1/access/` (`lib/applicant/access.ts`) says

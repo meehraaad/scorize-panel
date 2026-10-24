@@ -28,7 +28,7 @@ import {
   type LeadStage,
   type LostReason,
 } from '@/lib/sales/api';
-import type { NewTask, TaskSummary } from '@/lib/tasks/api';
+import type { TaskSummary } from '@/lib/tasks/api';
 import { forbidden, notFound, storage } from './session';
 
 /**
@@ -1034,8 +1034,6 @@ function consultationsOf(data: SalesState, url: URL): ConsultationsData {
   };
 }
 
-const TASKS = '/api/staff/v1/tasks';
-
 export const salesHandlers = [
   http.get(`${BASE}/today/`, () => {
     const data = stateOrError();
@@ -1176,30 +1174,6 @@ export const salesHandlers = [
     if (index >= 0) data.receipts.splice(index, 1);
     if (payment) payment.status = 'paid_by_receipt';
     return HttpResponse.json({ message: 'رسید پرداخت با موفقت تایید شد.' });
-  }),
-
-  http.post(`${TASKS}/`, async ({ request }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const task = (await request.json()) as NewTask;
-    if (!task.text.trim()) return HttpResponse.json({ text: ['required'] }, { status: 400 });
-    const colleague = customerOf(data, data.customers[0] as MockCustomer).colleagues.find(
-      (item) => item.id === task.assignee,
-    );
-    const list = data.tasks.get(task.user) ?? [];
-    list.push({
-      id: nextId++,
-      kind: task.kind,
-      status: task.kind === 'mine' ? 'open' : task.kind === 'request' ? 'sent' : 'queued',
-      text: task.text,
-      due_at: task.due_at,
-      owner: task.kind === 'mine' ? SELLER : (colleague?.name ?? null),
-      creator: SELLER,
-      team: task.team ?? null,
-      automatic: false,
-    });
-    data.tasks.set(task.user, list);
-    return new HttpResponse(null, { status: 201 });
   }),
 ];
 

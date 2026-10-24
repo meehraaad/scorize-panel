@@ -19,7 +19,7 @@ import {
 } from '@/lib/tasks/api';
 import { customerKey, type CustomerData } from '../api';
 import { salesPath } from '../paths';
-import { fromLocalInput, quickWhen } from '../when';
+import { fromLocalInput, quickWhen } from '@/lib/when';
 
 const STATUS_TONE: Record<TaskStatus, ChipTone> = {
   open: 'primary',

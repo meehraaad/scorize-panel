@@ -3,6 +3,7 @@ import type { SessionUser } from '@/lib/auth/session';
 import { applicantHandlers, resetApplicantMocks } from './applicant';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { salesCustomerHandlers } from './salesCustomer';
+import { resetTaskMocks, taskHandlers } from './tasks';
 import { storage } from './session';
 
 /**
@@ -103,6 +104,7 @@ export const handlers = [
     storage.set(null);
     resetApplicantMocks();
     resetSalesMocks();
+    resetTaskMocks();
     return HttpResponse.redirect('/', 302);
   }),
 
@@ -207,6 +209,7 @@ export const handlers = [
   ...applicantHandlers,
   ...salesHandlers,
   ...salesCustomerHandlers,
+  ...taskHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -215,4 +218,5 @@ export function resetMockSession() {
   flow = null;
   resetApplicantMocks();
   resetSalesMocks();
+  resetTaskMocks();
 }

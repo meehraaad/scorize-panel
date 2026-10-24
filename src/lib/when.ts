@@ -1,5 +1,5 @@
 /** Quick follow-up times, as the seller picks them ("tomorrow", "next week"), in local time. */
-export type QuickWhen = 'hour' | 'evening' | 'tomorrow' | 'three' | 'week';
+export type QuickWhen = 'hour' | 'twoHours' | 'evening' | 'tomorrow' | 'three' | 'week';
 
 const EVENING_HOUR = 18;
 const MORNING_HOUR = 10;
@@ -9,6 +9,8 @@ export function quickWhen(choice: QuickWhen, now = new Date()): Date {
   switch (choice) {
     case 'hour':
       return new Date(now.getTime() + 3_600_000);
+    case 'twoHours':
+      return new Date(now.getTime() + 2 * 3_600_000);
     case 'evening':
       date.setHours(EVENING_HOUR, 0, 0, 0);
       // Already evening: the same hour tomorrow.

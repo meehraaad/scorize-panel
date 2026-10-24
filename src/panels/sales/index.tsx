@@ -1,7 +1,7 @@
-import { ComingSoonPage } from '@/components/ComingSoonPage';
 import { boardQuery, customerQuery, monthQuery, todayQuery } from '@/features/sales/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { lazyPage } from '@/lib/router/lazyPage';
+import { tasksQuery } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
 
 /** Start a page's request together with its chunk, not after it. A failure shows on the page. */
@@ -93,6 +93,10 @@ export const salesPanel: PanelDefinition = {
       path: 'customers/:id/offer',
       ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales']),
     },
-    { path: 'tasks', element: <ComingSoonPage title="panels.sales.tasks" /> },
+    {
+      path: 'tasks',
+      loader: prefetch(() => queryClient.query(tasksQuery('sales'))),
+      ...lazyPage(() => import('./TasksPage'), ['tasks']),
+    },
   ],
 };

@@ -17,7 +17,7 @@ import {
   type LostReason,
 } from '@/lib/sales/api';
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
-import { fromLocalInput, quickWhen } from '../when';
+import { fromLocalInput, quickWhen } from '@/lib/when';
 
 export interface LogStart {
   channel: Channel;
