@@ -5,12 +5,12 @@ import { MessageBubble } from '@/components/tickets/MessageThread';
 import { TicketRating } from '@/components/tickets/TicketRating';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Notice } from '@/components/ui/Notice';
 import { Badge, SectionCard } from '@/components/ui/SectionCard';
 import { APPLICANT_TICKETS, SUPERVISOR_THREAD } from '@/lib/applicant/tickets';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { DEFAULT_PRIORITY, useRateMessage, useSendMessage } from '@/lib/tickets/api';
 import type { ApplicantOverview, TicketMessage } from '../api';
+import { toast } from '@/lib/toast';
 
 const MAX_RATING = 5;
 
@@ -104,7 +104,7 @@ function ReplyForm({ messages }: { messages: TicketMessage[] }) {
     if (!text.trim()) return;
     reply.mutate(
       { text: text.trim(), priority: DEFAULT_PRIORITY, attachment: null },
-      { onSuccess: () => setText('') },
+      { onError: () => toast.error(t('ticket.sendError')), onSuccess: () => setText('') },
     );
   };
 
@@ -129,7 +129,6 @@ function ReplyForm({ messages }: { messages: TicketMessage[] }) {
           {t('ticket.send')}
         </Button>
       </div>
-      {reply.isError && <Notice tone="error">{t('ticket.sendError')}</Notice>}
     </form>
   );
 }

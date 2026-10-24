@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { toasts } from '@/test/toasts';
 
 const SARA = 1; // applicant: 2 documents to send, 10 files, SOP + CV (src/mocks/applicant.ts)
 const MARYAM = 2; // no applicant file
@@ -81,7 +82,7 @@ describe('documents page', () => {
 
     await user.click(within(required()).getByRole('button', { name: 'ارسال ۱ فایل' }));
     expect(
-      await within(required()).findByText('فایل‌ها ارسال شد. سوپروایزر شما با خبر شد.'),
+      await toasts().findByText('فایل‌ها ارسال شد. سوپروایزر شما با خبر شد.'),
     ).toBeInTheDocument();
     expect(
       screen.getByText('۹ از ۱۰ مدرک را فرستاده‌اید. ۱ مدرک دیگر مانده است.'),
@@ -129,7 +130,7 @@ describe('documents page', () => {
       pdf('transcript.pdf'),
     );
     await user.click(within(required()).getByRole('button', { name: 'ارسال ۱ فایل' }));
-    await within(required()).findByText('فایل‌ها ارسال شد. سوپروایزر شما با خبر شد.');
+    await toasts().findByText('فایل‌ها ارسال شد. سوپروایزر شما با خبر شد.');
 
     await router.navigate('/');
     const todos = await screen.findByRole('region', { name: 'کارهای منتظر شما' });

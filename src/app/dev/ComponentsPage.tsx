@@ -35,8 +35,11 @@ import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
 import { TagList } from '@/components/ui/Tags';
 import { TextField } from '@/components/ui/TextField';
+import { Toast } from '@/components/ui/Toast';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useTheme } from '@/lib/theme/ThemeProvider';
+import { toast, type ToastData } from '@/lib/toast';
+import { uploadWithToast } from '@/lib/upload';
 
 /**
  * Every shared block with sample data, in the current theme and language: change a block in
@@ -135,6 +138,27 @@ export default function ComponentsPage() {
           )}
         </Group>
 
+        <Group name="Toast (lib/toast, lib/upload)">
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => void fakeUpload(false).catch(() => undefined)}>
+              بارگذاری رسید
+            </Button>
+            <Button variant="outline" onClick={() => void fakeUpload(true).catch(() => undefined)}>
+              بارگذاری ناموفق
+            </Button>
+            <Button variant="outline" onClick={() => toast.success('ذخیره شد.')}>
+              success
+            </Button>
+            <Button variant="outline" onClick={() => toast.error('ارسال نشد. دوباره امتحان کنید.')}>
+              error
+            </Button>
+          </div>
+          <div className="grid items-start gap-3 lg:grid-cols-2">
+            {TOAST_SAMPLES.map((item) => (
+              <Toast key={item.id} item={item} onClose={() => undefined} />
+            ))}
+          </div>
+        </Group>
         <Group name="SectionCard · EmptyState · PageColumns">
           <PageColumns
             asideLabel="ستون کناری"
@@ -479,6 +503,16 @@ export default function ComponentsPage() {
               footer={<Button onClick={() => setDialog(false)}>ثبت</Button>}
             >
               <TextAreaField label="یادداشت" />
+              <Button
+                variant="outline"
+                onClick={() =>
+                  toast.error('ارسال نشد. دوباره امتحان کنید.', {
+                    action: { label: 'ارسال دوباره', run: () => toast.success('ذخیره شد.') },
+                  })
+                }
+              >
+                Toast داخل Dialog
+              </Button>
             </Dialog>
           </div>
         </Group>
@@ -653,6 +687,77 @@ export default function ComponentsPage() {
         </Group>
       </div>
     </div>
+  );
+}
+
+const TOAST_SAMPLES: ToastData[] = [
+  {
+    id: -1,
+    kind: 'uploading',
+    title: 'رسید-قسط-دوم.jpg',
+    meta: 'در حال بارگذاری · ۶۴٪ · ۱٫۲ از ۱٫۹ مگابایت',
+    progress: 0.64,
+  },
+  {
+    id: -2,
+    kind: 'uploading',
+    title: 'بارگذاری ۳ فایل',
+    meta: '۱ از ۳ انجام شد · ۵۲٪',
+    progress: 0.52,
+    files: [
+      { name: 'پاسپورت.pdf', state: 'done' },
+      { name: 'ریزنمرات-کارشناسی.pdf', state: 'up', progress: 0.56 },
+      { name: 'مدرک-آیلتس.jpg', state: 'wait' },
+    ],
+  },
+  { id: -3, kind: 'success', title: 'رسید بارگذاری شد', meta: 'رسید-قسط-دوم.jpg' },
+  {
+    id: -4,
+    kind: 'paused',
+    title: 'رسید-قسط-دوم.jpg',
+    meta: 'اینترنت قطع شد · وصل که شود، از ۶۲٪ ادامه می‌دهد',
+    progress: 0.62,
+  },
+  {
+    id: -5,
+    kind: 'error',
+    title: 'بارگذاری کامل نشد',
+    meta: 'اتصال در ۶۲٪ قطع ماند. فایل نگه داشته شده؛ همین را دوباره بفرستید.',
+    action: { label: 'ارسال دوباره', run: () => undefined },
+  },
+  { id: -6, kind: 'warn', title: 'این فایل فرستاده نشد', meta: 'PDF یا تصویر تا ۱۰ مگابایت' },
+  { id: -7, kind: 'info', title: 'پیش‌نویس ذخیره شد' },
+];
+
+/** A 3-second upload with real progress events, for trying the toast. */
+function fakeUpload(fail: boolean) {
+  return uploadWithToast(
+    [
+      {
+        name: 'رسید-قسط-دوم.jpg',
+        size: 1.9 * 1024 * 1024,
+        send: (onProgress, signal) =>
+          new Promise<null>((resolve, reject) => {
+            let sent = 0;
+            const timer = setInterval(() => {
+              sent += 0.05;
+              onProgress(Math.min(sent, 1), 1);
+              if (fail && sent >= 0.6) {
+                clearInterval(timer);
+                reject(new Error('Upload failed'));
+              } else if (sent >= 1) {
+                clearInterval(timer);
+                resolve(null);
+              }
+            }, 150);
+            signal.addEventListener('abort', () => {
+              clearInterval(timer);
+              reject(new DOMException('', 'AbortError'));
+            });
+          }),
+      },
+    ],
+    { retry: () => void fakeUpload(false).catch(() => undefined) },
   );
 }
 

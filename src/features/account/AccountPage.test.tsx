@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { toasts } from '@/test/toasts';
 
 const SARA = 1; // 7 notifications (3 unread, two pages), email not verified (src/mocks/account.ts)
 
@@ -57,18 +58,18 @@ describe('account and notifications', () => {
     expect(save).toBeDisabled();
     await user.click(within(channels).getByRole('switch', { name: /ایمیل/ }));
     await user.click(save);
-    expect(await within(channels).findByText('ثبت شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('ثبت شد.')).toBeInTheDocument();
 
     const login = screen.getByRole('region', { name: 'اطلاعات ورود' });
     expect(within(login).getByText(/تأیید نشده/)).toBeInTheDocument();
     await user.click(within(login).getByRole('button', { name: 'ارسال دوباره' }));
-    expect(await within(login).findByText('لینک دوباره فرستاده شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('لینک دوباره فرستاده شد.')).toBeInTheDocument();
 
     await user.click(within(login).getByRole('button', { name: 'ویرایش نام و نام خانوادگی' }));
     await user.clear(within(login).getByLabelText('نام خانوادگی'));
     await user.type(within(login).getByLabelText('نام خانوادگی'), 'محمدی');
     await user.click(within(login).getByRole('button', { name: 'ثبت' }));
-    expect(await within(login).findByText('نام ثبت شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('نام ثبت شد.')).toBeInTheDocument();
     expect(within(login).getByText('سارا محمدی')).toBeInTheDocument();
 
     await user.click(within(login).getByRole('button', { name: 'تغییر رمز' }));
@@ -84,7 +85,7 @@ describe('account and notifications', () => {
     await user.clear(within(login).getByLabelText('رمز فعلی'));
     await user.type(within(login).getByLabelText('رمز فعلی'), 'password123');
     await user.click(within(login).getByRole('button', { name: 'ثبت' }));
-    expect(await within(login).findByText('رمز عبور تغییر کرد.')).toBeInTheDocument();
+    expect(await toasts().findByText('رمز عبور تغییر کرد.')).toBeInTheDocument();
   });
 
   it('asks once how they heard about Scorize', async () => {

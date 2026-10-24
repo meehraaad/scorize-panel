@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
-import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import { useRequestDocument } from '../api';
+import { toast } from '@/lib/toast';
 
 /** Asks the applicant for one more document (UploadRequiredDocument); they get an SMS. */
 export function RequestDocumentDialog({
@@ -38,7 +38,7 @@ export function RequestDocumentDialog({
             onClick={() =>
               request.mutate(
                 { name: name.trim(), deadline: deadline || null, note: note.trim() },
-                { onSuccess: onClose },
+                { onError: () => toast.error(t('saveError')), onSuccess: onClose },
               )
             }
           >
@@ -50,7 +50,6 @@ export function RequestDocumentDialog({
         </>
       }
     >
-      {request.isError && <Notice tone="error">{t('saveError')}</Notice>}
       <TextField
         label={t('requestDialog.name')}
         placeholder={t('requestDialog.namePlaceholder')}

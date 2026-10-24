@@ -15,6 +15,7 @@ import { isolate, useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
 import { packageQuery, useReviewPackage, type PackageDetail } from './api';
 import { NotFound } from './components/NotFound';
+import { toast } from '@/lib/toast';
 
 /**
  * A bought package: its lessons (played in the secure player), where the user left off, and a
@@ -125,7 +126,7 @@ function Review({ data }: { data: PackageDetail }) {
       setEmpty(true);
       return;
     }
-    review.mutate(text.trim());
+    review.mutate(text.trim(), { onError: () => toast.error(t('package.error')) });
   };
 
   return (
@@ -162,7 +163,6 @@ function Review({ data }: { data: PackageDetail }) {
               setEmpty(false);
             }}
           />
-          {review.isError && <Notice tone="error">{t('package.error')}</Notice>}
           <Button type="submit" disabled={review.isPending} className="self-start">
             {review.isPending ? t('package.sending') : t('package.submit')}
           </Button>

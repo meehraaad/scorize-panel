@@ -299,5 +299,28 @@
     "minute": "دقیقه",
     "gregorian": "مطابق با {{date}}",
     "weekend": "تعطیل"
+  },
+  "toast": {
+    "region": "پیام‌های پنل",
+    "close": "بستن اعلان",
+    "showFiles": "نمایش فهرست فایل‌ها",
+    "hideFiles": "پنهان کردن فهرست فایل‌ها",
+    "fileDone": "بارگذاری شد",
+    "fileWaiting": "در صف",
+    "percent": "{{value}}٪",
+    "upload": {
+      "cancel": "لغو بارگذاری",
+      "cancelAll": "لغو همه‌ی بارگذاری‌ها",
+      "progress": "در حال بارگذاری · {{percent}}٪ · {{sent}} از {{total}} مگابایت",
+      "batchTitle": "بارگذاری {{n}} فایل",
+      "batchProgress": "{{done}} از {{count}} انجام شد · {{percent}}٪",
+      "paused": "اینترنت قطع شد · وصل که شود، از {{percent}}٪ ادامه می‌دهد",
+      "failed": "بارگذاری کامل نشد",
+      "failedMeta": "اتصال در {{percent}}٪ قطع ماند. فایل نگه داشته شده؛ همین را دوباره بفرستید.",
+      "batchFailedMeta": "{{failed}} فایل از {{count}} فرستاده نشد؛ بقیه بارگذاری شدند.",
+      "retry": "ارسال دوباره",
+      "done": "بارگذاری شد",
+      "batchDone": "همه‌ی فایل‌ها بارگذاری شدند"
+    }
   }
 }

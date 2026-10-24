@@ -1,11 +1,11 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TagList } from '@/components/ui/Tags';
 import { isolate, useFormat } from '@/lib/i18n/useFormat';
 import { MAX_INTEREST_LENGTH, useSaveInterests } from '../api';
+import { toast } from '@/lib/toast';
 
 /** Research interests the professor-email bot searches with: remove a chip, add a topic. */
 export function InterestsCard({ interests }: { interests: string[] }) {
@@ -28,7 +28,10 @@ export function InterestsCard({ interests }: { interests: string[] }) {
       setProblem(t('interests.duplicate', { name: isolate(existing) }));
       return;
     }
-    save.mutate([...interests, name], { onSuccess: () => setText('') });
+    save.mutate([...interests, name], {
+      onError: () => toast.error(t('interests.error')),
+      onSuccess: () => setText(''),
+    });
   };
 
   return (
@@ -45,7 +48,12 @@ export function InterestsCard({ interests }: { interests: string[] }) {
           tags={interests}
           removeLabel={(name) => t('interests.remove', { name })}
           disabled={save.isPending}
-          onRemove={(name) => save.mutate(interests.filter((item) => item !== name))}
+          onRemove={(name) =>
+            save.mutate(
+              interests.filter((item) => item !== name),
+              { onError: () => toast.error(t('interests.error')) },
+            )
+          }
         />
       ) : (
         <p className="m-0 text-sm leading-7 text-text-2">{t('interests.empty')}</p>
@@ -80,7 +88,6 @@ export function InterestsCard({ interests }: { interests: string[] }) {
             {problem}
           </p>
         )}
-        {save.isError && <Notice tone="error">{t('interests.error')}</Notice>}
       </form>
     </SectionCard>
   );

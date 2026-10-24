@@ -4,11 +4,11 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { SectionCard } from '@/components/ui/SectionCard';
-import { Notice } from '@/components/ui/Notice';
 import { normalizePhone } from '@/lib/text';
 import { useSaveWriting } from '../api';
 import type { FormSpec, FormType } from '../formSpec';
 import { useFormText } from '../useFormText';
+import { toast } from '@/lib/toast';
 
 /** The side column of a writing form, as its spec asks (see FormSpec.aside). */
 export function FormAside({
@@ -90,7 +90,13 @@ function PhoneCard({
       return;
     }
     setValue(normalized);
-    save.mutate({ contact_phone: normalized });
+    save.mutate(
+      { contact_phone: normalized },
+      {
+        onSuccess: () => toast.success(t('phone.saved')),
+        onError: () => toast.error(t('phone.error')),
+      },
+    );
   };
 
   return (
@@ -132,8 +138,6 @@ function PhoneCard({
             {t('phone.invalid')}
           </span>
         )}
-        {save.isSuccess && <Notice tone="success">{t('phone.saved')}</Notice>}
-        {save.isError && <Notice tone="error">{t('phone.error')}</Notice>}
       </form>
     </SectionCard>
   );

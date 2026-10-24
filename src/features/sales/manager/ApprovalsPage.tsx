@@ -9,12 +9,12 @@ import { Chip } from '@/components/ui/Chip';
 import { TextAreaField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
-import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { approvalsQuery, useDecideDraft, type ApprovalAction, type ContractDraft } from '../api';
 import { customerPath } from '../paths';
+import { toast } from '@/lib/toast';
 
 /** Contract drafts waiting for the sales manager. Canvas "تأیید قراردادها". */
 export default function ApprovalsPage() {
@@ -101,7 +101,10 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
     setTried(true);
     // Returning or rejecting needs a word for the seller.
     if (action !== 'approve' && !comment.trim()) return;
-    decide.mutate({ id: draft.id, action, comment: comment.trim() });
+    decide.mutate(
+      { id: draft.id, action, comment: comment.trim() },
+      { onError: () => toast.error(t('error')) },
+    );
   };
 
   return (
@@ -185,7 +188,6 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
           {t('manager.approvals.reject', { name: draft.name })}
         </Button>
       </div>
-      {decide.isError && <Notice tone="error">{t('error')}</Notice>}
     </Card>
   );
 }

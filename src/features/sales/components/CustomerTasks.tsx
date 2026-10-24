@@ -6,7 +6,6 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -21,6 +20,7 @@ import {
 import { customerKey, type CustomerData } from '../api';
 import { salesPath } from '../paths';
 import { fromLocalInput, quickWhen } from '@/lib/when';
+import { toast } from '@/lib/toast';
 
 const STATUS_TONE: Record<TaskStatus, ChipTone> = {
   open: 'primary',
@@ -138,9 +138,11 @@ function NewTaskForm({ customer, name }: { customer: CustomerData; name: string 
         ...(kind === 'team' ? { team } : {}),
       },
       {
+        onError: () => toast.error(t('error')),
         onSuccess: () => {
           setText('');
           setMissing(false);
+          toast.success(t('customer.newTask.created'));
         },
       },
     );
@@ -208,8 +210,6 @@ function NewTaskForm({ customer, name }: { customer: CustomerData; name: string 
       <Button type="submit" className="self-start" disabled={create.isPending}>
         {t(`customer.newTask.cta.${kind}`)}
       </Button>
-      {create.isSuccess && <Notice tone="success">{t('customer.newTask.created')}</Notice>}
-      {create.isError && <Notice tone="error">{t('error')}</Notice>}
     </form>
   );
 }

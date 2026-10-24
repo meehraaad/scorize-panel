@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
-import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import { useTaskChange, type MyTask, type TaskOutcome } from '@/lib/tasks/api';
 import { quickWhen } from '@/lib/when';
 import type { TasksConfig } from '../config';
+import { toast } from '@/lib/toast';
 
 const OUTCOMES = [
   'talked',
@@ -56,7 +56,7 @@ export function DoneDialog({
           ...(ending ? { end_reason: end } : {}),
         },
       },
-      { onSuccess: onClose },
+      { onError: () => toast.error(t('error')), onSuccess: onClose },
     );
   };
 
@@ -127,7 +127,6 @@ export function DoneDialog({
         >
           {ending ? t('done.needNext') : t(`done.noNext.${config.person}`)}
         </button>
-        {change.isError && <Notice tone="error">{t('error')}</Notice>}
       </form>
     </Dialog>
   );

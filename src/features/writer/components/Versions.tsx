@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { FileDrop, FileTile, PickedFile } from '@/components/ui/Files';
-import { Notice } from '@/components/ui/Notice';
 import { StepDot } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { checkFile, extensionOf, type FileProblem } from '@/lib/files';
@@ -89,7 +88,6 @@ function NextVersion({ order }: { order: OrderData }) {
   const [file, setFile] = useState<File | null>(null);
   const [problem, setProblem] = useState<FileProblem | 'missing' | null>(null);
   const [note, setNote] = useState('');
-  const [sent, setSent] = useState<'draft' | 'final' | null>(null);
   const number = order.versions.length + 1;
 
   const pick = (picked: File | undefined) => {
@@ -97,24 +95,33 @@ function NextVersion({ order }: { order: OrderData }) {
     const issue = checkFile(picked, VERSION_FILE);
     setProblem(issue);
     setFile(issue ? null : picked);
-    setSent(null);
   };
   const submit = (final: boolean) => {
     if (!file) {
       setProblem('missing');
       return;
     }
+    upload(file, note.trim(), final);
+  };
+  const upload = (picked: File, text: string, final: boolean) =>
     send.mutate(
-      { file, note: note.trim(), final },
+      {
+        file: picked,
+        note: text,
+        final,
+        messages: {
+          done: t(`versions.done.${final ? 'final' : 'draft'}`),
+          failed: t('versions.error'),
+          retry: () => upload(picked, text, final),
+        },
+      },
       {
         onSuccess: () => {
           setFile(null);
           setNote('');
-          setSent(final ? 'final' : 'draft');
         },
       },
     );
-  };
 
   return (
     <form
@@ -130,7 +137,6 @@ function NextVersion({ order }: { order: OrderData }) {
           ? t('versions.revised')
           : t('versions.draft', { n: f.number(number) })}
       </h3>
-      {sent && <Notice tone="success">{t(`versions.done.${sent}`)}</Notice>}
       {file ? (
         <PickedFile
           ext={extensionOf(file.name)}
@@ -170,7 +176,6 @@ function NextVersion({ order }: { order: OrderData }) {
           className="w-full resize-y rounded-2xl bg-canvas px-4 py-3.5 text-[15px] leading-8 text-text shadow-[inset_0_0_0_1px_var(--line-2)] outline-0 placeholder:text-text-2 focus-visible:shadow-[inset_0_0_0_2px_var(--focus)]"
         />
       </div>
-      {send.isError && <Notice tone="error">{t('versions.error')}</Notice>}
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={send.isPending}>
           {t('versions.send')}

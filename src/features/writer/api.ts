@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { TicketsEndpoint, WritingDepartment } from '@/lib/tickets/api';
+import { uploadFile, type UploadMessages } from '@/lib/upload';
 
 /**
  * The writer panel: writing orders (SOP, CV, letters, …) assigned to the logged-in writer.
@@ -136,15 +137,27 @@ export const VERSION_FILE = {
 export function useSendVersion(id: number) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ file, note, final }: { file: File; note: string; final: boolean }) => {
+    mutationFn: ({
+      file,
+      note,
+      final,
+      messages,
+    }: {
+      file: File;
+      note: string;
+      final: boolean;
+      messages?: UploadMessages;
+    }) => {
       const body = new FormData();
       body.append('file', file);
       body.append('note', note);
       body.append('final', String(final));
-      return api<OrderVersion>(`${WRITER_API}/orders/${String(id)}/versions/`, {
-        method: 'POST',
+      return uploadFile<OrderVersion>(
+        `${WRITER_API}/orders/${String(id)}/versions/`,
         body,
-      });
+        file,
+        messages,
+      );
     },
     onSuccess: () => client.invalidateQueries({ queryKey: WRITER_KEY }),
   });

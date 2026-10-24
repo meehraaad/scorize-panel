@@ -5,6 +5,7 @@ import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import { instalmentPlan } from './plan';
 import '@/test/server';
+import { toasts } from '@/test/toasts';
 
 const NIMA = 3;
 const ERFAN = '/sales/customers/105';
@@ -69,7 +70,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await user.clear(city);
     await user.type(city, 'تهران');
     await user.click(within(personal).getByRole('button', { name: 'ذخیره' }));
-    expect(await within(personal).findByText('ذخیره شد')).toBeInTheDocument();
+    expect(await toasts().findByText('ذخیره شد')).toBeInTheDocument();
   });
 
   it('purchases: one row per Django invoice, by kind', async () => {
@@ -91,12 +92,12 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await user.clear(countries);
     await user.type(countries, 'هلند، Atlantis');
     await user.click(within(goal).getByRole('button', { name: 'ذخیره' }));
-    expect(await within(goal).findByText(/«Atlantis» پیدا نشد/)).toBeInTheDocument();
+    expect(await toasts().findByText(/«Atlantis» پیدا نشد/)).toBeInTheDocument();
 
     await user.clear(countries);
     await user.type(countries, 'هلند، canada');
     await user.click(within(goal).getByRole('button', { name: 'ذخیره' }));
-    expect(await within(goal).findByText('ذخیره شد')).toBeInTheDocument();
+    expect(await toasts().findByText('ذخیره شد')).toBeInTheDocument();
     expect(countries).toHaveValue('هلند، canada');
   });
 

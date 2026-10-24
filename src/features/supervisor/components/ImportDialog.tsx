@@ -7,6 +7,7 @@ import { FileDrop, PickedFile } from '@/components/ui/Files';
 import { Notice } from '@/components/ui/Notice';
 import { StepBar } from '@/components/ui/Progress';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { toast } from '@/lib/toast';
 import {
   importSampleHref,
   isCsv,
@@ -117,7 +118,6 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
           onAgain={again}
         />
       )}
-      {step === 1 && apply.isError && <Notice tone="error">{t('import.applyError')}</Notice>}
 
       {step === 2 && (
         <Notice tone="success">
@@ -131,7 +131,13 @@ function ImportFlow({ onClose }: { onClose: () => void }) {
           <>
             <Button
               disabled={changes === 0 || apply.isPending}
-              onClick={() => data && apply.mutate({ token: data.token, notify })}
+              onClick={() =>
+                data &&
+                apply.mutate(
+                  { token: data.token, notify },
+                  { onError: () => toast.error(t('import.applyError')) },
+                )
+              }
             >
               {t('import.apply', { n: f.number(changes) })}
             </Button>

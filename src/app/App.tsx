@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { lazy, Suspense, useState } from 'react';
 import { RouterProvider } from 'react-router';
+import { Toaster } from '@/components/ui/Toast';
 import { queryClient } from '@/lib/api/queryClient';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 import { createRouter } from './router';
@@ -18,6 +19,7 @@ export function App() {
         {/* Boot fallback: plain canvas while the session and dictionary load (usually < 1 frame). */}
         <Suspense fallback={<div className="min-h-dvh" />}>
           <RouterProvider router={router} />
+          <Toaster />
           {UpdatePrompt && <UpdatePrompt />}
         </Suspense>
       </ThemeProvider>

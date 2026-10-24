@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { historyQuery, useAddNote, type HistoryEvent, type HistoryKind } from '../api';
+import { toast } from '@/lib/toast';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
@@ -111,7 +111,10 @@ function QuickNote({ customer }: { customer: number }) {
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!text.trim()) return;
-    add.mutate(text.trim(), { onSuccess: () => setText('') });
+    add.mutate(text.trim(), {
+      onError: () => toast.error(t('error')),
+      onSuccess: () => setText(''),
+    });
   };
   return (
     <form onSubmit={submit} className="flex flex-col gap-2 px-5 pb-4 lg:px-8">
@@ -130,7 +133,6 @@ function QuickNote({ customer }: { customer: number }) {
           {t('customer.history.save')}
         </Button>
       </div>
-      {add.isError && <Notice tone="error">{t('error')}</Notice>}
     </form>
   );
 }

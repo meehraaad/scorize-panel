@@ -8,6 +8,7 @@ import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
 import { useSaveGpa, type GpaCourse, type ServicesData } from '../api';
+import { toast } from '@/lib/toast';
 
 interface Row {
   key: number;
@@ -63,7 +64,10 @@ export function GpaCard({ data }: { data: ServicesData }) {
       setInvalid(true);
       return;
     }
-    save.mutate(courses.filter((course): course is GpaCourse => course !== null));
+    save.mutate(
+      courses.filter((course): course is GpaCourse => course !== null),
+      { onError: () => toast.error(t('gpa.error')) },
+    );
   };
 
   const result = save.data?.result ?? data.gpa.result;
@@ -143,7 +147,6 @@ export function GpaCard({ data }: { data: ServicesData }) {
         </ol>
         <p className="m-0 text-[13px] leading-6 text-text-2">{t('gpa.note')}</p>
         {invalid && <Notice tone="error">{t('gpa.invalid')}</Notice>}
-        {save.isError && <Notice tone="error">{t('gpa.error')}</Notice>}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setRows((current) => [...current, row()])}>
             {t('gpa.add')}

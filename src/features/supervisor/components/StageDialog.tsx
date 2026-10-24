@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
-import { Notice } from '@/components/ui/Notice';
 import { CASE_STAGES, useChangeStage, type CaseStage } from '../api';
+import { toast } from '@/lib/toast';
 
 /** Moves the case to another stage, with an optional note for its history. */
 export function StageDialog({
@@ -37,7 +37,10 @@ export function StageDialog({
           <Button
             disabled={picked === stage || change.isPending}
             onClick={() =>
-              change.mutate({ stage: picked, note: note.trim() }, { onSuccess: onClose })
+              change.mutate(
+                { stage: picked, note: note.trim() },
+                { onError: () => toast.error(t('saveError')), onSuccess: onClose },
+              )
             }
           >
             {t('stageDialog.save')}
@@ -48,7 +51,6 @@ export function StageDialog({
         </>
       }
     >
-      {change.isError && <Notice tone="error">{t('saveError')}</Notice>}
       <ChoiceGroup
         legend={t('stageDialog.legend')}
         look="tiles"

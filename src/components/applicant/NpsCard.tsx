@@ -7,6 +7,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { TextAreaField } from '@/components/ui/TextField';
 import { gatesQuery, useAnswerNps } from '@/lib/applicant/gates';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { toast } from '@/lib/toast';
 
 const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
@@ -42,11 +43,14 @@ export function NpsCard() {
       setMissing(true);
       return;
     }
-    answer.mutate({ score, comment: comment.trim() }, { onSuccess: () => setState('thanks') });
+    answer.mutate(
+      { score, comment: comment.trim() },
+      { onError: () => toast.error(t('nps.error')), onSuccess: () => setState('thanks') },
+    );
   };
 
   const later = () => {
-    answer.mutate({ dismissed: true });
+    answer.mutate({ dismissed: true }, { onError: () => toast.error(t('nps.error')) });
     setState('hidden');
   };
 
@@ -93,7 +97,6 @@ export function NpsCard() {
           onChange={(event) => setComment(event.target.value)}
         />
         {missing && <Notice tone="error">{t('nps.pickFirst')}</Notice>}
-        {answer.isError && <Notice tone="error">{t('nps.error')}</Notice>}
         <div className="flex flex-wrap gap-2.5">
           <Button type="submit" disabled={answer.isPending} className="max-sm:flex-1">
             {answer.isPending ? t('nps.sending') : t('nps.submit')}

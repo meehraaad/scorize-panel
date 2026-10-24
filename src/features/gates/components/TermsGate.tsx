@@ -2,10 +2,10 @@ import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Notice } from '@/components/ui/Notice';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useAcceptTerms, type Gates } from '@/lib/applicant/gates';
+import { toast } from '@/lib/toast';
 
 /** Step 1 of starting a case: read and accept the terms (canvas V6 section 8, terms). */
 export function TermsGate({ terms }: { terms: NonNullable<Gates['terms']> }) {
@@ -17,7 +17,7 @@ export function TermsGate({ terms }: { terms: NonNullable<Gates['terms']> }) {
 
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
-    if (checked) accept.mutate(terms.version);
+    if (checked) accept.mutate(terms.version, { onError: () => toast.error(t('terms.error')) });
   };
 
   return (
@@ -64,11 +64,6 @@ export function TermsGate({ terms }: { terms: NonNullable<Gates['terms']> }) {
           <Button type="submit" disabled={!checked || accept.isPending} className="max-sm:w-full">
             {accept.isPending ? t('terms.sending') : t('terms.submit')}
           </Button>
-          {accept.isError && (
-            <div className="w-full">
-              <Notice tone="error">{t('terms.error')}</Notice>
-            </div>
-          )}
         </form>
       </Card>
     </div>

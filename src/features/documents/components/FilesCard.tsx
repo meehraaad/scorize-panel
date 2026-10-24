@@ -5,10 +5,10 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FileTile } from '@/components/ui/Files';
 import { IconButton, IconLink } from '@/components/ui/IconButton';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDeleteFile, type CaseFile } from '../api';
+import { toast } from '@/lib/toast';
 
 /** Everything on the case: the applicant's uploads and the writing team's deliveries. */
 export function FilesCard({ files }: { files: CaseFile[] }) {
@@ -64,7 +64,14 @@ function FileItem({ file }: { file: CaseFile }) {
           confirmLabel={t('files.confirmYes')}
           cancelLabel={t('files.confirmNo')}
           pending={remove.isPending}
-          onConfirm={() => remove.mutate(file.id, { onError: () => setConfirming(false) })}
+          onConfirm={() =>
+            remove.mutate(file.id, {
+              onError: () => {
+                setConfirming(false);
+                toast.error(t('files.deleteError'));
+              },
+            })
+          }
           onCancel={() => setConfirming(false)}
         />
       </li>
@@ -98,9 +105,7 @@ function FileItem({ file }: { file: CaseFile }) {
             )}
           </>
         }
-      >
-        {remove.isError && <Notice tone="error">{t('files.deleteError')}</Notice>}
-      </FileTile>
+      ></FileTile>
     </li>
   );
 }

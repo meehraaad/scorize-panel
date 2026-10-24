@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { ApiError, api } from '@/lib/api/client';
 import type { ContractFeature } from '@/lib/applicant/access';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
+import { uploadFile, type UploadMessages } from '@/lib/upload';
 import { safeHref } from '@/lib/url';
 
 /**
@@ -189,9 +190,11 @@ export function useStartOnlinePayment() {
 }
 
 export function useUploadReceipt() {
-  return useApplicantMutation(({ id, file }: { id: number; file: File }) => {
-    const body = new FormData();
-    body.append('receipt', file);
-    return api(`${BASE}/payments/${String(id)}/receipt/`, { method: 'POST', body });
-  });
+  return useApplicantMutation(
+    ({ id, file, messages }: { id: number; file: File; messages?: UploadMessages }) => {
+      const body = new FormData();
+      body.append('receipt', file);
+      return uploadFile(`${BASE}/payments/${String(id)}/receipt/`, body, file, messages);
+    },
+  );
 }

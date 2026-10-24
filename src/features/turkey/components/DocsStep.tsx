@@ -9,6 +9,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { checkFile, type FileProblem } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
+import { toast } from '@/lib/toast';
 import {
   MAX_TURKEY_UPLOAD_BYTES,
   TURKEY_UPLOAD_TYPES,
@@ -43,7 +44,7 @@ export function DocsStep({ data }: { data: TurkeyCase }) {
   const { t: tc } = useTranslation();
   const f = useFormat();
   const submit = useSubmitTurkey();
-  const [message, setMessage] = useState<'incomplete' | 'submitError' | null>(null);
+  const [incomplete, setIncomplete] = useState(false);
   const review = data.step === 'review';
   const required = data.documents.filter((doc) => doc.required);
   const approved = data.documents.filter((doc) => doc.status === 'approved').length;
@@ -53,12 +54,12 @@ export function DocsStep({ data }: { data: TurkeyCase }) {
   const canSend = !review || data.documents.some((doc) => doc.status === 'uploaded');
 
   const send = () => {
-    setMessage(null);
+    setIncomplete(false);
     if (required.some(needsFile)) {
-      setMessage('incomplete');
+      setIncomplete(true);
       return;
     }
-    submit.mutate(undefined, { onError: () => setMessage('submitError') });
+    submit.mutate(undefined, { onError: () => toast.error(t('docs.submitError')) });
   };
 
   const degree = data.answers ? tc(`degree.${data.answers.degree}`) : '';
@@ -114,7 +115,7 @@ export function DocsStep({ data }: { data: TurkeyCase }) {
           ))}
         </ul>
         <div className="flex flex-col gap-3 px-5 py-[18px] shadow-[inset_0_1px_0_var(--hair)] lg:px-8 lg:py-[22px]">
-          {message && <Notice tone="error">{t(`docs.${message}`)}</Notice>}
+          {incomplete && <Notice tone="error">{t('docs.incomplete')}</Notice>}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm leading-7 text-text-2">
               {t(review ? 'docs.reviewFooter' : 'docs.footer')}
@@ -137,9 +138,7 @@ function DocumentRow({ doc }: { doc: TurkeyDocument }) {
   const { t } = useTranslation('turkey');
   const f = useFormat();
   const upload = useUploadTurkeyDocument();
-  const [problem, setProblem] = useState<{ problem: FileProblem; size: number } | 'failed' | null>(
-    null,
-  );
+  const [problem, setProblem] = useState<{ problem: FileProblem; size: number } | null>(null);
   const inputId = `turkey-doc-${String(doc.id)}`;
   const errorId = `${inputId}-error`;
   const look = LOOK[doc.status];
@@ -154,8 +153,14 @@ function DocumentRow({ doc }: { doc: TurkeyDocument }) {
       return;
     }
     setProblem(null);
-    upload.mutate({ id: doc.id, file }, { onError: () => setProblem('failed') });
+    send(file);
   };
+  const send = (file: File) =>
+    upload.mutate({
+      id: doc.id,
+      file,
+      messages: { failed: t('docs.uploadError'), retry: () => send(file) },
+    });
 
   const meta =
     doc.status === 'missing'
@@ -207,14 +212,12 @@ function DocumentRow({ doc }: { doc: TurkeyDocument }) {
       )}
       {problem && (
         <p id={errorId} className="m-0 text-sm leading-6 text-danger">
-          {problem === 'failed'
-            ? t('docs.uploadError')
-            : problem.problem === 'tooBig'
-              ? t('docs.tooBig', {
-                  size: f.fileSize(problem.size),
-                  max: f.fileSize(MAX_TURKEY_UPLOAD_BYTES),
-                })
-              : t('docs.badType')}
+          {problem.problem === 'tooBig'
+            ? t('docs.tooBig', {
+                size: f.fileSize(problem.size),
+                max: f.fileSize(MAX_TURKEY_UPLOAD_BYTES),
+              })
+            : t('docs.badType')}
         </p>
       )}
     </li>

@@ -5,12 +5,12 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
-import { Notice } from '@/components/ui/Notice';
 import { StepBar } from '@/components/ui/Progress';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { requestQuery, useTaskChange } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
+import { toast } from '@/lib/toast';
 
 const STEPS = ['sent', 'seen', 'in_progress', 'done'] as const;
 
@@ -40,7 +40,7 @@ export function RequestDialog({
     if (!id || !message.trim()) return;
     change.mutate(
       { id, change: { kind: 'comment', text: message.trim() } },
-      { onSuccess: () => setMessage('') },
+      { onError: () => toast.error(t('error')), onSuccess: () => setMessage('') },
     );
   };
   const finish = (status: 'done' | 'rejected') =>
@@ -54,7 +54,7 @@ export function RequestDialog({
           ...(status === 'rejected' ? { reason: reason.trim() } : {}),
         },
       },
-      { onSuccess: onClose },
+      { onError: () => toast.error(t('error')), onSuccess: onClose },
     );
   const first = data?.from.name.split(' ')[0] ?? '';
   const current = data ? Math.max(1, STEPS.indexOf(data.status as (typeof STEPS)[number])) : 0;
@@ -179,7 +179,6 @@ export function RequestDialog({
               onChange={(event) => setReason(event.target.value)}
             />
           )}
-          {change.isError && <Notice tone="error">{t('error')}</Notice>}
         </>
       )}
     </Dialog>

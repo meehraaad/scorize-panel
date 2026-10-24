@@ -19,10 +19,10 @@ export function ReceiptForm({ payment, onOnline }: { payment: PaymentData; onOnl
   const upload = useUploadReceipt();
   const [file, setFile] = useState<File | null>(null);
   const [problem, setProblem] = useState<{ problem: FileProblem; size: number } | null>(null);
-  const [message, setMessage] = useState<'pickFirst' | 'error' | null>(null);
+  const [pickFirst, setPickFirst] = useState(false);
 
   const choose = (picked: File | undefined) => {
-    setMessage(null);
+    setPickFirst(false);
     if (!picked) return;
     const found = checkFile(picked, RULE);
     setProblem(found ? { problem: found, size: picked.size } : null);
@@ -32,12 +32,18 @@ export function ReceiptForm({ payment, onOnline }: { payment: PaymentData; onOnl
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
     if (!file) {
-      setMessage('pickFirst');
+      setPickFirst(true);
       return;
     }
-    // On success the invoice turns to "in review" and the page shows that instead of this form.
-    upload.mutate({ id: payment.id, file }, { onError: () => setMessage('error') });
+    send(file);
   };
+  // On success the invoice turns to "in review" and the page shows that instead of this form.
+  const send = (picked: File) =>
+    upload.mutate({
+      id: payment.id,
+      file: picked,
+      messages: { failed: t('payment.receipt.error'), retry: () => send(picked) },
+    });
 
   return (
     <SectionCard
@@ -92,7 +98,7 @@ export function ReceiptForm({ payment, onOnline }: { payment: PaymentData; onOnl
               : t('payment.receipt.badType')}
           </p>
         )}
-        {message && <Notice tone="error">{t(`payment.receipt.${message}`)}</Notice>}
+        {pickFirst && <Notice tone="error">{t('payment.receipt.pickFirst')}</Notice>}
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"

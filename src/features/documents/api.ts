@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiError, api } from '@/lib/api/client';
+import { ApiError, api, uploadApi } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
+import { UploadFailed, uploadWithToast, type UploadMessages } from '@/lib/upload';
 
 /**
  * "Documents & writing" of the applicant panel. Shapes: docs/backend-changes.md H8–H11.
@@ -80,19 +81,42 @@ function useApplicantMutation<T>(mutationFn: (variables: T) => Promise<unknown>)
   });
 }
 
-/** Sends the chosen files, one request per document, and reports which ones failed. */
+/**
+ * Sends the chosen files, one request per document, under one upload toast, and reports which
+ * ones failed.
+ */
 export function useUploadDocuments() {
-  return useApplicantMutation(async (uploads: { id: number; file: File }[]) => {
-    const results = await Promise.allSettled(
-      uploads.map(({ id, file }) => {
-        const body = new FormData();
-        body.append('file', file);
-        return api(`${BASE}/documents/${String(id)}/upload/`, { method: 'POST', body });
-      }),
-    );
-    const failed = uploads.filter((_, index) => results[index]?.status === 'rejected');
-    if (failed.length) throw new UploadError(failed.map((upload) => upload.id));
-  });
+  return useApplicantMutation(
+    async ({
+      uploads,
+      messages,
+    }: {
+      uploads: { id: number; file: File }[];
+      messages?: UploadMessages;
+    }) => {
+      try {
+        await uploadWithToast(
+          uploads.map(({ id, file }) => ({
+            name: file.name,
+            size: file.size,
+            send: (onProgress, signal) => {
+              const body = new FormData();
+              body.append('file', file);
+              return uploadApi(`${BASE}/documents/${String(id)}/upload/`, body, {
+                onProgress,
+                signal,
+              });
+            },
+          })),
+          messages,
+        );
+      } catch (error) {
+        if (error instanceof UploadFailed)
+          throw new UploadError(error.failed.flatMap((index) => uploads[index]?.id ?? []));
+        throw error;
+      }
+    },
+  );
 }
 
 /** Some uploads failed; the rest went through. */

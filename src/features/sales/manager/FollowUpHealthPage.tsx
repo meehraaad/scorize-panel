@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { SelectField } from '@/components/ui/Choices';
-import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { toast } from '@/lib/toast';
 import { healthQuery, useManageTask, type HealthData, type HealthTeam } from '../api';
 import { useSalesFormat } from '../format';
 
@@ -269,7 +269,10 @@ function Oldest({ data }: { data: HealthData }) {
                     onClick={() =>
                       manage.mutate(
                         { task: item.task, assignee: Number(assignee) },
-                        { onSuccess: () => setHanding(null) },
+                        {
+                          onError: () => toast.error(t('error')),
+                          onSuccess: () => setHanding(null),
+                        },
                       )
                     }
                   >
@@ -285,7 +288,10 @@ function Oldest({ data }: { data: HealthData }) {
                     onClick={() =>
                       manage.mutate(
                         { task: item.task },
-                        { onSuccess: () => setReminded(new Set([...reminded, item.task])) },
+                        {
+                          onError: () => toast.error(t('error')),
+                          onSuccess: () => setReminded(new Set([...reminded, item.task])),
+                        },
                       )
                     }
                   >
@@ -309,11 +315,6 @@ function Oldest({ data }: { data: HealthData }) {
           );
         })}
       </ul>
-      {manage.isError && (
-        <div className="px-5 pb-5 lg:px-8">
-          <Notice tone="error">{t('error')}</Notice>
-        </div>
-      )}
     </SectionCard>
   );
 }

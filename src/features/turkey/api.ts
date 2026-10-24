@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
+import { uploadFile, type UploadMessages } from '@/lib/upload';
 
 /**
  * The free Turkey application (canvas V7 section 3): the applicant answers a few questions, uploads
@@ -89,11 +90,13 @@ export function useStartTurkey() {
 }
 
 export function useUploadTurkeyDocument() {
-  return useTurkeyMutation(({ id, file }: { id: number; file: File }) => {
-    const body = new FormData();
-    body.append('file', file);
-    return api(`${BASE}/documents/${String(id)}/upload/`, { method: 'POST', body });
-  });
+  return useTurkeyMutation(
+    ({ id, file, messages }: { id: number; file: File; messages?: UploadMessages }) => {
+      const body = new FormData();
+      body.append('file', file);
+      return uploadFile(`${BASE}/documents/${String(id)}/upload/`, body, file, messages);
+    },
+  );
 }
 
 /** Sends the uploads for review (again, after a document was sent back). */

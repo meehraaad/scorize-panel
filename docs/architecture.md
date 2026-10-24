@@ -98,6 +98,7 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `OtpInput`                                                    | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                            |
 | `Switch`                                                      | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                              |
 | `DateTile`                                                    | A small calendar leaf (day over month; `large` adds the weekday): consultations, the writer's week. Decorative: say the date in text beside it                                                                      |
+| `Toast`, `Toaster`                                            | What an action did (saved, not sent, upload progress). Not used directly: call `toast.*` / `uploadWithToast` (see Messages below); `Toaster` is mounted once in `App`                                               |
 
 Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
 panel that shows tickets:
@@ -117,6 +118,29 @@ Block extensions made for them: `Avatar stacked`, `FileDrop compact` (icon only 
 from PanelLayout), `PageColumns fill` (side column hidden on phones), `PageHeader compact` (no
 subtitle on phones) and `SheetButton` (`components/ui/Sheet.tsx`: a round button that opens a bottom
 sheet, for side-column content on phones).
+
+### Messages: toast or Notice
+
+Design: canvas "Scorize Seller Panel", row 11 (اعلان بارگذاری).
+
+- **Toast** (`lib/toast.ts`): the result of an action. `toast.success(t('saved'))` in a mutation's
+  `onSuccess`, `toast.error(t('error'))` in its `onError` (pass them to `mutate`, where the
+  component's `t` is). Success and info close after 5 s (held while hovered or focused); errors and
+  warnings stay until closed and may carry one `action` ("Send again"). At most 3 at once.
+  `<Toaster>` (`components/ui/Toast.tsx`, mounted in `App`) shows them at the bottom, end side from
+  lg, full width above the tab bar on phones, and inside an open modal `Dialog` (everything outside
+  it is inert) above its buttons.
+- **Uploads** (`lib/upload.ts`): `uploadFile(path, formData, file, messages)` for one file,
+  `uploadWithToast(jobs, messages)` for several (one toast, a file list, one request each). The
+  toast shows progress (a ring), "offline: picks up when you're back" (waits `OFFLINE_WAIT_MS`),
+  then success, or an error whose "Send again" runs `messages.retry` (the caller's mutation again).
+  It is the only message an upload needs. Requests go through `uploadApi` (XMLHttpRequest, for
+  progress; tests swap in a fetch-backed stand-in, `src/test/xhr.ts`).
+- **Notice** stays for what belongs on the page, not to an action: a field or form that needs
+  fixing first ("choose a file", "wrong password", missing answers), the state of the page (read-only,
+  past consultation, declined payment) and completion screens that replace a form (thanks).
+  Field errors stay on their field (`TextField error`).
+- Tests read toasts with `toasts()` from `src/test/toasts.ts`.
 
 ### Tickets across panels
 

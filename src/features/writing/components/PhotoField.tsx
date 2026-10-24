@@ -2,7 +2,6 @@ import { useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
-import { Notice } from '@/components/ui/Notice';
 import { TagList } from '@/components/ui/Tags';
 import { checkFile } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -32,6 +31,11 @@ export function PhotoField({ type, part, url, readOnly, missing, onUploaded }: P
   const [problem, setProblem] = useState<string | null>(null);
   const id = `${type}-${part.name}`;
 
+  const send = (file: File) =>
+    upload.mutate(
+      { file, messages: { failed: t('photo.error'), retry: () => send(file) } },
+      { onSuccess: ({ url: stored }) => onUploaded(stored) },
+    );
   const choose = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -46,7 +50,7 @@ export function PhotoField({ type, part, url, readOnly, missing, onUploaded }: P
       return;
     }
     setProblem(null);
-    upload.mutate(file, { onSuccess: ({ url: stored }) => onUploaded(stored) });
+    send(file);
   };
 
   const message = problem ?? (missing && !url ? t('photo.required') : null);
@@ -100,7 +104,6 @@ export function PhotoField({ type, part, url, readOnly, missing, onUploaded }: P
           </div>
         )}
       </div>
-      {upload.isError && <Notice tone="error">{t('photo.error')}</Notice>}
     </div>
   );
 }

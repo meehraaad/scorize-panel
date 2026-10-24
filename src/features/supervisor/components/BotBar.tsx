@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useSetBot, type BotStatus } from '../api';
+import { toast } from '@/lib/toast';
 
 /** The professor-email bot for this applicant: on or off, today's sends, the sending account. */
 export function BotBar({ caseId, bot }: { caseId: number; bot: BotStatus }) {
@@ -35,13 +35,12 @@ export function BotBar({ caseId, bot }: { caseId: number; bot: BotStatus }) {
           variant="outline"
           className="ms-auto h-11 px-4 text-sm"
           disabled={set.isPending || blocked}
-          onClick={() => set.mutate(!bot.active)}
+          onClick={() => set.mutate(!bot.active, { onError: () => toast.error(t('saveError')) })}
         >
           {t(bot.active ? 'bot.stop' : 'bot.start')}
         </Button>
       </div>
       {blocked && <p className="m-0 text-[13px] text-text-2">{t('bot.blocked')}</p>}
-      {set.isError && <Notice tone="error">{t('saveError')}</Notice>}
     </Card>
   );
 }

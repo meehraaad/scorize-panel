@@ -5,7 +5,6 @@ import { SelectField, TextAreaField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
-import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import type { Degree } from '@/lib/applicant/approval';
 import {
@@ -15,6 +14,7 @@ import {
   type FeePayment,
 } from '@/lib/applications';
 import { toLatinNumber } from '@/lib/text';
+import { toast } from '@/lib/toast';
 import {
   useDeleteApplication,
   useSaveApplication,
@@ -81,7 +81,13 @@ export function ApplicationDialog({
       result: result || null,
       note: note.trim() || null,
     };
-    save.mutate({ application: application?.id ?? null, values }, { onSuccess: onClose });
+    save.mutate(
+      { application: application?.id ?? null, values },
+      {
+        onSuccess: onClose,
+        onError: () => toast.error(t('saveError')),
+      },
+    );
   };
 
   return (
@@ -109,14 +115,18 @@ export function ApplicationDialog({
         </>
       }
     >
-      {(save.isError || remove.isError) && <Notice tone="error">{t('saveError')}</Notice>}
       {application && confirming && (
         <InlineConfirm
           message={t('appDialog.deleteConfirm', { name: application.university })}
           confirmLabel={t('appDialog.delete')}
           cancelLabel={t('cancel')}
           pending={remove.isPending}
-          onConfirm={() => remove.mutate(application.id, { onSuccess: onClose })}
+          onConfirm={() =>
+            remove.mutate(application.id, {
+              onSuccess: onClose,
+              onError: () => toast.error(t('saveError')),
+            })
+          }
           onCancel={() => setConfirming(false)}
         />
       )}

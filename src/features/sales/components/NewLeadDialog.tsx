@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
-import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { normalizePhone } from '@/lib/text';
+import { toast } from '@/lib/toast';
 import { useCreateLead } from '../api';
 import { customerPath } from '../paths';
 
@@ -45,6 +45,11 @@ export function NewLeadDialog({ open, onClose }: { open: boolean; onClose: () =>
       {
         onSuccess: ({ customer }) => {
           void navigate(customerPath(customer));
+        },
+        // A refused phone number shows on its field instead.
+        onError: (error) => {
+          if (!(error instanceof ApiError && (error.body as { phone?: unknown } | null)?.phone))
+            toast.error(t('error'));
         },
       },
     );
@@ -100,7 +105,6 @@ export function NewLeadDialog({ open, onClose }: { open: boolean; onClose: () =>
           onChange={(event) => setNote(event.target.value)}
           rows={3}
         />
-        {create.isError && !serverPhone && <Notice tone="error">{t('error')}</Notice>}
       </form>
     </Dialog>
   );

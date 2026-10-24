@@ -7,7 +7,6 @@ import { TextAreaField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FileTile } from '@/components/ui/Files';
 import { Icon } from '@/components/ui/Icon';
-import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -19,6 +18,7 @@ import { documentsQuery, useReviewDocument, type CaseDocument, type CaseWriting 
 import { DocumentChip } from './components/Chips';
 import { RequestDocumentDialog } from './components/RequestDocumentDialog';
 import { useCaseId } from './useCaseId';
+import { toast } from '@/lib/toast';
 
 /**
  * What the applicant was asked for and what they sent: check each upload (accept, or send it back
@@ -138,7 +138,6 @@ function DocumentRow({ caseId, doc }: { caseId: number; doc: CaseDocument }) {
           {t('documents.returnedNote', { note: doc.note })}
         </p>
       )}
-      {review.isError && <Notice tone="error">{t('saveError')}</Notice>}
       {doc.state === 'review' &&
         (returning ? (
           <div className="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-[inset_0_0_0_1px_var(--line-2)]">
@@ -155,7 +154,10 @@ function DocumentRow({ caseId, doc }: { caseId: number; doc: CaseDocument }) {
                 className="shadow-[inset_0_0_0_1px_var(--danger)]"
                 disabled={!note.trim() || review.isPending}
                 onClick={() =>
-                  review.mutate({ document: doc.id, approved: false, note: note.trim() })
+                  review.mutate(
+                    { document: doc.id, approved: false, note: note.trim() },
+                    { onError: () => toast.error(t('saveError')) },
+                  )
                 }
               >
                 {t('documents.returnConfirm')}
@@ -169,7 +171,12 @@ function DocumentRow({ caseId, doc }: { caseId: number; doc: CaseDocument }) {
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={review.isPending}
-              onClick={() => review.mutate({ document: doc.id, approved: true, note: '' })}
+              onClick={() =>
+                review.mutate(
+                  { document: doc.id, approved: true, note: '' },
+                  { onError: () => toast.error(t('saveError')) },
+                )
+              }
               aria-label={t('documents.approveLabel', { name: doc.name })}
             >
               <Icon name="check" size={18} />

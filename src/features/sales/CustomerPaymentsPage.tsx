@@ -13,6 +13,7 @@ import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
+import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
   paymentsQuery,
@@ -154,7 +155,6 @@ function PaymentDetail({
   const [copied, setCopied] = useState(false);
   const wallet = wallets.find((item) => item.id === payment.wallet)?.name ?? '';
   const paid = payment.status === 'paid' || payment.status === 'paid_by_receipt';
-  const failed = confirm.isError || action.isError;
 
   return (
     <Card aria-labelledby="payment-detail" className="flex flex-col gap-5 p-5 lg:p-7">
@@ -206,13 +206,23 @@ function PaymentDetail({
               cancelLabel={t('cancel')}
               pending={action.isPending}
               onCancel={() => setDeclining(false)}
-              onConfirm={() => action.mutate({ payment: payment.id, action: { kind: 'decline' } })}
+              onConfirm={() =>
+                action.mutate(
+                  { payment: payment.id, action: { kind: 'decline' } },
+                  { onError: () => toast.error(t('error')) },
+                )
+              }
             />
           ) : (
             <div className="flex flex-wrap gap-2">
               <Button
                 disabled={confirm.isPending}
-                onClick={() => confirm.mutate({ customer, payment: payment.id })}
+                onClick={() =>
+                  confirm.mutate(
+                    { customer, payment: payment.id },
+                    { onError: () => toast.error(t('error')) },
+                  )
+                }
               >
                 {t('payments.receipt.confirm')}
               </Button>
@@ -231,7 +241,10 @@ function PaymentDetail({
             label={t('payments.methodLabel')}
             value={payment.method}
             onChange={(method: PaymentMethod) =>
-              action.mutate({ payment: payment.id, action: { kind: 'method', method } })
+              action.mutate(
+                { payment: payment.id, action: { kind: 'method', method } },
+                { onError: () => toast.error(t('error')) },
+              )
             }
             options={(['online', 'receipt'] as const).map((value) => ({
               value,
@@ -243,10 +256,13 @@ function PaymentDetail({
               label={t('payments.wallet')}
               value={String(payment.wallet)}
               onChange={(value) =>
-                action.mutate({
-                  payment: payment.id,
-                  action: { kind: 'wallet', wallet: Number(value) },
-                })
+                action.mutate(
+                  {
+                    payment: payment.id,
+                    action: { kind: 'wallet', wallet: Number(value) },
+                  },
+                  { onError: () => toast.error(t('error')) },
+                )
               }
               options={wallets.map((item) => ({ value: String(item.id), label: item.name }))}
             />
@@ -254,7 +270,12 @@ function PaymentDetail({
           <div className="flex flex-wrap gap-2">
             <Button
               disabled={action.isPending}
-              onClick={() => action.mutate({ payment: payment.id, action: { kind: 'factor' } })}
+              onClick={() =>
+                action.mutate(
+                  { payment: payment.id, action: { kind: 'factor' } },
+                  { onError: () => toast.error(t('error')) },
+                )
+              }
             >
               {t('payments.sendFactor')}
             </Button>
@@ -289,7 +310,6 @@ function PaymentDetail({
       {payment.status === 'receipt_declined' && (
         <Notice tone="info">{t('payments.declinedNote')}</Notice>
       )}
-      {failed && <Notice tone="error">{t('error')}</Notice>}
     </Card>
   );
 }

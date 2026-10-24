@@ -22,6 +22,7 @@ import {
 } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
+import { toast } from '@/lib/toast';
 
 const CATEGORIES = ['consultation', 'writing', 'package', 'event'] as const;
 const METHODS = ['online', 'receipt'] as const satisfies readonly PaymentMethod[];
@@ -89,6 +90,7 @@ export function SellDialog({
         method,
       },
       {
+        onError: () => toast.error(t('error')),
         onSuccess: ({ payment }) => {
           onClose();
           void navigate(`${customerPath(customer.id)}/payments?payment=${String(payment)}`);
@@ -241,7 +243,6 @@ export function SellDialog({
             hint: t(`sell.methodHint.${value}`),
           }))}
         />
-        {sell.isError && <Notice tone="error">{t('error')}</Notice>}
       </form>
     </Dialog>
   );

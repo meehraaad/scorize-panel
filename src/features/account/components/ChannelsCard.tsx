@@ -2,19 +2,18 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { Switch } from '@/components/ui/Switch';
 import { CHANNELS, useUpdateAccount, type AccountData, type Channel } from '@/lib/account/api';
 import { formatPhone } from '@/lib/site';
 import { safeHref } from '@/lib/url';
+import { toast } from '@/lib/toast';
 
 /** Which channels carry notifications (they're always kept in the panel too). */
 export function ChannelsCard({ account }: { account: AccountData }) {
   const { t } = useTranslation('account');
   const update = useUpdateAccount();
   const [channels, setChannels] = useState(account.channels);
-  const [saved, setSaved] = useState(false);
   const changed = CHANNELS.some((channel) => channels[channel] !== account.channels[channel]);
 
   const meta = (channel: Channel) => {
@@ -44,7 +43,6 @@ export function ChannelsCard({ account }: { account: AccountData }) {
             checked={channels[channel] && usable(channel)}
             disabled={!usable(channel)}
             onChange={(on) => {
-              setSaved(false);
               setChannels((current) => ({ ...current, [channel]: on }));
             }}
           />
@@ -66,12 +64,18 @@ export function ChannelsCard({ account }: { account: AccountData }) {
           </a>
         </div>
       )}
-      {saved && <Notice tone="success">{t('channels.saved')}</Notice>}
-      {update.isError && <Notice tone="error">{t('channels.error')}</Notice>}
       <Button
         variant="outline"
         disabled={!changed || update.isPending}
-        onClick={() => update.mutate({ channels }, { onSuccess: () => setSaved(true) })}
+        onClick={() =>
+          update.mutate(
+            { channels },
+            {
+              onError: () => toast.error(t('channels.error')),
+              onSuccess: () => toast.success(t('channels.saved')),
+            },
+          )
+        }
       >
         {update.isPending ? t('channels.saving') : t('channels.save')}
       </Button>

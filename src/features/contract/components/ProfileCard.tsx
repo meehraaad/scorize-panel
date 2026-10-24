@@ -2,12 +2,12 @@ import { useEffect, useRef, useState, type KeyboardEvent, type SubmitEvent } fro
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { formatPhone } from '@/lib/site';
 import { normalizePhone, toLatinDigits } from '@/lib/text';
+import { toast } from '@/lib/toast';
 import { PROFILE_FIELDS, useSaveProfileField, type ContractData, type ProfileField } from '../api';
 
 type Problem = 'required' | 'email' | 'mobile' | 'phone' | 'tenDigits' | 'latin';
@@ -102,7 +102,6 @@ export function ProfileCard({ contract }: { contract: ContractData }) {
   const { t } = useTranslation('contract');
   const f = useFormat();
   const [editing, setEditing] = useState<ProfileField | null>(null);
-  const [saved, setSaved] = useState<ProfileField | null>(null);
   // After saving or cancelling, focus goes back to the row's button, not to the top of the page.
   const returnTo = useRef<ProfileField | null>(null);
   useEffect(() => {
@@ -128,13 +127,6 @@ export function ProfileCard({ contract }: { contract: ContractData }) {
       subtitle={t('profile.subtitle')}
       end={missing > 0 && <Chip tone="warn">{t('profile.missing', { n: f.number(missing) })}</Chip>}
     >
-      {saved && (
-        <div className="px-5 pb-3 lg:px-8">
-          <Notice tone="success">
-            {t('profile.saved', { field: t(`profile.field.${saved}`) })}
-          </Notice>
-        </div>
-      )}
       <dl className="m-0">
         {PROFILE_FIELDS.map((field) => {
           const value = contract.profile[field];
@@ -156,7 +148,8 @@ export function ProfileCard({ contract }: { contract: ContractData }) {
                     onDone={(done) => {
                       setEditing(null);
                       returnTo.current = field;
-                      if (done) setSaved(field);
+                      if (done)
+                        toast.success(t('profile.saved', { field: t(`profile.field.${field}`) }));
                     }}
                   />
                 </dd>
@@ -177,10 +170,7 @@ export function ProfileCard({ contract }: { contract: ContractData }) {
                       aria-label={t(value ? 'profile.editLabel' : 'profile.addLabel', {
                         field: label,
                       })}
-                      onClick={() => {
-                        setSaved(null);
-                        setEditing(field);
-                      }}
+                      onClick={() => setEditing(field)}
                     >
                       {t(value ? 'profile.edit' : 'profile.add')}
                     </Button>

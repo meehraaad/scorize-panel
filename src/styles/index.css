@@ -44,6 +44,8 @@
   --color-hero-accent: var(--hero-accent);
   --color-on-hero-3: var(--on-hero-3);
   --color-hero-current: var(--hero-current);
+  --color-hero-danger: var(--hero-danger);
+  --color-toast: var(--toast);
   --color-danger: var(--danger);
   --color-danger-tint: var(--danger-tint);
   --color-warn: var(--warn);
@@ -66,6 +68,7 @@
 
   --shadow-panel: var(--panel-shadow);
   --shadow-hero: var(--hero-shadow);
+  --shadow-toast: var(--toast-shadow);
 
   --container-page: var(--page-width);
 }
@@ -84,6 +87,16 @@
 }
 @utility animate-rise {
   animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+/* A toast arrives from below. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+@utility animate-toast-in {
+  animation: toast-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 @utility animate-drift {
   animation: drift 7s ease-in-out infinite;

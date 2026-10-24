@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon } from '@/components/ui/Icon';
-import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import {
   CALL_TIMES,
@@ -15,6 +14,7 @@ import {
 } from '@/lib/applicant/access';
 import { formatPhone, SITE } from '@/lib/site';
 import { normalizePhone } from '@/lib/text';
+import { toast } from '@/lib/toast';
 
 interface CallRequestButtonProps {
   /** The button's text ("Ask an advisor to call"). */
@@ -92,7 +92,7 @@ function CallRequestForm({
     }
     send.mutate(
       { phone: normalized, topics, time, page, reason },
-      { onSuccess: () => setSent(normalized) },
+      { onError: () => toast.error(t('lock.call.error')), onSuccess: () => setSent(normalized) },
     );
   };
 
@@ -211,7 +211,6 @@ function CallRequestForm({
         </div>
       </fieldset>
 
-      {send.isError && <Notice tone="error">{t('lock.call.error')}</Notice>}
       <Button type="submit" size="lg" disabled={send.isPending}>
         {send.isPending ? t('lock.call.sending') : t('lock.call.submit')}
       </Button>

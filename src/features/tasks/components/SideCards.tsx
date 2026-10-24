@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { TASKS_KEY, useCreateTask, type Colleague, type SentRequest } from '@/lib/tasks/api';
 import { quickWhen } from '@/lib/when';
 import type { TasksConfig } from '../config';
 import { STATUS_TONE } from './status';
+import { toast } from '@/lib/toast';
 
 const WHENS = ['evening', 'tomorrow', 'week'] as const;
 
@@ -71,7 +71,7 @@ function InternalRequestDialog({
         assignee: Number(peer),
         due_at: quickWhen(when).toISOString(),
       },
-      { onSuccess: onClose },
+      { onError: () => toast.error(t('error')), onSuccess: onClose },
     );
   };
 
@@ -115,7 +115,6 @@ function InternalRequestDialog({
           onChange={setWhen}
           options={WHENS.map((value) => ({ value, label: t(`done.whenOption.${value}`) }))}
         />
-        {create.isError && <Notice tone="error">{t('error')}</Notice>}
       </form>
     </Dialog>
   );

@@ -11,6 +11,7 @@ import {
   type Gates,
   type SurveyAnswer,
 } from '@/lib/applicant/gates';
+import { toast } from '@/lib/toast';
 
 /**
  * Monthly supervisor surveys that must be answered before the panel opens (canvas V6 section 8).
@@ -56,7 +57,10 @@ function SurveyForm({ survey, label }: { survey: Gates['surveys'][number]; label
       setMissing(true);
       return;
     }
-    answer.mutate({ id: survey.id, answer: picked });
+    answer.mutate(
+      { id: survey.id, answer: picked },
+      { onError: () => toast.error(t('survey.error')) },
+    );
   };
 
   return (
@@ -95,7 +99,6 @@ function SurveyForm({ survey, label }: { survey: Gates['surveys'][number]; label
           </div>
         </fieldset>
         {missing && <Notice tone="error">{t('survey.pickFirst')}</Notice>}
-        {answer.isError && <Notice tone="error">{t('survey.error')}</Notice>}
         <Button type="submit" disabled={answer.isPending} className="sm:self-start">
           {answer.isPending ? t('survey.sending') : t('survey.submit')}
         </Button>

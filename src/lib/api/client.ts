@@ -88,3 +88,82 @@ export async function api<T>(path: string, options?: RequestOptions) {
   if (!ok) throw new ApiError(status, data);
   return data as T;
 }
+
+export interface UploadOptions {
+  method?: 'POST' | 'PUT' | 'PATCH';
+  /** Bytes sent so far and in all, as the browser reports them. */
+  onProgress?: (sent: number, total: number) => void;
+  signal?: AbortSignal | undefined;
+}
+
+/**
+ * Sends a FormData to /api with upload progress (fetch can't report it, so this is XMLHttpRequest).
+ * Same headers, cookie and errors as `api()`. The request fails as a NetworkError when no bytes move
+ * for REQUEST_TIMEOUT_MS, not after a fixed time: a big file on a slow line still gets through.
+ */
+export async function uploadApi<T>(
+  path: string,
+  body: FormData,
+  { method = 'POST', onProgress, signal }: UploadOptions = {},
+): Promise<T> {
+  try {
+    await ensureCsrfCookie(AbortSignal.timeout(REQUEST_TIMEOUT_MS));
+  } catch (error) {
+    throw new NetworkError(error);
+  }
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let stall: ReturnType<typeof setTimeout> | undefined;
+    const idle = () => {
+      clearTimeout(stall);
+      stall = setTimeout(() => {
+        xhr.abort();
+        reject(new NetworkError(new Error('Upload stalled')));
+      }, REQUEST_TIMEOUT_MS);
+    };
+    const done = () => {
+      clearTimeout(stall);
+      signal?.removeEventListener('abort', cancel);
+    };
+    const cancel = () => {
+      done();
+      xhr.abort();
+      reject(
+        signal?.reason instanceof Error
+          ? signal.reason
+          : new DOMException('Upload cancelled', 'AbortError'),
+      );
+    };
+    if (signal?.aborted) {
+      cancel();
+      return;
+    }
+    signal?.addEventListener('abort', cancel);
+
+    xhr.open(method, `${API_BASE}${path}`);
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.setRequestHeader('Accept-Language', i18n.language);
+    xhr.setRequestHeader('X-CSRFToken', readCookie('csrftoken') ?? '');
+    xhr.upload.onprogress = (event) => {
+      idle();
+      if (event.lengthComputable) onProgress?.(event.loaded, event.total);
+    };
+    xhr.onload = () => {
+      done();
+      let data: unknown;
+      try {
+        data = xhr.status === 204 || !xhr.responseText ? null : JSON.parse(xhr.responseText);
+      } catch {
+        data = null;
+      }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data as T);
+      else reject(new ApiError(xhr.status, data));
+    };
+    xhr.onerror = () => {
+      done();
+      reject(new NetworkError(new Error('Upload failed')));
+    };
+    idle();
+    xhr.send(body);
+  });
+}

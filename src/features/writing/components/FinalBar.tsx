@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/Card';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { missingFromError } from '../api';
 import type { FormType } from '../formSpec';
 import type { useDraft } from '../useDraft';
 import { useFormText } from '../useFormText';
@@ -30,9 +29,6 @@ export function FinalBar({
     <Card className="flex flex-col gap-3 rounded-[24px] px-5 py-[18px] lg:px-6">
       {final.notice && final.stillMissing.size > 0 && (
         <Notice tone="error">{t('final.missing', { n: f.number(final.stillMissing.size) })}</Notice>
-      )}
-      {submit.isError && missingFromError(submit.error).length === 0 && (
-        <Notice tone="error">{t('final.error')}</Notice>
       )}
       {final.confirming ? (
         <InlineConfirm

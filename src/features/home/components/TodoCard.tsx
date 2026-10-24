@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { useApproveApplication } from '@/lib/applicant/approval';
 import type { ApplicationSummary, Todo } from '../api';
 import { daysUntil } from '@/lib/dates';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { toast } from '@/lib/toast';
 
 /** An upload due this soon is shown in the urgent colour. */
 const URGENT_DAYS = 7;
@@ -167,7 +167,10 @@ function ApproveTodo({ application }: { application: ApplicationSummary }) {
     .join(' · ');
 
   const decide = (approved: boolean) => {
-    approve.mutate({ id: application.id, approved });
+    approve.mutate(
+      { id: application.id, approved },
+      { onError: () => toast.error(t('todos.error')) },
+    );
   };
 
   return (
@@ -206,11 +209,6 @@ function ApproveTodo({ application }: { application: ApplicationSummary }) {
           onConfirm={() => decide(false)}
           onCancel={() => setConfirming(false)}
         />
-      )}
-      {approve.isError && (
-        <div className="w-full">
-          <Notice tone="error">{t('todos.error')}</Notice>
-        </div>
       )}
     </>
   );

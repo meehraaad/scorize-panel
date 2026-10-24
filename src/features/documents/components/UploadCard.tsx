@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react';
+import { useRef, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -36,13 +36,14 @@ export function UploadCard({ data }: { data: DocumentsData }) {
   const upload = useUploadDocuments();
   const [picked, setPicked] = useState<Record<number, File>>({});
   const [problems, setProblems] = useState<Record<number, { problem: Problem; size: number }>>({});
-  const [message, setMessage] = useState<'pickFirst' | 'sent' | { failed: number } | null>(null);
+  const [pickFirst, setPickFirst] = useState(false);
+  const failedIds = useRef<number[]>([]);
 
   const required = data.required;
   const chosen = required.filter((item) => picked[item.id]);
 
   const choose = (item: RequiredDocument, file: File | undefined) => {
-    setMessage(null);
+    setPickFirst(false);
     const rest = <T,>(record: Record<number, T>) =>
       Object.fromEntries(Object.entries(record).filter(([id]) => Number(id) !== item.id));
     if (!file) return;
@@ -65,30 +66,41 @@ export function UploadCard({ data }: { data: DocumentsData }) {
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
     if (!chosen.length) {
-      setMessage('pickFirst');
+      setPickFirst(true);
       return;
     }
-    const uploads = chosen.flatMap((item) => {
-      const file = picked[item.id];
-      return file ? [{ id: item.id, file }] : [];
-    });
-    upload.mutate(uploads, {
-      onSuccess: () => {
-        setPicked({});
-        setMessage('sent');
-      },
-      onError: (error) => {
-        // Keep only the files that didn't go through, ready to send again.
-        const failed = error instanceof UploadError ? error.ids : uploads.map((item) => item.id);
-        setPicked((previous) =>
-          Object.fromEntries(
-            Object.entries(previous).filter(([id]) => failed.includes(Number(id))),
-          ),
-        );
-        setMessage({ failed: failed.length });
-      },
-    });
+    send(
+      chosen.flatMap((item) => {
+        const file = picked[item.id];
+        return file ? [{ id: item.id, file }] : [];
+      }),
+    );
   };
+
+  // The upload toast shows progress and the result; "send again" sends only what failed.
+  const send = (uploads: { id: number; file: File }[]) =>
+    upload.mutate(
+      {
+        uploads,
+        messages: {
+          done: t('required.sent'),
+          retry: () => send(uploads.filter((item) => failedIds.current.includes(item.id))),
+        },
+      },
+      {
+        onSuccess: () => setPicked({}),
+        onError: (error) => {
+          // Keep only the files that didn't go through, ready to send again.
+          const failed = error instanceof UploadError ? error.ids : uploads.map((item) => item.id);
+          failedIds.current = failed;
+          setPicked((previous) =>
+            Object.fromEntries(
+              Object.entries(previous).filter(([id]) => failed.includes(Number(id))),
+            ),
+          );
+        },
+      },
+    );
 
   return (
     <SectionCard
@@ -112,11 +124,6 @@ export function UploadCard({ data }: { data: DocumentsData }) {
     >
       {required.length === 0 ? (
         <>
-          {message === 'sent' && (
-            <div className="px-5 lg:px-8">
-              <Notice tone="success">{t('required.sent')}</Notice>
-            </div>
-          )}
           <EmptyState title={t('required.completeTitle')}>{t('required.complete')}</EmptyState>
         </>
       ) : (
@@ -133,11 +140,7 @@ export function UploadCard({ data }: { data: DocumentsData }) {
             />
           ))}
           <div className="flex flex-col gap-3 px-5 py-[18px] shadow-[inset_0_1px_0_var(--hair)] lg:px-8 lg:py-[22px]">
-            {message === 'pickFirst' && <Notice tone="error">{t('required.pickFirst')}</Notice>}
-            {message === 'sent' && <Notice tone="success">{t('required.sent')}</Notice>}
-            {typeof message === 'object' && message !== null && (
-              <Notice tone="error">{t('required.failed', { n: f.number(message.failed) })}</Notice>
-            )}
+            {pickFirst && <Notice tone="error">{t('required.pickFirst')}</Notice>}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm text-text-2">{t('required.footer')}</span>
               <Button type="submit" disabled={upload.isPending} className="w-full sm:w-auto">

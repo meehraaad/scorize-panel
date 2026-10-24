@@ -11,6 +11,7 @@ import {
   type AccountData,
 } from '@/lib/account/api';
 import { formatPhone } from '@/lib/site';
+import { toast } from '@/lib/toast';
 
 const MIN_PASSWORD = 8;
 
@@ -18,18 +19,16 @@ const MIN_PASSWORD = 8;
 export function LoginCard({ account }: { account: AccountData }) {
   const { t } = useTranslation('account');
   const [editing, setEditing] = useState<'name' | 'password' | null>(null);
-  const [notice, setNotice] = useState<'nameSaved' | 'passwordSaved' | null>(null);
   const resend = useResendEmail();
   const name = [account.first_name, account.last_name].filter(Boolean).join(' ');
 
   const done = (message: 'nameSaved' | 'passwordSaved') => {
     setEditing(null);
-    setNotice(message);
+    toast.success(t(`login.${message}`));
   };
 
   return (
     <SectionCard variant="panel" id="account-login" title={t('login.title')}>
-      {notice && <Notice tone="success">{t(`login.${notice}`)}</Notice>}
       <div className="flex flex-col">
         <Row
           label={t('login.name')}
@@ -39,10 +38,7 @@ export function LoginCard({ account }: { account: AccountData }) {
               <Button
                 variant="outline"
                 aria-label={t('login.editLabel', { field: t('login.name') })}
-                onClick={() => {
-                  setNotice(null);
-                  setEditing('name');
-                }}
+                onClick={() => setEditing('name')}
               >
                 {t('login.edit')}
               </Button>
@@ -83,16 +79,18 @@ export function LoginCard({ account }: { account: AccountData }) {
                 <Button
                   variant="primary"
                   disabled={resend.isPending || resend.isSuccess}
-                  onClick={() => resend.mutate()}
+                  onClick={() =>
+                    resend.mutate(undefined, {
+                      onSuccess: () => toast.success(t('login.resent')),
+                      onError: () => toast.error(t('login.resendError')),
+                    })
+                  }
                 >
                   {t('login.resend')}
                 </Button>
               )
             }
-          >
-            {resend.isSuccess && <Notice tone="success">{t('login.resent')}</Notice>}
-            {resend.isError && <Notice tone="error">{t('login.resendError')}</Notice>}
-          </Row>
+          />
         )}
         <Row
           label={t('login.password')}
@@ -100,13 +98,7 @@ export function LoginCard({ account }: { account: AccountData }) {
           ltr
           action={
             editing !== 'password' && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setNotice(null);
-                  setEditing('password');
-                }}
-              >
+              <Button variant="outline" onClick={() => setEditing('password')}>
                 {t('login.changePassword')}
               </Button>
             )
@@ -178,7 +170,10 @@ function NameForm({
       setMissing(true);
       return;
     }
-    update.mutate({ first_name: first.trim(), last_name: last.trim() }, { onSuccess: onDone });
+    update.mutate(
+      { first_name: first.trim(), last_name: last.trim() },
+      { onError: () => toast.error(t('login.error')), onSuccess: onDone },
+    );
   };
 
   return (
@@ -199,7 +194,6 @@ function NameForm({
           onChange={(event) => setLast(event.target.value)}
         />
       </div>
-      {update.isError && <Notice tone="error">{t('login.error')}</Notice>}
       <FormButtons pending={update.isPending} onCancel={onCancel} />
     </form>
   );

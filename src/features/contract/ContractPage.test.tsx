@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { toasts } from '@/test/toasts';
 
 const SARA = 1; // applicant: 4 instalments (2 paid, 1 due, 1 later), 2 empty details (src/mocks/applicant.ts)
 const MARYAM = 2; // no applicant file
@@ -97,7 +98,7 @@ describe('contract page', () => {
     await user.type(input, '۸۱۷۴۶۷۳۱۱۱');
     await user.click(within(profile()).getByRole('button', { name: 'ثبت' }));
 
-    expect(await within(profile()).findByText('«کد پستی» ثبت شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('«کد پستی» ثبت شد.')).toBeInTheDocument();
     expect(within(profile()).getByText('8174673111')).toBeInTheDocument();
     expect(within(profile()).getByText('۱ مورد خالی')).toBeInTheDocument();
     // Focus goes back to the row.

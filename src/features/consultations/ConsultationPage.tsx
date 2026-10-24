@@ -19,6 +19,7 @@ import {
   type ConsultationDetail,
   type ConsultationInfo,
 } from './api';
+import { toast } from '@/lib/toast';
 
 const REQUIRED = ['university', 'major', 'degree'] as const;
 
@@ -63,11 +64,9 @@ function InfoForm({ session }: { session: ConsultationDetail }) {
   const save = useSaveConsultationInfo(session.id);
   const [info, setInfo] = useState<ConsultationInfo>(session.info);
   const [errors, setErrors] = useState<Partial<Record<keyof ConsultationInfo, boolean>>>({});
-  const [saved, setSaved] = useState(false);
   const readOnly = isPast(session.starts_at);
 
   const set = (field: keyof ConsultationInfo, value: string) => {
-    setSaved(false);
     setInfo((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: false }));
   };
@@ -87,7 +86,10 @@ function InfoForm({ session }: { session: ConsultationDetail }) {
         degree: info.degree.trim(),
         notes: info.notes.trim(),
       },
-      { onSuccess: () => setSaved(true) },
+      {
+        onError: () => toast.error(t('detail.error')),
+        onSuccess: () => toast.success(t('detail.saved')),
+      },
     );
   };
 
@@ -127,8 +129,6 @@ function InfoForm({ session }: { session: ConsultationDetail }) {
           <Notice tone="info">{t('detail.past')}</Notice>
         ) : (
           <>
-            {saved && <Notice tone="success">{t('detail.saved')}</Notice>}
-            {save.isError && <Notice tone="error">{t('detail.error')}</Notice>}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm text-text-2">{t('detail.footer')}</span>
               <Button type="submit" disabled={save.isPending} className="max-sm:w-full">

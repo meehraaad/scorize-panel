@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
-import { Notice } from '@/components/ui/Notice';
 import { useApproveApplication } from '@/lib/applicant/approval';
 import { daysUntil } from '@/lib/dates';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useShowcaseAnswer, type Application } from '../api';
 import { PAYMENT_TONE, RESULT_TONE, URGENT_DAYS } from '../groups';
+import { toast } from '@/lib/toast';
 
 /** Desktop columns: university, deadline, fee, result, approval (header in ApplicationsList). */
 export const ROW_COLUMNS =
@@ -121,7 +121,12 @@ export function ApplicationRow({ item }: { item: Application }) {
                 <Button
                   aria-label={t('approval.approveAria', { university })}
                   disabled={approve.isPending}
-                  onClick={() => approve.mutate({ id: item.id, approved: true })}
+                  onClick={() =>
+                    approve.mutate(
+                      { id: item.id, approved: true },
+                      { onError: () => toast.error(t('approval.error')) },
+                    )
+                  }
                   className="flex-[2] lg:flex-none lg:px-[18px]"
                 >
                   {t('approval.approve')}
@@ -149,11 +154,15 @@ export function ApplicationRow({ item }: { item: Application }) {
               confirmLabel={t('approval.confirmYes')}
               cancelLabel={t('approval.confirmNo')}
               pending={approve.isPending}
-              onConfirm={() => approve.mutate({ id: item.id, approved: false })}
+              onConfirm={() =>
+                approve.mutate(
+                  { id: item.id, approved: false },
+                  { onError: () => toast.error(t('approval.error')) },
+                )
+              }
               onCancel={() => setConfirming(false)}
             />
           )}
-          {approve.isError && <Notice tone="error">{t('approval.error')}</Notice>}
           {noteOpen && <SupervisorNote note={item.supervisor_note} />}
         </div>
       )}
@@ -193,22 +202,27 @@ function OfferPanel({ item }: { item: Application }) {
           variant="outline"
           className="bg-transparent"
           disabled={answer.isPending}
-          onClick={() => answer.mutate({ id: item.id, allowed: false })}
+          onClick={() =>
+            answer.mutate(
+              { id: item.id, allowed: false },
+              { onError: () => toast.error(t('approval.error')) },
+            )
+          }
         >
           {t('offer.no')}
         </Button>
         <Button
           disabled={answer.isPending}
-          onClick={() => answer.mutate({ id: item.id, allowed: true })}
+          onClick={() =>
+            answer.mutate(
+              { id: item.id, allowed: true },
+              { onError: () => toast.error(t('approval.error')) },
+            )
+          }
         >
           {t('offer.yes')}
         </Button>
       </div>
-      {answer.isError && (
-        <div className="w-full">
-          <Notice tone="error">{t('approval.error')}</Notice>
-        </div>
-      )}
     </div>
   );
 }

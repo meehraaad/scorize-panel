@@ -1,12 +1,12 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
 import { TURKEY_DEGREES, useStartTurkey, type TurkeyDegree } from '../api';
+import { toast } from '@/lib/toast';
 
 const HOW = ['upload', 'review', 'sign'] as const;
 type Field = 'field' | 'gpa' | 'start_term';
@@ -43,12 +43,15 @@ export function StartStep() {
       document.getElementById(`turkey-${first}`)?.focus();
       return;
     }
-    start.mutate({
-      degree,
-      field: values.field.trim(),
-      gpa: String(gpa),
-      start_term: values.start_term.trim(),
-    });
+    start.mutate(
+      {
+        degree,
+        field: values.field.trim(),
+        gpa: String(gpa),
+        start_term: values.start_term.trim(),
+      },
+      { onError: () => toast.error(t('start.error')) },
+    );
   };
 
   return (
@@ -142,7 +145,6 @@ export function StartStep() {
               onChange={(event) => set('start_term', event.target.value)}
             />
           </div>
-          {start.isError && <Notice tone="error">{t('start.error')}</Notice>}
           <Button type="submit" size="lg" disabled={start.isPending} className="sm:self-start">
             {start.isPending ? t('start.sending') : t('start.submit')}
           </Button>

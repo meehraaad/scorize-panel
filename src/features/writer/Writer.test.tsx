@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { toasts } from '@/test/toasts';
 
 const MARYAM = 2; // also a writer (src/mocks/writer.ts)
 
@@ -61,7 +62,7 @@ describe('writer panel', () => {
     );
     await user.type(within(versions).getByLabelText(/توضیح برای متقاضی/), 'هر سه نکته اعمال شد.');
     await user.click(within(versions).getByRole('button', { name: 'ارسال برای متقاضی' }));
-    expect(await within(versions).findByText('نسخه برای متقاضی فرستاده شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('نسخه برای متقاضی فرستاده شد.')).toBeInTheDocument();
     expect(within(versions).getByText('SOP-Sara-v2.pdf')).toBeInTheDocument();
     expect(await screen.findByText('منتظر متقاضی')).toBeInTheDocument();
   });

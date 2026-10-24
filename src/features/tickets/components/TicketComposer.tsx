@@ -12,6 +12,7 @@ import {
   useSendMessage,
   type Priority,
 } from '@/lib/tickets/api';
+import { toast } from '@/lib/toast';
 import type { TicketsConfig } from '../config';
 
 const RULE: FileRule = { types: ATTACHMENT_TYPES, maxBytes: MAX_ATTACHMENT_BYTES };
@@ -50,6 +51,7 @@ export function TicketComposer({ config, thread }: { config: TicketsConfig; thre
     send.mutate(
       { text: text.trim(), priority: applicant ? priority : DEFAULT_PRIORITY, attachment: file },
       {
+        onError: () => toast.error(t('composer.sendError')),
         onSuccess: () => {
           setText('');
           setFile(null);
@@ -108,7 +110,6 @@ export function TicketComposer({ config, thread }: { config: TicketsConfig; thre
       sendLabel={t('composer.send')}
       sending={send.isPending}
       canSend={canSend}
-      error={send.isError && t('composer.sendError')}
       onSubmit={submit}
     />
   );

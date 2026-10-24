@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
-import { Notice } from '@/components/ui/Notice';
 import { ProgressBar } from '@/components/ui/Progress';
 import { Badge, SectionCard } from '@/components/ui/SectionCard';
 import { percentOf } from '@/lib/progress';
@@ -13,6 +12,7 @@ import { safeHref } from '@/lib/url';
 import type { MonthSummary, PendingReceipt, TodayConsultation, TodayData } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';
+import { toast } from '@/lib/toast';
 
 /** "My tasks": one link with the three counts (the tasks page). */
 export function TasksCard({ tasks }: { tasks: TodayData['tasks'] }) {
@@ -168,7 +168,10 @@ export function ReceiptsCard({ receipts }: { receipts: PendingReceipt[] }) {
                   aria-label={t('today.receipts.confirmName', { name: receipt.name })}
                   disabled={confirm.isPending}
                   onClick={() =>
-                    confirm.mutate({ customer: receipt.customer, payment: receipt.payment })
+                    confirm.mutate(
+                      { customer: receipt.customer, payment: receipt.payment },
+                      { onError: () => toast.error(t('today.receipts.error')) },
+                    )
                   }
                 >
                   {t('today.receipts.confirm')}
@@ -178,7 +181,6 @@ export function ReceiptsCard({ receipts }: { receipts: PendingReceipt[] }) {
           ))}
         </ul>
       )}
-      {confirm.isError && <Notice tone="error">{t('today.receipts.error')}</Notice>}
     </SectionCard>
   );
 }

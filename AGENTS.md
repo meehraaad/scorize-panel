@@ -31,6 +31,9 @@ versions V6/V7 for the applicant panel.
 - **Build pages from shared blocks** (`src/components/ui/`, listed in docs/architecture.md, previewed
   at `/dev/components` in dev). Don't copy a block's markup into a feature: extend the block instead.
 - Accessible markup: real `<button>`/`<a>`, `aria-label` on icon-only buttons, touch targets ≥ 44px.
+- **Messages**: what an action did goes in a toast (`toast.success/error` from `src/lib/toast.ts`;
+  uploads through `uploadFile`/`uploadWithToast` in `src/lib/upload.ts`). `<Notice>` is only for what
+  must be fixed on the page first or describes the page (docs/architecture.md, "Messages").
 - **Links from API data** go through `safeHref()` (`src/lib/url.ts`). The CSP (`security-headers.conf`)
   allows no inline scripts except the hashed boot script in `index.html`.
 

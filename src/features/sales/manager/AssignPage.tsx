@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard, SectionHeading } from '@/components/ui/SectionCard';
@@ -23,6 +22,7 @@ import {
 } from '../api';
 import { ScoreChip } from '../components/LeadChips';
 import { useSalesFormat } from '../format';
+import { toast } from '@/lib/toast';
 
 const MODES = ['round_robin', 'least_load', 'match'] as const satisfies readonly AssignMode[];
 const ESCALATIONS = ['alert', 'next', 'both'] as const satisfies readonly Escalation[];
@@ -80,6 +80,7 @@ export default function AssignPage() {
               onClick={() =>
                 assign.mutate(
                   data.queue.map((lead) => ({ lead: lead.lead, seller: lead.suggested })),
+                  { onError: () => toast.error(t('error')) },
                 )
               }
             >
@@ -99,15 +100,14 @@ export default function AssignPage() {
                 sellers={data.sellers}
                 now={now}
                 pending={assign.isPending}
-                onAssign={(seller) => assign.mutate([{ lead: lead.lead, seller }])}
+                onAssign={(seller) =>
+                  assign.mutate([{ lead: lead.lead, seller }], {
+                    onError: () => toast.error(t('error')),
+                  })
+                }
               />
             ))}
           </ul>
-        )}
-        {assign.isError && (
-          <div className="px-5 pb-5 lg:px-8">
-            <Notice tone="error">{t('error')}</Notice>
-          </div>
         )}
       </SectionCard>
     </>
@@ -121,7 +121,7 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
   const update = (change: Partial<AssignSettings>) => {
     const next = { ...form, ...change };
     setForm(next);
-    save.mutate(next);
+    save.mutate(next, { onError: () => toast.error(t('error')) });
   };
   return (
     <Card aria-labelledby="auto-title" className="flex flex-col gap-5 p-5 lg:px-8 lg:py-6">
@@ -168,7 +168,6 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
           />
         </div>
       )}
-      {save.isError && <Notice tone="error">{t('error')}</Notice>}
     </Card>
   );
 }

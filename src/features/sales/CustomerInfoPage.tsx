@@ -8,11 +8,11 @@ import { SelectField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
-import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { CHOICES } from '@/lib/staff/api';
+import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
   UnknownNameError,
@@ -126,7 +126,15 @@ function InfoForm({
   const save = useSaveInfo(useCustomerId());
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    save.mutate(section());
+    save.mutate(section(), {
+      onSuccess: () => toast.success(t('info.done')),
+      onError: (error) =>
+        toast.error(
+          error instanceof UnknownNameError
+            ? t('info.notFound', { value: error.value })
+            : t('error'),
+        ),
+    });
   };
   return (
     <SectionCard id={id} variant="panel" size="lg" title={title} end={end}>
@@ -136,15 +144,7 @@ function InfoForm({
           <Button type="submit" disabled={save.isPending}>
             {t('info.save')}
           </Button>
-          {save.isSuccess && <span className="text-sm text-good">{t('info.done')}</span>}
         </div>
-        {save.error && (
-          <Notice tone="error">
-            {save.error instanceof UnknownNameError
-              ? t('info.notFound', { value: save.error.value })
-              : t('error')}
-          </Notice>
-        )}
       </form>
     </SectionCard>
   );

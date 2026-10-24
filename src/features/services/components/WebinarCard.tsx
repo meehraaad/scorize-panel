@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
-import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useRegisterWebinar, type Webinar } from '../api';
+import { toast } from '@/lib/toast';
 
 const UNITS = ['days', 'hours', 'minutes', 'seconds'] as const;
 
@@ -39,6 +39,7 @@ export function WebinarCard({ webinar }: { webinar: Webinar }) {
 
   const signUp = () =>
     register.mutate(webinar.id, {
+      onError: () => toast.error(t('webinar.error')),
       onSuccess: ({ payment_id }) => {
         if (payment_id !== null) void navigate(`/payments/${String(payment_id)}`);
       },
@@ -97,7 +98,6 @@ export function WebinarCard({ webinar }: { webinar: Webinar }) {
                 : t('webinar.register')}
           </Button>
         )}
-        {register.isError && <Notice tone="error">{t('webinar.error')}</Notice>}
       </div>
     </section>
   );

@@ -2,7 +2,6 @@ import { useLayoutEffect, useRef, type ReactNode, type SubmitEvent } from 'react
 import { Button } from '@/components/ui/Button';
 import { FileDrop, PickedFile } from '@/components/ui/Files';
 import { Icon } from '@/components/ui/Icon';
-import { Notice } from '@/components/ui/Notice';
 
 export interface ComposerChoice {
   value: number;
@@ -49,8 +48,6 @@ interface ComposerProps {
   sending: boolean;
   /** Send stays off (nothing typed, rules not accepted). */
   canSend: boolean;
-  /** Under the form: the send failed. */
-  error?: ReactNode;
   onSubmit: () => void;
 }
 
@@ -83,7 +80,6 @@ export function Composer({
   sendLabel,
   sending,
   canSend,
-  error,
   onSubmit,
 }: ComposerProps) {
   const fileError = attach.error ? `${id}-file-error` : null;
@@ -208,11 +204,6 @@ export function Composer({
         <Icon name="send" size={18} className="lg:hidden" />
         <span className="max-lg:sr-only">{sendLabel}</span>
       </Button>
-      {error && (
-        <div className="col-span-3 lg:order-6">
-          <Notice tone="error">{error}</Notice>
-        </div>
-      )}
     </form>
   );
 }

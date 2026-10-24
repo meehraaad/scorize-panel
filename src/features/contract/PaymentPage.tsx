@@ -17,6 +17,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
 import { paymentQuery, useStartOnlinePayment, type PaymentData, type PaymentStatus } from './api';
 import { ReceiptForm } from './components/ReceiptForm';
+import { toast } from '@/lib/toast';
 
 const TONE: Record<PaymentStatus, ChipTone> = {
   unpaid: 'warn',
@@ -168,12 +169,12 @@ function OnlineCard({ payment, onReceipt }: { payment: PaymentData; onReceipt: (
 
   return (
     <Card className="flex flex-col gap-3 p-5 lg:p-[26px]">
-      {start.isError && <Notice tone="error">{t('payment.onlineError')}</Notice>}
       <Button
         size="lg"
         disabled={busy}
         onClick={() =>
           start.mutate(payment.id, {
+            onError: () => toast.error(t('payment.onlineError')),
             onSuccess: ({ redirect_url }) => window.location.assign(redirect_url),
           })
         }

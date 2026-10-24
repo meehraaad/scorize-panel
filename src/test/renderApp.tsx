@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { Suspense } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '@/app/router';
+import { Toaster } from '@/components/ui/Toast';
 import { queryClient } from '@/lib/api/queryClient';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
 
@@ -15,6 +16,7 @@ export function renderApp(path: string) {
       <ThemeProvider>
         <Suspense>
           <RouterProvider router={router} />
+          <Toaster />
         </Suspense>
       </ThemeProvider>
     </QueryClientProvider>,

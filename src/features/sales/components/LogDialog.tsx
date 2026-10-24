@@ -18,6 +18,7 @@ import {
 } from '@/lib/sales/api';
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
+import { toast } from '@/lib/toast';
 
 export interface LogStart {
   channel: Channel;
@@ -108,7 +109,7 @@ export function LogDialog({
           ? t('customer.logDialog.retryTask')
           : notes.trim() || t('customer.logDialog.followTask'),
       },
-      { onSuccess: onClose },
+      { onError: () => toast.error(t('error')), onSuccess: onClose },
     );
   };
 
@@ -267,7 +268,6 @@ export function LogDialog({
             {t('customer.logDialog.emailSummary')}
           </label>
         )}
-        {log.isError && <Notice tone="error">{t('error')}</Notice>}
       </form>
     </Dialog>
   );

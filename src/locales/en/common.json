@@ -299,5 +299,28 @@
     "minute": "Minute",
     "gregorian": "Same as {{date}}",
     "weekend": "Weekend"
+  },
+  "toast": {
+    "region": "Panel messages",
+    "close": "Close notification",
+    "showFiles": "Show the files",
+    "hideFiles": "Hide the files",
+    "fileDone": "Uploaded",
+    "fileWaiting": "Waiting",
+    "percent": "{{value}}%",
+    "upload": {
+      "cancel": "Cancel upload",
+      "cancelAll": "Cancel all uploads",
+      "progress": "Uploading · {{percent}}% · {{sent}} of {{total}} MB",
+      "batchTitle": "Uploading {{n}} files",
+      "batchProgress": "{{done}} of {{count}} done · {{percent}}%",
+      "paused": "You're offline · it picks up from {{percent}}% once you're back",
+      "failed": "Upload didn't finish",
+      "failedMeta": "The connection dropped at {{percent}}%. The file is kept; send it again.",
+      "batchFailedMeta": "{{failed}} of {{count}} files weren't sent; the rest are uploaded.",
+      "retry": "Send again",
+      "done": "Uploaded",
+      "batchDone": "All files uploaded"
+    }
   }
 }

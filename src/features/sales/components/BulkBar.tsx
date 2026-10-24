@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
-import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useBulkLeads, type BulkChange } from '../api';
 import { quickWhen, type QuickWhen } from '@/lib/when';
+import { toast } from '@/lib/toast';
 
 const STAGE_CHOICES = ['new', 'contacted', 'consulted', 'offer'] as const;
 const WHEN_CHOICES = ['tomorrow', 'three', 'week'] as const satisfies readonly QuickWhen[];
@@ -24,7 +24,7 @@ export function BulkBar({ ids, onDone }: { ids: number[]; onDone: () => void }) 
   const apply = () => {
     const change: BulkChange =
       action === 'stage' ? { stage } : { follow_up_at: quickWhen(when).toISOString() };
-    bulk.mutate({ ids, change }, { onSuccess: onDone });
+    bulk.mutate({ ids, change }, { onError: () => toast.error(t('error')), onSuccess: onDone });
   };
 
   return (
@@ -76,7 +76,6 @@ export function BulkBar({ ids, onDone }: { ids: number[]; onDone: () => void }) 
           </Button>
         </div>
       </div>
-      {bulk.isError && <Notice tone="error">{t('error')}</Notice>}
     </div>
   );
 }

@@ -1,12 +1,12 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { normalizePhone } from '@/lib/text';
 import { useSaveGateProfile, type Gates, type ProfileGateField } from '@/lib/applicant/gates';
+import { toast } from '@/lib/toast';
 
 type Problem = 'required' | 'latin' | 'mobile';
 
@@ -45,7 +45,7 @@ export function ProfileGate({ profile }: { profile: NonNullable<Gates['profile']
       document.getElementById(`gate-${first}`)?.focus();
       return;
     }
-    save.mutate(clean);
+    save.mutate(clean, { onError: () => toast.error(t('profile.error')) });
   };
 
   return (
@@ -76,7 +76,6 @@ export function ProfileGate({ profile }: { profile: NonNullable<Gates['profile']
               }}
             />
           ))}
-          {save.isError && <Notice tone="error">{t('profile.error')}</Notice>}
           <Button type="submit" size="lg" disabled={save.isPending}>
             {save.isPending ? t('profile.sending') : t('profile.submit')}
           </Button>

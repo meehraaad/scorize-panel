@@ -1,4 +1,6 @@
 import { useState, type SubmitEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from '@/lib/toast';
 import { missingFromError, useSubmitWriting } from './api';
 import { missingInForm, type FormSpec } from './formSpec';
 import type { useDraft } from './useDraft';
@@ -13,6 +15,7 @@ export function useFinal(
   draft: ReturnType<typeof useDraft>,
   onMissing: (first: { key: string; section: number }) => void,
 ) {
+  const { t } = useTranslation('writing');
   const { answers } = draft;
   const submit = useSubmitWriting(spec.type);
   const [confirming, setConfirming] = useState(false);
@@ -58,7 +61,9 @@ export function useFinal(
     submit.mutate(answers, {
       onError: (error) => {
         setConfirming(false);
-        showMissing(missingFromError(error));
+        const keys = missingFromError(error);
+        if (keys.length) showMissing(keys);
+        else toast.error(t('final.error'));
       },
     });
   };

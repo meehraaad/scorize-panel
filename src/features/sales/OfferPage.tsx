@@ -6,7 +6,6 @@ import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
-import { Icon } from '@/components/ui/Icon';
 import { Notice } from '@/components/ui/Notice';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -27,6 +26,7 @@ import {
 import { useSalesFormat } from './format';
 import { customerPath } from './paths';
 import { instalmentPlan } from './plan';
+import { toast } from '@/lib/toast';
 
 const FLOW = ['draft', 'manager', 'panel', 'signed'] as const;
 
@@ -67,7 +67,6 @@ export default function OfferPage() {
   const save = useSaveOffer(id);
   const { options } = data;
   const [offer, setOffer] = useState<Offer>(() => data.draft ?? startingOffer(customer, options));
-  const [done, setDone] = useState<OfferAction | null>(null);
   const set = <K extends keyof Offer>(key: K, value: Offer[K]) =>
     setOffer((current) => ({ ...current, [key]: value }));
 
@@ -84,9 +83,10 @@ export default function OfferPage() {
     save.mutate(
       { offer, action },
       {
+        onError: () => toast.error(t('error')),
         onSuccess: () => {
-          setDone(action);
           if (action === 'submit') void navigate(customerPath(id));
+          else toast.success(t(`offer.done.${action}`));
         },
       },
     );
@@ -354,15 +354,6 @@ export default function OfferPage() {
                 {t('offer.save')}
               </Button>
               {!valid && <span className="text-xs text-text-2">{t('offer.incomplete')}</span>}
-              {done && done !== 'submit' && (
-                <Notice tone="success">
-                  <span className="inline-flex items-center gap-2">
-                    <Icon name="check" size={16} />
-                    {t(`offer.done.${done}`)}
-                  </span>
-                </Notice>
-              )}
-              {save.isError && <Notice tone="error">{t('error')}</Notice>}
             </div>
           </>
         }

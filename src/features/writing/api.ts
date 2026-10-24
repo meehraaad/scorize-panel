@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
+import { uploadFile, type UploadMessages } from '@/lib/upload';
 import type { Answers, FormType } from './formSpec';
 
 /**
@@ -81,13 +82,15 @@ export function useSaveWriting(type: FormType) {
 export function useUploadPhoto(type: FormType, name: string) {
   const update = useUpdateCache(type);
   return useMutation({
-    mutationFn: (file: File) => {
+    mutationFn: ({ file, messages }: { file: File; messages?: UploadMessages }) => {
       const body = new FormData();
       body.append(name, file);
-      return api<{ url: string; updated_at: string }>(`${url(type)}${name}/`, {
-        method: 'POST',
+      return uploadFile<{ url: string; updated_at: string }>(
+        `${url(type)}${name}/`,
         body,
-      });
+        file,
+        messages,
+      );
     },
     onSuccess: ({ url: stored, updated_at }) => {
       update({ updated_at, answers: { [name]: stored } });

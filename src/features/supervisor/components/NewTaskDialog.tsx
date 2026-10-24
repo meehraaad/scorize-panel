@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
-import { Notice } from '@/components/ui/Notice';
 import { useCreateTask } from '@/lib/tasks/api';
 import { fromLocalInput } from '@/lib/when';
 import { caseKey } from '../api';
+import { toast } from '@/lib/toast';
 
 /** A follow-up of my own about this applicant (StaffToDo, docs/backend-changes.md T2). */
 export function NewTaskDialog({
@@ -45,7 +45,7 @@ export function NewTaskDialog({
               if (!dueAt) return;
               create.mutate(
                 { user, text: text.trim(), kind: 'mine', due_at: dueAt },
-                { onSuccess: onClose },
+                { onError: () => toast.error(t('saveError')), onSuccess: onClose },
               );
             }}
           >
@@ -57,7 +57,6 @@ export function NewTaskDialog({
         </>
       }
     >
-      {create.isError && <Notice tone="error">{t('saveError')}</Notice>}
       <TextAreaField
         label={t('taskDialog.text')}
         placeholder={t('taskDialog.placeholder')}
