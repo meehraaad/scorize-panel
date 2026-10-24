@@ -9,7 +9,11 @@
  * writing.test.ts checks every key a spec needs exists in every language.
  */
 
-export type FormType = 'sop' | 'cv';
+/** Writing orders with a form so far (Django SopResumeTicket types sop, cv, recommendation, pl). */
+export const FORM_TYPES = ['sop', 'cv', 'recommendation', 'pl'] as const;
+export type FormType = (typeof FORM_TYPES)[number];
+export const isFormType = (value: unknown): value is FormType =>
+  FORM_TYPES.includes(value as FormType);
 
 export type FieldKind =
   | 'text'
@@ -23,7 +27,14 @@ export type FieldKind =
   | 'month'
   | 'email'
   | 'tel'
-  | 'number';
+  | 'url'
+  | 'number'
+  /** Several of `options` (checkboxes); the answer is a list of values. */
+  | 'checks'
+  /** Short labels the applicant types (research interests); the answer is a list. */
+  | 'tags'
+  /** A start term among the next intakes ("2027-fall"); see upcomingTerms(). */
+  | 'term';
 
 export interface FieldSpec {
   kind: FieldKind;
@@ -37,6 +48,10 @@ export interface FieldSpec {
   options?: { set: string; values: readonly (string | number | boolean)[] };
   /** Written in English (the CV): left-to-right input. */
   ltr?: boolean;
+  /** choice: options one under another (long labels) instead of side by side. */
+  layout?: 'stack';
+  /** Asked only while another field of the same entry or form has this value. */
+  when?: { name: string; value: Scalar };
 }
 
 export interface ListSpec {
@@ -49,6 +64,8 @@ export interface ListSpec {
   title: string;
   subtitle?: string[];
   period?: [start: string, end: string];
+  /** Field holding a web address, shown as a link on the entry (a professor's group page). */
+  link?: string;
 }
 
 export interface PhotoSpec {
@@ -75,6 +92,11 @@ export interface FormSpec {
   sections: SectionSpec[];
   /** What the progress bar counts: answered questions (SOP) or finished sections (CV). */
   progress: 'questions' | 'sections';
+  /**
+   * The side column: `tips` lines (`<type>.tips.<n>`, titled `<type>.tipsTitle` when the form has
+   * its own), the writer's phone card, a card that points to the writing ticket.
+   */
+  aside: { tips: number; ownTitle?: boolean; phone?: boolean; ticket?: boolean };
 }
 
 export type Scalar = string | number | boolean | null;
@@ -85,6 +107,12 @@ export type Answers = Record<string, AnswerValue>;
 export const isList = (part: Part): part is ListSpec => part.kind === 'list';
 export const isField = (part: Part): part is FieldSpec =>
   part.kind !== 'list' && part.kind !== 'photo' && part.kind !== 'interests';
+/** Answers that are lists of values (checkboxes, tags), not one value. */
+export const isMulti = (field: FieldSpec) => field.kind === 'checks' || field.kind === 'tags';
+
+/** Whether a field is asked, given the other answers of its entry (or form). */
+export const applies = (field: FieldSpec, values: Record<string, AnswerValue>) =>
+  !field.when || values[field.when.name] === field.when.value;
 
 export function isAnswered(value: AnswerValue) {
   if (typeof value === 'string') return value.trim() !== '';
@@ -94,7 +122,18 @@ export function isAnswered(value: AnswerValue) {
 
 /** Required fields of a list entry that are still empty. */
 export const itemGaps = (list: ListSpec, item: ListItem) =>
-  list.fields.filter((field) => field.required && !isAnswered(item[field.name])).map((f) => f.name);
+  list.fields
+    .filter((field) => field.required && applies(field, item) && !isAnswered(item[field.name]))
+    .map((f) => f.name);
+
+/** Questions of a list entry it asks (see `when`), and how many of them are answered. */
+export function itemStats(list: ListSpec, item: ListItem) {
+  const asked = list.fields.filter((field) => applies(field, item));
+  return {
+    answered: asked.filter((field) => isAnswered(item[field.name])).length,
+    total: asked.length,
+  };
+}
 
 const items = (answers: Answers, list: ListSpec) => (answers[list.name] ?? []) as ListItem[];
 
@@ -112,6 +151,7 @@ export function missingKeys(section: SectionSpec, answers: Answers): string[] {
         itemGaps(part, item).length ? [`${part.name}.${String(index)}`] : [],
       );
     }
+    if (isField(part) && !applies(part, answers)) return [];
     return part.required && !isAnswered(answers[part.name]) ? [part.name] : [];
   });
 }
@@ -158,4 +198,27 @@ export function elementIdFor(type: FormType, key: string, spec: FormSpec, answer
   const item = list && isList(list) ? items(answers, list)[Number(index)] : undefined;
   const gap = list && isList(list) && item ? itemGaps(list, item)[0] : undefined;
   return `${type}-${String(name)}-${index}-${gap ?? ''}`;
+}
+
+export const TERM_SEASONS = ['winter', 'spring', 'summer', 'fall'] as const;
+export type TermSeason = (typeof TERM_SEASONS)[number];
+/** Month each intake starts in (January, May, July, September). */
+const TERM_MONTH: Record<TermSeason, number> = { winter: 0, spring: 4, summer: 6, fall: 8 };
+
+/** The next `count` intakes after `now`, as "<year>-<season>" (start-term questions). */
+export function upcomingTerms(now = new Date(), count = 6) {
+  const terms: string[] = [];
+  for (let year = now.getFullYear(); terms.length < count; year++)
+    for (const season of TERM_SEASONS) {
+      if (terms.length === count) break;
+      if (new Date(year, TERM_MONTH[season], 1) > now) terms.push(`${String(year)}-${season}`);
+    }
+  return terms;
+}
+
+export function parseTerm(value: string) {
+  const [year, season] = value.split('-');
+  return TERM_SEASONS.includes(season as TermSeason) && Number(year)
+    ? { year: Number(year), season: season as TermSeason }
+    : null;
 }

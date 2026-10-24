@@ -14,15 +14,19 @@ import type {
   CaseWriting,
   Credential,
   Inbox,
+  ImportPreview,
+  ImportRow,
   InboxItem,
   NewDocument,
   ProfessorEmailRow,
+  ReportsData,
   StageFilter,
   TodayData,
   WaitingCase,
   WritingState,
 } from '@/features/supervisor/api';
 import type { Degree } from '@/lib/applicant/approval';
+import { APPLICATION_RESULTS, type ApplicationResult } from '@/lib/applications';
 import type { NewTask } from '@/lib/tasks/api';
 import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/api';
 import { forbidden, notFound, storage } from './session';
@@ -829,6 +833,170 @@ export function addCaseTask(task: NewTask) {
     }
 }
 
+// ── Reports and CSV import ───────────────────────────────────────────────────────────────────
+
+/** Applications sent per month before this one (oldest first): history the seeds don't hold. */
+const MONTH_HISTORY: [submitted: number, accepted: number][] = [
+  [6, 1],
+  [9, 2],
+  [11, 3],
+  [8, 4],
+  [13, 3],
+];
+const PERIOD_SCALE: Record<string, number> = { month: 1, last_month: 0.7, quarter: 2.4 };
+
+function reportOf(list: MockCase[], period: string): ReportsData {
+  const scale = PERIOD_SCALE[period] ?? 1;
+  const apps = list.flatMap((item) => item.applications.map((app) => ({ item, app })));
+  const now = new Date();
+  const monthStart = (back: number) => new Date(now.getFullYear(), now.getMonth() - back, 1);
+  const thisMonth = apps.filter(({ app }) => app.result && APPLIED.has(app.result)).length;
+  const months = [
+    // A day in each month (Django counts months in the user's calendar: Jalali in Persian).
+    ...MONTH_HISTORY.map(([submitted, accepted], index) => ({
+      month: ago((MONTH_HISTORY.length - index) * 30 * DAY),
+      submitted,
+      accepted,
+    })),
+    {
+      month: now.toISOString(),
+      submitted: thisMonth,
+      accepted: apps.filter(({ app }) => app.result === 'accepted').length,
+    },
+  ];
+  const byCountry = new Map<string, ReportsData['countries'][number]>();
+  for (const { item, app } of apps) {
+    if (!app.result || !APPLIED.has(app.result)) continue;
+    const country = item.data.contract.countries[0] ?? '—';
+    const row = byCountry.get(country) ?? {
+      country,
+      submitted: 0,
+      accepted: 0,
+      rejected: 0,
+      waiting: 0,
+    };
+    row.submitted++;
+    if (app.result === 'accepted') row.accepted++;
+    else if (app.result === 'rejected') row.rejected++;
+    else row.waiting++;
+    byCountry.set(country, row);
+  }
+  const missed = apps
+    .filter(
+      ({ app }) =>
+        app.deadline &&
+        new Date(app.deadline).getTime() < Date.now() &&
+        (!app.result || !APPLIED.has(app.result)),
+    )
+    .slice(0, 3)
+    .map(({ item, app }, index) => ({
+      application: app.id,
+      applicant: { id: item.data.id, name: item.data.name },
+      university: app.university,
+      deadline: app.deadline ?? '',
+      reason: index === 0 ? 'SOP به‌موقع آماده نشد؛ نسخه‌ی دوم ۴ روز در تیم نگارش ماند.' : null,
+    }));
+  const idle = list
+    .filter((item) => item.data.stage !== 'closed')
+    .map((item) => ({
+      id: item.data.id,
+      name: item.data.name,
+      stage: item.data.stage,
+      days: Math.floor((Date.now() - new Date(item.last_activity).getTime()) / DAY),
+    }))
+    .filter((item) => item.days > 14)
+    .sort((a, b) => b.days - a.days);
+  const emails = list.flatMap((item) => item.emails.filter((email) => email.sent_at));
+  const waitingDocs = list.flatMap((item) =>
+    item.documents.filter((doc) => doc.state === 'review'),
+  );
+  return {
+    start: monthStart(period === 'quarter' ? 2 : period === 'last_month' ? 1 : 0).toISOString(),
+    end: (period === 'last_month'
+      ? new Date(now.getFullYear(), now.getMonth(), 0)
+      : now
+    ).toISOString(),
+    submitted: { count: Math.round(thisMonth * scale), change: period === 'quarter' ? 9 : 5 },
+    accepted: {
+      count: Math.round((months.at(-1)?.accepted ?? 0) * scale),
+      results: Math.round(11 * scale),
+    },
+    on_time: { percent: period === 'last_month' ? 86 : 92, goal: 90 },
+    documents_waiting: {
+      count: waitingDocs.length,
+      oldest_at: waitingDocs.length ? ago(2 * DAY) : null,
+    },
+    months,
+    countries: [...byCountry.values()].sort((a, b) => b.submitted - a.submitted),
+    missed,
+    replies: {
+      median_minutes: 180,
+      same_day: 84,
+      goal: 90,
+      slowest: { applicant: list[0]?.data.name ?? '', minutes: 3 * 24 * 60 },
+      urgent_max_minutes: 110,
+    },
+    idle,
+    bot: {
+      sent: emails.length,
+      replied: emails.filter((email) => email.status === 'replied').length,
+      active: list.filter((item) => item.data.bot.active).length,
+      applying: list.filter((item) => item.data.stage === 'applying').length,
+      stopped: list.filter((item) => item.data.bot.problems.length > 0).length,
+    },
+  };
+}
+
+const isResult = (value: string): value is ApplicationResult =>
+  APPLICATION_RESULTS.includes(value as ApplicationResult);
+
+/** Checked files waiting for the supervisor's go-ahead, by token. */
+const imports = new Map<string, ImportRow[]>();
+
+function previewImport(
+  all: Map<number, MockCase>,
+  name: string,
+  size: number,
+  text: string,
+): ImportPreview | null {
+  const [header = '', ...lines] = text.trim().split(/\r?\n/);
+  const columns = header.split(',').map((column) => column.trim().toLowerCase());
+  const at = (column: string) => columns.indexOf(column);
+  if (['file', 'university', 'result'].some((column) => at(column) === -1)) return null;
+  const byFile = new Map([...all.values()].map((item) => [item.data.file_number, item]));
+  const rows: ImportRow[] = lines
+    .map((line, index) => ({ cells: line.split(',').map((cell) => cell.trim()), line: index + 2 }))
+    .filter(({ cells }) => cells.some(Boolean))
+    .map(({ cells, line }) => {
+      const fileNumber = Number(cells[at('file')]) || null;
+      const university = cells[at('university')] ?? '';
+      const program = at('program') === -1 ? '' : (cells[at('program')] ?? '');
+      const result = cells[at('result')] ?? '';
+      const item = fileNumber === null ? undefined : byFile.get(fileNumber);
+      const base = { line, file_number: fileNumber, university, program, old: null, new: null };
+      if (!university || !result)
+        return { ...base, applicant: null, change: 'skip', problem: 'missing_column' };
+      if (!item) return { ...base, applicant: null, change: 'skip', problem: 'case_not_found' };
+      const applicant = { id: item.data.id, name: item.data.name };
+      if (!isResult(result)) return { ...base, applicant, change: 'skip', problem: 'bad_result' };
+      const existing = item.applications.find(
+        (app) => app.university.toLowerCase() === university.toLowerCase(),
+      );
+      if (!existing) return { ...base, applicant, new: result, change: 'add', problem: null };
+      return {
+        ...base,
+        applicant,
+        old: existing.result,
+        new: result,
+        change: existing.result === result ? 'same' : 'update',
+        problem: null,
+      };
+    });
+  const counts = { update: 0, add: 0, same: 0, skip: 0 };
+  for (const row of rows) counts[row.change]++;
+  return { token: String(newId()), file: { name, size, rows: rows.length }, counts, rows };
+}
+
 // ── Handlers ─────────────────────────────────────────────────────────────────────────────────
 
 export const supervisorHandlers = [
@@ -1198,8 +1366,99 @@ export const supervisorHandlers = [
       results: filter === 'all' ? items : waiting,
     });
   }),
+
+  // ── Reports (SV15) ──
+  http.get(`${API}/reports/`, ({ request }) => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    const period = new URL(request.url).searchParams.get('period') ?? 'month';
+    return HttpResponse.json<ReportsData>(reportOf([...all.values()], period));
+  }),
+
+  http.get(`${API}/reports/export/`, ({ request }) => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    const period = new URL(request.url).searchParams.get('period') ?? 'month';
+    const report = reportOf([...all.values()], period);
+    // Django answers an .xlsx; a CSV of the country table stands in for it here.
+    const lines = ['country,submitted,accepted,rejected,waiting'];
+    for (const row of report.countries)
+      lines.push([row.country, row.submitted, row.accepted, row.rejected, row.waiting].join(','));
+    return new HttpResponse(lines.join('\n'), {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="report.csv"',
+      },
+    });
+  }),
+
+  // ── Import results from CSV (SV17) ──
+  http.get(`${API}/cases/import/sample/`, () => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    return new HttpResponse(
+      [
+        'file,university,program,deadline,result',
+        '1240,TU Munich,MSc Informatics,2026-12-01,accepted',
+        '1240,McGill University,MSc Computer Science,2026-12-15,submitted',
+      ].join('\n'),
+      {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': 'attachment; filename="results-sample.csv"',
+        },
+      },
+    );
+  }),
+
+  http.post(`${API}/cases/import/preview/`, async ({ request }) => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    const file = (await request.formData()).get('file');
+    if (!(file instanceof File)) return HttpResponse.json({ file: ['required'] }, { status: 400 });
+    const text = await file.text();
+    const preview = previewImport(all, file.name, file.size, text);
+    if (!preview) return HttpResponse.json({ file: ['invalid'] }, { status: 400 });
+    imports.set(preview.token, preview.rows);
+    return HttpResponse.json<ImportPreview>(preview);
+  }),
+
+  http.post(`${API}/cases/import/`, async ({ request }) => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    const { token } = (await request.json()) as { token: string; notify: boolean };
+    const rows = imports.get(token);
+    if (!rows) return HttpResponse.json({ token: ['expired'] }, { status: 400 });
+    imports.delete(token);
+    let applied = 0;
+    for (const row of rows) {
+      const item = row.applicant ? all.get(row.applicant.id) : undefined;
+      if (!item || !row.new || (row.change !== 'update' && row.change !== 'add')) continue;
+      const existing = item.applications.find(
+        (app) => app.university.toLowerCase() === row.university.toLowerCase(),
+      );
+      if (existing) existing.result = row.new;
+      else
+        item.applications.push({
+          id: newId(),
+          university: row.university,
+          program: row.program,
+          degree: item.data.contract.degree ?? 2,
+          deadline: null,
+          fee: null,
+          payment: null,
+          result: row.new,
+          approval: 'approved',
+          note: null,
+        });
+      record(item, `${SUPERVISOR_NAME} نتیجه‌ی ${row.university} را از فایل ثبت کرد`);
+      applied++;
+    }
+    return HttpResponse.json({ applied });
+  }),
 ];
 
 export function resetSupervisorMocks() {
   cases = null;
+  imports.clear();
 }

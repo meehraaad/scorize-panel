@@ -139,7 +139,7 @@ describe('tickets page', () => {
     ).toBeInTheDocument();
 
     const tabs = screen.getByRole('navigation', { name: 'دپارتمان‌های نگارش' });
-    expect(within(tabs).getAllByRole('link')).toHaveLength(2);
+    expect(within(tabs).getAllByRole('link')).toHaveLength(4);
     expect(within(tabs).getByRole('link', { name: 'انگیزه‌نامه' })).toHaveAttribute(
       'aria-current',
       'page',

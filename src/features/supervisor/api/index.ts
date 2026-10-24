@@ -12,3 +12,5 @@ export * from './documents';
 export * from './applications';
 export * from './activity';
 export * from './tickets';
+export * from './reports';
+export * from './import';

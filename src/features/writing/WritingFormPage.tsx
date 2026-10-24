@@ -1,34 +1,37 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState, type SubmitEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink } from 'react-router';
-import { BackLink } from '@/components/ui/BackLink';
-import { Button } from '@/components/ui/Button';
-import { buttonClass, tabClass } from '@/components/ui/buttonStyles';
-import { Card } from '@/components/ui/Card';
+import { Link } from 'react-router';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Icon } from '@/components/ui/Icon';
-import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { ProgressBar, StepDot } from '@/components/ui/Progress';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
-import { missingFromError, useSubmitWriting, writingQuery, type WritingForm } from './api';
+import { writingQuery, type WritingForm } from './api';
+import { FinalBar } from './components/FinalBar';
+import { FormHeader } from './components/FormHeader';
 import { FormSection } from './components/FormSection';
-import { PhoneCard, TipsCard } from './components/SidePanels';
-import { elementIdFor, formProgress, missingInForm, sectionStats, type FormSpec } from './formSpec';
+import { FormAside } from './components/SidePanels';
+import { elementIdFor, formProgress, sectionStats, type FormSpec } from './formSpec';
 import { useDraft } from './useDraft';
+import { useFinal } from './useFinal';
 import { useFormText } from './useFormText';
 
-/** Forms with a page so far, for the tabs (others in the contract show once built). */
-const BUILT = ['sop', 'cv'] as const;
-
 /**
- * A writing information form (SOP, CV). Design: canvas V6 sections 4 and 5 (AppWriting, AppCv):
- * sections one at a time, autosave, final submit that checks required answers first.
+ * A writing information form (SOP, CV, professor list). Design: canvas V6 sections 4 and 5
+ * (AppWriting, AppCv), V8 (AppProfForm): sections one at a time, autosave, final submit that
+ * checks required answers first. `View` lays out a form whose spec needs another layout (the
+ * recommendation letters).
  */
-export function WritingFormPage({ spec }: { spec: FormSpec }) {
+export function WritingFormPage({
+  spec,
+  View = FormView,
+}: {
+  spec: FormSpec;
+  View?: (props: { spec: FormSpec; form: WritingForm }) => ReactNode;
+}) {
   const { t } = useTranslation('writing');
   const { text } = useFormText(spec.type);
   const { data } = useSuspenseQuery(writingQuery(spec.type));
@@ -49,7 +52,20 @@ export function WritingFormPage({ spec }: { spec: FormSpec }) {
     );
 
   // A final submit refetches the form: start over in read-only mode.
-  return <FormView key={String(data.is_final)} spec={spec} form={data} />;
+  return <View key={String(data.is_final)} spec={spec} form={data} />;
+}
+
+/** The final note once submitted: nothing more to edit. */
+export function FinalNotice({ spec, form }: { spec: FormSpec; form: WritingForm }) {
+  const { t } = useTranslation('writing');
+  const { text } = useFormText(spec.type);
+  const f = useFormat();
+  return (
+    <Notice tone="success">
+      <strong className="block">{text('doneTitle')}</strong>
+      {t('final.doneText', { date: form.final_at ? f.date(form.final_at) : '' })}
+    </Notice>
+  );
 }
 
 function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
@@ -60,11 +76,7 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
   const readOnly = form.is_final;
   const draft = useDraft(type, form);
   const { answers } = draft;
-  const submit = useSubmitWriting(type);
-  const [confirming, setConfirming] = useState(false);
-  const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
   const [focusItem, setFocusItem] = useState<string | null>(null);
-  const [notice, setNotice] = useState(false);
   // Start at the first section with required parts left.
   const [open, setOpen] = useState(() => {
     const first = sections.findIndex((section) => !sectionStats(section, answers).complete);
@@ -73,6 +85,12 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
   const headings = useRef<(HTMLHeadingElement | null)[]>([]);
   // 'heading' (the open section's title) or the id of a field.
   const focusTarget = useRef<string | null>(null);
+
+  const final = useFinal(spec, draft, (first) => {
+    setFocusItem(first.key.includes('.') ? first.key : null);
+    focusTarget.current = elementIdFor(type, first.key, spec, answers);
+    setOpen(first.section);
+  });
 
   // After a section opens on request, move focus there so keyboard and screen-reader users follow.
   useEffect(() => {
@@ -86,7 +104,7 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
       behavior: 'smooth',
     });
     element?.focus({ preventScroll: true });
-  }, [open, missing, focusItem]);
+  }, [open, final.attempt, focusItem]);
 
   const go = (index: number) => {
     draft.saveNow();
@@ -96,48 +114,6 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
 
   const progress = formProgress(spec, answers);
   const percent = percentOf(progress.done, progress.total);
-  // Missing answers show their error until answered.
-  const stillMissing = new Set(
-    missingInForm(spec, answers)
-      .map((item) => item.key)
-      .filter((key) => missing.has(key)),
-  );
-
-  const showMissing = (keys: string[]) => {
-    const all = missingInForm(spec, answers);
-    const first = all.find((item) => keys.includes(item.key)) ?? all[0];
-    if (!first) return;
-    setMissing(new Set(keys));
-    setNotice(true);
-    setFocusItem(first.key.includes('.') ? first.key : null);
-    focusTarget.current = elementIdFor(type, first.key, spec, answers);
-    setOpen(first.section);
-  };
-
-  const finalize = (event: SubmitEvent) => {
-    event.preventDefault();
-    const keys = missingInForm(spec, answers).map((item) => item.key);
-    if (keys.length) {
-      showMissing(keys);
-      return;
-    }
-    setNotice(false);
-    setConfirming(true);
-  };
-
-  const confirm = async () => {
-    try {
-      await draft.flush();
-    } catch {
-      // The final request sends every answer anyway.
-    }
-    submit.mutate(answers, {
-      onError: (error) => {
-        setConfirming(false);
-        showMissing(missingFromError(error));
-      },
-    });
-  };
 
   const progressBar = (
     <div className="flex flex-col gap-2.5">
@@ -158,44 +134,9 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <div className="flex flex-col gap-4">
-        <BackLink to="/documents">{t('back')}</BackLink>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-2.5">
-            <h1 className="m-0 font-display text-[26px] leading-snug font-bold lg:text-[34px]">
-              {text('title')}
-            </h1>
-            <p className="m-0 max-w-[64ch] text-[15px] leading-8 text-text-2 lg:text-base">
-              {text('subtitle')}
-            </p>
-          </div>
-          {!readOnly && <SaveStatus spec={spec} draft={draft} />}
-        </div>
-        <nav
-          aria-label={t('tabs.label')}
-          className="-mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
-        >
-          {BUILT.filter((order) => form.orders.includes(order)).map((order) => (
-            <NavLink
-              key={order}
-              to={`/documents/${order}`}
-              className={({ isActive }) => tabClass(isActive)}
-            >
-              {t(`tabs.${order}`)}
-            </NavLink>
-          ))}
-          <Link to="/tickets" className={tabClass(false)}>
-            {t('tabs.ticket')}
-          </Link>
-        </nav>
-      </div>
+      <FormHeader type={type} form={form} draft={draft} />
 
-      {readOnly && (
-        <Notice tone="success">
-          <strong className="block">{text('doneTitle')}</strong>
-          {t('final.doneText', { date: form.final_at ? f.date(form.final_at) : '' })}
-        </Notice>
-      )}
+      {readOnly && <FinalNotice spec={spec} form={form} />}
 
       <div className="flex flex-wrap items-start gap-4 lg:gap-6">
         {!readOnly && (
@@ -243,7 +184,7 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
         {!readOnly && <div className="w-full xl:hidden">{progressBar}</div>}
 
         <form
-          onSubmit={finalize}
+          onSubmit={final.finalize}
           noValidate
           className="flex min-w-0 flex-[999_1_520px] flex-col gap-3.5"
         >
@@ -257,7 +198,7 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
               open={readOnly || index === open}
               readOnly={readOnly}
               answers={answers}
-              missing={stillMissing}
+              missing={final.stillMissing}
               focusItem={index === open ? focusItem : null}
               headingRef={(element) => {
                 headings.current[index] = element;
@@ -273,87 +214,16 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
             />
           ))}
 
-          {!readOnly && (
-            <Card className="flex flex-col gap-3 rounded-[24px] px-5 py-[18px] lg:px-6">
-              {notice && stillMissing.size > 0 && (
-                <Notice tone="error">
-                  {t('final.missing', { n: f.number(stillMissing.size) })}
-                </Notice>
-              )}
-              {submit.isError && missingFromError(submit.error).length === 0 && (
-                <Notice tone="error">{t('final.error')}</Notice>
-              )}
-              {confirming ? (
-                <InlineConfirm
-                  message={t('final.confirm')}
-                  confirmLabel={t('final.confirmYes')}
-                  cancelLabel={t('final.confirmNo')}
-                  pending={submit.isPending}
-                  onConfirm={() => void confirm()}
-                  onCancel={() => setConfirming(false)}
-                />
-              ) : (
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span className="flex-[1_1_300px] text-sm leading-7 text-text-2">
-                    {text('finalNote')}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button variant="outline" disabled={draft.saving} onClick={draft.saveNow}>
-                      {t('final.save')}
-                    </Button>
-                    <Button type="submit">{t('final.submit')}</Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
+          {!readOnly && <FinalBar type={type} draft={draft} final={final} />}
         </form>
 
         <aside
           aria-label={t('tipsTitle')}
           className="flex min-w-0 flex-[1_1_300px] flex-col gap-3.5"
         >
-          <TipsCard type={type} />
-          <PhoneCard type={type} phone={form.contact_phone} readOnly={readOnly} />
+          <FormAside spec={spec} phone={form.contact_phone} readOnly={readOnly} />
         </aside>
       </div>
     </div>
-  );
-}
-
-/** "Saving…", "Saved · 2 minutes ago", or a failed save with a retry. */
-function SaveStatus({ spec, draft }: { spec: FormSpec; draft: ReturnType<typeof useDraft> }) {
-  const { t } = useTranslation('writing');
-  const f = useFormat();
-  const { data } = useSuspenseQuery(writingQuery(spec.type));
-  const savedAt = data?.updated_at;
-
-  return (
-    <span role="status" className="inline-flex items-center gap-2 text-sm text-text-2">
-      {draft.failed ? (
-        <>
-          <Icon name="alert" size={18} className="text-danger" />
-          <span className="text-danger">{t('save.failed')}</span>
-          <button
-            type="button"
-            onClick={draft.saveNow}
-            className="-my-3 min-h-11 font-medium text-primary-text"
-          >
-            {t('save.retry')}
-          </button>
-        </>
-      ) : draft.saving ? (
-        t('save.saving')
-      ) : draft.dirty ? (
-        t('save.unsaved')
-      ) : (
-        savedAt && (
-          <>
-            <Icon name="check" size={18} className="text-good" />
-            {t('save.saved', { time: f.timeAgo(savedAt) })}
-          </>
-        )
-      )}
-    </span>
   );
 }

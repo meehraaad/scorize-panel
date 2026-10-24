@@ -23,6 +23,7 @@ import {
   type StageFilter,
 } from './api';
 import { CaseTable } from './components/CaseTable';
+import { ImportDialog } from './components/ImportDialog';
 
 const STAGES: readonly StageFilter[] = ['all', ...CASE_STAGES];
 const isStage = (value: string | null): value is StageFilter =>
@@ -39,10 +40,15 @@ export default function CasesPage() {
   const [params, setParams] = useSearchParams();
   const stageParam = params.get('stage');
   const stage: StageFilter = isStage(stageParam) ? stageParam : 'all';
-  const [bot, setBot] = useState<BotFilter>('all');
+  // A link may open the list on the email bot's state (reports: "bots that are stopped").
+  const botParam = params.get('bot');
+  const [bot, setBot] = useState<BotFilter>(
+    botParam === 'on' || botParam === 'off' ? botParam : 'all',
+  );
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
+  const [importing, setImporting] = useState(false);
   const query: CasesQuery = { stage, bot, search: useDeferredValue(search), page };
   const { data, isPending, isPlaceholderData } = useQuery(casesQuery(query));
 
@@ -72,7 +78,14 @@ export default function CasesPage() {
       <PageHeader
         title={t('cases.title')}
         subtitle={data ? t('cases.subtitle', { n: f.number(data.counts.all) }) : undefined}
+        actions={
+          <Button variant="outline" onClick={() => setImporting(true)}>
+            <Icon name="upload" size={18} />
+            {t('import.open')}
+          </Button>
+        }
       />
+      <ImportDialog open={importing} onClose={() => setImporting(false)} />
 
       <section aria-label={t('cases.list')} className="flex flex-col gap-4">
         <FilterTabs

@@ -1,22 +1,46 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { Notice } from '@/components/ui/Notice';
 import { normalizePhone } from '@/lib/text';
 import { useSaveWriting } from '../api';
-import type { FormType } from '../formSpec';
+import type { FormSpec, FormType } from '../formSpec';
 import { useFormText } from '../useFormText';
 
-const TIPS = ['0', '1', '2', '3'] as const;
+/** The side column of a writing form, as its spec asks (see FormSpec.aside). */
+export function FormAside({
+  spec,
+  phone,
+  readOnly,
+}: {
+  spec: FormSpec;
+  phone: string | null;
+  readOnly: boolean;
+}) {
+  const { aside, type } = spec;
+  return (
+    <>
+      <TipsCard type={type} count={aside.tips} ownTitle={aside.ownTitle ?? false} />
+      {aside.phone && <PhoneCard type={type} phone={phone} readOnly={readOnly} />}
+      {aside.ticket && <TicketCard type={type} />}
+    </>
+  );
+}
 
-export function TipsCard({ type }: { type: FormType }) {
+function TipsCard({ type, count, ownTitle }: { type: FormType; count: number; ownTitle: boolean }) {
   const { t } = useTranslation('writing');
   const { text } = useFormText(type);
   return (
-    <SectionCard variant="panel" id={`${type}-tips`} title={t('tipsTitle')}>
+    <SectionCard
+      variant="panel"
+      id={`${type}-tips`}
+      title={ownTitle ? text('tipsTitle') : t('tipsTitle')}
+    >
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
-        {TIPS.map((tip) => (
+        {Array.from({ length: count }, (_, index) => String(index)).map((tip) => (
           <li key={tip} className="flex gap-2.5 text-sm leading-7">
             <span
               aria-hidden="true"
@@ -30,8 +54,21 @@ export function TipsCard({ type }: { type: FormType }) {
   );
 }
 
+/** Questions go to the writer through the writing ticket. */
+function TicketCard({ type }: { type: FormType }) {
+  const { t } = useTranslation('writing');
+  return (
+    <SectionCard variant="panel" id={`${type}-ask`} title={t('ask.title')}>
+      <span className="text-sm leading-7 text-text-2">{t('ask.text')}</span>
+      <Link to={`/tickets/writing/${type}`} className={buttonClass('outline', 'self-start')}>
+        {t('tabs.ticket')}
+      </Link>
+    </SectionCard>
+  );
+}
+
 /** The number the writer calls to coordinate. */
-export function PhoneCard({
+function PhoneCard({
   type,
   phone,
   readOnly,

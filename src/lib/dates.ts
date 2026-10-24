@@ -14,3 +14,8 @@ export function daysBetween(start: string, end: string) {
 export function isPast(value: string, now = Date.now()) {
   return new Date(value).getTime() < now;
 }
+
+/** Whole days since `value` passed (0 while it hasn't). */
+export function daysSince(value: string, now = Date.now()) {
+  return Math.max(0, Math.floor((now - new Date(value).getTime()) / DAY));
+}

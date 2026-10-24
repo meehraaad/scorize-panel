@@ -45,6 +45,8 @@ export function useFormat() {
           month: parts.find((part) => part.type === 'month')?.value ?? '',
         };
       },
+      /** "Aban": a month's name alone (chart axes). */
+      month: (value: Date | string) => monthOnly.format(new Date(value)),
       /** "Aban 1405" (month first: CLDR puts the year first in Persian). */
       monthYear: (value: Date | string) =>
         `${monthOnly.format(new Date(value))} ${yearOnly.format(new Date(value))}`,

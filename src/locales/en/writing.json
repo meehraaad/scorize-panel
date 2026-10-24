@@ -4,7 +4,9 @@
     "label": "Your writing orders",
     "sop": "Statement of purpose (SOP)",
     "cv": "CV",
-    "ticket": "Writing ticket"
+    "ticket": "Writing ticket",
+    "recommendation": "Recommendation",
+    "pl": "Professor list"
   },
   "save": {
     "saving": "Saving…",
@@ -404,6 +406,158 @@
       "certificates": "Add a certificate",
       "memberships": "Add a membership",
       "cv_references": "Add a reference"
+    }
+  },
+  "term": {
+    "winter": "Winter {{year}}",
+    "spring": "Spring {{year}}",
+    "summer": "Summer {{year}}",
+    "fall": "Fall {{year}}"
+  },
+  "tags": {
+    "add": "Add",
+    "remove": "Remove {{tag}}"
+  },
+  "ask": {
+    "title": "Questions?",
+    "text": "Talk to your writer in the writing ticket."
+  },
+  "recommendation": {
+    "title": "Recommendation letters information",
+    "subtitle": "Fill this in separately for each professor or manager who recommends you. Our writer writes the letter in their voice; the more detail, the more real it reads.",
+    "noOrder": "Your contract has no recommendation letters.",
+    "doneTitle": "Your recommendation information went to the writing team",
+    "finalNote": "Once you send it, writing the letters starts.",
+    "submit": "Send to the writing team",
+    "limit": "Your contract has {{n}} recommendation letters. If a professor writes their own letter, don't add them here; just give their name and email to your supervisor.",
+    "full": "Your contract has {{n}} recommendation letters; order more from “Other services”.",
+    "add": {
+      "recommenders": "Add a recommender"
+    },
+    "untitled": "Recommender {{n}}",
+    "cardTitle": "Recommender {{n}} · {{name}}",
+    "tips": {
+      "0": "Check with the professor that they will recommend you, and get their email right.",
+      "1": "A PhD needs at least two academic letters.",
+      "2": "Avoid general sentences; a real example makes the letter believable."
+    },
+    "section": {
+      "recommenders": {
+        "title": "Recommenders",
+        "description": "Professors or managers who recommend you"
+      }
+    },
+    "field": {
+      "recommenders": "Recommenders"
+    },
+    "item": {
+      "recommenders": {
+        "kind": "Type of letter",
+        "full_name": "Full name",
+        "name_en": "Name in English",
+        "position": "Position and rank",
+        "organization": "University or company",
+        "email": "Work email",
+        "relationship": "How long and in what role have you known them?",
+        "courses": "Courses you took with them and your grades",
+        "work": "Work you did under their supervision",
+        "qualities": "Three qualities they can vouch for",
+        "delivery": "How does the final letter reach the university?"
+      }
+    },
+    "help": {
+      "recommenders": {
+        "email": "The university sends its upload link to this email.",
+        "qualities": "With a real example for each; e.g. “persistence: I collected the data myself when public datasets weren't enough”."
+      }
+    },
+    "option": {
+      "kind": {
+        "academic": "Academic (professor)",
+        "work": "Work (manager)"
+      },
+      "delivery": {
+        "self_upload": "The professor reads the letter and uploads it",
+        "sign_only": "The professor only signs; we upload it"
+      }
+    }
+  },
+  "pl": {
+    "title": "Professor list form",
+    "subtitle": "Tell us what kind of professors you are looking for. The search team prepares a list of professors who match your research interests.",
+    "noOrder": "Your contract has no professor list.",
+    "doneTitle": "The form went to the search team",
+    "finalNote": "Once you send it, the search team starts.",
+    "submit": "Send to the search team",
+    "tipsTitle": "What you get",
+    "tips": {
+      "0": "A list of [number] professors with their email, group page and how their research relates to yours",
+      "1": "In “Documents & writing”, about [time] working days after you send the form",
+      "2": "The same list goes to the email bot"
+    },
+    "section": {
+      "target": {
+        "title": "What you are looking for",
+        "description": "Degree, field, countries and research interests"
+      },
+      "known": {
+        "title": "Professors you found yourself",
+        "description": "They go on the list, and the search team finds similar ones."
+      },
+      "limits": {
+        "title": "Limits",
+        "description": "Universities or cities you don't want"
+      }
+    },
+    "field": {
+      "degree": "Degree",
+      "field": "Field and specialization",
+      "start_term": "Start term",
+      "countries": "Target countries",
+      "research_interests": "Research interests",
+      "funding": "Funding",
+      "known_professors": "Professors you found yourself",
+      "exclusions": "Universities or cities you don't want"
+    },
+    "help": {
+      "research_interests": "In English, the keywords that appear in paper titles. The email bot finds professors with these too.",
+      "exclusions": "e.g. very cold cities, universities that charge master's tuition"
+    },
+    "placeholder": {
+      "research_interests": "e.g. Sensor Fusion"
+    },
+    "option": {
+      "degree": {
+        "research_master": "Research master's",
+        "phd": "PhD"
+      },
+      "country": {
+        "ca": "Canada",
+        "us": "USA",
+        "de": "Germany",
+        "gb": "UK",
+        "nl": "Netherlands",
+        "au": "Australia",
+        "se": "Sweden"
+      },
+      "funding": {
+        "full": "Full funding only",
+        "partial": "Partial funding is fine",
+        "any": "Doesn't matter"
+      }
+    },
+    "item": {
+      "known_professors": {
+        "name": "Professor's name",
+        "university": "University",
+        "url": "Page link"
+      }
+    },
+    "add": {
+      "known_professors": "Add a professor"
+    },
+    "linkLabel": {
+      "known_professors": "Group page"
     }
   }
 }

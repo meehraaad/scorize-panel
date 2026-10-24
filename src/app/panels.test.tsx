@@ -40,7 +40,9 @@ describe('panels', () => {
         name: /پنل نگارش/,
       }),
     );
-    expect(await screen.findByRole('heading', { name: 'سفارش‌های نگارش' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/writer');
     expect(localStorage.getItem('scorize.panel.start')).toBe('last');
   });
@@ -66,7 +68,9 @@ describe('panels', () => {
 
     localStorage.setItem('scorize.panel.start', 'writer');
     router = renderApp('/start');
-    expect(await screen.findByRole('heading', { name: 'سفارش‌های نگارش' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/writer');
   });
 
@@ -86,7 +90,9 @@ describe('panels', () => {
     expect(localStorage.getItem('scorize.panel.start')).toBe('ask');
 
     await user.click(within(switcher).getByRole('link', { name: /پنل نگارش/ }));
-    expect(await screen.findByRole('heading', { name: 'سفارش‌های نگارش' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/writer');
     expect(localStorage.getItem('scorize.panel')).toBe('writer');
   });

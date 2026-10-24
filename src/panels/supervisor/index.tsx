@@ -1,10 +1,10 @@
-import { ComingSoonPage } from '@/components/ComingSoonPage';
 import {
   activityQuery,
   applicationsQuery,
   caseQuery,
   documentsQuery,
   inboxQuery,
+  reportsQuery,
   todayQuery,
 } from '@/features/supervisor/api';
 import { queryClient } from '@/lib/api/queryClient';
@@ -26,7 +26,7 @@ const caseIdOf = (params: { id?: string | undefined }) => {
 
 /**
  * Supervisors (executive team, or `can_manage_applicant`). Design: canvas "V1 · Supervisor panel"
- * (list, case file, applications) and V5 (today), built in the V6 look.
+ * (list, case file, applications), V5 (today) and V8 (reports, CSV import), built in the V6 look.
  */
 export const supervisorPanel: PanelDefinition = {
   id: 'supervisor',
@@ -125,7 +125,10 @@ export const supervisorPanel: PanelDefinition = {
       loader: prefetch(() => queryClient.query(tasksQuery('supervisor'))),
       ...lazyPage(() => import('./TasksPage'), ['tasks']),
     },
-    // No design yet.
-    { path: 'reports', element: <ComingSoonPage title="panels.supervisor.nav.reports" /> },
+    {
+      path: 'reports',
+      loader: prefetch(() => queryClient.query(reportsQuery('month'))),
+      ...lazyPage(() => import('@/features/supervisor/ReportsPage'), ['supervisor']),
+    },
   ],
 };

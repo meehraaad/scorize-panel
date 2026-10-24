@@ -22,6 +22,8 @@ export interface WritingForm {
   contact_phone: string | null;
   /** Writing orders in the contract, for the tabs: 'sop', 'cv', … */
   orders: string[];
+  /** How many of this order the contract has (recommendation letters); absent: one. */
+  count?: number;
 }
 
 /** What the photo field accepts (the CV's pass_photo). The server checks again. */

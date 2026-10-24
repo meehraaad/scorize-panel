@@ -93,6 +93,7 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `Dialog`                                                      | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). Parent controls `open`                                                                                                           |
 | `OtpInput`                                                    | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                            |
 | `Switch`                                                      | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                              |
+| `DateTile`                                                    | A small calendar leaf (day over month; `large` adds the weekday): consultations, the writer's week. Decorative: say the date in text beside it                                                                      |
 
 Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
 panel that shows tickets:
@@ -123,7 +124,18 @@ path, `viewer: applicant | staff`) ← `panels/<panel>/` (passes its config; the
 supervisor panel passes one applicant's threads with `viewer: 'staff'` and `embedded` (inside the
 case file: no page header, no full-screen chat; `panels/supervisor/CaseTicketsPage.tsx`). Staff pick no
 priority, see the applicant's rating under staff replies, no FAQ or opening hours, and their own
-thread subtitle and empty state. The writer panel will do the same.
+thread subtitle and empty state. The writer panel does the same for one order's conversation
+(`panels/writer/OrderTicketsPage.tsx`, endpoint `writer/v1/orders/<id>/tickets`).
+
+### Writing forms
+
+`features/writing` builds every applicant writing form from a spec (`sopForm`, `cvForm`,
+`recommendationForm`, `plForm`; see `formSpec.ts`): field kinds include `checks` (several options),
+`tags` (typed labels), `term` (the next intakes), `url`, and `when` (asked only for some answers).
+Shared parts: `FormHeader` (title, autosave status, tabs of the contract's forms), `FinalBar` and
+`useFinal` (final submit that points at missing answers), `FormAside` (tips, phone, ticket card per
+spec). The recommendation form lays its list out as one card per recommender
+(`RecommendationFormPage`, passed to `WritingFormPage` as `View`).
 
 Helpers used with them: `lib/progress.ts` (`percentOf`, `stepState`), `lib/files.ts` (`checkFile`,
 `extensionOf`), `lib/text.ts` (Persian digits, phone numbers, initials).

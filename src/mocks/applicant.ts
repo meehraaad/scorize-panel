@@ -26,11 +26,14 @@ import type {
 import { cvForm } from '@/features/writing/cvForm';
 import {
   isField,
+  isFormType,
   missingInForm,
   type Answers,
   type FormSpec,
   type FormType,
 } from '@/features/writing/formSpec';
+import { plForm } from '@/features/writing/plForm';
+import { recommendationForm } from '@/features/writing/recommendationForm';
 import { sopForm } from '@/features/writing/sopForm';
 import { forbidden, notFound, storage } from './session';
 
@@ -272,8 +275,60 @@ function saraDocuments(): Omit<DocumentsData, 'progress'> {
     writing: [
       { type: 'sop', step: 'form', delivered_at: null, file_url: null },
       { type: 'cv', step: 'form', delivered_at: null, file_url: null },
+      { type: 'recommendation', step: 'form', delivered_at: null, file_url: null },
+      { type: 'pl', step: 'form', delivered_at: null, file_url: null },
     ],
     interests: ['Machine Learning', 'Computer Vision', 'Graph Neural Networks', 'Explainable AI'],
+  };
+}
+
+/** Sara's writing orders: SOP, CV, two recommendation letters, a professor list. */
+const ORDERS = ['sop', 'cv', 'recommendation', 'pl'];
+
+/** One recommender almost done (the qualities left), none for the second letter yet. */
+function saraRecommendation(): WritingForm {
+  return {
+    is_final: false,
+    final_at: null,
+    updated_at: hoursAgo(5),
+    contact_phone: '09120000000',
+    orders: ORDERS,
+    count: 2,
+    answers: {
+      recommenders: [
+        {
+          id: 1,
+          kind: 'academic',
+          full_name: 'علی صادقی',
+          name_en: 'Ali Sadeghi',
+          position: 'دانشیار دانشکده‌ی کامپیوتر',
+          organization: 'دانشگاه صنعتی اصفهان',
+          email: 'a.sadeghi@iut.ac.ir',
+          relationship: 'استاد راهنمای پروژه‌ی پایانی؛ دو سال',
+          courses: 'بینایی ماشین (۱۹٫۵)، هوش مصنوعی (۱۸)',
+          work: 'پروژه‌ی پایانی: تشخیص پلاک با یادگیری عمیق؛ مقاله‌ی کنفرانس با همکاری او.',
+          qualities: null,
+          delivery: 'self_upload',
+        },
+      ],
+    },
+  };
+}
+
+/** The professor list form started: the target section, no professors of her own yet. */
+function saraPl(): WritingForm {
+  return {
+    is_final: false,
+    final_at: null,
+    updated_at: hoursAgo(30),
+    contact_phone: '09120000000',
+    orders: ORDERS,
+    answers: {
+      degree: 'research_master',
+      field: 'مهندسی کامپیوتر، هوش مصنوعی',
+      countries: ['ca', 'de'],
+      known_professors: [],
+    },
   };
 }
 
@@ -283,7 +338,7 @@ function saraSop(): WritingForm {
     final_at: null,
     updated_at: hoursAgo(26),
     contact_phone: '09120000000',
-    orders: ['sop', 'cv'],
+    orders: ORDERS,
     answers: {
       grade: 1,
       field_of_study: 'مهندسی کامپیوتر',
@@ -308,7 +363,7 @@ function saraCv(): WritingForm {
     final_at: null,
     updated_at: hoursAgo(3),
     contact_phone: '09120000000',
-    orders: ['sop', 'cv'],
+    orders: ORDERS,
     answers: {
       template: 'na',
       name: 'Sara Ahmadi',
@@ -346,8 +401,12 @@ function saraCv(): WritingForm {
   };
 }
 
-const SPECS: Record<FormType, FormSpec> = { sop: sopForm, cv: cvForm };
-const isFormType = (value: unknown): value is FormType => value === 'sop' || value === 'cv';
+const SPECS: Record<FormType, FormSpec> = {
+  sop: sopForm,
+  cv: cvForm,
+  recommendation: recommendationForm,
+  pl: plForm,
+};
 
 /**
  * Answers Django would refuse: names the form doesn't have, text longer than its column, or a
@@ -437,7 +496,7 @@ function saraState(): SaraState {
   return {
     applications: saraApplications(),
     documents: saraDocuments(),
-    writing: { sop: saraSop(), cv: saraCv() },
+    writing: { sop: saraSop(), cv: saraCv(), recommendation: saraRecommendation(), pl: saraPl() },
     answers: new Map(),
     visa: saraVisa(),
     professors: saraProfessorEmails(),
@@ -757,8 +816,16 @@ function saraThreads(): MockThread[] {
         ),
       ],
     },
-    // One thread per writing order of the contract (Sara: SOP and CV). No writer on the SOP yet.
+    // One thread per writing order of the contract. No writer on the SOP, letters or list yet.
     { id: 'writing/sop', department: 'writing', writing: 'sop', team: [], messages: [] },
+    {
+      id: 'writing/recommendation',
+      department: 'writing',
+      writing: 'recommendation',
+      team: [],
+      messages: [],
+    },
+    { id: 'writing/pl', department: 'writing', writing: 'pl', team: [], messages: [] },
     {
       id: 'writing/cv',
       department: 'writing',
@@ -1883,8 +1950,11 @@ export const applicantHandlers = [
     if (failed(state)) return state;
     if (!isFormType(params.type)) return notFound();
     const form = state.writing[params.type];
-    // The CV shows the research interests from the documents page (read-only here).
-    const extra = params.type === 'cv' ? { research_interests: state.documents.interests } : {};
+    // The CV (read-only) and the professor list (editable) show the documents page's interests.
+    const extra =
+      params.type === 'cv' || params.type === 'pl'
+        ? { research_interests: state.documents.interests }
+        : {};
     return HttpResponse.json({ ...form, answers: { ...form.answers, ...extra } });
   }),
 
@@ -1903,7 +1973,11 @@ export const applicantHandlers = [
       );
     if (body.contact_phone !== undefined && !/^09\d{9}$/.test(body.contact_phone))
       return HttpResponse.json({ contact_phone: ['invalid'] }, { status: 400 });
-    form.answers = { ...form.answers, ...storeLists(body.answers ?? {}) };
+    const { research_interests: interests, ...answers } = body.answers ?? {};
+    // The professor list edits the applicant's research interests themselves (H11).
+    if (params.type === 'pl' && Array.isArray(interests))
+      state.documents.interests = interests as string[];
+    form.answers = { ...form.answers, ...storeLists(answers) };
     // One number per order in Django: both forms show it.
     if (body.contact_phone !== undefined)
       for (const other of Object.values(state.writing)) other.contact_phone = body.contact_phone;
@@ -1939,10 +2013,17 @@ export const applicantHandlers = [
     if (form.is_final) return HttpResponse.json({ detail: 'Final.' }, { status: 409 });
     const { answers = {} } = (await request.json()) as { answers?: Answers };
     // The page sends every answer, read-only ones included: Django ignores those.
-    const { pass_photo: _photo, research_interests: _interests, ...editable } = answers;
+    const { pass_photo: _photo, research_interests: interests, ...editable } = answers;
     if (invalidAnswers(SPECS[type], editable).length)
       return HttpResponse.json({ detail: 'Invalid answers.' }, { status: 400 });
-    const merged = { ...form.answers, ...storeLists(editable) };
+    // The professor list's interests are the applicant's own (H11), kept on the documents page.
+    if (type === 'pl' && Array.isArray(interests))
+      state.documents.interests = interests as string[];
+    const merged = {
+      ...form.answers,
+      ...storeLists(editable),
+      ...(type === 'pl' ? { research_interests: state.documents.interests } : {}),
+    };
     const missing = missingInForm(SPECS[type], merged).map((item) => item.key);
     if (missing.length) return HttpResponse.json({ missing }, { status: 400 });
     const now = new Date().toISOString();

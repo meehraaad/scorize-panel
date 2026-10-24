@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
-import type { FieldSpec, FormType, Scalar } from '../formSpec';
+import { parseTerm, upcomingTerms, type FieldSpec, type FormType, type Scalar } from '../formSpec';
 import { useFormText } from '../useFormText';
 
 interface Props {
@@ -27,6 +27,7 @@ const INPUT_TYPE = {
   text: 'text',
   email: 'email',
   tel: 'tel',
+  url: 'url',
   date: 'date',
   month: 'month',
   number: 'text',
@@ -46,9 +47,19 @@ export function FieldInput({ type, field, value, id, labelKey, missing, onChange
   const wide = field.wide || field.kind === 'textarea';
   const current =
     typeof value === 'string' ? value : value === null || value === undefined ? '' : String(value);
-  const options = field.options?.values ?? [];
-  const optionText = (option: Scalar) =>
-    text(`option.${field.options?.set ?? ''}.${String(option)}`);
+  // A start term offers the next intakes (and keeps a stored one that has passed).
+  const terms = field.kind === 'term' ? upcomingTerms() : [];
+  if (field.kind === 'term' && current && !terms.includes(current)) terms.unshift(current);
+  const options = field.kind === 'term' ? terms : (field.options?.values ?? []);
+  const optionText = (option: Scalar) => {
+    if (field.kind === 'term') {
+      const term = parseTerm(String(option));
+      return term
+        ? t(`term.${term.season}`, { year: f.digits(String(term.year)) })
+        : String(option);
+    }
+    return text(`option.${field.options?.set ?? ''}.${String(option)}`);
+  };
 
   const label = (
     <>
@@ -75,24 +86,45 @@ export function FieldInput({ type, field, value, id, labelKey, missing, onChange
       >
         <legend className="mb-2 p-0 text-[15px] leading-7 font-semibold">{label}</legend>
         {help}
-        <div className="flex gap-1.5 rounded-full bg-canvas p-1 shadow-[inset_0_0_0_1px_var(--line-2)]">
-          {options.map((option, index) => (
-            <label
-              key={String(option)}
-              className="flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full px-3 text-center text-sm font-semibold text-text-2 has-checked:bg-surface has-checked:text-text has-checked:shadow-[0_1px_3px_rgb(27_16_32/0.12)] has-focus-visible:outline-2 has-focus-visible:outline-focus"
-            >
-              <input
-                type="radio"
-                name={id}
-                id={index === 0 ? id : undefined}
-                className="sr-only"
-                checked={value === option}
-                onChange={() => onChange(option)}
-              />
-              {optionText(option)}
-            </label>
-          ))}
-        </div>
+        {field.layout === 'stack' ? (
+          <div className="flex flex-col gap-2">
+            {options.map((option, index) => (
+              <label
+                key={String(option)}
+                className="flex min-h-12 cursor-pointer items-center gap-3 rounded-[14px] bg-canvas px-4 py-2.5 text-[15px] leading-7 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-focus"
+              >
+                <input
+                  type="radio"
+                  name={id}
+                  id={index === 0 ? id : undefined}
+                  className="size-[18px] flex-none accent-primary"
+                  checked={value === option}
+                  onChange={() => onChange(option)}
+                />
+                {optionText(option)}
+              </label>
+            ))}
+          </div>
+        ) : (
+          <div className="flex gap-1.5 rounded-full bg-canvas p-1 shadow-[inset_0_0_0_1px_var(--line-2)]">
+            {options.map((option, index) => (
+              <label
+                key={String(option)}
+                className="flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full px-3 text-center text-sm font-semibold text-text-2 has-checked:bg-surface has-checked:text-text has-checked:shadow-[0_1px_3px_rgb(27_16_32/0.12)] has-focus-visible:outline-2 has-focus-visible:outline-focus"
+              >
+                <input
+                  type="radio"
+                  name={id}
+                  id={index === 0 ? id : undefined}
+                  className="sr-only"
+                  checked={value === option}
+                  onChange={() => onChange(option)}
+                />
+                {optionText(option)}
+              </label>
+            ))}
+          </div>
+        )}
         {error}
       </fieldset>
     );
@@ -119,7 +151,7 @@ export function FieldInput({ type, field, value, id, labelKey, missing, onChange
             {current.trim() ? t('chars', { n: f.number(current.length) }) : t('nothingYet')}
           </span>
         </>
-      ) : field.kind === 'select' ? (
+      ) : field.kind === 'select' || field.kind === 'term' ? (
         <div className="relative">
           <select
             id={id}
@@ -151,7 +183,9 @@ export function FieldInput({ type, field, value, id, labelKey, missing, onChange
       ) : (
         <input
           id={id}
-          type={INPUT_TYPE[field.kind]}
+          type={
+            field.kind in INPUT_TYPE ? INPUT_TYPE[field.kind as keyof typeof INPUT_TYPE] : 'text'
+          }
           dir={field.kind === 'date' || field.kind === 'month' ? 'ltr' : dir}
           value={current}
           maxLength={field.maxLength}

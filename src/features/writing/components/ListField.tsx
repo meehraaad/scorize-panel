@@ -5,7 +5,9 @@ import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import {
+  applies,
   isAnswered,
   itemGaps,
   type FormType,
@@ -143,18 +145,20 @@ export function ListField({
             >
               <legend className="sr-only">{title}</legend>
               <div className="grid min-w-0 grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
-                {list.fields.map((field) => (
-                  <FieldInput
-                    key={field.name}
-                    type={type}
-                    field={field}
-                    value={item[field.name]}
-                    id={`${prefix}-${String(index)}-${field.name}`}
-                    labelKey={`item.${list.name}.${field.name}`}
-                    missing={gaps.has(field.name)}
-                    onChange={(value) => update(index, field.name, value)}
-                  />
-                ))}
+                {list.fields
+                  .filter((field) => applies(field, item))
+                  .map((field) => (
+                    <FieldInput
+                      key={field.name}
+                      type={type}
+                      field={field}
+                      value={item[field.name]}
+                      id={`${prefix}-${String(index)}-${field.name}`}
+                      labelKey={`item.${list.name}.${field.name}`}
+                      missing={gaps.has(field.name)}
+                      onChange={(value) => update(index, field.name, value)}
+                    />
+                  ))}
               </div>
               <div className="flex justify-end">
                 <Button onClick={() => close(index)}>{t('list.done')}</Button>
@@ -182,6 +186,16 @@ export function ListField({
                 <span className="text-[13px] text-danger">{t('list.incomplete')}</span>
               )}
             </span>
+            {list.link && safeHref(String(item[list.link] ?? '')) && (
+              <a
+                href={safeHref(String(item[list.link]))}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-11 flex-none items-center px-2 text-sm font-medium"
+              >
+                {text(`linkLabel.${list.name}`)}
+              </a>
+            )}
             {!readOnly && (
               <>
                 <IconButton

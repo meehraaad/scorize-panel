@@ -359,5 +359,145 @@
     "unread": "unread messages",
     "emptyTitle": "Nothing waiting",
     "empty": "New messages from applicants show up here."
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Your work on your cases in {{month}}: what went well and what fell behind.",
+    "subtitleQuarter": "Your work on your cases over the three months to {{month}}: what went well and what fell behind.",
+    "period": "Report period",
+    "periods": {
+      "month": "This month",
+      "last_month": "Last month",
+      "quarter": "Last 3 months"
+    },
+    "export": "Export to Excel",
+    "summary": "Period summary",
+    "followUps": "Follow-ups",
+    "percent": "{{n}}%",
+    "minutes": "{{n}} min",
+    "hours": "{{n}} h",
+    "days": "{{n}} days",
+    "stat": {
+      "submitted": "Applications sent",
+      "submittedUnit": "applications",
+      "more": "{{n}} more than the period before",
+      "fewer": "{{n}} fewer than the period before",
+      "same": "Same as the period before",
+      "accepted": "Admissions",
+      "acceptedUnit": "admissions",
+      "results": "out of {{n}} results in",
+      "onTime": "Tasks on time",
+      "goal": "Team goal: {{n}}%",
+      "documents": "Documents to review",
+      "documentsUnit": "documents",
+      "oldest": "Oldest: {{time}}"
+    },
+    "months": {
+      "title": "Applications sent in the last 6 months",
+      "submitted": "Sent",
+      "accepted": "Admitted",
+      "bar": "{{month}}: {{submitted}} applications sent, {{accepted}} admissions"
+    },
+    "countries": {
+      "title": "Application results by country",
+      "subtitle": "Since the start of the academic year, for the cases you supervise",
+      "empty": "No applications sent yet.",
+      "column": {
+        "country": "Country",
+        "submitted": "Sent",
+        "accepted": "Admitted",
+        "rejected": "Rejected",
+        "waiting": "Waiting",
+        "rate": "Admission rate"
+      }
+    },
+    "missed": {
+      "title": "Missed deadlines",
+      "count": "{{n}} applications",
+      "none": "No deadline was missed in this period.",
+      "noReason": "No reason recorded."
+    },
+    "replies": {
+      "title": "Ticket reply time",
+      "median": "median first reply",
+      "sameDay": "Answered the same working day",
+      "sameDayValue": "{{n}}% · goal {{goal}}%",
+      "slowest": "Slowest reply: {{name}}, {{time}}.",
+      "urgent": "Slowest reply to an “urgent” ticket: {{time}}."
+    },
+    "idle": {
+      "title": "Idle cases",
+      "subtitle": "Nothing done for more than 14 days",
+      "none": "Every case had activity in the last 14 days."
+    },
+    "bot": {
+      "title": "Professor email bot",
+      "sent": "Emails sent",
+      "replied": "Professors' replies",
+      "rate": "({{n}}%)",
+      "active": "Bot on",
+      "of": "of {{n}} applying cases",
+      "stopped": "Bot stopped by a problem",
+      "link": "See the cases whose bot is off"
+    }
+  },
+  "import": {
+    "open": "Import results from CSV",
+    "title": "Import results from CSV",
+    "subtitle": "Record the results of several cases at once. You see every change before it is saved.",
+    "steps": "Steps",
+    "step": "{{n}}. {{name}}",
+    "stepName": {
+      "file": "Choose a file",
+      "review": "Review changes",
+      "done": "Save"
+    },
+    "choose": "Choose a CSV file",
+    "drop": "or drop it here",
+    "reading": "Reading the file…",
+    "problem": {
+      "badType": "Only CSV files are accepted.",
+      "tooBig": "The file is larger than 2 MB."
+    },
+    "readError": "The file couldn't be read. Compare its columns with the sample file and try again.",
+    "csv": "CSV",
+    "fileMeta": "{{rows}} rows · {{size}} KB",
+    "otherFile": "Another file",
+    "summary": "Summary of changes",
+    "count": {
+      "update": "{{n}} results updated",
+      "add": "{{n}} new applications",
+      "same": "{{n}} unchanged",
+      "skip": "{{n}} rows not saved"
+    },
+    "line": "Row {{n}}",
+    "problemRow": {
+      "case_not_found": "Case #{{file}} wasn't found or you don't supervise it. This row is left out; the rest are saved.",
+      "bad_result": "The result in this row (case #{{file}}) isn't recognised. This row is left out; the rest are saved.",
+      "bad_date": "The date in this row (case #{{file}}) is invalid. This row is left out; the rest are saved.",
+      "missing_column": "A column of this row is empty. This row is left out; the rest are saved."
+    },
+    "skipShort": {
+      "case_not_found": "Case not found",
+      "bad_result": "Invalid result",
+      "bad_date": "Invalid date",
+      "missing_column": "Empty column"
+    },
+    "changes": "Changes",
+    "same": "No change",
+    "added": "New application",
+    "to": "to",
+    "arrow": "→",
+    "more": "Show {{n}} more rows",
+    "notify": "Tell the applicants their results",
+    "notifyHelp": "Each applicant gets a text and a panel notification about their new result.",
+    "columns": "File columns:",
+    "columnNames": "file, university, program, deadline, result",
+    "sample": "Download a sample file",
+    "apply": "Save {{n}} changes",
+    "back": "Back",
+    "applyError": "The changes weren't saved. Try again.",
+    "done": "{{n}} changes saved.",
+    "lineLabel": "Row {{n}}:"
   }
 }

@@ -8,6 +8,7 @@ import { managerHandlers, resetManagerMocks } from './salesManager';
 import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
 import { resetTaskMocks, taskHandlers } from './tasks';
 import { storage } from './session';
+import { resetWriterMocks, writerHandlers } from './writer';
 
 /**
  * Fake Django for working on the panel without a backend (VITE_API_MOCKS=true) and for tests.
@@ -17,7 +18,8 @@ import { storage } from './session';
  * Mock accounts (SMS code 123456, password password123):
  *   09120000000 / sara.ahmadi@scorize.local    applicant only
  *   09120000001 / maryam.kazemi@scorize.local  staff: supervisor + writer (panel switcher); her
- *                                               cases and tasks: src/mocks/supervisor.ts
+ *                                               cases and tasks: src/mocks/supervisor.ts, her
+ *                                               writing orders: src/mocks/writer.ts
  *   09120000002 / nima.rostami@scorize.local   staff: sales only (no switcher)
  *   09120000003 / reza.kamrani@scorize.local   staff: sales manager (sales panel + manager section)
  */
@@ -51,7 +53,12 @@ const users: MockUser[] = [
     password: MOCK_PASSWORD,
     staff: { id: 7, full_name: 'مریم کاظمی', team: 1 },
     is_superuser: false,
-    permissions: [{ codename: 'can_write_sop' }],
+    // Writes SOPs (and personal statements) and CVs: the writer panel.
+    permissions: [
+      { codename: 'can_write_sop' },
+      { codename: 'can_write_ps' },
+      { codename: 'can_write_cv' },
+    ],
     group_permissions: [],
   },
   {
@@ -125,6 +132,7 @@ export const handlers = [
     resetSalesMocks();
     resetTaskMocks();
     resetManagerMocks();
+    resetWriterMocks();
     return HttpResponse.redirect('/', 302);
   }),
 
@@ -233,6 +241,7 @@ export const handlers = [
   ...managerHandlers,
   ...taskHandlers,
   ...supervisorHandlers,
+  ...writerHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -245,4 +254,5 @@ export function resetMockSession() {
   resetTaskMocks();
   resetManagerMocks();
   resetSupervisorMocks();
+  resetWriterMocks();
 }

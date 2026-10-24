@@ -32,6 +32,7 @@ import { SheetButton } from '@/components/ui/Sheet';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
 import { StatGrid } from '@/components/ui/StatGrid';
+import { DateTile } from '@/components/ui/DateTile';
 import { TagList } from '@/components/ui/Tags';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -292,6 +293,13 @@ export default function ComponentsPage() {
           <div className="flex flex-col gap-4 rounded-card bg-hero p-6 text-on-hero shadow-hero">
             <ProgressBar value={55} size="sm" tone="onHero" />
             <StepBar label="مراحل روی کارت تیره" steps={steps} current={2} tone="onHero" />
+          </div>
+        </Group>
+
+        <Group name="DateTile">
+          <div className="flex gap-3">
+            <DateTile value={new Date().toISOString()} highlight={false} />
+            <DateTile value={new Date().toISOString()} highlight />
           </div>
         </Group>
 

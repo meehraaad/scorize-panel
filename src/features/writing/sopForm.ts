@@ -13,6 +13,7 @@ const long = (name: string, required = false): FieldSpec => ({ kind: 'textarea',
 export const sopForm: FormSpec = {
   type: 'sop',
   progress: 'questions',
+  aside: { tips: 4, phone: true },
   sections: [
     {
       id: 'education',

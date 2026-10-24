@@ -114,7 +114,24 @@ export const applicantPanel: PanelDefinition = {
           },
           ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing']),
         },
-        // Other writing orders (recommendation, PS, …) get a form later.
+        // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm).
+        {
+          path: 'documents/recommendation',
+          loader: () => {
+            queryClient.query(writingQuery('recommendation')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing']),
+        },
+        {
+          path: 'documents/pl',
+          loader: () => {
+            queryClient.query(writingQuery('pl')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing']),
+        },
+        // PS and DS: the SOP form with their own questions (canvas V8 note); not built yet.
         {
           path: 'documents/:writing',
           element: <ComingSoonPage title="panels.applicant.nav.documents" />,

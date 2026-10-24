@@ -36,7 +36,8 @@ describe('applicant home', () => {
       .find((step) => step.getAttribute('aria-current') === 'step');
     expect(current).toHaveTextContent('اپلای');
 
-    expect(within(todos()).getAllByRole('listitem')).toHaveLength(5);
+    // Five tasks plus the recommendation and professor-list forms to fill in.
+    expect(within(todos()).getAllByRole('listitem')).toHaveLength(7);
     expect(within(todos()).getByText(/۱۲۰ دلار کانادا/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'آپلود فایل' })).toHaveAttribute('href', '/documents');
 
@@ -71,7 +72,7 @@ describe('applicant home', () => {
 
     await user.click(screen.getByRole('button', { name: 'رد اپلای University of Waterloo' }));
     await user.click(screen.getByRole('button', { name: 'رد اپلای' }));
-    expect(await screen.findByText('۴ مورد')).toBeInTheDocument();
+    expect(await screen.findByText('۶ مورد')).toBeInTheDocument();
     expect(screen.queryByText('University of Waterloo')).not.toBeInTheDocument();
   });
 

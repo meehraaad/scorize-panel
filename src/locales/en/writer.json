@@ -1,0 +1,142 @@
+{
+  "dash": "—",
+  "optional": "(optional)",
+  "fileNumber": "#{{n}}",
+  "type": {
+    "sop": "SOP",
+    "cv": "CV",
+    "recommendation": "Recommendation",
+    "ps": "Personal Statement",
+    "ds": "Diversity Statement",
+    "pl": "Professor list"
+  },
+  "state": {
+    "new": "New order",
+    "drafting": "Writing",
+    "revision": "Revision requested",
+    "waiting_applicant": "With the applicant",
+    "delivered": "Delivered"
+  },
+  "status": {
+    "new": "The form is complete; start writing",
+    "drafting": "Writing draft {{n}}",
+    "revision": "Revision round {{round}}; the applicant wrote {{n}} points",
+    "waiting": "Draft {{n}} is with the applicant for comments",
+    "delivered": "The final file is in the case's documents"
+  },
+  "due": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "left": "{{n}} days left",
+    "late": "{{n}} days late"
+  },
+  "queue": {
+    "title": "Hello {{name}}, {{n}} orders are waiting for you",
+    "titleClear": "Hello {{name}}, no orders are waiting for you",
+    "subtitle": "{{n}} deliveries are due this week. Orders with closer deadlines come first.",
+    "subtitleCalm": "Nothing is due this week.",
+    "views": "Show orders",
+    "view": {
+      "mine": "Waiting for me",
+      "applicant": "With the applicant",
+      "delivered": "Delivered"
+    },
+    "empty": {
+      "mine": "No orders are waiting for you.",
+      "applicant": "No orders are with the applicant.",
+      "delivered": "You haven't delivered an order yet."
+    },
+    "side": "Your week",
+    "due": "Due",
+    "delivered": "Delivered",
+    "newMessages": "new messages",
+    "open": "Open",
+    "openNamed": "Open the {{type}} order of {{name}}"
+  },
+  "week": {
+    "title": "Due this week",
+    "none": "Nothing is due this week.",
+    "what": "{{type}} · {{version}}",
+    "next": {
+      "draft": "draft {{n}}",
+      "revision": "revised version",
+      "final": "final version"
+    }
+  },
+  "capacity": {
+    "title": "Your load",
+    "open": "{{n}} open orders",
+    "max": "limit {{n}}",
+    "note": "The team lead assigns new orders by this load."
+  },
+  "guides": {
+    "title": "Writing team guides"
+  },
+  "order": {
+    "title": "{{type}} · {{name}}",
+    "back": "Orders",
+    "summary": "Order summary",
+    "side": "About the order",
+    "round": "Revision requested · round {{current}} of {{max}}",
+    "words": "{{min}} to {{max}} words",
+    "supervisor": "Supervisor: {{name}}",
+    "ordered": "Ordered: {{date}}",
+    "dueRevision": "Revised version due",
+    "dueNext": "Next version due",
+    "dueAt": "{{date}} · {{left}}",
+    "chat": "Talk to the applicant",
+    "formPdf": "Download the applicant's form (PDF)"
+  },
+  "versions": {
+    "title": "Versions",
+    "none": "You haven't sent a version yet.",
+    "draft": "Draft {{n}}",
+    "final": "Final version",
+    "revised": "Revised version",
+    "sent": "Sent to the applicant · {{date}}",
+    "delivered": "Delivered · {{date}}",
+    "words": "{{n}} words",
+    "open": "Open the file",
+    "revision": "The applicant's revision request · {{date}}",
+    "choose": "Choose a Word or PDF file",
+    "hint": "or drop it here; up to 10 MB",
+    "size": "{{n}} KB",
+    "remove": "Remove the file",
+    "problem": {
+      "badType": "Only DOCX or PDF files are accepted.",
+      "tooBig": "The file is larger than 10 MB.",
+      "missing": "Choose the file first."
+    },
+    "note": "Note to the applicant",
+    "notePlaceholder": "e.g. All three points done; the internship paragraph is down to 4 lines.",
+    "send": "Send to the applicant",
+    "deliver": "Final delivery",
+    "finalHint": "Deliver the final version once the applicant approves or the revision rounds are used; the file goes to the case's documents.",
+    "error": "The file wasn't sent. Try again.",
+    "done": {
+      "draft": "The version went to the applicant.",
+      "final": "The final file is in the case's documents."
+    }
+  },
+  "form": {
+    "title": "Applicant's information form",
+    "submitted": "Submitted {{date}} · read-only",
+    "notYet": "The applicant hasn't submitted the form yet.",
+    "empty": "No answers recorded."
+  },
+  "side": {
+    "requirements": "This program's requirements",
+    "noRequirements": "The supervisor hasn't written requirements for this program.",
+    "programPage": "The program's page on the university's site",
+    "documents": "Applicant's documents",
+    "noDocuments": "No documents are available for this order.",
+    "messages": "Latest messages",
+    "noMessages": "No messages yet.",
+    "messageBy": "{{name}} · {{time}}",
+    "you": "You",
+    "toChat": "Go to the conversation"
+  },
+  "chat": {
+    "title": "Conversation with {{name}}"
+  }
+}

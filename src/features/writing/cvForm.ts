@@ -20,6 +20,7 @@ const list = (spec: Omit<ListSpec, 'kind'>): ListSpec => ({ kind: 'list', ...spe
 export const cvForm: FormSpec = {
   type: 'cv',
   progress: 'sections',
+  aside: { tips: 4, phone: true },
   sections: [
     {
       id: 'personal',

@@ -5,9 +5,11 @@ import { Card } from '@/components/ui/Card';
 import { StepDot } from '@/components/ui/Progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
+  applies,
   isAnswered,
   isField,
   isList,
+  isMulti,
   sectionStats,
   type AnswerValue,
   type Answers,
@@ -19,6 +21,7 @@ import {
 import { useFormText } from '../useFormText';
 import { FieldInput } from './FieldInput';
 import { ListField } from './ListField';
+import { MultiInput } from './MultiInput';
 import { InterestsField, PhotoField } from './PhotoField';
 
 interface Props {
@@ -57,7 +60,7 @@ export function FormSection(props: Props) {
   // Short answers read well in one line ("Bachelor's · Computer Engineering · …"); long ones don't.
   const short = section.parts
     .filter(isField)
-    .filter((field) => field.kind !== 'textarea' && field.kind !== 'choice')
+    .filter((field) => field.kind !== 'textarea' && field.kind !== 'choice' && !isMulti(field))
     .map((field) => {
       const value = answers[field.name] as Scalar | undefined;
       if (!isAnswered(value)) return null;
@@ -171,6 +174,20 @@ export function FormSection(props: Props) {
                     type={type}
                     part={part}
                     interests={(answers[part.name] as string[] | undefined) ?? []}
+                  />
+                );
+              if (!applies(part, answers)) return null;
+              if (isMulti(part))
+                return (
+                  <MultiInput
+                    key={part.name}
+                    type={type}
+                    field={part}
+                    value={(answers[part.name] as string[] | undefined) ?? []}
+                    id={`${type}-${part.name}`}
+                    missing={missing.has(part.name)}
+                    readOnly={readOnly}
+                    onChange={(value) => props.onChange(part.name, value)}
                   />
                 );
               return (
