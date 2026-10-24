@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { joinNames, localName } from '@/lib/i18n/names';
 import {
   SALES_API,
   SALES_KEY,
@@ -158,7 +159,7 @@ function similarOf(
   return {
     background: {
       degree,
-      field: top.study_field ? (top.study_field.name_persian ?? top.study_field.name) : null,
+      field: top.study_field ? localName(top.study_field.name, top.study_field.name_persian) : null,
       gpa: top.gpa,
     },
     count: experiences.count,
@@ -183,16 +184,18 @@ function profileOf(
       ? {
           key: 'language',
           text:
-            exams.map((exam) => `${exam.exam.name} ${String(exam.score)}`).join('، ') ||
+            joinNames(exams.map((exam) => `${exam.exam.name} ${String(exam.score)}`)) ||
             (personal?.current_lang_level ?? ''),
         }
       : null,
     personal?.desired_countries.length
       ? {
           key: 'countries',
-          text: personal.desired_countries
-            .map((country) => country.persian_name ?? country.country)
-            .join('، '),
+          text: joinNames(
+            personal.desired_countries.map((country) =>
+              localName(country.country, country.persian_name),
+            ),
+          ),
         }
       : null,
     asBudget(personal?.budget ?? null)
@@ -266,8 +269,8 @@ async function fetchCustomer(id: number, signal?: AbortSignal): Promise<Customer
     headline: {
       degree: asDegree(details?.desired_degree ?? null),
       field: null,
-      countries: (details?.desired_countries ?? []).map(
-        (country) => country.persian_name ?? country.country,
+      countries: (details?.desired_countries ?? []).map((country) =>
+        localName(country.country, country.persian_name),
       ),
       budget: asBudget(details?.budget ?? null),
     },

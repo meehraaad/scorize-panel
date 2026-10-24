@@ -1,5 +1,6 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query';
 import { sessionQuery } from '@/lib/auth/session';
+import i18n from '@/lib/i18n';
 import { ApiError } from './client';
 
 export const queryClient: QueryClient = new QueryClient({
@@ -26,4 +27,10 @@ export const queryClient: QueryClient = new QueryClient({
       refetchOnWindowFocus: true,
     },
   },
+});
+
+// Django words some fields in the request's language (Accept-Language), and the mappers name
+// countries and join lists in it: fetch again in the new language.
+i18n.on('languageChanged', () => {
+  void queryClient.invalidateQueries();
 });
