@@ -1,0 +1,106 @@
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it } from 'vitest';
+import i18n from '@/lib/i18n';
+import { renderApp } from '@/test/renderApp';
+import { instalmentPlan } from './plan';
+import '@/test/server';
+
+const NIMA = 3;
+const ERFAN = '/sales/customers/105';
+
+describe('sales panel, customer sub-tabs, sale and offer', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+    localStorage.setItem('scorize.mock.session', String(NIMA));
+  });
+
+  it('payments: confirms a receipt and texts an invoice', async () => {
+    const user = userEvent.setup();
+    renderApp(`${ERFAN}/payments`);
+    const detail = await screen.findByRole('region', { name: 'نگارش انگیزه‌نامه و رزومه' });
+    await user.click(within(detail).getByRole('button', { name: 'تأیید رسید' }));
+    expect(await within(detail).findByText('پرداخت کامل شد.')).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'پرداخت شماره‌ی ۴۹۰۲، بسته‌ی نمونه انگیزه‌نامه‌ها' }),
+    );
+    const pending = await screen.findByRole('region', { name: 'بسته‌ی نمونه انگیزه‌نامه‌ها' });
+    expect(within(pending).getByText(/مشتری لینک را باز نکرده/)).toBeInTheDocument();
+    await user.click(within(pending).getByRole('button', { name: 'ارسال فاکتور با پیامک' }));
+    expect(await within(pending).findByText(/آخرین ارسال فاکتور: اکنون/)).toBeInTheDocument();
+  });
+
+  it('payments: declining a receipt asks first', async () => {
+    const user = userEvent.setup();
+    renderApp(`${ERFAN}/payments`);
+    const detail = await screen.findByRole('region', { name: 'نگارش انگیزه‌نامه و رزومه' });
+    await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
+    await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
+    expect(await within(detail).findByText(/منتظر آپلود دوباره‌ی مشتری/)).toBeInTheDocument();
+  });
+
+  it('sells a product with a discount code and opens its invoice', async () => {
+    const user = userEvent.setup();
+    const router = renderApp(ERFAN);
+    await user.click(await screen.findByText('فروش تازه'));
+    await user.click(screen.getByRole('button', { name: /^فروش محصول/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'فروش محصول به عرفان ملکی' });
+    await user.click(await within(dialog).findByRole('button', { name: 'نگارش' }));
+    await user.click(within(dialog).getByRole('checkbox', { name: /نگارش رزومه/ }));
+    await user.type(within(dialog).getByLabelText('کد تخفیف'), 'scorize10');
+    await user.click(within(dialog).getByRole('button', { name: 'اعمال' }));
+    expect(await within(dialog).findByText('تخفیف: ۳۵۰٬۰۰۰ تومان')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ساختن پرداخت و ارسال فاکتور با پیامک' }));
+
+    expect(await screen.findByRole('region', { name: 'نگارش رزومه' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`${ERFAN}/payments`);
+  });
+
+  it('details: saves a section', async () => {
+    const user = userEvent.setup();
+    renderApp(`${ERFAN}/info`);
+    const personal = await screen.findByRole('region', { name: 'مشخصات' });
+    const city = within(personal).getByLabelText('شهر محل زندگی');
+    await user.clear(city);
+    await user.type(city, 'تهران');
+    await user.click(within(personal).getByRole('button', { name: 'ذخیره' }));
+    expect(await within(personal).findByText('ذخیره شد')).toBeInTheDocument();
+  });
+
+  it('application file is read-only', async () => {
+    renderApp(`${ERFAN}/apply`);
+    expect(await screen.findByText(/فقط خواندنی/)).toBeInTheDocument();
+    expect(screen.getByText('University of Twente')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'ذخیره' })).not.toBeInTheDocument();
+  });
+
+  it('offer: a big discount needs the manager; the draft goes to the manager', async () => {
+    const user = userEvent.setup();
+    const router = renderApp(`${ERFAN}/offer`);
+    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
+    await user.selectOptions(screen.getByLabelText('تخفیف'), '15');
+    expect(screen.getByText(/فقط با تأیید مدیر فروش ممکن است/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'فقط ارسال پیشنهاد به مشتری (پیامک و واتساپ)' }),
+    ).toBeDisabled();
+
+    await user.click(
+      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+    );
+    await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
+    expect(router.state.location.pathname).toBe(ERFAN);
+    expect(screen.getAllByText('پیش‌نویس، منتظر مدیر').length).toBeGreaterThan(0);
+  });
+});
+
+describe('instalmentPlan', () => {
+  it('takes 40% first (rounded to 100,000), the rest evenly, monthly from the start', () => {
+    const plan = instalmentPlan(70_000_000, 3, '2026-11-22');
+    expect(plan.map((item) => item.amount)).toEqual([28_000_000, 21_000_000, 21_000_000]);
+    expect(plan[0]?.due).toBeNull();
+    expect(new Date(plan[1]?.due ?? '').getMonth()).toBe(11);
+    expect(instalmentPlan(5, 1, '2026-11-22')).toEqual([{ due: null, amount: 5 }]);
+  });
+});

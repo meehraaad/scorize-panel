@@ -416,6 +416,21 @@
       "saveLost": "Save and close the lead",
       "choose": "Choose",
       "followWhen": "{{day}}, {{time}}"
+    },
+    "tabs": {
+      "label": "Customer page sections",
+      "summary": "Summary",
+      "purchases": "Purchases and consultations",
+      "payments": "Payments",
+      "info": "Details",
+      "apply": "Application file"
+    },
+    "newSale": {
+      "label": "New sale",
+      "product": "Sell a product",
+      "productHint": "Consultation, package, writing, webinar; payment link or receipt",
+      "offer": "Contract offer",
+      "offerHint": "Application, visa, writing; a draft for the manager to approve"
     }
   },
   "month": {
@@ -493,5 +508,283 @@
     "customer": "Customer page",
     "actionsFor": "{{action}}: {{name}}",
     "empty": "No consultations in this range."
+  },
+  "purchases": {
+    "stats": "Purchases summary",
+    "total": "Total purchases",
+    "sessions": "Consultations",
+    "sessionsValue": "{{held}} held · {{upcoming}} upcoming",
+    "failed": "Recent failed payments",
+    "group": {
+      "consultation": "Consultations",
+      "writing": "Writing",
+      "product": "Products and webinars"
+    },
+    "add": {
+      "consultation": "Book a consultation",
+      "writing": "Sell writing",
+      "product": "Sell a product"
+    },
+    "empty": "No purchases yet.",
+    "free": "Free",
+    "status": {
+      "logged": "Held · session logged",
+      "held": "Held · session not logged",
+      "upcoming": "Upcoming · paid",
+      "paid": "Paid",
+      "pending": "Awaiting payment",
+      "failed": "Payment failed"
+    },
+    "logSession": "Log session"
+  },
+  "payments": {
+    "title": "Payments",
+    "detail": "Payment details",
+    "empty": "This customer has no payments yet.",
+    "column": {
+      "number": "No.",
+      "what": "For",
+      "amount": "Amount",
+      "method": "Method",
+      "status": "Status",
+      "date": "Date"
+    },
+    "open": "Payment number {{id}}, {{what}}",
+    "method": {
+      "online": "Online",
+      "receipt": "Card transfer"
+    },
+    "status": {
+      "pending": "Being paid",
+      "paid": "Paid",
+      "paid_by_receipt": "Paid by receipt",
+      "expired": "Expired",
+      "failed": "Failed",
+      "pending_receipt": "Receipt to review",
+      "receipt_declined": "Receipt declined"
+    },
+    "payable": "Amount to pay",
+    "receipt": {
+      "waiting": "Receipt uploaded · waiting for your review",
+      "view": "View receipt",
+      "meta": "To \"{{wallet}}\" · {{when}}",
+      "confirm": "Confirm receipt",
+      "decline": "Decline receipt",
+      "declineConfirm": "Decline the receipt? The customer gets an SMS to upload it again.",
+      "declineNote": "Declining sends the customer an automatic SMS to upload again."
+    },
+    "methodLabel": "Payment method",
+    "methodOption": {
+      "online": "Online payment link",
+      "receipt": "Card transfer with receipt"
+    },
+    "wallet": "Destination account (for receipts)",
+    "sendFactor": "Text the invoice",
+    "copyLink": "Copy payment link",
+    "copied": "Link copied",
+    "factorOpened": "Invoice last sent {{when}} · the customer opened the link",
+    "factorNotOpened": "Invoice last sent {{when}} · the customer hasn't opened the link",
+    "paid": "Paid in full.",
+    "paidRef": "Paid in full. Reference: {{reference}}",
+    "declinedNote": "Receipt declined; waiting for the customer to upload again."
+  },
+  "info": {
+    "aside": "About the details",
+    "saved": "Last saved {{when}}",
+    "save": "Save",
+    "done": "Saved",
+    "choose": "Choose",
+    "personal": {
+      "title": "Personal details",
+      "first_name": "First name",
+      "last_name": "Last name",
+      "father_name": "Father's name",
+      "birth_date": "Date of birth",
+      "gender": "Gender",
+      "marital": "Marital status",
+      "military": "Military service",
+      "city": "City",
+      "work_years": "Work experience (years)"
+    },
+    "goal": {
+      "title": "Goal and situation",
+      "wanted_degree": "Wanted degree",
+      "budget": "Budget (application, study, living)",
+      "countries": "Wanted countries",
+      "language": "Current language level"
+    },
+    "education": {
+      "title": "Education",
+      "add": "Degree",
+      "row": "Degree {{n}}",
+      "degree": "Degree",
+      "field": "Field",
+      "university": "University",
+      "gpa": "GPA",
+      "remove": "Remove degree {{n}}"
+    },
+    "exams": {
+      "title": "Test scores",
+      "add": "Test",
+      "row": "Test {{n}}",
+      "exam": "Test",
+      "score": "Score",
+      "date": "Date",
+      "remove": "Remove test {{n}}"
+    },
+    "tablet": {
+      "title": "Customer in the office?",
+      "text": "Open the tablet form so they fill in their details, education and scores themselves. This page updates on its own.",
+      "open": "Open the tablet form"
+    },
+    "similar": {
+      "title": "Similar cases",
+      "text": "Each change to degree or GPA updates the list of applicants with a similar background in the summary.",
+      "link": "See in the summary"
+    }
+  },
+  "apply": {
+    "none": "This customer has no application file yet.",
+    "readOnly": "Read only. The supervisor runs the file; if something is needed, send them a request from \"New task\".",
+    "stats": "File summary",
+    "fileStatus": "File status",
+    "applies": "Applications done",
+    "admissions": "Offers",
+    "emails": "Emails sent",
+    "of": "of {{n}}",
+    "contract": "Contract",
+    "download": "Download contract",
+    "active": "Active",
+    "ended": "Ended",
+    "period": "{{start}} to {{end}}",
+    "row": {
+      "status": "Contract status",
+      "features": "Services",
+      "period": "Start and end",
+      "degree": "Degree and countries",
+      "supervisors": "Supervisors",
+      "consultant": "Consultant"
+    },
+    "feature": {
+      "admission": "Admission",
+      "visa": "Visa",
+      "writing": "Writing"
+    },
+    "applications": "Offers and application fees",
+    "noApplications": "No applications yet.",
+    "feePaid": "fee paid",
+    "feeUnpaid": "fee not paid",
+    "status": {
+      "ready": "Ready to submit",
+      "submitted": "Waiting for result",
+      "accepted": "Offer",
+      "rejected": "Rejected"
+    }
+  },
+  "sell": {
+    "title": "Sell a product to {{name}}",
+    "subtitle": "Without leaving the panel; the payment is made in the customer's name",
+    "category": "Product type",
+    "categoryOption": {
+      "consultation": "Consultation",
+      "writing": "Writing",
+      "package": "Packages",
+      "event": "Webinars and events"
+    },
+    "nothingPicked": "Pick at least one product.",
+    "slot": "Time for {{product}}",
+    "slotRequired": "Pick a consultation time.",
+    "slotOption": "{{when}} · {{consultant}}",
+    "code": "Discount code",
+    "apply": "Apply",
+    "codeError": {
+      "invalid": "This code isn't valid.",
+      "used_by_user": "The customer has already used this code.",
+      "max_use_exceeded": "This code has run out."
+    },
+    "credit": "Use wallet credit (balance: {{amount}})",
+    "discount": "Discount: {{amount}}",
+    "total": "Total",
+    "method": "How will the customer pay?",
+    "methodOption": {
+      "online": "Online payment link",
+      "receipt": "Card transfer with receipt"
+    },
+    "methodHint": {
+      "online": "The gateway link goes by SMS",
+      "receipt": "The customer uploads the receipt in their panel"
+    },
+    "submitOnline": "Create the payment and text the invoice",
+    "submitReceipt": "Create the payment and send the account details"
+  },
+  "offer": {
+    "title": "Offer for {{name}}",
+    "subtitle": "Build the offer. Send just the offer, or send the contract draft to the manager; once approved it opens in the customer's panel.",
+    "features": "1. Contract services",
+    "featureHint": {
+      "admission": "Choosing universities, applying, professor email bot, following up results",
+      "visa": "Embassy file, appointment, interview preparation",
+      "writing": "Motivation letter, CV and recommendations for every application"
+    },
+    "details": "2. Details",
+    "degree": "Degree",
+    "applies": "Number of applications",
+    "start": "Start date",
+    "months": "Contract length",
+    "monthsOption": "{{n}} months",
+    "languageScore": "Required language score",
+    "languageDeadline": "Language score deadline",
+    "countries": "Countries",
+    "removeCountry": "Remove {{country}}",
+    "addCountry": "Add a country",
+    "price": "3. Price and instalments",
+    "base": "Base price (from the services)",
+    "discount": "Discount",
+    "noDiscount": "No discount",
+    "discountManager": "{{n}} (manager approval)",
+    "managerNeeded": "A discount above {{n}} needs the sales manager's approval. The offer also goes to the manager before the customer sees it.",
+    "instalments": "Instalments",
+    "once": "One payment",
+    "count": "{{n}} instalments",
+    "plan": {
+      "number": "No.",
+      "due": "Due",
+      "amount": "Amount",
+      "atSigning": "At signing"
+    },
+    "note": "4. Note for the manager",
+    "noteLabel": "Only the sales manager sees this",
+    "preview": "What the customer sees in their panel",
+    "contractOf": "{{features}} contract",
+    "summary": "{{degree}} · {{countries}} · {{applies}} applications · {{months}} months",
+    "planOnce": "One payment at signing",
+    "planNote": "{{n}} instalments · first {{first}} at signing",
+    "flow": {
+      "title": "Contract path",
+      "draft": {
+        "title": "Draft",
+        "text": "You build it"
+      },
+      "manager": {
+        "title": "Sales manager approval",
+        "text": "Checks price, discount and terms"
+      },
+      "panel": {
+        "title": "In the customer's panel",
+        "text": "\"Contract under review\" and an SMS to the customer"
+      },
+      "signed": {
+        "title": "Signed and first instalment",
+        "text": "With the first instalment paid, the file goes to a supervisor"
+      }
+    },
+    "submit": "Send the contract draft for approval",
+    "send": "Send only the offer to the customer (SMS and WhatsApp)",
+    "save": "Save draft",
+    "incomplete": "Pick at least one service and one country.",
+    "done": {
+      "save": "Draft saved.",
+      "send": "Offer sent to the customer."
+    }
   }
 }

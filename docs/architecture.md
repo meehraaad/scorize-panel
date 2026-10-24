@@ -128,12 +128,13 @@ than copying its markup into the feature, and add it to the gallery.
 
 ### Sales panel (canvas "Scorize Seller Panel")
 
-`features/sales/` holds every sales page (Today, Leads, Board, Customer, My month, My consultations;
-later the customer sub-tabs, offer and manager pages), `api.ts` with one response per page, and
+`features/sales/` holds every sales page (Today, Leads, Board, My month, My consultations, the customer
+pages: `CustomerLayout` with its sub-tabs summary / purchases / payments / details / application file,
+the offer page; later the manager pages), `api.ts` with one response per page, and
 `paths.ts` (the panel's URLs, since features can't import panels). Shared vocabulary (stages, sources,
 scores) is in `lib/sales/`; tasks in `lib/tasks/` (the supervisor panel uses them too). "Call" buttons
 open the customer page with `?log=call`, so every call ends in the log dialog; `?log=meeting&reservation=`
-logs a consultation session. Mock seller: Nima (09120000002). Backend items: backend-changes.md S, T.
+logs a consultation session; `?sell=<category>` opens the product sale. Mock seller: Nima (09120000002). Backend items: backend-changes.md S, T.
 
 ### Locked sections (applicant panel, canvas V7)
 

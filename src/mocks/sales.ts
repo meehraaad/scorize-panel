@@ -13,6 +13,9 @@ import type {
   MonthData,
   NewLead,
   NextStep,
+  CustomerInfo,
+  Offer,
+  PaymentRow,
   PendingReceipt,
   TodayData,
 } from '@/features/sales/api';
@@ -36,7 +39,7 @@ import { forbidden, notFound, storage } from './session';
 
 const SELLERS = new Set([3]);
 const BASE = '/api/sales/v1';
-const SELLER = 'نیما رستمی';
+export const SELLER = 'نیما رستمی';
 
 const MINUTE = 60_000;
 const DAY = 86_400_000;
@@ -49,7 +52,7 @@ const at = (hour: number, minute = 0, days = 0) => {
   return date.toISOString();
 };
 
-interface MockLead {
+export interface MockLead {
   id: number;
   source: LeadSource;
   cause: string;
@@ -69,7 +72,7 @@ interface MockLead {
   receipt: boolean;
 }
 
-interface MockCustomer {
+export interface MockCustomer {
   id: number;
   name: string;
   phone: string;
@@ -82,6 +85,8 @@ interface MockCustomer {
 }
 
 let nextId = 500;
+/** A fresh id for anything the mock creates. */
+export const newId = () => nextId++;
 
 const lead = (
   id: number,
@@ -132,7 +137,7 @@ const customer = (
   ...extra,
 });
 
-const ERFAN = 105;
+export const ERFAN = 105;
 
 function customers(): MockCustomer[] {
   return [
@@ -461,12 +466,16 @@ const consultations = (): MockConsultation[] => [
   },
 ];
 
-interface SalesState {
+export interface SalesState {
   customers: MockCustomer[];
   consultations: MockConsultation[];
   receipts: PendingReceipt[];
   history: Map<number, HistoryEvent[]>;
   tasks: Map<number, TaskSummary[]>;
+  /** Per customer, filled on first use by src/mocks/salesCustomer.ts. */
+  payments: Map<number, PaymentRow[]>;
+  info: Map<number, CustomerInfo>;
+  offers: Map<number, Offer>;
 }
 
 function erfanHistory(): HistoryEvent[] {
@@ -588,18 +597,22 @@ const salesState = (): SalesState => ({
   ],
   history: new Map([[ERFAN, erfanHistory()]]),
   tasks: new Map([[ERFAN, erfanTasks()]]),
+  payments: new Map(),
+  info: new Map(),
+  offers: new Map(),
 });
 
 let state: SalesState | null = null;
 
-function stateOrError(): SalesState | Response {
+export function stateOrError(): SalesState | Response {
   const user = storage.get();
   if (!user || !SELLERS.has(user)) return forbidden();
   state ??= salesState();
   return state;
 }
 
-const failed = (value: SalesState | Response): value is Response => value instanceof Response;
+export const failed = (value: SalesState | Response): value is Response =>
+  value instanceof Response;
 
 const startOfToday = () => new Date(at(0)).getTime();
 const endOfToday = () => startOfToday() + DAY;
@@ -1152,12 +1165,16 @@ export const salesHandlers = [
     const index = data.receipts.findIndex(
       (item) => item.payment === Number(params.id) && item.customer === Number(params.user),
     );
-    if (index < 0)
+    const payment = data.payments
+      .get(Number(params.user))
+      ?.find((item) => item.id === Number(params.id) && item.status === 'pending_receipt');
+    if (index < 0 && !payment)
       return HttpResponse.json(
         { message: 'رسید پرداخت در انتظار تایید وجود ندارد!' },
         { status: 400 },
       );
-    data.receipts.splice(index, 1);
+    if (index >= 0) data.receipts.splice(index, 1);
+    if (payment) payment.status = 'paid_by_receipt';
     return HttpResponse.json({ message: 'رسید پرداخت با موفقت تایید شد.' });
   }),
 

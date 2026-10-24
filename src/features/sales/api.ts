@@ -5,7 +5,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { ApiError, api } from '@/lib/api/client';
 import {
   SALES_API,
   SALES_KEY,
@@ -461,3 +461,368 @@ export const consultationsQuery = (
     },
     placeholderData: keepPreviousData,
   });
+
+// ── Customer: purchases and consultations ────────────────────────────────────────────────────
+
+export type ProductCategory = 'consultation' | 'writing' | 'package' | 'event';
+
+export interface Purchase {
+  /** Invoice id. */
+  id: number;
+  category: ProductCategory;
+  title: string;
+  /** Localized line ("Monday 28 Mehr · 11:00 · online · consultant: …", "SpotPlayer licence active"). */
+  detail: string;
+  /** Toman. */
+  amount: number;
+  status: 'paid' | 'pending' | 'failed';
+  at: string;
+  /** Consultations: the reservation, and whether its session took place and was logged. */
+  session: { reservation: number; starts_at: string; logged: boolean } | null;
+}
+
+export interface PurchasesData {
+  /** Paid total, toman. */
+  total: number;
+  sessions: { held: number; upcoming: number };
+  failed: { count: number; last_at: string } | null;
+  items: Purchase[];
+}
+
+export const purchasesQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...customerKey(id), 'purchases'],
+    queryFn: ({ signal }) =>
+      api<PurchasesData>(`${SALES_API}/customers/${String(id)}/purchases/`, { signal }),
+  });
+
+// ── Customer: payments ───────────────────────────────────────────────────────────────────────
+
+/** finance.Payment.Status, by name. */
+export const PAYMENT_STATUSES = [
+  'pending',
+  'paid',
+  'paid_by_receipt',
+  'expired',
+  'failed',
+  'pending_receipt',
+  'receipt_declined',
+] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+/** finance.types.PaymentMethod (0 online, 1 receipt). */
+export type PaymentMethod = 'online' | 'receipt';
+const METHOD_CODE: Record<PaymentMethod, number> = { online: 0, receipt: 1 };
+
+export interface PaymentRow {
+  id: number;
+  /** What it pays for, localized. */
+  what: string;
+  /** Toman, after discounts and credit. */
+  amount: number;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  created_at: string;
+  lines: { label: string; amount: number }[];
+  /** Destination account for card transfers (Payment.wallet). */
+  wallet: number;
+  /** Bank reference once paid online. */
+  reference: string | null;
+  receipt: { url: string; uploaded_at: string } | null;
+  /** Last time the invoice SMS went out, and whether the customer opened the link since. */
+  factor: { sent_at: string; opened: boolean } | null;
+  /** The payment page link to share. */
+  pay_url: string;
+}
+
+export interface PaymentsData {
+  wallets: { id: number; name: string }[];
+  results: PaymentRow[];
+}
+
+export const paymentsQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...customerKey(id), 'payments'],
+    queryFn: ({ signal }) =>
+      api<PaymentsData>(`${SALES_API}/customers/${String(id)}/payments/`, { signal }),
+  });
+
+/** Existing staff endpoints of Django's PaymentViewSet (api/user_profile/staff). */
+const staffPayment = (customer: number, payment: number) =>
+  `/profile/staff/v1/users/${String(customer)}/payments/${String(payment)}`;
+
+export type PaymentAction =
+  | { kind: 'decline' }
+  | { kind: 'method'; method: PaymentMethod }
+  | { kind: 'factor' }
+  | { kind: 'wallet'; wallet: number };
+
+/**
+ * What a seller does to an invoice. Declining a receipt and changing the method use the existing
+ * staff endpoints; the invoice SMS and the destination account are new (S24, S25).
+ * Confirming a receipt: useConfirmReceipt (lib/sales).
+ */
+export function usePaymentAction(customer: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ payment, action }: { payment: number; action: PaymentAction }) => {
+      switch (action.kind) {
+        case 'decline':
+          return api(`${staffPayment(customer, payment)}/decline_receipt/`, { method: 'PATCH' });
+        case 'method':
+          return api(
+            `${staffPayment(customer, payment)}/change_method/${String(METHOD_CODE[action.method])}/`,
+            { method: 'PATCH' },
+          );
+        case 'factor':
+          return api(`${SALES_API}/payments/${String(payment)}/factor/`, { method: 'POST' });
+        case 'wallet':
+          return api(`${SALES_API}/payments/${String(payment)}/`, {
+            method: 'PATCH',
+            body: { wallet: action.wallet },
+          });
+      }
+    },
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
+// ── Customer: details ────────────────────────────────────────────────────────────────────────
+
+export interface Option {
+  value: string;
+  label: string;
+}
+
+export interface EducationEntry {
+  /** Missing for a new row. */
+  id?: number;
+  degree: string;
+  field: string;
+  university: string;
+  gpa: string;
+}
+
+export interface ExamEntry {
+  id?: number;
+  exam: string;
+  score: string;
+  /** ISO date, or empty. */
+  date: string;
+}
+
+export interface CustomerInfo {
+  personal: {
+    first_name: string;
+    last_name: string;
+    father_name: string;
+    /** ISO date, or empty. */
+    birth_date: string;
+    gender: string;
+    marital: string;
+    military: string;
+    city: string;
+    work_years: string;
+  };
+  goal: { wanted_degree: string; budget: string; countries: string; language: string };
+  education: EducationEntry[];
+  exams: ExamEntry[];
+  /** Choices of the select fields (Django model choices), localized. */
+  choices: Record<'gender' | 'marital' | 'military' | 'budget' | 'degree' | 'exam', Option[]>;
+  /** The office tablet form for this customer (crm user_detail tablet form). */
+  tablet_url: string;
+  updated_at: string;
+}
+
+export const infoQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...customerKey(id), 'info'],
+    queryFn: ({ signal }) =>
+      api<CustomerInfo>(`${SALES_API}/customers/${String(id)}/info/`, { signal }),
+  });
+
+export type InfoSection = Partial<Pick<CustomerInfo, 'personal' | 'goal' | 'education' | 'exams'>>;
+
+/** Saves one section; the server answers the stored info (S27). */
+export function useSaveInfo(id: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (section: InfoSection) =>
+      api<CustomerInfo>(`${SALES_API}/customers/${String(id)}/info/`, {
+        method: 'PATCH',
+        body: section,
+      }),
+    onSuccess: (data) => {
+      client.setQueryData(infoQuery(id).queryKey, data);
+      return client.invalidateQueries({ queryKey: customerKey(id), exact: true });
+    },
+  });
+}
+
+// ── Customer: application file (read-only) ───────────────────────────────────────────────────
+
+export interface ApplyFile {
+  /** Applicant status, localized ("Applying"). */
+  status: string;
+  applies: { used: number; total: number };
+  admissions: number;
+  emails: { sent: number; total: number };
+  contract: {
+    active: boolean;
+    features: ('admission' | 'writing' | 'visa')[];
+    start: string;
+    end: string;
+    degree: Degree;
+    countries: string[];
+    supervisors: string[];
+    consultant: string | null;
+    file_url: string | null;
+  };
+  applications: {
+    id: number;
+    university: string;
+    program: string;
+    fee_paid: boolean;
+    status: 'ready' | 'submitted' | 'accepted' | 'rejected';
+  }[];
+}
+
+export const applyQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...customerKey(id), 'apply'],
+    queryFn: async ({ signal }): Promise<ApplyFile | null> => {
+      try {
+        return await api<ApplyFile>(`${SALES_API}/customers/${String(id)}/apply/`, { signal });
+      } catch (error) {
+        // No applicant file yet.
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }
+    },
+  });
+
+// ── Selling a product ────────────────────────────────────────────────────────────────────────
+
+export interface Product {
+  id: number;
+  category: ProductCategory;
+  title: string;
+  /** Localized ("Online or in person", "Delivered in 7 working days"). */
+  detail: string;
+  /** Toman; 0 = free. */
+  price: number;
+  /** Consultations: free times to book. */
+  slots: { id: number; starts_at: string; consultant: string }[];
+}
+
+export const productsQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'products'],
+  queryFn: ({ signal }) => api<{ products: Product[] }>(`${SALES_API}/products/`, { signal }),
+  staleTime: 5 * 60_000,
+});
+
+export interface SaleQuote {
+  subtotal: number;
+  discount: number;
+  total: number;
+  /** finance.types.DiscountCheckResult, by name; null when the code is fine or none was given. */
+  discount_error: 'invalid' | 'used_by_user' | 'max_use_exceeded' | null;
+}
+
+export interface NewSale {
+  products: number[];
+  slot?: number;
+  discount_code?: string;
+  use_credit: boolean;
+  method: PaymentMethod;
+}
+
+/** The price with a discount code, as the cart would compute it (check-content; S29). */
+export function useQuote(customer: number) {
+  return useMutation({
+    mutationFn: (sale: Pick<NewSale, 'products' | 'discount_code' | 'use_credit'>) =>
+      api<SaleQuote>(`${SALES_API}/customers/${String(customer)}/sell/quote/`, {
+        method: 'POST',
+        body: sale,
+      }),
+  });
+}
+
+/** Creates the invoice in the customer's name and texts them the payment link (S30). */
+export function useSell(customer: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (sale: NewSale) =>
+      api<{ payment: number }>(`${SALES_API}/customers/${String(customer)}/sell/`, {
+        method: 'POST',
+        body: sale,
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: customerKey(customer) }),
+  });
+}
+
+// ── Offer and contract draft ─────────────────────────────────────────────────────────────────
+
+export type ContractFeature = 'admission' | 'visa' | 'writing';
+
+export interface OfferOptions {
+  /** Price of each service, toman. */
+  features: { key: ContractFeature; price: number }[];
+  degrees: Degree[];
+  /** Months. */
+  durations: number[];
+  countries: string[];
+  /** Percent; above `approval_above` the manager must approve before the customer sees it. */
+  discounts: number[];
+  approval_above: number;
+  instalments: number[];
+}
+
+export interface Offer {
+  features: ContractFeature[];
+  degree: Degree;
+  applies: number;
+  /** ISO date. */
+  start: string;
+  months: number;
+  language_score: string;
+  /** ISO date, or empty. */
+  language_deadline: string;
+  countries: string[];
+  discount: number;
+  instalments: number;
+  manager_note: string;
+}
+
+export interface OfferData {
+  options: OfferOptions;
+  /** The saved draft, if any. */
+  draft: Offer | null;
+  /** Where the draft is: still editable, or sent. */
+  state: 'none' | 'saved' | 'sent' | 'submitted';
+}
+
+export const offerQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...customerKey(id), 'offer'],
+    queryFn: ({ signal }) =>
+      api<OfferData>(`${SALES_API}/customers/${String(id)}/offer/`, { signal }),
+  });
+
+/**
+ * `save`: keep the draft; `send`: send the offer to the customer (SMS + panel); `submit`: send the
+ * contract draft to the sales manager (Contract with `creator`; S32).
+ */
+export type OfferAction = 'save' | 'send' | 'submit';
+
+export function useSaveOffer(id: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ offer, action }: { offer: Offer; action: OfferAction }) =>
+      api(`${SALES_API}/customers/${String(id)}/offer/`, {
+        method: 'POST',
+        body: { ...offer, action },
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}

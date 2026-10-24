@@ -79,7 +79,19 @@ export const salesPanel: PanelDefinition = {
           queryClient.query(customerQuery(id)).catch(() => undefined);
         return null;
       },
-      ...lazyPage(() => import('@/features/sales/CustomerPage'), ['sales']),
+      ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales']),
+      children: [
+        { index: true, ...lazyPage(() => import('@/features/sales/CustomerSummaryPage')) },
+        { path: 'purchases', ...lazyPage(() => import('@/features/sales/CustomerPurchasesPage')) },
+        { path: 'payments', ...lazyPage(() => import('@/features/sales/CustomerPaymentsPage')) },
+        { path: 'info', ...lazyPage(() => import('@/features/sales/CustomerInfoPage')) },
+        { path: 'apply', ...lazyPage(() => import('@/features/sales/CustomerApplyPage')) },
+      ],
+    },
+    // Its own page (no customer card): building an offer takes the whole screen.
+    {
+      path: 'customers/:id/offer',
+      ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales']),
     },
     { path: 'tasks', element: <ComingSoonPage title="panels.sales.tasks" /> },
   ],

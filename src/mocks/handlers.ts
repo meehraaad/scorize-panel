@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import type { SessionUser } from '@/lib/auth/session';
 import { applicantHandlers, resetApplicantMocks } from './applicant';
 import { resetSalesMocks, salesHandlers } from './sales';
+import { salesCustomerHandlers } from './salesCustomer';
 import { storage } from './session';
 
 /**
@@ -205,6 +206,7 @@ export const handlers = [
 
   ...applicantHandlers,
   ...salesHandlers,
+  ...salesCustomerHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */

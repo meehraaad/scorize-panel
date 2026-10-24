@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { StepBar } from '@/components/ui/Progress';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -6,6 +8,7 @@ import { initialOf } from '@/lib/text';
 import { MESSAGE_CHANNELS, STAGES, maskPhone, type Channel } from '@/lib/sales/api';
 import type { CustomerData } from '../api';
 import { useSalesFormat } from '../format';
+import { customerPath } from '../paths';
 import { ScoreChip, StageChip } from './LeadChips';
 
 /** Stages on the bar (a lost lead shows its chip instead of a step). */
@@ -18,9 +21,12 @@ const raised =
 export function CustomerHero({
   customer,
   onLog,
+  onSell,
 }: {
   customer: CustomerData;
   onLog: (channel: Channel) => void;
+  /** Opens the product sale. */
+  onSell: () => void;
 }) {
   const { t } = useTranslation('sales');
   const { t: tc } = useTranslation();
@@ -102,6 +108,8 @@ export function CustomerHero({
             {t(`channel.${channel}`)}
           </button>
         ))}
+        <span aria-hidden="true" className="mx-1 hidden h-6 w-px bg-hero-line sm:block" />
+        <NewSaleMenu customer={customer.id} onSell={onSell} />
       </div>
 
       {lead && lead.stage !== 'lost' && (
@@ -114,5 +122,45 @@ export function CustomerHero({
         />
       )}
     </section>
+  );
+}
+
+/** "New sale ▾": sell a product now, or prepare a contract offer. A native disclosure. */
+function NewSaleMenu({ customer, onSell }: { customer: number; onSell: () => void }) {
+  const { t } = useTranslation('sales');
+  const menu = useRef<HTMLDetailsElement>(null);
+  const item =
+    'flex min-h-11 flex-col gap-0.5 rounded-2xl px-4 py-2.5 text-start text-text hover:bg-canvas';
+  return (
+    <details
+      ref={menu}
+      className="group relative"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') menu.current?.removeAttribute('open');
+      }}
+    >
+      <summary className={`${raised} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
+        <Icon name="plus" size={16} />
+        {t('customer.newSale.label')}
+        <Icon name="chevronDown" size={16} className="transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="absolute start-0 top-12 z-10 flex w-72 flex-col gap-1 rounded-card-sm bg-surface p-2 shadow-panel">
+        <button
+          type="button"
+          className={item}
+          onClick={() => {
+            menu.current?.removeAttribute('open');
+            onSell();
+          }}
+        >
+          <span className="text-[15px] font-semibold">{t('customer.newSale.product')}</span>
+          <span className="text-xs leading-5 text-text-2">{t('customer.newSale.productHint')}</span>
+        </button>
+        <Link to={`${customerPath(customer)}/offer`} className={item}>
+          <span className="text-[15px] font-semibold">{t('customer.newSale.offer')}</span>
+          <span className="text-xs leading-5 text-text-2">{t('customer.newSale.offerHint')}</span>
+        </Link>
+      </div>
+    </details>
   );
 }
