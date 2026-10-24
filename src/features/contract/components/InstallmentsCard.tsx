@@ -63,7 +63,9 @@ export function InstallmentsCard({ contract }: { contract: ContractData }) {
           </p>
         </div>
       ) : installments.length === 0 ? (
-        <EmptyState>{t('installments.empty')}</EmptyState>
+        <EmptyState title={t('installments.emptyTitle')} icon="card">
+          {t('installments.empty')}
+        </EmptyState>
       ) : (
         <>
           <div className="px-5 pb-2 lg:px-8">

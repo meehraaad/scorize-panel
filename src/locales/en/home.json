@@ -175,7 +175,7 @@
   "todos": {
     "title": "Waiting for you",
     "count": "{{n}} items",
-    "empty": "Nothing is waiting for you right now. New tasks show up here.",
+    "empty": "Nothing is waiting for you. When there's a new application, document or message, we'll tell you here and by text.",
     "error": "That didn't go through. Check your internet connection and try again.",
     "deadline": "Deadline {{date}}",
     "fee": "Fee {{fee}}",
@@ -204,7 +204,8 @@
       "title": "Pay instalment {{number}}",
       "meta": "Pay online or upload a receipt",
       "action": "Pay instalment"
-    }
+    },
+    "emptyTitle": "All caught up"
   },
   "ticket": {
     "title": "Latest ticket messages",
@@ -228,7 +229,7 @@
     "feePaid": "Fee {{fee}} · paid",
     "feeUnpaid": "Fee {{fee}} · not paid",
     "aria": "{{university}}, {{days}} days left, {{status}}",
-    "empty": "No deadlines on your case yet.",
+    "empty": "Once your first application is added, deadlines show here with a countdown.",
     "status": {
       "awaiting_approval": "Waiting for your approval",
       "ready": "Ready to submit",
@@ -236,7 +237,8 @@
       "submitted": "Submitted",
       "accepted": "Accepted",
       "rejected": "Rejected"
-    }
+    },
+    "emptyTitle": "No deadlines yet"
   },
   "aside": "Case summary",
   "installment": {

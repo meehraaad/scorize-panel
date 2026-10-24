@@ -75,3 +75,49 @@ export function TextField({
     </div>
   );
 }
+
+interface TextAreaFieldProps extends ComponentProps<'textarea'> {
+  label: string;
+  hint?: string | undefined;
+  error?: string | undefined;
+}
+
+/** The multi-line sibling of TextField: same label, hint and error wiring. */
+export function TextAreaField({
+  label,
+  hint,
+  error,
+  id,
+  rows = 5,
+  className = '',
+  ...props
+}: TextAreaFieldProps) {
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  const messageId = `${inputId}-message`;
+  const message = error ?? hint;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={inputId} className="text-[15px] font-medium text-text">
+        {label}
+      </label>
+      <textarea
+        id={inputId}
+        rows={rows}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={message ? messageId : undefined}
+        className={`w-full resize-y rounded-2xl bg-surface px-4 py-3 text-base leading-8 text-text shadow-[inset_0_0_0_1px_var(--line-2)] transition-shadow outline-none placeholder:text-text-3 hover:shadow-[inset_0_0_0_1px_var(--line-3)] focus-visible:shadow-[inset_0_0_0_2px_var(--focus)] aria-invalid:shadow-[inset_0_0_0_1.5px_var(--danger)] ${className}`}
+        {...props}
+      />
+      {message && (
+        <p
+          id={messageId}
+          className={`m-0 text-sm leading-6 ${error ? 'text-danger' : 'text-text-2'}`}
+        >
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}

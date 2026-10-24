@@ -149,6 +149,14 @@ export default function ComponentsPage() {
                     هنوز چیزی این‌جا نیست.
                   </EmptyState>
                 </SectionCard>
+                <SectionCard id="demo-empty-title" title="کارت خالی با عنوان">
+                  <EmptyState
+                    title="همه‌چیز مرتب است"
+                    action={<Button variant="outline">قدم بعدی</Button>}
+                  >
+                    فعلاً کاری منتظر شما نیست.
+                  </EmptyState>
+                </SectionCard>
                 <SectionCard id="demo-loading" title="در حال بارگذاری">
                   <SkeletonRows rows={3} />
                 </SectionCard>

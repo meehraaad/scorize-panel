@@ -1,0 +1,145 @@
+{
+  "title": "Other services",
+  "subtitle": "Courses, events, consultations and the GPA calculator.",
+  "amount": "{{amount}} toman",
+  "credit": "Wallet credit",
+  "sections": "Sections of this page",
+  "tile": {
+    "packages": {
+      "title": "My packages",
+      "none": "No packages yet",
+      "count": "{{n}} packages"
+    },
+    "events": {
+      "title": "Events",
+      "none": "No upcoming events",
+      "count": "{{n}} upcoming"
+    },
+    "consultations": {
+      "title": "Consultations",
+      "none": "No sessions booked",
+      "count": "{{n}} booked"
+    },
+    "gpa": {
+      "title": "GPA calculator",
+      "none": "Turn your grades into a GPA",
+      "result": "Last result: {{gpa}}"
+    }
+  },
+  "webinar": {
+    "kicker": "Upcoming webinar",
+    "when": "{{date}} · {{time}}",
+    "seats": "Seats left: {{n}}",
+    "countdown": "Time left on the early price",
+    "countdownText": "until the early price ends",
+    "unit": {
+      "days": "days",
+      "hours": "hours",
+      "minutes": "minutes",
+      "seconds": "seconds"
+    },
+    "register": "Register for the webinar",
+    "registerPrice": "Register · {{amount}} toman",
+    "registering": "Registering…",
+    "registered": "You're registered. The join link is under “My events”.",
+    "error": "Registration didn't go through. Try again."
+  },
+  "packages": {
+    "title": "My packages",
+    "empty": "Language-test and application course packages you buy show up here.",
+    "offer": "View",
+    "emptyTitle": "No packages yet"
+  },
+  "consultations": {
+    "title": "My consultations",
+    "book": "Book a consultation",
+    "empty": "No upcoming consultation sessions.",
+    "when": "{{date}} · {{time}}",
+    "all": "All bookings ({{n}})",
+    "emptyTitle": "You haven't booked a consultation",
+    "noneYet": "Applying gets easier! Clear up every question in a consultation session."
+  },
+  "events": {
+    "title": "My events",
+    "count": "{{n}} events",
+    "empty": "Don't miss Scorize's free and special webinars.",
+    "upcoming": "{{date}} · {{time}}",
+    "online": "Online",
+    "held": "Held · {{date}}",
+    "videoSoon": "video coming soon",
+    "join": "Join link",
+    "video": "Download the video",
+    "details": "Details",
+    "emptyTitle": "You haven't joined any events"
+  },
+  "gpa": {
+    "title": "Online GPA calculator",
+    "result": "Your GPA",
+    "credits": "Total credits",
+    "course": "Course",
+    "creditsLabel": "Credits",
+    "grade": "Grade (out of 20)",
+    "courseN": "Course {{n}} name",
+    "creditsN": "Course {{n}} credits",
+    "gradeN": "Course {{n}} grade",
+    "remove": "Remove course {{n}}",
+    "note": "For a failed course you passed later, enter the passing grade. For an overall GPA: enter the credits passed and your overall average.",
+    "add": "Add a course",
+    "submit": "Save and calculate",
+    "calculating": "Calculating…",
+    "invalid": "Give each course a name, credits (1 to 10) and a grade between 0 and 20.",
+    "error": "Couldn't calculate. Try again.",
+    "empty": "Enter your courses to calculate your GPA."
+  },
+  "detail": {
+    "back": "Other services",
+    "missing": "This wasn't found. The link may be old.",
+    "toServices": "Go to other services"
+  },
+  "package": {
+    "lessons": "Package content",
+    "lessonN": "Lesson {{n}}",
+    "minutes": "{{n}} min",
+    "current": "Lesson {{n}} · {{title}}",
+    "start": "Start from the first lesson",
+    "play": "Play {{title}}",
+    "player": "Secure playback with SpotPlayer · your licence is active",
+    "review": "Your review of this package",
+    "credit": "Review it and get {{amount}} toman of credit",
+    "reviewLabel": "Your review",
+    "reviewHint": "How much did this package help you?",
+    "submit": "Submit review",
+    "sending": "Sending…",
+    "empty": "Write a few words.",
+    "thanks": "Your review is in. Thank you!",
+    "yours": "Your review ({{date}})",
+    "error": "Not sent. Try again."
+  },
+  "event": {
+    "kind": {
+      "webinar": "webinar",
+      "event": "event"
+    },
+    "registered": "Registered",
+    "how": "How to join the {{kind}}",
+    "when": "{{date}} · {{time}}",
+    "place": "Online",
+    "howText": "On the day, you'll get an email and an SMS with the link and how to join. When it starts, the join button here turns on.",
+    "heldText": "This has already taken place.",
+    "join": "Join the {{kind}}",
+    "joinIn": "Join the {{kind}} · {{days}}",
+    "about": "About the {{kind}}",
+    "video": "Recording of the {{kind}}",
+    "videoText": "Within 24 working hours after it ends, the recording appears here and under “My packages”.",
+    "download": "Download the recording",
+    "downloadLater": "Download · after it takes place",
+    "videoSoon": "The recording is coming soon",
+    "invoice": "Registration invoice",
+    "invTitle": "Event",
+    "invPlace": "Where",
+    "invDate": "When",
+    "invAmount": "Amount paid",
+    "free": "Free",
+    "online": "Online"
+  }
+}

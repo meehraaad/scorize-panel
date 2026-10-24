@@ -1,9 +1,12 @@
 import { Logo } from '@/components/ui/Logo';
+import { useQuery } from '@tanstack/react-query';
 import { Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { PageLoader } from '@/components/ui/PageLoader';
+import { unreadQuery } from '@/lib/account/api';
+import { useFormat } from '@/lib/i18n/useFormat';
 import { loginHref, useSession } from '@/lib/auth/session';
 import { applicantPanel } from '@/panels/applicant';
 import { panelsFor, rememberPanel } from '@/panels/registry';
@@ -29,6 +32,8 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const { t } = useTranslation();
   const user = useSession();
   const location = useLocation();
+  const format = useFormat();
+  const { data: unread = 0 } = useQuery({ ...unreadQuery, enabled: Boolean(user) });
   const useLocked = panel.useLockedNav ?? useNoLockedNav;
   const locked = useLocked();
 
@@ -105,13 +110,23 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
 
           <div className="flex flex-none items-center gap-1.5">
             <span aria-hidden="true" className="me-1 hidden h-6 w-px bg-hair xl:block" />
-            <button
-              type="button"
+            <Link
+              to="/account#notifications"
               className="relative inline-flex size-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-canvas hover:text-text"
-              aria-label={t('header.notifications')}
+              aria-label={
+                unread
+                  ? t('header.notificationsUnread', { n: format.number(unread) })
+                  : t('header.notifications')
+              }
             >
               <Icon name="bell" />
-            </button>
+              {unread > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute end-2.5 top-2.5 size-2.5 rounded-full bg-primary shadow-[0_0_0_2px_var(--surface)]"
+                />
+              )}
+            </Link>
             <AccountMenu user={user} customerLink={customerLink} />
           </div>
         </div>

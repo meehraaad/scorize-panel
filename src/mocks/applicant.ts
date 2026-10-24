@@ -9,6 +9,9 @@ import type {
 import type { ContractData, PaymentData, ProfileField } from '@/features/contract/api';
 import type { CaseFile, DocumentsData, RequiredDocument } from '@/features/documents/api';
 import type { AccessState, ApplicantAccess, CallRequest } from '@/lib/applicant/access';
+import type { Gates } from '@/lib/applicant/gates';
+import type { ConsultationDetail } from '@/features/consultations/api';
+import type { EventDetail, GpaCourse, PackageDetail, ServicesData } from '@/features/services/api';
 import type { TurkeyAnswers, TurkeyCase, TurkeyDocument } from '@/features/turkey/api';
 import type { ApplicantOverview, ApplicationSummary } from '@/features/home/api';
 import type { WritingForm } from '@/features/writing/api';
@@ -32,7 +35,7 @@ import { sopForm } from '@/features/writing/sopForm';
 import { forbidden, notFound, storage } from './session';
 
 /**
- * Fake applicant-panel API (docs/backend-changes.md H1–H35). Only Sara (user 1) has a case; anyone
+ * Fake applicant-panel API (docs/backend-changes.md H1–H41). Only Sara (user 1) has a case; anyone
  * else gets 404, like Django for a user without an Applicant. Her applications and documents are
  * the one source for the home page's deadlines, progress and tasks too, so a change shows up on
  * every page.
@@ -1245,7 +1248,493 @@ const turkeyHandlers = [
 
 // endregion
 
+// region Other services (H36–H38)
+
+/** Reviews written on packages (by package id). */
+const packageReviews = new Map<number, { text: string; submitted_at: string }>();
+
+/** Each user's services page (any account). Sara has bought things; others start empty. */
+const servicesOf = new Map<number, ServicesData>();
+
+function servicesFor(user: number): ServicesData {
+  let found = servicesOf.get(user);
+  if (found) return found;
+  const sara = user === SARA;
+  const at = (days: number, hour: number) => {
+    const date = new Date(Date.now() + days * 86_400_000);
+    date.setHours(hour, 0, 0, 0);
+    return date.toISOString();
+  };
+  found = {
+    credit: sara ? 5_000 : 0,
+    webinar: {
+      id: 31,
+      title: 'اپلای کارشناسی ارشد کانادا ۲۰۲۷',
+      starts_at: at(5, 18),
+      seats_left: 23,
+      price: 0,
+      discount_ends_at: new Date(
+        Date.now() + (2 * 86_400 + 14 * 3600 + 36 * 60) * 1000,
+      ).toISOString(),
+      registered: false,
+    },
+    packages: sara
+      ? [
+          {
+            id: 1,
+            tag: 'TOEFL',
+            name: 'آمادگی تافل ۱۲۰',
+            meta: '۱۸ جلسه‌ی ویدئویی · ادامه از جلسه‌ی ۷',
+            url: '#',
+          },
+          { id: 2, tag: 'WEB', name: 'فیلم وبینار اپلای کانادا', meta: 'خریداری ۱۲ مهر', url: '#' },
+        ]
+      : [],
+    offer: {
+      name: 'بسته‌ی آمادگی آیلتس ۷ قدم',
+      price: 1_400_000,
+      old_price: 2_000_000,
+      label: 'پیشنهاد داغ · ۳۰٪ تخفیف تا ۱۰ آبان',
+      url: '#',
+    },
+    consultations: sara
+      ? {
+          upcoming: [{ id: 41, title: 'مشاوره‌ی تخصصی اپلای دکترا', starts_at: at(19, 17) }],
+          total: 4,
+        }
+      : { upcoming: [], total: 0 },
+    events: sara
+      ? [
+          {
+            id: 31,
+            title: 'اپلای کارشناسی ارشد کانادا ۲۰۲۷',
+            starts_at: at(5, 18),
+            online: true,
+            status: 'upcoming',
+            join_url: '#',
+            video_url: null,
+            url: '#',
+          },
+          {
+            id: 32,
+            title: 'نوشتن SOP بدون اشتباه',
+            starts_at: at(-3, 18),
+            online: true,
+            status: 'held',
+            join_url: null,
+            video_url: '#',
+            url: '#',
+          },
+          {
+            id: 33,
+            title: 'بورسیه‌های آلمان',
+            starts_at: at(-18, 18),
+            online: true,
+            status: 'held',
+            join_url: null,
+            video_url: null,
+            url: '#',
+          },
+        ]
+      : [],
+    gpa: sara
+      ? {
+          courses: [
+            { name: 'Advanced Programming', credits: 3, grade: 18.5 },
+            { name: 'Artificial Intelligence', credits: 3, grade: 19 },
+            { name: 'Linear Algebra', credits: 3, grade: 15.25 },
+            { name: 'Technical English', credits: 2, grade: 17 },
+          ],
+          result: 3.5,
+        }
+      : { courses: [], result: null },
+  };
+  // Sara already signed up for it (it is in her events).
+  if (sara && found.webinar) found.webinar.registered = true;
+  servicesOf.set(user, found);
+  return found;
+}
+
+/** The fake's GPA: the credit-weighted average out of 20, scaled to 4. Django uses its own method. */
+const gpaOf = (courses: GpaCourse[]) => {
+  const credits = courses.reduce((sum, course) => sum + course.credits, 0);
+  const average = courses.reduce((sum, course) => sum + course.credits * course.grade, 0) / credits;
+  return Math.round((average / 5) * 100) / 100;
+};
+
+/** Each user's booked consultations (Sara: one ahead, three behind). */
+const consultationsOf = new Map<number, ConsultationDetail[]>();
+
+function consultationsFor(user: number): ConsultationDetail[] {
+  let found = consultationsOf.get(user);
+  if (found) return found;
+  const at = (days: number, hour: number, minute = 0) => {
+    const date = new Date(Date.now() + days * 86_400_000);
+    date.setHours(hour, minute, 0, 0);
+    return date.toISOString();
+  };
+  const empty = { university: '', major: '', degree: '', notes: '' };
+  const session = (
+    id: number,
+    title: string,
+    starts_at: string,
+    mode: ConsultationDetail['mode'],
+    summary: string,
+    amount: number,
+    extra: Partial<ConsultationDetail> = {},
+  ): ConsultationDetail => ({
+    id,
+    title,
+    starts_at,
+    minutes: 45,
+    mode,
+    consultant: 'نیلوفر شریفی',
+    summary,
+    info_complete: true,
+    info: {
+      university: 'دانشگاه صنعتی اصفهان',
+      major: 'مهندسی کامپیوتر',
+      degree: 'کارشناسی',
+      notes: '',
+    },
+    invoice: { amount, paid_at: amount ? at(-60, 10) : null, payment_id: null },
+    ...extra,
+  });
+  found =
+    user === SARA
+      ? [
+          session(
+            41,
+            'مشاوره‌ی تخصصی اپلای دکترا',
+            at(19, 17),
+            'online',
+            'بررسی شانس پذیرش و فاند دکترا در کانادا و آمریکا.',
+            800_000,
+            {
+              info_complete: false,
+              info: empty,
+              invoice: { amount: 800_000, paid_at: at(-2, 11), payment_id: null },
+            },
+          ),
+          session(
+            42,
+            'مشاوره‌ی اپلای کارشناسی ارشد',
+            at(-34, 11),
+            'in_person',
+            'انتخاب کشور و دانشگاه بر اساس رزومه.',
+            600_000,
+          ),
+          session(
+            43,
+            'مشاوره‌ی آزمون زبان',
+            at(-83, 18, 30),
+            'online',
+            'برنامه‌ریزی برای آیلتس آکادمیک.',
+            400_000,
+          ),
+          session(
+            44,
+            'مشاوره‌ی رایگان اولیه',
+            at(-101, 10),
+            'online',
+            'آشنایی با خدمات اسکورایز.',
+            0,
+          ),
+        ]
+      : [];
+  consultationsOf.set(user, found);
+  return found;
+}
+
+const summaryOf = ({ info: _info, invoice: _invoice, ...rest }: ConsultationDetail) => rest;
+
+const consultationHandlers = [
+  http.get(`${BASE}/consultations/`, () => {
+    const user = storage.get();
+    return user
+      ? HttpResponse.json({ results: consultationsFor(user).map(summaryOf) })
+      : forbidden();
+  }),
+
+  http.get(`${BASE}/consultations/:id/`, ({ params }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = consultationsFor(user).find((item) => item.id === Number(params.id));
+    return found ? HttpResponse.json(found) : notFound();
+  }),
+
+  http.put(`${BASE}/consultations/:id/info/`, async ({ params, request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = consultationsFor(user).find((item) => item.id === Number(params.id));
+    if (!found) return notFound();
+    if (new Date(found.starts_at).getTime() < Date.now())
+      return HttpResponse.json({ detail: 'Held.' }, { status: 409 });
+    const info = (await request.json()) as ConsultationDetail['info'];
+    if (!info.university.trim() || !info.major.trim() || !info.degree.trim())
+      return HttpResponse.json({ detail: 'Missing.' }, { status: 400 });
+    Object.assign(found, { info, info_complete: true });
+    return HttpResponse.json(info);
+  }),
+];
+
+const servicesHandlers = [
+  http.get(`${BASE}/services/`, () => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    // The same sessions the consultations page lists.
+    const sessions = consultationsFor(user);
+    const now = Date.now();
+    return HttpResponse.json({
+      ...servicesFor(user),
+      consultations: {
+        upcoming: sessions
+          .filter((item) => new Date(item.starts_at).getTime() >= now)
+          .map(({ id, title, starts_at }) => ({ id, title, starts_at })),
+        total: sessions.length,
+      },
+    });
+  }),
+
+  // Free in the fake: registered at once. A paid webinar answers the invoice to pay.
+  http.post(`${BASE}/services/webinars/:id/register/`, ({ params }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const data = servicesFor(user);
+    if (data.webinar?.id !== Number(params.id)) return notFound();
+    data.webinar.registered = true;
+    if (!data.events.some((event) => event.id === data.webinar?.id))
+      data.events.unshift({
+        id: data.webinar.id,
+        title: data.webinar.title,
+        starts_at: data.webinar.starts_at,
+        online: true,
+        status: 'upcoming',
+        join_url: '#',
+        video_url: null,
+        url: '#',
+      });
+    return HttpResponse.json({ payment_id: null });
+  }),
+
+  http.get(`${BASE}/services/packages/:id/`, ({ params }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = servicesFor(user).packages.find((item) => item.id === Number(params.id));
+    if (!found) return notFound();
+    const titles = [
+      'Introduction & Test Format',
+      'Reading: Skimming',
+      'Reading: Inference',
+      'Listening: Lectures',
+      'Listening: Conversations',
+      'Speaking Task 1',
+      'Speaking Task 2',
+      'Speaking Tasks 3–4',
+      'Writing: Integrated',
+      'Writing: Academic Discussion',
+    ];
+    const detail: PackageDetail = {
+      id: found.id,
+      tag: found.tag,
+      name: found.name,
+      description:
+        found.id === 1 ? '۱۸ جلسه‌ی ویدئویی برای چهار مهارت آزمون تافل.' : 'فیلم کامل وبینار.',
+      lessons: (found.id === 1 ? titles : ['Webinar recording']).map((title, index) => ({
+        id: index + 1,
+        title,
+        minutes: 18 + ((index * 7) % 20),
+        url: '#',
+      })),
+      current_lesson: found.id === 1 ? 7 : null,
+      review: packageReviews.get(found.id) ?? null,
+      review_credit: 50_000,
+    };
+    return HttpResponse.json(detail);
+  }),
+
+  http.post(`${BASE}/services/packages/:id/review/`, async ({ params, request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const { text } = (await request.json()) as { text: string };
+    if (!text.trim()) return HttpResponse.json({ text: ['required'] }, { status: 400 });
+    packageReviews.set(Number(params.id), { text, submitted_at: new Date().toISOString() });
+    servicesFor(user).credit += 50_000;
+    return new HttpResponse(null, { status: 201 });
+  }),
+
+  http.get(`${BASE}/services/events/:id/`, ({ params }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const data = servicesFor(user);
+    const found = data.events.find((item) => item.id === Number(params.id));
+    if (!found) return notFound();
+    const detail: EventDetail = {
+      id: found.id,
+      kind: 'webinar',
+      title: found.title,
+      starts_at: found.starts_at,
+      online: found.online,
+      location: null,
+      description: '[توضیحات رویداد از پنل مدیریت]',
+      registered: true,
+      // The room isn't open yet in the fake (a real one opens shortly before it starts).
+      join_url: null,
+      video_url: found.video_url,
+      invoice: { amount: found.id === 31 ? 290_000 : 0, paid_at: found.starts_at },
+    };
+    return HttpResponse.json(detail);
+  }),
+
+  http.put(`${BASE}/services/gpa/`, async ({ request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const { courses } = (await request.json()) as { courses: GpaCourse[] };
+    if (
+      !courses.length ||
+      courses.some(
+        (course) =>
+          !course.name.trim() ||
+          course.credits < 1 ||
+          course.credits > 10 ||
+          course.grade < 0 ||
+          course.grade > 20,
+      )
+    )
+      return HttpResponse.json({ courses: ['invalid'] }, { status: 400 });
+    const data = servicesFor(user);
+    data.gpa = { courses, result: gpaOf(courses) };
+    return HttpResponse.json({ result: data.gpa.result });
+  }),
+];
+
+// endregion
+
 /** Call requests sent from the panel (leads for the sales team), newest last. */
+
+// region Gates (H45–H49)
+
+/**
+ * Dev knob for the gates (canvas V6 sections 8 and 14): `localStorage['scorize.mock.gate']` set
+ * to `terms` (terms, then the profile step), `surveys`, `inactive` or `nps` puts that gate in
+ * front of Sara's panel. Without it nothing stands in the way.
+ */
+export const MOCK_GATE_KEY = 'scorize.mock.gate';
+
+interface GateState {
+  terms: boolean;
+  profile: boolean;
+  surveys: Gates['surveys'];
+  inactive: boolean;
+  nps: boolean;
+}
+
+let gateState: GateState | null = null;
+
+const TERMS: NonNullable<Gates['terms']> = {
+  version: '1405-1',
+  sections: [
+    {
+      title: '۱. موضوع قرارداد',
+      text: 'اسکورایز مسیر اپلای شما را از انتخاب دانشگاه تا گرفتن پذیرش همراهی می‌کند: انتخاب دانشگاه و استاد، نگارش مدارک، ارسال درخواست‌ها و پیگیری نتیجه‌ها.',
+    },
+    {
+      title: '۲. تعهدات متقاضی',
+      text: 'اطلاعات و مدارک را درست و به‌موقع می‌فرستید و پیش از هر ارسال، فهرست دانشگاه‌ها را تأیید می‌کنید. پاسخ به تیکت‌ها در زمان مقرر، سرعت کار را حفظ می‌کند.',
+    },
+    {
+      title: '۳. پرداخت',
+      text: 'مبلغ قرارداد در قسط‌هایی که در صفحه‌ی قرارداد می‌بینید پرداخت می‌شود. با تأخیر در پرداخت، کار پرونده تا تسویه متوقف می‌شود.',
+    },
+    {
+      title: '۴. فسخ قرارداد',
+      text: 'شرایط فسخ و بازگشت وجه در متن کامل قرارداد آمده است. برای هر سؤال، از تیکت پشتیبانی بپرسید.',
+    },
+  ],
+};
+
+function gatesOf(): GateState {
+  if (gateState) return gateState;
+  const knob = globalThis.localStorage.getItem(MOCK_GATE_KEY);
+  gateState = {
+    terms: knob === 'terms',
+    profile: knob === 'terms',
+    surveys:
+      knob === 'surveys'
+        ? [
+            { id: 1, supervisor: 'نیلوفر شریفی' },
+            { id: 2, supervisor: 'امیر کاظمی' },
+          ]
+        : [],
+    inactive: knob === 'inactive',
+    nps: knob === 'nps',
+  };
+  return gateState;
+}
+
+const NO_GATES: Gates = { terms: null, profile: null, surveys: [], inactive: null, nps: null };
+
+/** The profile step clears once its fields are saved (PATCH /profile/). */
+function profileSaved(fields: string[]) {
+  if (
+    gateState?.profile &&
+    ['passport_name', 'relative_name', 'relative_phone'].every((f) => fields.includes(f))
+  )
+    gateState.profile = false;
+}
+
+const gateHandlers = [
+  http.get(`${BASE}/gates/`, () => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    if (user !== SARA) return HttpResponse.json(NO_GATES);
+    const gates = gatesOf();
+    return HttpResponse.json<Gates>({
+      terms: gates.terms ? TERMS : null,
+      profile:
+        !gates.terms && gates.profile
+          ? { fields: ['passport_name', 'relative_name', 'relative_phone'] }
+          : null,
+      surveys: gates.surveys,
+      inactive: gates.inactive
+        ? {
+            file_number: SARA_FILE,
+            credentials: [
+              { label: 'ایمیل اپلای', value: 'sara.ahmadi.apply@gmail.com', secret: false },
+              { label: 'رمز ایمیل', value: 'Sc0rize-1240!', secret: true },
+            ],
+            support_email: 'support@scorize.com',
+          }
+        : null,
+      nps: gates.nps ? { credit: 5_000 } : null,
+    });
+  }),
+
+  http.post(`${BASE}/gates/terms/`, async ({ request }) => {
+    const { version } = (await request.json()) as { version?: unknown };
+    if (version !== TERMS.version)
+      return HttpResponse.json({ version: ['stale'] }, { status: 400 });
+    gatesOf().terms = false;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/gates/surveys/:id/`, async ({ params, request }) => {
+    const { answer } = (await request.json()) as { answer?: unknown };
+    const gates = gatesOf();
+    const id = Number(params.id);
+    if (!gates.surveys.some((survey) => survey.id === id)) return notFound();
+    if (typeof answer !== 'string')
+      return HttpResponse.json({ answer: ['required'] }, { status: 400 });
+    gates.surveys = gates.surveys.filter((survey) => survey.id !== id);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/gates/nps/`, () => {
+    gatesOf().nps = false;
+    return new HttpResponse(null, { status: 204 });
+  }),
+];
+
 export const callRequests: CallRequest[] = [];
 
 export const applicantHandlers = [
@@ -1493,6 +1982,7 @@ export const applicantHandlers = [
     }
     if (Object.keys(errors).length) return HttpResponse.json(errors, { status: 400 });
     Object.assign(state.contract.profile, body);
+    profileSaved(Object.keys(body));
     return HttpResponse.json(body);
   }),
 
@@ -1548,6 +2038,9 @@ export const applicantHandlers = [
 
   ...ticketHandlers,
   ...turkeyHandlers,
+  ...servicesHandlers,
+  ...consultationHandlers,
+  ...gateHandlers,
 ];
 
 /** Forget Sara's changes (tests, logout). */
@@ -1555,5 +2048,9 @@ export function resetApplicantMocks() {
   sara = null;
   callRequests.length = 0;
   turkeyCases.clear();
+  servicesOf.clear();
+  packageReviews.clear();
+  consultationsOf.clear();
   transcriptReturned.clear();
+  gateState = null;
 }

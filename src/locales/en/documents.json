@@ -25,7 +25,8 @@
     "pickFirst": "Choose a file for one of the documents first.",
     "sent": "Files sent. Your supervisor has been notified.",
     "failed": "Files not sent: {{n}}. They're still chosen; send them again.",
-    "complete": "You've sent every document we need. If we need another, it shows up here."
+    "complete": "No document is waiting for upload. If a new one is needed, we'll let you know by text.",
+    "completeTitle": "All documents sent"
   },
   "files": {
     "title": "Sent documents",
@@ -38,7 +39,9 @@
     "confirmYes": "Delete file",
     "confirmNo": "Cancel",
     "deleteError": "The file wasn't deleted. Try again.",
-    "empty": "You haven't sent any files yet."
+    "empty": "Documents you upload and the writing team's files collect here.",
+    "emptyTitle": "You haven't sent any files yet",
+    "toRequired": "Go to required documents"
   },
   "aside": "Writing and research interests",
   "writing": {

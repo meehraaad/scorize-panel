@@ -131,7 +131,9 @@ describe('panels', () => {
 
     await user.click(screen.getByRole('button', { name: 'حساب کاربری' }));
     await user.click(screen.getByRole('link', { name: 'پنل کاربر عادی' }));
-    expect(await screen.findByRole('heading', { name: 'سلام نیما، به اسکورایز خوش آمدید' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'سلام نیما، به اسکورایز خوش آمدید' }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
 
     // Not one of his panels, but listed while he is in it, so he can get back.

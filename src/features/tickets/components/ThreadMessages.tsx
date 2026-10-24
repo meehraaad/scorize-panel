@@ -2,6 +2,7 @@ import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { DaySeparator, MessageBubble, MessageThread } from '@/components/tickets/MessageThread';
 import { TicketRating } from '@/components/tickets/TicketRating';
+import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
@@ -29,7 +30,23 @@ export function ThreadMessages({ config, thread }: { config: TicketsConfig; thre
   if (messages.length === 0)
     return (
       <div className="min-h-0 flex-1">
-        <EmptyState variant="padded">{t('empty')}</EmptyState>
+        <EmptyState
+          variant="padded"
+          title={t('emptyTitle')}
+          icon="chat"
+          action={
+            <Button
+              variant="outline"
+              onClick={() =>
+                document.getElementById(`ticket-${thread.replace('/', '-')}-text`)?.focus()
+              }
+            >
+              {t('writeFirst')}
+            </Button>
+          }
+        >
+          {t('empty')}
+        </EmptyState>
       </div>
     );
 

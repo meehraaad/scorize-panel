@@ -40,6 +40,7 @@ src/
 │   │                      (which sections are locked) and the call request
 │   ├── tickets/           Panel-neutral ticket API: types, queries, send/rate/seen hooks, day grouping
 │   ├── dates.ts           Whole days until / between dates
+│   ├── account/           Every panel's account: notifications (the header's bell), channels, login details
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
 │   ├── i18n/              i18next setup, locales config, Intl formatters (Jalali dates)
 │   ├── router/            lazyPage(): page chunk + its dictionaries in parallel
@@ -66,23 +67,24 @@ a change is made once. A feature keeps only what is specific to it (its data, it
 rules); anything that looks the same on two pages becomes a block. Blocks take ready-made text and
 numbers as props (no fetching, no dictionary of their own), so any panel can use them.
 
-| Block                                                         | Use it for                                                                                                                |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `PageStack`, `PageColumns`                                    | Page body: header + sections; main column with a side `<aside>` that drops under it on phones                             |
-| `PageHeader`                                                  | The page's h1, subtitle and actions (sets the document title)                                                             |
-| `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`   | A titled card (a region named by its h2); a section title above several cards or a toolbar                                |
-| `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`    | "Nothing here yet" with a next step; loading rows                                                                         |
-| `ProgressBar`, `StepBar`, `StepList`, `StepDot`               | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                           |
-| `StatGrid`                                                    | A row of number tiles                                                                                                     |
-| `FilterTabs`, `SearchField`, `Pager`                          | List toolbars and paging                                                                                                  |
-| `FileDrop`, `PickedFile`, `FileTile`                          | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully |
-| `TagList`, `Chip`, `Avatar`, `StarRating`                     | Tags with optional remove, status pills, initials, 1–5 rating                                                             |
-| `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass` | Actions (44px touch targets; icon-only ones require `aria-label`)                                                         |
-| `Notice`, `InlineConfirm`, `TextField`, `Icon`, `Card`        | Messages, in-place confirmation, inputs, icons, a bare card                                                               |
-| `BackLink`                                                    | "← Back" above a sub-page's title (writing forms, payment)                                                                |
-| `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)       | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                   |
-| `LinkTile`, `TileGrid`                                        | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid                               |
-| `OtpInput`                                                    | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge  |
+| Block                                                                   | Use it for                                                                                                                |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `PageStack`, `PageColumns`                                              | Page body: header + sections; main column with a side `<aside>` that drops under it on phones                             |
+| `PageHeader`                                                            | The page's h1, subtitle and actions (sets the document title)                                                             |
+| `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`             | A titled card (a region named by its h2); a section title above several cards or a toolbar                                |
+| `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`              | "Nothing here yet" with a next step; loading rows                                                                         |
+| `ProgressBar`, `StepBar`, `StepList`, `StepDot`                         | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                           |
+| `StatGrid`                                                              | A row of number tiles                                                                                                     |
+| `FilterTabs`, `SearchField`, `Pager`                                    | List toolbars and paging                                                                                                  |
+| `FileDrop`, `PickedFile`, `FileTile`                                    | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully |
+| `TagList`, `Chip`, `Avatar`, `StarRating`                               | Tags with optional remove, status pills, initials, 1–5 rating                                                             |
+| `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass`           | Actions (44px touch targets; icon-only ones require `aria-label`)                                                         |
+| `Notice`, `InlineConfirm`, `TextField`, `TextAreaField`, `Icon`, `Card` | Messages, in-place confirmation, inputs (one line, several lines), icons, a bare card                                     |
+| `BackLink`                                                              | "← Back" above a sub-page's title (writing forms, payment)                                                                |
+| `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)                 | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                   |
+| `LinkTile`, `TileGrid`                                                  | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid (`dense`: 2 on phones)        |
+| `OtpInput`                                                              | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge  |
+| `Switch`                                                                | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                    |
 
 Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
 panel that shows tickets:
@@ -131,6 +133,16 @@ banner for the reason, and under it the page's own blocks fed with sample data f
 `preview.ts` (texts from its dictionary), faded and `inert`. An ended contract shows the real case
 under the banner. Dev: `localStorage['scorize.mock.access']` = `pending` / `noservice` / `ended`
 switches the mock user's state (log in as Maryam for a guest).
+
+### Gates (applicant panel, canvas V6 sections 8 and 14)
+
+`GET /applicant/v1/gates/` (`lib/applicant/gates.ts`) says what must happen before the panel
+opens. The applicant routes sit under a pathless layout, `features/gates/GatesLayout`, which shows
+the first gate that applies instead of the page: a closed (inactive) panel, the terms, the missing
+profile details, then the month's supervisor surveys. Answering one invalidates the applicant
+queries and the next gate (or the page asked for) appears. The optional NPS survey is a card on the
+home page (`components/applicant/NpsCard`). Dev: `localStorage['scorize.mock.gate']` = `terms` /
+`surveys` / `inactive` / `nps` (as Sara).
 
 ### Panels and roles
 

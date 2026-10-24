@@ -72,7 +72,8 @@
     "more": "More"
   },
   "header": {
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "notificationsUnread": "Notifications, {{n}} unread"
   },
   "account": {
     "menu": "Account",

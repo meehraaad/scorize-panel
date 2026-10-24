@@ -40,7 +40,7 @@ export function TodoCard({ todos }: { todos: Todo[] }) {
       }
     >
       {todos.length === 0 ? (
-        <EmptyState>{t('todos.empty')}</EmptyState>
+        <EmptyState title={t('todos.emptyTitle')}>{t('todos.empty')}</EmptyState>
       ) : (
         <ul className="m-0 list-none divide-y divide-hair p-0">
           {todos.map((todo) => (

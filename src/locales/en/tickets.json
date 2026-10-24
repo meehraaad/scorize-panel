@@ -51,7 +51,7 @@
   "rate": "Rate this reply",
   "star": "Rate {{n}} out of {{max}}",
   "rated": "Your rating: {{n}} out of {{max}}",
-  "empty": "No messages in this conversation yet. Write your question and the team will reply.",
+  "empty": "Ask your supervisor anything about your case, right here.",
   "loadError": "The messages didn't load. Check your internet connection and open the page again.",
   "composer": {
     "label": "Message",
@@ -85,5 +85,7 @@
     "question": "Hi, when will the University of Toronto decision come out?",
     "answer": "Hi, usually by the end of March. As soon as it arrives, we'll let you know here and by SMS.",
     "thanks": "Thank you for following up."
-  }
+  },
+  "emptyTitle": "You haven't sent a message yet",
+  "writeFirst": "Write your first message"
 }

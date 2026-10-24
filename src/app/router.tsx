@@ -5,8 +5,8 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router';
-import { ComingSoonPage } from '@/components/ComingSoonPage';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
+import { accountQuery } from '@/lib/account/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage } from '@/lib/router/lazyPage';
@@ -117,7 +117,14 @@ export const routes: RouteObject[] = [
       {
         ErrorBoundary: SectionError,
         children: [
-          { path: 'account', element: <ComingSoonPage title="account.profile" /> },
+          {
+            path: 'account',
+            loader: () => {
+              queryClient.query(accountQuery).catch(() => undefined);
+              return null;
+            },
+            ...lazyPage(() => import('@/features/account/AccountPage'), ['account']),
+          },
           { path: 'settings', ...lazyPage(() => import('@/features/settings/SettingsPage')) },
         ],
       },

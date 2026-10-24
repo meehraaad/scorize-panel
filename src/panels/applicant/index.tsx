@@ -1,12 +1,15 @@
 import { ComingSoonPage } from '@/components/ComingSoonPage';
 import { applicationsQuery } from '@/features/applications/api';
+import { consultationQuery, consultationsQuery } from '@/features/consultations/api';
 import { contractQuery, paymentQuery } from '@/features/contract/api';
+import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
 import { turkeyQuery } from '@/features/turkey/api';
 import { documentsQuery } from '@/features/documents/api';
 import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
+import { gatesQuery } from '@/lib/applicant/gates';
 import { lazyPage } from '@/lib/router/lazyPage';
 import { ticketsQuery } from '@/lib/tickets/api';
 import type { PanelDefinition } from '../types';
@@ -57,96 +60,158 @@ export const applicantPanel: PanelDefinition = {
   ],
   routes: [
     {
-      index: true,
-      // Start the case request together with the page chunk, not after it.
+      // Terms, missing details, supervisor surveys or a closed panel come before any page
+      // (canvas V6 section 8).
       loader: () => {
-        // A failure here shows up when the page reads the query.
-        queryClient.query(overviewQuery).catch(() => undefined);
-        queryClient.query(accessQuery).catch(() => undefined);
+        queryClient.query(gatesQuery).catch(() => undefined);
         return null;
       },
-      ...lazyPage(() => import('@/features/home/HomePage'), ['home']),
-    },
-    {
-      path: 'applications',
-      loader: () => {
-        queryClient.query(applicationsQuery).catch(() => undefined);
-        queryClient.query(accessQuery).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/applications/ApplicationsPage'), ['applications']),
-    },
-    {
-      path: 'documents',
-      loader: () => {
-        queryClient.query(documentsQuery).catch(() => undefined);
-        queryClient.query(accessQuery).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/documents/DocumentsPage'), ['documents']),
-    },
-    // Writing information forms. Design: canvas V6 sections 4 (SOP) and 5 (CV).
-    {
-      path: 'documents/sop',
-      loader: () => {
-        queryClient.query(writingQuery('sop')).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/writing/SopFormPage'), ['writing']),
-    },
-    {
-      path: 'documents/cv',
-      loader: () => {
-        queryClient.query(writingQuery('cv')).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing']),
-    },
-    // Other writing orders (recommendation, PS, …) get a form later.
-    {
-      path: 'documents/:writing',
-      element: <ComingSoonPage title="panels.applicant.nav.documents" />,
-    },
-    // Supervisor and writing tickets. Design: canvas V6 "تیکت‌ها" / "تیکت نگارش" (AppTickets).
-    {
-      path: 'tickets/*',
-      loader: () => {
-        queryClient.query(ticketsQuery(applicantTickets)).catch(() => undefined);
-        queryClient.query(accessQuery).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('./TicketsPage'), ['tickets']),
-    },
-    // Design: canvas V6 sections 7 (contract) and 11 (payment details).
-    {
-      path: 'contract',
-      loader: () => {
-        queryClient.query(contractQuery).catch(() => undefined);
-        queryClient.query(accessQuery).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/contract/ContractPage'), ['contract']),
-    },
-    {
-      // An invoice: an instalment, or a purchase from "other services".
-      path: 'payments/:id',
-      loader: ({ params }) => {
-        const id = Number(params.id);
-        if (Number.isInteger(id) && id > 0)
-          queryClient.query(paymentQuery(id)).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/contract/PaymentPage'), ['contract']),
-    },
-    { path: 'services', element: <ComingSoonPage title="panels.applicant.nav.services" /> },
-    // The free Turkey application (no nav item: the guest home links to it). Canvas V7 section 3.
-    {
-      path: 'turkey',
-      loader: () => {
-        queryClient.query(turkeyQuery).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/turkey/TurkeyPage'), ['turkey']),
+      ...lazyPage(() => import('@/features/gates/GatesLayout'), ['gates']),
+      children: [
+        {
+          index: true,
+          // Start the case request together with the page chunk, not after it.
+          loader: () => {
+            // A failure here shows up when the page reads the query.
+            queryClient.query(overviewQuery).catch(() => undefined);
+            queryClient.query(accessQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/home/HomePage'), ['home', 'gates']),
+        },
+        {
+          path: 'applications',
+          loader: () => {
+            queryClient.query(applicationsQuery).catch(() => undefined);
+            queryClient.query(accessQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/applications/ApplicationsPage'), ['applications']),
+        },
+        {
+          path: 'documents',
+          loader: () => {
+            queryClient.query(documentsQuery).catch(() => undefined);
+            queryClient.query(accessQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/documents/DocumentsPage'), ['documents']),
+        },
+        // Writing information forms. Design: canvas V6 sections 4 (SOP) and 5 (CV).
+        {
+          path: 'documents/sop',
+          loader: () => {
+            queryClient.query(writingQuery('sop')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/SopFormPage'), ['writing']),
+        },
+        {
+          path: 'documents/cv',
+          loader: () => {
+            queryClient.query(writingQuery('cv')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing']),
+        },
+        // Other writing orders (recommendation, PS, …) get a form later.
+        {
+          path: 'documents/:writing',
+          element: <ComingSoonPage title="panels.applicant.nav.documents" />,
+        },
+        // Supervisor and writing tickets. Design: canvas V6 "تیکت‌ها" / "تیکت نگارش" (AppTickets).
+        {
+          path: 'tickets/*',
+          loader: () => {
+            queryClient.query(ticketsQuery(applicantTickets)).catch(() => undefined);
+            queryClient.query(accessQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('./TicketsPage'), ['tickets']),
+        },
+        // Design: canvas V6 sections 7 (contract) and 11 (payment details).
+        {
+          path: 'contract',
+          loader: () => {
+            queryClient.query(contractQuery).catch(() => undefined);
+            queryClient.query(accessQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/contract/ContractPage'), ['contract']),
+        },
+        {
+          // An invoice: an instalment, or a purchase from "other services".
+          path: 'payments/:id',
+          loader: ({ params }) => {
+            const id = Number(params.id);
+            if (Number.isInteger(id) && id > 0)
+              queryClient.query(paymentQuery(id)).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/contract/PaymentPage'), ['contract']),
+        },
+        // Design: canvas V6 section 9. Open with or without a contract.
+        {
+          path: 'services',
+          loader: () => {
+            queryClient.query(servicesQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/services/ServicesPage'), ['services']),
+        },
+        // A bought package, an event. Design: canvas V6 section 13 (reached from services).
+        {
+          path: 'services/packages/:id',
+          loader: ({ params }) => {
+            const id = Number(params.id);
+            if (Number.isInteger(id) && id > 0)
+              queryClient.query(packageQuery(id)).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/services/PackagePage'), ['services']),
+        },
+        {
+          path: 'services/events/:id',
+          loader: ({ params }) => {
+            const id = Number(params.id);
+            if (Number.isInteger(id) && id > 0)
+              queryClient.query(eventQuery(id)).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/services/EventPage'), ['services']),
+        },
+        // Booked consultations and one session. Design: canvas V6 section 15 (reached from services).
+        {
+          path: 'consultations',
+          loader: () => {
+            queryClient.query(consultationsQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(
+            () => import('@/features/consultations/ConsultationsPage'),
+            ['consultations'],
+          ),
+        },
+        {
+          path: 'consultations/:id',
+          loader: ({ params }) => {
+            const id = Number(params.id);
+            if (Number.isInteger(id) && id > 0)
+              queryClient.query(consultationQuery(id)).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/consultations/ConsultationPage'), ['consultations']),
+        },
+        // The free Turkey application (no nav item: the guest home links to it). Canvas V7 section 3.
+        {
+          path: 'turkey',
+          loader: () => {
+            queryClient.query(turkeyQuery).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/turkey/TurkeyPage'), ['turkey']),
+        },
+      ],
     },
   ],
 };

@@ -134,6 +134,12 @@ const PATHS = {
       <path d="M10 8l6 4-6 4z" />
     </>
   ),
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+    </>
+  ),
   /** Points to the end of the line (right in LTR, left in RTL): "next", "continue". */
   chevronEnd: <path d="m9 18 6-6-6-6" />,
   /** Points to the start of the line: "back". */

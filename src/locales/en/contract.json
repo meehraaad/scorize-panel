@@ -52,7 +52,8 @@
     "uploadReceipt": "Upload receipt",
     "details": "Payment details",
     "free": "This contract is free for you and has no instalments. The university pays for the services.",
-    "empty": "No instalments are recorded for this contract yet."
+    "empty": "The contract's instalments show here once the finance team adds them.",
+    "emptyTitle": "No instalments yet"
   },
   "profile": {
     "title": "Your details",

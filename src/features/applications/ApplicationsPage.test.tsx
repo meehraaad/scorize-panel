@@ -95,7 +95,9 @@ describe('applications page', () => {
 
     await user.click(screen.getByRole('button', { name: 'تأیید اپلای McGill University' }));
     expect(await within(list()).findByText('University of Waterloo')).toBeInTheDocument();
-    expect(within(list()).queryByText('McGill University')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(list()).queryByText('McGill University')).not.toBeInTheDocument();
+    });
     expect(filter(/^منتظر تأیید شما/)).toHaveTextContent('۱');
 
     await user.click(screen.getByRole('button', { name: 'رد اپلای University of Waterloo' }));
@@ -123,7 +125,9 @@ describe('applications page', () => {
     await openPage('/applications?filter=accepted');
     await user.click(within(list()).getByRole('button', { name: 'بله، اجازه می‌دهم' }));
     expect(await screen.findByText('۲ اپلای')).toBeInTheDocument();
-    expect(within(list()).queryByText('تبریک! پذیرش شما ثبت شد')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(list()).queryByText('تبریک! پذیرش شما ثبت شد')).not.toBeInTheDocument();
+    });
   });
 
   it('pages through professor emails', async () => {

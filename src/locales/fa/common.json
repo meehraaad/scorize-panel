@@ -72,7 +72,8 @@
     "more": "بیشتر"
   },
   "header": {
-    "notifications": "اعلان‌ها"
+    "notifications": "اعلان‌ها",
+    "notificationsUnread": "اعلان‌ها، {{n}} خوانده‌نشده"
   },
   "account": {
     "menu": "حساب کاربری",

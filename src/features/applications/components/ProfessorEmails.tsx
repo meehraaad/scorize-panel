@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pager } from '@/components/ui/Pager';
@@ -77,6 +79,19 @@ export function ProfessorEmails() {
           </EmptyState>
         ) : !data ? (
           <SkeletonRows rows={PROFESSORS_PAGE_SIZE} />
+        ) : data.count === 0 ? (
+          <EmptyState
+            variant="padded"
+            title={t('professors.emptyTitle')}
+            icon="send"
+            action={
+              <Link to="/documents#docs-interests" className={buttonClass('primary')}>
+                {t('professors.addInterests')}
+              </Link>
+            }
+          >
+            {t('professors.empty')}
+          </EmptyState>
         ) : (
           <>
             <div

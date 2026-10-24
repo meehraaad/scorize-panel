@@ -44,7 +44,14 @@ export function LinkTile({
   );
 }
 
-/** Tiles in a row that wraps: four across on wide screens, two on tablets, one on phones. */
-export function TileGrid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{children}</div>;
+/**
+ * Tiles in a row that wraps: four across on wide screens, two on tablets, one on phones.
+ * `dense`: two across on phones too (short tiles, like a page's jump links).
+ */
+export function TileGrid({ children, dense = false }: { children: ReactNode; dense?: boolean }) {
+  return (
+    <div className={`grid gap-3 xl:grid-cols-4 ${dense ? 'grid-cols-2' : 'sm:grid-cols-2'}`}>
+      {children}
+    </div>
+  );
 }

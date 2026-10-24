@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
+import { NpsCard } from '@/components/applicant/NpsCard';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { accessQuery } from '@/lib/applicant/access';
 import { useUser } from '@/lib/auth/session';
@@ -51,6 +52,7 @@ export default function HomePage() {
         asideLabel={t('aside')}
         main={
           <>
+            <NpsCard />
             <TodoCard todos={data.todos} />
             <TicketCard ticket={data.ticket} />
             <DeadlinesCard deadlines={data.deadlines} />

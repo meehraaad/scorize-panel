@@ -22,6 +22,7 @@ export function useFormat() {
       month: 'long',
       day: 'numeric',
     });
+    const weekdayName = new Intl.DateTimeFormat(tag, { weekday: 'long' });
     const list = new Intl.ListFormat(tag, { type: 'conjunction' });
     const gregorian = new Intl.DateTimeFormat('en-GB', {
       day: 'numeric',
@@ -32,6 +33,16 @@ export function useFormat() {
     return {
       date: (value: Date | string) => date.format(new Date(value)),
       dateShort: (value: Date | string) => dateShort.format(new Date(value)),
+      /** "Monday". */
+      weekdayName: (value: Date | string) => weekdayName.format(new Date(value)),
+      /** The day and the month name apart, for a calendar tile ("12" over "Aban"). */
+      dayMonth: (value: Date | string) => {
+        const parts = dateShort.formatToParts(new Date(value));
+        return {
+          day: parts.find((part) => part.type === 'day')?.value ?? '',
+          month: parts.find((part) => part.type === 'month')?.value ?? '',
+        };
+      },
       /**
        * The same date as universities publish it ("23 Nov 2026"), for locales whose calendar
        * isn't Gregorian; null where `date` already is.

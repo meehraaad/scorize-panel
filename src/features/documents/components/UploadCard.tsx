@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Chip } from '@/components/ui/Chip';
 import { FileDrop, PickedFile } from '@/components/ui/Files';
 import { Notice } from '@/components/ui/Notice';
@@ -110,10 +111,14 @@ export function UploadCard({ data }: { data: DocumentsData }) {
       }
     >
       {required.length === 0 ? (
-        <div className="flex flex-col gap-3 px-5 pb-6 lg:px-8 lg:pb-8">
-          {message === 'sent' && <Notice tone="success">{t('required.sent')}</Notice>}
-          <p className="m-0 text-[15px] leading-7 text-text-2">{t('required.complete')}</p>
-        </div>
+        <>
+          {message === 'sent' && (
+            <div className="px-5 lg:px-8">
+              <Notice tone="success">{t('required.sent')}</Notice>
+            </div>
+          )}
+          <EmptyState title={t('required.completeTitle')}>{t('required.complete')}</EmptyState>
+        </>
       ) : (
         <form onSubmit={submit} noValidate className="flex flex-col">
           {required.map((item) => (

@@ -128,7 +128,10 @@ describe('tickets page', () => {
     const sop = await screen.findByRole('region', { name: 'تیم نگارش · انگیزه‌نامه' });
     expect(router.state.location.pathname).toBe('/tickets/writing/sop');
     expect(within(sop).getByText(/نگارنده هنوز تعیین نشده است/)).toBeInTheDocument();
-    expect(await within(sop).findByText(/هنوز پیامی در این گفت‌وگو نیست/)).toBeInTheDocument();
+    expect(await within(sop).findByText('هنوز پیامی نفرستاده‌اید')).toBeInTheDocument();
+    // The empty thread's next step puts the cursor in the composer.
+    await userEvent.setup().click(within(sop).getByRole('button', { name: 'نوشتن اولین پیام' }));
+    expect(document.activeElement?.tagName).toBe('TEXTAREA');
     expect(
       screen.getByText(
         'گفت‌وگو با تیم نگارش درباره‌ی نوشته‌های شما. اصلاحات را مکتوب و دقیق بنویسید.',

@@ -1,0 +1,76 @@
+{
+  "terms": {
+    "step": "Step {{n}} of 2 · Starting your case",
+    "title": "Welcome, {{name}}! First, read the terms",
+    "titleNoName": "Welcome! First, read the terms",
+    "text": "Once you accept, you'll fill in your passport name and a close contact, and your panel opens.",
+    "label": "Terms and conditions",
+    "accept": "I've read and accept Scorize's terms and conditions.",
+    "submit": "Accept and continue",
+    "sending": "Saving…",
+    "error": "Not saved. Try again."
+  },
+  "profile": {
+    "title": "Complete a few essential details",
+    "text": "These are needed for university and embassy forms. Your panel opens once they're saved.",
+    "passport_name": "Name in passport (English)",
+    "relative_name": "Name of a close contact",
+    "relative_phone": "Their mobile number",
+    "required": "Fill in this field.",
+    "latin": "In English letters, as in your passport.",
+    "mobile": "Enter a mobile number starting with 09, 11 digits.",
+    "submit": "Save and open my panel",
+    "sending": "Saving…",
+    "error": "Not saved. Check the values and try again."
+  },
+  "survey": {
+    "title": "Before you continue, tell us what you think",
+    "text": "To open your panel, answer {{n}} short surveys about your supervisors. Under a minute.",
+    "which": "Survey {{n}} of {{total}} · Supervisor",
+    "question": "Over the past month, how satisfied were you with {{name}}'s follow-up?",
+    "answer": {
+      "very_satisfied": "Very satisfied",
+      "satisfied": "Satisfied",
+      "neutral": "Neutral",
+      "dissatisfied": "Dissatisfied"
+    },
+    "done": "Done",
+    "submit": "Submit and continue",
+    "sending": "Saving…",
+    "pickFirst": "Pick one of the options.",
+    "error": "Not saved. Try again."
+  },
+  "inactive": {
+    "file": "Case no. {{number}}",
+    "title": "Your contract has ended",
+    "text": "The applicant panel is closed, but your email logins are still here.",
+    "status": "Contract status",
+    "ended": "Ended",
+    "emails": "Email logins",
+    "emailsText": "The emails we created for your applications. We suggest changing the password.",
+    "show": "Show",
+    "hide": "Hide",
+    "copy": "Copy {{name}}",
+    "copied": "Copied",
+    "next": "We're here for your next degree too",
+    "nextText": "Share your experience with friends, or book a consultation for your PhD.",
+    "consult": "Book a consultation for your next degree",
+    "copyShort": "Copy",
+    "support": "Questions? Email <email>{{email}}</email>."
+  },
+  "nps": {
+    "credit": "{{amount}} toman credit as a thank-you",
+    "title": "Just a few seconds of your time",
+    "text": "For your time, {{amount}} toman is added to your credit.",
+    "question": "From 1 to 10, how likely are you to recommend Scorize?",
+    "low": "Not at all likely",
+    "high": "Extremely likely",
+    "comment": "What would make it a 10?",
+    "submit": "Submit",
+    "sending": "Sending…",
+    "later": "Later",
+    "pickFirst": "Pick a score.",
+    "thanks": "Thanks! {{amount}} toman was added to your credit.",
+    "error": "Not sent. Try again."
+  }
+}

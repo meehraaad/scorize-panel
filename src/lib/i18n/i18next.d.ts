@@ -1,10 +1,14 @@
 import 'i18next';
+import type account from '@/locales/fa/account.json';
 import type applications from '@/locales/fa/applications.json';
 import type auth from '@/locales/fa/auth.json';
 import type common from '@/locales/fa/common.json';
+import type consultations from '@/locales/fa/consultations.json';
 import type contract from '@/locales/fa/contract.json';
 import type documents from '@/locales/fa/documents.json';
+import type gates from '@/locales/fa/gates.json';
 import type home from '@/locales/fa/home.json';
+import type services from '@/locales/fa/services.json';
 import type tickets from '@/locales/fa/tickets.json';
 import type turkey from '@/locales/fa/turkey.json';
 import type writing from '@/locales/fa/writing.json';
@@ -24,6 +28,10 @@ declare module 'i18next' {
       tickets: typeof tickets;
       contract: typeof contract;
       turkey: typeof turkey;
+      services: typeof services;
+      consultations: typeof consultations;
+      account: typeof account;
+      gates: typeof gates;
     };
   }
 }

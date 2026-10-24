@@ -121,6 +121,8 @@ export function ApplicationsList({ applications }: { applications: Application[]
         ) : (
           <EmptyState
             variant="padded"
+            title={applications.length === 0 ? t('list.noneTitle') : undefined}
+            icon="graduation"
             action={
               applications.length > 0 && (
                 <Button

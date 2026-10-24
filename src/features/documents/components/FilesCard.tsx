@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FileTile } from '@/components/ui/Files';
 import { IconButton, IconLink } from '@/components/ui/IconButton';
@@ -26,7 +27,17 @@ export function FilesCard({ files }: { files: CaseFile[] }) {
       }
     >
       {files.length === 0 ? (
-        <EmptyState>{t('files.empty')}</EmptyState>
+        <EmptyState
+          title={t('files.emptyTitle')}
+          icon="document"
+          action={
+            <a href="#docs-required" className={buttonClass('outline')}>
+              {t('files.toRequired')}
+            </a>
+          }
+        >
+          {t('files.empty')}
+        </EmptyState>
       ) : (
         <ul className="m-0 grid list-none grid-cols-1 gap-3 px-4 pt-2 pb-4 lg:px-6 lg:pb-6 xl:grid-cols-2">
           {files.map((file) => (

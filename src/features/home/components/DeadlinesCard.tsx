@@ -38,7 +38,9 @@ export function DeadlinesCard({ deadlines }: { deadlines: ApplicationSummary[] }
       }
     >
       {deadlines.length === 0 ? (
-        <EmptyState>{t('deadlines.empty')}</EmptyState>
+        <EmptyState title={t('deadlines.emptyTitle')} icon="clock">
+          {t('deadlines.empty')}
+        </EmptyState>
       ) : (
         <ul className="m-0 list-none divide-y divide-hair p-0">
           {deadlines.map((item) => {

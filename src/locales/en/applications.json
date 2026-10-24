@@ -19,11 +19,12 @@
     "filters": "Filter applications",
     "range": "{{from}}–{{to}} of {{total}} applications",
     "count": "Applications: {{total}}",
-    "none": "No applications yet. Your supervisor adds them here after the university search.",
+    "none": "After searching universities, your supervisor adds applications here for you to approve.",
     "emptyFilter": "No applications in this group.",
     "emptySearch": "No applications match “{{query}}”.",
     "clearSearch": "Clear search",
-    "showAll": "Show all applications"
+    "showAll": "Show all applications",
+    "noneTitle": "No applications yet"
   },
   "filter": {
     "all": "All",
@@ -111,7 +112,7 @@
     "sent": "emails sent",
     "replied": "replies",
     "page": "Page {{page}} of {{pages}}",
-    "empty": "No emails to professors yet.",
+    "empty": "First add your research interests so the search team can find the right professors.",
     "error": "The email list didn't load. Check your internet connection.",
     "retry": "Try again",
     "column": {
@@ -124,6 +125,8 @@
       "sent": "Sent",
       "reminded": "Reminder sent",
       "replied": "Replied"
-    }
+    },
+    "emptyTitle": "The email bot hasn't started yet",
+    "addInterests": "Add research interests"
   }
 }
