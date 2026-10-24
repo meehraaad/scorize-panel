@@ -1,16 +1,23 @@
 import { queryOptions, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { changeTask, createTask, taskRequest, tasksOverview } from './django';
 
 /**
  * Staff tasks (StaffToDo): one model, three behaviours (canvas "کارها"):
  * - `mine`: a follow-up I set for myself about a person; done → outcome + next step
  * - `request`: I ask a colleague; they see it, work on it, finish or refuse it
  * - `team`: sent to a team's queue; whoever takes it becomes its owner
- * Panel-neutral (the supervisor panel uses the same endpoint). Shapes: backend-changes.md T1–T12.
+ * Panel-neutral. The sales panel reads and writes Django's existing StaffToDo API (./django.ts);
+ * the supervisor panel, whose people are Applicant ids, waits for the tasks endpoint
+ * (backend-changes.md T1–T12, T11).
  */
 
 export const TASKS_KEY = ['tasks'] as const;
 export const TASKS_API = '/staff/v1/tasks';
+
+export type TasksPanel = 'sales' | 'supervisor';
+/** Which panels already run on Django's StaffToDo. */
+const onDjango = (panel: TasksPanel) => panel === 'sales';
 
 export type TaskKind = 'mine' | 'request' | 'team';
 export type TaskStatus = 'open' | 'sent' | 'seen' | 'in_progress' | 'done' | 'rejected' | 'queued';
@@ -23,8 +30,10 @@ export interface TaskSummary {
   kind: TaskKind;
   status: TaskStatus;
   text: string;
-  /** With the time (StaffToDo.deadline has none today: T1). */
+  /** With the time; a `date_only` task is due at the end of its day. */
   due_at: string;
+  /** StaffToDo.deadline is a date (T1): show the day, not a time. */
+  date_only?: boolean;
   /** Who does it; null while it waits in a team queue. */
   owner: string | null;
   /** Who asked (a colleague, a manager, or the system for automatic follow-ups). */
@@ -54,10 +63,11 @@ export interface NewTask {
 }
 
 /** Creates a task about a person. Refreshes the tasks pages and the `also` keys (the page it came from). */
-export function useCreateTask(also: QueryKey) {
+export function useCreateTask(also: QueryKey, panel: TasksPanel) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (task: NewTask) => api(`${TASKS_API}/`, { method: 'POST', body: task }),
+    mutationFn: (task: NewTask) =>
+      onDjango(panel) ? createTask(task) : api(`${TASKS_API}/`, { method: 'POST', body: task }),
     onSuccess: () =>
       Promise.all([
         client.invalidateQueries({ queryKey: TASKS_KEY }),
@@ -76,7 +86,9 @@ export interface MyTask {
   id: number;
   text: string;
   due_at: string;
-  person: { id: number; name: string; context: string };
+  date_only?: boolean;
+  /** Null for an internal task about nobody. */
+  person: { id: number; name: string; context: string } | null;
   source: TaskSource;
   /** How many times it was pushed back. */
   snoozed: number;
@@ -98,6 +110,7 @@ export interface TaskRequest {
   text: string;
   person: { id: number; name: string } | null;
   due_at: string;
+  date_only?: boolean;
   status: TaskStatus;
   comments: number;
 }
@@ -124,25 +137,28 @@ export interface SentRequest {
 }
 
 export interface TasksOverview {
-  /** Share of tasks done on time (0–1). */
-  on_time: { week: number; last_week: number; target: number };
+  /** Share of tasks done on time (0–1); null until the server measures it (T3). */
+  on_time: { week: number; last_week: number; target: number } | null;
   /** Active people with no open next step: they get forgotten (T5). */
   orphans: { id: number; name: string }[];
   /** Up to the end of today, oldest first. */
   mine: MyTask[];
   tomorrow: number;
-  done_today: number;
+  /** Null until the server records when a task was done (T3). */
+  done_today: number | null;
   requests: TaskRequest[];
   team: QueueItem[];
   sent: SentRequest[];
   colleagues: Colleague[];
 }
 
-export const tasksQuery = (panel: string) =>
+export const tasksQuery = (panel: TasksPanel) =>
   queryOptions({
     queryKey: [...TASKS_KEY, panel],
     queryFn: ({ signal }) =>
-      api<TasksOverview>(`${TASKS_API}/?panel=${encodeURIComponent(panel)}`, { signal }),
+      onDjango(panel)
+        ? tasksOverview(signal)
+        : api<TasksOverview>(`${TASKS_API}/?panel=${encodeURIComponent(panel)}`, { signal }),
   });
 
 export interface RequestDetail extends TaskRequest {
@@ -151,10 +167,13 @@ export interface RequestDetail extends TaskRequest {
   thread: { id: number; author: string; mine: boolean; at: string; text: string }[];
 }
 
-export const requestQuery = (id: number) =>
+export const requestQuery = (panel: TasksPanel, id: number) =>
   queryOptions({
-    queryKey: [...TASKS_KEY, 'request', id],
-    queryFn: ({ signal }) => api<RequestDetail>(`${TASKS_API}/${String(id)}/`, { signal }),
+    queryKey: [...TASKS_KEY, panel, 'request', id],
+    queryFn: ({ signal }) =>
+      onDjango(panel)
+        ? taskRequest(id, signal)
+        : api<RequestDetail>(`${TASKS_API}/${String(id)}/`, { signal }),
   });
 
 export type TaskOutcome = 'talked' | 'no_answer' | 'messaged' | 'later';
@@ -182,10 +201,11 @@ const CHANGE_PATH: Record<TaskChange['kind'], string> = {
 };
 
 /** Everything done to a task from the tasks page (T3–T8). */
-export function useTaskChange() {
+export function useTaskChange(panel: TasksPanel) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ id, change }: { id: number; change: TaskChange }) => {
+      if (onDjango(panel)) return changeTask(id, change);
       const { kind, ...body } = change;
       return api(`${TASKS_API}/${String(id)}/${CHANGE_PATH[kind]}/`, { method: 'POST', body });
     },

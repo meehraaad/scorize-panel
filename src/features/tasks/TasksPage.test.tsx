@@ -1,11 +1,11 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 
-const NIMA = 3; // seller (src/mocks/tasks.ts)
+const NIMA = 3; // seller (src/mocks/staff.ts)
 
 const openTasks = async () => {
   renderApp('/sales/tasks');
@@ -19,35 +19,47 @@ describe('tasks page (sales panel)', () => {
     localStorage.setItem('scorize.mock.session', String(NIMA));
   });
 
-  it('groups my follow-ups and flags people with no next step', async () => {
+  // Tasks are Django's StaffToDo (src/mocks/staff.ts): a deadline is a date, there are no team
+  // queues or "no next step" lists yet (backend-changes T3–T8).
+  it('groups my follow-ups by day and links the person', async () => {
     await openTasks();
     expect(screen.getByRole('heading', { name: /^عقب‌افتاده/ })).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: '۳ مشتری فعال قدم بعدی ندارند' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'تعیین قدم بعدی' })).toHaveAttribute(
+    expect(screen.getByText('تماس دوم؛ دیروز جواب نداد')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'سمیرا نوروزی' })).toHaveAttribute(
       'href',
-      '/sales/customers/109',
+      '/sales/customers/106',
     );
+    expect(screen.queryByText(/قدم بعدی ندارند/)).not.toBeInTheDocument();
+    expect(screen.getByText('فردا: ۱ پیگیری')).toBeInTheDocument();
   });
 
-  it('done asks for the next step; without one it needs a reason', async () => {
+  it('done with a next step makes the next task; without one it needs a reason', async () => {
     const user = userEvent.setup();
     await openTasks();
     await user.click(screen.getByRole('button', { name: 'انجام شد: تماس دوم؛ دیروز جواب نداد' }));
-    const dialog = await screen.findByRole('dialog', { name: 'پیگیری انجام شد' });
-    expect(within(dialog).getByLabelText('قدم بعدی')).toHaveValue(
-      'تماس سوم، اگر جواب نداد پیام واتساپ',
+    let dialog = await screen.findByRole('dialog', { name: 'پیگیری انجام شد' });
+    await user.type(within(dialog).getByLabelText('قدم بعدی'), 'پیام واتساپ بفرست');
+    await user.click(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' }));
+    await user.click(screen.getByRole('button', { name: 'ثبت و ساختن قدم بعدی' }));
+    expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
+    expect(screen.queryByText('تماس دوم؛ دیروز جواب نداد')).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'انجام شد: بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود',
+      }),
     );
-    await user.click(within(dialog).getByRole('radio', { name: 'جواب نداد' }));
+    dialog = await screen.findByRole('dialog', { name: 'پیگیری انجام شد' });
     await user.click(
       within(dialog).getByRole('button', { name: 'این مشتری پیگیری دیگری لازم ندارد' }),
     );
     expect(within(dialog).getByLabelText('چرا پیگیری دیگری لازم نیست؟')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ثبت و بستن پیگیری' }));
-
-    expect(await screen.findByText('انجام‌شده‌های امروز: ۶')).toBeInTheDocument();
-    expect(screen.queryByText('تماس دوم؛ دیروز جواب نداد')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByText('بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود'),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it('pushes a follow-up to tomorrow', async () => {
@@ -59,7 +71,7 @@ describe('tasks page (sales panel)', () => {
     if (!row) throw new Error('row not found');
     await user.click(within(row).getByRole('button', { name: 'عقب بینداز' }));
     await user.click(within(row).getByRole('button', { name: 'فردا ۱۰:۰۰' }));
-    expect(await screen.findByText('فردا: ۸ پیگیری')).toBeInTheDocument();
+    expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
   });
 
   it('requests: starts one, answers in its conversation, finishes it', async () => {
@@ -79,14 +91,6 @@ describe('tasks page (sales panel)', () => {
     const row = (await screen.findAllByText(/^پذیرش Uppsala/))[0]?.closest('li');
     if (!row) throw new Error('row not found');
     expect(await within(row).findByText('انجام شد')).toBeInTheDocument();
-  });
-
-  it('team queue: taking a task moves it to my follow-ups', async () => {
-    const user = userEvent.setup();
-    await openTasks();
-    await user.click(screen.getByRole('button', { name: /^صف تیم/ }));
-    await user.click(screen.getByRole('button', { name: /^برمی‌دارم: درخواست تماس از پنل/ }));
-    expect(await screen.findByText('برداشتید؛ به «پیگیری‌های من» رفت')).toBeInTheDocument();
   });
 
   it('sends an internal request to a colleague', async () => {

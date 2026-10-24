@@ -1,20 +1,13 @@
 import { http, HttpResponse } from 'msw';
-import type {
-  MyTask,
-  NewTask,
-  QueueItem,
-  RequestDetail,
-  TaskChange,
-  TasksOverview,
-} from '@/lib/tasks/api';
-import { notFound, storage } from './session';
-import { SELLER, failed, newId, stateOrError, type SalesState } from './sales';
+import type { NewTask, RequestDetail, TaskChange, TasksOverview } from '@/lib/tasks/api';
+import { forbidden, notFound, storage } from './session';
+import { newId } from './sales';
 import { SUPERVISOR, SUPERVISOR_NAME, addCaseTask } from './supervisor';
 
 /**
- * Fake staff tasks (docs/backend-changes.md T1–T12) for the seller and the supervisor: follow-ups,
- * colleagues' requests, the team queue. Tasks created about a customer (or an applicant) also show
- * on that person's page.
+ * Fake planned tasks endpoint (docs/backend-changes.md T1–T12, T11) for the supervisor panel:
+ * follow-ups, colleagues' requests, the team queue; a task about an applicant also shows on their
+ * case. The sales panel's tasks use Django's existing StaffToDo API (src/mocks/staff.ts).
  */
 
 const TASKS = '/api/staff/v1/tasks';
@@ -32,156 +25,6 @@ const todayAt = (hour: number) => {
 interface TasksState {
   overview: TasksOverview;
   details: Map<number, RequestDetail>;
-}
-
-const mine = (): MyTask[] => [
-  {
-    id: 101,
-    text: 'زنگ بزن و جواب خانواده درباره‌ی پیشنهاد اپلای آلمان را بگیر',
-    due_at: ago(2 * DAY),
-    person: { id: 104, name: 'محمد یزدانی', context: 'لید · پیشنهاد ارسال شد' },
-    source: 'chain',
-    snoozed: 2,
-    step: 3,
-    action: 'call',
-    note: 'پدرش هزینه را می‌دهد؛ گفت تا شنبه خبر می‌دهند.',
-    suggested_next: 'جواب نهایی خانواده را بگیر',
-  },
-  {
-    id: 102,
-    text: 'پیگیری رسید قسط اول؛ کارت‌به‌کارت کرده ولی رسید را نفرستاده',
-    due_at: ago(DAY),
-    person: { id: 112, name: 'کیان مرادی', context: 'قرارداد اپلای کامل ایتالیا' },
-    source: 'system',
-    snoozed: 0,
-    step: null,
-    action: 'message',
-    note: '',
-    suggested_next: 'رسید را در پنل تأیید کن',
-  },
-  {
-    id: 103,
-    text: 'تماس دوم؛ دیروز جواب نداد',
-    due_at: later(20 * 60_000),
-    person: { id: 106, name: 'سمیرا نوروزی', context: 'لید · کمپین وبینار کانادا' },
-    source: 'system',
-    snoozed: 0,
-    step: null,
-    action: 'call',
-    note: '',
-    suggested_next: 'تماس سوم، اگر جواب نداد پیام واتساپ',
-  },
-  {
-    id: 104,
-    text: 'بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود',
-    due_at: todayAt(18),
-    person: { id: 105, name: 'عرفان ملکی', context: 'لید · مشاوره شد' },
-    source: 'chain',
-    snoozed: 0,
-    step: 2,
-    action: 'call',
-    note: '',
-    suggested_next: 'پیشنهاد اقساطی را بفرست',
-  },
-];
-
-const team = (): QueueItem[] => [
-  {
-    id: 301,
-    team: 'sales',
-    automatic: true,
-    text: 'درخواست تماس از پنل؛ روی صفحه‌ی قفل «قرارداد» زد',
-    person: { id: 102, name: 'پویا عسگری' },
-    queued_at: ago(18 * 60_000),
-    taken: null,
-  },
-  {
-    id: 302,
-    team: 'sales',
-    automatic: true,
-    text: 'مشاوره خریده ولی ۷ روز است پیشنهادی نگرفته',
-    person: { id: 110, name: 'داوود صالحی' },
-    queued_at: ago(2 * DAY),
-    taken: null,
-  },
-];
-
-function tasksState(): TasksState {
-  const details: RequestDetail[] = [
-    {
-      id: 201,
-      from: { name: 'مریم کاظمی', role: 'سوپروایزر' },
-      created_at: ago(4 * HOUR),
-      text: 'پذیرش Uppsala گرفت و قرارداد فقط اپلای است؛ خدمات ویزا را پیشنهاد بده',
-      person: { id: 120, name: 'زهرا موسوی' },
-      due_at: todayAt(18),
-      status: 'sent',
-      comments: 1,
-      body: 'زهرا از Uppsala پذیرش گرفته و قراردادش فقط اپلای است. خیلی نگران وقت سفارت است. اگر ویزا را بگیرد من پرونده را تا آخر نگه می‌دارم.',
-      watchers: [],
-      thread: [
-        {
-          id: 1,
-          author: 'مریم کاظمی',
-          mine: false,
-          at: ago(3 * HOUR),
-          text: 'شماره‌ی همسرش را هم در پرونده گذاشتم؛ تصمیم با هر دو است.',
-        },
-      ],
-    },
-    {
-      id: 202,
-      from: { name: 'حسین رحیمی', role: 'مشاور' },
-      created_at: ago(2 * DAY),
-      text: 'جلسه‌ی دوم مشاوره را با عرفان هماهنگ کن؛ سؤال‌های بورسیه دارد',
-      person: { id: 105, name: 'عرفان ملکی' },
-      due_at: ago(DAY),
-      status: 'seen',
-      comments: 0,
-      body: 'عرفان درباره‌ی بورسیه‌های هلند سؤال‌های زیادی داشت. یک جلسه‌ی ۳۰ دقیقه‌ای دیگر لازم است.',
-      watchers: [],
-      thread: [],
-    },
-  ];
-  return {
-    overview: {
-      on_time: { week: 0.86, last_week: 0.71, target: 0.9 },
-      orphans: [
-        { id: 109, name: 'لیلا امینی' },
-        { id: 110, name: 'داوود صالحی' },
-        { id: 113, name: 'نیما رستگار' },
-      ],
-      mine: mine(),
-      tomorrow: 7,
-      done_today: 5,
-      requests: details.map(
-        ({ body: _body, watchers: _watchers, thread: _thread, ...request }) => request,
-      ),
-      team: team(),
-      sent: [
-        {
-          id: 401,
-          text: 'تأیید رسید کیان مرادی',
-          to: { team: 'finance' },
-          at: ago(3 * HOUR),
-          status: 'seen',
-        },
-        {
-          id: 402,
-          text: 'جلسه‌ی دوم مشاوره برای عرفان',
-          to: { name: 'حسین رحیمی' },
-          at: ago(DAY),
-          status: 'done',
-        },
-      ],
-      colleagues: [
-        { id: 21, name: 'حسین رحیمی', role: 'مشاور' },
-        { id: 7, name: 'مریم کاظمی', role: 'سوپروایزر' },
-        { id: 22, name: 'الهام رضوی', role: 'سرپرست تیم نگارش' },
-      ],
-    },
-    details: new Map(details.map((detail) => [detail.id, detail])),
-  };
 }
 
 /** Maryam's tasks in the supervisor panel (`?panel=supervisor`): about her applicants' cases. */
@@ -282,7 +125,6 @@ function supervisorTasksState(): TasksState {
   };
 }
 
-let tasks: TasksState | null = null;
 let supervisorTasks: TasksState | null = null;
 
 interface TasksContext {
@@ -294,31 +136,9 @@ interface TasksContext {
 }
 
 function tasksOrError(): TasksContext | Response {
-  if (storage.get() === SUPERVISOR) {
-    supervisorTasks ??= supervisorTasksState();
-    return { tasks: supervisorTasks, me: SUPERVISOR_NAME, onPerson: addCaseTask };
-  }
-  const data = stateOrError();
-  if (failed(data)) return data;
-  tasks ??= tasksState();
-  return { tasks, me: SELLER, onPerson: (task, owner) => addCustomerTask(data, task, owner) };
-}
-
-function addCustomerTask(sales: SalesState, task: NewTask, owner: string | null) {
-  if (task.user === null) return;
-  const list = sales.tasks.get(task.user) ?? [];
-  list.push({
-    id: newId(),
-    kind: task.kind,
-    status: task.kind === 'mine' ? 'open' : task.kind === 'request' ? 'sent' : 'queued',
-    text: task.text,
-    due_at: task.due_at,
-    owner,
-    creator: SELLER,
-    team: task.team ?? null,
-    automatic: false,
-  });
-  sales.tasks.set(task.user, list);
+  if (storage.get() !== SUPERVISOR) return forbidden();
+  supervisorTasks ??= supervisorTasksState();
+  return { tasks: supervisorTasks, me: SUPERVISOR_NAME, onPerson: addCaseTask };
 }
 
 function applyChange(
@@ -337,7 +157,7 @@ function applyChange(
       if (!change.next && !change.end_reason)
         return HttpResponse.json({ next: ['required'] }, { status: 400 });
       overview.mine = overview.mine.filter((item) => item !== task);
-      overview.done_today += 1;
+      overview.done_today = (overview.done_today ?? 0) + 1;
       // The next step lands in my follow-ups (tomorrow's list when it is not today).
       if (change.next) {
         const due = new Date(change.next.due_at);
@@ -469,6 +289,5 @@ export const taskHandlers = [
 ];
 
 export function resetTaskMocks() {
-  tasks = null;
   supervisorTasks = null;
 }

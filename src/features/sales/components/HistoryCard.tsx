@@ -69,7 +69,9 @@ function EventRow({ event }: { event: HistoryEvent }) {
   const f = useFormat();
   const look = LOOK[event.kind];
   const author = event.author ?? t('customer.history.system');
-  const title = t(`customer.history.event.${event.kind}`, {
+  // Django's history doesn't say who a lead went to.
+  const key = event.kind === 'lead' && !event.author ? 'leadNew' : event.kind;
+  const title = t(`customer.history.event.${key}`, {
     author,
     channel: event.channel ? t(`channel.${event.channel}`) : '',
     title: event.title ?? '',

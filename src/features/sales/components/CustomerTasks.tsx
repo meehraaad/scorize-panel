@@ -64,24 +64,27 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
   // Read once: whether a task is late doesn't need to change while the page is open.
   const [now] = useState(() => Date.now());
   if (tasks.length === 0) return <EmptyState>{t('customer.tasks.empty')}</EmptyState>;
-  const when = (value: string) => `${f.dateShort(value)} ${f.time(value)}`;
+  const when = (task: TaskSummary) =>
+    task.date_only
+      ? f.dateShort(task.due_at)
+      : `${f.dateShort(task.due_at)} ${f.time(task.due_at)}`;
   return (
     <ul className="m-0 list-none p-0 pb-3">
       {tasks.map((task) => {
         const late = new Date(task.due_at).getTime() < now && task.status !== 'done';
         const meta =
           task.kind === 'mine'
-            ? t('customer.tasks.meta.mine', { due: when(task.due_at) })
+            ? t('customer.tasks.meta.mine', { due: when(task) })
             : task.kind === 'request'
               ? t('customer.tasks.meta.request', {
                   creator: task.creator ?? t('customer.history.system'),
                   owner: task.owner ?? '',
-                  due: when(task.due_at),
+                  due: when(task),
                 })
               : t('customer.tasks.meta.team', {
                   auto: task.automatic ? t('customer.tasks.automatic') : '',
                   team: task.team ? t(`customer.team.${task.team}`) : '',
-                  due: when(task.due_at),
+                  due: when(task),
                 });
         return (
           <li
@@ -108,7 +111,7 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
 
 function NewTaskForm({ customer, name }: { customer: CustomerData; name: string }) {
   const { t } = useTranslation('sales');
-  const create = useCreateTask(customerKey(customer.id));
+  const create = useCreateTask(customerKey(customer.id), 'sales');
   const [text, setText] = useState('');
   const [kind, setKind] = useState<TaskKind>('mine');
   const [peer, setPeer] = useState(String(customer.colleagues[0]?.id ?? ''));

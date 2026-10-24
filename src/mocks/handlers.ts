@@ -9,6 +9,7 @@ import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
 import { resetTaskMocks, taskHandlers } from './tasks';
 import { storage } from './session';
 import { resetWriterMocks, writerHandlers } from './writer';
+import { resetStaffMocks, staffHandlers } from './staff';
 
 /**
  * Fake Django for working on the panel without a backend (VITE_API_MOCKS=true) and for tests.
@@ -234,6 +235,8 @@ export const handlers = [
     return code(21);
   }),
 
+  // Django's existing staff API first: planned-endpoint mocks below build on its records.
+  ...staffHandlers,
   ...applicantHandlers,
   ...accountHandlers,
   ...salesHandlers,
@@ -255,4 +258,5 @@ export function resetMockSession() {
   resetManagerMocks();
   resetSupervisorMocks();
   resetWriterMocks();
+  resetStaffMocks();
 }

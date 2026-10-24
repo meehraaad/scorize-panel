@@ -25,7 +25,9 @@ versions V6/V7 for the applicant panel.
 - **Panels**: navigation and routes live in `src/panels/<panel>/`; layouts in `src/app/layouts/`.
   Every page is lazy (`lazyPage`). Layers are enforced by ESLint (see docs/architecture.md).
 - **API calls** go through `api()` in `src/lib/api/client.ts` and React Query. Mirror each new
-  endpoint in `src/mocks/` (`handlers.ts` for auth, `applicant.ts` for the applicant panel).
+  endpoint in `src/mocks/` (`handlers.ts` for auth, `applicant.ts` for the applicant panel,
+  `staff.ts` for Django's existing staff API). Where Django already has an endpoint, use it
+  (types in `src/lib/staff/api.ts`, table in docs/backend-integration.md) before planning a new one.
 - **Build pages from shared blocks** (`src/components/ui/`, listed in docs/architecture.md, previewed
   at `/dev/components` in dev). Don't copy a block's markup into a feature: extend the block instead.
 - Accessible markup: real `<button>`/`<a>`, `aria-label` on icon-only buttons, touch targets ≥ 44px.

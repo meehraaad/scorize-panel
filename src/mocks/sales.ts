@@ -3,33 +3,22 @@ import type {
   BoardCard,
   BoardData,
   CallItem,
-  ConsultationRange,
-  ConsultationsData,
-  ContactLog,
-  CustomerData,
-  HistoryEvent,
-  LeadRow,
-  LeadsData,
   MonthData,
-  NewLead,
   NextStep,
-  CustomerInfo,
   Offer,
-  PaymentRow,
   PendingReceipt,
   TodayData,
 } from '@/features/sales/api';
 import { BOARD_STAGES } from '@/features/sales/api';
 import {
   STAGES,
-  scoreBand,
   type Degree,
   type LeadSource,
   type LeadStage,
   type LostReason,
 } from '@/lib/sales/api';
-import type { TaskSummary } from '@/lib/tasks/api';
 import { forbidden, notFound, storage } from './session';
+import { staffData } from './staff';
 
 /**
  * Fake sales-panel API (docs/backend-changes.md S1–S20) and the staff tasks endpoint (T1–T12).
@@ -140,7 +129,8 @@ const customer = (
 
 export const ERFAN = 105;
 
-function customers(): MockCustomer[] {
+/** The customers every sales mock shares (also the users of the fake staff API, src/mocks/staff.ts). */
+export function customers(): MockCustomer[] {
   return [
     customer(
       101,
@@ -402,7 +392,6 @@ interface MockConsultation {
 const MASTER = { id: 1, name: 'مشاوره‌ی اپلای ارشد' };
 const PHD = { id: 2, name: 'مشاوره‌ی اپلای دکتری' };
 const VISA = { id: 3, name: 'مشاوره‌ی ویزای تحصیلی' };
-const TYPES = [MASTER, PHD, VISA];
 
 const consultations = (): MockConsultation[] => [
   {
@@ -470,136 +459,12 @@ const consultations = (): MockConsultation[] => [
 export interface SalesState {
   customers: MockCustomer[];
   consultations: MockConsultation[];
-  receipts: PendingReceipt[];
-  history: Map<number, HistoryEvent[]>;
-  tasks: Map<number, TaskSummary[]>;
-  /** Per customer, filled on first use by src/mocks/salesCustomer.ts. */
-  payments: Map<number, PaymentRow[]>;
-  info: Map<number, CustomerInfo>;
   offers: Map<number, Offer>;
-}
-
-function erfanHistory(): HistoryEvent[] {
-  const event = (
-    id: string,
-    kind: HistoryEvent['kind'],
-    when: string,
-    text: string,
-    extra: Partial<HistoryEvent> = {},
-  ): HistoryEvent => ({
-    id,
-    kind,
-    at: when,
-    author: SELLER,
-    channel: null,
-    title: null,
-    text,
-    stage: null,
-    ...extra,
-  });
-  return [
-    event(
-      'contact-5',
-      'call',
-      daysAgo(4),
-      'بعد از مشاوره زنگ زدم. هلند گزینه‌ی اول است، آلمان دوم. نمره‌ی آیلتس ۶٫۵ دارد. منتظر صحبت با خانواده.',
-      { stage: 'consulted' },
-    ),
-    event(
-      'reservation-9',
-      'meeting',
-      daysAgo(5),
-      'مشاوره‌ی ۳۰ دقیقه‌ای اپلای ارشد. پیشنهاد مشاور: ۶ اپلای هلند و آلمان، شروع نگارش از آذر.',
-      { author: 'حسین رحیمی' },
-    ),
-    event('payment-31', 'payment', daysAgo(6), '۱٫۵ میلیون تومان · پرداخت آنلاین موفق', {
-      author: null,
-      title: 'مشاوره‌ی اپلای ارشد',
-    }),
-    event('contact-4', 'no_answer', daysAgo(7), 'پیامک «تماس بی‌پاسخ» خودکار ارسال شد.'),
-    event('contact-3', 'message', daysAgo(7), 'پیام آماده‌ی «معرفی و لینک رزرو مشاوره» ارسال شد.', {
-      channel: 'whatsapp',
-    }),
-    event('payment-30', 'payment_failed', daysAgo(8), 'مشاوره‌ی اپلای ارشد · درگاه بانک خطا داد.', {
-      author: null,
-      title: 'مشاوره‌ی اپلای ارشد',
-    }),
-    event(
-      'lead-5',
-      'lead',
-      daysAgo(8),
-      'علت: خرید ناموفق مشاوره · اولین تماس ۱۱ ساعت بعد (هدف: ۱۵ دقیقه)',
-    ),
-  ];
-}
-
-function erfanTasks(): TaskSummary[] {
-  return [
-    {
-      id: 1,
-      kind: 'mine',
-      status: 'open',
-      text: 'بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود',
-      due_at: at(14, 30),
-      owner: SELLER,
-      creator: SELLER,
-      team: null,
-      automatic: false,
-    },
-    {
-      id: 2,
-      kind: 'request',
-      status: 'seen',
-      text: 'جلسه‌ی دوم مشاوره درباره‌ی بورسیه‌های هلند',
-      due_at: daysAgo(1),
-      owner: 'حسین رحیمی',
-      creator: SELLER,
-      team: null,
-      automatic: false,
-    },
-    {
-      id: 3,
-      kind: 'team',
-      status: 'queued',
-      text: 'نمونه‌ی انگیزه‌نامه‌ی ارشد هوش مصنوعی برای عرفان',
-      due_at: at(18, 0, 2),
-      owner: null,
-      creator: null,
-      team: 'writing',
-      automatic: true,
-    },
-  ];
 }
 
 const salesState = (): SalesState => ({
   customers: customers(),
   consultations: consultations(),
-  receipts: [
-    {
-      payment: 41,
-      customer: 112,
-      name: 'کیان مرادی',
-      amount: 12_000_000,
-      what: 'قسط اول قرارداد اپلای کامل',
-      method: 'card',
-      uploaded_at: minutesAgo(120),
-      receipt_url: '#',
-    },
-    {
-      payment: 42,
-      customer: 104,
-      name: 'محمد یزدانی',
-      amount: 3_500_000,
-      what: 'نگارش رزومه',
-      method: 'iban',
-      uploaded_at: daysAgo(1),
-      receipt_url: '#',
-    },
-  ],
-  history: new Map([[ERFAN, erfanHistory()]]),
-  tasks: new Map([[ERFAN, erfanTasks()]]),
-  payments: new Map(),
-  info: new Map(),
   offers: new Map(),
 });
 
@@ -629,6 +494,29 @@ function bucketOf(item: MockLead): CallItem['bucket'] | null {
 }
 
 const BUCKET_ORDER = { new: 0, overdue: 1, today: 2 } as const;
+
+/** Receipts waiting in Django (Payment PENDING_RECEIPT of the seller's customers), oldest first. */
+function receiptsOf(): PendingReceipt[] {
+  const db = staffData();
+  return db.payments
+    .filter((row) => row.data.status === 5)
+    .map(({ user, data: payment }) => {
+      const person = db.users.get(user);
+      return {
+        payment: payment.id,
+        customer: user,
+        name: person ? `${person.first_name} ${person.last_name}` : '',
+        amount: payment.amount,
+        what:
+          payment.description ??
+          payment.invoices.map((item) => item.purchasable?.title ?? item.type_display).join('، '),
+        method: 'card' as const,
+        uploaded_at: payment.payment_date ?? payment.creation_datetime,
+        receipt_url: payment.receipt_file ?? '#',
+      };
+    })
+    .sort((a, b) => a.uploaded_at.localeCompare(b.uploaded_at));
+}
 
 function todayOf(data: SalesState): TodayData {
   const fresh = data.customers.filter(
@@ -685,7 +573,7 @@ function todayOf(data: SalesState): TodayData {
         starts_at: item.starts_at,
         logged: item.logged,
       })),
-    receipts: data.receipts,
+    receipts: receiptsOf(),
     month: {
       won: data.customers.filter((item) => item.lead.stage === 'won').length + 6,
       target: 12,
@@ -706,79 +594,6 @@ function todayOf(data: SalesState): TodayData {
         ],
       },
     ],
-  };
-}
-
-function rowOf(item: MockCustomer): LeadRow {
-  return {
-    id: item.lead.id,
-    customer: item.id,
-    name: item.name,
-    phone: item.phone,
-    degree: item.degree,
-    countries: item.countries,
-    source: item.lead.source,
-    cause: item.lead.cause,
-    score: item.lead.score,
-    stage: item.lead.stage,
-    lost_reason: item.lead.lost_reason,
-    follow_up_at: item.lead.follow_up_at,
-    last_contact: item.lead.last_contact,
-    created_at: item.lead.created_at,
-  };
-}
-
-const PAGE_SIZE = 10;
-
-function leadsOf(data: SalesState, url: URL): LeadsData {
-  const params = url.searchParams;
-  const search = (params.get('search') ?? '').trim();
-  const overdue = params.get('overdue') === '1';
-  const base = data.customers.filter(
-    (item) =>
-      (!params.get('source') || item.lead.source === params.get('source')) &&
-      (!params.get('band') || scoreBand(item.lead.score) === params.get('band')) &&
-      (!overdue || bucketOf(item.lead) === 'overdue') &&
-      (!search ||
-        item.name.includes(search) ||
-        item.phone.includes(search) ||
-        (item.email ?? '').includes(search)),
-  );
-  const stage = params.get('stage');
-  const matching = base.filter((item) => !stage || item.lead.stage === stage);
-  const page = Math.max(1, Number(params.get('page')) || 1);
-  const counts = Object.fromEntries([
-    ['all', base.length],
-    ...STAGES.map((value) => [value, base.filter((item) => item.lead.stage === value).length]),
-  ]) as LeadsData['counts'];
-  const fresh = data.customers.filter((item) => bucketOf(item.lead) === 'new');
-  const oldest = fresh.reduce<number | null>((max, item) => {
-    const minutes = Math.round((Date.now() - new Date(item.lead.created_at).getTime()) / MINUTE);
-    return max === null || minutes > max ? minutes : max;
-  }, null);
-  const overdueLeads = data.customers.filter((item) => bucketOf(item.lead) === 'overdue');
-  const today = data.customers.filter((item) => bucketOf(item.lead) === 'today');
-  return {
-    counts,
-    stats: {
-      new_waiting: fresh.length,
-      oldest_new_minutes: oldest,
-      today: today.length,
-      today_before_noon: today.filter(
-        (item) => new Date(item.lead.follow_up_at ?? 0).getHours() < 12,
-      ).length,
-      overdue: overdueLeads.length,
-      max_overdue_days: Math.max(
-        0,
-        ...overdueLeads.map((item) =>
-          Math.ceil((Date.now() - new Date(item.lead.follow_up_at ?? 0).getTime()) / DAY),
-        ),
-      ),
-      first_call_minutes: 22,
-    },
-    count: matching.length,
-    page_size: PAGE_SIZE,
-    results: matching.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(rowOf),
   };
 }
 
@@ -834,139 +649,10 @@ function boardOf(data: SalesState): BoardData {
   };
 }
 
-function customerOf(data: SalesState, item: MockCustomer): CustomerData {
-  const first = item.name.split(' ')[0] ?? item.name;
-  const erfan = item.id === ERFAN;
-  return {
-    id: item.id,
-    name: item.name,
-    phone: item.phone,
-    email: item.email,
-    lead: {
-      id: item.lead.id,
-      source: item.lead.source,
-      stage: item.lead.stage,
-      score: item.lead.score,
-      follow_up_at: item.lead.follow_up_at,
-      lost_reason: item.lead.lost_reason,
-      seller: SELLER,
-    },
-    headline: {
-      degree: item.degree,
-      field: item.field,
-      countries: item.countries,
-      budget: item.budget,
-    },
-    score_factors: erfan
-      ? [
-          { label: 'مشاوره‌ی پولی خریده', points: 20 },
-          { label: 'بودجه ۵۰۰ م تا ۱ میلیارد', points: 15 },
-          { label: 'آیلتس ۶٫۵ دارد', points: 12 },
-          { label: 'معدل ۱۶٫۲ · کامپیوتر', points: 10 },
-          { label: 'هلند: کشور با نرخ پذیرش بالا', points: 8 },
-          { label: '۴ روز بدون تماس', points: -2 },
-        ]
-      : [{ label: 'منبع لید', points: Math.round(item.lead.score / 2) }],
-    similar: erfan
-      ? {
-          background: 'کارشناسی کامپیوتر، معدل ۱۵٫۵ تا ۱۷',
-          count: 4,
-          universities: ['TU Delft', 'University of Twente', 'TU Munich', 'RWTH Aachen'],
-        }
-      : null,
-    profile: erfan
-      ? [
-          { key: 'current_degree', value: 'کارشناسی کامپیوتر · فارغ‌التحصیل' },
-          { key: 'wanted_degree', value: 'کارشناسی ارشد' },
-          { key: 'gpa', value: '۱۶٫۲' },
-          { key: 'language', value: 'IELTS 6.5' },
-          { key: 'countries', value: 'هلند، آلمان' },
-          { key: 'budget', value: '۵۰۰ م تا ۱ میلیارد تومان' },
-          { key: 'city', value: 'شیراز' },
-          { key: 'military', value: 'معافیت تحصیلی' },
-          { key: 'referral', value: 'اینستاگرام' },
-        ]
-      : [{ key: 'countries', value: item.countries.join('، ') }],
-    purchases: erfan
-      ? [
-          { label: 'مشاوره‌ی اپلای ارشد · ۳۰ دقیقه', status: 'paid' },
-          { label: 'وبینار «اپلای هلند»', status: 'paid' },
-        ]
-      : [],
-    credit: 0,
-    counts: { purchases: erfan ? 3 : 0, payments: erfan ? 4 : 0 },
-    tasks: data.tasks.get(item.id) ?? [],
-    templates: [
-      {
-        id: 1,
-        title: 'پیگیری بعد از مشاوره',
-        text: `سلام ${first} جان، ${SELLER} از اسکورایز هستم. امیدوارم مشاوره مفید بوده باشد. پیشنهاد اپلای را آماده کردم؛ کی وقت دارید ۱۰ دقیقه صحبت کنیم؟`,
-      },
-      {
-        id: 2,
-        title: 'ارسال پیشنهاد و اقساط',
-        text: `سلام ${first} جان، پیشنهاد اپلای با پرداخت ۳ قسطی در پنل شما قرار گرفت. لینک: scorize.com/panel`,
-      },
-      {
-        id: 3,
-        title: 'تماس بی‌پاسخ',
-        text: `سلام ${first} جان، چند دقیقه پیش تماس گرفتم و موفق به صحبت نشدیم. هر زمان راحت بودید همین‌جا خبر بدهید.`,
-      },
-    ],
-    colleagues: [
-      { id: 21, name: 'حسین رحیمی', role: 'مشاور این مشتری' },
-      { id: 7, name: 'مریم کاظمی', role: 'سوپروایزر' },
-      { id: 22, name: 'الهام رضوی', role: 'سرپرست تیم نگارش' },
-    ],
-  };
-}
-
-const HISTORY_PAGE = 5;
-
 const STAGE_RANK = Object.fromEntries(STAGES.map((stage, index) => [stage, index])) as Record<
   LeadStage,
   number
 >;
-
-function logContact(data: SalesState, item: MockCustomer, log: ContactLog) {
-  const now = new Date().toISOString();
-  const noAnswer = log.channel === 'call' && log.outcome === 'no_answer';
-  const kind: HistoryEvent['kind'] = noAnswer
-    ? 'no_answer'
-    : log.channel === 'call'
-      ? 'call'
-      : log.channel === 'meeting'
-        ? 'meeting'
-        : 'message';
-  const history = data.history.get(item.id) ?? [];
-  history.unshift({
-    id: `contact-${String(nextId++)}`,
-    kind,
-    at: now,
-    author: SELLER,
-    channel: kind === 'message' ? log.channel : null,
-    title: null,
-    text: noAnswer ? 'پیامک «تماس بی‌پاسخ» خودکار ارسال شد.' : log.notes,
-    stage: log.stage ?? null,
-  });
-  data.history.set(item.id, history);
-  // An unanswered call doesn't count as reaching the customer (S4).
-  if (!noAnswer) {
-    item.lead.last_contact = { at: now, summary: log.notes.slice(0, 40) || 'تماس' };
-    if (item.lead.stage === 'new') item.lead.stage = 'contacted';
-  }
-  if (log.stage && log.stage !== item.lead.stage) {
-    item.lead.stage = log.stage;
-    item.lead.stage_since = now;
-    item.lead.lost_reason = log.stage === 'lost' ? (log.lost_reason ?? null) : null;
-  }
-  // No answer: a follow-up for tomorrow is made automatically.
-  item.lead.follow_up_at = noAnswer ? at(10, 0, 1) : log.follow_up_at;
-  if (log.reservation) {
-    const session = data.consultations.find((entry) => entry.id === log.reservation);
-    if (session) session.logged = true;
-  }
-}
 
 function monthOf(data: SalesState): MonthData {
   const won = data.customers.filter((item) => item.lead.stage === 'won').length + 6;
@@ -993,82 +679,10 @@ function monthOf(data: SalesState): MonthData {
   };
 }
 
-function consultationsOf(data: SalesState, url: URL): ConsultationsData {
-  const now = Date.now();
-  const weekEnd = startOfToday() + 7 * DAY;
-  const inRange = (item: MockConsultation, range: ConsultationRange) => {
-    const time = new Date(item.starts_at).getTime();
-    if (range === 'today') return time >= startOfToday() && time < endOfToday();
-    if (range === 'week') return time >= startOfToday() - DAY && time < weekEnd;
-    if (range === 'past') return time < now;
-    return true;
-  };
-  const range = (url.searchParams.get('range') ?? 'week') as ConsultationRange;
-  const type = Number(url.searchParams.get('type')) || null;
-  const unlogged = url.searchParams.get('unlogged') === '1';
-  const ranges: ConsultationRange[] = ['today', 'week', 'past', 'all'];
-  const person = (id: number) => data.customers.find((item) => item.id === id);
-  return {
-    counts: Object.fromEntries(
-      ranges.map((value) => [
-        value,
-        data.consultations.filter((item) => inRange(item, value)).length,
-      ]),
-    ) as ConsultationsData['counts'],
-    unlogged: data.consultations.filter(
-      (item) => !item.logged && new Date(item.starts_at).getTime() < now,
-    ).length,
-    types: TYPES,
-    results: data.consultations
-      .filter(
-        (item) =>
-          inRange(item, range) &&
-          (type === null || item.type.id === type) &&
-          (!unlogged || (!item.logged && new Date(item.starts_at).getTime() < now)),
-      )
-      .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
-      .map((item) => ({
-        ...item,
-        name: person(item.customer)?.name ?? '',
-        phone: person(item.customer)?.phone ?? '',
-      })),
-  };
-}
-
 export const salesHandlers = [
   http.get(`${BASE}/today/`, () => {
     const data = stateOrError();
     return failed(data) ? data : HttpResponse.json(todayOf(data));
-  }),
-
-  http.get(`${BASE}/leads/`, ({ request }) => {
-    const data = stateOrError();
-    return failed(data) ? data : HttpResponse.json(leadsOf(data, new URL(request.url)));
-  }),
-
-  http.post(`${BASE}/leads/`, async ({ request }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const body = (await request.json()) as NewLead;
-    if (!/^09\d{9}$/.test(body.phone))
-      return HttpResponse.json({ phone: ['invalid'] }, { status: 400 });
-    if (data.customers.some((item) => item.phone === body.phone))
-      return HttpResponse.json({ phone: ['exists'] }, { status: 400 });
-    const id = nextId++;
-    data.customers.push(
-      customer(
-        id,
-        `${body.first_name} ${body.last_name}`.trim(),
-        body.phone,
-        null,
-        [],
-        lead(id, 'manual', body.note || 'ثبت دستی', body.note || 'ثبت دستی', 40, 'new', {
-          created_at: new Date().toISOString(),
-          stage_since: new Date().toISOString(),
-        }),
-      ),
-    );
-    return HttpResponse.json({ customer: id }, { status: 201 });
   }),
 
   http.post(`${BASE}/leads/bulk/`, async ({ request }) => {
@@ -1094,87 +708,18 @@ export const salesHandlers = [
     return failed(data) ? data : HttpResponse.json(boardOf(data));
   }),
 
-  http.get(`${BASE}/customers/:id/`, ({ params }) => {
+  // Planned (S17): a quick note. Django's history has no notes yet, so it doesn't show there.
+  http.post(`${BASE}/customers/:id/notes/`, ({ params }) => {
     const data = stateOrError();
     if (failed(data)) return data;
-    const item = data.customers.find((entry) => entry.id === Number(params.id));
-    return item ? HttpResponse.json(customerOf(data, item)) : notFound();
-  }),
-
-  http.get(`${BASE}/customers/:id/history/`, ({ params, request }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const id = Number(params.id);
-    if (!data.customers.some((entry) => entry.id === id)) return notFound();
-    const page = Math.max(1, Number(new URL(request.url).searchParams.get('page')) || 1);
-    const all = data.history.get(id) ?? [];
-    return HttpResponse.json({
-      results: all.slice((page - 1) * HISTORY_PAGE, page * HISTORY_PAGE),
-      next: page * HISTORY_PAGE < all.length ? page + 1 : null,
-    });
-  }),
-
-  http.post(`${BASE}/customers/:id/contacts/`, async ({ params, request }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const item = data.customers.find((entry) => entry.id === Number(params.id));
-    if (!item) return notFound();
-    const log = (await request.json()) as ContactLog;
-    if (log.stage === 'lost' && !log.lost_reason)
-      return HttpResponse.json({ lost_reason: ['required'] }, { status: 400 });
-    logContact(data, item, log);
-    return new HttpResponse(null, { status: 201 });
-  }),
-
-  http.post(`${BASE}/customers/:id/notes/`, async ({ params, request }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const id = Number(params.id);
-    if (!data.customers.some((entry) => entry.id === id)) return notFound();
-    const { text } = (await request.json()) as { text: string };
-    const history = data.history.get(id) ?? [];
-    history.unshift({
-      id: `note-${String(nextId++)}`,
-      kind: 'note',
-      at: new Date().toISOString(),
-      author: SELLER,
-      channel: null,
-      title: null,
-      text,
-      stage: null,
-    });
-    data.history.set(id, history);
-    return new HttpResponse(null, { status: 201 });
+    return data.customers.some((entry) => entry.id === Number(params.id))
+      ? new HttpResponse(null, { status: 201 })
+      : notFound();
   }),
 
   http.get(`${BASE}/month/`, () => {
     const data = stateOrError();
     return failed(data) ? data : HttpResponse.json(monthOf(data));
-  }),
-
-  http.get(`${BASE}/consultations/`, ({ request }) => {
-    const data = stateOrError();
-    return failed(data) ? data : HttpResponse.json(consultationsOf(data, new URL(request.url)));
-  }),
-
-  // Existing Django endpoint (PaymentViewSet.confirm_receipt).
-  http.patch('/api/profile/staff/v1/users/:user/payments/:id/confirm_receipt/', ({ params }) => {
-    const data = stateOrError();
-    if (failed(data)) return data;
-    const index = data.receipts.findIndex(
-      (item) => item.payment === Number(params.id) && item.customer === Number(params.user),
-    );
-    const payment = data.payments
-      .get(Number(params.user))
-      ?.find((item) => item.id === Number(params.id) && item.status === 'pending_receipt');
-    if (index < 0 && !payment)
-      return HttpResponse.json(
-        { message: 'رسید پرداخت در انتظار تایید وجود ندارد!' },
-        { status: 400 },
-      );
-    if (index >= 0) data.receipts.splice(index, 1);
-    if (payment) payment.status = 'paid_by_receipt';
-    return HttpResponse.json({ message: 'رسید پرداخت با موفقت تایید شد.' });
   }),
 ];
 

@@ -17,16 +17,22 @@ export function LeadTable({
   rows,
   selected,
   onSelect,
+  selectable,
 }: {
   rows: LeadRow[];
   selected: ReadonlySet<number>;
   onSelect: (selected: ReadonlySet<number>) => void;
+  /** Checkboxes for bulk changes, when the server takes them. */
+  selectable: boolean;
 }) {
   const { t } = useTranslation('sales');
   const { t: tc } = useTranslation();
   const f = useFormat();
   const s = useSalesFormat();
   const all = rows.length > 0 && rows.every((row) => selected.has(row.id));
+  // No score column while no lead has one (Django has no lead score yet: S5).
+  const scored = rows.some((row) => row.score !== null);
+  const columns = COLUMNS.filter((column) => column !== 'score' || scored);
 
   const toggle = (id: number, on: boolean) => {
     const next = new Set(selected);
@@ -40,18 +46,20 @@ export function LeadTable({
       <table className="w-full min-w-[1000px] border-collapse text-start">
         <thead>
           <tr className="text-[13px] font-medium text-text-2 shadow-[inset_0_-1px_0_var(--hair)]">
-            <th scope="col" className={`${cell} w-10 py-3`}>
-              <input
-                type="checkbox"
-                aria-label={t('leads.selectAll')}
-                checked={all}
-                onChange={(event) =>
-                  onSelect(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())
-                }
-                className="size-[18px] accent-primary"
-              />
-            </th>
-            {COLUMNS.map((column) => (
+            {selectable && (
+              <th scope="col" className={`${cell} w-10 py-3`}>
+                <input
+                  type="checkbox"
+                  aria-label={t('leads.selectAll')}
+                  checked={all}
+                  onChange={(event) =>
+                    onSelect(event.target.checked ? new Set(rows.map((row) => row.id)) : new Set())
+                  }
+                  className="size-[18px] accent-primary"
+                />
+              </th>
+            )}
+            {columns.map((column) => (
               <th key={column} scope="col" className={`${cell} py-3 text-start font-medium`}>
                 {t(`leads.column.${column}`)}
               </th>
@@ -63,7 +71,11 @@ export function LeadTable({
         </thead>
         <tbody>
           {rows.map((row) => {
-            const due = s.due(row.follow_up_at, row.stage, row.last_contact !== null);
+            const due = s.due(
+              row.follow_up_at,
+              row.stage,
+              row.last_contact !== null || row.stage !== 'new',
+            );
             const meta = [
               row.degree !== null ? tc(`degree.${row.degree}`) : null,
               row.countries.length ? f.list(row.countries) : null,
@@ -74,15 +86,17 @@ export function LeadTable({
                 key={row.id}
                 className={`shadow-[inset_0_1px_0_var(--hair)] hover:bg-canvas ${selected.has(row.id) ? 'bg-row-highlight' : ''}`}
               >
-                <td className={cell}>
-                  <input
-                    type="checkbox"
-                    aria-label={t('leads.select', { name: row.name })}
-                    checked={selected.has(row.id)}
-                    onChange={(event) => toggle(row.id, event.target.checked)}
-                    className="size-[18px] accent-primary"
-                  />
-                </td>
+                {selectable && (
+                  <td className={cell}>
+                    <input
+                      type="checkbox"
+                      aria-label={t('leads.select', { name: row.name })}
+                      checked={selected.has(row.id)}
+                      onChange={(event) => toggle(row.id, event.target.checked)}
+                      className="size-[18px] accent-primary"
+                    />
+                  </td>
+                )}
                 <td className={cell}>
                   <span className="flex flex-col gap-1">
                     <Link
@@ -100,9 +114,9 @@ export function LeadTable({
                     <span className="text-[13px] leading-6 text-text-2">{row.cause}</span>
                   </span>
                 </td>
-                <td className={cell}>
-                  <ScoreChip score={row.score} />
-                </td>
+                {scored && (
+                  <td className={cell}>{row.score !== null && <ScoreChip score={row.score} />}</td>
+                )}
                 <td className={cell}>
                   <span className="flex flex-col items-start gap-1">
                     <StageChip stage={row.stage} />
@@ -121,14 +135,15 @@ export function LeadTable({
                       {due.text}
                     </span>
                     <span className="text-[13px] text-text-2">
-                      {t('lastContact', {
-                        text: row.last_contact
-                          ? t('lastContactAgo', {
-                              when: f.timeAgo(row.last_contact.at),
-                              text: row.last_contact.summary,
-                            })
-                          : t('noContact'),
-                      })}
+                      {(row.last_contact || row.stage === 'new') &&
+                        t('lastContact', {
+                          text: row.last_contact
+                            ? t('lastContactAgo', {
+                                when: f.timeAgo(row.last_contact.at),
+                                text: row.last_contact.summary,
+                              })
+                            : t('noContact'),
+                        })}
                     </span>
                   </span>
                 </td>

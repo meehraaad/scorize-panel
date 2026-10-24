@@ -73,7 +73,9 @@ export function MyTasks({ data, config }: { data: TasksOverview; config: TasksCo
       })}
       <p className="m-0 flex flex-wrap justify-between gap-2 px-5 py-4 text-sm text-text-2 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
         <span>{t('mine.tomorrow', { n: f.number(data.tomorrow) })}</span>
-        <span>{t('mine.doneToday', { n: f.number(data.done_today) })}</span>
+        {data.done_today !== null && (
+          <span>{t('mine.doneToday', { n: f.number(data.done_today) })}</span>
+        )}
       </p>
       <DoneDialog
         key={done?.id ?? 'closed'}
@@ -100,7 +102,7 @@ function TaskRow({
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
-  const change = useTaskChange();
+  const change = useTaskChange(config.panel);
   const [snoozing, setSnoozing] = useState(false);
   const [reason, setReason] = useState<(typeof REASONS)[number]>('customer_later');
   const daysLate = Math.max(1, Math.floor((now - new Date(task.due_at).getTime()) / DAY));
@@ -119,18 +121,24 @@ function TaskRow({
     >
       <div className="flex w-20 flex-none flex-col">
         <span className={`text-base font-bold tabular-nums ${late ? 'text-urgent' : 'text-text'}`}>
-          {late && !lateToday ? t('mine.daysLate', { n: f.number(daysLate) }) : f.time(task.due_at)}
+          {late && !lateToday
+            ? t('mine.daysLate', { n: f.number(daysLate) })
+            : task.date_only
+              ? f.dateShort(task.due_at)
+              : f.time(task.due_at)}
         </span>
         {late && <span className="text-xs text-urgent">{t('mine.late')}</span>}
       </div>
       <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1.5">
         <span className="text-[15px] leading-7 font-semibold">{task.text}</span>
-        <span className="text-[13px] text-text-2">
-          <Link to={config.personPath(task.person.id)} className="font-medium text-primary-text">
-            {task.person.name}
-          </Link>
-          {` · ${task.person.context}`}
-        </span>
+        {task.person && (
+          <span className="text-[13px] text-text-2">
+            <Link to={config.personPath(task.person.id)} className="font-medium text-primary-text">
+              {task.person.name}
+            </Link>
+            {task.person.context && ` · ${task.person.context}`}
+          </span>
+        )}
         <span className="flex flex-wrap gap-1.5">
           <Chip tone={SOURCE_TONE[task.source]} small>
             {t(`mine.source.${task.source}`)}
@@ -174,7 +182,7 @@ function TaskRow({
         )}
       </div>
       <div className="flex flex-none flex-wrap items-start gap-2">
-        {task.action !== 'open' && (
+        {task.action !== 'open' && task.person && (
           <Link
             to={config.personPath(task.person.id, task.action)}
             className={buttonClass('outline', 'h-11 px-4 text-sm')}

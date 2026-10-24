@@ -39,7 +39,9 @@ export function CustomerHero({
       .join(' ')
       .trim(),
     headline.countries.length ? f.list(headline.countries) : '',
-    headline.budget ? t('customer.budget', { budget: headline.budget }) : '',
+    headline.budget
+      ? t('customer.budget', { budget: t(`info.choice.budget.${headline.budget}`) })
+      : '',
   ].filter(Boolean);
   const contact = [
     f.digits(maskPhone(customer.phone)),
@@ -50,7 +52,9 @@ export function CustomerHero({
         seller: lead.seller ?? t('due.none'),
       }),
   ].filter(Boolean);
-  const due = lead && s.due(lead.follow_up_at, lead.stage, lead.stage !== 'new');
+  const due =
+    lead &&
+    s.due(lead.follow_up_at, lead.stage, lead.stage !== 'new', lead.follow_up_date_only ?? false);
 
   return (
     <section
@@ -70,7 +74,7 @@ export function CustomerHero({
               <h1 className="m-0 font-display text-2xl font-bold lg:text-[28px]">
                 {customer.name}
               </h1>
-              {lead && <ScoreChip score={lead.score} />}
+              {lead && lead.score !== null && <ScoreChip score={lead.score} />}
               {lead && <StageChip stage={lead.stage} />}
             </div>
             {line.length > 0 && (

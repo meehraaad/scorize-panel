@@ -61,7 +61,8 @@
     "overdue": "{{n}} days overdue",
     "today": "Today {{time}}",
     "later": "{{date}} · {{time}}",
-    "none": "—"
+    "none": "—",
+    "todayDay": "Today"
   },
   "noContact": "not called yet",
   "lastContact": "Last contact: {{text}}",
@@ -342,7 +343,8 @@
         "note": "Note · {{author}}",
         "payment": "Bought {{title}}",
         "payment_failed": "Payment failed",
-        "lead": "Lead created and given to {{author}}"
+        "lead": "Lead created and given to {{author}}",
+        "leadNew": "Lead created"
       },
       "system": "System",
       "stageTag": "Stage: {{stage}}"
@@ -415,7 +417,10 @@
       "save": "Save and set follow-up",
       "saveLost": "Save and close the lead",
       "choose": "Choose",
-      "followWhen": "{{day}}, {{time}}"
+      "followWhen": "{{day}}, {{time}}",
+      "noAnswerToday": "A follow-up for tomorrow is made. The “unanswered call” SMS isn’t sent from the panel yet; send it yourself if needed.",
+      "retryTask": "Call again; the last call wasn’t answered",
+      "followTask": "Follow up after the last contact"
     },
     "tabs": {
       "label": "Customer page sections",
@@ -507,7 +512,8 @@
     "link": "Session link",
     "customer": "Customer page",
     "actionsFor": "{{action}}: {{name}}",
-    "empty": "No consultations in this range."
+    "empty": "No consultations in this range.",
+    "metaShort": "{{type}} · {{mode}}"
   },
   "purchases": {
     "stats": "Purchases summary",
@@ -590,7 +596,6 @@
   },
   "info": {
     "aside": "About the details",
-    "saved": "Last saved {{when}}",
     "save": "Save",
     "done": "Saved",
     "choose": "Choose",
@@ -611,7 +616,8 @@
       "wanted_degree": "Wanted degree",
       "budget": "Budget (application, study, living)",
       "countries": "Wanted countries",
-      "language": "Current language level"
+      "language": "Current language level",
+      "countriesHint": "Separate with commas: Canada, Germany"
     },
     "education": {
       "title": "Education",
@@ -641,6 +647,28 @@
       "title": "Similar cases",
       "text": "Each change to degree or GPA updates the list of applicants with a similar background in the summary.",
       "link": "See in the summary"
+    },
+    "notFound": "“{{value}}” wasn’t found. Write the name as it is on the site.",
+    "choice": {
+      "gender": {
+        "1": "Male",
+        "2": "Female"
+      },
+      "marital": {
+        "1": "Single",
+        "2": "Married"
+      },
+      "military": {
+        "1": "Permanent exemption",
+        "2": "Student exemption",
+        "3": "Serving",
+        "4": "Completed"
+      },
+      "budget": {
+        "1": "Under 500 million toman",
+        "2": "500 million to 1 billion toman",
+        "3": "Over 1 billion toman"
+      }
     }
   },
   "apply": {

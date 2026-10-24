@@ -284,6 +284,24 @@ Design: canvas V8 "پنل نگارش" (WriterQueue, WriterOrder).
 | WR5 | The order's conversation: H17–H20 shapes under `orders/<id>/tickets/` with one thread `writing/<type>` (the order's `SopResumeTicket`), seen from the writer's side (`mine` = written by the writer; no rating endpoint)                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ☐      |
 | WR6 | A writers' inbox of every order's conversation (the panel's "Tickets" item) is not designed; the menu keeps it as "coming soon"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ☐      |
 
+## Existing staff API: small fixes the panel works around today
+
+The sales panel already runs on Django's staff API (`/api/profile/staff/v1/`, see
+backend-integration.md "Existing staff API"). These small changes to it remove workarounds in the
+panel's adapters; each is useful on its own, before the bigger items above.
+
+| #   | Change                                                                                                              | Until then                                                                | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------ |
+| E1  | `SaleLeadViewSet`: add `user` to `filter_fields`                                                                    | The customer page finds the lead by searching the phone number            | ☐      |
+| E2  | `HistorySerializer` (`contact-history/history/`): also send the `ContactHistory.type` code                          | The panel reads the kind from the Persian `type` text ("تماس: پیام رسان") | ☐      |
+| E3  | `PaymentSerializer`: send `ref_id` (bank reference) and the payment link (`get_payment_url`)                        | No reference on paid payments; the link is built from `authority`         | ☐      |
+| E4  | `ConsultationTypeSerializer`: add `meeting_length`                                                                  | Consultations and purchases show no session length                        | ☐      |
+| E5  | `DStaffToDoSerializer` (todos/ list): include `views`                                                               | The tasks page loads each request's detail to know whether it was started | ☐      |
+| E6  | A list of active `Wallet`s (destination accounts) for sellers                                                       | The payments tab can't choose the account for a card transfer             | ☐      |
+| E7  | Register `ExperienceViewSet` (written in `staff/views/v1.py`, missing from the router) as `users/<id>/experiences/` | No "similar admissions" on the customer page                              | ☐      |
+| E8  | Pending receipts of the seller's customers in one list (`PaymentViewSet` is per user)                               | Part of S10 (Today)                                                       | ☐      |
+| E9  | `UserViewSet.create`: `phone_number` errors with a code (`invalid` / `exists`) instead of model text                | The panel checks "exists" with a search first                             | ☐      |
+
 ## Roles
 
 | #   | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Status |
