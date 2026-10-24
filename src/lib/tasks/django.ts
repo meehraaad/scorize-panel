@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client';
+import { joinNames } from '@/lib/i18n/names';
 import {
   STAFF_API,
   TEAM,
@@ -62,7 +63,7 @@ const owns = (todo: DjangoTodo, me: number) => todo.support_staves.some((item) =
 const dueOf = (todo: DjangoTodo) => endOfDay(todo.deadline);
 const personOf = (todo: DjangoTodo) =>
   todo.user ? { id: todo.user.id, name: fullName(todo.user) } : null;
-const names = (staves: DjangoStaff[]) => staves.map((item) => item.full_name).join('، ');
+const names = (staves: DjangoStaff[]) => joinNames(staves.map((item) => item.full_name));
 
 /** Viewed by an owner other than the creator: Django's nearest thing to "started". */
 function statusOf(todo: DjangoTodo, me: number): TaskStatus {

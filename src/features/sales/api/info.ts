@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { joinNames, localName } from '@/lib/i18n/names';
 import {
   COUNTRIES_API,
   EXAMS_API,
@@ -77,8 +78,8 @@ const userApi = (id: number) => `${STAFF_API}/users/${String(id)}`;
 
 const text = (value: string | number | null | undefined) =>
   value === null || value === undefined ? '' : String(value);
-const countryName = (country: DjangoCountry) => country.persian_name ?? country.country;
-const fieldName = (field: DjangoStudyField) => field.name_persian ?? field.name;
+const countryName = (country: DjangoCountry) => localName(country.country, country.persian_name);
+const fieldName = (field: DjangoStudyField) => localName(field.name, field.name_persian);
 
 interface InfoRecords {
   user: DjangoUserDetail;
@@ -113,7 +114,7 @@ function infoOf({ user, personal, education, exams }: InfoRecords, list: DjangoE
     goal: {
       wanted_degree: text(personal?.desired_degree),
       budget: text(personal?.budget),
-      countries: (personal?.desired_countries ?? []).map(countryName).join('، '),
+      countries: joinNames((personal?.desired_countries ?? []).map(countryName)),
       language: text(personal?.current_lang_level),
     },
     education: education.map((row) => ({

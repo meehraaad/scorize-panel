@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { joinNames } from '@/lib/i18n/names';
 import { SALES_API, SALES_KEY } from '@/lib/sales/api';
 import {
   PAYMENT_STATUS,
@@ -56,7 +57,7 @@ const payUrl = (authority: string | null) =>
 export function paymentRowOf(payment: DjangoPayment): PaymentRow {
   return {
     id: payment.id,
-    what: payment.invoices.map((item) => invoiceTitle(item, payment)).join('، '),
+    what: joinNames(payment.invoices.map((item) => invoiceTitle(item, payment))),
     amount: payment.amount,
     // change_method sets an authority for online payment and clears it for a receipt.
     method: payment.authority ? 'online' : 'receipt',

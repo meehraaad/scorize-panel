@@ -17,6 +17,19 @@ export const API_BASE = '/api';
  */
 export const REQUEST_TIMEOUT_MS = 20_000;
 
+/**
+ * Uploads get extra time for their size, at a slow mobile upload rate (~256 kbit/s), so a 10 MB
+ * file has about 5.5 minutes instead of being cut off at 20 s.
+ */
+const SLOW_UPLOAD_BYTES_PER_MS = 32;
+
+function timeoutFor(body: unknown) {
+  if (!(body instanceof FormData)) return REQUEST_TIMEOUT_MS;
+  let bytes = 0;
+  for (const value of body.values()) if (value instanceof Blob) bytes += value.size;
+  return REQUEST_TIMEOUT_MS + Math.ceil(bytes / SLOW_UPLOAD_BYTES_PER_MS);
+}
+
 /** Django answered with an error status. */
 export class ApiError extends Error {
   constructor(
@@ -58,7 +71,7 @@ export async function request(
   const headers = new Headers({ Accept: 'application/json', 'Accept-Language': i18n.language });
   const isForm = body instanceof FormData;
   if (body !== undefined && !isForm) headers.set('Content-Type', 'application/json');
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  const timeout = AbortSignal.timeout(timeoutFor(body));
   let response: Response;
   try {
     if (method !== 'GET') {
