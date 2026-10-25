@@ -110,6 +110,9 @@
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
     text-size-adjust: 100%;
+    /* No rubber-band bounce past the page ends: on iOS the bounce drags the fixed bottom tabs up
+       with the page and opens an empty band under them. Also turns off pull-to-refresh. */
+    overscroll-behavior-y: none;
   }
 
   body {
