@@ -9,8 +9,10 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterTabs } from '@/components/ui/Filters';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Pager } from '@/components/ui/Pager';
 import { Badge } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
+import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { inboxQuery, type InboxFilter } from './api';
 import { casePath } from './paths';
@@ -23,7 +25,10 @@ export default function InboxPage() {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const [filter, setFilter] = useState<InboxFilter>('waiting');
-  const { data, isPlaceholderData } = useQuery(inboxQuery(filter));
+  const [page, setPage] = useState(1);
+  const { data, isPlaceholderData } = useQuery(inboxQuery(filter, page));
+  const pages = pagesOf(data);
+  useClampPage(data, page, setPage);
 
   return (
     <PageStack>
@@ -40,7 +45,10 @@ export default function InboxPage() {
       <FilterTabs
         label={t('inbox.filter')}
         value={filter}
-        onChange={setFilter}
+        onChange={(next) => {
+          setFilter(next);
+          setPage(1);
+        }}
         options={(['waiting', 'all'] as const).map((value) => ({
           value,
           label: t(`inbox.${value}`),
@@ -103,6 +111,9 @@ export default function InboxPage() {
               </li>
             ))}
           </ul>
+        )}
+        {pages > 1 && (
+          <Pager page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
         )}
       </Card>
     </PageStack>

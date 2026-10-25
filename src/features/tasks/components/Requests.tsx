@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
@@ -16,7 +16,16 @@ import { STATUS_TONE } from './status';
 const NEXT = { sent: 'in_progress', seen: 'in_progress', in_progress: 'done' } as const;
 
 /** Colleagues' requests to me, with their status and one button for the next move. */
-export function Requests({ requests, config }: { requests: TaskRequest[]; config: TasksConfig }) {
+export function Requests({
+  requests,
+  pager,
+  config,
+}: {
+  requests: TaskRequest[];
+  /** Under the list, when it has more than one page. */
+  pager?: ReactNode;
+  config: TasksConfig;
+}) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const change = useTaskChange();
@@ -93,6 +102,7 @@ export function Requests({ requests, config }: { requests: TaskRequest[]; config
           );
         })}
       </ul>
+      {pager}
       <RequestDialog
         key={open ?? 'closed'}
         id={open}

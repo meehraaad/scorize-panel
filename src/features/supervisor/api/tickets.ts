@@ -1,5 +1,6 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Page } from '@/lib/api/page';
 import type { TicketsEndpoint } from '@/lib/tickets/api';
 import { caseKey } from './case';
 import { SUPERVISOR_API, SUPERVISOR_KEY } from './common';
@@ -26,14 +27,16 @@ export interface InboxItem {
   urgent: boolean;
 }
 
-export interface Inbox {
+/** A page of the chosen filter, and how many threads each filter has. */
+export interface Inbox extends Page<InboxItem> {
   counts: Record<InboxFilter, number>;
-  results: InboxItem[];
 }
 
-export const inboxQuery = (filter: InboxFilter) =>
+export const inboxQuery = (filter: InboxFilter, page: number) =>
   queryOptions({
-    queryKey: [...SUPERVISOR_KEY, 'inbox', filter],
-    queryFn: ({ signal }) => api<Inbox>(`${SUPERVISOR_API}/tickets/?filter=${filter}`, { signal }),
+    queryKey: [...SUPERVISOR_KEY, 'inbox', filter, page],
+    queryFn: ({ signal }) =>
+      api<Inbox>(`${SUPERVISOR_API}/tickets/?filter=${filter}&page=${String(page)}`, { signal }),
+    placeholderData: keepPreviousData,
     refetchInterval: 60_000,
   });

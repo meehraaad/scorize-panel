@@ -11,7 +11,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterTabs } from '@/components/ui/Filters';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
+import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
@@ -44,9 +46,13 @@ export default function ConsultationsPage() {
   const [range, setRange] = useState<ConsultationRange>('week');
   const [type, setType] = useState('all');
   const [unlogged, setUnlogged] = useState(false);
-  const { data } = useQuery(
-    consultationsQuery(range, type === 'all' ? null : Number(type), unlogged),
+  const [page, setPage] = useState(1);
+  const { data, isPlaceholderData } = useQuery(
+    consultationsQuery(range, type === 'all' ? null : Number(type), unlogged, page),
   );
+  const pages = pagesOf(data);
+  useClampPage(data, page, setPage);
+
   // Read once: the statuses don't need to change while the page is open.
   const [now] = useState(() => Date.now());
 
@@ -71,7 +77,10 @@ export default function ConsultationsPage() {
         <FilterTabs
           label={t('consultations.range')}
           value={range}
-          onChange={setRange}
+          onChange={(value) => {
+            setRange(value);
+            setPage(1);
+          }}
           options={RANGES.map((value) => ({
             value,
             label: t(`consultations.rangeOption.${value}`),
@@ -82,7 +91,10 @@ export default function ConsultationsPage() {
           inline
           label={t('consultations.type')}
           value={type}
-          onChange={setType}
+          onChange={(value) => {
+            setType(value);
+            setPage(1);
+          }}
           options={[
             { value: 'all', label: t('consultations.allTypes') },
             ...(data?.types ?? []).map((item) => ({ value: String(item.id), label: item.name })),
@@ -91,7 +103,10 @@ export default function ConsultationsPage() {
         <TogglePill
           label={t('consultations.unloggedOnly')}
           checked={unlogged}
-          onChange={setUnlogged}
+          onChange={(value) => {
+            setUnlogged(value);
+            setPage(1);
+          }}
         />
       </div>
 
@@ -123,6 +138,11 @@ export default function ConsultationsPage() {
             </Card>
           );
         })
+      )}
+      {pages > 1 && (
+        <Card>
+          <Pager page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
+        </Card>
       )}
     </PageStack>
   );

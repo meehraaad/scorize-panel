@@ -17,7 +17,7 @@ import {
   type LeadStage,
   type LostReason,
 } from '@/lib/sales/api';
-import { forbidden, notFound, storage } from './session';
+import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';
 
 /**
@@ -29,6 +29,8 @@ import { staffData } from './staff';
 /** Nima (seller) and Reza (sales manager). */
 const SELLERS = new Set([3, 4]);
 const BASE = '/api/sales/v1';
+/** Django's `RECEIPTS_PAGE` (api/sales/v1/seller.py). */
+const RECEIPTS_PAGE = 10;
 export const SELLER = 'نیما رستمی';
 
 const MINUTE = 60_000;
@@ -573,7 +575,6 @@ function todayOf(data: SalesState): TodayData {
         starts_at: item.starts_at,
         logged: item.logged,
       })),
-    receipts: receiptsOf(),
     month: {
       won: data.customers.filter((item) => item.lead.stage === 'won').length + 6,
       target: 12,
@@ -683,6 +684,11 @@ export const salesHandlers = [
   http.get(`${BASE}/today/`, () => {
     const data = stateOrError();
     return failed(data) ? data : HttpResponse.json(todayOf(data));
+  }),
+
+  http.get(`${BASE}/receipts/`, ({ request }) => {
+    const data = stateOrError();
+    return failed(data) ? data : HttpResponse.json(pageOf(request, receiptsOf(), RECEIPTS_PAGE));
   }),
 
   http.post(`${BASE}/leads/bulk/`, async ({ request }) => {

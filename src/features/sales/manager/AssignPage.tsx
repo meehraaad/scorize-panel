@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -7,8 +7,10 @@ import { Card } from '@/components/ui/Card';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard, SectionHeading } from '@/components/ui/SectionCard';
+import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   assignQuery,
@@ -35,25 +37,30 @@ export default function AssignPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  const { data } = useSuspenseQuery(assignQuery);
+  const [page, setPage] = useState(1);
+  // Another page keeps this one on screen until it arrives (no loader in its place).
+  const [turning, startTurning] = useTransition();
+  const { data } = useSuspenseQuery(assignQuery(page));
+  const queue = data.queue.results;
+  const pages = pagesOf(data.queue);
+  useClampPage(data.queue, page, setPage);
   const assign = useAssignLeads();
   // Read once: the waiting times don't need to tick here.
   const [now] = useState(() => Date.now());
-  const oldest = data.queue.reduce(
-    (max, lead) => Math.max(max, Math.round((now - new Date(lead.created_at).getTime()) / 60_000)),
-    0,
-  );
+  const oldest = data.oldest_at
+    ? Math.max(0, Math.round((now - new Date(data.oldest_at).getTime()) / 60_000))
+    : 0;
 
   return (
     <>
       <PageHeader
         title={
-          data.queue.length
-            ? t('manager.assign.title', { n: f.number(data.queue.length) })
+          data.queue.count
+            ? t('manager.assign.title', { n: f.number(data.queue.count) })
             : t('manager.assign.titleNone')
         }
         subtitle={
-          data.queue.length ? t('manager.assign.subtitle', { age: s.duration(oldest) }) : undefined
+          data.queue.count ? t('manager.assign.subtitle', { age: s.duration(oldest) }) : undefined
         }
       />
       <AutoCard key={JSON.stringify(data.settings)} settings={data.settings} />
@@ -73,27 +80,27 @@ export default function AssignPage() {
         id="queue-title"
         title={t('manager.assign.queue')}
         end={
-          data.queue.length > 0 && (
+          queue.length > 0 && (
             <Button
               variant="outline"
               disabled={assign.isPending}
               onClick={() =>
                 assign.mutate(
-                  data.queue.map((lead) => ({ lead: lead.lead, seller: lead.suggested })),
+                  queue.map((lead) => ({ lead: lead.lead, seller: lead.suggested })),
                   { onError: () => toast.error(t('error')) },
                 )
               }
             >
-              {t('manager.assign.all')}
+              {t(pages > 1 ? 'manager.assign.allPage' : 'manager.assign.all')}
             </Button>
           )
         }
       >
-        {data.queue.length === 0 ? (
+        {queue.length === 0 ? (
           <EmptyState>{t('manager.assign.empty')}</EmptyState>
         ) : (
           <ul className="m-0 list-none p-0 pb-2">
-            {data.queue.map((lead) => (
+            {queue.map((lead) => (
               <QueueRow
                 key={lead.lead}
                 lead={lead}
@@ -108,6 +115,14 @@ export default function AssignPage() {
               />
             ))}
           </ul>
+        )}
+        {pages > 1 && (
+          <Pager
+            page={page}
+            pages={pages}
+            pending={turning}
+            onPage={(next) => startTurning(() => setPage(next))}
+          />
         )}
       </SectionCard>
     </>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -8,7 +8,7 @@ import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useTaskChange, type MyTask, type TaskSource, type TasksOverview } from '@/lib/tasks/api';
+import { useTaskChange, type MyTask, type TaskSource } from '@/lib/tasks/api';
 import { quickWhen, type QuickWhen } from '@/lib/when';
 import type { TasksConfig } from '../config';
 import { DoneDialog } from './DoneDialog';
@@ -32,20 +32,33 @@ const groupOf = (task: MyTask, now: number): Group => {
   return due - now <= SOON ? 'now' : 'today';
 };
 
-/** My follow-ups for today: overdue first, then the next hour, then the rest. */
-export function MyTasks({ data, config }: { data: TasksOverview; config: TasksConfig }) {
+/** My follow-ups for today (a page of them): overdue first, then the next hour, then the rest. */
+export function MyTasks({
+  tasks: all,
+  tomorrow,
+  doneToday,
+  pager,
+  config,
+}: {
+  tasks: MyTask[];
+  tomorrow: number;
+  doneToday: number | null;
+  /** Under the list, when it has more than one page. */
+  pager?: ReactNode;
+  config: TasksConfig;
+}) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   // Read once: the groups don't need to move while the page is open.
   const [now] = useState(() => Date.now());
   const [done, setDone] = useState<MyTask | null>(null);
 
-  if (data.mine.length === 0) return <EmptyState variant="card">{t('mine.empty')}</EmptyState>;
+  if (all.length === 0) return <EmptyState variant="card">{t('mine.empty')}</EmptyState>;
 
   return (
     <Card aria-label={t('view.mine.label')}>
       {GROUPS.map((group) => {
-        const tasks = data.mine.filter((task) => groupOf(task, now) === group);
+        const tasks = all.filter((task) => groupOf(task, now) === group);
         if (tasks.length === 0) return null;
         return (
           <section key={group} aria-labelledby={`group-${group}`}>
@@ -71,11 +84,10 @@ export function MyTasks({ data, config }: { data: TasksOverview; config: TasksCo
           </section>
         );
       })}
+      {pager}
       <p className="m-0 flex flex-wrap justify-between gap-2 px-5 py-4 text-sm text-text-2 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
-        <span>{t('mine.tomorrow', { n: f.number(data.tomorrow) })}</span>
-        {data.done_today !== null && (
-          <span>{t('mine.doneToday', { n: f.number(data.done_today) })}</span>
-        )}
+        <span>{t('mine.tomorrow', { n: f.number(tomorrow) })}</span>
+        {doneToday !== null && <span>{t('mine.doneToday', { n: f.number(doneToday) })}</span>}
       </p>
       <DoneDialog
         key={done?.id ?? 'closed'}

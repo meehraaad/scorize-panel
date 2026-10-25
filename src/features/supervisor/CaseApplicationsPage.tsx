@@ -19,6 +19,7 @@ import {
   type Credential,
   type ProfessorEmailStatus,
 } from './api';
+import { pagesOf } from '@/lib/api/page';
 import { ApplicationDialog } from './components/ApplicationDialog';
 import { ApplicationTable } from './components/ApplicationTable';
 import { BotBar } from './components/BotBar';
@@ -111,7 +112,7 @@ function ProfessorEmails({ caseId, replied }: { caseId: number; replied: number 
   const f = useFormat();
   const [page, setPage] = useState(1);
   const { data, isPlaceholderData } = useQuery(professorEmailsQuery(caseId, page));
-  const pages = data ? Math.max(1, Math.ceil(data.count / data.page_size)) : 1;
+  const pages = pagesOf(data);
 
   return (
     <Card aria-label={t('applications.view.emails')} aria-busy={!data || isPlaceholderData}>
@@ -148,13 +149,7 @@ function ProfessorEmails({ caseId, replied }: { caseId: number; replied: number 
         </ul>
       )}
       {data && data.count > 0 && (
-        <Pager
-          status={t('emails.pager', { page: f.number(page), pages: f.number(pages) })}
-          page={page}
-          pages={pages}
-          pending={isPlaceholderData}
-          onPage={setPage}
-        />
+        <Pager page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
       )}
     </Card>
   );

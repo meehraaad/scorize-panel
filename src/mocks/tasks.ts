@@ -1,6 +1,15 @@
 import { http, HttpResponse } from 'msw';
-import type { NewTask, RequestDetail, TaskChange, TasksOverview } from '@/lib/tasks/api';
-import { forbidden, notFound, storage } from './session';
+import type {
+  MyTask,
+  NewTask,
+  QueueItem,
+  RequestDetail,
+  TaskChange,
+  TaskList,
+  TaskRequest,
+  TasksOverview,
+} from '@/lib/tasks/api';
+import { forbidden, notFound, pageOf, storage } from './session';
 import { newId } from './sales';
 import { SUPERVISOR, SUPERVISOR_NAME, addCaseTask } from './supervisor';
 
@@ -22,8 +31,33 @@ const todayAt = (hour: number) => {
   return date.getTime() > Date.now() ? date.toISOString() : later(HOUR * 2);
 };
 
+/** Django's `TASKS_PAGE` (api/staff/v1/tasks.py). */
+export const TASKS_PAGE = 15;
+
+/** The tasks page with its three lists whole: the mocks page them like Django. */
+export type FullTasks = Omit<TasksOverview, 'counts'> & {
+  mine: MyTask[];
+  requests: TaskRequest[];
+  team: QueueItem[];
+};
+
+/** `GET tasks/`: the lists' sizes, not their rows. */
+export const overviewOf = ({ mine, requests, team, ...rest }: FullTasks): TasksOverview => ({
+  ...rest,
+  counts: { mine: mine.length, requests: requests.length, team: team.length },
+});
+
+const LISTS: readonly string[] = ['mine', 'requests', 'team'] satisfies TaskList[];
+
+/** `GET tasks/lists/<list>/?page=` (404 for another list). */
+export function taskListOf(request: Request, tasks: FullTasks, list: string) {
+  if (!LISTS.includes(list)) return notFound();
+  const rows: readonly unknown[] = tasks[list as TaskList];
+  return HttpResponse.json(pageOf(request, rows, TASKS_PAGE));
+}
+
 interface TasksState {
-  overview: TasksOverview;
+  overview: FullTasks;
   details: Map<number, RequestDetail>;
 }
 
@@ -190,7 +224,8 @@ function applyChange(
     case 'claim': {
       if (!queued) return notFound();
       if (queued.taken) return HttpResponse.json({ detail: 'Already taken.' }, { status: 409 });
-      queued.taken = 'me';
+      // It becomes my follow-up: out of the queue.
+      overview.team = overview.team.filter((item) => item !== queued);
       if (queued.person)
         overview.mine.push({
           id: newId(),
@@ -243,7 +278,14 @@ const CHANGE_KIND: Record<string, TaskChange['kind']> = {
 export const taskHandlers = [
   http.get(`${TASKS}/`, () => {
     const data = tasksOrError();
-    return data instanceof Response ? data : HttpResponse.json(data.tasks.overview);
+    return data instanceof Response ? data : HttpResponse.json(overviewOf(data.tasks.overview));
+  }),
+
+  http.get(`${TASKS}/lists/:list/`, ({ params, request }) => {
+    const data = tasksOrError();
+    return data instanceof Response
+      ? data
+      : taskListOf(request, data.tasks.overview, String(params.list));
   }),
 
   http.get(`${TASKS}/:id/`, ({ params }) => {

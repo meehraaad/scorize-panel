@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client';
+import type { FullTasks } from '../tasks';
 import { joinNames } from '@/lib/i18n/names';
 import {
   STAFF_API,
@@ -26,7 +27,6 @@ import type {
   TaskStatus,
   TaskSummary,
   TaskTeam,
-  TasksOverview,
 } from '@/lib/tasks/api';
 
 /**
@@ -149,7 +149,7 @@ const withViews = (todos: DjangoTodo[], signal?: AbortSignal) =>
   Promise.all(todos.map((todo) => api<DjangoTodo>(`${TODOS}/${String(todo.id)}/`, { signal })));
 
 /** The tasks page (T3) from the open tasks I'm on and the ones I sent. */
-export async function tasksOverview(signal?: AbortSignal): Promise<TasksOverview> {
+export async function tasksOverview(signal?: AbortSignal): Promise<FullTasks> {
   const me = await myStaffId();
   const [onMe, sentPage, peers] = await Promise.all([
     allPages<DjangoTodo>(

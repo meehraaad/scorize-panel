@@ -15,3 +15,16 @@ export const storage = {
 export const forbidden = () =>
   HttpResponse.json({ detail: 'Authentication credentials were not provided.' }, { status: 403 });
 export const notFound = () => HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+
+/**
+ * One page of a panel list (`?page=`, from 1), as Django's panel views answer it (`api.core.pagination.page_of`):
+ * `{count, page_size, results}`, no rows past the last page.
+ */
+export function pageOf<T>(request: Request, items: readonly T[], size: number) {
+  const page = Math.max(1, Number(new URL(request.url).searchParams.get('page')) || 1);
+  return {
+    count: items.length,
+    page_size: size,
+    results: items.slice((page - 1) * size, page * size),
+  };
+}

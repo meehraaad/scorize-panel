@@ -6,7 +6,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterTabs } from '@/components/ui/Filters';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
+import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { QUEUE_VIEWS, queueQuery, type QueueView } from './api';
@@ -23,7 +25,10 @@ export default function QueuePage() {
   const f = useFormat();
   const user = useUser();
   const [view, setView] = useState<QueueView>('mine');
-  const { data, isPlaceholderData } = useQuery(queueQuery(view));
+  const [page, setPage] = useState(1);
+  const { data, isPlaceholderData } = useQuery(queueQuery(view, page));
+  const pages = pagesOf(data);
+  useClampPage(data, page, setPage);
   const name = user.first_name || user.staff?.full_name || '';
   const waiting = data?.counts.mine ?? 0;
 
@@ -45,7 +50,10 @@ export default function QueuePage() {
       <FilterTabs
         label={t('queue.views')}
         value={view}
-        onChange={setView}
+        onChange={(next) => {
+          setView(next);
+          setPage(1);
+        }}
         options={QUEUE_VIEWS.map((value) => ({
           value,
           label: t(`queue.view.${value}`),
@@ -62,6 +70,9 @@ export default function QueuePage() {
               <EmptyState variant="padded">{t(`queue.empty.${view}`)}</EmptyState>
             ) : (
               <OrderList orders={data.results} />
+            )}
+            {pages > 1 && (
+              <Pager page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
             )}
           </Card>
         }

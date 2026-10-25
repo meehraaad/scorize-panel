@@ -212,7 +212,8 @@
   },
   "pager": {
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "page": "Page {{page}} of {{pages}}"
   },
   "lock": {
     "preview": "Preview · sample data, not your case",

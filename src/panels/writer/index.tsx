@@ -42,7 +42,7 @@ export const writerPanel: PanelDefinition = {
     {
       index: true,
       loader: () => {
-        queryClient.query(queueQuery('mine')).catch(() => undefined);
+        queryClient.query(queueQuery('mine', 1)).catch(() => undefined);
         return null;
       },
       ...lazyPage(() => import('@/features/writer/QueuePage'), ['writer']),

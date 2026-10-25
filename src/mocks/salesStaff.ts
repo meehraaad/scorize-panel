@@ -22,7 +22,8 @@ import { fetchInfo, saveSection, UnknownNameError } from './legacy/info';
 import { createCustomer, fetchLeads } from './legacy/leads';
 import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
-import { storage } from './session';
+import { pageOf, storage } from './session';
+import { overviewOf, taskListOf } from './tasks';
 
 /**
  * The sales panel's endpoints (`/api/sales/v1/` S11–S22, `/api/staff/v1/tasks/` for sales staff),
@@ -34,6 +35,8 @@ const BASE = '/api/sales/v1';
 const TASKS = '/api/staff/v1/tasks';
 /** The mock sellers (src/mocks/handlers.ts): their tasks are StaffToDos about customers. */
 const SELLERS = [3, 4];
+/** Django's `CONSULTATIONS_PAGE` (api/sales/v1/seller.py). */
+const CONSULTATIONS_PAGE = 20;
 const isSeller = () => SELLERS.includes(storage.get() ?? 0);
 
 /** The staff API's own error (403, 404, 400) answers as is. */
@@ -78,7 +81,7 @@ export const salesStaffHandlers = [
         (query.get('range') ?? 'today') as ConsultationRange,
         type ? Number(type) : null,
         query.get('unlogged') === '1',
-      ),
+      ).then((data) => ({ ...data, ...pageOf(request, data.results, CONSULTATIONS_PAGE) })),
     );
   }),
 
@@ -125,7 +128,12 @@ export const salesStaffHandlers = [
   }),
 
   // Sellers' tasks; other staff fall through to src/mocks/tasks.ts.
-  http.get(`${TASKS}/`, () => (isSeller() ? answer(() => tasksOverview()) : undefined)),
+  http.get(`${TASKS}/`, () =>
+    isSeller() ? answer(() => tasksOverview().then(overviewOf)) : undefined,
+  ),
+  http.get(`${TASKS}/lists/:list/`, async ({ params, request }) =>
+    isSeller() ? taskListOf(request, await tasksOverview(), String(params.list)) : undefined,
+  ),
   http.get(`${TASKS}/:id/`, ({ params }) =>
     isSeller() ? answer(() => taskRequest(id(params))) : undefined,
   ),

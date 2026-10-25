@@ -15,6 +15,7 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES, STAGES } from '@/lib/sales/api';
+import { pagesOf } from '@/lib/api/page';
 import { leadsQuery, type LeadFilter, type LeadQuery, type LeadsData } from './api';
 import { BulkBar } from './components/BulkBar';
 import { useSalesFormat } from './format';
@@ -70,7 +71,7 @@ export default function LeadsPage() {
       { replace: true },
     );
 
-  const pages = data ? Math.max(1, Math.ceil(data.count / data.page_size)) : 1;
+  const pages = pagesOf(data);
 
   return (
     <PageStack>

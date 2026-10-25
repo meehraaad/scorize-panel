@@ -8,7 +8,7 @@ import type {
   TeamData,
   TeamRange,
 } from '@/features/sales/api';
-import { forbidden, notFound, storage } from './session';
+import { forbidden, notFound, pageOf, storage } from './session';
 import { failed, stateOrError, type SalesState } from './sales';
 
 /**
@@ -24,7 +24,7 @@ const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 
 interface ManagerState {
   settings: AssignSettings;
-  queue: AssignData['queue'];
+  queue: AssignData['queue']['results'];
   /** Leads given out, by seller. */
   assigned: Map<number, number>;
   decided: Set<number>;
@@ -389,14 +389,19 @@ const healthOf = (state: ManagerState, team: HealthTeam): HealthData => {
   };
 };
 
+/** Django's `QUEUE_PAGE` (api/sales/v1/manager.py). */
+const QUEUE_PAGE = 20;
+
 export const managerHandlers = [
-  http.get(`${BASE}/assign/`, () => {
+  http.get(`${BASE}/assign/`, ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
+    const queue = data.manager.queue.filter((lead) => !data.manager.assigned.has(lead.lead));
     const body: AssignData = {
       settings: data.manager.settings,
       sellers: sellers(data.manager),
-      queue: data.manager.queue.filter((lead) => !data.manager.assigned.has(lead.lead)),
+      queue: pageOf(request, queue, QUEUE_PAGE),
+      oldest_at: queue.map((lead) => lead.created_at).sort()[0] ?? null,
     };
     return HttpResponse.json(body);
   }),

@@ -23,7 +23,7 @@ describe('tasks page (sales panel)', () => {
   // queues or "no next step" lists yet (backend-changes T3–T8).
   it('groups my follow-ups by day and links the person', async () => {
     await openTasks();
-    expect(screen.getByRole('heading', { name: /^عقب‌افتاده/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^عقب‌افتاده/ })).toBeInTheDocument();
     expect(screen.getByText('تماس دوم؛ دیروز جواب نداد')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'سمیرا نوروزی' })).toHaveAttribute(
       'href',
@@ -36,7 +36,9 @@ describe('tasks page (sales panel)', () => {
   it('done with a next step makes the next task; without one it needs a reason', async () => {
     const user = userEvent.setup();
     await openTasks();
-    await user.click(screen.getByRole('button', { name: 'انجام شد: تماس دوم؛ دیروز جواب نداد' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'انجام شد: تماس دوم؛ دیروز جواب نداد' }),
+    );
     let dialog = await screen.findByRole('dialog', { name: 'پیگیری انجام شد' });
     await user.type(within(dialog).getByLabelText('قدم بعدی'), 'پیام واتساپ بفرست');
     await user.click(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' }));
@@ -65,9 +67,9 @@ describe('tasks page (sales panel)', () => {
   it('pushes a follow-up to tomorrow', async () => {
     const user = userEvent.setup();
     await openTasks();
-    const row = screen
-      .getByText('بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود')
-      .closest('li');
+    const row = (
+      await screen.findByText('بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود')
+    ).closest('li');
     if (!row) throw new Error('row not found');
     await user.click(within(row).getByRole('button', { name: 'عقب بینداز' }));
     await user.click(within(row).getByRole('button', { name: 'فردا ۱۰:۰۰' }));
@@ -78,7 +80,7 @@ describe('tasks page (sales panel)', () => {
     const user = userEvent.setup();
     await openTasks();
     await user.click(screen.getByRole('button', { name: /^درخواست‌ها به من/ }));
-    await user.click(screen.getByRole('button', { name: 'دیدم، شروع می‌کنم' }));
+    await user.click(await screen.findByRole('button', { name: 'دیدم، شروع می‌کنم' }));
     expect(await screen.findByText('در حال انجام')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /^باز کردن: پذیرش Uppsala/ }));

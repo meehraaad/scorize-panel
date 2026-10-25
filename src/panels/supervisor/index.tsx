@@ -117,7 +117,7 @@ export const supervisorPanel: PanelDefinition = {
     },
     {
       path: 'tickets',
-      loader: prefetch(() => queryClient.query(inboxQuery('waiting'))),
+      loader: prefetch(() => queryClient.query(inboxQuery('waiting', 1))),
       ...lazyPage(() => import('@/features/supervisor/InboxPage'), ['supervisor']),
     },
     {
