@@ -15,6 +15,7 @@ import type { ApplicantAccess, LockableSection } from '@/lib/applicant/access';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 
 const JOURNEY = ['consult', 'writing', 'documents', 'apply', 'results', 'visa'] as const;
 const STARTING = ['registered', 'review', 'start', 'call'] as const;
@@ -120,7 +121,7 @@ export function GuestHome({ access }: { access: ApplicantAccess }) {
         )}
       </section>
 
-      {!pending && <TurkeyCard step={access.turkey} />}
+      {!pending && ON_SERVER.turkey && <TurkeyCard step={access.turkey} />}
 
       <section aria-labelledby="guest-previews" className="flex flex-col gap-3.5">
         <SectionHeading

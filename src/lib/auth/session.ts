@@ -1,5 +1,6 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
+import type { Role } from './roles';
 
 interface Permission {
   codename: string;
@@ -13,19 +14,25 @@ export interface SessionUser {
   email: string | null;
   phone_number: string | null;
   /** SupportStaff (BDSupportStaffSerializer); null for customers and applicants. */
-  staff: { id: number; full_name: string; team: number | null; is_active?: boolean } | null;
+  staff: { id: number; full_name: string; team: number | null; is_active: boolean } | null;
   is_superuser: boolean;
   /** Direct user permissions. */
   permissions: Permission[];
   /** Permissions inherited from the user's groups. */
   group_permissions: { name: string; permissions: Permission[] }[];
-  /** Not in whoami yet (docs/backend-changes.md, R1). */
-  applicant?: {
-    contract_status: number;
+  /** The user's own applicant file; null without one (R1). */
+  applicant: {
+    contract_status: 'active' | 'ended';
     accepted_the_terms: boolean;
+    has_admission_features: boolean;
+    has_visa_features: boolean;
+    has_writing_features: boolean;
   } | null;
-  /** Not in whoami yet (docs/backend-changes.md, R2). */
-  is_country_supervisor?: boolean;
+  /** Supervises a country's applicants (User.is_user_country_supervisor, R2). */
+  is_country_supervisor: boolean;
+  /** The panel opened last (or the one pinned with `always`), and what opens after login (R6). */
+  last_workspace: Role | null;
+  workspace_mode: 'last' | 'always' | 'ask';
 }
 
 /** In-app path of the login page (the router adds the /panel base). */

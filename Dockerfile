@@ -13,7 +13,7 @@ RUN pnpm build \
  # Pre-compress so nginx serves .gz without spending CPU on every request.
  && find dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' -o -name '*.json' -o -name '*.webmanifest' \) -exec gzip -9 -k {} \; \
  # Source maps stay out of the public image (upload them to an error tracker instead).
- && find dist \( -name '*.map' -o -name 'mockServiceWorker.js*' \) -delete
+ && find dist -name '*.map' -delete
 
 # ---- serve ----
 # Runs as the unprivileged `nginx` user (uid 101) instead of root, so it listens on 8080.

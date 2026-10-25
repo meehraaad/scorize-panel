@@ -15,6 +15,7 @@ import {
 import { formatPhone, SITE } from '@/lib/site';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 
 interface CallRequestButtonProps {
   /** The button's text ("Ask an advisor to call"). */
@@ -33,7 +34,11 @@ interface CallRequestButtonProps {
  * trap, Esc). After sending, the dialog says when to expect the call. The sales team gets a lead
  * with the page it came from.
  */
-export function CallRequestButton({ label, className = '', ...form }: CallRequestButtonProps) {
+export function CallRequestButton(props: CallRequestButtonProps) {
+  return ON_SERVER.callRequest ? <CallRequestDialog {...props} /> : null;
+}
+
+function CallRequestDialog({ label, className = '', ...form }: CallRequestButtonProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const titleId = useId();

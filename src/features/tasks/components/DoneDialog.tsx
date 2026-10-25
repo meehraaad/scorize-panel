@@ -32,7 +32,7 @@ export function DoneDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
-  const change = useTaskChange(config.panel);
+  const change = useTaskChange();
   const [outcome, setOutcome] = useState<TaskOutcome>('talked');
   const [note, setNote] = useState(task?.note ?? '');
   const [next, setNext] = useState(task?.suggested_next ?? '');

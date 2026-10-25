@@ -34,6 +34,9 @@ export function InstallmentsCard({ contract }: { contract: ContractData }) {
     .filter((item) => item.status === 'paid')
     .reduce((sum, item) => sum + item.amount, 0);
   const free = contract.kind === 'turkey';
+  // Instalments are priced in the contract's currency.
+  const money = (amount: number) =>
+    f.price(amount, contract.currency, (value) => t('amount', { amount: value }));
 
   return (
     <SectionCard
@@ -45,11 +48,11 @@ export function InstallmentsCard({ contract }: { contract: ContractData }) {
           <dl className="m-0 flex gap-5 text-sm">
             <div className="flex flex-col gap-0.5">
               <dt className="text-text-2">{t('installments.paid')}</dt>
-              <dd className="m-0 font-bold text-good">{t('amount', { amount: f.number(paid) })}</dd>
+              <dd className="m-0 font-bold text-good">{money(paid)}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
               <dt className="text-text-2">{t('installments.left')}</dt>
-              <dd className="m-0 font-bold">{t('amount', { amount: f.number(total - paid) })}</dd>
+              <dd className="m-0 font-bold">{money(total - paid)}</dd>
             </div>
           </dl>
         )
@@ -121,7 +124,7 @@ function InstallmentRow({ item }: { item: Installment }) {
       </span>
       <span className="flex flex-col items-end gap-1.5">
         <span className="text-base font-bold tabular-nums">
-          {t('amount', { amount: f.number(item.amount) })}
+          {f.price(item.amount, item.currency, (amount) => t('amount', { amount }))}
         </span>
         <Chip tone={TONE[item.status]} small>
           {t(`installments.status.${item.status}`)}

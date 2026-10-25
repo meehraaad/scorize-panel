@@ -25,7 +25,7 @@ import {
   type DjangoUser,
   type DjangoUserDetail,
   type DjangoUserInfo,
-} from '@/lib/staff/api';
+} from '@/mocks/djangoStaff';
 import { customers, ERFAN } from './sales';
 import { forbidden, notFound, storage } from './session';
 

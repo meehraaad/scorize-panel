@@ -1,6 +1,6 @@
 /**
  * Seller pages of the sales panel: one response per screen (as the applicant panel does), so a
- * phone waits for one round trip. Shapes: docs/backend-changes.md S1–S20. Mock: src/mocks/sales.ts.
+ * phone waits for one round trip. Django: `/api/sales/v1/` (backend-changes.md S1–S40).
  */
 
 export * from './today';

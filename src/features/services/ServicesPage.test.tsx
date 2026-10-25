@@ -1,10 +1,16 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
+
+// Also covers features Django doesn't serve yet (src/lib/applicant/onServer.ts): switch them on.
+vi.mock('@/lib/applicant/onServer', async (original) => {
+  const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
+  return { ON_SERVER: Object.fromEntries(Object.keys(ON_SERVER).map((key) => [key, true])) };
+});
 
 const SARA = 1; // bought packages, a booked consultation, events, saved GPA (src/mocks/applicant.ts)
 const MARYAM = 2; // no contract, nothing bought: the page is open to her too

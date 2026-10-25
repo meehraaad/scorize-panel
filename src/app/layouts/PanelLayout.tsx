@@ -39,8 +39,8 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const locked = useLocked();
 
   useEffect(() => {
-    rememberPanel(panel);
-  }, [panel]);
+    if (user) rememberPanel(user, panel);
+  }, [user, panel]);
 
   // The session expired while the app was open (see queryClient): log in, then come back here.
   if (!user) {

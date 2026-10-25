@@ -9,10 +9,11 @@ import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
 import { resetTaskMocks, taskHandlers } from './tasks';
 import { storage } from './session';
 import { resetWriterMocks, writerHandlers } from './writer';
+import { salesStaffHandlers } from './salesStaff';
 import { resetStaffMocks, staffHandlers } from './staff';
 
 /**
- * Fake Django for working on the panel without a backend (VITE_API_MOCKS=true) and for tests.
+ * Fake Django for the integration tests (src/test/server.ts); the app itself always talks to Django.
  * Mirrors the real behaviour of user_profile/authentication/views.py, including the session-held
  * login state and the response `code`s. When an endpoint ships or changes, mirror it here.
  *
@@ -32,7 +33,16 @@ interface MockUser extends SessionUser {
   password: string;
 }
 
-const customer = { staff: null, is_superuser: false, permissions: [], group_permissions: [] };
+const customer = {
+  staff: null,
+  is_superuser: false,
+  permissions: [],
+  group_permissions: [],
+  applicant: null,
+  is_country_supervisor: false,
+};
+/** Each login starts with no saved panel (whoami R6); `PATCH workspace/` changes it. */
+const workspace = () => ({ last_workspace: null, workspace_mode: 'last' as const });
 
 const users: MockUser[] = [
   {
@@ -43,6 +53,14 @@ const users: MockUser[] = [
     phone_number: '09120000000',
     password: MOCK_PASSWORD,
     ...customer,
+    ...workspace(),
+    applicant: {
+      contract_status: 'active',
+      accepted_the_terms: true,
+      has_admission_features: true,
+      has_visa_features: false,
+      has_writing_features: true,
+    },
   },
   {
     // Staff with two roles: executive team (supervisor panel) + SOP writer (writer panel).
@@ -52,7 +70,10 @@ const users: MockUser[] = [
     email: 'maryam.kazemi@scorize.local',
     phone_number: '09120000001',
     password: MOCK_PASSWORD,
-    staff: { id: 7, full_name: 'مریم کاظمی', team: 1 },
+    staff: { id: 7, full_name: 'مریم کاظمی', team: 1, is_active: true },
+    applicant: null,
+    is_country_supervisor: false,
+    ...workspace(),
     is_superuser: false,
     // Writes SOPs (and personal statements) and CVs: the writer panel.
     permissions: [
@@ -70,7 +91,10 @@ const users: MockUser[] = [
     email: 'nima.rostami@scorize.local',
     phone_number: '09120000002',
     password: MOCK_PASSWORD,
-    staff: { id: 8, full_name: 'نیما رستمی', team: 0 },
+    staff: { id: 8, full_name: 'نیما رستمی', team: 0, is_active: true },
+    applicant: null,
+    is_country_supervisor: false,
+    ...workspace(),
     is_superuser: false,
     permissions: [],
     group_permissions: [],
@@ -83,7 +107,10 @@ const users: MockUser[] = [
     email: 'reza.kamrani@scorize.local',
     phone_number: '09120000003',
     password: MOCK_PASSWORD,
-    staff: { id: 9, full_name: 'رضا کامرانی', team: 0 },
+    staff: { id: 9, full_name: 'رضا کامرانی', team: 0, is_active: true },
+    applicant: null,
+    is_country_supervisor: false,
+    ...workspace(),
     is_superuser: false,
     permissions: [{ codename: 'can_assign_to_seller' }],
     group_permissions: [],
@@ -116,17 +143,29 @@ export const handlers = [
         );
   }),
 
-  // Stands in for the old login page: only used to obtain the CSRF cookie.
+  // The panel's choice of what opens after login (R6).
+  http.patch('/api/profile/auth/v1/workspace/', async ({ request }) => {
+    const user = users.find((candidate) => candidate.id === storage.get());
+    if (!user) return HttpResponse.json({ detail: 'Not logged in.' }, { status: 403 });
+    const change = (await request.json()) as Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;
+    Object.assign(user, change);
+    return HttpResponse.json({
+      last_workspace: user.last_workspace,
+      workspace_mode: user.workspace_mode,
+    });
+  }),
+
+  // Only sets the CSRF cookie (A9).
   http.get(
-    `${AUTH}/login/`,
+    '/api/profile/auth/v1/csrf/',
     () =>
       new HttpResponse(null, {
-        status: 200,
+        status: 204,
         headers: { 'Set-Cookie': 'csrftoken=mock-csrf; Path=/' },
       }),
   ),
 
-  http.get(`${AUTH}/logout/`, () => {
+  http.post('/api/profile/auth/v1/logout/', () => {
     storage.set(null);
     resetApplicantMocks();
     resetAccountMocks();
@@ -134,7 +173,7 @@ export const handlers = [
     resetTaskMocks();
     resetManagerMocks();
     resetWriterMocks();
-    return HttpResponse.redirect('/', 302);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.post(`${AUTH}/begin/`, async ({ request }) => {
@@ -212,6 +251,7 @@ export const handlers = [
       phone_number: flow.phone,
       password: MOCK_PASSWORD,
       ...customer,
+      ...workspace(),
     };
     users.push(user);
     return login(user);
@@ -235,8 +275,9 @@ export const handlers = [
     return code(21);
   }),
 
-  // Django's existing staff API first: planned-endpoint mocks below build on its records.
+  // Django's existing staff API first: the sales endpoints below are computed from its records.
   ...staffHandlers,
+  ...salesStaffHandlers,
   ...applicantHandlers,
   ...accountHandlers,
   ...salesHandlers,
@@ -251,6 +292,7 @@ export const handlers = [
 export function resetMockSession() {
   storage.set(null);
   flow = null;
+  for (const user of users) Object.assign(user, workspace());
   resetApplicantMocks();
   resetAccountMocks();
   resetSalesMocks();
@@ -259,4 +301,21 @@ export function resetMockSession() {
   resetSupervisorMocks();
   resetWriterMocks();
   resetStaffMocks();
+}
+
+type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;
+
+/** Test helper: what a mock account saved as its panel after login (whoami R6). */
+export function mockWorkspace(id: number): Workspace {
+  const user = users.find((candidate) => candidate.id === id);
+  return {
+    last_workspace: user?.last_workspace ?? null,
+    workspace_mode: user?.workspace_mode ?? 'last',
+  };
+}
+
+/** Test helper: a mock account's saved panel choice, as if set on another device. */
+export function setMockWorkspace(id: number, change: Partial<Workspace>) {
+  const user = users.find((candidate) => candidate.id === id);
+  if (user) Object.assign(user, change);
 }

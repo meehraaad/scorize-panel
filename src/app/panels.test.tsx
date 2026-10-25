@@ -2,6 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
+import { mockWorkspace, setMockWorkspace } from '@/mocks/handlers';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 
@@ -19,7 +20,7 @@ describe('panels', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('asks staff with several panels where to start on their first login here', async () => {
+  it('asks staff with several panels where to start on their first login', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     const router = renderApp('/start');
@@ -44,12 +45,14 @@ describe('panels', () => {
       await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/writer');
-    expect(localStorage.getItem('scorize.panel.start')).toBe('last');
+    await waitFor(() => {
+      expect(mockWorkspace(MARYAM)).toEqual({ last_workspace: 'writer', workspace_mode: 'last' });
+    });
   });
 
   it('sends staff straight to the panel they used last', async () => {
     loginAs(MARYAM);
-    localStorage.setItem('scorize.panel', 'supervisor');
+    setMockWorkspace(MARYAM, { last_workspace: 'supervisor' });
     const router = renderApp('/start');
     expect(
       await screen.findByRole('heading', { name: /^سلام مریم، .* پرونده منتظر شماست$/ }),
@@ -59,14 +62,13 @@ describe('panels', () => {
 
   it('follows the "open after login" choice: always ask, or always one panel', async () => {
     loginAs(MARYAM);
-    localStorage.setItem('scorize.panel', 'supervisor');
-    localStorage.setItem('scorize.panel.start', 'ask');
+    setMockWorkspace(MARYAM, { last_workspace: 'supervisor', workspace_mode: 'ask' });
     let router = renderApp('/start');
     await screen.findByRole('heading', { name: /کدام پنل/ });
     expect(router.state.location.pathname).toBe('/choose');
     cleanup();
 
-    localStorage.setItem('scorize.panel.start', 'writer');
+    setMockWorkspace(MARYAM, { last_workspace: 'writer', workspace_mode: 'always' });
     router = renderApp('/start');
     expect(
       await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
@@ -87,17 +89,18 @@ describe('panels', () => {
     expect(links[0]).toHaveAttribute('aria-current', 'page');
 
     await user.selectOptions(screen.getByLabelText('بعد از ورود باز شود'), 'همیشه بپرس');
-    expect(localStorage.getItem('scorize.panel.start')).toBe('ask');
+    await waitFor(() => {
+      expect(mockWorkspace(MARYAM).workspace_mode).toBe('ask');
+    });
 
     await user.click(within(switcher).getByRole('link', { name: /پنل نگارش/ }));
     expect(
       await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/writer');
-    // Saved by an effect, which can run just after the page shows (seen on a slow CI runner).
-    await waitFor(() => {
-      expect(localStorage.getItem('scorize.panel')).toBe('writer');
-    });
+    // Opening the supervisor panel saved it as the last one; under "always ask" the writer panel
+    // isn't saved over it.
+    expect(mockWorkspace(MARYAM)).toEqual({ last_workspace: 'supervisor', workspace_mode: 'ask' });
   });
 
   it('sends staff with one work panel straight to it, with no switcher', async () => {
@@ -172,7 +175,7 @@ describe('panels', () => {
 
   it('shows shared pages inside the last-used panel', async () => {
     loginAs(MARYAM);
-    localStorage.setItem('scorize.panel', 'writer');
+    setMockWorkspace(MARYAM, { last_workspace: 'writer' });
     renderApp('/settings');
     expect(await screen.findByRole('heading', { name: 'تنظیمات' })).toBeInTheDocument();
     // jsdom applies no CSS, so the desktop menu (header) is the one to check.

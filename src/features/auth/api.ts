@@ -15,18 +15,33 @@ export interface AuthResult {
   status: number;
   /** Per-field validation errors (keys = field names). Server text is not shown to users. */
   errors?: FieldErrors;
+  /** INVALID_OTP: wrong codes still allowed before OTP_MAX_TRY_EXCEEDED (A14). */
+  tries_left?: number;
+  /** TOO_MANY_REQUESTS: seconds until this IP, phone or account may try again (A1, A3). */
+  retry_after?: number;
 }
 
 async function post(step: string, body?: object): Promise<AuthResult> {
   const { status, data } = await request(`${AUTH_BASE}/${step}/`, { method: 'POST', body });
-  const payload = data as { code?: unknown; errors?: unknown } | null;
+  const payload = data as {
+    code?: unknown;
+    errors?: unknown;
+    tries_left?: unknown;
+    retry_after?: unknown;
+  } | null;
   // Anything without a numeric code (HTML error page, proxy error, CSRF failure) is unexpected.
   if (typeof payload?.code !== 'number') throw new ApiError(status, data);
   const errors =
     payload.errors && typeof payload.errors === 'object'
       ? (payload.errors as FieldErrors)
       : undefined;
-  return { code: payload.code as AuthCode, status, ...(errors ? { errors } : {}) };
+  return {
+    code: payload.code as AuthCode,
+    status,
+    ...(errors ? { errors } : {}),
+    ...(typeof payload.tries_left === 'number' ? { tries_left: payload.tries_left } : {}),
+    ...(typeof payload.retry_after === 'number' ? { retry_after: payload.retry_after } : {}),
+  };
 }
 
 export type Identifier = { type: 'phone'; value: string } | { type: 'email'; value: string };

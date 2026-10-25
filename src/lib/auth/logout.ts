@@ -1,25 +1,25 @@
+import i18n from '@/lib/i18n';
+import { API_BASE, request } from '@/lib/api/client';
 import { queryClient } from '@/lib/api/queryClient';
 import { SITE } from '@/lib/site';
+import { toast } from '@/lib/toast';
 
-// GET for now; should become POST (docs/backend-changes.md, A7).
-const LOGOUT_URL = '/profile/authentication/logout/';
+/** POST with the CSRF token (backend-changes.md A7); answers 204. */
+const LOGOUT_URL = `${API_BASE}/profile/auth/v1/logout/`;
 
 /**
  * Ends the Django session, then leaves the panel for the site home.
- * A request first, not a page navigation: the session is gone before the page changes (and API
- * mocks can answer it), whatever the server does with the redirect.
+ * A request first, not a page navigation: the session is gone before the page changes. When it
+ * doesn't reach Django the user is still logged in, so they stay and are told.
  */
 export async function logout() {
   try {
-    await fetch(LOGOUT_URL, { credentials: 'same-origin', redirect: 'manual' });
+    await request(LOGOUT_URL, { method: 'POST' });
   } catch {
-    // Offline or blocked: navigating to the logout page below still logs out.
-    window.location.assign(LOGOUT_URL);
+    toast.error(i18n.t('account.logoutFailed'));
     return;
   }
   // Drop every cached response so nothing from this account survives in memory.
   queryClient.clear();
-  // With API mocks there is no main site: back to the panel's login page.
-  const mocked = import.meta.env.DEV && import.meta.env.VITE_API_MOCKS === 'true';
-  window.location.assign(mocked ? `${import.meta.env.BASE_URL}login` : SITE.home);
+  window.location.assign(SITE.home);
 }

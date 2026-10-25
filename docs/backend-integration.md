@@ -2,7 +2,9 @@
 
 The panel is a static app. Everything it shows comes from Django on the same domain, authenticated
 with the Django session cookie. **Changes the panel needs from Django are tracked in
-[backend-changes.md](backend-changes.md)**; this file describes what the panel uses today.
+[backend-changes.md](backend-changes.md)**; this file describes what the panel uses today. There is
+no mock mode: run Django locally (the scorize repo's `./run_local.sh`, with `seed` for sample users
+of every role).
 
 ## Local development
 
@@ -11,7 +13,7 @@ with the Django session cookie. **Changes the panel needs from Django are tracke
   origin check matches the request host and `CSRF_TRUSTED_ORIGINS` isn't needed.
 - In local mode Django writes the SMS code to `otp.txt` in the scorize repo instead of sending it.
 
-## Authentication API (existing, reused as is)
+## Authentication API (existing, extended)
 
 Plain Django JSON views in `user_profile/authentication/` under `/profile/authentication/`.
 Every response carries a numeric `code` (`AuthenticationResponseType` in
@@ -33,56 +35,42 @@ password-reset {token, password, password_confirmation}        (link from the re
 
 - Phone numbers must match `^09\d{9}$`; the panel normalizes Persian/Arabic digits and `+98`.
 - A code is valid for 100 s (`OTP_CACHE_TIME`); a new one can't be requested before that
-  (`OTP_TIMEOUT`); 5 wrong tries (`MAX_OTP_TRY_COUNT`) → `OTP_MAX_TRY_EXCEEDED`.
-- `pre-registration-check` keeps the email/phone already stored by `begin`, so the panel locks the
-  identifier the user started with.
-- All POSTs need the `X-CSRFToken` header. Logging in rotates the session and the CSRF token; the
-  client reads the cookie on every request.
-- Logout: `GET /profile/authentication/logout/` (redirects to the home page).
+  (`OTP_TIMEOUT`); 5 wrong tries (`MAX_OTP_TRY_COUNT`) → `OTP_MAX_TRY_EXCEEDED`. `INVALID_OTP`
+  carries `tries_left`; too many codes or logins from one IP, phone or account answer
+  `TOO_MANY_REQUESTS` (22, HTTP 429) with `retry_after` in seconds. The panel shows both.
+- All POSTs need the `X-CSRFToken` header. The cookie comes from `GET /api/profile/auth/v1/csrf/`
+  (204). Logging in rotates the session and the CSRF token; the client reads the cookie on every
+  request.
+- Logout: `POST /api/profile/auth/v1/logout/` (204).
+- reCAPTCHA (`RECAPTCHA_FAILED` with `captcha_required`) is switched off on the server
+  (`SCORIZE_AUTH_CAPTCHA`); the panel has no widget yet and shows "security check failed".
 
-## Other endpoints
+## Endpoints the panel uses
 
-| Endpoint                             | Used for                                                    |
-| ------------------------------------ | ----------------------------------------------------------- |
-| `GET /api/profile/auth/v1/whoami/`   | Session check (403 when logged out) and user name           |
-| `GET /profile/authentication/login/` | Only to obtain the `csrftoken` cookie before login (see A9) |
+Everything comes from Django (`claude/eager-bohr-8iw6h3` of scorize-revolution); the schema is at
+`/api/schema/` and `/api/docs/`. Each feature's `api.ts` has the shapes, field for field.
 
-## Existing staff API (used today by the sales panel)
+| Area                        | Endpoints                                                                                                                                                                                                                               | Panel code                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Session, roles, start panel | `GET /api/profile/auth/v1/whoami/` (`applicant`, `is_country_supervisor`, `staff.is_active`, `last_workspace`, `workspace_mode`), `PATCH …/workspace/`                                                                                  | `lib/auth/`, `panels/registry.ts`             |
+| Account (every panel)       | `/api/profile/v1/` `account/`, `notifications/`                                                                                                                                                                                         | `lib/account/api.ts`                          |
+| Applicant panel             | `/api/applicant/v1/` (H1–H28, H36, H39, H40, H44–H49)                                                                                                                                                                                   | `features/*`, `lib/applicant/`, `lib/tickets` |
+| Sales panel                 | `/api/sales/v1/` (S10–S40); receipts: `PATCH /api/profile/staff/v1/users/<id>/payments/<id>/confirm_receipt/`, `decline_receipt/`, `change_method/<0\|1>/` (S20, S23); manual assignment: `PATCH …/sale-leads/<id>/assign_staff/` (S35) | `features/sales/api/`, `lib/sales/api.ts`     |
+| Staff tasks                 | `/api/staff/v1/tasks/?panel=sales\|supervisor` (T1–T12)                                                                                                                                                                                 | `lib/tasks/api.ts`                            |
+| Supervisor panel            | `/api/supervisor/v1/` (SV1–SV17)                                                                                                                                                                                                        | `features/supervisor/api/`                    |
+| Writer panel                | `/api/writer/v1/` (WR1–WR5)                                                                                                                                                                                                             | `features/writer/api.ts`                      |
 
-Django already has a REST API for staff: `api/user_profile/staff` under `/api/profile/staff/v1/`
-(the old React staff dashboard's), plus lookups. Until the panel endpoints of backend-changes.md
-ship, the sales panel reads and writes through it. Types (serializer JSON, field for field) and
-helpers are in `src/lib/staff/api.ts`; each page's `queryFn` maps them to the page's own shape, so
-when the planned endpoint ships only that `queryFn` changes. The fake Django for these endpoints
-is `src/mocks/staff.ts` (same permissions, pagination and filters).
+**Not on the server yet**, so the panel doesn't offer them (`src/lib/applicant/onServer.ts`; set an
+entry to true when its endpoint ships): the call request (H29), the Turkey programme (H30–H35),
+professor emails (H7), webinar sign-up (H37), the GPA calculator (H38), editing a consultation's
+details (H41), package pages and reviews (H42, H43), and the recommendation and professor-list
+forms (H50). PS and DS forms (H51) and the writers' inbox (WR6) were "coming soon" already.
+The NPS card (H48) appears when `gates.nps` is set, which the server doesn't do yet.
 
-| Panel                                   | Existing endpoints                                                                                                                                                                                                                                       | Adapter                               | Missing until the planned item ships                                                                                    |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Customer page (summary)                 | `users/<id>/`, `…/personal-information/`, `…/info/`, `…/exam-scores/`, `…/education-degrees/`, `…/experiences/?is_successful=True` (similar admissions), `…/invoices/`, `…/payments/`, `sale-leads/?search=<phone>`, `todos/?user=`, `staves/`           | `features/sales/api/customer.ts`      | Stage beyond new/contacted, automatic score (S3, S5), ready messages (S7)                                               |
-| History                                 | `users/<id>/contact-history/history/`                                                                                                                                                                                                                    | `customer.ts` `historyQuery`          | Payments and notes in the timeline, the message channel (S17, S7)                                                       |
-| Log a call / message / session          | `POST users/<id>/contact-history/` (on the newest lead or the session), `PATCH …/<id>/send-summery/`, `POST todos/` (the follow-up)                                                                                                                      | `customer.ts` `useLogContact`         | Stage and lost reason, the "unanswered call" SMS (S16)                                                                  |
-| Purchases tab                           | `users/<id>/invoices/`, `consultation-reservations/?search=<phone>` (for the session log link)                                                                                                                                                           | `features/sales/api/purchases.ts`     | Session length and online/in-person per purchase (S21)                                                                  |
-| Payments tab                            | `users/<id>/payments/`; confirm / decline receipt and change method (`PATCH …/payments/<id>/confirm_receipt/` etc.)                                                                                                                                      | `features/sales/api/payments.ts`      | Wallets list, bank reference, invoice SMS log (S22); invoice SMS and wallet change are still the planned S24, S25       |
-| Details tab                             | `users/<id>/personal-information/`, `…/education-degrees/`, `…/exam-scores/` (GET, POST, PATCH, DELETE); `/api/profile/user/v1/exams/`, `/api/apply/v1/countries/` and `/api/apply/v1/study-fields/` (`?search=`, names typed on the page are looked up) | `features/sales/api/info.ts`          | One request for the page (S26, S27)                                                                                     |
-| Leads list                              | `sale-leads/` and `sale-leads/count/` (`search`, `contact_history__isnull`, `cause__in`, `creation_date__…`)                                                                                                                                             | `features/sales/api/leads.ts`         | Stages after "contacted", score, follow-ups, first-call time, bulk changes (S3, S5, S6, S11, S13); the page hides those |
-| Add a customer by hand                  | `GET users/?search=<phone>`, `POST users/` (`UserViewSet.create`), `POST users/<id>/info/` (the note)                                                                                                                                                    | `leads.ts` `useCreateLead`            | The lead itself (S14)                                                                                                   |
-| My consultations                        | `consultation-reservations/` and `…/count/` (`date__range`, `date__lt`, `consultation_type`, `contact_history__isnull`); `/api/consultation/v1/consultation-types/`                                                                                      | `features/sales/api/consultations.ts` | Session length, meeting link (S19)                                                                                      |
-| Tasks page and tasks on a customer page | `todos/` (`support_staves`, `creator`, `user`, `is_done`, `ordering`), `todos/<id>/`, `POST todos/`, `PATCH todos/<id>/` (deadline), `…/mark_as_done/`, `…/add_view/`, `…/comments/`                                                                     | `src/lib/tasks/django.ts`             | Time of day, one owner, statuses, team queues, snooze reasons, on-time rate, people without a next step (T1–T8)         |
-
-Not connected yet: the seller's Today, board and month, the offer and product sale, the
-application file, the sales manager section, the whole supervisor panel (its tasks keep the
-planned endpoint: they point at Applicant ids) and the applicant panel. Django has no JSON API for
-those screens; the old site renders them as HTML (see backend-changes.md).
-
-Planned, mocked until Django ships them (backend-changes.md H1–H21), all under `/api/applicant/v1/`:
-`overview/` (home), `applications/` and `professor-emails/` (applications page), `documents/`
-(documents page), `applications/<id>/approval/`, `applications/<id>/showcase/`,
-`documents/<id>/upload/`, `documents/files/<id>/`, `research-interests/`, `writing/sop/` and
-`writing/sop/final/` (SOP form), `tickets/`, `tickets/<thread>/messages/`,
-`tickets/<thread>/seen/`, `tickets/<thread>/messages/<id>/rating/` (`<thread>` = `supervisor` or
-`writing/<type>`).
-
-Keep `src/mocks/handlers.ts` in sync with every endpoint the panel uses.
+**Money**: contract totals, instalments and invoices come in their own currency with `currency`
+(ISO 4217, `IRT` for the toman; many contracts are in euros). `useFormat().price` writes toman with
+the page's text and other currencies with Intl. The bank gateway takes toman only, so another
+currency's invoice is paid by card transfer (receipt).
 
 ## Conventions for new API endpoints
 

@@ -64,10 +64,7 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
   // Read once: whether a task is late doesn't need to change while the page is open.
   const [now] = useState(() => Date.now());
   if (tasks.length === 0) return <EmptyState>{t('customer.tasks.empty')}</EmptyState>;
-  const when = (task: TaskSummary) =>
-    task.date_only
-      ? f.dateShort(task.due_at)
-      : `${f.dateShort(task.due_at)} ${f.time(task.due_at)}`;
+  const when = (task: TaskSummary) => `${f.dateShort(task.due_at)} ${f.time(task.due_at)}`;
   return (
     <ul className="m-0 list-none p-0 pb-3">
       {tasks.map((task) => {
@@ -111,7 +108,7 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
 
 function NewTaskForm({ customer, name }: { customer: CustomerData; name: string }) {
   const { t } = useTranslation('sales');
-  const create = useCreateTask(customerKey(customer.id), 'sales');
+  const create = useCreateTask(customerKey(customer.id));
   const [text, setText] = useState('');
   const [kind, setKind] = useState<TaskKind>('mine');
   const [peer, setPeer] = useState(String(customer.colleagues[0]?.id ?? ''));

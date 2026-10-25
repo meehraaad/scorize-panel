@@ -102,7 +102,7 @@ function TaskRow({
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
-  const change = useTaskChange(config.panel);
+  const change = useTaskChange();
   const [snoozing, setSnoozing] = useState(false);
   const [reason, setReason] = useState<(typeof REASONS)[number]>('customer_later');
   const daysLate = Math.max(1, Math.floor((now - new Date(task.due_at).getTime()) / DAY));
@@ -121,11 +121,7 @@ function TaskRow({
     >
       <div className="flex w-20 flex-none flex-col">
         <span className={`text-base font-bold tabular-nums ${late ? 'text-urgent' : 'text-text'}`}>
-          {late && !lateToday
-            ? t('mine.daysLate', { n: f.number(daysLate) })
-            : task.date_only
-              ? f.dateShort(task.due_at)
-              : f.time(task.due_at)}
+          {late && !lateToday ? t('mine.daysLate', { n: f.number(daysLate) }) : f.time(task.due_at)}
         </span>
         {late && <span className="text-xs text-urgent">{t('mine.late')}</span>}
       </div>

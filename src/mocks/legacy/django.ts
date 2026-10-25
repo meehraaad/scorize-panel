@@ -14,7 +14,7 @@ import {
   type DjangoTodoComment,
   type DjangoTodoWrite,
   type Page,
-} from '@/lib/staff/api';
+} from '../djangoStaff';
 import type {
   Colleague,
   MyTask,
@@ -27,7 +27,7 @@ import type {
   TaskSummary,
   TaskTeam,
   TasksOverview,
-} from './api';
+} from '@/lib/tasks/api';
 
 /**
  * The sales panel's tasks on Django's existing StaffToDo API (todos/, todos/<id>/comments/) until
@@ -82,7 +82,6 @@ export function taskSummaryOf(todo: DjangoTodo, me: number): TaskSummary {
     status: statusOf(todo, me),
     text: todo.description,
     due_at: dueOf(todo),
-    date_only: true,
     owner: names(todo.support_staves) || null,
     creator: todo.creator?.full_name ?? null,
     team: null,
@@ -121,7 +120,6 @@ function myTaskOf(todo: DjangoTodo): MyTask {
     id: todo.id,
     text: todo.description,
     due_at: dueOf(todo),
-    date_only: true,
     person: todo.user ? { ...(personOf(todo) as { id: number; name: string }), context: '' } : null,
     source: todo.creator ? 'me' : 'system',
     snoozed: 0,
@@ -142,7 +140,6 @@ const requestOf = (todo: DjangoTodo, me: number): TaskRequest => ({
   text: todo.description,
   person: personOf(todo),
   due_at: dueOf(todo),
-  date_only: true,
   status: statusOf(todo, me),
   comments: todo.comments_count ?? 0,
 });

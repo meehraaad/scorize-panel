@@ -1,5 +1,7 @@
+import { api } from '@/lib/api/client';
+import { queryClient } from '@/lib/api/queryClient';
 import { getRoles, type Role } from '@/lib/auth/roles';
-import type { SessionUser } from '@/lib/auth/session';
+import { sessionQuery, type SessionUser } from '@/lib/auth/session';
 import { applicantPanel } from './applicant';
 import { salesPanel } from './sales';
 import { supervisorPanel } from './supervisor';
@@ -17,31 +19,17 @@ export const PANELS: readonly PanelDefinition[] = [
   applicantPanel,
 ];
 
-const LAST_PANEL_KEY = 'scorize.panel';
-const START_KEY = 'scorize.panel.start';
-
 /**
  * Which panel opens after login, for people with several (switcher → "open after login"):
- * the last one used, always a given one, or always ask (the chooser page).
- * Per device until Django stores it (backend-changes.md, R6).
+ * the last one used, always a given one, or always ask (the chooser page). Stored on the user
+ * (`whoami.last_workspace` + `workspace_mode`, backend-changes.md R6), so it follows them across devices.
  */
 export type StartPreference = 'last' | 'ask' | Role;
 
-function read(key: string) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null; // Storage blocked: defaults apply.
-  }
-}
+type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;
 
-function write(key: string, value: string) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Storage blocked: defaults apply next time.
-  }
-}
+const saveWorkspace = (change: Partial<Workspace>) =>
+  api('/profile/auth/v1/workspace/', { method: 'PATCH', body: change });
 
 export function panelsFor(user: SessionUser): PanelDefinition[] {
   const roles = getRoles(user);
@@ -56,38 +44,47 @@ export function canOpen(user: SessionUser, panel: PanelDefinition) {
   return panel.id === applicantPanel.id || getRoles(user).includes(panel.id);
 }
 
-export function rememberPanel(panel: PanelDefinition) {
-  write(LAST_PANEL_KEY, panel.id);
+/**
+ * The panel just opened becomes the "last used" one, unless the user pinned another. Only the
+ * server is told: it matters at the next login, and changing the cached session would re-render
+ * every page. A failed save keeps the previous panel, so it isn't reported.
+ */
+export function rememberPanel(user: SessionUser, panel: PanelDefinition) {
+  if (user.workspace_mode !== 'last' || user.last_workspace === panel.id) return;
+  saveWorkspace({ last_workspace: panel.id }).catch(() => undefined);
 }
 
 /** The panel used last (if still allowed), else the highest-priority one the user can open. */
 export function preferredPanel(user: SessionUser): PanelDefinition {
   const available = panelsFor(user);
-  const last = read(LAST_PANEL_KEY);
-  return available.find((panel) => panel.id === last) ?? available[0] ?? applicantPanel;
+  return (
+    available.find((panel) => panel.id === user.last_workspace) ?? available[0] ?? applicantPanel
+  );
 }
 
-export function startPreference(): StartPreference {
-  const value = read(START_KEY);
-  return value === 'ask' || PANELS.some((panel) => panel.id === value)
-    ? (value as StartPreference)
-    : 'last';
+export function startPreference(user: SessionUser): StartPreference {
+  if (user.workspace_mode === 'ask') return 'ask';
+  const pinned = PANELS.find((panel) => panel.id === user.last_workspace);
+  return user.workspace_mode === 'always' && pinned ? pinned.id : 'last';
 }
 
-export function setStartPreference(preference: StartPreference) {
-  write(START_KEY, preference);
+/** The user's own choice: saved, and the cached session follows so the switcher shows it. */
+export async function setStartPreference(preference: StartPreference) {
+  const change: Partial<Workspace> =
+    preference === 'last' || preference === 'ask'
+      ? { workspace_mode: preference }
+      : { workspace_mode: 'always', last_workspace: preference };
+  await saveWorkspace(change);
+  queryClient.setQueryData(sessionQuery.queryKey, (user) => user && { ...user, ...change });
 }
 
 /**
  * Where to go after login. One panel: straight there. Several: the pinned panel, else the last
- * one used; the chooser when the user asked for it or has no last panel yet (first login here).
+ * one used; the chooser when the user asked for it or has no last panel yet (first login).
  */
 export function startTarget(user: SessionUser): PanelDefinition | 'choose' {
   const available = panelsFor(user);
   if (available.length <= 1) return available[0] ?? applicantPanel;
-  const preference = startPreference();
-  if (preference === 'ask') return 'choose';
-  const pinned = available.find((panel) => panel.id === preference);
-  const last = available.find((panel) => panel.id === read(LAST_PANEL_KEY));
-  return pinned ?? last ?? 'choose';
+  if (startPreference(user) === 'ask') return 'choose';
+  return available.find((panel) => panel.id === user.last_workspace) ?? 'choose';
 }

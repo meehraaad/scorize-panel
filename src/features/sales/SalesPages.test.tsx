@@ -42,9 +42,11 @@ describe('sales panel, seller pages', () => {
     expect(
       await within(receipts).findByRole('button', { name: 'تأیید رسید محمد یزدانی' }),
     ).toBeInTheDocument();
-    expect(
-      within(receipts).queryByRole('button', { name: 'تأیید رسید کیان مرادی' }),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        within(receipts).queryByRole('button', { name: 'تأیید رسید کیان مرادی' }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   // Leads are Django's SaleLead (src/mocks/staff.ts): "new" = not called yet, "contacted" = called.

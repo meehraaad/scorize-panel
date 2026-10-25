@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -45,7 +45,10 @@ describe('account and notifications', () => {
       }),
     );
     expect(await screen.findByRole('link', { name: 'اعلان‌ها' })).toBeInTheDocument();
-    expect(within(notifications()).queryByText('۳ جدید')).toBeNull();
+    // The bell and the list refetch separately: wait for the list too.
+    await waitFor(() => {
+      expect(within(notifications()).queryByText('۳ جدید')).toBeNull();
+    });
   });
 
   it('changes channels, name and password', async () => {

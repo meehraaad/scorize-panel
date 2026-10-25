@@ -4,7 +4,7 @@
 
 ```
 src/
-├── main.tsx               Entry: i18n, global CSS, optional API mocks, render <App>
+├── main.tsx               Entry: i18n, global CSS, render <App>
 ├── app/                   Assembles everything (top layer)
 │   ├── App.tsx            Providers: React Query, theme, router, PWA update prompt
 │   ├── router.tsx         Route map: /login, /start, shared pages, one tree per panel
@@ -56,9 +56,9 @@ src/
 │   └── theme/             Light / dark / system theme
 ├── locales/<lang>/        Dictionaries: common.json + one per feature namespace. fa is the source
 ├── styles/                tokens.css (design tokens), index.css (Tailwind + base)
-├── mocks/                 MSW fake Django for `pnpm dev:mock` and tests (handlers.ts: auth;
-│                          applicant.ts: applicant-panel API; staff.ts: Django's existing staff
-│                          API, which the planned sales mocks build on; session.ts: who is logged in)
+├── mocks/                 MSW fake Django for the tests only (handlers.ts: auth; applicant.ts:
+│                          applicant-panel API; staff.ts: Django's staff API rows, from which
+│                          salesStaff.ts + legacy/ compute the sales endpoints; session.ts: who is logged in)
 ├── pwa/                   Service-worker registration + update prompt
 └── test/                  Vitest setup, MSW server, renderApp() (vitest.node-globals.ts: Node's FormData/File)
 ```
@@ -168,7 +168,7 @@ spec). The recommendation form lays its list out as one card per recommender
 Helpers used with them: `lib/progress.ts` (`percentOf`, `stepState`), `lib/files.ts` (`checkFile`,
 `extensionOf`), `lib/text.ts` (Persian digits, phone numbers, initials).
 
-**See and tweak them:** `pnpm dev:mock`, then open `/panel/dev/components`: every block with sample
+**See and tweak them:** `pnpm dev`, then open `/panel/dev/components`: every block with sample
 data, with light/dark and fa/en (RTL/LTR) switches. The page exists only in dev builds.
 
 When a new screen needs something a block can't do, extend the block (a prop or a variant) rather
@@ -211,7 +211,7 @@ orders, research interests), email and applications (bot on/off, applications wi
 activity. `InboxPage` lists every case's supervisors' thread, waiting ones first. `api/` has one
 response per screen (a file per screen, keys and stages in `api/common.ts`); `paths.ts` the panel's URLs. "My tasks" is the shared tasks page with
 `panel: 'supervisor'` (`panels/supervisor/TasksPage.tsx`). Reports has no design yet. Mock: Maryam
-(09120000001), `src/mocks/supervisor.ts` (her tasks in `src/mocks/tasks.ts`). Backend items:
+(09120000001) in the tests, `src/mocks/supervisor.ts` (her tasks in `src/mocks/tasks.ts`). Backend items:
 backend-changes.md SV.
 
 ### Locked sections (applicant panel, canvas V7)
@@ -222,8 +222,8 @@ whether the user has an active contract, one in review, none, or an ended one, a
 locked items in the menus. A locked page renders `SectionLock` (`components/applicant/`): the
 banner for the reason, and under it the page's own blocks fed with sample data from the feature's
 `preview.ts` (texts from its dictionary), faded and `inert`. An ended contract shows the real case
-under the banner. Dev: `localStorage['scorize.mock.access']` = `pending` / `noservice` / `ended`
-switches the mock user's state (log in as Maryam for a guest).
+under the banner. Tests: `localStorage['scorize.mock.access']` = `pending` / `noservice` / `ended`
+switches the fake user's state (Maryam is a guest).
 
 ### Gates (applicant panel, canvas V6 sections 8 and 14)
 
@@ -232,7 +232,7 @@ opens. The applicant routes sit under a pathless layout, `features/gates/GatesLa
 the first gate that applies instead of the page: a closed (inactive) panel, the terms, the missing
 profile details, then the month's supervisor surveys. Answering one invalidates the applicant
 queries and the next gate (or the page asked for) appears. The optional NPS survey is a card on the
-home page (`components/applicant/NpsCard`). Dev: `localStorage['scorize.mock.gate']` = `terms` /
+home page (`components/applicant/NpsCard`). Tests: `localStorage['scorize.mock.gate']` = `terms` /
 `surveys` / `inactive` / `nps` (as Sara).
 
 ### Panels and roles
@@ -289,7 +289,7 @@ option existed.
 | Dates/numbers   | **Intl API**                                                                        | Built into the browser: Jalali calendar and Persian digits at 0 KB (no moment/dayjs)                                                        |
 | Fonts           | **Self-hosted via @fontsource**                                                     | Google Fonts is slow or blocked in Iran. Split by `unicode-range`, so only the scripts on screen download                                   |
 | Icons           | **Inline SVG components**                                                           | No icon font, no extra request, only the icons used are bundled                                                                             |
-| API mocking     | **MSW**                                                                             | Frontend work and tests don't wait for the backend                                                                                          |
+| API mocking     | **MSW**                                                                             | Tests only: a fake Django in `src/mocks/`. The app always calls Django (no mock mode)                                                       |
 | Tests           | **Vitest + Testing Library**                                                        | Same config as Vite. Add Playwright for end-to-end tests once real flows exist                                                              |
 | Lint/format     | **ESLint (typescript-eslint strict-type-checked) + Prettier**                       | Includes `i18next/no-literal-string`, which enforces "all text in dictionaries"                                                             |
 | PWA             | **vite-plugin-pwa (Workbox)**                                                       | Manifest ships now; service worker turns on with one flag (see PWA.md)                                                                      |

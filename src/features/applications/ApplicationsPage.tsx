@@ -10,6 +10,7 @@ import { ProfessorEmails } from './components/ProfessorEmails';
 import { StatsGrid } from './components/StatsGrid';
 import { VisaResults } from './components/VisaResults';
 import { previewApplications } from './preview';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 
 /**
  * "Applications & results". Design: canvas V6 "اپلای‌ها و نتایج" (AppApplications); without a
@@ -27,7 +28,7 @@ export default function ApplicationsPage() {
       <StatsGrid data={results} />
       <ApplicationsList applications={results.results} />
       {results.visa && <VisaResults results={results.visa} />}
-      {emails && <ProfessorEmails />}
+      {emails && ON_SERVER.professorEmails && <ProfessorEmails />}
     </>
   );
 

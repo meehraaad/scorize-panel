@@ -20,6 +20,7 @@ import {
   type ConsultationInfo,
 } from './api';
 import { toast } from '@/lib/toast';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 
 const REQUIRED = ['university', 'major', 'degree'] as const;
 
@@ -64,7 +65,7 @@ function InfoForm({ session }: { session: ConsultationDetail }) {
   const save = useSaveConsultationInfo(session.id);
   const [info, setInfo] = useState<ConsultationInfo>(session.info);
   const [errors, setErrors] = useState<Partial<Record<keyof ConsultationInfo, boolean>>>({});
-  const readOnly = isPast(session.starts_at);
+  const readOnly = isPast(session.starts_at) || !ON_SERVER.consultationInfo;
 
   const set = (field: keyof ConsultationInfo, value: string) => {
     setInfo((current) => ({ ...current, [field]: value }));

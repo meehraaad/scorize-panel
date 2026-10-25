@@ -5,7 +5,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip } from '@/components/ui/Chip';
 import { ProgressBar, StepBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
-import { useFormat } from '@/lib/i18n/useFormat';
+import { TOMAN, useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
 import type { ApplicantOverview } from '../api';
 
@@ -44,8 +44,14 @@ function Installment({
     >
       <div className="flex flex-col gap-1">
         <span className="text-[28px] font-bold tabular-nums">
-          {f.number(installment.amount)}{' '}
-          <span className="text-[15px] font-medium text-text-2">{t('installment.toman')}</span>
+          {installment.currency && installment.currency !== TOMAN ? (
+            f.money(installment.amount, installment.currency)
+          ) : (
+            <>
+              {f.number(installment.amount)}{' '}
+              <span className="text-[15px] font-medium text-text-2">{t('installment.toman')}</span>
+            </>
+          )}
         </span>
         <span className="text-sm leading-7 text-text-2">
           {[t('installment.label', { number: f.number(installment.number) }), installment.condition]

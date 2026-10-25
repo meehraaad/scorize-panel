@@ -27,6 +27,8 @@ export type AuthMessage = ParseKeys<'auth'>;
 export interface Feedback {
   tone: 'error' | 'info' | 'success';
   message: AuthMessage;
+  /** Numbers the message shows ("{{n}} tries left", "in {{minutes}} minutes"). */
+  values?: Record<string, number>;
 }
 
 /**
@@ -56,8 +58,8 @@ export function useAuthFlow({
     setFeedback(nextFeedback);
     setFieldErrors([]);
   };
-  const fail = (message: AuthMessage) => {
-    setFeedback({ tone: 'error', message });
+  const fail = (message: AuthMessage, values?: Record<string, number>) => {
+    setFeedback({ tone: 'error', message, ...(values ? { values } : {}) });
   };
 
   const finish = async () => {
@@ -91,6 +93,12 @@ export function useAuthFlow({
     }
     if (result.code === AuthCode.RECAPTCHA_FAILED) {
       fail('errors.captcha');
+      return true;
+    }
+    if (result.code === AuthCode.TOO_MANY_REQUESTS) {
+      fail('errors.tooManyRequests', {
+        minutes: Math.max(1, Math.ceil((result.retry_after ?? 60) / 60)),
+      });
       return true;
     }
     return false;
@@ -178,7 +186,9 @@ export function useAuthFlow({
         if (await handleCommon(result)) return;
         switch (result.code) {
           case AuthCode.INVALID_OTP:
-            fail('errors.invalidOtp');
+            if (result.tries_left !== undefined && result.tries_left > 0)
+              fail('errors.invalidOtpTries', { n: result.tries_left });
+            else fail('errors.invalidOtp');
             return;
           case AuthCode.OTP_EXPIRED:
             fail('errors.otpExpired');

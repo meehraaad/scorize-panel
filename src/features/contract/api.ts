@@ -24,8 +24,10 @@ export interface Installment {
   id: number;
   /** 0: the prepayment, then 1, 2, … */
   number: number;
-  /** Toman. */
+  /** In `currency`. */
   amount: number;
+  /** ISO 4217, or `IRT` for the toman; many contracts are priced in euros. */
+  currency: string | null;
   status: InstallmentStatus;
   /** A fixed date to pay by; null when it depends on a step (`condition`). */
   due_date: string | null;
@@ -81,6 +83,8 @@ export interface ContractData {
   applies_total: number;
   /** Toman; null for a free contract. */
   total_amount: number | null;
+  /** Of `total_amount`: ISO 4217, or `IRT` for the toman. */
+  currency: string | null;
   start_date: string;
   end_date: string;
   /** Turkey: when the pledge was signed with the SMS code. */
@@ -105,10 +109,12 @@ export interface PaymentData {
   /** The instalment it settles, when it is one (back link goes to the contract). */
   installment: number | null;
   items: { label: string; amount: number }[];
-  /** Toman: sum of the items, credit used, and what is left to pay. */
+  /** Sum of the items, credit used, and what is left to pay, in `currency`. */
   total: number;
   credit_used: number;
   amount: number;
+  /** The receiving account's currency: ISO 4217, or `IRT` for the toman. */
+  currency: string | null;
   created_at: string;
   paid_at: string | null;
   seller: string | null;

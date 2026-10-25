@@ -11,10 +11,10 @@ import { IconButton } from '@/components/ui/IconButton';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
-import { CHOICES } from '@/lib/staff/api';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
+  CHOICES,
   UnknownNameError,
   infoQuery,
   useSaveInfo,

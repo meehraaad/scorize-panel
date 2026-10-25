@@ -13,19 +13,18 @@
 corepack enable          # یک بار: pnpm را فعال می‌کند (نسخه از package.json خوانده می‌شود)
 pnpm install
 cp .env.example .env.local
-pnpm dev:mock            # بدون نیاز به Django، با داده‌ی نمونه → http://localhost:5173/panel/
+pnpm dev                 # → http://localhost:5173/panel/
 ```
 
-با بک‌اند واقعی: در repo `scorize` دستور `./run_local.sh` را اجرا کنید، بعد اینجا `pnpm dev`.
-Vite درخواست‌های `/api`، `/profile` (صفحه‌ی لاگین)، `/static` و `/media` را به `127.0.0.1:8000` می‌فرستد.
-اول در `http://localhost:5173/profile/authentication/login/` لاگین کنید.
+پنل همیشه به Django وصل است (داده‌ی ساختگی ندارد): در repo `scorize` دستور `./run_local.sh` را اجرا کنید
+(با `seed`، کاربرهای نمونه‌ی هر نقش ساخته می‌شوند). Vite درخواست‌های `/api`، `/profile`، `/static` و `/media`
+را به `127.0.0.1:8000` می‌فرستد. لاگین از خود پنل: `http://localhost:5173/panel/login`.
 
 ## دستورها
 
 | دستور                       | کار                                                     |
 | --------------------------- | ------------------------------------------------------- |
 | `pnpm dev`                  | سرور توسعه، متصل به Django لوکال                        |
-| `pnpm dev:mock`             | سرور توسعه با API ساختگی (`src/mocks/`)                 |
 | `pnpm build`                | بررسی تایپ + ساخت نسخه‌ی production در `dist/`          |
 | `pnpm preview`              | اجرای نسخه‌ی build شده                                  |
 | `pnpm lint` / `pnpm format` | ESLint / Prettier                                       |

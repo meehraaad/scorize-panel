@@ -12,11 +12,15 @@ const base: SessionUser = {
   is_superuser: false,
   permissions: [],
   group_permissions: [],
+  applicant: null,
+  is_country_supervisor: false,
+  last_workspace: null,
+  workspace_mode: 'last',
 };
 
 const staff = (team: number, extra: Partial<SessionUser> = {}): SessionUser => ({
   ...base,
-  staff: { id: 9, full_name: 'Staff', team },
+  staff: { id: 9, full_name: 'Staff', team, is_active: true },
   ...extra,
 });
 
@@ -57,9 +61,19 @@ describe('roles', () => {
 
   it('adds the applicant panel for staff with their own applicant file', () => {
     const user = staff(Team.SALES, {
-      applicant: { contract_status: 1, accepted_the_terms: true },
+      applicant: {
+        contract_status: 'active',
+        accepted_the_terms: true,
+        has_admission_features: true,
+        has_visa_features: false,
+        has_writing_features: false,
+      },
     });
     expect(getRoles(user)).toEqual(['sales', 'applicant']);
+  });
+
+  it('gives country supervisors the supervisor panel', () => {
+    expect(getRoles({ ...base, is_country_supervisor: true })).toEqual(['supervisor']);
   });
 
   it('treats superusers as having every permission', () => {

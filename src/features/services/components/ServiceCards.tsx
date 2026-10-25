@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { safeHref } from '@/lib/url';
@@ -24,21 +25,36 @@ export function PackagesCard({ data }: { data: ServicesData }) {
         <ul className="m-0 list-none p-0">
           {data.packages.map((item) => (
             <li key={item.id}>
-              <Link
-                to={`/services/packages/${String(item.id)}`}
-                className={`${ROW} text-text hover:bg-canvas`}
-              >
-                <span
-                  aria-hidden="true"
-                  className="flex h-12 w-16 flex-none items-center justify-center rounded-xl bg-hero text-[11px] font-bold tracking-wider text-on-hero"
+              {ON_SERVER.packages ? (
+                <Link
+                  to={`/services/packages/${String(item.id)}`}
+                  className={`${ROW} text-text hover:bg-canvas`}
                 >
-                  {item.tag}
-                </span>
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold">{item.name}</span>
-                  <span className="text-[13px] text-text-2">{item.meta}</span>
-                </span>
-              </Link>
+                  <span
+                    aria-hidden="true"
+                    className="flex h-12 w-16 flex-none items-center justify-center rounded-xl bg-hero text-[11px] font-bold tracking-wider text-on-hero"
+                  >
+                    {item.tag}
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-[15px] font-semibold">{item.name}</span>
+                    <span className="text-[13px] text-text-2">{item.meta}</span>
+                  </span>
+                </Link>
+              ) : (
+                <div className={`${ROW} text-text`}>
+                  <span
+                    aria-hidden="true"
+                    className="flex h-12 w-16 flex-none items-center justify-center rounded-xl bg-hero text-[11px] font-bold tracking-wider text-on-hero"
+                  >
+                    {item.tag}
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-[15px] font-semibold">{item.name}</span>
+                    <span className="text-[13px] text-text-2">{item.meta}</span>
+                  </span>
+                </div>
+              )}
             </li>
           ))}
         </ul>

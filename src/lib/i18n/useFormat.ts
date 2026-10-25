@@ -6,6 +6,9 @@ import { DEFAULT_LOCALE, LOCALES, isLocale } from './config';
  * Locale-aware formatting built on Intl (no date library in the bundle).
  * Persian gets the Jalali calendar and Persian digits automatically.
  */
+/** Django's code for the toman (not in ISO 4217). */
+export const TOMAN = 'IRT';
+
 export function useFormat() {
   const { i18n } = useTranslation();
   const locale = isLocale(i18n.language) ? i18n.language : DEFAULT_LOCALE;
@@ -96,6 +99,18 @@ export function useFormat() {
           currency,
           maximumFractionDigits: 0,
         }).format(value),
+      /**
+       * An amount in its own currency: the toman (Django's `IRT`, or none given) through the
+       * page's own "{{amount}} toman" text, anything else (EUR, CAD…) as Intl formats it.
+       */
+      price: (value: number, currency: string | null, toman: (amount: string) => string) =>
+        currency && currency !== TOMAN
+          ? new Intl.NumberFormat(tag, {
+              style: 'currency',
+              currency,
+              maximumFractionDigits: 0,
+            }).format(value)
+          : toman(number.format(value)),
       relativeDays: (days: number) => relative.format(days, 'day'),
       /** "2.4 megabytes", "350 kilobytes". */
       fileSize: (bytes: number) => {

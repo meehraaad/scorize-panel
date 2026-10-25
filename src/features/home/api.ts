@@ -68,8 +68,10 @@ export interface ApplicantOverview {
     number: number;
     count: number;
     paid_count: number;
-    /** Toman. */
+    /** In `currency`. */
     amount: number;
+    /** ISO 4217, or `IRT` for the toman. */
+    currency: string | null;
     is_due: boolean;
     /** When it falls due, written by staff ("after the TU Munich admission"). */
     condition: string | null;

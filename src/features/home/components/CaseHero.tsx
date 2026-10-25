@@ -21,7 +21,7 @@ export function CaseHero({ file }: { file: ApplicantOverview['file'] }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5 text-sm text-on-hero-2">
-          <span>{t('hero.file', { id: f.number(file.applicant_id) })}</span>
+          <span>{t('hero.file', { id: f.digits(String(file.applicant_id)) })}</span>
           <span aria-hidden="true" className="size-1 rounded-full bg-on-hero-3" />
           <span>
             {t('hero.contract', {

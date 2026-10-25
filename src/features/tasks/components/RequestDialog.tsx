@@ -30,7 +30,7 @@ export function RequestDialog({
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const { data } = useQuery({ ...requestQuery(config.panel, id ?? 0), enabled: id !== null });
-  const change = useTaskChange(config.panel);
+  const change = useTaskChange();
   const [message, setMessage] = useState('');
   const [refusing, setRefusing] = useState(false);
   const [reason, setReason] = useState('');
@@ -115,11 +115,7 @@ export function RequestDialog({
                 </Link>
               </span>
             )}
-            <span>
-              {t('requests.due', {
-                when: data.date_only ? f.dateShort(data.due_at) : f.dateTime(data.due_at),
-              })}
-            </span>
+            <span>{t('requests.due', { when: f.dateTime(data.due_at) })}</span>
             {data.watchers.length > 0 && (
               <span>{t('requests.watchers', { names: f.list(data.watchers) })}</span>
             )}

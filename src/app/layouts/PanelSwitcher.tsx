@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import type { SessionUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { toast } from '@/lib/toast';
 import { setStartPreference, startPreference, type StartPreference } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { PanelTile } from './PanelTile';
@@ -26,7 +27,7 @@ export function PanelSwitcher({ user, panel, panels }: Props) {
   const { t } = useTranslation();
   const format = useFormat();
   const [open, setOpen] = useState(false);
-  const [preference, setPreference] = useState<StartPreference>(startPreference);
+  const [preference, setPreference] = useState<StartPreference>(() => startPreference(user));
   const dialog = useRef<HTMLDialogElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -138,8 +139,12 @@ export function PanelSwitcher({ user, panel, panels }: Props) {
               value={preference}
               onChange={(event) => {
                 const value = event.target.value as StartPreference;
+                const previous = preference;
                 setPreference(value);
-                setStartPreference(value);
+                setStartPreference(value).catch(() => {
+                  setPreference(previous);
+                  toast.error(t('switcher.saveFailed'));
+                });
               }}
               className="h-11 max-w-full rounded-full bg-canvas px-3 text-sm text-text"
             >

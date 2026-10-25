@@ -7,6 +7,7 @@ import { logout } from '@/lib/auth/logout';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
+import { toast } from '@/lib/toast';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import { applicantPanel } from '@/panels/applicant';
 import { panelsFor, setStartPreference } from '@/panels/registry';
@@ -32,7 +33,9 @@ export default function ChoosePanelPage() {
   useDocumentTitle(title);
 
   const remember = () => {
-    setStartPreference(skipNextTime ? 'last' : 'ask');
+    setStartPreference(skipNextTime ? 'last' : 'ask').catch(() => {
+      toast.error(t('switcher.saveFailed'));
+    });
   };
 
   return (

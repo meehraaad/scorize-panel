@@ -45,8 +45,7 @@ export function hasPermission(user: SessionUser, codename: string) {
 
 /** user_is_support_staff(): has an active SupportStaff record. */
 export function isActiveStaff(user: SessionUser) {
-  // `is_active` is not in whoami yet (backend-changes.md, R3); until then a staff record counts.
-  return Boolean(user.staff && user.staff.is_active !== false);
+  return Boolean(user.staff?.is_active);
 }
 
 export function getRoles(user: SessionUser): Role[] {
@@ -60,7 +59,7 @@ export function getRoles(user: SessionUser): Role[] {
     // applicant files. It reads only `staff.team` and `is_superuser` from whoami.
     (staff && team === Team.EXECUTIVE) ||
     hasPermission(user, 'can_manage_applicant') ||
-    // Country supervisors outside the executive team (backend-changes.md, R2; optional).
+    // Country supervisors outside the executive team (backend-changes.md, R2).
     user.is_country_supervisor
   ) {
     roles.push('supervisor');
@@ -74,8 +73,7 @@ export function getRoles(user: SessionUser): Role[] {
     roles.push('sales');
   }
   // The applicant panel: everyone without a work panel (no contract = the guest state, V7 design),
-  // and staff who also have an applicant file of their own. Until whoami sends `applicant`
-  // (backend-changes.md, R1) that can't be known, so staff see only their work panels.
+  // and staff who also have an applicant file of their own (`whoami.applicant`, R1).
   if (roles.length === 0 || user.applicant) roles.push('applicant');
 
   return roles;

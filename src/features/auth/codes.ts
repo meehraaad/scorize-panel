@@ -25,6 +25,8 @@ export const AuthCode = {
   INVALID_PASSWORD_RESET_TOKEN: 19,
   PASSWORD_RESET_TOKEN_DOES_NOT_EXIST: 20,
   PASSWORD_RESET_COMPLETE: 21,
+  /** HTTP 429 with `retry_after` (seconds): too many codes or logins from this IP, phone or account. */
+  TOO_MANY_REQUESTS: 22,
 } as const;
 
 export type AuthCode = (typeof AuthCode)[keyof typeof AuthCode];

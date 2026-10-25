@@ -35,7 +35,9 @@ export default function LoginPage() {
   return (
     // Keyed by step: each new step rises into place.
     <div key={step.name} className="flex animate-rise flex-col gap-6">
-      {feedback && !otpError && <Notice tone={feedback.tone}>{t(feedback.message)}</Notice>}
+      {feedback && !otpError && (
+        <Notice tone={feedback.tone}>{t(feedback.message, feedback.values ?? {})}</Notice>
+      )}
 
       {step.name === 'identify' && (
         <IdentifyStep
@@ -52,7 +54,7 @@ export default function LoginPage() {
           sentAt={step.sentAt}
           purpose={step.purpose}
           pending={pending}
-          error={otpError ? t(otpError.message) : undefined}
+          error={otpError ? t(otpError.message, otpError.values ?? {}) : undefined}
           onSubmit={actions.verifyOtp}
           onResend={actions.resendOtp}
           onChangePhone={() => actions.restart(step.phone)}

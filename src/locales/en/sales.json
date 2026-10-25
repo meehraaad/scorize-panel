@@ -61,8 +61,7 @@
     "overdue": "{{n}} days overdue",
     "today": "Today {{time}}",
     "later": "{{date}} · {{time}}",
-    "none": "—",
-    "todayDay": "Today"
+    "none": "—"
   },
   "noContact": "not called yet",
   "lastContact": "Last contact: {{text}}",

@@ -13,7 +13,7 @@ import { Notice } from '@/components/ui/Notice';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
-import { useFormat } from '@/lib/i18n/useFormat';
+import { TOMAN, useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
 import { paymentQuery, useStartOnlinePayment, type PaymentData, type PaymentStatus } from './api';
 import { ReceiptForm } from './components/ReceiptForm';
@@ -43,8 +43,12 @@ function Payment({ id }: { id: number }) {
   const f = useFormat();
   const { data } = useSuspenseQuery(paymentQuery(id));
   const [params] = useSearchParams();
+  // The bank gateway takes only toman (H25); other currencies are paid by card transfer.
+  const online = !data?.currency || data.currency === TOMAN;
   const [method, setMethod] = useState<'online' | 'receipt'>(() =>
-    params.get('method') === 'receipt' || data?.status === 'declined' ? 'receipt' : 'online',
+    !online || params.get('method') === 'receipt' || data?.status === 'declined'
+      ? 'receipt'
+      : 'online',
   );
 
   if (!data) return <Missing />;
@@ -81,7 +85,7 @@ function Payment({ id }: { id: number }) {
         <OnlineCard payment={data} onReceipt={() => setMethod('receipt')} />
       )}
       {payable && method === 'receipt' && (
-        <ReceiptForm payment={data} onOnline={() => setMethod('online')} />
+        <ReceiptForm payment={data} onOnline={online ? () => setMethod('online') : undefined} />
       )}
       {data.status === 'review' && (
         <Outcome icon="clock" tone="bg-info-tint text-info" title={t('payment.review.title')}>
@@ -115,7 +119,8 @@ function Payment({ id }: { id: number }) {
 function Summary({ payment, method }: { payment: PaymentData; method: PaymentData['method'] }) {
   const { t } = useTranslation('contract');
   const f = useFormat();
-  const money = (amount: number) => t('amount', { amount: f.number(amount) });
+  const money = (amount: number) =>
+    f.price(amount, payment.currency, (value) => t('amount', { amount: value }));
   const facts = [
     [t('payment.total'), money(payment.total)],
     payment.credit_used > 0 && [t('payment.credit'), money(payment.credit_used)],

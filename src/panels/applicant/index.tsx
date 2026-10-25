@@ -9,6 +9,7 @@ import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { gatesQuery } from '@/lib/applicant/gates';
 import { lazyPage } from '@/lib/router/lazyPage';
 import { ticketsQuery } from '@/lib/tickets/api';
@@ -114,23 +115,32 @@ export const applicantPanel: PanelDefinition = {
           },
           ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing']),
         },
-        // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm).
-        {
-          path: 'documents/recommendation',
-          loader: () => {
-            queryClient.query(writingQuery('recommendation')).catch(() => undefined);
-            return null;
-          },
-          ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing']),
-        },
-        {
-          path: 'documents/pl',
-          loader: () => {
-            queryClient.query(writingQuery('pl')).catch(() => undefined);
-            return null;
-          },
-          ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing']),
-        },
+        // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm). Until Django serves a
+        // form (lib/applicant/onServer.ts) its path falls to "coming soon" below.
+        ...(ON_SERVER.recommendationForm
+          ? [
+              {
+                path: 'documents/recommendation',
+                loader: () => {
+                  queryClient.query(writingQuery('recommendation')).catch(() => undefined);
+                  return null;
+                },
+                ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing']),
+              },
+            ]
+          : []),
+        ...(ON_SERVER.professorListForm
+          ? [
+              {
+                path: 'documents/pl',
+                loader: () => {
+                  queryClient.query(writingQuery('pl')).catch(() => undefined);
+                  return null;
+                },
+                ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing']),
+              },
+            ]
+          : []),
         // PS and DS: the SOP form with their own questions (canvas V8 note); not built yet.
         {
           path: 'documents/:writing',
@@ -220,14 +230,16 @@ export const applicantPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/consultations/ConsultationPage'), ['consultations']),
         },
         // The free Turkey application (no nav item: the guest home links to it). Canvas V7 section 3.
-        {
-          path: 'turkey',
-          loader: () => {
-            queryClient.query(turkeyQuery).catch(() => undefined);
-            return null;
-          },
-          ...lazyPage(() => import('@/features/turkey/TurkeyPage'), ['turkey']),
-        },
+        ON_SERVER.turkey
+          ? {
+              path: 'turkey',
+              loader: () => {
+                queryClient.query(turkeyQuery).catch(() => undefined);
+                return null;
+              },
+              ...lazyPage(() => import('@/features/turkey/TurkeyPage'), ['turkey']),
+            }
+          : { path: 'turkey', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
       ],
     },
   ],

@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "panel-mock",
+      "name": "panel",
       "runtimeExecutable": "corepack",
-      "runtimeArgs": ["pnpm", "dev:mock"],
+      "runtimeArgs": ["pnpm", "dev"],
       "port": 5173
     }
   ]

@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => {
           navigateFallbackDenylist: [/^\/api\//],
           globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
           // Rare font subsets (math, symbols) load on demand instead of on install.
-          globIgnores: ['**/mockServiceWorker.js', '**/*-{math,symbols}-*.woff2'],
+          globIgnores: ['**/*-{math,symbols}-*.woff2'],
         },
       }),
     ],

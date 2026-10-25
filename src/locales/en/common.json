@@ -88,7 +88,8 @@
     "profile": "Account",
     "settings": "Settings",
     "logout": "Log out",
-    "asCustomer": "Customer view"
+    "asCustomer": "Customer view",
+    "logoutFailed": "Couldn't log out. Check your internet connection and try again."
   },
   "more": {
     "title": "More",
@@ -188,7 +189,8 @@
       "last": "The last panel I used",
       "always": "Always the {{panel}}",
       "ask": "Always ask"
-    }
+    },
+    "saveFailed": "Your choice wasn't saved. Check your internet connection and try again."
   },
   "chooser": {
     "title": "Hi {{name}}, which panel shall we start with today?",

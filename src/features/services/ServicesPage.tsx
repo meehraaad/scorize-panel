@@ -5,6 +5,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { LinkTile, TileGrid } from '@/components/ui/LinkTile';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { servicesQuery } from './api';
 import { GpaCard } from './components/GpaCard';
@@ -78,32 +79,34 @@ export default function ServicesPage() {
 
       <nav aria-label={t('sections')}>
         <TileGrid dense>
-          {tiles.map((tile) => (
-            <LinkTile
-              key={tile.id}
-              {...linkTo(tile.id)}
-              title={tile.title}
-              text={tile.text}
-              end={
-                <span
-                  aria-hidden="true"
-                  className="flex size-10 flex-none items-center justify-center rounded-xl bg-tint text-primary-text"
-                >
-                  <Icon name={tile.icon} size={20} />
-                </span>
-              }
-            />
-          ))}
+          {tiles
+            .filter((tile) => tile.id !== 'gpa' || ON_SERVER.gpaSave)
+            .map((tile) => (
+              <LinkTile
+                key={tile.id}
+                {...linkTo(tile.id)}
+                title={tile.title}
+                text={tile.text}
+                end={
+                  <span
+                    aria-hidden="true"
+                    className="flex size-10 flex-none items-center justify-center rounded-xl bg-tint text-primary-text"
+                  >
+                    <Icon name={tile.icon} size={20} />
+                  </span>
+                }
+              />
+            ))}
         </TileGrid>
       </nav>
 
-      {data.webinar && <WebinarCard webinar={data.webinar} />}
+      {data.webinar && ON_SERVER.webinarRegistration && <WebinarCard webinar={data.webinar} />}
 
       <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-7">
         <PackagesCard data={data} />
         <ConsultationsCard data={data} />
         <EventsCard data={data} />
-        <GpaCard data={data} />
+        {ON_SERVER.gpaSave && <GpaCard data={data} />}
       </div>
     </PageStack>
   );

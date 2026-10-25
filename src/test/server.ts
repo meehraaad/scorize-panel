@@ -2,7 +2,7 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { handlers, resetMockSession } from '@/mocks/handlers';
 
-/** The same fake Django as `pnpm dev:mock`, for integration tests. Import once per test file. */
+/** Fake Django (src/mocks) for integration tests. Import once per test file. */
 export const server = setupServer(...handlers);
 
 beforeAll(() => {

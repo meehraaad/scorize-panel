@@ -37,7 +37,7 @@ export function ContractHero({ contract }: { contract: ContractData }) {
           [t('hero.applies'), t('hero.appliesValue', { n: f.number(contract.applies_total) })],
           contract.total_amount !== null && [
             t('hero.total'),
-            t('amount', { amount: f.number(contract.total_amount) }),
+            f.price(contract.total_amount, contract.currency, (amount) => t('amount', { amount })),
           ],
           [t('hero.duration'), t('hero.months', { n: f.number(Math.round(total / MONTH_DAYS)) })],
         ]

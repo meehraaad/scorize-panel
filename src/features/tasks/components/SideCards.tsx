@@ -34,7 +34,6 @@ export function InternalRequestCard({
         key={open ? 'open' : 'closed'}
         open={open}
         colleagues={colleagues}
-        panel={config.panel}
         onClose={() => setOpen(false)}
       />
     </SectionCard>
@@ -44,16 +43,14 @@ export function InternalRequestCard({
 function InternalRequestDialog({
   open,
   colleagues,
-  panel,
   onClose,
 }: {
   open: boolean;
   colleagues: Colleague[];
-  panel: TasksConfig['panel'];
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
-  const create = useCreateTask(TASKS_KEY, panel);
+  const create = useCreateTask(TASKS_KEY);
   const [text, setText] = useState('');
   const [peer, setPeer] = useState(String(colleagues[0]?.id ?? ''));
   const [when, setWhen] = useState<(typeof WHENS)[number]>('tomorrow');

@@ -13,7 +13,7 @@ import type { TasksConfig } from '../config';
 export function TeamQueue({ items, config }: { items: QueueItem[]; config: TasksConfig }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
-  const change = useTaskChange(config.panel);
+  const change = useTaskChange();
   return (
     <Card aria-label={t('view.team.label')} className="flex flex-col">
       <div className="p-5 pb-2 lg:px-8">

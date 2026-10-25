@@ -19,7 +19,7 @@ const NEXT = { sent: 'in_progress', seen: 'in_progress', in_progress: 'done' } a
 export function Requests({ requests, config }: { requests: TaskRequest[]; config: TasksConfig }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
-  const change = useTaskChange(config.panel);
+  const change = useTaskChange();
   const [open, setOpen] = useState<number | null>(null);
 
   if (requests.length === 0) return <EmptyState variant="card">{t('requests.empty')}</EmptyState>;
@@ -57,13 +57,7 @@ export function Requests({ requests, config }: { requests: TaskRequest[]; config
                       </Link>
                     </span>
                   )}
-                  <span>
-                    {t('requests.due', {
-                      when: request.date_only
-                        ? f.dateShort(request.due_at)
-                        : f.dateTime(request.due_at),
-                    })}
-                  </span>
+                  <span>{t('requests.due', { when: f.dateTime(request.due_at) })}</span>
                   {request.comments > 0 && (
                     <span>{t('requests.comments', { n: f.number(request.comments) })}</span>
                   )}

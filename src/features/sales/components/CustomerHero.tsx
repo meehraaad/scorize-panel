@@ -52,9 +52,7 @@ export function CustomerHero({
         seller: lead.seller ?? t('due.none'),
       }),
   ].filter(Boolean);
-  const due =
-    lead &&
-    s.due(lead.follow_up_at, lead.stage, lead.stage !== 'new', lead.follow_up_date_only ?? false);
+  const due = lead && s.due(lead.follow_up_at, lead.stage, lead.stage !== 'new');
 
   return (
     <section

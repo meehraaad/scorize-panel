@@ -1,10 +1,16 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { MOCK_PLEDGE_CODE } from '@/mocks/applicant';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+
+// Also covers features Django doesn't serve yet (src/lib/applicant/onServer.ts): switch them on.
+vi.mock('@/lib/applicant/onServer', async (original) => {
+  const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
+  return { ON_SERVER: Object.fromEntries(Object.keys(ON_SERVER).map((key) => [key, true])) };
+});
 
 const MARYAM = 2; // no contract: may start the free Turkey application (src/mocks/applicant.ts)
 

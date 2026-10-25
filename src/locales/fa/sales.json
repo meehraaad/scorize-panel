@@ -61,8 +61,7 @@
     "overdue": "{{n}} روز عقب‌افتاده",
     "today": "امروز {{time}}",
     "later": "{{date}} · {{time}}",
-    "none": "—",
-    "todayDay": "امروز"
+    "none": "—"
   },
   "noContact": "هنوز تماس نگرفته",
   "lastContact": "آخرین تماس: {{text}}",

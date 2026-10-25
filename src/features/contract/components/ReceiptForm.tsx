@@ -13,7 +13,14 @@ const INPUT_ID = 'payment-receipt';
 const ERROR_ID = `${INPUT_ID}-error`;
 
 /** Card transfer: the account to pay into (copyable), then the receipt file. */
-export function ReceiptForm({ payment, onOnline }: { payment: PaymentData; onOnline: () => void }) {
+/** `onOnline`: switch to the bank gateway; absent when it can't take this currency. */
+export function ReceiptForm({
+  payment,
+  onOnline,
+}: {
+  payment: PaymentData;
+  onOnline?: (() => void) | undefined;
+}) {
   const { t } = useTranslation('contract');
   const f = useFormat();
   const upload = useUploadReceipt();
@@ -100,14 +107,16 @@ export function ReceiptForm({ payment, onOnline }: { payment: PaymentData; onOnl
         )}
         {pickFirst && <Notice tone="error">{t('payment.receipt.pickFirst')}</Notice>}
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            className="flex-[1_1_auto]"
-            disabled={upload.isPending}
-            onClick={onOnline}
-          >
-            {t('payment.receipt.toOnline')}
-          </Button>
+          {onOnline && (
+            <Button
+              variant="outline"
+              className="flex-[1_1_auto]"
+              disabled={upload.isPending}
+              onClick={onOnline}
+            >
+              {t('payment.receipt.toOnline')}
+            </Button>
+          )}
           <Button type="submit" className="flex-[2_1_auto]" disabled={upload.isPending}>
             {upload.isPending ? t('payment.receipt.sending') : t('payment.receipt.submit')}
           </Button>

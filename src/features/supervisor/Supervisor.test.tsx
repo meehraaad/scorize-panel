@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -164,7 +164,9 @@ describe('supervisor panel', () => {
     const confirm = within(dialog).getByRole('group', { name: 'اپلای KIT حذف شود؟' });
     await user.click(within(confirm).getByRole('button', { name: 'حذف اپلای' }));
     await screen.findByRole('button', { name: 'افزودن اپلای' });
-    expect(screen.queryByText('KIT')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText('KIT')).toBeNull();
+    });
   });
 
   it('applications: the bot stops, and cannot start while it has problems', async () => {
