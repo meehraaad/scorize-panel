@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { toasts } from '@/test/toasts';
 
 const NIMA = 3; // seller (mock user in src/mocks/handlers.ts)
 const ERFAN = 105; // a consulted lead with history and tasks (src/mocks/sales.ts)
@@ -46,6 +47,7 @@ describe('sales panel, seller pages', () => {
 
     const receipts = screen.getByRole('region', { name: /رسیدهای منتظر تأیید/ });
     await user.click(within(receipts).getByRole('button', { name: 'تأیید رسید کیان مرادی' }));
+    expect(await toasts().findByText('رسید کیان مرادی تأیید شد.')).toBeInTheDocument();
     expect(
       await within(receipts).findByRole('button', { name: 'تأیید رسید محمد یزدانی' }),
     ).toBeInTheDocument();

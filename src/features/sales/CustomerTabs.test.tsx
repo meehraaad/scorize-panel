@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import { instalmentPlan } from './plan';
@@ -11,6 +11,10 @@ const NIMA = 3;
 const ERFAN = '/sales/customers/105';
 
 describe('sales panel, customer sub-tabs, sale and offer', () => {
+  // The first test opens the payments page: compile its lazy chunk up front, outside the
+  // 12 s wait for the page (src/test/setup.ts), which a cold chunk can use up on a busy CI runner.
+  beforeAll(() => import('./CustomerPaymentsPage'), 30_000);
+
   beforeEach(async () => {
     localStorage.clear();
     await i18n.changeLanguage('fa');
@@ -26,6 +30,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'تأیید رسید' }));
     expect(await within(detail).findByText('پرداخت کامل شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('رسید تأیید شد.')).toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: 'پرداخت شماره‌ی ۴۹۰۲، بسته‌ی نمونه انگیزه‌نامه‌ها' }),
@@ -36,13 +41,15 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(within(pending).queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('payments: declining a receipt asks first', async () => {
+  it('payments: declining a receipt asks first and takes an optional reason', async () => {
     const user = userEvent.setup();
     renderApp(`${ERFAN}/payments`);
     const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
+    await user.type(within(detail).getByLabelText('علت رد (اختیاری)'), 'مبلغ یکی نیست');
     await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
     expect(await within(detail).findByText(/منتظر آپلود دوباره‌ی مشتری/)).toBeInTheDocument();
+    expect(await toasts().findByText('رسید رد شد و برای مشتری پیامک رفت.')).toBeInTheDocument();
   });
 
   it('sells a product with a discount code and opens its invoice', async () => {

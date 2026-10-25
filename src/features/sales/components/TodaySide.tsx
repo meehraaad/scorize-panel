@@ -182,7 +182,11 @@ export function ReceiptsCard() {
                   onClick={() =>
                     confirm.mutate(
                       { customer: receipt.customer, payment: receipt.payment },
-                      { onError: () => toast.error(t('today.receipts.error')) },
+                      {
+                        onSuccess: () =>
+                          toast.success(t('today.receipts.confirmed', { name: receipt.name })),
+                        onError: () => toast.error(t('today.receipts.error')),
+                      },
                     )
                   }
                 >

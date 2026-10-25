@@ -130,7 +130,8 @@
         "iban": "Bank transfer (IBAN)"
       },
       "empty": "No receipts waiting.",
-      "error": "The receipt wasn't confirmed. Please try again."
+      "error": "The receipt wasn't confirmed. Please try again.",
+      "confirmed": "{{name}}'s receipt confirmed."
     },
     "month": {
       "title": "My month",
@@ -578,7 +579,11 @@
       "confirm": "Confirm receipt",
       "decline": "Decline receipt",
       "declineConfirm": "Decline the receipt? The customer gets an SMS to upload it again.",
-      "declineNote": "Declining sends the customer an automatic SMS to upload again."
+      "declineNote": "Declining sends the customer an automatic SMS to upload again.",
+      "confirmed": "Receipt confirmed.",
+      "declined": "Receipt declined; the customer was texted.",
+      "reason": "Reason (optional)",
+      "reasonHint": "The customer sees this next to their payment."
     },
     "methodLabel": "Payment method",
     "methodOption": {
@@ -593,7 +598,12 @@
     "factorNotOpened": "Invoice last sent {{when}} · the customer hasn't opened the link",
     "paid": "Paid in full.",
     "paidRef": "Paid in full. Reference: {{reference}}",
-    "declinedNote": "Receipt declined; waiting for the customer to upload again."
+    "declinedNote": "Receipt declined; waiting for the customer to upload again.",
+    "done": {
+      "method": "Payment method changed.",
+      "wallet": "Destination account changed.",
+      "factor": "Invoice sent by SMS."
+    }
   },
   "info": {
     "aside": "About the details",

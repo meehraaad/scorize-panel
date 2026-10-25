@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
-import { SelectField } from '@/components/ui/Choices';
+import { SelectField, TextAreaField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
@@ -152,6 +152,7 @@ function PaymentDetail({
   const confirm = useConfirmReceipt();
   const action = usePaymentAction(customer);
   const [declining, setDeclining] = useState(false);
+  const [reason, setReason] = useState('');
   const [copied, setCopied] = useState(false);
   const wallet = wallets.find((item) => item.id === payment.wallet)?.name ?? '';
   const paid = payment.status === 'paid' || payment.status === 'paid_by_receipt';
@@ -208,11 +209,23 @@ function PaymentDetail({
               onCancel={() => setDeclining(false)}
               onConfirm={() =>
                 action.mutate(
-                  { payment: payment.id, action: { kind: 'decline' } },
-                  { onError: () => toast.error(t('error')) },
+                  { payment: payment.id, action: { kind: 'decline', reason: reason.trim() } },
+                  {
+                    onSuccess: () => toast.success(t('payments.receipt.declined')),
+                    onError: () => toast.error(t('error')),
+                  },
                 )
               }
-            />
+            >
+              <TextAreaField
+                label={t('payments.receipt.reason')}
+                hint={t('payments.receipt.reasonHint')}
+                rows={2}
+                maxLength={1000}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </InlineConfirm>
           ) : (
             <div className="flex flex-wrap gap-2">
               <Button
@@ -220,7 +233,10 @@ function PaymentDetail({
                 onClick={() =>
                   confirm.mutate(
                     { customer, payment: payment.id },
-                    { onError: () => toast.error(t('error')) },
+                    {
+                      onSuccess: () => toast.success(t('payments.receipt.confirmed')),
+                      onError: () => toast.error(t('error')),
+                    },
                   )
                 }
               >
@@ -243,7 +259,10 @@ function PaymentDetail({
             onChange={(method: PaymentMethod) =>
               action.mutate(
                 { payment: payment.id, action: { kind: 'method', method } },
-                { onError: () => toast.error(t('error')) },
+                {
+                  onSuccess: () => toast.success(t('payments.done.method')),
+                  onError: () => toast.error(t('error')),
+                },
               )
             }
             options={(['online', 'receipt'] as const).map((value) => ({
@@ -261,7 +280,10 @@ function PaymentDetail({
                     payment: payment.id,
                     action: { kind: 'wallet', wallet: Number(value) },
                   },
-                  { onError: () => toast.error(t('error')) },
+                  {
+                    onSuccess: () => toast.success(t('payments.done.wallet')),
+                    onError: () => toast.error(t('error')),
+                  },
                 )
               }
               options={wallets.map((item) => ({ value: String(item.id), label: item.name }))}
@@ -273,7 +295,10 @@ function PaymentDetail({
               onClick={() =>
                 action.mutate(
                   { payment: payment.id, action: { kind: 'factor' } },
-                  { onError: () => toast.error(t('error')) },
+                  {
+                    onSuccess: () => toast.success(t('payments.done.factor')),
+                    onError: () => toast.error(t('error')),
+                  },
                 )
               }
             >
