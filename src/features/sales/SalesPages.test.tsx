@@ -37,6 +37,13 @@ describe('sales panel, seller pages', () => {
     expect(within(calls).getAllByRole('listitem')).toHaveLength(2);
     expect(within(calls).getByText('سمیرا نوروزی')).toBeInTheDocument();
 
+    // Two admissions of one customer make one card.
+    const upsell = screen.getByRole('region', { name: 'فرصت‌های فروش مکمل' });
+    expect(within(upsell).getAllByRole('listitem')).toHaveLength(3);
+    expect(
+      within(upsell).getByText('زهرا موسوی از Uppsala University و Lund University پذیرش گرفت'),
+    ).toBeInTheDocument();
+
     const receipts = screen.getByRole('region', { name: /رسیدهای منتظر تأیید/ });
     await user.click(within(receipts).getByRole('button', { name: 'تأیید رسید کیان مرادی' }));
     expect(

@@ -584,6 +584,7 @@ function todayOf(data: SalesState): TodayData {
     },
     upsell: [
       { kind: 'admitted', customer: 120, name: 'زهرا موسوی', university: 'Uppsala University' },
+      { kind: 'admitted', customer: 120, name: 'زهرا موسوی', university: 'Lund University' },
       { kind: 'ending', customer: 121, name: 'علی نوری', days: 14, admissions: 2 },
       {
         kind: 'no_contract',
