@@ -64,7 +64,7 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* "Graphite": neutral greys, so the brand magenta is the only colour on screen. */
+  /* "Graphite": neutral greys. The brand colour appears only as fills (buttons, logo, counters). */
   --canvas: #111113;
   --surface: #1b1b1f;
   --text: #ededf0;
@@ -75,14 +75,14 @@
   --line-2: rgb(255 255 255 / 0.12);
   --line-3: rgb(255 255 255 / 0.26);
   --track: rgb(255 255 255 / 0.08);
-  --row-highlight: rgb(240 140 198 / 0.06);
+  --row-highlight: rgb(255 255 255 / 0.035);
 
-  --primary: #c43a8e; /* brighter than light mode so buttons don't sink into the cards */
-  --primary-hover: #d14b9b;
+  --primary: #951768;
+  --primary-hover: #a61f74;
   --on-primary: #ffffff;
-  --primary-text: #f08cc6;
-  --tint: rgb(240 140 198 / 0.13);
-  --focus: #f08cc6;
+  --primary-text: #ffffff; /* the brand is too dark to read as text here, so links and active nav are white */
+  --tint: rgb(255 255 255 / 0.09);
+  --focus: #ffffff;
 
   --hero: #232328;
   --on-hero: #ffffff;
@@ -90,7 +90,7 @@
   --hero-raised: rgb(255 255 255 / 0.06);
   --hero-line: rgb(255 255 255 / 0.1);
   --live: #6fd3a0;
-  --hero-accent: #f08cc6;
+  --hero-accent: #ffffff;
   --on-hero-3: #7d7d86;
   --hero-current: #f2bf5c;
   --hero-danger: #ff9c94;
