@@ -8,6 +8,36 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import type { Upsell } from '../api';
 import { customerPath, salesPath } from '../paths';
 
+type Item =
+  | Exclude<Upsell, { kind: 'admitted' }>
+  | { kind: 'admitted'; customer: number; name: string; universities: string[] };
+
+/** Django sends one "admitted" row per admission: show each customer once, with all their offers. */
+function mergeAdmissions(items: Upsell[]): Item[] {
+  const merged: Item[] = [];
+  const admitted = new Map<number, string[]>();
+  for (const item of items) {
+    if (item.kind !== 'admitted') {
+      merged.push(item);
+      continue;
+    }
+    const universities = admitted.get(item.customer);
+    if (universities) {
+      if (!universities.includes(item.university)) universities.push(item.university);
+      continue;
+    }
+    const entry = {
+      kind: item.kind,
+      customer: item.customer,
+      name: item.name,
+      universities: [item.university],
+    };
+    admitted.set(item.customer, entry.universities);
+    merged.push(entry);
+  }
+  return merged;
+}
+
 const TONE: Record<Upsell['kind'], ChipTone> = {
   admitted: 'good',
   ending: 'warn',
@@ -19,11 +49,14 @@ export function UpsellSection({ items }: { items: Upsell[] }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
 
-  const content = (item: Upsell) => {
+  const content = (item: Item) => {
     switch (item.kind) {
       case 'admitted':
         return {
-          title: t('today.upsell.admitted.title', { name: item.name, university: item.university }),
+          title: t('today.upsell.admitted.title', {
+            name: item.name,
+            university: f.list(item.universities),
+          }),
           meta: t('today.upsell.admitted.meta'),
           to: customerPath(item.customer),
         };
@@ -50,7 +83,7 @@ export function UpsellSection({ items }: { items: Upsell[] }) {
         subtitle={t('today.upsell.subtitle')}
       />
       <ul className="m-0 grid list-none gap-4 p-0 md:grid-cols-3">
-        {items.map((item, index) => {
+        {mergeAdmissions(items).map((item, index) => {
           const { title, meta, to } = content(item);
           return (
             <li key={index} className="flex">
