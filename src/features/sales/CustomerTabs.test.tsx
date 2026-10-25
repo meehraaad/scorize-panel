@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import { instalmentPlan } from './plan';
@@ -11,6 +11,10 @@ const NIMA = 3;
 const ERFAN = '/sales/customers/105';
 
 describe('sales panel, customer sub-tabs, sale and offer', () => {
+  // The first test opens the payments page: compile its lazy chunk up front, outside the
+  // 12 s wait for the page (src/test/setup.ts), which a cold chunk can use up on a busy CI runner.
+  beforeAll(() => import('./CustomerPaymentsPage'), 30_000);
+
   beforeEach(async () => {
     localStorage.clear();
     await i18n.changeLanguage('fa');
