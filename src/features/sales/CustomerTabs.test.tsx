@@ -26,6 +26,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'تأیید رسید' }));
     expect(await within(detail).findByText('پرداخت کامل شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('رسید تأیید شد.')).toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: 'پرداخت شماره‌ی ۴۹۰۲، بسته‌ی نمونه انگیزه‌نامه‌ها' }),
@@ -36,13 +37,15 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(within(pending).queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('payments: declining a receipt asks first', async () => {
+  it('payments: declining a receipt asks first and takes an optional reason', async () => {
     const user = userEvent.setup();
     renderApp(`${ERFAN}/payments`);
     const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
+    await user.type(within(detail).getByLabelText('علت رد (اختیاری)'), 'مبلغ یکی نیست');
     await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
     expect(await within(detail).findByText(/منتظر آپلود دوباره‌ی مشتری/)).toBeInTheDocument();
+    expect(await toasts().findByText('رسید رد شد و برای مشتری پیامک رفت.')).toBeInTheDocument();
   });
 
   it('sells a product with a discount code and opens its invoice', async () => {

@@ -235,6 +235,7 @@ const paymentRow = (
   status,
   status_display: STATUS_DISPLAY[status] ?? '',
   authority: null,
+  decline_reason: null,
   used_credit: null,
   invoices,
   ...extra,
@@ -1169,7 +1170,7 @@ export const staffHandlers = [
     payment.status_display = STATUS_DISPLAY[2] ?? '';
     return message('رسید پرداخت با موفقت تایید شد.');
   }),
-  http.patch(`${STAFF}/users/:user/payments/:id/decline_receipt/`, ({ params }) => {
+  http.patch(`${STAFF}/users/:user/payments/:id/decline_receipt/`, async ({ params, request }) => {
     const error = sellerOrError();
     if (error) return error;
     const payment = paymentOf(params.user, params.id);
@@ -1178,6 +1179,8 @@ export const staffHandlers = [
     payment.status = 6;
     payment.status_display = STATUS_DISPLAY[6] ?? '';
     payment.payment_date = null;
+    const body = (await request.json().catch(() => ({}))) as { reason?: string };
+    payment.decline_reason = body.reason || null;
     return message('رسید پرداخت با موفقیت رد شد.');
   }),
   http.patch(`${STAFF}/users/:user/payments/:id/change_method/:method/`, ({ params }) => {

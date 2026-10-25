@@ -203,6 +203,8 @@ export interface DjangoPayment {
   status_display: string;
   /** Set while it waits for the online gateway. */
   authority: string | null;
+  /** Written by the seller when declining a receipt; the applicant sees it. */
+  decline_reason: string | null;
   used_credit: number | null;
   invoices: DjangoInvoice[];
 }

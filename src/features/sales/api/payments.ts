@@ -59,13 +59,13 @@ const staffPayment = (customer: number, payment: number) =>
   `/profile/staff/v1/users/${String(customer)}/payments/${String(payment)}`;
 
 export type PaymentAction =
-  | { kind: 'decline' }
+  | { kind: 'decline'; reason: string }
   | { kind: 'method'; method: PaymentMethod }
   | { kind: 'factor' }
   | { kind: 'wallet'; wallet: number };
 
 /**
- * What a seller does to an invoice: decline a receipt, change the method, text the invoice link
+ * What a seller does to an invoice: decline a receipt (with an optional reason the customer sees), change the method, text the invoice link
  * (S24) or change the destination account (S25).
  * Confirming a receipt: useConfirmReceipt (lib/sales).
  */
@@ -75,7 +75,10 @@ export function usePaymentAction(customer: number) {
     mutationFn: ({ payment, action }: { payment: number; action: PaymentAction }) => {
       switch (action.kind) {
         case 'decline':
-          return api(`${staffPayment(customer, payment)}/decline_receipt/`, { method: 'PATCH' });
+          return api(`${staffPayment(customer, payment)}/decline_receipt/`, {
+            method: 'PATCH',
+            body: { reason: action.reason },
+          });
         case 'method':
           return api(
             `${staffPayment(customer, payment)}/change_method/${String(METHOD_CODE[action.method])}/`,
