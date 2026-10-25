@@ -64,51 +64,52 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --canvas: #0f0a12;
-  --surface: #1a1320;
-  --text: #f4f0f6;
-  --text-2: #a69fad;
-  --text-3: #6e6476;
+  /* "Graphite": neutral greys, so the brand magenta is the only colour on screen. */
+  --canvas: #111113;
+  --surface: #1b1b1f;
+  --text: #ededf0;
+  --text-2: #a1a1aa;
+  --text-3: #63636b;
 
-  --hair: rgb(255 255 255 / 0.07);
-  --line-2: rgb(255 255 255 / 0.14);
-  --line-3: rgb(255 255 255 / 0.28);
-  --track: rgb(255 255 255 / 0.1);
-  --row-highlight: rgb(149 23 104 / 0.1);
+  --hair: rgb(255 255 255 / 0.06);
+  --line-2: rgb(255 255 255 / 0.12);
+  --line-3: rgb(255 255 255 / 0.26);
+  --track: rgb(255 255 255 / 0.08);
+  --row-highlight: rgb(240 140 198 / 0.06);
 
-  --primary: #951768;
-  --primary-hover: #a81d78;
+  --primary: #c43a8e; /* brighter than light mode so buttons don't sink into the cards */
+  --primary-hover: #d14b9b;
   --on-primary: #ffffff;
-  --primary-text: #f2a9d6;
-  --tint: rgb(149 23 104 / 0.38);
-  --focus: #ffffff;
+  --primary-text: #f08cc6;
+  --tint: rgb(240 140 198 / 0.13);
+  --focus: #f08cc6;
 
-  --hero: #251729;
+  --hero: #232328;
   --on-hero: #ffffff;
-  --on-hero-2: #bdb4c3;
-  --hero-raised: rgb(255 255 255 / 0.08);
-  --hero-line: rgb(255 255 255 / 0.12);
-  --live: #7fd8a6;
-  --hero-accent: #f2a9d6;
-  --on-hero-3: #8f8597;
-  --hero-current: #f0b94e;
+  --on-hero-2: #b4b4bc;
+  --hero-raised: rgb(255 255 255 / 0.06);
+  --hero-line: rgb(255 255 255 / 0.1);
+  --live: #6fd3a0;
+  --hero-accent: #f08cc6;
+  --on-hero-3: #7d7d86;
+  --hero-current: #f2bf5c;
   --hero-danger: #ff9c94;
-  --toast: #2a1d30;
+  --toast: #2a2a30;
 
   --danger: #ff9b9b;
-  --danger-tint: rgb(255 120 120 / 0.12);
-  --warn: #f0b94e;
-  --warn-tint: rgb(240 185 78 / 0.16);
-  --good: #7fd8a6;
-  --good-tint: rgb(90 200 140 / 0.16);
-  --info: #9cc0f5;
-  --info-tint: rgb(120 160 240 / 0.16);
-  --urgent: #f0b94e;
-  --neutral: #d4ccd9;
-  --neutral-tint: rgb(255 255 255 / 0.08);
+  --danger-tint: rgb(255 120 120 / 0.13);
+  --warn: #f0bc5e;
+  --warn-tint: rgb(240 188 94 / 0.14);
+  --good: #74d6a2;
+  --good-tint: rgb(90 200 140 / 0.14);
+  --info: #9ec2f7;
+  --info-tint: rgb(120 160 240 / 0.15);
+  --urgent: #f0bc5e;
+  --neutral: #d0d0d6;
+  --neutral-tint: rgb(255 255 255 / 0.07);
 
   --panel-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
-  --hero-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07), 0 30px 70px rgb(0 0 0 / 0.5);
+  --hero-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07), 0 24px 60px rgb(0 0 0 / 0.45);
   --toast-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 20px 50px rgb(0 0 0 / 0.55);
 }
 
