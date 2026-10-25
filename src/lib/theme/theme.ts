@@ -30,7 +30,7 @@ export function resolveTheme(mode: ThemeMode): ResolvedTheme {
 }
 
 // Browser chrome / installed-PWA title bar colour; matches --canvas in tokens.css.
-const THEME_COLOR: Record<ResolvedTheme, string> = { light: '#F6F4F7', dark: '#0F0A12' };
+const THEME_COLOR: Record<ResolvedTheme, string> = { light: '#F6F4F7', dark: '#111113' };
 
 export function applyTheme(theme: ResolvedTheme) {
   document.documentElement.dataset.theme = theme;
