@@ -78,8 +78,8 @@ describe('other services', () => {
     await user.type(within(gpa).getByLabelText('نمره‌ی درس ۵'), '۲۰');
     expect(within(gpa).getByText('۱۴')).toBeInTheDocument();
     await user.click(within(gpa).getByRole('button', { name: 'ثبت و محاسبه' }));
-    // (18.5×3 + 19×3 + 15.25×3 + 17×2 + 20×3) / 14 = 17.98 → 3.6 in the fake.
-    expect(await within(gpa).findByText('۳٫۶')).toBeInTheDocument();
+    // Django's table: 18.5, 19, 17, 20 → 4 and 15.25 → 3, so (4×3 + 4×3 + 3×3 + 4×2 + 4×3) / 14.
+    expect(await within(gpa).findByText('۳٫۷۹')).toBeInTheDocument();
 
     await user.click(within(gpa).getByRole('button', { name: 'حذف درس ۵' }));
     expect(within(gpa).queryByLabelText('نام درس ۵')).toBeNull();

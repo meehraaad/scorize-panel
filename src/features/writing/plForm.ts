@@ -2,8 +2,8 @@ import type { FormSpec } from './formSpec';
 
 /**
  * Professor list form: what the search team needs to find professors that fit the applicant.
- * Django has no model for it yet (docs/backend-changes.md H50). Design: canvas V8 "فرم فهرست
- * استادها" (AppProfForm).
+ * Django's ProfessorsListData and KnownProfessor (H50). Design: canvas V8 "فرم فهرست استادها"
+ * (AppProfForm).
  */
 export const plForm: FormSpec = {
   type: 'pl',

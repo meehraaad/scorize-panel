@@ -145,3 +145,46 @@ describe('professor list form', () => {
     );
   });
 });
+
+describe('personal and diversity statement forms', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('asks the diversity statement’s required questions, then sends it', async () => {
+    const user = userEvent.setup();
+    await open('/documents/ds', 'اطلاعات بیانیه‌ی تنوع و شمول');
+    await user.click(screen.getByRole('button', { name: 'ثبت نهایی' }));
+    const interaction = screen.getByLabelText(/تجربه‌ی خاصی از تعامل/);
+    expect(interaction).toHaveFocus();
+    await user.type(interaction, 'کار گروهی با دانشجوهای چهار کشور');
+
+    await user.click(screen.getByRole('button', { name: 'ثبت نهایی' }));
+    const beliefs = screen.getByLabelText(/تنوع عقاید در رشته‌ی شما/);
+    expect(beliefs).toHaveFocus();
+    await user.type(beliefs, 'در اخلاق هوش مصنوعی');
+    // "No" is an answer: the minority question starts answered (Django's default).
+    expect(screen.getByLabelText('خیر')).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: 'ثبت نهایی' }));
+    const confirm = screen.getByRole('group', { name: /ثبت نهایی شود؟/ });
+    await user.click(within(confirm).getByRole('button', { name: 'ثبت نهایی' }));
+    expect(await screen.findByText('اطلاعات بیانیه‌ی تنوع ثبت نهایی شد')).toBeInTheDocument();
+    expect(await serverAnswers('ds')).toMatchObject({
+      interaction_experience: 'کار گروهی با دانشجوهای چهار کشور',
+      discrimination_experience: null,
+      is_minority: false,
+      diversity_of_religious_beliefs: 'در اخلاق هوش مصنوعی',
+    });
+  });
+
+  it('saves a personal statement draft', async () => {
+    const user = userEvent.setup();
+    await open('/documents/ps', 'اطلاعات بیانیه‌ی شخصی');
+    await user.type(screen.getByLabelText(/فضایی که در آن بزرگ شدید/), 'شهر کوچک، کتابخانه‌ی محله');
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText(/ذخیره شد · اکنون/)).toBeInTheDocument();
+    expect((await serverAnswers('ps'))['personal_mentality']).toBe('شهر کوچک، کتابخانه‌ی محله');
+  });
+});

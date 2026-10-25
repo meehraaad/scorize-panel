@@ -11,8 +11,8 @@ const text = (name: string, maxLength: number, ltr = false): FieldSpec => ({
 /**
  * Recommendation letters form: one entry per recommender, up to the number of letters in the
  * contract (`count` of the form). The writer writes each letter in the recommender's voice.
- * Django has no model for it yet (docs/backend-changes.md H50). Design: canvas V8 "فرم اطلاعات
- * توصیه‌نامه" (AppRecForm).
+ * Django's Recommendation rows (H50: `full_name`, `organization`, `courses` are its `name`,
+ * `university`, `course_or_project`). Design: canvas V8 "فرم اطلاعات توصیه‌نامه" (AppRecForm).
  */
 export const recommendationForm: FormSpec = {
   type: 'recommendation',

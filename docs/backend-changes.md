@@ -9,8 +9,9 @@ Status: ☐ open · ☑ done
 **Status (2026-10-25):** most of this list is built on branch `claude/eager-bohr-8iw6h3` of
 scorize-revolution (tested, not deployed; its `docs/panel-backend-plan.md` has the row-by-row
 status and the deploy checklist), and the panel calls those endpoints (backend-integration.md).
-Not built yet: H7, H29–H35, H37, H38, H41–H43, H50, H51, WR6, R5, R7, R8, A10–A12, A15, A16 and
-the wiring P1, P2. Parked for the team's input: H24 (automatic invoice per instalment), H48 (NPS
+Built since then (branch `claude/applicant-endpoints-h29-h51`): H7, H29, H37, H38, H41–H43, H50,
+H51; the panel uses them. Not built yet: H30–H35, WR6, R5, R7, R8, A10–A12, A15, A16 and the wiring
+P1, P2. Parked for the team's input: H24 (automatic invoice per instalment), H48 (NPS
 credit, C11) and the content items C1–C11. The marks below predate that branch.
 
 **Before a public launch** (many users at once): A1 and A3 (SMS and login abuse cost money and

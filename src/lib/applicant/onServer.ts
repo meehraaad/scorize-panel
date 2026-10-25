@@ -10,27 +10,21 @@ export type ServerFeature =
   | 'webinarRegistration'
   | 'gpaSave'
   | 'consultationInfo'
-  | 'packages'
-  | 'recommendationForm'
-  | 'professorListForm';
+  | 'packages';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
-  callRequest: false,
+  callRequest: true,
   /** H30–H35 `turkey/…`. */
   turkey: false,
   /** H7 `GET professor-emails/`. */
-  professorEmails: false,
+  professorEmails: true,
   /** H37 `POST services/webinars/<id>/register/`. */
-  webinarRegistration: false,
+  webinarRegistration: true,
   /** H38 `PUT services/gpa/`. */
-  gpaSave: false,
+  gpaSave: true,
   /** H41 `PUT consultations/<id>/info/`. */
-  consultationInfo: false,
+  consultationInfo: true,
   /** H42, H43 `services/packages/<id>/` and its review. */
-  packages: false,
-  /** H50 `writing/recommendation/`. */
-  recommendationForm: false,
-  /** H50 `writing/pl/`. */
-  professorListForm: false,
+  packages: true,
 };

@@ -115,33 +115,42 @@ export const applicantPanel: PanelDefinition = {
           },
           ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing']),
         },
-        // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm). Until Django serves a
-        // form (lib/applicant/onServer.ts) its path falls to "coming soon" below.
-        ...(ON_SERVER.recommendationForm
-          ? [
-              {
-                path: 'documents/recommendation',
-                loader: () => {
-                  queryClient.query(writingQuery('recommendation')).catch(() => undefined);
-                  return null;
-                },
-                ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing']),
-              },
-            ]
-          : []),
-        ...(ON_SERVER.professorListForm
-          ? [
-              {
-                path: 'documents/pl',
-                loader: () => {
-                  queryClient.query(writingQuery('pl')).catch(() => undefined);
-                  return null;
-                },
-                ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing']),
-              },
-            ]
-          : []),
-        // PS and DS: the SOP form with their own questions (canvas V8 note); not built yet.
+        // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm).
+        {
+          path: 'documents/recommendation',
+          loader: () => {
+            queryClient.query(writingQuery('recommendation')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing']),
+        },
+        {
+          path: 'documents/pl',
+          loader: () => {
+            queryClient.query(writingQuery('pl')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing']),
+        },
+        // PS and DS: the SOP form with their own questions (canvas V8 note), Django's
+        // PersonalStatement and DiversityStatement.
+        {
+          path: 'documents/ps',
+          loader: () => {
+            queryClient.query(writingQuery('ps')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/PsFormPage'), ['writing']),
+        },
+        {
+          path: 'documents/ds',
+          loader: () => {
+            queryClient.query(writingQuery('ds')).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/writing/DsFormPage'), ['writing']),
+        },
+        // Any other writing order: no form in the panel.
         {
           path: 'documents/:writing',
           element: <ComingSoonPage title="panels.applicant.nav.documents" />,

@@ -6,6 +6,8 @@
     "cv": "CV",
     "ticket": "Writing ticket",
     "recommendation": "Recommendation",
+    "ps": "Personal statement (PS)",
+    "ds": "Diversity statement (DS)",
     "pl": "Professor list"
   },
   "save": {
@@ -558,6 +560,74 @@
     },
     "linkLabel": {
       "known_professors": "Group page"
+    }
+  },
+  "ps": {
+    "title": "Personal statement details",
+    "subtitle": "Key memories and pointers are enough; the writer turns them into your own statement.",
+    "noOrder": "A personal statement is not part of your contract.",
+    "doneTitle": "Your personal statement details are submitted",
+    "finalNote": "Answer the required questions to submit. After submitting you can no longer edit, and the writing starts.",
+    "tips": {
+      "0": "A personal statement is about you, not just your grades: tell us your experiences and outlook.",
+      "1": "One or two real, specific stories help more than general descriptions.",
+      "2": "We call you to coordinate once you submit."
+    },
+    "section": {
+      "background": {
+        "title": "Where you grew up",
+        "description": "Your outlook and how it shaped your studies"
+      },
+      "character": {
+        "title": "Character and challenges",
+        "description": "How you see yourself and what problems taught you"
+      }
+    },
+    "field": {
+      "personal_mentality": "Tell us about where you grew up and your outlook",
+      "descriptive_character": "How would you describe your character?",
+      "educational_problems": "What problems did you face in your studies and research?"
+    },
+    "help": {
+      "personal_mentality": "How has this outlook helped your education? You can talk about your childhood too.",
+      "educational_problems": "How did you solve them, and what did you learn from them?"
+    }
+  },
+  "ds": {
+    "title": "Diversity statement details",
+    "subtitle": "Tell us about your experiences with people of other cultures, languages and beliefs; the writer builds the statement.",
+    "noOrder": "A diversity statement is not part of your contract.",
+    "doneTitle": "Your diversity statement details are submitted",
+    "finalNote": "Answer the required questions to submit. After submitting you can no longer edit, and the writing starts.",
+    "tips": {
+      "0": "Universities want to know how you work and live in a diverse environment.",
+      "1": "The minority question needs an answer, but “no” is a complete one.",
+      "2": "We call you to coordinate once you submit."
+    },
+    "section": {
+      "experience": {
+        "title": "Your experiences",
+        "description": "Working with other cultures and languages, and discrimination"
+      },
+      "identity": {
+        "title": "You and your field",
+        "description": "Minority background and diversity of beliefs in your field"
+      }
+    },
+    "field": {
+      "interaction_experience": "Have you had a particular experience with people of different cultures and languages?",
+      "discrimination_experience": "If you experienced ethnic or gender discrimination, tell us",
+      "is_minority": "Do you belong to an ethnic, religious or sexual/gender minority?",
+      "diversity_of_religious_beliefs": "How does diversity of beliefs show in your field?"
+    },
+    "help": {
+      "interaction_experience": "How do you get along with diverse people?"
+    },
+    "option": {
+      "minority": {
+        "false": "No",
+        "true": "Yes"
+      }
     }
   }
 }

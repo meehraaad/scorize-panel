@@ -54,18 +54,18 @@ Everything comes from Django (`claude/eager-bohr-8iw6h3` of scorize-revolution);
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | Session, roles, start panel | `GET /api/profile/auth/v1/whoami/` (`applicant`, `is_country_supervisor`, `staff.is_active`, `last_workspace`, `workspace_mode`), `PATCH …/workspace/`                                                                                  | `lib/auth/`, `panels/registry.ts`             |
 | Account (every panel)       | `/api/profile/v1/` `account/`, `notifications/`                                                                                                                                                                                         | `lib/account/api.ts`                          |
-| Applicant panel             | `/api/applicant/v1/` (H1–H28, H36, H39, H40, H44–H49)                                                                                                                                                                                   | `features/*`, `lib/applicant/`, `lib/tickets` |
+| Applicant panel             | `/api/applicant/v1/` (H1–H29, H36–H47, H49–H51)                                                                                                                                                                                         | `features/*`, `lib/applicant/`, `lib/tickets` |
 | Sales panel                 | `/api/sales/v1/` (S10–S40); receipts: `PATCH /api/profile/staff/v1/users/<id>/payments/<id>/confirm_receipt/`, `decline_receipt/`, `change_method/<0\|1>/` (S20, S23); manual assignment: `PATCH …/sale-leads/<id>/assign_staff/` (S35) | `features/sales/api/`, `lib/sales/api.ts`     |
 | Staff tasks                 | `/api/staff/v1/tasks/?panel=sales\|supervisor` (T1–T12)                                                                                                                                                                                 | `lib/tasks/api.ts`                            |
 | Supervisor panel            | `/api/supervisor/v1/` (SV1–SV17)                                                                                                                                                                                                        | `features/supervisor/api/`                    |
 | Writer panel                | `/api/writer/v1/` (WR1–WR5)                                                                                                                                                                                                             | `features/writer/api.ts`                      |
 
-**Not on the server yet**, so the panel doesn't offer them (`src/lib/applicant/onServer.ts`; set an
-entry to true when its endpoint ships): the call request (H29), the Turkey programme (H30–H35),
-professor emails (H7), webinar sign-up (H37), the GPA calculator (H38), editing a consultation's
-details (H41), package pages and reviews (H42, H43), and the recommendation and professor-list
-forms (H50). PS and DS forms (H51) and the writers' inbox (WR6) were "coming soon" already.
-The NPS card (H48) appears when `gates.nps` is set, which the server doesn't do yet.
+**Not on the server yet**, so the panel doesn't offer it (`src/lib/applicant/onServer.ts`; set an
+entry to true when its endpoint ships): the Turkey programme (H30–H35). The NPS card (H48) appears
+when `gates.nps` is set, which the server doesn't do yet; instalment invoices aren't created
+automatically (H24). The writers' inbox (WR6) is "coming soon". A package review gives wallet
+credit only once the team sets its amount in Django (`PANEL_REVIEW_CREDIT`, C10); until then
+`review_credit` is null and the page shows no credit chip.
 
 **Money**: contract totals, instalments and invoices come in their own currency with `currency`
 (ISO 4217, `IRT` for the toman; many contracts are in euros). `useFormat().price` writes toman with

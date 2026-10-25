@@ -24,6 +24,7 @@ import type {
   TicketsOverview,
 } from '@/lib/tickets/api';
 import { cvForm } from '@/features/writing/cvForm';
+import { dsForm } from '@/features/writing/dsForm';
 import {
   isField,
   isFormType,
@@ -33,6 +34,7 @@ import {
   type FormType,
 } from '@/features/writing/formSpec';
 import { plForm } from '@/features/writing/plForm';
+import { psForm } from '@/features/writing/psForm';
 import { recommendationForm } from '@/features/writing/recommendationForm';
 import { sopForm } from '@/features/writing/sopForm';
 import { forbidden, notFound, storage } from './session';
@@ -282,8 +284,11 @@ function saraDocuments(): Omit<DocumentsData, 'progress'> {
   };
 }
 
-/** Sara's writing orders: SOP, CV, two recommendation letters, a professor list. */
-const ORDERS = ['sop', 'cv', 'recommendation', 'pl'];
+/**
+ * Sara's writing orders: SOP, CV, two recommendation letters, a personal and a diversity statement,
+ * a professor list (in Django's order).
+ */
+const ORDERS = ['sop', 'cv', 'recommendation', 'ps', 'ds', 'pl'];
 
 /** One recommender almost done (the qualities left), none for the second letter yet. */
 function saraRecommendation(): WritingForm {
@@ -323,14 +328,44 @@ function saraPl(): WritingForm {
     updated_at: hoursAgo(30),
     contact_phone: '09120000000',
     orders: ORDERS,
+    // Every answer comes back, unanswered ones as null (research interests: the documents page's).
     answers: {
       degree: 'research_master',
       field: 'مهندسی کامپیوتر، هوش مصنوعی',
+      start_term: null,
+      funding: null,
+      exclusions: null,
       countries: ['ca', 'de'],
       known_professors: [],
     },
   };
 }
+
+/** The personal and diversity statement forms, not opened yet: Django answers every question. */
+function saraStatement(answers: Answers): WritingForm {
+  return {
+    is_final: false,
+    final_at: null,
+    updated_at: null,
+    contact_phone: '09120000000',
+    orders: ORDERS,
+    answers,
+  };
+}
+const saraPs = () =>
+  saraStatement({
+    personal_mentality: null,
+    descriptive_character: null,
+    educational_problems: null,
+  });
+// `is_minority` is a boolean column with a default: false until answered.
+const saraDs = () =>
+  saraStatement({
+    interaction_experience: null,
+    discrimination_experience: null,
+    is_minority: false,
+    diversity_of_religious_beliefs: null,
+  });
 
 function saraSop(): WritingForm {
   return {
@@ -405,6 +440,8 @@ const SPECS: Record<FormType, FormSpec> = {
   sop: sopForm,
   cv: cvForm,
   recommendation: recommendationForm,
+  ps: psForm,
+  ds: dsForm,
   pl: plForm,
 };
 
@@ -496,7 +533,14 @@ function saraState(): SaraState {
   return {
     applications: saraApplications(),
     documents: saraDocuments(),
-    writing: { sop: saraSop(), cv: saraCv(), recommendation: saraRecommendation(), pl: saraPl() },
+    writing: {
+      sop: saraSop(),
+      cv: saraCv(),
+      recommendation: saraRecommendation(),
+      ps: saraPs(),
+      ds: saraDs(),
+      pl: saraPl(),
+    },
     answers: new Map(),
     visa: saraVisa(),
     professors: saraProfessorEmails(),
@@ -1430,10 +1474,16 @@ function servicesFor(user: number): ServicesData {
 }
 
 /** The fake's GPA: the credit-weighted average out of 20, scaled to 4. Django uses its own method. */
+/** Django's `compute_gpa`: each grade out of 20 on the 4-point table, weighted by credits. */
+/** Wallet credit for a package review (Django's PANEL_REVIEW_CREDIT, set for these tests). */
+const REVIEW_CREDIT = 50_000;
+
+const gpaPoints = (grade: number) =>
+  grade >= 16 ? 4 : grade >= 14 ? 3 : grade >= 12 ? 2 : grade >= 10 ? 1 : 0;
 const gpaOf = (courses: GpaCourse[]) => {
   const credits = courses.reduce((sum, course) => sum + course.credits, 0);
-  const average = courses.reduce((sum, course) => sum + course.credits * course.grade, 0) / credits;
-  return Math.round((average / 5) * 100) / 100;
+  const points = courses.reduce((sum, course) => sum + course.credits * gpaPoints(course.grade), 0);
+  return points ? Math.round((points / credits) * 100) / 100 : 0;
 };
 
 /** Each user's booked consultations (Sara: one ahead, three behind). */
@@ -1542,13 +1592,18 @@ const consultationHandlers = [
     if (!user) return forbidden();
     const found = consultationsFor(user).find((item) => item.id === Number(params.id));
     if (!found) return notFound();
-    if (new Date(found.starts_at).getTime() < Date.now())
-      return HttpResponse.json({ detail: 'Held.' }, { status: 409 });
-    const info = (await request.json()) as ConsultationDetail['info'];
-    if (!info.university.trim() || !info.major.trim() || !info.degree.trim())
-      return HttpResponse.json({ detail: 'Missing.' }, { status: 400 });
-    Object.assign(found, { info, info_complete: true });
-    return HttpResponse.json(info);
+    if (new Date(found.starts_at).getTime() <= Date.now())
+      return HttpResponse.json({ detail: 'This session has already started.' }, { status: 409 });
+    const sent = (await request.json()) as ConsultationDetail['info'];
+    // Django: the first three required (field errors), `notes` may be empty.
+    const blank = (['university', 'major', 'degree'] as const).filter((name) => !sent[name].trim());
+    if (blank.length)
+      return HttpResponse.json(
+        Object.fromEntries(blank.map((name) => [name, ['This field may not be blank.']])),
+        { status: 400 },
+      );
+    Object.assign(found, { info: sent, info_complete: true });
+    return HttpResponse.json(sent);
   }),
 ];
 
@@ -1576,6 +1631,8 @@ const servicesHandlers = [
     if (!user) return forbidden();
     const data = servicesFor(user);
     if (data.webinar?.id !== Number(params.id)) return notFound();
+    if (data.webinar.registered)
+      return HttpResponse.json({ detail: 'You are already registered.' }, { status: 409 });
     data.webinar.registered = true;
     if (!data.events.some((event) => event.id === data.webinar?.id))
       data.events.unshift({
@@ -1588,7 +1645,8 @@ const servicesHandlers = [
         video_url: null,
         url: '#',
       });
-    return HttpResponse.json({ payment_id: null });
+    // Free (Sara's webinar): registered at once. A paid one answers the invoice's payment id.
+    return HttpResponse.json({ payment_id: null }, { status: 201 });
   }),
 
   http.get(`${BASE}/services/packages/:id/`, ({ params }) => {
@@ -1622,7 +1680,8 @@ const servicesHandlers = [
       })),
       current_lesson: found.id === 1 ? 7 : null,
       review: packageReviews.get(found.id) ?? null,
-      review_credit: 50_000,
+      // Django's PANEL_REVIEW_CREDIT (0 = no offer: null), as set for these tests; null once reviewed.
+      review_credit: packageReviews.has(found.id) ? null : REVIEW_CREDIT,
     };
     return HttpResponse.json(detail);
   }),
@@ -1630,10 +1689,18 @@ const servicesHandlers = [
   http.post(`${BASE}/services/packages/:id/review/`, async ({ params, request }) => {
     const user = storage.get();
     if (!user) return forbidden();
+    if (!servicesFor(user).packages.some((item) => item.id === Number(params.id)))
+      return notFound();
     const { text } = (await request.json()) as { text: string };
-    if (!text.trim()) return HttpResponse.json({ text: ['required'] }, { status: 400 });
-    packageReviews.set(Number(params.id), { text, submitted_at: new Date().toISOString() });
-    servicesFor(user).credit += 50_000;
+    if (!text.trim())
+      return HttpResponse.json({ text: ['This field may not be blank.'] }, { status: 400 });
+    if (packageReviews.has(Number(params.id)))
+      return HttpResponse.json({ detail: 'You already reviewed this package.' }, { status: 409 });
+    packageReviews.set(Number(params.id), {
+      text: text.trim(),
+      submitted_at: new Date().toISOString(),
+    });
+    servicesFor(user).credit += REVIEW_CREDIT;
     return new HttpResponse(null, { status: 201 });
   }),
 
@@ -1664,18 +1731,19 @@ const servicesHandlers = [
     const user = storage.get();
     if (!user) return forbidden();
     const { courses } = (await request.json()) as { courses: GpaCourse[] };
-    if (
-      !courses.length ||
-      courses.some(
-        (course) =>
-          !course.name.trim() ||
-          course.credits < 1 ||
-          course.credits > 10 ||
-          course.grade < 0 ||
-          course.grade > 20,
-      )
-    )
-      return HttpResponse.json({ courses: ['invalid'] }, { status: 400 });
+    // Django's errors: the list's own, or one object per course (empty for a valid one).
+    if (!courses.length)
+      return HttpResponse.json(
+        { courses: { non_field_errors: ['This list may not be empty.'] } },
+        { status: 400 },
+      );
+    const errors = courses.map((course) => ({
+      ...(course.name.trim() ? {} : { name: ['This field may not be blank.'] }),
+      ...(course.credits >= 1 && course.credits <= 10 ? {} : { credits: ['invalid'] }),
+      ...(course.grade >= 0 && course.grade <= 20 ? {} : { grade: ['invalid'] }),
+    }));
+    if (errors.some((error) => Object.keys(error).length))
+      return HttpResponse.json({ courses: errors }, { status: 400 });
     const data = servicesFor(user);
     data.gpa = { courses, result: gpaOf(courses) };
     return HttpResponse.json({ result: data.gpa.result });
@@ -1822,7 +1890,10 @@ export const applicantHandlers = [
     if (!storage.get()) return forbidden();
     const body = (await request.json()) as CallRequest;
     if (!/^09\d{9}$/.test(body.phone))
-      return HttpResponse.json({ phone: ['invalid'] }, { status: 400 });
+      return HttpResponse.json(
+        { phone: ['Enter a mobile number like 09121234567.'] },
+        { status: 400 },
+      );
     callRequests.push(body);
     return new HttpResponse(null, { status: 201 });
   }),
@@ -1874,9 +1945,13 @@ export const applicantHandlers = [
     const pages = Math.max(1, Math.ceil(state.professors.length / size));
     if (!(page >= 1 && page <= pages))
       return HttpResponse.json({ detail: 'Invalid page.' }, { status: 404 });
+    // Django's links are absolute.
     const link = (target: number) =>
       target >= 1 && target <= pages
-        ? `${BASE}/professor-emails/?page=${String(target)}&page_size=${String(size)}`
+        ? new URL(
+            `${BASE}/professor-emails/?page=${String(target)}&page_size=${String(size)}`,
+            request.url,
+          ).href
         : null;
     const data: ProfessorEmailPage = {
       count: state.professors.length,
@@ -1951,12 +2026,13 @@ export const applicantHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  // Writing information forms (SOP, CV): H12–H16. 404 for a type the contract doesn't include.
+  // Writing information forms: H12–H16, H50, H51. 404 for a type the contract doesn't include.
   http.get(`${BASE}/writing/:type/`, ({ params }) => {
     const state = caseOrError();
     if (failed(state)) return state;
     if (!isFormType(params.type)) return notFound();
     const form = state.writing[params.type];
+    if (!form.orders.includes(params.type)) return notFound();
     // The CV (read-only) and the professor list (editable) show the documents page's interests.
     const extra =
       params.type === 'cv' || params.type === 'pl'

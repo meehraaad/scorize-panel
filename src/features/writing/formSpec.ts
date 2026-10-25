@@ -9,8 +9,8 @@
  * writing.test.ts checks every key a spec needs exists in every language.
  */
 
-/** Writing orders with a form so far (Django SopResumeTicket types sop, cv, recommendation, pl). */
-export const FORM_TYPES = ['sop', 'cv', 'recommendation', 'pl'] as const;
+/** Writing orders with a form: every Django SopResumeTicket type, in the order Django lists them. */
+export const FORM_TYPES = ['sop', 'cv', 'recommendation', 'ps', 'ds', 'pl'] as const;
 export type FormType = (typeof FORM_TYPES)[number];
 export const isFormType = (value: unknown): value is FormType =>
   FORM_TYPES.includes(value as FormType);

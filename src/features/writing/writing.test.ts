@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import en from '@/locales/en/writing.json';
 import fa from '@/locales/fa/writing.json';
 import { cvForm } from './cvForm';
+import { dsForm } from './dsForm';
 import { isField, isList, missingInForm, upcomingTerms, type FormSpec } from './formSpec';
 import { plForm } from './plForm';
+import { psForm } from './psForm';
 import { recommendationForm } from './recommendationForm';
 import { sopForm } from './sopForm';
 
@@ -50,20 +52,23 @@ function keysFor(spec: FormSpec) {
   return keys;
 }
 
-describe.each([sopForm, cvForm, recommendationForm, plForm])('$type form', (spec) => {
-  it.each([
-    ['fa', fa],
-    ['en', en],
-  ])('has every dictionary key in %s', (_language, dictionary) => {
-    const missing = keysFor(spec).filter((key) => !has(dictionary, `${spec.type}.${key}`));
-    expect(missing).toEqual([]);
-  });
+describe.each([sopForm, cvForm, recommendationForm, plForm, psForm, dsForm])(
+  '$type form',
+  (spec) => {
+    it.each([
+      ['fa', fa],
+      ['en', en],
+    ])('has every dictionary key in %s', (_language, dictionary) => {
+      const missing = keysFor(spec).filter((key) => !has(dictionary, `${spec.type}.${key}`));
+      expect(missing).toEqual([]);
+    });
 
-  it('gives each part a unique name', () => {
-    const names = spec.sections.flatMap((section) => section.parts.map((part) => part.name));
-    expect(new Set(names).size).toBe(names.length);
-  });
-});
+    it('gives each part a unique name', () => {
+      const names = spec.sections.flatMap((section) => section.parts.map((part) => part.name));
+      expect(new Set(names).size).toBe(names.length);
+    });
+  },
+);
 
 describe('CV form', () => {
   it('needs the photo, a degree, a course and a reference before the final submit', () => {
