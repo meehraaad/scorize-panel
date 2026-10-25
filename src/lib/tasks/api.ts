@@ -1,5 +1,12 @@
-import { queryOptions, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQueryClient,
+  type QueryKey,
+} from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Page } from '@/lib/api/page';
 
 /**
  * Staff tasks (StaffToDo): one model, three behaviours (canvas "کارها"):
@@ -131,13 +138,11 @@ export interface TasksOverview {
   on_time: { week: number; last_week: number; target: number } | null;
   /** Active people with no open next step: they get forgotten (T5). */
   orphans: { id: number; name: string }[];
-  /** Up to the end of today, oldest first. */
-  mine: MyTask[];
+  /** How many rows each list has (the tabs); the rows come a page at a time (`taskListQuery`). */
+  counts: Record<TaskList, number>;
   tomorrow: number;
   /** Null until the server records when a task was done (T3). */
   done_today: number | null;
-  requests: TaskRequest[];
-  team: QueueItem[];
   sent: SentRequest[];
   colleagues: Colleague[];
 }
@@ -147,6 +152,29 @@ export const tasksQuery = (panel: TasksPanel) =>
     queryKey: [...TASKS_KEY, panel],
     queryFn: ({ signal }) =>
       api<TasksOverview>(`${TASKS_API}/?panel=${encodeURIComponent(panel)}`, { signal }),
+  });
+
+/** The three lists of the tasks page, each paged on its own. */
+export type TaskList = 'mine' | 'requests' | 'team';
+
+export interface TaskListRow {
+  /** Up to the end of today, oldest first. */
+  mine: MyTask;
+  /** Open requests to me, by due time. */
+  requests: TaskRequest;
+  /** My teams' queues, oldest first. */
+  team: QueueItem;
+}
+
+export const taskListQuery = <L extends TaskList>(panel: TasksPanel, list: L, page: number) =>
+  queryOptions({
+    queryKey: [...TASKS_KEY, panel, 'list', list, page],
+    queryFn: ({ signal }) =>
+      api<Page<TaskListRow[L]>>(
+        `${TASKS_API}/lists/${list}/?panel=${encodeURIComponent(panel)}&page=${String(page)}`,
+        { signal },
+      ),
+    placeholderData: keepPreviousData,
   });
 
 export interface RequestDetail extends TaskRequest {

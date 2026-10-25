@@ -13,7 +13,7 @@ import type {
   TicketsOverview,
   WritingDepartment,
 } from '@/lib/tickets/api';
-import { forbidden, notFound, storage } from './session';
+import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
  * Fake writer API (docs/backend-changes.md WR1–WR6) for Maryam (09120000001), who also writes
@@ -330,6 +330,9 @@ const detail = (order: MockOrder): OrderData => ({
   })),
 });
 
+/** Django's `ORDERS_PAGE` (api/writer/v1/orders.py). */
+const ORDERS_PAGE = 20;
+
 export const writerHandlers = [
   http.get(`${API}/orders/`, ({ request }) => {
     const all = ordersOrError();
@@ -356,16 +359,17 @@ export const writerHandlers = [
         next: order.data.state === 'revision' ? ('revision' as const) : ('draft' as const),
         draft: order.data.versions.length + 1,
       }));
+    const rows = list
+      .filter((order) => VIEW_OF[order.data.state] === view)
+      .map(rowOf)
+      .sort((a, b) =>
+        view === 'delivered'
+          ? (b.delivered_at ?? '').localeCompare(a.delivered_at ?? '')
+          : (a.due_at ?? '~').localeCompare(b.due_at ?? '~'),
+      );
     return HttpResponse.json<QueueData>({
       counts,
-      results: list
-        .filter((order) => VIEW_OF[order.data.state] === view)
-        .map(rowOf)
-        .sort((a, b) =>
-          view === 'delivered'
-            ? (b.delivered_at ?? '').localeCompare(a.delivered_at ?? '')
-            : (a.due_at ?? '~').localeCompare(b.due_at ?? '~'),
-        ),
+      ...pageOf(request, rows, ORDERS_PAGE),
       week,
       capacity: { open: counts.mine + counts.applicant, max: 10 },
       guides: [

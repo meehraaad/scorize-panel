@@ -1,5 +1,6 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
 import type { Colleague } from '@/lib/tasks/api';
 
@@ -48,14 +49,19 @@ export interface UnassignedLead {
 export interface AssignData {
   settings: AssignSettings;
   sellers: SellerLoad[];
-  queue: UnassignedLead[];
+  /** A page of the unassigned leads, best score first. */
+  queue: Page<UnassignedLead>;
+  /** When the longest-waiting unassigned lead arrived; null with an empty queue. */
+  oldest_at: string | null;
 }
 
-export const assignQuery = queryOptions({
-  queryKey: [...MANAGER_KEY, 'assign'],
-  queryFn: ({ signal }) => api<AssignData>(`${MANAGER_API}/assign/`, { signal }),
-  refetchInterval: 60_000,
-});
+export const assignQuery = (page: number) =>
+  queryOptions({
+    queryKey: [...MANAGER_KEY, 'assign', page],
+    queryFn: ({ signal }) =>
+      api<AssignData>(`${MANAGER_API}/assign/?page=${String(page)}`, { signal }),
+    refetchInterval: 60_000,
+  });
 
 export function useAssignSettings() {
   const client = useQueryClient();

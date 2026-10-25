@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +11,16 @@ import { useTaskChange, type QueueItem } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
 
 /** Tasks given to a team, not a person: whoever takes one first owns it. */
-export function TeamQueue({ items, config }: { items: QueueItem[]; config: TasksConfig }) {
+export function TeamQueue({
+  items,
+  pager,
+  config,
+}: {
+  items: QueueItem[];
+  /** Under the list, when it has more than one page. */
+  pager?: ReactNode;
+  config: TasksConfig;
+}) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const change = useTaskChange();
@@ -69,6 +79,7 @@ export function TeamQueue({ items, config }: { items: QueueItem[]; config: Tasks
           ))}
         </ul>
       )}
+      {pager}
     </Card>
   );
 }

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { daysUntil } from '@/lib/dates';
@@ -11,11 +13,18 @@ import type { WaitingCase } from '../api';
 import { casePath } from '../paths';
 import { useCaseLine } from './useCaseLine';
 
-/** Cases with something for the supervisor to do now, the most urgent first. */
-export function WaitingList({ cases }: { cases: readonly WaitingCase[] }) {
+/** Rows per page. The server sends them all (one per open case, sorted by urgency). */
+const PAGE_SIZE = 10;
+
+/** Cases with something for the supervisor to do now, the most urgent first, a page at a time. */
+export function WaitingList({ cases: all }: { cases: readonly WaitingCase[] }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const line = useCaseLine();
+  const [chosen, setPage] = useState(1);
+  const pages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  const page = Math.min(chosen, pages);
+  const cases = all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <SectionCard
@@ -89,6 +98,7 @@ export function WaitingList({ cases }: { cases: readonly WaitingCase[] }) {
           ))}
         </ul>
       )}
+      {pages > 1 && <Pager page={page} pages={pages} onPage={setPage} />}
     </SectionCard>
   );
 }

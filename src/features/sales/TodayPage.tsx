@@ -59,7 +59,7 @@ export default function TodayPage() {
           <>
             <TasksCard tasks={data.tasks} />
             <TodayConsultationsCard consultations={data.consultations} />
-            <ReceiptsCard receipts={data.receipts} />
+            <ReceiptsCard />
             <MonthCard month={data.month} />
           </>
         }

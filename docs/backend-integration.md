@@ -78,3 +78,22 @@ currency's invoice is paid by card transfer (receipt).
 - Session auth answers **403** (not 401) when nobody is logged in; the panel treats both as
   "go to login".
 - The panel sends `Accept-Language` and the `django_language` cookie; error text should be translated.
+- **A list that can grow is paged.** `?page=` (from 1) answers `{count, page_size, results}`
+  (`api.core.pagination.page_of` in Django, `Page<T>` in `src/lib/api/page.ts`), with no rows past the last
+  page (never a 404). A page with other data around it (counts per tab, stats) keeps those keys next to
+  these three. The panel shows `Pager` under the list, starts again at page 1 when a filter changes, and
+  steps back when its page emptied (`useClampPage`). Don't cut a list with a silent `[:N]`.
+
+  | List                                  | Endpoint                                    | Page size |
+  | ------------------------------------- | ------------------------------------------- | --------- |
+  | Receipts waiting (sales Today)        | `GET /api/sales/v1/receipts/`               | 10        |
+  | Leads                                 | `GET /api/sales/v1/leads/`                  | 15        |
+  | Sales consultations                   | `GET /api/sales/v1/consultations/`          | 20        |
+  | Unassigned leads (manager)            | `GET /api/sales/v1/manager/assign/` `queue` | 20        |
+  | Tasks: my follow-ups, requests, queue | `GET /api/staff/v1/tasks/lists/<list>/`     | 15        |
+  | Supervisor cases                      | `GET /api/supervisor/v1/cases/`             | 10        |
+  | Supervisor inbox                      | `GET /api/supervisor/v1/tickets/`           | 20        |
+  | Writer orders                         | `GET /api/writer/v1/orders/`                | 20        |
+
+  The supervisor's "waiting for you" card (Today) pages in the panel: the server sends one row per open
+  case, already sorted by urgency.

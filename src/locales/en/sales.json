@@ -854,6 +854,7 @@
       "response": "Median response",
       "queue": "Unassigned queue",
       "all": "Assign all as suggested",
+      "allPage": "Assign this page as suggested",
       "empty": "No unassigned leads.",
       "sellerFor": "Seller for {{name}}",
       "suggested": "{{name}} (suggested)",

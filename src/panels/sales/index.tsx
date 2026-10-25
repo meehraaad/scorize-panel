@@ -125,7 +125,7 @@ export const salesPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          loader: prefetch(() => queryClient.query(assignQuery)),
+          loader: prefetch(() => queryClient.query(assignQuery(1))),
           ...lazyPage(() => import('@/features/sales/manager/AssignPage')),
         },
         {

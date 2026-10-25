@@ -1,5 +1,6 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type LeadSource, type LeadStage } from '@/lib/sales/api';
 
 /** A new lead nobody has called yet (top of "Today", oldest first). */
@@ -81,7 +82,6 @@ export interface TodayData {
   calls: CallItem[];
   tasks: { overdue: number; requests: number; team: number };
   consultations: TodayConsultation[];
-  receipts: PendingReceipt[];
   month: MonthSummary;
   upsell: Upsell[];
 }
@@ -92,3 +92,13 @@ export const todayQuery = queryOptions({
   // New leads arrive all day: refresh while the page is open.
   refetchInterval: 60_000,
 });
+
+/** Receipts waiting for a seller, oldest first, a page at a time (the Today card pages through them). */
+export const receiptsQuery = (page: number) =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'receipts', page],
+    queryFn: ({ signal }) =>
+      api<Page<PendingReceipt>>(`${SALES_API}/receipts/?page=${String(page)}`, { signal }),
+    placeholderData: keepPreviousData,
+    refetchInterval: 60_000,
+  });

@@ -22,6 +22,7 @@ import {
   type CasesQuery,
   type StageFilter,
 } from './api';
+import { pagesOf } from '@/lib/api/page';
 import { CaseTable } from './components/CaseTable';
 import { ImportDialog } from './components/ImportDialog';
 
@@ -71,7 +72,7 @@ export default function CasesPage() {
     ),
   );
 
-  const pages = data ? Math.max(1, Math.ceil(data.count / data.page_size)) : 1;
+  const pages = pagesOf(data);
 
   return (
     <PageStack>

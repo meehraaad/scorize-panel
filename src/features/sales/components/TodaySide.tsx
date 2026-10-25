@@ -1,15 +1,19 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
+import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { Badge, SectionCard } from '@/components/ui/SectionCard';
+import { SkeletonRows } from '@/components/ui/Skeleton';
+import { pagesOf, useClampPage } from '@/lib/api/page';
 import { percentOf } from '@/lib/progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
-import type { MonthSummary, PendingReceipt, TodayConsultation, TodayData } from '../api';
+import { receiptsQuery, type MonthSummary, type TodayConsultation, type TodayData } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';
 import { toast } from '@/lib/toast';
@@ -124,22 +128,30 @@ export function TodayConsultationsCard({ consultations }: { consultations: Today
   );
 }
 
-export function ReceiptsCard({ receipts }: { receipts: PendingReceipt[] }) {
+/** Receipts waiting for a seller, a page at a time: the badge counts all of them. */
+export function ReceiptsCard() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
   const confirm = useConfirmReceipt();
+  const [page, setPage] = useState(1);
+  const { data, isPlaceholderData } = useQuery(receiptsQuery(page));
+  const pages = pagesOf(data);
+  useClampPage(data, page, setPage);
+  const receipts = data?.results ?? [];
   return (
     <SectionCard
       id="today-receipts"
       variant="panel"
       title={t('today.receipts.title')}
-      badge={receipts.length > 0 && <Badge>{f.number(receipts.length)}</Badge>}
+      badge={data && data.count > 0 && <Badge>{f.number(data.count)}</Badge>}
     >
-      {receipts.length === 0 ? (
+      {!data ? (
+        <SkeletonRows rows={2} />
+      ) : receipts.length === 0 ? (
         <p className="m-0 text-sm text-text-2">{t('today.receipts.empty')}</p>
       ) : (
-        <ul className="m-0 flex list-none flex-col gap-4 p-0">
+        <ul aria-busy={isPlaceholderData} className="m-0 flex list-none flex-col gap-4 p-0">
           {receipts.map((receipt) => (
             <li key={receipt.payment} className="flex flex-col gap-2">
               <span className="flex items-baseline justify-between gap-3">
@@ -180,6 +192,9 @@ export function ReceiptsCard({ receipts }: { receipts: PendingReceipt[] }) {
             </li>
           ))}
         </ul>
+      )}
+      {pages > 1 && (
+        <Pager inset page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
       )}
     </SectionCard>
   );

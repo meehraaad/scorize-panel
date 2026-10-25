@@ -1,10 +1,20 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BackLink } from '@/components/ui/BackLink';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { tasksQuery } from '@/lib/tasks/api';
+import { Pager } from '@/components/ui/Pager';
+import { Card } from '@/components/ui/Card';
+import { SkeletonRows } from '@/components/ui/Skeleton';
+import { pagesOf, useClampPage } from '@/lib/api/page';
+import {
+  taskListQuery,
+  tasksQuery,
+  type TaskList,
+  type TaskListRow,
+  type TasksOverview,
+} from '@/lib/tasks/api';
 import { MyTasks } from './components/MyTasks';
 import { OnTime } from './components/OnTime';
 import { Orphans } from './components/Orphans';
@@ -32,29 +42,13 @@ export function TasksPage({ config }: { config: TasksConfig }) {
         subtitle={t(`subtitle.${config.person}`)}
         actions={data.on_time && <OnTime onTime={data.on_time} />}
       />
-      <ViewTabs
-        value={view}
-        onChange={setView}
-        counts={{
-          mine: data.mine.length,
-          requests: data.requests.filter((item) => item.status !== 'done').length,
-          team: data.team.filter((item) => item.taken === null).length,
-        }}
-      />
+      <ViewTabs value={view} onChange={setView} counts={data.counts} />
       {view === 'mine' && data.orphans.length > 0 && (
         <Orphans orphans={data.orphans} config={config} />
       )}
       <PageColumns
         asideLabel={t('aside')}
-        main={
-          view === 'mine' ? (
-            <MyTasks data={data} config={config} />
-          ) : view === 'requests' ? (
-            <Requests requests={data.requests} config={config} />
-          ) : (
-            <TeamQueue items={data.team} config={config} />
-          )
-        }
+        main={<TaskListView key={view} list={view} overview={data} config={config} />}
         aside={
           <>
             <InternalRequestCard colleagues={data.colleagues} config={config} />
@@ -63,5 +57,46 @@ export function TasksPage({ config }: { config: TasksConfig }) {
         }
       />
     </PageStack>
+  );
+}
+
+/** One of the three lists, a page at a time (each tab starts again at page 1). */
+function TaskListView({
+  list,
+  overview,
+  config,
+}: {
+  list: TaskList;
+  overview: TasksOverview;
+  config: TasksConfig;
+}) {
+  const { t } = useTranslation('tasks');
+  const [page, setPage] = useState(1);
+  const { data, isPlaceholderData } = useQuery(taskListQuery(config.panel, list, page));
+  const pages = pagesOf(data);
+  useClampPage(data, page, setPage);
+
+  if (!data)
+    return (
+      <Card aria-label={t(`view.${list}.label`)}>
+        <SkeletonRows rows={4} />
+      </Card>
+    );
+  const pager: ReactNode = pages > 1 && (
+    <Pager page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
+  );
+  const rows = data.results;
+  return list === 'mine' ? (
+    <MyTasks
+      tasks={rows as TaskListRow['mine'][]}
+      tomorrow={overview.tomorrow}
+      doneToday={overview.done_today}
+      pager={pager}
+      config={config}
+    />
+  ) : list === 'requests' ? (
+    <Requests requests={rows as TaskListRow['requests'][]} pager={pager} config={config} />
+  ) : (
+    <TeamQueue items={rows as TaskListRow['team'][]} pager={pager} config={config} />
   );
 }

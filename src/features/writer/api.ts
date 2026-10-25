@@ -1,5 +1,6 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Page } from '@/lib/api/page';
 import type { TicketsEndpoint, WritingDepartment } from '@/lib/tickets/api';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
 
@@ -43,10 +44,9 @@ export interface OrderRow {
   unread: number;
 }
 
-export interface QueueData {
+/** A page of the chosen view (soonest due first; delivered: newest first). */
+export interface QueueData extends Page<OrderRow> {
   counts: Record<QueueView, number>;
-  /** Soonest due first. */
-  results: OrderRow[];
   /** Versions due in the next 7 days, soonest first. */
   week: {
     order: number;
@@ -62,10 +62,11 @@ export interface QueueData {
   guides: { title: string; url: string }[];
 }
 
-export const queueQuery = (view: QueueView) =>
+export const queueQuery = (view: QueueView, page: number) =>
   queryOptions({
-    queryKey: [...WRITER_KEY, 'orders', view],
-    queryFn: ({ signal }) => api<QueueData>(`${WRITER_API}/orders/?view=${view}`, { signal }),
+    queryKey: [...WRITER_KEY, 'orders', view, page],
+    queryFn: ({ signal }) =>
+      api<QueueData>(`${WRITER_API}/orders/?view=${view}&page=${String(page)}`, { signal }),
     placeholderData: keepPreviousData,
   });
 

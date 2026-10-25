@@ -29,7 +29,7 @@ import type { Degree } from '@/lib/applicant/approval';
 import { APPLICATION_RESULTS, type ApplicationResult } from '@/lib/applications';
 import type { NewTask } from '@/lib/tasks/api';
 import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/api';
-import { forbidden, notFound, storage } from './session';
+import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
  * Fake supervisor API (docs/backend-changes.md SV1–SV14) for Maryam (09120000001), supervisor of
@@ -45,6 +45,7 @@ const CASES_PAGE = 10;
 const EMAILS_PAGE = 8;
 const ACTIVITY_PAGE = 10;
 const MESSAGES_PAGE = 20;
+const INBOX_PAGE = 20;
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
@@ -1363,7 +1364,7 @@ export const supervisorHandlers = [
     const waiting = items.filter((item) => item.waiting_since);
     return HttpResponse.json<Inbox>({
       counts: { waiting: waiting.length, all: items.length },
-      results: filter === 'all' ? items : waiting,
+      ...pageOf(request, filter === 'all' ? items : waiting, INBOX_PAGE),
     });
   }),
 

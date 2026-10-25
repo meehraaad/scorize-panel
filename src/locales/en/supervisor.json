@@ -321,7 +321,6 @@
   "emails": {
     "replied": "{{n}} professors replied",
     "empty": "The bot hasn't sent any emails yet.",
-    "pager": "Page {{page}} of {{pages}}",
     "status": {
       "queued": "Queued",
       "sent": "Sent",
@@ -341,8 +340,7 @@
   },
   "activity": {
     "title": "Activity",
-    "empty": "No activity recorded yet.",
-    "pager": "Page {{page}} of {{pages}}"
+    "empty": "No activity recorded yet."
   },
   "inbox": {
     "title": "Tickets",

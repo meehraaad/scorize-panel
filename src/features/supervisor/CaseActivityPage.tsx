@@ -6,6 +6,7 @@ import { Pager } from '@/components/ui/Pager';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { pagesOf } from '@/lib/api/page';
 import { activityQuery } from './api';
 import { useCaseId } from './useCaseId';
 
@@ -16,7 +17,7 @@ export default function CaseActivityPage() {
   const id = useCaseId();
   const [page, setPage] = useState(1);
   const { data, isPlaceholderData } = useQuery(activityQuery(id, page));
-  const pages = data ? Math.max(1, Math.ceil(data.count / data.page_size)) : 1;
+  const pages = pagesOf(data);
 
   return (
     <SectionCard id="case-history" title={t('activity.title')}>
@@ -40,13 +41,7 @@ export default function CaseActivityPage() {
         </ol>
       )}
       {data && data.count > 0 && (
-        <Pager
-          status={t('activity.pager', { page: f.number(page), pages: f.number(pages) })}
-          page={page}
-          pages={pages}
-          pending={isPlaceholderData}
-          onPage={setPage}
-        />
+        <Pager page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
       )}
     </SectionCard>
   );
