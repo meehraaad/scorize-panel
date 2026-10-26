@@ -16,7 +16,7 @@ const RULE = { types: REVIEW_TYPES, maxBytes: REVIEW_MAX_BYTES };
  * doesn't take says why in a toast (the buttons that send it sit in small cards).
  */
 export function useReviewUpload() {
-  const { t } = useTranslation('journey');
+  const { t } = useTranslation('documents');
   const f = useFormat();
   const upload = useUploadReviewDocument();
 

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ReviewFile } from '@/components/applicant/ReviewFile';
+import { ReviewFile } from './ReviewFile';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { ReviewDocument } from '@/lib/applicant/journey';

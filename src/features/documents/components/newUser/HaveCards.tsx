@@ -38,10 +38,9 @@ function HaveCard({
   files: ReviewDocument[];
 }) {
   const { t } = useTranslation('documents');
-  const { t: tj } = useTranslation('journey');
   const f = useFormat();
   const { send, pending } = useReviewUpload();
-  const name = tj(`review.kinds.${kind}`);
+  const name = t(`review.kinds.${kind}`);
   const sent = files.length > 0;
   const key = KEY_KINDS.includes(kind);
 
@@ -88,7 +87,7 @@ function HaveCard({
           accept={REVIEW_TYPES}
           disabled={pending}
           chooseLabel={t(sent ? 'newUser.have.more' : 'newUser.have.upload')}
-          inputLabel={tj('review.chooseFor', { kind: name })}
+          inputLabel={t('review.chooseFor', { kind: name })}
           onFile={(file) => send(kind, file)}
         />
       </div>

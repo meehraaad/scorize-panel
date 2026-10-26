@@ -9,11 +9,11 @@ import { useDeleteReviewDocument, type ReviewDocument } from '@/lib/applicant/jo
 import { toast } from '@/lib/toast';
 
 /**
- * One file sent for the free review (home and documents tab): what it is, when it was sent, and
+ * One file sent for the free review: what it is, when it was sent, and
  * delete after an inline confirm. A list item; the list spans two columns from `xl`.
  */
 export function ReviewFile({ file }: { file: ReviewDocument }) {
-  const { t } = useTranslation('journey');
+  const { t } = useTranslation('documents');
   const f = useFormat();
   const remove = useDeleteReviewDocument();
   const [confirming, setConfirming] = useState(false);

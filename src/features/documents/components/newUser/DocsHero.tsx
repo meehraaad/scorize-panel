@@ -20,11 +20,10 @@ const STATE_ICON = { done: 'check', started: 'pen', todo: 'plus' } as const;
  */
 export function DocsHero({ tray, next }: { tray: TrayItem[]; next: ReviewKind }) {
   const { t } = useTranslation('documents');
-  const { t: tj } = useTranslation('journey');
   const f = useFormat();
   const { send, pending } = useReviewUpload();
   const done = tray.filter((item) => item.state === 'done').length;
-  const nextName = tj(`review.kinds.${next}`);
+  const nextName = t(`review.kinds.${next}`);
 
   return (
     <section
@@ -62,7 +61,7 @@ export function DocsHero({ tray, next }: { tray: TrayItem[]; next: ReviewKind })
                 className={`flex items-center gap-1.5 rounded-full py-1.5 ps-2.5 pe-3 text-[13px] font-bold ${STATE_CLASS[item.state]}`}
               >
                 <Icon name={STATE_ICON[item.state]} size={14} />
-                {tj(`review.kinds.${item.kind}`)}
+                {t(`review.kinds.${item.kind}`)}
                 <span className="sr-only">{t(`newUser.hero.state.${item.state}`)}</span>
               </li>
             ))}
@@ -77,10 +76,10 @@ export function DocsHero({ tray, next }: { tray: TrayItem[]; next: ReviewKind })
             id="docs-hero-file"
             accept={REVIEW_TYPES}
             disabled={pending}
-            chooseLabel={tj('review.choose')}
-            inputLabel={tj('review.chooseFor', { kind: nextName })}
-            hint={tj('review.dropHint')}
-            touchHint={tj('review.dropHintTouch')}
+            chooseLabel={t('review.choose')}
+            inputLabel={t('review.chooseFor', { kind: nextName })}
+            hint={t('review.dropHint')}
+            touchHint={t('review.dropHintTouch')}
             onFile={(file) => send(next, file)}
           />
         </div>

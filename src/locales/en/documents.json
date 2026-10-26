@@ -238,5 +238,31 @@
     "delivered": "Writing delivered",
     "deliveredHint": "Of your contract's writing",
     "ofTotal": "{{n}}/{{total}}"
+  },
+  "review": {
+    "kinds": {
+      "transcript": "Transcript",
+      "cv": "CV",
+      "language": "Language certificate",
+      "passport": "Passport",
+      "degree": "Degree certificate",
+      "sop": "Statement of purpose",
+      "recommendation": "Recommendation letter",
+      "other": "Other"
+    },
+    "choose": "Choose a file",
+    "chooseFor": "Choose a file: {{kind}}",
+    "dropHint": "or drop it here",
+    "dropHintTouch": "from your gallery or files",
+    "tooBig": "This file is {{size}}. The limit is {{max}}; choose a smaller file.",
+    "badType": "This file type isn't accepted. Choose a PDF, or a JPG or PNG photo.",
+    "sent": "Document received. Our expert will call you with the review.",
+    "confirm": "Delete {{name}}?",
+    "confirmYes": "Delete",
+    "confirmNo": "Cancel",
+    "deleted": "Document deleted.",
+    "deleteError": "The document wasn't deleted. Try again.",
+    "waiting": "Waiting for review",
+    "delete": "Delete {{name}}"
   }
 }
