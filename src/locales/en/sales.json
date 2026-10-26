@@ -533,8 +533,12 @@
       "rate": "Rate"
     }
   },
+  "leadsSection": {
+    "nav": "Leads sections",
+    "leads": "Leads",
+    "consultations": "My consultations"
+  },
   "consultations": {
-    "back": "Today",
     "title": "My consultations",
     "subtitle": "Consultations assigned to you.",
     "unlogged": "{{n}} past consultations have no session logged yet.",

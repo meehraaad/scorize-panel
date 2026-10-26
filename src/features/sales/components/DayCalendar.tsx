@@ -152,7 +152,7 @@ export function DayCalendar({
         calls: f.number(callCount),
       })}
       end={
-        <Link to={salesPath('consultations')} className="text-sm font-medium text-primary-text">
+        <Link to={salesPath('leads/consultations')} className="text-sm font-medium text-primary-text">
           {t('today.calendar.all')}
         </Link>
       }

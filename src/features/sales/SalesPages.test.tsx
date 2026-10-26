@@ -243,11 +243,20 @@ describe('sales panel, seller pages', () => {
   });
 
   it('consultations: past sessions link to the session log', async () => {
-    renderApp('/sales/consultations');
+    renderApp('/sales/leads/consultations');
     expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
     expect((await screen.findAllByRole('link', { name: /^ثبت جلسه: / }))[0]).toHaveAttribute(
       'href',
       expect.stringMatching(/log=meeting&reservation=\d+$/),
     );
+  });
+
+  it('consultations: a sub-tab of the leads tab, also at its old address', async () => {
+    const router = renderApp('/sales/consultations');
+    expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales/leads/consultations');
+    const sections = screen.getByRole('navigation', { name: 'بخش‌های لیدها' });
+    await userEvent.click(within(sections).getByRole('link', { name: 'لیدها' }));
+    expect(await screen.findByRole('heading', { name: 'لیدهای من' })).toBeInTheDocument();
   });
 });

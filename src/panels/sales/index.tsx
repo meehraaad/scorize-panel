@@ -79,7 +79,18 @@ export const salesPanel: PanelDefinition = {
       loader: prefetch(() => queryClient.query(todayQuery)),
       ...lazyPage(() => import('@/features/sales/TodayPage'), ['sales']),
     },
-    { path: 'leads', ...lazyPage(() => import('@/features/sales/LeadsPage'), ['sales']) },
+    // Leads and "my consultations" share one nav tab, with a sub-tab each.
+    {
+      path: 'leads',
+      ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
+      children: [
+        { index: true, ...lazyPage(() => import('@/features/sales/LeadsPage')) },
+        {
+          path: 'consultations',
+          ...lazyPage(() => import('@/features/sales/ConsultationsPage')),
+        },
+      ],
+    },
     {
       path: 'board',
       loader: prefetch(() => queryClient.query(boardQuery)),
@@ -90,11 +101,8 @@ export const salesPanel: PanelDefinition = {
       loader: prefetch(() => queryClient.query(monthQuery)),
       ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales']),
     },
-    // Under "Today" (no nav item).
-    {
-      path: 'consultations',
-      ...lazyPage(() => import('@/features/sales/ConsultationsPage'), ['sales']),
-    },
+    // Its old address, before it moved under the leads tab.
+    { path: 'consultations', loader: () => redirect('/sales/leads/consultations') },
     {
       path: 'customers/:id',
       loader: ({ params }) => {
