@@ -322,6 +322,24 @@
     "chosen": "{{day}}، ساعت {{time}}",
     "chosenRange": "{{day}}، ساعت {{from}} تا {{to}}"
   },
+  "weekCalendar": {
+    "range": "{{from}} تا {{to}}",
+    "thisWeek": "این هفته",
+    "previous": "هفته‌ی قبل",
+    "next": "هفته‌ی بعد",
+    "legendFree": "آزاد",
+    "legendFew": "چند جا مانده",
+    "legendFull": "پر شد",
+    "timeRange": "{{from}} تا {{to}}",
+    "full": "پر شد",
+    "left": "{{n}} جا",
+    "today": "امروز",
+    "holiday": "تعطیل",
+    "noTimes": "زمانی ندارد",
+    "days": "روزهای هفته",
+    "freeCount": "{{n}} زمان آزاد",
+    "dayLineFull": "{{free}} زمان آزاد · {{full}} پر شده"
+  },
   "toast": {
     "region": "پیام‌های پنل",
     "close": "بستن اعلان",

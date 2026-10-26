@@ -243,13 +243,19 @@
     "call": "Call me",
     "sent": "Call request sent.",
     "done": "Done. We’ll call you in the {{time}}.",
-    "book": "Pick a time for {{title}}; an advisor talks with you then.",
-    "pick": "Session time",
-    "pickFirst": "Pick a time",
-    "bookAt": "Book and pay · {{time}}",
+    "book": "Book a session with an advisor. First say how it should be held; then pick the topic and a time on the calendar.",
     "free": "A free call first",
-    "error": "The free times didn't load.",
-    "retry": "Try again"
+    "how": "How the session is held",
+    "modes": {
+      "online": {
+        "title": "Online",
+        "line": "Video or phone call, from anywhere"
+      },
+      "in_person": {
+        "title": "In person",
+        "line": "At the Scorize office, face to face"
+      }
+    }
   },
   "topics": {
     "title": "What we’ll talk about in the session",

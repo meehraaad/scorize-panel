@@ -69,15 +69,14 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(router.state.location.pathname).toBe(`${ERFAN}/payments`);
   });
 
-  it('details: saves a section', async () => {
+  it('details: automatically saves a section', async () => {
     const user = userEvent.setup();
     renderApp(`${ERFAN}/info`);
     const personal = await screen.findByRole('region', { name: 'مشخصات' });
     const city = within(personal).getByLabelText('شهر محل زندگی');
     await user.clear(city);
     await user.type(city, 'تهران');
-    await user.click(within(personal).getByRole('button', { name: 'ذخیره' }));
-    expect(await toasts().findByText('ذخیره شد')).toBeInTheDocument();
+    expect(await within(personal).findByText('همهٔ تغییرات ذخیره شد')).toBeInTheDocument();
   });
 
   it('purchases: one row per Django invoice, by kind', async () => {
@@ -98,13 +97,11 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(countries).toHaveValue('هلند، آلمان');
     await user.clear(countries);
     await user.type(countries, 'هلند، Atlantis');
-    await user.click(within(goal).getByRole('button', { name: 'ذخیره' }));
-    expect(await toasts().findByText(/«Atlantis» پیدا نشد/)).toBeInTheDocument();
+    expect(await within(goal).findByText(/«Atlantis» پیدا نشد/)).toBeInTheDocument();
 
     await user.clear(countries);
     await user.type(countries, 'هلند، canada');
-    await user.click(within(goal).getByRole('button', { name: 'ذخیره' }));
-    expect(await toasts().findByText('ذخیره شد')).toBeInTheDocument();
+    expect(await within(goal).findByText('همهٔ تغییرات ذخیره شد')).toBeInTheDocument();
     expect(countries).toHaveValue('هلند، canada');
   });
 

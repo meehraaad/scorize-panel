@@ -1,3 +1,4 @@
+import type { BookableType, CalendarSlot } from '@/lib/applicant/booking';
 import { http, HttpResponse } from 'msw';
 import {
   BACKGROUND_DEGREES,
@@ -39,19 +40,70 @@ function nextSlots(): string[] {
   });
 }
 
+/** The booking calendar's types (H66): Django's active consultation types with a weekly schedule. */
+export const CALENDAR_TYPES: BookableType[] = [
+  {
+    id: 3,
+    title: 'مشاوره‌ی اپلای',
+    description: null,
+    mode: 'online',
+    minutes: 20,
+    price: 500_000,
+    full_price: null,
+    color: '3',
+    popular: true,
+  },
+  {
+    id: 4,
+    title: 'مشاوره‌ی ویزا',
+    description: null,
+    mode: 'online',
+    minutes: 45,
+    price: 900_000,
+    full_price: null,
+    color: '2',
+    popular: false,
+  },
+  {
+    id: 5,
+    title: 'اپلای حضوری',
+    description: null,
+    mode: 'in_person',
+    minutes: 60,
+    price: 1_200_000,
+    full_price: 1_500_000,
+    color: '7',
+    popular: false,
+  },
+];
+const TYPE_TIMES: Record<number, { times: string[]; capacity: number }> = {
+  3: { times: ['10:00', '10:20', '10:40', '11:00', '11:20', '11:40'], capacity: 3 },
+  4: { times: ['14:00', '14:45', '15:30'], capacity: 1 },
+  5: { times: ['10:00', '11:00'], capacity: 2 },
+};
+
 /**
- * The calendar's free times between two days (`YYYY-MM-DD`): from tomorrow, every 20 minutes from
- * 10:00 to 12:00 Tehran, not Thursday or Friday (Django: the type's `slot_minutes` schedule).
+ * Every type's times between two days (`YYYY-MM-DD`), from tomorrow, not Thursday or Friday, in
+ * Tehran time. Seats: the second time of a day has one left, the third is full.
  */
-function slotsBetween(from: string, to: string) {
-  const slots: { at: string; left: number }[] = [];
+export function calendarSlots(from: string, to: string): CalendarSlot[] {
+  const slots: CalendarSlot[] = [];
   const tomorrow = new Date(Date.now() + 24 * 60 * 60_000).toISOString().slice(0, 10);
   for (let day = new Date(`${from > tomorrow ? from : tomorrow}T00:00:00Z`); ;) {
     const date = day.toISOString().slice(0, 10);
     if (date > to) break;
     if (day.getUTCDay() !== 4 && day.getUTCDay() !== 5)
-      for (const time of ['10:00', '10:20', '10:40', '11:00', '11:20', '11:40'])
-        slots.push({ at: new Date(`${date}T${time}:00+03:30`).toISOString(), left: 2 });
+      for (const type of CALENDAR_TYPES) {
+        const { times, capacity } = TYPE_TIMES[type.id] ?? { times: [], capacity: 1 };
+        times.forEach((time, index) =>
+          slots.push({
+            type: type.id,
+            at: new Date(`${date}T${time}:00+03:30`).toISOString(),
+            left: index === 2 ? 0 : index === 1 ? Math.min(1, capacity) : capacity,
+            capacity,
+          }),
+        );
+      }
     day = new Date(day.getTime() + 24 * 60 * 60_000);
   }
   return slots;
@@ -74,6 +126,7 @@ function defaultOffers(): StartOffers {
 }
 
 const offersOf = new Map<number, Partial<StartOffers>>();
+const calendarTypesOf = new Map<number, BookableType[]>();
 /** Bookings sent, for the tests. */
 export const bookingsSent: { type: number; starts_at: string }[] = [];
 
@@ -111,14 +164,17 @@ export const journeyHandlers = [
     return user ? HttpResponse.json({ ...defaultOffers(), ...offersOf.get(user) }) : forbidden();
   }),
 
-  http.get(`${BASE}/consultations/slots/`, ({ request }) => {
+  http.get(`${BASE}/consultations/calendar/`, ({ request }) => {
     const user = storage.get();
     if (!user) return forbidden();
     const query = new URL(request.url).searchParams;
-    const offer = { ...defaultOffers(), ...offersOf.get(user) }.consultation;
+    const types = calendarTypesOf.get(user) ?? CALENDAR_TYPES;
+    const shown = new Set(types.map((type) => type.id));
     return HttpResponse.json({
-      type: offer?.type ?? null,
-      slots: offer ? slotsBetween(query.get('from') ?? '', query.get('to') ?? '') : [],
+      types,
+      slots: calendarSlots(query.get('from') ?? '', query.get('to') ?? '').filter((slot) =>
+        shown.has(slot.type),
+      ),
     });
   }),
 
@@ -127,13 +183,19 @@ export const journeyHandlers = [
     if (!user) return forbidden();
     const sent = (await request.json()) as { type: number; starts_at: string };
     const offer = { ...defaultOffers(), ...offersOf.get(user) }.consultation;
-    if (!offer || offer.type !== sent.type)
+    const types = calendarTypesOf.get(user) ?? CALENDAR_TYPES;
+    if (!types.some((type) => type.id === sent.type) && offer?.type !== sent.type)
       return HttpResponse.json(
         { type: ['This consultation can not be booked here.'] },
         { status: 400 },
       );
     const day = new Date(sent.starts_at).toISOString().slice(0, 10);
-    const free = [...offer.slots, ...slotsBetween(day, day).map((slot) => slot.at)];
+    const free = [
+      ...(offer?.type === sent.type ? offer.slots : []),
+      ...calendarSlots(day, day)
+        .filter((slot) => slot.type === sent.type && slot.left > 0)
+        .map((slot) => slot.at),
+    ];
     if (!free.includes(sent.starts_at))
       return HttpResponse.json({ starts_at: ['This time is taken.'] }, { status: 400 });
     bookingsSent.push(sent);
@@ -217,8 +279,14 @@ export function setStartOffers(user: number, offers: Partial<StartOffers>) {
   offersOf.set(user, offers);
 }
 
+/** The booking calendar's types for this user (none: the defaults). */
+export function setCalendarTypes(user: number, types: BookableType[]) {
+  calendarTypesOf.set(user, types);
+}
+
 export function resetJourneyMocks() {
   offersOf.clear();
+  calendarTypesOf.clear();
   bookingsSent.length = 0;
   reviewOf.clear();
   backgroundOf.clear();

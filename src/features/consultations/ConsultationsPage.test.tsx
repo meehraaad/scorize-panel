@@ -132,7 +132,7 @@ describe('consultations', () => {
     expect(await screen.findByText('هنوز مشاوره‌ای رزرو نکرده‌اید.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'رزرو مشاوره‌ی جدید' })).toHaveAttribute(
       'href',
-      '/consultation/',
+      '/consultations/book',
     );
   });
 

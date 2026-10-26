@@ -31,6 +31,10 @@ import { ProgressBar, ProgressRing, StepBar, StepDot, StepList } from '@/compone
 import { Badge, SectionCard, SectionHeading } from '@/components/ui/SectionCard';
 import { SheetButton } from '@/components/ui/Sheet';
 import { SlotPicker, type Slot } from '@/components/ui/SlotPicker';
+import { MiniMonth } from '@/components/ui/MiniMonth';
+import { WeekCalendar, type CalendarTime } from '@/components/ui/WeekCalendar';
+import { weekOf } from '@/lib/applicant/booking';
+import { addDays } from '@/lib/calendar';
 import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
 import { StatGrid } from '@/components/ui/StatGrid';
@@ -70,6 +74,10 @@ export default function ComponentsPage() {
   const [moment, setMoment] = useState('');
   const [slot, setSlot] = useState<string | null>(null);
   const [slots] = useState(sampleSlots);
+  const [thisWeek] = useState(() => weekOf(new Date(), i18n.language === 'fa' ? 6 : 1));
+  const [week, setWeek] = useState(thisWeek);
+  const [booked, setBooked] = useState<string | null>(null);
+  const [times] = useState(sampleTimes);
 
   const steps = ['قرارداد', 'نگارش', 'مدارک', 'اپلای', 'نتایج', 'ویزا'].map((label) => ({
     key: label,
@@ -567,6 +575,62 @@ export default function ComponentsPage() {
           </div>
         </Group>
 
+        <Group name="WeekCalendar · MiniMonth (booking; free, a few left, full)">
+          <div className="flex flex-wrap items-start gap-4">
+            <div className="flex-[1_1_280px] rounded-card bg-surface p-3 shadow-panel lg:max-w-80">
+              <MiniMonth
+                week={week}
+                color="var(--cal-3)"
+                min={new Date()}
+                max={addDays(thisWeek, 83)}
+                marked={(date) =>
+                  times.some(
+                    (time) =>
+                      time.left > 0 && new Date(time.at).toDateString() === date.toDateString(),
+                  )
+                }
+                onPick={(date) => setWeek(weekOf(date, i18n.language === 'fa' ? 6 : 1))}
+              />
+            </div>
+            <div className="min-w-0 flex-[999_1_560px] rounded-card bg-surface p-5 shadow-panel">
+              <WeekCalendar
+                label="WeekCalendar"
+                week={week}
+                onWeekChange={setWeek}
+                firstWeek={thisWeek}
+                lastWeek={addDays(thisWeek, 77)}
+                times={times}
+                minutes={20}
+                color="var(--cal-3)"
+                value={booked}
+                onChange={setBooked}
+                details={
+                  <div className="rounded-card-sm bg-surface p-5 shadow-toast">
+                    کارت زمان انتخابی (details)
+                  </div>
+                }
+                empty={
+                  <div className="rounded-2xl bg-surface p-5 shadow-toast">این هفته خالی است</div>
+                }
+              />
+            </div>
+          </div>
+          <div className="max-w-sm rounded-card bg-surface p-4 shadow-panel">
+            <WeekCalendar
+              label="WeekCalendar narrow"
+              week={week}
+              onWeekChange={setWeek}
+              firstWeek={thisWeek}
+              lastWeek={addDays(thisWeek, 77)}
+              times={times}
+              minutes={20}
+              color="var(--cal-7)"
+              value={booked}
+              onChange={setBooked}
+            />
+          </div>
+        </Group>
+
         <Group name="PageSkeleton (loading shape per page kind)">
           {(
             ['dashboard', 'list', 'detail', 'customer', 'form', 'board', 'chat', 'tab'] as const
@@ -843,6 +907,15 @@ function sampleSlots(): Slot[] {
     }
   }
   return slots;
+}
+
+/** Eight weeks of 20-minute times, three seats each: some with one left, some full. */
+function sampleTimes(): CalendarTime[] {
+  return sampleSlots().map((slot, index) => ({
+    at: slot.at,
+    capacity: 3,
+    left: index % 7 === 3 ? 0 : index % 5 === 1 ? 1 : 3,
+  }));
 }
 
 function Group({ name, children }: { name: string; children: ReactNode }) {

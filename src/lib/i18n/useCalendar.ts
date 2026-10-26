@@ -11,7 +11,7 @@ export function useCalendar() {
   const { i18n } = useTranslation();
   const locale = isLocale(i18n.language) ? i18n.language : DEFAULT_LOCALE;
   const { intl, dir } = LOCALES[locale];
-  const kind: CalendarKind = intl.includes('ca-persian') ? 'persian' : 'gregorian';
+  const kind = calendarKind(locale);
   return useMemo(
     () => ({
       kind,
@@ -22,7 +22,15 @@ export function useCalendar() {
       weekdayLong: new Intl.DateTimeFormat(intl, { weekday: 'long' }),
       number: new Intl.NumberFormat(intl, { useGrouping: false }),
       twoDigits: new Intl.NumberFormat(intl, { minimumIntegerDigits: 2, useGrouping: false }),
+      /** "27 Oct": the Gregorian day beside a Jalali one (people abroad, universities' dates). */
+      gregorianDay: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }),
     }),
     [kind, dir, intl],
   );
+}
+
+/** The calendar a language uses (outside components: route data). */
+export function calendarKind(language: string): CalendarKind {
+  const locale = isLocale(language) ? language : DEFAULT_LOCALE;
+  return LOCALES[locale].intl.includes('ca-persian') ? 'persian' : 'gregorian';
 }
