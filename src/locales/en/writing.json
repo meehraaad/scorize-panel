@@ -43,7 +43,12 @@
     "confirmYes": "Submit",
     "confirmNo": "Cancel",
     "error": "The form wasn't submitted. Check your internet connection and try again.",
-    "doneText": "Writing started on {{date}}. Your answers are read-only now; for any change, write in the writing ticket."
+    "doneText": "Writing started on {{date}}. Your answers are read-only now; for any change, write in the writing ticket.",
+    "submitPay": "Final submit and pay {{price}} Toman",
+    "confirmPay": "Your answers are saved and you go to the payment. After paying, press \"final submit\" once more and the writing starts.",
+    "payNote": "Your answers save as you type. You pay only at the final submit; after it there is no editing and the writing starts.",
+    "toPay": "Answers saved. Pay so the writing can start.",
+    "inReview": "Your payment receipt is being reviewed. Once it is approved, press final submit."
   },
   "tipsTitle": "Read before you write",
   "phone": {

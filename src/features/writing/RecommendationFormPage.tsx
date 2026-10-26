@@ -169,7 +169,9 @@ function RecommendersView({ spec, form }: { spec: FormSpec; form: WritingForm })
               </span>
             )}
 
-            {!readOnly && <FinalBar type={type} draft={draft} final={final} />}
+            {!readOnly && (
+              <FinalBar type={type} draft={draft} final={final} purchase={form.purchase} />
+            )}
           </form>
         }
         aside={<FormAside spec={spec} phone={form.contact_phone} readOnly={readOnly} />}

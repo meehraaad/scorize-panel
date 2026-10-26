@@ -1,14 +1,16 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { toast } from '@/lib/toast';
-import { missingFromError, useSubmitWriting } from './api';
+import { missingFromError, paymentFromError, receiptInReview, useSubmitWriting } from './api';
 import { missingInForm, type FormSpec } from './formSpec';
 import type { useDraft } from './useDraft';
 
 /**
  * The final submit of a writing form: checks required answers first (and points at the first
  * one missing through `onMissing`), asks to confirm, then sends every answer. A refusal from the
- * server with missing keys points at them the same way.
+ * server with missing keys points at them the same way. An order not paid yet (H66) goes to its
+ * payment: the answers are saved, and after paying the final submit sends the form to the writer.
  */
 export function useFinal(
   spec: FormSpec,
@@ -18,6 +20,7 @@ export function useFinal(
   const { t } = useTranslation('writing');
   const { answers } = draft;
   const submit = useSubmitWriting(spec.type);
+  const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
   const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
   const [notice, setNotice] = useState(false);
@@ -62,7 +65,12 @@ export function useFinal(
       onError: (error) => {
         setConfirming(false);
         const keys = missingFromError(error);
+        const payment = paymentFromError(error);
         if (keys.length) showMissing(keys);
+        else if (payment !== null) {
+          toast.success(t('final.toPay'));
+          void navigate(`/payments/${payment}`);
+        } else if (receiptInReview(error)) toast.error(t('final.inReview'));
         else toast.error(t('final.error'));
       },
     });

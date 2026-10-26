@@ -56,6 +56,8 @@ const PAGES: PageCase[] = [
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
   { path: '/', user: MARYAM },
+  // No contract: the new user's documents tab (files for the free review, writing offered).
+  { path: '/documents', user: MARYAM },
   {
     path: '/applications',
     user: SARA,

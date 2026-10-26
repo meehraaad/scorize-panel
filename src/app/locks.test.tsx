@@ -59,7 +59,7 @@ describe('locked sections', () => {
   it('sends a call request from the lock banner', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    await open('/documents', 'مدارک و نگارش');
+    await open('/applications', 'اپلای‌ها و نتایج');
 
     await user.click(screen.getByRole('button', { name: 'درخواست تماس مشاور' }));
     const dialog = screen.getByRole('dialog', { name: 'درخواست تماس مشاور' });
@@ -86,7 +86,7 @@ describe('locked sections', () => {
         phone: '09123456789',
         topics: ['admission', 'visa'],
         time: 'evening',
-        page: 'documents',
+        page: 'applications',
         reason: 'guest',
       },
     ]);

@@ -214,7 +214,9 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
             />
           ))}
 
-          {!readOnly && <FinalBar type={type} draft={draft} final={final} />}
+          {!readOnly && (
+            <FinalBar type={type} draft={draft} final={final} purchase={form.purchase} />
+          )}
         </form>
 
         <aside

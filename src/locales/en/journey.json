@@ -39,6 +39,8 @@
       "language": "Language certificate",
       "passport": "Passport",
       "degree": "Degree certificate",
+      "sop": "Statement of purpose",
+      "recommendation": "Recommendation letter",
       "other": "Other"
     },
     "choose": "Choose a file",

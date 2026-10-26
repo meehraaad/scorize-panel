@@ -114,6 +114,7 @@ export default function ComponentsPage() {
             <Button>اصلی</Button>
             <Button variant="outline">دوم</Button>
             <Button variant="danger">حذف</Button>
+            <Button variant="dark">ادامه</Button>
             <Button size="lg" shape="rounded">
               بزرگ
             </Button>

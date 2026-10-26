@@ -14,7 +14,8 @@ export type ServerFeature =
   | 'estimate'
   | 'reviewDocuments'
   | 'background'
-  | 'start';
+  | 'start'
+  | 'writingOffers';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -42,4 +43,10 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * home (scorize-revolution `claude/project-thread-ri6qn8`). Off: the home offers what it did before.
    */
   start: true,
+  /**
+   * H66 `writing-offers/` and `writing/<kind>/start/`: the new user's documents tab, writing forms
+   * before paying (scorize-revolution `claude/project-thread-7rn4r9`). Off: the tab stays a locked
+   * preview without a contract.
+   */
+  writingOffers: true,
 };
