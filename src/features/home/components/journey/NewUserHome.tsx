@@ -36,6 +36,7 @@ import { StartPaths } from './StartPaths';
  * - a booked consultation: the session (countdown, calendar), what it covers, what to fill before it
  * - after a session (within a month): a short survey about it leads
  * Their own seller and admissions of people like them close every moment but the first.
+ * On phones the quiz is one short card that opens its questions in a bottom sheet.
  * Design: "Scorize New User Dashboard v2" canvas (Main, FirstVisit, AfterUpload, UpcomingConsult).
  */
 export function NewUserHome({ access }: { access: ApplicantAccess }) {
@@ -56,7 +57,13 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   const firstVisit = estimate === null && files.length === 0 && !next && !held;
 
   const quiz = (
-    <EstimateFlow key="quiz" phone={access.phone} detailsTo="/estimate" teaser={firstVisit} />
+    <EstimateFlow
+      key="quiz"
+      phone={access.phone}
+      detailsTo="/estimate"
+      teaser={firstVisit}
+      sheetOnPhone
+    />
   );
   const readiness = (
     <ReadinessCard

@@ -5,6 +5,7 @@ import i18n from '@/lib/i18n';
 import { estimateAnswers, estimateStarts } from '@/mocks/estimate';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { onDesktop } from '@/test/viewport';
 
 // The quiz isn't on the server yet (src/lib/applicant/onServer.ts): switch everything on.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -47,6 +48,7 @@ describe('admission-chance quiz', () => {
   });
 
   it('is the guest home: the quiz, then a short result linking to the full one', async () => {
+    onDesktop();
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
@@ -81,6 +83,41 @@ describe('admission-chance quiz', () => {
     expect(await screen.findByRole('region', { name: 'ایتالیا' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'مشاور شما تماس می‌گیرد' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'درخواست تماس مشاور' })).not.toBeInTheDocument();
+  });
+
+  it('on phones, the guest home asks in a sheet and keeps a short card', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/');
+    const card = await screen.findByRole('region', { name: 'شانس پذیرش‌تان را ببینید' });
+    // No preview or locked result filling the page: they live in the sheet's steps.
+    expect(screen.queryByRole('region', { name: 'تا اینجا' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'نتیجه‌ی شما این شکلی است' })).toBeNull();
+    expect(estimateStarts.has(MARYAM)).toBe(false);
+
+    await user.click(within(card).getByRole('button', { name: 'شروع پرسش‌نامه' }));
+    const sheet = screen.getByRole('dialog', { name: 'شانس پذیرش شما' });
+    expect(within(sheet).getByRole('list', { name: 'مراحل پرسش‌نامه' })).toBeInTheDocument();
+    await answerAll(user);
+
+    // The sheet closes on the result: the best country, the call promise, the full result's link.
+    const best = await screen.findByRole('region', { name: 'بیشترین شانس شما: ایتالیا' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      within(best).getByText('یک مشاور امروز عصر در واتس‌اپ به شما پیام می‌دهد.'),
+    ).toBeInTheDocument();
+    expect(within(best).getByRole('link', { name: 'جزئیات هر کشور' })).toHaveAttribute(
+      'href',
+      '/estimate',
+    );
+    expect(estimateStarts.has(MARYAM)).toBe(true);
+
+    // Answering again opens the sheet; closing it keeps the result.
+    await user.click(within(best).getByRole('button', { name: 'پاسخ دوباره' }));
+    const again = screen.getByRole('dialog', { name: 'شانس پذیرش شما' });
+    await user.click(within(again).getByRole('button', { name: 'بستن' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'بیشترین شانس شما: ایتالیا' })).toBeInTheDocument();
   });
 
   it('goes from the questions to the result and the call promise', async () => {

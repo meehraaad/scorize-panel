@@ -202,5 +202,11 @@
   "locked": {
     "title": "Your result will look like this",
     "text": "After the last question, your real chance in each country and the universities that fit open up."
+  },
+  "sheet": {
+    "title": "See your admission chance",
+    "text": "Five short questions, about two minutes. The result shows right here.",
+    "start": "Start the quiz",
+    "close": "Close"
   }
 }
