@@ -71,14 +71,15 @@ export const applicantPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          ...lazyPage(() => import('@/features/home/HomePage'), ['home', 'gates'], {
-            // The guest home's quiz card reads the last result; a case with a contract has no card.
-            data: () => [
-              overviewQuery,
-              ON_SERVER.estimate &&
-                queryClient.getQueryData(accessQuery.queryKey)?.state !== 'active' &&
-                latestEstimateQuery,
-            ],
+          ...lazyPage(() => import('@/features/home/HomePage'), ['home', 'gates', 'estimate'], {
+            // The guest home is the admission-chance quiz (or its last result); a case with a
+            // contract has none.
+            data: () => {
+              const guest =
+                ON_SERVER.estimate &&
+                queryClient.getQueryData(accessQuery.queryKey)?.state !== 'active';
+              return [overviewQuery, guest && latestEstimateQuery, guest && estimateOptionsQuery];
+            },
             skeleton: 'dashboard',
           }),
         },
@@ -243,7 +244,7 @@ export const applicantPanel: PanelDefinition = {
           ? {
               path: 'estimate',
               ...lazyPage(() => import('@/features/estimate/EstimatePage'), ['estimate'], {
-                data: () => [latestEstimateQuery, estimateOptionsQuery],
+                data: () => [accessQuery, latestEstimateQuery, estimateOptionsQuery],
                 skeleton: 'form',
               }),
             }

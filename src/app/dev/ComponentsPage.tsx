@@ -27,7 +27,7 @@ import { OtpInput } from '@/components/ui/OtpInput';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
-import { ProgressBar, StepBar, StepDot, StepList } from '@/components/ui/Progress';
+import { ProgressBar, ProgressRing, StepBar, StepDot, StepList } from '@/components/ui/Progress';
 import { Badge, SectionCard, SectionHeading } from '@/components/ui/SectionCard';
 import { SheetButton } from '@/components/ui/Sheet';
 import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
@@ -316,6 +316,7 @@ export default function ComponentsPage() {
             <ProgressBar value={35} label="پیشرفت" />
             <ProgressBar value={70} size="sm" />
             <ProgressBar value={50} tone="good" label="پرداخت‌شده" />
+            <ProgressRing value={60} label="پروفایل ۶۰٪ کامل" />
             <StepBar label="مراحل پرونده" steps={steps} current={3} />
             <StepBar
               label="مرور مراحل (current=-1, hint)"

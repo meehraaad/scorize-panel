@@ -18,7 +18,7 @@ const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
 };
 
-const step = () => screen.getByRole('region', { name: /سؤال|برای چه|سوابق|زبان|کجا|مشاور/ });
+const step = () => screen.getByRole('region', { name: /^(برای چه|سوابق|زبان|کجا|مشاور با شما)/ });
 const next = () => screen.getByRole('button', { name: 'ادامه' });
 
 /** Answers every step: Engineering, the given GPA and English choice, Italy, then contact. */
@@ -46,14 +46,39 @@ describe('admission-chance quiz', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('is offered on the guest home', async () => {
+  it('is the guest home: the quiz, then a short result linking to the full one', async () => {
+    const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
-    const card = await screen.findByRole('region', { name: 'شانس پذیرش‌تان چقدر است؟' });
-    expect(within(card).getByRole('link', { name: 'شروع پرسش‌نامه' })).toHaveAttribute(
+    expect(
+      await screen.findByRole('heading', { name: 'سلام مریم، به اسکورایز خوش آمدید', level: 1 }),
+    ).toBeInTheDocument();
+    const preview = screen.getByRole('region', { name: 'تا اینجا' });
+    expect(within(preview).getByRole('img', { name: 'پاسخ‌ها ۰٪ کامل' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'بعد از این چند سؤال' })).toBeInTheDocument();
+    // The rest of the guest home stays under it.
+    expect(screen.getByRole('region', { name: 'پنل شما بعد از قرارداد' })).toBeInTheDocument();
+
+    await answerAll(user);
+    const best = await screen.findByRole('region', { name: 'بیشترین شانس شما: ایتالیا' });
+    expect(within(best).getByText('بالا')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'جزئیات هر کشور' })).toHaveAttribute(
       'href',
       '/estimate',
     );
+    const call = screen.getByRole('region', { name: 'مشاور شما تماس می‌گیرد' });
+    expect(within(call).getByText('پاسخ‌های شما به تیم مشاوره رسید')).toBeInTheDocument();
+    expect(
+      within(call).getByText('یک مشاور امروز عصر در واتس‌اپ به شما پیام می‌دهد.'),
+    ).toBeInTheDocument();
+    // Short result: the per-country cards are on the full page.
+    expect(screen.queryByRole('region', { name: 'ایتالیا' })).not.toBeInTheDocument();
+
+    // The full result keeps the same promise instead of offering another call request.
+    await user.click(screen.getByRole('link', { name: 'جزئیات هر کشور' }));
+    expect(await screen.findByRole('region', { name: 'ایتالیا' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'مشاور شما تماس می‌گیرد' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'درخواست تماس مشاور' })).not.toBeInTheDocument();
   });
 
   it('goes from the questions to the result and the call promise', async () => {
@@ -125,7 +150,7 @@ describe('admission-chance quiz', () => {
     expect(step()).toHaveAccessibleName('زبان انگلیسی');
   });
 
-  it('without contact: no call promise, a consultation link instead', async () => {
+  it('without contact: no call promise, a call they can ask for instead', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/estimate');
@@ -135,7 +160,8 @@ describe('admission-chance quiz', () => {
     expect(
       screen.queryByRole('region', { name: 'مشاور شما تماس می‌گیرد' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'رزرو مشاوره' })).toBeInTheDocument();
+    const call = screen.getByRole('region', { name: 'یک تماس کوتاه رایگان' });
+    expect(within(call).getByRole('button', { name: 'درخواست تماس مشاور' })).toBeInTheDocument();
     const italy = screen.getByRole('region', { name: 'ایتالیا' });
     expect(within(italy).getByText('با آیلتس ۷: از «پایین» به «متوسط»')).toBeInTheDocument();
     expect(estimateAnswers[0]?.contact).toEqual({ channel: 'none' });
@@ -161,8 +187,8 @@ describe('admission-chance quiz', () => {
 
     cleanup();
     renderApp('/');
-    const card = await screen.findByRole('region', { name: 'آخرین نتیجه‌ی شانس پذیرش شما' });
-    expect(within(card).getByText('ایتالیا: بالا')).toBeInTheDocument();
+    const best = await screen.findByRole('region', { name: 'بیشترین شانس شما: ایتالیا' });
+    expect(within(best).getByText('بالا')).toBeInTheDocument();
   });
 
   it('starts again from the answers the profile holds', async () => {

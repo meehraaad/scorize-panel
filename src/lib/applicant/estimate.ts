@@ -112,13 +112,19 @@ export const latestEstimateQuery = queryOptions({
   staleTime: 60_000,
 });
 
+/** Where the contact answer of this visit's quiz is kept, so every page shows the same promise. */
+export const ANSWERED_CONTACT_KEY = [...KEY, 'answeredContact'] as const;
+
 export function useSubmitEstimate() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (answers: EstimateAnswers) =>
       api<EstimateResult>(`${BASE}/`, { method: 'POST', body: answers }),
-    onSuccess: (result) => {
+    onSuccess: (result, answers) => {
       client.setQueryData(latestEstimateQuery.queryKey, result);
+      // Kept for the whole visit, not dropped after the cache's idle time like a fetched query.
+      client.setQueryDefaults(ANSWERED_CONTACT_KEY, { gcTime: Infinity });
+      client.setQueryData(ANSWERED_CONTACT_KEY, answers.contact);
       // The answers are now the profile's: the next quiz starts from them.
       void client.invalidateQueries({ queryKey: estimateOptionsQuery.queryKey });
     },

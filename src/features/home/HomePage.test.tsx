@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { ON_SERVER, type ServerFeature } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
@@ -99,6 +100,12 @@ describe('applicant home', () => {
   });
 
   it('welcomes someone without a contract: the journey, previews and what is open now', async () => {
+    // Before the quiz is on the server; with it, the quiz takes the journey's place (estimate tests).
+    const onServer = ON_SERVER as Record<ServerFeature, boolean>;
+    onServer.estimate = false;
+    onTestFinished(() => {
+      onServer.estimate = true;
+    });
     loginAs(MARYAM);
     renderApp('/');
     expect(
