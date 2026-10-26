@@ -1,6 +1,7 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
+import type { Stage } from '@/lib/applicant/stages';
 import type { ApplicationResult, Approval, FeePayment } from '@/lib/applications';
 
 /**
@@ -29,6 +30,11 @@ export interface Application {
    * first name? null = not asked yet.
    */
   showcase: boolean | null;
+  /** The university's country, localized by the server. */
+  country: string;
+  /** When the team sent it, and when its result came (null: not yet, or before Django kept them). */
+  sent_at: string | null;
+  result_at: string | null;
 }
 
 /** VisaResult.Status, named. */
@@ -55,6 +61,8 @@ export interface VisaResult {
 }
 
 export interface ApplicationsData {
+  /** Where the case is (the home page's case stages). */
+  stage: Stage;
   applies: { used: number; total: number };
   results: Application[];
   /** null: the contract has no visa services (the section is hidden). */

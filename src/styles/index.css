@@ -46,6 +46,7 @@
   --color-hero-accent: var(--hero-accent);
   --color-on-hero-3: var(--on-hero-3);
   --color-hero-current: var(--hero-current);
+  --color-hero-info: var(--hero-info);
   --color-hero-danger: var(--hero-danger);
   --color-toast: var(--toast);
   --color-danger: var(--danger);
