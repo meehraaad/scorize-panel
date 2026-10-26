@@ -35,7 +35,7 @@ src/
 │                          components/applicant/ = applicant-panel pieces several pages share and
 │                          that talk to the API (SectionLock, CallRequestButton; canvas V7;
 │                          estimate/: the admission-chance quiz and result, guest home + /estimate;
-│                          on phones the home shows one card and asks in a bottom sheet)
+│                          on phones the home shows one gauge card and asks in a bottom sheet)
 ├── lib/                   Infrastructure (bottom layer)
 │   ├── api/               fetch client (session cookie + CSRF), React Query client
 │   ├── applicant/         Shared by applicant pages: query-key prefix, approve/reject an application,

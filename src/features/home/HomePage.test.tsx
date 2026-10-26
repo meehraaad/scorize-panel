@@ -235,9 +235,7 @@ describe('applicant home', () => {
     onDesktop();
     loginAs(MARYAM);
     renderApp('/');
-    expect(
-      await screen.findByRole('region', { name: 'نتیجه‌ی شما این شکلی است' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
     const talk = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
     const how = within(talk).getByRole('navigation', { name: 'نحوه‌ی برگزاری جلسه' });
     expect(within(how).getByRole('link', { name: /^آنلاین/ })).toHaveAttribute(
