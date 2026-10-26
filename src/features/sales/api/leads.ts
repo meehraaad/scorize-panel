@@ -7,6 +7,7 @@ import {
   type LeadSource,
   type LeadStage,
   type LostReason,
+  STAGES,
 } from '@/lib/sales/api';
 
 export interface LeadRow {
@@ -31,6 +32,22 @@ export interface LeadRow {
 }
 
 export type LeadFilter = LeadStage | 'all';
+
+export const LEAD_FILTERS: readonly LeadFilter[] = ['all', ...STAGES];
+
+/** The stage tab in the URL (`?stage=`); anything else is "all". */
+export const leadFilterOf = (value: string | null): LeadFilter =>
+  LEAD_FILTERS.find((filter) => filter === value) ?? 'all';
+
+/** The list as the page first shows it: the URL's stage tab, no other filter, page 1. */
+export const firstLeadQuery = (stage: LeadFilter): LeadQuery => ({
+  stage,
+  source: 'all',
+  band: 'all',
+  overdue: false,
+  search: '',
+  page: 1,
+});
 
 export interface LeadQuery {
   stage: LeadFilter;

@@ -2,6 +2,7 @@ import type { ParseKeys } from 'i18next';
 import type { RouteObject } from 'react-router';
 import type { IconName } from '@/components/ui/Icon';
 import type { Role } from '@/lib/auth/roles';
+import type { PageQuery } from '@/lib/router/lazyPage';
 
 /**
  * One list per panel drives its desktop top nav, mobile bottom tabs and "More" sheet,
@@ -43,6 +44,11 @@ export interface PanelDefinition {
    * shows a preview). The applicant panel locks its sections until there is a contract.
    */
   useLockedNav?: () => ReadonlySet<string>;
+  /**
+   * Queries the panel's frame reads on every page (e.g. the data behind `useLockedNav`), started
+   * with the page's own data. Pages declare theirs with `lazyPage(…, data)`.
+   */
+  data?: () => readonly PageQuery[];
 }
 
 const NO_LOCKS: ReadonlySet<string> = new Set();

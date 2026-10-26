@@ -51,7 +51,7 @@ src/
 │   ├── account/           Every panel's account: notifications (the header's bell), channels, login details
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
 │   ├── i18n/              i18next setup, locales config, Intl formatters (Jalali dates)
-│   ├── router/            lazyPage(): page chunk + its dictionaries in parallel
+│   ├── router/            lazyPage(): page chunk, its dictionaries and its data in parallel
 │   ├── site.ts            Links to main-site pages and the support phone
 │   └── theme/             Light / dark / system theme
 ├── locales/<lang>/        Dictionaries: common.json + one per feature namespace. fa is the source
@@ -334,6 +334,9 @@ are loaded per script as text appears.
 - `index.html` preloads the `whoami` request, so the session check runs while JS downloads.
 - New pages must be lazy routes. Heavy widgets (charts, editors, date pickers) are lazy-loaded inside
   their page.
+- Every route declares the data its page shows first (`lazyPage(load, namespaces, data)`), so code
+  and data load together; `src/app/pageData.test.tsx` fails on a page that fetches after it renders.
+  The rule, its exceptions and the speed roadmap: docs/performance.md.
 - The panel's Suspense boundary is keyed by pathname so a new page shows its loading state during
   navigation instead of leaving the previous screen visible under the new URL. Search-only changes
   keep form state. Customer tabs have a separate boundary so their data cannot block customer actions

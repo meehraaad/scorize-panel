@@ -11,6 +11,7 @@ versions V6/V7 for the applicant panel.
 
 - `docs/architecture.md`: folder layout, every tech decision, theming, i18n, performance budget
 - `docs/backend-integration.md`: how the panel talks to Django today (auth flow, endpoints)
+- `docs/performance.md`: page data rule (no waterfalls) and the speed roadmap
 - `docs/backend-changes.md`: every change the redesign needs in Django. **Do not edit or connect anything
   in the scorize repo** until the migration: the old site must keep working as it is. Add needed backend
   changes to this list instead
@@ -24,6 +25,9 @@ versions V6/V7 for the applicant panel.
 - **RTL-safe layout.** Use logical utilities (`ps-*`, `me-*`, `start-*`, `text-start`), never `left`/`right`.
 - **Panels**: navigation and routes live in `src/panels/<panel>/`; layouts in `src/app/layouts/`.
   Every page is lazy (`lazyPage`). Layers are enforced by ESLint (see docs/architecture.md).
+- **No request waterfalls.** Each route lists every query its page reads on first render in
+  `lazyPage(load, namespaces, data)`, and each new page is added to `src/app/pageData.test.tsx`
+  (docs/performance.md).
 - **API calls** go through `api()` in `src/lib/api/client.ts` and React Query, straight to Django's
   endpoints (table in docs/backend-integration.md; schema at `/api/schema/`): the app has no mock
   mode and no sample data. `src/mocks/` is the fake Django the **tests** run against: mirror each

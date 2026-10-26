@@ -89,13 +89,6 @@ export interface TodayData {
   upsell: Upsell[];
 }
 
-export const todayQuery = queryOptions({
-  queryKey: [...SALES_KEY, 'today'],
-  queryFn: ({ signal }) => api<TodayData>(`${SALES_API}/today/`, { signal }),
-  // New leads arrive all day: refresh while the page is open.
-  refetchInterval: 60_000,
-});
-
 /** Receipts waiting for a seller, oldest first, a page at a time (the Today card pages through them). */
 export const receiptsQuery = (page: number) =>
   queryOptions({
