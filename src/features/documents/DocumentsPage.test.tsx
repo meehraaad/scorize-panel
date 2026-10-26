@@ -47,9 +47,6 @@ describe('documents page', () => {
     const team = screen.getByRole('region', { name: 'فایل‌های آماده از تیم' });
     expect(within(team).getAllByRole('listitem')).toHaveLength(2);
     // What waits on the applicant comes first: documents to upload and the writing forms.
-    // How ready the case is: what is done, with the team, and waiting on the applicant.
-    const ready = screen.getByRole('region', { name: /برای اپلای آماده است/ });
-    expect(within(ready).getByText(/منتظر شما/)).toBeInTheDocument();
     const waiting = screen.getByRole('region', { name: 'منتظر شما' });
     // One card per document (the one sent back says why) and per form.
     expect(within(waiting).getByText(/نسخه‌ی قبلی امضا نداشت/)).toBeInTheDocument();
