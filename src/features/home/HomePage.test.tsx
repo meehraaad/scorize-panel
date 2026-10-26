@@ -272,6 +272,27 @@ describe('applicant home', () => {
     expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
   });
 
+  it('remembers a session long past, without the first-visit or readiness blocks', async () => {
+    loginAs(MARYAM);
+    addHeldConsultation(MARYAM, 45);
+    renderApp('/');
+    const card = await screen.findByRole('region', {
+      name: 'جلسه‌تان با نیلوفر شریفی یادتان هست؟',
+    });
+    expect(within(card).getByRole('link', { name: 'جزئیات جلسه' })).toHaveAttribute(
+      'href',
+      '/consultations/90',
+    );
+    expect(
+      within(card).getByRole('button', { name: 'سؤال دارم، تماس بگیرید' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' })).toBeNull();
+    expect(screen.queryByRole('region', { name: /چطور بود؟$/ })).toBeNull();
+    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
+    expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
+  });
+
   it('puts a booked session first, with what to fill before it', async () => {
     loginAs(SARA);
     localStorage.setItem('scorize.mock.access', 'guest');
