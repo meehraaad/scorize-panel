@@ -11,6 +11,7 @@ const SIZES = {
   lg: 'h-14 px-6 text-base',
 } as const;
 
+export type ButtonShape = 'pill' | 'rounded';
 export type ButtonVariant = keyof typeof VARIANTS;
 export type ButtonSize = keyof typeof SIZES;
 
@@ -19,8 +20,9 @@ export function buttonClass(
   variant: ButtonVariant = 'primary',
   className = '',
   size: ButtonSize = 'md',
+  shape: ButtonShape = 'pill',
 ) {
-  return `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full transition-colors disabled:opacity-50 ${SIZES[size]} ${VARIANTS[variant]} ${className}`;
+  return `inline-flex items-center justify-center gap-2 whitespace-nowrap ${shape === 'pill' ? 'rounded-full' : 'rounded-xl'} transition-colors disabled:opacity-50 ${SIZES[size]} ${VARIANTS[variant]} ${className}`;
 }
 
 /** A pill tab (filters, form tabs): raised when active. Also used by links (NavLink). */

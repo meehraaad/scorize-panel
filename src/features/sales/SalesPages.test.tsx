@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -204,6 +204,47 @@ describe('sales panel, seller pages', () => {
     expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'پیش‌نویس، منتظر مدیر' })).toHaveTextContent(
       'مدیر بررسی می‌کند',
+    );
+  });
+
+  it('board: fullscreen exits with Escape and does not carry into the leads list', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/board');
+    const enter = await screen.findByRole('button', { name: 'تمام‌صفحه' });
+    await user.click(enter);
+    expect(screen.getByRole('button', { name: 'خروج از تمام‌صفحه' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.keyboard('[Escape]');
+    expect(screen.getByRole('button', { name: 'تمام‌صفحه' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    await user.click(screen.getByRole('button', { name: 'تمام‌صفحه' }));
+    await user.click(screen.getByRole('link', { name: i18n.t('board.listView', { ns: 'sales' }) }));
+    expect(await screen.findByRole('heading', { name: 'لیدهای من' })).toBeInTheDocument();
+    expect(document.querySelector('[data-page-workspace]')).not.toBeInTheDocument();
+  });
+
+  it('board: can add a lead in fullscreen; Escape in its dialog keeps the workspace open', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/board');
+    await user.click(await screen.findByRole('button', { name: 'تمام‌صفحه' }));
+    await user.click(screen.getByRole('button', { name: 'ثبت لید دستی' }));
+    const dialog = screen.getByRole('dialog', { name: 'ثبت لید دستی' });
+    fireEvent.keyDown(within(dialog).getByLabelText('نام'), { key: 'Escape', code: 'Escape' });
+    expect(screen.getByRole('button', { name: 'خروج از تمام‌صفحه', hidden: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.click(
+      within(dialog).getByRole('button', { name: i18n.t('close', { ns: 'sales' }) }),
+    );
+    await user.keyboard('[Escape]');
+    expect(screen.getByRole('button', { name: 'تمام‌صفحه' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
     );
   });
 

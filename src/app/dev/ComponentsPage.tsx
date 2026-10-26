@@ -17,6 +17,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FileDrop, FileTile, PickedFile } from '@/components/ui/Files';
 import { FilterTabs, SearchField } from '@/components/ui/Filters';
+import { Icon } from '@/components/ui/Icon';
 import { IconButton, IconLink } from '@/components/ui/IconButton';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { LinkTile, TileGrid } from '@/components/ui/LinkTile';
@@ -48,7 +49,7 @@ import { uploadWithToast } from '@/lib/upload';
  */
 export default function ComponentsPage() {
   const { theme, setMode } = useTheme();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const f = useFormat();
   const [filter, setFilter] = useState<'all' | 'waiting' | 'done'>('all');
   const [query, setQuery] = useState('');
@@ -96,12 +97,26 @@ export default function ComponentsPage() {
           }
         />
 
+        <Group name="PageHeader · workspace">
+          <PageHeader
+            size="workspace"
+            title={t('app.name')}
+            actions={<Button shape="rounded">{t('header.notifications')}</Button>}
+          />
+          <div className="flex gap-2">
+            <Icon name="expand" />
+            <Icon name="grip" />
+          </div>
+        </Group>
+
         <Group name="Buttons · Chips · Notices">
           <div className="flex flex-wrap items-center gap-2">
             <Button>اصلی</Button>
             <Button variant="outline">دوم</Button>
             <Button variant="danger">حذف</Button>
-            <Button size="lg">بزرگ</Button>
+            <Button size="lg" shape="rounded">
+              بزرگ
+            </Button>
             <IconButton icon="pen" aria-label="ویرایش" />
             <IconButton icon="trash" tone="danger" aria-label="حذف" />
             <IconLink icon="download" href="#" aria-label="دانلود" />

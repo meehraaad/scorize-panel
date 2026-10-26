@@ -39,7 +39,7 @@ export function BottomTabs({ panel, locked }: Props) {
           an overscroll bounce opens under the bar. */}
       <nav
         aria-label={t(panel.navLabel)}
-        className="fixed inset-x-0 bottom-0 z-30 flex transform-gpu border-t border-hair bg-surface pb-[env(safe-area-inset-bottom)] after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-24 after:bg-surface lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 flex transform-gpu border-t border-hair bg-surface pb-[env(safe-area-inset-bottom)] group-has-[[data-workspace-fullscreen]]/panel:hidden after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-24 after:bg-surface lg:hidden"
       >
         {tabs.map((item) => (
           <NavLink

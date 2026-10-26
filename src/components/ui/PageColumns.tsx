@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 /**
  * The page body: a main column and a side column that drops under it on narrow screens (no
@@ -75,6 +75,40 @@ export function PageFill({ children }: { children: ReactNode }) {
     <div
       data-page-fill
       className="flex flex-col gap-3 max-lg:-mb-10 max-lg:h-[calc(100dvh-var(--panel-top)-var(--panel-bottom))] lg:gap-7"
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Full-width, viewport-height workspace. PanelLayout opts in only while this block is mounted. */
+export function PageWorkspace({
+  children,
+  fullscreen,
+  onExitFullscreen,
+}: {
+  children: ReactNode;
+  fullscreen: boolean;
+  onExitFullscreen: () => void;
+}) {
+  useEffect(() => {
+    if (!fullscreen) return;
+    const exit = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      if (event.target instanceof Element && event.target.closest('dialog[open]')) return;
+      onExitFullscreen();
+    };
+    window.addEventListener('keydown', exit);
+    return () => window.removeEventListener('keydown', exit);
+  }, [fullscreen, onExitFullscreen]);
+
+  return (
+    <div
+      data-page-workspace
+      data-workspace-fullscreen={fullscreen || undefined}
+      className={`isolate flex min-h-0 w-full min-w-0 flex-col overflow-hidden ${
+        fullscreen ? 'h-dvh' : 'h-[calc(100dvh-var(--panel-top,0px)-var(--panel-bottom,0px))]'
+      }`}
     >
       {children}
     </div>
