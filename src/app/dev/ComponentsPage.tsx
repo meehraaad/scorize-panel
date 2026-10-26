@@ -518,16 +518,16 @@ export default function ComponentsPage() {
         </Group>
 
         <Group name="PageSkeleton (loading shape per page kind)">
-          {(['dashboard', 'list', 'detail', 'customer', 'form', 'board', 'chat', 'tab'] as const).map(
-            (kind) => (
-              <div key={kind} className="flex flex-col gap-2">
-                <span dir="ltr" className="font-mono text-sm text-text-2">
-                  {kind}
-                </span>
-                <PageSkeleton kind={kind} />
-              </div>
-            ),
-          )}
+          {(
+            ['dashboard', 'list', 'detail', 'customer', 'form', 'board', 'chat', 'tab'] as const
+          ).map((kind) => (
+            <div key={kind} className="flex flex-col gap-2">
+              <span dir="ltr" className="font-mono text-sm text-text-2">
+                {kind}
+              </span>
+              <PageSkeleton kind={kind} />
+            </div>
+          ))}
         </Group>
         <Group name="Tickets (src/components/tickets)">
           <div className="flex flex-wrap items-center gap-3">

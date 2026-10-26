@@ -1,7 +1,9 @@
 import { Suspense, lazy, type ComponentProps } from 'react';
 import type { DatePicker } from './DatePicker';
 
-const Picker = lazy(() => import('./DatePicker').then((module) => ({ default: module.DatePicker })));
+const Picker = lazy(() =>
+  import('./DatePicker').then((module) => ({ default: module.DatePicker })),
+);
 
 /**
  * `DatePicker` with its code (calendar math, keyboard handling) fetched on first show: for forms

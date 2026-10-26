@@ -22,14 +22,7 @@ export function SkeletonRows({ rows }: { rows: number }) {
  * `tab` is the body of a tab inside a page that keeps its own header (customer, case file).
  */
 export type SkeletonKind =
-  | 'dashboard'
-  | 'list'
-  | 'detail'
-  | 'customer'
-  | 'form'
-  | 'board'
-  | 'chat'
-  | 'tab';
+  'dashboard' | 'list' | 'detail' | 'customer' | 'form' | 'board' | 'chat' | 'tab';
 
 /**
  * Fades in after 150 ms, so a fast load shows nothing; once shown, React keeps a Suspense
