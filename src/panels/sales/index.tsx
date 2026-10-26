@@ -73,6 +73,13 @@ export const salesPanel: PanelDefinition = {
       icon: 'grid',
     },
     {
+      id: 'tasks',
+      to: 'tasks',
+      label: 'panels.sales.nav.tasks',
+      tab: 'panels.sales.tabs.tasks',
+      icon: 'check',
+    },
+    {
       id: 'month',
       to: 'month',
       label: 'panels.sales.nav.month',
