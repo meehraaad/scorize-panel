@@ -38,6 +38,7 @@ import { useBoardOrder, type BoardStage } from '../boardOrder';
 import { useSalesFormat } from '../format';
 import { salesPath } from '../paths';
 import { DealCard } from './DealCard';
+import { BoardAutoScroll } from './BoardAutoScroll';
 
 const MemoDealCard = memo(DealCard);
 const MemoIconButton = memo(IconButton);
@@ -153,6 +154,7 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
   return (
     <>
       <DndContext
+        autoScroll={false}
         sensors={sensors}
         collisionDetection={boardCollisionDetection}
         accessibility={{
@@ -200,6 +202,7 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
           else if (isMovableStage(target.stage)) move(item, target.stage);
         }}
       >
+        <BoardAutoScroll board={board} />
         <div
           ref={board}
           aria-busy={mutation.isPending}
@@ -344,6 +347,7 @@ function BoardColumn({
   return (
     <section
       ref={setNodeRef}
+      data-board-lane
       aria-labelledby={`col-${column.stage}`}
       className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-hair bg-board-lane ${isOver || over?.data.current?.stage === column.stage ? 'ring-2 ring-primary ring-inset' : ''}`}
     >
@@ -371,6 +375,7 @@ function BoardColumn({
         </span>
       </div>
       <ul
+        data-board-cards
         className={`m-0 flex min-h-0 [scrollbar-width:thin] list-none flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-2.5 pb-2.5 ${column.cards.length ? 'flex-1' : 'flex-none'}`}
       >
         {children}
