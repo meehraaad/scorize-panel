@@ -1,13 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon } from '@/components/ui/Icon';
 import { IconLink } from '@/components/ui/IconButton';
 import { MESSAGE_CHANNELS, messageHref } from '@/lib/sales/api';
-import { customerPath } from '../paths';
 
 /**
- * "Call" opens the customer page with the call log ready (the dialer button is there, so every
+ * "Call" opens the persistent contact form (the dialer button is there, so every
  * call gets recorded), plus the messaging apps. `onHero`: light buttons on the dark card.
  */
 export function ContactButtons({
@@ -27,8 +26,10 @@ export function ContactButtons({
   const { t } = useTranslation('sales');
   return (
     <div className="flex flex-none flex-wrap items-center gap-1">
-      <Link
-        to={customerPath(customer, 'call')}
+      <ContactLogButton
+        customer={customer}
+        name={name}
+        start={{ channel: 'call' }}
         aria-label={t('callName', { name })}
         className={
           onHero
@@ -38,7 +39,7 @@ export function ContactButtons({
       >
         <Icon name="phone" size={18} />
         {t('call')}
-      </Link>
+      </ContactLogButton>
       {messages &&
         MESSAGE_CHANNELS.map((channel) => (
           <IconLink

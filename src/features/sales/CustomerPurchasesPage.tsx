@@ -1,7 +1,8 @@
+import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
@@ -12,7 +13,6 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { purchasesQuery, type ProductCategory, type Purchase } from './api';
 import { useCustomerId } from './useCustomerId';
 import { useSalesFormat } from './format';
-import { customerPath } from './paths';
 
 /** Sections of the tab: packages and events are one group, as on the old crm page. */
 const GROUPS = ['consultation', 'writing', 'product'] as const;
@@ -117,12 +117,14 @@ export default function CustomerPurchasesPage() {
                         {t(`purchases.status.${status}`)}
                       </Chip>
                       {status === 'held' && item.session && (
-                        <Link
-                          to={customerPath(id, 'meeting', item.session.reservation)}
+                        <ContactLogButton
+                          customer={id}
+                          name={''}
+                          start={{ channel: 'meeting', reservation: item.session.reservation }}
                           className={buttonClass('primary', 'h-11 px-4 text-sm')}
                         >
                           {t('purchases.logSession')}
-                        </Link>
+                        </ContactLogButton>
                       )}
                     </li>
                   );
