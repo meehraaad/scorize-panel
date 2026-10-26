@@ -1,5 +1,6 @@
 import { dehydrate, hydrate, type DehydratedState } from '@tanstack/react-query';
 import i18n from '@/lib/i18n';
+import { clearContactDrafts } from '@/lib/sales/contactDrafts';
 import { queryClient } from './queryClient';
 
 /*
@@ -73,6 +74,7 @@ export function restoreCacheFor(id: number) {
 
 /** Logout and login: nothing from this account stays in the tab. */
 export function clearPersistedCache() {
+  clearContactDrafts();
   saved = null;
   user = null;
   try {

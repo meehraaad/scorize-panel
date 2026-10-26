@@ -100,6 +100,7 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `LazyDatePicker`                                                           | `DatePicker` with its code fetched on first show, for a date behind a choice ("another time…"): keeps it out of the page's first load                                                                                                                                                                                                                    |
 | `SlotPicker`                                                               | Booking a time from free slots, like a calendar app's booking page: a month (Jalali in Persian) with free days marked, the chosen day's times grouped by morning / afternoon / evening, the pick as "day, from to". Side by side from a 36rem container, stacked when narrow; `onMonthChange` + `loading` to load a month at a time. Consultations first |
 | `Dialog`                                                                   | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). Parent controls `open`                                                                                                                                                                                                                                                |
+| `FloatingPanel`                                                            | A non-modal floating form with a scrolling body and pinned footer. The sales contact workspace uses it so navigation stays usable; minimize retains the draft.                                                                                                                                                                                           |
 | `OtpInput`                                                                 | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                                                                                                                                                                 |
 | `Switch`                                                                   | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                                                                                                                                                                   |
 | `DateTile`                                                                 | A small calendar leaf (day over month; `large` adds the weekday): consultations, the writer's week. Decorative: say the date in text beside it                                                                                                                                                                                                           |
@@ -366,3 +367,19 @@ cache, measuring): docs/performance.md.
   or dialogs.
 - The Noto Kufi display font costs ~120 KB. Set `--family-display` to `var(--family-body)` in
   `tokens.css` to drop it if needed.
+
+### Persistent staff contact drafts
+
+`WorkspaceLayout` sits above the route trees and lazy-loads the sales `ContactWorkspace` only
+when a contact draft exists. Calls, messages and consultation logs open through
+`openContactLog` (`lib/sales/contactDrafts.ts`), without changing the route. Old customer
+`?log=` links still open the workspace and consume their query parameters.
+
+Drafts retain their customer, reservation and form values while navigating or switching panels.
+Minimize and Escape keep a draft in the fixed tray; saving removes only that draft, and discarding
+requires confirmation. Multiple drafts stay mounted while saving so a response also completes
+when its form is minimized. Each has a unique form id.
+
+Drafts also survive a tab refresh in sessionStorage. They restore minimized only after whoami
+identifies the same account, and logout/login clears them with the persisted query cache.
+Blocked storage falls back to in-memory drafts. Closing the tab ends this local persistence.

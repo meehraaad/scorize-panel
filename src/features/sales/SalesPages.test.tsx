@@ -31,17 +31,14 @@ describe('sales panel, seller pages', () => {
     ).toBeInTheDocument();
     const hot = screen.getByRole('region', { name: 'لیدهای تازه، به ترتیب زمان انتظار' });
     expect(within(hot).getAllByRole('listitem')).toHaveLength(3);
-    expect(within(hot).getByRole('link', { name: 'تماس با کیانا رضوی' })).toHaveAttribute(
-      'href',
-      '/sales/customers/101?log=call',
-    );
+    expect(within(hot).getByRole('button', { name: 'تماس با کیانا رضوی' })).toBeInTheDocument();
 
     // Consultations and today's timed follow-ups on the day calendar.
     const calendar = await screen.findByRole('region', { name: 'تقویم امروز' });
     expect(
       within(calendar).getByRole('link', { name: /^مشاوره‌ی .*، جلسه ثبت شد$/ }),
     ).toHaveAttribute('href', '/sales/customers/104');
-    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+    expect(within(calendar).getAllByRole('button', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
 
     // Ten calls: six on the first page, four on the next.
     const calls = screen.getByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' });
@@ -53,7 +50,7 @@ describe('sales panel, seller pages', () => {
     expect(await within(calls).findByText('سمیرا نوروزی')).toBeInTheDocument();
     await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(2));
 
-    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+    expect(within(calendar).getAllByRole('button', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
     // Two admissions of one customer make one card.
     const upsell = await screen.findByRole('region', { name: /^فرصت‌های فروش مکمل/ });
     expect(
@@ -346,13 +343,16 @@ describe('sales panel, seller pages', () => {
     expect(screen.getByRole('progressbar', { name: '۷ از ۱۲ قرارداد' })).toBeInTheDocument();
   });
 
-  it('consultations: past sessions link to the session log', async () => {
-    renderApp('/sales/leads/consultations');
+  it('consultations: past sessions open the session log without leaving the list', async () => {
+    const user = userEvent.setup();
+    const router = renderApp('/sales/leads/consultations');
     expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
-    expect((await screen.findAllByRole('link', { name: /^ثبت جلسه: / }))[0]).toHaveAttribute(
-      'href',
-      expect.stringMatching(/log=meeting&reservation=\d+$/),
+    await user.click(
+      (await screen.findAllByRole('button', { name: /^ثبت جلسه: / }))[0] as HTMLElement,
     );
+    expect(await screen.findByRole('radio', { name: 'جلسه‌ی مشاوره' })).toBeChecked();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales/leads/consultations');
   });
 
   it('consultations: a sub-tab of the leads tab, also at its old address', async () => {

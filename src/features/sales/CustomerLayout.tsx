@@ -7,11 +7,11 @@ import { PageStack } from '@/components/ui/PageColumns';
 import { PageSkeleton } from '@/components/ui/Skeleton';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import { whenIdle } from '@/lib/whenIdle';
-import type { MessageChannel } from '@/lib/sales/api';
+import { openContactLog } from '@/lib/sales/contactDrafts';
+import type { Channel } from '@/lib/sales/api';
 import { customerQuery, type ProductCategory } from './api';
 import { CustomerHero } from './components/CustomerHero';
 import { CustomerTabs } from './components/CustomerTabs';
-import type { LogStart } from './components/LogDialog';
 import { salesPath, type LogIntent } from './paths';
 import { useCustomerId } from './useCustomerId';
 
@@ -20,14 +20,12 @@ const CATEGORIES: readonly ProductCategory[] = ['consultation', 'writing', 'pack
 
 // The dialogs (and the date picker they use) open on a click: their code is not part of the
 // page's first load. It is fetched once the browser is idle, so a click still opens them at once.
-const loadLogDialog = () => import('./components/LogDialog');
 const loadSellDialog = () => import('./components/SellDialog');
-const LogDialog = lazy(() => loadLogDialog().then((module) => ({ default: module.LogDialog })));
 const SellDialog = lazy(() => loadSellDialog().then((module) => ({ default: module.SellDialog })));
 
 /**
  * Frame of every customer page: the summary card with its actions, the sub-tabs (summary,
- * purchases, payments, details, application file) and the two dialogs. Canvas "صفحه‌ی مشتری".
+ * purchases, payments, details, application file) and the product-sale dialog. Canvas "صفحه‌ی مشتری".
  * `?log=call|message|meeting` opens the contact log; `?sell=<category>` the product sale.
  */
 export default function CustomerLayout() {
@@ -39,24 +37,31 @@ export default function CustomerLayout() {
   useEffect(
     () =>
       whenIdle(() => {
-        void loadLogDialog();
         void loadSellDialog();
       }),
     [],
   );
 
+  // Preserve old deep links, then remove their intent so back/forward cannot reopen a saved log.
   const intent = params.get('log');
-  const start: LogStart | null = INTENTS.includes(intent as LogIntent)
-    ? {
-        channel:
-          intent === 'message'
-            ? ((params.get('channel') as MessageChannel | null) ?? 'whatsapp')
-            : intent === 'meeting'
-              ? 'meeting'
-              : 'call',
-        reservation: Number(params.get('reservation')) || undefined,
-      }
-    : null;
+  const channel = params.get('channel');
+  const reservation = params.get('reservation');
+  useEffect(() => {
+    if (!INTENTS.includes(intent as LogIntent)) return;
+    const messageChannel = channel === 'telegram' || channel === 'sms' ? channel : 'whatsapp';
+    openContactLog(id, data.name, {
+      channel: intent === 'message' ? messageChannel : intent === 'meeting' ? 'meeting' : 'call',
+      reservation: Number(reservation) || undefined,
+    });
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        for (const key of ['log', 'channel', 'reservation']) next.delete(key);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [intent, channel, reservation, id, data.name, setParams]);
   const sell = params.get('sell');
   const category = CATEGORIES.find((value) => value === sell) ?? null;
 
@@ -68,15 +73,7 @@ export default function CustomerLayout() {
       },
       { replace: true },
     );
-  const openLog = (channel: LogStart['channel']) =>
-    update((current) => {
-      current.set('log', channel === 'call' || channel === 'meeting' ? channel : 'message');
-      if (channel !== 'call' && channel !== 'meeting') current.set('channel', channel);
-    });
-  const closeLog = () =>
-    update((current) => {
-      for (const key of ['log', 'channel', 'reservation']) current.delete(key);
-    });
+  const openLog = (channel: Channel) => openContactLog(id, data.name, { channel });
 
   return (
     <PageStack>
@@ -91,16 +88,8 @@ export default function CustomerLayout() {
       <Suspense fallback={<PageSkeleton kind="tab" />}>
         <Outlet />
       </Suspense>
-      {/* Keyed by what opened it, so a new intent starts a fresh form. */}
+      {/* Product sales remain local to the customer page. */}
       <Suspense fallback={null}>
-        {start && (
-          <LogDialog
-            key={`log-${start.channel}-${String(start.reservation ?? '')}`}
-            customer={data}
-            start={start}
-            onClose={closeLog}
-          />
-        )}
         {category && (
           <SellDialog
             customer={data}

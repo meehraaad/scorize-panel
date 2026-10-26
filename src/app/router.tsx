@@ -17,6 +17,8 @@ import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
 import { PanelLayout } from './layouts/PanelLayout';
+import { WorkspaceLayout } from './layouts/WorkspaceLayout';
+import { restoreContactDrafts } from '@/lib/sales/contactDrafts';
 import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
 
 /*
@@ -40,6 +42,7 @@ const currentUser = () => queryClient.query({ ...sessionQuery, staleTime: 'stati
 const prefetchFrame = (panel: PanelDefinition, user: { id: number }) => {
   // Before the page renders: it opens from this tab's last answers, if they were this user's.
   restoreCacheFor(user.id);
+  restoreContactDrafts(user.id);
   prefetchQueries([unreadQuery, ...(panel.data?.() ?? [])]);
 };
 
@@ -74,7 +77,7 @@ function panelRoutes(panel: PanelDefinition): RouteObject {
   };
 }
 
-export const routes: RouteObject[] = [
+const pageRoutes: RouteObject[] = [
   {
     Component: AuthLayout,
     ErrorBoundary: ErrorPage,
@@ -161,6 +164,8 @@ export const routes: RouteObject[] = [
       ]
     : []),
 ];
+
+export const routes: RouteObject[] = [{ Component: WorkspaceLayout, children: pageRoutes }];
 
 setPreloadRoutes(routes);
 
