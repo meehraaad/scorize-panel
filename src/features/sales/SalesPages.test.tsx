@@ -140,10 +140,12 @@ describe('sales panel, seller pages', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).queryByLabelText('مرحله‌ی بعدی')).not.toBeInTheDocument();
     await user.type(within(dialog).getByLabelText('یادداشت'), 'قرار شد بورسیه‌ها را بفرستم');
+    await user.type(within(dialog).getByLabelText('خلاصه برای مشتری'), 'رزومه‌ی خود را تکمیل کنید');
     await user.click(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
 
     const history = await screen.findByRole('region', { name: 'تاریخچه' });
     expect(await within(history).findByText('قرار شد بورسیه‌ها را بفرستم')).toBeInTheDocument();
+    expect(await within(history).findByText('رزومه‌ی خود را تکمیل کنید')).toBeInTheDocument();
   });
 
   it('customer: similar admissions from ExperienceViewSet', async () => {

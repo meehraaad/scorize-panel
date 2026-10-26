@@ -1,3 +1,4 @@
+import { saveSessionSummary } from '../sessionSummaries';
 import { api } from '@/lib/api/client';
 import { joinNames, localName } from '@/lib/i18n/names';
 import {
@@ -356,6 +357,7 @@ export interface ContactLog {
   stage?: LeadStage;
   lost_reason?: LostReason;
   notes: string;
+  customer_summary?: string;
   /** Creates "my follow-up" at this time; null: none (a lost lead). */
   follow_up_at: string | null;
   email_summary: boolean;
@@ -400,6 +402,15 @@ export async function logContact(customer: number, log: ContactLog) {
     method: 'POST',
     body,
   });
+  if (log.customer_summary?.trim())
+    saveSessionSummary(customer, {
+      id: contact.id,
+      at: new Date().toISOString(),
+      kind: contact.type_display,
+      customer_summary: log.customer_summary.trim(),
+      reservation: log.reservation ?? null,
+      authors: contact.support_staves.map((staff) => staff.full_name),
+    });
   if (log.email_summary)
     await api(`${userApi(customer)}/contact-history/${String(contact.id)}/send-summery/`, {
       method: 'PATCH',

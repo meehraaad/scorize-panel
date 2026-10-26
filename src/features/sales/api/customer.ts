@@ -118,6 +118,7 @@ export interface HistoryEvent {
   /** Payments and leads: what it was, localized ("Master's application consultation"). */
   title: string | null;
   text: string;
+  customer_summary?: string;
   /** The stage the contact moved the lead to. */
   stage: LeadStage | null;
 }
@@ -150,6 +151,7 @@ export interface ContactLog {
   stage?: LeadStage;
   lost_reason?: LostReason;
   notes: string;
+  customer_summary: string;
   /** Creates "my follow-up" at this time; null: none (a lost lead). */
   follow_up_at: string | null;
   email_summary: boolean;

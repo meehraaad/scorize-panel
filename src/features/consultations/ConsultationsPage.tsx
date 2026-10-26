@@ -14,6 +14,7 @@ import { daysUntil } from '@/lib/dates';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { consultationsQuery, splitSessions, type Consultation } from './api';
+import { SessionSummariesCard } from './SessionSummariesCard';
 import { DateTile } from '@/components/ui/DateTile';
 
 type Filter = 'all' | 'upcoming' | 'past';
@@ -44,6 +45,8 @@ export default function ConsultationsPage() {
           </a>
         }
       />
+
+      <SessionSummariesCard />
 
       {next && <NextSession session={next} />}
 
