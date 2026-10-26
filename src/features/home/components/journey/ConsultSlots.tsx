@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
+import { useBookSlot } from '@/lib/applicant/booking';
 import type { StartOffers } from '@/lib/applicant/journey';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useBookSlot } from './useBookSlot';
 
 type Offer = NonNullable<StartOffers['consultation']>;
 
@@ -16,7 +16,11 @@ type Offer = NonNullable<StartOffers['consultation']>;
 export function ConsultSlots({ offer }: { offer: Offer }) {
   const { t } = useTranslation('journey');
   const f = useFormat();
-  const book = useBookSlot();
+  const book = useBookSlot({
+    booked: t('slots.booked'),
+    taken: t('slots.taken'),
+    error: t('slots.error'),
+  });
   const [picked, setPicked] = useState<string | null>(offer.slots[0] ?? null);
   const slot = picked && offer.slots.includes(picked) ? picked : (offer.slots[0] ?? null);
   const label = (value: string) => `${f.weekday(value)} ${f.time(value)}`;

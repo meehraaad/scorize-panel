@@ -11,7 +11,7 @@ export function useCalendar() {
   const { i18n } = useTranslation();
   const locale = isLocale(i18n.language) ? i18n.language : DEFAULT_LOCALE;
   const { intl, dir } = LOCALES[locale];
-  const kind: CalendarKind = intl.includes('ca-persian') ? 'persian' : 'gregorian';
+  const kind = calendarKind(locale);
   return useMemo(
     () => ({
       kind,
@@ -25,4 +25,10 @@ export function useCalendar() {
     }),
     [kind, dir, intl],
   );
+}
+
+/** The calendar a language uses (outside components: route data). */
+export function calendarKind(language: string): CalendarKind {
+  const locale = isLocale(language) ? language : DEFAULT_LOCALE;
+  return LOCALES[locale].intl.includes('ca-persian') ? 'persian' : 'gregorian';
 }

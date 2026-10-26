@@ -231,43 +231,23 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
   });
 
-  it('first visit: the result locked beside the quiz, and a consultation booked on the calendar', async () => {
+  it('first visit: the result locked beside the quiz, and booking starts with online or in person', async () => {
     onDesktop();
-    const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
     expect(
       await screen.findByRole('region', { name: 'نتیجه‌ی شما این شکلی است' }),
     ).toBeInTheDocument();
     const talk = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
-    const book = within(talk).getByRole('button', { name: 'یک زمان انتخاب کنید' });
-    expect(book).toBeDisabled();
-    // The calendar opens on the first free day; a time on it, then "book" goes to the gateway.
-    const picker = within(talk).getByRole('region', { name: 'زمان جلسه' });
-    const times = await within(picker).findAllByRole('radio');
-    await user.click(times[1] as HTMLElement);
-    const assign = vi.fn();
-    const { href, origin, protocol, host, hostname, port, pathname, search, hash } =
-      window.location;
-    vi.stubGlobal('location', {
-      href,
-      origin,
-      protocol,
-      host,
-      hostname,
-      port,
-      pathname,
-      search,
-      hash,
-      assign,
-    });
-    onTestFinished(() => {
-      vi.unstubAllGlobals();
-    });
-    await user.click(within(talk).getByRole('button', { name: /^رزرو و پرداخت · / }));
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
-    expect(bookingsSent).toHaveLength(1);
-    expect(bookingsSent[0]?.starts_at).toBe((times[1] as HTMLInputElement).value);
+    const how = within(talk).getByRole('navigation', { name: 'نحوه‌ی برگزاری جلسه' });
+    expect(within(how).getByRole('link', { name: /^آنلاین/ })).toHaveAttribute(
+      'href',
+      '/consultations/book?mode=online',
+    );
+    expect(within(how).getByRole('link', { name: /^حضوری/ })).toHaveAttribute(
+      'href',
+      '/consultations/book?mode=in_person',
+    );
   });
 
   it('first visit: a free call instead, which asks for a phone first', async () => {

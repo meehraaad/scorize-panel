@@ -3,6 +3,49 @@
   "subtitle": "Manage your bookings and fill in your details before each session.",
   "back": "Back to the Academy",
   "book": "Book a new consultation",
+  "booking": {
+    "back": "Back to consultations",
+    "title": "Book a consultation",
+    "subtitle": "Choose how and what the session is about, then a time that suits you.",
+    "how": "How should the session be held?",
+    "modes": {
+      "online": {
+        "title": "Online",
+        "line": "Video or phone call, wherever you are",
+        "detail": "Online · video or phone call · {{minutes}} minutes"
+      },
+      "in_person": {
+        "title": "In person",
+        "line": "At the Scorize office, face to face",
+        "detail": "In person at the Scorize office · {{minutes}} minutes"
+      }
+    },
+    "modeCount": "{{n}} kinds · from {{price}}",
+    "topics": {
+      "online": "Online session topic",
+      "in_person": "In-person session topic"
+    },
+    "popular": "Popular",
+    "typeLine": "{{minutes}} minutes · {{price}}",
+    "toman": "{{amount}} toman",
+    "unsure": "Not sure? A free call first",
+    "calendar": "{{title}} times",
+    "emptyWeek": "Nothing is free for this consultation this week.",
+    "nextFree": "Go to the nearest free time",
+    "card": "Chosen time for {{title}}",
+    "when": "{{day}} · {{from}} – {{to}}",
+    "close": "Close",
+    "lastSeat": "Only one spot left",
+    "seatsLeft": "{{n}} of {{of}} spots left",
+    "another": "Another time",
+    "pay": "Book and pay",
+    "booked": "Session booked.",
+    "taken": "That time just filled up. Choose another.",
+    "error": "Booking didn't go through. Try again.",
+    "none": "No consultation can be booked right now",
+    "noneText": "New times are added soon. Meanwhile we can call you.",
+    "call": "Request a free call"
+  },
   "mode": {
     "online": "Online",
     "in_person": "In person"
