@@ -1,6 +1,10 @@
 import { ComingSoonPage } from '@/components/ComingSoonPage';
 import { applicationsQuery } from '@/features/applications/api';
-import { consultationQuery, consultationsQuery } from '@/features/consultations/api';
+import {
+  consultationQuery,
+  consultationsQuery,
+  sessionSummariesQuery,
+} from '@/features/consultations/api';
 import { contractQuery, paymentQuery } from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
 import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
@@ -65,6 +69,12 @@ export const applicantPanel: PanelDefinition = {
       icon: 'chat',
     },
     { id: 'contract', to: 'contract', label: 'panels.applicant.nav.contract', icon: 'card' },
+    {
+      id: 'consultations',
+      to: 'consultations',
+      label: 'panels.applicant.nav.consultations',
+      icon: 'phone',
+    },
     { id: 'services', to: 'services', label: 'panels.applicant.nav.services', icon: 'play' },
   ],
   routes: [
@@ -230,7 +240,7 @@ export const applicantPanel: PanelDefinition = {
           ...lazyPage(
             () => import('@/features/consultations/ConsultationsPage'),
             ['consultations'],
-            { data: () => [consultationsQuery], skeleton: 'list' },
+            { data: () => [consultationsQuery, sessionSummariesQuery()], skeleton: 'list' },
           ),
         },
         // Booking one on a week calendar (design: "Consultation Booking Design" canvas).
@@ -253,7 +263,10 @@ export const applicantPanel: PanelDefinition = {
             {
               data: ({ params }) => {
                 const id = idParam(params.id);
-                return [id !== null && consultationQuery(id)];
+                return [
+                  id !== null && consultationQuery(id),
+                  id !== null && sessionSummariesQuery(id),
+                ];
               },
               skeleton: 'detail',
             },

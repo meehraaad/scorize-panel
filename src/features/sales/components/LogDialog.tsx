@@ -70,6 +70,7 @@ export function LogDialog({
   const [stage, setStage] = useState<StageChoice>('keep');
   const [lostReason, setLostReason] = useState<LostReason | ''>('');
   const [notes, setNotes] = useState('');
+  const [customerSummary, setCustomerSummary] = useState('');
   const [follow, setFollow] = useState<Follow>('tomorrow');
   const [date, setDate] = useState('');
   const [email, setEmail] = useState(false);
@@ -102,7 +103,8 @@ export function LogDialog({
         ...(lost && lostReason ? { lost_reason: lostReason } : {}),
         notes: notes.trim() || (message ? (chosen?.title ?? '') : ''),
         follow_up_at: asksFollowUp ? followAt : null,
-        email_summary: email,
+        customer_summary: noAnswer ? '' : customerSummary.trim(),
+        email_summary: !noAnswer && email && !!customerSummary.trim(),
         ...(message && chosen ? { template: chosen.id } : {}),
         ...(start?.reservation ? { reservation: start.reservation } : {}),
         follow_up_text: noAnswer
@@ -221,8 +223,20 @@ export function LogDialog({
           <TextAreaField
             label={t('customer.logDialog.notes')}
             placeholder={t('customer.logDialog.notesPlaceholder')}
+            hint={t('customer.logDialog.privateHint')}
+            maxLength={5000}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
+          />
+        )}
+
+        {!noAnswer && (
+          <TextAreaField
+            label={t('customer.logDialog.customerSummary')}
+            hint={t('customer.logDialog.customerSummaryHint')}
+            value={customerSummary}
+            onChange={(event) => setCustomerSummary(event.target.value)}
+            maxLength={5000}
           />
         )}
 
@@ -257,7 +271,7 @@ export function LogDialog({
           />
         )}
 
-        {customer.email && !message && (
+        {customer.email && !message && !noAnswer && customerSummary.trim() && (
           <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
             <input
               type="checkbox"

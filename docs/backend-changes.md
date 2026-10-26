@@ -368,3 +368,22 @@ left is how long each answer takes and knowing how fast real users are.
 | C9  | The Turkey document list per degree (bachelor's, master's, PhD), with a short hint each, from the Turkey team (H31)                                | The mock's list follows the design                          | ☐   |
 | C10 | The wallet credit for a package review (H42 `review_credit`)                                                                                       | The mock shows 50,000 toman                                 | ☐   |
 | C11 | The NPS credit (H48) and the current terms text for the terms gate (H45)                                                                           | The mock shows 5,000 toman (as the design) and sample terms | ☐   |
+
+## Customer-visible session summaries (2026-10-26)
+
+Implemented in both repositories: `ContactHistory.customer_summary` is a separate, optional text field
+(maximum 5,000 characters). Sellers write it while logging any contact, with or without a lead or a
+consultation reservation. Contact notes and quick notes stay internal; existing notes are never copied.
+`email_summary` on the sales contact endpoint now requires this public text and emails only that text.
+
+`GET /api/applicant/v1/session-summaries/` requires only login, returns only the current user's explicitly
+shared summaries, and uses `?before=<id>` pagination (`results`, `has_more`, 20 per page).
+Optional `?reservation=<id>` limits it to one booking. Each row has `id`, `at`, `kind`, `authors`,
+`customer_summary`, and nullable `reservation`. The applicant navigation links to `/consultations`,
+which lists shared summaries alongside bookings; booking details also show their own summaries.
+No applicant file, active contract, paid booking or email address is needed to read a summary.
+
+Deployment: generate and apply the Django migration before publishing the panel (migrations are generated
+locally in this project). On an existing installation, `manage.py makemigrations user_profile` should add
+only `ContactHistory.customer_summary`; then run `manage.py migrate --noinput` and deploy both services.
+The new column defaults to an empty string, so no historical notes become visible.

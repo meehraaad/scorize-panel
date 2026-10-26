@@ -1,4 +1,9 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  infiniteQueryOptions,
+  queryOptions,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 import {
@@ -55,3 +60,34 @@ export function useSaveConsultationInfo(id: number) {
     onSuccess: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
   });
 }
+
+export interface SessionSummary {
+  id: number;
+  at: string;
+  kind: string;
+  customer_summary: string;
+  reservation: number | null;
+  authors: string[];
+}
+
+interface SessionSummaryPage {
+  results: SessionSummary[];
+  has_more: boolean;
+}
+
+/** Shared contact/session advice, including leads without a booking or a contract. */
+export const sessionSummariesQuery = (reservation?: number) =>
+  infiniteQueryOptions({
+    queryKey: [...KEY, 'session-summaries', reservation ?? null],
+    queryFn: ({ signal, pageParam }) => {
+      const params = new URLSearchParams();
+      if (pageParam !== null) params.set('before', String(pageParam));
+      if (reservation !== undefined) params.set('reservation', String(reservation));
+      return api<SessionSummaryPage>(`/applicant/v1/session-summaries/?${params.toString()}`, {
+        signal,
+      });
+    },
+    initialPageParam: null as number | null,
+    getNextPageParam: (page) => (page.has_more ? page.results.at(-1)?.id : undefined),
+    staleTime: 30_000,
+  });

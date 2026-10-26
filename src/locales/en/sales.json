@@ -481,7 +481,7 @@
       },
       "followNote": "A follow-up is made for you: {{when}}",
       "followDate": "Follow-up date and time",
-      "emailSummary": "Email a summary of the call to the customer",
+      "emailSummary": "Also email this customer summary",
       "send": "Send and record",
       "save": "Save and set follow-up",
       "saveLost": "Save and close the lead",
@@ -489,7 +489,10 @@
       "followWhen": "{{day}}, {{time}}",
       "noAnswerToday": "A follow-up for tomorrow is made. The “unanswered call” SMS isn’t sent from the panel yet; send it yourself if needed.",
       "retryTask": "Call again; the last call wasn’t answered",
-      "followTask": "Follow up after the last contact"
+      "followTask": "Follow up after the last contact",
+      "privateHint": "Only staff can see these notes.",
+      "customerSummary": "Summary for customer",
+      "customerSummaryHint": "Saved with this contact and visible in the customer’s panel. Write your advice and next steps here."
     },
     "tabs": {
       "label": "Customer page sections",

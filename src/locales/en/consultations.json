@@ -1,6 +1,6 @@
 {
-  "title": "Booked consultations",
-  "subtitle": "Manage your bookings and fill in your details before each session.",
+  "title": "Sessions & consultations",
+  "subtitle": "Read your session summaries and advice, and manage your consultation bookings.",
   "back": "Back to the Academy",
   "book": "Book a new consultation",
   "booking": {
@@ -104,5 +104,12 @@
     "free": "Free",
     "amount": "{{amount}} toman",
     "payment": "Payment details"
+  },
+  "summaries": {
+    "title": "Your session summaries",
+    "subtitle": "Advice and next steps shared with you after calls and consultations.",
+    "empty": "Your session summaries will appear here when your advisor shares them.",
+    "booking": "Consultation details",
+    "more": "Older summaries"
   }
 }

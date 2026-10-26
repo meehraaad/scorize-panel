@@ -14,7 +14,8 @@
         "documents": "Documents",
         "tickets": "Tickets",
         "contract": "Contract",
-        "services": "Academy"
+        "services": "Academy",
+        "consultations": "Sessions & consultations"
       },
       "tabs": {
         "home": "Home",

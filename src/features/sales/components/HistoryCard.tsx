@@ -92,6 +92,16 @@ function EventRow({ event }: { event: HistoryEvent }) {
           </time>
         </div>
         {event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>}
+        {event.customer_summary && (
+          <div className="rounded-xl bg-info-tint p-3">
+            <span className="text-xs font-semibold text-text-2">
+              {t('customer.logDialog.customerSummary')}
+            </span>
+            <p className="m-0 text-sm leading-7 break-words whitespace-pre-wrap">
+              {event.customer_summary}
+            </p>
+          </div>
+        )}
         {event.stage && (
           <span>
             <Chip tone="info" small>
