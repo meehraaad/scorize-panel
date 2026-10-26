@@ -1,115 +1,166 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import istanbul from '@/assets/journey/istanbul.svg';
+import travel from '@/assets/journey/travel.svg';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { SectionHeading } from '@/components/ui/SectionCard';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import type { StartOffers } from '@/lib/applicant/journey';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { SITE } from '@/lib/site';
-import { ConsultSlots } from './ConsultSlots';
 
-const PATH = 'flex flex-col gap-3 p-5 lg:p-6';
+const TURKEY_STEPS = [
+  { key: 'upload', icon: 'upload' },
+  { key: 'review', icon: 'search' },
+  { key: 'sign', icon: 'pen' },
+] as const satisfies readonly { key: string; icon: IconName }[];
 
 /**
- * The ways to begin, each one step away from money: Turkey (starts without paying first; its own
- * flow once on the server, a seller's call until then), a paid consultation with its nearest free
- * times and price (not once one was booked), or a call about a contract, with what it costs per
- * instalment. Design: "Scorize New User Dashboard v2" canvas, start paths.
+ * The two ways to begin that start today (the consultation has its own card): Turkey, which starts
+ * without paying first (its own flow once on the server, a seller's call until then), and a call
+ * about a contract, with what it costs per instalment. Each has a picture: Istanbul at sunset, a
+ * paper plane over the globe. Design: "Mobile Quiz Card Mockups" canvas, start paths.
  */
-export function StartPaths({
-  access,
-  offers,
-  consulted = false,
-}: {
-  access: ApplicantAccess;
-  offers: StartOffers;
-  /** Has had or booked a session: no consultation offer, two ways left. */
-  consulted?: boolean;
-}) {
+export function StartPaths({ access, offers }: { access: ApplicantAccess; offers: StartOffers }) {
   const { t } = useTranslation('journey');
   const f = useFormat();
   const contract = offers.contract;
-  const button = buttonClass('primary', 'mt-auto w-full');
-  const call = (topic: 'turkey' | 'admission', label: string) => (
+  const call = (topic: 'turkey' | 'admission', label: string, className: string) => (
     <CallRequestButton
       label={label}
-      className={button}
+      className={className}
       phone={access.phone}
       topic={topic}
       page="home"
       reason="guest"
     />
   );
+  const primary = buttonClass('primary', 'w-full sm:w-auto', 'lg');
+  // Outlined in the brand colour: the second way, lighter than Turkey's. At the bottom without a price.
+  const contractButton = buttonClass(
+    'outline',
+    `w-full font-bold text-primary-text! shadow-[inset_0_0_0_1.5px_var(--primary)]! ${
+      contract ? '' : 'mt-auto'
+    }`,
+    'lg',
+  );
 
   return (
     <section aria-labelledby="journey-paths" className="flex flex-col gap-3.5">
       <SectionHeading id="journey-paths" title={t('paths.title')} subtitle={t('paths.subtitle')} />
-      <div className={`grid gap-3 ${consulted ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] lg:gap-5">
         <Card
           aria-labelledby="journey-path-turkey"
-          className={`${PATH} shadow-[0_0_0_1.5px_var(--primary),var(--panel-shadow)]`}
+          className="flex flex-col shadow-[var(--panel-shadow),var(--path-shadow)] lg:flex-row"
         >
-          <Chip tone="good" small>
-            {t('paths.turkey.chip')}
-          </Chip>
-          <h3 id="journey-path-turkey" className="m-0 text-base font-bold">
-            {t('paths.turkey.title')}
-          </h3>
-          <p className="m-0 text-[13px] leading-6 text-text-2">{t('paths.turkey.text')}</p>
-          {ON_SERVER.turkey ? (
-            <Link to="/turkey" className={button}>
-              {t('paths.turkey.start')}
-            </Link>
-          ) : (
-            call('turkey', t('paths.turkey.call'))
-          )}
-        </Card>
-        {!consulted && (
-          <Card aria-labelledby="journey-path-consult" className={PATH}>
-            <h3 id="journey-path-consult" className="m-0 text-base font-bold">
-              {t('paths.consult.title')}
-            </h3>
-            <p className="m-0 text-[13px] leading-6 text-text-2">
-              {offers.consultation
-                ? t('paths.consult.minutes', { n: f.number(offers.consultation.minutes) })
-                : t('paths.consult.text')}
-            </p>
-            {offers.consultation ? (
-              <div className="mt-auto">
-                <ConsultSlots offer={offers.consultation} />
-              </div>
-            ) : (
-              <a href={SITE.consultation} className={buttonClass('outline', 'mt-auto w-full')}>
-                {t('paths.consult.start')}
-              </a>
-            )}
-          </Card>
-        )}
-        <Card aria-labelledby="journey-path-contract" className={PATH}>
-          <h3 id="journey-path-contract" className="m-0 text-base font-bold">
-            {t('paths.contract.title')}
-          </h3>
-          <p className="m-0 text-[13px] leading-6 text-text-2">{t('paths.contract.text')}</p>
-          {contract && (
-            <>
-              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-[13px]">
-                {contract.writing && <li>{t('paths.contract.writing')}</li>}
-                <li>{t('paths.contract.applies')}</li>
-                <li>{t('paths.contract.instalments', { n: f.number(contract.instalments) })}</li>
-              </ul>
-              <p className="m-0 flex flex-wrap items-baseline gap-x-2 text-sm text-text-2">
-                {t('paths.contract.from')}
-                <span className="text-base font-bold text-text">
-                  {t('slots.toman', { amount: f.number(contract.instalment) })}
-                </span>
+          <div className="relative h-44 flex-none lg:order-last lg:h-auto lg:w-[38%]">
+            <img src={istanbul} alt="" className="block size-full object-cover" />
+            <span className="absolute start-3.5 top-3.5 inline-flex h-7.5 items-center gap-1.5 rounded-full bg-surface px-3 text-xs font-bold text-good shadow-panel">
+              <Icon name="check" size={14} />
+              {t('paths.turkey.chip')}
+            </span>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 lg:gap-5 lg:p-8">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-bold text-primary-text">
+                {t('paths.turkey.kicker')}
+              </span>
+              <h3
+                id="journey-path-turkey"
+                className="m-0 font-display text-[19px] leading-relaxed font-bold lg:text-2xl"
+              >
+                {t('paths.turkey.title')}
+              </h3>
+              <p className="m-0 text-sm leading-7 text-text-2 lg:text-[15px]">
+                {t('paths.turkey.text')}
               </p>
-            </>
-          )}
-          {call('admission', t('paths.contract.start'))}
+            </div>
+            <ol
+              aria-label={t('paths.turkey.steps')}
+              className="m-0 grid list-none grid-cols-3 gap-2 rounded-2xl bg-path-sand p-3.5"
+            >
+              {TURKEY_STEPS.map(({ key, icon }) => (
+                <li
+                  key={key}
+                  className="flex flex-col items-center gap-1.5 text-center text-xs leading-5 font-semibold"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`flex size-10 items-center justify-center rounded-[14px] bg-surface shadow-panel ${
+                      key === 'upload'
+                        ? 'text-path-sun'
+                        : key === 'review'
+                          ? 'text-path-sea'
+                          : 'text-primary-text'
+                    }`}
+                  >
+                    <Icon name={icon} size={20} />
+                  </span>
+                  {t(`paths.turkey.step.${key}`)}
+                </li>
+              ))}
+            </ol>
+            <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2">
+              {ON_SERVER.turkey ? (
+                <Link to="/turkey" className={primary}>
+                  {t('paths.turkey.start')}
+                </Link>
+              ) : (
+                call('turkey', t('paths.turkey.call'), primary)
+              )}
+              <span className="text-[13px] text-text-2 max-sm:w-full max-sm:text-center">
+                {t('paths.turkey.note')}
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        <Card aria-labelledby="journey-path-contract" className="flex flex-col">
+          <div className="h-25 flex-none lg:h-28">
+            <img src={travel} alt="" className="block size-full object-cover" />
+          </div>
+          <div className="flex flex-1 flex-col gap-3.5 p-5 lg:p-6">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-bold text-primary-text">
+                {t('paths.contract.kicker')}
+              </span>
+              <h3
+                id="journey-path-contract"
+                className="m-0 font-display text-lg leading-relaxed font-bold lg:text-xl"
+              >
+                {t('paths.contract.title')}
+              </h3>
+              <p className="m-0 text-sm leading-7 text-text-2">{t('paths.contract.text')}</p>
+            </div>
+            {contract && (
+              <>
+                <ul className="m-0 flex list-none flex-col gap-2 p-0 text-sm">
+                  {[
+                    contract.writing && t('paths.contract.writing'),
+                    t('paths.contract.applies'),
+                    t('paths.contract.instalments', { n: f.number(contract.instalments) }),
+                  ]
+                    .filter(Boolean)
+                    .map((line) => (
+                      <li key={line as string} className="flex items-center gap-2">
+                        <Icon name="check" size={16} className="flex-none text-good" />
+                        {line}
+                      </li>
+                    ))}
+                </ul>
+                <p className="m-0 mt-auto flex items-baseline justify-between gap-2 pt-3.5 text-[13px] text-text-2 shadow-[inset_0_1px_0_var(--hair)]">
+                  {t('paths.contract.from')}
+                  <span className="font-display text-lg font-bold text-text">
+                    {t('slots.toman', { amount: f.number(contract.instalment) })}
+                  </span>
+                </p>
+              </>
+            )}
+            {call('admission', t('paths.contract.start'), contractButton)}
+          </div>
         </Card>
       </div>
     </section>

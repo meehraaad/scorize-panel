@@ -172,39 +172,20 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
 
     // The ways to start: the consultation's nearest times and price, the contract's instalment.
+    // The ways that start today: Turkey and a contract (the consultation has its own card).
     const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
-    const consult = within(paths).getByRole('region', { name: 'مشاوره‌ی تخصصی' });
-    expect(within(consult).getAllByRole('radio')).toHaveLength(3);
-    expect(within(consult).getByText('۵۰۰٬۰۰۰ تومان')).toBeInTheDocument();
+    const turkeyPath = within(paths).getByRole('region', {
+      name: 'اپلای دانشگاه‌های ترکیه، بدون هزینه‌ی خدمات',
+    });
+    expect(within(turkeyPath).getByRole('list', { name: 'مراحل اپلای ترکیه' })).toHaveTextContent(
+      'امضای تعهدنامه',
+    );
+    expect(within(paths).queryByRole('region', { name: 'مشاوره‌ی تخصصی' })).toBeNull();
     const contract = within(paths).getByRole('region', { name: 'قرارداد اپلای' });
     expect(within(contract).getByText('۲۱٬۲۵۰٬۰۰۰ تومان')).toBeInTheDocument();
     expect(
       within(contract).getByRole('button', { name: 'درخواست تماس برای قرارداد' }),
     ).toBeInTheDocument();
-
-    // Booking a time goes to the bank gateway.
-    await user.click(within(consult).getAllByRole('radio')[1] as HTMLElement);
-    const assign = vi.fn();
-    const { href, origin, protocol, host, hostname, port, pathname, search, hash } =
-      window.location;
-    vi.stubGlobal('location', {
-      href,
-      origin,
-      protocol,
-      host,
-      hostname,
-      port,
-      pathname,
-      search,
-      hash,
-      assign,
-    });
-    onTestFinished(() => {
-      vi.unstubAllGlobals();
-    });
-    await user.click(within(consult).getByRole('button', { name: /^رزرو / }));
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
-    expect(bookingsSent).toHaveLength(1);
   });
 
   it('before a booked session: the countdown, the calendar, its topics and their seller', async () => {
@@ -231,21 +212,50 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
   });
 
-  it('first visit: the result locked beside the quiz, and booking starts with online or in person', async () => {
+  it('first visit: the result locked beside the quiz, and a consultation at its first free time', async () => {
     onDesktop();
+    const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
     expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
     const talk = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
-    const how = within(talk).getByRole('navigation', { name: 'نحوه‌ی برگزاری جلسه' });
-    expect(within(how).getByRole('link', { name: /^آنلاین/ })).toHaveAttribute(
+    const how = within(talk).getByRole('group', { name: 'جلسه را چطور می‌خواهید؟' });
+    // Each way with its first free time; online is chosen first.
+    const online = await within(how).findByRole('radio', { name: /^آنلاین/ });
+    expect(online).toBeChecked();
+    expect(within(how).getAllByText('اولین وقت خالی')).toHaveLength(2);
+    expect(within(talk).getByRole('link', { name: 'زمان‌های دیگر' })).toHaveAttribute(
       'href',
-      '/consultations/book?mode=online',
+      '/consultations/book?mode=online&type=3',
     );
-    expect(within(how).getByRole('link', { name: /^حضوری/ })).toHaveAttribute(
+    await user.click(within(how).getByRole('radio', { name: /^حضوری/ }));
+    expect(within(talk).getByRole('link', { name: 'زمان‌های دیگر' })).toHaveAttribute(
       'href',
-      '/consultations/book?mode=in_person',
+      '/consultations/book?mode=in_person&type=5',
     );
+
+    // One tap books that time: off to the bank gateway.
+    const assign = vi.fn();
+    const { href, origin, protocol, host, hostname, port, pathname, search, hash } =
+      window.location;
+    vi.stubGlobal('location', {
+      href,
+      origin,
+      protocol,
+      host,
+      hostname,
+      port,
+      pathname,
+      search,
+      hash,
+      assign,
+    });
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    await user.click(within(talk).getByRole('button', { name: /^رزرو حضوری · / }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
+    expect(bookingsSent).toHaveLength(1);
   });
 
   it('first visit: a free call instead, which asks for a phone first', async () => {

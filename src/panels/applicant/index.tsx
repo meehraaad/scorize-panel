@@ -105,6 +105,10 @@ export const applicantPanel: PanelDefinition = {
                   guest && backgroundQuery,
                   guest && consultationsQuery,
                   guest && startQuery,
+                  // The consultation card's first free time per mode (the booking page's first read).
+                  guest &&
+                    ON_SERVER.bookingCalendar &&
+                    firstCalendarQuery(weekStart(calendarKind(i18n.language))),
                 ];
               },
               skeleton: 'dashboard',

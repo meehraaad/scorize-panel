@@ -38,7 +38,9 @@ describe('free Turkey application', () => {
     loginAs(MARYAM);
     renderApp('/');
     // One of the ways to start on the new-user home.
-    const card = await screen.findByRole('region', { name: 'اپلای ترکیه، بدون پیش‌پرداخت' });
+    const card = await screen.findByRole('region', {
+      name: 'اپلای دانشگاه‌های ترکیه، بدون هزینه‌ی خدمات',
+    });
     expect(within(card).getByRole('link', { name: 'شروع اپلای ترکیه' })).toHaveAttribute(
       'href',
       '/turkey',

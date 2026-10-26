@@ -80,7 +80,7 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
     />
   );
   const upload = <ReviewUploadCard key="upload" files={files} kind={kind} onKind={setKind} />;
-  const paths = <StartPaths key="paths" access={access} offers={offers} consulted={consulted} />;
+  const paths = <StartPaths key="paths" access={access} offers={offers} />;
   const people = [
     offers.consultant && (
       <ConsultantCard key="consultant" consultant={offers.consultant} access={access} />

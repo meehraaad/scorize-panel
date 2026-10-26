@@ -105,8 +105,8 @@ export const salesStaffHandlers = [
   http.post(`${BASE}/customers/:id/contacts/`, async ({ params, request }) => {
     const log = (await request.json()) as ContactLog;
     if (
-      (log.customer_summary ?? '').trim().length > 5000 ||
-      (log.email_summary && !log.customer_summary?.trim())
+      log.customer_summary.trim().length > 5000 ||
+      (log.email_summary && !log.customer_summary.trim())
     )
       return HttpResponse.json(
         { customer_summary: ['Write a summary of up to 5,000 characters.'] },
