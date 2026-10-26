@@ -2,13 +2,15 @@ import { Icon } from './Icon';
 
 /**
  * Score buttons (1 to `max` stars). Labels come from the caller, already translated, so this works
- * in any feature: `starLabel(3)` → "3 out of 5".
+ * in any feature: `starLabel(3)` → "3 out of 5". With `value` it is a form field: the chosen score
+ * stays filled (and pressed) until another is picked.
  */
 export function StarRating({
   prompt,
   max = 5,
   starLabel,
   disabled = false,
+  value,
   onRate,
 }: {
   /** Shown before the stars ("Rate this reply"). */
@@ -16,6 +18,8 @@ export function StarRating({
   max?: number;
   starLabel: (score: number) => string;
   disabled?: boolean;
+  /** The score picked so far (a form field); leave out for a one-tap rating. */
+  value?: number | null;
   onRate: (score: number) => void;
 }) {
   return (
@@ -27,11 +31,14 @@ export function StarRating({
             key={score}
             type="button"
             aria-label={starLabel(score)}
+            aria-pressed={value === undefined ? undefined : value === score}
             disabled={disabled}
             onClick={() => onRate(score)}
-            className="flex size-11 items-center justify-center rounded-full text-text-2 hover:text-primary-text disabled:opacity-50"
+            className={`flex size-11 items-center justify-center rounded-full hover:text-primary-text disabled:opacity-50 ${
+              value != null && score <= value ? 'text-warn' : 'text-text-2'
+            }`}
           >
-            <Icon name="star" size={18} />
+            <Icon name="star" size={18} filled={value != null && score <= value} />
           </button>
         ))}
       </span>

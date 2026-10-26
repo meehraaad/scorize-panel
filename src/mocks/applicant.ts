@@ -1520,6 +1520,7 @@ function consultationsFor(user: number): ConsultationDetail[] {
     consultant: 'نیلوفر شریفی',
     summary,
     info_complete: true,
+    feedback: null,
     info: {
       university: 'دانشگاه صنعتی اصفهان',
       major: 'مهندسی کامپیوتر',
@@ -1577,7 +1578,49 @@ function consultationsFor(user: number): ConsultationDetail[] {
 
 const summaryOf = ({ info: _info, invoice: _invoice, ...rest }: ConsultationDetail) => rest;
 
+/** A session held `daysAgo` for `user` (tests of the survey after a session). */
+export function addHeldConsultation(user: number, daysAgo = 1) {
+  const sessions = consultationsFor(user);
+  const starts = new Date(Date.now() - daysAgo * 86_400_000).toISOString();
+  sessions.unshift({
+    id: 90 + sessions.length,
+    title: 'مشاوره‌ی اپلای کارشناسی ارشد',
+    starts_at: starts,
+    minutes: 45,
+    mode: 'online',
+    consultant: 'نیلوفر شریفی',
+    summary: null,
+    info_complete: true,
+    feedback: null,
+    info: { university: '', major: '', degree: '', notes: '' },
+    invoice: { amount: 600_000, paid_at: starts, payment_id: null },
+  });
+}
+
+/** Survey answers sent, for the tests. */
+export const feedbackSent: { id: number; answer: unknown }[] = [];
+
 const consultationHandlers = [
+  http.post(`${BASE}/consultations/:id/feedback/`, async ({ params, request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const found = consultationsFor(user).find((item) => item.id === Number(params.id));
+    if (!found) return notFound();
+    if (new Date(found.starts_at).getTime() > Date.now())
+      return HttpResponse.json({ detail: 'Not held yet.', code: 'not_held' }, { status: 409 });
+    if (found.feedback)
+      return HttpResponse.json({ detail: 'Answered.', code: 'answered' }, { status: 409 });
+    const answer = (await request.json()) as Omit<
+      NonNullable<ConsultationDetail['feedback']>,
+      'created_at'
+    >;
+    if (answer.rating < 1 || answer.rating > 5)
+      return HttpResponse.json({ rating: ['invalid'] }, { status: 400 });
+    found.feedback = { ...answer, created_at: new Date().toISOString() };
+    feedbackSent.push({ id: found.id, answer });
+    return HttpResponse.json(found.feedback, { status: 201 });
+  }),
+
   http.get(`${BASE}/consultations/`, () => {
     const user = storage.get();
     return user
@@ -2223,6 +2266,7 @@ export function resetApplicantMocks() {
   servicesOf.clear();
   packageReviews.clear();
   consultationsOf.clear();
+  feedbackSent.length = 0;
   transcriptReturned.clear();
   gateState = null;
   resetEstimateMocks();

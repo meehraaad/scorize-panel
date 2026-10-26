@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { ON_SERVER, type ServerFeature } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
+import { addHeldConsultation, feedbackSent } from '@/mocks/applicant';
 import { renderApp } from '@/test/renderApp';
 import { toasts } from '@/test/toasts';
 import '@/test/server';
@@ -167,6 +168,35 @@ describe('applicant home', () => {
     expect(
       within(paths).getByRole('button', { name: 'درخواست تماس برای قرارداد' }),
     ).toBeInTheDocument();
+  });
+
+  it('asks about the consultant after a session, then offers the step that fits', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    addHeldConsultation(MARYAM, 2);
+    renderApp('/');
+    const card = await screen.findByRole('region', { name: 'جلسه با نیلوفر شریفی چطور بود؟' });
+    await user.click(within(card).getByRole('button', { name: 'ارسال' }));
+    expect(within(card).getByText('به هر سه سؤال جواب دهید.')).toBeInTheDocument();
+
+    await user.click(within(card).getByRole('button', { name: '۴ از ۵' }));
+    expect(within(card).getByRole('button', { name: '۴ از ۵' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.click(within(card).getByRole('radio', { name: 'تا حدی' }));
+    await user.click(within(card).getByRole('radio', { name: /هزینه برایم سؤال است/ }));
+    await user.click(within(card).getByRole('button', { name: 'ارسال' }));
+    expect(await toasts().findByText('ممنون! جواب شما به ما رسید.')).toBeInTheDocument();
+    expect(feedbackSent).toEqual([
+      { id: 90, answer: { rating: 4, clear: 'partly', next: 'cost', comment: '' } },
+    ]);
+
+    const thanks = await screen.findByRole('region', { name: 'ممنون از نظرتان' });
+    expect(within(thanks).getByRole('button', { name: 'تماس درباره‌ی ترکیه' })).toBeInTheDocument();
+    // Consulted: no more consultation offer among the ways to start.
+    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
+    expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
   });
 
   it('puts a booked session first, with what to fill before it', async () => {
