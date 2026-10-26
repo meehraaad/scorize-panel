@@ -432,7 +432,7 @@
     "finalNote": "Once you send it, writing the letters starts.",
     "submit": "Send to the writing team",
     "limit": "Your contract has {{n}} recommendation letters. If a professor writes their own letter, don't add them here; just give their name and email to your supervisor.",
-    "full": "Your contract has {{n}} recommendation letters; order more from “Learning & packages”.",
+    "full": "Your contract has {{n}} recommendation letters; order more from the “Academy”.",
     "add": {
       "recommenders": "Add a recommender"
     },
