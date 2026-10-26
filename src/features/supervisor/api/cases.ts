@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { API_BASE, api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
 import {
+  CASE_STAGES,
   SUPERVISOR_API,
   type CaseStage,
   type DocCount,
@@ -11,6 +12,23 @@ import {
 
 export type StageFilter = 'all' | CaseStage;
 export type BotFilter = 'all' | 'on' | 'off';
+
+export const STAGE_FILTERS: readonly StageFilter[] = ['all', ...CASE_STAGES];
+
+/**
+ * The list as the page first shows it: the URL's stage tab and bot filter (reports link to
+ * "bots that are stopped"), no search, page 1. The route prefetches it.
+ */
+export function firstCasesQuery(params: URLSearchParams): CasesQuery {
+  const stage = params.get('stage');
+  const bot = params.get('bot');
+  return {
+    stage: STAGE_FILTERS.find((value) => value === stage) ?? 'all',
+    bot: bot === 'on' || bot === 'off' ? bot : 'all',
+    search: '',
+    page: 1,
+  };
+}
 
 export interface CaseRow {
   id: number;

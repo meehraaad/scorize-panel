@@ -29,6 +29,7 @@ jobs:
       - run: pnpm i18n:check
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm size
 
   image:
     # Publishes ghcr.io/<owner>/scorize-panel on every push to main, like the main site's image.

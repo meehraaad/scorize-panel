@@ -1,7 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet } from 'react-router';
+import { PageSkeleton } from '@/components/ui/Skeleton';
 import { BackLink } from '@/components/ui/BackLink';
 import { buttonClass, tabClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -99,7 +100,10 @@ function Case({ data }: { data: CaseData }) {
           );
         })}
       </nav>
-      <Outlet />
+      {/* A tab's data must not hide the case card and its tabs. */}
+      <Suspense fallback={<PageSkeleton kind="tab" />}>
+        <Outlet />
+      </Suspense>
       <StageDialog
         key={stageOpen ? `stage-${data.stage}` : 'stage-closed'}
         caseId={data.id}

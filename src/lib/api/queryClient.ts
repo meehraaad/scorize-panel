@@ -20,7 +20,8 @@ export const queryClient: QueryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
-      gcTime: 5 * 60_000,
+      // Pages left open in the cache: going back shows them at once and refreshes behind them.
+      gcTime: 30 * 60_000,
       // Client errors (4xx) will not fix themselves; retry only network and server errors.
       retry: (failureCount, error) =>
         !(error instanceof ApiError && error.status < 500) && failureCount < 2,

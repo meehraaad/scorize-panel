@@ -17,23 +17,26 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES, STAGES } from '@/lib/sales/api';
 import { pagesOf } from '@/lib/api/page';
-import { leadsQuery, type LeadFilter, type LeadQuery, type LeadsData } from './api';
+import {
+  LEAD_FILTERS,
+  leadFilterOf,
+  leadsQuery,
+  type LeadFilter,
+  type LeadQuery,
+  type LeadsData,
+} from './api';
 import { BulkBar } from './components/BulkBar';
 import { useSalesFormat } from './format';
 import { LeadTable } from './components/LeadTable';
 import { NewLeadDialog } from './components/NewLeadDialog';
-
-const FILTERS: readonly LeadFilter[] = ['all', ...STAGES];
-const isFilter = (value: string | null): value is LeadFilter =>
-  FILTERS.includes(value as LeadFilter);
 
 /** Every lead of the seller, by stage, with its score and next follow-up. Canvas "لیدها". */
 export default function LeadsPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const [params, setParams] = useSearchParams();
-  const stageParam = params.get('stage');
-  const stage: LeadFilter = isFilter(stageParam) ? stageParam : 'all';
+  const stage = leadFilterOf(params.get('stage'));
+  // Starts as `firstLeadQuery`, which the route prefetches.
   const [source, setSource] = useState<LeadQuery['source']>('all');
   const [band, setBand] = useState<LeadQuery['band']>('all');
   const [overdue, setOverdue] = useState(false);
@@ -100,13 +103,13 @@ export default function LeadsPage() {
           label={t('leads.stageFilter')}
           value={stage}
           onChange={setStage}
-          options={FILTERS.filter((value) => !data || data.supports.stages.includes(value)).map(
-            (value) => ({
-              value,
-              label: value === 'all' ? t('leads.all') : t(`stage.${value}`),
-              ...(data ? { count: f.number(data.counts[value]) } : {}),
-            }),
-          )}
+          options={LEAD_FILTERS.filter(
+            (value) => !data || data.supports.stages.includes(value),
+          ).map((value) => ({
+            value,
+            label: value === 'all' ? t('leads.all') : t(`stage.${value}`),
+            ...(data ? { count: f.number(data.counts[value]) } : {}),
+          }))}
         />
         <div className="flex flex-wrap items-center gap-2.5">
           <SearchField

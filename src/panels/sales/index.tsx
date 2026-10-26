@@ -1,27 +1,37 @@
 import { redirect } from 'react-router';
 import {
   MANAGER_PERMISSION,
+  activityQuery,
+  applyQuery,
   approvalsQuery,
   assignQuery,
   boardQuery,
+  consultationsQuery,
   customerQuery,
+  firstLeadQuery,
+  leadsQuery,
+  healthQuery,
   historyQuery,
-  activityQuery,
+  infoQuery,
+  leadFilterOf,
   monthQuery,
+  offerQuery,
   outreachQuery,
+  paymentsQuery,
+  purchasesQuery,
+  receiptsQuery,
+  teamQuery,
 } from '@/features/sales/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
-import { lazyPage } from '@/lib/router/lazyPage';
-import { tasksQuery } from '@/lib/tasks/api';
+import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { taskListQuery, tasksQuery } from '@/lib/tasks/api';
+import type { LoaderFunctionArgs } from 'react-router';
 import type { PanelDefinition } from '../types';
 
-/** Start a page's request together with its chunk, not after it. A failure shows on the page. */
-const prefetch = (load: () => Promise<unknown>) => () => {
-  load().catch(() => undefined);
-  return null;
-};
+/** A customer page's id, or null (the page says the customer doesn't exist). */
+const customerOf = ({ params }: LoaderFunctionArgs) => idParam(params.id);
 
 /** Sellers without the manager's permission are sent back to the panel's home. */
 async function managerOnly() {
@@ -75,73 +85,124 @@ export const salesPanel: PanelDefinition = {
       permission: MANAGER_PERMISSION,
     },
   ],
+  // Each route lists what its page shows first (docs/performance.md, "Page data").
   routes: [
     {
       index: true,
-      // The page's first two requests (the month and the chances wait until they are seen).
-      loader: prefetch(() =>
-        Promise.all([
-          queryClient.query(outreachQuery(1, 1, 'all')),
-          queryClient.query(activityQuery(1)),
-        ]),
-      ),
-      ...lazyPage(() => import('@/features/sales/TodayPage'), ['sales']),
+      ...lazyPage(() => import('@/features/sales/TodayPage'), ['sales'], {
+        data: () => [outreachQuery(1), activityQuery(1), receiptsQuery(1)],
+        skeleton: 'dashboard',
+      }),
     },
     // Leads and "my consultations" share one nav tab, with a sub-tab each.
     {
       path: 'leads',
       ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
       children: [
-        { index: true, ...lazyPage(() => import('@/features/sales/LeadsPage')) },
+        {
+          index: true,
+          ...lazyPage(() => import('@/features/sales/LeadsPage'), [], {
+            data: ({ request }) => [
+              leadsQuery(
+                firstLeadQuery(leadFilterOf(new URL(request.url).searchParams.get('stage'))),
+              ),
+            ],
+            skeleton: 'list',
+          }),
+        },
         {
           path: 'consultations',
-          ...lazyPage(() => import('@/features/sales/ConsultationsPage')),
+          ...lazyPage(() => import('@/features/sales/ConsultationsPage'), [], {
+            data: () => [consultationsQuery('week', null, false, 1)],
+            skeleton: 'list',
+          }),
         },
       ],
     },
     {
       path: 'board',
-      loader: prefetch(() => queryClient.query(boardQuery)),
-      ...lazyPage(() => import('@/features/sales/BoardPage'), ['sales']),
+      ...lazyPage(() => import('@/features/sales/BoardPage'), ['sales'], {
+        data: () => [boardQuery],
+        skeleton: 'board',
+      }),
     },
     {
       path: 'month',
-      loader: prefetch(() => queryClient.query(monthQuery)),
-      ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales']),
+      ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], {
+        data: () => [monthQuery],
+        skeleton: 'dashboard',
+      }),
     },
     // Its old address, before it moved under the leads tab.
     { path: 'consultations', loader: () => redirect('/sales/leads/consultations') },
     {
       path: 'customers/:id',
-      loader: ({ params }) => {
-        const id = Number(params.id);
-        if (Number.isInteger(id) && id > 0)
-          queryClient.query(customerQuery(id)).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales']),
+      ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales'], {
+        data: (args) => {
+          const id = customerOf(args);
+          return [id !== null && customerQuery(id)];
+        },
+        skeleton: 'detail',
+      }),
+      // Each tab's data starts with the customer's, not after it.
       children: [
         {
           index: true,
-          // The history starts with the customer card, not after it arrives.
-          loader: ({ params }) => {
-            const id = Number(params.id);
-            if (Number.isInteger(id) && id > 0)
-              queryClient.infiniteQuery(historyQuery(id)).catch(() => undefined);
-            return null;
-          },
-          ...lazyPage(() => import('@/features/sales/CustomerSummaryPage')),
+          ...lazyPage(() => import('@/features/sales/CustomerSummaryPage'), [], {
+            data: (args) => {
+              const id = customerOf(args);
+              return [id !== null && historyQuery(id)];
+            },
+          }),
         },
-        { path: 'purchases', ...lazyPage(() => import('@/features/sales/CustomerPurchasesPage')) },
-        { path: 'payments', ...lazyPage(() => import('@/features/sales/CustomerPaymentsPage')) },
-        { path: 'info', ...lazyPage(() => import('@/features/sales/CustomerInfoPage')) },
-        { path: 'apply', ...lazyPage(() => import('@/features/sales/CustomerApplyPage')) },
+        {
+          path: 'purchases',
+          ...lazyPage(() => import('@/features/sales/CustomerPurchasesPage'), [], {
+            data: (args) => {
+              const id = customerOf(args);
+              return [id !== null && purchasesQuery(id)];
+            },
+          }),
+        },
+        {
+          path: 'payments',
+          ...lazyPage(() => import('@/features/sales/CustomerPaymentsPage'), [], {
+            data: (args) => {
+              const id = customerOf(args);
+              return [id !== null && paymentsQuery(id)];
+            },
+          }),
+        },
+        {
+          path: 'info',
+          ...lazyPage(() => import('@/features/sales/CustomerInfoPage'), [], {
+            data: (args) => {
+              const id = customerOf(args);
+              return [id !== null && infoQuery(id)];
+            },
+          }),
+        },
+        {
+          path: 'apply',
+          ...lazyPage(() => import('@/features/sales/CustomerApplyPage'), [], {
+            data: (args) => {
+              const id = customerOf(args);
+              return [id !== null && applyQuery(id)];
+            },
+          }),
+        },
       ],
     },
     // Its own page (no customer card): building an offer takes the whole screen.
     {
       path: 'customers/:id/offer',
-      ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales']),
+      ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales'], {
+        data: (args) => {
+          const id = customerOf(args);
+          return id === null ? [] : [customerQuery(id), offerQuery(id)];
+        },
+        skeleton: 'form',
+      }),
     },
     // The sales manager's section (nav item and routes need can_assign_to_seller).
     {
@@ -151,25 +212,40 @@ export const salesPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          loader: prefetch(() => queryClient.query(assignQuery(1))),
-          ...lazyPage(() => import('@/features/sales/manager/AssignPage')),
+          ...lazyPage(() => import('@/features/sales/manager/AssignPage'), [], {
+            data: () => [assignQuery(1)],
+            skeleton: 'list',
+          }),
         },
         {
           path: 'approvals',
-          loader: prefetch(() => queryClient.query(approvalsQuery)),
-          ...lazyPage(() => import('@/features/sales/manager/ApprovalsPage')),
+          ...lazyPage(() => import('@/features/sales/manager/ApprovalsPage'), [], {
+            data: () => [approvalsQuery],
+            skeleton: 'list',
+          }),
         },
-        { path: 'team', ...lazyPage(() => import('@/features/sales/manager/TeamPage')) },
+        {
+          path: 'team',
+          ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
+            data: () => [teamQuery('month')],
+            skeleton: 'dashboard',
+          }),
+        },
         {
           path: 'follow-ups',
-          ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage')),
+          ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage'), [], {
+            data: () => [healthQuery('all')],
+            skeleton: 'list',
+          }),
         },
       ],
     },
     {
       path: 'tasks',
-      loader: prefetch(() => queryClient.query(tasksQuery('sales'))),
-      ...lazyPage(() => import('./TasksPage'), ['tasks']),
+      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
+        data: () => [tasksQuery('sales'), taskListQuery('sales', 'mine', 1)],
+        skeleton: 'list',
+      }),
     },
   ],
 };

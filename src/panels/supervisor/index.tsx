@@ -2,27 +2,20 @@ import {
   activityQuery,
   applicationsQuery,
   caseQuery,
+  caseTickets,
+  casesQuery,
   documentsQuery,
+  firstCasesQuery,
   inboxQuery,
   reportsQuery,
-  todayQuery,
+  todayBoardQuery,
+  todayCountsQuery,
+  todayWaitingQuery,
 } from '@/features/supervisor/api';
-import { queryClient } from '@/lib/api/queryClient';
-import { lazyPage } from '@/lib/router/lazyPage';
-import { tasksQuery } from '@/lib/tasks/api';
+import { prefetchTickets } from '@/features/tickets/config';
+import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
-
-/** Start a page's request together with its chunk, not after it. A failure shows on the page. */
-const prefetch = (load: () => Promise<unknown>) => () => {
-  load().catch(() => undefined);
-  return null;
-};
-
-/** The case of a `files/:id` route, or null for a bad id (the page says so). */
-const caseIdOf = (params: { id?: string | undefined }) => {
-  const id = Number(params.id);
-  return Number.isInteger(id) && id > 0 ? id : null;
-};
 
 /**
  * Supervisors (executive team, or `can_manage_applicant`). Design: canvas "V1 · Supervisor panel"
@@ -70,65 +63,88 @@ export const supervisorPanel: PanelDefinition = {
   routes: [
     {
       index: true,
-      loader: prefetch(() => queryClient.query(todayQuery)),
-      ...lazyPage(() => import('@/features/supervisor/TodayPage'), ['supervisor']),
+      ...lazyPage(() => import('@/features/supervisor/TodayPage'), ['supervisor'], {
+        data: () => [todayBoardQuery(1), todayWaitingQuery(1), todayCountsQuery],
+        skeleton: 'dashboard',
+      }),
     },
-    { path: 'files', ...lazyPage(() => import('@/features/supervisor/CasesPage'), ['supervisor']) },
+    {
+      path: 'files',
+      ...lazyPage(() => import('@/features/supervisor/CasesPage'), ['supervisor'], {
+        data: ({ request }) => [casesQuery(firstCasesQuery(new URL(request.url).searchParams))],
+        skeleton: 'list',
+      }),
+    },
     {
       path: 'files/:id',
-      loader: ({ params }) => {
-        const id = caseIdOf(params);
-        if (id) queryClient.query(caseQuery(id)).catch(() => undefined);
-        return null;
-      },
-      ...lazyPage(() => import('@/features/supervisor/CaseLayout'), ['supervisor']),
+      ...lazyPage(() => import('@/features/supervisor/CaseLayout'), ['supervisor'], {
+        data: ({ params }) => {
+          const id = idParam(params.id);
+          return [id !== null && caseQuery(id)];
+        },
+        skeleton: 'detail',
+      }),
       children: [
         { index: true, ...lazyPage(() => import('@/features/supervisor/CaseOverviewPage')) },
         {
           path: 'documents',
-          loader: ({ params }) => {
-            const id = caseIdOf(params);
-            if (id) queryClient.query(documentsQuery(id)).catch(() => undefined);
-            return null;
-          },
-          ...lazyPage(() => import('@/features/supervisor/CaseDocumentsPage')),
+          ...lazyPage(() => import('@/features/supervisor/CaseDocumentsPage'), [], {
+            data: ({ params }) => {
+              const id = idParam(params.id);
+              return [id !== null && documentsQuery(id)];
+            },
+          }),
         },
         {
           path: 'applications',
-          loader: ({ params }) => {
-            const id = caseIdOf(params);
-            if (id) queryClient.query(applicationsQuery(id)).catch(() => undefined);
-            return null;
-          },
-          ...lazyPage(() => import('@/features/supervisor/CaseApplicationsPage')),
+          ...lazyPage(() => import('@/features/supervisor/CaseApplicationsPage'), [], {
+            data: ({ params }) => {
+              const id = idParam(params.id);
+              return [id !== null && applicationsQuery(id)];
+            },
+          }),
         },
         // One applicant's threads; `tickets/<thread>` for writing threads.
-        { path: 'tickets/*', ...lazyPage(() => import('./CaseTicketsPage'), ['tickets']) },
         {
-          path: 'activity',
+          path: 'tickets/*',
           loader: ({ params }) => {
-            const id = caseIdOf(params);
-            if (id) queryClient.query(activityQuery(id, 1)).catch(() => undefined);
+            const id = idParam(params.id);
+            if (id !== null) prefetchTickets(caseTickets(id), params['*'] ?? '');
             return null;
           },
-          ...lazyPage(() => import('@/features/supervisor/CaseActivityPage')),
+          ...lazyPage(() => import('./CaseTicketsPage'), ['tickets']),
+        },
+        {
+          path: 'activity',
+          ...lazyPage(() => import('@/features/supervisor/CaseActivityPage'), [], {
+            data: ({ params }) => {
+              const id = idParam(params.id);
+              return [id !== null && activityQuery(id, 1)];
+            },
+          }),
         },
       ],
     },
     {
       path: 'tickets',
-      loader: prefetch(() => queryClient.query(inboxQuery('waiting', 1))),
-      ...lazyPage(() => import('@/features/supervisor/InboxPage'), ['supervisor']),
+      ...lazyPage(() => import('@/features/supervisor/InboxPage'), ['supervisor'], {
+        data: () => [inboxQuery('waiting', 1)],
+        skeleton: 'list',
+      }),
     },
     {
       path: 'tasks',
-      loader: prefetch(() => queryClient.query(tasksQuery('supervisor'))),
-      ...lazyPage(() => import('./TasksPage'), ['tasks']),
+      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
+        data: () => [tasksQuery('supervisor'), taskListQuery('supervisor', 'mine', 1)],
+        skeleton: 'list',
+      }),
     },
     {
       path: 'reports',
-      loader: prefetch(() => queryClient.query(reportsQuery('month'))),
-      ...lazyPage(() => import('@/features/supervisor/ReportsPage'), ['supervisor']),
+      ...lazyPage(() => import('@/features/supervisor/ReportsPage'), ['supervisor'], {
+        data: () => [reportsQuery('month')],
+        skeleton: 'dashboard',
+      }),
     },
   ],
 };
