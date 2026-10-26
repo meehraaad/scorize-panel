@@ -25,6 +25,11 @@ export interface WritingForm {
   orders: string[];
   /** How many of this order the contract has (recommendation letters); absent: one. */
   count?: number;
+  /**
+   * An order the person started before paying (no contract, H67): its price, paid at the final
+   * submit. Null or absent once paid, and for a contract's orders.
+   */
+  purchase?: { price: number } | null;
 }
 
 /** What the photo field accepts (the CV's pass_photo). The server checks again. */
@@ -105,6 +110,27 @@ export function missingFromError(error: unknown): string[] {
     return body?.missing ?? [];
   }
   return [];
+}
+
+/**
+ * The final submit of an order not paid yet: the answers are saved and Django names the payment to
+ * make (402). After paying, the final submit sends the form to the writer.
+ */
+export function paymentFromError(error: unknown): number | null {
+  if (error instanceof ApiError && error.status === 402) {
+    const body = error.body as { payment_id?: number } | null;
+    return body?.payment_id ?? null;
+  }
+  return null;
+}
+
+/** A transfer receipt for this order waits for the team (409 `in_review`). */
+export function receiptInReview(error: unknown) {
+  return (
+    error instanceof ApiError &&
+    error.status === 409 &&
+    (error.body as { code?: string } | null)?.code === 'in_review'
+  );
 }
 
 export function useSubmitWriting(type: FormType) {

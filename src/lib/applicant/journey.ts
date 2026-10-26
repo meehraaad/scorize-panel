@@ -16,6 +16,8 @@ export const REVIEW_KINDS = [
   'language',
   'passport',
   'degree',
+  'sop',
+  'recommendation',
   'other',
 ] as const;
 export type ReviewKind = (typeof REVIEW_KINDS)[number];

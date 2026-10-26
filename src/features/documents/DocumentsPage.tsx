@@ -4,10 +4,13 @@ import { SectionLock } from '@/components/applicant/SectionLock';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { accessQuery, lockOf } from '@/lib/applicant/access';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { documentsQuery, type DocumentsData } from './api';
+import { CountsStrip } from './components/CountsStrip';
 import { FilesCard } from './components/FilesCard';
 import { InterestsCard } from './components/InterestsCard';
+import { NewUserDocuments } from './components/newUser/NewUserDocuments';
 import { UploadCard } from './components/UploadCard';
 import { WaitingCard } from './components/WaitingCard';
 import { WritingCard } from './components/WritingCard';
@@ -18,7 +21,8 @@ import { previewDocuments } from './preview';
  * "Documents & writing". Design: canvas V6 "مدارک و نگارش" (AppDocuments), reworked in the
  * "Scorize New User Dashboard v2" canvas (Documents): what waits on the applicant (one card each),
  * then two lanes, their uploads and the team's writing. Without a contract, the locked preview of
- * canvas V7 section 5.
+ * canvas V7 section 5, or (once Django offers writing) the new user's tab: documents to send for a
+ * free review next to the writing we offer.
  */
 export default function DocumentsPage() {
   const { t } = useTranslation('documents');
@@ -56,6 +60,14 @@ export default function DocumentsPage() {
     </>
   );
 
+  if (lock === 'guest' && ON_SERVER.writingOffers)
+    return (
+      <PageStack>
+        <PageHeader title={t('title')} subtitle={t('newUser.subtitle')} />
+        <NewUserDocuments access={access} />
+      </PageStack>
+    );
+
   if (lock || !data)
     return (
       <PageStack>
@@ -79,6 +91,7 @@ export default function DocumentsPage() {
   return (
     <PageStack>
       <PageHeader title={t('title')} subtitle={subtitle} />
+      <CountsStrip data={data} />
       {body(data)}
     </PageStack>
   );

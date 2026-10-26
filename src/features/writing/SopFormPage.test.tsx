@@ -153,4 +153,40 @@ describe('SOP information form', () => {
     renderApp('/documents/sop');
     expect(await screen.findByText('انگیزه‌نامه جزو خدمات قرارداد شما نیست.')).toBeInTheDocument();
   });
+
+  it('takes a new user from a complete form to its payment', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    // Started from the documents tab before paying, answered in an earlier visit.
+    const api = (path: string, init?: RequestInit) =>
+      fetch(new URL(`/api/applicant/v1/writing/sop/${path}`, window.location.origin), {
+        headers: { 'Content-Type': 'application/json' },
+        ...init,
+      });
+    await api('start/', { method: 'POST' });
+    await api('', { method: 'PATCH', body: JSON.stringify({ answers: COMPLETE_SOP }) });
+
+    const router = renderApp('/documents/sop');
+    await user.click(
+      await screen.findByRole('button', { name: 'ثبت نهایی و پرداخت ۴٬۵۰۰٬۰۰۰ تومان' }),
+    );
+    const confirm = screen.getByRole('group', { name: /به صفحه‌ی پرداخت می‌روید/ });
+    await user.click(within(confirm).getByRole('button', { name: 'ثبت نهایی' }));
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/payments/600'));
+  });
 });
+
+const COMPLETE_SOP = {
+  grade: 2,
+  field_of_study: 'مهندسی کامپیوتر',
+  university_1: 'دانشگاه صنعتی اصفهان',
+  Rate_1: '17',
+  field_of_study_for_apply: 'Computer Science',
+  city_for_apply: 'Toronto',
+  general_sop: true,
+  reason: 'دلیل',
+  interest: 'علاقه',
+  reason_to_continuation: 'ادامه',
+  project: 'پروژه',
+  job: 'پژوهشگر',
+};

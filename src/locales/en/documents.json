@@ -133,5 +133,136 @@
     "title": "Leave your CV and SOP to us",
     "text": "The Scorize writing team writes your CV, statement of purpose and recommendation letters from your case.",
     "cta": "Request a call about writing"
+  },
+  "newUser": {
+    "subtitle": "Send your documents for a free review; what you don't have, our writing team writes.",
+    "hero": {
+      "badge": "Free case review",
+      "title": "Send your documents and an advisor tells you where you can get in.",
+      "text": "Your transcript and language test are enough for an advisor to see your real case and call you. Whatever you don't have yet, our writing team writes for you.",
+      "count": "{{done}} of {{total}} case documents are here",
+      "tray": "Case documents",
+      "state": {
+        "done": "sent",
+        "started": "being written",
+        "todo": "not yet"
+      },
+      "next": "Next: {{kind}}",
+      "private": "Only your advisor sees your files."
+    },
+    "have": {
+      "title": "What you have",
+      "subtitle": "Send any of these you have. For the review, the transcript and language test matter most.",
+      "sent": "Sent",
+      "key": "Key for the review",
+      "optional": "If you have it",
+      "sentMeta": "{{n}} files · {{date}}",
+      "hint": {
+        "transcript": "Bachelor's or your latest degree",
+        "language": "IELTS, TOEFL, Duolingo or PTE",
+        "degree": "Or an enrolment certificate",
+        "passport": "Not needed for the review"
+      },
+      "more": "Another file",
+      "upload": "Upload"
+    },
+    "write": {
+      "title": "What you don't have, we write",
+      "subtitle": "Start the form now. You pay only when you press \"final submit\" and the writer starts.",
+      "badge": "Start free, pay at final submit",
+      "toman": "{{amount}} Toman",
+      "state": {
+        "none": "Not yet",
+        "draft": "Form in progress",
+        "paid": "Paid",
+        "writing": "Being written",
+        "ready": "Ready"
+      },
+      "pitch": {
+        "sop": "The most important text of your case. The writer writes it from your form answers, for the program you want.",
+        "cv": "A consistent academic CV in English, from the background you give in the form.",
+        "recommendation": "We write the letter; your professor or manager only reads and signs it."
+      },
+      "voice": "{{name}}'s experience",
+      "priceNote": "at final submit",
+      "discountEnds": "discount until {{date}}",
+      "note": {
+        "paid": "Paid. Finish the form so the writer can start.",
+        "writing": "The writer is working on it.",
+        "ready": "It's ready. See the final version."
+      },
+      "start": "Start the {{name}} form",
+      "startError": "The form didn't open. Try again.",
+      "continue": "Continue the form",
+      "view": "See the order",
+      "haveIt": "I have it, upload",
+      "haveItFor": "Upload your own {{name}}"
+    },
+    "samples": {
+      "title": "Admissions won with these same documents",
+      "subtitle": "Scorize's newest real admission samples.",
+      "all": "All admission samples",
+      "ielts": "IELTS {{score}}",
+      "toefl": "TOEFL {{score}}",
+      "gpa": "GPA {{gpa}}",
+      "degree": {
+        "high_school": "High school",
+        "bachelor": "Bachelor's",
+        "master": "Master's",
+        "phd": "PhD"
+      }
+    },
+    "sent": {
+      "title": "Files you've sent",
+      "count": "{{n}} files"
+    },
+    "call": {
+      "title": "No time to upload?",
+      "text": "We have your number. An advisor calls and asks for it all by phone.",
+      "steps": {
+        "see": "The advisor sees your documents on your case.",
+        "call": "They tell you the review's result by phone.",
+        "contract": "With a contract, these documents and writings go to your case."
+      },
+      "button": "Call me"
+    }
+  },
+  "counts": {
+    "label": "Status summary",
+    "waiting": "Waiting for you",
+    "waitingHint": "{{documents}} documents, {{forms}} forms and {{drafts}} drafts",
+    "review": "With your supervisor",
+    "reviewHint": "Uploaded, not checked yet",
+    "approved": "Approved",
+    "approvedHint": "Your supervisor approved them",
+    "delivered": "Writing delivered",
+    "deliveredHint": "Of your contract's writing",
+    "ofTotal": "{{n}}/{{total}}"
+  },
+  "review": {
+    "kinds": {
+      "transcript": "Transcript",
+      "cv": "CV",
+      "language": "Language certificate",
+      "passport": "Passport",
+      "degree": "Degree certificate",
+      "sop": "Statement of purpose",
+      "recommendation": "Recommendation letter",
+      "other": "Other"
+    },
+    "choose": "Choose a file",
+    "chooseFor": "Choose a file: {{kind}}",
+    "dropHint": "or drop it here",
+    "dropHintTouch": "from your gallery or files",
+    "tooBig": "This file is {{size}}. The limit is {{max}}; choose a smaller file.",
+    "badType": "This file type isn't accepted. Choose a PDF, or a JPG or PNG photo.",
+    "sent": "Document received. Our expert will call you with the review.",
+    "confirm": "Delete {{name}}?",
+    "confirmYes": "Delete",
+    "confirmNo": "Cancel",
+    "deleted": "Document deleted.",
+    "deleteError": "The document wasn't deleted. Try again.",
+    "waiting": "Waiting for review",
+    "delete": "Delete {{name}}"
   }
 }

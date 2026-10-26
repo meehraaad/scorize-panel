@@ -40,6 +40,7 @@ import { sopForm } from '@/features/writing/sopForm';
 import { estimateHandlers, resetEstimateMocks } from './estimate';
 import { journeyHandlers, resetJourneyMocks } from './journey';
 import { forbidden, notFound, storage } from './session';
+import { resetWritingOfferMocks, writingOfferHandlers } from './writingOffers';
 
 /**
  * Fake applicant-panel API (docs/backend-changes.md H1–H41). Only Sara (user 1) has a case; anyone
@@ -1961,6 +1962,8 @@ const gateHandlers = [
 export const callRequests: CallRequest[] = [];
 
 export const applicantHandlers = [
+  // Before the case's writing forms: a person's own (bought) orders answer there first.
+  ...writingOfferHandlers,
   // Any logged-in user: guests get the panel too (locked previews).
   http.get(`${BASE}/access/`, () => {
     const user = storage.get();
@@ -2294,6 +2297,7 @@ export const applicantHandlers = [
 /** Forget Sara's changes (tests, logout). */
 export function resetApplicantMocks() {
   sara = null;
+  resetWritingOfferMocks();
   callRequests.length = 0;
   turkeyCases.clear();
   servicesOf.clear();

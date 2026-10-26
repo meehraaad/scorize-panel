@@ -15,7 +15,8 @@ export type ServerFeature =
   | 'reviewDocuments'
   | 'background'
   | 'start'
-  | 'bookingCalendar';
+  | 'bookingCalendar'
+  | 'writingOffers';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -45,4 +46,10 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   start: true,
   /** H66 `consultations/calendar/`: every bookable type and its times, for the booking page. */
   bookingCalendar: true,
+  /**
+   * H67 `writing-offers/` and `writing/<kind>/start/`: the new user's documents tab, writing forms
+   * before paying (scorize-revolution `claude/project-thread-7rn4r9`). Off: the tab stays a locked
+   * preview without a contract.
+   */
+  writingOffers: true,
 };

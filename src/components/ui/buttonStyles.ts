@@ -2,6 +2,8 @@ const VARIANTS = {
   primary: 'bg-primary text-on-primary hover:bg-primary-hover font-semibold',
   outline:
     'bg-surface text-text font-medium shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)]',
+  /** A strong action next to a primary one (an offer card that isn't the featured one). */
+  dark: 'bg-hero text-on-hero hover:bg-hero-raised font-semibold',
   danger: 'bg-transparent text-danger font-medium hover:bg-danger-tint',
 } as const;
 

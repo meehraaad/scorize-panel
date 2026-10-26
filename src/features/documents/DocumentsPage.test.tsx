@@ -40,6 +40,9 @@ describe('documents page', () => {
       within(required()).getByLabelText('ریز نمرات کارشناسی (ترجمه‌ی رسمی)'),
     ).toBeInTheDocument();
     expect(within(required()).getAllByText(/نسخه‌ی قبلی امضا نداشت/).length).toBeGreaterThan(0);
+    // Four counts of real rows: waiting on the applicant, with the supervisor, approved, delivered.
+    const counts = screen.getByRole('list', { name: 'خلاصه‌ی وضعیت' });
+    expect(within(counts).getAllByRole('listitem')).toHaveLength(4);
     // Two lanes: the applicant's files with their review state, the team's deliveries apart.
     expect(within(files()).getAllByRole('listitem')).toHaveLength(8);
     expect(within(files()).getByRole('link', { name: 'دانلود پاسپورت' })).toBeInTheDocument();
@@ -157,11 +160,48 @@ describe('documents page', () => {
     );
   });
 
-  it('explains the page to someone without a contract', async () => {
+  it('asks a new user for their documents, next to the writing we offer', async () => {
+    const user = userEvent.setup();
     loginAs(MARYAM);
+    const router = renderApp('/documents');
+    expect(
+      await screen.findByRole('heading', { name: /مدارک‌تان را بفرستید، مشاور می‌گوید/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('۰ از ۷ مدرک پرونده‌تان این‌جاست')).toBeInTheDocument();
+
+    // What they have: sent at once, for the free review.
+    const have = screen.getByRole('region', { name: 'آنچه دارید' });
+    await user.upload(within(have).getByLabelText('انتخاب فایل ریزنمرات'), pdf('transcript.pdf'));
+    expect(await toasts().findByText(/مدرک رسید/)).toBeInTheDocument();
+    expect(await within(have).findByText('فرستاده شد')).toBeInTheDocument();
+    expect(screen.getByText('۱ از ۷ مدرک پرونده‌تان این‌جاست')).toBeInTheDocument();
+    const sent = screen.getByRole('region', { name: 'فایل‌هایی که فرستاده‌اید' });
+    expect(within(sent).getAllByRole('listitem')).toHaveLength(1);
+
+    // What they don't have, we write: the price, paid at the form's final submit.
+    const write = screen.getByRole('region', { name: 'آنچه ندارید، ما می‌نویسیم' });
+    const sop = within(write).getByRole('article', { name: 'انگیزه‌نامه (SOP)' });
+    expect(sop).toHaveTextContent('۴٬۵۰۰٬۰۰۰ تومان');
+    expect(within(sop).getByText('۵٬۰۰۰٬۰۰۰ تومان')).toBeInTheDocument();
+    expect(within(sop).getByLabelText('تجربه‌ی نگار رحیمی')).toBeInTheDocument();
+    expect(screen.getByText('University of Toronto')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'با من تماس بگیرید' })).toBeInTheDocument();
+
+    await user.click(within(sop).getByRole('button', { name: 'شروع فرم انگیزه‌نامه (SOP)' }));
+    expect(
+      await screen.findByRole('heading', { name: 'اطلاعات انگیزه‌نامه', level: 1 }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/documents/sop');
+    expect(
+      screen.getByRole('button', { name: 'ثبت نهایی و پرداخت ۴٬۵۰۰٬۰۰۰ تومان' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the locked preview for a contract with writing', async () => {
+    loginAs(SARA);
+    localStorage.setItem('scorize.mock.access', 'pending');
     renderApp('/documents');
-    // A locked preview with sample data (canvas V7): src/app/locks.test.tsx.
-    expect(await screen.findByRole('region', { name: 'این بخش قفل است' })).toBeInTheDocument();
-    expect(screen.getByText('پاسپورت').closest('[inert]')).not.toBeNull();
+    expect(await screen.findByRole('region', { name: 'قرارداد در حال بررسی' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'آنچه دارید' })).toBeNull();
   });
 });
