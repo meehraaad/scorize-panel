@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { ChoiceGroup, SelectField, TogglePill } from '@/components/ui/Choices';
-import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { ProgressRing, StepBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -33,12 +32,17 @@ const STEPS = ['goal', 'background', 'english', 'plan', 'contact'] as const;
 type Step = (typeof STEPS)[number];
 type EnglishMode = EnglishLevel | 'score';
 type Field = 'field_group' | 'gpa' | 'score';
+/** What the GPA is out of: typed as on the transcript, sent out of 20. */
+type GpaScale = '20' | '4' | '100';
+const GPA_SCALES: readonly GpaScale[] = ['20', '4', '100'];
+const GPA_EXAMPLE: Record<GpaScale, number> = { '20': 17.5, '4': 3.5, '100': 87.5 };
 
 interface Draft {
   goal: Goal;
   degree: DegreeName;
   field_group: string;
   gpa: string;
+  gpaScale: GpaScale;
   english: EnglishMode;
   exam: EnglishExam;
   score: string;
@@ -54,6 +58,7 @@ const FIRST: Draft = {
   degree: 'master',
   field_group: '',
   gpa: '',
+  gpaScale: '20',
   english: 'none',
   exam: 'ielts',
   score: '',
@@ -80,13 +85,19 @@ function draftFrom(prefill: EstimatePrefill): Draft {
   };
 }
 
-const knowsSomething = (prefill: EstimatePrefill) =>
-  Object.values(prefill).some((value) =>
-    Array.isArray(value) ? value.length > 0 : value !== null,
-  );
-
 /** A number typed in Persian or Latin digits, or NaN. */
 const numberOf = (text: string) => (text.trim() ? Number(toLatinNumber(text.trim())) : NaN);
+
+/**
+ * The GPA out of 20, or NaN. The server reads 0–4 and 20–100 as other scales, so a GPA of 4 or less
+ * out of 20 can't be sent: it counts as invalid.
+ */
+function gpaOn20(draft: Draft) {
+  const gpa = numberOf(draft.gpa);
+  const scale = Number(draft.gpaScale);
+  if (!(gpa > scale / 5 && gpa <= scale)) return NaN;
+  return Math.round(gpa * (20 / scale) * 100) / 100;
+}
 
 /**
  * The quiz, one short step at a time (one hand on a phone), with a live preview of the answers beside
@@ -106,10 +117,13 @@ export function Quiz({
   const submit = useSubmitEstimate();
   const [step, setStep] = useState<Step>('goal');
   const [draft, setDraft] = useState<Draft>(() => draftFrom(options.prefill));
-  const prefilled = knowsSomething(options.prefill);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const index = STEPS.indexOf(step);
   const exam = options.english_exams.find((item) => item.name === draft.exam);
+  const gpaHintValues = {
+    scale: f.number(Number(draft.gpaScale)),
+    example: f.number(GPA_EXAMPLE[draft.gpaScale]),
+  };
 
   useEffect(() => {
     void markStarted();
@@ -117,8 +131,10 @@ export function Quiz({
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setDraft((current) => ({ ...current, [key]: value }));
-    if (key === 'field_group' || key === 'gpa' || key === 'score' || key === 'exam')
-      setErrors((current) => ({ ...current, [key === 'exam' ? 'score' : key]: undefined }));
+    // A field's error goes once it changes (the exam and the scale belong to their number).
+    const field = key === 'exam' ? 'score' : key === 'gpaScale' ? 'gpa' : key;
+    if (field === 'field_group' || field === 'gpa' || field === 'score')
+      setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
   /** This step's problems (empty: may go on), with focus on the first one. */
@@ -126,8 +142,7 @@ export function Quiz({
     const found: Partial<Record<Field, string>> = {};
     if (current === 'background') {
       if (!draft.field_group) found.field_group = t('quiz.required');
-      const gpa = numberOf(draft.gpa);
-      if (!(gpa > 0 && gpa <= 100)) found.gpa = t('quiz.gpaError');
+      if (Number.isNaN(gpaOn20(draft))) found.gpa = t('quiz.gpaError', gpaHintValues);
     }
     if (current === 'english' && draft.english === 'score' && exam) {
       const score = numberOf(draft.score);
@@ -144,7 +159,7 @@ export function Quiz({
     goal: draft.goal,
     degree: draft.degree,
     field_group: Number(draft.field_group),
-    gpa: numberOf(draft.gpa),
+    gpa: gpaOn20(draft),
     english:
       draft.english === 'score'
         ? { exam: draft.exam, score: numberOf(draft.score) }
@@ -204,7 +219,6 @@ export function Quiz({
               })}
             >
               <form noValidate onSubmit={next} className="flex flex-col gap-6">
-                {prefilled && <Notice tone="info">{t('quiz.prefilled')}</Notice>}
                 {step === 'goal' && (
                   <>
                     <ChoiceGroup
@@ -230,43 +244,54 @@ export function Quiz({
                   </>
                 )}
                 {step === 'background' && (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <SelectField
-                      id="estimate-field_group"
-                      label={t('quiz.field')}
-                      error={errors.field_group}
-                      options={[
-                        { value: '', label: t('quiz.choose') },
-                        ...options.field_groups.map((group) => ({
-                          value: String(group.id),
-                          label: group.name_persian ?? group.name,
-                        })),
-                      ]}
-                      value={draft.field_group}
-                      onChange={(value) => set('field_group', value)}
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <SelectField
+                        id="estimate-field_group"
+                        label={t('quiz.field')}
+                        error={errors.field_group}
+                        options={[
+                          { value: '', label: t('quiz.choose') },
+                          ...options.field_groups.map((group) => ({
+                            value: String(group.id),
+                            label: group.name_persian ?? group.name,
+                          })),
+                        ]}
+                        value={draft.field_group}
+                        onChange={(value) => set('field_group', value)}
+                      />
+                      <TextField
+                        id="estimate-gpa"
+                        label={t('quiz.gpa')}
+                        hint={t('quiz.gpaHint', gpaHintValues)}
+                        inputMode="decimal"
+                        value={draft.gpa}
+                        error={errors.gpa}
+                        onChange={(event) => set('gpa', event.target.value)}
+                      />
+                    </div>
+                    <ChoiceGroup
+                      legend={t('quiz.gpaScale')}
+                      options={GPA_SCALES.map((value) => ({
+                        value,
+                        label: t('quiz.gpaOf', { scale: f.number(Number(value)) }),
+                      }))}
+                      value={draft.gpaScale}
+                      onChange={(value) => set('gpaScale', value)}
                     />
-                    <TextField
-                      id="estimate-gpa"
-                      label={t('quiz.gpa')}
-                      hint={t('quiz.gpaHint')}
-                      inputMode="decimal"
-                      value={draft.gpa}
-                      error={errors.gpa}
-                      onChange={(event) => set('gpa', event.target.value)}
-                    />
-                  </div>
+                  </>
                 )}
                 {step === 'english' && (
                   <>
                     <ChoiceGroup
                       legend={t('quiz.english')}
-                      options={[
-                        ...options.english_levels.map((value) => ({
-                          value,
-                          label: t(`english.${value}`),
-                        })),
-                        { value: 'score', label: t('english.score') },
-                      ]}
+                      look="tiles"
+                      hint={t('quiz.englishHint')}
+                      options={(['score', ...options.english_levels] as const).map((value) => ({
+                        value,
+                        label: t(`english.${value}`),
+                        hint: t(`englishHint.${value}`),
+                      }))}
                       value={draft.english}
                       onChange={(value) => set('english', value)}
                     />
@@ -488,7 +513,12 @@ function LivePreview({
     [t('summary.goal'), t(`goal.${draft.goal}`)],
     [t('summary.degree'), t(`degree.${draft.degree}`)],
     [t('summary.field'), draft.field_group ? fieldName(Number(draft.field_group)) : '—'],
-    [t('summary.gpa'), Number.isFinite(gpa) ? f.number(gpa) : '—'],
+    [
+      t('summary.gpa'),
+      Number.isFinite(gpa)
+        ? t('summary.gpaOf', { gpa: f.number(gpa), scale: f.number(Number(draft.gpaScale)) })
+        : '—',
+    ],
     [
       t('summary.english'),
       draft.english === 'score'
