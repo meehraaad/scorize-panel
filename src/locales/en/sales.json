@@ -81,10 +81,12 @@
       "goal": "Team goal: call within {{n}} minutes",
       "waiting": "minutes waiting",
       "waitingFor": "waiting since {{time}}",
-      "source": "Source: {{source}}"
+      "source": "Source: {{source}}",
+      "more": "{{n}} more leads",
+      "less": "Show fewer"
     },
     "list": {
-      "title": "Today's call list",
+      "title": "Today's follow-ups and calls",
       "all": "All leads",
       "filter": "Filter the call list",
       "tab": {
@@ -97,7 +99,8 @@
       "dueToday": "Follow up today {{time}}",
       "stage": "Stage: {{stage}}",
       "order": "Order: new leads, then overdue follow-ups, then by score.",
-      "empty": "Nobody is on today's call list."
+      "empty": "Nobody is on today's call list.",
+      "pager": "{{from}}–{{to}} of {{total}}"
     },
     "tasks": {
       "title": "My tasks",
@@ -108,15 +111,9 @@
       "label": "My tasks: {{overdue}} overdue, {{requests}} requests from colleagues, {{team}} in the team queue"
     },
     "consultations": {
-      "title": "Today's consultations",
-      "all": "All consultations",
       "type": "{{type}} · {{mode}}",
-      "log": "Log session",
-      "logName": "Log the session with {{name}}",
       "prepare": "Prepare",
-      "prepareName": "Prepare for the consultation with {{name}}",
-      "logged": "Logged",
-      "empty": "No consultations today."
+      "prepareName": "Prepare for the consultation with {{name}}"
     },
     "receipts": {
       "title": "Receipts to confirm",
@@ -144,7 +141,7 @@
     },
     "upsell": {
       "title": "Cross-sell opportunities",
-      "subtitle": "Customers ready for their next purchase, found from their files.",
+      "subtitle": "{{n}} customers are ready for their next purchase, found from their files.",
       "admitted": {
         "tag": "Admitted",
         "title": "{{name}} got an offer from {{university}}",
@@ -160,7 +157,40 @@
       "no_contract": {
         "tag": "Consultation, no contract",
         "title": "{{n}} people bought a consultation this week and have no contract",
-        "action": "See the list"
+        "action": "See the list",
+        "meta": "They bought a consultation but have no contract yet. Call each of them."
+      },
+      "more": "and {{n}} more"
+    },
+    "more": "Tasks, receipts and my month",
+    "calendar": {
+      "title": "Today's calendar",
+      "subtitle": "{{day}} · {{consultations}} consultations, {{calls}} timed follow-ups",
+      "all": "All consultations",
+      "range": "{{from}}–{{to}}",
+      "meta": "{{range}} · {{meta}}",
+      "callBlock": "{{time}} · follow up with {{name}}",
+      "consultation": "Consultation with {{name}}, {{range}}, {{meta}}, {{status}}",
+      "call": "Follow up with {{name}} at {{time}}",
+      "now": "Now, {{time}}",
+      "empty": "No consultations or timed follow-ups today.",
+      "unlogged": "{{n}} of today's consultations took place and aren't logged yet.",
+      "nextNow": "Right now",
+      "nextIn": "In {{n}} minutes",
+      "nextAt": "Next consultation at {{time}}",
+      "join": "Join the session",
+      "joinName": "Join the session with {{name}}",
+      "status": {
+        "live": "In progress · log the session",
+        "need": "Session not logged",
+        "done": "Session logged",
+        "upcoming": "Upcoming"
+      },
+      "legend": {
+        "upcoming": "Upcoming consultation",
+        "need": "Not logged",
+        "done": "Logged",
+        "call": "Follow-up call"
       }
     }
   },

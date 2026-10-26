@@ -13,9 +13,9 @@ import { percentOf } from '@/lib/progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
-import { receiptsQuery, type MonthSummary, type TodayConsultation, type TodayData } from '../api';
+import { receiptsQuery, type MonthSummary, type TodayData } from '../api';
 import { useSalesFormat } from '../format';
-import { customerPath, salesPath } from '../paths';
+import { salesPath } from '../paths';
 import { toast } from '@/lib/toast';
 
 /** "My tasks": one link with the three counts (the tasks page). */
@@ -54,77 +54,6 @@ export function TasksCard({ tasks }: { tasks: TodayData['tasks'] }) {
         ))}
       </span>
     </Link>
-  );
-}
-
-export function TodayConsultationsCard({ consultations }: { consultations: TodayConsultation[] }) {
-  const { t } = useTranslation('sales');
-  const f = useFormat();
-  // Read once: the side card doesn't need to re-render by the minute.
-  const [now] = useState(() => Date.now());
-  return (
-    <SectionCard
-      id="today-consultations"
-      variant="panel"
-      title={t('today.consultations.title')}
-      end={
-        <Link to={salesPath('consultations')} className="text-sm text-primary-text">
-          {t('today.consultations.all')}
-        </Link>
-      }
-    >
-      {consultations.length === 0 ? (
-        <p className="m-0 text-sm text-text-2">{t('today.consultations.empty')}</p>
-      ) : (
-        <ul className="m-0 flex list-none flex-col gap-3 p-0">
-          {consultations.map((item) => {
-            const past = new Date(item.starts_at).getTime() < now;
-            return (
-              <li key={item.id} className="flex items-center gap-3">
-                <span
-                  className={`w-12 flex-none text-sm font-bold tabular-nums ${past ? 'text-text-2' : 'text-text'}`}
-                >
-                  {f.time(item.starts_at)}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <Link
-                    to={customerPath(item.customer)}
-                    className="truncate text-[15px] font-semibold text-text hover:underline"
-                  >
-                    {item.name}
-                  </Link>
-                  <span className="truncate text-xs text-text-2">
-                    {t('today.consultations.type', {
-                      type: item.type,
-                      mode: t(`mode.${item.mode}`),
-                    })}
-                  </span>
-                </span>
-                {item.logged ? (
-                  <span className="text-xs text-good">{t('today.consultations.logged')}</span>
-                ) : past ? (
-                  <Link
-                    to={customerPath(item.customer, 'meeting', item.id)}
-                    aria-label={t('today.consultations.logName', { name: item.name })}
-                    className={buttonClass('outline', 'h-11 px-3.5 text-sm')}
-                  >
-                    {t('today.consultations.log')}
-                  </Link>
-                ) : (
-                  <Link
-                    to={customerPath(item.customer)}
-                    aria-label={t('today.consultations.prepareName', { name: item.name })}
-                    className={buttonClass('outline', 'h-11 px-3.5 text-sm')}
-                  >
-                    {t('today.consultations.prepare')}
-                  </Link>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </SectionCard>
   );
 }
 

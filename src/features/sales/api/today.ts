@@ -41,8 +41,11 @@ export interface TodayConsultation {
   type: string;
   mode: 'online' | 'in_person';
   starts_at: string;
+  /** The session length (the day calendar's block); null when the consultation type has none. */
+  minutes: number | null;
   /** A ContactHistory exists for it (the session was logged). */
   logged: boolean;
+  meeting_url: string | null;
 }
 
 /** A card-transfer receipt waiting for a seller (Payment.Status.PENDING_RECEIPT). */
