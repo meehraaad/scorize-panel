@@ -182,3 +182,58 @@ export function StepList({
     </ol>
   );
 }
+
+/**
+ * A round progress meter with the value in words beside it (a quiz's "profile 60% complete").
+ * `onHero`: on the dark hero card.
+ */
+export function ProgressRing({
+  value,
+  label,
+  size = 64,
+  tone = 'surface',
+}: {
+  /** 0–100. */
+  value: number;
+  /** Read by screen readers ("Profile 60% complete"). */
+  label: string;
+  size?: number;
+  tone?: 'surface' | 'onHero';
+}) {
+  const radius = 27;
+  const circumference = 2 * Math.PI * radius;
+  const hero = tone === 'onHero';
+  return (
+    <svg
+      role="img"
+      aria-label={label}
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      className="flex-none -rotate-90"
+    >
+      <circle
+        cx="32"
+        cy="32"
+        r={radius}
+        fill="none"
+        strokeWidth="7"
+        className={hero ? 'stroke-hero-line' : 'stroke-track'}
+      />
+      {value > 0 && (
+        <circle
+          cx="32"
+          cy="32"
+          r={radius}
+          fill="none"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={`${String((circumference * Math.min(Math.max(value, 0), 100)) / 100)} ${String(circumference)}`}
+          className={`transition-[stroke-dasharray] duration-500 motion-reduce:transition-none ${
+            hero ? 'stroke-hero-accent' : 'stroke-primary'
+          }`}
+        />
+      )}
+    </svg>
+  );
+}

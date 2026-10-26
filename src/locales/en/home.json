@@ -118,17 +118,7 @@
       }
     },
     "estimate": {
-      "title": "What's your admission chance?",
-      "lastTitle": "Your last admission-chance result",
-      "text": "Answer a few short questions to see your chance of admission in each country. Under two minutes.",
-      "country": "{{country}}: {{band}}",
-      "band": {
-        "high": "high",
-        "medium": "medium",
-        "low": "low"
-      },
-      "start": "Start the quiz",
-      "see": "See the result"
+      "text": "Answer a few short questions to see your chance of admission in each country. Under two minutes."
     }
   },
   "hero": {

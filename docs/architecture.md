@@ -33,7 +33,8 @@ src/
 ├── components/            Shared UI; components/ui/ = design-system primitives,
 │                          components/tickets/ = conversation blocks (any panel),
 │                          components/applicant/ = applicant-panel pieces several pages share and
-│                          that talk to the API (SectionLock, CallRequestButton; canvas V7)
+│                          that talk to the API (SectionLock, CallRequestButton; canvas V7;
+│                          estimate/: the admission-chance quiz and result, guest home + /estimate)
 ├── lib/                   Infrastructure (bottom layer)
 │   ├── api/               fetch client (session cookie + CSRF), React Query client
 │   ├── applicant/         Shared by applicant pages: query-key prefix, approve/reject an application,
@@ -83,7 +84,7 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `PageHeader`                                                               | The page's h1, subtitle and actions (sets the document title)                                                                                                                                                       |
 | `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`                | A titled card (a region named by its h2); a section title above several cards or a toolbar                                                                                                                          |
 | `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`, `PageSkeleton` | "Nothing here yet" with a next step; loading rows; a page's loading shape by kind                                                                                                                                   |
-| `ProgressBar`, `StepBar`, `StepList`, `StepDot`                            | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                                                                                                                     |
+| `ProgressBar`, `StepBar`, `StepList`, `StepDot`, `ProgressRing`            | Progress and steps (case stages, visa, writing, form sections), a round meter (the quiz's answers); `onHero` tone for the dark card                                                                                 |
 | `StatGrid`                                                                 | A row of number tiles                                                                                                                                                                                               |
 | `FilterTabs`, `SearchField`, `Pager`                                       | List toolbars and paging                                                                                                                                                                                            |
 | `FileDrop`, `PickedFile`, `FileTile`                                       | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully                                                                                           |

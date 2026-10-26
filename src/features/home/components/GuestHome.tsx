@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
+import { EstimateFlow } from '@/components/applicant/estimate/EstimateFlow';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
@@ -17,7 +17,6 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { BAND_TONE, latestEstimateQuery } from '@/lib/applicant/estimate';
 
 const JOURNEY = ['consult', 'writing', 'documents', 'apply', 'results', 'visa'] as const;
 const STARTING = ['registered', 'review', 'start', 'call'] as const;
@@ -33,13 +32,16 @@ const PREVIEWS: { section: LockableSection; to: string }[] = [
 /**
  * Home of an account without an active contract: no contract yet (`guest`), or one in review
  * (`pending`). What working with Scorize looks like, previews of the locked sections, and what is
- * open now. Design: canvas V7 section 2 (AppGuest, AppGuestPending).
+ * open now. Design: canvas V7 section 2 (AppGuest, AppGuestPending). Without a contract, the
+ * admission-chance quiz and its result take the hero's place once the quiz is on the server (the
+ * new-user dashboard: "Scorize New User Dashboard" canvas).
  */
 export function GuestHome({ access }: { access: ApplicantAccess }) {
   const { t } = useTranslation('home');
   const f = useFormat();
   const user = useUser();
   const pending = access.state === 'pending';
+  const dashboard = !pending && ON_SERVER.estimate;
   const name = user.first_name;
 
   const title = pending
@@ -62,68 +64,75 @@ export function GuestHome({ access }: { access: ApplicantAccess }) {
     <PageStack spacing="wide">
       <PageHeader
         title={title}
-        subtitle={t(pending ? 'guest.pending.subtitle' : 'guest.subtitle')}
+        subtitle={t(
+          pending ? 'guest.pending.subtitle' : dashboard ? 'guest.estimate.text' : 'guest.subtitle',
+        )}
       />
 
-      <section
-        aria-labelledby="guest-hero-title"
-        className="flex flex-col gap-5 rounded-[24px] bg-hero px-5 py-[22px] text-on-hero shadow-hero lg:gap-7 lg:rounded-[32px] lg:px-11 lg:py-9"
-      >
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div className="flex flex-[1_1_420px] flex-col gap-2">
-            <span className="text-[13px] font-semibold text-hero-current">
-              {t(pending ? 'guest.pending.kicker' : 'guest.hero.kicker')}
-            </span>
-            <h2
-              id="guest-hero-title"
-              className="m-0 font-display text-[22px] leading-snug font-bold lg:text-[30px]"
-            >
-              {pending ? contract : t('guest.hero.title')}
-            </h2>
-            <p className="m-0 text-[15px] leading-8 text-on-hero-2">
-              {t(pending ? 'guest.pending.text' : 'guest.hero.text')}
-            </p>
-          </div>
-          {!pending && (
-            <div className="flex flex-wrap gap-2 max-sm:w-full [&>*]:flex-auto">
-              <a href={SITE.consultation} className={buttonClass('outline', lockButtonOnHero)}>
-                {t('guest.consult')}
-              </a>
-              <CallRequestButton
-                label={t('guest.call')}
-                className={buttonClass('primary')}
-                phone={access.phone}
-                topic="admission"
-                page="home"
-                reason="guest"
-              />
+      {dashboard ? (
+        <EstimateFlow phone={access.phone} detailsTo="/estimate" />
+      ) : (
+        <section
+          aria-labelledby="guest-hero-title"
+          className="flex flex-col gap-5 rounded-[24px] bg-hero px-5 py-[22px] text-on-hero shadow-hero lg:gap-7 lg:rounded-[32px] lg:px-11 lg:py-9"
+        >
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <div className="flex flex-[1_1_420px] flex-col gap-2">
+              <span className="text-[13px] font-semibold text-hero-current">
+                {t(pending ? 'guest.pending.kicker' : 'guest.hero.kicker')}
+              </span>
+              <h2
+                id="guest-hero-title"
+                className="m-0 font-display text-[22px] leading-snug font-bold lg:text-[30px]"
+              >
+                {pending ? contract : t('guest.hero.title')}
+              </h2>
+              <p className="m-0 text-[15px] leading-8 text-on-hero-2">
+                {t(pending ? 'guest.pending.text' : 'guest.hero.text')}
+              </p>
             </div>
+            {!pending && (
+              <div className="flex flex-wrap gap-2 max-sm:w-full [&>*]:flex-auto">
+                <a href={SITE.consultation} className={buttonClass('outline', lockButtonOnHero)}>
+                  {t('guest.consult')}
+                </a>
+                <CallRequestButton
+                  label={t('guest.call')}
+                  className={buttonClass('primary')}
+                  phone={access.phone}
+                  topic="admission"
+                  page="home"
+                  reason="guest"
+                />
+              </div>
+            )}
+          </div>
+          {pending ? (
+            <StepBar
+              label={t('guest.pending.steps')}
+              tone="onHero"
+              steps={STARTING.map((step) => ({
+                key: step,
+                label: t(`guest.pending.step.${step}`),
+              }))}
+              current={REVIEW_STEP}
+              className="pt-5 shadow-[inset_0_1px_0_var(--hero-line)] lg:pt-7"
+            />
+          ) : (
+            <StepBar
+              label={t('guest.hero.steps')}
+              tone="onHero"
+              steps={JOURNEY.map((step) => ({
+                key: step,
+                label: t(`guest.step.${step}.name`),
+                hint: t(`guest.step.${step}.hint`),
+              }))}
+              current={-1}
+              className="pt-5 shadow-[inset_0_1px_0_var(--hero-line)] lg:pt-7"
+            />
           )}
-        </div>
-        {pending ? (
-          <StepBar
-            label={t('guest.pending.steps')}
-            tone="onHero"
-            steps={STARTING.map((step) => ({ key: step, label: t(`guest.pending.step.${step}`) }))}
-            current={REVIEW_STEP}
-            className="pt-5 shadow-[inset_0_1px_0_var(--hero-line)] lg:pt-7"
-          />
-        ) : (
-          <StepBar
-            label={t('guest.hero.steps')}
-            tone="onHero"
-            steps={JOURNEY.map((step) => ({
-              key: step,
-              label: t(`guest.step.${step}.name`),
-              hint: t(`guest.step.${step}.hint`),
-            }))}
-            current={-1}
-            className="pt-5 shadow-[inset_0_1px_0_var(--hero-line)] lg:pt-7"
-          />
-        )}
-      </section>
-
-      {!pending && ON_SERVER.estimate && <EstimateCard />}
+        </section>
+      )}
 
       {!pending && ON_SERVER.turkey && <TurkeyCard step={access.turkey} />}
 
@@ -193,55 +202,6 @@ export function GuestHome({ access }: { access: ApplicantAccess }) {
         </TileGrid>
       </section>
     </PageStack>
-  );
-}
-
-const ESTIMATE_COUNTRIES_SHOWN = 3;
-
-/**
- * The admission-chance quiz: an invitation, or the last result's best countries once taken
- * (the new-user dashboard). Loads on its own, so the rest of the home doesn't wait for it.
- */
-function EstimateCard() {
-  const { t } = useTranslation('home');
-  const { data: latest } = useQuery(latestEstimateQuery);
-  const shown = latest?.countries.slice(0, ESTIMATE_COUNTRIES_SHOWN) ?? [];
-  return (
-    <Card
-      aria-labelledby="guest-estimate"
-      className="flex flex-wrap items-center gap-x-7 gap-y-5 p-5 shadow-[0_0_0_1.5px_var(--primary),var(--panel-shadow)] lg:p-7"
-    >
-      <span
-        aria-hidden="true"
-        className="flex size-16 flex-none items-center justify-center rounded-[20px] bg-tint text-primary-text"
-      >
-        <Icon name="chart" size={28} />
-      </span>
-      <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-1.5">
-        <h2 id="guest-estimate" className="m-0 font-display text-[21px] font-bold">
-          {t(latest ? 'guest.estimate.lastTitle' : 'guest.estimate.title')}
-        </h2>
-        {shown.length > 0 ? (
-          <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-            {shown.map((estimate) => (
-              <li key={estimate.country.id}>
-                <Chip tone={BAND_TONE[estimate.band]} dot>
-                  {t('guest.estimate.country', {
-                    country: estimate.country.name,
-                    band: t(`guest.estimate.band.${estimate.band}`),
-                  })}
-                </Chip>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="m-0 text-sm leading-7 text-text-2">{t('guest.estimate.text')}</p>
-        )}
-      </div>
-      <Link to="/estimate" className={buttonClass('primary', 'max-sm:w-full')}>
-        {t(latest ? 'guest.estimate.see' : 'guest.estimate.start')}
-      </Link>
-    </Card>
   );
 }
 

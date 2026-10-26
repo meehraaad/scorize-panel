@@ -39,7 +39,6 @@
     "time": "When?",
     "back": "Back",
     "next": "Continue",
-    "sending": "Working it out…",
     "submit": "See my chance",
     "throttled": "You've sent the quiz several times in the last hour. Try again a little later.",
     "error": "Your result couldn't be worked out. Try again.",
@@ -137,7 +136,20 @@
     "holds": "Holding you back a little:",
     "raise": "What would raise your chance",
     "raiseStep": "With IELTS {{score}}: from “{{from}}” to “{{to}}”",
-    "similar": "Admissions of people like you"
+    "similar": "Admissions of people like you",
+    "asideLabel": "Your consultant",
+    "bestKicker": "Your best path",
+    "best": "Your best chance: {{country}}",
+    "bestChance": "admission chance",
+    "compare": "Countries compared",
+    "details": "Details for each country",
+    "callSteps": "Consultant call steps",
+    "callSent": "Your answers reached our consultants",
+    "freeCall": {
+      "title": "A short free call",
+      "text": "An admissions consultant goes through the result with you and answers your questions.",
+      "button": "Ask a consultant to call"
+    }
   },
   "band": {
     "high": "High",
@@ -150,5 +162,31 @@
     "gpa": "GPA",
     "english": "English",
     "field": "field"
+  },
+  "analysing": {
+    "kicker": "Preparing your result",
+    "title": "Just a moment…",
+    "background": "Reviewing your academic background",
+    "similar": "Comparing with applicants like you",
+    "consultant": "Getting the result ready for your consultant"
+  },
+  "preview": {
+    "kicker": "Your result is taking shape",
+    "complete": "Answers {{n}}% complete",
+    "get": {
+      "title": "After these few questions",
+      "chance": {
+        "title": "Your admission chance in each country",
+        "text": "Instantly, right here"
+      },
+      "consultant": {
+        "title": "A free admissions consultant",
+        "text": "A short call, no commitment"
+      },
+      "similar": {
+        "title": "Admissions of people like you",
+        "text": "From real Scorize cases"
+      }
+    }
   }
 }
