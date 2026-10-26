@@ -143,7 +143,20 @@ export function ReceiptsCard() {
           ))}
         </ul>
       )}
-      {pages > 1 && <Pager inset page={page} pages={pages} pending={!loaded} onPage={setPage} />}
+      {head && head.count > 0 && (
+        <Pager
+          inset
+          status={t('today.receipts.pager', {
+            from: f.number(Math.min(start + 1, head.count)),
+            to: f.number(Math.min(start + RECEIPTS_SHOWN, head.count)),
+            total: f.number(head.count),
+          })}
+          page={page}
+          pages={pages}
+          pending={!loaded}
+          onPage={setPage}
+        />
+      )}
     </SectionCard>
   );
 }

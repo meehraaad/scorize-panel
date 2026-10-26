@@ -82,8 +82,7 @@
       "waiting": "minutes waiting",
       "waitingFor": "waiting since {{time}}",
       "source": "Source: {{source}}",
-      "more": "{{n}} more leads",
-      "less": "Show fewer"
+      "pager": "{{from}}–{{to}} of {{total}} waiting leads"
     },
     "list": {
       "title": "Today's follow-ups and calls",
@@ -128,7 +127,8 @@
       },
       "empty": "No receipts waiting.",
       "error": "The receipt wasn't confirmed. Please try again.",
-      "confirmed": "{{name}}'s receipt confirmed."
+      "confirmed": "{{name}}'s receipt confirmed.",
+      "pager": "{{from}}–{{to}} of {{total}}"
     },
     "month": {
       "title": "My month",
@@ -160,7 +160,9 @@
         "action": "See the list",
         "meta": "They bought a consultation but have no contract yet. Call each of them."
       },
-      "more": "and {{n}} more"
+      "more": "and {{n}} more",
+      "previous": "Previous opportunities",
+      "next": "Next opportunities"
     },
     "calendar": {
       "title": "Today's calendar",

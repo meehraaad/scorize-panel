@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { Icon } from '@/components/ui/Icon';
+import { Pager } from '@/components/ui/Pager';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FIRST_CALL_TARGET_MINUTES } from '@/lib/sales/api';
 import type { HotLead } from '../api';
@@ -10,17 +10,19 @@ import { useNow } from '../useNow';
 import { ContactButtons } from './ContactButtons';
 import { ScoreChip } from './LeadChips';
 
-/** Leads shown before "show more": the oldest ones, which are the most urgent. */
-const HOT_SHOWN = 3;
+/** Leads per page: the first page holds the oldest ones, which are the most urgent. */
+export const HOT_PAGE = 3;
 
 /** "Call now": new leads nobody has called, oldest first, each with a running wait timer. */
 export function HotLeads({ leads }: { leads: HotLead[] }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const now = useNow();
-  const [all, setAll] = useState(false);
-  const shown = all ? leads : leads.slice(0, HOT_SHOWN);
-  const hidden = leads.length - HOT_SHOWN;
+  const [page, setPage] = useState(1);
+  const pages = Math.max(1, Math.ceil(leads.length / HOT_PAGE));
+  // The list refreshes every minute: called leads leave it, so the page may no longer exist.
+  const current = Math.min(page, pages);
+  const shown = leads.slice((current - 1) * HOT_PAGE, current * HOT_PAGE);
 
   const clock = (since: string) => {
     const seconds = Math.max(0, Math.floor((now - new Date(since).getTime()) / 1000));
@@ -95,18 +97,18 @@ export function HotLeads({ leads }: { leads: HotLead[] }) {
           );
         })}
       </ul>
-      {hidden > 0 && (
-        <div className="px-5 py-3 shadow-[inset_0_1px_0_var(--hero-line)] lg:px-9">
-          <button
-            type="button"
-            aria-expanded={all}
-            onClick={() => setAll(!all)}
-            className="inline-flex h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold text-on-hero hover:bg-hero-raised"
-          >
-            {all ? t('today.hot.less') : t('today.hot.more', { n: f.number(hidden) })}
-            <Icon name="chevronDown" size={16} className={all ? 'rotate-180' : ''} />
-          </button>
-        </div>
+      {pages > 1 && (
+        <Pager
+          onHero
+          status={t('today.hot.pager', {
+            from: f.number((current - 1) * HOT_PAGE + 1),
+            to: f.number((current - 1) * HOT_PAGE + shown.length),
+            total: f.number(leads.length),
+          })}
+          page={current}
+          pages={pages}
+          onPage={setPage}
+        />
       )}
     </section>
   );

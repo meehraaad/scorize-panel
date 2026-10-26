@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { api } from '@/lib/api/client';
-import type { CustomerData, CustomerInfo } from './api';
+import type { CustomerData, CustomerInfo, TodayData } from './api';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
@@ -234,6 +234,28 @@ describe('sales panel, seller pages', () => {
       release();
     }
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+
+  it('today: new leads to call now, three at a time', async () => {
+    const user = userEvent.setup();
+    const today = await api<TodayData>('/sales/v1/today/');
+    const more = today.hot.map((lead) => ({
+      ...lead,
+      lead: lead.lead + 100,
+      name: `${lead.name} ۲`,
+    }));
+    server.use(
+      http.get('/api/sales/v1/today/', () =>
+        HttpResponse.json({ ...today, hot: [...today.hot, ...more.slice(0, 2)] }),
+      ),
+    );
+    renderApp('/sales');
+    const hot = await screen.findByRole('region', { name: 'لیدهای تازه، به ترتیب زمان انتظار' });
+    expect(within(hot).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(hot).getByText('۱ تا ۳ از ۵ لید منتظر')).toBeInTheDocument();
+    await user.click(within(hot).getByRole('button', { name: 'بعدی' }));
+    expect(within(hot).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(hot).getByText(`${today.hot[0]?.name ?? ''} ۲`)).toBeInTheDocument();
   });
 
   it('today: receipts three at a time, across server pages', async () => {
