@@ -104,9 +104,10 @@ Both combined `today/` endpoints remain compatible. The panel now uses these foc
 
 - Supervisor `today/board/` and `today/waiting/`: `?page=`, `{count, page_size: 20, results}`;
   `today/counts/`: the existing stage-count object. Visible sections load concurrently.
-- Seller `today/outreach/`: `{hot, calls}`, pages of 50. `hot_page` pages hot leads independently;
+- Seller `today/outreach/`: `{hot, calls}`, hot pages of 50 and call pages of 6. `hot_page` pages hot leads independently;
   `page` and `bucket=all|new|today|overdue` select calls. `calls.counts` holds global tab totals.
-- Seller `today/activity/`: task counts plus paginated `consultations` (`?page=`, size 20).
+- Seller `today/activity/`: task counts, paginated `consultations` (size 20) and `calendar_calls` (size 50).
+  Both calendar lists use `?page=` and stay independent of the call-list filter.
 - Seller `today/insights/`: month summary and upsell suggestions; disabled until the details open.
 
 Requests keep their sales/supervisor query prefixes and periodic refresh. Task changes invalidate

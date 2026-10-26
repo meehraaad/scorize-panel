@@ -10,13 +10,7 @@ import type {
   TodayData,
 } from '@/features/sales/api';
 import { BOARD_STAGES } from '@/features/sales/api';
-import {
-  STAGES,
-  type Degree,
-  type LeadSource,
-  type LeadStage,
-  type LostReason,
-} from '@/lib/sales/api';
+import { type Degree, type LeadSource, type LeadStage, type LostReason } from '@/lib/sales/api';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';
 
@@ -573,7 +567,9 @@ function todayOf(data: SalesState): TodayData {
         type: item.type.name,
         mode: item.mode,
         starts_at: item.starts_at,
+        minutes: item.minutes,
         logged: item.logged,
+        meeting_url: item.meeting_url,
       })),
     month: {
       won: data.customers.filter((item) => item.lead.stage === 'won').length + 6,
@@ -651,11 +647,6 @@ function boardOf(data: SalesState): BoardData {
   };
 }
 
-const STAGE_RANK = Object.fromEntries(STAGES.map((stage, index) => [stage, index])) as Record<
-  LeadStage,
-  number
->;
-
 function monthOf(data: SalesState): MonthData {
   const won = data.customers.filter((item) => item.lead.stage === 'won').length + 6;
   return {
@@ -697,7 +688,7 @@ export const salesHandlers = [
           ...pageOf(
             request,
             today.calls.filter((row) => bucket === 'all' || row.bucket === bucket),
-            50,
+            6,
           ),
           counts: Object.fromEntries(
             ['all', 'new', 'today', 'overdue'].map((key) => [
@@ -712,6 +703,16 @@ export const salesHandlers = [
       return HttpResponse.json({
         tasks: today.tasks,
         consultations: pageOf(request, today.consultations, 20),
+        calendar_calls: pageOf(
+          request,
+          today.calls.filter(
+            (row) =>
+              row.follow_up_at &&
+              new Date(row.follow_up_at).getTime() >= startOfToday() &&
+              new Date(row.follow_up_at).getTime() < endOfToday(),
+          ),
+          50,
+        ),
       });
     if (params.section === 'insights')
       return HttpResponse.json({ month: today.month, upsell: today.upsell });
@@ -731,8 +732,14 @@ export const salesHandlers = [
       stage?: LeadStage;
       follow_up_at?: string;
     };
-    for (const item of data.customers.filter((entry) => body.ids.includes(entry.lead.id))) {
-      if (body.stage && STAGE_RANK[body.stage] >= 0) {
+    const openStages: readonly LeadStage[] = ['new', 'contacted', 'consulted', 'offer'];
+    if (body.stage && !openStages.includes(body.stage)) {
+      return HttpResponse.json({ stage: ['invalid_choice'] }, { status: 400 });
+    }
+    for (const item of data.customers.filter(
+      (entry) => body.ids.includes(entry.lead.id) && openStages.includes(entry.lead.stage),
+    )) {
+      if (body.stage) {
         item.lead.stage = body.stage;
         item.lead.stage_since = new Date().toISOString();
       }

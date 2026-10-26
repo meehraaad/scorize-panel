@@ -1,9 +1,12 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
+import { api } from '@/lib/api/client';
+import type { CustomerData, CustomerInfo } from './api';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
 
 const NIMA = 3; // seller (mock user in src/mocks/handlers.ts)
@@ -33,18 +36,40 @@ describe('sales panel, seller pages', () => {
       '/sales/customers/101?log=call',
     );
 
-    const calls = screen.getByRole('region', { name: 'فهرست تماس امروز' });
+    // Consultations and today's timed follow-ups on the day calendar.
+    const calendar = await screen.findByRole('region', { name: 'تقویم امروز' });
+    expect(
+      within(calendar).getByRole('link', { name: /^مشاوره‌ی .*، جلسه ثبت شد$/ }),
+    ).toHaveAttribute('href', '/sales/customers/104');
+    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+
+    // Ten calls: six on the first page, four on the next.
+    const calls = screen.getByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' });
+    expect(within(calls).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(calls).getByText('۱ تا ۶ از ۱۰')).toBeInTheDocument();
+    await user.click(within(calls).getByRole('button', { name: 'بعدی' }));
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(4));
     await user.click(within(calls).getByRole('button', { name: /عقب‌افتاده/ }));
     expect(await within(calls).findByText('سمیرا نوروزی')).toBeInTheDocument();
-    expect(within(calls).getAllByRole('listitem')).toHaveLength(2);
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(2));
 
+    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
     await user.click(screen.getByText('ماه من', { selector: 'summary' }));
     // Two admissions of one customer make one card.
-    const upsell = await screen.findByRole('region', { name: 'فرصت‌های فروش مکمل' });
-    expect(within(upsell).getAllByRole('listitem')).toHaveLength(3);
+    const upsell = await screen.findByRole('region', { name: /^فرصت‌های فروش مکمل/ });
     expect(
-      within(upsell).getByText('زهرا موسوی از Uppsala University و Lund University پذیرش گرفت'),
-    ).toBeInTheDocument();
+      within(upsell).getByRole('link', {
+        name: 'زهرا موسوی از Uppsala University و Lund University پذیرش گرفت',
+      }),
+    ).toHaveAttribute('href', '/sales/customers/120');
+    expect(within(upsell).getByRole('link', { name: /پیشنهاد خدمات ویزا/ })).toHaveAttribute(
+      'href',
+      '/sales/customers/120/offer',
+    );
+    expect(within(upsell).getByRole('link', { name: /کامران زارع/ })).toHaveAttribute(
+      'href',
+      '/sales/customers/123',
+    );
 
     const receipts = screen.getByRole('region', { name: /رسیدهای منتظر تأیید/ });
     await user.click(within(receipts).getByRole('button', { name: 'تأیید رسید کیان مرادی' }));
@@ -135,6 +160,33 @@ describe('sales panel, seller pages', () => {
     expect(universities).toEqual(['University of Toronto', 'University of Waterloo', 'TU Munich']);
   });
 
+  it('customer: opens the contact dialog while the details tab is still loading', async () => {
+    const info = await api<CustomerInfo>('/sales/v1/customers/105/info/');
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get('/api/sales/v1/customers/105/info/', async () => {
+        await pending;
+        return HttpResponse.json(info);
+      }),
+    );
+    renderApp('/sales/customers/105/info?log=call');
+    try {
+      expect(
+        await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'عرفان ملکی' })).toBeInTheDocument();
+    } finally {
+      release();
+    }
+    await screen.findByRole('region', {
+      name: i18n.t('info.personal.title', { ns: 'sales' }),
+      hidden: true,
+    });
+  });
+
   it('customer: asks a colleague for something', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
@@ -154,6 +206,36 @@ describe('sales panel, seller pages', () => {
     expect(screen.getByRole('region', { name: 'پیش‌نویس، منتظر مدیر' })).toHaveTextContent(
       'مدیر بررسی می‌کند',
     );
+  });
+
+  it('board: replaces the board with loading while a customer request is pending', async () => {
+    const user = userEvent.setup();
+    const customer = await api<CustomerData>('/sales/v1/customers/101/');
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get('/api/sales/v1/customers/101/', async () => {
+        await pending;
+        return HttpResponse.json(customer);
+      }),
+    );
+    const router = renderApp('/sales/board');
+    await screen.findByRole('heading', { name: 'تابلوی فروش' });
+    const card = screen
+      .getAllByRole('link')
+      .find((link) => link.getAttribute('href') === '/sales/customers/101');
+    if (!card) throw new Error('No customer card');
+    try {
+      await user.click(card);
+      await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/sales\/customers\//));
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('در حال بارگذاری'));
+      expect(screen.queryByRole('heading', { name: 'تابلوی فروش' })).not.toBeInTheDocument();
+    } finally {
+      release();
+    }
+    expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 
   it('month: goal and funnel', async () => {

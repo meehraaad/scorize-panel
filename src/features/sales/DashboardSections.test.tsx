@@ -24,6 +24,7 @@ it('seller shell and outreach stay usable while activity waits; insights fetch o
       return HttpResponse.json({
         tasks: { overdue: 0, requests: 0, team: 0 },
         consultations: { count: 0, page_size: 20, results: [] },
+        calendar_calls: { count: 0, page_size: 50, results: [] },
       });
     }),
     http.get('/api/sales/v1/today/insights/', () => {
@@ -33,13 +34,15 @@ it('seller shell and outreach stay usable while activity waits; insights fetch o
   );
   try {
     renderApp('/sales');
-    expect(await screen.findByRole('region', { name: 'فهرست تماس امروز' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'ثبت لید دستی' })).toBeInTheDocument();
     expect(insights).not.toHaveBeenCalled();
     await userEvent.click(screen.getByText('ماه من', { selector: 'summary' }));
     await waitFor(() => expect(insights).toHaveBeenCalledOnce());
     expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('errors.sectionTitle'));
-    expect(screen.getByRole('region', { name: 'فهرست تماس امروز' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' })).toBeInTheDocument();
   } finally {
     release();
   }

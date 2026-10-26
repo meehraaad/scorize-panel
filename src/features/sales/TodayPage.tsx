@@ -7,18 +7,23 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon } from '@/components/ui/Icon';
-import { PageColumns, PageStack } from '@/components/ui/PageColumns';
+import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { outreachQuery, activityQuery, insightsQuery, type CallBucket } from './api';
 import { CallList } from './components/CallList';
+import { DayCalendar } from './components/DayCalendar';
 import { HotLeads } from './components/HotLeads';
-import { MonthCard, ReceiptsCard, TasksCard, TodayConsultationsCard } from './components/TodaySide';
+import { MonthCard, ReceiptsCard, TasksCard } from './components/TodaySide';
 import { UpsellSection } from './components/UpsellSection';
 import { salesPath } from './paths';
 
-/** The seller's home: who to call now, today's list, sessions, receipts, the month. Canvas "امروز". */
+/**
+ * The seller's home (canvas "امروز"), in order of what the day is made of: who to call now, then
+ * the day itself (consultations and timed follow-ups on a calendar, beside the follow-up list),
+ * then the chances to sell more, then tasks, receipts and the month.
+ */
 export default function TodayPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -33,7 +38,23 @@ export default function TodayPage() {
   const insights = useQuery({ ...insightsQuery, enabled: expanded });
   useClampPage(outreach.data?.hot, hotPage, setHotPage);
   useClampPage(outreach.data?.calls, page, setPage);
-  useClampPage(activity.data?.consultations, activityPage, setActivityPage);
+  useClampPage(
+    activity.data
+      ? {
+          count: Math.max(
+            pagesOf(activity.data.consultations),
+            pagesOf(activity.data.calendar_calls),
+          ),
+          page_size: 1,
+        }
+      : undefined,
+    activityPage,
+    setActivityPage,
+  );
+  const calendarPages = Math.max(
+    pagesOf(activity.data?.consultations),
+    pagesOf(activity.data?.calendar_calls),
+  );
   const waiting = outreach.data?.hot.count ?? 0;
   const name = user.first_name || user.staff?.full_name || '';
 
@@ -47,7 +68,7 @@ export default function TodayPage() {
               ? t('today.title', { name, n: f.number(waiting) })
               : t('today.titleClear', { name })
         }
-        subtitle={t('today.subtitleCalm', { n: f.number(outreach.data?.calls.count ?? 0) })}
+        subtitle={t('today.subtitleCalm', { n: f.number(outreach.data?.calls.counts.all ?? 0) })}
         actions={
           <Link to={salesPath('leads?new=1')} className={buttonClass('outline')}>
             <Icon name="plus" size={18} />
@@ -69,68 +90,76 @@ export default function TodayPage() {
           </>
         )}
       </QuerySection>
-      <PageColumns
-        asideLabel={t('today.month.title')}
-        main={
-          <QuerySection
-            pending={outreach.isPending}
-            error={outreach.error}
-            retry={() => {
-              void outreach.refetch();
+      <div className="grid items-start gap-4 lg:gap-7 xl:grid-cols-2">
+        <QuerySection
+          pending={activity.isPending}
+          error={activity.error}
+          retry={() => {
+            void activity.refetch();
+          }}
+        >
+          <DayCalendar
+            consultations={activity.data?.consultations.results ?? []}
+            calls={activity.data?.calendar_calls.results ?? []}
+          />
+          <Pager page={activityPage} pages={calendarPages} onPage={setActivityPage} />
+        </QuerySection>
+        <QuerySection
+          pending={outreach.isPending}
+          error={outreach.error}
+          retry={() => {
+            void outreach.refetch();
+          }}
+        >
+          <CallList
+            calls={outreach.data?.calls.results ?? []}
+            counts={outreach.data?.calls.counts}
+            page={page}
+            pages={pagesOf(outreach.data?.calls)}
+            onPage={setPage}
+            total={outreach.data?.calls.count ?? 0}
+            tab={bucket}
+            onTab={(value) => {
+              setBucket(value);
+              setPage(1);
             }}
-          >
-            <CallList
-              calls={outreach.data?.calls.results ?? []}
-              counts={outreach.data?.calls.counts}
-              tab={bucket}
-              onTab={(value) => {
-                setBucket(value);
-                setPage(1);
-              }}
-            />
-            <Pager page={page} pages={pagesOf(outreach.data?.calls)} onPage={setPage} />
-          </QuerySection>
-        }
-        aside={
-          <>
+          />
+        </QuerySection>
+      </div>
+      <aside
+        aria-label={t('today.more')}
+        className="grid items-start gap-4 md:grid-cols-2 lg:gap-7 xl:grid-cols-3"
+      >
+        <QuerySection
+          pending={activity.isPending}
+          error={activity.error}
+          retry={() => {
+            void activity.refetch();
+          }}
+        >
+          {activity.data && <TasksCard tasks={activity.data.tasks} />}
+        </QuerySection>
+        <ReceiptsCard />
+        <details onToggle={(event) => setExpanded(event.currentTarget.open)}>
+          <summary className="min-h-11 cursor-pointer p-3">{t('today.month.title')}</summary>
+          {expanded && (
             <QuerySection
-              pending={activity.isPending}
-              error={activity.error}
+              pending={insights.isPending}
+              error={insights.error}
               retry={() => {
-                void activity.refetch();
+                void insights.refetch();
               }}
             >
-              {activity.data && <TasksCard tasks={activity.data.tasks} />}
-              <TodayConsultationsCard consultations={activity.data?.consultations.results ?? []} />
-              <Pager
-                page={activityPage}
-                pages={pagesOf(activity.data?.consultations)}
-                onPage={setActivityPage}
-              />
-            </QuerySection>
-            <ReceiptsCard />
-            <details onToggle={(event) => setExpanded(event.currentTarget.open)}>
-              <summary className="min-h-11 cursor-pointer p-3">{t('today.month.title')}</summary>
-              {expanded && (
-                <QuerySection
-                  pending={insights.isPending}
-                  error={insights.error}
-                  retry={() => {
-                    void insights.refetch();
-                  }}
-                >
-                  {insights.data && (
-                    <>
-                      <MonthCard month={insights.data.month} />
-                      <UpsellSection items={insights.data.upsell} />
-                    </>
-                  )}
-                </QuerySection>
+              {insights.data && (
+                <>
+                  <MonthCard month={insights.data.month} />
+                  <UpsellSection items={insights.data.upsell} />
+                </>
               )}
-            </details>
-          </>
-        }
-      />
+            </QuerySection>
+          )}
+        </details>
+      </aside>
     </PageStack>
   );
 }
