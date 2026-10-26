@@ -36,17 +36,38 @@ describe('sales panel, seller pages', () => {
       '/sales/customers/101?log=call',
     );
 
-    const calls = screen.getByRole('region', { name: 'فهرست تماس امروز' });
+    // Consultations and today's timed follow-ups on the day calendar.
+    const calendar = screen.getByRole('region', { name: 'تقویم امروز' });
+    expect(
+      within(calendar).getByRole('link', { name: /^مشاوره‌ی .*، جلسه ثبت شد$/ }),
+    ).toHaveAttribute('href', '/sales/customers/104');
+    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+
+    // Ten calls: six on the first page, four on the next.
+    const calls = screen.getByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' });
+    expect(within(calls).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(calls).getByText('۱ تا ۶ از ۱۰')).toBeInTheDocument();
+    await user.click(within(calls).getByRole('button', { name: 'بعدی' }));
+    expect(within(calls).getAllByRole('listitem')).toHaveLength(4);
     await user.click(within(calls).getByRole('button', { name: /عقب‌افتاده/ }));
     expect(within(calls).getAllByRole('listitem')).toHaveLength(2);
     expect(within(calls).getByText('سمیرا نوروزی')).toBeInTheDocument();
 
-    // Two admissions of one customer make one card.
-    const upsell = screen.getByRole('region', { name: 'فرصت‌های فروش مکمل' });
-    expect(within(upsell).getAllByRole('listitem')).toHaveLength(3);
+    // Two admissions of one customer make one row; the group row names its people.
+    const upsell = screen.getByRole('region', { name: /^فرصت‌های فروش مکمل/ });
     expect(
-      within(upsell).getByText('زهرا موسوی از Uppsala University و Lund University پذیرش گرفت'),
-    ).toBeInTheDocument();
+      within(upsell).getByRole('link', {
+        name: 'زهرا موسوی از Uppsala University و Lund University پذیرش گرفت',
+      }),
+    ).toHaveAttribute('href', '/sales/customers/120');
+    expect(within(upsell).getByRole('link', { name: /پیشنهاد خدمات ویزا/ })).toHaveAttribute(
+      'href',
+      '/sales/customers/120/offer',
+    );
+    expect(within(upsell).getByRole('link', { name: /کامران زارع/ })).toHaveAttribute(
+      'href',
+      '/sales/customers/123',
+    );
 
     const receipts = screen.getByRole('region', { name: /رسیدهای منتظر تأیید/ });
     await user.click(within(receipts).getByRole('button', { name: 'تأیید رسید کیان مرادی' }));

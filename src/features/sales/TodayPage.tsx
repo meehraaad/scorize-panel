@@ -4,19 +4,24 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon } from '@/components/ui/Icon';
-import { PageColumns, PageStack } from '@/components/ui/PageColumns';
+import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FIRST_CALL_TARGET_MINUTES } from '@/lib/sales/api';
 import { todayQuery } from './api';
 import { CallList } from './components/CallList';
+import { DayCalendar } from './components/DayCalendar';
 import { HotLeads } from './components/HotLeads';
-import { MonthCard, ReceiptsCard, TasksCard, TodayConsultationsCard } from './components/TodaySide';
+import { MonthCard, ReceiptsCard, TasksCard } from './components/TodaySide';
 import { UpsellSection } from './components/UpsellSection';
 import { salesPath } from './paths';
 
-/** The seller's home: who to call now, today's list, sessions, receipts, the month. Canvas "امروز". */
+/**
+ * The seller's home (canvas "امروز"), in order of what the day is made of: who to call now, then
+ * the day itself (consultations and timed follow-ups on a calendar, beside the follow-up list),
+ * then the chances to sell more, then tasks, receipts and the month.
+ */
 export default function TodayPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -52,19 +57,19 @@ export default function TodayPage() {
         }
       />
       {waiting > 0 && <HotLeads leads={data.hot} />}
-      <PageColumns
-        asideLabel={t('today.month.title')}
-        main={<CallList calls={data.calls} />}
-        aside={
-          <>
-            <TasksCard tasks={data.tasks} />
-            <TodayConsultationsCard consultations={data.consultations} />
-            <ReceiptsCard />
-            <MonthCard month={data.month} />
-          </>
-        }
-      />
+      <div className="grid items-start gap-4 lg:gap-7 xl:grid-cols-2">
+        <DayCalendar consultations={data.consultations} calls={data.calls} />
+        <CallList calls={data.calls} />
+      </div>
       {data.upsell.length > 0 && <UpsellSection items={data.upsell} />}
+      <aside
+        aria-label={t('today.more')}
+        className="grid items-start gap-4 md:grid-cols-2 lg:gap-7 xl:grid-cols-3"
+      >
+        <TasksCard tasks={data.tasks} />
+        <ReceiptsCard />
+        <MonthCard month={data.month} />
+      </aside>
     </PageStack>
   );
 }

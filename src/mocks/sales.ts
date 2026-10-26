@@ -567,7 +567,9 @@ function todayOf(data: SalesState): TodayData {
         type: item.type.name,
         mode: item.mode,
         starts_at: item.starts_at,
+        minutes: item.minutes,
         logged: item.logged,
+        meeting_url: item.meeting_url,
       })),
     month: {
       won: data.customers.filter((item) => item.lead.stage === 'won').length + 6,
