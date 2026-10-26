@@ -24,7 +24,7 @@ const next = () => screen.getByRole('button', { name: 'ادامه' });
 /** Answers every step: Engineering, the given GPA and English choice, Italy, then contact. */
 async function answerAll(
   user: ReturnType<typeof userEvent.setup>,
-  { gpa = '17.5', english = '۷ و بالاتر', channel = 'واتس‌اپ', time = 'امروز عصر' } = {},
+  { gpa = '17.5', english = /۷ و بالاتر/, channel = 'واتس‌اپ', time = 'امروز عصر' } = {},
 ) {
   await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
   await user.click(next());
@@ -137,10 +137,10 @@ describe('admission-chance quiz', () => {
     const summary = screen.getByRole('region', { name: 'تا اینجا' });
     expect(within(summary).getByText('کار یا زندگی')).toBeInTheDocument();
     expect(within(summary).getByText('مهندسی')).toBeInTheDocument();
-    expect(within(summary).getByText('۱۸')).toBeInTheDocument();
+    expect(within(summary).getByText('۱۸ از ۲۰')).toBeInTheDocument();
 
     await user.click(next());
-    await user.click(screen.getByRole('radio', { name: 'نمره‌ی آزمون دارم' }));
+    await user.click(screen.getByRole('radio', { name: /مدرک زبان دارم/ }));
     await user.selectOptions(screen.getByLabelText('آزمون'), 'تافل');
     await user.type(screen.getByLabelText('نمره'), '130');
     await user.click(next());
@@ -150,11 +150,39 @@ describe('admission-chance quiz', () => {
     expect(step()).toHaveAccessibleName('زبان انگلیسی');
   });
 
+  it('takes the GPA out of 4 or 100 and sends it out of 20', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/estimate');
+    await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
+    await user.click(next());
+    await user.selectOptions(screen.getByLabelText('رشته‌ی تحصیلی'), 'مهندسی');
+    const gpa = screen.getByLabelText('معدل آخرین مقطع');
+    expect(gpa).toHaveAccessibleDescription('معدل از ۲۰، مثلاً ۱۷٫۵.');
+    await user.click(screen.getByRole('radio', { name: 'از ۴' }));
+    expect(gpa).toHaveAccessibleDescription('معدل از ۴، مثلاً ۳٫۵.');
+    await user.type(gpa, '17');
+    await user.click(next());
+    expect(gpa).toHaveAccessibleDescription('معدل از ۴ را به عدد بنویسید، مثلاً ۳٫۵.');
+    await user.clear(gpa);
+    await user.type(gpa, '3.6');
+    expect(
+      within(screen.getByRole('region', { name: 'تا اینجا' })).getByText('۳٫۶ از ۴'),
+    ).toBeInTheDocument();
+    await user.click(next());
+    await user.click(next());
+    await user.click(next());
+    await user.click(screen.getByRole('radio', { name: /فعلاً نه/ }));
+    await user.click(screen.getByRole('button', { name: 'دیدن شانس من' }));
+    await screen.findByRole('heading', { name: 'شانس پذیرش شما', level: 1 });
+    expect(estimateAnswers[0]?.gpa).toBe(18);
+  });
+
   it('without contact: no call promise, a call they can ask for instead', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/estimate');
-    await answerAll(user, { gpa: '12', english: 'مدرک ندارم', channel: 'فعلاً نه' });
+    await answerAll(user, { gpa: '12', english: /^مدرک ندارم/, channel: 'فعلاً نه' });
 
     await screen.findByRole('heading', { name: 'شانس پذیرش شما', level: 1 });
     expect(
@@ -196,20 +224,17 @@ describe('admission-chance quiz', () => {
     loginAs(MARYAM);
     renderApp('/estimate');
     await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
-    // Nothing known yet: no note.
-    expect(screen.queryByText(/از اطلاعاتی که قبلاً/)).not.toBeInTheDocument();
     cleanup();
 
     renderApp('/estimate');
     await answerAll(user);
     await user.click(await screen.findByRole('button', { name: 'پاسخ دوباره' }));
     await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
-    expect(screen.getByText(/از اطلاعاتی که قبلاً به ما داده‌اید پر کرده‌ایم/)).toBeInTheDocument();
     await user.click(next());
     expect(screen.getByLabelText('رشته‌ی تحصیلی')).toHaveValue('1');
     expect(screen.getByLabelText('معدل آخرین مقطع')).toHaveValue('17.5');
     await user.click(next());
-    expect(screen.getByRole('radio', { name: '۷ و بالاتر' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /۷ و بالاتر/ })).toBeChecked();
     await user.click(next());
     expect(screen.getByRole('checkbox', { name: 'ایتالیا' })).toBeChecked();
   });

@@ -23,10 +23,13 @@
     "field": "Field of study",
     "choose": "Choose",
     "gpa": "GPA of your last degree",
-    "gpaHint": "Out of 20, 4 or 100.",
-    "gpaError": "Enter your GPA as a number, e.g. 17.5.",
+    "gpaScale": "What is your GPA out of?",
+    "gpaHint": "Out of {{scale}}, e.g. {{example}}.",
+    "gpaError": "Enter your GPA out of {{scale}} as a number, e.g. {{example}}.",
+    "gpaOf": "Out of {{scale}}",
     "required": "Choose one.",
     "english": "English level",
+    "englishHint": "Without a certificate, pick your level roughly. With an exam score the result is more accurate.",
     "exam": "Exam",
     "score": "Score",
     "scoreHint": "From {{min}} to {{max}}.",
@@ -41,8 +44,7 @@
     "next": "Continue",
     "submit": "See my chance",
     "throttled": "You've sent the quiz several times in the last hour. Try again a little later.",
-    "error": "Your result couldn't be worked out. Try again.",
-    "prefilled": "We've filled in some answers from what you told us before. Check them and change any that are out of date."
+    "error": "Your result couldn't be worked out. Try again."
   },
   "goal": {
     "study": "Study",
@@ -60,11 +62,18 @@
     "phd": "PhD"
   },
   "english": {
-    "none": "No certificate",
-    "under_6": "Under 6",
-    "6_to_6_5": "6 to 6.5",
-    "7_plus": "7 or more",
-    "score": "I have an exam score"
+    "score": "I have a certificate",
+    "under_6": "About under 6",
+    "6_to_6_5": "About 6 to 6.5",
+    "7_plus": "About 7 or more",
+    "none": "No certificate"
+  },
+  "englishHint": {
+    "score": "An IELTS, TOEFL or Duolingo score",
+    "under_6": "My own guess, no certificate",
+    "6_to_6_5": "My own guess, no certificate",
+    "7_plus": "My own guess, no certificate",
+    "none": "I don't know my level"
   },
   "exam": {
     "ielts": "IELTS",
@@ -106,7 +115,8 @@
     "countries": "Countries",
     "allCountries": "All",
     "budget": "Budget",
-    "note": "These answers are saved to your profile, so your consultant doesn't have to ask again."
+    "note": "These answers are saved to your profile, so your consultant doesn't have to ask again.",
+    "gpaOf": "{{gpa}} out of {{scale}}"
   },
   "result": {
     "title": "Your admission chance",
