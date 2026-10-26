@@ -145,7 +145,7 @@ export function DayCalendar({
   return (
     <SectionCard
       id="day-calendar"
-      className="flex flex-col"
+      className="flex min-h-0 flex-1 flex-col"
       title={t('today.calendar.title')}
       subtitle={t('today.calendar.subtitle', {
         day: f.weekday(new Date(now)),
@@ -153,7 +153,10 @@ export function DayCalendar({
         calls: f.number(callCount),
       })}
       end={
-        <Link to={salesPath('consultations')} className="text-sm font-medium text-primary-text">
+        <Link
+          to={salesPath('leads/consultations')}
+          className="text-sm font-medium text-primary-text"
+        >
           {t('today.calendar.all')}
         </Link>
       }

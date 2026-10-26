@@ -5,8 +5,10 @@ import {
   assignQuery,
   boardQuery,
   customerQuery,
+  historyQuery,
+  activityQuery,
   monthQuery,
-  todayQuery,
+  outreachQuery,
 } from '@/features/sales/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
@@ -76,10 +78,27 @@ export const salesPanel: PanelDefinition = {
   routes: [
     {
       index: true,
-      loader: prefetch(() => queryClient.query(todayQuery)),
+      // The page's first two requests (the month and the chances wait until they are seen).
+      loader: prefetch(() =>
+        Promise.all([
+          queryClient.query(outreachQuery(1, 1, 'all')),
+          queryClient.query(activityQuery(1)),
+        ]),
+      ),
       ...lazyPage(() => import('@/features/sales/TodayPage'), ['sales']),
     },
-    { path: 'leads', ...lazyPage(() => import('@/features/sales/LeadsPage'), ['sales']) },
+    // Leads and "my consultations" share one nav tab, with a sub-tab each.
+    {
+      path: 'leads',
+      ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
+      children: [
+        { index: true, ...lazyPage(() => import('@/features/sales/LeadsPage')) },
+        {
+          path: 'consultations',
+          ...lazyPage(() => import('@/features/sales/ConsultationsPage')),
+        },
+      ],
+    },
     {
       path: 'board',
       loader: prefetch(() => queryClient.query(boardQuery)),
@@ -90,11 +109,8 @@ export const salesPanel: PanelDefinition = {
       loader: prefetch(() => queryClient.query(monthQuery)),
       ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales']),
     },
-    // Under "Today" (no nav item).
-    {
-      path: 'consultations',
-      ...lazyPage(() => import('@/features/sales/ConsultationsPage'), ['sales']),
-    },
+    // Its old address, before it moved under the leads tab.
+    { path: 'consultations', loader: () => redirect('/sales/leads/consultations') },
     {
       path: 'customers/:id',
       loader: ({ params }) => {
@@ -105,7 +121,17 @@ export const salesPanel: PanelDefinition = {
       },
       ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales']),
       children: [
-        { index: true, ...lazyPage(() => import('@/features/sales/CustomerSummaryPage')) },
+        {
+          index: true,
+          // The history starts with the customer card, not after it arrives.
+          loader: ({ params }) => {
+            const id = Number(params.id);
+            if (Number.isInteger(id) && id > 0)
+              queryClient.infiniteQuery(historyQuery(id)).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/sales/CustomerSummaryPage')),
+        },
         { path: 'purchases', ...lazyPage(() => import('@/features/sales/CustomerPurchasesPage')) },
         { path: 'payments', ...lazyPage(() => import('@/features/sales/CustomerPaymentsPage')) },
         { path: 'info', ...lazyPage(() => import('@/features/sales/CustomerInfoPage')) },

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Pager } from '@/components/ui/Pager';
@@ -13,16 +12,28 @@ import { ScoreChip } from './LeadChips';
 /** Leads per page: the first page holds the oldest ones, which are the most urgent. */
 export const HOT_PAGE = 3;
 
-/** "Call now": new leads nobody has called, oldest first, each with a running wait timer. */
-export function HotLeads({ leads }: { leads: HotLead[] }) {
+/**
+ * "Call now": new leads nobody has called, oldest first, each with a running wait timer, a page
+ * at a time. `leads` is the page; `from` the position of its first lead in the whole list.
+ */
+export function HotLeads({
+  leads,
+  from,
+  total,
+  page,
+  pages,
+  onPage,
+}: {
+  leads: HotLead[];
+  from: number;
+  total: number;
+  page: number;
+  pages: number;
+  onPage: (page: number) => void;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const now = useNow();
-  const [page, setPage] = useState(1);
-  const pages = Math.max(1, Math.ceil(leads.length / HOT_PAGE));
-  // The list refreshes every minute: called leads leave it, so the page may no longer exist.
-  const current = Math.min(page, pages);
-  const shown = leads.slice((current - 1) * HOT_PAGE, current * HOT_PAGE);
 
   const clock = (since: string) => {
     const seconds = Math.max(0, Math.floor((now - new Date(since).getTime()) / 1000));
@@ -57,7 +68,7 @@ export function HotLeads({ leads }: { leads: HotLead[] }) {
         </span>
       </div>
       <ul className="m-0 list-none p-0">
-        {shown.map((lead) => {
+        {leads.map((lead) => {
           const timer = clock(lead.created_at);
           return (
             <li
@@ -101,13 +112,13 @@ export function HotLeads({ leads }: { leads: HotLead[] }) {
         <Pager
           onHero
           status={t('today.hot.pager', {
-            from: f.number((current - 1) * HOT_PAGE + 1),
-            to: f.number((current - 1) * HOT_PAGE + shown.length),
-            total: f.number(leads.length),
+            from: f.number(from + 1),
+            to: f.number(from + leads.length),
+            total: f.number(total),
           })}
-          page={current}
+          page={page}
           pages={pages}
-          onPage={setPage}
+          onPage={onPage}
         />
       )}
     </section>

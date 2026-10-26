@@ -29,3 +29,23 @@ export function useClampPage(
     if (data && page > pages) setPage(pages);
   }, [data, page, pages, setPage]);
 }
+
+/**
+ * Shorter pages than the server's, cut out of its pages: page `page` of `size` rows is rows
+ * `offset…offset+size` of server page `serverPage`. A short page never spans two server pages
+ * (the last one of each server page holds what is left), so it needs one request.
+ */
+export function slicePage(page: number, size: number, serverSize: number) {
+  const perServer = Math.max(1, Math.ceil(serverSize / size));
+  return {
+    serverPage: Math.floor((page - 1) / perServer) + 1,
+    offset: ((page - 1) % perServer) * size,
+  };
+}
+
+/** How many short pages `slicePage` makes of `count` rows (at least one). */
+export function slicedPages(count: number, size: number, serverSize: number) {
+  const perServer = Math.max(1, Math.ceil(serverSize / size));
+  const full = Math.floor(count / Math.max(1, serverSize));
+  return Math.max(1, full * perServer + Math.ceil((count - full * serverSize) / size));
+}

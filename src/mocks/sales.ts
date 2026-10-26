@@ -489,7 +489,7 @@ function bucketOf(item: MockLead): CallItem['bucket'] | null {
   return due < endOfToday() ? 'today' : null;
 }
 
-const BUCKET_ORDER = { new: 0, overdue: 1, today: 2 } as const;
+const BUCKET_ORDER = { new: 0, today: 1, overdue: 2 } as const;
 
 /** Receipts waiting in Django (Payment PENDING_RECEIPT of the seller's customers), oldest first. */
 function receiptsOf(): PendingReceipt[] {
@@ -673,9 +673,50 @@ function monthOf(data: SalesState): MonthData {
 }
 
 export const salesHandlers = [
-  http.get(`${BASE}/today/`, () => {
+  http.get(`${BASE}/today/:section?`, ({ request, params }) => {
     const data = stateOrError();
-    return failed(data) ? data : HttpResponse.json(todayOf(data));
+    if (failed(data)) return data;
+    const today = todayOf(data);
+    if (params.section === 'outreach') {
+      const url = new URL(request.url);
+      const bucket = url.searchParams.get('bucket') ?? 'all';
+      const hotUrl = new URL(request.url);
+      hotUrl.searchParams.set('page', url.searchParams.get('hot_page') ?? '1');
+      return HttpResponse.json({
+        hot: pageOf(new Request(hotUrl), today.hot, 50),
+        calls: {
+          ...pageOf(
+            request,
+            today.calls.filter((row) => bucket === 'all' || row.bucket === bucket),
+            6,
+          ),
+          counts: Object.fromEntries(
+            ['all', 'new', 'today', 'overdue'].map((key) => [
+              key,
+              today.calls.filter((row) => key === 'all' || row.bucket === key).length,
+            ]),
+          ),
+        },
+      });
+    }
+    if (params.section === 'activity')
+      return HttpResponse.json({
+        tasks: today.tasks,
+        consultations: pageOf(request, today.consultations, 20),
+        calendar_calls: pageOf(
+          request,
+          today.calls.filter(
+            (row) =>
+              row.follow_up_at &&
+              new Date(row.follow_up_at).getTime() >= startOfToday() &&
+              new Date(row.follow_up_at).getTime() < endOfToday(),
+          ),
+          50,
+        ),
+      });
+    if (params.section === 'insights')
+      return HttpResponse.json({ month: today.month, upsell: today.upsell });
+    return HttpResponse.json(today);
   }),
 
   http.get(`${BASE}/receipts/`, ({ request }) => {

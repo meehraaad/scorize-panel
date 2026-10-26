@@ -37,7 +37,7 @@ describe('sales panel, seller pages', () => {
     );
 
     // Consultations and today's timed follow-ups on the day calendar.
-    const calendar = screen.getByRole('region', { name: 'تقویم امروز' });
+    const calendar = await screen.findByRole('region', { name: 'تقویم امروز' });
     expect(
       within(calendar).getByRole('link', { name: /^مشاوره‌ی .*، جلسه ثبت شد$/ }),
     ).toHaveAttribute('href', '/sales/customers/104');
@@ -48,13 +48,14 @@ describe('sales panel, seller pages', () => {
     expect(within(calls).getAllByRole('listitem')).toHaveLength(6);
     expect(within(calls).getByText('۱ تا ۶ از ۱۰')).toBeInTheDocument();
     await user.click(within(calls).getByRole('button', { name: 'بعدی' }));
-    expect(within(calls).getAllByRole('listitem')).toHaveLength(4);
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(4));
     await user.click(within(calls).getByRole('button', { name: /عقب‌افتاده/ }));
-    expect(within(calls).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(calls).getByText('سمیرا نوروزی')).toBeInTheDocument();
+    expect(await within(calls).findByText('سمیرا نوروزی')).toBeInTheDocument();
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(2));
 
-    // Two admissions of one customer make one row; the group row names its people.
-    const upsell = screen.getByRole('region', { name: /^فرصت‌های فروش مکمل/ });
+    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+    // Two admissions of one customer make one card.
+    const upsell = await screen.findByRole('region', { name: /^فرصت‌های فروش مکمل/ });
     expect(
       within(upsell).getByRole('link', {
         name: 'زهرا موسوی از Uppsala University و Lund University پذیرش گرفت',
@@ -244,9 +245,14 @@ describe('sales panel, seller pages', () => {
       lead: lead.lead + 100,
       name: `${lead.name} ۲`,
     }));
+    const waiting = [...today.hot, ...more.slice(0, 2)];
+    const outreach = await api<{ calls: unknown }>('/sales/v1/today/outreach/?page=1');
     server.use(
-      http.get('/api/sales/v1/today/', () =>
-        HttpResponse.json({ ...today, hot: [...today.hot, ...more.slice(0, 2)] }),
+      http.get('/api/sales/v1/today/outreach/', () =>
+        HttpResponse.json({
+          ...outreach,
+          hot: { count: waiting.length, page_size: 50, results: waiting },
+        }),
       ),
     );
     renderApp('/sales');
@@ -260,7 +266,7 @@ describe('sales panel, seller pages', () => {
 
   it('today: receipts three at a time, across server pages', async () => {
     const user = userEvent.setup();
-    // Five receipts, four per server page: the card's second page takes one row from each.
+    // Five receipts, four per server page.
     const names = ['رسید ۱', 'رسید ۲', 'رسید ۳', 'رسید ۴', 'رسید ۵'];
     const receipt = (name: string, index: number) => ({
       payment: index + 1,
@@ -283,10 +289,13 @@ describe('sales panel, seller pages', () => {
     const receipts = await screen.findByRole('region', { name: /رسیدهای منتظر تأیید/ });
     expect(await within(receipts).findByText('رسید ۱')).toBeInTheDocument();
     expect(within(receipts).getAllByRole('listitem')).toHaveLength(3);
+    // The second page holds what is left of the first server page; the third is server page 2.
+    await user.click(within(receipts).getByRole('button', { name: 'بعدی' }));
+    expect(await within(receipts).findByText('رسید ۴')).toBeInTheDocument();
+    expect(within(receipts).getAllByRole('listitem')).toHaveLength(1);
     await user.click(within(receipts).getByRole('button', { name: 'بعدی' }));
     expect(await within(receipts).findByText('رسید ۵')).toBeInTheDocument();
-    expect(within(receipts).getByText('رسید ۴')).toBeInTheDocument();
-    expect(within(receipts).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(receipts).getByText('۵ تا ۵ از ۵')).toBeInTheDocument();
   });
 
   it('month: goal and funnel', async () => {
@@ -296,11 +305,20 @@ describe('sales panel, seller pages', () => {
   });
 
   it('consultations: past sessions link to the session log', async () => {
-    renderApp('/sales/consultations');
+    renderApp('/sales/leads/consultations');
     expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
     expect((await screen.findAllByRole('link', { name: /^ثبت جلسه: / }))[0]).toHaveAttribute(
       'href',
       expect.stringMatching(/log=meeting&reservation=\d+$/),
     );
+  });
+
+  it('consultations: a sub-tab of the leads tab, also at its old address', async () => {
+    const router = renderApp('/sales/consultations');
+    expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales/leads/consultations');
+    const sections = screen.getByRole('navigation', { name: 'بخش‌های لیدها' });
+    await userEvent.click(within(sections).getByRole('link', { name: 'لیدها' }));
+    expect(await screen.findByRole('heading', { name: 'لیدهای من' })).toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useDeferredValue, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +14,7 @@ import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES, STAGES } from '@/lib/sales/api';
 import { pagesOf } from '@/lib/api/page';
 import { leadsQuery, type LeadFilter, type LeadQuery, type LeadsData } from './api';
@@ -39,7 +40,14 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
-  const query: LeadQuery = { stage, source, band, overdue, search: useDeferredValue(search), page };
+  const query: LeadQuery = {
+    stage,
+    source,
+    band,
+    overdue,
+    search: useDebouncedValue(search.trim()),
+    page,
+  };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
 
   // Any filter change starts again at page 1 with nothing selected.

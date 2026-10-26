@@ -96,6 +96,9 @@ export const customerQuery = (id: number) =>
   queryOptions({
     queryKey: customerKey(id),
     queryFn: ({ signal }) => api<CustomerData>(`${customerApi(id)}/`, { signal }),
+    // Sellers switch to WhatsApp and back all the time: don't rebuild the card each time. The
+    // seller's own changes refresh it; another visit after staleTime does too.
+    refetchOnWindowFocus: false,
   });
 
 export type HistoryKind =
@@ -130,6 +133,8 @@ export const historyQuery = (id: number) =>
       api<HistoryPage>(`${customerApi(id)}/history/?page=${String(pageParam)}`, { signal }),
     initialPageParam: 1,
     getNextPageParam: (page) => page.next,
+    // A refetch reloads every page the seller has opened, one after another.
+    refetchOnWindowFocus: false,
   });
 
 export type CallOutcome = 'talked' | 'no_answer' | 'call_later' | 'wrong_number';

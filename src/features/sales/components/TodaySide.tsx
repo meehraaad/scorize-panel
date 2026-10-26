@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
+import { QuerySection } from '@/components/ui/QuerySection';
 import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { Badge, SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { pagesOf, useClampPage } from '@/lib/api/page';
+import { slicePage, slicedPages, useClampPage } from '@/lib/api/page';
 import { percentOf } from '@/lib/progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
@@ -67,97 +68,96 @@ export function ReceiptsCard() {
   const s = useSalesFormat();
   const confirm = useConfirmReceipt();
   const [page, setPage] = useState(1);
-  // Django pages receipts by its own size: this card's short page is read from the one or two
-  // server pages under it (page 1 answers the size).
-  const head = useQuery(receiptsQuery(1)).data;
-  const size = Math.max(1, head?.page_size ?? RECEIPTS_SHOWN);
-  const start = (page - 1) * RECEIPTS_SHOWN;
-  const from = Math.floor(start / size) + 1;
-  const to = Math.floor((start + RECEIPTS_SHOWN - 1) / size) + 1;
-  const first = useQuery(receiptsQuery(from));
-  const second = useQuery({ ...receiptsQuery(to), enabled: to !== from });
-  const loaded = first.data !== undefined && (to === from || second.data !== undefined);
-  const shown = head && { count: head.count, page_size: RECEIPTS_SHOWN };
-  const pages = pagesOf(shown);
-  useClampPage(shown, page, setPage);
-  const offset = start - (from - 1) * size;
-  const receipts = [
-    ...(first.data?.results ?? []),
-    ...(to !== from ? (second.data?.results ?? []) : []),
-  ].slice(offset, offset + RECEIPTS_SHOWN);
+  // Django pages receipts by its own size (it answers it): this card's pages are cut out of them.
+  const [serverSize, setServerSize] = useState(RECEIPTS_SHOWN);
+  const { serverPage, offset } = slicePage(page, RECEIPTS_SHOWN, serverSize);
+  const { data, isPending, error, refetch } = useQuery(receiptsQuery(serverPage));
+  if (data && data.page_size !== serverSize) setServerSize(data.page_size);
+  const pages = slicedPages(data?.count ?? 0, RECEIPTS_SHOWN, serverSize);
+  useClampPage(data && { count: pages, page_size: 1 }, page, setPage);
+  const receipts = data?.results.slice(offset, offset + RECEIPTS_SHOWN) ?? [];
+  const from = (serverPage - 1) * serverSize + offset;
   return (
-    <SectionCard
-      id="today-receipts"
-      variant="panel"
-      title={t('today.receipts.title')}
-      badge={head && head.count > 0 && <Badge>{f.number(head.count)}</Badge>}
+    <QuerySection
+      // Only the first load replaces the card; a later server page loads inside it.
+      pending={isPending && serverPage === 1}
+      error={error}
+      retry={() => {
+        void refetch();
+      }}
     >
-      {!loaded ? (
-        <SkeletonRows rows={RECEIPTS_SHOWN} />
-      ) : receipts.length === 0 ? (
-        <p className="m-0 text-sm text-text-2">{t('today.receipts.empty')}</p>
-      ) : (
-        <ul className="m-0 flex list-none flex-col gap-4 p-0">
-          {receipts.map((receipt) => (
-            <li key={receipt.payment} className="flex flex-col gap-2">
-              <span className="flex items-baseline justify-between gap-3">
-                <span className="text-[15px] font-semibold">{receipt.name}</span>
-                <span className="text-sm font-bold tabular-nums">{s.toman(receipt.amount)}</span>
-              </span>
-              <span className="text-xs leading-6 text-text-2">
-                {t('today.receipts.what', {
-                  what: receipt.what,
-                  method: t(`today.receipts.method.${receipt.method}`),
-                  when: f.timeAgo(receipt.uploaded_at),
-                })}
-              </span>
-              <span className="flex gap-2">
-                <a
-                  href={safeHref(receipt.receipt_url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={t('today.receipts.viewName', { name: receipt.name })}
-                  className={buttonClass('outline', 'h-11 flex-1 px-3 text-sm')}
-                >
-                  {t('today.receipts.view')}
-                </a>
-                <Button
-                  className="h-11 flex-1 px-3 text-sm"
-                  aria-label={t('today.receipts.confirmName', { name: receipt.name })}
-                  disabled={confirm.isPending}
-                  onClick={() =>
-                    confirm.mutate(
-                      { customer: receipt.customer, payment: receipt.payment },
-                      {
-                        onSuccess: () =>
-                          toast.success(t('today.receipts.confirmed', { name: receipt.name })),
-                        onError: () => toast.error(t('today.receipts.error')),
-                      },
-                    )
-                  }
-                >
-                  {t('today.receipts.confirm')}
-                </Button>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {head && head.count > 0 && (
-        <Pager
-          inset
-          status={t('today.receipts.pager', {
-            from: f.number(Math.min(start + 1, head.count)),
-            to: f.number(Math.min(start + RECEIPTS_SHOWN, head.count)),
-            total: f.number(head.count),
-          })}
-          page={page}
-          pages={pages}
-          pending={!loaded}
-          onPage={setPage}
-        />
-      )}
-    </SectionCard>
+      <SectionCard
+        id="today-receipts"
+        variant="panel"
+        title={t('today.receipts.title')}
+        badge={data && data.count > 0 && <Badge>{f.number(data.count)}</Badge>}
+      >
+        {!data ? (
+          <SkeletonRows rows={2} />
+        ) : receipts.length === 0 ? (
+          <p className="m-0 text-sm text-text-2">{t('today.receipts.empty')}</p>
+        ) : (
+          <ul className="m-0 flex list-none flex-col gap-4 p-0">
+            {receipts.map((receipt) => (
+              <li key={receipt.payment} className="flex flex-col gap-2">
+                <span className="flex items-baseline justify-between gap-3">
+                  <span className="text-[15px] font-semibold">{receipt.name}</span>
+                  <span className="text-sm font-bold tabular-nums">{s.toman(receipt.amount)}</span>
+                </span>
+                <span className="text-xs leading-6 text-text-2">
+                  {t('today.receipts.what', {
+                    what: receipt.what,
+                    method: t(`today.receipts.method.${receipt.method}`),
+                    when: f.timeAgo(receipt.uploaded_at),
+                  })}
+                </span>
+                <span className="flex gap-2">
+                  <a
+                    href={safeHref(receipt.receipt_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t('today.receipts.viewName', { name: receipt.name })}
+                    className={buttonClass('outline', 'h-11 flex-1 px-3 text-sm')}
+                  >
+                    {t('today.receipts.view')}
+                  </a>
+                  <Button
+                    className="h-11 flex-1 px-3 text-sm"
+                    aria-label={t('today.receipts.confirmName', { name: receipt.name })}
+                    disabled={confirm.isPending}
+                    onClick={() =>
+                      confirm.mutate(
+                        { customer: receipt.customer, payment: receipt.payment },
+                        {
+                          onSuccess: () =>
+                            toast.success(t('today.receipts.confirmed', { name: receipt.name })),
+                          onError: () => toast.error(t('today.receipts.error')),
+                        },
+                      )
+                    }
+                  >
+                    {t('today.receipts.confirm')}
+                  </Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {data && data.count > 0 && (
+          <Pager
+            inset
+            status={t('today.receipts.pager', {
+              from: f.number(from + 1),
+              to: f.number(from + receipts.length),
+              total: f.number(data.count),
+            })}
+            page={page}
+            pages={pages}
+            onPage={setPage}
+          />
+        )}
+      </SectionCard>
+    </QuerySection>
   );
 }
 

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
@@ -18,21 +17,30 @@ const TABS: readonly Tab[] = ['all', 'today', 'overdue', 'new'];
 /** Rows per page: the list stays short enough to work through without scrolling past the calendar. */
 export const CALLS_PAGE = 6;
 
-/**
- * Today's follow-ups and calls, a page at a time: new leads, then overdue follow-ups, then by score
- * (the server's order). The whole list comes with `today/`, so it pages here.
- */
-export function CallList({ calls }: { calls: CallItem[] }) {
+/** Today's call list: new leads, today’s follow-ups, overdue follow-ups, then by score (the server's order). */
+export function CallList({
+  calls,
+  counts,
+  tab,
+  onTab,
+  page,
+  pages,
+  onPage,
+  total,
+}: {
+  calls: CallItem[];
+  page: number;
+  pages: number;
+  onPage: (page: number) => void;
+  total: number;
+  counts: Record<Tab, number> | undefined;
+  tab: Tab;
+  onTab: (tab: Tab) => void;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  const [tab, setTab] = useState<Tab>('all');
-  const [page, setPage] = useState(1);
-  const filtered = calls.filter((call) => tab === 'all' || call.bucket === tab);
-  const pages = Math.max(1, Math.ceil(filtered.length / CALLS_PAGE));
-  // The list refreshes every minute: a call done on the last page can empty it.
-  const current = Math.min(page, pages);
-  const shown = filtered.slice((current - 1) * CALLS_PAGE, current * CALLS_PAGE);
+  const shown = calls;
 
   const dueOf = (call: CallItem) => {
     if (call.bucket === 'new') return { text: t('today.list.dueNew'), urgent: true };
@@ -44,7 +52,7 @@ export function CallList({ calls }: { calls: CallItem[] }) {
   return (
     <SectionCard
       id="calls-title"
-      className="flex flex-col"
+      className="flex min-h-0 flex-1 flex-col"
       title={t('today.list.title')}
       end={
         <Link to={salesPath('leads')} className="text-sm font-medium text-primary-text">
@@ -56,16 +64,11 @@ export function CallList({ calls }: { calls: CallItem[] }) {
         <FilterTabs
           label={t('today.list.filter')}
           value={tab}
-          onChange={(value) => {
-            setTab(value);
-            setPage(1);
-          }}
+          onChange={onTab}
           options={TABS.map((value) => ({
             value,
             label: t(`today.list.tab.${value}`),
-            count: f.number(
-              value === 'all' ? calls.length : calls.filter((call) => call.bucket === value).length,
-            ),
+            count: f.number(counts?.[value] ?? 0),
           }))}
         />
       </div>
@@ -118,16 +121,16 @@ export function CallList({ calls }: { calls: CallItem[] }) {
           </ul>
         )}
       </div>
-      {filtered.length > CALLS_PAGE && (
+      {pages > 1 && (
         <Pager
           status={t('today.list.pager', {
-            from: f.number((current - 1) * CALLS_PAGE + 1),
-            to: f.number((current - 1) * CALLS_PAGE + shown.length),
-            total: f.number(filtered.length),
+            from: f.number((page - 1) * CALLS_PAGE + 1),
+            to: f.number((page - 1) * CALLS_PAGE + shown.length),
+            total: f.number(total),
           })}
-          page={current}
+          page={page}
           pages={pages}
-          onPage={setPage}
+          onPage={onPage}
         />
       )}
       <p className="m-0 px-5 py-4 text-xs text-text-2 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
