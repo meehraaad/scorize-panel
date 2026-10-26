@@ -21,7 +21,7 @@ import { weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { gatesQuery } from '@/lib/applicant/gates';
-import { backgroundQuery, startQuery } from '@/lib/applicant/journey';
+import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
