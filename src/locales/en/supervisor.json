@@ -84,6 +84,7 @@
     }
   },
   "today": {
+    "greeting": "Hello {{name}}",
     "title": "Hi {{name}}, {{n}} files are waiting on you",
     "titleClear": "Hi {{name}}, no files are waiting on you",
     "subtitle": "{{n}} deadlines fall in the next 7 days. Start at the top of the board.",

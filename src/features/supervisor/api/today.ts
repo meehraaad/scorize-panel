@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
+import type { Page } from '@/lib/api/page';
 import { api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
 import { SUPERVISOR_API, type CaseStage, type DocCount, SUPERVISOR_KEY } from './common';
@@ -41,5 +42,25 @@ export interface TodayData {
 export const todayQuery = queryOptions({
   queryKey: [...SUPERVISOR_KEY, 'today'],
   queryFn: ({ signal }) => api<TodayData>(`${SUPERVISOR_API}/today/`, { signal }),
+  refetchInterval: 5 * 60_000,
+});
+
+export const todayBoardQuery = (page: number) =>
+  queryOptions({
+    queryKey: [...SUPERVISOR_KEY, 'today', 'board', page],
+    queryFn: ({ signal }) =>
+      api<Page<BoardItem>>(`${SUPERVISOR_API}/today/board/?page=${String(page)}`, { signal }),
+    refetchInterval: 5 * 60_000,
+  });
+export const todayWaitingQuery = (page: number) =>
+  queryOptions({
+    queryKey: [...SUPERVISOR_KEY, 'today', 'waiting', page],
+    queryFn: ({ signal }) =>
+      api<Page<WaitingCase>>(`${SUPERVISOR_API}/today/waiting/?page=${String(page)}`, { signal }),
+    refetchInterval: 5 * 60_000,
+  });
+export const todayCountsQuery = queryOptions({
+  queryKey: [...SUPERVISOR_KEY, 'today', 'counts'],
+  queryFn: ({ signal }) => api<TodayData['counts']>(`${SUPERVISOR_API}/today/counts/`, { signal }),
   refetchInterval: 5 * 60_000,
 });

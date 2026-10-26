@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
+import { QuerySection } from '@/components/ui/QuerySection';
 import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { Badge, SectionCard } from '@/components/ui/SectionCard';
@@ -64,72 +65,80 @@ export function ReceiptsCard() {
   const s = useSalesFormat();
   const confirm = useConfirmReceipt();
   const [page, setPage] = useState(1);
-  const { data, isPlaceholderData } = useQuery(receiptsQuery(page));
+  const { data, isPlaceholderData, isPending, error, refetch } = useQuery(receiptsQuery(page));
   const pages = pagesOf(data);
   useClampPage(data, page, setPage);
   const receipts = data?.results ?? [];
   return (
-    <SectionCard
-      id="today-receipts"
-      variant="panel"
-      title={t('today.receipts.title')}
-      badge={data && data.count > 0 && <Badge>{f.number(data.count)}</Badge>}
+    <QuerySection
+      pending={isPending}
+      error={error}
+      retry={() => {
+        void refetch();
+      }}
     >
-      {!data ? (
-        <SkeletonRows rows={2} />
-      ) : receipts.length === 0 ? (
-        <p className="m-0 text-sm text-text-2">{t('today.receipts.empty')}</p>
-      ) : (
-        <ul aria-busy={isPlaceholderData} className="m-0 flex list-none flex-col gap-4 p-0">
-          {receipts.map((receipt) => (
-            <li key={receipt.payment} className="flex flex-col gap-2">
-              <span className="flex items-baseline justify-between gap-3">
-                <span className="text-[15px] font-semibold">{receipt.name}</span>
-                <span className="text-sm font-bold tabular-nums">{s.toman(receipt.amount)}</span>
-              </span>
-              <span className="text-xs leading-6 text-text-2">
-                {t('today.receipts.what', {
-                  what: receipt.what,
-                  method: t(`today.receipts.method.${receipt.method}`),
-                  when: f.timeAgo(receipt.uploaded_at),
-                })}
-              </span>
-              <span className="flex gap-2">
-                <a
-                  href={safeHref(receipt.receipt_url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={t('today.receipts.viewName', { name: receipt.name })}
-                  className={buttonClass('outline', 'h-11 flex-1 px-3 text-sm')}
-                >
-                  {t('today.receipts.view')}
-                </a>
-                <Button
-                  className="h-11 flex-1 px-3 text-sm"
-                  aria-label={t('today.receipts.confirmName', { name: receipt.name })}
-                  disabled={confirm.isPending}
-                  onClick={() =>
-                    confirm.mutate(
-                      { customer: receipt.customer, payment: receipt.payment },
-                      {
-                        onSuccess: () =>
-                          toast.success(t('today.receipts.confirmed', { name: receipt.name })),
-                        onError: () => toast.error(t('today.receipts.error')),
-                      },
-                    )
-                  }
-                >
-                  {t('today.receipts.confirm')}
-                </Button>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {pages > 1 && (
-        <Pager inset page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
-      )}
-    </SectionCard>
+      <SectionCard
+        id="today-receipts"
+        variant="panel"
+        title={t('today.receipts.title')}
+        badge={data && data.count > 0 && <Badge>{f.number(data.count)}</Badge>}
+      >
+        {!data ? (
+          <SkeletonRows rows={2} />
+        ) : receipts.length === 0 ? (
+          <p className="m-0 text-sm text-text-2">{t('today.receipts.empty')}</p>
+        ) : (
+          <ul aria-busy={isPlaceholderData} className="m-0 flex list-none flex-col gap-4 p-0">
+            {receipts.map((receipt) => (
+              <li key={receipt.payment} className="flex flex-col gap-2">
+                <span className="flex items-baseline justify-between gap-3">
+                  <span className="text-[15px] font-semibold">{receipt.name}</span>
+                  <span className="text-sm font-bold tabular-nums">{s.toman(receipt.amount)}</span>
+                </span>
+                <span className="text-xs leading-6 text-text-2">
+                  {t('today.receipts.what', {
+                    what: receipt.what,
+                    method: t(`today.receipts.method.${receipt.method}`),
+                    when: f.timeAgo(receipt.uploaded_at),
+                  })}
+                </span>
+                <span className="flex gap-2">
+                  <a
+                    href={safeHref(receipt.receipt_url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t('today.receipts.viewName', { name: receipt.name })}
+                    className={buttonClass('outline', 'h-11 flex-1 px-3 text-sm')}
+                  >
+                    {t('today.receipts.view')}
+                  </a>
+                  <Button
+                    className="h-11 flex-1 px-3 text-sm"
+                    aria-label={t('today.receipts.confirmName', { name: receipt.name })}
+                    disabled={confirm.isPending}
+                    onClick={() =>
+                      confirm.mutate(
+                        { customer: receipt.customer, payment: receipt.payment },
+                        {
+                          onSuccess: () =>
+                            toast.success(t('today.receipts.confirmed', { name: receipt.name })),
+                          onError: () => toast.error(t('today.receipts.error')),
+                        },
+                      )
+                    }
+                  >
+                    {t('today.receipts.confirm')}
+                  </Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {pages > 1 && (
+          <Pager inset page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
+        )}
+      </SectionCard>
+    </QuerySection>
   );
 }
 

@@ -25,6 +25,8 @@ export interface TicketsEndpoint {
    * so the home page's ticket card updates too).
    */
   queryKey: QueryKey;
+  /** Related dashboards whose unread/waiting counts change with this conversation. */
+  invalidateKeys?: readonly QueryKey[];
 }
 
 /** Ticket.Priority. */
@@ -140,7 +142,12 @@ export const messagesOf = (pages: readonly MessagePage[]) =>
 
 function useRefresh(endpoint: TicketsEndpoint) {
   const client = useQueryClient();
-  return () => client.invalidateQueries({ queryKey: endpoint.queryKey });
+  return () =>
+    Promise.all(
+      [endpoint.queryKey, ...(endpoint.invalidateKeys ?? [])].map((queryKey) =>
+        client.invalidateQueries({ queryKey }),
+      ),
+    );
 }
 
 export interface NewMessage {

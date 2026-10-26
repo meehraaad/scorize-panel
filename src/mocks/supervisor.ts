@@ -1001,7 +1001,7 @@ function previewImport(
 // ── Handlers ─────────────────────────────────────────────────────────────────────────────────
 
 export const supervisorHandlers = [
-  http.get(`${API}/today/`, () => {
+  http.get(`${API}/today/:section?`, ({ request, params }) => {
     const all = casesOrError();
     if (all instanceof Response) return all;
     const list = [...all.values()];
@@ -1047,6 +1047,9 @@ export const supervisorHandlers = [
         (stage) => [stage, list.filter((item) => item.data.stage === stage).length],
       ),
     ) as TodayData['counts'];
+    if (params.section === 'board') return HttpResponse.json(pageOf(request, board, 20));
+    if (params.section === 'waiting') return HttpResponse.json(pageOf(request, waiting, 20));
+    if (params.section === 'counts') return HttpResponse.json(counts);
     return HttpResponse.json<TodayData>({ board, waiting, counts });
   }),
 
