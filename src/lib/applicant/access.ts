@@ -31,6 +31,15 @@ export interface ApplicantAccess {
    * home's card. null when none was started or once the case has begun.
    */
   turkey: 'docs' | 'review' | 'sign' | null;
+  /**
+   * While `pending`: the prepayment to pay before a supervisor takes the case (S46), toman.
+   * null otherwise, and for contracts registered before this flow.
+   */
+  prepayment: {
+    payment_id: number;
+    amount: number;
+    status: 'unpaid' | 'review' | 'declined' | 'paid';
+  } | null;
 }
 
 /** Sections of the applicant panel that can be locked (their nav item ids). */
@@ -54,13 +63,17 @@ export function lockOf(access: ApplicantAccess, section: LockableSection): Lock 
   return null;
 }
 
-/** Nav items shown with a lock: every lockable section, until a contract is active. */
+/**
+ * Nav items shown with a lock: every lockable section, until a contract is active. An approved
+ * contract waiting for its prepayment keeps the contract tab open: the prepayment is paid there.
+ */
 export function useLockedNav(): ReadonlySet<string> {
   const { data } = useQuery(accessQuery);
-  return data && (data.state === 'guest' || data.state === 'pending')
-    ? new Set<string>(LOCKABLE)
-    : NONE;
+  if (!data || (data.state !== 'guest' && data.state !== 'pending')) return NONE;
+  return data.prepayment ? STARTING : ALL;
 }
+const ALL: ReadonlySet<string> = new Set<string>(LOCKABLE);
+const STARTING: ReadonlySet<string> = new Set<string>(LOCKABLE.filter((id) => id !== 'contract'));
 const NONE: ReadonlySet<string> = new Set();
 
 export const CALL_TOPICS = ['admission', 'visa', 'turkey', 'writing'] as const;

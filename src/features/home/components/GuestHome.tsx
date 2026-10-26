@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { buttonClass } from '@/components/ui/buttonStyles';
+import { LinkTile } from '@/components/ui/LinkTile';
 import { lockButtonOnHero } from '@/components/ui/Lock';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -36,6 +37,9 @@ function ContractlessHome({ access }: { access: ApplicantAccess }) {
   const f = useFormat();
   const user = useUser();
   const pending = access.state === 'pending';
+  const { prepayment } = access;
+  // The prepayment still to pay or fix: the contract page has it, the home only points there.
+  const action = pending && prepayment && prepayment.status !== 'paid' ? prepayment : null;
   const name = user.first_name;
 
   const title = pending
@@ -77,7 +81,13 @@ function ContractlessHome({ access }: { access: ApplicantAccess }) {
               {pending ? contract : t('guest.hero.title')}
             </h2>
             <p className="m-0 text-[15px] leading-8 text-on-hero-2">
-              {t(pending ? 'guest.pending.text' : 'guest.hero.text')}
+              {t(
+                !pending
+                  ? 'guest.hero.text'
+                  : action
+                    ? 'guest.pending.textAction'
+                    : 'guest.pending.text',
+              )}
             </p>
           </div>
           {!pending && (
@@ -121,6 +131,20 @@ function ContractlessHome({ access }: { access: ApplicantAccess }) {
           />
         )}
       </section>
+
+      {action && (
+        <LinkTile
+          to="/contract"
+          title={t('guest.pending.action.title')}
+          text={t(
+            `guest.pending.action.${action.status as Exclude<typeof action.status, 'paid'>}`,
+            {
+              amount: t('guest.pending.action.toman', { amount: f.number(action.amount) }),
+            },
+          )}
+          footer={t('guest.pending.action.go')}
+        />
+      )}
 
       {!pending && ON_SERVER.turkey && <TurkeyCard step={access.turkey} />}
 

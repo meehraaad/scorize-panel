@@ -1089,5 +1089,40 @@
       "handTo": "To",
       "hand": "Hand over"
     }
+  },
+  "handoff": {
+    "title": "Contract until the case starts",
+    "steps": "Steps to start the case",
+    "step": {
+      "signing": "Contract signed",
+      "payment": "Prepayment",
+      "supervisor": "Supervisor assigned",
+      "active": "Case started"
+    },
+    "state": {
+      "signing": "Print the contract, sign it with the customer and upload the scan here.",
+      "payment": "The signed contract is in. Waiting for the customer's prepayment.",
+      "supervisor": "Everything is ready. A manager hands the case to a supervisor.",
+      "active": "The case has started. Supervisor: {{supervisors}}"
+    },
+    "prepayment": "Prepayment: {{amount}}",
+    "payment": {
+      "unpaid": "Not paid",
+      "review": "Receipt in review",
+      "declined": "Receipt declined",
+      "paid": "Paid"
+    },
+    "scan": {
+      "title": "Signed contract",
+      "name": "Scan {{n}}",
+      "hint": "A PDF or a photo of each page, up to {{size}}. Send several pages one by one.",
+      "choose": "Choose the contract scan",
+      "more": "Add another page",
+      "dropHint": "or drop the file here",
+      "dropHintTouch": "from the camera or gallery",
+      "tooBig": "This file is {{size}}; the limit is {{max}}.",
+      "badType": "Only PDF, JPG or PNG.",
+      "error": "The contract scan wasn't sent"
+    }
   }
 }

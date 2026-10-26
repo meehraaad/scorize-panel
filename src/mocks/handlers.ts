@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import type { SessionUser } from '@/lib/auth/session';
 import { accountHandlers, resetAccountMocks } from './account';
 import { applicantHandlers, resetApplicantMocks } from './applicant';
+import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { salesCustomerHandlers } from './salesCustomer';
 import { managerHandlers, resetManagerMocks } from './salesManager';
@@ -21,7 +22,8 @@ import { resetStaffMocks, staffHandlers } from './staff';
  *   09120000000 / sara.ahmadi@scorize.local    applicant only
  *   09120000001 / maryam.kazemi@scorize.local  staff: supervisor + writer (panel switcher); her
  *                                               cases and tasks: src/mocks/supervisor.ts, her
- *                                               writing orders: src/mocks/writer.ts
+ *                                               writing orders: src/mocks/writer.ts; assigns new
+ *                                               cases (src/mocks/handoff.ts)
  *   09120000002 / nima.rostami@scorize.local   staff: sales only (no switcher)
  *   09120000003 / reza.kamrani@scorize.local   staff: sales manager (sales panel + manager section)
  */
@@ -80,6 +82,8 @@ const users: MockUser[] = [
       { codename: 'can_write_sop' },
       { codename: 'can_write_ps' },
       { codename: 'can_write_cv' },
+      // Hands new cases to supervisors (the supervisor panel's "New cases").
+      { codename: 'can_assign_supervisor' },
     ],
     group_permissions: [],
   },
@@ -172,6 +176,7 @@ export const handlers = [
     resetSalesMocks();
     resetTaskMocks();
     resetManagerMocks();
+    resetHandoffMocks();
     resetWriterMocks();
     return new HttpResponse(null, { status: 204 });
   }),
@@ -285,6 +290,7 @@ export const handlers = [
   ...managerHandlers,
   ...taskHandlers,
   ...supervisorHandlers,
+  ...handoffHandlers,
   ...writerHandlers,
 ];
 
@@ -299,6 +305,7 @@ export function resetMockSession() {
   resetTaskMocks();
   resetManagerMocks();
   resetSupervisorMocks();
+  resetHandoffMocks();
   resetWriterMocks();
   resetStaffMocks();
 }
