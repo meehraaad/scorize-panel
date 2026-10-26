@@ -231,21 +231,23 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
   });
 
-  it('first visit: the result locked beside the quiz, and booking starts with online or in person', async () => {
+  it('first visit: the result locked beside the quiz, and booking in a dialog on its first choice', async () => {
     onDesktop();
+    const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
     expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
     const talk = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
-    const how = within(talk).getByRole('navigation', { name: 'نحوه‌ی برگزاری جلسه' });
-    expect(within(how).getByRole('link', { name: /^آنلاین/ })).toHaveAttribute(
-      'href',
-      '/consultations/book?mode=online',
-    );
-    expect(within(how).getByRole('link', { name: /^حضوری/ })).toHaveAttribute(
-      'href',
-      '/consultations/book?mode=in_person',
-    );
+    const how = within(talk).getByRole('group', { name: 'نحوه‌ی برگزاری جلسه' });
+    await user.click(within(how).getByRole('button', { name: /^حضوری/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'رزرو مشاوره' });
+    expect(
+      await within(dialog).findByRole('radio', { name: 'حضوری' }, { timeout: 15_000 }),
+    ).toBeChecked();
+    const topics = within(dialog).getByRole('group', { name: 'موضوع جلسه‌ی حضوری' });
+    expect(within(topics).getByRole('radio', { name: /اپلای حضوری/ })).toBeChecked();
+    await user.click(within(dialog).getByRole('button', { name: 'بستن' }));
+    expect(screen.queryByRole('dialog', { name: 'رزرو مشاوره' })).toBeNull();
   });
 
   it('first visit: a free call instead, which asks for a phone first', async () => {

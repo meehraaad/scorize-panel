@@ -130,10 +130,15 @@ describe('consultations', () => {
     loginAs(MARYAM);
     renderApp('/consultations');
     expect(await screen.findByText('هنوز مشاوره‌ای رزرو نکرده‌اید.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'رزرو مشاوره‌ی جدید' })).toHaveAttribute(
-      'href',
-      '/consultations/book',
-    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'رزرو مشاوره‌ی جدید' }));
+    const dialog = await screen.findByRole('dialog', { name: 'رزرو مشاوره' });
+    // Online first, on its most booked topic.
+    expect(
+      await within(dialog).findByRole('radio', { name: 'آنلاین' }, { timeout: 15_000 }),
+    ).toBeChecked();
+    expect(
+      within(dialog).getByRole('region', { name: 'زمان‌های مشاوره‌ی اپلای' }),
+    ).toBeInTheDocument();
   });
 
   it('is linked from the services page', async () => {
