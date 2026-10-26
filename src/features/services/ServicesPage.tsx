@@ -17,7 +17,7 @@ const linkTo = (id: string) =>
   id === 'consultations' ? { to: '/consultations' } : { href: `#${id}` };
 
 /**
- * "Other services". Design: canvas V6 section 9 (AppServices). Open with or without a contract.
+ * "Learning & packages" (was "Other services"): the applicant's videos and packages first. Design: canvas V6 section 9 (AppServices). Open with or without a contract.
  */
 export default function ServicesPage() {
   const { t } = useTranslation('services');

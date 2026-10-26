@@ -1,6 +1,6 @@
 {
-  "title": "Other services",
-  "subtitle": "Courses, events, consultations and the GPA calculator.",
+  "title": "Learning & packages",
+  "subtitle": "Watch your videos and learning packages here; webinars, consultations and the GPA calculator are here too.",
   "amount": "{{amount}} toman",
   "credit": "Wallet credit",
   "pager": "{{from}}–{{to}} of {{total}}",
@@ -93,9 +93,9 @@
     "empty": "Enter your courses to calculate your GPA."
   },
   "detail": {
-    "back": "Other services",
+    "back": "Learning & packages",
     "missing": "This wasn't found. The link may be old.",
-    "toServices": "Go to other services"
+    "toServices": "Go to learning & packages"
   },
   "package": {
     "lessons": "Package content",

@@ -23,7 +23,7 @@ const loginAs = (id: number) => {
 const open = async (id: number) => {
   loginAs(id);
   renderApp('/services');
-  await screen.findByRole('heading', { name: 'دیگر خدمات', level: 1 });
+  await screen.findByRole('heading', { name: 'آموزش و پکیج‌ها', level: 1 });
 };
 
 describe('other services', () => {
