@@ -85,7 +85,7 @@ describe('panels', () => {
     await user.click(await header.findByRole('button', { name: 'پنل سوپروایزر' }));
     const switcher = screen.getByRole('navigation', { name: 'پنل‌های شما' });
     const links = within(switcher).getAllByRole('link');
-    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/supervisor', '/writer']);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/supervisor', '/writer', '/']);
     expect(links[0]).toHaveAttribute('aria-current', 'page');
 
     await user.selectOptions(screen.getByLabelText('بعد از ورود باز شود'), 'همیشه بپرس');
@@ -103,14 +103,20 @@ describe('panels', () => {
     expect(mockWorkspace(MARYAM)).toEqual({ last_workspace: 'supervisor', workspace_mode: 'ask' });
   });
 
-  it('sends staff with one work panel straight to it, with no switcher', async () => {
+  it('sends staff with one work panel straight to it', async () => {
+    const user = userEvent.setup();
     loginAs(NIMA);
     const router = renderApp('/start');
     expect(await screen.findByRole('heading', { name: /^سلام نیما، / })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sales');
-    expect(
-      within(screen.getByRole('banner')).queryByRole('button', { name: 'پنل فروش' }),
-    ).toBeNull();
+
+    // The switcher still offers the applicant panel, but no "open after login" choice.
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'پنل فروش' }));
+    const links = within(screen.getByRole('navigation', { name: 'پنل‌های شما' })).getAllByRole(
+      'link',
+    );
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/sales', '/']);
+    expect(screen.queryByLabelText('بعد از ورود باز شود')).toBeNull();
 
     // Nothing to choose either.
     cleanup();
@@ -150,7 +156,7 @@ describe('panels', () => {
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
 
-    // Not one of his panels, but listed while he is in it, so he can get back.
+    // Not one of his panels, but always listed, so he can get back.
     await user.click(
       within(screen.getByRole('banner')).getByRole('button', { name: 'پنل متقاضی' }),
     );
@@ -159,7 +165,19 @@ describe('panels', () => {
         name: /پنل فروش/,
       }),
     );
-    expect(await screen.findByRole('heading', { name: /^سلام نیما، / })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^سلام نیما، .*لید/ })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales');
+
+    // And from work, back to the applicant panel again.
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'پنل فروش' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'پنل‌های شما' })).getByRole('link', {
+        name: /پنل متقاضی/,
+      }),
+    );
+    expect(
+      await screen.findByRole('heading', { name: 'سلام نیما، به اسکورایز خوش آمدید' }),
+    ).toBeInTheDocument();
   });
 
   it('logs out for real: the session is gone', async () => {
