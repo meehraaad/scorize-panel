@@ -43,6 +43,7 @@
   --hero-accent: #f2a9d6; /* primary, lightened to stay readable on the dark hero */
   --on-hero-3: #8f8597; /* upcoming steps on the hero */
   --hero-current: #f0b94e; /* the current step on the hero */
+  --hero-info: #8fb4f0; /* sent, waiting for a result, on the hero */
   --hero-danger: #ff9c94; /* errors on the hero and in toasts */
   --toast: #1b1020; /* toasts: ink in both themes, so they stand out from the page */
 
@@ -120,6 +121,7 @@
   --hero-accent: #ffffff;
   --on-hero-3: #7d7d86;
   --hero-current: #f2bf5c;
+  --hero-info: #9ec2f7;
   --hero-danger: #ff9c94;
   --toast: #2a2a30;
 

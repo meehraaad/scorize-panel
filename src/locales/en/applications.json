@@ -1,47 +1,110 @@
 {
   "title": "Applications & results",
-  "subtitle": "Your supervisor adds each application and you approve it. Results are updated here.",
+  "subtitle": "Your supervisor suggests universities, you approve them and the team sends the applications. Every result is recorded here.",
   "noteLabel": "Supervisor's note:",
-  "stats": {
-    "label": "Applications summary",
-    "done": "Applications made",
-    "doneUnit": "of {{total}}",
-    "awaiting": "Waiting for your approval",
-    "inReview": "In progress",
-    "accepted": "Admissions",
-    "unitApply": "applications",
-    "unitUniversity": "universities"
+  "quota": {
+    "label": "Your contract's applications",
+    "title": "{{used}} universities added, of {{total}} applications in your contract",
+    "titleNoTotal": "{{used}} universities added",
+    "stage": "Case stage:",
+    "legend": "Application states",
+    "decided": "{{n}} with a result",
+    "sent": "{{n}} sent",
+    "preparing": "{{n}} being prepared",
+    "awaiting": "{{n}} waiting for you",
+    "declined": "{{n}} you rejected",
+    "free": "{{n}} not chosen yet"
   },
-  "list": {
-    "title": "Applications",
-    "search": "Search university or programme",
-    "searchPlaceholder": "University or programme",
-    "filters": "Filter applications",
-    "range": "{{from}}–{{to}} of {{total}} applications",
-    "count": "Applications: {{total}}",
-    "none": "After searching universities, your supervisor adds applications here for you to approve.",
-    "emptyFilter": "No applications in this group.",
-    "emptySearch": "No applications match “{{query}}”.",
-    "clearSearch": "Clear search",
-    "showAll": "Show all applications",
-    "noneTitle": "No applications yet"
-  },
-  "filter": {
-    "all": "All",
-    "awaiting": "Waiting for you",
-    "inReview": "In progress",
-    "accepted": "Accepted",
-    "rejected": "Rejected"
-  },
-  "column": {
-    "university": "University & programme",
+  "awaiting": {
+    "title": "Waiting for your approval",
+    "subtitle": "Nothing is sent until you approve. Each decision is recorded once.",
+    "suggested": "Suggested by your supervisor",
     "deadline": "Deadline",
     "fee": "Application fee",
-    "result": "Result",
-    "approval": "Your approval"
+    "noDeadline": "Not set",
+    "daysLeft": "{{n}} days left",
+    "ask": "Ask your supervisor"
   },
-  "daysLeft": "{{n}} days left",
-  "noDeadline": "No deadline",
+  "lanes": {
+    "title": "Approved applications",
+    "subtitle": "Each column by deadline",
+    "preparing": {
+      "title": "Being prepared",
+      "hint": "You approved it; the team is preparing the university's form.",
+      "empty": "Nothing being prepared."
+    },
+    "sent": {
+      "title": "Sent, waiting for a result",
+      "hint": "The university has it and will announce the result.",
+      "empty": "Nothing sent yet."
+    },
+    "decided": {
+      "title": "Result in",
+      "hint": "Your supervisor records each result as soon as it arrives.",
+      "empty": "No results yet."
+    }
+  },
+  "card": {
+    "deadline": "Deadline {{date}}",
+    "noDeadline": "No deadline",
+    "sent": "Sent {{date}}",
+    "result": "Result {{date}}",
+    "fee": "Fee: {{status}}",
+    "noFee": "No fee",
+    "toDocuments": "Go to documents",
+    "noteShow": "Supervisor's note",
+    "noteHide": "Hide note"
+  },
+  "declined": {
+    "show": "You rejected {{n}} suggestions · Show",
+    "hide": "Hide rejected suggestions",
+    "title": "Rejected suggestions"
+  },
+  "admission": {
+    "kicker": "New admission",
+    "on": "Recorded on {{date}}",
+    "title": "Congratulations! You were admitted to {{university}}"
+  },
+  "empty": {
+    "title": "No applications yet",
+    "text": "Your contract includes {{total}} applications. None have been added yet, which is normal: applying starts after writing and documents.",
+    "textNoTotal": "No universities have been added yet, which is normal: applying starts after writing and documents.",
+    "kicker": "Where your case is",
+    "stage": "You're at the “{{stage}}” stage",
+    "stageText": "Your supervisor updates the case's stage. Once it reaches “Apply”, suggested universities show up here for your approval.",
+    "stages": "Case stages",
+    "now": "What moves your applications forward",
+    "documents": {
+      "title": "Documents & writing",
+      "text": "No application is sent without complete documents. See what's waiting for you.",
+      "action": "Go to documents & writing"
+    },
+    "interests": {
+      "title": "Research interests",
+      "text": "The search team uses them to find suitable professors and universities. A few words in English are enough.",
+      "action": "Add research interests"
+    },
+    "supervisor": {
+      "title": "Have a country or university in mind?",
+      "text": "Tell your supervisor now so it's part of the search.",
+      "action": "Message your supervisor"
+    }
+  },
+  "how": {
+    "title": "How this page works",
+    "pick": {
+      "title": "Your supervisor suggests a university",
+      "text": "With the program, deadline, application fee and the reason."
+    },
+    "approve": {
+      "title": "You approve or reject it",
+      "text": "Nothing is sent until you approve."
+    },
+    "result": {
+      "title": "The team sends it and the result shows here",
+      "text": "You also get a ticket with each result."
+    }
+  },
   "noFee": "No fee",
   "payment": {
     "pending": "Not paid",
@@ -70,10 +133,6 @@
     "approved": "You approved",
     "rejected": "You rejected",
     "error": "That didn't go through. Check your internet connection and try again."
-  },
-  "note": {
-    "show": "Supervisor's note",
-    "hide": "Hide note"
   },
   "offer": {
     "title": "Congratulations! Your admission is in",

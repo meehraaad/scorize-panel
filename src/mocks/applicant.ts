@@ -77,6 +77,9 @@ const app = (
   payment,
   supervisor_note: null,
   showcase: null,
+  country: 'کانادا',
+  sent_at: null,
+  result_at: null,
   ...extra,
 });
 
@@ -105,6 +108,9 @@ function saraApplications(): Application[] {
       'pending',
     ),
     app(105, 'TU Munich', 'Informatics', -21, 'approved', 'accepted', null, 'waived', {
+      country: 'آلمان',
+      sent_at: daysFromNow(-60),
+      result_at: daysFromNow(-4),
       supervisor_note:
         'نامه‌ی پذیرش در ایمیل شما آمده. مهلت قبول پیشنهاد ۱۵ آذر است. برای قسط «بعد از پذیرش» هم پیامک دریافت می‌کنید.',
     }),
@@ -118,7 +124,9 @@ function saraApplications(): Application[] {
       cad(125),
       'pending',
     ),
-    app(103, 'UBC', 'Data Science', 32, 'approved', 'submitted', cad(168), 'paid'),
+    app(103, 'UBC', 'Data Science', 32, 'approved', 'submitted', cad(168), 'paid', {
+      sent_at: daysFromNow(-12),
+    }),
     app(
       106,
       'RWTH Aachen',
@@ -129,6 +137,7 @@ function saraApplications(): Application[] {
       { amount: 75, currency: 'EUR' },
       'paid',
       {
+        country: 'آلمان',
         supervisor_note:
           'یکی از دو توصیه‌نامه هنوز ارسال نشده. لطفاً به استاد دومتان یادآوری کنید.',
       },
@@ -142,6 +151,7 @@ function saraApplications(): Application[] {
       'rejected',
       { amount: 90, currency: 'GBP' },
       'paid',
+      { country: 'انگلستان', sent_at: daysFromNow(-40), result_at: daysFromNow(-6) },
     ),
     app(
       108,
@@ -158,6 +168,9 @@ function saraApplications(): Application[] {
       },
     ),
     app(109, 'TU Berlin', 'Computer Science', -30, 'approved', 'accepted', null, 'waived', {
+      country: 'آلمان',
+      sent_at: daysFromNow(-75),
+      result_at: daysFromNow(-20),
       showcase: true,
     }),
     app(
@@ -1991,6 +2004,7 @@ export const applicantHandlers = [
     const state = caseOrError();
     if (failed(state)) return state;
     const data: ApplicationsData = {
+      stage: 'apply',
       applies: { used: state.applications.length, total: 15 },
       results: state.applications,
       visa: state.visa,

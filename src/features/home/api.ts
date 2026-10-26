@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
+import type { Stage } from '@/lib/applicant/stages';
 import type { StaffRole, TicketMessage } from '@/lib/tickets/api';
 
 export type { StaffRole, TicketMessage };
@@ -10,9 +11,8 @@ export type { StaffRole, TicketMessage };
  * for one round trip, not seven. Endpoint shape: docs/backend-changes.md (H1–H4).
  */
 
-/** The six steps on the case card, in order (server maps Applicant status onto these). */
-export const STAGES = ['contract', 'writing', 'documents', 'apply', 'results', 'visa'] as const;
-export type Stage = (typeof STAGES)[number];
+/** The six steps on the case card. */
+export { STAGES, type Stage } from '@/lib/applicant/stages';
 
 /** Contract.has_*_features that are on. */
 export type ContractFeature = 'admission' | 'writing' | 'visa';

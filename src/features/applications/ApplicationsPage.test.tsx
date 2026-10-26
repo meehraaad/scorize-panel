@@ -1,9 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
+import type { ApplicationsData } from './api';
 
 // Also covers features Django doesn't serve yet (src/lib/applicant/onServer.ts): switch them on.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -18,19 +20,19 @@ const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
 };
 
-const openPage = async (path = '/applications') => {
+const openPage = async () => {
   loginAs(SARA);
-  const router = renderApp(path);
+  renderApp('/applications');
   await screen.findByRole('heading', { name: 'اپلای‌ها و نتایج', level: 1 });
-  return router;
 };
 
-const list = () => screen.getByRole('region', { name: 'فهرست اپلای‌ها' });
-const rows = () => within(list()).getAllByRole('listitem');
-const filter = (name: RegExp) =>
-  within(screen.getByRole('group', { name: 'فیلتر اپلای‌ها' })).getByRole('button', { name });
-const stat = (label: string) =>
-  within(screen.getByRole('region', { name: 'خلاصه‌ی اپلای‌ها' })).getByText(label).parentElement;
+const region = (name: string) => screen.getByRole('region', { name });
+const awaiting = () => region('منتظر تأیید شما');
+const lane = (name: string) => region(name);
+const titlesIn = (element: HTMLElement) =>
+  within(element)
+    .getAllByRole('listitem')
+    .map((item) => item.querySelector('bdi')?.textContent);
 
 describe('applications page', () => {
   beforeEach(async () => {
@@ -38,120 +40,134 @@ describe('applications page', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('shows the summary, the first page of applications, visa and professor emails', async () => {
+  it('shows the quota, what waits for approval, the three columns, visa and professor emails', async () => {
     await openPage();
-    expect(stat('اپلای انجام‌شده')).toHaveTextContent('۱۲از ۱۵');
-    expect(stat('منتظر تأیید شما')).toHaveTextContent('۲');
-    expect(stat('در جریان بررسی')).toHaveTextContent('۶');
-    expect(stat('پذیرش')).toHaveTextContent('۲');
-
-    expect(rows()).toHaveLength(10);
-    expect(within(list()).getByText('۱–۱۰ از ۱۲ اپلای')).toBeInTheDocument();
-    expect(within(list()).getByText('تبریک! پذیرش شما ثبت شد')).toBeInTheDocument();
-
-    const visa = screen.getByRole('region', { name: 'نتایج ویزا' });
-    expect(within(visa).getByText('منتظر برگزاری جلسه‌ی سفارت')).toBeInTheDocument();
-
-    const emails = screen.getByRole('region', { name: 'ایمیل به استادها' });
-    expect(await within(emails).findByText('صفحه‌ی ۱ از ۱۸')).toBeInTheDocument();
-  });
-
-  it('filters by tab, keeps the tab in the address, and searches', async () => {
-    const user = userEvent.setup();
-    const router = await openPage();
-
-    await user.click(filter(/^منتظر تأیید شما/));
-    await waitFor(() => {
-      expect(filter(/^منتظر تأیید شما/)).toHaveAttribute('aria-pressed', 'true');
-    });
-    expect(router.state.location.search).toBe('?filter=awaiting');
-    expect(rows()).toHaveLength(2);
-
-    await user.click(filter(/^همه/));
-    await waitFor(() => {
-      expect(rows()).toHaveLength(10);
-    });
-    await user.type(
-      within(list()).getByRole('searchbox', { name: 'جستجوی دانشگاه یا رشته' }),
-      'tu ',
-    );
-    expect(await within(list()).findByText('TU Munich')).toBeInTheDocument();
-    expect(within(list()).getByText('TU Berlin')).toBeInTheDocument();
-    expect(within(list()).queryByText('UBC')).not.toBeInTheDocument();
-
-    await user.type(within(list()).getByRole('searchbox'), 'xyz');
+    const quota = region('۱۲ دانشگاه ثبت شده، از ۱۵ اپلای قرارداد');
+    expect(quota).toHaveTextContent('مرحله‌ی پرونده:در حال اپلای');
+    const legend = within(quota).getByRole('list', { name: 'وضعیت اپلای‌ها' });
     expect(
-      await within(list()).findByText('اپلایی با «\u2068tu xyz\u2069» پیدا نشد.'),
-    ).toBeInTheDocument();
-    await user.click(within(list()).getByRole('button', { name: 'پاک کردن جستجو' }));
-    expect(rows()).toHaveLength(10);
-  });
+      within(legend)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
+      '۳ نتیجه آمد',
+      '۱ ارسال شد',
+      '۵ در حال آماده‌سازی',
+      '۲ منتظر تأیید شما',
+      '۱ را رد کردید',
+      '۳ هنوز انتخاب نشده',
+    ]);
 
-  it('opens on the tab in the address', async () => {
-    await openPage('/applications?filter=rejected');
-    expect(filter(/^رد شده/)).toHaveAttribute('aria-pressed', 'true');
-    expect(within(list()).getByText('University of Edinburgh')).toBeInTheDocument();
-    expect(within(list()).getByText('University of Ottawa')).toBeInTheDocument();
-    expect(within(list()).getByText('رد کردید')).toBeInTheDocument();
+    expect(titlesIn(awaiting())).toEqual(['McGill University', 'University of Waterloo']);
+    expect(within(awaiting()).getAllByText('کانادا')).toHaveLength(2);
+
+    // Each column by deadline; each card keeps its exact status.
+    expect(titlesIn(lane('در حال آماده‌سازی'))).toEqual([
+      'RWTH Aachen',
+      'University of Toronto',
+      'Simon Fraser University',
+      'University of Alberta',
+      'Concordia University',
+    ]);
+    expect(within(lane('در حال آماده‌سازی')).getByText('مدارک ناقص است')).toBeInTheDocument();
+    expect(titlesIn(lane('ارسال شد، منتظر نتیجه'))).toEqual(['UBC']);
+    expect(titlesIn(lane('نتیجه آمد'))).toEqual([
+      'TU Berlin',
+      'TU Munich',
+      'University of Edinburgh',
+    ]);
+    expect(within(lane('نتیجه آمد')).getAllByText(/^نتیجه [۰-۹]/)).toHaveLength(3);
+
+    expect(region('نتایج ویزا')).toHaveTextContent('منتظر برگزاری جلسه‌ی سفارت');
+    expect(
+      await within(region('ایمیل به استادها')).findByText('صفحه‌ی ۱ از ۱۸'),
+    ).toBeInTheDocument();
   });
 
   it('approves, and rejects after a confirmation', async () => {
     const user = userEvent.setup();
-    await openPage('/applications?filter=awaiting');
+    await openPage();
 
     await user.click(screen.getByRole('button', { name: 'تأیید اپلای McGill University' }));
-    expect(await within(list()).findByText('University of Waterloo')).toBeInTheDocument();
     await waitFor(() => {
-      expect(within(list()).queryByText('McGill University')).not.toBeInTheDocument();
+      expect(titlesIn(awaiting())).toEqual(['University of Waterloo']);
     });
-    expect(filter(/^منتظر تأیید شما/)).toHaveTextContent('۱');
+    expect(titlesIn(lane('در حال آماده‌سازی'))).toContain('McGill University');
 
     await user.click(screen.getByRole('button', { name: 'رد اپلای University of Waterloo' }));
     await user.click(screen.getByRole('button', { name: 'رد اپلای' }));
-    expect(await within(list()).findByText('اپلایی در این دسته نیست.')).toBeInTheDocument();
-    expect(filter(/^رد شده/)).toHaveTextContent('۳');
+    await waitFor(() => {
+      expect(screen.queryByRole('region', { name: 'منتظر تأیید شما' })).not.toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: '۲ پیشنهاد را رد کرده‌اید · نمایش' }));
+    expect(titlesIn(screen.getByRole('list', { name: 'پیشنهادهای ردشده' }))).toEqual([
+      'University of Ottawa',
+      'University of Waterloo',
+    ]);
+  });
+
+  it('links a missing document to the documents tab, with the supervisor note', async () => {
+    const user = userEvent.setup();
+    await openPage();
+    const preparing = lane('در حال آماده‌سازی');
+    expect(within(preparing).getByText(/ریز نمرات با ترجمه‌ی رسمی لازم است/)).toBeInTheDocument();
+    await user.click(within(preparing).getByRole('link', { name: 'رفتن به مدارک' }));
+    expect(
+      await screen.findByRole('heading', { name: 'مدارک و نگارش', level: 1 }),
+    ).toBeInTheDocument();
   });
 
   it('shows the supervisor note on request', async () => {
     const user = userEvent.setup();
-    await openPage('/applications?filter=inReview');
-    // RWTH Aachen: the first application in this tab with a note.
-    const toggle = within(list()).getAllByRole('button', { name: 'توضیحات سوپروایزر' }).at(0);
+    await openPage();
+    const preparing = lane('در حال آماده‌سازی');
+    const toggle = within(preparing).getByRole('button', { name: 'توضیح سوپروایزر' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    if (toggle) await user.click(toggle);
-    expect(within(list()).getByText(/یکی از دو توصیه‌نامه هنوز ارسال نشده/)).toBeInTheDocument();
-    expect(within(list()).getByRole('button', { name: 'بستن توضیحات' })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    );
+    await user.click(toggle);
+    expect(within(preparing).getByText(/یکی از دو توصیه‌نامه هنوز ارسال نشده/)).toBeInTheDocument();
   });
 
-  it('answers the "show my admission on the site" question once', async () => {
+  it('congratulates on a new admission and asks once about showing it', async () => {
     const user = userEvent.setup();
-    await openPage('/applications?filter=accepted');
-    await user.click(within(list()).getByRole('button', { name: 'بله، اجازه می‌دهم' }));
-    expect(await screen.findByText('۲ اپلای')).toBeInTheDocument();
+    await openPage();
+    const card = region('تبریک! از ⁨TU Munich⁩ پذیرش گرفتید');
+    expect(card).toHaveTextContent('مهلت قبول پیشنهاد ۱۵ آذر است');
+    await user.click(within(card).getByRole('button', { name: 'بله، اجازه می‌دهم' }));
     await waitFor(() => {
-      expect(within(list()).queryByText('تبریک! پذیرش شما ثبت شد')).not.toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: /پذیرش گرفتید/ })).not.toBeInTheDocument();
     });
   });
 
-  it('pages through professor emails', async () => {
-    const user = userEvent.setup();
+  it('shows where the case is when no application is added yet', async () => {
+    server.use(
+      http.get('/api/applicant/v1/applications/', () =>
+        HttpResponse.json<ApplicationsData>({
+          stage: 'documents',
+          applies: { used: 0, total: 10 },
+          results: [],
+          visa: null,
+        }),
+      ),
+    );
     await openPage();
-    const emails = screen.getByRole('region', { name: 'ایمیل به استادها' });
-    await within(emails).findByText('صفحه‌ی ۱ از ۱۸');
-    expect(within(emails).getByRole('button', { name: 'قبلی' })).toBeDisabled();
-    await user.click(within(emails).getByRole('button', { name: 'بعدی' }));
-    expect(await within(emails).findByText('صفحه‌ی ۲ از ۱۸')).toBeInTheDocument();
-    expect(within(emails).getByRole('button', { name: 'قبلی' })).toBeEnabled();
+    const stage = region('الان در مرحله‌ی «جمع‌آوری مدارک» هستید');
+    expect(stage).toHaveTextContent('قرارداد شما ۱۰ اپلای دارد');
+    expect(within(stage).getByRole('list', { name: 'مراحل پرونده' })).toBeInTheDocument();
+    const next = region('چیزی که اپلای را جلو می‌اندازد');
+    expect(within(next).getByRole('link', { name: /پیام به سوپروایزر/ })).toHaveAttribute(
+      'href',
+      '/tickets/supervisor',
+    );
+    expect(region('این صفحه چطور کار می‌کند')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'اپلای‌های تأییدشده' })).not.toBeInTheDocument();
   });
 
-  it('explains the page to someone without a contract', async () => {
+  it('explains the page to someone without a contract, without sample data', async () => {
     loginAs(MARYAM);
     renderApp('/applications');
-    // A locked preview with sample data (canvas V7), not their case: src/app/locks.test.tsx.
     expect(await screen.findByRole('region', { name: 'این بخش قفل است' })).toBeInTheDocument();
-    expect(screen.getByText('University of Toronto').closest('[inert]')).not.toBeNull();
+    expect(screen.getAllByText('مدارک ناقص است')[0]?.closest('[inert]')).not.toBeNull();
+    expect(screen.queryByText('University of Toronto')).not.toBeInTheDocument();
+    expect(region('این صفحه چطور کار می‌کند')).toBeInTheDocument();
   });
 });

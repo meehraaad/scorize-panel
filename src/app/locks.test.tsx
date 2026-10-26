@@ -46,8 +46,8 @@ describe('locked sections', () => {
       'اپلای‌ها، نتیجه‌ها و ایمیل به استادها بعد از عقد قرارداد برای شما فعال می‌شود',
     );
     expect(screen.getByText('پیش‌نمایش · داده‌های نمونه، نه پرونده‌ی شما')).toBeInTheDocument();
-    // The sample is shown but can't be used.
-    expect(screen.getByText('University of Toronto').closest('[inert]')).not.toBeNull();
+    // The page's layout is shown but can't be used.
+    expect(screen.getAllByText('مدارک ناقص است')[0]?.closest('[inert]')).not.toBeNull();
 
     const nav = mainNav();
     if (!nav) throw new Error('No panel menu');
