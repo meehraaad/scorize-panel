@@ -42,7 +42,8 @@ export function PageSkeleton({ kind }: { kind: SkeletonKind }) {
   );
 }
 
-function Bone({ className }: { className: string }) {
+/** One grey placeholder shape (a block whose content is on its way). */
+export function Bone({ className }: { className: string }) {
   return (
     <span aria-hidden="true" className={`block animate-pulse rounded-full bg-track ${className}`} />
   );

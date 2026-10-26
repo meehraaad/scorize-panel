@@ -89,7 +89,7 @@ export const applicantPanel: PanelDefinition = {
           index: true,
           ...lazyPage(
             () => import('@/features/home/HomePage'),
-            ['home', 'gates', 'estimate', 'journey'],
+            ['home', 'gates', 'estimate', 'journey', 'booking'],
             {
               // Without a contract the home is the journey toward one: the admission-chance quiz
               // (or its last result), the tablet form, the next session and what to start with
@@ -105,6 +105,10 @@ export const applicantPanel: PanelDefinition = {
                   guest && backgroundQuery,
                   guest && consultationsQuery,
                   guest && startQuery,
+                  // The consultation card's first free time per mode (the booking page's first read).
+                  guest &&
+                    ON_SERVER.bookingCalendar &&
+                    firstCalendarQuery(weekStart(calendarKind(i18n.language))),
                 ];
               },
               skeleton: 'dashboard',
@@ -239,7 +243,7 @@ export const applicantPanel: PanelDefinition = {
           path: 'consultations',
           ...lazyPage(
             () => import('@/features/consultations/ConsultationsPage'),
-            ['consultations'],
+            ['consultations', 'booking'],
             { data: () => [consultationsQuery, sessionSummariesQuery()], skeleton: 'list' },
           ),
         },
@@ -248,7 +252,7 @@ export const applicantPanel: PanelDefinition = {
           ? [
               {
                 path: 'consultations/book',
-                ...lazyPage(() => import('@/features/consultations/BookPage'), ['consultations'], {
+                ...lazyPage(() => import('@/features/consultations/BookPage'), ['booking'], {
                   data: () => [firstCalendarQuery(weekStart(calendarKind(i18n.language)))],
                   skeleton: 'board',
                 }),

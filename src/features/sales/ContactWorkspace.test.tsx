@@ -112,6 +112,11 @@ describe('persistent contact workspace', () => {
     expect(
       within(dialog).getByText('این ارتباط ثبت‌نشده حذف شود؟ یادداشت‌های آن پاک می‌شود.'),
     ).toBeInTheDocument();
+    const confirmation = within(dialog).getByRole('group', {
+      name: i18n.t('contactDraft.discardConfirm', { ns: 'sales' }),
+    });
+    expect(confirmation.closest('footer')).toBeVisible();
+    expect(within(dialog).getAllByRole('button', { name: 'حذف پیش‌نویس' })).toHaveLength(1);
     await user.click(within(dialog).getByRole('button', { name: 'نگه داشتن پیش‌نویس' }));
     expect(within(dialog).getByLabelText('یادداشت')).toHaveValue('Keep this draft');
     await user.click(within(dialog).getByRole('button', { name: 'حذف پیش‌نویس' }));

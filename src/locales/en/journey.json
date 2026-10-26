@@ -26,19 +26,21 @@
   },
   "paths": {
     "title": "Where shall we start?",
-    "subtitle": "Pick the one closest to you and start here.",
+    "subtitle": "Two ways that start today.",
     "turkey": {
-      "title": "Apply to Turkey, nothing upfront",
-      "text": "Starts without an upfront payment; send your documents and the team reviews them.",
+      "title": "Apply to Turkish universities, with no service fee",
+      "text": "The university pays our fee, not you. Send your documents; we take it from there.",
       "chip": "Nothing upfront",
       "start": "Start applying to Turkey",
-      "call": "Call me about Turkey"
-    },
-    "consult": {
-      "title": "Expert consultation",
-      "text": "One session with an application consultant to settle the country, field and costs.",
-      "start": "Book a consultation",
-      "minutes": "{{n}} minutes with a senior consultant: settle the route, country and costs."
+      "call": "Call me about Turkey",
+      "kicker": "Suggested path · Turkey",
+      "steps": "Steps of the Turkey application",
+      "step": {
+        "upload": "Upload documents",
+        "review": "Team review",
+        "sign": "Sign the agreement"
+      },
+      "note": "Sign the agreement right here, with a text-message code"
     },
     "contract": {
       "title": "Application contract",
@@ -47,7 +49,8 @@
       "writing": "A professional SOP and CV",
       "applies": "Applications followed through to the result",
       "instalments": "Pay in up to {{n}} instalments",
-      "from": "Instalments from"
+      "from": "Instalments from",
+      "kicker": "Every country"
     }
   },
   "session": {
@@ -208,19 +211,26 @@
     "call": "Call me",
     "sent": "Call request sent.",
     "done": "Done. We’ll call you in the {{time}}.",
-    "book": "Book a session with an advisor. First say how it should be held; then pick the topic and a time on the calendar.",
+    "book": "A session with a senior consultant: you settle the route, the country and the costs together.",
     "free": "A free call first",
-    "how": "How the session is held",
+    "how": "How would you like the session?",
     "modes": {
       "online": {
-        "title": "Online",
-        "line": "Video or phone call, from anywhere"
+        "title": "Online"
       },
       "in_person": {
-        "title": "In person",
-        "line": "At the Scorize office, face to face"
+        "title": "In person"
       }
-    }
+    },
+    "kicker": "Expert application consultation",
+    "kickerMinutes": "Expert application consultation · {{n}} min",
+    "first": "First free time",
+    "none": "No free time soon",
+    "when": "{{day}} · {{time}}",
+    "bookAt": "Book {{mode}} · {{time}}",
+    "other": "Other times",
+    "discount": "{{n}}% off",
+    "error": "The free times didn't load; see “Other times”."
   },
   "topics": {
     "title": "What we’ll talk about in the session",

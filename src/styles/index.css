@@ -31,6 +31,9 @@
   --color-line-3: var(--line-3);
   --color-track: var(--track);
   --color-row-highlight: var(--row-highlight);
+  --color-path-sand: var(--path-sand);
+  --color-path-sun: var(--path-sun);
+  --color-path-sea: var(--path-sea);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-on-primary: var(--on-primary);
