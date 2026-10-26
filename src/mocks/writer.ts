@@ -26,12 +26,9 @@ const API = '/api/writer/v1';
 const DAY = 86_400_000;
 const MESSAGES_PAGE = 20;
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
-const inDays = (n: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + n);
-  date.setHours(10, 0, 0, 0);
-  return date.toISOString();
-};
+// Exactly n days ahead, so daysUntil() reads n at any time of day (a fixed clock time would
+// round up to n + 1 before that time).
+const inDays = (n: number) => new Date(Date.now() + n * DAY).toISOString();
 
 let nextId = 70_000;
 const newId = () => nextId++;
