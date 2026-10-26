@@ -1,0 +1,81 @@
+.scene {
+  --surface: var(--hero);
+  --text: var(--on-hero);
+  --text-2: var(--on-hero-2);
+  --primary-text: var(--hero-accent);
+  --good: var(--live);
+  --hair: var(--hero-line);
+  --line-2: var(--hero-line);
+  --line-3: var(--hero-accent);
+  --focus: var(--hero-accent);
+  --path-sand: var(--hero-raised);
+  --path-sun: var(--hero-current);
+  --path-sea: var(--on-hero-2);
+  position: relative;
+  isolation: isolate;
+  color: var(--on-hero);
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 35% center;
+}
+
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    0deg,
+    var(--hero) 0%,
+    var(--hero) 55%,
+    color-mix(in srgb, var(--hero) 94%, transparent) 73%,
+    color-mix(in srgb, var(--hero) 8%, transparent) 100%
+  );
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding-block-start: clamp(9rem, 38vw, 13rem);
+}
+
+@media (min-width: 64rem) {
+  .turkey .content {
+    width: 66%;
+    min-height: 30rem;
+    padding-block-start: 2rem;
+  }
+
+  .turkey .art img {
+    object-position: center;
+  }
+
+  .turkey::after {
+    background: linear-gradient(
+      90deg,
+      var(--hero) 0%,
+      color-mix(in srgb, var(--hero) 97%, transparent) 40%,
+      color-mix(in srgb, var(--hero) 88%, transparent) 60%,
+      color-mix(in srgb, var(--hero) 8%, transparent) 100%
+    );
+  }
+
+  :global([dir='rtl']) .turkey::after {
+    transform: scaleX(-1);
+  }
+
+  .contract .content {
+    padding-block-start: 10rem;
+  }
+}

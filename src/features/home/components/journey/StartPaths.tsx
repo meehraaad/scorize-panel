@@ -9,10 +9,9 @@ import type { ApplicantAccess } from '@/lib/applicant/access';
 import type { StartOffers } from '@/lib/applicant/journey';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
-import immigrationImage from './images/immigration.webp';
 import immigrationMobileImage from './images/immigration-mobile.webp';
-import turkeyStudyImage from './images/turkey-study.webp';
 import turkeyStudyMobileImage from './images/turkey-study-mobile.webp';
+import styles from './StartPaths.module.css';
 
 const TURKEY_STEPS = [
   { key: 'upload', icon: 'upload' },
@@ -23,8 +22,8 @@ const TURKEY_STEPS = [
 /**
  * The two ways to begin that start today (the consultation has its own card): Turkey, which starts
  * without paying first (its own flow once on the server, a seller's call until then), and a call
- * about a contract, with what it costs per instalment. Each has dedicated mobile and desktop
- * artwork: a Turkish campus and a doorway to a new city.
+ * about a contract, with what it costs per instalment. Artwork sits behind a responsive fade:
+ * space above the text on phones, beside it on Turkey's larger desktop card.
  */
 export function StartPaths({ access, offers }: { access: ApplicantAccess; offers: StartOffers }) {
   const { t } = useTranslation('journey');
@@ -41,10 +40,10 @@ export function StartPaths({ access, offers }: { access: ApplicantAccess; offers
     />
   );
   const primary = buttonClass('primary', 'w-full sm:w-auto', 'lg');
-  // Outlined in the brand colour: the second way, lighter than Turkey's. At the bottom without a price.
+  // The secondary action stays readable on the scene in both themes.
   const contractButton = buttonClass(
     'outline',
-    `w-full font-bold text-primary-text! shadow-[inset_0_0_0_1.5px_var(--primary)]! ${
+    `w-full font-bold text-primary-text! shadow-[inset_0_0_0_1.5px_var(--hero-accent)]! ${
       contract ? '' : 'mt-auto'
     }`,
     'lg',
@@ -56,32 +55,25 @@ export function StartPaths({ access, offers }: { access: ApplicantAccess; offers
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] lg:gap-5">
         <Card
           aria-labelledby="journey-path-turkey"
-          className="flex flex-col shadow-[var(--panel-shadow),var(--path-shadow)] lg:flex-row"
+          className={`${styles.scene} ${styles.turkey} flex flex-col shadow-[var(--panel-shadow),var(--path-shadow)]`}
         >
-          <div className="relative aspect-2/1 flex-none lg:order-last lg:aspect-auto lg:w-[38%]">
-            <picture className="absolute inset-0">
-              <source
-                media="(min-width: 1024px)"
-                srcSet={turkeyStudyImage}
-                width={720}
-                height={1000}
-              />
-              <img
-                src={turkeyStudyMobileImage}
-                alt=""
-                width={960}
-                height={480}
-                loading="lazy"
-                decoding="async"
-                className="block size-full object-cover"
-              />
-            </picture>
-            <span className="absolute start-3.5 top-3.5 inline-flex h-7.5 items-center gap-1.5 rounded-full bg-surface px-3 text-xs font-bold text-good shadow-panel">
+          <picture className={styles.art}>
+            <img
+              src={turkeyStudyMobileImage}
+              alt=""
+              width={960}
+              height={480}
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
+          <div
+            className={`${styles.content} flex min-w-0 flex-1 flex-col gap-4 p-5 lg:gap-5 lg:p-8`}
+          >
+            <span className="inline-flex h-7.5 items-center gap-1.5 self-start rounded-full bg-hero-raised px-3 text-xs font-bold text-good shadow-panel">
               <Icon name="check" size={14} />
               {t('paths.turkey.chip')}
             </span>
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 lg:gap-5 lg:p-8">
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-bold text-primary-text">
                 {t('paths.turkey.kicker')}
@@ -136,14 +128,11 @@ export function StartPaths({ access, offers }: { access: ApplicantAccess; offers
           </div>
         </Card>
 
-        <Card aria-labelledby="journey-path-contract" className="flex flex-col">
-          <picture className="block aspect-2/1 flex-none lg:aspect-16/5">
-            <source
-              media="(min-width: 1024px)"
-              srcSet={immigrationImage}
-              width={1200}
-              height={375}
-            />
+        <Card
+          aria-labelledby="journey-path-contract"
+          className={`${styles.scene} ${styles.contract} flex flex-col`}
+        >
+          <picture className={styles.art}>
             <img
               src={immigrationMobileImage}
               alt=""
@@ -151,10 +140,9 @@ export function StartPaths({ access, offers }: { access: ApplicantAccess; offers
               height={480}
               loading="lazy"
               decoding="async"
-              className="block size-full object-cover"
             />
           </picture>
-          <div className="flex flex-1 flex-col gap-3.5 p-5 lg:p-6">
+          <div className={`${styles.content} flex flex-1 flex-col gap-3.5 p-5 lg:p-6`}>
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-bold text-primary-text">
                 {t('paths.contract.kicker')}
