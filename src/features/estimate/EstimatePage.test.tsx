@@ -2,9 +2,11 @@ import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
+import { accountOf } from '@/mocks/account';
 import { estimateAnswers, estimateStarts } from '@/mocks/estimate';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { onDesktop } from '@/test/viewport';
 
 // The quiz isn't on the server yet (src/lib/applicant/onServer.ts): switch everything on.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -24,7 +26,13 @@ const next = () => screen.getByRole('button', { name: 'ادامه' });
 /** Answers every step: Engineering, the given GPA and English choice, Italy, then contact. */
 async function answerAll(
   user: ReturnType<typeof userEvent.setup>,
-  { gpa = '17.5', english = /۷ و بالاتر/, channel = 'واتس‌اپ', time = 'امروز عصر' } = {},
+  {
+    gpa = '17.5',
+    english = /۷ و بالاتر/,
+    channel = 'واتس‌اپ',
+    time = 'امروز عصر',
+    referral = '',
+  } = {},
 ) {
   await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
   await user.click(next());
@@ -37,6 +45,7 @@ async function answerAll(
   await user.click(next());
   await user.click(screen.getByRole('radio', { name: new RegExp(channel) }));
   if (channel !== 'فعلاً نه') await user.click(screen.getByRole('radio', { name: time }));
+  if (referral) await user.click(screen.getByRole('radio', { name: referral }));
   await user.click(screen.getByRole('button', { name: 'دیدن شانس من' }));
 }
 
@@ -47,6 +56,7 @@ describe('admission-chance quiz', () => {
   });
 
   it('is the guest home: the quiz, then a short result linking to the full one', async () => {
+    onDesktop();
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
@@ -83,6 +93,41 @@ describe('admission-chance quiz', () => {
     expect(screen.queryByRole('button', { name: 'درخواست تماس مشاور' })).not.toBeInTheDocument();
   });
 
+  it('on phones, the guest home asks in a sheet and keeps a short card', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/');
+    const card = await screen.findByRole('region', { name: 'شانس پذیرش‌تان را ببینید' });
+    // No preview or locked result filling the page: they live in the sheet's steps.
+    expect(screen.queryByRole('region', { name: 'تا اینجا' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'نتیجه‌ی شما این شکلی است' })).toBeNull();
+    expect(estimateStarts.has(MARYAM)).toBe(false);
+
+    await user.click(within(card).getByRole('button', { name: 'شروع پرسش‌نامه' }));
+    const sheet = screen.getByRole('dialog', { name: 'شانس پذیرش شما' });
+    expect(within(sheet).getByRole('list', { name: 'مراحل پرسش‌نامه' })).toBeInTheDocument();
+    await answerAll(user);
+
+    // The sheet closes on the result: the best country, the call promise, the full result's link.
+    const best = await screen.findByRole('region', { name: 'بیشترین شانس شما: ایتالیا' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      within(best).getByText('یک مشاور امروز عصر در واتس‌اپ به شما پیام می‌دهد.'),
+    ).toBeInTheDocument();
+    expect(within(best).getByRole('link', { name: 'جزئیات هر کشور' })).toHaveAttribute(
+      'href',
+      '/estimate',
+    );
+    expect(estimateStarts.has(MARYAM)).toBe(true);
+
+    // Answering again opens the sheet; closing it keeps the result.
+    await user.click(within(best).getByRole('button', { name: 'پاسخ دوباره' }));
+    const again = screen.getByRole('dialog', { name: 'شانس پذیرش شما' });
+    await user.click(within(again).getByRole('button', { name: 'بستن' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'بیشترین شانس شما: ایتالیا' })).toBeInTheDocument();
+  });
+
   it('goes from the questions to the result and the call promise', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
@@ -114,6 +159,25 @@ describe('admission-chance quiz', () => {
         contact: { channel: 'whatsapp', time: 'evening' },
       },
     ]);
+  });
+
+  it('asks how they heard about Scorize on the last step, until answered', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/estimate');
+    await answerAll(user, { referral: 'اینستاگرام' });
+    await screen.findByRole('heading', { name: 'شانس پذیرش شما', level: 1 });
+    expect(estimateAnswers[0]?.referral).toBe('instagram');
+    // The account's answer: the account page stops asking too.
+    expect(accountOf(MARYAM).data.referral).toBe('instagram');
+
+    // Answered: the next quiz doesn't ask again.
+    await user.click(screen.getByRole('button', { name: 'پاسخ دوباره' }));
+    for (let n = 0; n < 4; n++) await user.click(next());
+    await screen.findByRole('heading', { name: 'مشاور با شما تماس بگیرد؟' });
+    expect(
+      screen.queryByRole('group', { name: 'از کجا با اسکورایز آشنا شدید؟' }),
+    ).not.toBeInTheDocument();
   });
 
   it('checks a step before going on and shows the answers so far', async () => {

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
@@ -98,8 +99,16 @@ export function Result({
   );
 }
 
-/** The dark card: the best country, then every country side by side. */
-function ResultHero({ result, best }: { result: EstimateResult; best: CountryEstimate }) {
+/** The dark card: the best country, then every country side by side; `children` close it. */
+export function ResultHero({
+  result,
+  best,
+  children,
+}: {
+  result: EstimateResult;
+  best: CountryEstimate;
+  children?: ReactNode;
+}) {
   const { t } = useTranslation('estimate');
   const f = useFormat();
   const level = (estimate: CountryEstimate) =>
@@ -155,6 +164,7 @@ function ResultHero({ result, best }: { result: EstimateResult; best: CountryEst
           </ol>
         </div>
       )}
+      {children}
     </section>
   );
 }

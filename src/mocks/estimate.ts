@@ -7,6 +7,7 @@ import type {
   EstimatePrefill,
   EstimateResult,
 } from '@/lib/applicant/estimate';
+import { accountOf } from './account';
 import { forbidden, notFound, storage } from './session';
 
 /**
@@ -39,6 +40,7 @@ export const ESTIMATE_OPTIONS: Omit<EstimateOptions, 'prefill'> = {
   starts: ['soon', 'next_year', 'unsure'],
   contact_channels: ['call', 'whatsapp', 'none'],
   contact_times: ['now', 'evening', 'tomorrow'],
+  referrals: ['telegram', 'instagram', 'google', 'friends', 'other'],
 };
 
 const BANDS: Band[] = ['low', 'medium', 'high'];
@@ -49,8 +51,8 @@ export const estimateAnswers: EstimateAnswers[] = [];
 export const estimateStarts = new Set<number>();
 const latest = new Map<number, EstimateResult>();
 /** What each user's profile holds for the quiz: their last answers, as Django saves them. */
-const profiles = new Map<number, EstimatePrefill>();
-const NOTHING: EstimatePrefill = {
+const profiles = new Map<number, Omit<EstimatePrefill, 'referral'>>();
+const NOTHING: Omit<EstimatePrefill, 'referral'> = {
   degree: null,
   field_group: null,
   gpa: null,
@@ -114,7 +116,8 @@ export const estimateHandlers = [
     if (!user) return forbidden();
     const options: EstimateOptions = {
       ...ESTIMATE_OPTIONS,
-      prefill: profiles.get(user) ?? NOTHING,
+      // "How did you hear about us" is the account's answer, as on Django (`UserInfo.referred_from`).
+      prefill: { ...(profiles.get(user) ?? NOTHING), referral: accountOf(user).data.referral },
     };
     return HttpResponse.json(options);
   }),
@@ -133,7 +136,12 @@ export const estimateHandlers = [
     if (!ESTIMATE_OPTIONS.field_groups.some((group) => group.id === answers.field_group))
       return invalid('field_group');
     if (!(answers.gpa > 0 && answers.gpa <= 100)) return invalid('gpa');
+    if (answers.referral && !ESTIMATE_OPTIONS.referrals.includes(answers.referral))
+      return invalid('referral');
     estimateAnswers.push(answers);
+    // Once: an earlier answer is kept.
+    const account = accountOf(user).data;
+    if (answers.referral && !account.referral) account.referral = answers.referral;
     profiles.set(user, {
       degree: answers.degree,
       field_group: answers.field_group,

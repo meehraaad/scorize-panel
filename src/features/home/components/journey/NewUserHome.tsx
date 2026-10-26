@@ -19,6 +19,7 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { AfterSessionCard } from './AfterSessionCard';
 import { AfterUpload } from './AfterUpload';
 import { TalkCard } from './CallTimeCard';
+import { PastSessionCard } from './PastSessionCard';
 import { ConsultantCard, SimilarCard } from './PeopleCards';
 import { ReadinessCard } from './ReadinessCard';
 import { ReviewUploadCard } from './ReviewUploadCard';
@@ -35,7 +36,10 @@ import { StartPaths } from './StartPaths';
  * - after the first file: it arrived, a time for the session, what Turkey still needs
  * - a booked consultation: the session (countdown, calendar), what it covers, what to fill before it
  * - after a session (within a month): a short survey about it leads
+ * - long after a session: a short card about it, then the ways to start (no readiness checklist:
+ *   its steps lead to the session they already had)
  * Their own seller and admissions of people like them close every moment but the first.
+ * On phones the quiz is one short card that opens its questions in a bottom sheet.
  * Design: "Scorize New User Dashboard v2" canvas (Main, FirstVisit, AfterUpload, UpcomingConsult).
  */
 export function NewUserHome({ access }: { access: ApplicantAccess }) {
@@ -47,16 +51,22 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   const { data: sessions } = useSuspenseQuery(consultationsQuery);
   const { data: offers } = useSuspenseQuery(startQuery);
   const [kind, setKind] = useState<ReviewKind>('transcript');
-  const { upcoming } = splitSessions(sessions.results);
+  const { upcoming, past } = splitSessions(sessions.results);
   const next = upcoming[0];
   // The last session, while it is recent: the survey about it (or the thanks for it) leads.
   const held = recentSession(sessions.results);
   const consulted = sessions.results.length > 0;
-  // Nothing answered or sent yet.
-  const firstVisit = estimate === null && files.length === 0 && !next && !held;
+  // Nothing answered, sent or booked yet.
+  const firstVisit = estimate === null && files.length === 0 && !consulted;
 
   const quiz = (
-    <EstimateFlow key="quiz" phone={access.phone} detailsTo="/estimate" teaser={firstVisit} />
+    <EstimateFlow
+      key="quiz"
+      phone={access.phone}
+      detailsTo="/estimate"
+      teaser={firstVisit}
+      sheetOnPhone
+    />
   );
   const readiness = (
     <ReadinessCard
@@ -102,6 +112,14 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
       upload,
       paths,
       quiz,
+      ...people,
+    ];
+  else if (past[0])
+    blocks = [
+      <PastSessionCard key="past" session={past[0]} access={access} />,
+      paths,
+      quiz,
+      upload,
       ...people,
     ];
   else if (firstVisit)

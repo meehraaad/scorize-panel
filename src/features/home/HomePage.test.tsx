@@ -7,6 +7,7 @@ import { addHeldConsultation, feedbackSent } from '@/mocks/applicant';
 import { bookingsSent, setStartOffers } from '@/mocks/journey';
 import { renderApp } from '@/test/renderApp';
 import { toasts } from '@/test/toasts';
+import { onDesktop } from '@/test/viewport';
 import '@/test/server';
 
 // Also covers features Django doesn't serve yet (src/lib/applicant/onServer.ts): switch them on.
@@ -231,6 +232,7 @@ describe('applicant home', () => {
   });
 
   it('first visit: the result locked beside the quiz, and a consultation booked on the calendar', async () => {
+    onDesktop();
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
@@ -312,6 +314,27 @@ describe('applicant home', () => {
     const thanks = await screen.findByRole('region', { name: 'ممنون از نظرتان' });
     expect(within(thanks).getByRole('button', { name: 'تماس درباره‌ی ترکیه' })).toBeInTheDocument();
     // Consulted: no more consultation offer among the ways to start.
+    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
+    expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
+  });
+
+  it('remembers a session long past, without the first-visit or readiness blocks', async () => {
+    loginAs(MARYAM);
+    addHeldConsultation(MARYAM, 45);
+    renderApp('/');
+    const card = await screen.findByRole('region', {
+      name: 'جلسه‌تان با نیلوفر شریفی یادتان هست؟',
+    });
+    expect(within(card).getByRole('link', { name: 'جزئیات جلسه' })).toHaveAttribute(
+      'href',
+      '/consultations/90',
+    );
+    expect(
+      within(card).getByRole('button', { name: 'سؤال دارم، تماس بگیرید' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' })).toBeNull();
+    expect(screen.queryByRole('region', { name: /چطور بود؟$/ })).toBeNull();
     const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
     expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
   });
