@@ -39,6 +39,24 @@ function nextSlots(): string[] {
   });
 }
 
+/**
+ * The calendar's free times between two days (`YYYY-MM-DD`): from tomorrow, every 20 minutes from
+ * 10:00 to 12:00 Tehran, not Thursday or Friday (Django: the type's `slot_minutes` schedule).
+ */
+function slotsBetween(from: string, to: string) {
+  const slots: { at: string; left: number }[] = [];
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60_000).toISOString().slice(0, 10);
+  for (let day = new Date(`${from > tomorrow ? from : tomorrow}T00:00:00Z`); ;) {
+    const date = day.toISOString().slice(0, 10);
+    if (date > to) break;
+    if (day.getUTCDay() !== 4 && day.getUTCDay() !== 5)
+      for (const time of ['10:00', '10:20', '10:40', '11:00', '11:20', '11:40'])
+        slots.push({ at: new Date(`${date}T${time}:00+03:30`).toISOString(), left: 2 });
+    day = new Date(day.getTime() + 24 * 60 * 60_000);
+  }
+  return slots;
+}
+
 function defaultOffers(): StartOffers {
   return {
     consultation: {
@@ -93,6 +111,17 @@ export const journeyHandlers = [
     return user ? HttpResponse.json({ ...defaultOffers(), ...offersOf.get(user) }) : forbidden();
   }),
 
+  http.get(`${BASE}/consultations/slots/`, ({ request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const query = new URL(request.url).searchParams;
+    const offer = { ...defaultOffers(), ...offersOf.get(user) }.consultation;
+    return HttpResponse.json({
+      type: offer?.type ?? null,
+      slots: offer ? slotsBetween(query.get('from') ?? '', query.get('to') ?? '') : [],
+    });
+  }),
+
   http.post(`${BASE}/consultations/book/`, async ({ request }) => {
     const user = storage.get();
     if (!user) return forbidden();
@@ -103,7 +132,9 @@ export const journeyHandlers = [
         { type: ['This consultation can not be booked here.'] },
         { status: 400 },
       );
-    if (!offer.slots.includes(sent.starts_at))
+    const day = new Date(sent.starts_at).toISOString().slice(0, 10);
+    const free = [...offer.slots, ...slotsBetween(day, day).map((slot) => slot.at)];
+    if (!free.includes(sent.starts_at))
       return HttpResponse.json({ starts_at: ['This time is taken.'] }, { status: 400 });
     bookingsSent.push(sent);
     // Django: the gateway (a relative path when the visitor's IP needs checking first).

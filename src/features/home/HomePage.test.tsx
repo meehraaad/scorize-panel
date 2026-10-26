@@ -230,15 +230,59 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
   });
 
-  it('first visit: the result locked beside the quiz, and a call at a time they pick', async () => {
+  it('first visit: the result locked beside the quiz, and a consultation booked on the calendar', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
     expect(
       await screen.findByRole('region', { name: 'نتیجه‌ی شما این شکلی است' }),
     ).toBeInTheDocument();
-    // No phone on the account: the call request asks for one.
-    const call = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
+    const talk = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
+    const book = within(talk).getByRole('button', { name: 'یک زمان انتخاب کنید' });
+    expect(book).toBeDisabled();
+    // The calendar opens on the first free day; a time on it, then "book" goes to the gateway.
+    const picker = within(talk).getByRole('region', { name: 'زمان جلسه' });
+    const times = await within(picker).findAllByRole('radio');
+    await user.click(times[1] as HTMLElement);
+    const assign = vi.fn();
+    const { href, origin, protocol, host, hostname, port, pathname, search, hash } =
+      window.location;
+    vi.stubGlobal('location', {
+      href,
+      origin,
+      protocol,
+      host,
+      hostname,
+      port,
+      pathname,
+      search,
+      hash,
+      assign,
+    });
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    await user.click(within(talk).getByRole('button', { name: /^رزرو و پرداخت · / }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
+    expect(bookingsSent).toHaveLength(1);
+    expect(bookingsSent[0]?.starts_at).toBe((times[1] as HTMLInputElement).value);
+  });
+
+  it('first visit: a free call instead, which asks for a phone first', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/');
+    const talk = await screen.findByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
+    await user.click(within(talk).getByRole('button', { name: 'اول یک تماس رایگان' }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('first visit without a consultation on offer: the call alone', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    setStartOffers(MARYAM, { consultation: null });
+    renderApp('/');
+    const call = await screen.findByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
     await user.click(within(call).getByRole('button', { name: 'با من تماس بگیرید' }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });

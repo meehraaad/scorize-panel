@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { toValue } from '@/lib/calendar';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
 
 /**
@@ -176,6 +177,37 @@ export const startQuery = queryOptions({
   // Free times change as people book: fresh enough for a visit, not for a day.
   staleTime: 60_000,
 });
+
+/** The dashboard consultation's free times between two days (H66), for the booking calendar. */
+export interface FreeSlots {
+  /** The consultation they belong to; null when none is offered. */
+  type: number | null;
+  slots: { at: string; left: number }[];
+}
+
+/** `from`, `to`: `YYYY-MM-DD`, at most 62 days apart (a month of the calendar). */
+export const freeSlotsQuery = (from: string, to: string) =>
+  queryOptions({
+    queryKey: [...START_KEY, 'slots', from, to],
+    queryFn: ({ signal }) =>
+      api<FreeSlots>(
+        `${BASE}/consultations/slots/?${new URLSearchParams({ from, to }).toString()}`,
+        {
+          signal,
+        },
+      ),
+    staleTime: 60_000,
+  });
+
+/** The calendar's first read: this month and the next (the API's most is 62 days). */
+export const FIRST_SLOT_DAYS = 61;
+
+/** The free times from today on, for FIRST_SLOT_DAYS days: read with the home page (its route). */
+export const firstSlotsQuery = (now = Date.now()) =>
+  freeSlotsQuery(
+    toValue(new Date(now), false),
+    toValue(new Date(now + FIRST_SLOT_DAYS * 86_400_000), false),
+  );
 
 /**
  * Books the dashboard's consultation at one of its times (H64). `redirect_url`: the bank gateway,
