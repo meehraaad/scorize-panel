@@ -5,6 +5,7 @@ import {
   assignQuery,
   boardQuery,
   customerQuery,
+  historyQuery,
   monthQuery,
   todayQuery,
 } from '@/features/sales/api';
@@ -113,7 +114,17 @@ export const salesPanel: PanelDefinition = {
       },
       ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales']),
       children: [
-        { index: true, ...lazyPage(() => import('@/features/sales/CustomerSummaryPage')) },
+        {
+          index: true,
+          // The history starts with the customer card, not after it arrives.
+          loader: ({ params }) => {
+            const id = Number(params.id);
+            if (Number.isInteger(id) && id > 0)
+              queryClient.infiniteQuery(historyQuery(id)).catch(() => undefined);
+            return null;
+          },
+          ...lazyPage(() => import('@/features/sales/CustomerSummaryPage')),
+        },
         { path: 'purchases', ...lazyPage(() => import('@/features/sales/CustomerPurchasesPage')) },
         { path: 'payments', ...lazyPage(() => import('@/features/sales/CustomerPaymentsPage')) },
         { path: 'info', ...lazyPage(() => import('@/features/sales/CustomerInfoPage')) },
