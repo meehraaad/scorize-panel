@@ -77,6 +77,12 @@ export default defineConfig(({ mode }) => {
           codeSplitting: {
             groups: [
               { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+              {
+                name: 'board-drag',
+                test: /node_modules[\\/]@dnd-kit[\\/]/,
+                priority: 20,
+                includeDependenciesRecursively: false,
+              },
               { name: 'vendor', test: /node_modules[\\/]/ },
             ],
           },
