@@ -3,8 +3,9 @@ import { Icon } from './Icon';
 
 /**
  * A modal panel (native <dialog>: focus trap, Esc and the back gesture close it): a bottom sheet on
- * phones, a panel at the end side of the screen from lg up (log a call, sell a product). The parent
- * decides when it is open; the content renders only while open.
+ * phones, a panel at the end side of the screen from lg up (log a call, sell a product). `wide`: a
+ * large centred window from lg up and the whole screen on phones, for a workspace (booking on a
+ * week calendar). The parent decides when it is open; the content renders only while open.
  */
 export function Dialog({
   open,
@@ -13,6 +14,7 @@ export function Dialog({
   subtitle,
   closeLabel,
   footer,
+  size = 'panel',
   children,
 }: {
   open: boolean;
@@ -22,6 +24,7 @@ export function Dialog({
   closeLabel: string;
   /** Pinned under the scrolling body: the form's buttons. */
   footer?: ReactNode;
+  size?: 'panel' | 'wide';
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -40,10 +43,16 @@ export function Dialog({
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(event) => event.target === event.currentTarget && ref.current?.close()}
-      className="m-0 mt-auto max-h-[92dvh] w-full max-w-none rounded-t-card bg-surface p-0 text-text backdrop:bg-black/40 lg:ms-auto lg:mt-0 lg:h-dvh lg:max-h-dvh lg:w-[480px] lg:rounded-none lg:rounded-s-card"
+      className={`p-0 text-text backdrop:bg-black/40 ${
+        size === 'wide'
+          ? 'm-0 h-dvh max-h-dvh w-full max-w-none bg-canvas lg:m-auto lg:h-[min(940px,94dvh)] lg:max-h-[94dvh] lg:w-[min(1280px,95vw)] lg:rounded-card'
+          : 'm-0 mt-auto max-h-[92dvh] w-full max-w-none rounded-t-card bg-surface lg:ms-auto lg:mt-0 lg:h-dvh lg:max-h-dvh lg:w-[480px] lg:rounded-none lg:rounded-s-card'
+      }`}
     >
       {open && (
-        <div className="flex max-h-[92dvh] flex-col lg:h-full lg:max-h-none">
+        <div
+          className={`flex flex-col ${size === 'wide' ? 'h-full' : 'max-h-[92dvh] lg:h-full lg:max-h-none'}`}
+        >
           <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 lg:px-7 lg:pt-7">
             <div className="flex min-w-0 flex-col gap-1">
               <h2 id={titleId} className="m-0 font-display text-lg font-bold lg:text-xl">

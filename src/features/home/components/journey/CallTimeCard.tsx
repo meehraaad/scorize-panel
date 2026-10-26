@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { BookingDialog } from '@/components/applicant/booking/BookingDialog';
+import { preloadBooking } from '@/components/applicant/booking/preload';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
@@ -13,14 +14,14 @@ import {
   type ApplicantAccess,
   type CallTime,
 } from '@/lib/applicant/access';
-import { CONSULTATION_MODES } from '@/lib/applicant/booking';
+import { CONSULTATION_MODES, type ConsultationMode } from '@/lib/applicant/booking';
 import type { StartOffers } from '@/lib/applicant/journey';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { toast } from '@/lib/toast';
 
 /**
  * "Rather talk?": book a consultation, starting with its first step, online or in person (each
- * opens the booking calendar on that choice), with a free call as the smaller way. Without a
+ * opens the booking dialog on that choice), with a free call as the smaller way. Without a
  * consultation on offer, the call alone.
  */
 export function TalkCard({ access, offers }: { access: ApplicantAccess; offers: StartOffers }) {
@@ -30,6 +31,7 @@ export function TalkCard({ access, offers }: { access: ApplicantAccess; offers: 
 
 function BookTalkCard({ access }: { access: ApplicantAccess }) {
   const { t } = useTranslation('journey');
+  const [booking, setBooking] = useState<ConsultationMode | null>(null);
   return (
     <Card aria-labelledby="journey-call" className="flex flex-col gap-4 p-5 lg:p-7">
       <div className="flex flex-col gap-1">
@@ -38,12 +40,16 @@ function BookTalkCard({ access }: { access: ApplicantAccess }) {
         </h2>
         <p className="m-0 text-sm leading-6 text-text-2">{t('callTime.book')}</p>
       </div>
-      <nav aria-label={t('callTime.how')} className="grid gap-3 sm:grid-cols-2">
+      <div role="group" aria-label={t('callTime.how')} className="grid gap-3 sm:grid-cols-2">
         {CONSULTATION_MODES.map((mode) => (
-          <Link
+          <button
             key={mode}
-            to={`/consultations/book?mode=${mode}`}
-            className="group flex min-h-20 items-center gap-4 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-row-highlight hover:shadow-[inset_0_0_0_1.5px_var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            type="button"
+            aria-haspopup="dialog"
+            onPointerEnter={preloadBooking}
+            onFocus={preloadBooking}
+            onClick={() => setBooking(mode)}
+            className="group flex min-h-20 items-center gap-4 rounded-2xl p-4 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-row-highlight hover:shadow-[inset_0_0_0_1.5px_var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             <span
               aria-hidden="true"
@@ -60,9 +66,9 @@ function BookTalkCard({ access }: { access: ApplicantAccess }) {
               </span>
             </span>
             <Icon name="chevronEnd" size={18} className="text-text-2" />
-          </Link>
+          </button>
         ))}
-      </nav>
+      </div>
       <CallRequestButton
         label={t('callTime.free')}
         className={buttonClass('outline', 'self-start')}
@@ -70,6 +76,11 @@ function BookTalkCard({ access }: { access: ApplicantAccess }) {
         topic="admission"
         page="home"
         reason="guest"
+      />
+      <BookingDialog
+        open={booking !== null}
+        onClose={() => setBooking(null)}
+        initial={{ mode: booking }}
       />
     </Card>
   );
