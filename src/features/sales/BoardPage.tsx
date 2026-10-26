@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { PageWorkspace } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { boardQuery, type BoardData } from './api';
 import { SalesBoard } from './components/SalesBoard';
@@ -20,6 +21,7 @@ export default function BoardPage() {
   const f = useFormat();
   const s = useSalesFormat();
   const { data } = useSuspenseQuery(boardQuery);
+  const user = useUser();
 
   const [fullscreen, setFullscreen] = useState(false);
   const [newLead, setNewLead] = useState(false);
@@ -75,7 +77,7 @@ export default function BoardPage() {
           }
         />
       </div>
-      <SalesBoard data={data} />
+      <SalesBoard data={data} ownerId={user.id} />
       <LostCard lost={data.lost} />
       <NewLeadDialog open={newLead} onClose={() => setNewLead(false)} />
     </PageWorkspace>

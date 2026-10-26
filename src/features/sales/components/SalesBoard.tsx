@@ -4,15 +4,16 @@ import {
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  pointerWithin,
-  rectIntersection,
-  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
-  type CollisionDetection,
-  type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -32,49 +33,21 @@ import {
   type BoardData,
   type MovableStage,
 } from '../api';
+import { boardCollisionDetection, boardCoordinates } from '../boardDrag';
+import { useBoardOrder, type BoardStage } from '../boardOrder';
 import { useSalesFormat } from '../format';
 import { salesPath } from '../paths';
 import { DealCard } from './DealCard';
 
-// Pointer drops must actually be inside a column. Keyboard dragging has no pointer.
-const collisionDetection: CollisionDetection = (args) =>
-  args.pointerCoordinates ? pointerWithin(args) : rectIntersection(args);
-
-/** Navigate by physical column position so the arrow keys work in both RTL and LTR. */
-const columnCoordinates: KeyboardCoordinateGetter = (event, { context, currentCoordinates }) => {
-  if (event.code !== 'ArrowLeft' && event.code !== 'ArrowRight') return;
-  event.preventDefault();
-  const current = context.collisionRect;
-  if (!current) return;
-  const center = current.left + current.width / 2;
-  const candidates = context.droppableContainers
-    .getEnabled()
-    .flatMap(({ id }) => {
-      const rect = context.droppableRects.get(id);
-      return rect ? [rect] : [];
-    })
-    .filter((rect) =>
-      event.code === 'ArrowRight'
-        ? rect.left + rect.width / 2 > center + 1
-        : rect.left + rect.width / 2 < center - 1,
-    );
-  candidates.sort(
-    (a, b) => Math.abs(a.left + a.width / 2 - center) - Math.abs(b.left + b.width / 2 - center),
-  );
-  const target = candidates[0];
-  if (!target) return;
-  return {
-    x: currentCoordinates.x + target.left + target.width / 2 - center,
-    y: currentCoordinates.y + target.top - current.top + 16,
-  };
-};
-
 const MemoDealCard = memo(DealCard);
 const MemoIconButton = memo(IconButton);
-type PickedCard = { card: BoardCard; stage: MovableStage };
+type PickedCard = { card: BoardCard; stage: BoardStage };
 
-export function SalesBoard({ data }: { data: BoardData }) {
+export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; ownerId: number }) {
+  const order = useBoardOrder(ownerId, serverData);
+  const data = order.data;
   const { t } = useTranslation('sales');
+  const f = useFormat();
   const mutation = useMoveBoardCard();
   const busy = useRef(false);
   const board = useRef<HTMLDivElement>(null);
@@ -87,24 +60,43 @@ export function SalesBoard({ data }: { data: BoardData }) {
     // Long press the handle; moving before activation preserves ordinary touch scrolling.
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: columnCoordinates,
+      coordinateGetter: boardCoordinates,
       keyboardCodes: { start: ['Space'], cancel: ['Escape', 'Tab'], end: ['Space', 'Enter'] },
       scrollBehavior: 'auto',
     }),
   );
   const findCard = (id: string | number): PickedCard | null => {
     for (const column of data.columns) {
-      if (!isMovableStage(column.stage)) continue;
       const card = column.cards.find((item) => item.lead === id);
       if (card) return { card, stage: column.stage };
     }
     return null;
   };
   const nameOf = (id: string | number) => findCard(id)?.card.name ?? '';
-  const stageOf = (id: string | number) => (isMovableStage(id) ? t(`stage.${id}`) : '');
+  const stageOf = (id: string | number) => {
+    const stage =
+      typeof id === 'number'
+        ? findCard(id)?.stage
+        : data.columns.find((column) => column.stage === id)?.stage;
+    return stage ? t(`stage.${stage}`) : '';
+  };
+
+  function targetOf(id: string | number) {
+    const stage = typeof id === 'number' ? findCard(id)?.stage : id;
+    const column = data.columns.find((column) => column.stage === stage);
+    return column
+      ? {
+          stage: column.stage,
+          index:
+            typeof id === 'number'
+              ? column.cards.findIndex((card) => card.lead === id)
+              : column.cards.length - 1,
+        }
+      : null;
+  }
 
   function move(item: PickedCard, to: MovableStage) {
-    if (busy.current || item.stage === to) return;
+    if (busy.current || item.stage === to || !isMovableStage(item.stage)) return;
     busy.current = true;
     mutation.mutate(
       { lead: item.card.lead, from: item.stage, to },
@@ -119,6 +111,27 @@ export function SalesBoard({ data }: { data: BoardData }) {
       },
     );
   }
+
+  function reorder(item: PickedCard, to: number) {
+    if (busy.current) return;
+    const cards = data.columns.find((column) => column.stage === item.stage)?.cards;
+    if (!cards) return;
+    const from = cards.findIndex((card) => card.lead === item.card.lead);
+    if (from < 0 || to < 0 || to >= cards.length || from === to) return;
+    if (
+      !order.save(
+        item.stage,
+        arrayMove(cards, from, to).map((card) => card.lead),
+      )
+    ) {
+      restoreLead.current = null;
+      toast.error(t('board.order.failed'));
+      return;
+    }
+    toast.success(t('board.order.saved', { name: item.card.name, position: f.number(to + 1) }));
+  }
+  const pickedCards = data.columns.find((column) => column.stage === picked?.stage)?.cards ?? [];
+  const pickedIndex = pickedCards.findIndex((card) => card.lead === picked?.card.lead);
 
   // Query reconciliation can replace the card again. Focus after both DOM updates commit.
   useEffect(() => {
@@ -141,18 +154,35 @@ export function SalesBoard({ data }: { data: BoardData }) {
     <>
       <DndContext
         sensors={sensors}
-        collisionDetection={collisionDetection}
+        collisionDetection={boardCollisionDetection}
         accessibility={{
           restoreFocus: false,
           screenReaderInstructions: { draggable: t('board.move.instructions') },
           announcements: {
             onDragStart: ({ active }) => t('board.move.pickedUp', { name: nameOf(active.id) }),
-            onDragOver: ({ over }) =>
-              over ? t('board.move.over', { stage: stageOf(over.id) }) : t('board.move.outside'),
-            onDragEnd: ({ active, over }) =>
-              over && findCard(active.id)?.stage !== over.id
-                ? t('board.move.dropped', { name: nameOf(active.id), stage: stageOf(over.id) })
-                : t('board.move.cancelled'),
+            onDragOver: ({ over }) => {
+              const item = over && typeof over.id === 'number' ? findCard(over.id) : null;
+              const cards = data.columns.find((column) => column.stage === item?.stage)?.cards;
+              return item && cards
+                ? t('board.order.over', {
+                    stage: stageOf(item.card.lead),
+                    position: f.number(cards.findIndex((card) => card.lead === item.card.lead) + 1),
+                  })
+                : over
+                  ? t('board.move.over', { stage: stageOf(over.id) })
+                  : t('board.move.outside');
+            },
+            onDragEnd: ({ active, over }) => {
+              const item = findCard(active.id);
+              const target = over && targetOf(over.id);
+              if (!item || !target) return t('board.move.cancelled');
+              if (item.stage !== target.stage)
+                return t('board.move.dropped', { name: item.card.name, stage: stageOf(over.id) });
+              const from = data.columns
+                .find((column) => column.stage === item.stage)
+                ?.cards.findIndex((card) => card.lead === item.card.lead);
+              return from !== target.index ? t('board.order.dropped') : t('board.move.cancelled');
+            },
             onDragCancel: () => t('board.move.cancelled'),
           },
         }}
@@ -163,7 +193,11 @@ export function SalesBoard({ data }: { data: BoardData }) {
         onDragEnd={({ active, over }) => {
           setActive(null);
           const item = findCard(active.id);
-          if (item && over && isMovableStage(over.id)) move(item, over.id);
+          if (!item || !over) return;
+          const target = targetOf(over.id);
+          if (!target) return;
+          if (target.stage === item.stage) reorder(item, target.index);
+          else if (isMovableStage(target.stage)) move(item, target.stage);
         }}
       >
         <div
@@ -174,20 +208,25 @@ export function SalesBoard({ data }: { data: BoardData }) {
           <div className="grid h-full min-w-full auto-cols-[minmax(264px,1fr)] grid-flow-col items-stretch gap-3 pb-1 lg:auto-cols-[minmax(288px,1fr)] lg:gap-4">
             {data.columns.map((column) => (
               <BoardColumn key={column.stage} column={column} disabled={mutation.isPending}>
-                {column.cards.map((card) => (
-                  <DraggableDeal
-                    key={card.lead}
-                    card={card}
-                    stage={column.stage}
-                    disabled={mutation.isPending}
-                    pending={mutation.isPending && mutation.variables.lead === card.lead}
-                    onPick={() => {
-                      if (busy.current || !isMovableStage(column.stage)) return;
-                      setPicked({ card, stage: column.stage });
-                      setDestination(null);
-                    }}
-                  />
-                ))}
+                <SortableContext
+                  items={column.cards.map((card) => card.lead)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {column.cards.map((card) => (
+                    <DraggableDeal
+                      key={card.lead}
+                      card={card}
+                      stage={column.stage}
+                      disabled={mutation.isPending}
+                      pending={mutation.isPending && mutation.variables.lead === card.lead}
+                      onPick={() => {
+                        if (busy.current) return;
+                        setPicked({ card, stage: column.stage });
+                        setDestination(null);
+                      }}
+                    />
+                  ))}
+                </SortableContext>
               </BoardColumn>
             ))}
           </div>
@@ -219,28 +258,57 @@ export function SalesBoard({ data }: { data: BoardData }) {
         closeLabel={t('close')}
         subtitle={t('board.move.hint')}
         footer={
-          <Button
-            disabled={!destination || mutation.isPending}
-            onClick={() => {
-              if (picked && destination) {
-                move(picked, destination);
-                setPicked(null);
-              }
-            }}
-          >
-            {t('board.move.save')}
-          </Button>
+          isMovableStage(picked?.stage) ? (
+            <Button
+              disabled={!destination || mutation.isPending}
+              onClick={() => {
+                if (destination) {
+                  move(picked, destination);
+                  setPicked(null);
+                }
+              }}
+            >
+              {t('board.move.save')}
+            </Button>
+          ) : undefined
         }
       >
-        <ChoiceGroup
-          legend={t('board.move.destination')}
-          value={destination}
-          onChange={setDestination}
-          options={MOVABLE_STAGES.filter((stage) => stage !== picked?.stage).map((stage) => ({
-            value: stage,
-            label: t(`stage.${stage}`),
-          }))}
-        />
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={pickedIndex <= 0 || mutation.isPending}
+            onClick={() => {
+              if (picked) reorder(picked, pickedIndex - 1);
+              setPicked(null);
+            }}
+          >
+            {t('board.order.up')}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={
+              pickedIndex < 0 || pickedIndex >= pickedCards.length - 1 || mutation.isPending
+            }
+            onClick={() => {
+              if (picked) reorder(picked, pickedIndex + 1);
+              setPicked(null);
+            }}
+          >
+            {t('board.order.down')}
+          </Button>
+        </div>
+        <p className="m-0 text-sm text-text-2">{t('board.order.scope')}</p>
+        {isMovableStage(picked?.stage) && (
+          <ChoiceGroup
+            legend={t('board.move.destination')}
+            value={destination}
+            onChange={setDestination}
+            options={MOVABLE_STAGES.filter((stage) => stage !== picked.stage).map((stage) => ({
+              value: stage,
+              label: t(`stage.${stage}`),
+            }))}
+          />
+        )}
       </Dialog>
     </>
   );
@@ -268,12 +336,16 @@ function BoardColumn({
   const f = useFormat();
   const s = useSalesFormat();
   const movable = isMovableStage(column.stage);
-  const { setNodeRef, isOver } = useDroppable({ id: column.stage, disabled: disabled || !movable });
+  const { setNodeRef, isOver, over } = useDroppable({
+    id: column.stage,
+    disabled,
+    data: { stage: column.stage, type: 'column' },
+  });
   return (
     <section
       ref={setNodeRef}
       aria-labelledby={`col-${column.stage}`}
-      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-hair bg-board-lane ${isOver ? 'ring-2 ring-primary ring-inset' : ''}`}
+      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-hair bg-board-lane ${isOver || over?.data.current?.stage === column.stage ? 'ring-2 ring-primary ring-inset' : ''}`}
     >
       <div className="flex min-h-23 flex-none flex-col justify-center gap-2 px-4 pt-3 pb-3">
         <div className="flex items-center gap-2">
@@ -336,28 +408,44 @@ function DraggableDeal({
   onPick: () => void;
 }) {
   const { t } = useTranslation('sales');
-  const movable = isMovableStage(stage);
-  const { setNodeRef, setActivatorNodeRef, attributes, listeners, isDragging } = useDraggable({
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    attributes,
+    listeners,
+    isDragging,
+    transform,
+    transition,
+  } = useSortable({
     id: card.lead,
-    disabled: disabled || !movable,
+    disabled,
+    data: { stage, type: 'card' },
     attributes: { roleDescription: t('board.move.card') },
   });
   return (
-    <li ref={setNodeRef} className={`relative flex-none ${isDragging ? 'opacity-30' : ''}`}>
+    <li
+      ref={setNodeRef}
+      style={{
+        transform: transform
+          ? `translate3d(${String(transform.x)}px, ${String(transform.y)}px, 0)`
+          : undefined,
+        transition,
+        willChange: transform ? 'transform' : undefined,
+      }}
+      className={`relative flex-none ${isDragging ? 'opacity-30' : ''}`}
+    >
       <MemoDealCard card={card} />
-      {movable && (
-        <MemoIconButton
-          ref={setActivatorNodeRef}
-          {...attributes}
-          {...listeners}
-          icon="grip"
-          aria-label={t('board.move.title', { name: card.name })}
-          data-move-lead={card.lead}
-          disabled={disabled}
-          onClick={onPick}
-          className="absolute end-0.5 top-0.5 cursor-grab touch-pan-y text-text-2 active:cursor-grabbing"
-        />
-      )}
+      <MemoIconButton
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+        icon="grip"
+        aria-label={t('board.move.title', { name: card.name })}
+        data-move-lead={card.lead}
+        disabled={disabled}
+        onClick={onPick}
+        className="absolute end-0.5 top-0.5 cursor-grab touch-pan-y text-text-2 active:cursor-grabbing"
+      />
       {pending && (
         <span role="status" className="block px-2 pt-1 text-xs text-text-2">
           {t('board.move.saving')}
