@@ -45,7 +45,7 @@ export interface AccountData {
   /** The Telegram bot: linked or not, and the deep link that links it. */
   telegram: { connected: boolean; connect_url: string };
   /** "How did you hear about us", once answered. */
-  referral: string | null;
+  referral: Referral | null;
 }
 
 export const REFERRALS = ['telegram', 'instagram', 'google', 'friends', 'other'] as const;

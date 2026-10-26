@@ -24,7 +24,7 @@ const NAMES: Record<number, [string, string, string, string]> = {
   3: ['نیما', 'رستمی', '09120000002', 'nima.rostami@scorize.local'],
 };
 
-function accountOf(user: number): MockAccount {
+export function accountOf(user: number): MockAccount {
   let found = accounts.get(user);
   if (found) return found;
   const [first, last, phone, email] = NAMES[user] ?? ['', '', null, null];
