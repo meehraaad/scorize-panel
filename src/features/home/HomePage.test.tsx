@@ -1,9 +1,10 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { ON_SERVER, type ServerFeature } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
 import { addHeldConsultation, feedbackSent } from '@/mocks/applicant';
+import { bookingsSent, setStartOffers } from '@/mocks/journey';
 import { renderApp } from '@/test/renderApp';
 import { toasts } from '@/test/toasts';
 import '@/test/server';
@@ -160,14 +161,86 @@ describe('applicant home', () => {
     expect(within(sent).getByText('رزومه')).toBeInTheDocument();
     expect(await within(readiness).findByText('انجام شد')).toBeInTheDocument();
 
-    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
-    expect(within(paths).getByRole('link', { name: 'رزرو مشاوره' })).toHaveAttribute(
-      'href',
-      '/consultation/',
-    );
+    // After the first file: it arrived, a time for the session, what Turkey still needs.
+    expect(await screen.findByRole('region', { name: 'رزومه شما رسید' })).toBeInTheDocument();
+    const turkey = screen.getByRole('region', { name: 'برای ترکیه فقط ۳ مدرک دیگر لازم است' });
+    await user.click(within(turkey).getByRole('button', { name: 'آپلود پاسپورت' }));
+    expect(within(review).getByRole('radio', { name: 'پاسپورت' })).toBeChecked();
     expect(
-      within(paths).getByRole('button', { name: 'درخواست تماس برای قرارداد' }),
+      screen.getByRole('region', { name: 'ارزیابی را در یک جلسه با مشاور مرور کنید' }),
     ).toBeInTheDocument();
+
+    // The ways to start: the consultation's nearest times and price, the contract's instalment.
+    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
+    const consult = within(paths).getByRole('region', { name: 'مشاوره‌ی تخصصی' });
+    expect(within(consult).getAllByRole('radio')).toHaveLength(3);
+    expect(within(consult).getByText('۵۰۰٬۰۰۰ تومان')).toBeInTheDocument();
+    const contract = within(paths).getByRole('region', { name: 'قرارداد اپلای' });
+    expect(within(contract).getByText('۲۱٬۲۵۰٬۰۰۰ تومان')).toBeInTheDocument();
+    expect(
+      within(contract).getByRole('button', { name: 'درخواست تماس برای قرارداد' }),
+    ).toBeInTheDocument();
+
+    // Booking a time goes to the bank gateway.
+    await user.click(within(consult).getAllByRole('radio')[1] as HTMLElement);
+    const assign = vi.fn();
+    const { href, origin, protocol, host, hostname, port, pathname, search, hash } =
+      window.location;
+    vi.stubGlobal('location', {
+      href,
+      origin,
+      protocol,
+      host,
+      hostname,
+      port,
+      pathname,
+      search,
+      hash,
+      assign,
+    });
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    await user.click(within(consult).getByRole('button', { name: /^رزرو / }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
+    expect(bookingsSent).toHaveLength(1);
+  });
+
+  it('before a booked session: the countdown, the calendar, its topics and their seller', async () => {
+    loginAs(MARYAM);
+    addHeldConsultation(MARYAM, -2);
+    setStartOffers(MARYAM, { consultant: { name: 'سارا احمدی', picture: null } });
+    const createUrl = vi.fn(() => 'blob:ics');
+    URL.createObjectURL = createUrl;
+    URL.revokeObjectURL = vi.fn();
+    const user = userEvent.setup();
+    renderApp('/');
+    const session = await screen.findByRole('region', { name: 'مشاوره‌ی اپلای کارشناسی ارشد' });
+    expect(within(session).getByRole('timer')).toHaveAccessibleName(/۱ روز، ۲۳ ساعت|۲ روز/);
+    await user.click(within(session).getByRole('button', { name: 'افزودن به تقویم' }));
+    expect(createUrl).toHaveBeenCalledOnce();
+    const topics = screen.getByRole('region', { name: 'در جلسه درباره‌ی این‌ها حرف می‌زنیم' });
+    expect(within(topics).getAllByRole('listitem')).toHaveLength(4);
+    expect(
+      screen.getByRole('region', { name: 'بعد از جلسه: پیشنهاد قرارداد شما' }),
+    ).toHaveTextContent('بعد از جلسه باز می‌شود');
+    const consultant = screen.getByRole('region', { name: 'سارا احمدی' });
+    expect(
+      within(consultant).getByRole('button', { name: 'با من تماس بگیرید' }),
+    ).toBeInTheDocument();
+  });
+
+  it('first visit: the result locked beside the quiz, and a call at a time they pick', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/');
+    expect(
+      await screen.findByRole('region', { name: 'نتیجه‌ی شما این شکلی است' }),
+    ).toBeInTheDocument();
+    // No phone on the account: the call request asks for one.
+    const call = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
+    await user.click(within(call).getByRole('button', { name: 'با من تماس بگیرید' }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   it('asks about the consultant after a session, then offers the step that fits', async () => {

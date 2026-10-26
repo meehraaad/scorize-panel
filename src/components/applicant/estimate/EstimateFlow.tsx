@@ -20,12 +20,15 @@ export function EstimateFlow({
   phone,
   header,
   detailsTo,
+  teaser = false,
 }: {
   phone: string | null;
   /** Above the quiz or the result (the estimate page's title). */
   header?: (mode: EstimateMode) => ReactNode;
   /** On the guest home: the result links to the full one instead of showing every country. */
   detailsTo?: string;
+  /** First visit on the home: the quiz shows the result's shape, locked, beside the questions. */
+  teaser?: boolean;
 }) {
   const { data: latest } = useSuspenseQuery(latestEstimateQuery);
   const { data: options } = useSuspenseQuery(estimateOptionsQuery);
@@ -58,6 +61,7 @@ export function EstimateFlow({
       ) : (
         <Quiz
           options={options}
+          teaser={teaser}
           onDone={(answer) => {
             setContact(answer);
             setMode('result');

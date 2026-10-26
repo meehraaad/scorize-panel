@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
 
 /**
@@ -134,5 +135,61 @@ export function useSaveBackground() {
     mutationFn: (body: BackgroundWrite) =>
       api<Background>(`${BASE}/background/`, { method: 'PUT', body }),
     onSuccess: (saved) => client.setQueryData(BACKGROUND_KEY, saved),
+  });
+}
+
+/** The dashboard's offers to start with (H63): any account. */
+export interface StartOffers {
+  /** The consultation it offers and books; null when none is set up. */
+  consultation: {
+    type: number;
+    title: string;
+    minutes: number;
+    mode: 'online' | 'in_person';
+    /** Toman, after a running discount. */
+    price: number;
+    /** Toman before the discount, while there is one. */
+    full_price: number | null;
+    /** The nearest free start times (up to 3), soonest first. */
+    slots: string[];
+  } | null;
+  /** The full application from the sales price list, split over the most instalments. */
+  contract: {
+    price: number;
+    instalments: number;
+    instalment: number;
+    /** The price includes the SOP and CV. */
+    writing: boolean;
+  } | null;
+  /** The seller assigned to the person's open lead ("call me" reaches them). */
+  consultant: { name: string; picture: string | null } | null;
+}
+
+const START_KEY = [...APPLICANT_KEY, 'start'] as const;
+
+const NO_OFFERS: StartOffers = { consultation: null, contract: null, consultant: null };
+
+export const startQuery = queryOptions({
+  queryKey: START_KEY,
+  queryFn: ({ signal }) =>
+    ON_SERVER.start ? api<StartOffers>(`${BASE}/start/`, { signal }) : Promise.resolve(NO_OFFERS),
+  // Free times change as people book: fresh enough for a visit, not for a day.
+  staleTime: 60_000,
+});
+
+/**
+ * Books the dashboard's consultation at one of its times (H64). `redirect_url`: the bank gateway,
+ * which brings the browser back to the panel's payment page; null when credit paid it all.
+ */
+export function useBookConsultation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { type: number; starts_at: string }) =>
+      api<{ consultation: number; payment_id: number; redirect_url: string | null }>(
+        `${BASE}/consultations/book/`,
+        { method: 'POST', body },
+      ),
+    // Paid by credit, the session is in the consultations list now; a taken time leaves the offers.
+    onSettled: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
   });
 }

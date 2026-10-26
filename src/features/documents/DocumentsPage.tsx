@@ -16,9 +16,9 @@ import { previewDocuments } from './preview';
 
 /**
  * "Documents & writing". Design: canvas V6 "مدارک و نگارش" (AppDocuments), reworked in the
- * "Scorize New User Dashboard" canvas (Documents): what waits on the applicant first, then two
- * lanes, their uploads and the team's writing. Without a contract, the locked preview of canvas
- * V7 section 5.
+ * "Scorize New User Dashboard v2" canvas (Documents): what waits on the applicant (one card each),
+ * then two lanes, their uploads and the team's writing. Without a contract, the locked preview of
+ * canvas V7 section 5.
  */
 export default function DocumentsPage() {
   const { t } = useTranslation('documents');

@@ -1,16 +1,21 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { lockButtonOnHero } from '@/components/ui/Lock';
 import { DateTile } from '@/components/ui/DateTile';
 import { Icon } from '@/components/ui/Icon';
+import { downloadIcs } from '@/lib/ics';
 import type { Consultation } from '@/lib/applicant/consultations';
 import { useFormat } from '@/lib/i18n/useFormat';
 
+const MINUTE = 60_000;
+
 /**
- * The next booked consultation, on the dark hero: when, with whom, and what to do before it. No
- * files are needed for a session; the consultant reads the tablet form and the session's topic.
- * Design: "Scorize New User Dashboard" canvas, upcoming consultation.
+ * The next booked consultation, on the dark hero: when, with whom, how long until it (to the
+ * minute), a button to put it in their calendar, and what to do before it. No files are needed
+ * for a session; the consultant reads the tablet form and the session's topic.
+ * Design: "Scorize New User Dashboard v2" canvas, UpcomingConsult.
  */
 export function SessionCard({
   session,
@@ -63,12 +68,37 @@ export function SessionCard({
               .filter(Boolean)
               .join(' · ')}
           </p>
-          <Link
-            to={`/consultations/${String(session.id)}`}
-            className={buttonClass('outline', `mt-2 self-start ${lockButtonOnHero}`)}
-          >
-            {t('session.details')}
-          </Link>
+          <Countdown startsAt={session.starts_at} />
+          <div className="mt-2 flex flex-wrap gap-2 max-sm:[&>*]:flex-auto">
+            <button
+              type="button"
+              className={buttonClass('primary')}
+              onClick={() =>
+                downloadIcs(
+                  {
+                    uid: `consultation-${String(session.id)}@scorize`,
+                    title: session.title,
+                    starts_at: session.starts_at,
+                    minutes: session.minutes,
+                    ...(session.consultant && {
+                      description: t('session.with', { name: session.consultant }),
+                    }),
+                  },
+                  `scorize-consultation-${String(session.id)}.ics`,
+                )
+              }
+            >
+              <Icon name="calendar" size={18} />
+              {t('session.calendar')}
+            </button>
+            <Link
+              to={`/consultations/${String(session.id)}`}
+              className={buttonClass('outline', lockButtonOnHero)}
+            >
+              {t('session.details')}
+            </Link>
+          </div>
+          <span className="text-[13px] text-on-hero-2">{t('session.reminder')}</span>
         </div>
       </div>
 
@@ -98,5 +128,45 @@ export function SessionCard({
         </ul>
       </div>
     </section>
+  );
+}
+
+/** Days, hours and minutes left, read again every minute. Gone once the session starts. */
+function Countdown({ startsAt }: { startsAt: string }) {
+  const { t } = useTranslation('journey');
+  const f = useFormat();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), MINUTE);
+    return () => clearInterval(timer);
+  }, []);
+  const left = Math.floor((new Date(startsAt).getTime() - now) / MINUTE);
+  if (left <= 0) return null;
+  const parts = [
+    { key: 'days', value: Math.floor(left / (24 * 60)) },
+    { key: 'hours', value: Math.floor(left / 60) % 24 },
+    { key: 'minutes', value: left % 60 },
+  ] as const;
+  const spoken = parts.map((part) => t(`session.left.${part.key}`, { n: f.number(part.value) }));
+
+  return (
+    <div
+      role="timer"
+      aria-label={t('session.left.label', { left: f.list(spoken) })}
+      className="mt-2 flex gap-2"
+    >
+      {parts.map((part) => (
+        <span
+          key={part.key}
+          aria-hidden="true"
+          className="flex min-w-16 flex-col items-center rounded-2xl bg-hero-raised px-3 py-2"
+        >
+          <span className="font-display text-2xl leading-tight font-bold tabular-nums">
+            {f.number(part.value)}
+          </span>
+          <span className="text-xs text-on-hero-2">{t(`session.left.${part.key}Unit`)}</span>
+        </span>
+      ))}
+    </div>
   );
 }

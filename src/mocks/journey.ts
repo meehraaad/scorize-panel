@@ -6,12 +6,14 @@ import {
   type BackgroundWrite,
   type ReviewDocument,
   type ReviewKind,
+  type StartOffers,
 } from '@/lib/applicant/journey';
 import { forbidden, notFound, storage } from './session';
 
 /**
- * Django's new-user dashboard steps (scorize-revolution `api/applicant/v1/journey.py`), for the
- * tests: files sent for a free review (H59) and the tablet form (H60). Any logged-in account.
+ * Django's new-user dashboard steps (scorize-revolution `api/applicant/v1/journey.py`,
+ * `start.py`), for the tests: files sent for a free review (H59), the tablet form (H60), what to
+ * start with (H63) and booking its consultation (H64). Any logged-in account.
  */
 
 const BASE = '/api/applicant/v1';
@@ -27,6 +29,35 @@ export const JOURNEY_EXAMS = [
   { id: 1, name: 'IELTS', min: 0, max: 9 },
   { id: 2, name: 'TOEFL', min: 0, max: 120 },
 ];
+
+/** Tomorrow and the two days after, 10:00 in Tehran (Django's schedule: never today). */
+function nextSlots(): string[] {
+  const day = 24 * 60 * 60_000;
+  return [1, 2, 3].map((n) => {
+    const date = new Date(Date.now() + n * day).toISOString().slice(0, 10);
+    return new Date(`${date}T10:00:00+03:30`).toISOString();
+  });
+}
+
+function defaultOffers(): StartOffers {
+  return {
+    consultation: {
+      type: 3,
+      title: 'مشاوره‌ی اپلای',
+      minutes: 45,
+      mode: 'online',
+      price: 500_000,
+      full_price: null,
+      slots: nextSlots(),
+    },
+    contract: { price: 85_000_000, instalments: 4, instalment: 21_250_000, writing: true },
+    consultant: null,
+  };
+}
+
+const offersOf = new Map<number, Partial<StartOffers>>();
+/** Bookings sent, for the tests. */
+export const bookingsSent: { type: number; starts_at: string }[] = [];
 
 const reviewOf = new Map<number, ReviewDocument[]>();
 const backgroundOf = new Map<number, BackgroundWrite>();
@@ -57,6 +88,31 @@ function backgroundFor(user: number): Background {
 }
 
 export const journeyHandlers = [
+  http.get(`${BASE}/start/`, () => {
+    const user = storage.get();
+    return user ? HttpResponse.json({ ...defaultOffers(), ...offersOf.get(user) }) : forbidden();
+  }),
+
+  http.post(`${BASE}/consultations/book/`, async ({ request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const sent = (await request.json()) as { type: number; starts_at: string };
+    const offer = { ...defaultOffers(), ...offersOf.get(user) }.consultation;
+    if (!offer || offer.type !== sent.type)
+      return HttpResponse.json(
+        { type: ['This consultation can not be booked here.'] },
+        { status: 400 },
+      );
+    if (!offer.slots.includes(sent.starts_at))
+      return HttpResponse.json({ starts_at: ['This time is taken.'] }, { status: 400 });
+    bookingsSent.push(sent);
+    // Django: the gateway (a relative path when the visitor's IP needs checking first).
+    return HttpResponse.json(
+      { consultation: 900, payment_id: 77, redirect_url: '/finance/payment-ip-check/AUTH77/' },
+      { status: 201 },
+    );
+  }),
+
   http.get(`${BASE}/review-documents/`, () => {
     const user = storage.get();
     if (!user) return forbidden();
@@ -125,7 +181,14 @@ export const journeyHandlers = [
 export const reviewDocumentsOf = (user: number) => reviewOf.get(user) ?? [];
 export const savedBackgroundOf = (user: number) => backgroundOf.get(user);
 
+/** What `start/` answers this user, over the defaults. */
+export function setStartOffers(user: number, offers: Partial<StartOffers>) {
+  offersOf.set(user, offers);
+}
+
 export function resetJourneyMocks() {
+  offersOf.clear();
+  bookingsSent.length = 0;
   reviewOf.clear();
   backgroundOf.clear();
   nextId = 1;
