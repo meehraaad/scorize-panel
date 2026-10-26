@@ -21,7 +21,22 @@ export type ContactTime = 'now' | 'evening' | 'tomorrow';
 export type Band = 'high' | 'medium' | 'low';
 export type FactorName = 'country' | 'degree' | 'gpa' | 'english' | 'field';
 
+/**
+ * The answers the profile already holds (campaign and site forms, sellers' forms, an earlier quiz),
+ * so a returning person confirms instead of typing again; null where it holds nothing usable.
+ */
+export interface EstimatePrefill {
+  degree: DegreeName | null;
+  field_group: number | null;
+  /** Out of 20. */
+  gpa: number | null;
+  english: EstimateAnswers['english'] | null;
+  budget: Budget | null;
+  countries: number[];
+}
+
 export interface EstimateOptions {
+  prefill: EstimatePrefill;
   goals: Goal[];
   degrees: DegreeName[];
   /** Top-level study fields. */
@@ -102,7 +117,11 @@ export function useSubmitEstimate() {
   return useMutation({
     mutationFn: (answers: EstimateAnswers) =>
       api<EstimateResult>(`${BASE}/`, { method: 'POST', body: answers }),
-    onSuccess: (result) => client.setQueryData(latestEstimateQuery.queryKey, result),
+    onSuccess: (result) => {
+      client.setQueryData(latestEstimateQuery.queryKey, result);
+      // The answers are now the profile's: the next quiz starts from them.
+      void client.invalidateQueries({ queryKey: estimateOptionsQuery.queryKey });
+    },
   });
 }
 
