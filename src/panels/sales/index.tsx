@@ -21,8 +21,10 @@ import {
   purchasesQuery,
   receiptsQuery,
   teamQuery,
+  funnelQuery,
 } from '@/features/sales/api';
 import { queryClient } from '@/lib/api/queryClient';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
@@ -227,7 +229,7 @@ export const salesPanel: PanelDefinition = {
         {
           path: 'team',
           ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
-            data: () => [teamQuery('month')],
+            data: () => [teamQuery('month'), ON_SERVER.estimate && funnelQuery('month')],
             skeleton: 'dashboard',
           }),
         },

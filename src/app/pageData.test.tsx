@@ -1,5 +1,5 @@
 import { waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
@@ -12,6 +12,13 @@ import '@/test/server';
  * and fails on any first load that started after the route had loaded. (Refetches, e.g. after the
  * page marks something seen, are not waterfalls.)
  */
+
+// The admission-chance quiz isn't on the server yet (src/lib/applicant/onServer.ts): its pages are
+// checked as they will be once it is.
+vi.mock('@/lib/applicant/onServer', async (original) => {
+  const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
+  return { ON_SERVER: { ...ON_SERVER, estimate: true } };
+});
 
 const SARA = 1; // applicant with a contract (src/mocks/applicant.ts)
 const MARYAM = 2; // supervisor and writer (src/mocks/supervisor.ts, writer.ts)
@@ -44,7 +51,10 @@ const PAGES: PageCase[] = [
     '/services/events/31',
     '/consultations',
     '/consultations/41',
+    '/estimate',
   ].map((path) => ({ path, user: SARA })),
+  // No contract: the guest home, with the quiz card.
+  { path: '/', user: MARYAM },
   {
     path: '/applications',
     user: SARA,

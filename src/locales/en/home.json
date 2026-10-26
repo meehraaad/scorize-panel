@@ -116,6 +116,19 @@
         "review": "Your documents are being reviewed.",
         "sign": "Every document is approved; the pledge is waiting for your signature."
       }
+    },
+    "estimate": {
+      "title": "What's your admission chance?",
+      "lastTitle": "Your last admission-chance result",
+      "text": "Answer a few short questions to see your chance of admission in each country. Under two minutes.",
+      "country": "{{country}}: {{band}}",
+      "band": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low"
+      },
+      "start": "Start the quiz",
+      "see": "See the result"
     }
   },
   "hero": {

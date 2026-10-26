@@ -37,6 +37,7 @@ import { plForm } from '@/features/writing/plForm';
 import { psForm } from '@/features/writing/psForm';
 import { recommendationForm } from '@/features/writing/recommendationForm';
 import { sopForm } from '@/features/writing/sopForm';
+import { estimateHandlers, resetEstimateMocks } from './estimate';
 import { forbidden, notFound, storage } from './session';
 
 /**
@@ -2205,6 +2206,7 @@ export const applicantHandlers = [
   ...servicesHandlers,
   ...consultationHandlers,
   ...gateHandlers,
+  ...estimateHandlers,
 ];
 
 /** Forget Sara's changes (tests, logout). */
@@ -2217,4 +2219,5 @@ export function resetApplicantMocks() {
   consultationsOf.clear();
   transcriptReturned.clear();
   gateState = null;
+  resetEstimateMocks();
 }

@@ -3,10 +3,12 @@ import { applicationsQuery } from '@/features/applications/api';
 import { consultationQuery, consultationsQuery } from '@/features/consultations/api';
 import { contractQuery, paymentQuery } from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
+import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
 import { turkeyQuery } from '@/features/turkey/api';
 import { documentsQuery } from '@/features/documents/api';
 import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
+import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { gatesQuery } from '@/lib/applicant/gates';
@@ -70,7 +72,13 @@ export const applicantPanel: PanelDefinition = {
         {
           index: true,
           ...lazyPage(() => import('@/features/home/HomePage'), ['home', 'gates'], {
-            data: () => [overviewQuery],
+            // The guest home's quiz card reads the last result; a case with a contract has no card.
+            data: () => [
+              overviewQuery,
+              ON_SERVER.estimate &&
+                queryClient.getQueryData(accessQuery.queryKey)?.state !== 'active' &&
+                latestEstimateQuery,
+            ],
             skeleton: 'dashboard',
           }),
         },
@@ -230,6 +238,16 @@ export const applicantPanel: PanelDefinition = {
               }),
             }
           : { path: 'turkey', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
+        // The admission-chance quiz of the new-user dashboard (no nav item: the guest home links to it).
+        ON_SERVER.estimate
+          ? {
+              path: 'estimate',
+              ...lazyPage(() => import('@/features/estimate/EstimatePage'), ['estimate'], {
+                data: () => [latestEstimateQuery, estimateOptionsQuery],
+                skeleton: 'form',
+              }),
+            }
+          : { path: 'estimate', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
       ],
     },
   ],
