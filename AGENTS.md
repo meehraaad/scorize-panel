@@ -46,3 +46,7 @@ versions V6/V7 for the applicant panel.
 
 `pnpm dev` (proxy to Django on :8000) · `pnpm lint` · `pnpm typecheck` ·
 `pnpm test` · `pnpm i18n:check` · `pnpm build` · `pnpm size` (after build). Run lint, typecheck, test and i18n:check before finishing a change.
+
+**Small changes** (text, a style, one component, a fix in a file or two): run only `pnpm lint` and
+`pnpm typecheck` on your side, then push. CI runs the rest, so don't wait for it or re-run it locally.
+Put several small asks in one PR rather than one PR each.
