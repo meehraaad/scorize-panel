@@ -164,4 +164,27 @@ describe('admission-chance quiz', () => {
     const card = await screen.findByRole('region', { name: 'آخرین نتیجه‌ی شانس پذیرش شما' });
     expect(within(card).getByText('ایتالیا: بالا')).toBeInTheDocument();
   });
+
+  it('starts again from the answers the profile holds', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/estimate');
+    await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
+    // Nothing known yet: no note.
+    expect(screen.queryByText(/از اطلاعاتی که قبلاً/)).not.toBeInTheDocument();
+    cleanup();
+
+    renderApp('/estimate');
+    await answerAll(user);
+    await user.click(await screen.findByRole('button', { name: 'پاسخ دوباره' }));
+    await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
+    expect(screen.getByText(/از اطلاعاتی که قبلاً به ما داده‌اید پر کرده‌ایم/)).toBeInTheDocument();
+    await user.click(next());
+    expect(screen.getByLabelText('رشته‌ی تحصیلی')).toHaveValue('1');
+    expect(screen.getByLabelText('معدل آخرین مقطع')).toHaveValue('17.5');
+    await user.click(next());
+    expect(screen.getByRole('radio', { name: '۷ و بالاتر' })).toBeChecked();
+    await user.click(next());
+    expect(screen.getByRole('checkbox', { name: 'ایتالیا' })).toBeChecked();
+  });
 });

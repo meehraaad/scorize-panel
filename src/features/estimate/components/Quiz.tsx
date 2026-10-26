@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ChoiceGroup, SelectField, TogglePill } from '@/components/ui/Choices';
+import { Notice } from '@/components/ui/Notice';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { StepBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -22,6 +23,7 @@ import {
   type EnglishLevel,
   type EstimateAnswers,
   type EstimateOptions,
+  type EstimatePrefill,
   type Goal,
   type Start,
 } from '@/lib/applicant/estimate';
@@ -61,6 +63,27 @@ const FIRST: Draft = {
   time: 'now',
 };
 
+/** The quiz's starting answers: what the profile already holds, the defaults for the rest. */
+function draftFrom(prefill: EstimatePrefill): Draft {
+  const { english } = prefill;
+  return {
+    ...FIRST,
+    degree: prefill.degree ?? FIRST.degree,
+    field_group: prefill.field_group === null ? '' : String(prefill.field_group),
+    gpa: prefill.gpa === null ? '' : String(prefill.gpa),
+    english: english === null ? FIRST.english : 'level' in english ? english.level : 'score',
+    exam: english && 'exam' in english ? english.exam : FIRST.exam,
+    score: english && 'exam' in english ? String(english.score) : '',
+    budget: prefill.budget ?? FIRST.budget,
+    countries: prefill.countries,
+  };
+}
+
+const knowsSomething = (prefill: EstimatePrefill) =>
+  Object.values(prefill).some((value) =>
+    Array.isArray(value) ? value.length > 0 : value !== null,
+  );
+
 /** A number typed in Persian or Latin digits, or NaN. */
 const numberOf = (text: string) => (text.trim() ? Number(toLatinNumber(text.trim())) : NaN);
 
@@ -79,7 +102,8 @@ export function Quiz({
   const f = useFormat();
   const submit = useSubmitEstimate();
   const [step, setStep] = useState<Step>('goal');
-  const [draft, setDraft] = useState<Draft>(FIRST);
+  const [draft, setDraft] = useState<Draft>(() => draftFrom(options.prefill));
+  const prefilled = knowsSomething(options.prefill);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const index = STEPS.indexOf(step);
   const exam = options.english_exams.find((item) => item.name === draft.exam);
@@ -171,6 +195,7 @@ export function Quiz({
             subtitle={t('quiz.counter', { n: f.number(index + 1), total: f.number(STEPS.length) })}
           >
             <form noValidate onSubmit={next} className="flex flex-col gap-6">
+              {prefilled && <Notice tone="info">{t('quiz.prefilled')}</Notice>}
               {step === 'goal' && (
                 <>
                   <ChoiceGroup

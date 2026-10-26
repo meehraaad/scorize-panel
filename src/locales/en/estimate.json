@@ -42,7 +42,8 @@
     "sending": "Working it out…",
     "submit": "See my chance",
     "throttled": "You've sent the quiz several times in the last hour. Try again a little later.",
-    "error": "Your result couldn't be worked out. Try again."
+    "error": "Your result couldn't be worked out. Try again.",
+    "prefilled": "We've filled in some answers from what you told us before. Check them and change any that are out of date."
   },
   "goal": {
     "study": "Study",

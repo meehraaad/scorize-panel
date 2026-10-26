@@ -4,6 +4,7 @@ import type {
   CountryEstimate,
   EstimateAnswers,
   EstimateOptions,
+  EstimatePrefill,
   EstimateResult,
 } from '@/lib/applicant/estimate';
 import { forbidden, notFound, storage } from './session';
@@ -17,7 +18,7 @@ import { forbidden, notFound, storage } from './session';
 
 const BASE = '/api/applicant/v1/estimate';
 
-export const ESTIMATE_OPTIONS: EstimateOptions = {
+export const ESTIMATE_OPTIONS: Omit<EstimateOptions, 'prefill'> = {
   goals: ['study', 'work', 'both'],
   degrees: ['bachelor', 'master', 'phd'],
   field_groups: [
@@ -47,6 +48,16 @@ const IELTS_OF_LEVEL = { none: null, under_6: 5.5, '6_to_6_5': 6, '7_plus': 7 } 
 export const estimateAnswers: EstimateAnswers[] = [];
 export const estimateStarts = new Set<number>();
 const latest = new Map<number, EstimateResult>();
+/** What each user's profile holds for the quiz: their last answers, as Django saves them. */
+const profiles = new Map<number, EstimatePrefill>();
+const NOTHING: EstimatePrefill = {
+  degree: null,
+  field_group: null,
+  gpa: null,
+  english: null,
+  budget: null,
+  countries: [],
+};
 let nextId = 1;
 
 function gpaOn20(gpa: number) {
@@ -98,9 +109,15 @@ const invalid = (field: string) =>
   HttpResponse.json({ [field]: ['This value is not valid.'] }, { status: 400 });
 
 export const estimateHandlers = [
-  http.get(`${BASE}/options/`, () =>
-    storage.get() ? HttpResponse.json(ESTIMATE_OPTIONS) : forbidden(),
-  ),
+  http.get(`${BASE}/options/`, () => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const options: EstimateOptions = {
+      ...ESTIMATE_OPTIONS,
+      prefill: profiles.get(user) ?? NOTHING,
+    };
+    return HttpResponse.json(options);
+  }),
 
   http.post(`${BASE}/started/`, () => {
     const user = storage.get();
@@ -117,6 +134,14 @@ export const estimateHandlers = [
       return invalid('field_group');
     if (!(answers.gpa > 0 && answers.gpa <= 100)) return invalid('gpa');
     estimateAnswers.push(answers);
+    profiles.set(user, {
+      degree: answers.degree,
+      field_group: answers.field_group,
+      gpa: gpaOn20(answers.gpa),
+      english: answers.english,
+      budget: answers.budget,
+      countries: answers.countries,
+    });
     const result = estimateOf(answers);
     latest.set(user, result);
     return HttpResponse.json(result, { status: 201 });
@@ -134,5 +159,6 @@ export function resetEstimateMocks() {
   estimateAnswers.length = 0;
   estimateStarts.clear();
   latest.clear();
+  profiles.clear();
   nextId = 1;
 }
