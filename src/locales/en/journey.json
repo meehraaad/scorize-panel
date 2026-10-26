@@ -242,7 +242,14 @@
     "legend": "When to call",
     "call": "Call me",
     "sent": "Call request sent.",
-    "done": "Done. We’ll call you in the {{time}}."
+    "done": "Done. We’ll call you in the {{time}}.",
+    "book": "Pick a time for {{title}}; an advisor talks with you then.",
+    "pick": "Session time",
+    "pickFirst": "Pick a time",
+    "bookAt": "Book and pay · {{time}}",
+    "free": "A free call first",
+    "error": "The free times didn't load.",
+    "retry": "Try again"
   },
   "topics": {
     "title": "What we’ll talk about in the session",

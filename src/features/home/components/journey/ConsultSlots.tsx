@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
-import { ApiError } from '@/lib/api/client';
-import { useBookConsultation, type StartOffers } from '@/lib/applicant/journey';
+import type { StartOffers } from '@/lib/applicant/journey';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { toast } from '@/lib/toast';
-import { safeHref } from '@/lib/url';
+import { useBookSlot } from './useBookSlot';
 
 type Offer = NonNullable<StartOffers['consultation']>;
 
@@ -19,33 +16,11 @@ type Offer = NonNullable<StartOffers['consultation']>;
 export function ConsultSlots({ offer }: { offer: Offer }) {
   const { t } = useTranslation('journey');
   const f = useFormat();
-  const navigate = useNavigate();
-  const book = useBookConsultation();
+  const book = useBookSlot();
   const [picked, setPicked] = useState<string | null>(offer.slots[0] ?? null);
   const slot = picked && offer.slots.includes(picked) ? picked : (offer.slots[0] ?? null);
   const label = (value: string) => `${f.weekday(value)} ${f.time(value)}`;
   const toman = (amount: number) => t('slots.toman', { amount: f.number(amount) });
-
-  const submit = () => {
-    if (!slot) return;
-    book.mutate(
-      { type: offer.type, starts_at: slot },
-      {
-        onSuccess: ({ consultation, redirect_url }) => {
-          const target = safeHref(redirect_url);
-          if (target) window.location.assign(target);
-          else {
-            toast.success(t('slots.booked'));
-            void navigate(`/consultations/${String(consultation)}`);
-          }
-        },
-        onError: (error) =>
-          toast.error(
-            t(error instanceof ApiError && error.status === 400 ? 'slots.taken' : 'slots.error'),
-          ),
-      },
-    );
-  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -65,7 +40,12 @@ export function ConsultSlots({ offer }: { offer: Offer }) {
         {offer.full_price !== null && <s className="text-[13px]">{toman(offer.full_price)}</s>}
       </p>
       {slot && (
-        <Button size="lg" className="w-full" disabled={book.isPending} onClick={submit}>
+        <Button
+          size="lg"
+          className="w-full"
+          disabled={book.pending}
+          onClick={() => book.submit(offer.type, slot)}
+        >
           {t('slots.book', { time: label(slot) })}
         </Button>
       )}

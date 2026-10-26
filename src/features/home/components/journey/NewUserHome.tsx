@@ -18,7 +18,7 @@ import { GuestSections, TurkeyCard } from '../GuestSections';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { AfterSessionCard } from './AfterSessionCard';
 import { AfterUpload } from './AfterUpload';
-import { CallTimeCard } from './CallTimeCard';
+import { TalkCard } from './CallTimeCard';
 import { PastSessionCard } from './PastSessionCard';
 import { ConsultantCard, SimilarCard } from './PeopleCards';
 import { ReadinessCard } from './ReadinessCard';
@@ -123,7 +123,13 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
       ...people,
     ];
   else if (firstVisit)
-    blocks = [quiz, <CallTimeCard key="call" access={access} />, paths, readiness, upload];
+    blocks = [
+      quiz,
+      <TalkCard key="call" access={access} offers={offers} />,
+      paths,
+      readiness,
+      upload,
+    ];
   else if (files.length > 0 && !consulted)
     blocks = [
       <AfterUpload
