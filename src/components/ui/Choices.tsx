@@ -110,6 +110,7 @@ export function SelectField<T extends string>({
   inline = false,
   hint,
   error,
+  id: givenId,
 }: {
   label: string;
   options: readonly { value: T; label: string }[];
@@ -118,8 +119,11 @@ export function SelectField<T extends string>({
   inline?: boolean;
   hint?: string | undefined;
   error?: string | undefined;
+  /** The select's id, to focus it from a form's check; generated when not given. */
+  id?: string;
 }) {
-  const id = useId();
+  const generatedId = useId();
+  const id = givenId ?? generatedId;
   const message = error ?? hint;
   const select = (
     <div className="relative">

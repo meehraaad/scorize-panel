@@ -1,0 +1,153 @@
+{
+  "title": "Your admission chance",
+  "subtitle": "Answer a few short questions to see your chance of admission in each country.",
+  "quiz": {
+    "steps": "Quiz steps",
+    "step": {
+      "goal": "Goal",
+      "background": "Background",
+      "english": "English",
+      "plan": "Plan",
+      "contact": "Contact"
+    },
+    "title": {
+      "goal": "Why do you want to go?",
+      "background": "Your studies",
+      "english": "English",
+      "plan": "Where and when?",
+      "contact": "Should a consultant contact you?"
+    },
+    "counter": "Question {{n}} of {{total}}",
+    "goal": "Your goal",
+    "degree": "The degree you want to study",
+    "field": "Field of study",
+    "choose": "Choose",
+    "gpa": "GPA of your last degree",
+    "gpaHint": "Out of 20, 4 or 100.",
+    "gpaError": "Enter your GPA as a number, e.g. 17.5.",
+    "required": "Choose one.",
+    "english": "English level",
+    "exam": "Exam",
+    "score": "Score",
+    "scoreHint": "From {{min}} to {{max}}.",
+    "scoreError": "The score must be between {{min}} and {{max}}.",
+    "countries": "Countries you're interested in",
+    "countriesHint": "Choose none to see every country.",
+    "budget": "Budget (applying, studying and living)",
+    "start": "When do you want to start?",
+    "channel": "How?",
+    "time": "When?",
+    "back": "Back",
+    "next": "Continue",
+    "sending": "Working it out…",
+    "submit": "See my chance",
+    "throttled": "You've sent the quiz several times in the last hour. Try again a little later.",
+    "error": "Your result couldn't be worked out. Try again."
+  },
+  "goal": {
+    "study": "Study",
+    "work": "Work or live",
+    "both": "Both"
+  },
+  "goalHint": {
+    "study": "Admission to a university",
+    "work": "A work or residence visa",
+    "both": "Study, then work and stay"
+  },
+  "degree": {
+    "bachelor": "Bachelor's",
+    "master": "Master's",
+    "phd": "PhD"
+  },
+  "english": {
+    "none": "No certificate",
+    "under_6": "Under 6",
+    "6_to_6_5": "6 to 6.5",
+    "7_plus": "7 or more",
+    "score": "I have an exam score"
+  },
+  "exam": {
+    "ielts": "IELTS",
+    "toefl": "TOEFL",
+    "duolingo": "Duolingo"
+  },
+  "budget": {
+    "under_500m": "Under 500 million toman",
+    "between_500m_1b": "500 million to 1 billion",
+    "more_than_1b": "Over 1 billion toman"
+  },
+  "start": {
+    "soon": "As soon as possible",
+    "next_year": "Next year",
+    "unsure": "Not sure yet"
+  },
+  "channel": {
+    "call": "Phone call",
+    "whatsapp": "WhatsApp",
+    "none": "Not now"
+  },
+  "channelHint": {
+    "call": "A consultant calls your account's number.",
+    "whatsapp": "A consultant messages you on WhatsApp.",
+    "none": "I'll just see the result."
+  },
+  "time": {
+    "now": "Right now",
+    "evening": "This evening",
+    "tomorrow": "Tomorrow morning"
+  },
+  "summary": {
+    "title": "So far",
+    "goal": "Goal",
+    "degree": "Degree",
+    "field": "Field",
+    "gpa": "GPA",
+    "english": "English",
+    "countries": "Countries",
+    "allCountries": "All",
+    "budget": "Budget",
+    "note": "These answers are saved to your profile, so your consultant doesn't have to ask again."
+  },
+  "result": {
+    "title": "Your admission chance",
+    "subtitle": "From your answers of {{date}} and the results of applicants Scorize applied for.",
+    "retake": "Answer again",
+    "callTitle": "Your consultant will contact you",
+    "call": {
+      "call": {
+        "now": "A consultant will call you shortly.",
+        "evening": "A consultant will call you this evening.",
+        "tomorrow": "A consultant will call you tomorrow morning."
+      },
+      "whatsapp": {
+        "now": "A consultant will message you on WhatsApp shortly.",
+        "evening": "A consultant will message you on WhatsApp this evening.",
+        "tomorrow": "A consultant will message you on WhatsApp tomorrow morning."
+      }
+    },
+    "emptyTitle": "Not enough data yet",
+    "empty": "There aren't enough results for this degree yet. A consultant can look at your chance.",
+    "consult": "Book a consultation",
+    "disclaimer": "This estimate comes from the results of Scorize's past applicants and isn't a guarantee. Your consultant can say more once they see your file.",
+    "percent": "{{n}}%",
+    "decided": "Based on {{n}} applicants with a final result.",
+    "fewDecided": "We have few results for this country yet.",
+    "helps": "In your favour:",
+    "holds": "Holding you back a little:",
+    "raise": "What would raise your chance",
+    "raiseStep": "With IELTS {{score}}: from “{{from}}” to “{{to}}”",
+    "similar": "Admissions of people like you"
+  },
+  "band": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "factor": {
+    "country": "country",
+    "degree": "degree",
+    "gpa": "GPA",
+    "english": "English",
+    "field": "field"
+  }
+}

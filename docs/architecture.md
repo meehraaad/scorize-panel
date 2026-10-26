@@ -38,7 +38,8 @@ src/
 │   ├── api/               fetch client (session cookie + CSRF), React Query client
 │   ├── applicant/         Shared by applicant pages: query-key prefix, approve/reject an application,
 │   │                      the tickets endpoint (tickets page + home card), access
-│   │                      (which sections are locked) and the call request
+│   │                      (which sections are locked), the call request and the admission-chance
+│   │                      quiz (estimate.ts: the guest home's card and features/estimate)
 │   ├── tickets/           Panel-neutral ticket API: types, queries, send/rate/seen hooks, day grouping
 │   ├── sales/             Shared by sales pages: lead stages, sources, lost reasons, score bands,
 │   │                      message links (WhatsApp/Telegram/SMS), receipt confirmation

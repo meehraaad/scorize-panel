@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { buttonClass } from '@/components/ui/buttonStyles';
@@ -16,6 +17,7 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { BAND_TONE, latestEstimateQuery } from '@/lib/applicant/estimate';
 
 const JOURNEY = ['consult', 'writing', 'documents', 'apply', 'results', 'visa'] as const;
 const STARTING = ['registered', 'review', 'start', 'call'] as const;
@@ -121,6 +123,8 @@ export function GuestHome({ access }: { access: ApplicantAccess }) {
         )}
       </section>
 
+      {!pending && ON_SERVER.estimate && <EstimateCard />}
+
       {!pending && ON_SERVER.turkey && <TurkeyCard step={access.turkey} />}
 
       <section aria-labelledby="guest-previews" className="flex flex-col gap-3.5">
@@ -168,11 +172,19 @@ export function GuestHome({ access }: { access: ApplicantAccess }) {
             title={t('guest.open.services.title')}
             text={t('guest.open.services.text')}
           />
-          <LinkTile
-            href={SITE.estimateAdmission}
-            title={t('guest.open.estimate.title')}
-            text={t('guest.open.estimate.text')}
-          />
+          {ON_SERVER.estimate ? (
+            <LinkTile
+              to="/estimate"
+              title={t('guest.open.estimate.title')}
+              text={t('guest.open.estimate.text')}
+            />
+          ) : (
+            <LinkTile
+              href={SITE.estimateAdmission}
+              title={t('guest.open.estimate.title')}
+              text={t('guest.open.estimate.text')}
+            />
+          )}
           <LinkTile
             href={SITE.admissionSamples}
             title={t('guest.open.samples.title')}
@@ -181,6 +193,55 @@ export function GuestHome({ access }: { access: ApplicantAccess }) {
         </TileGrid>
       </section>
     </PageStack>
+  );
+}
+
+const ESTIMATE_COUNTRIES_SHOWN = 3;
+
+/**
+ * The admission-chance quiz: an invitation, or the last result's best countries once taken
+ * (the new-user dashboard). Loads on its own, so the rest of the home doesn't wait for it.
+ */
+function EstimateCard() {
+  const { t } = useTranslation('home');
+  const { data: latest } = useQuery(latestEstimateQuery);
+  const shown = latest?.countries.slice(0, ESTIMATE_COUNTRIES_SHOWN) ?? [];
+  return (
+    <Card
+      aria-labelledby="guest-estimate"
+      className="flex flex-wrap items-center gap-x-7 gap-y-5 p-5 shadow-[0_0_0_1.5px_var(--primary),var(--panel-shadow)] lg:p-7"
+    >
+      <span
+        aria-hidden="true"
+        className="flex size-16 flex-none items-center justify-center rounded-[20px] bg-tint text-primary-text"
+      >
+        <Icon name="chart" size={28} />
+      </span>
+      <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-1.5">
+        <h2 id="guest-estimate" className="m-0 font-display text-[21px] font-bold">
+          {t(latest ? 'guest.estimate.lastTitle' : 'guest.estimate.title')}
+        </h2>
+        {shown.length > 0 ? (
+          <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+            {shown.map((estimate) => (
+              <li key={estimate.country.id}>
+                <Chip tone={BAND_TONE[estimate.band]} dot>
+                  {t('guest.estimate.country', {
+                    country: estimate.country.name,
+                    band: t(`guest.estimate.band.${estimate.band}`),
+                  })}
+                </Chip>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="m-0 text-sm leading-7 text-text-2">{t('guest.estimate.text')}</p>
+        )}
+      </div>
+      <Link to="/estimate" className={buttonClass('primary', 'max-sm:w-full')}>
+        {t(latest ? 'guest.estimate.see' : 'guest.estimate.start')}
+      </Link>
+    </Card>
   );
 }
 

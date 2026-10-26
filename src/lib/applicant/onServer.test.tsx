@@ -16,8 +16,21 @@ describe('features by what Django serves', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('leaves only the Turkey programme off', () => {
-    expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([['turkey', false]]);
+  it('leaves only the Turkey programme and the admission-chance quiz off', () => {
+    expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
+      ['turkey', false],
+      ['estimate', false],
+    ]);
+  });
+
+  it("keeps the main site's estimator on the guest home until the quiz is served", async () => {
+    loginAs(2); // Maryam: no contract
+    renderApp('/');
+    const tile = await screen.findByRole('link', { name: /تخمین شانس پذیرش/ });
+    expect(tile).toHaveAttribute('href', '/estimation/estimate-admission/');
+    expect(
+      screen.queryByRole('region', { name: 'شانس پذیرش‌تان چقدر است؟' }),
+    ).not.toBeInTheDocument();
   });
 
   it('offers the GPA calculator, webinar sign-up and package pages on the services page', async () => {

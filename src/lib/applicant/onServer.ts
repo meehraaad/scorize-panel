@@ -10,7 +10,8 @@ export type ServerFeature =
   | 'webinarRegistration'
   | 'gpaSave'
   | 'consultationInfo'
-  | 'packages';
+  | 'packages'
+  | 'estimate';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -27,4 +28,6 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   consultationInfo: true,
   /** H42, H43 `services/packages/<id>/` and its review. */
   packages: true,
+  /** H52–H55 `estimate/…`: the admission-chance quiz (scorize-revolution PR #5, not deployed yet). */
+  estimate: false,
 };

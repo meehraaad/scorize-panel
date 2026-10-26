@@ -3,6 +3,7 @@ import { applicationsQuery } from '@/features/applications/api';
 import { consultationQuery, consultationsQuery } from '@/features/consultations/api';
 import { contractQuery, paymentQuery } from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
+import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
 import { turkeyQuery } from '@/features/turkey/api';
 import { documentsQuery } from '@/features/documents/api';
 import { overviewQuery } from '@/features/home/api';
@@ -249,6 +250,18 @@ export const applicantPanel: PanelDefinition = {
               ...lazyPage(() => import('@/features/turkey/TurkeyPage'), ['turkey']),
             }
           : { path: 'turkey', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
+        // The admission-chance quiz of the new-user dashboard (no nav item: the guest home links to it).
+        ON_SERVER.estimate
+          ? {
+              path: 'estimate',
+              loader: () => {
+                queryClient.query(latestEstimateQuery).catch(() => undefined);
+                queryClient.query(estimateOptionsQuery).catch(() => undefined);
+                return null;
+              },
+              ...lazyPage(() => import('@/features/estimate/EstimatePage'), ['estimate']),
+            }
+          : { path: 'estimate', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
       ],
     },
   ],
