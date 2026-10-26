@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { lockButtonOnHero } from '@/components/ui/Lock';
@@ -36,6 +37,7 @@ function ContractlessHome({ access }: { access: ApplicantAccess }) {
   const f = useFormat();
   const user = useUser();
   const pending = access.state === 'pending';
+  const { prepayment } = access;
   const name = user.first_name;
 
   const title = pending
@@ -77,9 +79,27 @@ function ContractlessHome({ access }: { access: ApplicantAccess }) {
               {pending ? contract : t('guest.hero.title')}
             </h2>
             <p className="m-0 text-[15px] leading-8 text-on-hero-2">
-              {t(pending ? 'guest.pending.text' : 'guest.hero.text')}
+              {pending && prepayment
+                ? t(`guest.pending.prepayment.${prepayment.status}`, {
+                    amount: t('guest.pending.prepayment.toman', {
+                      amount: f.number(prepayment.amount),
+                    }),
+                  })
+                : t(pending ? 'guest.pending.text' : 'guest.hero.text')}
             </p>
           </div>
+          {pending && prepayment && prepayment.status !== 'paid' && (
+            <Link
+              to={`/payments/${String(prepayment.payment_id)}`}
+              className={buttonClass('primary', 'max-sm:w-full')}
+            >
+              {t(
+                prepayment.status === 'review'
+                  ? 'guest.pending.prepayment.open'
+                  : 'guest.pending.prepayment.pay',
+              )}
+            </Link>
+          )}
           {!pending && (
             <div className="flex flex-wrap gap-2 max-sm:w-full [&>*]:flex-auto">
               <a href={SITE.consultation} className={buttonClass('outline', lockButtonOnHero)}>

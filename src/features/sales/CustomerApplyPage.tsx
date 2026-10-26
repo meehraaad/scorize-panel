@@ -9,6 +9,7 @@ import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
 import { applyQuery, type ApplyFile } from './api';
+import { ContractHandoff } from './components/ContractHandoff';
 import { useCustomerId } from './useCustomerId';
 
 const TONE: Record<ApplyFile['applications'][number]['status'], ChipTone> = {
@@ -23,9 +24,16 @@ export default function CustomerApplyPage() {
   const { t } = useTranslation('sales');
   const { t: tc } = useTranslation();
   const f = useFormat();
-  const { data } = useSuspenseQuery(applyQuery(useCustomerId()));
+  const id = useCustomerId();
+  const { data } = useSuspenseQuery(applyQuery(id));
 
-  if (!data) return <EmptyState variant="card">{t('apply.none')}</EmptyState>;
+  if (!data)
+    return (
+      <>
+        <ContractHandoff customer={id} />
+        <EmptyState variant="card">{t('apply.none')}</EmptyState>
+      </>
+    );
   const { contract } = data;
   const rows = [
     { key: 'status', value: contract.active ? t('apply.active') : t('apply.ended') },
@@ -44,6 +52,7 @@ export default function CustomerApplyPage() {
 
   return (
     <>
+      <ContractHandoff customer={id} />
       <Notice tone="info">{t('apply.readOnly')}</Notice>
       <StatGrid
         label={t('apply.stats')}

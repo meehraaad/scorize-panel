@@ -15,6 +15,7 @@ import {
   infoQuery,
   leadFilterOf,
   monthQuery,
+  handoffQuery,
   offerQuery,
   outreachQuery,
   paymentsQuery,
@@ -196,7 +197,7 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/CustomerApplyPage'), [], {
             data: (args) => {
               const id = customerOf(args);
-              return [id !== null && applyQuery(id)];
+              return [id !== null && applyQuery(id), id !== null && handoffQuery(id)];
             },
           }),
         },

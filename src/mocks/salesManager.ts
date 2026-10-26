@@ -11,6 +11,7 @@ import type {
 } from '@/features/sales/api';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { failed, stateOrError, type SalesState } from './sales';
+import { openHandoff } from './handoff';
 
 /**
  * Fake sales-manager API (docs/backend-changes.md S34–S40, T12). Only Reza (user 4, with
@@ -442,8 +443,10 @@ export const managerHandlers = [
     data.manager.decided.add(item.lead.id);
     item.lead.manager = false;
     item.lead.stage_since = new Date().toISOString();
-    if (action === 'approve') item.lead.stage = 'won';
-    else if (action === 'return') item.lead.stage = 'offer';
+    if (action === 'approve') {
+      item.lead.stage = 'won';
+      openHandoff(item.id, item.name, item.lead.amount ?? 0, item.countries);
+    } else if (action === 'return') item.lead.stage = 'offer';
     else {
       item.lead.stage = 'lost';
       item.lead.lost_reason = 'later';

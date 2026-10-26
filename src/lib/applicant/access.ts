@@ -31,6 +31,15 @@ export interface ApplicantAccess {
    * home's card. null when none was started or once the case has begun.
    */
   turkey: 'docs' | 'review' | 'sign' | null;
+  /**
+   * While `pending`: the prepayment to pay before a supervisor takes the case (S46), toman.
+   * null otherwise, and for contracts registered before this flow.
+   */
+  prepayment: {
+    payment_id: number;
+    amount: number;
+    status: 'unpaid' | 'review' | 'declined' | 'paid';
+  } | null;
 }
 
 /** Sections of the applicant panel that can be locked (their nav item ids). */

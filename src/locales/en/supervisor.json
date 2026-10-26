@@ -498,5 +498,39 @@
     "applyError": "The changes weren't saved. Try again.",
     "done": "{{n}} changes saved.",
     "lineLabel": "Row {{n}}:"
+  },
+  "handoffs": {
+    "title": "New cases",
+    "subtitle": "{{n}} cases waiting for a supervisor, {{ready}} ready to start",
+    "subtitleNone": "Cases from approved contracts, until they get a supervisor",
+    "empty": "No case is waiting for a supervisor.",
+    "feature": {
+      "admission": "Admission",
+      "writing": "Writing",
+      "visa": "Visa"
+    },
+    "meta": "Seller: {{seller}} · approved {{when}} · {{amount}}",
+    "noSeller": "unknown",
+    "toman": "{{amount}} toman",
+    "signed": "Signed contract uploaded",
+    "notSigned": "No signed contract yet",
+    "payment": {
+      "unpaid": "Prepayment not paid",
+      "review": "Prepayment receipt in review",
+      "declined": "Prepayment receipt declined",
+      "paid": "Prepayment paid"
+    },
+    "scan": "Contract scan {{n}}",
+    "supervisor": "Supervisor",
+    "suggested": "Suggested: the supervisor of the contract's countries with the fewest active cases",
+    "option": "{{name}} · {{n}} active cases · {{countries}}",
+    "anyCountry": "all countries",
+    "assign": "Assign and start the case",
+    "done": "{{name}}'s case went to {{supervisor}} and the contract is active.",
+    "notReady": "The case isn't ready yet: the signed contract or the prepayment is missing.",
+    "waiting": {
+      "signing": "Waiting for the seller to upload the signed contract",
+      "payment": "Waiting for the customer's prepayment"
+    }
   }
 }

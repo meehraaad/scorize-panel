@@ -6,6 +6,7 @@ import {
   casesQuery,
   documentsQuery,
   firstCasesQuery,
+  handoffsQuery,
   inboxQuery,
   reportsQuery,
   todayBoardQuery,
@@ -15,7 +16,18 @@ import {
 import { prefetchTickets } from '@/features/tickets/config';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { taskListQuery, tasksQuery } from '@/lib/tasks/api';
+import { ASSIGN_PERMISSION } from '@/features/supervisor/api';
+import { queryClient } from '@/lib/api/queryClient';
+import { hasPermission } from '@/lib/auth/roles';
+import { sessionQuery } from '@/lib/auth/session';
+import { redirect } from 'react-router';
 import type { PanelDefinition } from '../types';
+
+/** Supervisors who don't assign new cases are sent back to the panel's home. */
+async function assignersOnly() {
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+  return user && hasPermission(user, ASSIGN_PERMISSION) ? null : redirect('/supervisor');
+}
 
 /**
  * Supervisors (executive team, or `can_manage_applicant`). Design: canvas "V1 · Supervisor panel"
@@ -57,6 +69,13 @@ export const supervisorPanel: PanelDefinition = {
       label: 'panels.supervisor.nav.tasks',
       tab: 'panels.supervisor.tabs.tasks',
       icon: 'check',
+    },
+    {
+      id: 'new',
+      to: 'new',
+      label: 'panels.supervisor.nav.new',
+      icon: 'user',
+      permission: ASSIGN_PERMISSION,
     },
     { id: 'reports', to: 'reports', label: 'panels.supervisor.nav.reports', icon: 'chart' },
   ],
@@ -136,6 +155,15 @@ export const supervisorPanel: PanelDefinition = {
       path: 'tasks',
       ...lazyPage(() => import('./TasksPage'), ['tasks'], {
         data: () => [tasksQuery('supervisor'), taskListQuery('supervisor', 'mine', 1)],
+        skeleton: 'list',
+      }),
+    },
+    // New cases waiting for a supervisor (managers with can_assign_supervisor).
+    {
+      path: 'new',
+      loader: assignersOnly,
+      ...lazyPage(() => import('@/features/supervisor/HandoffsPage'), ['supervisor'], {
+        data: () => [handoffsQuery],
         skeleton: 'list',
       }),
     },
