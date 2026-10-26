@@ -6,7 +6,7 @@ import {
   type RouteObject,
 } from 'react-router';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
-import { accountQuery, unreadQuery } from '@/lib/account/api';
+import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
@@ -133,7 +133,7 @@ export const routes: RouteObject[] = [
           {
             path: 'account',
             ...lazyPage(() => import('@/features/account/AccountPage'), ['account'], {
-              data: () => [accountQuery],
+              data: () => [accountQuery, notificationsQuery],
               skeleton: 'dashboard',
             }),
           },

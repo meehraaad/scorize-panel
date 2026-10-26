@@ -2,13 +2,19 @@ import {
   activityQuery,
   applicationsQuery,
   caseQuery,
+  caseTickets,
+  casesQuery,
   documentsQuery,
+  firstCasesQuery,
   inboxQuery,
   reportsQuery,
-  todayQuery,
+  todayBoardQuery,
+  todayCountsQuery,
+  todayWaitingQuery,
 } from '@/features/supervisor/api';
+import { prefetchTickets } from '@/features/tickets/config';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
-import { tasksQuery } from '@/lib/tasks/api';
+import { taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
 
 /**
@@ -58,13 +64,14 @@ export const supervisorPanel: PanelDefinition = {
     {
       index: true,
       ...lazyPage(() => import('@/features/supervisor/TodayPage'), ['supervisor'], {
-        data: () => [todayQuery],
+        data: () => [todayBoardQuery(1), todayWaitingQuery(1), todayCountsQuery],
         skeleton: 'dashboard',
       }),
     },
     {
       path: 'files',
       ...lazyPage(() => import('@/features/supervisor/CasesPage'), ['supervisor'], {
+        data: ({ request }) => [casesQuery(firstCasesQuery(new URL(request.url).searchParams))],
         skeleton: 'list',
       }),
     },
@@ -98,7 +105,15 @@ export const supervisorPanel: PanelDefinition = {
           }),
         },
         // One applicant's threads; `tickets/<thread>` for writing threads.
-        { path: 'tickets/*', ...lazyPage(() => import('./CaseTicketsPage'), ['tickets']) },
+        {
+          path: 'tickets/*',
+          loader: ({ params }) => {
+            const id = idParam(params.id);
+            if (id !== null) prefetchTickets(caseTickets(id), params['*'] ?? '');
+            return null;
+          },
+          ...lazyPage(() => import('./CaseTicketsPage'), ['tickets']),
+        },
         {
           path: 'activity',
           ...lazyPage(() => import('@/features/supervisor/CaseActivityPage'), [], {
@@ -120,7 +135,7 @@ export const supervisorPanel: PanelDefinition = {
     {
       path: 'tasks',
       ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: () => [tasksQuery('supervisor')],
+        data: () => [tasksQuery('supervisor'), taskListQuery('supervisor', 'mine', 1)],
         skeleton: 'list',
       }),
     },

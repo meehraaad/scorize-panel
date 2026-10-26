@@ -1,6 +1,7 @@
 import { ComingSoonPage } from '@/components/ComingSoonPage';
-import { orderQuery, queueQuery } from '@/features/writer/api';
-import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { prefetchTickets } from '@/features/tickets/config';
+import { orderQuery, orderTickets, queueQuery } from '@/features/writer/api';
+import { idParam, lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import type { PanelDefinition } from '../types';
 
 /**
@@ -52,6 +53,14 @@ export const writerPanel: PanelDefinition = {
     // The order's conversation with the applicant: the shared tickets page, as staff.
     {
       path: 'orders/:id/tickets/*',
+      loader: ({ params }) => {
+        const id = idParam(params.id);
+        if (id !== null) {
+          prefetchQueries([orderQuery(id)]);
+          prefetchTickets(orderTickets(id), params['*'] ?? '');
+        }
+        return null;
+      },
       ...lazyPage(() => import('./OrderTicketsPage'), ['writer', 'tickets'], { skeleton: 'chat' }),
     },
     // Every conversation across orders: no design yet (each order links to its own).

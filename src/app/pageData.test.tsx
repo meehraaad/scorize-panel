@@ -8,12 +8,13 @@ import '@/test/server';
 /*
  * The page-data rule (docs/performance.md): opening a page starts every request its first screen
  * needs together with its code, in the route's loader (`lazyPage(…, data)`). A request the page
- * itself starts after it renders is a waterfall. This opens every page against the fake Django
+ * itself starts after it renders is a waterfall. This opens every panel page against the fake Django
  * and fails on any first load that started after the route had loaded. (Refetches, e.g. after the
  * page marks something seen, are not waterfalls.)
  */
 
 const SARA = 1; // applicant with a contract (src/mocks/applicant.ts)
+const MARYAM = 2; // supervisor and writer (src/mocks/supervisor.ts, writer.ts)
 const NIMA = 3; // seller
 const REZA = 4; // sales manager
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
@@ -81,6 +82,29 @@ const PAGES: PageCase[] = [
     '/sales/manager/team',
     '/sales/manager/follow-ups',
   ].map((path) => ({ path, user: REZA })),
+  // Supervisor panel.
+  ...[
+    '/supervisor',
+    '/supervisor/files',
+    '/supervisor/files/1227',
+    '/supervisor/files/1227/documents',
+    '/supervisor/files/1227/applications',
+    '/supervisor/files/1227/activity',
+    '/supervisor/tickets',
+    '/supervisor/tasks',
+    '/supervisor/reports',
+  ].map((path) => ({ path, user: MARYAM })),
+  // Writer panel.
+  ...['/writer', '/writer/orders/1240'].map((path) => ({ path, user: MARYAM })),
+  // Tickets pages: the thread's messages are chained after the list in the loader.
+  ...['/supervisor/files/1227/tickets', '/writer/orders/1240/tickets'].map((path) => ({
+    path,
+    user: MARYAM,
+    later: [{ key: '"messages"', why: "the thread's id comes from the list (backend item H52)" }],
+  })),
+  // Shared pages.
+  { path: '/account', user: SARA },
+  { path: '/settings', user: SARA },
 ];
 
 /** Queries first loaded while `path` opens, and whether the load began after the route had. */

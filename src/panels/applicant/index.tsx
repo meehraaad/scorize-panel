@@ -7,13 +7,11 @@ import { turkeyQuery } from '@/features/turkey/api';
 import { documentsQuery } from '@/features/documents/api';
 import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
-import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { gatesQuery } from '@/lib/applicant/gates';
-import { idParam, lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
-import { messagesQuery, ticketsQuery } from '@/lib/tickets/api';
-import { findThread } from '@/features/tickets/config';
+import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
 import { applicantTickets } from './tickets';
 
@@ -146,13 +144,7 @@ export const applicantPanel: PanelDefinition = {
           path: 'tickets/*',
           // The thread comes from the list: its messages start as soon as the list arrives.
           loader: ({ params }) => {
-            queryClient
-              .query(ticketsQuery(applicantTickets))
-              .then((data) => {
-                const thread = data && findThread(data.threads, params['*'] ?? '');
-                if (thread) prefetchQueries([messagesQuery(applicantTickets, thread.id)]);
-              })
-              .catch(() => undefined);
+            prefetchTickets(applicantTickets, params['*'] ?? '');
             return null;
           },
           ...lazyPage(() => import('./TicketsPage'), ['tickets'], { skeleton: 'chat' }),
