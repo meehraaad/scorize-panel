@@ -13,7 +13,8 @@ export type ServerFeature =
   | 'packages'
   | 'estimate'
   | 'reviewDocuments'
-  | 'background';
+  | 'background'
+  | 'start';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -36,4 +37,9 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   reviewDocuments: true,
   /** H60 `background/`: the tablet form. */
   background: true,
+  /**
+   * H63, H64 `start/` and `consultations/book/`: free times, prices and the seller on the new-user
+   * home (scorize-revolution `claude/project-thread-ri6qn8`). Off: the home offers what it did before.
+   */
+  start: true,
 };

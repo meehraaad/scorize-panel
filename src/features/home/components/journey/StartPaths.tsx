@@ -6,25 +6,33 @@ import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { SectionHeading } from '@/components/ui/SectionCard';
 import type { ApplicantAccess } from '@/lib/applicant/access';
+import type { StartOffers } from '@/lib/applicant/journey';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
+import { ConsultSlots } from './ConsultSlots';
 
 const PATH = 'flex flex-col gap-3 p-5 lg:p-6';
 
 /**
  * The ways to begin, each one step away from money: Turkey (starts without paying first; its own
- * flow once on the server, a seller's call until then), a paid consultation (not once one was
- * booked), or a call about a contract. Design: "Scorize New User Dashboard" canvas, start paths.
+ * flow once on the server, a seller's call until then), a paid consultation with its nearest free
+ * times and price (not once one was booked), or a call about a contract, with what it costs per
+ * instalment. Design: "Scorize New User Dashboard v2" canvas, start paths.
  */
 export function StartPaths({
   access,
+  offers,
   consulted = false,
 }: {
   access: ApplicantAccess;
+  offers: StartOffers;
   /** Has had or booked a session: no consultation offer, two ways left. */
   consulted?: boolean;
 }) {
   const { t } = useTranslation('journey');
+  const f = useFormat();
+  const contract = offers.contract;
   const button = buttonClass('primary', 'mt-auto w-full');
   const call = (topic: 'turkey' | 'admission', label: string) => (
     <CallRequestButton
@@ -65,10 +73,20 @@ export function StartPaths({
             <h3 id="journey-path-consult" className="m-0 text-base font-bold">
               {t('paths.consult.title')}
             </h3>
-            <p className="m-0 text-[13px] leading-6 text-text-2">{t('paths.consult.text')}</p>
-            <a href={SITE.consultation} className={buttonClass('outline', 'mt-auto w-full')}>
-              {t('paths.consult.start')}
-            </a>
+            <p className="m-0 text-[13px] leading-6 text-text-2">
+              {offers.consultation
+                ? t('paths.consult.minutes', { n: f.number(offers.consultation.minutes) })
+                : t('paths.consult.text')}
+            </p>
+            {offers.consultation ? (
+              <div className="mt-auto">
+                <ConsultSlots offer={offers.consultation} />
+              </div>
+            ) : (
+              <a href={SITE.consultation} className={buttonClass('outline', 'mt-auto w-full')}>
+                {t('paths.consult.start')}
+              </a>
+            )}
           </Card>
         )}
         <Card aria-labelledby="journey-path-contract" className={PATH}>
@@ -76,6 +94,21 @@ export function StartPaths({
             {t('paths.contract.title')}
           </h3>
           <p className="m-0 text-[13px] leading-6 text-text-2">{t('paths.contract.text')}</p>
+          {contract && (
+            <>
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-[13px]">
+                {contract.writing && <li>{t('paths.contract.writing')}</li>}
+                <li>{t('paths.contract.applies')}</li>
+                <li>{t('paths.contract.instalments', { n: f.number(contract.instalments) })}</li>
+              </ul>
+              <p className="m-0 flex flex-wrap items-baseline gap-x-2 text-sm text-text-2">
+                {t('paths.contract.from')}
+                <span className="text-base font-bold text-text">
+                  {t('slots.toman', { amount: f.number(contract.instalment) })}
+                </span>
+              </p>
+            </>
+          )}
           {call('admission', t('paths.contract.start'))}
         </Card>
       </div>

@@ -31,8 +31,22 @@ export function previewDocuments(t: TFunction<'documents'>): DocumentsData {
       file(6, t('preview.universities'), 'PDF', 9, true),
     ],
     writing: [
-      { type: 'sop', step: 'form', delivered_at: null, file_url: null },
-      { type: 'cv', step: 'writing', delivered_at: null, file_url: null },
+      {
+        type: 'sop',
+        step: 'form',
+        delivered_at: null,
+        file_url: null,
+        draft_waiting: false,
+        due_at: null,
+      },
+      {
+        type: 'cv',
+        step: 'writing',
+        delivered_at: null,
+        file_url: null,
+        draft_waiting: false,
+        due_at: null,
+      },
     ],
     interests: ['Machine Learning', 'Computer Vision', 'Robotics'],
   };

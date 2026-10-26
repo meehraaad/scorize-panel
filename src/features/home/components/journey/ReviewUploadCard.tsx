@@ -27,11 +27,22 @@ const RULE = { types: REVIEW_TYPES, maxBytes: REVIEW_MAX_BYTES };
  * sign someone is ready, so each upload reaches a seller (Django makes a lead). Pick what the file
  * is, then the file; it is sent at once under the upload toast.
  */
-export function ReviewUploadCard({ files }: { files: ReviewDocument[] }) {
+export function ReviewUploadCard({
+  files,
+  kind: chosen,
+  onKind,
+}: {
+  files: ReviewDocument[];
+  /** The kind picked, when the page picks it too (the Turkey checklist's "upload passport"). */
+  kind?: ReviewKind;
+  onKind?: (kind: ReviewKind) => void;
+}) {
   const { t } = useTranslation('journey');
   const f = useFormat();
   const upload = useUploadReviewDocument();
-  const [kind, setKind] = useState<ReviewKind>('transcript');
+  const [own, setOwn] = useState<ReviewKind>('transcript');
+  const kind = chosen ?? own;
+  const setKind = onKind ?? setOwn;
   const [problem, setProblem] = useState<{ problem: FileProblem; size: number } | null>(null);
   const full = files.length >= MAX_REVIEW_DOCUMENTS;
 

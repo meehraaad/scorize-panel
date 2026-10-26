@@ -39,7 +39,7 @@ describe('documents page', () => {
     expect(
       within(required()).getByLabelText('ریز نمرات کارشناسی (ترجمه‌ی رسمی)'),
     ).toBeInTheDocument();
-    expect(within(required()).getByText(/نسخه‌ی قبلی امضا نداشت/)).toBeInTheDocument();
+    expect(within(required()).getAllByText(/نسخه‌ی قبلی امضا نداشت/).length).toBeGreaterThan(0);
     // Two lanes: the applicant's files with their review state, the team's deliveries apart.
     expect(within(files()).getAllByRole('listitem')).toHaveLength(8);
     expect(within(files()).getByRole('link', { name: 'دانلود پاسپورت' })).toBeInTheDocument();
@@ -47,8 +47,16 @@ describe('documents page', () => {
     const team = screen.getByRole('region', { name: 'فایل‌های آماده از تیم' });
     expect(within(team).getAllByRole('listitem')).toHaveLength(2);
     // What waits on the applicant comes first: documents to upload and the writing forms.
+    // How ready the case is: what is done, with the team, and waiting on the applicant.
+    const ready = screen.getByRole('region', { name: /برای اپلای آماده است/ });
+    expect(within(ready).getByText(/منتظر شما/)).toBeInTheDocument();
     const waiting = screen.getByRole('region', { name: 'منتظر شما' });
-    expect(within(waiting).getByText('۲ مدرک برای آپلود')).toBeInTheDocument();
+    // One card per document (the one sent back says why) and per form.
+    expect(within(waiting).getByText(/نسخه‌ی قبلی امضا نداشت/)).toBeInTheDocument();
+    expect(within(waiting).getByRole('link', { name: 'آپلود دوباره' })).toHaveAttribute(
+      'href',
+      '#docs-required',
+    );
     expect(within(waiting).getByText('فرم انگیزه‌نامه (SOP)')).toBeInTheDocument();
     expect(within(waiting).getAllByRole('link', { name: 'تکمیل فرم' })[0]).toHaveAttribute(
       'href',

@@ -1,5 +1,6 @@
 import { useEffect, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LockedResult } from './LockedResult';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -108,9 +109,12 @@ function gpaOn20(draft: Draft) {
 export function Quiz({
   options,
   onDone,
+  teaser = false,
 }: {
   options: EstimateOptions;
   onDone: (contact: EstimateAnswers['contact']) => void;
+  /** First visit on the home: the locked result's shape leads the aside, instead of what they get. */
+  teaser?: boolean;
 }) {
   const { t } = useTranslation('estimate');
   const f = useFormat();
@@ -422,13 +426,14 @@ export function Quiz({
         }
         aside={
           <>
+            {teaser && <LockedResult options={options} />}
             <LivePreview
               draft={draft}
               options={options}
               fieldName={fieldName}
               complete={Math.round((index / STEPS.length) * 100)}
             />
-            <WhatYouGet />
+            {!teaser && <WhatYouGet />}
           </>
         }
       />

@@ -64,23 +64,28 @@
     "status": {
       "form": "Waiting for you",
       "writing": "Being written",
-      "ready": "Ready"
+      "ready": "Ready",
+      "review": "Your review"
     },
     "steps": "Writing steps",
     "step": {
       "form": "Your details in the form",
       "writing": "Written by the team",
-      "ready": "Ready to download"
+      "ready": "Ready to download",
+      "review": "You review the draft"
     },
     "note": {
       "form": "Writing starts once you submit the form.",
       "writing": "The writing team is on it. You'll get a text message when it's ready.",
-      "ready": "The final version was delivered on {{date}}. If you need changes, request a revision."
+      "ready": "The final version was delivered on {{date}}. If you need changes, request a revision.",
+      "review": "The draft is ready. Read it, then approve it or ask for changes.",
+      "writingDue": "The writing team is on it; the next version is due around {{date}}."
     },
     "fillForm": "Fill in the form",
     "viewForm": "View the form",
     "download": "Download {{name}}",
-    "revise": "Request a revision"
+    "revise": "Request a revision",
+    "seeDraft": "See the draft"
   },
   "interests": {
     "title": "Research interests",
@@ -106,14 +111,38 @@
   "waiting": {
     "title": "Waiting for you",
     "subtitle": "These move your case forward; the rest is on us.",
-    "upload": "{{n}} documents to upload",
-    "uploadAction": "Upload documents",
     "form": "{{name}} form",
-    "formAction": "Fill in the form"
+    "formAction": "Fill in the form",
+    "redo": "Upload again",
+    "daysLeft": "{{n}} days left",
+    "kindUpload": "Upload",
+    "kindForm": "Form",
+    "kindDraft": "Review",
+    "supervisor": "Supervisor:",
+    "uploadHint": "A PDF or a clear photo.",
+    "uploadOne": "Upload {{name}}",
+    "reupload": "Upload again",
+    "formChip": "Writing waits on you",
+    "formHint": "The writing team starts once you submit the form.",
+    "draftChip": "Draft ready",
+    "draft": "{{name}} draft",
+    "draftHint": "Approve it or ask for changes, and the final version follows.",
+    "draftAction": "See the draft"
   },
   "upsell": {
     "title": "Leave your CV and SOP to us",
     "text": "The Scorize writing team writes your CV, statement of purpose and recommendation letters from your case.",
     "cta": "Request a call about writing"
+  },
+  "ready": {
+    "kicker": "Ready to apply",
+    "title": "Your case is {{percent}}% ready to apply",
+    "nearest": "Nearest deadline",
+    "nearestDoc": "{{name}} · {{days}} days left",
+    "lane": {
+      "ready": "{{n}} ready",
+      "team": "{{n}} with the team",
+      "you": "{{n}} waiting on you"
+    }
   }
 }

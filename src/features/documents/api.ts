@@ -42,6 +42,10 @@ export interface WritingOrder {
   delivered_at: string | null;
   /** The delivered file, when ready. */
   file_url: string | null;
+  /** A draft waits for the applicant to approve it or ask for changes (the step "your review"). */
+  draft_waiting: boolean;
+  /** While the team writes: when the next version is due. */
+  due_at: string | null;
 }
 
 export interface DocumentsData {

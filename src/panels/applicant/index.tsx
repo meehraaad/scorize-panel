@@ -12,7 +12,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { gatesQuery } from '@/lib/applicant/gates';
-import { backgroundQuery, reviewDocumentsQuery } from '@/lib/applicant/journey';
+import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
@@ -78,8 +78,8 @@ export const applicantPanel: PanelDefinition = {
             ['home', 'gates', 'estimate', 'journey'],
             {
               // Without a contract the home is the journey toward one: the admission-chance quiz
-              // (or its last result), files for a free review, the tablet form and the next
-              // session. A case with a contract (or one in review) reads none of them.
+              // (or its last result), files for a free review, the tablet form, the next
+              // session and what to start with (free times, prices, their seller). A case with a contract (or one in review) reads none of them.
               data: () => {
                 const state = queryClient.getQueryData(accessQuery.queryKey)?.state;
                 const guest = ON_SERVER.estimate && state !== 'active' && state !== 'pending';
@@ -90,6 +90,7 @@ export const applicantPanel: PanelDefinition = {
                   guest && reviewDocumentsQuery,
                   guest && backgroundQuery,
                   guest && consultationsQuery,
+                  guest && startQuery,
                 ];
               },
               skeleton: 'dashboard',

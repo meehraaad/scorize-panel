@@ -55,7 +55,9 @@ describe('admission-chance quiz', () => {
     ).toBeInTheDocument();
     const preview = screen.getByRole('region', { name: 'تا اینجا' });
     expect(within(preview).getByRole('img', { name: 'پاسخ‌ها ۰٪ کامل' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'بعد از این چند سؤال' })).toBeInTheDocument();
+    // First visit: the result's shape, locked, beside the first question.
+    const locked = screen.getByRole('region', { name: 'نتیجه‌ی شما این شکلی است' });
+    expect(within(locked).getByText(/بعد از سؤال آخر/)).toBeInTheDocument();
     // The rest of the guest home stays under it.
     expect(screen.getByRole('region', { name: 'پنل شما بعد از قرارداد' })).toBeInTheDocument();
 

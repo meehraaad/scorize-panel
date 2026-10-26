@@ -72,12 +72,17 @@
     "consult": {
       "title": "Expert consultation",
       "text": "One session with an application consultant to settle the country, field and costs.",
-      "start": "Book a consultation"
+      "start": "Book a consultation",
+      "minutes": "{{n}} minutes with a senior consultant: settle the route, country and costs."
     },
     "contract": {
       "title": "Application contract",
       "text": "Know your path? A consultant calls you about the contract.",
-      "start": "Request a call about a contract"
+      "start": "Request a call about a contract",
+      "writing": "A professional SOP and CV",
+      "applies": "Applications followed through to the result",
+      "instalments": "Pay in up to {{n}} instalments",
+      "from": "Instalments from"
     }
   },
   "session": {
@@ -96,7 +101,18 @@
     "infoDone": "Session topic saved",
     "fill": "Fill in",
     "edit": "Edit",
-    "details": "Session details"
+    "details": "Session details",
+    "calendar": "Add to calendar",
+    "reminder": "We’ll text you a reminder the day before the session.",
+    "left": {
+      "label": "Time left until the session: {{left}}",
+      "days": "{{n}} days",
+      "hours": "{{n}} hours",
+      "minutes": "{{n}} minutes",
+      "daysUnit": "days",
+      "hoursUnit": "hours",
+      "minutesUnit": "minutes"
+    }
   },
   "background": {
     "title": "Background form",
@@ -192,5 +208,76 @@
     "call": "I have a question, call me",
     "callTurkey": "Call me about Turkey",
     "details": "Session details"
+  },
+  "slots": {
+    "legend": "Nearest free times",
+    "none": "No free times soon. Check back in a few days, or ask us to call.",
+    "price": "Session fee",
+    "toman": "{{amount}} toman",
+    "book": "Book {{time}}",
+    "booked": "Your session is booked.",
+    "taken": "That time was just taken. Pick another one.",
+    "error": "The booking didn’t go through. Try again."
+  },
+  "consultant": {
+    "kicker": "Your personal consultant",
+    "text": "Any questions? We have your number; just tell us when to call.",
+    "call": "Call me"
+  },
+  "similar": {
+    "title": "People with a case like yours",
+    "subtitle": "Recent admissions of Scorize applicants with your degree, field and a GPA close to yours",
+    "all": "All admission samples",
+    "admitted": "Admitted"
+  },
+  "callTime": {
+    "title": "Rather talk?",
+    "text": "We have your number. Just tell us when to call; the call is free.",
+    "legend": "When to call",
+    "call": "Call me",
+    "sent": "Call request sent.",
+    "done": "Done. We’ll call you in the {{time}}."
+  },
+  "topics": {
+    "title": "What we’ll talk about in the session",
+    "subtitle": "Another question? Add it to the session’s topic.",
+    "countries": {
+      "name": "Countries and universities that fit",
+      "hint": "From your GPA and documents"
+    },
+    "costs": {
+      "name": "Costs and instalments",
+      "hint": "From applying to the visa, clear and complete"
+    },
+    "timeline": {
+      "name": "Timeline to the start of term",
+      "hint": "Deadlines and each month’s work"
+    },
+    "turkey": {
+      "name": "Turkey, without paying first",
+      "hint": "If it suits you"
+    },
+    "offer": {
+      "title": "After the session: your contract offer",
+      "text": "After the session your consultant prepares a contract offer for you, with its price and instalments.",
+      "locked": "Opens after the session"
+    }
+  },
+  "received": {
+    "title": "Your {{kind}} arrived",
+    "text": "Our expert reviews your documents and calls you with the result of the review.",
+    "textNamed": "{{name}} reviews your documents and calls you with the result of the review."
+  },
+  "book": {
+    "kicker": "Your next step",
+    "title": "Go over the review in a session with a consultant",
+    "text": "Book the session now, and settle the route and costs together."
+  },
+  "turkeyDocs": {
+    "title": "Turkey needs just {{n}} more documents",
+    "titleDone": "You have the documents to start Turkey",
+    "sent": "sent",
+    "missing": "not sent yet",
+    "upload": "Upload {{name}}"
   }
 }
