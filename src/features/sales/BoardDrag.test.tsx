@@ -135,8 +135,12 @@ beforeEach(() => {
   };
   server.use(http.get('/api/sales/v1/board/', () => HttpResponse.json(data)));
 });
-afterEach(() => {
+afterEach(async () => {
+  cleanup();
   client.clear();
+  // dnd-kit keeps its document click/selection guard for 50 ms after a pointer drop.
+  // Let that teardown finish before the next test creates a different board.
+  await new Promise<void>((resolve) => setTimeout(resolve, 60));
   vi.restoreAllMocks();
 });
 
