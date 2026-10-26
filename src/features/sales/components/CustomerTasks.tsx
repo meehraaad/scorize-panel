@@ -2,7 +2,7 @@ import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
-import { DatePicker } from '@/components/ui/DatePicker';
+import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -195,7 +195,7 @@ function NewTaskForm({ customer, name }: { customer: CustomerData; name: string 
         }))}
       />
       {when === 'other' && (
-        <DatePicker
+        <LazyDatePicker
           time
           only="future"
           label={t('customer.newTask.date')}

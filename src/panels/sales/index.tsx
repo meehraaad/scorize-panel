@@ -142,7 +142,7 @@ export const salesPanel: PanelDefinition = {
           const id = customerOf(args);
           return [id !== null && customerQuery(id)];
         },
-        skeleton: 'detail',
+        skeleton: 'customer',
       }),
       // Each tab's data starts with the customer's, not after it.
       children: [

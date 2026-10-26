@@ -125,10 +125,12 @@ export interface HistoryPage {
   next: number | null;
 }
 
+const historyKey = (id: number) => [...customerKey(id), 'history'] as const;
+
 /** Contacts, leads, sessions, payments and notes, newest first (S17). */
 export const historyQuery = (id: number) =>
   infiniteQueryOptions({
-    queryKey: [...customerKey(id), 'history'],
+    queryKey: historyKey(id),
     queryFn: ({ signal, pageParam }) =>
       api<HistoryPage>(`${customerApi(id)}/history/?page=${String(pageParam)}`, { signal }),
     initialPageParam: 1,
@@ -172,6 +174,7 @@ export function useAddNote(customer: number) {
   return useMutation({
     mutationFn: (text: string) =>
       api(`${customerApi(customer)}/notes/`, { method: 'POST', body: { text } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: customerKey(customer) }),
+    // A note shows only in the history: the card (about 10 queries in Django, S41) stays as is.
+    onSuccess: () => client.invalidateQueries({ queryKey: historyKey(customer) }),
   });
 }
