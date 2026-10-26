@@ -182,6 +182,12 @@ header and mobile tabs until the user exits or presses Escape; Escape within a d
 stays with that interaction. The Sales Board uses it, with independent scrolling in each stage.
 Other panel pages keep their existing width and navigation.
 
+The Sales Board uses `@dnd-kit/sortable` for vertical card ordering. Personal positions are saved
+as numeric lead IDs per signed-in account in this browser (`features/sales/boardOrder.ts`), and
+storage events synchronize tabs. New server cards appear first; counts, values, lead stages and
+stage timestamps stay server-owned. Only the visible cards can be sorted because the API caps
+each column; shared ordering and changing that selection need backend item S12a.
+
 ### Sales panel (canvas "Scorize Seller Panel")
 
 `features/sales/` holds every sales page (Today, Leads and My consultations under one nav tab with

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, useSuspenseQuery } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { Suspense } from 'react';
@@ -9,6 +9,7 @@ import { Toaster } from '@/components/ui/Toast';
 import i18n from '@/lib/i18n';
 import { server } from '@/test/server';
 import { BOARD_STAGES, boardQuery, type BoardData } from './api';
+import { boardOrderKey } from './boardOrder';
 import { SalesBoard } from './components/SalesBoard';
 
 let data: BoardData;
@@ -26,7 +27,7 @@ const card = {
 };
 function Harness() {
   const { data } = useSuspenseQuery(boardQuery);
-  return <SalesBoard data={data} />;
+  return <SalesBoard data={data} ownerId={3} />;
 }
 async function setup(language = 'en') {
   await i18n.changeLanguage(language);
@@ -72,13 +73,42 @@ function layout(rtl = false) {
     const section = this.closest('section');
     const stage = section?.getAttribute('aria-labelledby')?.replace('col-', '');
     const index = BOARD_STAGES.findIndex((value) => value === stage);
-    if (index < 0) return rect(0, 0, 1320, 600);
+    if (index < 0) {
+      // Portaled previews retain the active card's size and original position, including RTL.
+      if (
+        this === document.body ||
+        this === document.documentElement ||
+        this.hasAttribute('aria-busy')
+      )
+        return rect(0, 0, 1320, 900);
+      const active = document.querySelector('[data-move-lead][aria-pressed="true"]');
+      const activeStage = active
+        ?.closest('section')
+        ?.getAttribute('aria-labelledby')
+        ?.replace('col-', '');
+      const stageIndex = Math.max(
+        0,
+        BOARD_STAGES.findIndex((value) => value === activeStage),
+      );
+      const item = active?.closest('li');
+      const position = item ? Array.from(item.parentElement?.children ?? []).indexOf(item) : 0;
+      return rect(
+        (rtl ? 5 - stageIndex : stageIndex) * 220 + 10,
+        100 + Math.max(0, position) * 180,
+        184,
+        160,
+      );
+    }
     const x = (rtl ? 5 - index : index) * 220;
-    return this === section ? rect(x, 0, 204, 500) : rect(x + 10, 100, 184, 160);
+    const item = this.closest('li');
+    const position = item ? Array.from(item.parentElement?.children ?? []).indexOf(item) : 0;
+    return this === section
+      ? rect(x, 0, 204, 900)
+      : rect(x + 10, 100 + Math.max(0, position) * 180, 184, 160);
   });
 }
-async function keyboardPick(user: ReturnType<typeof userEvent.setup>) {
-  act(() => handle().focus());
+async function keyboardPick(user: ReturnType<typeof userEvent.setup>, name = 'Sara') {
+  act(() => handle(name).focus());
   await user.keyboard('[Space]');
   // KeyboardSensor attaches its document listener on the next task.
   await act(async () => {
@@ -87,6 +117,7 @@ async function keyboardPick(user: ReturnType<typeof userEvent.setup>) {
 }
 
 beforeEach(() => {
+  localStorage.clear();
   data = {
     open_value: 0,
     columns: BOARD_STAGES.map((stage) => ({
@@ -195,7 +226,7 @@ describe('sales board card moves', () => {
     }
     expect(post).not.toHaveBeenCalled();
     expect(within(column('new')).getByRole('link')).toHaveTextContent('Sara');
-    expect(screen.queryByRole('button', { name: 'Move Ali' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Move Ali' })).toBeEnabled();
   });
 
   it('click alternative updates immediately, locks further moves, and restores the board on failure', async () => {
@@ -251,5 +282,142 @@ describe('sales board card moves', () => {
     await waitFor(() => expect(column('contacted')).toHaveClass('ring-2'));
     fireEvent.touchEnd(handle(), { changedTouches: [touch(300)] });
     await waitFor(() => expect(post).toHaveBeenCalledOnce());
+  });
+});
+
+function addCards(stage: (typeof BOARD_STAGES)[number] = 'new') {
+  data = {
+    ...data,
+    columns: data.columns.map((column) =>
+      column.stage === stage
+        ? {
+            ...column,
+            count: column.cards.length + 2,
+            cards: [
+              ...column.cards,
+              { ...card, lead: 13, customer: 103, name: 'Mina' },
+              { ...card, lead: 14, customer: 104, name: 'Kian' },
+            ],
+          }
+        : column,
+    ),
+  };
+}
+const customerOrder = (stage: (typeof BOARD_STAGES)[number] = 'new') =>
+  within(column(stage))
+    .getAllByRole('link')
+    .map((link) => link.getAttribute('href'));
+
+describe('manual ordering within a sales stage', () => {
+  it('mouse reorders to the last card and survives both refetch and remount without changing stages', async () => {
+    addCards();
+    const post = vi.fn(() => new HttpResponse(null, { status: 204 }));
+    server.use(http.post('/api/sales/v1/leads/bulk/', post));
+    await setup();
+    layout();
+    fireEvent.mouseDown(handle(), { button: 0, clientX: 180, clientY: 120 });
+    fireEvent.mouseMove(document, { clientX: 188, clientY: 120 });
+    fireEvent.mouseMove(document, { clientX: 150, clientY: 530 });
+    fireEvent.mouseUp(document);
+    await waitFor(() =>
+      expect(customerOrder()).toEqual([
+        '/sales/customers/103',
+        '/sales/customers/104',
+        '/sales/customers/101',
+      ]),
+    );
+    expect(JSON.parse(localStorage.getItem(boardOrderKey(3)) ?? '{}')).toMatchObject({
+      new: [13, 14, 11],
+    });
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: boardQuery.queryKey });
+    });
+    expect(customerOrder()[2]).toBe('/sales/customers/101');
+    cleanup();
+    client.clear();
+    await setup();
+    expect(customerOrder()[2]).toBe('/sales/customers/101');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it.each(['en', 'fa'])(
+    'Up/Down reorders in both directions with keyboard (%s)',
+    async (language) => {
+      addCards();
+      const user = await setup(language);
+      layout(language === 'fa');
+      await keyboardPick(user);
+      await user.keyboard('[ArrowDown][Space]');
+      await waitFor(() =>
+        expect(customerOrder()).toEqual([
+          '/sales/customers/103',
+          '/sales/customers/101',
+          '/sales/customers/104',
+        ]),
+      );
+      await waitFor(() => expect(handle()).toHaveFocus());
+      await keyboardPick(user);
+      await user.keyboard('[ArrowUp][Space]');
+      await waitFor(() => expect(customerOrder()[0]).toBe('/sales/customers/101'));
+    },
+  );
+
+  it('cancelling a reorder leaves the list and saved preferences unchanged', async () => {
+    addCards();
+    const user = await setup();
+    layout();
+    await keyboardPick(user);
+    await user.keyboard('[ArrowDown][Escape]');
+    expect(customerOrder()[0]).toBe('/sales/customers/101');
+    expect(localStorage.getItem(boardOrderKey(3))).toBeNull();
+  });
+
+  it('touch long press can reorder within the same column', async () => {
+    addCards();
+    await setup();
+    layout();
+    const touch = (y: number) => ({ identifier: 1, clientX: 150, clientY: y });
+    fireEvent.touchStart(handle(), { touches: [touch(120)] });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 230));
+    });
+    fireEvent.touchMove(handle(), { touches: [touch(530)] });
+    fireEvent.touchEnd(handle(), { changedTouches: [touch(530)] });
+    await waitFor(() => expect(customerOrder()[2]).toBe('/sales/customers/101'));
+  });
+
+  it.each(['draft', 'won'] as const)(
+    '%s can be reordered through move options without changing stage',
+    async (stage) => {
+      addCards(stage);
+      const user = await setup();
+      await user.click(handle(stage === 'draft' ? 'Ali' : 'Mina'));
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).queryByRole('radio')).not.toBeInTheDocument();
+      await user.click(within(dialog).getByRole('button', { name: 'Move down' }));
+      expect(customerOrder(stage)).toEqual(
+        stage === 'draft'
+          ? ['/sales/customers/103', '/sales/customers/102', '/sales/customers/104']
+          : ['/sales/customers/104', '/sales/customers/103'],
+      );
+      expect(data.columns.find((column) => column.stage === stage)?.count).toBe(
+        stage === 'draft' ? 3 : 2,
+      );
+    },
+  );
+
+  it('a storage failure preserves the previous order and explains the failure', async () => {
+    addCards();
+    const user = await setup();
+    layout();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Quota', 'QuotaExceededError');
+    });
+    await keyboardPick(user);
+    await user.keyboard('[ArrowDown][Space]');
+    expect(
+      await screen.findByText('Could not save the order in this browser. The card has not moved.'),
+    ).toBeInTheDocument();
+    expect(customerOrder()[0]).toBe('/sales/customers/101');
   });
 });

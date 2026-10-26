@@ -289,9 +289,9 @@
       "item": "{{reason}} · {{n}}"
     },
     "move": {
-      "hint": "Drag a card by its handle, or click the handle to choose a stage. Draft and won deals follow the contract workflow.",
-      "instructions": "Press Space to pick up a card, Left or Right to choose a column, Space or Enter to drop, and Escape to cancel. Press Enter on the handle to choose a stage without dragging.",
-      "pickedUp": "Picked up {{name}}. Use Left or Right to choose a stage.",
+      "hint": "Drag to reorder cards. Open sales stages also allow moves between columns. Draft and Won change stages through the contract workflow.",
+      "instructions": "Press Space to pick up a card, Up or Down to reorder, Left or Right to change columns, Space or Enter to drop, and Escape to cancel. Press Enter on the handle for move options.",
+      "pickedUp": "Picked up {{name}}. Use Up or Down to reorder, or Left or Right to change columns.",
       "over": "Over {{stage}}.",
       "outside": "Outside the available columns. Release to cancel.",
       "dropped": "Dropped {{name}} in {{stage}}. Saving the change.",
@@ -311,7 +311,16 @@
       "boardView": "Board",
       "fullscreen": "Full screen",
       "exitFullscreen": "Exit full screen",
-      "footer": "Drag a handle to move · Open a card to view the customer"
+      "footer": "Drag to move or reorder · Card order is saved on this browser"
+    },
+    "order": {
+      "saved": "{{name}} moved to position {{position}}. Order saved on this browser.",
+      "failed": "Could not save the order in this browser. The card has not moved.",
+      "up": "Move up",
+      "down": "Move down",
+      "scope": "Your visible-card order is saved for this account on this browser.",
+      "over": "Position {{position}} in {{stage}}.",
+      "dropped": "Card reordered. Saving your order."
     }
   },
   "customer": {
