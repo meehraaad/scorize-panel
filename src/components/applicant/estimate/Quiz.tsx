@@ -1,6 +1,5 @@
 import { useEffect, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LockedResult } from './LockedResult';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -386,7 +385,13 @@ export function Quiz({
           )}
         </>
       )}
-      <div className="flex flex-wrap gap-2 max-sm:[&>*]:flex-auto">
+      <div
+        className={`flex flex-wrap gap-2 max-sm:[&>*]:flex-auto ${
+          inSheet
+            ? 'sticky -bottom-6 z-10 -mx-5 -mb-6 bg-surface px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[inset_0_1px_0_var(--hair)]'
+            : ''
+        }`}
+      >
         {index > 0 && (
           <Button
             type="button"
@@ -407,65 +412,98 @@ export function Quiz({
     </form>
   );
 
-  if (inSheet)
-    return (
-      <div className="flex flex-col gap-5">
-        {stepBar}
-        {submit.isPending ? (
-          <Analysing />
-        ) : (
-          <section aria-labelledby="estimate-step" className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1">
-              <h3
-                id="estimate-step"
-                tabIndex={-1}
-                className="m-0 font-display text-lg font-bold outline-none"
-              >
-                {t(`quiz.title.${step}`)}
-              </h3>
-              <span className="text-sm text-text-2">{counter}</span>
-            </div>
-            {form}
-          </section>
-        )}
+  const question = (
+    <section aria-labelledby="estimate-step" className="flex flex-col gap-5 lg:gap-6">
+      {stepBar}
+      {inSheet && <Answered draft={draft} options={options} fieldName={fieldName} done={index} />}
+      <div className="flex flex-col gap-1 pt-5 shadow-[inset_0_1px_0_var(--hair)]">
+        <h2
+          id="estimate-step"
+          tabIndex={-1}
+          className="m-0 font-display text-lg font-bold outline-none lg:text-xl"
+        >
+          {t(`quiz.title.${step}`)}
+        </h2>
+        <span className="text-sm text-text-2">{counter}</span>
       </div>
-    );
+      {form}
+    </section>
+  );
+
+  if (inSheet) return submit.isPending ? <Analysing /> : question;
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-7">
-      <Card className="flex flex-col gap-4 p-5 lg:px-7">{stepBar}</Card>
-      <PageColumns
-        asideLabel={t('summary.title')}
-        asideWidth="sm"
-        main={
-          submit.isPending ? (
-            <Analysing />
-          ) : (
-            <SectionCard
-              variant="panel"
-              size="lg"
-              id="estimate-step"
-              title={t(`quiz.title.${step}`)}
-              subtitle={counter}
+    <PageColumns
+      asideLabel={t('summary.title')}
+      asideWidth="sm"
+      main={submit.isPending ? <Analysing /> : <Card className="p-5 lg:p-7">{question}</Card>}
+      aside={
+        <>
+          <LivePreview
+            draft={draft}
+            options={options}
+            fieldName={fieldName}
+            complete={Math.round((index / STEPS.length) * 100)}
+            locked={teaser}
+          />
+          {!teaser && <WhatYouGet />}
+        </>
+      }
+    />
+  );
+}
+
+/**
+ * In the sheet, instead of the preview: each answered step as a short chip ("Study · Master's").
+ */
+function Answered({
+  draft,
+  options,
+  fieldName,
+  done,
+}: {
+  draft: Draft;
+  options: EstimateOptions;
+  fieldName: (id: number) => string;
+  /** How many steps are answered. */
+  done: number;
+}) {
+  const { t } = useTranslation('estimate');
+  const f = useFormat();
+  if (done === 0) return null;
+  const gpa = numberOf(draft.gpa);
+  const countries = options.countries
+    .filter((country) => draft.countries.includes(country.id))
+    .map((country) => country.name);
+  const chips: Record<Exclude<Step, 'contact'>, string> = {
+    goal: `${t(`goal.${draft.goal}`)} · ${t(`degree.${draft.degree}`)}`,
+    background: [
+      draft.field_group && fieldName(Number(draft.field_group)),
+      Number.isFinite(gpa) && t('answered.gpa', { gpa: f.number(gpa) }),
+    ]
+      .filter(Boolean)
+      .join(' · '),
+    english:
+      draft.english === 'score'
+        ? `${t(`exam.${draft.exam}`)} ${f.number(numberOf(draft.score))}`
+        : t(`english.${draft.english}`),
+    plan: countries.length ? f.list(countries) : t('answered.allCountries'),
+  };
+  return (
+    <ul aria-label={t('answered.label')} className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+      {STEPS.slice(0, done).map(
+        (key) =>
+          key !== 'contact' && (
+            <li
+              key={key}
+              className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full bg-tint px-2.5 text-xs font-semibold text-primary-text"
             >
-              {form}
-            </SectionCard>
-          )
-        }
-        aside={
-          <>
-            {teaser && <LockedResult options={options} />}
-            <LivePreview
-              draft={draft}
-              options={options}
-              fieldName={fieldName}
-              complete={Math.round((index / STEPS.length) * 100)}
-            />
-            {!teaser && <WhatYouGet />}
-          </>
-        }
-      />
-    </div>
+              <Icon name="check" size={12} className="flex-none" />
+              <span className="truncate">{chips[key]}</span>
+            </li>
+          ),
+      )}
+    </ul>
   );
 }
 
@@ -519,29 +557,35 @@ function Analysing() {
   );
 }
 
+/** Bar lengths of the locked result: a shape, not anyone's chance. */
+const SHAPE = ['w-[88%]', 'w-[70%]', 'w-[62%]', 'w-[44%]'];
+
 /**
  * The live preview on the dark card: how far the quiz is and what it knows so far, as the seller
- * will read it.
+ * will read it. `locked` (first visit on the home): the result's shape leads it, blurred and
+ * locked, on the countries they picked (or the first ones offered). Curiosity about their own
+ * numbers is the reason to finish. Design: "Mobile Quiz Card Mockups" canvas, Desktop.
  */
 function LivePreview({
   draft,
   options,
   fieldName,
   complete,
+  locked = false,
 }: {
   draft: Draft;
   options: EstimateOptions;
   fieldName: (id: number) => string;
   /** 0–100: the share of steps answered. */
   complete: number;
+  locked?: boolean;
 }) {
   const { t } = useTranslation('estimate');
   const f = useFormat();
   const gpa = numberOf(draft.gpa);
   const score = numberOf(draft.score);
-  const countries = options.countries
-    .filter((country) => draft.countries.includes(country.id))
-    .map((country) => country.name);
+  const picked = options.countries.filter((country) => draft.countries.includes(country.id));
+  const countries = picked.map((country) => country.name);
   const rows: [string, string][] = [
     [t('summary.goal'), t(`goal.${draft.goal}`)],
     [t('summary.degree'), t(`degree.${draft.degree}`)],
@@ -574,22 +618,54 @@ function LivePreview({
         <div className="flex min-w-0 flex-col">
           <span className="text-[13px] font-semibold text-hero-current">{t('preview.kicker')}</span>
           <h2 id="estimate-summary" className="m-0 text-base font-bold">
-            {t('summary.title')}
+            {t(locked ? 'preview.lockedTitle' : 'summary.title')}
           </h2>
           <span aria-hidden="true" className="text-[13px] text-on-hero-2">
             {completeText}
           </span>
         </div>
       </div>
-      <dl className="m-0 flex flex-col gap-2.5 pt-4 shadow-[inset_0_1px_0_var(--hero-line)]">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex justify-between gap-3 text-sm">
-            <dt className="text-on-hero-2">{label}</dt>
-            <dd className="m-0 text-end font-semibold">{value}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="m-0 text-[13px] leading-6 text-on-hero-2">{t('summary.note')}</p>
+      {locked && (
+        <ul
+          aria-hidden="true"
+          className="m-0 flex list-none flex-col gap-3 rounded-2xl bg-hero-raised p-3.5"
+        >
+          {(picked.length ? picked : options.countries)
+            .slice(0, SHAPE.length)
+            .map((country, index) => (
+              <li
+                key={country.id}
+                className="grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-2.5 text-sm"
+              >
+                <span className="truncate font-semibold">{country.name}</span>
+                <span className="h-2 rounded-full bg-hero-line">
+                  <span
+                    className={`block h-full rounded-full bg-hero-accent opacity-75 blur-[2.5px] ${SHAPE[index] ?? ''}`}
+                  />
+                </span>
+                <Icon name="lock" size={14} className="text-on-hero-2" />
+              </li>
+            ))}
+        </ul>
+      )}
+      <div className="flex flex-col gap-2.5">
+        {locked && (
+          <h3 className="m-0 text-[13px] font-normal text-on-hero-2">{t('preview.answers')}</h3>
+        )}
+        <dl
+          className={`m-0 flex flex-col gap-2.5 ${locked ? '' : 'pt-4 shadow-[inset_0_1px_0_var(--hero-line)]'}`}
+        >
+          {rows.map(([label, value]) => (
+            <div key={label} className="flex justify-between gap-3 text-sm">
+              <dt className="text-on-hero-2">{label}</dt>
+              <dd className="m-0 text-end font-semibold">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <p className="m-0 pt-3.5 text-[13px] leading-6 text-on-hero-2 shadow-[inset_0_1px_0_var(--hero-line)]">
+        {t('summary.note')}
+      </p>
     </section>
   );
 }

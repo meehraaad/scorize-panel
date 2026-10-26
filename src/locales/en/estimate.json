@@ -159,7 +159,9 @@
       "title": "A short free call",
       "text": "An admissions consultant goes through the result with you and answers your questions.",
       "button": "Ask a consultant to call"
-    }
+    },
+    "others": "Other countries",
+    "ring": "Admission chance in {{country}}: {{level}}"
   },
   "band": {
     "high": "High",
@@ -197,16 +199,29 @@
         "title": "Admissions of people like you",
         "text": "From real Scorize cases"
       }
-    }
-  },
-  "locked": {
-    "title": "Your result will look like this",
-    "text": "After the last question, your real chance in each country and the universities that fit open up."
+    },
+    "lockedTitle": "Your chance in each country",
+    "answers": "Your answers so far"
   },
   "sheet": {
-    "title": "See your admission chance",
-    "text": "Five short questions, about two minutes. The result shows right here.",
-    "start": "Start the quiz",
-    "close": "Close"
+    "kicker": "Admission-chance estimate",
+    "title": "Where does your needle land?",
+    "text": "We compare your GPA, field and English with the results of real Scorize applicants.",
+    "countries": "Compared in these countries",
+    "more": "+{{n}}",
+    "start": "Start the estimate",
+    "questions": "· {{n}} questions",
+    "close": "Close",
+    "perks": {
+      "instant": "Instant result",
+      "consultant": "Free consultant",
+      "similar": "Similar admissions"
+    },
+    "gaugeMark": "?"
+  },
+  "answered": {
+    "label": "Your answers so far",
+    "gpa": "GPA {{gpa}}",
+    "allCountries": "All countries"
   }
 }

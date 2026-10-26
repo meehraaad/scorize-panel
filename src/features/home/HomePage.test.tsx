@@ -236,9 +236,7 @@ describe('applicant home', () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
-    expect(
-      await screen.findByRole('region', { name: 'نتیجه‌ی شما این شکلی است' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
     // No phone on the account: the call request asks for one.
     const call = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
     await user.click(within(call).getByRole('button', { name: 'با من تماس بگیرید' }));
