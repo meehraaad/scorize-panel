@@ -14,6 +14,7 @@ export interface ContactValues {
   stage: 'keep' | 'contacted' | 'consulted' | 'offer' | 'lost';
   lostReason: LostReason | '';
   notes: string;
+  customerSummary?: string;
   follow: 'evening' | 'tomorrow' | 'three' | 'week' | 'other';
   date: string;
   email: boolean;
@@ -93,6 +94,7 @@ export function openContactLog(customer: number, name: string, start: LogStart) 
       stage: 'keep',
       lostReason: '',
       notes: '',
+      customerSummary: '',
       follow: 'tomorrow',
       date: '',
       email: false,

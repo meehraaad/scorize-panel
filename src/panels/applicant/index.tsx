@@ -1,6 +1,10 @@
 import { ComingSoonPage } from '@/components/ComingSoonPage';
 import { applicationsQuery } from '@/features/applications/api';
-import { consultationQuery, consultationsQuery } from '@/features/consultations/api';
+import {
+  consultationQuery,
+  consultationsQuery,
+  sessionSummariesQuery,
+} from '@/features/consultations/api';
 import { contractQuery, paymentQuery } from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
 import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
@@ -11,13 +15,12 @@ import { writingQuery } from '@/features/writing/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { firstCalendarQuery } from '@/lib/applicant/booking';
+import { weekStart } from '@/lib/calendar';
+import i18n from '@/lib/i18n';
+import { calendarKind } from '@/lib/i18n/useCalendar';
 import { gatesQuery } from '@/lib/applicant/gates';
-import {
-  backgroundQuery,
-  firstSlotsQuery,
-  reviewDocumentsQuery,
-  startQuery,
-} from '@/lib/applicant/journey';
+import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
@@ -66,6 +69,12 @@ export const applicantPanel: PanelDefinition = {
       icon: 'chat',
     },
     { id: 'contract', to: 'contract', label: 'panels.applicant.nav.contract', icon: 'card' },
+    {
+      id: 'consultations',
+      to: 'consultations',
+      label: 'panels.applicant.nav.consultations',
+      icon: 'phone',
+    },
     { id: 'services', to: 'services', label: 'panels.applicant.nav.services', icon: 'play' },
   ],
   routes: [
@@ -84,8 +93,7 @@ export const applicantPanel: PanelDefinition = {
             {
               // Without a contract the home is the journey toward one: the admission-chance quiz
               // (or its last result), files for a free review, the tablet form, the next
-              // session and what to start with (free times, prices, their seller, the calendar's first
-              // two months). A case with a contract (or one in review) reads none of them.
+              // session and what to start with (free times, prices, their seller). A case with a contract (or one in review) reads none of them.
               data: () => {
                 const state = queryClient.getQueryData(accessQuery.queryKey)?.state;
                 const guest = ON_SERVER.estimate && state !== 'active' && state !== 'pending';
@@ -97,7 +105,6 @@ export const applicantPanel: PanelDefinition = {
                   guest && backgroundQuery,
                   guest && consultationsQuery,
                   guest && startQuery,
-                  guest && ON_SERVER.consultationSlots && firstSlotsQuery(),
                 ];
               },
               skeleton: 'dashboard',
@@ -233,9 +240,21 @@ export const applicantPanel: PanelDefinition = {
           ...lazyPage(
             () => import('@/features/consultations/ConsultationsPage'),
             ['consultations'],
-            { data: () => [consultationsQuery], skeleton: 'list' },
+            { data: () => [consultationsQuery, sessionSummariesQuery()], skeleton: 'list' },
           ),
         },
+        // Booking one on a week calendar (design: "Consultation Booking Design" canvas).
+        ...(ON_SERVER.bookingCalendar
+          ? [
+              {
+                path: 'consultations/book',
+                ...lazyPage(() => import('@/features/consultations/BookPage'), ['consultations'], {
+                  data: () => [firstCalendarQuery(weekStart(calendarKind(i18n.language)))],
+                  skeleton: 'board',
+                }),
+              },
+            ]
+          : []),
         {
           path: 'consultations/:id',
           ...lazyPage(
@@ -244,7 +263,10 @@ export const applicantPanel: PanelDefinition = {
             {
               data: ({ params }) => {
                 const id = idParam(params.id);
-                return [id !== null && consultationQuery(id)];
+                return [
+                  id !== null && consultationQuery(id),
+                  id !== null && sessionSummariesQuery(id),
+                ];
               },
               skeleton: 'detail',
             },

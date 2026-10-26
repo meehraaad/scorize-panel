@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { saveSessionSummary } from '@/mocks/sessionSummaries';
 
 // Also covers features Django doesn't serve yet (src/lib/applicant/onServer.ts): switch them on.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -28,7 +29,7 @@ describe('consultations', () => {
     const user = userEvent.setup();
     loginAs(SARA);
     renderApp('/consultations');
-    await screen.findByRole('heading', { name: 'مشاوره‌های رزرو شده', level: 1 });
+    await screen.findByRole('heading', { name: 'جلسه‌ها و مشاوره‌ها', level: 1 });
 
     const next = screen.getByRole('region', { name: 'مشاوره‌ی تخصصی اپلای دکترا' });
     expect(next).toHaveTextContent('اطلاعات جلسه هنوز کامل نشده');
@@ -43,6 +44,56 @@ describe('consultations', () => {
     expect(within(all).getAllByRole('listitem')).toHaveLength(3);
     expect(within(all).getAllByRole('link', { name: 'فاکتور و توضیحات' })).toHaveLength(3);
     expect(within(all).getByText('۳ رزرو')).toBeInTheDocument();
+  });
+
+  it('shows shared advice to a lead without a booking or contract, with older sessions', async () => {
+    loginAs(MARYAM);
+    for (let id = 1; id <= 21; id++)
+      saveSessionSummary(MARYAM, {
+        id,
+        at: '2026-10-26T09:00:00Z',
+        kind: 'تماس تلفنی',
+        customer_summary: `پیشنهاد شماره ${String(id)}`,
+        reservation: null,
+        authors: ['نیما رستمی'],
+      });
+    const user = userEvent.setup();
+    renderApp('/consultations');
+    const summaries = await screen.findByRole('region', { name: 'خلاصه‌ی جلسه‌های شما' });
+    expect(within(summaries).getAllByRole('listitem')).toHaveLength(20);
+    expect(within(summaries).getByText('پیشنهاد شماره 21')).toBeInTheDocument();
+    expect(within(summaries).queryByText('پیشنهاد شماره 1')).not.toBeInTheDocument();
+    expect(within(summaries).queryByRole('link')).not.toBeInTheDocument();
+    await user.click(within(summaries).getByRole('button', { name: 'خلاصه‌های قدیمی‌تر' }));
+    expect(await within(summaries).findByText('پیشنهاد شماره 1')).toBeInTheDocument();
+    expect(within(summaries).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'جلسه‌ها و مشاوره‌ها' })).toHaveAttribute(
+      'href',
+      '/consultations',
+    );
+  });
+
+  it('shows consultation advice with a link to its booking', async () => {
+    loginAs(SARA);
+    saveSessionSummary(SARA, {
+      id: 1,
+      at: '2026-10-26T09:00:00Z',
+      kind: 'جلسه مشاوره',
+      customer_summary: 'رزومه را تکمیل کنید.',
+      reservation: 42,
+      authors: ['نیما رستمی'],
+    });
+    renderApp('/consultations');
+    const summaries = await screen.findByRole('region', { name: 'خلاصه‌ی جلسه‌های شما' });
+    expect(within(summaries).getByText('رزومه را تکمیل کنید.')).toBeInTheDocument();
+    expect(within(summaries).getByRole('link', { name: 'جزئیات مشاوره' })).toHaveAttribute(
+      'href',
+      '/consultations/42',
+    );
+    const user = userEvent.setup();
+    await user.click(within(summaries).getByRole('link', { name: 'جزئیات مشاوره' }));
+    await screen.findByRole('heading', { name: 'مشاوره‌ی اپلای کارشناسی ارشد', level: 1 });
+    expect(screen.getByText('رزومه را تکمیل کنید.')).toBeInTheDocument();
   });
 
   it('saves the session details, then shows them as done', async () => {
@@ -81,7 +132,7 @@ describe('consultations', () => {
     expect(await screen.findByText('هنوز مشاوره‌ای رزرو نکرده‌اید.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'رزرو مشاوره‌ی جدید' })).toHaveAttribute(
       'href',
-      '/consultation/',
+      '/consultations/book',
     );
   });
 

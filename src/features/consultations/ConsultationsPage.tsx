@@ -10,10 +10,12 @@ import { FilterTabs } from '@/components/ui/Filters';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { daysUntil } from '@/lib/dates';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { consultationsQuery, splitSessions, type Consultation } from './api';
+import { SessionSummariesCard } from './SessionSummariesCard';
 import { DateTile } from '@/components/ui/DateTile';
 
 type Filter = 'all' | 'upcoming' | 'past';
@@ -39,11 +41,19 @@ export default function ConsultationsPage() {
         title={t('title')}
         subtitle={t('subtitle')}
         actions={
-          <a href={SITE.consultation} className={buttonClass('primary', 'max-sm:w-full')}>
-            {t('book')}
-          </a>
+          ON_SERVER.bookingCalendar ? (
+            <Link to="/consultations/book" className={buttonClass('primary', 'max-sm:w-full')}>
+              {t('book')}
+            </Link>
+          ) : (
+            <a href={SITE.consultation} className={buttonClass('primary', 'max-sm:w-full')}>
+              {t('book')}
+            </a>
+          )
         }
       />
+
+      <SessionSummariesCard />
 
       {next && <NextSession session={next} />}
 

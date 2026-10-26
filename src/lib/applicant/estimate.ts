@@ -73,6 +73,9 @@ export interface EstimateAnswers {
 }
 
 /** How a band reads as a status pill. */
+/** How long a country's bar is when the server sends a level, not a percentage. */
+export const BAND_BAR: Record<Band, number> = { high: 85, medium: 55, low: 25 };
+
 export const BAND_TONE: Record<Band, ChipTone> = { high: 'good', medium: 'warn', low: 'neutral' };
 
 export interface CountryEstimate {

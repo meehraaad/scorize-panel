@@ -1,115 +1,76 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Icon } from '@/components/ui/Icon';
-import { SlotPicker } from '@/components/ui/SlotPicker';
 import {
   CALL_TIMES,
   useCallRequest,
   type ApplicantAccess,
   type CallTime,
 } from '@/lib/applicant/access';
-import {
-  FIRST_SLOT_DAYS,
-  firstSlotsQuery,
-  freeSlotsQuery,
-  type StartOffers,
-} from '@/lib/applicant/journey';
+import { CONSULTATION_MODES } from '@/lib/applicant/booking';
+import type { StartOffers } from '@/lib/applicant/journey';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { toValue } from '@/lib/calendar';
-import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { useBookSlot } from './useBookSlot';
-
-const DAY = 86_400_000;
-/** How far ahead the calendar goes. */
-const AHEAD_DAYS = 120;
 
 /**
- * "Rather talk?": the consultation booked on a calendar (its free days and times, the price,
- * "book"), with a free call as the smaller way. Without a consultation on offer, the call alone.
+ * "Rather talk?": book a consultation, starting with its first step, online or in person (each
+ * opens the booking calendar on that choice), with a free call as the smaller way. Without a
+ * consultation on offer, the call alone.
  */
 export function TalkCard({ access, offers }: { access: ApplicantAccess; offers: StartOffers }) {
-  const offer = offers.consultation;
-  if (!offer || !ON_SERVER.consultationSlots) return <CallTimeCard access={access} />;
-  return <BookTalkCard access={access} offer={offer} />;
+  if (!offers.consultation || !ON_SERVER.bookingCalendar) return <CallTimeCard access={access} />;
+  return <BookTalkCard access={access} />;
 }
 
-type Offer = NonNullable<StartOffers['consultation']>;
-
-function BookTalkCard({ access, offer }: { access: ApplicantAccess; offer: Offer }) {
+function BookTalkCard({ access }: { access: ApplicantAccess }) {
   const { t } = useTranslation('journey');
-  const f = useFormat();
-  const book = useBookSlot();
-  const [now] = useState(() => Date.now());
-  const day = (offset: number) => toValue(new Date(now + offset * DAY), false);
-  const [range, setRange] = useState<{ from: string; to: string } | null>(null);
-  const [slot, setSlot] = useState<string | null>(null);
-  const first = useQuery(firstSlotsQuery(now));
-  // A month past the first read: its own read.
-  const later = range !== null && range.to > day(FIRST_SLOT_DAYS);
-  const month = useQuery({ ...freeSlotsQuery(range?.from ?? '', range?.to ?? ''), enabled: later });
-  const slots = [...(first.data?.slots ?? []), ...(later ? (month.data?.slots ?? []) : [])];
-  const toman = (amount: number) => t('slots.toman', { amount: f.number(amount) });
-
   return (
-    <Card aria-labelledby="journey-call" className="flex flex-col gap-5 p-5 lg:p-7">
+    <Card aria-labelledby="journey-call" className="flex flex-col gap-4 p-5 lg:p-7">
       <div className="flex flex-col gap-1">
         <h2 id="journey-call" className="m-0 text-lg font-bold">
           {t('callTime.title')}
         </h2>
-        <p className="m-0 text-sm leading-6 text-text-2">
-          {t('callTime.book', { title: offer.title })}
-        </p>
+        <p className="m-0 text-sm leading-6 text-text-2">{t('callTime.book')}</p>
       </div>
-      {first.isError ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-canvas p-4">
-          <p className="m-0 text-sm leading-6 text-text-2">{t('callTime.error')}</p>
-          <Button variant="outline" onClick={() => void first.refetch()}>
-            {t('callTime.retry')}
-          </Button>
-        </div>
-      ) : (
-        <SlotPicker
-          label={t('callTime.pick')}
-          slots={slots}
-          value={slot}
-          onChange={setSlot}
-          minutes={offer.minutes}
-          loading={first.isPending || (later && month.isPending)}
-          onMonthChange={setRange}
-          until={day(AHEAD_DAYS)}
-        />
-      )}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-hair pt-4">
-        <p className="m-0 flex flex-wrap items-baseline gap-x-2 text-sm text-text-2">
-          {t('slots.price')}
-          <span className="text-base font-bold text-text">{toman(offer.price)}</span>
-          {offer.full_price !== null && <s className="text-[13px]">{toman(offer.full_price)}</s>}
-        </p>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <CallRequestButton
-            label={t('callTime.free')}
-            className={buttonClass('outline', 'flex-1 sm:flex-none')}
-            phone={access.phone}
-            topic="admission"
-            page="home"
-            reason="guest"
-          />
-          <Button
-            className="flex-1 sm:flex-none"
-            disabled={!slot || book.pending}
-            onClick={() => slot && book.submit(offer.type, slot)}
+      <nav aria-label={t('callTime.how')} className="grid gap-3 sm:grid-cols-2">
+        {CONSULTATION_MODES.map((mode) => (
+          <Link
+            key={mode}
+            to={`/consultations/book?mode=${mode}`}
+            className="group flex min-h-20 items-center gap-4 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-row-highlight hover:shadow-[inset_0_0_0_1.5px_var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
-            {slot ? t('callTime.bookAt', { time: f.time(slot) }) : t('callTime.pickFirst')}
-          </Button>
-        </div>
-      </div>
+            <span
+              aria-hidden="true"
+              className="flex size-12 flex-none items-center justify-center rounded-2xl bg-tint text-primary-text group-hover:bg-primary group-hover:text-on-primary"
+            >
+              <Icon name={mode === 'online' ? 'video' : 'building'} size={22} />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-base font-bold text-text">
+                {t(`callTime.modes.${mode}.title`)}
+              </span>
+              <span className="text-[13px] leading-6 text-text-2">
+                {t(`callTime.modes.${mode}.line`)}
+              </span>
+            </span>
+            <Icon name="chevronEnd" size={18} className="text-text-2" />
+          </Link>
+        ))}
+      </nav>
+      <CallRequestButton
+        label={t('callTime.free')}
+        className={buttonClass('outline', 'self-start')}
+        phone={access.phone}
+        topic="admission"
+        page="home"
+        reason="guest"
+      />
     </Card>
   );
 }

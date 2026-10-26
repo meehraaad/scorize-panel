@@ -21,6 +21,7 @@ import {
 } from './api';
 import { toast } from '@/lib/toast';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { SessionSummariesCard } from './SessionSummariesCard';
 
 const REQUIRED = ['university', 'major', 'degree'] as const;
 
@@ -51,6 +52,7 @@ function Consultation({ id }: { id: number }) {
           t(`mode.${data.mode}`),
         ].join(' · ')}
       />
+      <SessionSummariesCard reservation={id} />
       <PageColumns
         asideLabel={t('detail.invoice')}
         main={<InfoForm session={data} />}

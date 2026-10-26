@@ -101,6 +101,9 @@ describe('persistent contact workspace', () => {
     );
     dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
     expect(within(dialog).getByLabelText('یادداشت')).toHaveValue('Keep this draft');
+    expect(
+      within(dialog).getByLabelText(i18n.t('customer.logDialog.customerSummary', { ns: 'sales' })),
+    ).toHaveValue('Customer-facing summary');
     await user.click(within(dialog).getByRole('button', { name: 'حذف پیش‌نویس' }));
     expect(
       within(dialog).getByText('این ارتباط ثبت‌نشده حذف شود؟ یادداشت‌های آن پاک می‌شود.'),

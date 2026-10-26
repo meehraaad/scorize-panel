@@ -1,3 +1,4 @@
+import { summaryForContact } from './sessionSummaries';
 import { http, HttpResponse } from 'msw';
 import { ApiError } from '@/lib/api/client';
 import type {
@@ -90,10 +91,27 @@ export const salesStaffHandlers = [
   ),
   http.get(`${BASE}/customers/:id/history/`, ({ params, request }) => {
     const page = Number(new URL(request.url).searchParams.get('page') ?? 1);
-    return answer<HistoryPage>(() => fetchHistory(id(params), page));
+    return answer<HistoryPage>(async () => {
+      const history = await fetchHistory(id(params), page);
+      return {
+        ...history,
+        results: history.results.map((event) => ({
+          ...event,
+          customer_summary: summaryForContact(id(params), event.id) ?? '',
+        })),
+      };
+    });
   }),
   http.post(`${BASE}/customers/:id/contacts/`, async ({ params, request }) => {
     const log = (await request.json()) as ContactLog;
+    if (
+      (log.customer_summary ?? '').trim().length > 5000 ||
+      (log.email_summary && !log.customer_summary?.trim())
+    )
+      return HttpResponse.json(
+        { customer_summary: ['Write a summary of up to 5,000 characters.'] },
+        { status: 400 },
+      );
     return answer(() => logContact(id(params), log).then(() => ({ id: 1 })), 201);
   }),
   http.get(`${BASE}/customers/:id/purchases/`, ({ params }) =>

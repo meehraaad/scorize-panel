@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
@@ -15,15 +14,12 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import {
+  BAND_BAR,
   BAND_TONE,
-  type Band,
   type CountryEstimate,
   type EstimateAnswers,
   type EstimateResult,
 } from '@/lib/applicant/estimate';
-
-/** How long a country's bar is when the server sends a level, not a percentage. */
-const BAND_BAR: Record<Band, number> = { high: 85, medium: 55, low: 25 };
 
 /**
  * The result: the best country and every country compared on the dark card, the consultant beside
@@ -99,16 +95,8 @@ export function Result({
   );
 }
 
-/** The dark card: the best country, then every country side by side; `children` close it. */
-export function ResultHero({
-  result,
-  best,
-  children,
-}: {
-  result: EstimateResult;
-  best: CountryEstimate;
-  children?: ReactNode;
-}) {
+/** The dark card: the best country, then every country side by side. */
+function ResultHero({ result, best }: { result: EstimateResult; best: CountryEstimate }) {
   const { t } = useTranslation('estimate');
   const f = useFormat();
   const level = (estimate: CountryEstimate) =>
@@ -164,7 +152,6 @@ export function ResultHero({
           </ol>
         </div>
       )}
-      {children}
     </section>
   );
 }

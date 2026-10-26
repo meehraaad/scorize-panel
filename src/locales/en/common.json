@@ -14,7 +14,8 @@
         "documents": "Documents",
         "tickets": "Tickets",
         "contract": "Contract",
-        "services": "Academy"
+        "services": "Academy",
+        "consultations": "Sessions & consultations"
       },
       "tabs": {
         "home": "Home",
@@ -320,6 +321,24 @@
     "nearest": "Nearest free day: {{day}}",
     "chosen": "{{day}}, {{time}}",
     "chosenRange": "{{day}}, {{from}} to {{to}}"
+  },
+  "weekCalendar": {
+    "range": "{{from}} – {{to}}",
+    "thisWeek": "This week",
+    "previous": "Previous week",
+    "next": "Next week",
+    "legendFree": "Free",
+    "legendFew": "A few spots left",
+    "legendFull": "Full",
+    "timeRange": "{{from}} – {{to}}",
+    "full": "Full",
+    "left": "{{n}} left",
+    "today": "Today",
+    "holiday": "Closed",
+    "noTimes": "No times",
+    "days": "Days of the week",
+    "freeCount": "{{n}} free",
+    "dayLineFull": "{{free}} free · {{full}} full"
   },
   "toast": {
     "region": "Panel messages",

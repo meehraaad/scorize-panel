@@ -118,3 +118,13 @@ Today activity; case-ticket changes invalidate waiting cases and the inbox. Logi
 clear the query cache. Receipts retain their existing endpoint and now show a local retry state.
 Backend query plans, measurements, compatibility notes and the opt-in benchmark are documented
 in the backend repository's `docs/dashboard-performance.md`.
+
+### Shared session advice
+
+`GET /api/applicant/v1/session-summaries/?before=<id>&reservation=<booking-id>` lists explicit
+`ContactHistory.customer_summary` text for the signed-in user, including accounts without contracts.
+Both parameters are optional. It answers `{ results: [{ id, at, kind, authors, customer_summary,
+reservation }], has_more }`, newest first, 20 rows per page. There are no internal notes in this API.
+`features/consultations/api.ts` owns the query; the session list and booking detail preload it.
+The sales logger sends `customer_summary` separately from `notes`, and its optional `email_summary`
+emails the public text. Publish after applying the new Django field's generated migration.
