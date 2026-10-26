@@ -1,5 +1,6 @@
 import i18n from '@/lib/i18n';
 import { API_BASE, request } from '@/lib/api/client';
+import { clearPersistedCache } from '@/lib/api/persist';
 import { queryClient } from '@/lib/api/queryClient';
 import { SITE } from '@/lib/site';
 import { toast } from '@/lib/toast';
@@ -21,5 +22,6 @@ export async function logout() {
   }
   // Drop every cached response so nothing from this account survives in memory.
   queryClient.clear();
+  clearPersistedCache();
   window.location.assign(SITE.home);
 }

@@ -1,4 +1,11 @@
-import type { TicketThread, TicketsEndpoint } from '@/lib/tickets/api';
+import { queryClient } from '@/lib/api/queryClient';
+import { prefetchQueries } from '@/lib/router/lazyPage';
+import {
+  messagesQuery,
+  ticketsQuery,
+  type TicketThread,
+  type TicketsEndpoint,
+} from '@/lib/tickets/api';
 
 /**
  * What a panel passes to the tickets page. The page itself is panel-neutral: the applicant panel
@@ -34,4 +41,18 @@ export function findThread(threads: readonly TicketThread[], segment: string) {
     threads.find((thread) => thread.id === segment) ??
     threads.find((thread) => thread.department === segment)
   );
+}
+
+/**
+ * Route data of a tickets page: the list now, and the thread the URL points at as soon as the
+ * list arrives (its id comes from the list). Never awaited: a failure shows on the page.
+ */
+export function prefetchTickets(endpoint: TicketsEndpoint, segment: string) {
+  queryClient
+    .query(ticketsQuery(endpoint))
+    .then((data) => {
+      const thread = data && findThread(data.threads, segment);
+      if (thread) prefetchQueries([messagesQuery(endpoint, thread.id)]);
+    })
+    .catch(() => undefined);
 }

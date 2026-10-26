@@ -1,9 +1,11 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
+import { http, HttpResponse } from 'msw';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 
 const NIMA = 3; // seller (src/mocks/staff.ts)
 
@@ -62,6 +64,8 @@ describe('tasks page (sales panel)', () => {
         screen.queryByText('بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود'),
       ).not.toBeInTheDocument(),
     );
+    // The row leaves at once (optimistic): let the server finish before the next test.
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
   });
 
   it('pushes a follow-up to tomorrow', async () => {
@@ -104,5 +108,31 @@ describe('tasks page (sales panel)', () => {
     await user.click(screen.getByRole('button', { name: 'فرستادن درخواست' }));
     const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
     expect(await within(sent).findByText('نمونه قرارداد ترکیه را بفرست')).toBeInTheDocument();
+  });
+});
+
+describe('tasks page, server refuses', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+    localStorage.setItem('scorize.mock.session', String(NIMA));
+  });
+
+  it('a task marked done comes back when the server refuses', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/staff/v1/tasks/:id/done/', () =>
+        HttpResponse.json({ detail: 'no' }, { status: 400 }),
+      ),
+    );
+    await openTasks();
+    const text = 'بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود';
+    await user.click(await screen.findByRole('button', { name: `انجام شد: ${text}` }));
+    const dialog = await screen.findByRole('dialog', { name: 'پیگیری انجام شد' });
+    await user.type(within(dialog).getByLabelText('قدم بعدی'), 'پیام واتساپ بفرست');
+    await user.click(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' }));
+    await user.click(screen.getByRole('button', { name: 'ثبت و ساختن قدم بعدی' }));
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(await screen.findByText(text)).toBeInTheDocument();
   });
 });

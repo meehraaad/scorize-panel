@@ -52,7 +52,7 @@ src/
 │   ├── account/           Every panel's account: notifications (the header's bell), channels, login details
 │   ├── auth/              session (whoami), roles (same rules as Django), logout
 │   ├── i18n/              i18next setup, locales config, Intl formatters (Jalali dates)
-│   ├── router/            lazyPage(): page chunk + its dictionaries in parallel
+│   ├── router/            lazyPage(): page chunk, dictionaries and data in parallel; preload on intent
 │   ├── site.ts            Links to main-site pages and the support phone
 │   └── theme/             Light / dark / system theme
 ├── locales/<lang>/        Dictionaries: common.json + one per feature namespace. fa is the source
@@ -77,29 +77,29 @@ a change is made once. A feature keeps only what is specific to it (its data, it
 rules); anything that looks the same on two pages becomes a block. Blocks take ready-made text and
 numbers as props (no fetching, no dictionary of their own), so any panel can use them.
 
-| Block                                                         | Use it for                                                                                                                                                                                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PageStack`, `PageColumns`                                    | Page body: header + sections; main column with a side `<aside>` that drops under it on phones                                                                                                                       |
-| `PageHeader`                                                  | The page's h1, subtitle and actions (sets the document title)                                                                                                                                                       |
-| `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`   | A titled card (a region named by its h2); a section title above several cards or a toolbar                                                                                                                          |
-| `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`    | "Nothing here yet" with a next step; loading rows                                                                                                                                                                   |
-| `ProgressBar`, `StepBar`, `StepList`, `StepDot`               | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                                                                                                                     |
-| `StatGrid`                                                    | A row of number tiles                                                                                                                                                                                               |
-| `FilterTabs`, `SearchField`, `Pager`                          | List toolbars and paging                                                                                                                                                                                            |
-| `FileDrop`, `PickedFile`, `FileTile`                          | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully                                                                                           |
-| `TagList`, `Chip`, `Avatar`, `StarRating`                     | Tags with optional remove, status pills, initials, 1–5 rating                                                                                                                                                       |
-| `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass` | Actions (44px touch targets; icon-only ones require `aria-label`)                                                                                                                                                   |
-| `Notice`, `InlineConfirm`, `TextField`, `Icon`, `Card`        | Messages (`error`, `info`, `success`, `warn`: something to fix first), in-place confirmation, inputs (one line, several lines), icons, a bare card                                                                  |
-| `BackLink`                                                    | "← Back" above a sub-page's title (writing forms, payment)                                                                                                                                                          |
-| `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)       | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                                                                                                             |
-| `LinkTile`, `TileGrid`                                        | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid (`dense`: 2 on phones)                                                                                                  |
-| `ChoiceGroup`, `TogglePill`, `SelectField`, `TextAreaField`   | One-of-a-few radios as pills or tiles, a checkbox pill, labelled select (or `inline` in a toolbar), multi-line field                                                                                                |
-| `DatePicker`                                                  | A date (or date and time) in the user's calendar: Jalali in Persian, Gregorian in English (`lib/calendar.ts`), with month/year views, keyboard use, `only="future"/"past"`. Use it instead of `<input type="date">` |
-| `Dialog`                                                      | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). Parent controls `open`                                                                                                           |
-| `OtpInput`                                                    | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                            |
-| `Switch`                                                      | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                              |
-| `DateTile`                                                    | A small calendar leaf (day over month; `large` adds the weekday): consultations, the writer's week. Decorative: say the date in text beside it                                                                      |
-| `Toast`, `Toaster`                                            | What an action did (saved, not sent, upload progress). Not used directly: call `toast.*` / `uploadWithToast` (see Messages below); `Toaster` is mounted once in `App`                                               |
+| Block                                                                      | Use it for                                                                                                                                                                                                          |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageStack`, `PageColumns`                                                 | Page body: header + sections; main column with a side `<aside>` that drops under it on phones                                                                                                                       |
+| `PageHeader`                                                               | The page's h1, subtitle and actions (sets the document title)                                                                                                                                                       |
+| `SectionCard` (`list` / `panel`), `SectionHeading`, `Badge`                | A titled card (a region named by its h2); a section title above several cards or a toolbar                                                                                                                          |
+| `EmptyState` (`inset` / `padded` / `card`), `SkeletonRows`, `PageSkeleton` | "Nothing here yet" with a next step; loading rows; a page's loading shape by kind                                                                                                                                   |
+| `ProgressBar`, `StepBar`, `StepList`, `StepDot`                            | Progress and steps (case stages, visa, writing, form sections); `onHero` tone for the dark card                                                                                                                     |
+| `StatGrid`                                                                 | A row of number tiles                                                                                                                                                                                               |
+| `FilterTabs`, `SearchField`, `Pager`                                       | List toolbars and paging                                                                                                                                                                                            |
+| `FileDrop`, `PickedFile`, `FileTile`                                       | Choosing, holding and showing files (checks in `lib/files.ts`); `FileDrop inputLabel` names a short "Upload" button fully                                                                                           |
+| `TagList`, `Chip`, `Avatar`, `StarRating`                                  | Tags with optional remove, status pills, initials, 1–5 rating                                                                                                                                                       |
+| `Button`, `IconButton`, `IconLink`, `buttonClass`, `tabClass`              | Actions (44px touch targets; icon-only ones require `aria-label`)                                                                                                                                                   |
+| `Notice`, `InlineConfirm`, `TextField`, `Icon`, `Card`                     | Messages (`error`, `info`, `success`, `warn`: something to fix first), in-place confirmation, inputs (one line, several lines), icons, a bare card                                                                  |
+| `BackLink`                                                                 | "← Back" above a sub-page's title (writing forms, payment)                                                                                                                                                          |
+| `LockBanner`, `PreviewChip`, `PreviewArea` (`Lock.tsx`)                    | A section the user can't use yet: why (4 tones), "sample data" label, the faded `inert` sample under it                                                                                                             |
+| `LinkTile`, `TileGrid`                                                     | A card that is one link (title, line, optional end mark and footer), in a 1–2–4 column grid (`dense`: 2 on phones)                                                                                                  |
+| `ChoiceGroup`, `TogglePill`, `SelectField`, `TextAreaField`                | One-of-a-few radios as pills or tiles, a checkbox pill, labelled select (or `inline` in a toolbar), multi-line field                                                                                                |
+| `DatePicker`                                                               | A date (or date and time) in the user's calendar: Jalali in Persian, Gregorian in English (`lib/calendar.ts`), with month/year views, keyboard use, `only="future"/"past"`. Use it instead of `<input type="date">` |
+| `Dialog`                                                                   | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). Parent controls `open`                                                                                                           |
+| `OtpInput`                                                                 | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                            |
+| `Switch`                                                                   | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                              |
+| `DateTile`                                                                 | A small calendar leaf (day over month; `large` adds the weekday): consultations, the writer's week. Decorative: say the date in text beside it                                                                      |
+| `Toast`, `Toaster`                                                         | What an action did (saved, not sent, upload progress). Not used directly: call `toast.*` / `uploadWithToast` (see Messages below); `Toaster` is mounted once in `App`                                               |
 
 Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
 panel that shows tickets:
@@ -327,17 +327,21 @@ option existed.
 
 ## Performance budget
 
-Current first load (gzip): JS ≈ 131 KB (react 68, other libraries 55, app 7), CSS ≈ 6 KB, fonts
-are loaded per script as text appears.
+First load (gzip, `pnpm size` checks it in CI): JS ≈ 162 KB (budget 170), CSS ≈ 15 KB (budget 18);
+fonts are loaded per script as text appears. How pages stay fast (page data, skeletons, preload,
+cache, measuring): docs/performance.md.
 
 - Libraries and app code are in separate chunks (`vite.config.ts` → `codeSplitting`), so a deploy only
   invalidates the small app chunk in users' browsers.
 - `index.html` preloads the `whoami` request, so the session check runs while JS downloads.
 - New pages must be lazy routes. Heavy widgets (charts, editors, date pickers) are lazy-loaded inside
   their page.
+- Every route declares the data its page shows first and its loading shape
+  (`lazyPage(load, namespaces, { data, skeleton })`), so code and data load together and the page's
+  skeleton shows meanwhile; `pageData.test.tsx` and `skeletons.test.ts` enforce both.
 - The panel's Suspense boundary is keyed by pathname so a new page shows its loading state during
   navigation instead of leaving the previous screen visible under the new URL. Search-only changes
-  keep form state. Customer tabs have a separate boundary so their data cannot block customer actions
+  keep form state. Customer and case-file tabs have a separate boundary so their data cannot block customer actions
   or dialogs.
 - The Noto Kufi display font costs ~120 KB. Set `--family-display` to `var(--family-body)` in
   `tokens.css` to drop it if needed.

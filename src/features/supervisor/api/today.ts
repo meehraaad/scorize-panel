@@ -39,12 +39,6 @@ export interface TodayData {
   counts: Record<CaseStage, number>;
 }
 
-export const todayQuery = queryOptions({
-  queryKey: [...SUPERVISOR_KEY, 'today'],
-  queryFn: ({ signal }) => api<TodayData>(`${SUPERVISOR_API}/today/`, { signal }),
-  refetchInterval: 5 * 60_000,
-});
-
 export const todayBoardQuery = (page: number) =>
   queryOptions({
     queryKey: [...SUPERVISOR_KEY, 'today', 'board', page],

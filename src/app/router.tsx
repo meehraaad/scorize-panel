@@ -6,16 +6,18 @@ import {
   type RouteObject,
 } from 'react-router';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
-import { accountQuery } from '@/lib/account/api';
+import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
+import { restoreCacheFor } from '@/lib/api/persist';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
-import { lazyPage } from '@/lib/router/lazyPage';
-import { PANELS, canOpen, panelsFor, startTarget } from '@/panels/registry';
+import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
+import { setPreloadRoutes } from '@/lib/router/preload';
+import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
 import { PanelLayout } from './layouts/PanelLayout';
-import { BootFallback, SharedLayout } from './layouts/SharedLayout';
+import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
 
 /*
  * Route map
@@ -34,6 +36,15 @@ const CHOOSE_PATH = '/choose';
 // Loaders run in parallel, so each one asks for the session; React Query sends a single request.
 const currentUser = () => queryClient.query({ ...sessionQuery, staleTime: 'static' });
 
+/** The data of a panel's frame (header badge, locked sections), started with the page's own. */
+const prefetchFrame = (panel: PanelDefinition, user: { id: number }) => {
+  // Before the page renders: it opens from this tab's last answers, if they were this user's.
+  restoreCacheFor(user.id);
+  prefetchQueries([unreadQuery, ...(panel.data?.() ?? [])]);
+};
+
+const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 function toLogin(request: Request) {
   const url = new URL(request.url);
   return redirect(loginHref(url.pathname + url.search));
@@ -48,11 +59,12 @@ function panelRoutes(panel: PanelDefinition): RouteObject {
       if (!user) return toLogin(request);
       // No role for this panel: go to one the user can open (the API refuses the data anyway).
       if (!canOpen(user, panel)) return redirect(START_PATH);
+      prefetchFrame(panel, user);
       return null;
     },
     Component: () => <PanelLayout panel={panel} />,
     ErrorBoundary: ErrorPage,
-    HydrateFallback: BootFallback,
+    HydrateFallback: PanelBootFallback,
     children: [
       {
         ErrorBoundary: SectionError,
@@ -109,23 +121,30 @@ export const routes: RouteObject[] = [
     HydrateFallback: BootFallback,
   },
   {
-    loader: async ({ request }) => ((await currentUser()) ? null : toLogin(request)),
+    loader: async ({ request }) => {
+      const user = await currentUser();
+      if (!user) return toLogin(request);
+      prefetchFrame(preferredPanel(user), user);
+      return null;
+    },
     Component: SharedLayout,
     ErrorBoundary: ErrorPage,
-    HydrateFallback: BootFallback,
+    HydrateFallback: PanelBootFallback,
     children: [
       {
         ErrorBoundary: SectionError,
         children: [
           {
             path: 'account',
-            loader: () => {
-              queryClient.query(accountQuery).catch(() => undefined);
-              return null;
-            },
-            ...lazyPage(() => import('@/features/account/AccountPage'), ['account']),
+            ...lazyPage(() => import('@/features/account/AccountPage'), ['account'], {
+              data: () => [accountQuery, notificationsQuery],
+              skeleton: 'dashboard',
+            }),
           },
-          { path: 'settings', ...lazyPage(() => import('@/features/settings/SettingsPage')) },
+          {
+            path: 'settings',
+            ...lazyPage(() => import('@/features/settings/SettingsPage'), [], { skeleton: 'form' }),
+          },
         ],
       },
     ],
@@ -143,5 +162,6 @@ export const routes: RouteObject[] = [
     : []),
 ];
 
-export const createRouter = () =>
-  createBrowserRouter(routes, { basename: import.meta.env.BASE_URL.replace(/\/$/, '') });
+setPreloadRoutes(routes);
+
+export const createRouter = () => createBrowserRouter(routes, { basename: BASENAME });

@@ -7,7 +7,7 @@ import { APPLICANT_KEY } from '@/lib/applicant/approval';
  * The admission-chance quiz of the new-user dashboard (any account, contract or not): the choices,
  * the answers in and a result per country out, and the last result on return. The answers also go
  * to the profile and, unless the person said not to be contacted, to a seller as a lead. Shapes:
- * docs/backend-changes.md H52–H55.
+ * docs/backend-changes.md H52–H54, H56.
  */
 
 export type Goal = 'study' | 'work' | 'both';

@@ -15,8 +15,9 @@ import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
-  CASE_STAGES,
+  STAGE_FILTERS,
   casesQuery,
+  firstCasesQuery,
   exportHref,
   type BotFilter,
   type CasesQuery,
@@ -25,10 +26,6 @@ import {
 import { pagesOf } from '@/lib/api/page';
 import { CaseTable } from './components/CaseTable';
 import { ImportDialog } from './components/ImportDialog';
-
-const STAGES: readonly StageFilter[] = ['all', ...CASE_STAGES];
-const isStage = (value: string | null): value is StageFilter =>
-  STAGES.includes(value as StageFilter);
 
 /**
  * Every case the supervisor runs: by stage, searchable, with the professor-email bot and
@@ -39,13 +36,10 @@ export default function CasesPage() {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const [params, setParams] = useSearchParams();
-  const stageParam = params.get('stage');
-  const stage: StageFilter = isStage(stageParam) ? stageParam : 'all';
-  // A link may open the list on the email bot's state (reports: "bots that are stopped").
-  const botParam = params.get('bot');
-  const [bot, setBot] = useState<BotFilter>(
-    botParam === 'on' || botParam === 'off' ? botParam : 'all',
-  );
+  // Starts as the route prefetched it: the URL's stage and bot (reports link to stopped bots).
+  const first = firstCasesQuery(params);
+  const stage = first.stage;
+  const [bot, setBot] = useState<BotFilter>(first.bot);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
@@ -93,7 +87,7 @@ export default function CasesPage() {
           label={t('cases.stageFilter')}
           value={stage}
           onChange={setStage}
-          options={STAGES.map((value) => ({
+          options={STAGE_FILTERS.map((value) => ({
             value,
             label: value === 'all' ? t('cases.all') : t(`stage.${value}`),
             ...(data ? { count: f.number(data.counts[value]) } : {}),

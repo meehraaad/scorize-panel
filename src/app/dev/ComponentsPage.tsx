@@ -29,7 +29,7 @@ import { Pager } from '@/components/ui/Pager';
 import { ProgressBar, StepBar, StepDot, StepList } from '@/components/ui/Progress';
 import { Badge, SectionCard, SectionHeading } from '@/components/ui/SectionCard';
 import { SheetButton } from '@/components/ui/Sheet';
-import { SkeletonRows } from '@/components/ui/Skeleton';
+import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
@@ -517,6 +517,18 @@ export default function ComponentsPage() {
           </div>
         </Group>
 
+        <Group name="PageSkeleton (loading shape per page kind)">
+          {(['dashboard', 'list', 'detail', 'form', 'board', 'chat', 'tab'] as const).map(
+            (kind) => (
+              <div key={kind} className="flex flex-col gap-2">
+                <span dir="ltr" className="font-mono text-sm text-text-2">
+                  {kind}
+                </span>
+                <PageSkeleton kind={kind} />
+              </div>
+            ),
+          )}
+        </Group>
         <Group name="Tickets (src/components/tickets)">
           <div className="flex flex-wrap items-center gap-3">
             <SheetButton icon="help" label="راهنما" title="Sheet: راهنما" closeLabel="بستن">

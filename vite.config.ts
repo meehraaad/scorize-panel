@@ -52,6 +52,10 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
+    define: {
+      // Changes with every build: a cache saved by an older build is discarded (src/lib/api/persist.ts).
+      'import.meta.env.VITE_APP_BUILD': JSON.stringify(Date.now().toString(36)),
+    },
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
