@@ -157,6 +157,7 @@ export interface NewMessage {
 }
 
 export function useSendMessage(endpoint: TicketsEndpoint, thread: string) {
+  const client = useQueryClient();
   const refresh = useRefresh(endpoint);
   return useMutation({
     mutationFn: ({ text, priority, attachment }: NewMessage) => {
@@ -166,7 +167,16 @@ export function useSendMessage(endpoint: TicketsEndpoint, thread: string) {
       if (attachment) body.append('attachment', attachment);
       return api<TicketMessage>(`${endpoint.api}/${thread}/messages/`, { method: 'POST', body });
     },
-    onSuccess: refresh,
+    // The sent message shows at once, from the server's answer; the rest refreshes behind it.
+    onSuccess: (message) => {
+      client.setQueryData(messagesQuery(endpoint, thread).queryKey, (data) => {
+        const [newest, ...older] = data?.pages ?? [];
+        return data && newest
+          ? { ...data, pages: [{ ...newest, messages: [...newest.messages, message] }, ...older] }
+          : data;
+      });
+      return refresh();
+    },
   });
 }
 

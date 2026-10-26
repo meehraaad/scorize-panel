@@ -217,13 +217,41 @@ const CHANGE_PATH: Record<TaskChange['kind'], string> = {
   comment: 'comments',
 };
 
-/** Everything done to a task from the tasks page (T3–T8). */
+/** Cached pages of every panel's "mine" list. */
+const isMineList = (queryKey: readonly unknown[]) =>
+  queryKey[0] === TASKS_KEY[0] && queryKey[2] === 'list' && queryKey[3] === 'mine';
+
+/**
+ * Everything done to a task from the tasks page (T3–T8). A task marked done leaves "my tasks" at
+ * once (optimistic; a snoozed one may stay today, so it waits for the server); the lists come back as they were if the server refuses.
+ */
 export function useTaskChange() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ id, change }: { id: number; change: TaskChange }) => {
       const { kind, ...body } = change;
       return api(`${TASKS_API}/${String(id)}/${CHANGE_PATH[kind]}/`, { method: 'POST', body });
+    },
+    onMutate: async ({ id, change }) => {
+      if (change.kind !== 'done') return undefined;
+      const filters = {
+        predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => isMineList(queryKey),
+      };
+      await client.cancelQueries(filters);
+      const previous = client.getQueriesData<Page<MyTask>>(filters);
+      client.setQueriesData<Page<MyTask>>(filters, (page) =>
+        page?.results.some((task) => task.id === id)
+          ? {
+              ...page,
+              count: page.count - 1,
+              results: page.results.filter((task) => task.id !== id),
+            }
+          : page,
+      );
+      return previous;
+    },
+    onError: (_error, _change, previous) => {
+      for (const [queryKey, data] of previous ?? []) client.setQueryData(queryKey, data);
     },
     onSuccess: () =>
       Promise.all([

@@ -55,8 +55,10 @@ it('supervisor waiting cases render when the board fails and can retry independe
   renderApp('/supervisor');
   expect(await screen.findByRole('region', { name: 'پرونده‌های منتظر شما' })).toBeInTheDocument();
   expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('errors.sectionTitle'));
+  // The route's prefetch failed and the section tried once more on mount; retry asks again.
+  const before = board.mock.calls.length;
   await userEvent.click(screen.getByRole('button', { name: i18n.t('errors.retry') }));
-  await waitFor(() => expect(board).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(board).toHaveBeenCalledTimes(before + 1));
   expect(screen.getByRole('region', { name: 'پرونده‌های منتظر شما' })).toBeInTheDocument();
 });
 

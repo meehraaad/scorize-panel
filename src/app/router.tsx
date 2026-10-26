@@ -7,6 +7,7 @@ import {
 } from 'react-router';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
+import { restoreCacheFor } from '@/lib/api/persist';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
@@ -36,7 +37,9 @@ const CHOOSE_PATH = '/choose';
 const currentUser = () => queryClient.query({ ...sessionQuery, staleTime: 'static' });
 
 /** The data of a panel's frame (header badge, locked sections), started with the page's own. */
-const prefetchFrame = (panel: PanelDefinition) => {
+const prefetchFrame = (panel: PanelDefinition, user: { id: number }) => {
+  // Before the page renders: it opens from this tab's last answers, if they were this user's.
+  restoreCacheFor(user.id);
   prefetchQueries([unreadQuery, ...(panel.data?.() ?? [])]);
 };
 
@@ -56,7 +59,7 @@ function panelRoutes(panel: PanelDefinition): RouteObject {
       if (!user) return toLogin(request);
       // No role for this panel: go to one the user can open (the API refuses the data anyway).
       if (!canOpen(user, panel)) return redirect(START_PATH);
-      prefetchFrame(panel);
+      prefetchFrame(panel, user);
       return null;
     },
     Component: () => <PanelLayout panel={panel} />,
@@ -121,7 +124,7 @@ export const routes: RouteObject[] = [
     loader: async ({ request }) => {
       const user = await currentUser();
       if (!user) return toLogin(request);
-      prefetchFrame(preferredPanel(user));
+      prefetchFrame(preferredPanel(user), user);
       return null;
     },
     Component: SharedLayout,

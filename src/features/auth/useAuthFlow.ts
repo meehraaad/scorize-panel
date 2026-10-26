@@ -3,6 +3,7 @@ import type { ParseKeys } from 'i18next';
 import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { NetworkError } from '@/lib/api/client';
+import { clearPersistedCache } from '@/lib/api/persist';
 import { START_PATH, sessionQuery } from '@/lib/auth/session';
 import { authApi, type AuthResult, type Identifier, type RegistrationDetails } from './api';
 import { AuthCode, RESTART_CODES, SUCCESS_CODES } from './codes';
@@ -65,6 +66,7 @@ export function useAuthFlow({
   const finish = async () => {
     // A different account may have been cached in this tab: start from a clean slate.
     queryClient.clear();
+    clearPersistedCache();
     await queryClient.query({ ...sessionQuery, staleTime: 0 });
     // No `next`: the router picks the user's panel (staff land in their work panel).
     if (!next) {

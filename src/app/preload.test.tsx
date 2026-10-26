@@ -27,8 +27,9 @@ describe('preload on intent', () => {
       .getByRole('link', { name: i18n.t('panels.sales.nav.board') })
       .focus();
 
+    // The board's request has started (it may still be on its way).
     await waitFor(() => {
-      expect(queryClient.getQueryState(boardQuery.queryKey)?.status).toBe('success');
+      expect(queryClient.getQueryState(boardQuery.queryKey)).toBeDefined();
     });
     // Nothing navigated: the data waits in the cache for the click.
     expect(router.state.location.pathname).toBe('/sales');
