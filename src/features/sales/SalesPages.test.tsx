@@ -36,17 +36,40 @@ describe('sales panel, seller pages', () => {
       '/sales/customers/101?log=call',
     );
 
-    const calls = screen.getByRole('region', { name: 'فهرست تماس امروز' });
-    await user.click(within(calls).getByRole('button', { name: /عقب‌افتاده/ }));
-    expect(within(calls).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(calls).getByText('سمیرا نوروزی')).toBeInTheDocument();
-
-    // Two admissions of one customer make one card.
-    const upsell = screen.getByRole('region', { name: 'فرصت‌های فروش مکمل' });
-    expect(within(upsell).getAllByRole('listitem')).toHaveLength(3);
+    // Consultations and today's timed follow-ups on the day calendar.
+    const calendar = await screen.findByRole('region', { name: 'تقویم امروز' });
     expect(
-      within(upsell).getByText('زهرا موسوی از Uppsala University و Lund University پذیرش گرفت'),
-    ).toBeInTheDocument();
+      within(calendar).getByRole('link', { name: /^مشاوره‌ی .*، جلسه ثبت شد$/ }),
+    ).toHaveAttribute('href', '/sales/customers/104');
+    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+
+    // Ten calls: six on the first page, four on the next.
+    const calls = screen.getByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' });
+    expect(within(calls).getAllByRole('listitem')).toHaveLength(6);
+    expect(within(calls).getByText('۱ تا ۶ از ۱۰')).toBeInTheDocument();
+    await user.click(within(calls).getByRole('button', { name: 'بعدی' }));
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(4));
+    await user.click(within(calls).getByRole('button', { name: /عقب‌افتاده/ }));
+    expect(await within(calls).findByText('سمیرا نوروزی')).toBeInTheDocument();
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(2));
+
+    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+    await user.click(screen.getByText('ماه من', { selector: 'summary' }));
+    // Two admissions of one customer make one card.
+    const upsell = await screen.findByRole('region', { name: /^فرصت‌های فروش مکمل/ });
+    expect(
+      within(upsell).getByRole('link', {
+        name: 'زهرا موسوی از Uppsala University و Lund University پذیرش گرفت',
+      }),
+    ).toHaveAttribute('href', '/sales/customers/120');
+    expect(within(upsell).getByRole('link', { name: /پیشنهاد خدمات ویزا/ })).toHaveAttribute(
+      'href',
+      '/sales/customers/120/offer',
+    );
+    expect(within(upsell).getByRole('link', { name: /کامران زارع/ })).toHaveAttribute(
+      'href',
+      '/sales/customers/123',
+    );
 
     const receipts = screen.getByRole('region', { name: /رسیدهای منتظر تأیید/ });
     await user.click(within(receipts).getByRole('button', { name: 'تأیید رسید کیان مرادی' }));
@@ -222,11 +245,20 @@ describe('sales panel, seller pages', () => {
   });
 
   it('consultations: past sessions link to the session log', async () => {
-    renderApp('/sales/consultations');
+    renderApp('/sales/leads/consultations');
     expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
     expect((await screen.findAllByRole('link', { name: /^ثبت جلسه: / }))[0]).toHaveAttribute(
       'href',
       expect.stringMatching(/log=meeting&reservation=\d+$/),
     );
+  });
+
+  it('consultations: a sub-tab of the leads tab, also at its old address', async () => {
+    const router = renderApp('/sales/consultations');
+    expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales/leads/consultations');
+    const sections = screen.getByRole('navigation', { name: 'بخش‌های لیدها' });
+    await userEvent.click(within(sections).getByRole('link', { name: 'لیدها' }));
+    expect(await screen.findByRole('heading', { name: 'لیدهای من' })).toBeInTheDocument();
   });
 });

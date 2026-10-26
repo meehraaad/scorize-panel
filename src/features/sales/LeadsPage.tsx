@@ -40,7 +40,14 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
-  const query: LeadQuery = { stage, source, band, overdue, search: useDebouncedValue(search.trim()), page };
+  const query: LeadQuery = {
+    stage,
+    source,
+    band,
+    overdue,
+    search: useDebouncedValue(search.trim()),
+    page,
+  };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
 
   // Any filter change starts again at page 1 with nothing selected.

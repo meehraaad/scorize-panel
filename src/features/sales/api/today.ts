@@ -41,8 +41,11 @@ export interface TodayConsultation {
   type: string;
   mode: 'online' | 'in_person';
   starts_at: string;
+  /** The session length (the day calendar's block); null when the consultation type has none. */
+  minutes: number | null;
   /** A ContactHistory exists for it (the session was logged). */
   logged: boolean;
+  meeting_url: string | null;
 }
 
 /** A card-transfer receipt waiting for a seller (Payment.Status.PENDING_RECEIPT). */
@@ -102,3 +105,35 @@ export const receiptsQuery = (page: number) =>
     placeholderData: keepPreviousData,
     refetchInterval: 60_000,
   });
+
+export const outreachQuery = (page: number, hotPage = 1, bucket: CallBucket | 'all' = 'all') =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'today', 'outreach', page, hotPage, bucket],
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) =>
+      api<{
+        hot: Page<HotLead>;
+        calls: Page<CallItem> & { counts: Record<CallBucket | 'all', number> };
+      }>(
+        `${SALES_API}/today/outreach/?page=${String(page)}&hot_page=${String(hotPage)}&bucket=${bucket}`,
+        { signal },
+      ),
+    refetchInterval: 60_000,
+  });
+export const activityQuery = (page: number) =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'today', 'activity', page],
+    queryFn: ({ signal }) =>
+      api<{
+        tasks: TodayData['tasks'];
+        consultations: Page<TodayConsultation>;
+        calendar_calls: Page<CallItem>;
+      }>(`${SALES_API}/today/activity/?page=${String(page)}`, { signal }),
+    refetchInterval: 60_000,
+  });
+export const insightsQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'today', 'insights'],
+  queryFn: ({ signal }) =>
+    api<Pick<TodayData, 'month' | 'upsell'>>(`${SALES_API}/today/insights/`, { signal }),
+  refetchInterval: 60_000,
+});

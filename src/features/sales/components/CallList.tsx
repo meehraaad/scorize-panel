@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterTabs } from '@/components/ui/Filters';
+import { Pager } from '@/components/ui/Pager';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { CallBucket, CallItem } from '../api';
@@ -13,15 +13,34 @@ import { ContactButtons } from './ContactButtons';
 import { ScoreChip } from './LeadChips';
 
 type Tab = CallBucket | 'all';
-const TABS: readonly Tab[] = ['all', 'new', 'today', 'overdue'];
+const TABS: readonly Tab[] = ['all', 'today', 'overdue', 'new'];
+/** Rows per page: the list stays short enough to work through without scrolling past the calendar. */
+export const CALLS_PAGE = 6;
 
-/** Today's call list: new leads, then overdue follow-ups, then by score (the server's order). */
-export function CallList({ calls }: { calls: CallItem[] }) {
+/** Today's call list: new leads, today’s follow-ups, overdue follow-ups, then by score (the server's order). */
+export function CallList({
+  calls,
+  counts,
+  tab,
+  onTab,
+  page,
+  pages,
+  onPage,
+  total,
+}: {
+  calls: CallItem[];
+  page: number;
+  pages: number;
+  onPage: (page: number) => void;
+  total: number;
+  counts: Record<Tab, number> | undefined;
+  tab: Tab;
+  onTab: (tab: Tab) => void;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  const [tab, setTab] = useState<Tab>('all');
-  const shown = calls.filter((call) => tab === 'all' || call.bucket === tab);
+  const shown = calls;
 
   const dueOf = (call: CallItem) => {
     if (call.bucket === 'new') return { text: t('today.list.dueNew'), urgent: true };
@@ -44,13 +63,11 @@ export function CallList({ calls }: { calls: CallItem[] }) {
         <FilterTabs
           label={t('today.list.filter')}
           value={tab}
-          onChange={setTab}
+          onChange={onTab}
           options={TABS.map((value) => ({
             value,
             label: t(`today.list.tab.${value}`),
-            count: f.number(
-              value === 'all' ? calls.length : calls.filter((call) => call.bucket === value).length,
-            ),
+            count: f.number(counts?.[value] ?? 0),
           }))}
         />
       </div>
@@ -63,10 +80,10 @@ export function CallList({ calls }: { calls: CallItem[] }) {
             return (
               <li
                 key={call.lead}
-                className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:flex-nowrap lg:px-8"
+                className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] sm:flex-nowrap lg:px-8"
               >
                 <Avatar name={call.name} />
-                <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
+                <div className="flex min-w-0 flex-[1_1_200px] flex-col gap-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       to={customerPath(call.customer)}
@@ -76,16 +93,15 @@ export function CallList({ calls }: { calls: CallItem[] }) {
                     </Link>
                     <ScoreChip score={call.score} />
                   </div>
-                  <span className="text-sm leading-6 text-text-2">{call.reason}</span>
-                </div>
-                <div className="flex w-40 flex-none flex-col gap-0.5">
-                  <span
-                    className={`text-sm font-semibold ${due.urgent ? 'text-urgent' : 'text-text'}`}
-                  >
-                    {due.text}
-                  </span>
-                  <span className="text-xs text-text-2">
-                    {t('today.list.stage', { stage: t(`stage.${call.stage}`) })}
+                  <span className="line-clamp-2 text-sm leading-6 text-text-2">{call.reason}</span>
+                  <span className="text-xs">
+                    <span className={`font-semibold ${due.urgent ? 'text-urgent' : 'text-text'}`}>
+                      {due.text}
+                    </span>
+                    <span className="text-text-2">
+                      {' · '}
+                      {t('today.list.stage', { stage: t(`stage.${call.stage}`) })}
+                    </span>
                   </span>
                 </div>
                 <ContactButtons
@@ -98,6 +114,18 @@ export function CallList({ calls }: { calls: CallItem[] }) {
             );
           })}
         </ul>
+      )}
+      {pages > 1 && (
+        <Pager
+          status={t('today.list.pager', {
+            from: f.number((page - 1) * CALLS_PAGE + 1),
+            to: f.number((page - 1) * CALLS_PAGE + shown.length),
+            total: f.number(total),
+          })}
+          page={page}
+          pages={pages}
+          onPage={onPage}
+        />
       )}
       <p className="m-0 px-5 py-4 text-xs text-text-2 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
         {t('today.list.order')}
