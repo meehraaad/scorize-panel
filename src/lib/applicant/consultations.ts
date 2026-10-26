@@ -58,11 +58,16 @@ export function splitSessions(results: Consultation[], now = Date.now()) {
 /** How long after a session its survey stays on the new-user home. */
 const RECENT_MS = 30 * 86_400_000;
 
-/** The last session held within a month, when none is booked ahead: its survey is due. */
+/**
+ * The last session, once it has ended and for a month after, when none is booked ahead: its survey is due.
+ * Django texts the link as it ends (H62), so the card is there when the person opens it.
+ */
 export function recentSession(results: Consultation[], now = Date.now()) {
   const { upcoming, past } = splitSessions(results, now);
-  if (upcoming.length) return undefined;
-  return past.find((item) => now - new Date(item.starts_at).getTime() < RECENT_MS);
+  const last = past[0];
+  if (upcoming.length || !last) return undefined;
+  const ended = now - (new Date(last.starts_at).getTime() + last.minutes * 60_000);
+  return ended >= 0 && ended < RECENT_MS ? last : undefined;
 }
 
 /** The survey after a session: once, and the seller hears of it (Django makes or tells a lead). */
