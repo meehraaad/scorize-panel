@@ -3,6 +3,7 @@ import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import '@/lib/i18n';
 import { toast } from '@/lib/toast';
+import { clearContactDrafts } from '@/lib/sales/contactDrafts';
 import './xhr';
 
 // Integration tests load lazy page chunks through Vite's transform: allow more than the 1 s default.
@@ -12,6 +13,7 @@ configure({ asyncUtilTimeout: 12_000 });
 
 afterEach(() => {
   cleanup();
+  clearContactDrafts();
   toast.clear();
 });
 

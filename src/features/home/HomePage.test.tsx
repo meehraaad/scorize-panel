@@ -224,15 +224,15 @@ describe('applicant home', () => {
     const online = await within(how).findByRole('radio', { name: /^آنلاین/ });
     expect(online).toBeChecked();
     expect(within(how).getAllByText('اولین وقت خالی')).toHaveLength(2);
-    expect(within(talk).getByRole('link', { name: 'زمان‌های دیگر' })).toHaveAttribute(
-      'href',
-      '/consultations/book?mode=online&type=3',
-    );
+    // "Other times" opens the booking popup on that choice.
     await user.click(within(how).getByRole('radio', { name: /^حضوری/ }));
-    expect(within(talk).getByRole('link', { name: 'زمان‌های دیگر' })).toHaveAttribute(
-      'href',
-      '/consultations/book?mode=in_person&type=5',
-    );
+    await user.click(within(talk).getByRole('button', { name: 'زمان‌های دیگر' }));
+    const dialog = await screen.findByRole('dialog', { name: 'رزرو مشاوره' }, { timeout: 15_000 });
+    expect(
+      await within(dialog).findByRole('radio', { name: 'حضوری' }, { timeout: 15_000 }),
+    ).toBeChecked();
+    await user.click(within(dialog).getByRole('button', { name: 'بستن' }));
+    expect(screen.queryByRole('dialog', { name: 'رزرو مشاوره' })).toBeNull();
 
     // One tap books that time: off to the bank gateway.
     const assign = vi.fn();

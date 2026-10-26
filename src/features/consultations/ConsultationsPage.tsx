@@ -2,6 +2,8 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { BookingDialog } from '@/components/applicant/booking/BookingDialog';
+import { preloadBooking } from '@/components/applicant/booking/preload';
 import { BackLink } from '@/components/ui/BackLink';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip } from '@/components/ui/Chip';
@@ -29,6 +31,7 @@ export default function ConsultationsPage() {
   const f = useFormat();
   const { data } = useSuspenseQuery(consultationsQuery);
   const [filter, setFilter] = useState<Filter>('all');
+  const [booking, setBooking] = useState(false);
   const { upcoming, past } = splitSessions(data.results);
   const next = upcoming[0];
   const shown =
@@ -42,9 +45,16 @@ export default function ConsultationsPage() {
         subtitle={t('subtitle')}
         actions={
           ON_SERVER.bookingCalendar ? (
-            <Link to="/consultations/book" className={buttonClass('primary', 'max-sm:w-full')}>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              onPointerEnter={preloadBooking}
+              onFocus={preloadBooking}
+              onClick={() => setBooking(true)}
+              className={buttonClass('primary', 'max-sm:w-full')}
+            >
               {t('book')}
-            </Link>
+            </button>
           ) : (
             <a href={SITE.consultation} className={buttonClass('primary', 'max-sm:w-full')}>
               {t('book')}
@@ -54,6 +64,8 @@ export default function ConsultationsPage() {
       />
 
       <SessionSummariesCard />
+
+      <BookingDialog open={booking} onClose={() => setBooking(false)} />
 
       {next && <NextSession session={next} />}
 

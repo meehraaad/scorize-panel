@@ -3,6 +3,7 @@ import type account from '@/locales/fa/account.json';
 import type applications from '@/locales/fa/applications.json';
 import type auth from '@/locales/fa/auth.json';
 import type common from '@/locales/fa/common.json';
+import type booking from '@/locales/fa/booking.json';
 import type consultations from '@/locales/fa/consultations.json';
 import type contract from '@/locales/fa/contract.json';
 import type documents from '@/locales/fa/documents.json';
@@ -38,6 +39,7 @@ declare module 'i18next' {
       journey: typeof journey;
       services: typeof services;
       consultations: typeof consultations;
+      booking: typeof booking;
       account: typeof account;
       gates: typeof gates;
       sales: typeof sales;

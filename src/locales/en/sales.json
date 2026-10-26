@@ -1140,5 +1140,16 @@
       "badType": "Only PDF, JPG or PNG.",
       "error": "The contract scan wasn't sent"
     }
+  },
+  "contactDraft": {
+    "tray": "Unsaved calls and sessions",
+    "minimize": "Minimize",
+    "resume": "Resume draft for {{name}}",
+    "unsaved": "Unsaved · {{name}}",
+    "discard": "Discard draft",
+    "discardConfirm": "Discard this unsaved contact? Your notes will be deleted.",
+    "keep": "Keep draft",
+    "retry": "Try again",
+    "saved": "Contact saved."
   }
 }

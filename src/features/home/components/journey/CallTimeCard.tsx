@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import consultation from '@/assets/journey/consultation.svg';
+import { BookingDialog } from '@/components/applicant/booking/BookingDialog';
+import { preloadBooking } from '@/components/applicant/booking/preload';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
@@ -88,9 +89,7 @@ function BookTalkCard({ access }: { access: ApplicantAccess }) {
   });
   const when = (at: string) => t('callTime.when', { day: f.weekday(at), time: f.time(at) });
   const toman = (amount: number) => t('slots.toman', { amount: f.number(amount) });
-  const otherTimes = chosen
-    ? `/consultations/book?mode=${chosen.mode}&type=${String(chosen.type.id)}`
-    : '/consultations/book';
+  const [booking, setBooking] = useState(false);
   const discount =
     chosen?.type.full_price && chosen.type.full_price > chosen.type.price
       ? Math.round((1 - chosen.type.price / chosen.type.full_price) * 100)
@@ -98,13 +97,17 @@ function BookTalkCard({ access }: { access: ApplicantAccess }) {
 
   const links = (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <Link
-        to={otherTimes}
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        onPointerEnter={preloadBooking}
+        onFocus={preloadBooking}
+        onClick={() => setBooking(true)}
         className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary-text"
       >
         {t('callTime.other')}
         <Icon name="chevronEnd" size={14} />
-      </Link>
+      </button>
       <CallRequestButton
         label={t('callTime.free')}
         className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-text-2"
@@ -244,14 +247,26 @@ function BookTalkCard({ access }: { access: ApplicantAccess }) {
             </Button>
           ) : (
             !calendar.isPending && (
-              <Link to={otherTimes} className={buttonClass('primary', 'max-lg:w-full', 'lg')}>
+              <Button
+                size="lg"
+                className="max-lg:w-full"
+                aria-haspopup="dialog"
+                onPointerEnter={preloadBooking}
+                onFocus={preloadBooking}
+                onClick={() => setBooking(true)}
+              >
                 {t('callTime.other')}
-              </Link>
+              </Button>
             )
           )}
           {!desktop && links}
         </div>
       </div>
+      <BookingDialog
+        open={booking}
+        onClose={() => setBooking(false)}
+        initial={chosen ? { mode: chosen.mode, type: chosen.type.id } : undefined}
+      />
     </Card>
   );
 }

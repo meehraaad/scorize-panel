@@ -29,6 +29,7 @@ export const NAMESPACES = [
   'journey',
   'services',
   'consultations',
+  'booking',
   'account',
   'gates',
   'sales',

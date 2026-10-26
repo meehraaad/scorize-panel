@@ -1,3 +1,4 @@
+import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -187,13 +188,15 @@ function ConsultationRow({ item, status }: { item: Consultation; status: Status 
       </Chip>
       <span className="flex flex-wrap gap-2">
         {(status === 'need' || status === 'soon') && (
-          <Link
-            to={customerPath(item.customer, 'meeting', item.id)}
+          <ContactLogButton
+            customer={item.customer}
+            name={item.name}
+            start={{ channel: 'meeting', reservation: item.id }}
             aria-label={action(t('consultations.log'))}
             className={buttonClass('primary', 'h-11 px-4 text-sm')}
           >
             {t('consultations.log')}
-          </Link>
+          </ContactLogButton>
         )}
         {status === 'upcoming' && (
           <a
