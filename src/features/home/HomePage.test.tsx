@@ -217,12 +217,11 @@ describe('applicant home', () => {
       .find((step) => step.getAttribute('aria-current') === 'step');
     expect(current).toHaveTextContent('بررسی و تأیید');
     expect(within(hero).queryByRole('button')).toBeNull();
-    // The prepayment comes before the case starts.
-    expect(within(hero).getByText(/پیش‌پرداخت قرارداد \(۱٬۲۰۰٬۰۰۰ تومان\)/)).toBeInTheDocument();
-    expect(within(hero).getByRole('link', { name: 'پرداخت پیش‌پرداخت' })).toHaveAttribute(
-      'href',
-      '/payments/502',
-    );
+    expect(within(hero).queryByRole('link')).toBeNull();
+    // The prepayment is paid on the contract page; the home only points there.
+    const action = screen.getByRole('link', { name: /یک کار در صفحه‌ی قرارداد/ });
+    expect(action).toHaveAttribute('href', '/contract');
+    expect(action).toHaveTextContent('پیش‌پرداخت قرارداد (۱٬۲۰۰٬۰۰۰ تومان) را بپردازید');
     expect(
       screen.getByRole('region', { name: 'بخش‌هایی که به‌زودی فعال می‌شوند' }),
     ).toBeInTheDocument();

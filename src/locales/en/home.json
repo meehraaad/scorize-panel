@@ -101,14 +101,14 @@
       },
       "previews": "Sections opening soon",
       "previewsSubtitle": "Until your contract is active, see each section's preview.",
-      "prepayment": {
-        "toman": "{{amount}} toman",
-        "unpaid": "To start your case, pay the contract prepayment ({{amount}}) online or send a transfer receipt.",
-        "declined": "The prepayment receipt ({{amount}}) wasn't accepted. See why on the payment page and send it again.",
-        "review": "We got your prepayment receipt ({{amount}}) and are checking it. Once it's confirmed, your case goes to a supervisor.",
-        "paid": "Your prepayment ({{amount}}) is paid. A supervisor will be assigned to your case soon and will call you.",
-        "pay": "Pay the prepayment",
-        "open": "Payment page"
+      "textAction": "One step is left before your case starts. The details and payment are on your contract page.",
+      "action": {
+        "title": "Something to do on your contract",
+        "unpaid": "Pay the contract prepayment ({{amount}}) so your case can start.",
+        "declined": "Your prepayment receipt wasn't accepted. See why and send it again.",
+        "review": "Your prepayment receipt is being checked. See where it stands on your contract page.",
+        "go": "Go to contract",
+        "toman": "{{amount}} toman"
       }
     },
     "consult": "Book an application consultation",

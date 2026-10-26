@@ -9,7 +9,8 @@
     "turkey": "Free Turkey application",
     "status": {
       "active": "Active",
-      "ended": "Ended"
+      "ended": "Ended",
+      "pending": "Starting"
     },
     "countries": "Countries",
     "degrees": "Degrees",
@@ -187,5 +188,28 @@
     "afterForms": "After your forms are done",
     "afterAdmission": "After an admission",
     "afterVisa": "After the visa"
+  },
+  "start": {
+    "title": "Starting your case",
+    "subtitle": "Your contract is approved. Once the prepayment is in, a supervisor is assigned and your panel opens.",
+    "steps": "Starting your case",
+    "step": {
+      "pay": "Prepayment",
+      "supervisor": "Supervisor assigned",
+      "open": "Case starts"
+    },
+    "toman": "{{amount}} toman",
+    "unpaid": "To start your case, pay the contract prepayment ({{amount}}) online or send a transfer receipt.",
+    "declined": "The prepayment receipt ({{amount}}) wasn't accepted. See why on the payment page and send it again.",
+    "review": "We got your prepayment receipt ({{amount}}) and are checking it. Once it's confirmed, your case goes to a supervisor.",
+    "paid": "Your prepayment ({{amount}}) is paid. A supervisor will be assigned to your case soon and will call you.",
+    "pay": "Pay the prepayment",
+    "open": "Payment page",
+    "state": {
+      "unpaid": "Not paid",
+      "review": "Receipt in review",
+      "declined": "Receipt declined",
+      "paid": "Paid"
+    }
   }
 }

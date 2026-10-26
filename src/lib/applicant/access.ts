@@ -63,13 +63,17 @@ export function lockOf(access: ApplicantAccess, section: LockableSection): Lock 
   return null;
 }
 
-/** Nav items shown with a lock: every lockable section, until a contract is active. */
+/**
+ * Nav items shown with a lock: every lockable section, until a contract is active. An approved
+ * contract waiting for its prepayment keeps the contract tab open: the prepayment is paid there.
+ */
 export function useLockedNav(): ReadonlySet<string> {
   const { data } = useQuery(accessQuery);
-  return data && (data.state === 'guest' || data.state === 'pending')
-    ? new Set<string>(LOCKABLE)
-    : NONE;
+  if (!data || (data.state !== 'guest' && data.state !== 'pending')) return NONE;
+  return data.prepayment ? STARTING : ALL;
 }
+const ALL: ReadonlySet<string> = new Set<string>(LOCKABLE);
+const STARTING: ReadonlySet<string> = new Set<string>(LOCKABLE.filter((id) => id !== 'contract'));
 const NONE: ReadonlySet<string> = new Set();
 
 export const CALL_TOPICS = ['admission', 'visa', 'turkey', 'writing'] as const;
