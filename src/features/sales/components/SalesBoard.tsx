@@ -20,6 +20,7 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
+import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
@@ -138,7 +139,6 @@ export function SalesBoard({ data }: { data: BoardData }) {
 
   return (
     <>
-      <p className="m-0 text-sm leading-6 text-text-2">{t('board.move.hint')}</p>
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetection}
@@ -169,9 +169,9 @@ export function SalesBoard({ data }: { data: BoardData }) {
         <div
           ref={board}
           aria-busy={mutation.isPending}
-          className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2 lg:mx-0 lg:px-0"
+          className="min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden overscroll-x-contain bg-board px-4 pt-4 pb-3 [contain:layout_paint] lg:px-6 lg:pt-5"
         >
-          <div className="grid min-w-[1320px] grid-cols-6 items-stretch gap-4">
+          <div className="grid h-full min-w-full auto-cols-[minmax(264px,1fr)] grid-flow-col items-stretch gap-3 pb-1 lg:auto-cols-[minmax(288px,1fr)] lg:gap-4">
             {data.columns.map((column) => (
               <BoardColumn key={column.stage} column={column} disabled={mutation.isPending}>
                 {column.cards.map((card) => (
@@ -201,7 +201,7 @@ export function SalesBoard({ data }: { data: BoardData }) {
           >
             {active && (
               <div aria-hidden="true" className="pointer-events-none cursor-grabbing">
-                <div className="flex h-full flex-col gap-3 rounded-[20px] bg-surface p-4 text-text shadow-panel ring-2 ring-primary">
+                <div className="flex h-full flex-col gap-3 rounded-xl border border-primary bg-surface p-4 text-text shadow-board-card ring-2 ring-primary">
                   <span className="text-[15px] font-semibold">{active.card.name}</span>
                   <span className="text-[13px] leading-6 text-text-2">{active.card.summary}</span>
                   <span className="text-xs text-text-2">{t(`stage.${active.stage}`)}</span>
@@ -246,6 +246,15 @@ export function SalesBoard({ data }: { data: BoardData }) {
   );
 }
 
+const STAGE_DOT: Record<BoardData['columns'][number]['stage'], string> = {
+  new: 'bg-info',
+  contacted: 'bg-warn',
+  consulted: 'bg-primary',
+  offer: 'bg-hero-accent',
+  draft: 'bg-urgent',
+  won: 'bg-good',
+};
+
 function BoardColumn({
   column,
   disabled,
@@ -264,34 +273,49 @@ function BoardColumn({
     <section
       ref={setNodeRef}
       aria-labelledby={`col-${column.stage}`}
-      className={`flex min-h-64 flex-col gap-3 rounded-card-sm p-3.5 ${
-        column.stage === 'won' ? 'bg-good-tint' : column.stage === 'draft' ? 'bg-tint' : 'bg-track'
-      } ${isOver ? 'ring-2 ring-primary ring-inset' : ''}`}
+      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-hair bg-board-lane ${isOver ? 'ring-2 ring-primary ring-inset' : ''}`}
     >
-      <div className="flex flex-col gap-1 px-1 pt-1 pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <h2 id={`col-${column.stage}`} className="m-0 text-[15px] font-bold">
+      <div className="flex min-h-23 flex-none flex-col justify-center gap-2 px-4 pt-3 pb-3">
+        <div className="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className={`size-2 flex-none rounded-full ${STAGE_DOT[column.stage]}`}
+          />
+          <h2 id={`col-${column.stage}`} className="m-0 flex-1 text-[13px] leading-5 font-semibold">
             {t(`stage.${column.stage}`)}
           </h2>
-          <span className="text-sm text-text-2 tabular-nums">{f.number(column.count)}</span>
+          {!movable && (
+            <span title={t('board.move.managed')} className="text-text-2">
+              <Icon name="lock" size={12} />
+              <span className="sr-only">{t('board.move.managed')}</span>
+            </span>
+          )}
+          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-hair bg-surface px-1.5 text-[11px] font-medium text-text-2 tabular-nums">
+            {f.number(column.count)}
+          </span>
         </div>
-        <span className="text-[13px] text-text-2">
+        <span className="ps-4 text-[11px] text-text-2">
           {column.value === null ? t('board.noValue') : s.millions(column.value)}
         </span>
-        {!movable && (
-          <span className="text-xs leading-5 text-text-2">{t('board.move.managed')}</span>
-        )}
       </div>
-      <ul className="m-0 flex min-h-24 list-none flex-col gap-3 p-0">{children}</ul>
+      <ul
+        className={`m-0 flex min-h-0 [scrollbar-width:thin] list-none flex-col gap-2.5 overflow-y-auto overscroll-y-contain px-2.5 pb-2.5 ${column.cards.length ? 'flex-1' : 'flex-none'}`}
+      >
+        {children}
+      </ul>
       {column.cards.length === 0 && (
-        <p className="m-0 px-1 text-sm text-text-2">{t('board.move.empty')}</p>
+        <div className="mx-2.5 mb-auto flex min-h-32 flex-none flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-2 p-4 text-center text-text-2">
+          <Icon name={column.stage === 'won' ? 'check' : 'grid'} size={18} />
+          <p className="m-0 text-xs">{t('board.move.empty')}</p>
+        </div>
       )}
       {column.count > column.cards.length && (
         <Link
           to={salesPath(`leads?stage=${column.stage}`)}
-          className="px-1 text-sm text-primary-text"
+          className="mx-2.5 mb-2.5 inline-flex min-h-11 flex-none items-center justify-center gap-2 rounded-lg border border-dashed border-line-2 text-xs font-medium text-text-2 hover:border-line-3 hover:bg-surface"
         >
           {t('board.more', { n: f.number(column.count - column.cards.length) })}
+          <Icon name="chevronEnd" size={14} />
         </Link>
       )}
     </section>
@@ -319,19 +343,19 @@ function DraggableDeal({
     attributes: { roleDescription: t('board.move.card') },
   });
   return (
-    <li ref={setNodeRef} className={`relative ${isDragging ? 'opacity-30' : ''}`}>
+    <li ref={setNodeRef} className={`relative flex-none ${isDragging ? 'opacity-30' : ''}`}>
       <MemoDealCard card={card} />
       {movable && (
         <MemoIconButton
           ref={setActivatorNodeRef}
           {...attributes}
           {...listeners}
-          icon="more"
+          icon="grip"
           aria-label={t('board.move.title', { name: card.name })}
           data-move-lead={card.lead}
           disabled={disabled}
           onClick={onPick}
-          className="absolute end-1 top-1 cursor-grab touch-pan-y active:cursor-grabbing"
+          className="absolute end-0.5 top-0.5 cursor-grab touch-pan-y text-text-2 active:cursor-grabbing"
         />
       )}
       {pending && (

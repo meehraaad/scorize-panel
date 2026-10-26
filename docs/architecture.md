@@ -176,6 +176,12 @@ data, with light/dark and fa/en (RTL/LTR) switches. The page exists only in dev 
 When a new screen needs something a block can't do, extend the block (a prop or a variant) rather
 than copying its markup into the feature, and add it to the gallery.
 
+`PageWorkspace` opts a screen into a full-width, viewport-height layout with an internal scrolling
+area. It hides the panel footer while mounted. Its controlled fullscreen view hides the panel
+header and mobile tabs until the user exits or presses Escape; Escape within a drag or open dialog
+stays with that interaction. The Sales Board uses it, with independent scrolling in each stage.
+Other panel pages keep their existing width and navigation.
+
 ### Sales panel (canvas "Scorize Seller Panel")
 
 `features/sales/` holds every sales page (Today, Leads and My consultations under one nav tab with
