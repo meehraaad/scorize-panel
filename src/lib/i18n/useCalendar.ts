@@ -22,6 +22,8 @@ export function useCalendar() {
       weekdayLong: new Intl.DateTimeFormat(intl, { weekday: 'long' }),
       number: new Intl.NumberFormat(intl, { useGrouping: false }),
       twoDigits: new Intl.NumberFormat(intl, { minimumIntegerDigits: 2, useGrouping: false }),
+      /** "27 Oct": the Gregorian day beside a Jalali one (people abroad, universities' dates). */
+      gregorianDay: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }),
     }),
     [kind, dir, intl],
   );

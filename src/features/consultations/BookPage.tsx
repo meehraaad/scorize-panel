@@ -397,6 +397,10 @@ function SlotCard({
           <span className="text-sm">
             {t('booking.when', { day: f.weekday(start), from: f.time(start), to: f.time(end) })}
           </span>
+          {f.gregorian(start) && (
+            // The same day in the Gregorian calendar, kept left to right.
+            <span className="text-xs text-text-2">{`\u2066${f.gregorian(start) ?? ''}\u2069`}</span>
+          )}
         </span>
         <IconButton icon="close" aria-label={t('booking.close')} onClick={onClose} />
       </div>

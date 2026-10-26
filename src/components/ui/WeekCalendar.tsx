@@ -366,6 +366,11 @@ function WeekGrid({
               >
                 {cal.number.format(toCalendar(day.date, cal.kind).day)}
               </span>
+              {cal.kind === 'persian' && (
+                <span dir="ltr" className="text-[11px] leading-4 text-text-3">
+                  {cal.gregorianDay.format(day.date)}
+                </span>
+              )}
             </div>
           );
         })}
@@ -559,6 +564,11 @@ function DayView({
               >
                 {cal.number.format(toCalendar(day.date, cal.kind).day)}
               </span>
+              {cal.kind === 'persian' && (open || isToday) && (
+                <span dir="ltr" className="text-[10px] leading-3 whitespace-nowrap text-text-2">
+                  {cal.gregorianDay.format(day.date)}
+                </span>
+              )}
               <span
                 aria-hidden="true"
                 className={`size-1.5 rounded-full ${open && !isCurrent ? 'bg-[var(--event)]' : 'bg-transparent'}`}

@@ -58,6 +58,8 @@ describe('booking a consultation', () => {
 
     const calendar = screen.getByRole('region', { name: 'زمان‌های مشاوره‌ی اپلای' });
     expect(within(calendar).getByRole('heading', { name: '۲ تا ۸ آبان ۱۴۰۵' })).toBeInTheDocument();
+    // Each Jalali day with its Gregorian date under it.
+    expect(within(calendar).getByText('27 Oct')).toBeInTheDocument();
     const tuesday = within(calendar).getByRole('group', { name: 'سه‌شنبه ۵ آبان' });
     // Free, one seat left, full.
     expect(within(tuesday).getByRole('button', { name: /۰۶:۳۰ تا ۰۶:۵۰$/ })).toBeEnabled();
@@ -67,6 +69,7 @@ describe('booking a consultation', () => {
     await user.click(within(tuesday).getByRole('button', { name: /۰۶:۵۰ تا ۰۷:۱۰/ }));
     const card = screen.getByRole('dialog', { name: 'زمان انتخابی برای مشاوره‌ی اپلای' });
     expect(within(card).getByText('سه‌شنبه ۵ آبان · ۰۶:۵۰ تا ۰۷:۱۰')).toBeInTheDocument();
+    expect(within(card).getByText(/27 Oct 2026/)).toBeInTheDocument();
     expect(within(card).getByText('۵۰۰٬۰۰۰ تومان')).toBeInTheDocument();
     expect(within(card).getByText('فقط یک جای خالی مانده')).toBeInTheDocument();
 
