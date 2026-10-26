@@ -1,24 +1,35 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, isRouteErrorResponse, useRouteError } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PageSkeleton } from '@/components/ui/Skeleton';
 import { START_PATH } from '@/lib/auth/session';
+import { usePageSkeleton } from '@/lib/router/lazyPage';
+import { reloadForNewBuild, shouldReloadFor } from '@/lib/router/staleBuild';
 
 function useRouteFailure() {
   const error = useRouteError();
   const notFound = isRouteErrorResponse(error) && error.status === 404;
-  if (!notFound) console.error(error);
-  return { notFound };
+  // Code from before a deploy: reload once into the new build (lib/router/staleBuild.ts).
+  // Decided once, so the reload's own bookkeeping can't flip it to the error mid-way.
+  const [reloading] = useState(() => shouldReloadFor(error));
+  useEffect(() => {
+    if (reloading) reloadForNewBuild();
+  }, [reloading]);
+  if (!notFound && !reloading) console.error(error);
+  return { notFound, reloading };
 }
 
 /**
  * Last-resort boundary for a whole layout (the shell itself failed). Also catches failed lazy
- * chunks, e.g. after a deploy or on a bad network; reloading fetches the new files.
+ * chunks: after a deploy it reloads into the new files by itself; on a bad network it offers to.
  */
 export function ErrorPage() {
   const { t } = useTranslation();
-  const { notFound } = useRouteFailure();
+  const { notFound, reloading } = useRouteFailure();
+  if (reloading) return null;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 py-16">
@@ -43,8 +54,10 @@ export function ErrorPage() {
 /** Boundary inside a panel: only the page area is replaced, the header and menus keep working. */
 export function SectionError() {
   const { t } = useTranslation();
-  const { notFound } = useRouteFailure();
+  const { notFound, reloading } = useRouteFailure();
+  const skeleton = usePageSkeleton();
   if (notFound) return <NotFoundPage />;
+  if (reloading) return <PageSkeleton kind={skeleton} />;
 
   return (
     <Card className="flex flex-col items-start gap-4 p-6 lg:p-8" role="alert">
