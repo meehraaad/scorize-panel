@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { EstimateFlow } from '@/components/applicant/estimate/EstimateFlow';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { consultationsQuery, splitSessions } from '@/lib/applicant/consultations';
+import { consultationsQuery, recentSession, splitSessions } from '@/lib/applicant/consultations';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import { latestEstimateQuery } from '@/lib/applicant/estimate';
 import { backgroundQuery, reviewDocumentsQuery } from '@/lib/applicant/journey';
 import { useUser } from '@/lib/auth/session';
 import { GuestSections, TurkeyCard } from '../GuestSections';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { AfterSessionCard } from './AfterSessionCard';
 import { ReadinessCard } from './ReadinessCard';
 import { ReviewUploadCard } from './ReviewUploadCard';
 import { SessionCard } from './SessionCard';
@@ -22,6 +23,7 @@ import { StartPaths } from './StartPaths';
  * - first visit: the admission-chance quiz leads, then the ways to start
  * - after the quiz: how ready the case is, files for a free review, then the ways to start
  * - a booked consultation: the session and what to fill before it lead
+ * - after a session (within a month): a short survey about it leads
  * Design: "Scorize New User Dashboard" canvas (Main, FirstVisit, UpcomingConsult).
  */
 export function NewUserHome({ access }: { access: ApplicantAccess }) {
@@ -33,6 +35,8 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   const { data: sessions } = useSuspenseQuery(consultationsQuery);
   const { upcoming } = splitSessions(sessions.results);
   const next = upcoming[0];
+  // The last session, while it is recent: the survey about it (or the thanks for it) leads.
+  const held = recentSession(sessions.results);
 
   const quiz = <EstimateFlow key="quiz" phone={access.phone} detailsTo="/estimate" />;
   const readiness = (
@@ -47,12 +51,20 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
     />
   );
   const upload = <ReviewUploadCard key="upload" files={files} />;
-  const paths = <StartPaths key="paths" access={access} />;
+  const paths = <StartPaths key="paths" access={access} consulted={sessions.results.length > 0} />;
 
   let blocks: ReactNode[];
   if (next)
     blocks = [
       <SessionCard key="session" session={next} backgroundComplete={background.complete} />,
+      readiness,
+      upload,
+      paths,
+      quiz,
+    ];
+  else if (held)
+    blocks = [
+      <AfterSessionCard key="after" session={held} access={access} />,
       readiness,
       upload,
       paths,

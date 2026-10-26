@@ -12,11 +12,18 @@ import { SITE } from '@/lib/site';
 const PATH = 'flex flex-col gap-3 p-5 lg:p-6';
 
 /**
- * The three ways to begin, each one step away from money: Turkey (starts without paying first;
- * its own flow once on the server, a seller's call until then), a paid consultation, or a call
- * about a contract. Design: "Scorize New User Dashboard" canvas, start paths.
+ * The ways to begin, each one step away from money: Turkey (starts without paying first; its own
+ * flow once on the server, a seller's call until then), a paid consultation (not once one was
+ * booked), or a call about a contract. Design: "Scorize New User Dashboard" canvas, start paths.
  */
-export function StartPaths({ access }: { access: ApplicantAccess }) {
+export function StartPaths({
+  access,
+  consulted = false,
+}: {
+  access: ApplicantAccess;
+  /** Has had or booked a session: no consultation offer, two ways left. */
+  consulted?: boolean;
+}) {
   const { t } = useTranslation('journey');
   const button = buttonClass('primary', 'mt-auto w-full');
   const call = (topic: 'turkey' | 'admission', label: string) => (
@@ -33,7 +40,7 @@ export function StartPaths({ access }: { access: ApplicantAccess }) {
   return (
     <section aria-labelledby="journey-paths" className="flex flex-col gap-3.5">
       <SectionHeading id="journey-paths" title={t('paths.title')} subtitle={t('paths.subtitle')} />
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className={`grid gap-3 ${consulted ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
         <Card
           aria-labelledby="journey-path-turkey"
           className={`${PATH} shadow-[0_0_0_1.5px_var(--primary),var(--panel-shadow)]`}
@@ -53,15 +60,17 @@ export function StartPaths({ access }: { access: ApplicantAccess }) {
             call('turkey', t('paths.turkey.call'))
           )}
         </Card>
-        <Card aria-labelledby="journey-path-consult" className={PATH}>
-          <h3 id="journey-path-consult" className="m-0 text-base font-bold">
-            {t('paths.consult.title')}
-          </h3>
-          <p className="m-0 text-[13px] leading-6 text-text-2">{t('paths.consult.text')}</p>
-          <a href={SITE.consultation} className={buttonClass('outline', 'mt-auto w-full')}>
-            {t('paths.consult.start')}
-          </a>
-        </Card>
+        {!consulted && (
+          <Card aria-labelledby="journey-path-consult" className={PATH}>
+            <h3 id="journey-path-consult" className="m-0 text-base font-bold">
+              {t('paths.consult.title')}
+            </h3>
+            <p className="m-0 text-[13px] leading-6 text-text-2">{t('paths.consult.text')}</p>
+            <a href={SITE.consultation} className={buttonClass('outline', 'mt-auto w-full')}>
+              {t('paths.consult.start')}
+            </a>
+          </Card>
+        )}
         <Card aria-labelledby="journey-path-contract" className={PATH}>
           <h3 id="journey-path-contract" className="m-0 text-base font-bold">
             {t('paths.contract.title')}

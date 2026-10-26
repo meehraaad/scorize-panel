@@ -61,7 +61,7 @@
   },
   "paths": {
     "title": "Where shall we start?",
-    "subtitle": "Three ways to begin; pick the one closest to you.",
+    "subtitle": "Pick the one closest to you and start here.",
     "turkey": {
       "title": "Apply to Turkey, nothing upfront",
       "text": "Starts without an upfront payment; send your documents and the team reviews them.",
@@ -142,5 +142,55 @@
     "complete": "The form is complete; your consultant has everything.",
     "incomplete": "To complete it: your city and at least one degree with its university and GPA.",
     "back": "Back to home"
+  },
+  "afterSession": {
+    "kicker": "Your session is done",
+    "title": "How was your session with {{name}}?",
+    "titleNoName": "How was your consultation?",
+    "meta": "{{title}} · {{date}}",
+    "subtitle": "Three short questions. Your answers go straight to your case manager so they can prepare your next step.",
+    "rating": "How would you rate your consultant?",
+    "star": "{{n}} out of 5",
+    "clear": "Is your path clear after the session?",
+    "clearOption": {
+      "yes": "Yes, completely",
+      "partly": "Partly",
+      "no": "Not yet"
+    },
+    "next": "What is your next step?",
+    "nextOption": {
+      "contract": {
+        "label": "I'm ready for a contract",
+        "hint": "Your case manager calls you about the contract."
+      },
+      "think": {
+        "label": "I'll think about it",
+        "hint": "Any question left, we're here."
+      },
+      "cost": {
+        "label": "The cost is a question for me",
+        "hint": "We tell you about cheaper paths and instalments."
+      },
+      "compare": {
+        "label": "I'm looking at other options too",
+        "hint": "We explain the differences clearly."
+      }
+    },
+    "comment": "Anything you want us to know? (optional)",
+    "required": "Answer all three questions.",
+    "submit": "Send",
+    "sending": "Sending…",
+    "sent": "Thank you! We got your answer.",
+    "error": "It wasn't sent. Try again.",
+    "thanks": "Thank you for your feedback",
+    "after": {
+      "contract": "Your case manager will call you about the contract soon.",
+      "think": "Whenever you have a question, one call is enough.",
+      "cost": "Applying to Turkey starts with nothing upfront; we can call you about it.",
+      "compare": "Any question while comparing, one call is enough."
+    },
+    "call": "I have a question, call me",
+    "callTurkey": "Call me about Turkey",
+    "details": "Session details"
   }
 }
