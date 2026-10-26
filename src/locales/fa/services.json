@@ -3,6 +3,7 @@
   "subtitle": "بسته‌های آموزشی، رویدادها، مشاوره‌ها و ابزار محاسبه‌ی GPA.",
   "amount": "{{amount}} تومان",
   "credit": "اعتبار کیف پول",
+  "pager": "{{from}} تا {{to}} از {{total}}",
   "sections": "بخش‌های این صفحه",
   "tile": {
     "packages": {

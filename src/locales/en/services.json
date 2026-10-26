@@ -3,6 +3,7 @@
   "subtitle": "Courses, events, consultations and the GPA calculator.",
   "amount": "{{amount}} toman",
   "credit": "Wallet credit",
+  "pager": "{{from}}–{{to}} of {{total}}",
   "sections": "Sections of this page",
   "tile": {
     "packages": {
