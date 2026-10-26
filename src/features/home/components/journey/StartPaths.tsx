@@ -1,7 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import istanbul from '@/assets/journey/istanbul.svg';
-import travel from '@/assets/journey/travel.svg';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
@@ -11,6 +9,10 @@ import type { ApplicantAccess } from '@/lib/applicant/access';
 import type { StartOffers } from '@/lib/applicant/journey';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
+import immigrationImage from './images/immigration.webp';
+import immigrationMobileImage from './images/immigration-mobile.webp';
+import turkeyStudyImage from './images/turkey-study.webp';
+import turkeyStudyMobileImage from './images/turkey-study-mobile.webp';
 
 const TURKEY_STEPS = [
   { key: 'upload', icon: 'upload' },
@@ -21,8 +23,8 @@ const TURKEY_STEPS = [
 /**
  * The two ways to begin that start today (the consultation has its own card): Turkey, which starts
  * without paying first (its own flow once on the server, a seller's call until then), and a call
- * about a contract, with what it costs per instalment. Each has a picture: Istanbul at sunset, a
- * paper plane over the globe. Design: "Mobile Quiz Card Mockups" canvas, start paths.
+ * about a contract, with what it costs per instalment. Each has dedicated mobile and desktop
+ * artwork: a Turkish campus and a doorway to a new city.
  */
 export function StartPaths({ access, offers }: { access: ApplicantAccess; offers: StartOffers }) {
   const { t } = useTranslation('journey');
@@ -56,8 +58,24 @@ export function StartPaths({ access, offers }: { access: ApplicantAccess; offers
           aria-labelledby="journey-path-turkey"
           className="flex flex-col shadow-[var(--panel-shadow),var(--path-shadow)] lg:flex-row"
         >
-          <div className="relative h-44 flex-none lg:order-last lg:h-auto lg:w-[38%]">
-            <img src={istanbul} alt="" className="block size-full object-cover" />
+          <div className="relative aspect-2/1 flex-none lg:order-last lg:aspect-auto lg:w-[38%]">
+            <picture className="absolute inset-0">
+              <source
+                media="(min-width: 1024px)"
+                srcSet={turkeyStudyImage}
+                width={720}
+                height={1000}
+              />
+              <img
+                src={turkeyStudyMobileImage}
+                alt=""
+                width={960}
+                height={480}
+                loading="lazy"
+                decoding="async"
+                className="block size-full object-cover"
+              />
+            </picture>
             <span className="absolute start-3.5 top-3.5 inline-flex h-7.5 items-center gap-1.5 rounded-full bg-surface px-3 text-xs font-bold text-good shadow-panel">
               <Icon name="check" size={14} />
               {t('paths.turkey.chip')}
@@ -119,9 +137,23 @@ export function StartPaths({ access, offers }: { access: ApplicantAccess; offers
         </Card>
 
         <Card aria-labelledby="journey-path-contract" className="flex flex-col">
-          <div className="h-25 flex-none lg:h-28">
-            <img src={travel} alt="" className="block size-full object-cover" />
-          </div>
+          <picture className="block aspect-2/1 flex-none lg:aspect-16/5">
+            <source
+              media="(min-width: 1024px)"
+              srcSet={immigrationImage}
+              width={1200}
+              height={375}
+            />
+            <img
+              src={immigrationMobileImage}
+              alt=""
+              width={960}
+              height={480}
+              loading="lazy"
+              decoding="async"
+              className="block size-full object-cover"
+            />
+          </picture>
           <div className="flex flex-1 flex-col gap-3.5 p-5 lg:p-6">
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-bold text-primary-text">
