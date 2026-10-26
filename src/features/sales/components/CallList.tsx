@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
@@ -15,13 +14,22 @@ import { ScoreChip } from './LeadChips';
 type Tab = CallBucket | 'all';
 const TABS: readonly Tab[] = ['all', 'new', 'today', 'overdue'];
 
-/** Today's call list: new leads, then overdue follow-ups, then by score (the server's order). */
-export function CallList({ calls }: { calls: CallItem[] }) {
+/** Today's call list: new leads, today’s follow-ups, overdue follow-ups, then by score (the server's order). */
+export function CallList({
+  calls,
+  counts,
+  tab,
+  onTab,
+}: {
+  calls: CallItem[];
+  counts: Record<Tab, number> | undefined;
+  tab: Tab;
+  onTab: (tab: Tab) => void;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  const [tab, setTab] = useState<Tab>('all');
-  const shown = calls.filter((call) => tab === 'all' || call.bucket === tab);
+  const shown = calls;
 
   const dueOf = (call: CallItem) => {
     if (call.bucket === 'new') return { text: t('today.list.dueNew'), urgent: true };
@@ -44,13 +52,11 @@ export function CallList({ calls }: { calls: CallItem[] }) {
         <FilterTabs
           label={t('today.list.filter')}
           value={tab}
-          onChange={setTab}
+          onChange={onTab}
           options={TABS.map((value) => ({
             value,
             label: t(`today.list.tab.${value}`),
-            count: f.number(
-              value === 'all' ? calls.length : calls.filter((call) => call.bucket === value).length,
-            ),
+            count: f.number(counts?.[value] ?? 0),
           }))}
         />
       </div>

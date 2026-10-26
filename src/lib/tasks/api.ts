@@ -70,6 +70,7 @@ export function useCreateTask(also: QueryKey) {
     onSuccess: () =>
       Promise.all([
         client.invalidateQueries({ queryKey: TASKS_KEY }),
+        client.invalidateQueries({ queryKey: ['sales', 'today', 'activity'] }),
         client.invalidateQueries({ queryKey: also }),
       ]),
   });
@@ -224,6 +225,10 @@ export function useTaskChange() {
       const { kind, ...body } = change;
       return api(`${TASKS_API}/${String(id)}/${CHANGE_PATH[kind]}/`, { method: 'POST', body });
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: TASKS_KEY }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: TASKS_KEY }),
+        client.invalidateQueries({ queryKey: ['sales', 'today', 'activity'] }),
+      ]),
   });
 }

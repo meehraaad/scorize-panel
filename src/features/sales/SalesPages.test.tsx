@@ -35,11 +35,12 @@ describe('sales panel, seller pages', () => {
 
     const calls = screen.getByRole('region', { name: 'فهرست تماس امروز' });
     await user.click(within(calls).getByRole('button', { name: /عقب‌افتاده/ }));
+    expect(await within(calls).findByText('سمیرا نوروزی')).toBeInTheDocument();
     expect(within(calls).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(calls).getByText('سمیرا نوروزی')).toBeInTheDocument();
 
+    await user.click(screen.getByText('ماه من', { selector: 'summary' }));
     // Two admissions of one customer make one card.
-    const upsell = screen.getByRole('region', { name: 'فرصت‌های فروش مکمل' });
+    const upsell = await screen.findByRole('region', { name: 'فرصت‌های فروش مکمل' });
     expect(within(upsell).getAllByRole('listitem')).toHaveLength(3);
     expect(
       within(upsell).getByText('زهرا موسوی از Uppsala University و Lund University پذیرش گرفت'),

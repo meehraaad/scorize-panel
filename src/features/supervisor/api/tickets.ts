@@ -12,6 +12,10 @@ import { SUPERVISOR_API, SUPERVISOR_KEY } from './common';
 export const caseTickets = (id: number): TicketsEndpoint => ({
   api: `${SUPERVISOR_API}/cases/${String(id)}/tickets`,
   queryKey: caseKey(id),
+  invalidateKeys: [
+    [...SUPERVISOR_KEY, 'today', 'waiting'],
+    [...SUPERVISOR_KEY, 'inbox'],
+  ],
 });
 
 export type InboxFilter = 'waiting' | 'all';

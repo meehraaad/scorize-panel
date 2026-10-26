@@ -102,3 +102,34 @@ export const receiptsQuery = (page: number) =>
     placeholderData: keepPreviousData,
     refetchInterval: 60_000,
   });
+
+export const outreachQuery = (page: number, hotPage = 1, bucket: CallBucket | 'all' = 'all') =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'today', 'outreach', page, hotPage, bucket],
+    placeholderData: keepPreviousData,
+    queryFn: ({ signal }) =>
+      api<{
+        hot: Page<HotLead>;
+        calls: Page<CallItem> & { counts: Record<CallBucket | 'all', number> };
+      }>(
+        `${SALES_API}/today/outreach/?page=${String(page)}&hot_page=${String(hotPage)}&bucket=${bucket}`,
+        { signal },
+      ),
+    refetchInterval: 60_000,
+  });
+export const activityQuery = (page: number) =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'today', 'activity', page],
+    queryFn: ({ signal }) =>
+      api<{ tasks: TodayData['tasks']; consultations: Page<TodayConsultation> }>(
+        `${SALES_API}/today/activity/?page=${String(page)}`,
+        { signal },
+      ),
+    refetchInterval: 60_000,
+  });
+export const insightsQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'today', 'insights'],
+  queryFn: ({ signal }) =>
+    api<Pick<TodayData, 'month' | 'upsell'>>(`${SALES_API}/today/insights/`, { signal }),
+  refetchInterval: 60_000,
+});

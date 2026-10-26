@@ -70,6 +70,7 @@
   "cancel": "Cancel",
   "error": "That didn't work. Please try again.",
   "today": {
+    "greeting": "Hello {{name}}",
     "title": "Hi {{name}}, {{n}} leads are waiting for your call",
     "titleClear": "Hi {{name}}, no leads are waiting",
     "subtitle": "{{n}} leads arrived less than 15 minutes ago. The sooner you call, the better the chance of a contract.",
@@ -96,7 +97,7 @@
       "dueNew": "New · not called yet",
       "dueToday": "Follow up today {{time}}",
       "stage": "Stage: {{stage}}",
-      "order": "Order: new leads, then overdue follow-ups, then by score.",
+      "order": "Order: new leads, today’s follow-ups, overdue follow-ups, then by score.",
       "empty": "Nobody is on today's call list."
     },
     "tasks": {
