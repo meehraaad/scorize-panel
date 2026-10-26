@@ -1,9 +1,12 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
+import { api } from '@/lib/api/client';
+import type { CustomerData, CustomerInfo } from './api';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
 
 const NIMA = 3; // seller (mock user in src/mocks/handlers.ts)
@@ -134,6 +137,33 @@ describe('sales panel, seller pages', () => {
     expect(universities).toEqual(['University of Toronto', 'University of Waterloo', 'TU Munich']);
   });
 
+  it('customer: opens the contact dialog while the details tab is still loading', async () => {
+    const info = await api<CustomerInfo>('/sales/v1/customers/105/info/');
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get('/api/sales/v1/customers/105/info/', async () => {
+        await pending;
+        return HttpResponse.json(info);
+      }),
+    );
+    renderApp('/sales/customers/105/info?log=call');
+    try {
+      expect(
+        await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'عرفان ملکی' })).toBeInTheDocument();
+    } finally {
+      release();
+    }
+    await screen.findByRole('region', {
+      name: i18n.t('info.personal.title', { ns: 'sales' }),
+      hidden: true,
+    });
+  });
+
   it('customer: asks a colleague for something', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
@@ -153,6 +183,36 @@ describe('sales panel, seller pages', () => {
     expect(screen.getByRole('region', { name: 'پیش‌نویس، منتظر مدیر' })).toHaveTextContent(
       'مدیر بررسی می‌کند',
     );
+  });
+
+  it('board: replaces the board with loading while a customer request is pending', async () => {
+    const user = userEvent.setup();
+    const customer = await api<CustomerData>('/sales/v1/customers/101/');
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get('/api/sales/v1/customers/101/', async () => {
+        await pending;
+        return HttpResponse.json(customer);
+      }),
+    );
+    const router = renderApp('/sales/board');
+    await screen.findByRole('heading', { name: 'تابلوی فروش' });
+    const card = screen
+      .getAllByRole('link')
+      .find((link) => link.getAttribute('href') === '/sales/customers/101');
+    if (!card) throw new Error('No customer card');
+    try {
+      await user.click(card);
+      await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/sales\/customers\//));
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('در حال بارگذاری'));
+      expect(screen.queryByRole('heading', { name: 'تابلوی فروش' })).not.toBeInTheDocument();
+    } finally {
+      release();
+    }
+    expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 
   it('month: goal and funnel', async () => {

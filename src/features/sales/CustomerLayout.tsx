@@ -1,8 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
+import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { PageStack } from '@/components/ui/PageColumns';
+import { PageLoader } from '@/components/ui/PageLoader';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import type { MessageChannel } from '@/lib/sales/api';
 import { customerQuery, type ProductCategory } from './api';
@@ -70,7 +72,10 @@ export default function CustomerLayout() {
         onSell={() => update((current) => current.set('sell', 'consultation'))}
       />
       <CustomerTabs customer={data} />
-      <Outlet />
+      {/* Tab data must not hold up the customer actions or the contact dialog. */}
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
       {/* Keyed by what opened it, so a new intent starts a fresh form. */}
       <LogDialog
         key={start ? `log-${start.channel}-${String(start.reservation ?? '')}` : 'log-closed'}

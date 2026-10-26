@@ -333,5 +333,9 @@ are loaded per script as text appears.
 - `index.html` preloads the `whoami` request, so the session check runs while JS downloads.
 - New pages must be lazy routes. Heavy widgets (charts, editors, date pickers) are lazy-loaded inside
   their page.
+- The panel's Suspense boundary is keyed by pathname so a new page shows its loading state during
+  navigation instead of leaving the previous screen visible under the new URL. Search-only changes
+  keep form state. Customer tabs have a separate boundary so their data cannot block customer actions
+  or dialogs.
 - The Noto Kufi display font costs ~120 KB. Set `--family-display` to `var(--family-body)` in
   `tokens.css` to drop it if needed.

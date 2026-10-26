@@ -141,7 +141,9 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
       </header>
 
       <main id="main" className="mx-auto w-full max-w-page flex-1 px-4 pb-10 lg:px-8">
-        <Suspense fallback={<PageLoader />}>
+        {/* A new page must show its loading state rather than retain the previous page
+            during React Router's transition. Search-only changes keep the current form. */}
+        <Suspense key={location.pathname} fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
       </main>
