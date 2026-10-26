@@ -63,11 +63,11 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
     ),
   };
   const panels = panelsFor(user);
-  // Staff viewing the panel as a regular customer: it isn't one of their panels, so list it too
-  // (as the current one) and the switcher is their way back to work.
+  // Staff may open the applicant panel as a regular customer even when it isn't one of their
+  // panels, so the switcher always lists it last: their way there from work, and back.
   // Compared by id, not identity: a hot reload in development can recreate panel objects.
   const has = (target: PanelDefinition) => panels.some((item) => item.id === target.id);
-  const listed = has(panel) ? panels : [...panels, panel];
+  const listed = has(applicantPanel) ? panels : [...panels, applicantPanel];
   const customerLink = !has(applicantPanel) && panel.id !== applicantPanel.id;
 
   return (

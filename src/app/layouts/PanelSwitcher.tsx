@@ -5,14 +5,22 @@ import { Icon } from '@/components/ui/Icon';
 import type { SessionUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { setStartPreference, startPreference, type StartPreference } from '@/panels/registry';
+import {
+  panelsFor,
+  setStartPreference,
+  startPreference,
+  type StartPreference,
+} from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { PanelTile } from './PanelTile';
 
 interface Props {
   user: SessionUser;
   panel: PanelDefinition;
-  /** Only rendered for two or more: with one panel there is nothing to switch. */
+  /**
+   * Only rendered for two or more: with one panel there is nothing to switch. Staff also get the
+   * applicant panel here, though it isn't one of their own (see PanelLayout).
+   */
   panels: PanelDefinition[];
 }
 
@@ -65,6 +73,9 @@ export function PanelSwitcher({ user, panel, panels }: Props) {
   }, [open]);
 
   if (panels.length < 2) return null;
+
+  // "Open after login" chooses among the user's own panels: with one, there is nothing to choose.
+  const own = panelsFor(user);
 
   const name = `${user.first_name} ${user.last_name}`.trim() || user.email || user.phone_number;
 
@@ -132,31 +143,35 @@ export function PanelSwitcher({ user, panel, panels }: Props) {
             })}
           </nav>
 
-          <div className="mx-3.5 my-2 h-px bg-hair" />
-          <label className="flex flex-wrap items-center justify-between gap-3 px-3.5 pt-1.5 pb-1 text-sm text-neutral">
-            {t('switcher.startLabel')}
-            <select
-              value={preference}
-              onChange={(event) => {
-                const value = event.target.value as StartPreference;
-                const previous = preference;
-                setPreference(value);
-                setStartPreference(value).catch(() => {
-                  setPreference(previous);
-                  toast.error(t('switcher.saveFailed'));
-                });
-              }}
-              className="h-11 max-w-full rounded-full bg-canvas px-3 text-sm text-text"
-            >
-              <option value="last">{t('switcher.start.last')}</option>
-              {panels.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {t('switcher.start.always', { panel: t(item.name) })}
-                </option>
-              ))}
-              <option value="ask">{t('switcher.start.ask')}</option>
-            </select>
-          </label>
+          {own.length > 1 && (
+            <>
+              <div className="mx-3.5 my-2 h-px bg-hair" />
+              <label className="flex flex-wrap items-center justify-between gap-3 px-3.5 pt-1.5 pb-1 text-sm text-neutral">
+                {t('switcher.startLabel')}
+                <select
+                  value={preference}
+                  onChange={(event) => {
+                    const value = event.target.value as StartPreference;
+                    const previous = preference;
+                    setPreference(value);
+                    setStartPreference(value).catch(() => {
+                      setPreference(previous);
+                      toast.error(t('switcher.saveFailed'));
+                    });
+                  }}
+                  className="h-11 max-w-full rounded-full bg-canvas px-3 text-sm text-text"
+                >
+                  <option value="last">{t('switcher.start.last')}</option>
+                  {own.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {t('switcher.start.always', { panel: t(item.name) })}
+                    </option>
+                  ))}
+                  <option value="ask">{t('switcher.start.ask')}</option>
+                </select>
+              </label>
+            </>
+          )}
         </div>
       </dialog>
     </div>
