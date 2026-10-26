@@ -15,7 +15,7 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES, STAGES } from '@/lib/sales/api';
+import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES } from '@/lib/sales/api';
 import { pagesOf } from '@/lib/api/page';
 import {
   LEAD_FILTERS,

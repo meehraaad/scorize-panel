@@ -61,8 +61,17 @@ const PAGES: PageCase[] = [
     later: [{ key: '"messages"', why: "the thread's id comes from the list (backend item H55)" }],
   },
   // Sales panel.
+  {
+    path: '/sales',
+    user: NIMA,
+    later: [
+      {
+        key: '"insights"',
+        why: 'the month and the chances are far down the page: they load when scrolled into view',
+      },
+    ],
+  },
   ...[
-    '/sales',
     '/sales/leads',
     '/sales/leads?stage=new',
     '/sales/leads/consultations',

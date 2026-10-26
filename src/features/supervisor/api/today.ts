@@ -58,23 +58,3 @@ export const todayCountsQuery = queryOptions({
   queryFn: ({ signal }) => api<TodayData['counts']>(`${SUPERVISOR_API}/today/counts/`, { signal }),
   refetchInterval: 5 * 60_000,
 });
-
-export const todayBoardQuery = (page: number) =>
-  queryOptions({
-    queryKey: [...SUPERVISOR_KEY, 'today', 'board', page],
-    queryFn: ({ signal }) =>
-      api<Page<BoardItem>>(`${SUPERVISOR_API}/today/board/?page=${String(page)}`, { signal }),
-    refetchInterval: 5 * 60_000,
-  });
-export const todayWaitingQuery = (page: number) =>
-  queryOptions({
-    queryKey: [...SUPERVISOR_KEY, 'today', 'waiting', page],
-    queryFn: ({ signal }) =>
-      api<Page<WaitingCase>>(`${SUPERVISOR_API}/today/waiting/?page=${String(page)}`, { signal }),
-    refetchInterval: 5 * 60_000,
-  });
-export const todayCountsQuery = queryOptions({
-  queryKey: [...SUPERVISOR_KEY, 'today', 'counts'],
-  queryFn: ({ signal }) => api<TodayData['counts']>(`${SUPERVISOR_API}/today/counts/`, { signal }),
-  refetchInterval: 5 * 60_000,
-});
