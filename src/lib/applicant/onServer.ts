@@ -28,6 +28,6 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   consultationInfo: true,
   /** H42, H43 `services/packages/<id>/` and its review. */
   packages: true,
-  /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution PR #5, not deployed yet). */
-  estimate: false,
+  /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution `mehrad-take-over`). */
+  estimate: true,
 };

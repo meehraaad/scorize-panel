@@ -11,7 +11,7 @@ scorize-revolution (tested, not deployed; its `docs/panel-backend-plan.md` has t
 status and the deploy checklist), and the panel calls those endpoints (backend-integration.md).
 Built since then (branch `claude/applicant-endpoints-h29-h51`): H7, H29, H37, H38, H41–H43, H50,
 H51; the panel uses them. The admission-chance quiz H52–H54 and H56 and its funnel S42 (branch `claude/trusting-goodall-zn3nyn`):
-the panel's quiz page is built and stays off (`ON_SERVER.estimate`) until that branch is deployed.
+merged into `mehrad-take-over`; the panel's quiz is on (`ON_SERVER.estimate`) and is the guest home.
 Work and migration checks H57–H58 are on the same branch; the panel has no page for them yet. Not built yet: H30–H35, WR6, R5, R7, R8, A10–A12, A15, A16 and the wiring
 P1, P2. Parked for the team's input: H24 (automatic invoice per instalment), H48 (NPS
 credit, C11) and the content items C1–C11. The marks below predate that branch.
