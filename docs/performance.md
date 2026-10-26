@@ -1,20 +1,30 @@
 # Performance: how pages stay fast
 
-The target: a page opens in **one round trip**, whether it is the first page of the visit or a
-click inside the panel. Its code, its dictionaries and every request its first screen needs start
-together, the moment the URL is known, never one after another (a "waterfall").
+The target: a page opens in **one round trip** or less, whether it is the first page of the visit
+or a click inside the panel, and while anything loads the user sees the page's shape, never a
+spinner or a blank screen. Five rules get there; each is enforced by a test or a CI step.
 
-## Page data: the rule for every page
+| Rule                                          | Where                                       | Enforced by                   |
+| --------------------------------------------- | ------------------------------------------- | ----------------------------- |
+| Page data loads with the page's code          | `lazyPage(…, { data })`                     | `src/app/pageData.test.tsx`   |
+| Every page has a loading shape                | `lazyPage(…, { skeleton })`, `PageSkeleton` | `src/app/skeletons.test.ts`   |
+| The next page starts loading before the click | `src/lib/router/preload.ts`                 | `src/app/preload.test.tsx`    |
+| Answers are reused, not refetched             | `src/lib/api/queryClient.ts`, `persist.ts`  | `src/lib/api/persist.test.ts` |
+| The first load stays small                    | `scripts/check-size.mjs` (`pnpm size`)      | CI, after `pnpm build`        |
 
-Each route declares what its page shows first, as the third argument of `lazyPage`
-(`src/lib/router/lazyPage.ts`):
+## 1. Page data: no waterfalls
+
+Each route declares what its page shows first (`src/lib/router/lazyPage.ts`):
 
 ```tsx
 {
   path: 'customers/:id/offer',
-  ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales'], ({ params }) => {
-    const id = idParam(params.id);
-    return id === null ? [] : [customerQuery(id), offerQuery(id)];
+  ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales'], {
+    data: ({ params }) => {
+      const id = idParam(params.id);
+      return id === null ? [] : [customerQuery(id), offerQuery(id)];
+    },
+    skeleton: 'form',
   }),
 },
 ```
@@ -23,53 +33,83 @@ Each route declares what its page shows first, as the third argument of `lazyPag
   alike, in the page and in its child components. Use the same factory and the same arguments
   the page starts with (page 1, the default tab and filters, the URL's search params), so the
   query keys match and the page finds the data already loading.
-- **Read from the URL only** (`params`, `request.url`). Page state that starts from the URL
-  (e.g. the leads `?stage=` tab) gets one parser shared by the page and the route
-  (`leadFilterOf`); defaults that both need go next to the query factory (`firstLeadQuery`).
+- **Read from the URL only** (`params`, `request.url`). Page state that starts from the URL gets one
+  parser shared by the page and the route (`leadFilterOf`, `firstLeadQuery`, `firstCasesQuery`).
 - **Nested routes each list their own data.** Loaders of a layout and its child run in parallel,
   so a customer tab's data starts with the customer, not after the layout renders.
-- **The panel frame** (header badge, locked nav) is prefetched by the panel route itself:
-  `unreadQuery` for every panel, plus `PanelDefinition.data` (the applicant panel's `accessQuery`).
-  Pages don't repeat it.
-- **Data that depends on other data** (the tickets thread comes from the list) is chained in the
-  loader, `queryClient.query(a).then(…)`, so it starts as soon as `a` arrives instead of after the
-  page renders. Better still, ask Django for both in one response (backend-changes.md H52).
+- **The panel frame** (header badge, locked nav) is prefetched by the panel route: `unreadQuery`
+  for every panel, plus `PanelDefinition.data` (the applicant panel's `accessQuery`).
+- **Data that depends on other data** is chained in the loader, `queryClient.query(a).then(…)`,
+  so it starts as soon as `a` arrives instead of after the page renders: `prefetchTickets` (the
+  thread's id comes from the list). Better still, Django sends both at once (backend-changes H52).
 - **What may load later**, on purpose: data behind a click (a dialog, a collapsed section,
-  `enabled: open`), the next page of a list, and below-the-fold sections that are costly and often
-  empty (professor emails). Say why in a comment, and in the test's `later` list.
+  `enabled: open`), the next page of a list, and below-the-fold sections that are costly and
+  often empty (professor emails). Say why in a comment, and in the test's `later` list.
 - Loaders never `await` data: navigation is not held up. A failure surfaces when the page reads
   the query, inside the page's error boundary.
 
-### The guard
+**The guard**: `pageData.test.tsx` opens every panel page against the fake Django and fails when a
+query is first loaded after the route has loaded, which is exactly a waterfall. **A new page goes
+into its `PAGES` list.**
 
-`src/app/pageData.test.tsx` opens every applicant and sales page against the fake Django and fails
-when a query is first loaded after the route has loaded, which is exactly a waterfall. **A new
-page goes into its `PAGES` list.** If it fails, the message names the query keys: add them to the
-route's data, or to `later` with the reason.
+## 2. Loading states: the page's shape, never a spinner
 
-## Roadmap
+- **Skeletons by page kind** (`PageSkeleton` in `components/ui/Skeleton.tsx`): `dashboard`,
+  `list`, `detail`, `form`, `board`, `chat`, and `tab` for the body of a tab inside a page that
+  keeps its own frame (customer, case file). Each page directly under a panel names its kind in
+  `lazyPage(…, { skeleton })`; the panel's Suspense boundary draws it under the real header and
+  menu. `skeletons.test.ts` fails when a panel page names none. Previewed at `/dev/components`.
+- **No flash, no flicker**: a skeleton fades in after 150 ms (`animate-appear`), so fast loads show
+  nothing; once shown, React keeps a Suspense fallback at least 300 ms, so it never blinks.
+- **Sections inside a page** (dashboards whose parts load on their own) use `QuerySection` with
+  `SkeletonRows`, so one slow or failing section doesn't hold up the others.
+- **A click always answers**: `NavigationProgress`, a thin bar at the top while the next page's
+  code or data is on its way (after 150 ms; it slides from the start side in both directions).
+- **First visit**: `PanelBootFallback` draws the header capsule and the page's skeleton while the
+  session check and the first code load, instead of a blank screen.
 
-Done in phase 1: the rule above, the guard, and every applicant and sales page following it
-(sales Today was prefetching an endpoint the page no longer read; offer, customer tabs, tasks,
-leads, consultations and the manager's team and follow-up pages each started requests only after
-rendering).
+## 3. Preload on intent
 
-| Phase | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Win                                                                       |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| 2     | **Loading states.** (a) Page-shaped skeletons instead of the `PageLoader` spinner: a few shared blocks by page kind (dashboard, list, detail with tabs, form); each route names its kind in `handle`, and the panel's Suspense fallback draws it under the real header. (b) A thin top progress bar while a navigation waits for code (shown after ~150 ms), so a click always answers. (c) The app frame (header shape + skeleton) as `BootFallback` on the first visit instead of a blank page. (d) No flicker: keep the 300 ms delay, and once shown keep a skeleton ≥ 400 ms. (e) The guard checks every route names its skeleton | The user sees the page's shape at once, never a spinner or a blank screen |
-| 3     | Add the supervisor, writer, account and settings pages to the guard and fix what it finds (their routes already use `lazyPage(…, data)`, with the same queries as before; not yet audited; supervisor Today may prefetch an unused endpoint, as sales Today did)                                                                                                                                                                                                                                                                                                                                                                      | Same rule everywhere                                                      |
-| 4     | **Preload on intent**: on hover, focus or touch of an in-app link (and the panel's nav items once the page is idle) load the target route's chunk and run its data, through `matchRoutes(routes, to)`. The click then renders from cache                                                                                                                                                                                                                                                                                                                                                                                              | In-panel navigation feels instant                                         |
-| 5     | **Cache.** (a) `gcTime` 5 → 30 min, so going back to a page later shows it at once and refreshes behind it (now it is a skeleton after 5 idle minutes). (b) Mutations whose response is the updated object write it into the cache (`setQueryData`) instead of refetching it; keep the wide invalidation for the lists it affects. (c) Optimistic updates for quick actions (stage change, mark done, seen), as the board's drag already does. (d) Decide on persisting the cache across reloads (IndexedDB, keyed by user and app version, cleared on logout): instant reopen of the app, but customer data stays on the device      | Return visits and actions without waiting                                 |
-| 6     | Measure real users: report LCP, INP and CLS (`web-vitals`) per page to Django, plus a bundle-size check in CI against the budget in architecture.md                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Regressions are seen, not guessed                                         |
-| 7     | Backend (backend-changes.md): H52; a response-time budget for panel endpoints (p95 under 300 ms, `Server-Timing` header); `select_related`/`prefetch_related` on list views; Brotli next to the pre-gzipped assets                                                                                                                                                                                                                                                                                                                                                                                                                    | Each round trip is shorter                                                |
+`useIntentPreload` (mounted by the panel frame) starts a link's route code and route data when
+a mouse rests on it for 80 ms, or it is focused (keyboard) or touched (phones: ~100–300 ms before
+the click). `useIdlePreload` fetches the code of the panel's nav pages once the browser is idle.
+Route loaders only start queries, so running them early is safe: React Query de-duplicates, fresh
+data is not fetched again, and repeats within 10 s are skipped. Links to other sites, new tabs and
+downloads are ignored.
 
-### Caching today (audit, phase 1)
+## 4. Cache
 
-Already right: hashed assets are `immutable` for a year and precached by the service worker,
-`index.html` is `no-cache`; `whoami` is preloaded from `index.html`. Queries are fresh for 30 s by
-default (longer for slow-changing data: access, gates, products 5 min; writing drafts never
-refetch while open), so moving between pages within that time sends no request, and after it shows
-the cached page at once and refreshes in the background. Live lists poll every 60 s (sales) or
-5 min (supervisor) only while the tab is visible. A mutation invalidates its panel's queries: only
-those on screen refetch, the rest refetch when next shown. Logout and login clear the cache;
-a language change refetches (Django words some fields per language).
+- **Fresh for 30 s by default** (longer for slow-changing data: access, gates, products 5 min;
+  writing drafts never refetch while open): moving between pages within that time sends no
+  request. After it, the cached page shows at once and refreshes in the background.
+- **Kept 30 min** (`gcTime`): going back to a page shows it at once.
+- **Live lists poll** (sales 60 s, supervisor 5 min) only while the tab is visible.
+- **After an action** the panel's queries are invalidated: those on screen refetch, the rest when
+  next shown. Answers that carry the new state go straight into the cache (customer info, writing
+  drafts, a sent ticket message). Quick actions update at once and roll back if refused (board
+  drag, task done).
+- **Survives a reload of the tab** (`src/lib/api/persist.ts`): the cache is saved in
+  sessionStorage (this tab only, gone when it closes) and put back only after the session check
+  names the same user. The session is never saved; logout and login wipe it; an hour, a new
+  build or another language discards it.
+- **Static files**: hashed assets are `immutable` for a year, `index.html` is `no-cache`, files are
+  pre-gzipped (`nginx.conf`, `Dockerfile`). The service worker (offline precache) is off until
+  the PWA milestone (`VITE_ENABLE_PWA`, docs/PWA.md).
+- A language change refetches (Django words some fields per language).
+
+## 5. Measure
+
+- **First-load budget in CI**: `pnpm size` sums the gzip size of what `dist/index.html` loads
+  (scripts, preloaded modules, stylesheets) and fails above JS 170 KB / CSS 18 KB. Today: JS
+  ≈ 162 KB, CSS ≈ 15 KB. Raise a budget only on purpose, in review.
+- **Real users** (`src/lib/vitals.ts`): LCP, INP, CLS, FCP and TTFB per page pattern, sent with
+  `sendBeacon` when the tab is hidden. Off (and not even loaded) until Django's endpoint ships
+  (backend-changes V1); the `web-vitals` library is its own chunk.
+
+## Still to do
+
+| Where  | Work                                                                                                                                                                            |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Django | backend-changes H52 (tickets in one request), V1 (speed reports; then set `VITALS_ON_SERVER`), V2 (p95 under 300 ms, `Server-Timing`), V3 (no N+1), V4 (compressed API answers) |
+| Panel  | Brotli next to the pre-gzipped assets needs an nginx image with the brotli module (the `Dockerfile` uses `nginx-unprivileged`)                                                  |
+| Panel  | The service worker (PWA milestone): repeat visits then load the app's code from the device, even offline                                                                        |

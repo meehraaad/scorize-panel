@@ -11,7 +11,7 @@ versions V6/V7 for the applicant panel.
 
 - `docs/architecture.md`: folder layout, every tech decision, theming, i18n, performance budget
 - `docs/backend-integration.md`: how the panel talks to Django today (auth flow, endpoints)
-- `docs/performance.md`: page data rule (no waterfalls) and the speed roadmap
+- `docs/performance.md`: page data, loading skeletons, preload, cache and size budget
 - `docs/backend-changes.md`: every change the redesign needs in Django. **Do not edit or connect anything
   in the scorize repo** until the migration: the old site must keep working as it is. Add needed backend
   changes to this list instead
@@ -25,9 +25,9 @@ versions V6/V7 for the applicant panel.
 - **RTL-safe layout.** Use logical utilities (`ps-*`, `me-*`, `start-*`, `text-start`), never `left`/`right`.
 - **Panels**: navigation and routes live in `src/panels/<panel>/`; layouts in `src/app/layouts/`.
   Every page is lazy (`lazyPage`). Layers are enforced by ESLint (see docs/architecture.md).
-- **No request waterfalls.** Each route lists every query its page reads on first render in
-  `lazyPage(load, namespaces, data)`, and each new page is added to `src/app/pageData.test.tsx`
-  (docs/performance.md).
+- **Fast pages** (docs/performance.md). Each route lists every query its page reads on first render
+  and names its loading shape: `lazyPage(load, namespaces, { data, skeleton })`. Add each new page
+  to `src/app/pageData.test.tsx`. No spinners: loading shows `PageSkeleton` / `SkeletonRows`.
 - **API calls** go through `api()` in `src/lib/api/client.ts` and React Query, straight to Django's
   endpoints (table in docs/backend-integration.md; schema at `/api/schema/`): the app has no mock
   mode and no sample data. `src/mocks/` is the fake Django the **tests** run against: mirror each
@@ -45,4 +45,4 @@ versions V6/V7 for the applicant panel.
 ## Commands
 
 `pnpm dev` (proxy to Django on :8000) · `pnpm lint` · `pnpm typecheck` ·
-`pnpm test` · `pnpm i18n:check` · `pnpm build`. Run lint, typecheck, test and i18n:check before finishing a change.
+`pnpm test` · `pnpm i18n:check` · `pnpm build` · `pnpm size` (after build). Run lint, typecheck, test and i18n:check before finishing a change.
