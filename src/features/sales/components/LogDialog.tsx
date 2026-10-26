@@ -11,6 +11,7 @@ import {
   type ContactValues,
 } from '@/lib/sales/contactDrafts';
 import { Icon } from '@/components/ui/Icon';
+import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { LOST_REASONS, STAGES, messageHref, type Channel, type LeadStage } from '@/lib/sales/api';
@@ -141,40 +142,38 @@ export function LogDialog({
       }
       closeLabel={t('contactDraft.minimize')}
       footer={
-        <>
-          <Button type="submit" form={formId} disabled={log.isPending}>
-            {message
-              ? t('customer.logDialog.send')
-              : lost
-                ? t('customer.logDialog.saveLost')
-                : t('customer.logDialog.save')}
-          </Button>
-          <Button variant="outline" onClick={onClose}>
-            {t('contactDraft.minimize')}
-          </Button>
-          <Button
-            variant="outline"
-            disabled={log.isPending}
-            onClick={() => setConfirmDiscard(true)}
-          >
-            {t('contactDraft.discard')}
-          </Button>
-        </>
-      }
-    >
-      {confirmDiscard && (
-        <Notice tone="info">
-          <p>{t('contactDraft.discardConfirm')}</p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" disabled={log.isPending} onClick={onDiscard}>
+        confirmDiscard ? (
+          <InlineConfirm
+            message={t('contactDraft.discardConfirm')}
+            confirmLabel={t('contactDraft.discard')}
+            cancelLabel={t('contactDraft.keep')}
+            pending={log.isPending}
+            onConfirm={onDiscard}
+            onCancel={() => setConfirmDiscard(false)}
+          />
+        ) : (
+          <>
+            <Button type="submit" form={formId} disabled={log.isPending}>
+              {message
+                ? t('customer.logDialog.send')
+                : lost
+                  ? t('customer.logDialog.saveLost')
+                  : t('customer.logDialog.save')}
+            </Button>
+            <Button variant="outline" onClick={onClose}>
+              {t('contactDraft.minimize')}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={log.isPending}
+              onClick={() => setConfirmDiscard(true)}
+            >
               {t('contactDraft.discard')}
             </Button>
-            <Button variant="outline" onClick={() => setConfirmDiscard(false)}>
-              {t('contactDraft.keep')}
-            </Button>
-          </div>
-        </Notice>
-      )}
+          </>
+        )
+      }
+    >
       <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-6">
         <fieldset disabled={log.isPending} className="contents">
           <ChoiceGroup
