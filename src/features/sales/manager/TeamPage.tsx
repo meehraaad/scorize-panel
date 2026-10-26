@@ -11,10 +11,19 @@ import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { FIRST_CALL_TARGET_MINUTES } from '@/lib/sales/api';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
-import { teamExportHref, teamQuery, type TeamAlert, type TeamData, type TeamRange } from '../api';
+import {
+  FUNNEL_STEPS,
+  funnelQuery,
+  teamExportHref,
+  teamQuery,
+  type TeamAlert,
+  type TeamData,
+  type TeamRange,
+} from '../api';
 import { useSalesFormat } from '../format';
 import { salesPath } from '../paths';
 
@@ -107,6 +116,7 @@ export default function TeamPage() {
           <Leaderboard data={data} />
           {data.alerts.length > 0 && <Alerts alerts={data.alerts} />}
           <Sources data={data} />
+          {ON_SERVER.estimate && <QuizFunnel range={range} />}
         </>
       )}
     </>
@@ -285,6 +295,91 @@ function Sources({ data }: { data: TeamData }) {
           </tbody>
         </table>
       </div>
+    </SectionCard>
+  );
+}
+
+/**
+ * The admission-chance quiz, step by step (S42): how many people each step keeps, the step that
+ * loses the most, the time to the first call, and how many want to work or live abroad (Part 2's
+ * demand). Counted per person over the page's range.
+ */
+function QuizFunnel({ range }: { range: TeamRange }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const s = useSalesFormat();
+  const { data } = useQuery(funnelQuery(range));
+  if (!data) return <SkeletonRows rows={5} />;
+  const { steps } = data;
+  const top = Math.max(1, steps.started);
+  // The step before which most people leave (of those who reached the one before it). Signing is
+  // left out: few sign, so it would always win, and it says nothing about the quiz.
+  const drops = FUNNEL_STEPS.slice(1, -1).map((step, index) => {
+    const before = steps[FUNNEL_STEPS[index] ?? 'started'];
+    return { step, lost: before ? 1 - steps[step] / before : 0 };
+  });
+  const worst = drops.reduce((a, b) => (b.lost > a.lost ? b : a), { step: 'finished', lost: 0 });
+  const work = data.by_goal
+    .filter((row) => row.goal === 'work' || row.goal === 'both')
+    .reduce((sum, row) => sum + row.finished, 0);
+  return (
+    <SectionCard
+      id="team-funnel"
+      variant="panel"
+      size="lg"
+      title={t('manager.team.funnel.title')}
+      subtitle={t('manager.team.funnel.subtitle')}
+    >
+      <ol className="m-0 flex list-none flex-col gap-3 p-0">
+        {FUNNEL_STEPS.map((step, index) => {
+          const previous = index > 0 ? steps[FUNNEL_STEPS[index - 1] ?? 'started'] : 0;
+          return (
+            <li key={step} className="flex flex-col gap-1.5">
+              <span className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                <span className="font-semibold">{t(`manager.team.funnel.step.${step}`)}</span>
+                <span className="tabular-nums">
+                  <span className="font-bold">{f.number(steps[step])}</span>
+                  {index > 0 && previous > 0 && (
+                    <span className="text-text-2">
+                      {' · '}
+                      {t('manager.team.funnel.ofPrevious', {
+                        n: s.percent(steps[step] / previous),
+                      })}
+                    </span>
+                  )}
+                </span>
+              </span>
+              <span aria-hidden="true" className="h-2.5 rounded-full bg-track">
+                <span
+                  className="block h-2.5 rounded-full bg-primary"
+                  style={{ width: `${String((steps[step] / top) * 100)}%` }}
+                />
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm leading-7 text-text-2">
+        {worst.lost > 0 && (
+          <li>
+            {t('manager.team.funnel.worst', {
+              step: t(`manager.team.funnel.step.${worst.step}`),
+              n: s.percent(worst.lost),
+            })}
+          </li>
+        )}
+        <li>
+          {data.first_call_minutes === null
+            ? t('manager.team.funnel.noCalls')
+            : t('manager.team.funnel.firstCall', { n: s.minutes(data.first_call_minutes) })}
+        </li>
+        <li>
+          {t('manager.team.funnel.work', {
+            n: f.number(work),
+            total: f.number(steps.finished),
+          })}
+        </li>
+      </ul>
     </SectionCard>
   );
 }

@@ -1,9 +1,15 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+
+// The quiz funnel follows the quiz (src/lib/applicant/onServer.ts): switch everything on.
+vi.mock('@/lib/applicant/onServer', async (original) => {
+  const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
+  return { ON_SERVER: Object.fromEntries(Object.keys(ON_SERVER).map((key) => [key, true])) };
+});
 
 const NIMA = 3; // seller
 const REZA = 4; // sales manager (can_assign_to_seller)
@@ -87,5 +93,21 @@ describe('sales manager section', () => {
     await user.selectOptions(within(oldest).getByLabelText('به'), '33');
     await user.click(within(oldest).getByRole('button', { name: 'بسپار' }));
     expect(await within(oldest).findByText(/مسئول: امید رنجبر/)).toBeInTheDocument();
+  });
+
+  it('shows the quiz funnel with the step that loses the most people', async () => {
+    loginAs(REZA);
+    renderApp('/sales/manager/team');
+    const funnel = await screen.findByRole('region', { name: 'پرسش‌نامه‌ی شانس پذیرش' });
+    expect(within(funnel).getByText('پرسش‌نامه را باز کردند')).toBeInTheDocument();
+    expect(within(funnel).getByText('۱۲۰')).toBeInTheDocument();
+    expect(
+      within(funnel).getByText('بیشترین ریزش پیش از «تا آخر جواب دادند»: ۴۰٪ از دست رفتند.'),
+    ).toBeInTheDocument();
+    expect(
+      within(funnel).getByText(
+        '۲۵ نفر از ۱۲۰ نفری که پرسش‌نامه را تمام کردند، کار یا زندگی در خارج را هم می‌خواهند.',
+      ),
+    ).toBeInTheDocument();
   });
 });

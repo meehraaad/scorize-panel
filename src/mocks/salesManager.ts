@@ -3,6 +3,7 @@ import type {
   AssignData,
   AssignSettings,
   ContractDraft,
+  FunnelData,
   HealthData,
   HealthTeam,
   TeamData,
@@ -455,6 +456,24 @@ export const managerHandlers = [
     if (data instanceof Response) return data;
     const range = (new URL(request.url).searchParams.get('range') ?? 'month') as TeamRange;
     return HttpResponse.json(teamOf(range));
+  }),
+
+  http.get(`${BASE}/estimate-funnel/`, () => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const funnel: FunnelData = {
+      start: '2026-10-23',
+      end: '2026-11-22',
+      steps: { started: 200, finished: 120, wanted_call: 90, called: 81, contract: 9 },
+      first_call_minutes: 14,
+      by_goal: [
+        { goal: 'study', started: 100, finished: 95, wanted_call: 70, called: 64, contract: 8 },
+        { goal: 'work', started: 15, finished: 15, wanted_call: 12, called: 10, contract: 0 },
+        { goal: 'both', started: 10, finished: 10, wanted_call: 8, called: 7, contract: 1 },
+        { goal: 'unknown', started: 75, finished: 0, wanted_call: 0, called: 0, contract: 0 },
+      ],
+    };
+    return HttpResponse.json(funnel);
   }),
 
   http.get(`${BASE}/follow-ups/`, ({ request }) => {

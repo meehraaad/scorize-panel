@@ -183,6 +183,30 @@ export const teamQuery = (range: TeamRange) =>
     placeholderData: keepPreviousData,
   });
 
+/** The admission-chance quiz's funnel (S42): counted per person. */
+export const FUNNEL_STEPS = ['started', 'finished', 'wanted_call', 'called', 'contract'] as const;
+export type FunnelStep = (typeof FUNNEL_STEPS)[number];
+export type FunnelSteps = Record<FunnelStep, number>;
+
+export interface FunnelData {
+  start: string;
+  /** The day after the range. */
+  end: string;
+  steps: FunnelSteps;
+  /** Median minutes from the finished quiz to the first call; null before any call. */
+  first_call_minutes: number | null;
+  /** `unknown`: opened the quiz but never finished it. */
+  by_goal: ({ goal: 'study' | 'work' | 'both' | 'unknown' } & FunnelSteps)[];
+}
+
+export const funnelQuery = (range: TeamRange) =>
+  queryOptions({
+    queryKey: [...MANAGER_KEY, 'funnel', range],
+    queryFn: ({ signal }) =>
+      api<FunnelData>(`${MANAGER_API}/estimate-funnel/?range=${range}`, { signal }),
+    placeholderData: keepPreviousData,
+  });
+
 /** The same report as a spreadsheet (S38). */
 export const teamExportHref = (range: TeamRange) =>
   `/api${MANAGER_API}/team/export/?range=${range}`;

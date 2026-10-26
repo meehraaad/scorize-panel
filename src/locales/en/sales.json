@@ -1004,7 +1004,23 @@
         "rate": "Conversion",
         "sales": "Sales"
       },
-      "referral": "Referral from a former applicant"
+      "referral": "Referral from a former applicant",
+      "funnel": {
+        "title": "Admission-chance quiz",
+        "subtitle": "Each person counts once. Fix the step that loses the most people first.",
+        "step": {
+          "started": "Opened the quiz",
+          "finished": "Answered to the end",
+          "wanted_call": "Asked to be contacted",
+          "called": "We called them",
+          "contract": "Signed a contract"
+        },
+        "ofPrevious": "{{n}} of the step before",
+        "worst": "Most people leave before “{{step}}”: {{n}} lost.",
+        "firstCall": "Median time to the first call: {{n}}",
+        "noCalls": "No calls recorded yet.",
+        "work": "{{n}} of the {{total}} people who finished also want to work or live abroad."
+      }
     },
     "health": {
       "title": "{{n}} customers and files without a next step",
