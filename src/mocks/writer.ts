@@ -26,10 +26,12 @@ const API = '/api/writer/v1';
 const DAY = 86_400_000;
 const MESSAGES_PAGE = 20;
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
+// The start of the day n days ahead: "n days left" at any hour the tests run (at 10:00 it was
+// n + 1 days left every morning before 10).
 const inDays = (n: number) => {
   const date = new Date();
   date.setDate(date.getDate() + n);
-  date.setHours(10, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
   return date.toISOString();
 };
 
