@@ -34,27 +34,25 @@ export const writerPanel: PanelDefinition = {
   routes: [
     {
       index: true,
-      ...lazyPage(
-        () => import('@/features/writer/QueuePage'),
-        ['writer'],
-        () => [queueQuery('mine', 1)],
-      ),
+      ...lazyPage(() => import('@/features/writer/QueuePage'), ['writer'], {
+        data: () => [queueQuery('mine', 1)],
+        skeleton: 'list',
+      }),
     },
     {
       path: 'orders/:id',
-      ...lazyPage(
-        () => import('@/features/writer/OrderPage'),
-        ['writer'],
-        ({ params }) => {
+      ...lazyPage(() => import('@/features/writer/OrderPage'), ['writer'], {
+        data: ({ params }) => {
           const id = idParam(params.id);
           return [id !== null && orderQuery(id)];
         },
-      ),
+        skeleton: 'detail',
+      }),
     },
     // The order's conversation with the applicant: the shared tickets page, as staff.
     {
       path: 'orders/:id/tickets/*',
-      ...lazyPage(() => import('./OrderTicketsPage'), ['writer', 'tickets']),
+      ...lazyPage(() => import('./OrderTicketsPage'), ['writer', 'tickets'], { skeleton: 'chat' }),
     },
     // Every conversation across orders: no design yet (each order links to its own).
     { path: 'tickets', element: <ComingSoonPage title="panels.writer.nav.tickets" /> },

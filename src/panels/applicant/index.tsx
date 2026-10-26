@@ -65,87 +65,76 @@ export const applicantPanel: PanelDefinition = {
     {
       // Terms, missing details, supervisor surveys or a closed panel come before any page
       // (canvas V6 section 8).
-      ...lazyPage(
-        () => import('@/features/gates/GatesLayout'),
-        ['gates'],
-        () => [gatesQuery],
-      ),
+      ...lazyPage(() => import('@/features/gates/GatesLayout'), ['gates'], {
+        data: () => [gatesQuery],
+      }),
       children: [
         {
           index: true,
-          ...lazyPage(
-            () => import('@/features/home/HomePage'),
-            ['home', 'gates'],
-            () => [overviewQuery],
-          ),
+          ...lazyPage(() => import('@/features/home/HomePage'), ['home', 'gates'], {
+            data: () => [overviewQuery],
+            skeleton: 'dashboard',
+          }),
         },
         {
           path: 'applications',
-          ...lazyPage(
-            () => import('@/features/applications/ApplicationsPage'),
-            ['applications'],
-            () => [applicationsQuery],
-          ),
+          ...lazyPage(() => import('@/features/applications/ApplicationsPage'), ['applications'], {
+            data: () => [applicationsQuery],
+            skeleton: 'list',
+          }),
         },
         {
           path: 'documents',
-          ...lazyPage(
-            () => import('@/features/documents/DocumentsPage'),
-            ['documents'],
-            () => [documentsQuery],
-          ),
+          ...lazyPage(() => import('@/features/documents/DocumentsPage'), ['documents'], {
+            data: () => [documentsQuery],
+            skeleton: 'dashboard',
+          }),
         },
         // Writing information forms. Design: canvas V6 sections 4 (SOP) and 5 (CV).
         {
           path: 'documents/sop',
-          ...lazyPage(
-            () => import('@/features/writing/SopFormPage'),
-            ['writing'],
-            () => [writingQuery('sop')],
-          ),
+          ...lazyPage(() => import('@/features/writing/SopFormPage'), ['writing'], {
+            data: () => [writingQuery('sop')],
+            skeleton: 'form',
+          }),
         },
         {
           path: 'documents/cv',
-          ...lazyPage(
-            () => import('@/features/writing/CvFormPage'),
-            ['writing'],
-            () => [writingQuery('cv')],
-          ),
+          ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing'], {
+            data: () => [writingQuery('cv')],
+            skeleton: 'form',
+          }),
         },
         // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm).
         {
           path: 'documents/recommendation',
-          ...lazyPage(
-            () => import('@/features/writing/RecommendationFormPage'),
-            ['writing'],
-            () => [writingQuery('recommendation')],
-          ),
+          ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing'], {
+            data: () => [writingQuery('recommendation')],
+            skeleton: 'form',
+          }),
         },
         {
           path: 'documents/pl',
-          ...lazyPage(
-            () => import('@/features/writing/PlFormPage'),
-            ['writing'],
-            () => [writingQuery('pl')],
-          ),
+          ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing'], {
+            data: () => [writingQuery('pl')],
+            skeleton: 'form',
+          }),
         },
         // PS and DS: the SOP form with their own questions (canvas V8 note), Django's
         // PersonalStatement and DiversityStatement.
         {
           path: 'documents/ps',
-          ...lazyPage(
-            () => import('@/features/writing/PsFormPage'),
-            ['writing'],
-            () => [writingQuery('ps')],
-          ),
+          ...lazyPage(() => import('@/features/writing/PsFormPage'), ['writing'], {
+            data: () => [writingQuery('ps')],
+            skeleton: 'form',
+          }),
         },
         {
           path: 'documents/ds',
-          ...lazyPage(
-            () => import('@/features/writing/DsFormPage'),
-            ['writing'],
-            () => [writingQuery('ds')],
-          ),
+          ...lazyPage(() => import('@/features/writing/DsFormPage'), ['writing'], {
+            data: () => [writingQuery('ds')],
+            skeleton: 'form',
+          }),
         },
         // Any other writing order: no form in the panel.
         {
@@ -166,60 +155,55 @@ export const applicantPanel: PanelDefinition = {
               .catch(() => undefined);
             return null;
           },
-          ...lazyPage(() => import('./TicketsPage'), ['tickets']),
+          ...lazyPage(() => import('./TicketsPage'), ['tickets'], { skeleton: 'chat' }),
         },
         // Design: canvas V6 sections 7 (contract) and 11 (payment details).
         {
           path: 'contract',
-          ...lazyPage(
-            () => import('@/features/contract/ContractPage'),
-            ['contract'],
-            () => [contractQuery],
-          ),
+          ...lazyPage(() => import('@/features/contract/ContractPage'), ['contract'], {
+            data: () => [contractQuery],
+            skeleton: 'detail',
+          }),
         },
         {
           // An invoice: an instalment, or a purchase from "other services".
           path: 'payments/:id',
-          ...lazyPage(
-            () => import('@/features/contract/PaymentPage'),
-            ['contract'],
-            ({ params }) => {
+          ...lazyPage(() => import('@/features/contract/PaymentPage'), ['contract'], {
+            data: ({ params }) => {
               const id = idParam(params.id);
               return [id !== null && paymentQuery(id)];
             },
-          ),
+            skeleton: 'detail',
+          }),
         },
         // Design: canvas V6 section 9. Open with or without a contract.
         {
           path: 'services',
-          ...lazyPage(
-            () => import('@/features/services/ServicesPage'),
-            ['services'],
-            () => [servicesQuery],
-          ),
+          ...lazyPage(() => import('@/features/services/ServicesPage'), ['services'], {
+            data: () => [servicesQuery],
+            skeleton: 'dashboard',
+          }),
         },
         // A bought package, an event. Design: canvas V6 section 13 (reached from services).
         {
           path: 'services/packages/:id',
-          ...lazyPage(
-            () => import('@/features/services/PackagePage'),
-            ['services'],
-            ({ params }) => {
+          ...lazyPage(() => import('@/features/services/PackagePage'), ['services'], {
+            data: ({ params }) => {
               const id = idParam(params.id);
               return [id !== null && packageQuery(id)];
             },
-          ),
+            skeleton: 'detail',
+          }),
         },
         {
           path: 'services/events/:id',
-          ...lazyPage(
-            () => import('@/features/services/EventPage'),
-            ['services'],
-            ({ params }) => {
+          ...lazyPage(() => import('@/features/services/EventPage'), ['services'], {
+            data: ({ params }) => {
               const id = idParam(params.id);
               return [id !== null && eventQuery(id)];
             },
-          ),
+            skeleton: 'detail',
+          }),
         },
         // Booked consultations and one session. Design: canvas V6 section 15 (reached from services).
         {
@@ -227,7 +211,7 @@ export const applicantPanel: PanelDefinition = {
           ...lazyPage(
             () => import('@/features/consultations/ConsultationsPage'),
             ['consultations'],
-            () => [consultationsQuery],
+            { data: () => [consultationsQuery], skeleton: 'list' },
           ),
         },
         {
@@ -235,9 +219,12 @@ export const applicantPanel: PanelDefinition = {
           ...lazyPage(
             () => import('@/features/consultations/ConsultationPage'),
             ['consultations'],
-            ({ params }) => {
-              const id = idParam(params.id);
-              return [id !== null && consultationQuery(id)];
+            {
+              data: ({ params }) => {
+                const id = idParam(params.id);
+                return [id !== null && consultationQuery(id)];
+              },
+              skeleton: 'detail',
             },
           ),
         },
@@ -245,11 +232,10 @@ export const applicantPanel: PanelDefinition = {
         ON_SERVER.turkey
           ? {
               path: 'turkey',
-              ...lazyPage(
-                () => import('@/features/turkey/TurkeyPage'),
-                ['turkey'],
-                () => [turkeyQuery],
-              ),
+              ...lazyPage(() => import('@/features/turkey/TurkeyPage'), ['turkey'], {
+                data: () => [turkeyQuery],
+                skeleton: 'form',
+              }),
             }
           : { path: 'turkey', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
       ],

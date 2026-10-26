@@ -4,15 +4,17 @@ import { Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
-import { PageLoader } from '@/components/ui/PageLoader';
+import { PageSkeleton } from '@/components/ui/Skeleton';
 import { unreadQuery } from '@/lib/account/api';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { hasPermission } from '@/lib/auth/roles';
 import { loginHref, useSession } from '@/lib/auth/session';
+import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { applicantPanel } from '@/panels/applicant';
 import { panelsFor, rememberPanel } from '@/panels/registry';
 import { panelHref, useNoLockedNav, type PanelDefinition } from '@/panels/types';
 import { AccountMenu } from './AccountMenu';
+import { NavigationProgress } from './NavigationProgress';
 import { BottomTabs } from './BottomTabs';
 import { PanelFooter } from './PanelFooter';
 import { PanelSwitcher } from './PanelSwitcher';
@@ -37,6 +39,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const { data: unread = 0 } = useQuery({ ...unreadQuery, enabled: Boolean(user) });
   const useLocked = panel.useLockedNav ?? useNoLockedNav;
   const locked = useLocked();
+  const skeleton = usePageSkeleton();
 
   useEffect(() => {
     if (user) rememberPanel(user, panel);
@@ -67,6 +70,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
     // --panel-top / --panel-bottom: the header's height and the room kept for the bottom tabs, so a
     // page can fill the screen between them (PageFill: the tickets chat on phones).
     <div className="group/panel flex min-h-dvh flex-col pb-(--panel-bottom) [--panel-bottom:calc(72px+env(safe-area-inset-bottom))] [--panel-top:76px] lg:[--panel-bottom:0px] lg:[--panel-top:92px]">
+      <NavigationProgress />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-surface focus:px-4 focus:py-2"
@@ -143,7 +147,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
       <main id="main" className="mx-auto w-full max-w-page flex-1 px-4 pb-10 lg:px-8">
         {/* A new page must show its loading state rather than retain the previous page
             during React Router's transition. Search-only changes keep the current form. */}
-        <Suspense key={location.pathname} fallback={<PageLoader />}>
+        <Suspense key={location.pathname} fallback={<PageSkeleton kind={skeleton} />}>
           <Outlet />
         </Suspense>
       </main>

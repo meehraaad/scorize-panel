@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Outlet, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { PageStack } from '@/components/ui/PageColumns';
-import { PageLoader } from '@/components/ui/PageLoader';
+import { PageSkeleton } from '@/components/ui/Skeleton';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import type { MessageChannel } from '@/lib/sales/api';
 import { customerQuery, type ProductCategory } from './api';
@@ -73,7 +73,7 @@ export default function CustomerLayout() {
       />
       <CustomerTabs customer={data} />
       {/* Tab data must not hold up the customer actions or the contact dialog. */}
-      <Suspense fallback={<PageLoader />}>
+      <Suspense fallback={<PageSkeleton kind="tab" />}>
         <Outlet />
       </Suspense>
       {/* Keyed by what opened it, so a new intent starts a fresh form. */}

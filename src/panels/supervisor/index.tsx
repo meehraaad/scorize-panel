@@ -57,85 +57,79 @@ export const supervisorPanel: PanelDefinition = {
   routes: [
     {
       index: true,
-      ...lazyPage(
-        () => import('@/features/supervisor/TodayPage'),
-        ['supervisor'],
-        () => [todayQuery],
-      ),
+      ...lazyPage(() => import('@/features/supervisor/TodayPage'), ['supervisor'], {
+        data: () => [todayQuery],
+        skeleton: 'dashboard',
+      }),
     },
-    { path: 'files', ...lazyPage(() => import('@/features/supervisor/CasesPage'), ['supervisor']) },
+    {
+      path: 'files',
+      ...lazyPage(() => import('@/features/supervisor/CasesPage'), ['supervisor'], {
+        skeleton: 'list',
+      }),
+    },
     {
       path: 'files/:id',
-      ...lazyPage(
-        () => import('@/features/supervisor/CaseLayout'),
-        ['supervisor'],
-        ({ params }) => {
+      ...lazyPage(() => import('@/features/supervisor/CaseLayout'), ['supervisor'], {
+        data: ({ params }) => {
           const id = idParam(params.id);
           return [id !== null && caseQuery(id)];
         },
-      ),
+        skeleton: 'detail',
+      }),
       children: [
         { index: true, ...lazyPage(() => import('@/features/supervisor/CaseOverviewPage')) },
         {
           path: 'documents',
-          ...lazyPage(
-            () => import('@/features/supervisor/CaseDocumentsPage'),
-            [],
-            ({ params }) => {
+          ...lazyPage(() => import('@/features/supervisor/CaseDocumentsPage'), [], {
+            data: ({ params }) => {
               const id = idParam(params.id);
               return [id !== null && documentsQuery(id)];
             },
-          ),
+          }),
         },
         {
           path: 'applications',
-          ...lazyPage(
-            () => import('@/features/supervisor/CaseApplicationsPage'),
-            [],
-            ({ params }) => {
+          ...lazyPage(() => import('@/features/supervisor/CaseApplicationsPage'), [], {
+            data: ({ params }) => {
               const id = idParam(params.id);
               return [id !== null && applicationsQuery(id)];
             },
-          ),
+          }),
         },
         // One applicant's threads; `tickets/<thread>` for writing threads.
         { path: 'tickets/*', ...lazyPage(() => import('./CaseTicketsPage'), ['tickets']) },
         {
           path: 'activity',
-          ...lazyPage(
-            () => import('@/features/supervisor/CaseActivityPage'),
-            [],
-            ({ params }) => {
+          ...lazyPage(() => import('@/features/supervisor/CaseActivityPage'), [], {
+            data: ({ params }) => {
               const id = idParam(params.id);
               return [id !== null && activityQuery(id, 1)];
             },
-          ),
+          }),
         },
       ],
     },
     {
       path: 'tickets',
-      ...lazyPage(
-        () => import('@/features/supervisor/InboxPage'),
-        ['supervisor'],
-        () => [inboxQuery('waiting', 1)],
-      ),
+      ...lazyPage(() => import('@/features/supervisor/InboxPage'), ['supervisor'], {
+        data: () => [inboxQuery('waiting', 1)],
+        skeleton: 'list',
+      }),
     },
     {
       path: 'tasks',
-      ...lazyPage(
-        () => import('./TasksPage'),
-        ['tasks'],
-        () => [tasksQuery('supervisor')],
-      ),
+      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
+        data: () => [tasksQuery('supervisor')],
+        skeleton: 'list',
+      }),
     },
     {
       path: 'reports',
-      ...lazyPage(
-        () => import('@/features/supervisor/ReportsPage'),
-        ['supervisor'],
-        () => [reportsQuery('month')],
-      ),
+      ...lazyPage(() => import('@/features/supervisor/ReportsPage'), ['supervisor'], {
+        data: () => [reportsQuery('month')],
+        skeleton: 'dashboard',
+      }),
     },
   ],
 };

@@ -89,11 +89,10 @@ export const salesPanel: PanelDefinition = {
   routes: [
     {
       index: true,
-      ...lazyPage(
-        () => import('@/features/sales/TodayPage'),
-        ['sales'],
-        () => [outreachQuery(1), activityQuery(1), receiptsQuery(1)],
-      ),
+      ...lazyPage(() => import('@/features/sales/TodayPage'), ['sales'], {
+        data: () => [outreachQuery(1), activityQuery(1), receiptsQuery(1)],
+        skeleton: 'dashboard',
+      }),
     },
     // Leads and "my consultations" share one nav tab, with a sub-tab each.
     {
@@ -102,124 +101,108 @@ export const salesPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          ...lazyPage(
-            () => import('@/features/sales/LeadsPage'),
-            [],
-            ({ request }) => [
+          ...lazyPage(() => import('@/features/sales/LeadsPage'), [], {
+            data: ({ request }) => [
               leadsQuery(
                 firstLeadQuery(leadFilterOf(new URL(request.url).searchParams.get('stage'))),
               ),
             ],
-          ),
+            skeleton: 'list',
+          }),
         },
         {
           path: 'consultations',
-          ...lazyPage(
-            () => import('@/features/sales/ConsultationsPage'),
-            [],
-            () => [consultationsQuery('week', null, false, 1)],
-          ),
+          ...lazyPage(() => import('@/features/sales/ConsultationsPage'), [], {
+            data: () => [consultationsQuery('week', null, false, 1)],
+            skeleton: 'list',
+          }),
         },
       ],
     },
     {
       path: 'board',
-      ...lazyPage(
-        () => import('@/features/sales/BoardPage'),
-        ['sales'],
-        () => [boardQuery],
-      ),
+      ...lazyPage(() => import('@/features/sales/BoardPage'), ['sales'], {
+        data: () => [boardQuery],
+        skeleton: 'board',
+      }),
     },
     {
       path: 'month',
-      ...lazyPage(
-        () => import('@/features/sales/MonthPage'),
-        ['sales'],
-        () => [monthQuery],
-      ),
+      ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], {
+        data: () => [monthQuery],
+        skeleton: 'dashboard',
+      }),
     },
     // Its old address, before it moved under the leads tab.
     { path: 'consultations', loader: () => redirect('/sales/leads/consultations') },
     {
       path: 'customers/:id',
-      ...lazyPage(
-        () => import('@/features/sales/CustomerLayout'),
-        ['sales'],
-        (args) => {
+      ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales'], {
+        data: (args) => {
           const id = customerOf(args);
           return [id !== null && customerQuery(id)];
         },
-      ),
+        skeleton: 'detail',
+      }),
       // Each tab's data starts with the customer's, not after it.
       children: [
         {
           index: true,
-          ...lazyPage(
-            () => import('@/features/sales/CustomerSummaryPage'),
-            [],
-            (args) => {
+          ...lazyPage(() => import('@/features/sales/CustomerSummaryPage'), [], {
+            data: (args) => {
               const id = customerOf(args);
               return [id !== null && historyQuery(id)];
             },
-          ),
+          }),
         },
         {
           path: 'purchases',
-          ...lazyPage(
-            () => import('@/features/sales/CustomerPurchasesPage'),
-            [],
-            (args) => {
+          ...lazyPage(() => import('@/features/sales/CustomerPurchasesPage'), [], {
+            data: (args) => {
               const id = customerOf(args);
               return [id !== null && purchasesQuery(id)];
             },
-          ),
+          }),
         },
         {
           path: 'payments',
-          ...lazyPage(
-            () => import('@/features/sales/CustomerPaymentsPage'),
-            [],
-            (args) => {
+          ...lazyPage(() => import('@/features/sales/CustomerPaymentsPage'), [], {
+            data: (args) => {
               const id = customerOf(args);
               return [id !== null && paymentsQuery(id)];
             },
-          ),
+          }),
         },
         {
           path: 'info',
-          ...lazyPage(
-            () => import('@/features/sales/CustomerInfoPage'),
-            [],
-            (args) => {
+          ...lazyPage(() => import('@/features/sales/CustomerInfoPage'), [], {
+            data: (args) => {
               const id = customerOf(args);
               return [id !== null && infoQuery(id)];
             },
-          ),
+          }),
         },
         {
           path: 'apply',
-          ...lazyPage(
-            () => import('@/features/sales/CustomerApplyPage'),
-            [],
-            (args) => {
+          ...lazyPage(() => import('@/features/sales/CustomerApplyPage'), [], {
+            data: (args) => {
               const id = customerOf(args);
               return [id !== null && applyQuery(id)];
             },
-          ),
+          }),
         },
       ],
     },
     // Its own page (no customer card): building an offer takes the whole screen.
     {
       path: 'customers/:id/offer',
-      ...lazyPage(
-        () => import('@/features/sales/OfferPage'),
-        ['sales'],
-        (args) => {
+      ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales'], {
+        data: (args) => {
           const id = customerOf(args);
           return id === null ? [] : [customerQuery(id), offerQuery(id)];
         },
-      ),
+        skeleton: 'form',
+      }),
     },
     // The sales manager's section (nav item and routes need can_assign_to_seller).
     {
@@ -229,45 +212,40 @@ export const salesPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          ...lazyPage(
-            () => import('@/features/sales/manager/AssignPage'),
-            [],
-            () => [assignQuery(1)],
-          ),
+          ...lazyPage(() => import('@/features/sales/manager/AssignPage'), [], {
+            data: () => [assignQuery(1)],
+            skeleton: 'list',
+          }),
         },
         {
           path: 'approvals',
-          ...lazyPage(
-            () => import('@/features/sales/manager/ApprovalsPage'),
-            [],
-            () => [approvalsQuery],
-          ),
+          ...lazyPage(() => import('@/features/sales/manager/ApprovalsPage'), [], {
+            data: () => [approvalsQuery],
+            skeleton: 'list',
+          }),
         },
         {
           path: 'team',
-          ...lazyPage(
-            () => import('@/features/sales/manager/TeamPage'),
-            [],
-            () => [teamQuery('month')],
-          ),
+          ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
+            data: () => [teamQuery('month')],
+            skeleton: 'dashboard',
+          }),
         },
         {
           path: 'follow-ups',
-          ...lazyPage(
-            () => import('@/features/sales/manager/FollowUpHealthPage'),
-            [],
-            () => [healthQuery('all')],
-          ),
+          ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage'), [], {
+            data: () => [healthQuery('all')],
+            skeleton: 'list',
+          }),
         },
       ],
     },
     {
       path: 'tasks',
-      ...lazyPage(
-        () => import('./TasksPage'),
-        ['tasks'],
-        () => [tasksQuery('sales'), taskListQuery('sales', 'mine', 1)],
-      ),
+      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
+        data: () => [tasksQuery('sales'), taskListQuery('sales', 'mine', 1)],
+        skeleton: 'list',
+      }),
     },
   ],
 };

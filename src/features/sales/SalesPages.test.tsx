@@ -208,7 +208,7 @@ describe('sales panel, seller pages', () => {
     );
   });
 
-  it('board: replaces the board with loading while a customer request is pending', async () => {
+  it('board: replaces the board with the customer page skeleton while a customer request is pending', async () => {
     const user = userEvent.setup();
     const customer = await api<CustomerData>('/sales/v1/customers/101/');
     let release!: () => void;
@@ -230,7 +230,8 @@ describe('sales panel, seller pages', () => {
     try {
       await user.click(card);
       await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/sales\/customers\//));
-      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('در حال بارگذاری'));
+      // The customer page's shape (PageSkeleton), not the board.
+      expect(await screen.findByRole('status', { name: /در حال بارگذاری/ })).toBeInTheDocument();
       expect(screen.queryByRole('heading', { name: 'تابلوی فروش' })).not.toBeInTheDocument();
     } finally {
       release();

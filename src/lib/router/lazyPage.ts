@@ -4,10 +4,11 @@ import type {
   QueryKey,
 } from '@tanstack/react-query';
 import type { ComponentType } from 'react';
-import type { LoaderFunctionArgs, RouteObject } from 'react-router';
+import { useMatches, type LoaderFunctionArgs, type RouteObject } from 'react-router';
 import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
 import type { Namespace } from '@/lib/i18n/config';
+import type { SkeletonKind } from '@/components/ui/Skeleton';
 
 /**
  * What a `queryOptions()` / `infiniteQueryOptions()` factory returns. Only the parts this file
@@ -39,6 +40,35 @@ export function prefetchQueries(queries: readonly (PageQuery | false | null)[]) 
   }
 }
 
+export interface PageOptions {
+  /** Every query the page reads on its first render (see `PageData`). */
+  data?: PageData;
+  /**
+   * The page's shape while it loads (`PageSkeleton`). Every page directly under a panel names one;
+   * tabs inside a page with its own frame (customer, case file) use that frame's.
+   */
+  skeleton?: SkeletonKind;
+}
+
+/** What a route's `handle` holds for the panel frame. */
+export interface PageHandle {
+  skeleton?: SkeletonKind;
+}
+
+const skeletonOf = (handle: unknown): SkeletonKind | undefined =>
+  handle && typeof handle === 'object' && 'skeleton' in handle
+    ? (handle as PageHandle).skeleton
+    : undefined;
+
+/** The current page's skeleton: the deepest matched route that names one. */
+export function usePageSkeleton(): SkeletonKind {
+  return (
+    useMatches()
+      .map((match) => skeletonOf(match.handle))
+      .findLast((kind) => kind !== undefined) ?? 'list'
+  );
+}
+
 /**
  * A lazily loaded page: each page is its own chunk, so a phone only downloads the code for the
  * page it opens. Its code, its dictionary namespaces and its data (`data`) all load at once, as
@@ -48,8 +78,8 @@ export function prefetchQueries(queries: readonly (PageQuery | false | null)[]) 
 export function lazyPage(
   load: () => Promise<{ default: ComponentType }>,
   namespaces: Namespace[] = [],
-  data?: PageData,
-): Pick<RouteObject, 'lazy' | 'loader'> {
+  { data, skeleton }: PageOptions = {},
+): Pick<RouteObject, 'lazy' | 'loader' | 'handle'> {
   return {
     ...(data && {
       loader: (args: LoaderFunctionArgs) => {
@@ -57,6 +87,7 @@ export function lazyPage(
         return null;
       },
     }),
+    ...(skeleton && { handle: { skeleton } satisfies PageHandle }),
     lazy: async () => {
       const [module] = await Promise.all([load(), i18n.loadNamespaces(namespaces)]);
       return { Component: module.default };

@@ -15,7 +15,7 @@ import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
 import { PanelLayout } from './layouts/PanelLayout';
-import { BootFallback, SharedLayout } from './layouts/SharedLayout';
+import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
 
 /*
  * Route map
@@ -39,6 +39,8 @@ const prefetchFrame = (panel: PanelDefinition) => {
   prefetchQueries([unreadQuery, ...(panel.data?.() ?? [])]);
 };
 
+const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, '');
+
 function toLogin(request: Request) {
   const url = new URL(request.url);
   return redirect(loginHref(url.pathname + url.search));
@@ -58,7 +60,7 @@ function panelRoutes(panel: PanelDefinition): RouteObject {
     },
     Component: () => <PanelLayout panel={panel} />,
     ErrorBoundary: ErrorPage,
-    HydrateFallback: BootFallback,
+    HydrateFallback: PanelBootFallback,
     children: [
       {
         ErrorBoundary: SectionError,
@@ -123,20 +125,22 @@ export const routes: RouteObject[] = [
     },
     Component: SharedLayout,
     ErrorBoundary: ErrorPage,
-    HydrateFallback: BootFallback,
+    HydrateFallback: PanelBootFallback,
     children: [
       {
         ErrorBoundary: SectionError,
         children: [
           {
             path: 'account',
-            ...lazyPage(
-              () => import('@/features/account/AccountPage'),
-              ['account'],
-              () => [accountQuery],
-            ),
+            ...lazyPage(() => import('@/features/account/AccountPage'), ['account'], {
+              data: () => [accountQuery],
+              skeleton: 'dashboard',
+            }),
           },
-          { path: 'settings', ...lazyPage(() => import('@/features/settings/SettingsPage')) },
+          {
+            path: 'settings',
+            ...lazyPage(() => import('@/features/settings/SettingsPage'), [], { skeleton: 'form' }),
+          },
         ],
       },
     ],
@@ -154,5 +158,4 @@ export const routes: RouteObject[] = [
     : []),
 ];
 
-export const createRouter = () =>
-  createBrowserRouter(routes, { basename: import.meta.env.BASE_URL.replace(/\/$/, '') });
+export const createRouter = () => createBrowserRouter(routes, { basename: BASENAME });
