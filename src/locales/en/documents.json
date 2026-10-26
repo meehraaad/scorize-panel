@@ -133,16 +133,5 @@
     "title": "Leave your CV and SOP to us",
     "text": "The Scorize writing team writes your CV, statement of purpose and recommendation letters from your case.",
     "cta": "Request a call about writing"
-  },
-  "ready": {
-    "kicker": "Ready to apply",
-    "title": "Your case is {{percent}}% ready to apply",
-    "nearest": "Nearest deadline",
-    "nearestDoc": "{{name}} · {{days}} days left",
-    "lane": {
-      "ready": "{{n}} ready",
-      "team": "{{n}} with the team",
-      "you": "{{n}} waiting on you"
-    }
   }
 }

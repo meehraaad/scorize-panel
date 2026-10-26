@@ -8,7 +8,6 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { documentsQuery, type DocumentsData } from './api';
 import { FilesCard } from './components/FilesCard';
 import { InterestsCard } from './components/InterestsCard';
-import { ReadyHero } from './components/ReadyHero';
 import { UploadCard } from './components/UploadCard';
 import { WaitingCard } from './components/WaitingCard';
 import { WritingCard } from './components/WritingCard';
@@ -17,9 +16,9 @@ import { previewDocuments } from './preview';
 
 /**
  * "Documents & writing". Design: canvas V6 "مدارک و نگارش" (AppDocuments), reworked in the
- * "Scorize New User Dashboard v2" canvas (Documents): how ready the case is to apply, what waits
- * on the applicant (one card each), then two lanes, their uploads and the team's writing. Without
- * a contract, the locked preview of canvas V7 section 5.
+ * "Scorize New User Dashboard v2" canvas (Documents): what waits on the applicant (one card each),
+ * then two lanes, their uploads and the team's writing. Without a contract, the locked preview of
+ * canvas V7 section 5.
  */
 export default function DocumentsPage() {
   const { t } = useTranslation('documents');
@@ -33,7 +32,6 @@ export default function DocumentsPage() {
   // the applicant comes first.
   const body = (docs: DocumentsData) => (
     <>
-      <ReadyHero data={docs} />
       <WaitingCard data={docs} />
       <PageColumns
         asideLabel={t('aside')}
