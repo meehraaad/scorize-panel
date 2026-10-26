@@ -37,7 +37,7 @@ describe('sales panel, seller pages', () => {
     );
 
     // Consultations and today's timed follow-ups on the day calendar.
-    const calendar = screen.getByRole('region', { name: 'تقویم امروز' });
+    const calendar = await screen.findByRole('region', { name: 'تقویم امروز' });
     expect(
       within(calendar).getByRole('link', { name: /^مشاوره‌ی .*، جلسه ثبت شد$/ }),
     ).toHaveAttribute('href', '/sales/customers/104');
@@ -48,13 +48,15 @@ describe('sales panel, seller pages', () => {
     expect(within(calls).getAllByRole('listitem')).toHaveLength(6);
     expect(within(calls).getByText('۱ تا ۶ از ۱۰')).toBeInTheDocument();
     await user.click(within(calls).getByRole('button', { name: 'بعدی' }));
-    expect(within(calls).getAllByRole('listitem')).toHaveLength(4);
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(4));
     await user.click(within(calls).getByRole('button', { name: /عقب‌افتاده/ }));
-    expect(within(calls).getAllByRole('listitem')).toHaveLength(2);
-    expect(within(calls).getByText('سمیرا نوروزی')).toBeInTheDocument();
+    expect(await within(calls).findByText('سمیرا نوروزی')).toBeInTheDocument();
+    await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(2));
 
-    // Two admissions of one customer make one row; the group row names its people.
-    const upsell = screen.getByRole('region', { name: /^فرصت‌های فروش مکمل/ });
+    expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
+    await user.click(screen.getByText('ماه من', { selector: 'summary' }));
+    // Two admissions of one customer make one card.
+    const upsell = await screen.findByRole('region', { name: /^فرصت‌های فروش مکمل/ });
     expect(
       within(upsell).getByRole('link', {
         name: 'زهرا موسوی از Uppsala University و Lund University پذیرش گرفت',

@@ -97,3 +97,21 @@ currency's invoice is paid by card transfer (receipt).
 
   The supervisor's "waiting for you" card (Today) pages in the panel: the server sends one row per open
   case, already sorted by urgency.
+
+### Independent Today sections
+
+Both combined `today/` endpoints remain compatible. The panel now uses these focused endpoints:
+
+- Supervisor `today/board/` and `today/waiting/`: `?page=`, `{count, page_size: 20, results}`;
+  `today/counts/`: the existing stage-count object. Visible sections load concurrently.
+- Seller `today/outreach/`: `{hot, calls}`, hot pages of 50 and call pages of 6. `hot_page` pages hot leads independently;
+  `page` and `bucket=all|new|today|overdue` select calls. `calls.counts` holds global tab totals.
+- Seller `today/activity/`: task counts, paginated `consultations` (size 20) and `calendar_calls` (size 50).
+  Both calendar lists use `?page=` and stay independent of the call-list filter.
+- Seller `today/insights/`: month summary and upsell suggestions; disabled until the details open.
+
+Requests keep their sales/supervisor query prefixes and periodic refresh. Task changes invalidate
+Today activity; case-ticket changes invalidate waiting cases and the inbox. Login/logout still
+clear the query cache. Receipts retain their existing endpoint and now show a local retry state.
+Backend query plans, measurements, compatibility notes and the opt-in benchmark are documented
+in the backend repository's `docs/dashboard-performance.md`.
