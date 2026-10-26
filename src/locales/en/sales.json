@@ -255,6 +255,24 @@
       "title": "Lost this month · {{n}} deals",
       "note": "A deal can't be closed without a reason",
       "item": "{{reason}} · {{n}}"
+    },
+    "move": {
+      "hint": "Drag a card by its handle, or click the handle to choose a stage. Draft and won deals follow the contract workflow.",
+      "instructions": "Press Space to pick up a card, Left or Right to choose a column, Space or Enter to drop, and Escape to cancel. Press Enter on the handle to choose a stage without dragging.",
+      "pickedUp": "Picked up {{name}}. Use Left or Right to choose a stage.",
+      "over": "Over {{stage}}.",
+      "outside": "Outside the available columns. Release to cancel.",
+      "dropped": "Dropped {{name}} in {{stage}}. Saving the change.",
+      "cancelled": "Move cancelled. The stage has not changed.",
+      "saved": "{{name}} moved to {{stage}}.",
+      "failed": "Could not move {{name}}. The previous stage has been restored. Try again.",
+      "managed": "Updated through the contract workflow",
+      "empty": "No deals in this stage",
+      "saving": "Saving stage…",
+      "card": "sales card",
+      "title": "Move {{name}}",
+      "save": "Move card",
+      "destination": "Move to stage"
     }
   },
   "customer": {
