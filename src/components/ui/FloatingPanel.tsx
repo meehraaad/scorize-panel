@@ -58,7 +58,9 @@ export function FloatingPanel({
       <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 pt-2 pb-6">
         {children}
       </div>
-      {footer && <div className="flex flex-wrap gap-2 border-t border-hair p-4">{footer}</div>}
+      {footer && (
+        <footer className="flex flex-wrap gap-2 border-t border-hair p-4">{footer}</footer>
+      )}
     </section>
   );
 }
