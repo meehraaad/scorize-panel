@@ -108,7 +108,10 @@ Both combined `today/` endpoints remain compatible. The panel now uses these foc
   `page` and `bucket=all|new|today|overdue` select calls. `calls.counts` holds global tab totals.
 - Seller `today/activity/`: task counts, paginated `consultations` (size 20) and `calendar_calls` (size 50).
   Both calendar lists use `?page=` and stay independent of the call-list filter.
-- Seller `today/insights/`: month summary and upsell suggestions; disabled until the details open.
+- Seller `today/insights/`: month summary and upsell suggestions; disabled until that part of the page
+  scrolls into view.
+- The panel shows hot leads and receipts three at a time, cut out of the server's pages
+  (`slicePage` in `src/lib/api/page.ts`): the server's page sizes can stay as they are.
 
 Requests keep their sales/supervisor query prefixes and periodic refresh. Task changes invalidate
 Today activity; case-ticket changes invalidate waiting cases and the inbox. Login/logout still

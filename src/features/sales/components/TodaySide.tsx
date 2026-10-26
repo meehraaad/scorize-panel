@@ -9,7 +9,7 @@ import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { Badge, SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { pagesOf, useClampPage } from '@/lib/api/page';
+import { slicePage, slicedPages, useClampPage } from '@/lib/api/page';
 import { percentOf } from '@/lib/progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
@@ -58,20 +58,29 @@ export function TasksCard({ tasks }: { tasks: TodayData['tasks'] }) {
   );
 }
 
-/** Receipts waiting for a seller, a page at a time: the badge counts all of them. */
+/** Receipts shown at once: the card stays short beside the rest of the day. */
+export const RECEIPTS_SHOWN = 3;
+
+/** Receipts waiting for a seller, three at a time: the badge counts all of them. */
 export function ReceiptsCard() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
   const confirm = useConfirmReceipt();
   const [page, setPage] = useState(1);
-  const { data, isPlaceholderData, isPending, error, refetch } = useQuery(receiptsQuery(page));
-  const pages = pagesOf(data);
-  useClampPage(data, page, setPage);
-  const receipts = data?.results ?? [];
+  // Django pages receipts by its own size (it answers it): this card's pages are cut out of them.
+  const [serverSize, setServerSize] = useState(RECEIPTS_SHOWN);
+  const { serverPage, offset } = slicePage(page, RECEIPTS_SHOWN, serverSize);
+  const { data, isPending, error, refetch } = useQuery(receiptsQuery(serverPage));
+  if (data && data.page_size !== serverSize) setServerSize(data.page_size);
+  const pages = slicedPages(data?.count ?? 0, RECEIPTS_SHOWN, serverSize);
+  useClampPage(data && { count: pages, page_size: 1 }, page, setPage);
+  const receipts = data?.results.slice(offset, offset + RECEIPTS_SHOWN) ?? [];
+  const from = (serverPage - 1) * serverSize + offset;
   return (
     <QuerySection
-      pending={isPending}
+      // Only the first load replaces the card; a later server page loads inside it.
+      pending={isPending && serverPage === 1}
       error={error}
       retry={() => {
         void refetch();
@@ -88,7 +97,7 @@ export function ReceiptsCard() {
         ) : receipts.length === 0 ? (
           <p className="m-0 text-sm text-text-2">{t('today.receipts.empty')}</p>
         ) : (
-          <ul aria-busy={isPlaceholderData} className="m-0 flex list-none flex-col gap-4 p-0">
+          <ul className="m-0 flex list-none flex-col gap-4 p-0">
             {receipts.map((receipt) => (
               <li key={receipt.payment} className="flex flex-col gap-2">
                 <span className="flex items-baseline justify-between gap-3">
@@ -134,8 +143,18 @@ export function ReceiptsCard() {
             ))}
           </ul>
         )}
-        {pages > 1 && (
-          <Pager inset page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
+        {data && data.count > 0 && (
+          <Pager
+            inset
+            status={t('today.receipts.pager', {
+              from: f.number(from + 1),
+              to: f.number(from + receipts.length),
+              total: f.number(data.count),
+            })}
+            page={page}
+            pages={pages}
+            onPage={setPage}
+          />
         )}
       </SectionCard>
     </QuerySection>

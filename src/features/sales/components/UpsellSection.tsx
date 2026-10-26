@@ -1,10 +1,12 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { Avatar } from '@/components/ui/Avatar';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { Badge, SectionCard } from '@/components/ui/SectionCard';
+import { IconButton } from '@/components/ui/IconButton';
+import { Card } from '@/components/ui/Card';
+import { SectionHeading } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { Upsell } from '../api';
 import { customerPath, salesPath } from '../paths';
@@ -45,17 +47,43 @@ const LOOK: Record<Upsell['kind'], { tone: ChipTone; icon: IconName; tile: strin
   no_contract: { tone: 'info', icon: 'calendar', tile: 'bg-info-tint text-info' },
 };
 
+/** A card's width and the gap after it: how far the arrows scroll. */
+const CARD_STEP = 272 + 16;
+
 /** At most this many people of a group show by name; the rest are counted. */
-const PEOPLE_SHOWN = 4;
+const PEOPLE_SHOWN = 3;
 
 /**
- * Customers ready for their next purchase (canvas "فرصت‌های فروش مکمل"): one row per chance,
+ * Customers ready for their next purchase (canvas "فرصت‌های فروش مکمل"): a row of cards that
+ * scrolls sideways (arrows beside the title), one per chance,
  * with why it is one and the step that sells it (an offer, or the list of people to call).
  */
 export function UpsellSection({ items }: { items: Upsell[] }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const merged = mergeAdmissions(items);
+  const row = useRef<HTMLUListElement>(null);
+  // Which ends the row is scrolled to: the arrows hide when every card fits.
+  const [edges, setEdges] = useState({ start: true, end: true });
+  const measure = useCallback(() => {
+    const el = row.current;
+    if (!el) return;
+    // In RTL scrollLeft runs from 0 to negative: its size is the distance from the start.
+    const from = Math.abs(el.scrollLeft);
+    setEdges({ start: from <= 1, end: from + el.clientWidth >= el.scrollWidth - 1 });
+  }, []);
+  useEffect(() => {
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [measure, items]);
+  /** One card further along (1) or back (-1), in reading direction. */
+  const scroll = (step: 1 | -1) => {
+    const el = row.current;
+    if (!el) return;
+    const rtl = getComputedStyle(el).direction === 'rtl';
+    el.scrollBy({ left: step * (rtl ? -1 : 1) * CARD_STEP, behavior: 'smooth' });
+  };
   const people = merged.reduce(
     (sum, item) => sum + (item.kind === 'no_contract' ? item.customers.length : 1),
     0,
@@ -88,31 +116,54 @@ export function UpsellSection({ items }: { items: Upsell[] }) {
   };
 
   return (
-    <SectionCard
-      id="upsell-title"
-      title={t('today.upsell.title')}
-      badge={<Badge>{f.number(merged.length)}</Badge>}
-      subtitle={t('today.upsell.subtitle', { n: f.number(people) })}
-    >
-      <ul className="m-0 list-none p-0">
+    <section aria-labelledby="upsell-title" className="flex min-w-0 flex-col gap-4">
+      <SectionHeading
+        id="upsell-title"
+        title={t('today.upsell.title')}
+        subtitle={t('today.upsell.subtitle', { n: f.number(people) })}
+        end={
+          (!edges.start || !edges.end) && (
+            <span className="flex gap-1">
+              <IconButton
+                icon="chevronStart"
+                aria-label={t('today.upsell.previous')}
+                disabled={edges.start}
+                onClick={() => scroll(-1)}
+                className="shadow-[inset_0_0_0_1px_var(--line-2)]"
+              />
+              <IconButton
+                icon="chevronEnd"
+                aria-label={t('today.upsell.next')}
+                disabled={edges.end}
+                onClick={() => scroll(1)}
+                className="shadow-[inset_0_0_0_1px_var(--line-2)]"
+              />
+            </span>
+          )
+        }
+      />
+      <ul
+        ref={row}
+        onScroll={measure}
+        className="m-0 -mx-4 flex snap-x snap-mandatory scroll-px-4 [scrollbar-width:thin] list-none gap-4 overflow-x-auto px-4 py-1 lg:mx-0 lg:scroll-px-0.5 lg:px-0.5"
+      >
         {merged.map((item, index) => {
           const { title, meta, to } = content(item);
           const look = LOOK[item.kind];
           return (
-            <li
-              key={index}
-              className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:px-8"
-            >
-              <span
-                aria-hidden="true"
-                className={`flex size-11 flex-none items-center justify-center rounded-icon ${look.tile}`}
-              >
-                <Icon name={look.icon} size={20} />
-              </span>
-              <div className="flex min-w-0 flex-[1_1_280px] flex-col items-start gap-1.5">
-                <Chip tone={look.tone} small>
-                  {t(`today.upsell.${item.kind}.tag`)}
-                </Chip>
+            <li key={index} className="flex w-[272px] flex-none snap-start">
+              <Card className="flex flex-1 flex-col items-start gap-3 p-5 lg:p-6">
+                <span className="flex w-full items-center justify-between gap-2">
+                  <Chip tone={look.tone} small>
+                    {t(`today.upsell.${item.kind}.tag`)}
+                  </Chip>
+                  <span
+                    aria-hidden="true"
+                    className={`flex size-10 flex-none items-center justify-center rounded-icon ${look.tile}`}
+                  >
+                    <Icon name={look.icon} size={18} />
+                  </span>
+                </span>
                 {item.kind === 'no_contract' ? (
                   <span className="text-base leading-7 font-semibold">{title}</span>
                 ) : (
@@ -125,16 +176,16 @@ export function UpsellSection({ items }: { items: Upsell[] }) {
                 )}
                 <span className="text-sm leading-6 text-text-2">{meta}</span>
                 {item.kind === 'no_contract' && <People customers={item.customers} />}
-              </div>
-              <Link to={to} className={buttonClass('outline', 'h-11 px-4 text-sm')}>
-                {t(`today.upsell.${item.kind}.action`)}
-                <Icon name="chevronEnd" size={16} />
-              </Link>
+                <Link to={to} className={buttonClass('outline', 'mt-auto h-11 px-4 text-sm')}>
+                  {t(`today.upsell.${item.kind}.action`)}
+                  <Icon name="chevronEnd" size={16} />
+                </Link>
+              </Card>
             </li>
           );
         })}
       </ul>
-    </SectionCard>
+    </section>
   );
 }
 
@@ -149,9 +200,8 @@ function People({ customers }: { customers: { id: number; name: string }[] }) {
         <li key={customer.id}>
           <Link
             to={customerPath(customer.id)}
-            className="inline-flex h-9 items-center gap-2 rounded-full bg-canvas ps-1 pe-3 text-sm text-text hover:shadow-[inset_0_0_0_1px_var(--line-2)]"
+            className="inline-flex h-9 items-center rounded-full bg-canvas px-3 text-[13px] text-text hover:shadow-[inset_0_0_0_1px_var(--line-2)]"
           >
-            <Avatar name={customer.name} size="sm" />
             {customer.name}
           </Link>
         </li>

@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { api } from '@/lib/api/client';
-import type { CustomerData, CustomerInfo } from './api';
+import type { CustomerData, CustomerInfo, TodayData } from './api';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
@@ -54,7 +54,6 @@ describe('sales panel, seller pages', () => {
     await waitFor(() => expect(within(calls).getAllByRole('listitem')).toHaveLength(2));
 
     expect(within(calendar).getAllByRole('link', { name: /^پیگیری .*، ساعت / })).toHaveLength(3);
-    await user.click(screen.getByText('ماه من', { selector: 'summary' }));
     // Two admissions of one customer make one card.
     const upsell = await screen.findByRole('region', { name: /^فرصت‌های فروش مکمل/ });
     expect(
@@ -236,6 +235,67 @@ describe('sales panel, seller pages', () => {
       release();
     }
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+
+  it('today: new leads to call now, three at a time', async () => {
+    const user = userEvent.setup();
+    const today = await api<TodayData>('/sales/v1/today/');
+    const more = today.hot.map((lead) => ({
+      ...lead,
+      lead: lead.lead + 100,
+      name: `${lead.name} ۲`,
+    }));
+    const waiting = [...today.hot, ...more.slice(0, 2)];
+    const outreach = await api<{ calls: unknown }>('/sales/v1/today/outreach/?page=1');
+    server.use(
+      http.get('/api/sales/v1/today/outreach/', () =>
+        HttpResponse.json({
+          ...outreach,
+          hot: { count: waiting.length, page_size: 50, results: waiting },
+        }),
+      ),
+    );
+    renderApp('/sales');
+    const hot = await screen.findByRole('region', { name: 'لیدهای تازه، به ترتیب زمان انتظار' });
+    expect(within(hot).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(hot).getByText('۱ تا ۳ از ۵ لید منتظر')).toBeInTheDocument();
+    await user.click(within(hot).getByRole('button', { name: 'بعدی' }));
+    expect(within(hot).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(hot).getByText(`${today.hot[0]?.name ?? ''} ۲`)).toBeInTheDocument();
+  });
+
+  it('today: receipts three at a time, across server pages', async () => {
+    const user = userEvent.setup();
+    // Five receipts, four per server page.
+    const names = ['رسید ۱', 'رسید ۲', 'رسید ۳', 'رسید ۴', 'رسید ۵'];
+    const receipt = (name: string, index: number) => ({
+      payment: index + 1,
+      customer: 200 + index,
+      name,
+      amount: 1_000_000,
+      what: 'مشاوره',
+      method: 'card',
+      uploaded_at: new Date().toISOString(),
+      receipt_url: 'https://example.com/r.jpg',
+    });
+    server.use(
+      http.get('/api/sales/v1/receipts/', ({ request }) => {
+        const page = Number(new URL(request.url).searchParams.get('page'));
+        const rows = names.map(receipt).slice((page - 1) * 4, page * 4);
+        return HttpResponse.json({ count: names.length, page_size: 4, results: rows });
+      }),
+    );
+    renderApp('/sales');
+    const receipts = await screen.findByRole('region', { name: /رسیدهای منتظر تأیید/ });
+    expect(await within(receipts).findByText('رسید ۱')).toBeInTheDocument();
+    expect(within(receipts).getAllByRole('listitem')).toHaveLength(3);
+    // The second page holds what is left of the first server page; the third is server page 2.
+    await user.click(within(receipts).getByRole('button', { name: 'بعدی' }));
+    expect(await within(receipts).findByText('رسید ۴')).toBeInTheDocument();
+    expect(within(receipts).getAllByRole('listitem')).toHaveLength(1);
+    await user.click(within(receipts).getByRole('button', { name: 'بعدی' }));
+    expect(await within(receipts).findByText('رسید ۵')).toBeInTheDocument();
+    expect(within(receipts).getByText('۵ تا ۵ از ۵')).toBeInTheDocument();
   });
 
   it('month: goal and funnel', async () => {

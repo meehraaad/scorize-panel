@@ -96,13 +96,16 @@ export const todayQuery = queryOptions({
   refetchInterval: 60_000,
 });
 
-/** Receipts waiting for a seller, oldest first, a page at a time (the Today card pages through them). */
+/**
+ * Receipts waiting for a seller, oldest first, a page of the server at a time. No placeholder: the
+ * Today card cuts its short pages out of these (`slicePage`), and another server page's rows would
+ * be wrong ones.
+ */
 export const receiptsQuery = (page: number) =>
   queryOptions({
     queryKey: [...SALES_KEY, 'receipts', page],
     queryFn: ({ signal }) =>
       api<Page<PendingReceipt>>(`${SALES_API}/receipts/?page=${String(page)}`, { signal }),
-    placeholderData: keepPreviousData,
     refetchInterval: 60_000,
   });
 

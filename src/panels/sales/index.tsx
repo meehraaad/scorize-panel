@@ -6,8 +6,9 @@ import {
   boardQuery,
   customerQuery,
   historyQuery,
+  activityQuery,
   monthQuery,
-  todayQuery,
+  outreachQuery,
 } from '@/features/sales/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
@@ -77,7 +78,13 @@ export const salesPanel: PanelDefinition = {
   routes: [
     {
       index: true,
-      loader: prefetch(() => queryClient.query(todayQuery)),
+      // The page's first two requests (the month and the chances wait until they are seen).
+      loader: prefetch(() =>
+        Promise.all([
+          queryClient.query(outreachQuery(1, 1, 'all')),
+          queryClient.query(activityQuery(1)),
+        ]),
+      ),
       ...lazyPage(() => import('@/features/sales/TodayPage'), ['sales']),
     },
     // Leads and "my consultations" share one nav tab, with a sub-tab each.

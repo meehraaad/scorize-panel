@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -11,8 +11,20 @@ beforeEach(async () => {
   await i18n.changeLanguage('fa');
 });
 
-it('seller shell and outreach stay usable while activity waits; insights fetch only when opened', async () => {
+it('seller shell and outreach stay usable while activity waits; insights fetch only when seen', async () => {
   localStorage.setItem('scorize.mock.session', '3');
+  // The month and the chances load when they scroll into view: a stand-in observer to scroll.
+  const observers: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        observers.push(callback);
+      }
+      observe() {}
+      disconnect() {}
+    },
+  );
   let release: () => void = () => undefined;
   const held = new Promise<void>((resolve) => {
     release = resolve;
@@ -39,12 +51,15 @@ it('seller shell and outreach stay usable while activity waits; insights fetch o
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'ثبت لید دستی' })).toBeInTheDocument();
     expect(insights).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByText('ماه من', { selector: 'summary' }));
+    act(() => {
+      for (const callback of observers) callback([{ isIntersecting: true }]);
+    });
     await waitFor(() => expect(insights).toHaveBeenCalledOnce());
     expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('errors.sectionTitle'));
     expect(screen.getByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' })).toBeInTheDocument();
   } finally {
     release();
+    vi.unstubAllGlobals();
   }
 });
 
