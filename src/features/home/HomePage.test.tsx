@@ -236,9 +236,7 @@ describe('applicant home', () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
-    expect(
-      await screen.findByRole('region', { name: 'نتیجه‌ی شما این شکلی است' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
     const talk = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
     const book = within(talk).getByRole('button', { name: 'یک زمان انتخاب کنید' });
     expect(book).toBeDisabled();

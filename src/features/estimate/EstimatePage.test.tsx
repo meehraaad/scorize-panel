@@ -63,11 +63,16 @@ describe('admission-chance quiz', () => {
     expect(
       await screen.findByRole('heading', { name: 'سلام مریم، به اسکورایز خوش آمدید', level: 1 }),
     ).toBeInTheDocument();
-    const preview = screen.getByRole('region', { name: 'تا اینجا' });
+    // First visit: one card beside the questions, the result's shape locked above the answers.
+    const preview = screen.getByRole('region', { name: 'شانس شما در هر کشور' });
     expect(within(preview).getByRole('img', { name: 'پاسخ‌ها ۰٪ کامل' })).toBeInTheDocument();
-    // First visit: the result's shape, locked, beside the first question.
-    const locked = screen.getByRole('region', { name: 'نتیجه‌ی شما این شکلی است' });
-    expect(within(locked).getByText(/بعد از سؤال آخر/)).toBeInTheDocument();
+    expect(within(preview).getByText('پاسخ‌های تا اینجا')).toBeInTheDocument();
+    // The steps are inside the question's card.
+    expect(
+      within(screen.getByRole('region', { name: 'برای چه می‌خواهید بروید؟' })).getByRole('list', {
+        name: 'مراحل پرسش‌نامه',
+      }),
+    ).toBeInTheDocument();
     // The rest of the guest home stays under it.
     expect(screen.getByRole('region', { name: 'پنل شما بعد از قرارداد' })).toBeInTheDocument();
 
@@ -97,20 +102,31 @@ describe('admission-chance quiz', () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
-    const card = await screen.findByRole('region', { name: 'شانس پذیرش‌تان را ببینید' });
-    // No preview or locked result filling the page: they live in the sheet's steps.
-    expect(screen.queryByRole('region', { name: 'تا اینجا' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'نتیجه‌ی شما این شکلی است' })).toBeNull();
+    const card = await screen.findByRole('region', { name: 'عقربه‌ی شما کجا می‌ایستد؟' });
+    expect(within(card).getByRole('list', { name: 'مقایسه در این کشورها' })).toHaveTextContent(
+      'ایتالیا',
+    );
+    // No preview filling the page: the sheet shows the answers as chips instead.
+    expect(screen.queryByRole('region', { name: 'شانس شما در هر کشور' })).not.toBeInTheDocument();
     expect(estimateStarts.has(MARYAM)).toBe(false);
 
-    await user.click(within(card).getByRole('button', { name: 'شروع پرسش‌نامه' }));
+    await user.click(within(card).getByRole('button', { name: /^شروع تخمین/ }));
     const sheet = screen.getByRole('dialog', { name: 'شانس پذیرش شما' });
     expect(within(sheet).getByRole('list', { name: 'مراحل پرسش‌نامه' })).toBeInTheDocument();
+    expect(within(sheet).queryByRole('list', { name: 'پاسخ‌های تا اینجا' })).toBeNull();
+    await user.click(next());
+    expect(within(sheet).getByRole('list', { name: 'پاسخ‌های تا اینجا' })).toHaveTextContent(
+      'تحصیل · کارشناسی ارشد',
+    );
+    await user.click(screen.getByRole('button', { name: 'قبلی' }));
     await answerAll(user);
 
     // The sheet closes on the result: the best country, the call promise, the full result's link.
     const best = await screen.findByRole('region', { name: 'بیشترین شانس شما: ایتالیا' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      within(best).getByRole('img', { name: 'شانس پذیرش در ایتالیا: بالا' }),
+    ).toBeInTheDocument();
     expect(
       within(best).getByText('یک مشاور امروز عصر در واتس‌اپ به شما پیام می‌دهد.'),
     ).toBeInTheDocument();
