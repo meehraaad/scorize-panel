@@ -73,8 +73,8 @@ describe('admission-chance quiz', () => {
         name: 'مراحل پرسش‌نامه',
       }),
     ).toBeInTheDocument();
-    // The rest of the guest home stays under it.
-    expect(screen.getByRole('region', { name: 'پنل شما بعد از قرارداد' })).toBeInTheDocument();
+    // No previews of the locked sections under it.
+    expect(screen.queryByRole('region', { name: 'پنل شما بعد از قرارداد' })).toBeNull();
 
     await answerAll(user);
     const best = await screen.findByRole('region', { name: 'بیشترین شانس شما: ایتالیا' });

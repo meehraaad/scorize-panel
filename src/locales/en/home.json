@@ -40,50 +40,6 @@
         "hint": "From the embassy appointment to the visa."
       }
     },
-    "previews": {
-      "title": "Your panel after the contract",
-      "subtitle": "See each section with sample data.",
-      "see": "See the preview",
-      "locked": "Locked until you sign a contract"
-    },
-    "preview": {
-      "applications": {
-        "title": "Applications & results",
-        "text": "Approve applications and see decisions right here."
-      },
-      "documents": {
-        "title": "Documents & writing",
-        "text": "Uploads with deadlines, and the writing team's finished files."
-      },
-      "tickets": {
-        "title": "Tickets with your supervisor",
-        "text": "Talk directly with your case team."
-      },
-      "contract": {
-        "title": "Contract & payment",
-        "text": "Instalments and online payment at a glance."
-      }
-    },
-    "open": {
-      "title": "Open to you right now",
-      "subtitle": "These don't need a contract.",
-      "consult": {
-        "title": "Consultation",
-        "text": "Book a session with our application advisors."
-      },
-      "services": {
-        "title": "Events and courses",
-        "text": "Free webinars, and preparation for language tests and applications."
-      },
-      "estimate": {
-        "title": "Admission chances",
-        "text": "See where your record gives you the best chances."
-      },
-      "samples": {
-        "title": "Admission samples",
-        "text": "Admissions Scorize applicants have received."
-      }
-    },
     "pending": {
       "title": "Hi {{name}}, your contract is registered",
       "titleNoName": "Hi, your contract is registered",
@@ -99,8 +55,6 @@
         "start": "Case starts",
         "call": "Your team calls you"
       },
-      "previews": "Sections opening soon",
-      "previewsSubtitle": "Until your contract is active, see each section's preview.",
       "textAction": "One step is left before your case starts. The details and payment are on your contract page.",
       "action": {
         "title": "Something to do on your contract",

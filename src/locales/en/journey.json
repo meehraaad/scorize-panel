@@ -17,47 +17,12 @@
         "hint": "The same form you fill in at the office; your consultant reads it before the session.",
         "action": "Fill in the form"
       },
-      "files": {
-        "name": "Send documents for a free review",
-        "hint": "A transcript or CV is enough; our expert reviews it and calls you.",
-        "action": "Send a document"
-      },
       "consult": {
         "name": "Consultation session",
         "hint": "Settle your path, country and costs with a consultant.",
         "action": "Book a consultation"
       }
     }
-  },
-  "review": {
-    "title": "Send your documents for a free review",
-    "subtitle": "No contract needed. Our expert reads your documents and calls you with the result.",
-    "kind": "What are you sending?",
-    "kinds": {
-      "transcript": "Transcript",
-      "cv": "CV",
-      "language": "Language certificate",
-      "passport": "Passport",
-      "degree": "Degree certificate",
-      "other": "Other"
-    },
-    "choose": "Choose a file",
-    "chooseFor": "Choose a file: {{kind}}",
-    "dropHint": "or drop it here",
-    "dropHintTouch": "from your gallery or files",
-    "rule": "A PDF or a clear photo (JPG or PNG), up to {{size}} each.",
-    "tooBig": "This file is {{size}}. The limit is {{max}}; choose a smaller file.",
-    "badType": "This file type isn't accepted. Choose a PDF, or a JPG or PNG photo.",
-    "sent": "Document received. Our expert will call you with the review.",
-    "tooMany": "That's as many documents as we take for a free review. Talk to a consultant to go on.",
-    "list": "Documents sent",
-    "delete": "Delete {{name}}",
-    "confirm": "Delete {{name}}?",
-    "confirmYes": "Delete",
-    "confirmNo": "Cancel",
-    "deleted": "Document deleted.",
-    "deleteError": "The document wasn't deleted. Try again.",
-    "waiting": "Waiting for review"
   },
   "paths": {
     "title": "Where shall we start?",
@@ -281,22 +246,5 @@
       "text": "After the session your consultant prepares a contract offer for you, with its price and instalments.",
       "locked": "Opens after the session"
     }
-  },
-  "received": {
-    "title": "Your {{kind}} arrived",
-    "text": "Our expert reviews your documents and calls you with the result of the review.",
-    "textNamed": "{{name}} reviews your documents and calls you with the result of the review."
-  },
-  "book": {
-    "kicker": "Your next step",
-    "title": "Go over the review in a session with a consultant",
-    "text": "Book the session now, and settle the route and costs together."
-  },
-  "turkeyDocs": {
-    "title": "Turkey needs just {{n}} more documents",
-    "titleDone": "You have the documents to start Turkey",
-    "sent": "sent",
-    "missing": "not sent yet",
-    "upload": "Upload {{name}}"
   }
 }

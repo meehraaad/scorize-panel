@@ -8,7 +8,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
 import { SITE } from '@/lib/site';
 
-export type ReadinessStep = 'estimate' | 'background' | 'files' | 'consult';
+export type ReadinessStep = 'estimate' | 'background' | 'consult';
 
 const NEXT = buttonClass('primary', 'max-sm:w-full');
 const LATER = buttonClass('outline', 'max-sm:w-full');
@@ -17,13 +17,12 @@ const LATER = buttonClass('outline', 'max-sm:w-full');
 const ACTION: Record<ReadinessStep, { to: string } | { href: string }> = {
   estimate: { to: '/estimate' },
   background: { to: '/background' },
-  files: { href: '#review-upload' },
   consult: { href: SITE.consultation },
 };
 
 /**
  * How ready the person's case is for a contract: the steps that bring a seller's call closer
- * (quiz, tablet form, files for the free review, a consultation), done ones ticked, the first
+ * (quiz, tablet form, a consultation), done ones ticked, the first
  * open one highlighted with its action. Design: "Scorize New User Dashboard" canvas, readiness.
  */
 export function ReadinessCard({ done }: { done: Record<ReadinessStep, boolean> }) {

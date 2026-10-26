@@ -11,7 +11,7 @@ type Offer = NonNullable<StartOffers['consultation']>;
 /**
  * The consultation's nearest free times, its price and "book": one tap to the bank gateway (or
  * straight to the session, when credit pays it). A time taken meanwhile: the times are read again.
- * Design: "Scorize New User Dashboard v2" canvas, Main (consult path) and AfterUpload.
+ * Design: "Scorize New User Dashboard v2" canvas, Main (consult path).
  */
 export function ConsultSlots({ offer }: { offer: Offer }) {
   const { t } = useTranslation('journey');

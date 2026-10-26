@@ -20,7 +20,7 @@ import { weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { gatesQuery } from '@/lib/applicant/gates';
-import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applicant/journey';
+import { backgroundQuery, startQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
@@ -92,8 +92,9 @@ export const applicantPanel: PanelDefinition = {
             ['home', 'gates', 'estimate', 'journey'],
             {
               // Without a contract the home is the journey toward one: the admission-chance quiz
-              // (or its last result), files for a free review, the tablet form, the next
-              // session and what to start with (free times, prices, their seller). A case with a contract (or one in review) reads none of them.
+              // (or its last result), the tablet form, the next session and what to start with
+              // (free times, prices, their seller). A case with a contract (or one in review)
+              // reads none of them.
               data: () => {
                 const state = queryClient.getQueryData(accessQuery.queryKey)?.state;
                 const guest = ON_SERVER.estimate && state !== 'active' && state !== 'pending';
@@ -101,7 +102,6 @@ export const applicantPanel: PanelDefinition = {
                   overviewQuery,
                   guest && latestEstimateQuery,
                   guest && estimateOptionsQuery,
-                  guest && reviewDocumentsQuery,
                   guest && backgroundQuery,
                   guest && consultationsQuery,
                   guest && startQuery,

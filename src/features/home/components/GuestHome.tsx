@@ -11,7 +11,7 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { GuestSections, TurkeyCard } from './GuestSections';
+import { TurkeyCard } from './TurkeyCard';
 import { NewUserHome } from './journey/NewUserHome';
 
 const JOURNEY = ['consult', 'writing', 'documents', 'apply', 'results', 'visa'] as const;
@@ -21,8 +21,7 @@ const REVIEW_STEP = 1;
 
 /**
  * Home of an account without an active contract: no contract yet (`guest`), or one in review
- * (`pending`). What working with Scorize looks like, previews of the locked sections, and what is
- * open now. Design: canvas V7 section 2 (AppGuest, AppGuestPending). Without a contract, the
+ * (`pending`). What working with Scorize looks like. Design: canvas V7 section 2 (AppGuest, AppGuestPending). Without a contract, the
  * admission-chance quiz and its result take the hero's place once the quiz is on the server (the
  * new-user dashboard: "Scorize New User Dashboard" canvas).
  */
@@ -147,8 +146,6 @@ function ContractlessHome({ access }: { access: ApplicantAccess }) {
       )}
 
       {!pending && ON_SERVER.turkey && <TurkeyCard step={access.turkey} />}
-
-      <GuestSections pending={pending} />
     </PageStack>
   );
 }

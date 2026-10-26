@@ -103,7 +103,7 @@ describe('applicant home', () => {
     expect(await within(ticket).findByText('امتیاز شما: ۴ از ۵')).toBeInTheDocument();
   });
 
-  it('welcomes someone without a contract: the journey, previews and what is open now', async () => {
+  it('welcomes someone without a contract: the journey', async () => {
     // Before the quiz is on the server; with it, the quiz takes the journey's place (estimate tests).
     const onServer = ON_SERVER as Record<ServerFeature, boolean>;
     onServer.estimate = false;
@@ -123,25 +123,17 @@ describe('applicant home', () => {
     );
     expect(within(hero).getByRole('button', { name: 'درخواست تماس مشاور' })).toBeInTheDocument();
 
-    const previews = screen.getByRole('region', { name: 'پنل شما بعد از قرارداد' });
-    expect(within(previews).getAllByRole('link')).toHaveLength(4);
-    expect(within(previews).getByRole('link', { name: /^قرارداد و پرداخت/ })).toHaveAttribute(
-      'href',
-      '/contract',
-    );
-    const open = screen.getByRole('region', { name: 'همین حالا در دسترس شماست' });
-    expect(within(open).getByRole('link', { name: /^مشاوره/ })).toHaveAttribute(
-      'href',
-      '/consultation/',
-    );
+    // No previews of the locked sections, no list of what is open now.
+    expect(screen.queryByRole('region', { name: 'پنل شما بعد از قرارداد' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'همین حالا در دسترس شماست' })).toBeNull();
   });
 
-  it('leads someone without a contract toward one: readiness, a free review, ways to start', async () => {
+  it('leads someone without a contract toward one: readiness, ways to start', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
     const readiness = await screen.findByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' });
-    expect(within(readiness).getAllByRole('listitem')).toHaveLength(4);
+    expect(within(readiness).getAllByRole('listitem')).toHaveLength(3);
     // Nothing done yet: the quiz is the next step.
     expect(within(readiness).queryByText('انجام شد')).toBeNull();
     expect(within(readiness).getByRole('link', { name: 'شروع تخمین' })).toHaveAttribute(
@@ -149,27 +141,10 @@ describe('applicant home', () => {
       '/estimate',
     );
 
-    const review = screen.getByRole('region', { name: 'مدارک‌تان را برای ارزیابی رایگان بفرستید' });
-    await user.click(within(review).getByRole('radio', { name: 'رزومه' }));
-    await user.upload(
-      within(review).getByLabelText('انتخاب فایل رزومه'),
-      new File(['%PDF'], 'cv.pdf', { type: 'application/pdf' }),
-    );
+    // No free-review upload on the home.
     expect(
-      await toasts().findByText('مدرک رسید. کارشناس ما برای نتیجه‌ی ارزیابی تماس می‌گیرد.'),
-    ).toBeInTheDocument();
-    const sent = await within(review).findByRole('list', { name: 'مدارک فرستاده‌شده' });
-    expect(within(sent).getByText('رزومه')).toBeInTheDocument();
-    expect(await within(readiness).findByText('انجام شد')).toBeInTheDocument();
-
-    // After the first file: it arrived, a time for the session, what Turkey still needs.
-    expect(await screen.findByRole('region', { name: 'رزومه شما رسید' })).toBeInTheDocument();
-    const turkey = screen.getByRole('region', { name: 'برای ترکیه فقط ۳ مدرک دیگر لازم است' });
-    await user.click(within(turkey).getByRole('button', { name: 'آپلود پاسپورت' }));
-    expect(within(review).getByRole('radio', { name: 'پاسپورت' })).toBeChecked();
-    expect(
-      screen.getByRole('region', { name: 'ارزیابی را در یک جلسه با مشاور مرور کنید' }),
-    ).toBeInTheDocument();
+      screen.queryByRole('region', { name: 'مدارک‌تان را برای ارزیابی رایگان بفرستید' }),
+    ).toBeNull();
 
     // The ways to start: the consultation's nearest times and price, the contract's instalment.
     const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
@@ -370,8 +345,6 @@ describe('applicant home', () => {
     const action = screen.getByRole('link', { name: /یک کار در صفحه‌ی قرارداد/ });
     expect(action).toHaveAttribute('href', '/contract');
     expect(action).toHaveTextContent('پیش‌پرداخت قرارداد (۱٬۲۰۰٬۰۰۰ تومان) را بپردازید');
-    expect(
-      screen.getByRole('region', { name: 'بخش‌هایی که به‌زودی فعال می‌شوند' }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'بخش‌هایی که به‌زودی فعال می‌شوند' })).toBeNull();
   });
 });

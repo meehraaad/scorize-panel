@@ -84,7 +84,7 @@ export function Result({
       }
       aside={
         <>
-          <CallCard contact={contact} phone={phone} />
+          <CallCard contact={contact} phone={phone} freeCall={!detailsTo} />
           <Button variant="outline" onClick={onRetake}>
             {t('result.retake')}
           </Button>
@@ -164,9 +164,12 @@ const CALL_STEPS = ['sent', 'call'] as const;
 function CallCard({
   contact,
   phone,
+  freeCall,
 }: {
   contact: EstimateAnswers['contact'] | null;
   phone: string | null;
+  /** Off on the home, which has its own call cards. */
+  freeCall: boolean;
 }) {
   const { t } = useTranslation('estimate');
   const f = useFormat();
@@ -189,6 +192,7 @@ function CallCard({
       </SectionCard>
     );
 
+  if (!freeCall) return null;
   return (
     <SectionCard variant="panel" id="estimate-call" title={t('result.freeCall.title')}>
       <div className="flex items-start gap-3">
