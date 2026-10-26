@@ -10,6 +10,7 @@ import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
+import { setPreloadRoutes } from '@/lib/router/preload';
 import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
@@ -157,5 +158,7 @@ export const routes: RouteObject[] = [
       ]
     : []),
 ];
+
+setPreloadRoutes(routes);
 
 export const createRouter = () => createBrowserRouter(routes, { basename: BASENAME });

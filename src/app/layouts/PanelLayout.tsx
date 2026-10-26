@@ -10,6 +10,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { hasPermission } from '@/lib/auth/roles';
 import { loginHref, useSession } from '@/lib/auth/session';
 import { usePageSkeleton } from '@/lib/router/lazyPage';
+import { useIdlePreload, useIntentPreload } from '@/lib/router/preload';
 import { applicantPanel } from '@/panels/applicant';
 import { panelsFor, rememberPanel } from '@/panels/registry';
 import { panelHref, useNoLockedNav, type PanelDefinition } from '@/panels/types';
@@ -40,6 +41,9 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const useLocked = panel.useLockedNav ?? useNoLockedNav;
   const locked = useLocked();
   const skeleton = usePageSkeleton();
+  // The next page is usually loading before the click (docs/performance.md, "Preload on intent").
+  useIntentPreload();
+  useIdlePreload(panel.navigation.map((item) => panelHref(panel, item.to)));
 
   useEffect(() => {
     if (user) rememberPanel(user, panel);
