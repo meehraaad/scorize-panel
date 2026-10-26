@@ -190,14 +190,27 @@ function TaskRow({
         )}
       </div>
       <div className="flex flex-none flex-wrap items-start gap-2">
-        {task.action !== 'open' && task.person && (
-          <Link
-            to={config.personPath(task.person.id, task.action)}
-            className={buttonClass('outline', 'h-11 px-4 text-sm')}
-          >
-            {t(`mine.action.${task.action}`)}
-          </Link>
-        )}
+        {task.action !== 'open' &&
+          task.person &&
+          (config.onContact ? (
+            <Button
+              variant="outline"
+              className="h-11 px-4 text-sm"
+              onClick={() => {
+                if (task.person && task.action !== 'open')
+                  config.onContact?.(task.person.id, task.person.name, task.action);
+              }}
+            >
+              {t(`mine.action.${task.action}`)}
+            </Button>
+          ) : (
+            <Link
+              to={config.personPath(task.person.id, task.action)}
+              className={buttonClass('outline', 'h-11 px-4 text-sm')}
+            >
+              {t(`mine.action.${task.action}`)}
+            </Link>
+          ))}
         <Button
           className="h-11 px-4 text-sm"
           aria-label={t('mine.doneFor', { text: task.text })}

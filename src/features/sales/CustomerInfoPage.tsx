@@ -1,31 +1,37 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState, type ReactNode, type SubmitEvent } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { SelectField } from '@/components/ui/Choices';
+import { Dialog } from '@/components/ui/Dialog';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
-import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
   CHOICES,
   UnknownNameError,
   infoQuery,
-  useSaveInfo,
   type CustomerInfo,
   type EducationEntry,
   type ExamEntry,
-  type InfoSection,
   type Option,
 } from './api';
 import { customerPath } from './paths';
 import { useCustomerId } from './useCustomerId';
+import { useInfoAutosave, type InfoDraft, type SectionName } from './useInfoAutosave';
+
+const AutosaveContext = createContext<ReturnType<typeof useInfoAutosave> | null>(null);
+function useAutosave() {
+  const value = useContext(AutosaveContext);
+  if (!value) throw new Error('Missing customer autosave provider');
+  return value;
+}
 
 const PERSONAL_TEXT = ['first_name', 'last_name', 'father_name', 'city', 'work_years'] as const;
 const PERSONAL_CHOICE = ['gender', 'marital', 'military'] as const;
@@ -69,42 +75,68 @@ function useChoices() {
  * user_detail: personal information, user info, education degrees, exam scores).
  */
 export default function CustomerInfoPage() {
-  const { t } = useTranslation('sales');
   const id = useCustomerId();
   const { data } = useSuspenseQuery(infoQuery(id));
+  return <CustomerInfoEditor key={id} id={id} initial={data} />;
+}
+
+function CustomerInfoEditor({ id, initial }: { id: number; initial: CustomerInfo }) {
+  const { t } = useTranslation('sales');
+  const autosave = useInfoAutosave(id, initial);
+  const { draft: data, blocker } = autosave;
   return (
-    <PageColumns
-      asideLabel={t('info.aside')}
-      main={
-        <>
-          <PersonalCard info={data} />
-          <GoalCard info={data} />
-          <EducationCard info={data} />
-          <ExamsCard info={data} />
-        </>
-      }
-      aside={
-        <>
-          <SectionCard id="info-tablet" variant="panel" title={t('info.tablet.title')}>
-            <p className="m-0 text-sm leading-7 text-neutral">{t('info.tablet.text')}</p>
-            <a
-              href={safeHref(data.tablet_url)}
-              target="_blank"
-              rel="noreferrer"
-              className={buttonClass('outline', 'self-start')}
-            >
-              {t('info.tablet.open')}
-            </a>
-          </SectionCard>
-          <SectionCard id="info-similar" variant="panel" title={t('info.similar.title')}>
-            <p className="m-0 text-sm leading-7 text-neutral">{t('info.similar.text')}</p>
-            <Link to={customerPath(id)} className="text-sm text-primary-text">
-              {t('info.similar.link')}
-            </Link>
-          </SectionCard>
-        </>
-      }
-    />
+    <AutosaveContext value={autosave}>
+      <PageColumns
+        asideLabel={t('info.aside')}
+        main={
+          <>
+            <PersonalCard />
+            <GoalCard />
+            <EducationCard />
+            <ExamsCard />
+          </>
+        }
+        aside={
+          <>
+            <SectionCard id="info-tablet" variant="panel" title={t('info.tablet.title')}>
+              <p className="m-0 text-sm leading-7 text-neutral">{t('info.tablet.text')}</p>
+              <a
+                href={safeHref(data.tablet_url)}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonClass('outline', 'self-start')}
+              >
+                {t('info.tablet.open')}
+              </a>
+            </SectionCard>
+            <SectionCard id="info-similar" variant="panel" title={t('info.similar.title')}>
+              <p className="m-0 text-sm leading-7 text-neutral">{t('info.similar.text')}</p>
+              <Link to={customerPath(id)} className="text-sm text-primary-text">
+                {t('info.similar.link')}
+              </Link>
+            </SectionCard>
+          </>
+        }
+      />
+      <Dialog
+        open={blocker.state === 'blocked'}
+        onClose={() => blocker.state === 'blocked' && blocker.reset()}
+        title={t('info.autosave.leaveTitle')}
+        closeLabel={t('info.autosave.stay')}
+      >
+        <p>{t('info.autosave.leaveText')}</p>
+        <Button onClick={() => blocker.state === 'blocked' && blocker.reset()}>
+          {t('info.autosave.stay')}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={autosave.saving}
+          onClick={() => blocker.state === 'blocked' && blocker.proceed()}
+        >
+          {t('info.autosave.leave')}
+        </Button>
+      </Dialog>
+    </AutosaveContext>
   );
 }
 
@@ -119,49 +151,62 @@ function InfoForm({
   id: string;
   title: string;
   end?: ReactNode;
-  section: () => InfoSection;
+  section: SectionName;
   children: ReactNode;
 }) {
   const { t } = useTranslation('sales');
-  const save = useSaveInfo(useCustomerId());
-  const submit = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    save.mutate(section(), {
-      onSuccess: () => toast.success(t('info.done')),
-      onError: (error) =>
-        toast.error(
-          error instanceof UnknownNameError
-            ? t('info.notFound', { value: error.value })
-            : t('error'),
-        ),
-    });
-  };
+  const autosave = useAutosave();
+  const state = autosave.statuses[section];
+  const error = autosave.errors[section];
   return (
     <SectionCard id={id} variant="panel" size="lg" title={title} end={end}>
-      <form noValidate onSubmit={submit} className="flex flex-col gap-4">
+      <form
+        aria-describedby={`${id}-save-status`}
+        onSubmit={(event) => {
+          event.preventDefault();
+          autosave.retry(section);
+        }}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) void autosave.flush();
+        }}
+        className="flex flex-col gap-4"
+      >
         {children}
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="submit" disabled={save.isPending}>
-            {t('info.save')}
-          </Button>
+          <span
+            id={`${id}-save-status`}
+            role="status"
+            aria-live="polite"
+            className={
+              state === 'error' || state === 'incomplete'
+                ? 'text-sm text-danger'
+                : 'text-sm text-text-2'
+            }
+          >
+            {state === 'error' && error instanceof UnknownNameError
+              ? t('info.notFound', { value: error.value })
+              : t(`info.autosave.${state}`)}
+          </span>
+          {state === 'error' && (
+            <Button variant="outline" type="submit">
+              {t('info.autosave.retry')}
+            </Button>
+          )}
         </div>
       </form>
     </SectionCard>
   );
 }
 
-function PersonalCard({ info }: { info: CustomerInfo }) {
+function PersonalCard() {
+  const { draft: info, update } = useAutosave();
   const { t } = useTranslation('sales');
   const choices = useChoices();
-  const [form, setForm] = useState(info.personal);
+  const form = info.personal;
   const set = (key: keyof CustomerInfo['personal']) => (value: string) =>
-    setForm((current) => ({ ...current, [key]: value }));
+    update('personal', { ...form, [key]: value });
   return (
-    <InfoForm
-      id="info-personal"
-      title={t('info.personal.title')}
-      section={() => ({ personal: form })}
-    >
+    <InfoForm id="info-personal" title={t('info.personal.title')} section="personal">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {PERSONAL_TEXT.map((key) => (
           <TextField
@@ -192,14 +237,15 @@ function PersonalCard({ info }: { info: CustomerInfo }) {
   );
 }
 
-function GoalCard({ info }: { info: CustomerInfo }) {
+function GoalCard() {
+  const { draft: info, update } = useAutosave();
   const { t } = useTranslation('sales');
   const choices = useChoices();
-  const [form, setForm] = useState(info.goal);
+  const form = info.goal;
   const set = (key: keyof CustomerInfo['goal']) => (value: string) =>
-    setForm((current) => ({ ...current, [key]: value }));
+    update('goal', { ...form, [key]: value });
   return (
-    <InfoForm id="info-goal" title={t('info.goal.title')} section={() => ({ goal: form })}>
+    <InfoForm id="info-goal" title={t('info.goal.title')} section="goal">
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField
           label={t('info.goal.wanted_degree')}
@@ -230,21 +276,25 @@ function GoalCard({ info }: { info: CustomerInfo }) {
 }
 
 /** An editable list (degrees, exams): rows of fields with remove, and "add". */
-function useRows<T>(initial: T[], blank: T) {
-  const [rows, setRows] = useState(initial);
+function useRows<K extends 'education' | 'exams'>(key: K, blank: EducationEntry | ExamEntry) {
+  const { draft, update } = useAutosave();
+  const rows = draft[key];
   return {
     rows,
-    add: () => setRows((current) => [...current, blank]),
-    remove: (index: number) => setRows((current) => current.filter((_, at) => at !== index)),
-    set: (index: number, change: Partial<T>) =>
-      setRows((current) => current.map((row, at) => (at === index ? { ...row, ...change } : row))),
+    add: () => update(key, [...rows, { ...blank, localId: crypto.randomUUID() }] as InfoDraft[K]),
+    remove: (index: number) => update(key, rows.filter((_, at) => at !== index) as InfoDraft[K]),
+    set: (index: number, change: Partial<EducationEntry | ExamEntry>) =>
+      update(
+        key,
+        rows.map((row, at) => (at === index ? { ...row, ...change } : row)) as InfoDraft[K],
+      ),
   };
 }
 
-function EducationCard({ info }: { info: CustomerInfo }) {
+function EducationCard() {
   const { t } = useTranslation('sales');
   const choices = useChoices();
-  const list = useRows<EducationEntry>(info.education, {
+  const list = useRows('education', {
     degree: '',
     field: '',
     university: '',
@@ -254,7 +304,7 @@ function EducationCard({ info }: { info: CustomerInfo }) {
     <InfoForm
       id="info-education"
       title={t('info.education.title')}
-      section={() => ({ education: list.rows })}
+      section="education"
       end={
         <Button variant="outline" className="h-11 px-4 text-sm" onClick={list.add}>
           <Icon name="plus" size={16} />
@@ -264,7 +314,7 @@ function EducationCard({ info }: { info: CustomerInfo }) {
     >
       {list.rows.map((row, index) => (
         <fieldset
-          key={row.id ?? `new-${String(index)}`}
+          key={row.localId}
           className="m-0 grid items-end gap-3 rounded-2xl border-0 bg-canvas p-4 sm:grid-cols-[1fr_1fr_1fr_100px_auto]"
         >
           <legend className="sr-only">{t('info.education.row', { n: String(index + 1) })}</legend>
@@ -302,15 +352,16 @@ function EducationCard({ info }: { info: CustomerInfo }) {
   );
 }
 
-function ExamsCard({ info }: { info: CustomerInfo }) {
+function ExamsCard() {
+  const { draft: info } = useAutosave();
   const { t } = useTranslation('sales');
   const choices = useChoices();
-  const list = useRows<ExamEntry>(info.exams, { exam: '', score: '', date: '' });
+  const list = useRows('exams', { exam: '', score: '', date: '' });
   return (
     <InfoForm
       id="info-exams"
       title={t('info.exams.title')}
-      section={() => ({ exams: list.rows })}
+      section="exams"
       end={
         <Button variant="outline" className="h-11 px-4 text-sm" onClick={list.add}>
           <Icon name="plus" size={16} />
@@ -320,7 +371,7 @@ function ExamsCard({ info }: { info: CustomerInfo }) {
     >
       {list.rows.map((row, index) => (
         <fieldset
-          key={row.id ?? `new-${String(index)}`}
+          key={row.localId}
           className="m-0 grid items-end gap-3 rounded-2xl border-0 bg-canvas p-4 sm:grid-cols-[1fr_120px_1fr_auto]"
         >
           <legend className="sr-only">{t('info.exams.row', { n: String(index + 1) })}</legend>

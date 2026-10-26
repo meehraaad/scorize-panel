@@ -1,3 +1,4 @@
+import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -251,25 +252,9 @@ function ConsultationBlock({
   const { t } = useTranslation('sales');
   const f = useFormat();
   const { item } = event;
-  // A session that started and isn't logged opens the session log; the rest open the customer.
-  const to =
-    status === 'need' || status === 'live'
-      ? customerPath(item.customer, 'meeting', item.id)
-      : customerPath(item.customer);
   const meta = t('today.consultations.type', { type: item.type, mode: t(`mode.${item.mode}`) });
-  return (
-    <Link
-      to={to}
-      aria-label={t('today.calendar.consultation', {
-        name: item.name,
-        range,
-        meta,
-        status: t(`today.calendar.status.${status}`),
-      })}
-      className={`flex h-full overflow-hidden rounded-xl px-3 text-start hover:brightness-95 ${
-        roomy ? 'flex-col py-1.5' : 'items-center gap-2'
-      } ${BLOCK[status]}`}
-    >
+  const content = (
+    <>
       {roomy ? (
         <>
           <span className="truncate text-sm leading-5 font-semibold">{item.name}</span>
@@ -298,6 +283,29 @@ function ConsultationBlock({
           </span>
         </span>
       )}
+    </>
+  );
+  const actionProps = {
+    'aria-label': t('today.calendar.consultation', {
+      name: item.name,
+      range,
+      meta,
+      status: t(`today.calendar.status.${status}`),
+    }),
+    className: `flex h-full overflow-hidden rounded-xl px-3 text-start hover:brightness-95 ${roomy ? 'flex-col py-1.5' : 'items-center gap-2'} ${BLOCK[status]}`,
+  };
+  return status === 'need' || status === 'live' ? (
+    <ContactLogButton
+      {...actionProps}
+      customer={item.customer}
+      name={item.name}
+      start={{ channel: 'meeting', reservation: item.id }}
+    >
+      {content}
+    </ContactLogButton>
+  ) : (
+    <Link {...actionProps} to={customerPath(item.customer)}>
+      {content}
     </Link>
   );
 }
@@ -308,14 +316,16 @@ function CallBlock({ event }: { event: Event & { kind: 'call' } }) {
   const { item } = event;
   const time = f.time(new Date(event.start));
   return (
-    <Link
-      to={customerPath(item.customer, 'call')}
+    <ContactLogButton
+      customer={item.customer}
+      name={item.name}
+      start={{ channel: 'call' }}
       aria-label={t('today.calendar.call', { name: item.name, time })}
       className={`flex h-full items-center gap-1.5 overflow-hidden rounded-xl px-3 text-xs hover:shadow-[inset_0_0_0_1px_var(--line-3)] ${BLOCK.call}`}
     >
       <Icon name="phone" size={14} />
       <span className="truncate">{t('today.calendar.callBlock', { time, name: item.name })}</span>
-    </Link>
+    </ContactLogButton>
   );
 }
 

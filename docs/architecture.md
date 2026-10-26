@@ -103,6 +103,7 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `WeekCalendar`                                                             | Booking a time like a calendar app: a week with each time as a block as long as the booking, free, a few seats left (seat dots, "2 left") or full (striped, disabled); days without times shrink; a current-time line; `details` (the chosen time's card) opens beside the block. Under 720px of its own width (measured, one layout drawn) a week strip and the day's timeline with finger-sized blocks. Colour per kind (`--cal-*` tokens, Google Calendar's ids). The booking page |
 | `MiniMonth`                                                                | The small month beside a `WeekCalendar`: the week on screen shaded, days with something free bold, picking a day shows its week                                                                                                                                                                                                                                                                                                                                                       |
 | `Dialog`                                                                   | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). `size="wide"`: a large centred window from lg, the whole screen on phones (booking on the week calendar). Parent controls `open`                                                                                                                                                                                                                                                                   |
+| `FloatingPanel`                                                            | A non-modal floating form with a scrolling body and pinned footer. The sales contact workspace uses it so navigation stays usable; minimize retains the draft.                                                                                                                                                                                                                                                                                                                        |
 | `OtpInput`                                                                 | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                                                                                                                                                                                                                                                                                              |
 | `Switch`                                                                   | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                                                                                                                                                                                                                                                                                                |
 | `DateTile`                                                                 | A small calendar leaf (day over month; `large` adds the weekday): consultations, the writer's week. Decorative: say the date in text beside it                                                                                                                                                                                                                                                                                                                                        |
@@ -369,3 +370,19 @@ cache, measuring): docs/performance.md.
   or dialogs.
 - The Noto Kufi display font costs ~120 KB. Set `--family-display` to `var(--family-body)` in
   `tokens.css` to drop it if needed.
+
+### Persistent staff contact drafts
+
+`WorkspaceLayout` sits above the route trees and lazy-loads the sales `ContactWorkspace` only
+when a contact draft exists. Calls, messages and consultation logs open through
+`openContactLog` (`lib/sales/contactDrafts.ts`), without changing the route. Old customer
+`?log=` links still open the workspace and consume their query parameters.
+
+Drafts retain their customer, reservation and form values while navigating or switching panels.
+Minimize and Escape keep a draft in the fixed tray; saving removes only that draft, and discarding
+requires confirmation. Multiple drafts stay mounted while saving so a response also completes
+when its form is minimized. Each has a unique form id.
+
+Drafts also survive a tab refresh in sessionStorage. They restore minimized only after whoami
+identifies the same account, and logout/login clears them with the persisted query cache.
+Blocked storage falls back to in-memory drafts. Closing the tab ends this local persistence.
