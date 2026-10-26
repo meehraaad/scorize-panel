@@ -30,6 +30,7 @@ import { Pager } from '@/components/ui/Pager';
 import { ProgressBar, ProgressRing, StepBar, StepDot, StepList } from '@/components/ui/Progress';
 import { Badge, SectionCard, SectionHeading } from '@/components/ui/SectionCard';
 import { SheetButton } from '@/components/ui/Sheet';
+import { SlotPicker, type Slot } from '@/components/ui/SlotPicker';
 import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
 import { StatGrid } from '@/components/ui/StatGrid';
@@ -67,6 +68,8 @@ export default function ComponentsPage() {
   const [dialog, setDialog] = useState(false);
   const [day, setDay] = useState('');
   const [moment, setMoment] = useState('');
+  const [slot, setSlot] = useState<string | null>(null);
+  const [slots] = useState(sampleSlots);
 
   const steps = ['قرارداد', 'نگارش', 'مدارک', 'اپلای', 'نتایج', 'ویزا'].map((label) => ({
     key: label,
@@ -533,6 +536,37 @@ export default function ComponentsPage() {
           </div>
         </Group>
 
+        <Group name="SlotPicker (consultation times, 20-minute slots)">
+          <div className="rounded-card bg-surface p-5 shadow-panel lg:p-8">
+            <SlotPicker
+              label="زمان مشاوره"
+              slots={slots}
+              value={slot}
+              onChange={setSlot}
+              minutes={20}
+            />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
+            <div className="rounded-card bg-surface p-5 shadow-panel">
+              <SlotPicker
+                label="SlotPicker loading"
+                slots={[]}
+                value={null}
+                onChange={() => undefined}
+                loading
+              />
+            </div>
+            <div className="rounded-card bg-surface p-5 shadow-panel">
+              <SlotPicker
+                label="SlotPicker empty (narrow)"
+                slots={[]}
+                value={null}
+                onChange={() => undefined}
+              />
+            </div>
+          </div>
+        </Group>
+
         <Group name="PageSkeleton (loading shape per page kind)">
           {(
             ['dashboard', 'list', 'detail', 'customer', 'form', 'board', 'chat', 'tab'] as const
@@ -787,6 +821,28 @@ function fakeUpload(fail: boolean) {
     ],
     { retry: () => void fakeUpload(false).catch(() => undefined) },
   );
+}
+
+/** Six weeks of 20-minute times (not Thursday/Friday), some taken, from tomorrow. */
+function sampleSlots(): Slot[] {
+  const slots: Slot[] = [];
+  const today = new Date();
+  for (let offset = 1; offset <= 42; offset++) {
+    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+    if (day.getDay() === 4 || day.getDay() === 5) continue;
+    for (const [from, to] of [
+      [10 * 60, 12 * 60],
+      [14 * 60, 17 * 60],
+      [18 * 60, 19 * 60],
+    ] as const) {
+      for (let minute = from; minute < to; minute += 20) {
+        if ((offset * 7 + minute) % 3 === 0) continue;
+        const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minute);
+        slots.push({ at: at.toISOString(), left: minute % 100 === 0 ? 1 : 2 });
+      }
+    }
+  }
+  return slots;
 }
 
 function Group({ name, children }: { name: string; children: ReactNode }) {

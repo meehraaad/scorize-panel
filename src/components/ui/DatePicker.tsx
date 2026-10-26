@@ -1,12 +1,4 @@
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactNode,
-} from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   addDays,
@@ -19,9 +11,8 @@ import {
   toValue,
   weekStart,
   type CalendarDay,
-  type CalendarKind,
 } from '@/lib/calendar';
-import { DEFAULT_LOCALE, LOCALES, isLocale } from '@/lib/i18n/config';
+import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { Icon } from './Icon';
 
@@ -48,27 +39,6 @@ interface DatePickerProps {
 type View = 'days' | 'months' | 'years';
 const YEARS_PER_PAGE = 12;
 const DEFAULT_HOUR = 10;
-
-/** The calendar of the current language: Persian (Jalali) for Persian, else Gregorian. */
-function useCalendar() {
-  const { i18n } = useTranslation();
-  const locale = isLocale(i18n.language) ? i18n.language : DEFAULT_LOCALE;
-  const { intl, dir } = LOCALES[locale];
-  const kind: CalendarKind = intl.includes('ca-persian') ? 'persian' : 'gregorian';
-  return useMemo(
-    () => ({
-      kind,
-      rtl: dir === 'rtl',
-      month: new Intl.DateTimeFormat(intl, { month: 'long' }),
-      year: new Intl.DateTimeFormat(intl, { year: 'numeric' }),
-      weekday: new Intl.DateTimeFormat(intl, { weekday: 'narrow' }),
-      weekdayLong: new Intl.DateTimeFormat(intl, { weekday: 'long' }),
-      number: new Intl.NumberFormat(intl, { useGrouping: false }),
-      twoDigits: new Intl.NumberFormat(intl, { minimumIntegerDigits: 2, useGrouping: false }),
-    }),
-    [kind, dir, intl],
-  );
-}
 
 /**
  * A date field with its own calendar, in the user's calendar (Jalali in Persian, with Persian

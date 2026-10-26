@@ -1660,6 +1660,8 @@ const consultationHandlers = [
   }),
 
   http.get(`${BASE}/consultations/:id/`, ({ params }) => {
+    // Django's `<int:pk>`: `consultations/slots/` is another route.
+    if (!/^\d+$/.test(String(params.id))) return undefined;
     const user = storage.get();
     if (!user) return forbidden();
     const found = consultationsFor(user).find((item) => item.id === Number(params.id));

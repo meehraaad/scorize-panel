@@ -40,6 +40,8 @@
     "start": "When do you want to start?",
     "channel": "How?",
     "time": "When?",
+    "referral": "How did you hear about Scorize?",
+    "referralHint": "Optional.",
     "back": "Back",
     "next": "Continue",
     "submit": "See my chance",
@@ -104,6 +106,13 @@
     "now": "Right now",
     "evening": "This evening",
     "tomorrow": "Tomorrow morning"
+  },
+  "referral": {
+    "telegram": "Telegram",
+    "instagram": "Instagram",
+    "google": "Google search",
+    "friends": "Friends and family",
+    "other": "Other"
   },
   "summary": {
     "title": "So far",

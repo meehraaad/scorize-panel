@@ -11,6 +11,7 @@ import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
+import type { Referral } from '@/lib/account/api';
 import {
   isThrottled,
   markStarted,
@@ -51,6 +52,8 @@ interface Draft {
   start: Start;
   channel: ContactChannel;
   time: ContactTime;
+  /** Optional: none picked sends none. */
+  referral: Referral | null;
 }
 
 const FIRST: Draft = {
@@ -67,6 +70,7 @@ const FIRST: Draft = {
   start: 'next_year',
   channel: 'call',
   time: 'now',
+  referral: null,
 };
 
 /** The quiz's starting answers: what the profile already holds, the defaults for the rest. */
@@ -175,6 +179,7 @@ export function Quiz({
     start: draft.start,
     contact:
       draft.channel === 'none' ? { channel: 'none' } : { channel: draft.channel, time: draft.time },
+    ...(draft.referral && { referral: draft.referral }),
   });
 
   const next = (event: SubmitEvent) => {
@@ -381,6 +386,19 @@ export function Quiz({
               }))}
               value={draft.time}
               onChange={(value) => set('time', value)}
+            />
+          )}
+          {/* The account's "how did you hear about us", asked here until answered. */}
+          {options.prefill.referral === null && (
+            <ChoiceGroup
+              legend={t('quiz.referral')}
+              hint={t('quiz.referralHint')}
+              options={options.referrals.map((value) => ({
+                value,
+                label: t(`referral.${value}`),
+              }))}
+              value={draft.referral}
+              onChange={(value) => set('referral', value)}
             />
           )}
         </>

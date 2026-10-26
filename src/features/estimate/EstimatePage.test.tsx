@@ -2,6 +2,7 @@ import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
+import { accountOf } from '@/mocks/account';
 import { estimateAnswers, estimateStarts } from '@/mocks/estimate';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
@@ -25,7 +26,13 @@ const next = () => screen.getByRole('button', { name: 'ادامه' });
 /** Answers every step: Engineering, the given GPA and English choice, Italy, then contact. */
 async function answerAll(
   user: ReturnType<typeof userEvent.setup>,
-  { gpa = '17.5', english = /۷ و بالاتر/, channel = 'واتس‌اپ', time = 'امروز عصر' } = {},
+  {
+    gpa = '17.5',
+    english = /۷ و بالاتر/,
+    channel = 'واتس‌اپ',
+    time = 'امروز عصر',
+    referral = '',
+  } = {},
 ) {
   await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
   await user.click(next());
@@ -38,6 +45,7 @@ async function answerAll(
   await user.click(next());
   await user.click(screen.getByRole('radio', { name: new RegExp(channel) }));
   if (channel !== 'فعلاً نه') await user.click(screen.getByRole('radio', { name: time }));
+  if (referral) await user.click(screen.getByRole('radio', { name: referral }));
   await user.click(screen.getByRole('button', { name: 'دیدن شانس من' }));
 }
 
@@ -167,6 +175,25 @@ describe('admission-chance quiz', () => {
         contact: { channel: 'whatsapp', time: 'evening' },
       },
     ]);
+  });
+
+  it('asks how they heard about Scorize on the last step, until answered', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/estimate');
+    await answerAll(user, { referral: 'اینستاگرام' });
+    await screen.findByRole('heading', { name: 'شانس پذیرش شما', level: 1 });
+    expect(estimateAnswers[0]?.referral).toBe('instagram');
+    // The account's answer: the account page stops asking too.
+    expect(accountOf(MARYAM).data.referral).toBe('instagram');
+
+    // Answered: the next quiz doesn't ask again.
+    await user.click(screen.getByRole('button', { name: 'پاسخ دوباره' }));
+    for (let n = 0; n < 4; n++) await user.click(next());
+    await screen.findByRole('heading', { name: 'مشاور با شما تماس بگیرد؟' });
+    expect(
+      screen.queryByRole('group', { name: 'از کجا با اسکورایز آشنا شدید؟' }),
+    ).not.toBeInTheDocument();
   });
 
   it('checks a step before going on and shows the answers so far', async () => {

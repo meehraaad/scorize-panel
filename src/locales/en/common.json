@@ -306,6 +306,21 @@
     "gregorian": "Same as {{date}}",
     "weekend": "Weekend"
   },
+  "slotPicker": {
+    "free": "{{n}} free",
+    "freeWithLength": "{{n}} free · {{minutes}}-minute sessions",
+    "dayFree": "{{date}}, {{n}} free",
+    "dayFull": "{{date}}, nothing free",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "lastSeat": "Last spot",
+    "noneThisMonth": "Nothing is free this month.",
+    "none": "No free times right now. New times are added soon.",
+    "nearest": "Nearest free day: {{day}}",
+    "chosen": "{{day}}, {{time}}",
+    "chosenRange": "{{day}}, {{from}} to {{to}}"
+  },
   "toast": {
     "region": "Panel messages",
     "close": "Close notification",

@@ -14,7 +14,8 @@ export type ServerFeature =
   | 'estimate'
   | 'reviewDocuments'
   | 'background'
-  | 'start';
+  | 'start'
+  | 'consultationSlots';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -42,4 +43,6 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * home (scorize-revolution `claude/project-thread-ri6qn8`). Off: the home offers what it did before.
    */
   start: true,
+  /** H66 `consultations/slots/`: a month of free times for the booking calendar. */
+  consultationSlots: true,
 };

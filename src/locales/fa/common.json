@@ -306,6 +306,21 @@
     "gregorian": "مطابق با {{date}}",
     "weekend": "تعطیل"
   },
+  "slotPicker": {
+    "free": "{{n}} زمان آزاد",
+    "freeWithLength": "{{n}} زمان آزاد · جلسه‌های {{minutes}} دقیقه‌ای",
+    "dayFree": "{{date}}، {{n}} زمان آزاد",
+    "dayFull": "{{date}}، زمان آزادی نیست",
+    "morning": "صبح",
+    "afternoon": "بعدازظهر",
+    "evening": "عصر",
+    "lastSeat": "آخرین جا",
+    "noneThisMonth": "در این ماه زمان آزادی نمانده است.",
+    "none": "فعلاً زمان آزادی نیست. به‌زودی زمان‌های تازه اضافه می‌شود.",
+    "nearest": "نزدیک‌ترین زمان آزاد: {{day}}",
+    "chosen": "{{day}}، ساعت {{time}}",
+    "chosenRange": "{{day}}، ساعت {{from}} تا {{to}}"
+  },
   "toast": {
     "region": "پیام‌های پنل",
     "close": "بستن اعلان",

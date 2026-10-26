@@ -1,13 +1,15 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import type { ChipTone } from '@/components/ui/Chip';
+import { ACCOUNT_KEY, type Referral } from '@/lib/account/api';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 
 /**
  * The admission-chance quiz of the new-user dashboard (any account, contract or not): the choices,
  * the answers in and a result per country out, and the last result on return. The answers also go
  * to the profile and, unless the person said not to be contacted, to a seller as a lead. Shapes:
- * docs/backend-changes.md H52–H54, H56.
+ * docs/backend-changes.md H52–H54, H56. Until answered, the last step also asks "how did you hear about
+ * us", the account page's question.
  */
 
 export type Goal = 'study' | 'work' | 'both';
@@ -33,6 +35,8 @@ export interface EstimatePrefill {
   english: EstimateAnswers['english'] | null;
   budget: Budget | null;
   countries: number[];
+  /** "How did you hear about us", once answered (here or on the account page): asked only until then. */
+  referral: Referral | null;
 }
 
 export interface EstimateOptions {
@@ -49,6 +53,7 @@ export interface EstimateOptions {
   starts: Start[];
   contact_channels: ContactChannel[];
   contact_times: ContactTime[];
+  referrals: Referral[];
 }
 
 export interface EstimateAnswers {
@@ -63,6 +68,8 @@ export interface EstimateAnswers {
   countries: number[];
   start: Start;
   contact: { channel: 'none' } | { channel: 'call' | 'whatsapp'; time: ContactTime };
+  /** Optional; the server keeps an earlier answer. */
+  referral?: Referral;
 }
 
 /** How a band reads as a status pill. */
@@ -130,6 +137,7 @@ export function useSubmitEstimate() {
       client.setQueryData(ANSWERED_CONTACT_KEY, answers.contact);
       // The answers are now the profile's: the next quiz starts from them.
       void client.invalidateQueries({ queryKey: estimateOptionsQuery.queryKey });
+      if (answers.referral) void client.invalidateQueries({ queryKey: ACCOUNT_KEY });
     },
   });
 }
