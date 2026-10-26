@@ -126,6 +126,8 @@ async function saveSection(id: number, section: InfoSection) {
 export function useSaveInfo(id: number) {
   const client = useQueryClient();
   return useMutation({
+    // Fail visibly when offline; the editor retains input and retries on reconnection.
+    networkMode: 'always',
     mutationFn: (section: InfoSection) => saveSection(id, section),
     onSuccess: (data) => {
       client.setQueryData(infoQuery(id).queryKey, data);

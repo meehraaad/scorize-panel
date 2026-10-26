@@ -759,6 +759,19 @@
         "2": "500 million to 1 billion toman",
         "3": "Over 1 billion toman"
       }
+    },
+    "autosave": {
+      "idle": "Changes save automatically",
+      "pending": "Unsaved changes",
+      "saving": "Saving…",
+      "saved": "All changes saved",
+      "incomplete": "Complete the degree, university and GPA, or exam and score, in each row to save this section.",
+      "error": "Could not save. Your changes are still here. Review your entries or check your connection, then retry.",
+      "retry": "Retry saving",
+      "leaveTitle": "Unsaved changes",
+      "leaveText": "Your changes are being saved. If a section needs attention, close this dialog to correct it. Leaving before saving finishes will lose unsaved changes.",
+      "stay": "Keep editing",
+      "leave": "Leave without saving"
     }
   },
   "apply": {
