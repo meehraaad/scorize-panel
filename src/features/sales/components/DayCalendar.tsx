@@ -145,6 +145,7 @@ export function DayCalendar({
   return (
     <SectionCard
       id="day-calendar"
+      className="flex flex-col"
       title={t('today.calendar.title')}
       subtitle={t('today.calendar.subtitle', {
         day: f.weekday(new Date(now)),
@@ -166,7 +167,7 @@ export function DayCalendar({
       )}
       <div
         ref={scroller}
-        className="relative max-h-[560px] overflow-y-auto shadow-[inset_0_1px_0_var(--hair)]"
+        className="relative max-h-[560px] min-h-0 flex-1 overflow-y-auto shadow-[inset_0_1px_0_var(--hair)] xl:max-h-none"
       >
         <div className="relative my-3" style={{ height: hours.length * HOUR }}>
           {hours.map((hour, index) => (

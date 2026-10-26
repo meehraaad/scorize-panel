@@ -236,6 +236,37 @@ describe('sales panel, seller pages', () => {
     expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 
+  it('today: receipts three at a time, across server pages', async () => {
+    const user = userEvent.setup();
+    // Five receipts, four per server page: the card's second page takes one row from each.
+    const names = ['رسید ۱', 'رسید ۲', 'رسید ۳', 'رسید ۴', 'رسید ۵'];
+    const receipt = (name: string, index: number) => ({
+      payment: index + 1,
+      customer: 200 + index,
+      name,
+      amount: 1_000_000,
+      what: 'مشاوره',
+      method: 'card',
+      uploaded_at: new Date().toISOString(),
+      receipt_url: 'https://example.com/r.jpg',
+    });
+    server.use(
+      http.get('/api/sales/v1/receipts/', ({ request }) => {
+        const page = Number(new URL(request.url).searchParams.get('page'));
+        const rows = names.map(receipt).slice((page - 1) * 4, page * 4);
+        return HttpResponse.json({ count: names.length, page_size: 4, results: rows });
+      }),
+    );
+    renderApp('/sales');
+    const receipts = await screen.findByRole('region', { name: /رسیدهای منتظر تأیید/ });
+    expect(await within(receipts).findByText('رسید ۱')).toBeInTheDocument();
+    expect(within(receipts).getAllByRole('listitem')).toHaveLength(3);
+    await user.click(within(receipts).getByRole('button', { name: 'بعدی' }));
+    expect(await within(receipts).findByText('رسید ۵')).toBeInTheDocument();
+    expect(within(receipts).getByText('رسید ۴')).toBeInTheDocument();
+    expect(within(receipts).getAllByRole('listitem')).toHaveLength(2);
+  });
+
   it('month: goal and funnel', async () => {
     renderApp('/sales/month');
     expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();

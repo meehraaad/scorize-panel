@@ -44,6 +44,7 @@ export function CallList({ calls }: { calls: CallItem[] }) {
   return (
     <SectionCard
       id="calls-title"
+      className="flex flex-col"
       title={t('today.list.title')}
       end={
         <Link to={salesPath('leads')} className="text-sm font-medium text-primary-text">
@@ -68,50 +69,55 @@ export function CallList({ calls }: { calls: CallItem[] }) {
           }))}
         />
       </div>
-      {shown.length === 0 ? (
-        <EmptyState>{t('today.list.empty')}</EmptyState>
-      ) : (
-        <ul className="m-0 list-none p-0">
-          {shown.map((call) => {
-            const due = dueOf(call);
-            return (
-              <li
-                key={call.lead}
-                className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] sm:flex-nowrap lg:px-8"
-              >
-                <Avatar name={call.name} />
-                <div className="flex min-w-0 flex-[1_1_200px] flex-col gap-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      to={customerPath(call.customer)}
-                      className="text-base font-semibold text-text hover:underline"
-                    >
-                      {call.name}
-                    </Link>
-                    <ScoreChip score={call.score} />
+      {/* Beside the calendar the card is as tall as it: the rows scroll inside. */}
+      <div className="max-h-[560px] min-h-0 flex-1 overflow-y-auto xl:max-h-none">
+        {shown.length === 0 ? (
+          <EmptyState>{t('today.list.empty')}</EmptyState>
+        ) : (
+          <ul className="m-0 list-none p-0">
+            {shown.map((call) => {
+              const due = dueOf(call);
+              return (
+                <li
+                  key={call.lead}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] sm:flex-nowrap lg:px-8"
+                >
+                  <Avatar name={call.name} />
+                  <div className="flex min-w-0 flex-[1_1_200px] flex-col gap-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        to={customerPath(call.customer)}
+                        className="text-base font-semibold text-text hover:underline"
+                      >
+                        {call.name}
+                      </Link>
+                      <ScoreChip score={call.score} />
+                    </div>
+                    <span className="line-clamp-2 text-sm leading-6 text-text-2">
+                      {call.reason}
+                    </span>
+                    <span className="text-xs">
+                      <span className={`font-semibold ${due.urgent ? 'text-urgent' : 'text-text'}`}>
+                        {due.text}
+                      </span>
+                      <span className="text-text-2">
+                        {' · '}
+                        {t('today.list.stage', { stage: t(`stage.${call.stage}`) })}
+                      </span>
+                    </span>
                   </div>
-                  <span className="line-clamp-2 text-sm leading-6 text-text-2">{call.reason}</span>
-                  <span className="text-xs">
-                    <span className={`font-semibold ${due.urgent ? 'text-urgent' : 'text-text'}`}>
-                      {due.text}
-                    </span>
-                    <span className="text-text-2">
-                      {' · '}
-                      {t('today.list.stage', { stage: t(`stage.${call.stage}`) })}
-                    </span>
-                  </span>
-                </div>
-                <ContactButtons
-                  customer={call.customer}
-                  name={call.name}
-                  phone={call.phone}
-                  messages={false}
-                />
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  <ContactButtons
+                    customer={call.customer}
+                    name={call.name}
+                    phone={call.phone}
+                    messages={false}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
       {filtered.length > CALLS_PAGE && (
         <Pager
           status={t('today.list.pager', {

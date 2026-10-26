@@ -20,7 +20,7 @@ import { salesPath } from './paths';
 /**
  * The seller's home (canvas "امروز"), in order of what the day is made of: who to call now, then
  * the day itself (consultations and timed follow-ups on a calendar, beside the follow-up list),
- * then the chances to sell more, then tasks, receipts and the month.
+ * then, on one screen, the chances to sell more, tasks, the month and receipts.
  */
 export default function TodayPage() {
   const { t } = useTranslation('sales');
@@ -57,19 +57,22 @@ export default function TodayPage() {
         }
       />
       {waiting > 0 && <HotLeads leads={data.hot} />}
-      <div className="grid items-start gap-4 lg:gap-7 xl:grid-cols-2">
+      {/* Side by side the two cards are one height; each scrolls inside. */}
+      <div className="grid gap-4 lg:gap-7 xl:grid-cols-2 xl:grid-rows-[640px]">
         <DayCalendar consultations={data.consultations} calls={data.calls} />
         <CallList calls={data.calls} />
       </div>
-      {data.upsell.length > 0 && <UpsellSection items={data.upsell} />}
-      <aside
-        aria-label={t('today.more')}
-        className="grid items-start gap-4 md:grid-cols-2 lg:gap-7 xl:grid-cols-3"
-      >
-        <TasksCard tasks={data.tasks} />
+      {/* The rest of the day fits one screen: opportunities, tasks and the month, beside receipts. */}
+      <div className="grid items-start gap-4 lg:gap-7 xl:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-7 xl:col-span-2">
+          {data.upsell.length > 0 && <UpsellSection items={data.upsell} />}
+          <div className="grid items-start gap-4 md:grid-cols-2 lg:gap-7">
+            <TasksCard tasks={data.tasks} />
+            <MonthCard month={data.month} />
+          </div>
+        </div>
         <ReceiptsCard />
-        <MonthCard month={data.month} />
-      </aside>
+      </div>
     </PageStack>
   );
 }

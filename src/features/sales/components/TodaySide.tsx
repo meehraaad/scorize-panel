@@ -57,30 +57,47 @@ export function TasksCard({ tasks }: { tasks: TodayData['tasks'] }) {
   );
 }
 
-/** Receipts waiting for a seller, a page at a time: the badge counts all of them. */
+/** Receipts shown at once: the card stays short beside the rest of the day. */
+export const RECEIPTS_SHOWN = 3;
+
+/** Receipts waiting for a seller, three at a time: the badge counts all of them. */
 export function ReceiptsCard() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
   const confirm = useConfirmReceipt();
   const [page, setPage] = useState(1);
-  const { data, isPlaceholderData } = useQuery(receiptsQuery(page));
-  const pages = pagesOf(data);
-  useClampPage(data, page, setPage);
-  const receipts = data?.results ?? [];
+  // Django pages receipts by its own size: this card's short page is read from the one or two
+  // server pages under it (page 1 answers the size).
+  const head = useQuery(receiptsQuery(1)).data;
+  const size = Math.max(1, head?.page_size ?? RECEIPTS_SHOWN);
+  const start = (page - 1) * RECEIPTS_SHOWN;
+  const from = Math.floor(start / size) + 1;
+  const to = Math.floor((start + RECEIPTS_SHOWN - 1) / size) + 1;
+  const first = useQuery(receiptsQuery(from));
+  const second = useQuery({ ...receiptsQuery(to), enabled: to !== from });
+  const loaded = first.data !== undefined && (to === from || second.data !== undefined);
+  const shown = head && { count: head.count, page_size: RECEIPTS_SHOWN };
+  const pages = pagesOf(shown);
+  useClampPage(shown, page, setPage);
+  const offset = start - (from - 1) * size;
+  const receipts = [
+    ...(first.data?.results ?? []),
+    ...(to !== from ? (second.data?.results ?? []) : []),
+  ].slice(offset, offset + RECEIPTS_SHOWN);
   return (
     <SectionCard
       id="today-receipts"
       variant="panel"
       title={t('today.receipts.title')}
-      badge={data && data.count > 0 && <Badge>{f.number(data.count)}</Badge>}
+      badge={head && head.count > 0 && <Badge>{f.number(head.count)}</Badge>}
     >
-      {!data ? (
-        <SkeletonRows rows={2} />
+      {!loaded ? (
+        <SkeletonRows rows={RECEIPTS_SHOWN} />
       ) : receipts.length === 0 ? (
         <p className="m-0 text-sm text-text-2">{t('today.receipts.empty')}</p>
       ) : (
-        <ul aria-busy={isPlaceholderData} className="m-0 flex list-none flex-col gap-4 p-0">
+        <ul className="m-0 flex list-none flex-col gap-4 p-0">
           {receipts.map((receipt) => (
             <li key={receipt.payment} className="flex flex-col gap-2">
               <span className="flex items-baseline justify-between gap-3">
@@ -126,9 +143,7 @@ export function ReceiptsCard() {
           ))}
         </ul>
       )}
-      {pages > 1 && (
-        <Pager inset page={page} pages={pages} pending={isPlaceholderData} onPage={setPage} />
-      )}
+      {pages > 1 && <Pager inset page={page} pages={pages} pending={!loaded} onPage={setPage} />}
     </SectionCard>
   );
 }

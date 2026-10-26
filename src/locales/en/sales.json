@@ -162,7 +162,6 @@
       },
       "more": "and {{n}} more"
     },
-    "more": "Tasks, receipts and my month",
     "calendar": {
       "title": "Today's calendar",
       "subtitle": "{{day}} · {{consultations}} consultations, {{calls}} timed follow-ups",
