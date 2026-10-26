@@ -7,6 +7,7 @@ import { addHeldConsultation, feedbackSent } from '@/mocks/applicant';
 import { bookingsSent, setStartOffers } from '@/mocks/journey';
 import { renderApp } from '@/test/renderApp';
 import { toasts } from '@/test/toasts';
+import { onDesktop } from '@/test/viewport';
 import '@/test/server';
 
 // Also covers features Django doesn't serve yet (src/lib/applicant/onServer.ts): switch them on.
@@ -231,6 +232,7 @@ describe('applicant home', () => {
   });
 
   it('first visit: the result locked beside the quiz, and a call at a time they pick', async () => {
+    onDesktop();
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');

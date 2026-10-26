@@ -23,9 +23,8 @@ describe('features by what Django serves', () => {
   it('opens the guest home on the admission-chance quiz', async () => {
     loginAs(2); // Maryam: no contract
     renderApp('/');
-    expect(
-      await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' }),
-    ).toBeInTheDocument();
+    // At phone width the quiz is one card that opens its questions in a sheet.
+    expect(await screen.findByRole('button', { name: 'شروع پرسش‌نامه' })).toBeInTheDocument();
     const tile = screen.getByRole('link', { name: /تخمین شانس پذیرش/ });
     expect(tile).toHaveAttribute('href', '/estimate');
   });

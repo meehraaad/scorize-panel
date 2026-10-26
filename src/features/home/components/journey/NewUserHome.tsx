@@ -39,6 +39,7 @@ import { StartPaths } from './StartPaths';
  * - long after a session: a short card about it, then the ways to start (no readiness checklist:
  *   its steps lead to the session they already had)
  * Their own seller and admissions of people like them close every moment but the first.
+ * On phones the quiz is one short card that opens its questions in a bottom sheet.
  * Design: "Scorize New User Dashboard v2" canvas (Main, FirstVisit, AfterUpload, UpcomingConsult).
  */
 export function NewUserHome({ access }: { access: ApplicantAccess }) {
@@ -59,7 +60,13 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   const firstVisit = estimate === null && files.length === 0 && !consulted;
 
   const quiz = (
-    <EstimateFlow key="quiz" phone={access.phone} detailsTo="/estimate" teaser={firstVisit} />
+    <EstimateFlow
+      key="quiz"
+      phone={access.phone}
+      detailsTo="/estimate"
+      teaser={firstVisit}
+      sheetOnPhone
+    />
   );
   const readiness = (
     <ReadinessCard
