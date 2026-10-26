@@ -189,6 +189,11 @@ storage events synchronize tabs. New server cards appear first; counts, values, 
 stage timestamps stay server-owned. Only the visible cards can be sorted because the API caps
 each column; shared ordering and changing that selection need backend item S12a.
 
+During pointer dragging, `BoardAutoScroll` uses raw client coordinates to scroll the board and the
+hovered stage independently, including while the pointer stays still. One animation-frame loop
+ramps speed at the edges, goes idle in the middle or at scroll limits, and stops on drop, cancel,
+window blur, or unmount. Keyboard dragging retains the sensor's own target scrolling.
+
 ### Sales panel (canvas "Scorize Seller Panel")
 
 `features/sales/` holds every sales page (Today, Leads and My consultations under one nav tab with
