@@ -82,6 +82,10 @@ describe('persistent contact workspace', () => {
     renderApp('/sales/customers/105?log=call');
     let dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
     await user.type(within(dialog).getByLabelText('یادداشت'), 'Keep this draft');
+    await user.type(
+      within(dialog).getByLabelText(i18n.t('customer.logDialog.customerSummary', { ns: 'sales' })),
+      'Customer-facing summary',
+    );
     await user.click(within(dialog).getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
     await toasts().findByText(i18n.t('error', { ns: 'sales' }));
     await waitFor(() =>
