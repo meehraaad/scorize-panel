@@ -73,7 +73,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   return (
     // --panel-top / --panel-bottom: the header's height and the room kept for the bottom tabs, so a
     // page can fill the screen between them (PageFill: the tickets chat on phones).
-    <div className="group/panel flex min-h-dvh flex-col pb-(--panel-bottom) [--panel-bottom:calc(72px+env(safe-area-inset-bottom))] [--panel-top:76px] lg:[--panel-bottom:0px] lg:[--panel-top:92px]">
+    <div className="group/panel flex min-h-dvh flex-col pb-(--panel-bottom) [--panel-bottom:calc(72px+env(safe-area-inset-bottom))] [--panel-top:76px] has-[[data-workspace-fullscreen]]:pb-0 lg:[--panel-bottom:0px] lg:[--panel-top:92px]">
       <NavigationProgress />
       <a
         href="#main"
@@ -82,7 +82,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
         {t('app.skipToContent')}
       </a>
 
-      <header className="mx-auto flex h-(--panel-top) w-full max-w-page items-center px-4 lg:px-8">
+      <header className="mx-auto flex h-(--panel-top) w-full max-w-page items-center px-4 group-has-[[data-page-workspace]]/panel:max-w-none group-has-[[data-workspace-fullscreen]]/panel:hidden lg:px-8">
         {/* One floating capsule holds the whole bar: brand, menu and account. */}
         <div className="flex h-14 w-full items-center justify-between gap-3 rounded-full bg-surface ps-5 pe-2 shadow-panel lg:h-16 lg:gap-3 lg:ps-6 xl:gap-4">
           <div className="flex min-w-0 items-center gap-3 xl:gap-4">
@@ -148,7 +148,10 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
         </div>
       </header>
 
-      <main id="main" className="mx-auto w-full max-w-page flex-1 px-4 pb-10 lg:px-8">
+      <main
+        id="main"
+        className="mx-auto w-full max-w-page flex-1 px-4 pb-10 has-[[data-page-workspace]]:max-w-none has-[[data-page-workspace]]:px-0 has-[[data-page-workspace]]:pb-0 lg:px-8"
+      >
         {/* A new page must show its loading state rather than retain the previous page
             during React Router's transition. Search-only changes keep the current form. */}
         <Suspense key={location.pathname} fallback={<PageSkeleton kind={skeleton} />}>

@@ -36,6 +36,10 @@ const PATHS = {
       <rect x="14" y="14" width="7" height="7" rx="1.5" />
     </>
   ),
+  expand: <path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5" />,
+  collapse: <path d="M3 8h5V3M16 3v5h5M21 16h-5v5M8 21v-5H3" />,
+  list: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
+  grip: <path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" />,
   more: (
     <>
       <circle cx="5" cy="12" r="1.2" />

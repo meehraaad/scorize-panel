@@ -24,7 +24,7 @@ export function PanelFooter() {
   const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
   return (
-    <footer className="max-lg:group-has-[[data-page-fill]]/panel:hidden">
+    <footer className="group-has-[[data-page-workspace]]/panel:hidden max-lg:group-has-[[data-page-fill]]/panel:hidden">
       <div className="mx-auto flex w-full max-w-page items-center justify-between px-4 py-3 text-[11px] text-text-3 lg:px-8">
         <span>{t('auth.copyright')}</span>
 

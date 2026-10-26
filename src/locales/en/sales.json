@@ -305,6 +305,13 @@
       "title": "Move {{name}}",
       "save": "Move card",
       "destination": "Move to stage"
+    },
+    "workspace": {
+      "overview": "{{n}} deals · {{value}} in open deals",
+      "boardView": "Board",
+      "fullscreen": "Full screen",
+      "exitFullscreen": "Exit full screen",
+      "footer": "Drag a handle to move · Open a card to view the customer"
     }
   },
   "customer": {

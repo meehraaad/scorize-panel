@@ -8,6 +8,7 @@ interface IconButtonProps extends Omit<ComponentProps<'button'>, 'children'> {
   'aria-label': string;
   tone?: keyof typeof TONES;
   iconSize?: number;
+  shape?: 'round' | 'rounded';
 }
 
 /** `inherit`: the colour of the text around it (on the dark hero). */
@@ -23,6 +24,7 @@ export function IconButton({
   icon,
   tone = 'default',
   iconSize = 20,
+  shape = 'round',
   className = '',
   type = 'button',
   ...props
@@ -30,7 +32,7 @@ export function IconButton({
   return (
     <button
       type={type}
-      className={`flex size-11 flex-none items-center justify-center rounded-full hover:bg-canvas disabled:opacity-50 ${TONES[tone]} ${className}`}
+      className={`flex size-11 flex-none items-center justify-center ${shape === 'round' ? 'rounded-full' : 'rounded-xl'} hover:bg-canvas disabled:opacity-50 ${TONES[tone]} ${className}`}
       {...props}
     >
       <Icon name={icon} size={iconSize} />
@@ -51,6 +53,7 @@ export function IconLink({
   'aria-label': string;
   tone?: keyof typeof TONES;
   iconSize?: number;
+  shape?: 'round' | 'rounded';
 }) {
   return (
     <a

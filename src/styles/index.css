@@ -21,6 +21,8 @@
 @theme inline {
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
+  --color-board: var(--board);
+  --color-board-lane: var(--board-lane);
   --color-text: var(--text);
   --color-text-2: var(--text-2);
   --color-text-3: var(--text-3);
@@ -67,6 +69,7 @@
   --radius-icon: var(--r-icon);
 
   --shadow-panel: var(--panel-shadow);
+  --shadow-board-card: var(--board-card-shadow);
   --shadow-hero: var(--hero-shadow);
   --shadow-toast: var(--toast-shadow);
 

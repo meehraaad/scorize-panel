@@ -14,10 +14,9 @@ export function DealCard({ card }: { card: BoardCard }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  // Read once: the board doesn't need to re-render by the minute.
   const [now] = useState(() => Date.now());
   const stale = now - new Date(card.stage_since).getTime() > STALE_DAYS * DAY;
-  const next: { text: string; urgent: boolean } | null = !card.next
+  const next = !card.next
     ? null
     : card.next.kind === 'follow_up'
       ? s.due(card.next.at, 'contacted', true)
@@ -27,38 +26,50 @@ export function DealCard({ card }: { card: BoardCard }) {
     <Link
       to={customerPath(card.customer)}
       draggable={false}
-      className={`flex flex-col gap-2.5 rounded-[20px] bg-surface p-4 text-text hover:shadow-[0_0_0_1.5px_var(--primary)] ${
-        stale ? 'shadow-[0_0_0_2px_var(--hero-current)]' : 'shadow-panel'
-      }`}
+      className="group/deal flex flex-col gap-3 rounded-xl border border-hair bg-surface p-3.5 text-text shadow-board-card hover:border-line-3 motion-safe:transition-[border-color,box-shadow] motion-safe:duration-150"
     >
-      <span className="flex min-h-8 items-center pe-10 text-[15px] font-semibold">{card.name}</span>
-      <span>
+      <span className="flex min-h-6 items-center gap-2 pe-9">
         <ScoreChip score={card.score} />
       </span>
-      <span className="text-[13px] leading-6 text-text-2">{card.summary}</span>
-      <span className="flex items-center justify-between gap-2 text-[13px]">
-        <span className="font-semibold tabular-nums">
+      <span className="flex flex-col gap-1">
+        <span className="line-clamp-2 text-[15px] leading-6 font-semibold">{card.name}</span>
+        <span className="line-clamp-2 text-[13px] leading-6 text-text-2">{card.summary}</span>
+      </span>
+      {card.paid !== null || card.amount !== null ? (
+        <span className="text-[15px] font-semibold tabular-nums">
           {card.paid !== null
             ? t('board.paid', { amount: s.millions(card.paid) })
-            : card.amount !== null
-              ? s.millions(card.amount)
-              : t('due.none')}
+            : s.millions(card.amount ?? 0)}
         </span>
-        <span className={stale ? 'font-semibold text-urgent' : 'text-text-2'}>
+      ) : null}
+      <span className="flex flex-wrap items-center justify-between gap-2 border-t border-hair pt-2.5 text-[11px] leading-5">
+        <span
+          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 ${stale ? 'bg-warn-tint font-medium text-warn' : 'text-text-2'}`}
+        >
+          <Icon name="clock" size={12} />
           {s.age(card.stage_since)}
           {stale && (
             <span className="sr-only"> · {t('board.stale', { n: f.number(STALE_DAYS) })}</span>
           )}
         </span>
+        {next && (
+          <span
+            className={`inline-flex min-w-0 items-center gap-1 ${next.urgent ? 'font-medium text-urgent' : 'text-text-2'}`}
+          >
+            <Icon
+              name={
+                card.next?.kind === 'call_now'
+                  ? 'phone'
+                  : card.next?.kind === 'manager'
+                    ? 'lock'
+                    : 'calendar'
+              }
+              size={12}
+            />
+            <span>{next.text}</span>
+          </span>
+        )}
       </span>
-      {next && (
-        <span
-          className={`flex items-center gap-1.5 pt-2 text-[13px] shadow-[inset_0_1px_0_var(--hair)] ${next.urgent ? 'font-semibold text-urgent' : 'text-neutral'}`}
-        >
-          <Icon name="clock" size={14} />
-          {next.text}
-        </span>
-      )}
     </Link>
   );
 }
