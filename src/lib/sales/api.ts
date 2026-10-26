@@ -25,6 +25,7 @@ export const SOURCES = [
   'failed_purchase',
   'call_request',
   'chance_estimate',
+  'document_upload',
   'campaign',
   'consultation',
   'manual',

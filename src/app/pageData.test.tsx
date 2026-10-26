@@ -52,6 +52,7 @@ const PAGES: PageCase[] = [
     '/consultations',
     '/consultations/41',
     '/estimate',
+    '/background',
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
   { path: '/', user: MARYAM },

@@ -3,6 +3,7 @@ import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { safeHref } from '@/lib/url';
 import type { CustomerData, ProfileItem } from '../api';
 import { useSalesFormat } from '../format';
 
@@ -103,6 +104,32 @@ export function CustomerAside({ customer }: { customer: CustomerData }) {
           ))}
         </dl>
       </SectionCard>
+
+      {customer.review_files.length > 0 && (
+        <SectionCard
+          id="customer-review-files"
+          variant="panel"
+          title={t('customer.reviewFiles.title')}
+          subtitle={t('customer.reviewFiles.subtitle')}
+        >
+          <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+            {customer.review_files.map((file) => (
+              <li key={file.id} className="flex items-center justify-between gap-3 text-sm">
+                <a
+                  href={safeHref(file.url)}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={t('customer.reviewFiles.open', { kind: file.kind })}
+                  className="inline-flex min-h-11 items-center font-medium text-primary-text"
+                >
+                  {file.kind}
+                </a>
+                <span className="text-text-2">{f.dateShort(file.uploaded_at)}</span>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      )}
 
       <SectionCard id="customer-purchases" variant="panel" title={t('customer.purchases.title')}>
         {customer.purchases.length === 0 ? (

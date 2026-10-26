@@ -21,6 +21,7 @@
     "failed_purchase": "Failed purchase (live)",
     "call_request": "Call request from the panel",
     "chance_estimate": "Admission chance estimate",
+    "document_upload": "Documents for a free review",
     "campaign": "Campaign and webinar",
     "consultation": "Purchased consultation",
     "manual": "Added by hand"
@@ -504,6 +505,11 @@
       "productHint": "Consultation, package, writing, webinar; payment link or receipt",
       "offer": "Contract offer",
       "offerHint": "Application, visa, writing; a draft for the manager to approve"
+    },
+    "reviewFiles": {
+      "title": "Documents for a free review",
+      "subtitle": "Sent from the panel; give them the result by phone.",
+      "open": "Open {{kind}}"
     }
   },
   "month": {

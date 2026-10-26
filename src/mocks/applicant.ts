@@ -38,6 +38,7 @@ import { psForm } from '@/features/writing/psForm';
 import { recommendationForm } from '@/features/writing/recommendationForm';
 import { sopForm } from '@/features/writing/sopForm';
 import { estimateHandlers, resetEstimateMocks } from './estimate';
+import { journeyHandlers, resetJourneyMocks } from './journey';
 import { forbidden, notFound, storage } from './session';
 
 /**
@@ -252,6 +253,8 @@ function saraDocuments(): Omit<DocumentsData, 'progress'> {
     uploaded_at: daysFromNow(-daysAgo),
     source,
     can_delete: canDelete,
+    // Django: own files wait for the supervisor (deletable until then); team files are approved.
+    state: source === 'me' && canDelete ? 'review' : 'approved',
   });
   return {
     required: [
@@ -1174,7 +1177,8 @@ const failed = (value: SaraState | Response): value is Response => value instanc
 
 /**
  * Dev knob for the locked previews (canvas V7): `localStorage['scorize.mock.access']` set to
- * `pending` or `ended` changes the logged-in user's state; `noservice` keeps Sara active without
+ * `pending`, `ended` or `guest` changes the logged-in user's state (`guest`: Sara's booked sessions
+ * on the new-user home); `noservice` keeps Sara active without
  * admission services. Without it Sara is active and everyone else a guest.
  */
 export const MOCK_ACCESS_KEY = 'scorize.mock.access';
@@ -1185,7 +1189,7 @@ function accessOf(user: number): ApplicantAccess {
   const features: ApplicantAccess['features'] =
     knob === 'noservice' ? ['writing', 'visa'] : ['admission', 'writing', 'visa'];
   const state: AccessState =
-    knob === 'pending' || knob === 'ended' ? knob : sara ? 'active' : 'guest';
+    knob === 'pending' || knob === 'ended' || knob === 'guest' ? knob : sara ? 'active' : 'guest';
   // A registered contract (in review) already has its services and countries.
   const contract = state !== 'guest';
   return {
@@ -1989,6 +1993,7 @@ export const applicantHandlers = [
       uploaded_at: new Date().toISOString(),
       source: 'me',
       can_delete: true,
+      state: 'review',
     });
     state.answers.set(id, { ...required, note: null });
     return new HttpResponse(null, { status: 201 });
@@ -2207,6 +2212,7 @@ export const applicantHandlers = [
   ...consultationHandlers,
   ...gateHandlers,
   ...estimateHandlers,
+  ...journeyHandlers,
 ];
 
 /** Forget Sara's changes (tests, logout). */
@@ -2220,4 +2226,5 @@ export function resetApplicantMocks() {
   transcriptReturned.clear();
   gateState = null;
   resetEstimateMocks();
+  resetJourneyMocks();
 }

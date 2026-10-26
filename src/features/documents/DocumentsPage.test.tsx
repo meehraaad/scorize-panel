@@ -40,8 +40,20 @@ describe('documents page', () => {
       within(required()).getByLabelText('ریز نمرات کارشناسی (ترجمه‌ی رسمی)'),
     ).toBeInTheDocument();
     expect(within(required()).getByText(/نسخه‌ی قبلی امضا نداشت/)).toBeInTheDocument();
-    expect(within(files()).getAllByRole('listitem')).toHaveLength(10);
+    // Two lanes: the applicant's files with their review state, the team's deliveries apart.
+    expect(within(files()).getAllByRole('listitem')).toHaveLength(8);
     expect(within(files()).getByRole('link', { name: 'دانلود پاسپورت' })).toBeInTheDocument();
+    expect(within(files()).getAllByText('تأیید شد').length).toBeGreaterThan(0);
+    const team = screen.getByRole('region', { name: 'فایل‌های آماده از تیم' });
+    expect(within(team).getAllByRole('listitem')).toHaveLength(2);
+    // What waits on the applicant comes first: documents to upload and the writing forms.
+    const waiting = screen.getByRole('region', { name: 'منتظر شما' });
+    expect(within(waiting).getByText('۲ مدرک برای آپلود')).toBeInTheDocument();
+    expect(within(waiting).getByText('فرم انگیزه‌نامه (SOP)')).toBeInTheDocument();
+    expect(within(waiting).getAllByRole('link', { name: 'تکمیل فرم' })[0]).toHaveAttribute(
+      'href',
+      '/documents/sop',
+    );
     // Reviewed files and the team's deliveries can't be deleted.
     expect(within(files()).queryByRole('button', { name: 'حذف دانشنامه‌ی کارشناسی' })).toBeNull();
 
@@ -88,7 +100,7 @@ describe('documents page', () => {
       screen.getByText('۹ از ۱۰ مدرک را فرستاده‌اید. ۱ مدرک دیگر مانده است.'),
     ).toBeInTheDocument();
     expect(within(required()).queryByLabelText('ریز نمرات کارشناسی (ترجمه‌ی رسمی)')).toBeNull();
-    expect(within(files()).getAllByRole('listitem')).toHaveLength(11);
+    expect(within(files()).getAllByRole('listitem')).toHaveLength(9);
   });
 
   it('deletes an own file after a confirmation, and asks for it again', async () => {
@@ -99,7 +111,7 @@ describe('documents page', () => {
     await user.click(within(files()).getByRole('button', { name: 'حذف پاسپورت' }));
     await user.click(within(files()).getByRole('button', { name: 'حذف فایل' }));
     expect(await within(required()).findByLabelText('پاسپورت')).toBeInTheDocument();
-    expect(within(files()).getAllByRole('listitem')).toHaveLength(9);
+    expect(within(files()).getAllByRole('listitem')).toHaveLength(7);
   });
 
   it('adds and removes research interests, refusing duplicates', async () => {

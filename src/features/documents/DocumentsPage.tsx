@@ -9,12 +9,16 @@ import { documentsQuery, type DocumentsData } from './api';
 import { FilesCard } from './components/FilesCard';
 import { InterestsCard } from './components/InterestsCard';
 import { UploadCard } from './components/UploadCard';
+import { WaitingCard } from './components/WaitingCard';
 import { WritingCard } from './components/WritingCard';
+import { WritingUpsell } from './components/WritingUpsell';
 import { previewDocuments } from './preview';
 
 /**
- * "Documents & writing". Design: canvas V6 "مدارک و نگارش" (AppDocuments); without a contract,
- * the locked preview of canvas V7 section 5.
+ * "Documents & writing". Design: canvas V6 "مدارک و نگارش" (AppDocuments), reworked in the
+ * "Scorize New User Dashboard" canvas (Documents): what waits on the applicant first, then two
+ * lanes, their uploads and the team's writing. Without a contract, the locked preview of canvas
+ * V7 section 5.
  */
 export default function DocumentsPage() {
   const { t } = useTranslation('documents');
@@ -24,22 +28,32 @@ export default function DocumentsPage() {
   // No applicant file (404, data null) is a guest, whatever the access says.
   const lock = lockOf(access, 'documents') ?? (data ? null : 'guest');
 
+  // Two lanes: what the applicant sends (main), what the team writes (aside). What is waiting on
+  // the applicant comes first.
   const body = (docs: DocumentsData) => (
-    <PageColumns
-      asideLabel={t('aside')}
-      main={
-        <>
-          <UploadCard data={docs} />
-          <FilesCard files={docs.files} />
-        </>
-      }
-      aside={
-        <>
-          {docs.writing && docs.writing.length > 0 && <WritingCard orders={docs.writing} />}
-          <InterestsCard interests={docs.interests} />
-        </>
-      }
-    />
+    <>
+      <WaitingCard data={docs} />
+      <PageColumns
+        asideLabel={t('aside')}
+        main={
+          <>
+            <UploadCard data={docs} />
+            <FilesCard files={docs.files.filter((file) => file.source === 'me')} />
+          </>
+        }
+        aside={
+          <>
+            {docs.writing && docs.writing.length > 0 ? (
+              <WritingCard orders={docs.writing} />
+            ) : (
+              docs.writing === null && !lock && <WritingUpsell phone={access.phone} />
+            )}
+            <FilesCard lane="team" files={docs.files.filter((file) => file.source === 'team')} />
+            <InterestsCard interests={docs.interests} />
+          </>
+        }
+      />
+    </>
   );
 
   if (lock || !data)

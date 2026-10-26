@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buttonClass } from '@/components/ui/buttonStyles';
+import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FileTile } from '@/components/ui/Files';
 import { IconButton, IconLink } from '@/components/ui/IconButton';
@@ -10,14 +11,19 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useDeleteFile, type CaseFile } from '../api';
 import { toast } from '@/lib/toast';
 
-/** Everything on the case: the applicant's uploads and the writing team's deliveries. */
-export function FilesCard({ files }: { files: CaseFile[] }) {
+/**
+ * One lane of the case's files: the applicant's uploads with the supervisor's review state
+ * (`mine`), or the writing team's deliveries (`team`, not shown while there are none).
+ */
+export function FilesCard({ files, lane = 'mine' }: { files: CaseFile[]; lane?: 'mine' | 'team' }) {
   const { t } = useTranslation('documents');
   const f = useFormat();
+  if (lane === 'team' && files.length === 0) return null;
   return (
     <SectionCard
-      id="docs-files"
-      title={t('files.title')}
+      id={lane === 'team' ? 'docs-team-files' : 'docs-files'}
+      title={t(lane === 'team' ? 'files.teamTitle' : 'files.title')}
+      subtitle={lane === 'team' ? t('files.teamSubtitle') : undefined}
       end={
         files.length > 0 && (
           <span className="text-sm text-text-2">
@@ -89,6 +95,11 @@ function FileItem({ file }: { file: CaseFile }) {
         })}
         actions={
           <>
+            {!team && (
+              <Chip tone={file.state === 'approved' ? 'good' : 'info'} small>
+                {t(`files.state.${file.state}`)}
+              </Chip>
+            )}
             <IconLink
               icon="download"
               href={file.url}

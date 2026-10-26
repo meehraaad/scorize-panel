@@ -29,6 +29,8 @@ export interface CaseFile {
   source: 'me' | 'team';
   /** The applicant may still remove it (until the supervisor has reviewed it). */
   can_delete: boolean;
+  /** Own files: `review` until the supervisor has checked them; the team's files are `approved`. */
+  state: 'review' | 'approved';
 }
 
 export type WritingType = 'sop' | 'cv' | 'recommendation' | 'ps' | 'ds' | 'pl';
