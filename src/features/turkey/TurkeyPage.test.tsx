@@ -37,7 +37,8 @@ describe('free Turkey application', () => {
   it('is offered on the guest home', async () => {
     loginAs(MARYAM);
     renderApp('/');
-    const card = await screen.findByRole('region', { name: 'اپلای رایگان ترکیه' });
+    // One of the ways to start on the new-user home.
+    const card = await screen.findByRole('region', { name: 'اپلای ترکیه، بدون پیش‌پرداخت' });
     expect(within(card).getByRole('link', { name: 'شروع اپلای ترکیه' })).toHaveAttribute(
       'href',
       '/turkey',

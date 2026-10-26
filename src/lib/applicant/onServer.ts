@@ -11,7 +11,9 @@ export type ServerFeature =
   | 'gpaSave'
   | 'consultationInfo'
   | 'packages'
-  | 'estimate';
+  | 'estimate'
+  | 'reviewDocuments'
+  | 'background';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -30,4 +32,8 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   packages: true,
   /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution `mehrad-take-over`). */
   estimate: true,
+  /** H59 `review-documents/`: files sent for a free review (scorize-revolution `claude/project-thread-aylffr`). */
+  reviewDocuments: true,
+  /** H60 `background/`: the tablet form. */
+  background: true,
 };

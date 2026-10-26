@@ -41,7 +41,13 @@
     "deleteError": "The file wasn't deleted. Try again.",
     "empty": "Documents you upload and the writing team's files collect here.",
     "emptyTitle": "You haven't sent any files yet",
-    "toRequired": "Go to required documents"
+    "toRequired": "Go to required documents",
+    "state": {
+      "review": "In review",
+      "approved": "Approved"
+    },
+    "teamTitle": "Ready from the team",
+    "teamSubtitle": "What the writing team wrote for your case."
   },
   "aside": "Writing and research interests",
   "writing": {
@@ -96,5 +102,18 @@
     "language": "IELTS certificate",
     "degree": "Bachelor's degree certificate",
     "universities": "Suggested universities list"
+  },
+  "waiting": {
+    "title": "Waiting for you",
+    "subtitle": "These move your case forward; the rest is on us.",
+    "upload": "{{n}} documents to upload",
+    "uploadAction": "Upload documents",
+    "form": "{{name}} form",
+    "formAction": "Fill in the form"
+  },
+  "upsell": {
+    "title": "Leave your CV and SOP to us",
+    "text": "The Scorize writing team writes your CV, statement of purpose and recommendation letters from your case.",
+    "cta": "Request a call about writing"
   }
 }

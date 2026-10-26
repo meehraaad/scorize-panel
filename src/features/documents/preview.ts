@@ -16,6 +16,7 @@ export function previewDocuments(t: TFunction<'documents'>): DocumentsData {
     uploaded_at: days(-ago),
     source: team ? 'team' : 'me',
     can_delete: false,
+    state: 'approved',
   });
   return {
     progress: { uploaded: 6, required: 8 },

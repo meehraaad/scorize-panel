@@ -106,6 +106,7 @@ export interface CustomerData {
   templates: { id: number; title: string; text: string }[];
   /** For "ask a colleague". */
   colleagues: Colleague[];
+  review_files: { id: number; kind: string; url: string; uploaded_at: string }[];
   /** What the server does with a logged contact: store stage moves (S3), text "no answer" (S16). */
   supports: { stages: boolean; no_answer_sms: boolean };
 }
@@ -280,6 +281,8 @@ export async function fetchCustomer(id: number, signal?: AbortSignal): Promise<C
     templates: [],
     // The seller themself isn't someone to ask.
     colleagues: peers.filter((peer) => peer.id !== me),
+    // The old staff endpoints have no review files.
+    review_files: [],
     supports: { stages: false, no_answer_sms: false },
   };
 }

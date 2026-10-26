@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { ON_SERVER, type ServerFeature } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
+import { toasts } from '@/test/toasts';
 import '@/test/server';
 
 // Also covers features Django doesn't serve yet (src/lib/applicant/onServer.ts): switch them on.
@@ -130,6 +131,77 @@ describe('applicant home', () => {
       'href',
       '/consultation/',
     );
+  });
+
+  it('leads someone without a contract toward one: readiness, a free review, ways to start', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/');
+    const readiness = await screen.findByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' });
+    expect(within(readiness).getAllByRole('listitem')).toHaveLength(4);
+    // Nothing done yet: the quiz is the next step.
+    expect(within(readiness).queryByText('انجام شد')).toBeNull();
+    expect(within(readiness).getByRole('link', { name: 'شروع تخمین' })).toHaveAttribute(
+      'href',
+      '/estimate',
+    );
+
+    const review = screen.getByRole('region', { name: 'مدارک‌تان را برای ارزیابی رایگان بفرستید' });
+    await user.click(within(review).getByRole('radio', { name: 'رزومه' }));
+    await user.upload(
+      within(review).getByLabelText('انتخاب فایل رزومه'),
+      new File(['%PDF'], 'cv.pdf', { type: 'application/pdf' }),
+    );
+    expect(
+      await toasts().findByText('مدرک رسید. کارشناس ما برای نتیجه‌ی ارزیابی تماس می‌گیرد.'),
+    ).toBeInTheDocument();
+    const sent = await within(review).findByRole('list', { name: 'مدارک فرستاده‌شده' });
+    expect(within(sent).getByText('رزومه')).toBeInTheDocument();
+    expect(await within(readiness).findByText('انجام شد')).toBeInTheDocument();
+
+    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
+    expect(within(paths).getByRole('link', { name: 'رزرو مشاوره' })).toHaveAttribute(
+      'href',
+      '/consultation/',
+    );
+    expect(
+      within(paths).getByRole('button', { name: 'درخواست تماس برای قرارداد' }),
+    ).toBeInTheDocument();
+  });
+
+  it('puts a booked session first, with what to fill before it', async () => {
+    loginAs(SARA);
+    localStorage.setItem('scorize.mock.access', 'guest');
+    renderApp('/');
+    const session = await screen.findByRole('region', { name: 'مشاوره‌ی تخصصی اپلای دکترا' });
+    expect(within(session).getByText('فرم سوابق را کامل کنید')).toBeInTheDocument();
+    const links = within(session).getAllByRole('link', { name: 'تکمیل' });
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/background',
+      '/consultations/41',
+    ]);
+  });
+
+  it('saves the tablet form', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/background');
+    await screen.findByRole('heading', { name: 'فرم سوابق', level: 1 });
+    expect(
+      screen.getByText('برای کامل شدن: شهر و دست‌کم یک مدرک با دانشگاه و معدل.'),
+    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText('شهر محل زندگی'), 'اصفهان');
+    await user.click(screen.getByRole('button', { name: 'افزودن مدرک تحصیلی' }));
+    await user.click(screen.getByRole('button', { name: 'ذخیره‌ی فرم' }));
+    expect(screen.getByLabelText('دانشگاه')).toHaveFocus();
+    expect(screen.getByLabelText('دانشگاه')).toHaveAccessibleDescription('این بخش را پر کنید.');
+    await user.type(screen.getByLabelText('دانشگاه'), 'دانشگاه اصفهان');
+    await user.type(screen.getByLabelText('معدل'), '۱۷٫۵');
+    await user.click(screen.getByRole('button', { name: 'افزودن آزمون' }));
+    await user.type(screen.getByLabelText('نمره'), '7');
+    await user.click(screen.getByRole('button', { name: 'ذخیره‌ی فرم' }));
+    expect(await toasts().findByText('فرم سوابق ذخیره شد.')).toBeInTheDocument();
+    expect(await screen.findByText('فرم کامل است؛ مشاور همه‌چیز را دارد.')).toBeInTheDocument();
   });
 
   it('tells someone whose contract is in review where it stands', async () => {

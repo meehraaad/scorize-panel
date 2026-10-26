@@ -12,6 +12,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { gatesQuery } from '@/lib/applicant/gates';
+import { backgroundQuery, reviewDocumentsQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
@@ -37,19 +38,20 @@ export const applicantPanel: PanelDefinition = {
       tab: 'panels.applicant.tabs.home',
       icon: 'home',
     },
-    {
-      id: 'applications',
-      to: 'applications',
-      label: 'panels.applicant.nav.applications',
-      tab: 'panels.applicant.tabs.applications',
-      icon: 'graduation',
-    },
+    // Documents before applications: an application waits for them, and they are the applicant's work.
     {
       id: 'documents',
       to: 'documents',
       label: 'panels.applicant.nav.documents',
       tab: 'panels.applicant.tabs.documents',
       icon: 'document',
+    },
+    {
+      id: 'applications',
+      to: 'applications',
+      label: 'panels.applicant.nav.applications',
+      tab: 'panels.applicant.tabs.applications',
+      icon: 'graduation',
     },
     {
       id: 'tickets',
@@ -71,17 +73,28 @@ export const applicantPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          ...lazyPage(() => import('@/features/home/HomePage'), ['home', 'gates', 'estimate'], {
-            // The guest home is the admission-chance quiz (or its last result); a case with a
-            // contract has none.
-            data: () => {
-              const guest =
-                ON_SERVER.estimate &&
-                queryClient.getQueryData(accessQuery.queryKey)?.state !== 'active';
-              return [overviewQuery, guest && latestEstimateQuery, guest && estimateOptionsQuery];
+          ...lazyPage(
+            () => import('@/features/home/HomePage'),
+            ['home', 'gates', 'estimate', 'journey'],
+            {
+              // Without a contract the home is the journey toward one: the admission-chance quiz
+              // (or its last result), files for a free review, the tablet form and the next
+              // session. A case with a contract (or one in review) reads none of them.
+              data: () => {
+                const state = queryClient.getQueryData(accessQuery.queryKey)?.state;
+                const guest = ON_SERVER.estimate && state !== 'active' && state !== 'pending';
+                return [
+                  overviewQuery,
+                  guest && latestEstimateQuery,
+                  guest && estimateOptionsQuery,
+                  guest && reviewDocumentsQuery,
+                  guest && backgroundQuery,
+                  guest && consultationsQuery,
+                ];
+              },
+              skeleton: 'dashboard',
             },
-            skeleton: 'dashboard',
-          }),
+          ),
         },
         {
           path: 'applications',
@@ -249,6 +262,16 @@ export const applicantPanel: PanelDefinition = {
               }),
             }
           : { path: 'estimate', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
+        // The tablet form (no nav item: the new-user home and the session card link to it).
+        ON_SERVER.background
+          ? {
+              path: 'background',
+              ...lazyPage(() => import('@/features/background/BackgroundPage'), ['journey'], {
+                data: () => [backgroundQuery],
+                skeleton: 'form',
+              }),
+            }
+          : { path: 'background', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
       ],
     },
   ],
