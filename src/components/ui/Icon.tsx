@@ -138,6 +138,18 @@ const PATHS = {
       <path d="M10 8l6 4-6 4z" />
     </>
   ),
+  video: (
+    <>
+      <rect x="3" y="6" width="13" height="12" rx="2" />
+      <path d="m16 10 5-3v10l-5-3" />
+    </>
+  ),
+  building: (
+    <>
+      <path d="M4 21V5l8-2 8 2v16" />
+      <path d="M9 21v-4h6v4M9 8h1M14 8h1M9 12h1M14 12h1" />
+    </>
+  ),
   calendar: (
     <>
       <rect x="3" y="5" width="18" height="16" rx="2" />
