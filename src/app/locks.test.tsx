@@ -94,7 +94,8 @@ describe('locked sections', () => {
 
   it('tells someone whose contract is in review that nothing is needed yet', async () => {
     loginAs(SARA, 'pending');
-    await open('/contract', 'قرارداد و پرداخت');
+    // The contract tab is open while a prepayment is due (src/features/contract tests).
+    await open('/documents', 'مدارک و نگارش');
     const banner = screen.getByRole('region', { name: 'قرارداد در حال بررسی' });
     expect(banner).toHaveTextContent('قرارداد شما ثبت شده و در حال بررسی است');
     expect(within(banner).queryByRole('button')).toBeNull();

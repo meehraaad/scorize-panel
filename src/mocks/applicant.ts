@@ -1229,6 +1229,9 @@ function accessOf(user: number): ApplicantAccess {
       const step = turkeyCases.get(user)?.step;
       return step === 'docs' || step === 'review' || step === 'sign' ? step : null;
     })(),
+    // A case waiting to start: its prepayment (an invoice of the payment page's mock).
+    prepayment:
+      state === 'pending' ? { payment_id: 502, amount: 1_200_000, status: 'unpaid' } : null,
   };
 }
 

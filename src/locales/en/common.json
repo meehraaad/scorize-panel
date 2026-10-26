@@ -14,7 +14,7 @@
         "documents": "Documents",
         "tickets": "Tickets",
         "contract": "Contract",
-        "services": "Services"
+        "services": "Academy"
       },
       "tabs": {
         "home": "Home",
@@ -32,7 +32,8 @@
         "files": "All files",
         "tickets": "Tickets",
         "reports": "Reports",
-        "tasks": "My tasks"
+        "tasks": "My tasks",
+        "new": "New cases"
       },
       "tabs": {
         "today": "Today",

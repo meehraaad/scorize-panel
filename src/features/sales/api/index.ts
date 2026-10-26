@@ -16,3 +16,4 @@ export * from './apply';
 export * from './sell';
 export * from './offer';
 export * from './manager';
+export * from './contract';

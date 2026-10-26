@@ -75,7 +75,8 @@ export interface ContractData {
   holder: string;
   /** `turkey`: the free Turkey programme (no instalments, a pledge signed by SMS code). */
   kind: 'standard' | 'turkey';
-  status: 'active' | 'ended';
+  /** `pending`: approved, waiting for its prepayment and supervisor (set by the page, S46). */
+  status: 'active' | 'ended' | 'pending';
   features: ContractFeature[];
   /** Localized by the server (Accept-Language). */
   countries: string[];

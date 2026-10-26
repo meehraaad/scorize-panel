@@ -118,6 +118,27 @@ describe('contract page', () => {
     ).toHaveFocus();
   });
 
+  it('before the case starts, shows the prepayment to pay above the contract', async () => {
+    loginAs(SARA);
+    localStorage.setItem('scorize.mock.access', 'pending');
+    renderApp('/contract');
+    const start = await screen.findByRole('region', { name: 'شروع پرونده' });
+    expect(start).toHaveTextContent('پرداخت نشده');
+    expect(within(start).getByText(/پیش‌پرداخت قرارداد \(۱٬۲۰۰٬۰۰۰ تومان\)/)).toBeInTheDocument();
+    const current = within(start)
+      .getAllByRole('listitem')
+      .find((step) => step.getAttribute('aria-current') === 'step');
+    expect(current).toHaveTextContent('پیش‌پرداخت');
+    expect(within(start).getByRole('link', { name: 'پرداخت پیش‌پرداخت' })).toHaveAttribute(
+      'href',
+      '/payments/502',
+    );
+    // The real contract under it, not a locked preview.
+    const hero = screen.getByRole('region', { name: 'خلاصه‌ی قرارداد' });
+    expect(within(hero).getByText('در انتظار شروع')).toBeInTheDocument();
+    expect(hero.closest('[inert]')).toBeNull();
+  });
+
   it('without a contract, shows a locked preview', async () => {
     loginAs(MARYAM);
     renderApp('/contract');
