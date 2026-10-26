@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
+import type { ServicesData } from './api';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 
@@ -113,5 +114,65 @@ describe('other services', () => {
     expect(
       await screen.findByText('این پرداخت پیدا نشد. شاید پیوند قدیمی است.'),
     ).toBeInTheDocument();
+  });
+  it('shows long lists a page at a time', async () => {
+    const user = userEvent.setup();
+    const soon = new Date(Date.now() + 7 * 86_400_000).toISOString();
+    const many = (n: number, title: string) =>
+      Array.from({ length: n }, (_, i) => ({ id: i + 1, title: `${title} ${String(i + 1)}` }));
+    const data: ServicesData = {
+      credit: 0,
+      webinar: null,
+      packages: many(12, 'Package').map(({ id, title }) => ({
+        id,
+        tag: 'WEB',
+        name: title,
+        meta: '',
+        url: '#',
+      })),
+      offer: null,
+      consultations: {
+        upcoming: many(6, 'Session').map((item) => ({ ...item, starts_at: soon })),
+        total: 6,
+      },
+      events: many(7, 'Event').map((item) => ({
+        ...item,
+        starts_at: soon,
+        online: true,
+        status: 'upcoming',
+        join_url: null,
+        video_url: null,
+        url: '#',
+      })),
+      gpa: { courses: [], result: null },
+    };
+    server.use(http.get('/api/applicant/v1/services/', () => HttpResponse.json(data)));
+    await open(MARYAM);
+
+    const packages = screen.getByRole('region', { name: 'بسته‌های من' });
+    expect(within(packages).getByText('Package 5')).toBeInTheDocument();
+    expect(within(packages).queryByText('Package 6')).not.toBeInTheDocument();
+    expect(within(packages).getByText('۱ تا ۵ از ۱۲')).toBeInTheDocument();
+    await user.click(within(packages).getByRole('button', { name: 'بعدی' }));
+    expect(within(packages).getByText('Package 6')).toBeInTheDocument();
+    expect(within(packages).queryByText('Package 1')).not.toBeInTheDocument();
+    await user.click(within(packages).getByRole('button', { name: 'بعدی' }));
+    expect(within(packages).getByText('۱۱ تا ۱۲ از ۱۲')).toBeInTheDocument();
+    expect(within(packages).getByRole('button', { name: 'بعدی' })).toBeDisabled();
+
+    const consultations = screen.getByRole('region', { name: 'مشاوره‌های من' });
+    expect(within(consultations).queryByText('Session 6')).not.toBeInTheDocument();
+    await user.click(within(consultations).getByRole('button', { name: 'بعدی' }));
+    expect(within(consultations).getByText('Session 6')).toBeInTheDocument();
+
+    const events = screen.getByRole('region', { name: 'رویدادهای من' });
+    expect(within(events).getByText('۱ تا ۵ از ۷')).toBeInTheDocument();
+    await user.click(within(events).getByRole('button', { name: 'بعدی' }));
+    expect(within(events).getByText('Event 7')).toBeInTheDocument();
+  });
+
+  it('has no pager for short lists', async () => {
+    await open(SARA);
+    expect(screen.queryByRole('button', { name: 'بعدی' })).not.toBeInTheDocument();
   });
 });

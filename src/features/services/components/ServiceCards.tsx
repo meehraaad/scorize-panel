@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Pager } from '@/components/ui/Pager';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -11,10 +13,38 @@ import type { ServicesData } from '../api';
 
 const ROW = 'flex items-center gap-3 px-5 py-3.5 shadow-[inset_0_1px_0_var(--hair)] lg:px-7';
 
+/** Rows per page in each list. The server sends them all (one user's purchases, bookings, events). */
+export const SERVICES_PAGE_SIZE = 5;
+
+/** A page of `all`, and the pager under the list (only when there is more than one page). */
+function usePaged<T>(all: readonly T[]) {
+  const { t } = useTranslation('services');
+  const f = useFormat();
+  const [chosen, setPage] = useState(1);
+  const pages = Math.max(1, Math.ceil(all.length / SERVICES_PAGE_SIZE));
+  const page = Math.min(chosen, pages);
+  const from = (page - 1) * SERVICES_PAGE_SIZE;
+  const rows = all.slice(from, from + SERVICES_PAGE_SIZE);
+  const pager = pages > 1 && (
+    <Pager
+      page={page}
+      pages={pages}
+      onPage={setPage}
+      status={t('pager', {
+        from: f.number(from + 1),
+        to: f.number(from + rows.length),
+        total: f.number(all.length),
+      })}
+    />
+  );
+  return { rows, pager };
+}
+
 /** Courses and recordings the applicant bought, and the current offer. */
 export function PackagesCard({ data }: { data: ServicesData }) {
   const { t } = useTranslation('services');
   const f = useFormat();
+  const { rows, pager } = usePaged(data.packages);
   return (
     <SectionCard id="packages" title={t('packages.title')} size="md" className="scroll-mt-28">
       {data.packages.length === 0 ? (
@@ -23,7 +53,7 @@ export function PackagesCard({ data }: { data: ServicesData }) {
         </EmptyState>
       ) : (
         <ul className="m-0 list-none p-0">
-          {data.packages.map((item) => (
+          {rows.map((item) => (
             <li key={item.id}>
               {ON_SERVER.packages ? (
                 <Link
@@ -59,6 +89,7 @@ export function PackagesCard({ data }: { data: ServicesData }) {
           ))}
         </ul>
       )}
+      {pager}
       {data.offer && (
         <div className="m-4 mt-2 flex flex-wrap items-center justify-between gap-3 rounded-[18px] bg-tint px-4 py-3.5 lg:mx-6 lg:mb-6">
           <span className="flex flex-col gap-0.5">
@@ -87,6 +118,7 @@ export function ConsultationsCard({ data }: { data: ServicesData }) {
   const { t } = useTranslation('services');
   const f = useFormat();
   const { upcoming } = data.consultations;
+  const { rows, pager } = usePaged(upcoming);
   return (
     <SectionCard
       id="consultations"
@@ -109,7 +141,7 @@ export function ConsultationsCard({ data }: { data: ServicesData }) {
         )
       ) : (
         <ul className="m-0 list-none p-0 pb-2">
-          {upcoming.map((item) => (
+          {rows.map((item) => (
             <li key={item.id}>
               <Link
                 to={`/consultations/${String(item.id)}`}
@@ -138,6 +170,7 @@ export function ConsultationsCard({ data }: { data: ServicesData }) {
           ))}
         </ul>
       )}
+      {pager}
       {data.consultations.total > 0 && (
         <Link
           to="/consultations"
@@ -154,6 +187,7 @@ export function ConsultationsCard({ data }: { data: ServicesData }) {
 export function EventsCard({ data }: { data: ServicesData }) {
   const { t } = useTranslation('services');
   const f = useFormat();
+  const { rows, pager } = usePaged(data.events);
   return (
     <SectionCard
       id="events"
@@ -174,7 +208,7 @@ export function EventsCard({ data }: { data: ServicesData }) {
         </EmptyState>
       ) : (
         <ul className="m-0 list-none p-0 pb-2">
-          {data.events.map((event) => {
+          {rows.map((event) => {
             const action =
               event.status === 'upcoming' && event.join_url
                 ? { href: event.join_url, label: t('events.join'), primary: true }
@@ -227,6 +261,7 @@ export function EventsCard({ data }: { data: ServicesData }) {
           })}
         </ul>
       )}
+      {pager}
     </SectionCard>
   );
 }
