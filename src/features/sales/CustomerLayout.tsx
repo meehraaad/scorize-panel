@@ -1,22 +1,29 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { Suspense } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageSkeleton } from '@/components/ui/Skeleton';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
+import { whenIdle } from '@/lib/whenIdle';
 import type { MessageChannel } from '@/lib/sales/api';
 import { customerQuery, type ProductCategory } from './api';
 import { CustomerHero } from './components/CustomerHero';
 import { CustomerTabs } from './components/CustomerTabs';
-import { LogDialog, type LogStart } from './components/LogDialog';
-import { SellDialog } from './components/SellDialog';
+import type { LogStart } from './components/LogDialog';
 import { salesPath, type LogIntent } from './paths';
 import { useCustomerId } from './useCustomerId';
 
 const INTENTS: readonly LogIntent[] = ['call', 'message', 'meeting'];
 const CATEGORIES: readonly ProductCategory[] = ['consultation', 'writing', 'package', 'event'];
+
+// The dialogs (and the date picker they use) open on a click: their code is not part of the
+// page's first load. It is fetched once the browser is idle, so a click still opens them at once.
+const loadLogDialog = () => import('./components/LogDialog');
+const loadSellDialog = () => import('./components/SellDialog');
+const LogDialog = lazy(() => loadLogDialog().then((module) => ({ default: module.LogDialog })));
+const SellDialog = lazy(() => loadSellDialog().then((module) => ({ default: module.SellDialog })));
 
 /**
  * Frame of every customer page: the summary card with its actions, the sub-tabs (summary,
@@ -29,6 +36,14 @@ export default function CustomerLayout() {
   const { data } = useSuspenseQuery(customerQuery(id));
   const [params, setParams] = useSearchParams();
   useDocumentTitle(data.name);
+  useEffect(
+    () =>
+      whenIdle(() => {
+        void loadLogDialog();
+        void loadSellDialog();
+      }),
+    [],
+  );
 
   const intent = params.get('log');
   const start: LogStart | null = INTENTS.includes(intent as LogIntent)
@@ -77,18 +92,23 @@ export default function CustomerLayout() {
         <Outlet />
       </Suspense>
       {/* Keyed by what opened it, so a new intent starts a fresh form. */}
-      <LogDialog
-        key={start ? `log-${start.channel}-${String(start.reservation ?? '')}` : 'log-closed'}
-        customer={data}
-        start={start}
-        onClose={closeLog}
-      />
-      <SellDialog
-        key={category ? 'sell-open' : 'sell-closed'}
-        customer={data}
-        category={category}
-        onClose={() => update((current) => current.delete('sell'))}
-      />
+      <Suspense fallback={null}>
+        {start && (
+          <LogDialog
+            key={`log-${start.channel}-${String(start.reservation ?? '')}`}
+            customer={data}
+            start={start}
+            onClose={closeLog}
+          />
+        )}
+        {category && (
+          <SellDialog
+            customer={data}
+            category={category}
+            onClose={() => update((current) => current.delete('sell'))}
+          />
+        )}
+      </Suspense>
     </PageStack>
   );
 }

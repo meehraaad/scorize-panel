@@ -55,8 +55,9 @@ into its `PAGES` list.**
 ## 2. Loading states: the page's shape, never a spinner
 
 - **Skeletons by page kind** (`PageSkeleton` in `components/ui/Skeleton.tsx`): `dashboard`,
-  `list`, `detail`, `form`, `board`, `chat`, and `tab` for the body of a tab inside a page that
-  keeps its own frame (customer, case file). Each page directly under a panel names its kind in
+  `list`, `detail`, `customer` (the sales customer page: its dark card, tabs and summary), `form`,
+  `board`, `chat`, and `tab` for the body of a tab inside a page that keeps its own frame
+  (customer, case file). Each page directly under a panel names its kind in
   `lazyPage(…, { skeleton })`; the panel's Suspense boundary draws it under the real header and
   menu. `skeletons.test.ts` fails when a panel page names none. Previewed at `/dev/components`.
 - **No flash, no flicker**: a skeleton fades in after 150 ms (`animate-appear`), so fast loads show

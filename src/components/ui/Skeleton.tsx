@@ -21,7 +21,15 @@ export function SkeletonRows({ rows }: { rows: number }) {
  * the page's layout at once instead of a spinner (docs/performance.md, "Loading states").
  * `tab` is the body of a tab inside a page that keeps its own header (customer, case file).
  */
-export type SkeletonKind = 'dashboard' | 'list' | 'detail' | 'form' | 'board' | 'chat' | 'tab';
+export type SkeletonKind =
+  | 'dashboard'
+  | 'list'
+  | 'detail'
+  | 'customer'
+  | 'form'
+  | 'board'
+  | 'chat'
+  | 'tab';
 
 /**
  * Fades in after 150 ms, so a fast load shows nothing; once shown, React keeps a Suspense
@@ -35,7 +43,7 @@ export function PageSkeleton({ kind }: { kind: SkeletonKind }) {
       aria-label={t('status.loading')}
       className="flex animate-appear flex-col gap-4 lg:gap-7"
     >
-      {kind !== 'tab' && <HeaderBones />}
+      {kind !== 'tab' && kind !== 'customer' && <HeaderBones />}
       {SHAPES[kind]}
     </div>
   );
@@ -78,6 +86,11 @@ function Pills({ count }: { count: number }) {
       ))}
     </div>
   );
+}
+
+/** A bone on the dark hero card. */
+function HeroBone({ className }: { className: string }) {
+  return <span className={`block animate-pulse rounded-full bg-hero-raised ${className}`} />;
 }
 
 function Tiles({ count }: { count: number }) {
@@ -148,6 +161,35 @@ const SHAPES: Record<SkeletonKind, ReactNode> = {
         </div>
       </div>
       <Pills count={4} />
+      <Columns main={<CardBones rows={4} />} aside={<CardBones rows={2} />} />
+    </>
+  ),
+  // The customer page (sales): back link, the dark summary card, its five tabs, then the summary
+  // tab (tasks, history and aside), so nothing moves when it arrives.
+  customer: (
+    <>
+      <Bone className="h-5 w-28" />
+      <div
+        aria-hidden="true"
+        className="flex flex-col gap-6 rounded-card-sm bg-hero p-5 shadow-hero lg:rounded-[32px] lg:px-9 lg:py-8"
+      >
+        <div className="flex items-start gap-4">
+          <HeroBone className="size-14 flex-none" />
+          <div className="flex min-w-0 flex-1 flex-col gap-2.5">
+            <HeroBone className="h-7 w-48 max-w-full" />
+            <HeroBone className="h-4 w-72 max-w-full" />
+            <HeroBone className="h-4 w-56 max-w-full" />
+          </div>
+        </div>
+        <HeroBone className="h-2 w-full" />
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: 4 }, (_, index) => (
+            <HeroBone key={index} className="h-11 w-28" />
+          ))}
+        </div>
+      </div>
+      <Pills count={5} />
+      <CardBones rows={2} />
       <Columns main={<CardBones rows={4} />} aside={<CardBones rows={2} />} />
     </>
   ),

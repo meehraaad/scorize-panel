@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { matchRoutes, useHref, type LoaderFunctionArgs, type RouteObject } from 'react-router';
+import { whenIdle } from '@/lib/whenIdle';
 
 /*
  * Preload on intent (docs/performance.md): when a pointer rests on an in-app link, or it is
@@ -90,14 +91,8 @@ export function useIntentPreload() {
 export function useIdlePreload(paths: readonly string[]) {
   const key = paths.join(' ');
   useEffect(() => {
-    const run = () => {
+    return whenIdle(() => {
       for (const path of key.split(' ')) preloadPath(path, { data: false });
-    };
-    if ('requestIdleCallback' in window) {
-      const id = window.requestIdleCallback(run, { timeout: 4000 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const id = setTimeout(run, 2000);
-    return () => clearTimeout(id);
+    });
   }, [key]);
 }
