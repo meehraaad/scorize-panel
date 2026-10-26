@@ -302,7 +302,9 @@ function seedPayments(erfanSession: StaffDb['reservations'][number]): Row<Django
       4902,
       0,
       [invoice(FINANCE_TYPE.product, purchasable(7, 'بسته‌ی نمونه انگیزه‌نامه‌ها', 1_500_000))],
-      ago(DAY),
+      // A minute older than 5021: the same `ago(DAY)` could tie or flip by a millisecond, and the
+      // payments tab opens the newest payment.
+      ago(DAY + 60_000),
       { authority: 'A00000000000000000000000000000004902' },
     ),
     paymentRow(
