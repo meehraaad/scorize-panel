@@ -176,7 +176,8 @@ than copying its markup into the feature, and add it to the gallery.
 
 ### Sales panel (canvas "Scorize Seller Panel")
 
-`features/sales/` holds every sales page (Today, Leads, Board, My month, My consultations, the customer
+`features/sales/` holds every sales page (Today, Leads and My consultations under one nav tab with
+`LeadsLayout`'s sub-tabs, Board, My month, the customer
 pages: `CustomerLayout` with its sub-tabs summary / purchases / payments / details / application file,
 the offer page; later the manager pages), `api/` with one response per page (a file per page
 or tab, re-exported by `api/index.ts`), and

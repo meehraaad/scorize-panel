@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { BackLink } from '@/components/ui/BackLink';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
@@ -18,7 +17,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
 import { consultationsQuery, type Consultation, type ConsultationRange } from './api';
-import { customerPath, salesPath } from './paths';
+import { customerPath } from './paths';
 
 const RANGES: readonly ConsultationRange[] = ['today', 'week', 'past', 'all'];
 const SOON_MINUTES = 30;
@@ -64,7 +63,6 @@ export default function ConsultationsPage() {
 
   return (
     <PageStack>
-      <BackLink to={salesPath()}>{t('consultations.back')}</BackLink>
       <PageHeader
         title={t('consultations.title')}
         subtitle={
