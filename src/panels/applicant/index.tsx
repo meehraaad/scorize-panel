@@ -61,7 +61,7 @@ export const applicantPanel: PanelDefinition = {
       icon: 'chat',
     },
     { id: 'contract', to: 'contract', label: 'panels.applicant.nav.contract', icon: 'card' },
-    { id: 'services', to: 'services', label: 'panels.applicant.nav.services', icon: 'grid' },
+    { id: 'services', to: 'services', label: 'panels.applicant.nav.services', icon: 'play' },
   ],
   routes: [
     {

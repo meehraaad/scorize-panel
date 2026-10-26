@@ -54,7 +54,7 @@ describe('recommendation letters form', () => {
     // Two letters in the contract: no third.
     expect(screen.queryByRole('button', { name: 'افزودن توصیه‌کننده' })).toBeNull();
     expect(
-      screen.getByText(/برای توصیه‌نامه‌ی بیشتر از «دیگر خدمات» سفارش دهید/),
+      screen.getByText(/برای توصیه‌نامه‌ی بیشتر از «آکادمی» سفارش دهید/),
     ).toBeInTheDocument();
     // Let the autosave finish inside this test, not in the next one.
     expect(await screen.findByText(/ذخیره شد/, {}, { timeout: 4000 })).toBeInTheDocument();
