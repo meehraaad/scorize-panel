@@ -423,8 +423,18 @@ their page), on the home page and on the payment result screen. Design: the same
 **Built (2026-10-27)** on scorize-revolution `claude/great-franklin-42hjq7` (tested, not deployed): AC1, AC2,
 AC4, AC5 (without the count in `whoami`), the staff ask and the declined-receipt activity of AC3, and AC6 with a
 bell reminder instead of an SMS (an SMS needs a Kavenegar template). The model has `reminded_at` where this list
-said `last_popped_at`: the panel keeps "opened by itself today" per device. Not built yet: the purchase tasks, the
-session survey and the instalment reminder of AC3, and AC7. To deploy: add `activity` to the production
+said `last_popped_at`: the panel keeps "opened by itself today" per device. Then on branch
+`claude/project-thread-n9wtl7` (`activity/asks.py`): the rest of AC3 and the supervisor survey of AC7. A paid
+invoice opens one writing form per writing bought (`/documents/<kind>`, closed when the form is sent to the
+writers), the campaign's form after payment (a link to the old site's confirmation page, payload `url`; closed when
+its wizard ends) and the session information when the account lacks it (closed when it is saved, gone when the
+session starts); an invoice no longer paid cancels them. `timed_activities` (Celery, every 15 minutes) opens the
+session survey an hour after a session ends (the page's feedback form, closed by the answer, gone after 7 days), an
+instalment three days before its date (closed when paid) and the monthly supervisor surveys (made in bulk, so no
+signal). Each opens once per thing, so an answered or dismissed one doesn't come back. A supervisor survey answered
+in the box writes `SupervisorSurvey.answer` as the gate did; with `ON_SERVER.activities` on, the panel no longer
+shows the survey gate (Django still sends `surveys` for the panel until then). The NPS part of AC7 waits for H48.
+To deploy: add `activity` to the production
 `makemigrations` app list and give it a migrations volume like the other apps (the last apps added, `insights`,
 `metrics` and `pathways`, need the same), run `makemigrations activity` and `migrate`, then set
 `ON_SERVER.activities` to true in the panel.

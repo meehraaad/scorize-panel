@@ -5,6 +5,7 @@ import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 import { patchMockActivity } from '@/mocks/activities';
+import { MOCK_GATE_KEY } from '@/mocks/applicant';
 
 // Django doesn't serve activities yet (src/lib/applicant/onServer.ts): switch them on.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -99,5 +100,26 @@ describe('the to-do box', () => {
     renderApp('/');
     await screen.findByRole('heading', { level: 1 });
     expect(screen.queryByRole('button', { name: /کارهای شما/ })).not.toBeInTheDocument();
+  });
+
+  it("links a page of the old site, such as a campaign's form after payment", async () => {
+    const user = userEvent.setup();
+    loginAs(SARA);
+    patchMockActivity(SARA, 904, { payload: { url: '/campaign/registration-confirmation/7/' } });
+    renderApp('/');
+    await user.click(await screen.findByRole('button', { name: /کارهای شما: ۴/ }));
+    const box = screen.getByRole('dialog', { name: 'کارهای شما' });
+    expect(within(box).getByRole('link', { name: 'ادامه' })).toHaveAttribute(
+      'href',
+      '/campaign/registration-confirmation/7/',
+    );
+  });
+
+  it('asks supervisor surveys in the box, not as a gate before the panel', async () => {
+    loginAs(SARA);
+    localStorage.setItem(MOCK_GATE_KEY, 'surveys');
+    renderApp('/');
+    expect(await screen.findByRole('heading', { level: 1, name: /سارا/ })).toBeVisible();
+    expect(screen.queryByRole('form', { name: /نظرسنجی/ })).not.toBeInTheDocument();
   });
 });

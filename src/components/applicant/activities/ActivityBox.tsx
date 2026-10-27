@@ -23,6 +23,7 @@ import {
 } from '@/lib/applicant/activities';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
+import { safeHref } from '@/lib/url';
 
 /**
  * The applicant's to-dos on every page (canvas "Scorize Payment States", G1): a pill with the count
@@ -230,14 +231,23 @@ function TextButton({
 /** How the to-do is done: in place (survey, rating, answer, upload) or on its page (form, pay). */
 function Answer({ activity }: { activity: Activity }) {
   const { t } = useTranslation('activities');
-  const { href } = activity.payload;
+  const { href, url } = activity.payload;
+  const away = safeHref(url);
   switch (activity.kind) {
     case 'form':
     case 'pay':
-      return href ? (
-        <Link to={href} className={buttonClass('outline', 'self-start')}>
+      if (href) {
+        return (
+          <Link to={href} className={buttonClass('outline', 'self-start')}>
+            {t(`go.${activity.kind}`)}
+          </Link>
+        );
+      }
+      // A page of the old site: a full load, outside the panel.
+      return away ? (
+        <a href={away} className={buttonClass('outline', 'self-start')}>
           {t(`go.${activity.kind}`)}
-        </Link>
+        </a>
       ) : null;
     case 'upload':
       return <UploadAnswer activity={activity} />;

@@ -31,12 +31,17 @@ export interface Activity {
   due_at: string | null;
   /** 0–100 for a form already started. */
   progress: number | null;
-  /** `survey`: the choices; `rating`: the top score; `upload`: accepted types; `form`, `pay`: the panel path. */
+  /**
+   * `survey`: the choices; `rating`: the top score; `upload`: accepted types; `form`, `pay`: the
+   * panel path (`href`), or a page of the old site (`url`) for what the panel can't do yet, such
+   * as a campaign's form after payment.
+   */
   payload: {
     choices?: { value: string; label: string }[];
     max?: number;
     accept?: string[];
     href?: string;
+    url?: string;
   };
 }
 

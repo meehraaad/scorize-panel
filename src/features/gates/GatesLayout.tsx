@@ -15,14 +15,15 @@ const ActivityBox = lazy(() => import('@/components/applicant/activities/Activit
  * Wraps the applicant panel's pages. When the server says something must happen first (canvas V6
  * section 8), that step shows in place of the page: an inactive panel, then the terms, then the
  * missing profile details, then supervisor surveys. Each one clears as it is answered. With no
- * gate, the page shows with the to-do box over it (AC1–AC7).
+ * gate, the page shows with the to-do box over it (AC1–AC7). With the box on, supervisor surveys
+ * are asked there instead and no longer stop the panel (AC7).
  */
 export default function GatesLayout() {
   const { data } = useSuspenseQuery(gatesQuery);
   if (data.inactive) return <InactiveGate inactive={data.inactive} />;
   if (data.terms) return <TermsGate terms={data.terms} />;
   if (data.profile) return <ProfileGate profile={data.profile} />;
-  if (data.surveys.length > 0) return <SurveyGate surveys={data.surveys} />;
+  if (!ON_SERVER.activities && data.surveys.length > 0) return <SurveyGate surveys={data.surveys} />;
   return (
     <>
       <Outlet />
