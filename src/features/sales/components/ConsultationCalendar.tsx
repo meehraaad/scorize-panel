@@ -351,36 +351,39 @@ function Layers({
     { id: 'calls', label: t('consultationCalendar.calls'), color: 'var(--text-2)' },
   ];
   return (
-    <fieldset className="m-0 flex flex-col gap-0.5 border-0 p-0">
+    <fieldset className="m-0 border-0 p-0">
       <legend className="mb-2 px-2 text-sm font-bold">{t('consultationCalendar.layers')}</legend>
-      {rows.map((row) => {
-        const on = !hidden.has(row.id);
-        return (
-          <label
-            key={row.id}
-            className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl px-2 hover:bg-canvas has-focus-visible:outline-2 has-focus-visible:outline-focus"
-          >
-            <input
-              type="checkbox"
-              checked={on}
-              onChange={() => onToggle(row.id)}
-              className="sr-only"
-            />
-            <span
-              aria-hidden="true"
-              style={{
-                background: on ? row.color : undefined,
-                boxShadow: `inset 0 0 0 2px ${row.color}`,
-              }}
-              className="flex size-[18px] flex-none items-center justify-center rounded-[5px] text-on-primary"
+      {/* Many types: the list scrolls rather than pushing the page down. */}
+      <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
+        {rows.map((row) => {
+          const on = !hidden.has(row.id);
+          return (
+            <label
+              key={row.id}
+              className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl px-2 hover:bg-canvas has-focus-visible:outline-2 has-focus-visible:outline-focus"
             >
-              {on && <Icon name="check" size={12} />}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{row.label}</span>
-            <span className="text-xs text-text-2">{f.number(counts(row.id))}</span>
-          </label>
-        );
-      })}
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={() => onToggle(row.id)}
+                className="sr-only"
+              />
+              <span
+                aria-hidden="true"
+                style={{
+                  background: on ? row.color : undefined,
+                  boxShadow: `inset 0 0 0 2px ${row.color}`,
+                }}
+                className="flex size-[18px] flex-none items-center justify-center rounded-[5px] text-on-primary"
+              >
+                {on && <Icon name="check" size={12} />}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{row.label}</span>
+              <span className="text-xs text-text-2">{f.number(counts(row.id))}</span>
+            </label>
+          );
+        })}
+      </div>
     </fieldset>
   );
 }
