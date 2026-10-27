@@ -1,8 +1,4 @@
-import {
-  queryOptions,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 import {
