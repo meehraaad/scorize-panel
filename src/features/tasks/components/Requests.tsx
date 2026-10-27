@@ -10,7 +10,7 @@ import { useTaskChange, type TaskRequest } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
 import { ReactionSummary } from './Reactions';
 import { RequestDialog } from './RequestDialog';
-import { StatusMark } from './StatusMark';
+import { StatusMark, TickButton } from './StatusMark';
 
 /** The one-button move from each status: start it, then finish it. */
 const NEXT = { sent: 'in_progress', seen: 'in_progress', in_progress: 'done' } as const;
@@ -53,7 +53,14 @@ export function Requests({
                   </span>
                   <span>{f.timeAgo(request.created_at)}</span>
                 </span>
-                <span className="text-[15px] leading-7 font-semibold">{request.text}</span>
+                <button
+                  type="button"
+                  onClick={() => setOpen(request.id)}
+                  aria-label={t('requests.openFor', { text: request.text })}
+                  className="self-start text-start text-[15px] leading-7 font-semibold [overflow-wrap:anywhere] hover:text-primary-text"
+                >
+                  {request.text}
+                </button>
                 <span className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-text-2">
                   {request.person && (
                     <span>
@@ -76,24 +83,29 @@ export function Requests({
               <div className="flex flex-none flex-col items-end gap-2">
                 <StatusMark status={request.status} />
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="h-11 px-4 text-sm"
-                    aria-label={t('requests.openFor', { text: request.text })}
-                    onClick={() => setOpen(request.id)}
-                  >
-                    {t('requests.open')}
-                  </Button>
-                  {next && (
-                    <Button
-                      className="h-11 px-4 text-sm"
+                  {next === 'done' ? (
+                    <TickButton
+                      label={t('requests.doneFor', { text: request.text })}
                       disabled={change.isPending}
                       onClick={() =>
                         change.mutate({ id: request.id, change: { kind: 'status', status: next } })
                       }
-                    >
-                      {t(`requests.cta.${step}`)}
-                    </Button>
+                    />
+                  ) : (
+                    next && (
+                      <Button
+                        className="h-11 px-4 text-sm"
+                        disabled={change.isPending}
+                        onClick={() =>
+                          change.mutate({
+                            id: request.id,
+                            change: { kind: 'status', status: next },
+                          })
+                        }
+                      >
+                        {t(`requests.cta.${step}`)}
+                      </Button>
+                    )
                   )}
                 </div>
               </div>

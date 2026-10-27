@@ -21,17 +21,21 @@ const WATCHERS_SHOWN = 3;
 /**
  * A colleague's request: its steps, what they wrote, the conversation, and finishing it (they are
  * told) or refusing it with a reason. Canvas "جزئیات درخواست همکار". `sent`: a request I sent,
- * opened to follow it and talk; only who does it finishes or refuses it.
+ * opened to follow it and talk; only who does it finishes or refuses it. `followUp`: any other task
+ * row (my follow-ups, a queue), opened for its conversation and reactions.
  */
 export function RequestDialog({
   id,
   config,
   sent = false,
+  followUp = false,
   onClose,
 }: {
   id: number | null;
   config: TasksConfig;
   sent?: boolean;
+  /** One of my follow-ups or a queue task: its notes and reactions; done from the list. */
+  followUp?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
@@ -74,6 +78,7 @@ export function RequestDialog({
       title={data?.text ?? t('requests.loading')}
       subtitle={
         data &&
+        !followUp &&
         t('requests.from', {
           name: data.from.name,
           role: data.from.role,
@@ -85,6 +90,7 @@ export function RequestDialog({
         data &&
         !closed &&
         !sent &&
+        !followUp &&
         (refusing ? (
           <>
             <Button
@@ -135,12 +141,14 @@ export function RequestDialog({
               </span>
             )}
           </div>
-          <StepBar
-            label={t('requests.steps')}
-            steps={STEPS.map((step) => ({ key: step, label: t(`status.${step}`) }))}
-            current={data.status === 'rejected' ? STEPS.length - 1 : current}
-            finished={data.status === 'done'}
-          />
+          {!followUp && (
+            <StepBar
+              label={t('requests.steps')}
+              steps={STEPS.map((step) => ({ key: step, label: t(`status.${step}`) }))}
+              current={data.status === 'rejected' ? STEPS.length - 1 : current}
+              finished={data.status === 'done'}
+            />
+          )}
           {data.body && (
             <p className="m-0 rounded-2xl bg-canvas p-4 text-[15px] leading-8 [overflow-wrap:anywhere] whitespace-pre-line">
               {data.body}
@@ -175,7 +183,9 @@ export function RequestDialog({
                 <div className="flex-1">
                   <TextAreaField
                     label={
-                      sent ? t('requests.messageSent') : t('requests.message', { name: first })
+                      sent || followUp
+                        ? t('requests.messageSent')
+                        : t('requests.message', { name: first })
                     }
                     rows={2}
                     value={message}

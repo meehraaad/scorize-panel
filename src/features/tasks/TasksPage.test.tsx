@@ -85,6 +85,23 @@ describe('tasks page (sales panel)', () => {
     await waitFor(() => expect(queryClient.isMutating()).toBe(0));
   });
 
+  it('a follow-up opens in a popup to talk and react; done is a tick', async () => {
+    const user = userEvent.setup();
+    await openTasks();
+    const text = 'تماس دوم؛ دیروز جواب نداد';
+    expect(await screen.findByRole('button', { name: `انجام شد: ${text}` })).toHaveAttribute(
+      'title',
+      `انجام شد: ${text}`,
+    );
+    await user.click(screen.getByRole('button', { name: `باز کردن: ${text}` }));
+    const dialog = await screen.findByRole('dialog', { name: text });
+    expect(await within(dialog).findByRole('button', { name: 'افزودن واکنش' })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('list', { name: 'وضعیت درخواست' })).not.toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('پیام شما'), 'شماره‌ی دوم را امتحان کردم');
+    await user.click(within(dialog).getByRole('button', { name: 'ارسال' }));
+    expect(await within(dialog).findByText('شماره‌ی دوم را امتحان کردم')).toBeInTheDocument();
+  });
+
   it('pushes a follow-up to tomorrow', async () => {
     const user = userEvent.setup();
     await openTasks();
@@ -113,7 +130,9 @@ describe('tasks page (sales panel)', () => {
     await user.click(screen.getByRole('button', { name: 'انجام شد و به مریم خبر بده' }));
     const row = (await screen.findAllByText(/^پذیرش Uppsala/))[0]?.closest('li');
     if (!row) throw new Error('row not found');
-    expect(await within(row).findByText('انجام شد')).toBeInTheDocument();
+    expect(
+      await within(row).findByRole('button', { name: /^انجام شد: پذیرش Uppsala/ }),
+    ).toBeInTheDocument();
   });
 
   it('sent requests: one name and a count, a tick when done, and they open', async () => {

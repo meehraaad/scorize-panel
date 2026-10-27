@@ -12,6 +12,8 @@ import { useTaskChange, type MyTask, type TaskSource } from '@/lib/tasks/api';
 import { quickWhen, type QuickWhen } from '@/lib/when';
 import type { TasksConfig } from '../config';
 import { DoneDialog } from './DoneDialog';
+import { RequestDialog } from './RequestDialog';
+import { TickButton } from './StatusMark';
 
 const GROUPS = ['late', 'now', 'today'] as const;
 type Group = (typeof GROUPS)[number];
@@ -52,6 +54,7 @@ export function MyTasks({
   // Read once: the groups don't need to move while the page is open.
   const [now] = useState(() => Date.now());
   const [done, setDone] = useState<MyTask | null>(null);
+  const [open, setOpen] = useState<number | null>(null);
 
   if (all.length === 0) return <EmptyState variant="card">{t('mine.empty')}</EmptyState>;
 
@@ -78,6 +81,7 @@ export function MyTasks({
                   now={now}
                   config={config}
                   onDone={() => setDone(task)}
+                  onOpen={() => setOpen(task.id)}
                 />
               ))}
             </ul>
@@ -95,6 +99,13 @@ export function MyTasks({
         config={config}
         onClose={() => setDone(null)}
       />
+      <RequestDialog
+        key={open ?? 'none'}
+        id={open}
+        config={config}
+        followUp
+        onClose={() => setOpen(null)}
+      />
     </Card>
   );
 }
@@ -105,12 +116,15 @@ function TaskRow({
   now,
   config,
   onDone,
+  onOpen,
 }: {
   task: MyTask;
   late: boolean;
   now: number;
   config: TasksConfig;
   onDone: () => void;
+  /** The task in a popup, with its conversation. */
+  onOpen: () => void;
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
@@ -138,7 +152,14 @@ function TaskRow({
         {late && <span className="text-xs text-urgent">{t('mine.late')}</span>}
       </div>
       <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1.5">
-        <span className="text-[15px] leading-7 font-semibold">{task.text}</span>
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={t('requests.openFor', { text: task.text })}
+          className="self-start text-start text-[15px] leading-7 font-semibold [overflow-wrap:anywhere] hover:text-primary-text"
+        >
+          {task.text}
+        </button>
         {task.person && (
           <span className="text-[13px] text-text-2">
             <Link to={config.personPath(task.person.id)} className="font-medium text-primary-text">
@@ -211,13 +232,7 @@ function TaskRow({
               {t(`mine.action.${task.action}`)}
             </Link>
           ))}
-        <Button
-          className="h-11 px-4 text-sm"
-          aria-label={t('mine.doneFor', { text: task.text })}
-          onClick={onDone}
-        >
-          {t('mine.done')}
-        </Button>
+        <TickButton label={t('mine.doneFor', { text: task.text })} onClick={onDone} />
         <Button
           variant="outline"
           className="h-11 px-4 text-sm"

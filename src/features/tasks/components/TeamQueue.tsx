@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +9,7 @@ import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useTaskChange, type QueueItem } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
+import { RequestDialog } from './RequestDialog';
 
 /** Tasks given to a team, not a person: whoever takes one first owns it. */
 export function TeamQueue({
@@ -24,6 +25,7 @@ export function TeamQueue({
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const change = useTaskChange();
+  const [open, setOpen] = useState<number | null>(null);
   return (
     <Card aria-label={t('view.team.label')} className="flex flex-col">
       <div className="p-5 pb-2 lg:px-8">
@@ -49,7 +51,14 @@ export function TeamQueue({
                     </Chip>
                   )}
                 </span>
-                <span className="text-[15px] leading-7 font-semibold">{item.text}</span>
+                <button
+                  type="button"
+                  onClick={() => setOpen(item.id)}
+                  aria-label={t('requests.openFor', { text: item.text })}
+                  className="self-start text-start text-[15px] leading-7 font-semibold [overflow-wrap:anywhere] hover:text-primary-text"
+                >
+                  {item.text}
+                </button>
                 <span className="text-[13px] text-text-2">
                   {item.person && (
                     <>
@@ -80,6 +89,13 @@ export function TeamQueue({
         </ul>
       )}
       {pager}
+      <RequestDialog
+        key={open ?? 'none'}
+        id={open}
+        config={config}
+        followUp
+        onClose={() => setOpen(null)}
+      />
     </Card>
   );
 }

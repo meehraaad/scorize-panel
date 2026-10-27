@@ -279,6 +279,29 @@ function applyChange(
   }
 }
 
+/** A follow-up or queue task opened from its list: Django answers it like a request. */
+function followUpDetail(overview: FullTasks, id: number, me: string): RequestDetail | undefined {
+  const task = overview.mine.find((item) => item.id === id);
+  const queued = overview.team.find((item) => item.id === id);
+  const row = task ?? queued;
+  if (!row) return undefined;
+  return {
+    id,
+    from: { name: task?.source === 'me' ? me : '', role: '' },
+    created_at: queued?.queued_at ?? new Date().toISOString(),
+    text: row.text,
+    person: row.person && { id: row.person.id, name: row.person.name },
+    due_at: task?.due_at ?? new Date().toISOString(),
+    status: task ? 'open' : 'queued',
+    comments: 0,
+    reactions: [],
+    people: [],
+    body: task?.note ?? '',
+    watchers: [],
+    thread: [],
+  };
+}
+
 const CHANGE_KIND: Record<string, TaskChange['kind']> = {
   done: 'done',
   snooze: 'snooze',
@@ -304,8 +327,10 @@ export const taskHandlers = [
     const data = tasksOrError();
     if (data instanceof Response) return data;
     const id = Number(params.id);
-    const detail = data.tasks.details.get(id);
-    return detail ? HttpResponse.json({ ...detail, reactions: reactionDetails(id) }) : notFound();
+    const detail = data.tasks.details.get(id) ?? followUpDetail(data.tasks.overview, id, data.me);
+    if (!detail) return notFound();
+    data.tasks.details.set(id, detail);
+    return HttpResponse.json({ ...detail, reactions: reactionDetails(id) });
   }),
 
   http.post(`${TASKS}/:id/:action/`, async ({ params, request }) => {
