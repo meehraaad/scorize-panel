@@ -146,7 +146,6 @@
     "about": "About",
     "due": "Due: {{when}}",
     "comments": "{{n}} messages",
-    "open": "Open",
     "openFor": "Open: {{text}}",
     "cta": {
       "sent": "Seen, starting",
@@ -166,7 +165,8 @@
     "refuse": "Refuse request",
     "reason": "Why can't it be done? (for the requester)",
     "watchersMany": "Watching: {{names}} and {{n}} others",
-    "messageSent": "Your message"
+    "messageSent": "Your message",
+    "doneFor": "Done: {{text}}"
   },
   "team": {
     "note": "Tasks given to a team, not a person. The first to press \"I'll take it\" owns it and it leaves the queue for everyone else.",
@@ -186,23 +186,63 @@
       "finance": "Finance"
     }
   },
-  "internal": {
-    "title": "New task",
-    "text": {
-      "customer": "Create a task about a customer on their page so it's in their history too. For internal work not about a person:",
-      "applicant": "Create a task about an applicant on their file so it's in their history too. For internal work not about a person:"
-    },
-    "open": "Internal request to a colleague",
-    "what": "What needs doing?",
-    "required": "Write what is needed.",
-    "to": "Which colleague?",
-    "due": "Due",
-    "send": "Send request"
-  },
   "sent": {
     "title": "Requests I sent",
     "empty": "You haven't sent any requests.",
     "to": "To {{to}} · {{when}}",
-    "toMany": "{{name}} and {{n}} others"
+    "toMany": "{{name}} and {{n}} others",
+    "progress": "{{done}} of {{total}} done"
+  },
+  "new": {
+    "title": "New task",
+    "what": "What needs doing?",
+    "required": "Write what needs doing.",
+    "for": "Who is it for?",
+    "target": {
+      "me": "Me",
+      "people": "Colleagues",
+      "team": "A team"
+    },
+    "meHint": "It goes to “My follow-ups” and reminds you when it is due.",
+    "people": "Colleagues",
+    "picked": "Chosen",
+    "remove": "Remove {{name}}",
+    "search": "Search colleagues",
+    "noMatch": "No colleague by that name.",
+    "pickSomeone": "Choose at least one colleague.",
+    "several": "You can choose several people.",
+    "eachOwn": "Each of them does it separately, and you see how far each one got.",
+    "team": "Which team?",
+    "teamHint": "Whoever takes it first owns it.",
+    "due": "Due",
+    "send": {
+      "me": "Add to my tasks",
+      "people": "Send request",
+      "team": "Send to the team queue",
+      "many": "Send to {{n}} people"
+    },
+    "sent": {
+      "me": "Added to your tasks.",
+      "team": "Put in the team queue.",
+      "people": "Sent to {{n}} people."
+    }
+  },
+  "reactions": {
+    "label": "Reactions",
+    "add": "Add a reaction",
+    "count": "{{name}}: {{n}}",
+    "you": "You",
+    "whoMany": "{{names}} and {{n}} others",
+    "name": {
+      "agree": "Agree",
+      "done": "Done",
+      "thanks": "Thanks",
+      "love": "Great",
+      "looking": "Looking at it",
+      "congrats": "Congrats"
+    }
+  },
+  "people": {
+    "done": "{{done}} of {{total}} people have done it"
   }
 }

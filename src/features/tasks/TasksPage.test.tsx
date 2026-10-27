@@ -10,6 +10,7 @@ import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 
 const NIMA = 3; // seller (src/mocks/staff.ts)
+const SUPERVISOR = 2; // src/mocks/supervisor.ts
 
 const openTasks = async () => {
   renderApp('/sales/tasks');
@@ -84,6 +85,23 @@ describe('tasks page (sales panel)', () => {
     await waitFor(() => expect(queryClient.isMutating()).toBe(0));
   });
 
+  it('a follow-up opens in a popup to talk and react; done is a tick', async () => {
+    const user = userEvent.setup();
+    await openTasks();
+    const text = 'تماس دوم؛ دیروز جواب نداد';
+    expect(await screen.findByRole('button', { name: `انجام شد: ${text}` })).toHaveAttribute(
+      'title',
+      `انجام شد: ${text}`,
+    );
+    await user.click(screen.getByRole('button', { name: `باز کردن: ${text}` }));
+    const dialog = await screen.findByRole('dialog', { name: text });
+    expect(await within(dialog).findByRole('button', { name: 'افزودن واکنش' })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('list', { name: 'وضعیت درخواست' })).not.toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('پیام شما'), 'شماره‌ی دوم را امتحان کردم');
+    await user.click(within(dialog).getByRole('button', { name: 'ارسال' }));
+    expect(await within(dialog).findByText('شماره‌ی دوم را امتحان کردم')).toBeInTheDocument();
+  });
+
   it('pushes a follow-up to tomorrow', async () => {
     const user = userEvent.setup();
     await openTasks();
@@ -112,7 +130,9 @@ describe('tasks page (sales panel)', () => {
     await user.click(screen.getByRole('button', { name: 'انجام شد و به مریم خبر بده' }));
     const row = (await screen.findAllByText(/^پذیرش Uppsala/))[0]?.closest('li');
     if (!row) throw new Error('row not found');
-    expect(await within(row).findByText('انجام شد')).toBeInTheDocument();
+    expect(
+      await within(row).findByRole('button', { name: /^انجام شد: پذیرش Uppsala/ }),
+    ).toBeInTheDocument();
   });
 
   it('sent requests: one name and a count, a tick when done, and they open', async () => {
@@ -135,6 +155,8 @@ describe('tasks page (sales panel)', () => {
               at: new Date().toISOString(),
               status: 'done',
               comments: 3,
+              reactions: [{ emoji: '👍', count: 18, mine: true }],
+              progress: { done: 18, total: 46 },
             },
           ],
         }),
@@ -143,23 +165,105 @@ describe('tasks page (sales panel)', () => {
     await openTasks();
     const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
     expect(
-      within(sent).getByText(/^به مهران درمنکی و ۴۵ نفر دیگر · .* · ۳ پیام$/),
+      within(sent).getByText(
+        /^به مهران درمنکی و ۴۵ نفر دیگر · .* · ۱۸ از ۴۶ نفر انجام داده‌اند · ۳ پیام$/,
+      ),
     ).toBeInTheDocument();
+    expect(within(sent).getByRole('img', { name: 'موافق: ۱۸ نفر' })).toBeInTheDocument();
     expect(within(sent).getByRole('img', { name: 'انجام شد' })).toBeInTheDocument();
     await user.click(within(sent).getByRole('button', { name: /نصب سافت‌فون/ }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).queryByRole('button', { name: /خبر بده/ })).not.toBeInTheDocument();
   });
 
-  it('sends an internal request to a colleague', async () => {
+  it('new task: several colleagues get one row with their names, and it needs someone', async () => {
     const user = userEvent.setup();
     await openTasks();
-    await user.click(screen.getByRole('button', { name: 'درخواست داخلی از همکار' }));
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
     await user.type(within(dialog).getByLabelText('چه کاری؟'), 'نمونه قرارداد ترکیه را بفرست');
-    await user.click(screen.getByRole('button', { name: 'فرستادن درخواست' }));
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن درخواست' }));
+    expect(within(dialog).getByText('دست‌کم یک همکار را انتخاب کنید.')).toBeInTheDocument();
+
+    const boxes = within(dialog).getAllByRole('checkbox');
+    const [first, second] = boxes;
+    if (!first || !second) throw new Error('fewer than two colleagues in the mock');
+    await user.click(first);
+    await user.click(second);
+    expect(
+      within(dialog).getByText('هر کدام جداگانه انجامش می‌دهند و شما پیشرفت هر نفر را می‌بینید.'),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به ۲ نفر' }));
+    expect(await screen.findByText('برای ۲ نفر فرستاده شد.')).toBeInTheDocument();
     const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
-    expect(await within(sent).findByText('نمونه قرارداد ترکیه را بفرست')).toBeInTheDocument();
+    const row = (await within(sent).findByText('نمونه قرارداد ترکیه را بفرست')).closest('button');
+    if (!row) throw new Error('row not found');
+    expect(within(row).getByText(/ و ۱ نفر دیگر · /)).toBeInTheDocument();
+  });
+
+  it('new task for me lands in my follow-ups; one for a team goes to its queue', async () => {
+    const user = userEvent.setup();
+    await openTasks();
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+    let dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'گزارش هفته را بنویس');
+    await user.click(within(dialog).getByRole('radio', { name: 'خودم' }));
+    await user.click(within(dialog).getByRole('button', { name: 'افزودن به کارهای من' }));
+    expect(await screen.findByText('به کارهای شما اضافه شد.')).toBeInTheDocument();
+    expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+    dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'ترجمه‌ی ریزنمرات');
+    await user.click(within(dialog).getByRole('radio', { name: 'یک تیم' }));
+    await user.click(within(dialog).getByRole('radio', { name: 'تیم مدارک' }));
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به صف تیم' }));
+    expect(await screen.findByText('در صف تیم گذاشته شد.')).toBeInTheDocument();
+  });
+
+  it('reactions: adds mine from the popup, shows who, and the row counts it', async () => {
+    const user = userEvent.setup();
+    await openTasks();
+    await user.click(screen.getByRole('button', { name: /^درخواست‌ها به من/ }));
+    await user.click(await screen.findByRole('button', { name: /^باز کردن: پذیرش Uppsala/ }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(await within(dialog).findByRole('button', { name: 'افزودن واکنش' }));
+    await user.click(within(dialog).getByRole('button', { name: 'ممنون' }));
+    const mine = await within(dialog).findByRole('button', { name: 'ممنون: ۱ نفر' });
+    expect(mine).toHaveAttribute('aria-pressed', 'true');
+    expect(within(dialog).getByText('🙏 شما')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'بستن' }));
+    const row = (await screen.findAllByText(/^پذیرش Uppsala/))[0]?.closest('li');
+    if (!row) throw new Error('row not found');
+    expect(await within(row).findByRole('img', { name: 'ممنون: ۱ نفر' })).toBeInTheDocument();
+  });
+});
+
+describe('tasks page (supervisor panel)', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+    localStorage.setItem('scorize.mock.session', String(SUPERVISOR));
+  });
+
+  it('a request to several colleagues: how many have done it, and each one', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/tasks');
+    await screen.findByRole('heading', { level: 1, name: 'کارهای امروز' });
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'فرم جدید را امضا کنید');
+    await user.type(within(dialog).getByRole('searchbox'), 'رض');
+    for (const box of within(dialog).getAllByRole('checkbox')) await user.click(box);
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به ۲ نفر' }));
+    const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
+    await user.click(await within(sent).findByRole('button', { name: /فرم جدید را امضا کنید/ }));
+    const popup = await screen.findByRole('dialog', { name: 'فرم جدید را امضا کنید' });
+    expect(
+      await within(popup).findByRole('heading', { name: '۰ از ۲ نفر انجام داده‌اند' }),
+    ).toBeInTheDocument();
+    expect(within(popup).getByText('علی رضایی')).toBeInTheDocument();
+    expect(within(popup).getByText('الهام رضوی')).toBeInTheDocument();
   });
 });
 

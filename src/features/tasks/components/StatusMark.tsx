@@ -24,3 +24,27 @@ export function StatusMark({ status }: { status: TaskStatus }) {
     </Chip>
   );
 }
+
+/** Marks a task done: a round tick, not a word (the label names the task for screen readers). */
+export function TickButton({
+  label,
+  disabled = false,
+  onClick,
+}: {
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="inline-flex size-11 flex-none items-center justify-center rounded-full bg-good-tint text-good disabled:opacity-50"
+    >
+      <Icon name="check" size={20} />
+    </button>
+  );
+}

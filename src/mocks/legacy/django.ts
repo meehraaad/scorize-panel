@@ -1,5 +1,6 @@
 import { api } from '@/lib/api/client';
 import type { FullTasks } from '../tasks';
+import { reactionDetails } from '../taskReactions';
 import { joinNames } from '@/lib/i18n/names';
 import {
   STAFF_API,
@@ -38,7 +39,9 @@ import type {
  * - a status: open / done only. "Started" is Django's "viewed" (ToDoView); refusing adds the
  *   reason as a comment and closes the task (T7);
  * - snooze reasons and counts, the outcome of a follow-up, on-time rates and people without a
- *   next step (T3–T6): the outcome note becomes a comment, the rest is empty.
+ *   next step (T3–T6): the outcome note becomes a comment, the rest is empty;
+ * - copies per person (T13): a request to several colleagues is one todo for all of them;
+ * - reactions (T14): kept by src/mocks/taskReactions.ts.
  */
 
 const TODOS = `${STAFF_API}/todos`;
@@ -142,6 +145,7 @@ const requestOf = (todo: DjangoTodo, me: number): TaskRequest => ({
   due_at: dueOf(todo),
   status: statusOf(todo, me),
   comments: todo.comments_count ?? 0,
+  reactions: [],
 });
 
 /** The detail (with `views`) of each request, for its status: the list doesn't carry views. */
@@ -178,6 +182,8 @@ export async function tasksOverview(signal?: AbortSignal): Promise<FullTasks> {
       at: todo.creation_date,
       status: todo.is_done ? 'done' : 'sent',
       comments: 0,
+      reactions: [],
+      progress: null,
     }));
   return {
     on_time: null,
@@ -202,6 +208,8 @@ export async function taskRequest(id: number, signal?: AbortSignal): Promise<Req
   ]);
   return {
     ...requestOf(todo, me),
+    reactions: reactionDetails(id),
+    people: [],
     body: '',
     watchers: todo.support_staves.filter((item) => item.id !== me).map((item) => item.full_name),
     thread: comments
@@ -223,7 +231,7 @@ export async function createTask(task: NewTask) {
     task.kind === 'mine'
       ? [me]
       : task.kind === 'request'
-        ? [task.assignee ?? me]
+        ? [...new Set([...(task.assignee ? [task.assignee] : []), ...(task.assignees ?? [])])]
         : (
             await allPages<DjangoStaff>(
               `${STAFF_API}/staves/?team=${String(TEAM_OF[task.team ?? 'writing'])}`,

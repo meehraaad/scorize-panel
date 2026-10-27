@@ -13,6 +13,7 @@ import { storage } from './session';
 import { resetSessionSummaries, sessionSummaryHandlers } from './sessionSummaries';
 import { resetWriterMocks, writerHandlers } from './writer';
 import { salesStaffHandlers } from './salesStaff';
+import { taskReactionHandlers } from './taskReactions';
 import { resetStaffMocks, staffHandlers } from './staff';
 
 /**
@@ -286,6 +287,8 @@ export const handlers = [
 
   // Django's existing staff API first: the sales endpoints below are computed from its records.
   ...staffHandlers,
+  // Reactions for every panel's tasks, before the sellers' generic task actions.
+  ...taskReactionHandlers,
   ...salesStaffHandlers,
   ...applicantHandlers,
   ...accountHandlers,

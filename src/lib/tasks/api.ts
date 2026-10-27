@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
+import type { TaskEmoji } from './reactions';
 
 /**
  * Staff tasks (StaffToDo): one model, three behaviours (canvas "کارها"):
@@ -57,6 +58,8 @@ export interface NewTask {
   kind: TaskKind;
   /** `request`: the colleague (SupportStaff id). */
   assignee?: number;
+  /** `request` to several colleagues: each gets their own copy, one conversation (T13). */
+  assignees?: number[];
   /** `team`: the queue. */
   team?: TaskTeam;
   due_at: string;
@@ -74,6 +77,20 @@ export function useCreateTask(also: QueryKey) {
         client.invalidateQueries({ queryKey: also }),
       ]),
   });
+}
+
+// ── Reactions (T14) ──────────────────────────────────────────────────────────────────────────
+
+/** How many reacted with an emoji, and whether I did (the emojis: `./reactions.ts`). */
+export interface Reaction {
+  emoji: TaskEmoji;
+  count: number;
+  mine: boolean;
+}
+
+/** In the popup: also who else reacted (a few names; `count` has everyone). */
+export interface ReactionDetail extends Reaction {
+  names: string[];
 }
 
 // ── The tasks page ───────────────────────────────────────────────────────────────────────────
@@ -111,6 +128,7 @@ export interface TaskRequest {
   due_at: string;
   status: TaskStatus;
   comments: number;
+  reactions: Reaction[];
 }
 
 /** A task in a team queue I belong to. */
@@ -131,8 +149,12 @@ export interface SentRequest {
   /** A team, or the first colleague it went to and how many more (old rows name dozens). */
   to: { name: string; others: number } | { team: TaskTeam };
   at: string;
+  /** For several people: done once all are, in progress once anyone started. */
   status: TaskStatus;
   comments: number;
+  reactions: Reaction[];
+  /** Sent to several people: how many of them have done it. */
+  progress: { done: number; total: number } | null;
 }
 
 export interface TasksOverview {
@@ -181,6 +203,9 @@ export const taskListQuery = <L extends TaskList>(panel: TasksPanel, list: L, pa
   });
 
 export interface RequestDetail extends TaskRequest {
+  reactions: ReactionDetail[];
+  /** Sent to several people: each one's copy and how far it got (empty for one person). */
+  people: { name: string; status: TaskStatus }[];
   body: string;
   watchers: string[];
   thread: { id: number; author: string; mine: boolean; at: string; text: string }[];

@@ -19,15 +19,16 @@ import { MyTasks } from './components/MyTasks';
 import { OnTime } from './components/OnTime';
 import { Orphans } from './components/Orphans';
 import { Requests } from './components/Requests';
-import { SentCard, InternalRequestCard } from './components/SideCards';
+import { NewTaskButton } from './components/NewTask';
+import { SentCard } from './components/SideCards';
 import { TeamQueue } from './components/TeamQueue';
 import { ViewTabs, type View } from './components/ViewTabs';
 import type { TasksConfig } from './config';
 
 /**
  * "Today's tasks": my follow-ups (nobody is left without a next step), colleagues' requests to
- * me, and my teams' queues. Tasks about a person are created on that person's page; this page is
- * for seeing and doing them. Canvas "پیگیری‌ها" / "کارها".
+ * me, and my teams' queues. Tasks about a person are created on that person's page; «کار تازه»
+ * here makes one about nobody, for me, colleagues or a team. Canvas "پیگیری‌ها" / "کارها".
  */
 export function TasksPage({ config }: { config: TasksConfig }) {
   const { t } = useTranslation('tasks');
@@ -40,7 +41,12 @@ export function TasksPage({ config }: { config: TasksConfig }) {
       <PageHeader
         title={t('title')}
         subtitle={t(`subtitle.${config.person}`)}
-        actions={data.on_time && <OnTime onTime={data.on_time} />}
+        actions={
+          <>
+            {data.on_time && <OnTime onTime={data.on_time} />}
+            <NewTaskButton colleagues={data.colleagues} />
+          </>
+        }
       />
       <ViewTabs value={view} onChange={setView} counts={data.counts} />
       {view === 'mine' && data.orphans.length > 0 && (
@@ -49,12 +55,7 @@ export function TasksPage({ config }: { config: TasksConfig }) {
       <PageColumns
         asideLabel={t('aside')}
         main={<TaskListView key={view} list={view} overview={data} config={config} />}
-        aside={
-          <>
-            <InternalRequestCard colleagues={data.colleagues} config={config} />
-            <SentCard sent={data.sent} config={config} />
-          </>
-        }
+        aside={<SentCard sent={data.sent} config={config} />}
       />
     </PageStack>
   );
