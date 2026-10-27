@@ -26,6 +26,8 @@ const NIMA = 3;
 /** Nima's SupportStaff.full_name (src/mocks/handlers.ts). */
 const NIMA_NAME = 'نیما رستمی';
 const BASE = '/api/sales/v1';
+/** Every mock account's password (same as the login mock). */
+export const MONTH_PASSWORD = 'password123';
 /** Django's `RECEIPTS_PAGE` (api/sales/v1/seller.py). */
 const RECEIPTS_PAGE = 10;
 export const SELLER = 'نیما رستمی';
@@ -837,9 +839,14 @@ export const salesHandlers = [
       : notFound();
   }),
 
-  http.get(`${BASE}/month/`, () => {
+  // Read with the seller's password, on every visit (400 when wrong).
+  http.post(`${BASE}/month/`, async ({ request }) => {
     const data = stateOrError();
-    return failed(data) ? data : HttpResponse.json(monthOf(data));
+    if (failed(data)) return data;
+    const body = (await request.json()) as { password?: string };
+    return body.password === MONTH_PASSWORD
+      ? HttpResponse.json(monthOf(data))
+      : HttpResponse.json({ password: ['The password is wrong.'] }, { status: 400 });
   }),
 ];
 

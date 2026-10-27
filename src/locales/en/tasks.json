@@ -12,7 +12,9 @@
   "percent": "{{n}}%",
   "onTime": {
     "label": "On time this week",
-    "note": "Last week {{last}} · team goal {{target}}"
+    "note": "Last week {{last}} · team goal {{target}}",
+    "none": "—",
+    "noteNoLast": "Nothing was due last week · team goal {{target}}"
   },
   "views": "Sections",
   "view": {

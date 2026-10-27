@@ -139,13 +139,17 @@ export function TogglePill({
 const box =
   'w-full rounded-2xl bg-surface px-4 text-base text-text shadow-[inset_0_0_0_1px_var(--line-2)] outline-none placeholder:text-text-3 hover:shadow-[inset_0_0_0_1px_var(--line-3)] focus-visible:shadow-[inset_0_0_0_2px_var(--focus)] aria-invalid:shadow-[inset_0_0_0_1.5px_var(--danger)]';
 
-/** A labelled <select> with the field look. `inline`: label beside a pill select (toolbars). */
+/**
+ * A labelled <select> with the field look. `inline`: label beside a pill select (toolbars);
+ * `hideLabel`: the label is read by screen readers only (the row already says what it is for).
+ */
 export function SelectField<T extends string>({
   label,
   options,
   value,
   onChange,
   inline = false,
+  hideLabel = false,
   hint,
   error,
   id: givenId,
@@ -155,6 +159,7 @@ export function SelectField<T extends string>({
   value: T;
   onChange: (value: T) => void;
   inline?: boolean;
+  hideLabel?: boolean;
   hint?: string | undefined;
   error?: string | undefined;
   /** The select's id, to focus it from a form's check; generated when not given. */
@@ -195,7 +200,7 @@ export function SelectField<T extends string>({
   if (inline)
     return (
       <div className="inline-flex items-center gap-2">
-        <label htmlFor={id} className="text-sm text-text-2">
+        <label htmlFor={id} className={hideLabel ? 'sr-only' : 'text-sm text-text-2'}>
           {label}
         </label>
         {select}
@@ -203,7 +208,10 @@ export function SelectField<T extends string>({
     );
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-sm font-semibold text-text-2">
+      <label
+        htmlFor={id}
+        className={hideLabel ? 'sr-only' : 'text-sm font-semibold text-text-2'}
+      >
         {label}
       </label>
       {select}

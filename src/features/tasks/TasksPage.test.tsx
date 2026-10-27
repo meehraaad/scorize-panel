@@ -1,8 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { api } from '@/lib/api/client';
 import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
+import type { TasksOverview } from '@/lib/tasks/api';
 import { http, HttpResponse } from 'msw';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
@@ -33,6 +35,20 @@ describe('tasks page (sales panel)', () => {
     );
     expect(screen.queryByText(/قدم بعدی ندارند/)).not.toBeInTheDocument();
     expect(screen.getByText('فردا: ۱ پیگیری')).toBeInTheDocument();
+  });
+
+  it.each([
+    [{ week: 0.86, last_week: 1, target: 0.9 }, '۸۶٪', 'هفته‌ی پیش ۱۰۰٪ · هدف تیم ۹۰٪'],
+    // Nothing done or overdue yet: a dash, not a made-up 100%.
+    [{ week: null, last_week: null, target: 0.9 }, '—', 'هفته‌ی پیش کاری سررسید نشد · هدف تیم ۹۰٪'],
+  ])('on time: shows the shares Django counted (%o)', async (onTime, week, note) => {
+    const overview = await api<TasksOverview>('/staff/v1/tasks/?panel=sales');
+    server.use(
+      http.get('/api/staff/v1/tasks/', () => HttpResponse.json({ ...overview, on_time: onTime })),
+    );
+    await openTasks();
+    expect(screen.getByText(week)).toBeInTheDocument();
+    expect(screen.getByText(note)).toBeInTheDocument();
   });
 
   it('done with a next step makes the next task; without one it needs a reason', async () => {

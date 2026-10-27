@@ -1,6 +1,6 @@
-import { queryOptions } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { SALES_API, SALES_KEY, type LeadSource } from '@/lib/sales/api';
+import { SALES_API, type LeadSource } from '@/lib/sales/api';
 
 export interface MonthData {
   /** First day of the month. */
@@ -23,7 +23,14 @@ export interface MonthData {
   sources: { source: LeadSource; leads: number; won: number }[];
 }
 
-export const monthQuery = queryOptions({
-  queryKey: [...SALES_KEY, 'month'],
-  queryFn: ({ signal }) => api<MonthData>(`${SALES_API}/month/`, { signal }),
-});
+/**
+ * The month is read with the seller's password on every visit (commission and rank stay hidden on
+ * an open screen): a POST, kept only in the page's state, never in the query cache. Django answers
+ * 400 for a wrong password, 409 when the account has none, 429 after too many tries.
+ */
+export function useMonthUnlock() {
+  return useMutation({
+    mutationFn: (password: string) =>
+      api<MonthData>(`${SALES_API}/month/`, { method: 'POST', body: { password } }),
+  });
+}
