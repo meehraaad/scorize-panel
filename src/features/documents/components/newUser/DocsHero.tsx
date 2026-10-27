@@ -31,7 +31,7 @@ export function DocsHero({ tray, next }: { tray: TrayItem[]; next: ReviewKind })
       className="relative flex flex-wrap items-stretch gap-x-10 gap-y-7 overflow-hidden rounded-[28px] px-5 py-7 text-on-hero shadow-luxe bg-luxe lg:rounded-[36px] lg:px-10 lg:py-10"
     >
       <div className="relative flex min-w-0 flex-[1_1_480px] flex-col gap-4">
-        <span className="self-start rounded-full bg-luxe-gold px-3.5 py-1 text-[13px] font-extrabold">
+        <span className="self-start rounded-full px-3.5 py-1 text-[13px] font-extrabold bg-luxe-gold">
           {t('newUser.hero.badge')}
         </span>
         <h2

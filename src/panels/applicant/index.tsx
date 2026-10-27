@@ -118,10 +118,14 @@ export const applicantPanel: PanelDefinition = {
         },
         {
           path: 'applications',
-          ...lazyPage(() => import('@/features/applications/ApplicationsPage'), ['applications', 'home'], {
-            data: () => [applicationsQuery],
-            skeleton: 'list',
-          }),
+          ...lazyPage(
+            () => import('@/features/applications/ApplicationsPage'),
+            ['applications', 'home'],
+            {
+              data: () => [applicationsQuery],
+              skeleton: 'list',
+            },
+          ),
         },
         {
           path: 'documents',
