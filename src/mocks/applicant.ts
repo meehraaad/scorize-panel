@@ -2125,6 +2125,21 @@ export const applicantHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
+  // An account's interests before a case (H70, H71): any logged-in user; a toy professor count.
+  http.get(`${BASE}/research-interests/profile/`, () => HttpResponse.json(guestInterestsOf())),
+
+  http.put(`${BASE}/research-interests/profile/`, async ({ request }) => {
+    const { interests } = (await request.json()) as { interests?: unknown };
+    if (
+      !Array.isArray(interests) ||
+      interests.length > 20 ||
+      !interests.every((item) => typeof item === 'string' && item.trim() && item.length <= 64)
+    )
+      return HttpResponse.json({ interests: ['invalid'] }, { status: 400 });
+    guestInterests = interests as string[];
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   // Writing information forms: H12–H16, H50, H51. 404 for a type the contract doesn't include.
   http.get(`${BASE}/writing/:type/`, ({ params }) => {
     const state = caseOrError();
@@ -2309,7 +2324,24 @@ export const applicantHandlers = [
 ];
 
 /** Forget Sara's changes (tests, logout). */
+/** The account's research interests before a case (H70). */
+let guestInterests: string[] = [];
+
+/** H70 `GET research-interests/profile/`: 74 professors in 9 universities per interest, as a toy. */
+function guestInterestsOf() {
+  const countries = ['ایتالیا', 'آلمان', 'کانادا'];
+  return {
+    interests: guestInterests,
+    professors: guestInterests.length * 74,
+    universities: guestInterests.length * 9,
+    sample: guestInterests
+      .slice(0, 3)
+      .map((interest, index) => ({ country: countries[index % countries.length], interest })),
+  };
+}
+
 export function resetApplicantMocks() {
+  guestInterests = [];
   sara = null;
   resetWritingOfferMocks();
   callRequests.length = 0;

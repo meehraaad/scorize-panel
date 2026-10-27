@@ -9,7 +9,8 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { documentsQuery, type DocumentsData } from './api';
 import { CountsStrip } from './components/CountsStrip';
 import { FilesCard } from './components/FilesCard';
-import { InterestsCard } from './components/InterestsCard';
+import { InterestsCard } from '@/components/applicant/InterestsCard';
+import { useSaveInterests } from '@/lib/applicant/interests';
 import { NewUserDocuments } from './components/newUser/NewUserDocuments';
 import { UploadCard } from './components/UploadCard';
 import { WaitingCard } from './components/WaitingCard';
@@ -27,6 +28,7 @@ import { previewDocuments } from './preview';
 export default function DocumentsPage() {
   const { t } = useTranslation('documents');
   const f = useFormat();
+  const saveInterests = useSaveInterests();
   const { data: access } = useSuspenseQuery(accessQuery);
   const { data } = useSuspenseQuery(documentsQuery);
   // No applicant file (404, data null) is a guest, whatever the access says.
@@ -53,7 +55,7 @@ export default function DocumentsPage() {
               docs.writing === null && !lock && <WritingUpsell phone={access.phone} />
             )}
             <FilesCard lane="team" files={docs.files.filter((file) => file.source === 'team')} />
-            <InterestsCard interests={docs.interests} />
+            <InterestsCard id="docs-interests" interests={docs.interests} save={saveInterests} />
           </>
         }
       />

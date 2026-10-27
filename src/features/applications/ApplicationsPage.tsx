@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { SectionLock } from '@/components/applicant/SectionLock';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { InterestsCard } from '@/components/applicant/InterestsCard';
+import { documentsQuery } from '@/lib/applicant/documents';
+import { useSaveInterests } from '@/lib/applicant/interests';
 import { accessQuery, lockOf } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { applicationsQuery, type ApplicationsData } from './api';
@@ -15,12 +18,14 @@ import { NoApplications } from './components/NoApplications';
 import { ProfessorEmails } from './components/ProfessorEmails';
 import { QuotaCard } from './components/QuotaCard';
 import { VisaResults } from './components/VisaResults';
+import { GuestApplications } from './components/guest/GuestApplications';
 import { inPlace, isNewAdmission } from './groups';
 
 /**
  * "Applications & results". Design: canvas "New user dashboard v2", row «تب اپلای‌ها و نتایج»
- * (ApplyActive, ApplyResults, ApplyEmpty, ApplyGuest). Without a contract or the admission
- * service, the page's layout (no sample data) under the lock banner.
+ * (ApplyActive, ApplyResults, ApplyEmpty, ApplyGuest), and canvas "تب اپلای‌ها و نتایج". Without a
+ * contract, the page sells the service (`GuestApplications`); without the admission service or
+ * after the contract, the page's layout (no sample data) under the lock banner.
  */
 export default function ApplicationsPage() {
   const { t } = useTranslation('applications');
@@ -34,6 +39,8 @@ export default function ApplicationsPage() {
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
       {!lock && data ? (
         <Case data={data} />
+      ) : lock === 'guest' ? (
+        <GuestApplications access={access} />
       ) : (
         <>
           <SectionLock section="applications" lock={lock ?? 'guest'} access={access}>
@@ -48,6 +55,8 @@ export default function ApplicationsPage() {
 
 function Case({ data }: { data: ApplicationsData }) {
   const applications = data.results;
+  const { data: docs } = useSuspenseQuery(documentsQuery);
+  const saveInterests = useSaveInterests();
   return (
     <>
       {applications.length === 0 ? (
@@ -64,6 +73,9 @@ function Case({ data }: { data: ApplicationsData }) {
         </>
       )}
       {data.visa && <VisaResults results={data.visa} />}
+      {docs && (
+        <InterestsCard id="apps-interests" interests={docs.interests} save={saveInterests} />
+      )}
       {ON_SERVER.professorEmails && <ProfessorEmails />}
     </>
   );

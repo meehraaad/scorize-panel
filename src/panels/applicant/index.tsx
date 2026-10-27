@@ -125,9 +125,24 @@ export const applicantPanel: PanelDefinition = {
           path: 'applications',
           ...lazyPage(
             () => import('@/features/applications/ApplicationsPage'),
-            ['applications', 'home'],
+            ['applications', 'home', 'estimate', 'documents'],
             {
-              data: () => [applicationsQuery],
+              // With a case: its applications and research interests. Without one, the page that
+              // sells the service: the chance form reads the quiz's choices and last result.
+              data: () => {
+                const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
+                const guest = state === 'guest';
+                return [
+                  applicationsQuery,
+                  // The case's research interests. Opened first (access not known yet), it loads
+                  // them too, as the documents tab does: a guest gets a 404 and nothing is shown.
+                  documentsQuery,
+                  guest && ON_SERVER.estimate && estimateOptionsQuery,
+                  guest && ON_SERVER.estimate && latestEstimateQuery,
+                  // When H70 ships (ON_SERVER.guestInterests), add `guestInterestsQuery` here. Left
+                  // out while it's off: its import alone puts the first load over its JS budget.
+                ];
+              },
               skeleton: 'list',
             },
           ),

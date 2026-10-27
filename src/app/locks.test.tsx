@@ -37,17 +37,17 @@ describe('locked sections', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('shows a guest what each section will hold, locked in the menu', async () => {
+  it('shows a guest the panel with every section after a contract locked in the menu', async () => {
     loginAs(MARYAM);
     await open('/applications', 'اپلای‌ها و نتایج');
 
-    const banner = screen.getByRole('region', { name: 'این بخش قفل است' });
-    expect(banner).toHaveTextContent(
-      'اپلای‌ها، نتیجه‌ها و ایمیل به استادها بعد از عقد قرارداد برای شما فعال می‌شود',
-    );
-    expect(screen.getByText('پیش‌نمایش · داده‌های نمونه، نه پرونده‌ی شما')).toBeInTheDocument();
-    // The page's layout is shown but can't be used.
-    expect(screen.getAllByText('مدارک ناقص است')[0]?.closest('[inert]')).not.toBeNull();
+    // The applications tab sells the service instead of locking it (src/features/applications).
+    expect(screen.queryByRole('region', { name: 'این بخش قفل است' })).toBeNull();
+    expect(
+      screen.getByRole('region', {
+        name: 'هر دانشگاه را شما تأیید می‌کنید. فرستادن و پیگیری با ما.',
+      }),
+    ).toBeInTheDocument();
 
     const nav = mainNav();
     if (!nav) throw new Error('No panel menu');
@@ -56,12 +56,12 @@ describe('locked sections', () => {
     expect(within(nav).getByRole('link', { name: 'پرونده‌ی من' })).toBeInTheDocument();
   });
 
-  it('sends a call request from the lock banner', async () => {
+  it('sends a call request from the applications tab', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     await open('/applications', 'اپلای‌ها و نتایج');
 
-    await user.click(screen.getByRole('button', { name: 'درخواست تماس مشاور' }));
+    await user.click(screen.getByRole('button', { name: 'با من تماس بگیرید' }));
     const dialog = screen.getByRole('dialog', { name: 'درخواست تماس مشاور' });
     await user.click(within(dialog).getByRole('button', { name: 'ثبت درخواست تماس' }));
     expect(within(dialog).getByLabelText('شماره‌ی تماس')).toHaveAccessibleDescription(
