@@ -196,7 +196,7 @@ export function StepList({
 
 /**
  * A round progress meter with the value in words beside it (a quiz's "profile 60% complete").
- * `onHero`: on the dark hero card.
+ * `onHero`: on the dark hero card; `luxe`: gold, on the premium card.
  */
 export function ProgressRing({
   value,
@@ -209,11 +209,11 @@ export function ProgressRing({
   /** Read by screen readers ("Profile 60% complete"). */
   label: string;
   size?: number;
-  tone?: 'surface' | 'onHero';
+  tone?: 'surface' | 'onHero' | 'luxe';
 }) {
   const radius = 27;
   const circumference = 2 * Math.PI * radius;
-  const hero = tone === 'onHero';
+  const hero = tone !== 'surface';
   return (
     <svg
       role="img"
@@ -241,7 +241,11 @@ export function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={`${String((circumference * Math.min(Math.max(value, 0), 100)) / 100)} ${String(circumference)}`}
           className={`transition-[stroke-dasharray] duration-500 motion-reduce:transition-none ${
-            hero ? 'stroke-hero-accent' : 'stroke-primary'
+            tone === 'luxe'
+              ? 'stroke-luxe-gold-light'
+              : hero
+                ? 'stroke-hero-accent'
+                : 'stroke-primary'
           }`}
         />
       )}

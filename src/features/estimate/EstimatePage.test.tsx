@@ -20,7 +20,8 @@ const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
 };
 
-const step = () => screen.getByRole('region', { name: /^(برای چه|سوابق|زبان|کجا|مشاور با شما)/ });
+const step = () =>
+  screen.getByRole('region', { name: /^(برای چه|رشته و معدل|زبان|کجا|نتیجه را با)/ });
 const next = () => screen.getByRole('button', { name: 'ادامه' });
 
 /** Answers every step: Engineering, the given GPA and English choice, Italy, then contact. */
@@ -46,7 +47,9 @@ async function answerAll(
   await user.click(screen.getByRole('radio', { name: new RegExp(channel) }));
   if (channel !== 'فعلاً نه') await user.click(screen.getByRole('radio', { name: time }));
   if (referral) await user.click(screen.getByRole('radio', { name: referral }));
-  await user.click(screen.getByRole('button', { name: 'دیدن شانس من' }));
+  // On phones the start card's button has the same name behind the sheet.
+  const quiz = screen.queryByRole('dialog') ?? document.body;
+  await user.click(within(quiz).getByRole('button', { name: 'دیدن شانس من' }));
 }
 
 describe('admission-chance quiz', () => {
@@ -63,10 +66,11 @@ describe('admission-chance quiz', () => {
     expect(
       await screen.findByRole('heading', { name: 'سلام مریم، به اسکورایز خوش آمدید', level: 1 }),
     ).toBeInTheDocument();
-    // First visit: one card beside the questions, the result's shape locked above the answers.
+    // First visit: one card beside the questions, the chances locked and what the answers unlock.
     const preview = screen.getByRole('region', { name: 'شانس شما در هر کشور' });
     expect(within(preview).getByRole('img', { name: 'پاسخ‌ها ۰٪ کامل' })).toBeInTheDocument();
-    expect(within(preview).getByText('پاسخ‌های تا اینجا')).toBeInTheDocument();
+    expect(within(preview).getByText('در کدام کشور بیشترین شانس را دارید؟')).toBeInTheDocument();
+    expect(within(preview).queryByRole('region', { name: 'پاسخ‌های تا اینجا' })).toBeNull();
     // The steps are inside the question's card.
     expect(
       within(screen.getByRole('region', { name: 'برای چه می‌خواهید بروید؟' })).getByRole('list', {
@@ -102,15 +106,13 @@ describe('admission-chance quiz', () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
-    const card = await screen.findByRole('region', { name: 'عقربه‌ی شما کجا می‌ایستد؟' });
-    expect(within(card).getByRole('list', { name: 'مقایسه در این کشورها' })).toHaveTextContent(
-      'ایتالیا',
-    );
+    const card = await screen.findByRole('region', { name: 'شانس قبولی شما در هر کشور' });
+    expect(within(card).getByRole('list')).toHaveTextContent('ایتالیا');
     // No preview filling the page: the sheet shows the answers as chips instead.
     expect(screen.queryByRole('region', { name: 'شانس شما در هر کشور' })).not.toBeInTheDocument();
     expect(estimateStarts.has(MARYAM)).toBe(false);
 
-    await user.click(within(card).getByRole('button', { name: /^شروع تخمین/ }));
+    await user.click(within(card).getByRole('button', { name: 'دیدن شانس من' }));
     const sheet = screen.getByRole('dialog', { name: 'شانس پذیرش شما' });
     expect(within(sheet).getByRole('list', { name: 'مراحل پرسش‌نامه' })).toBeInTheDocument();
     expect(within(sheet).queryByRole('list', { name: 'پاسخ‌های تا اینجا' })).toBeNull();
@@ -190,7 +192,7 @@ describe('admission-chance quiz', () => {
     // Answered: the next quiz doesn't ask again.
     await user.click(screen.getByRole('button', { name: 'پاسخ دوباره' }));
     for (let n = 0; n < 4; n++) await user.click(next());
-    await screen.findByRole('heading', { name: 'مشاور با شما تماس بگیرد؟' });
+    await screen.findByRole('heading', { name: 'نتیجه را با یک مشاور هم مرور کنید؟' });
     expect(
       screen.queryByRole('group', { name: 'از کجا با اسکورایز آشنا شدید؟' }),
     ).not.toBeInTheDocument();
@@ -215,13 +217,14 @@ describe('admission-chance quiz', () => {
     expect(screen.getByLabelText('معدل آخرین مقطع')).toHaveFocus();
     await user.clear(screen.getByLabelText('معدل آخرین مقطع'));
     await user.type(screen.getByLabelText('معدل آخرین مقطع'), '۱۸');
+    await user.click(next());
 
-    const summary = screen.getByRole('region', { name: 'تا اینجا' });
+    // Each answered step, beside the questions.
+    const summary = screen.getByRole('region', { name: 'پاسخ‌های تا اینجا' });
     expect(within(summary).getByText('کار یا زندگی')).toBeInTheDocument();
     expect(within(summary).getByText('مهندسی')).toBeInTheDocument();
     expect(within(summary).getByText('۱۸ از ۲۰')).toBeInTheDocument();
 
-    await user.click(next());
     await user.click(screen.getByRole('radio', { name: /مدرک زبان دارم/ }));
     await user.selectOptions(screen.getByLabelText('آزمون'), 'تافل');
     await user.type(screen.getByLabelText('نمره'), '130');
@@ -229,7 +232,7 @@ describe('admission-chance quiz', () => {
     expect(screen.getByLabelText('نمره')).toHaveAccessibleDescription(
       'نمره باید بین ۰ و ۱۲۰ باشد.',
     );
-    expect(step()).toHaveAccessibleName('زبان انگلیسی');
+    expect(step()).toHaveAccessibleName('زبان انگلیسی‌تان در چه سطحی است؟');
   });
 
   it('takes the GPA out of 4 or 100 and sends it out of 20', async () => {
@@ -248,10 +251,10 @@ describe('admission-chance quiz', () => {
     expect(gpa).toHaveAccessibleDescription('معدل از ۴ را به عدد بنویسید، مثلاً ۳٫۵.');
     await user.clear(gpa);
     await user.type(gpa, '3.6');
-    expect(
-      within(screen.getByRole('region', { name: 'تا اینجا' })).getByText('۳٫۶ از ۴'),
-    ).toBeInTheDocument();
     await user.click(next());
+    expect(
+      within(screen.getByRole('region', { name: 'پاسخ‌های تا اینجا' })).getByText('۳٫۶ از ۴'),
+    ).toBeInTheDocument();
     await user.click(next());
     await user.click(next());
     await user.click(screen.getByRole('radio', { name: /فعلاً نه/ }));

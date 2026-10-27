@@ -12,10 +12,10 @@
     },
     "title": {
       "goal": "Why do you want to go?",
-      "background": "Your studies",
-      "english": "English",
-      "plan": "Where and when?",
-      "contact": "Should a consultant contact you?"
+      "background": "What are your field and GPA?",
+      "english": "How good is your English?",
+      "plan": "Where, on what budget, and when?",
+      "contact": "Go over the result with a consultant?"
     },
     "counter": "Question {{n}} of {{total}}",
     "goal": "Your goal",
@@ -46,7 +46,8 @@
     "next": "Continue",
     "submit": "See my chance",
     "throttled": "You've sent the quiz several times in the last hour. Try again a little later.",
-    "error": "Your result couldn't be worked out. Try again."
+    "error": "Your result couldn't be worked out. Try again.",
+    "counterStep": "Question {{n}} of {{total}}, {{step}}"
   },
   "goal": {
     "study": "Study",
@@ -170,7 +171,8 @@
       "button": "Ask a consultant to call"
     },
     "others": "Other countries",
-    "ring": "Admission chance in {{country}}: {{level}}"
+    "ring": "Admission chance in {{country}}: {{level}}",
+    "bestTitle": "Your best chance: <em>{{country}}</em>"
   },
   "band": {
     "high": "High",
@@ -192,41 +194,27 @@
     "consultant": "Getting the result ready for your consultant"
   },
   "preview": {
-    "kicker": "Your result is taking shape",
     "complete": "Answers {{n}}% complete",
-    "get": {
-      "title": "After these few questions",
-      "chance": {
-        "title": "Your admission chance in each country",
-        "text": "Instantly, right here"
-      },
-      "consultant": {
-        "title": "A free admissions consultant",
-        "text": "A short call, no commitment"
-      },
-      "similar": {
-        "title": "Admissions of people like you",
-        "text": "From real Scorize cases"
-      }
-    },
     "lockedTitle": "Your chance in each country",
-    "answers": "Your answers so far"
+    "answers": "Your answers so far",
+    "short": "In {{n}} short questions",
+    "ask": "Your next answers will tell you",
+    "askLast": "With the last answer you will see",
+    "tease": {
+      "country": "Which country gives you the best chance?",
+      "gpa": "Where does your GPA stand among similar applicants?",
+      "english": "How much would half an IELTS band more change your chance?",
+      "budget": "Which route is most realistic on your budget?",
+      "consultant": "A consultant goes over the result with you."
+    },
+    "mark": "?"
   },
   "sheet": {
-    "kicker": "Admission-chance estimate",
-    "title": "Where does your needle land?",
+    "title": "Your admission chance <em>in each country</em>",
     "text": "We compare your GPA, field and English with the results of real Scorize applicants.",
-    "countries": "Compared in these countries",
-    "more": "+{{n}}",
-    "start": "Start the estimate",
-    "questions": "· {{n}} questions",
+    "start": "See my chance",
     "close": "Close",
-    "perks": {
-      "instant": "Instant result",
-      "consultant": "Free consultant",
-      "similar": "Similar admissions"
-    },
-    "gaugeMark": "?"
+    "note": "{{n}} short questions. The result is instant, right here."
   },
   "answered": {
     "label": "Your answers so far",

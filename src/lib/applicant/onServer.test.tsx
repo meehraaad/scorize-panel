@@ -24,7 +24,7 @@ describe('features by what Django serves', () => {
     loginAs(2); // Maryam: no contract
     renderApp('/');
     // At phone width the quiz is one card that opens its questions in a sheet.
-    expect(await screen.findByRole('button', { name: /^شروع تخمین/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'دیدن شانس من' })).toBeInTheDocument();
     // The readiness card's first step leads to the full quiz page.
     expect(screen.getByRole('link', { name: 'شروع تخمین' })).toHaveAttribute('href', '/estimate');
   });

@@ -22,7 +22,6 @@ export function EstimateFlow({
   phone,
   header,
   detailsTo,
-  teaser = false,
   sheetOnPhone = false,
 }: {
   phone: string | null;
@@ -30,8 +29,6 @@ export function EstimateFlow({
   header?: (mode: EstimateMode) => ReactNode;
   /** On the guest home: the result links to the full one instead of showing every country. */
   detailsTo?: string;
-  /** First visit on the home: the quiz shows the result's shape, locked, beside the questions. */
-  teaser?: boolean;
   /**
    * The home on phones: one short card (start, or the result in brief) and the questions in a
    * bottom sheet, instead of the quiz and its preview filling the page.
@@ -81,7 +78,6 @@ export function EstimateFlow({
       ) : (
         <Quiz
           options={options}
-          teaser={teaser}
           onDone={(answer) => {
             setContact(answer);
             setMode('result');

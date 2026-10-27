@@ -49,15 +49,7 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   // Nothing answered or booked yet.
   const firstVisit = estimate === null && !consulted;
 
-  const quiz = (
-    <EstimateFlow
-      key="quiz"
-      phone={access.phone}
-      detailsTo="/estimate"
-      teaser={firstVisit}
-      sheetOnPhone
-    />
-  );
+  const quiz = <EstimateFlow key="quiz" phone={access.phone} detailsTo="/estimate" sheetOnPhone />;
   const readiness = (
     <ReadinessCard
       key="readiness"
