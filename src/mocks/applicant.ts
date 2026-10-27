@@ -2128,6 +2128,16 @@ export const applicantHandlers = [
   // An account's interests before a case (H70, H71): any logged-in user; a toy professor count.
   http.get(`${BASE}/research-interests/profile/`, () => HttpResponse.json(guestInterestsOf())),
 
+  // Suggestions while typing: the existing interests containing `q`, most professors first.
+  http.get(`${BASE}/research-interests/search/`, ({ request }) => {
+    const q = (new URL(request.url).searchParams.get('q') ?? '').trim().toLowerCase();
+    const results =
+      q.length < 2
+        ? []
+        : KNOWN_INTERESTS.filter(({ name }) => name.toLowerCase().includes(q)).slice(0, 8);
+    return HttpResponse.json({ results });
+  }),
+
   http.put(`${BASE}/research-interests/profile/`, async ({ request }) => {
     const { interests } = (await request.json()) as { interests?: unknown };
     if (
@@ -2326,6 +2336,15 @@ export const applicantHandlers = [
 /** Forget Sara's changes (tests, logout). */
 /** The account's research interests before a case (H70). */
 let guestInterests: string[] = [];
+
+/** The `ResearchInterest` rows Django has, with their professors, most first. */
+const KNOWN_INTERESTS = [
+  { name: 'Machine Learning', professors: 212 },
+  { name: 'Robotics', professors: 96 },
+  { name: 'Computer Vision', professors: 88 },
+  { name: 'Soft Robotics', professors: 14 },
+  { name: 'Robot Ethics', professors: 0 },
+];
 
 /** H70 `research-interests/profile/` (GET, and PUT's answer): 74 professors in 9 universities per interest, as a toy. */
 function guestInterestsOf() {

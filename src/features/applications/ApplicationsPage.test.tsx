@@ -225,6 +225,30 @@ describe('applications page', () => {
     expect(professors).toHaveTextContent('استاد در ۹ دانشگاه');
   });
 
+  it('offers the topics already in the list while typing, most professors first', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/applications');
+    const interests = await screen.findByRole('region', {
+      name: 'دوست دارید روی چه موضوعی پژوهش کنید؟',
+    });
+    await user.type(within(interests).getByLabelText('افزودن علاقه‌ی پژوهشی'), 'robot');
+    const offered = await within(interests).findByRole('list', { name: 'از فهرست موضوع‌های ما' });
+    expect(
+      within(offered)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Robotics۹۶ استاد', 'Soft Robotics۱۴ استاد', 'Robot Ethics']);
+
+    await user.click(within(offered).getByRole('button', { name: /^Robotics/ }));
+    const professors = region('استادهای هم‌موضوع با شما');
+    await waitFor(() => expect(professors).toHaveTextContent('۷۴'));
+    expect(within(interests).getByRole('list', { name: 'علاقه‌های پژوهشی شما' })).toHaveTextContent(
+      'Robotics',
+    );
+    expect(within(interests).getByLabelText('افزودن علاقه‌ی پژوهشی')).toHaveValue('');
+  });
+
   it('keeps the case’s research interests on the page, next to the nearest deadline', async () => {
     const user = userEvent.setup();
     await openPage();
