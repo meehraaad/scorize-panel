@@ -1,5 +1,6 @@
 import 'i18next';
 import type account from '@/locales/fa/account.json';
+import type activities from '@/locales/fa/activities.json';
 import type applications from '@/locales/fa/applications.json';
 import type auth from '@/locales/fa/auth.json';
 import type common from '@/locales/fa/common.json';
@@ -41,6 +42,7 @@ declare module 'i18next' {
       consultations: typeof consultations;
       booking: typeof booking;
       account: typeof account;
+      activities: typeof activities;
       gates: typeof gates;
       sales: typeof sales;
       tasks: typeof tasks;

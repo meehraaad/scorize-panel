@@ -16,8 +16,11 @@ describe('features by what Django serves', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('leaves only the Turkey programme off', () => {
-    expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([['turkey', false]]);
+  it('leaves only the Turkey programme and the to-do box off', () => {
+    expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
+      ['turkey', false],
+      ['activities', false],
+    ]);
   });
 
   it('opens the guest home on the admission-chance quiz', async () => {

@@ -16,7 +16,8 @@ export type ServerFeature =
   | 'background'
   | 'start'
   | 'bookingCalendar'
-  | 'writingOffers';
+  | 'writingOffers'
+  | 'activities';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -52,4 +53,9 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * preview without a contract.
    */
   writingOffers: true,
+  /**
+   * AC1–AC7 `activities/`: the to-do box on every page (supervisor asks, surveys, purchase tasks).
+   * Not built in Django yet. Off: no box.
+   */
+  activities: false,
 };
