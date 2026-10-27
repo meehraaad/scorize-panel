@@ -5,6 +5,11 @@ const VARIANTS = {
   /** A strong action next to a primary one (an offer card that isn't the featured one). */
   dark: 'bg-hero text-on-hero hover:bg-hero-raised font-semibold',
   danger: 'bg-transparent text-danger font-medium hover:bg-danger-tint',
+  /** The main action on a luxe or forest card: gold, dark text. */
+  gold: 'bg-luxe-gold font-bold shadow-[inset_0_1px_0_rgb(255_255_255/0.55)] hover:brightness-105',
+  /** The second action on a luxe or forest card: a gold outline. */
+  onLuxe:
+    'bg-transparent text-on-hero font-semibold shadow-[inset_0_0_0_1px_var(--luxe-rim)] hover:bg-hero-raised',
 } as const;
 
 const SIZES = {

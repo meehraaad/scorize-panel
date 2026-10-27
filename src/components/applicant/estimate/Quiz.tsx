@@ -2,11 +2,9 @@ import { useEffect, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { ChoiceGroup, SelectField, TogglePill } from '@/components/ui/Choices';
-import { PageColumns } from '@/components/ui/PageColumns';
-import { ProgressRing, StepBar } from '@/components/ui/Progress';
-import { SectionCard } from '@/components/ui/SectionCard';
+import { ProgressRing } from '@/components/ui/Progress';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
@@ -104,22 +102,20 @@ function gpaOn20(draft: Draft) {
 }
 
 /**
- * The quiz, one short step at a time (one hand on a phone), with a live preview of the answers beside
- * it (under it on phones). The last step sends them, and the step card shows what is being worked
- * out until the result is back; `onDone` gets the contact answer for the result.
+ * The quiz, one short step at a time (one hand on a phone), each step's heading its question, with
+ * the locked result and the answers so far beside it on the premium card (under it on phones). The
+ * last step sends them, and the card shows what is being worked out until the result is back;
+ * `onDone` gets the contact answer for the result.
  * `inSheet`: inside a bottom sheet (the home on phones): the steps alone, no cards and no preview.
- * Design: the "Scorize New User Dashboard" canvas.
+ * Design: "کوییز شانس قبولی" canvas.
  */
 export function Quiz({
   options,
   onDone,
-  teaser = false,
   inSheet = false,
 }: {
   options: EstimateOptions;
   onDone: (contact: EstimateAnswers['contact']) => void;
-  /** First visit on the home: the locked result's shape leads the aside, instead of what they get. */
-  teaser?: boolean;
   inSheet?: boolean;
 }) {
   const { t } = useTranslation('estimate');
@@ -203,21 +199,38 @@ export function Quiz({
     return group ? (group.name_persian ?? group.name) : '';
   };
 
-  const stepBar = (
-    <StepBar
-      label={t('quiz.steps')}
-      steps={STEPS.map((key) => ({ key, label: t(`quiz.step.${key}`) }))}
-      current={index}
-    />
+  const steps = (
+    <ol aria-label={t('quiz.steps')} className="m-0 grid list-none grid-cols-5 gap-1.5 p-0">
+      {STEPS.map((key, position) => (
+        <li
+          key={key}
+          aria-current={position === index ? 'step' : undefined}
+          className={`flex flex-col gap-2 text-xs ${
+            position === index
+              ? 'font-extrabold text-text'
+              : position < index
+                ? 'font-semibold text-primary-text'
+                : 'text-text-2'
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-1 rounded-full ${
+              position < index ? 'bg-primary' : position === index ? 'bg-primary/35' : 'bg-track'
+            }`}
+          />
+          <span className={inSheet ? 'sr-only' : ''}>{t(`quiz.step.${key}`)}</span>
+        </li>
+      ))}
+    </ol>
   );
-  const counter = t('quiz.counter', { n: f.number(index + 1), total: f.number(STEPS.length) });
   const form = (
     <form noValidate onSubmit={next} className="flex flex-col gap-6">
       {step === 'goal' && (
         <>
           <ChoiceGroup
             legend={t('quiz.goal')}
-            look="tiles"
+            look="cards"
             options={options.goals.map((value) => ({
               value,
               label: t(`goal.${value}`),
@@ -228,6 +241,7 @@ export function Quiz({
           />
           <ChoiceGroup
             legend={t('quiz.degree')}
+            look="segmented"
             options={options.degrees.map((value) => ({
               value,
               label: t(`degree.${value}`),
@@ -266,6 +280,7 @@ export function Quiz({
           </div>
           <ChoiceGroup
             legend={t('quiz.gpaScale')}
+            look="segmented"
             options={GPA_SCALES.map((value) => ({
               value,
               label: t('quiz.gpaOf', { scale: f.number(Number(value)) }),
@@ -279,7 +294,7 @@ export function Quiz({
         <>
           <ChoiceGroup
             legend={t('quiz.english')}
-            look="tiles"
+            look="cards"
             hint={t('quiz.englishHint')}
             options={(['score', ...options.english_levels] as const).map((value) => ({
               value,
@@ -346,6 +361,7 @@ export function Quiz({
           </fieldset>
           <ChoiceGroup
             legend={t('quiz.budget')}
+            look="segmented"
             options={options.budgets.map((value) => ({
               value,
               label: t(`budget.${value}`),
@@ -355,6 +371,7 @@ export function Quiz({
           />
           <ChoiceGroup
             legend={t('quiz.start')}
+            look="segmented"
             options={options.starts.map((value) => ({
               value,
               label: t(`start.${value}`),
@@ -368,7 +385,7 @@ export function Quiz({
         <>
           <ChoiceGroup
             legend={t('quiz.channel')}
-            look="tiles"
+            look="cards"
             options={options.contact_channels.map((value) => ({
               value,
               label: t(`channel.${value}`),
@@ -380,6 +397,7 @@ export function Quiz({
           {draft.channel !== 'none' && (
             <ChoiceGroup
               legend={t('quiz.time')}
+              look="segmented"
               options={options.contact_times.map((value) => ({
                 value,
                 label: t(`time.${value}`),
@@ -404,17 +422,18 @@ export function Quiz({
         </>
       )}
       <div
-        className={`flex flex-wrap gap-2 max-sm:[&>*]:flex-auto ${
+        className={`flex items-center justify-between gap-2 pt-5 shadow-[inset_0_1px_0_var(--hair)] ${
           inSheet
-            ? 'sticky -bottom-6 z-10 -mx-5 -mb-6 bg-surface px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] shadow-[inset_0_1px_0_var(--hair)]'
+            ? 'sticky -bottom-6 z-10 -mx-5 -mb-6 bg-surface px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))]'
             : ''
         }`}
       >
-        {index > 0 && (
+        {index > 0 ? (
           <Button
             type="button"
             variant="outline"
             size="lg"
+            className="max-sm:flex-1"
             onClick={() => {
               setStep(STEPS[index - 1] ?? 'goal');
               setErrors({});
@@ -422,52 +441,51 @@ export function Quiz({
           >
             {t('quiz.back')}
           </Button>
+        ) : (
+          <span />
         )}
-        <Button type="submit" size="lg">
+        <Button type="submit" size="lg" className="max-sm:flex-1 sm:min-w-44">
           {index < STEPS.length - 1 ? t('quiz.next') : t('quiz.submit')}
+          <Icon name="chevronEnd" size={18} />
         </Button>
       </div>
     </form>
   );
 
   const question = (
-    <section aria-labelledby="estimate-step" className="flex flex-col gap-5 lg:gap-6">
-      {stepBar}
-      {inSheet && <Answered draft={draft} options={options} fieldName={fieldName} done={index} />}
-      <div className="flex flex-col gap-1 pt-5 shadow-[inset_0_1px_0_var(--hair)]">
-        <h2
-          id="estimate-step"
-          tabIndex={-1}
-          className="m-0 font-display text-lg font-bold outline-none lg:text-xl"
-        >
-          {t(`quiz.title.${step}`)}
-        </h2>
-        <span className="text-sm text-text-2">{counter}</span>
+    <section aria-labelledby="estimate-step" className="flex flex-col gap-6 lg:gap-7">
+      <div className="flex flex-col gap-3">
+        {inSheet && (
+          <span className="text-[13px] font-bold text-text-2">
+            {t('quiz.counterStep', {
+              n: f.number(index + 1),
+              total: f.number(STEPS.length),
+              step: t(`quiz.step.${step}`),
+            })}
+          </span>
+        )}
+        {steps}
       </div>
+      {inSheet && <Answered draft={draft} options={options} fieldName={fieldName} done={index} />}
+      <h2
+        id="estimate-step"
+        tabIndex={-1}
+        className="m-0 font-display text-xl leading-relaxed font-semibold outline-none lg:text-2xl"
+      >
+        {t(`quiz.title.${step}`)}
+      </h2>
       {form}
     </section>
   );
 
   if (inSheet) return submit.isPending ? <Analysing /> : question;
+  if (submit.isPending) return <Analysing />;
 
   return (
-    <PageColumns
-      asideLabel={t('summary.title')}
-      asideWidth="sm"
-      main={submit.isPending ? <Analysing /> : <Card className="p-5 lg:p-7">{question}</Card>}
-      aside={
-        <>
-          <LivePreview
-            draft={draft}
-            options={options}
-            fieldName={fieldName}
-            complete={Math.round((index / STEPS.length) * 100)}
-            locked={teaser}
-          />
-          {!teaser && <WhatYouGet />}
-        </>
-      }
-    />
+    <Card className="flex flex-col overflow-hidden lg:flex-row">
+      <div className="min-w-0 p-5 lg:flex-1 lg:px-11 lg:py-9">{question}</div>
+      <LivePreview draft={draft} options={options} fieldName={fieldName} done={index} />
+    </Card>
   );
 }
 
@@ -543,9 +561,11 @@ function Analysing() {
     <section
       aria-labelledby="estimate-analysing"
       aria-live="polite"
-      className="flex flex-col gap-5 rounded-[24px] bg-hero px-5 py-7 text-on-hero shadow-hero lg:rounded-[32px] lg:px-9 lg:py-9"
+      className="flex flex-col gap-5 rounded-[24px] px-5 py-7 text-on-hero shadow-luxe bg-luxe lg:rounded-[32px] lg:px-9 lg:py-9"
     >
-      <span className="text-[13px] font-semibold text-hero-current">{t('analysing.kicker')}</span>
+      <span className="text-[13px] font-semibold text-luxe-gold-light">
+        {t('analysing.kicker')}
+      </span>
       <h2 id="estimate-analysing" className="m-0 font-display text-[22px] leading-snug font-bold">
         {t('analysing.title')}
       </h2>
@@ -575,28 +595,27 @@ function Analysing() {
   );
 }
 
-/** Bar lengths of the locked result: a shape, not anyone's chance. */
-const SHAPE = ['w-[88%]', 'w-[70%]', 'w-[62%]', 'w-[44%]'];
+/** The locked chances' look: a shape, blurred, not anyone's chance. */
+const VEILED = [78, 64, 51, 39];
+/** What each step's answer lets the result tell them: the reason to go on. */
+const TEASES = ['country', 'gpa', 'english', 'budget', 'consultant'] as const;
 
 /**
- * The live preview on the dark card: how far the quiz is and what it knows so far, as the seller
- * will read it. `locked` (first visit on the home): the result's shape leads it, blurred and
- * locked, on the countries they picked (or the first ones offered). Curiosity about their own
- * numbers is the reason to finish. Design: "Mobile Quiz Card Mockups" canvas, Desktop.
+ * Beside the questions, on the premium card: the result locked (their countries, the chances
+ * blurred), what the next answers will tell them, and their answers so far as the seller will read
+ * them. Curiosity about their own numbers is the reason to finish. Design: "کوییز شانس قبولی" canvas.
  */
 function LivePreview({
   draft,
   options,
   fieldName,
-  complete,
-  locked = false,
+  done,
 }: {
   draft: Draft;
   options: EstimateOptions;
   fieldName: (id: number) => string;
-  /** 0–100: the share of steps answered. */
-  complete: number;
-  locked?: boolean;
+  /** How many steps are answered. */
+  done: number;
 }) {
   const { t } = useTranslation('estimate');
   const f = useFormat();
@@ -604,17 +623,26 @@ function LivePreview({
   const score = numberOf(draft.score);
   const picked = options.countries.filter((country) => draft.countries.includes(country.id));
   const countries = picked.map((country) => country.name);
-  const rows: [string, string][] = [
-    [t('summary.goal'), t(`goal.${draft.goal}`)],
-    [t('summary.degree'), t(`degree.${draft.degree}`)],
-    [t('summary.field'), draft.field_group ? fieldName(Number(draft.field_group)) : '—'],
+  const complete = Math.round((done / STEPS.length) * 100);
+  const completeText = t('preview.complete', { n: f.number(complete) });
+  // Each answer under the step that asked it: only answered steps show.
+  const rows: [Step, string, string][] = [
+    ['goal', t('summary.goal'), t(`goal.${draft.goal}`)],
+    ['goal', t('summary.degree'), t(`degree.${draft.degree}`)],
     [
+      'background',
+      t('summary.field'),
+      draft.field_group ? fieldName(Number(draft.field_group)) : '—',
+    ],
+    [
+      'background',
       t('summary.gpa'),
       Number.isFinite(gpa)
         ? t('summary.gpaOf', { gpa: f.number(gpa), scale: f.number(Number(draft.gpaScale)) })
         : '—',
     ],
     [
+      'english',
       t('summary.english'),
       draft.english === 'score'
         ? Number.isFinite(score)
@@ -622,101 +650,92 @@ function LivePreview({
           : t(`exam.${draft.exam}`)
         : t(`english.${draft.english}`),
     ],
-    [t('summary.countries'), countries.length ? f.list(countries) : t('summary.allCountries')],
-    [t('summary.budget'), t(`budget.${draft.budget}`)],
+    [
+      'plan',
+      t('summary.countries'),
+      countries.length ? f.list(countries) : t('summary.allCountries'),
+    ],
+    ['plan', t('summary.budget'), t(`budget.${draft.budget}`)],
   ];
-  const completeText = t('preview.complete', { n: f.number(complete) });
+  const answered = rows.filter(([key]) => STEPS.indexOf(key) < done);
+
   return (
     <section
       aria-labelledby="estimate-summary"
-      className="flex flex-col gap-4 rounded-[24px] bg-hero p-5 text-on-hero shadow-hero lg:p-6"
+      className="m-2.5 flex flex-col gap-5 rounded-2xl px-5 py-6 text-on-hero shadow-luxe bg-luxe lg:w-90 lg:flex-none lg:px-7 lg:py-8"
     >
       <div className="flex items-center gap-4">
-        <ProgressRing value={complete} label={completeText} tone="onHero" />
-        <div className="flex min-w-0 flex-col">
-          <span className="text-[13px] font-semibold text-hero-current">{t('preview.kicker')}</span>
-          <h2 id="estimate-summary" className="m-0 text-base font-bold">
-            {t(locked ? 'preview.lockedTitle' : 'summary.title')}
+        <span className="relative flex-none">
+          <ProgressRing value={complete} label={completeText} size={66} tone="luxe" />
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 flex items-center justify-center font-display text-sm font-bold text-luxe-gold-light"
+          >
+            {t('result.percent', { n: f.number(complete) })}
+          </span>
+        </span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 id="estimate-summary" className="m-0 font-display text-[17px] font-semibold">
+            {t('preview.lockedTitle')}
           </h2>
-          <span aria-hidden="true" className="text-[13px] text-on-hero-2">
-            {completeText}
+          <span aria-hidden="true" className="text-[13px] text-on-luxe-2">
+            {done === 0 ? t('preview.short', { n: f.number(STEPS.length) }) : completeText}
           </span>
         </div>
       </div>
-      {locked && (
-        <ul
-          aria-hidden="true"
-          className="m-0 flex list-none flex-col gap-3 rounded-2xl bg-hero-raised p-3.5"
-        >
-          {(picked.length ? picked : options.countries)
-            .slice(0, SHAPE.length)
-            .map((country, index) => (
-              <li
-                key={country.id}
-                className="grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-2.5 text-sm"
-              >
-                <span className="truncate font-semibold">{country.name}</span>
-                <span className="h-2 rounded-full bg-hero-line">
-                  <span
-                    className={`block h-full rounded-full bg-hero-accent opacity-75 blur-[2.5px] ${SHAPE[index] ?? ''}`}
-                  />
-                </span>
-                <Icon name="lock" size={14} className="text-on-hero-2" />
-              </li>
-            ))}
-        </ul>
-      )}
-      <div className="flex flex-col gap-2.5">
-        {locked && (
-          <h3 className="m-0 text-[13px] font-normal text-on-hero-2">{t('preview.answers')}</h3>
-        )}
-        <dl
-          className={`m-0 flex flex-col gap-2.5 ${locked ? '' : 'pt-4 shadow-[inset_0_1px_0_var(--hero-line)]'}`}
-        >
-          {rows.map(([label, value]) => (
-            <div key={label} className="flex justify-between gap-3 text-sm">
-              <dt className="text-on-hero-2">{label}</dt>
-              <dd className="m-0 text-end font-semibold">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-      <p className="m-0 pt-3.5 text-[13px] leading-6 text-on-hero-2 shadow-[inset_0_1px_0_var(--hero-line)]">
-        {t('summary.note')}
-      </p>
-    </section>
-  );
-}
-
-const GETS = [
-  { key: 'chance', icon: 'chart' },
-  { key: 'consultant', icon: 'user' },
-  { key: 'similar', icon: 'graduation' },
-] as const satisfies readonly { key: string; icon: IconName }[];
-
-/** What answering gets them: the reason to finish. */
-function WhatYouGet() {
-  const { t } = useTranslation('estimate');
-  return (
-    <SectionCard variant="panel" id="estimate-gets" title={t('preview.get.title')}>
-      <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
-        {GETS.map(({ key, icon }) => (
-          <li key={key} className="flex items-start gap-3">
-            <span
-              aria-hidden="true"
-              className="flex size-9 flex-none items-center justify-center rounded-xl bg-tint text-primary-text"
-            >
-              <Icon name={icon} size={18} />
-            </span>
-            <span className="flex min-w-0 flex-col">
-              <span className="text-sm font-semibold">{t(`preview.get.${key}.title`)}</span>
-              <span className="text-[13px] leading-6 text-text-2">
-                {t(`preview.get.${key}.text`)}
+      <ul className="m-0 flex list-none flex-col gap-3 rounded-[14px] bg-hero-raised p-4 shadow-[inset_0_0_0_1px_var(--hero-line)]">
+        {(picked.length ? picked : options.countries).slice(0, VEILED.length).map((country, at) => (
+          <li
+            key={country.id}
+            className="flex items-center justify-between gap-3 text-sm font-semibold"
+          >
+            <span className="truncate">{country.name}</span>
+            <span aria-hidden="true" className="inline-flex items-center gap-2">
+              <span className="font-display font-bold text-luxe-gold-light blur-[2.5px] select-none">
+                {t('result.percent', { n: f.number(VEILED[at] ?? 0) })}
               </span>
+              <Icon name="lock" size={14} className="text-luxe-gold-light" />
             </span>
           </li>
         ))}
       </ul>
-    </SectionCard>
+      <div className="flex flex-col gap-3">
+        <h3 className="m-0 text-[13px] font-bold text-luxe-gold-light">
+          {t(done === STEPS.length - 1 ? 'preview.askLast' : 'preview.ask')}
+        </h3>
+        <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+          {TEASES.slice(done, done + 3).map((key) => (
+            <li key={key} className="flex items-start gap-2.5 text-sm leading-7">
+              <span
+                aria-hidden="true"
+                className="mt-0.5 flex size-[22px] flex-none items-center justify-center rounded-full text-[13px] font-extrabold bg-luxe-gold"
+              >
+                {t('preview.mark')}
+              </span>
+              {t(`preview.tease.${key}`)}
+            </li>
+          ))}
+        </ul>
+      </div>
+      {answered.length > 0 && (
+        <section
+          aria-labelledby="estimate-answers"
+          className="mt-auto flex flex-col gap-3 pt-4 shadow-[inset_0_1px_0_var(--hero-line)]"
+        >
+          <h3 id="estimate-answers" className="m-0 text-[13px] font-normal text-on-luxe-2">
+            {t('preview.answers')}
+          </h3>
+          <dl className="m-0 flex flex-col gap-2.5">
+            {answered.map(([, label, value]) => (
+              <div key={label} className="flex justify-between gap-3 text-sm">
+                <dt className="text-on-luxe-2">{label}</dt>
+                <dd className="m-0 text-end font-bold">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="m-0 text-xs leading-6 text-on-luxe-2">{t('summary.note')}</p>
+        </section>
+      )}
+    </section>
   );
 }

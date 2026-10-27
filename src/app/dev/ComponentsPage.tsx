@@ -11,7 +11,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField, TogglePill } from '@/components/ui/Choices';
-import { Chip } from '@/components/ui/Chip';
+import { Chip, StatusText } from '@/components/ui/Chip';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -28,7 +28,7 @@ import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { ProgressBar, ProgressRing, StepBar, StepDot, StepList } from '@/components/ui/Progress';
-import { Badge, SectionCard, SectionHeading } from '@/components/ui/SectionCard';
+import { Badge, SectionCard, SectionHeading, SideSection } from '@/components/ui/SectionCard';
 import { SheetButton } from '@/components/ui/Sheet';
 import { SlotPicker, type Slot } from '@/components/ui/SlotPicker';
 import { MiniMonth } from '@/components/ui/MiniMonth';
@@ -135,6 +135,12 @@ export default function ComponentsPage() {
             <IconButton icon="trash" tone="danger" aria-label="حذف" />
             <IconLink icon="download" href="#" aria-label="دانلود" />
           </div>
+          <div className="flex flex-wrap items-center gap-2 rounded-3xl p-4 shadow-luxe bg-luxe">
+            <Button variant="gold">طلایی (gold)</Button>
+            <Button variant="onLuxe">روی luxe (onLuxe)</Button>
+            <span className="rounded-full px-4 py-2 text-on-hero bg-forest">bg-forest</span>
+            <span className="rounded-full px-4 py-2 text-on-hero bg-luxe-soft">bg-luxe-soft</span>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             {(['primary', 'good', 'warn', 'danger', 'info', 'neutral'] as const).map((tone) => (
               <Chip key={tone} tone={tone} dot>
@@ -145,6 +151,8 @@ export default function ComponentsPage() {
               کوچک
             </Chip>
             <Badge>۲ جدید</Badge>
+            <StatusText tone="good">پرداخت شده (StatusText)</StatusText>
+            <StatusText tone="warn">لازم‌الپرداخت</StatusText>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
             <Notice tone="info">پیام اطلاع‌رسانی</Notice>
@@ -367,6 +375,13 @@ export default function ComponentsPage() {
               { label: 'پذیرش', value: f.number(1), unit: 'دانشگاه', tone: 'good' },
             ]}
           />
+          <SideSection
+            id="demo-side"
+            title="بخش بدون کارت (SideSection)"
+            subtitle="عنوان کنار، محتوا روبه‌رو، یک خط نازک بالا"
+          >
+            <p className="m-0 text-sm text-text-2">محتوای بخش</p>
+          </SideSection>
           <SectionHeading
             id="demo-heading"
             title="عنوان بخش (SectionHeading)"

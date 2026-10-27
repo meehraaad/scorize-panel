@@ -8,7 +8,11 @@ import type { ContractData } from '../api';
 /** Days in an average month, to show the contract length in months. */
 const MONTH_DAYS = 30.44;
 
-/** Dark summary card: what the contract covers, what it costs, and how much time is left. */
+/**
+ * The contract's summary on the luxe card (plum, wine and gold light, a gold rim): what it covers,
+ * what it costs, and how much time is left. Design: canvas "Scorize New User Dashboard v2",
+ * ContractActive.
+ */
 export function ContractHero({ contract }: { contract: ContractData }) {
   const { t } = useTranslation('contract');
   const { t: tc } = useTranslation();
@@ -46,11 +50,11 @@ export function ContractHero({ contract }: { contract: ContractData }) {
   return (
     <section
       aria-label={t('hero.label')}
-      className="flex flex-col gap-5 rounded-[24px] bg-hero px-5 py-[22px] text-on-hero shadow-hero lg:gap-[26px] lg:rounded-[32px] lg:px-10 lg:py-8"
+      className="flex flex-col gap-5 rounded-[24px] px-5 py-[22px] text-on-hero shadow-luxe bg-luxe lg:gap-[26px] lg:rounded-[32px] lg:px-10 lg:py-8"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm text-on-hero-2">
+          <span className="text-sm text-on-luxe-2">
             {t('hero.number', {
               number: f.digits(String(contract.number)),
               holder: contract.holder,
@@ -62,7 +66,7 @@ export function ContractHero({ contract }: { contract: ContractData }) {
         </div>
         <span
           className={`inline-flex h-8 items-center gap-2 rounded-full bg-hero-raised px-3.5 text-sm font-semibold ${
-            contract.status === 'active' ? 'text-live' : 'text-on-hero-2'
+            contract.status === 'active' ? 'text-live' : 'text-on-luxe-2'
           }`}
         >
           <span aria-hidden="true" className="size-2 rounded-full bg-current" />
@@ -70,10 +74,10 @@ export function ContractHero({ contract }: { contract: ContractData }) {
         </span>
       </div>
 
-      <dl className="m-0 grid grid-cols-2 gap-5 pt-[22px] shadow-[inset_0_1px_0_var(--hero-line)] lg:grid-cols-5">
+      <dl className="m-0 grid grid-cols-2 gap-5 pt-[22px] shadow-[inset_0_1px_0_var(--luxe-line)] lg:grid-cols-5">
         {facts.map(([label, value]) => (
           <div key={label} className="flex min-w-0 flex-col gap-1.5">
-            <dt className="text-[13px] text-on-hero-2">{label}</dt>
+            <dt className="text-[13px] text-on-luxe-2">{label}</dt>
             <dd className="m-0 text-base font-semibold">{value}</dd>
           </div>
         ))}
@@ -81,16 +85,16 @@ export function ContractHero({ contract }: { contract: ContractData }) {
 
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap justify-between gap-x-3 gap-y-1 text-sm">
-          <span className="text-on-hero-2">{f.date(contract.start_date)}</span>
+          <span className="text-on-luxe-2">{f.date(contract.start_date)}</span>
           <span className="font-semibold">
             {t('hero.daysLeft', { left: f.number(left), total: f.number(total) })}
           </span>
-          <span className="text-on-hero-2">{f.date(contract.end_date)}</span>
+          <span className="text-on-luxe-2">{f.date(contract.end_date)}</span>
         </div>
         <ProgressBar
           value={percentOf(total - left, total)}
           size="sm"
-          tone="onHero"
+          tone="gold"
           label={t('hero.time')}
         />
       </div>
