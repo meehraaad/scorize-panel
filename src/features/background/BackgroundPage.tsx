@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
@@ -99,9 +100,15 @@ const emptyEducation = (): EducationRow => ({
  * consultant reads it before a session, and the sales team's lead score uses it. Saved whole
  * (degrees and exams are replaced by what is sent). Shape: docs/backend-changes.md H60.
  */
+/** A campaign whose form this is (`?then=/campaigns/<slug>`): back there once it is complete. */
+const CAMPAIGN_PATH = /^\/campaigns\/[^/?#]+$/;
+
 export default function BackgroundPage() {
   const { t } = useTranslation('journey');
   const f = useFormat();
+  const navigate = useNavigate();
+  const then = useSearchParams()[0].get('then');
+  const campaign = then && CAMPAIGN_PATH.test(then) ? then : null;
   const { data } = useSuspenseQuery(backgroundQuery);
   const save = useSaveBackground();
   const [form, setForm] = useState(() => formOf(data));
@@ -188,6 +195,7 @@ export default function BackgroundPage() {
       onSuccess: (saved) => {
         setForm(formOf(saved));
         toast.success(t('background.saved'));
+        if (campaign && saved.complete) void navigate(campaign);
       },
       onError: () => toast.error(t('background.error')),
     });
@@ -198,8 +206,9 @@ export default function BackgroundPage() {
 
   return (
     <PageStack>
-      <BackLink to="/">{t('background.back')}</BackLink>
+      <BackLink to={campaign ?? '/'}>{t('background.back')}</BackLink>
       <PageHeader title={t('background.title')} subtitle={t('background.subtitle')} />
+      {campaign && <Notice tone="info">{t('background.forCampaign')}</Notice>}
       <Notice tone={data.complete ? 'success' : 'info'}>
         {t(data.complete ? 'background.complete' : 'background.incomplete')}
       </Notice>

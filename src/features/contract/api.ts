@@ -99,8 +99,39 @@ export interface ContractData {
   consultant: string | null;
 }
 
-/** Status of one invoice, as the applicant sees it. */
-export type PaymentStatus = 'unpaid' | 'review' | 'declined' | 'paid';
+import type { PaymentStatus } from '@/lib/applicant/publicInvoice';
+
+export type { PaymentStatus };
+
+export type PaymentItemKind =
+  | 'consultation'
+  | 'writing'
+  | 'campaign'
+  | 'package'
+  | 'webinar'
+  | 'service'
+  | 'lottery'
+  | 'instalment'
+  | 'other';
+
+/** One line of the invoice and how its price came about (PAY6). */
+export interface PaymentItem {
+  label: string;
+  /** A session's start (ISO), when the item has one. */
+  note: string | null;
+  kind: PaymentItemKind;
+  /** Its page in the panel, once bought. */
+  href: string | null;
+  /** The list price, then after the admin's discount (null: none). */
+  price: number;
+  discounted_price: number | null;
+  /** What the discount code took off, the wallet credit it used and its tax. */
+  code_discount: number;
+  credit: number;
+  tax: number;
+  /** What is left to pay for it. */
+  amount: number;
+}
 
 export interface PaymentData {
   id: number;
@@ -109,15 +140,26 @@ export interface PaymentData {
   method: 'online' | 'receipt' | null;
   /** The instalment it settles, when it is one (back link goes to the contract). */
   installment: number | null;
-  items: { label: string; amount: number }[];
+  items: PaymentItem[];
   /** Sum of the items, credit used, and what is left to pay, in `currency`. */
   total: number;
+  /** Sum of the list prices, the admin's discounts, the code (null: none) and the tax. */
+  original: number;
+  admin_discount: number;
+  code: { code: string; discount: number } | null;
+  tax: number;
   credit_used: number;
+  /** Raised to the bank's minimum, or a price the seller set (negative: lower). */
+  adjustment: number;
   amount: number;
   /** The receiving account's currency: ISO 4217, or `IRT` for the toman. */
   currency: string | null;
   created_at: string;
+  /** When an unpaid invoice expires; null: it doesn't. */
+  expires_at: string | null;
   paid_at: string | null;
+  /** The bank's reference, once paid online. */
+  ref_id: string | null;
   seller: string | null;
   /** The uploaded receipt, while one is waiting or was declined. */
   receipt: { url: string; uploaded_at: string } | null;
@@ -125,7 +167,39 @@ export interface PaymentData {
   decline_reason: string | null;
   /** Where to transfer for a receipt payment (from the server, never hard-coded here). */
   bank: { card: string; iban: string; holder: string };
+  /** The code and the credit can change: unpaid, made by the person, not at the bank yet. */
+  editable: boolean;
+  /** The wallet's credit now (for the switch); null when it can't change. */
+  wallet: number | null;
+  use_credit: boolean;
+  /** Toman purchases give this back to the wallet once paid. */
+  reward: number;
+  /** How an expired or failed one is bought again: a new invoice, from the seller, or its page. */
+  renew: 'self' | 'seller' | 'rebook' | null;
+  /** The open to-dos the purchase left (ids in the activities list). */
+  activities: number[];
+  /** Its public link: `/pay/<token>`. */
+  token: string;
 }
+
+/** One open payment in the list (PAY7). */
+export interface OpenPayment {
+  id: number;
+  status: PaymentStatus;
+  labels: string[];
+  installment: boolean;
+  amount: number;
+  currency: string | null;
+  created_at: string;
+  expires_at: string | null;
+  due_date: string | null;
+  seller: string | null;
+}
+
+export type { PublicInvoice } from '@/lib/applicant/publicInvoice';
+export { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
+
+export type DiscountResult = 'ok' | 'invalid' | 'expired' | 'used' | 'maxed' | 'not_for_items';
 
 /** What the receipt upload accepts. The server checks again. */
 export const RECEIPT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'] as const;
@@ -180,20 +254,78 @@ export function useSaveProfileField() {
   );
 }
 
-/** Starts an online payment; the browser then leaves for the bank gateway. */
+/** The person's open payments: unpaid, a receipt in review or declined (PAY7). */
+export const openPaymentsQuery = queryOptions({
+  queryKey: [...APPLICANT_KEY, 'payments', 'open'],
+  queryFn: ({ signal }) => api<OpenPayment[]>(`${BASE}/payments/?open=1`, { signal }),
+  staleTime: 30_000,
+});
+
+/**
+ * Starts an online payment: where the bank is, and whether the connection looks foreign (the bank
+ * opens only from Iran: the page asks to turn off the VPN first).
+ */
 export function useStartOnlinePayment() {
   return useMutation({
     mutationFn: async (id: number) => {
-      const { redirect_url } = await api<{ redirect_url: string }>(
-        `${BASE}/payments/${String(id)}/online/`,
-        { method: 'POST' },
-      );
+      const { redirect_url, outside_iran } = await api<{
+        redirect_url: string;
+        outside_iran?: boolean;
+      }>(`${BASE}/payments/${String(id)}/online/`, { method: 'POST' });
       // Never navigate to a javascript: or data: URL, even one the API sent.
       const target = safeHref(redirect_url);
       if (!target) throw new Error('Unsafe payment redirect');
-      return { redirect_url: target };
+      return { redirect_url: target, outside_iran: outside_iran ?? false };
     },
   });
+}
+
+/** Writes the page's answer into the cache, so the page shows it without another request. */
+function usePaymentWrite<T>(mutationFn: (variables: T) => Promise<PaymentData>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (payment) => {
+      client.setQueryData(paymentQuery(payment.id).queryKey, payment);
+      // A credit that now covers it all paid it: what it bought is in the lists now.
+      if (payment.status === 'paid') void client.invalidateQueries({ queryKey: APPLICANT_KEY });
+    },
+  });
+}
+
+/** Takes the wallet credit, or gives it back (PAY5). */
+export function useUseCredit() {
+  return usePaymentWrite(({ id, use }: { id: number; use: boolean }) =>
+    api<PaymentData>(`${BASE}/payments/${String(id)}/`, {
+      method: 'PATCH',
+      body: { use_credit: use },
+    }),
+  );
+}
+
+/** Applies a discount code (`''` removes it); `result` says why one didn't apply. */
+export function useApplyCode() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, code }: { id: number; code: string }) =>
+      api<{ result: DiscountResult; payment: PaymentData }>(
+        `${BASE}/payments/${String(id)}/discount/`,
+        { method: 'POST', body: { code } },
+      ),
+    onSuccess: ({ payment }) => client.setQueryData(paymentQuery(payment.id).queryKey, payment),
+  });
+}
+
+/**
+ * A new invoice for an expired or failed one (PAY1, PAY2): its id, or null when the seller was
+ * asked for one.
+ */
+export function useRenewPayment() {
+  return useApplicantMutation((id: number) =>
+    api<{ payment_id: number | null }>(`${BASE}/payments/${String(id)}/renew/`, {
+      method: 'POST',
+    }),
+  );
 }
 
 export function useUploadReceipt() {
@@ -203,5 +335,50 @@ export function useUploadReceipt() {
       body.append('receipt', file);
       return uploadFile(`${BASE}/payments/${String(id)}/receipt/`, body, file, messages);
     },
+  );
+}
+
+/** A campaign to register for in the panel (PAY10). */
+export interface CampaignData {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  /** Today's price after the admin's discount (0: free), and the price before it. */
+  price: number;
+  old_price: number | null;
+  /** The background form before payment, after it, or none. */
+  form_stage: 'before' | 'after' | null;
+  wizard: 'personal' | 'basic' | 'downgrade' | null;
+  /** null: no limit. */
+  seats_left: number | null;
+  form_complete: boolean;
+  registration: { id: number; status: 'unpaid' | 'review' | 'paid'; payment_id: number } | null;
+}
+
+/** An open campaign by its slug; null when it is closed or unknown. */
+export const campaignQuery = (slug: string) =>
+  queryOptions({
+    queryKey: [...APPLICANT_KEY, 'campaign', slug],
+    queryFn: async ({ signal }): Promise<CampaignData | null> => {
+      try {
+        return await api<CampaignData>(`${BASE}/campaigns/${encodeURIComponent(slug)}/`, {
+          signal,
+        });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }
+    },
+    staleTime: 30_000,
+  });
+
+/** Registers: the invoice to pay, or registered at once (free, or the credit covered it). */
+export function useRegisterCampaign() {
+  return useApplicantMutation((slug: string) =>
+    api<{ payment_id: number; paid: boolean }>(
+      `${BASE}/campaigns/${encodeURIComponent(slug)}/register/`,
+      { method: 'POST' },
+    ),
   );
 }

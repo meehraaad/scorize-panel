@@ -111,9 +111,7 @@ describe('other services', () => {
     await open(MARYAM);
     await user.click(screen.getByRole('button', { name: 'ثبت‌نام در وبینار' }));
     // Maryam has no invoices in the fake: the payment page says so, at the right address.
-    expect(
-      await screen.findByText('این پرداخت پیدا نشد. شاید پیوند قدیمی است.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('این پرداخت پیدا نشد')).toBeInTheDocument();
   });
   it('shows long lists a page at a time', async () => {
     const user = userEvent.setup();

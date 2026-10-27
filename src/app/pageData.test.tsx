@@ -45,7 +45,11 @@ const PAGES: PageCase[] = [
     '/documents/ps',
     '/documents/ds',
     '/contract',
+    '/payments',
     '/payments/501',
+    // Paid: the result with the to-dos the purchase left.
+    '/payments/510',
+    '/campaigns/apply-week',
     '/services',
     '/services/packages/1',
     '/services/events/31',

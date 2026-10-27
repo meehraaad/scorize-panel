@@ -197,7 +197,7 @@ describe('applicant home', () => {
     onDesktop();
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/');
+    const router = renderApp('/');
     expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
     const talk = screen.getByRole('region', { name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید' });
     // One offer: the soonest free time, whichever way it is held.
@@ -208,27 +208,9 @@ describe('applicant home', () => {
     await user.click(within(dialog).getByRole('button', { name: 'بستن' }));
     expect(screen.queryByRole('dialog', { name: 'رزرو مشاوره' })).toBeNull();
 
-    // One tap books that time: off to the bank gateway.
-    const assign = vi.fn();
-    const { href, origin, protocol, host, hostname, port, pathname, search, hash } =
-      window.location;
-    vi.stubGlobal('location', {
-      href,
-      origin,
-      protocol,
-      host,
-      hostname,
-      port,
-      pathname,
-      search,
-      hash,
-      assign,
-    });
-    onTestFinished(() => {
-      vi.unstubAllGlobals();
-    });
+    // One tap books that time: on to its purchase page.
     await user.click(within(talk).getByRole('button', { name: 'رزرو همین وقت' }));
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/payments/77'));
     expect(bookingsSent).toHaveLength(1);
   });
 

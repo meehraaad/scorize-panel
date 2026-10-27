@@ -119,34 +119,25 @@
   "payment": {
     "title": "Payment details",
     "back": "Back",
-    "invalid": "This payment wasn't found. The link may be old.",
-    "toContract": "Go to contract & payment",
-    "status": {
-      "unpaid": "Awaiting payment",
-      "review": "Receipt waiting for review",
-      "declined": "Receipt declined",
-      "paid": "Paid"
-    },
     "items": "Items",
-    "total": "Full value",
     "credit": "Credit used",
     "method": "Payment method",
     "methodName": {
       "online": "Online payment",
-      "receipt": "Bank transfer with receipt"
+      "receipt": "Bank transfer with receipt",
+      "credit": "Wallet credit"
     },
     "created": "Created",
-    "seller": "Seller",
     "paidAt": "Paid on",
     "amount": "Amount to pay",
-    "payOnline": "Pay {{amount}} toman online",
     "redirecting": "Going to the payment gateway…",
     "toReceipt": "Pay by card transfer and upload the receipt",
     "gateway": "Paid through a secure bank gateway",
     "onlineError": "Couldn't reach the payment gateway. Try again in a moment.",
     "declined": {
       "title": "Your receipt wasn't accepted",
-      "text": "Upload the correct receipt again, or pay online."
+      "text": "Upload the correct receipt again, or pay online.",
+      "previous": "See the previous receipt"
     },
     "receipt": {
       "title": "Pay with a receipt",
@@ -173,13 +164,170 @@
       "error": "The receipt wasn't uploaded. Check your internet connection and try again."
     },
     "review": {
-      "title": "We received your receipt",
-      "text": "The sales team will check it and let you know by SMS.",
-      "view": "View the uploaded receipt"
+      "title": "We got your receipt",
+      "text": "The sales team checks it and texts you the result. You don't need to do anything else.",
+      "view": "View the uploaded receipt",
+      "uploaded": "Receipt uploaded",
+      "team": "Sales team review",
+      "sameDay": "Usually the same working day",
+      "active": "Purchase activated, confirmation text"
     },
-    "paid": {
-      "title": "This payment is complete",
-      "text": "Paid on {{date}}. Thank you."
+    "buy": {
+      "title": "Complete your purchase",
+      "fromSeller": "Invoice from {{name}}, sales team",
+      "minutesLeft": "{{minutes}} min",
+      "foreign": "This invoice isn't in toman and the bank gateway takes toman only. Transfer the amount to the account below and upload the receipt. To pay online, your adviser sends a toman invoice.",
+      "items": "{{n}} items",
+      "saved": "{{amount}} off",
+      "creditShort": "credit −{{amount}}",
+      "withTax": "with tax",
+      "codeAndCredit": "code and credit",
+      "taxed": "Taxed",
+      "percentOff": "{{percent}}% off",
+      "original": "List price",
+      "adminDiscount": "Special discount",
+      "codeLine": "Code {{code}}",
+      "tax": "VAT",
+      "minimum": "Gateway minimum",
+      "sellerPrice": "Seller's price",
+      "pay": "Pay {{amount}}",
+      "retry": "Try again",
+      "dontClose": "The bank's page is opening. Don't close this page.",
+      "bankDown": "The bank gateway isn't answering. Try again in a moment, or pay by card transfer.",
+      "notCharged": "Nothing was taken from your account."
+    },
+    "code": {
+      "label": "Discount code",
+      "add": "Add a code",
+      "apply": "Apply",
+      "checking": "Checking…",
+      "remove": "Remove the discount code",
+      "hint": "The code applies to the discounted price.",
+      "applied": "Discount code applied.",
+      "removed": "Discount code removed.",
+      "error": "The code wasn't checked. Try again.",
+      "result": {
+        "invalid": "This code wasn't found. Check the letters and numbers.",
+        "expired": "This code has expired.",
+        "used": "You've already used this code. Each code is once per person.",
+        "maxed": "This code has been used up.",
+        "not_for_items": "This code doesn't apply to anything on this invoice."
+      }
+    },
+    "wallet": {
+      "label": "Wallet credit",
+      "using": "−{{used}} of {{balance}}",
+      "balance": "Balance {{balance}}",
+      "error": "The credit didn't change. Try again."
+    },
+    "vpn": {
+      "back": "Back to the payment",
+      "title": "Turn off your VPN first",
+      "text": "The bank gateway opens only on an Iranian connection. Yours looks like it's outside Iran.",
+      "step1": "Turn off your VPN.",
+      "step2": "Tap the button below to go to the gateway.",
+      "step3": "After paying you come back here automatically.",
+      "go": "It's off, go to the gateway",
+      "abroad": "I'm outside Iran: card transfer",
+      "anyCard": "A transfer from anyone's account is fine; just upload the receipt here."
+    },
+    "result": {
+      "paid": "Payment successful",
+      "receiptAccepted": "Your receipt was accepted",
+      "byCredit": "Paid with wallet credit",
+      "byCreditText": "Your credit covered the whole amount, so the bank wasn't needed.",
+      "details": "Payment details",
+      "ref": "Bank reference",
+      "next": "What's next",
+      "after": "After this",
+      "todoCount": "{{n}} things for you",
+      "nothing": "Nothing to do",
+      "kind": {
+        "consultation": "Your session",
+        "writing": "Writing order",
+        "package": "Start the lessons",
+        "webinar": "Your webinars",
+        "campaign": "Campaign page",
+        "instalment": "Contract & payment",
+        "service": "Services",
+        "lottery": "Registration",
+        "other": "Your purchase"
+      },
+      "later": "No time now? These stay on your home page and you'll get a reminder text.",
+      "reward": "{{amount}} gift credit will be added to your wallet soon.",
+      "home": "Go home",
+      "open": "Do it",
+      "required": "Required",
+      "optional": "Optional"
+    },
+    "renew": {
+      "today": "Made at today's price and credit.",
+      "asked": "Your request went to the seller. They'll text you a new invoice.",
+      "error": "The new invoice wasn't made. Try again.",
+      "rebook": "Book again",
+      "rebookText": "The earlier time or seat may be taken; choose again on its page.",
+      "askSeller": "Ask {{name}} for a new invoice",
+      "sellerText": "The seller texts you a new invoice."
+    },
+    "failed": {
+      "title": "Payment didn't go through",
+      "text": "The bank didn't confirm the payment, or you cancelled it. Your purchase isn't registered yet.",
+      "refund": "If money was taken from your account, the bank returns it within 72 hours. If it doesn't, message support with the reference.",
+      "again": "Pay again · {{amount}}",
+      "support": "Having trouble? Message support"
+    },
+    "expired": {
+      "title": "This invoice has expired",
+      "text": "Invoices expire a while after they're made so prices and seats stay current. Nothing was taken and your wallet credit is back.",
+      "again": "Make a new invoice · {{amount}}"
+    },
+    "checking": {
+      "title": "We're checking your payment",
+      "text": "The bank's answer didn't reach us. The sales team checks with the bank and texts you. If the payment isn't registered, the bank returns the money within 72 hours."
+    },
+    "missing": {
+      "title": "Payment not found",
+      "text": "The link may be old, or the invoice was made for another account. If the text came to another account, sign in with that one.",
+      "open": "See open payments",
+      "otherAccount": "Sign in with another account"
+    },
+    "open": {
+      "title": "Open payments",
+      "subtitle": "{{n}} payments · {{waiting}} waiting for you, {{review}} in review",
+      "list": "Invoices",
+      "note": "Each invoice is paid on its own. Paid ones are under \"Contract & payment\" and \"Services\".",
+      "empty": "You have no open payments.",
+      "installment": "Contract instalment",
+      "seller": "Seller's invoice",
+      "purchase": "Your purchase",
+      "review": "Your receipt is in review",
+      "declined": "Receipt declined; send it again",
+      "due": "Due {{date}}",
+      "until": "Until {{date}}",
+      "andMore": "{{first}} and {{n}} more",
+      "inReview": "In review",
+      "pay": "Pay"
+    },
+    "public": {
+      "title": "Payment invoice",
+      "madeBy": "{{seller}} from the sales team made this invoice for {{customer}}.",
+      "status": {
+        "unpaid": "Awaiting payment",
+        "expired": "Expired",
+        "failed": "Failed",
+        "review": "In review",
+        "declined": "Receipt declined",
+        "checking": "Being checked",
+        "paid": "Paid"
+      },
+      "loginPay": "Sign in and pay online",
+      "loginRetry": "Sign in and pay again",
+      "loginReceipt": "Sign in and pay by card transfer",
+      "withPhone": "Sign in with",
+      "loginNote": "and you'll come back to this invoice, where you can enter a discount code and see your wallet credit.",
+      "paidLogin": "Your sign-in on this browser has expired. Sign in to see what's next for this purchase.",
+      "loginContinue": "Sign in and continue",
+      "sum": "Total"
     }
   },
   "preview": {
@@ -339,5 +487,35 @@
         "a": "Turkey with an SMS code, right here. A full contract on paper at the office for now, with your sales consultant."
       }
     }
+  },
+  "campaign": {
+    "title": "Campaign",
+    "closed": "This campaign wasn't found or its registration has closed.",
+    "free": "Free",
+    "seats": "{{n}} seats left",
+    "steps": "Registration steps",
+    "formStep": "Registration form",
+    "payStep": "Payment",
+    "registerStep": "Registration",
+    "before": "3 short steps, then pay {{amount}} and you're registered.",
+    "beforeFree": "3 short steps to register. This campaign is free.",
+    "after": "After paying, fill in 3 short steps so our adviser calls you prepared.",
+    "afterFree": "After registering, fill in 3 short steps so our adviser calls you prepared.",
+    "fillForm": "Fill in your details",
+    "editForm": "Edit the form",
+    "registerPay": "Register and pay {{amount}}",
+    "registerFree": "Register for free",
+    "full": "Fully booked",
+    "toPayment": "Continue to payment",
+    "inReview": "Your receipt is in review",
+    "registered": "You're registered",
+    "cant": "Not registered: complete the form first, or it's full, or you're already registered.",
+    "error": "Registration failed. Try again.",
+    "formAfterTitle": "3 short steps to finish",
+    "formAfterText": "Basic details, degrees and language score. Our adviser calls you with these in hand.",
+    "later": "Later: you'll be reminded on your home page",
+    "next": "After this",
+    "sms": "A confirmation text was sent to you.",
+    "call": "Our adviser will call you to arrange the next step."
   }
 }

@@ -199,11 +199,8 @@ export const journeyHandlers = [
     if (!free.includes(sent.starts_at))
       return HttpResponse.json({ starts_at: ['This time is taken.'] }, { status: 400 });
     bookingsSent.push(sent);
-    // Django: the gateway (a relative path when the visitor's IP needs checking first).
-    return HttpResponse.json(
-      { consultation: 900, payment_id: 77, redirect_url: '/finance/payment-ip-check/AUTH77/' },
-      { status: 201 },
-    );
+    // Django: the invoice, paid on the panel's purchase page.
+    return HttpResponse.json({ consultation: 900, payment_id: 77, paid: false }, { status: 201 });
   }),
 
   http.get(`${BASE}/review-documents/`, () => {

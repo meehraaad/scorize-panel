@@ -7,6 +7,7 @@ import {
 } from 'react-router';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
+import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
 import { restoreCacheFor } from '@/lib/api/persist';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
@@ -98,6 +99,24 @@ const pageRoutes: RouteObject[] = [
           return routerPath ? redirect(routerPath) : redirectDocument(target);
         },
         ...lazyPage(() => import('@/features/auth/LoginPage'), ['auth']),
+      },
+      {
+        // An invoice by its public link (the seller's SMS, the bank's return), signed out too.
+        // Its owner, signed in, goes on to the payment page with the same query (`?from=bank`).
+        path: 'pay/:token',
+        loader: async ({ params, request }) => {
+          const query = publicInvoiceQuery(params.token ?? '');
+          const [user, invoice] = await Promise.all([
+            queryClient.query({ ...sessionQuery, staleTime: 0 }),
+            queryClient.query(query),
+          ]);
+          if (user && invoice?.payment_id)
+            return redirect(
+              `/payments/${String(invoice.payment_id)}${new URL(request.url).search}`,
+            );
+          return null;
+        },
+        ...lazyPage(() => import('@/features/contract/PublicInvoicePage'), ['contract']),
       },
     ],
   },
