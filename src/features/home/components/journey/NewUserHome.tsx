@@ -16,7 +16,6 @@ import { AfterSessionCard } from './AfterSessionCard';
 import { TalkCard } from './CallTimeCard';
 import { PastSessionCard } from './PastSessionCard';
 import { ConsultantCard, SimilarCard } from './PeopleCards';
-import { ReadinessCard } from './ReadinessCard';
 import { SessionCard } from './SessionCard';
 import { SessionTopics } from './SessionTopics';
 import { StartPaths } from './StartPaths';
@@ -26,12 +25,11 @@ import { StartPaths } from './StartPaths';
  * a seller's call closer (docs/backend-changes.md H59, H60, H63, H64). Moments, one page:
  * - first visit: the admission-chance quiz leads (its result's shape locked beside it), then a
  *   call at a time they pick, then the ways to start
- * - after the quiz: how ready the case is, then the ways to start
+ * - after the quiz, nothing booked: the consultation card leads, then the ways to start
  * - a booked consultation: the session (countdown, calendar, what to fill before it), then what
  *   it covers (desktop only)
  * - after a session (within a month): what the consultant wrote, the next step and a short survey
- * - long after a session: a short card about it, then the ways to start (no readiness checklist:
- *   its steps lead to the session they already had)
+ * - long after a session: a short card about it, then the ways to start
  * With more than one session, every session follows the first block (the consultations page's
  * place: "مشاوره در صفحه اصلی پنل" canvas).
  * Their own seller and admissions of people like them close every moment but the first.
@@ -54,16 +52,6 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   const firstVisit = estimate === null && !consulted;
 
   const quiz = <EstimateFlow key="quiz" phone={access.phone} detailsTo="/estimate" sheetOnPhone />;
-  const readiness = (
-    <ReadinessCard
-      key="readiness"
-      done={{
-        estimate: estimate !== null,
-        background: background.complete,
-        consult: consulted,
-      }}
-    />
-  );
   const paths = <StartPaths key="paths" access={access} offers={offers} />;
   const people = [
     offers.consultant && (
@@ -84,7 +72,6 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
         access={access}
       />,
       past.length > 0 ? history : <SessionTopics key="topics" />,
-      readiness,
       paths,
       quiz,
       ...people,
@@ -93,7 +80,6 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
     blocks = [
       <AfterSessionCard key="after" session={held} access={access} />,
       history,
-      readiness,
       paths,
       quiz,
       ...people,
@@ -107,8 +93,9 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
       ...people,
     ];
   else if (firstVisit)
-    blocks = [quiz, <TalkCard key="call" access={access} offers={offers} />, paths, readiness];
-  else blocks = [readiness, paths, quiz, ...people];
+    blocks = [quiz, <TalkCard key="call" access={access} offers={offers} />, paths];
+  // Nothing booked yet: the consultation card leads.
+  else blocks = [<TalkCard key="call" access={access} offers={offers} />, paths, quiz, ...people];
 
   return (
     <PageStack spacing="wide">

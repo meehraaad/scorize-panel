@@ -1,29 +1,4 @@
 {
-  "readiness": {
-    "title": "How ready is your case?",
-    "subtitle": "Each step makes your consultation and contract quicker and more precise.",
-    "meter": "Case {{percent}}% ready",
-    "percent": "{{percent}}%",
-    "steps": "Steps to get your case ready",
-    "done": "Done",
-    "step": {
-      "estimate": {
-        "name": "Admission chance estimate",
-        "hint": "Two minutes; see which country gives you the best chance.",
-        "action": "Start the estimate"
-      },
-      "background": {
-        "name": "Background form",
-        "hint": "The same form you fill in at the office; your consultant reads it before the session.",
-        "action": "Fill in the form"
-      },
-      "consult": {
-        "name": "Consultation session",
-        "hint": "Settle your path, country and costs with a consultant.",
-        "action": "Book a consultation"
-      }
-    }
-  },
   "paths": {
     "title": "Where shall we start?",
     "subtitle": "Two ways that start today.",
