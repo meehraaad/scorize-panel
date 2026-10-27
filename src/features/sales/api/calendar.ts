@@ -27,6 +27,10 @@ export interface CalendarConsultation {
   form: boolean;
   /** In person: when the customer arrived; null before. */
   arrived_at: string | null;
+  /** Assigned to this seller (a manager also sees everyone else's). */
+  mine: boolean;
+  /** Who it is assigned to; null while nobody is. */
+  seller: string | null;
 }
 
 /** An open lead with a follow-up time in the range. */

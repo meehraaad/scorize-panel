@@ -642,7 +642,9 @@
     "close": "Close",
     "views": "View",
     "week": "Week",
-    "list": "List"
+    "list": "List",
+    "seller": "Assigned to {{name}}",
+    "noSeller": "Not assigned"
   },
   "purchases": {
     "stats": "Purchases summary",
