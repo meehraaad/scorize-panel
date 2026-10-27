@@ -42,6 +42,9 @@ export default function AssignPage() {
   const [turning, startTurning] = useTransition();
   const { data } = useSuspenseQuery(assignQuery(page));
   const queue = data.queue.results;
+  const suggested = queue.flatMap((lead) =>
+    lead.suggested === null ? [] : [{ lead: lead.lead, seller: lead.suggested }],
+  );
   const pages = pagesOf(data.queue);
   useClampPage(data.queue, page, setPage);
   const assign = useAssignLeads();
@@ -83,13 +86,8 @@ export default function AssignPage() {
           queue.length > 0 && (
             <Button
               variant="outline"
-              disabled={assign.isPending}
-              onClick={() =>
-                assign.mutate(
-                  queue.map((lead) => ({ lead: lead.lead, seller: lead.suggested })),
-                  { onError: () => toast.error(t('error')) },
-                )
-              }
+              disabled={assign.isPending || suggested.length === 0}
+              onClick={() => assign.mutate(suggested, { onError: () => toast.error(t('error')) })}
             >
               {t(pages > 1 ? 'manager.assign.allPage' : 'manager.assign.all')}
             </Button>
@@ -229,7 +227,11 @@ function SellerCard({ seller }: { seller: SellerLoad }) {
         </div>
         <div className="flex justify-between">
           <dt className="text-text-2">{t('manager.assign.response')}</dt>
-          <dd className="m-0 font-semibold">{s.minutes(seller.response_minutes)}</dd>
+          <dd className="m-0 font-semibold">
+            {seller.response_minutes === null
+              ? t('month.speed.noData')
+              : s.minutes(seller.response_minutes)}
+          </dd>
         </div>
       </dl>
     </Card>
@@ -253,7 +255,9 @@ function QueueRow({
   const { t: tc } = useTranslation();
   const f = useFormat();
   const s = useSalesFormat();
-  const [seller, setSeller] = useState(String(lead.suggested));
+  const [seller, setSeller] = useState(lead.suggested === null ? '' : String(lead.suggested));
+  const available = sellers.filter((item) => item.status !== 'away');
+  const canAssign = available.some((item) => String(item.id) === seller);
   const minutes = Math.round((now - new Date(lead.created_at).getTime()) / 60_000);
   const meta = [
     lead.degree !== null ? tc(`degree.${lead.degree}`) : null,
@@ -276,19 +280,20 @@ function QueueRow({
           label={t('manager.assign.sellerFor', { name: lead.name })}
           value={seller}
           onChange={setSeller}
-          options={sellers
-            .filter((item) => item.status !== 'away')
-            .map((item) => ({
+          options={[
+            { value: '', label: t('manager.assign.chooseSeller') },
+            ...available.map((item) => ({
               value: String(item.id),
               label:
                 item.id === lead.suggested
                   ? t('manager.assign.suggested', { name: item.name })
                   : item.name,
-            }))}
+            })),
+          ]}
         />
         <Button
           className="h-11 px-4 text-sm"
-          disabled={pending}
+          disabled={pending || !canAssign}
           onClick={() => onAssign(Number(seller))}
         >
           {t('manager.assign.assign')}

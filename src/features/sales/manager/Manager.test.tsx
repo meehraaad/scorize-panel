@@ -1,9 +1,12 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
+import { api } from '@/lib/api/client';
+import type { AssignData, TeamData } from '../api';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 
 // The quiz funnel follows the quiz (src/lib/applicant/onServer.ts): switch everything on.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -53,6 +56,71 @@ describe('sales manager section', () => {
     expect(
       await screen.findByRole('heading', { name: 'همه‌ی لیدها صاحب دارند' }),
     ).toBeInTheDocument();
+  });
+
+  it('disables assignment when every seller is away and no suggestion exists', async () => {
+    loginAs(REZA);
+    const data = await api<AssignData>('/sales/v1/manager/assign/');
+    server.use(
+      http.get('/api/sales/v1/manager/assign/', () =>
+        HttpResponse.json({
+          ...data,
+          sellers: data.sellers.map((seller) => ({
+            ...seller,
+            status: 'away',
+            response_minutes: null,
+          })),
+          queue: {
+            ...data.queue,
+            results: data.queue.results.map((lead) => ({ ...lead, suggested: null })),
+          },
+        }),
+      ),
+    );
+    renderApp('/sales/manager');
+    const queue = await screen.findByRole('region', { name: 'صف بی‌صاحب' });
+    expect(within(queue).getByRole('button', { name: 'تخصیص پیشنهادی برای همه' })).toBeDisabled();
+    for (const button of within(queue).getAllByRole('button', { name: 'تخصیص' })) {
+      expect(button).toBeDisabled();
+    }
+    expect(screen.getAllByText('داده‌ی تماس موجود نیست')).toHaveLength(data.sellers.length);
+  });
+
+  it('ranks by wins with ties, and displays unset targets and missing measurements honestly', async () => {
+    loginAs(REZA);
+    const data = await api<TeamData>('/sales/v1/manager/team/?range=month');
+    const seller = data.sellers[0];
+    server.use(
+      http.get('/api/sales/v1/manager/team/', () =>
+        HttpResponse.json({
+          ...data,
+          target: 0,
+          first_call_minutes: null,
+          sales_change: null,
+          sellers: [
+            { ...seller, id: 1, name: 'A', won: 1, target: 0, first_call_minutes: null },
+            { ...seller, id: 2, name: 'B', won: 3, target: 0, first_call_minutes: 0 },
+            { ...seller, id: 3, name: 'C', won: 3, target: 0, first_call_minutes: null },
+          ],
+        }),
+      ),
+    );
+    renderApp('/sales/manager/team');
+    const board = await screen.findByRole('region', { name: 'رتبه‌بندی فروشنده‌ها' });
+    const rows = within(board).getAllByRole('row').slice(1);
+    rows.forEach((row, index) => {
+      expect(within(row).getByRole('rowheader')).toHaveAccessibleName(['B', 'C', 'A'][index]);
+    });
+    expect(rows.map((row) => within(row).getAllByRole('cell')[0]?.textContent)).toEqual([
+      '۱',
+      '۱',
+      '۳',
+    ]);
+    expect(within(board).queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(within(board).getByText('۰ دقیقه')).toBeInTheDocument();
+    expect(within(board).getAllByText('داده‌ی تماس موجود نیست')).toHaveLength(2);
+    expect(screen.getByText('هدف تعیین نشده')).toBeInTheDocument();
+    expect(screen.getByText('برای محاسبه‌ی رشد، فروشی در دوره‌ی قبل ثبت نشده')).toBeInTheDocument();
   });
 
   it('returning a draft needs a note; approving opens it for the customer', async () => {

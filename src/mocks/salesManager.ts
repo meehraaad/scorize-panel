@@ -415,15 +415,23 @@ export const managerHandlers = [
     return HttpResponse.json(data.manager.settings);
   }),
 
-  // Existing Django endpoint (StaffAssignableViewSet.assign_staff).
-  http.patch('/api/profile/staff/v1/sale-leads/:id/assign_staff/', async ({ params, request }) => {
+  http.post(`${BASE}/assign/`, async ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const lead = data.manager.queue.find((item) => item.lead === Number(params.id));
-    if (!lead) return notFound();
-    const { assigned_staff } = (await request.json()) as { assigned_staff: number };
-    data.manager.assigned.set(lead.lead, assigned_staff);
-    return HttpResponse.json({ message: 'تخصیص کارمند با موفقیت انجام شد.' });
+    const { assignments } = (await request.json()) as {
+      assignments: { lead: number; seller: number }[];
+    };
+    let assigned = 0;
+    for (const item of assignments) {
+      if (
+        data.manager.queue.some((lead) => lead.lead === item.lead) &&
+        !data.manager.assigned.has(item.lead)
+      ) {
+        data.manager.assigned.set(item.lead, item.seller);
+        assigned++;
+      }
+    }
+    return HttpResponse.json({ assigned });
   }),
 
   http.get(`${BASE}/approvals/`, () => {

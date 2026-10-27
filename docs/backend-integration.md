@@ -50,15 +50,32 @@ password-reset {token, password, password_confirmation}        (link from the re
 Everything comes from Django (`claude/eager-bohr-8iw6h3` of scorize-revolution); the schema is at
 `/api/schema/` and `/api/docs/`. Each feature's `api.ts` has the shapes, field for field.
 
-| Area                        | Endpoints                                                                                                                                                                                                                               | Panel code                                    |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Session, roles, start panel | `GET /api/profile/auth/v1/whoami/` (`applicant`, `is_country_supervisor`, `staff.is_active`, `last_workspace`, `workspace_mode`), `PATCH …/workspace/`                                                                                  | `lib/auth/`, `panels/registry.ts`             |
-| Account (every panel)       | `/api/profile/v1/` `account/`, `notifications/`                                                                                                                                                                                         | `lib/account/api.ts`                          |
-| Applicant panel             | `/api/applicant/v1/` (H1–H29, H36–H47, H49–H58)                                                                                                                                                                                         | `features/*`, `lib/applicant/`, `lib/tickets` |
-| Sales panel                 | `/api/sales/v1/` (S10–S40); receipts: `PATCH /api/profile/staff/v1/users/<id>/payments/<id>/confirm_receipt/`, `decline_receipt/`, `change_method/<0\|1>/` (S20, S23); manual assignment: `PATCH …/sale-leads/<id>/assign_staff/` (S35) | `features/sales/api/`, `lib/sales/api.ts`     |
-| Staff tasks                 | `/api/staff/v1/tasks/?panel=sales\|supervisor` (T1–T12)                                                                                                                                                                                 | `lib/tasks/api.ts`                            |
-| Supervisor panel            | `/api/supervisor/v1/` (SV1–SV17)                                                                                                                                                                                                        | `features/supervisor/api/`                    |
-| Writer panel                | `/api/writer/v1/` (WR1–WR5)                                                                                                                                                                                                             | `features/writer/api.ts`                      |
+| Area                        | Endpoints                                                                                                                                                                                                                            | Panel code                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| Session, roles, start panel | `GET /api/profile/auth/v1/whoami/` (`applicant`, `is_country_supervisor`, `staff.is_active`, `last_workspace`, `workspace_mode`), `PATCH …/workspace/`                                                                               | `lib/auth/`, `panels/registry.ts`             |
+| Account (every panel)       | `/api/profile/v1/` `account/`, `notifications/`                                                                                                                                                                                      | `lib/account/api.ts`                          |
+| Applicant panel             | `/api/applicant/v1/` (H1–H29, H36–H47, H49–H58)                                                                                                                                                                                      | `features/*`, `lib/applicant/`, `lib/tickets` |
+| Sales panel                 | `/api/sales/v1/` (S10–S40); receipts: `PATCH /api/profile/staff/v1/users/<id>/payments/<id>/confirm_receipt/`, `decline_receipt/`, `change_method/<0\|1>/` (S20, S23); manual assignment: `POST /api/sales/v1/manager/assign/` (S35) | `features/sales/api/`, `lib/sales/api.ts`     |
+| Staff tasks                 | `/api/staff/v1/tasks/?panel=sales\|supervisor` (T1–T12)                                                                                                                                                                              | `lib/tasks/api.ts`                            |
+| Supervisor panel            | `/api/supervisor/v1/` (SV1–SV17)                                                                                                                                                                                                     | `features/supervisor/api/`                    |
+| Writer panel                | `/api/writer/v1/` (WR1–WR5)                                                                                                                                                                                                          | `features/writer/api.ts`                      |
+
+The sales month report uses the current Jalali month. Its headline `won` counts wins in that
+month; `funnel` and `sources` track leads created in that month, so lead estimates use
+`funnel.won / funnel.leads`. A zero `target` means no positive target is configured. Each value
+in `weeks` is median first-call minutes for a rolling seven-day period, oldest first; `null`
+means no measurements, while `0` is a measured zero. Rank includes all active accounts with
+active seller staff records (sales, support, or superuser); equal win counts share a rank.
+
+Manager assignment posts `{assignments: [{lead, seller}]}` to `/api/sales/v1/manager/assign/`;
+the response `{assigned}` counts leads still unassigned when locked. Django timestamps and logs
+each assignment and notifies the seller. Suggestions may be `null` when no seller is available.
+The team report and CSV use the displayed roster (active sales staff with active accounts) for
+totals and comparisons, and count only paid payments in toman wallets. Call measurements are
+`null` without samples; `sales_change` is `null` without prior-period sales. The UI ranks by wins,
+with ties sharing a rank, and hides target progress when no positive target is configured.
+Follow-up health counts all customers and files without an open task, without the task page's
+preview limit. Its automatic percentage counts tasks created this week, including completed tasks.
 
 **Not on the server yet**, so the panel doesn't offer it (`src/lib/applicant/onServer.ts`; set an
 entry to true when its endpoint ships): the Turkey programme (H30–H35). The NPS card (H48) appears
