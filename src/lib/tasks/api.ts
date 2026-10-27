@@ -128,10 +128,11 @@ export interface QueueItem {
 export interface SentRequest {
   id: number;
   text: string;
-  /** A colleague's name, or a team. */
-  to: { name: string } | { team: TaskTeam };
+  /** A team, or the first colleague it went to and how many more (old rows name dozens). */
+  to: { name: string; others: number } | { team: TaskTeam };
   at: string;
   status: TaskStatus;
+  comments: number;
 }
 
 export interface TasksOverview {

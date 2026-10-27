@@ -52,7 +52,7 @@ export function TasksPage({ config }: { config: TasksConfig }) {
         aside={
           <>
             <InternalRequestCard colleagues={data.colleagues} config={config} />
-            <SentCard sent={data.sent} />
+            <SentCard sent={data.sent} config={config} />
           </>
         }
       />

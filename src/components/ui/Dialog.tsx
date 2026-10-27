@@ -55,7 +55,10 @@ export function Dialog({
         >
           <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 lg:px-7 lg:pt-7">
             <div className="flex min-w-0 flex-col gap-1">
-              <h2 id={titleId} className="m-0 font-display text-lg font-bold lg:text-xl">
+              <h2
+                id={titleId}
+                className="m-0 font-display text-lg font-bold [overflow-wrap:anywhere] lg:text-xl"
+              >
                 {title}
               </h2>
               {subtitle && <span className="text-sm leading-6 text-text-2">{subtitle}</span>}

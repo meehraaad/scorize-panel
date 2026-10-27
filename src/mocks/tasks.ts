@@ -147,6 +147,7 @@ function supervisorTasksState(): TasksState {
           to: { team: 'writing' },
           at: ago(2 * DAY),
           status: 'in_progress',
+          comments: 0,
         },
       ],
       colleagues: [
@@ -321,9 +322,10 @@ export const taskHandlers = [
       data.tasks.overview.sent.unshift({
         id: newId(),
         text: task.text,
-        to: task.team ? { team: task.team } : { name: colleague?.name ?? '' },
+        to: task.team ? { team: task.team } : { name: colleague?.name ?? '', others: 0 },
         at: new Date().toISOString(),
         status: task.kind === 'team' ? 'queued' : 'sent',
+        comments: 0,
       });
     data.onPerson(task, task.kind === 'mine' ? data.me : (colleague?.name ?? null));
     return new HttpResponse(null, { status: 201 });

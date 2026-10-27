@@ -171,9 +171,13 @@ export async function tasksOverview(signal?: AbortSignal): Promise<FullTasks> {
     .map((todo) => ({
       id: todo.id,
       text: todo.description,
-      to: { name: names(todo.support_staves) },
+      to: {
+        name: todo.support_staves[0]?.full_name ?? '',
+        others: Math.max(0, todo.support_staves.length - 1),
+      },
       at: todo.creation_date,
       status: todo.is_done ? 'done' : 'sent',
+      comments: 0,
     }));
   return {
     on_time: null,

@@ -115,6 +115,42 @@ describe('tasks page (sales panel)', () => {
     expect(await within(row).findByText('انجام شد')).toBeInTheDocument();
   });
 
+  it('sent requests: one name and a count, a tick when done, and they open', async () => {
+    const user = userEvent.setup();
+    const overview = await api<TasksOverview>('/staff/v1/tasks/?panel=sales');
+    const requests = await api<{ results: { id: number }[] }>(
+      '/staff/v1/tasks/lists/requests/?panel=sales&page=1',
+    );
+    const request = requests.results[0];
+    if (!request) throw new Error('no request in the mock');
+    server.use(
+      http.get('/api/staff/v1/tasks/', () =>
+        HttpResponse.json({
+          ...overview,
+          sent: [
+            {
+              id: request.id,
+              text: 'نصب سافت‌فون',
+              to: { name: 'مهران درمنکی', others: 45 },
+              at: new Date().toISOString(),
+              status: 'done',
+              comments: 3,
+            },
+          ],
+        }),
+      ),
+    );
+    await openTasks();
+    const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
+    expect(
+      within(sent).getByText(/^به مهران درمنکی و ۴۵ نفر دیگر · .* · ۳ پیام$/),
+    ).toBeInTheDocument();
+    expect(within(sent).getByRole('img', { name: 'انجام شد' })).toBeInTheDocument();
+    await user.click(within(sent).getByRole('button', { name: /نصب سافت‌فون/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).queryByRole('button', { name: /خبر بده/ })).not.toBeInTheDocument();
+  });
+
   it('sends an internal request to a colleague', async () => {
     const user = userEvent.setup();
     await openTasks();
