@@ -49,8 +49,8 @@ const PAGES: PageCase[] = [
     '/services',
     '/services/packages/1',
     '/services/events/31',
-    '/consultations',
-    '/consultations/41',
+    // A session's details over the home (old /consultations/41 links land here).
+    '/?session=41',
     '/consultations/book',
     '/estimate',
     '/background',

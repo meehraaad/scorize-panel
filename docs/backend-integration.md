@@ -142,6 +142,6 @@ in the backend repository's `docs/dashboard-performance.md`.
 `ContactHistory.customer_summary` text for the signed-in user, including accounts without contracts.
 Both parameters are optional. It answers `{ results: [{ id, at, kind, authors, customer_summary,
 reservation }], has_more }`, newest first, 20 rows per page. There are no internal notes in this API.
-`features/consultations/api.ts` owns the query; the session list and booking detail preload it.
+`lib/applicant/consultations.ts` owns the query; the home (its sessions list) preloads it.
 The sales logger sends `customer_summary` separately from `notes`, and its optional `email_summary`
 emails the public text. Publish after applying the new Django field's generated migration.

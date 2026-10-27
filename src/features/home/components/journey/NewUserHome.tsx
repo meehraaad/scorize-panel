@@ -11,6 +11,7 @@ import { backgroundQuery, startQuery } from '@/lib/applicant/journey';
 import { useUser } from '@/lib/auth/session';
 import { TurkeyCard } from '../TurkeyCard';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { SessionsCard } from '../SessionsCard';
 import { AfterSessionCard } from './AfterSessionCard';
 import { TalkCard } from './CallTimeCard';
 import { PastSessionCard } from './PastSessionCard';
@@ -26,10 +27,13 @@ import { StartPaths } from './StartPaths';
  * - first visit: the admission-chance quiz leads (its result's shape locked beside it), then a
  *   call at a time they pick, then the ways to start
  * - after the quiz: how ready the case is, then the ways to start
- * - a booked consultation: the session (countdown, calendar), what it covers, what to fill before it
- * - after a session (within a month): a short survey about it leads
+ * - a booked consultation: the session (countdown, calendar, what to fill before it), then what
+ *   it covers (desktop only)
+ * - after a session (within a month): what the consultant wrote, the next step and a short survey
  * - long after a session: a short card about it, then the ways to start (no readiness checklist:
  *   its steps lead to the session they already had)
+ * With more than one session, every session follows the first block (the consultations page's
+ * place: "مشاوره در صفحه اصلی پنل" canvas).
  * Their own seller and admissions of people like them close every moment but the first.
  * On phones the quiz is one short card that opens its questions in a bottom sheet.
  * Design: "Scorize New User Dashboard v2" canvas (Main, FirstVisit, UpcomingConsult).
@@ -68,11 +72,18 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
     estimate && <SimilarCard key="similar" estimate={estimate} />,
   ];
 
+  const history = <SessionsCard key="sessions" />;
+
   let blocks: ReactNode[];
   if (next)
     blocks = [
-      <SessionCard key="session" session={next} backgroundComplete={background.complete} />,
-      <SessionTopics key="topics" />,
+      <SessionCard
+        key="session"
+        session={next}
+        backgroundComplete={background.complete}
+        access={access}
+      />,
+      past.length > 0 ? history : <SessionTopics key="topics" />,
       readiness,
       paths,
       quiz,
@@ -81,6 +92,7 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   else if (held)
     blocks = [
       <AfterSessionCard key="after" session={held} access={access} />,
+      history,
       readiness,
       paths,
       quiz,
@@ -89,6 +101,7 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
   else if (past[0])
     blocks = [
       <PastSessionCard key="past" session={past[0]} access={access} />,
+      history,
       paths,
       quiz,
       ...people,

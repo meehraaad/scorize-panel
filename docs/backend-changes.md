@@ -383,8 +383,8 @@ consultation reservation. Contact notes and quick notes stay internal; existing 
 `GET /api/applicant/v1/session-summaries/` requires only login, returns only the current user's explicitly
 shared summaries, and uses `?before=<id>` pagination (`results`, `has_more`, 20 per page).
 Optional `?reservation=<id>` limits it to one booking. Each row has `id`, `at`, `kind`, `authors`,
-`customer_summary`, and nullable `reservation`. The applicant navigation links to `/consultations`,
-which lists shared summaries alongside bookings; booking details also show their own summaries.
+`customer_summary`, and nullable `reservation`. The applicant home lists shared summaries alongside bookings
+(there is no consultations page; old `/consultations` and `/consultations/<id>` links open the home and that session).
 No applicant file, active contract, paid booking or email address is needed to read a summary.
 
 Deployment: generate and apply the Django migration before publishing the panel (migrations are generated

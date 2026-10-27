@@ -4,7 +4,7 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 
 /**
@@ -51,6 +51,12 @@ export const consultationsQuery = queryOptions({
     api<{ results: Consultation[] }>('/applicant/v1/consultations/', { signal }),
   staleTime: 60_000,
 });
+
+/** The query parameter that opens a session's details over the home (`/?session=41`). */
+export const SESSION_PARAM = 'session';
+
+/** Where a session's details open: over the home, which lists every session. */
+export const sessionHref = (id: number) => `/?${SESSION_PARAM}=${String(id)}`;
 
 /** Upcoming sessions first (soonest first), then past ones (latest first). */
 export function splitSessions(results: Consultation[], now = Date.now()) {
@@ -121,3 +127,43 @@ export const sessionSummariesQuery = (reservation?: number) =>
     getNextPageParam: (page) => (page.has_more ? page.results.at(-1)?.id : undefined),
     staleTime: 30_000,
   });
+
+/** One session with what the consultant reads beforehand and its invoice (H39–H41). */
+export interface ConsultationInfo {
+  university: string;
+  major: string;
+  degree: string;
+  notes: string;
+}
+
+export interface ConsultationDetail extends Consultation {
+  info: ConsultationInfo;
+  invoice: { amount: number; paid_at: string | null; payment_id: number | null };
+}
+
+/** One session; null when it isn't the user's (or doesn't exist). */
+export const consultationQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...CONSULTATIONS_KEY, id],
+    queryFn: async ({ signal }): Promise<ConsultationDetail | null> => {
+      try {
+        return await api<ConsultationDetail>(`/applicant/v1/consultations/${String(id)}/`, {
+          signal,
+        });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }
+    },
+    staleTime: 30_000,
+  });
+
+export function useSaveConsultationInfo(id: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (info: ConsultationInfo) =>
+      api(`/applicant/v1/consultations/${String(id)}/info/`, { method: 'PUT', body: info }),
+    // The services page lists sessions too.
+    onSuccess: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
+  });
+}

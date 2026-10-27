@@ -14,7 +14,7 @@ export default function BookPage() {
   const [params] = useSearchParams();
   return (
     <PageStack>
-      <BackLink to="/consultations">{t('back')}</BackLink>
+      <BackLink to="/">{t('back')}</BackLink>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
       <BookingFlow initial={{ mode: params.get('mode'), type: Number(params.get('type')) }} />
     </PageStack>

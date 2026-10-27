@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { sessionHref } from '@/lib/applicant/consultations';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import type { Consultation } from '@/lib/applicant/consultations';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -34,7 +35,7 @@ export function PastSessionCard({
       subtitle={`${meta}. ${t(cost ? 'pastSession.textCost' : 'pastSession.text')}`}
       end={
         <span className="flex flex-wrap gap-2 max-sm:w-full [&>*]:flex-auto">
-          <Link to={`/consultations/${String(session.id)}`} className={buttonClass('outline')}>
+          <Link to={sessionHref(session.id)} className={buttonClass('outline')}>
             {t('afterSession.details')}
           </Link>
           <CallRequestButton
