@@ -1,58 +1,27 @@
 {
   "title": "Sessions & consultations",
-  "subtitle": "Read your session summaries and advice, and manage your consultation bookings.",
-  "back": "Back to the Academy",
-  "book": "Book a new consultation",
   "mode": {
     "online": "Online",
     "in_person": "In person"
   },
   "time": "{{time}}",
   "minutes": "{{n}} minutes",
-  "consultant": "Consultant: {{name}}",
-  "next": {
-    "label": "Next session",
-    "in": "Next session · {{days}}",
-    "today": "Next session · today",
-    "reminder": "We'll text you a reminder the day before.",
-    "incomplete": "Session details not filled in yet",
-    "complete": "Session details saved",
-    "fill": "Fill in session details",
-    "edit": "Edit session details"
-  },
-  "all": {
-    "title": "All bookings",
-    "filter": "Filter bookings",
-    "all": "All",
-    "upcoming": "Upcoming",
-    "past": "Past",
-    "info": "Session details",
-    "details": "Invoice and details",
-    "count": "{{n}} bookings",
-    "empty": "You haven't booked a consultation yet.",
-    "emptyFilter": "No bookings here."
-  },
   "detail": {
-    "back": "Back to consultations",
-    "missing": "This consultation wasn't found. The link may be old.",
-    "toList": "Go to consultations",
     "form": "Session details",
-    "formText": "This helps your consultant prepare. The more precise you are, the better the session.",
+    "formText": "Your consultant reads this before the session. You can edit it until it starts.",
     "university": "Current university",
     "major": "Current field",
     "degree": "Current degree",
     "notes": "Notes",
     "notesHint": "Anything you'd like the consultant to know beforehand.",
     "required": "Fill in this field.",
-    "footer": "You can still edit it here after saving.",
     "past": "This session has taken place; its details are read-only.",
-    "submit": "Save details",
+    "submit": "Send to the consultant",
     "saving": "Saving…",
     "saved": "Session details saved.",
     "error": "Not saved. Check your internet connection and try again.",
     "invoice": "Consultation invoice",
     "print": "Print invoice",
-    "invoiceTitle": "Consultation",
     "invoiceMode": "Type",
     "invoiceDate": "Date",
     "invoiceTime": "Time",
@@ -60,13 +29,10 @@
     "invoicePaid": "Paid on",
     "free": "Free",
     "amount": "{{amount}} toman",
-    "payment": "Payment details"
+    "payment": "Payment details",
+    "tabs": "Session details",
+    "invoiceConsultant": "Consultant",
+    "missing": "This consultation was not found. The link may be old."
   },
-  "summaries": {
-    "title": "Your session summaries",
-    "subtitle": "Advice and next steps shared with you after calls and consultations.",
-    "empty": "Your session summaries will appear here when your advisor shares them.",
-    "booking": "Consultation details",
-    "more": "Older summaries"
-  }
+  "close": "Close"
 }

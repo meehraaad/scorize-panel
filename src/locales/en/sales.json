@@ -549,7 +549,9 @@
       "value": "{{n}} m",
       "goal": "Goal {{n}} minutes",
       "chart": "{{list}}. Goal {{goal}} minutes.",
-      "item": "week {{n}}: {{minutes}} minutes"
+      "item": "week {{n}}: {{minutes}} minutes",
+      "noData": "No call data",
+      "itemNoData": "week {{n}}: no call data"
     },
     "sources": {
       "title": "Which leads became contracts for me?",
@@ -558,7 +560,10 @@
       "leads": "Leads",
       "won": "Contracts",
       "rate": "Rate"
-    }
+    },
+    "targetUnset": "Monthly target not set",
+    "subtitleNoConversion": "{{n}} more contracts to the target. Not enough conversion data to estimate new leads.",
+    "workingDaysLeft": "{{days}} working days left."
   },
   "leadsSection": {
     "nav": "Leads sections",
@@ -595,6 +600,51 @@
     "actionsFor": "{{action}}: {{name}}",
     "empty": "No consultations in this range.",
     "metaShort": "{{type}} · {{mode}}"
+  },
+  "consultationCalendar": {
+    "aside": "My calendar",
+    "status": {
+      "done": "Held and logged",
+      "need": "Not logged",
+      "live": "In progress",
+      "soon": "Within 30 minutes",
+      "upcoming": "Upcoming"
+    },
+    "tagNeed": "Not logged",
+    "followUp": "Follow-up",
+    "calls": "Timed follow-ups",
+    "modeFilter": "Format",
+    "modeAll": "All",
+    "layers": "Show on the calendar",
+    "unlogged": "{{n}} sessions not logged",
+    "form": {
+      "done": "Filled in the tablet form",
+      "missing": "Hasn't filled in the tablet form",
+      "legendDone": "Tablet form filled",
+      "legendMissing": "Not filled"
+    },
+    "next": "Next session",
+    "live": "In progress",
+    "range": "{{from}} – {{to}}",
+    "when": "{{day}} · {{from}} – {{to}}",
+    "minutes": "{{n}} minutes",
+    "call": "Call the customer",
+    "callNow": "Call",
+    "logCall": "Log the call",
+    "markArrived": "Customer arrived",
+    "arrived": "Customer is here",
+    "arrivedToast": "{{name}} marked as arrived.",
+    "waiting": "Waiting for the customer",
+    "error": "Not saved. Try again.",
+    "sendForm": "Send the form link",
+    "formText": "Hello {{name}}, please fill in this short form before the session so your advisor is ready: {{url}} Scorize",
+    "remind": "WhatsApp reminder",
+    "close": "Close",
+    "views": "View",
+    "week": "Week",
+    "list": "List",
+    "seller": "Assigned to {{name}}",
+    "noSeller": "Not assigned"
   },
   "purchases": {
     "stats": "Purchases summary",
@@ -960,7 +1010,8 @@
       "empty": "No unassigned leads.",
       "sellerFor": "Seller for {{name}}",
       "suggested": "{{name}} (suggested)",
-      "assign": "Assign"
+      "assign": "Assign",
+      "chooseSeller": "Choose a seller"
     },
     "approvals": {
       "title": "{{n}} contract drafts are waiting for you",
@@ -1058,7 +1109,10 @@
         "firstCall": "Median time to the first call: {{n}}",
         "noCalls": "No calls recorded yet.",
         "work": "{{n}} of the {{total}} people who finished also want to work or live abroad."
-      }
+      },
+      "targetUnset": "Target not set",
+      "wonWithoutTarget": "{{won}} contracts · target not set",
+      "noSalesBaseline": "No sales in the previous period to calculate growth"
     },
     "health": {
       "title": "{{n}} customers and files without a next step",

@@ -1,4 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
+import { SessionDialog } from '@/components/applicant/SessionDialog';
 import { useTranslation } from 'react-i18next';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { NpsCard } from '@/components/applicant/NpsCard';
@@ -10,15 +11,26 @@ import { overviewQuery } from './api';
 import { CaseHero } from './components/CaseHero';
 import { CaseSummary } from './components/CaseSummary';
 import { DeadlinesCard } from './components/DeadlinesCard';
+import { SessionsCard } from './components/SessionsCard';
 import { GuestHome } from './components/GuestHome';
 import { TicketCard } from './components/TicketCard';
 import { TodoCard } from './components/TodoCard';
 
 /**
  * "My case": the applicant panel's home. Design: canvas V6 "پرونده من" (AppHome); without an
- * active contract, the guest home of canvas V7 section 2.
+ * active contract, the guest home of canvas V7 section 2. Every home lists the sessions and opens
+ * one's details over it (`?session=<id>`): there is no consultations page.
  */
 export default function HomePage() {
+  return (
+    <>
+      <Home />
+      <SessionDialog />
+    </>
+  );
+}
+
+function Home() {
   const { t } = useTranslation('home');
   const f = useFormat();
   const user = useUser();
@@ -56,6 +68,7 @@ export default function HomePage() {
             <TodoCard todos={data.todos} />
             <TicketCard ticket={data.ticket} />
             <DeadlinesCard deadlines={data.deadlines} />
+            <SessionsCard />
           </>
         }
         aside={<CaseSummary data={data} />}

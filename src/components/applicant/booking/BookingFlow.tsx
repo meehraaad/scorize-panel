@@ -20,9 +20,8 @@ import {
   type BookableType,
   type CalendarSlot,
   type ConsultationMode,
-  weekOf,
 } from '@/lib/applicant/booking';
-import { addDays, sameDay, toValue, weekStart } from '@/lib/calendar';
+import { addDays, sameDay, toValue, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 

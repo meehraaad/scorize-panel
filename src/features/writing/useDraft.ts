@@ -1,33 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useBlocker } from 'react-router';
 import { useSaveWriting, type WritingForm } from './api';
 import type { AnswerValue, Answers, FormType } from './formSpec';
 
-/** Save this long after the last keystroke. */
-const AUTOSAVE_MS = 1500;
+const AUTOSAVE_MS = 1000;
 
-/**
- * The form's answers as the applicant edits them, saved to the server as a draft: shortly after
- * typing stops, when a section changes, and when the page closes. Only changed fields are sent.
- * Unsaved changes survive a failed save and go with the next one; leaving the site asks first.
- */
+/** Draft PATCHes never submit the form. Drain newer edits in order before a final submission. */
 export function useDraft(type: FormType, form: WritingForm) {
   const save = useSaveWriting(type);
   const [answers, setAnswers] = useState<Answers>(form.answers);
+  const latest = useRef(answers);
   const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
   const pending = useRef<Answers>({});
-  const inFlight = useRef<Promise<unknown>>(Promise.resolve());
+  const inFlight = useRef<Promise<void> | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { mutateAsync } = save;
 
-  /** Sends what's pending now. Rejects if the save fails (the changes stay pending). */
-  const flush = useCallback(() => {
+  const flush = useCallback((): Promise<void> => {
     clearTimeout(timer.current);
-    // One save at a time, in order: a slow request never overwrites a newer one.
-    inFlight.current = inFlight.current
-      .catch(() => undefined)
-      .then(async () => {
+    if (inFlight.current) return inFlight.current;
+    const run = async () => {
+      while (Object.keys(pending.current).length) {
         const changes = pending.current;
-        if (!Object.keys(changes).length) return;
         pending.current = {};
         try {
           await mutateAsync({ answers: changes });
@@ -35,51 +30,78 @@ export function useDraft(type: FormType, form: WritingForm) {
           pending.current = { ...changes, ...pending.current };
           throw error;
         }
-        if (!Object.keys(pending.current).length) setDirty(false);
-      });
+      }
+      setDirty(false);
+    };
+    setSaving(true);
+    inFlight.current = run().finally(() => {
+      inFlight.current = null;
+      setSaving(false);
+    });
     return inFlight.current;
   }, [mutateAsync]);
 
   const update = useCallback(
     (name: string, value: AnswerValue) => {
-      setAnswers((previous) => ({ ...previous, [name]: value }));
+      if (form.is_final) return;
+      latest.current = { ...latest.current, [name]: value };
+      setAnswers(latest.current);
       pending.current = { ...pending.current, [name]: value };
       setDirty(true);
       clearTimeout(timer.current);
       timer.current = setTimeout(() => {
-        flush().catch(() => undefined);
+        void flush().catch(() => undefined);
       }, AUTOSAVE_MS);
     },
-    [flush],
+    [flush, form.is_final],
   );
 
-  // Leaving the site with unsaved answers: the browser asks first.
+  const saveNow = useCallback(() => {
+    void flush().catch(() => undefined);
+  }, [flush]);
+  const getAnswers = useCallback(() => latest.current, []);
+
+  const blocker = useBlocker(
+    useCallback(
+      ({ currentLocation, nextLocation }) =>
+        currentLocation.pathname !== nextLocation.pathname &&
+        (Object.keys(pending.current).length > 0 || inFlight.current !== null),
+      [],
+    ),
+  );
   useEffect(() => {
-    if (!dirty) return;
+    if (blocker.state !== 'blocked') return;
+    let active = true;
+    void flush()
+      .then(() => {
+        if (active) blocker.proceed();
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [blocker, flush, dirty]);
+
+  useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
+      if (Object.keys(pending.current).length || inFlight.current) event.preventDefault();
+    };
+    const online = () => {
+      if (Object.keys(pending.current).length) saveNow();
     };
     window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
+    window.addEventListener('online', online);
+    return () => {
+      clearTimeout(timer.current);
+      window.removeEventListener('beforeunload', warn);
+      window.removeEventListener('online', online);
+    };
+  }, [saveNow]);
 
-  // Leaving the page inside the panel: send what's pending.
-  useEffect(
-    () => () => {
-      flush().catch(() => undefined);
-    },
-    [flush],
-  );
-
-  /** A value the server already stored (an uploaded photo): show it, don't send it again. */
   const adopt = useCallback((name: string, value: AnswerValue) => {
-    setAnswers((previous) => ({ ...previous, [name]: value }));
+    latest.current = { ...latest.current, [name]: value };
+    setAnswers(latest.current);
   }, []);
-
-  /** flush() for buttons: a failed save shows in `failed`, not as an error here. */
-  const saveNow = useCallback(() => {
-    flush().catch(() => undefined);
-  }, [flush]);
 
   return {
     answers,
@@ -87,8 +109,10 @@ export function useDraft(type: FormType, form: WritingForm) {
     flush,
     saveNow,
     adopt,
+    getAnswers,
+    blocker,
     dirty,
-    saving: save.isPending,
-    failed: save.isError && dirty,
+    saving,
+    failed: save.isError && dirty && !saving,
   };
 }

@@ -14,8 +14,7 @@
         "documents": "Documents",
         "tickets": "Tickets",
         "contract": "Contract",
-        "services": "Academy",
-        "consultations": "Sessions & consultations"
+        "services": "Academy"
       },
       "tabs": {
         "home": "Home",
@@ -339,6 +338,13 @@
     "days": "Days of the week",
     "freeCount": "{{n}} free",
     "dayLineFull": "{{free}} free · {{full}} full"
+  },
+  "eventCalendar": {
+    "holiday": "Closed",
+    "nothing": "Nothing",
+    "days": "Days of the week",
+    "count": "{{n}} items",
+    "nothingDay": "Nothing on your calendar on {{day}}."
   },
   "toast": {
     "region": "Panel messages",

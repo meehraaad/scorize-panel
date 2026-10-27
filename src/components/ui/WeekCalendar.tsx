@@ -1,17 +1,10 @@
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type KeyboardEvent,
-  type ReactNode,
-  type RefObject,
-} from 'react';
+import { useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { addDays, sameDay, toCalendar } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { Icon } from './Icon';
+import { WEEK_WIDTH, useWide } from './useWide';
 
 /** A scheduled time: its start (ISO, as the API sends it), seats left (0: full) and capacity. */
 export interface CalendarTime {
@@ -49,8 +42,6 @@ interface WeekCalendarProps {
   now?: Date;
 }
 
-/** From this container width (px) the whole week shows; below it, one day at a time. */
-const WEEK_WIDTH = 720;
 const DEFAULT_FROM = 9;
 const DEFAULT_TO = 18;
 /** Wide: one hour's height, px. */
@@ -61,22 +52,6 @@ const MIN_BLOCK = 46;
 const dayKey = (date: Date) =>
   `${String(date.getFullYear())}-${String(date.getMonth())}-${String(date.getDate())}`;
 const minutesOf = (date: Date) => date.getHours() * 60 + date.getMinutes();
-
-/** Whether the element is wide enough for the week (measured before paint; unknown width: wide). */
-function useWide(ref: RefObject<HTMLElement | null>) {
-  const [wide, setWide] = useState(true);
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const measure = () => setWide(element.clientWidth === 0 || element.clientWidth >= WEEK_WIDTH);
-    measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return wide;
-}
 
 interface Day {
   date: Date;
@@ -113,7 +88,7 @@ export function WeekCalendar({
   const cal = useCalendar();
   const [now] = useState(() => givenNow ?? new Date());
   const root = useRef<HTMLElement>(null);
-  const wide = useWide(root);
+  const wide = useWide(root, WEEK_WIDTH);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const days: Day[] = Array.from({ length: 7 }, (_, index) => {

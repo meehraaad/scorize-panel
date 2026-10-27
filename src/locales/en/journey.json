@@ -1,29 +1,4 @@
 {
-  "readiness": {
-    "title": "How ready is your case?",
-    "subtitle": "Each step makes your consultation and contract quicker and more precise.",
-    "meter": "Case {{percent}}% ready",
-    "percent": "{{percent}}%",
-    "steps": "Steps to get your case ready",
-    "done": "Done",
-    "step": {
-      "estimate": {
-        "name": "Admission chance estimate",
-        "hint": "Two minutes; see which country gives you the best chance.",
-        "action": "Start the estimate"
-      },
-      "background": {
-        "name": "Background form",
-        "hint": "The same form you fill in at the office; your consultant reads it before the session.",
-        "action": "Fill in the form"
-      },
-      "consult": {
-        "name": "Consultation session",
-        "hint": "Settle your path, country and costs with a consultant.",
-        "action": "Book a consultation"
-      }
-    }
-  },
   "paths": {
     "title": "Where shall we start?",
     "subtitle": "Two ways that start today.",
@@ -54,24 +29,22 @@
     }
   },
   "session": {
-    "kicker": "Your upcoming consultation",
-    "when": "{{date}} · {{minutes}} minutes",
     "with": "with {{name}}",
     "mode": {
       "online": "Online",
       "in_person": "In person"
     },
     "prep": "Before the session",
-    "prepHint": "No documents needed; this information lets the session focus on you from the first minute.",
+    "prepHint": "No documents needed. These two are enough for the consultant to read your case beforehand.",
     "background": "Complete the background form",
     "backgroundDone": "Background form complete",
-    "info": "Write what the session is about",
+    "info": "Write the session topic",
     "infoDone": "Session topic saved",
     "fill": "Fill in",
     "edit": "Edit",
-    "details": "Session details",
+    "details": "Details & invoice",
     "calendar": "Add to calendar",
-    "reminder": "We’ll text you a reminder the day before the session.",
+    "reminder": "We text you a reminder the day before.",
     "left": {
       "label": "Time left until the session: {{left}}",
       "days": "{{n}} days",
@@ -80,7 +53,13 @@
       "daysUnit": "days",
       "hoursUnit": "hours",
       "minutesUnit": "minutes"
-    }
+    },
+    "at": "{{date}}, {{time}}",
+    "minutes": "{{n}} min",
+    "today": "today",
+    "prepDone": "{{done}} of {{all}}",
+    "reschedule": "This time doesn't work?",
+    "rescheduleCall": "Call me to change it"
   },
   "background": {
     "title": "Background form",
@@ -128,11 +107,10 @@
     "back": "Back to home"
   },
   "afterSession": {
-    "kicker": "Your session is done",
     "title": "How was your session with {{name}}?",
     "titleNoName": "How was your consultation?",
     "meta": "{{title}} · {{date}}",
-    "subtitle": "Three short questions. Your answers go straight to your case manager so they can prepare your next step.",
+    "subtitle": "Your answer goes straight to your case manager.",
     "rating": "How would you rate your consultant?",
     "star": "{{n}} out of 5",
     "clear": "Is your path clear after the session?",
@@ -160,22 +138,26 @@
         "hint": "We explain the differences clearly."
       }
     },
-    "comment": "Anything you want us to know? (optional)",
     "required": "Answer all three questions.",
     "submit": "Send",
     "sending": "Sending…",
     "sent": "Thank you! We got your answer.",
     "error": "It wasn't sent. Try again.",
-    "thanks": "Thank you for your feedback",
     "after": {
       "contract": "Your case manager will call you about the contract soon.",
       "think": "Whenever you have a question, one call is enough.",
       "cost": "Applying to Turkey starts with nothing upfront; we can call you about it.",
       "compare": "Any question while comparing, one call is enough."
     },
-    "call": "I have a question, call me",
     "callTurkey": "Call me about Turkey",
-    "details": "Session details"
+    "details": "Details & invoice",
+    "summary": "Your session summary",
+    "noSummary": "Your consultant will write the summary and advice here soon.",
+    "nextKicker": "Next step",
+    "nextTitle": "Start your application",
+    "nextText": "One call to go over the contract and instalments, and your case starts the same day.",
+    "callContract": "I'm ready, call me about the contract",
+    "call": "I have a question, call me"
   },
   "pastSession": {
     "title": "Remember your session with {{name}}?",

@@ -15,7 +15,11 @@
     "saved": "Saved · {{time}}",
     "unsaved": "Changes not saved yet",
     "failed": "Not saved. Check your internet connection.",
-    "retry": "Save again"
+    "retry": "Save again",
+    "leaveTitle": "Unsaved draft changes",
+    "leaveText": "Your draft is being saved. If saving fails, stay here and retry to keep your latest answers.",
+    "stay": "Keep editing",
+    "leave": "Leave without saving"
   },
   "progress": "{{answered}} of {{total}} questions",
   "stepOf": "Section {{n}} of {{total}}",
@@ -37,10 +41,10 @@
   "requiredError": "Answer this question to submit the form.",
   "final": {
     "save": "Save",
-    "submit": "Submit",
+    "submit": "Final submit",
     "missing": "Required questions without an answer: {{n}}. We've opened the first one for you.",
-    "confirm": "Submit the form? You can't edit it afterwards, and the writing starts.",
-    "confirmYes": "Submit",
+    "confirm": "Submit the form? You can't edit it afterwards, and work on your order starts.",
+    "confirmYes": "Confirm final submission",
     "confirmNo": "Cancel",
     "error": "The form wasn't submitted. Check your internet connection and try again.",
     "doneText": "Writing started on {{date}}. Your answers are read-only now; for any change, write in the writing ticket.",
@@ -48,7 +52,12 @@
     "confirmPay": "Your answers are saved and you go to the payment. After paying, press \"final submit\" once more and the writing starts.",
     "payNote": "Your answers save as you type. You pay only at the final submit; after it there is no editing and the writing starts.",
     "toPay": "Answers saved. Pay so the writing can start.",
-    "inReview": "Your payment receipt is being reviewed. Once it is approved, press final submit."
+    "inReview": "Your payment receipt is being reviewed. Once it is approved, press final submit.",
+    "draftTitle": "Draft — not submitted",
+    "draftNotice": "Your answers save automatically as a draft. Work starts only after you click final submit and confirm.",
+    "saveDraft": "Save draft now",
+    "barLabel": "Draft saving and final submission",
+    "draftError": "Your draft could not be saved. Nothing was submitted. Retry saving before submitting."
   },
   "tipsTitle": "Read before you write",
   "phone": {

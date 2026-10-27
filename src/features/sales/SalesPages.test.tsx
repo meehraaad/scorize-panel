@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { api } from '@/lib/api/client';
-import type { CustomerData, CustomerInfo, TodayData } from './api';
+import type { CustomerData, CustomerInfo, MonthData, TodayData } from './api';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
@@ -345,10 +345,76 @@ describe('sales panel, seller pages', () => {
     expect(screen.getByRole('progressbar', { name: '۷ از ۱۲ قرارداد' })).toBeInTheDocument();
   });
 
+  it('month: estimates leads from the same cohort as the funnel', async () => {
+    const month = await api<MonthData>('/sales/v1/month/');
+    server.use(
+      http.get('/api/sales/v1/month/', () =>
+        HttpResponse.json({
+          ...month,
+          won: 7,
+          target: 12,
+          funnel: { ...month.funnel, leads: 10, won: 2 },
+        }),
+      ),
+    );
+    renderApp('/sales/month');
+    expect(
+      await screen.findByText('۵ قرارداد دیگر تا هدف. با نرخ تبدیل فعلی، یعنی حدود ۲۵ لید تازه.'),
+    ).toBeInTheDocument();
+  });
+
+  it('month: an unset target is not shown as achieved', async () => {
+    const month = await api<MonthData>('/sales/v1/month/');
+    server.use(http.get('/api/sales/v1/month/', () => HttpResponse.json({ ...month, target: 0 })));
+    renderApp('/sales/month');
+    expect(await screen.findAllByText('هدف ماه تعیین نشده')).toHaveLength(2);
+    expect(screen.queryByText('به هدف این ماه رسیدید.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it.each([0, 10])(
+    'month: no conversion estimate with %i leads and zero cohort wins',
+    async (leads) => {
+      const month = await api<MonthData>('/sales/v1/month/');
+      server.use(
+        http.get('/api/sales/v1/month/', () =>
+          HttpResponse.json({
+            ...month,
+            funnel: { ...month.funnel, leads, won: 0 },
+          }),
+        ),
+      );
+      renderApp('/sales/month');
+      expect(
+        await screen.findByText(
+          '۵ قرارداد دیگر تا هدف. داده‌ی کافی برای تخمین تعداد لید تازه وجود ندارد.',
+        ),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it('month: distinguishes missing call measurements from a real zero', async () => {
+    const month = await api<MonthData>('/sales/v1/month/');
+    server.use(
+      http.get('/api/sales/v1/month/', () =>
+        HttpResponse.json({
+          ...month,
+          weeks: [null, 0, 20, null],
+        }),
+      ),
+    );
+    renderApp('/sales/month');
+    const chart = await screen.findByRole('img', { name: /هفته‌ی ۱: داده‌ی تماس موجود نیست/ });
+    expect(chart).toHaveAccessibleName(/هفته‌ی ۲: ۰ دقیقه/);
+    expect(within(chart).getAllByText('داده‌ی تماس موجود نیست')).toHaveLength(2);
+    expect(within(chart).getByText('۰ د')).toBeInTheDocument();
+  });
+
   it('consultations: past sessions open the session log without leaving the list', async () => {
     const user = userEvent.setup();
     const router = renderApp('/sales/leads/consultations');
     expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'فهرست' }));
     await user.click(
       (await screen.findAllByRole('button', { name: /^ثبت جلسه: / }))[0] as HTMLElement,
     );

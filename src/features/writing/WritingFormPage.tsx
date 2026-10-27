@@ -184,7 +184,7 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
         {!readOnly && <div className="w-full xl:hidden">{progressBar}</div>}
 
         <form
-          onSubmit={final.finalize}
+          onSubmit={(event) => event.preventDefault()}
           noValidate
           className="flex min-w-0 flex-[999_1_520px] flex-col gap-3.5"
         >
@@ -196,7 +196,7 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
               index={index}
               last={index === sections.length - 1}
               open={readOnly || index === open}
-              readOnly={readOnly}
+              readOnly={readOnly || final.pending}
               answers={answers}
               missing={final.stillMissing}
               focusItem={index === open ? focusItem : null}
@@ -213,19 +213,16 @@ function FormView({ spec, form }: { spec: FormSpec; form: WritingForm }) {
               }}
             />
           ))}
-
-          {!readOnly && (
-            <FinalBar type={type} draft={draft} final={final} purchase={form.purchase} />
-          )}
         </form>
 
         <aside
           aria-label={t('tipsTitle')}
           className="flex min-w-0 flex-[1_1_300px] flex-col gap-3.5"
         >
-          <FormAside spec={spec} phone={form.contact_phone} readOnly={readOnly} />
+          <FormAside spec={spec} phone={form.contact_phone} readOnly={readOnly || final.pending} />
         </aside>
       </div>
+      {!readOnly && <FinalBar type={type} draft={draft} final={final} purchase={form.purchase} />}
     </div>
   );
 }

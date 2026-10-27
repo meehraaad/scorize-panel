@@ -32,9 +32,9 @@ import { Badge, SectionCard, SectionHeading, SideSection } from '@/components/ui
 import { SheetButton } from '@/components/ui/Sheet';
 import { SlotPicker, type Slot } from '@/components/ui/SlotPicker';
 import { MiniMonth } from '@/components/ui/MiniMonth';
+import { EventCalendar, type CalendarEvent } from '@/components/ui/EventCalendar';
 import { WeekCalendar, type CalendarTime } from '@/components/ui/WeekCalendar';
-import { weekOf } from '@/lib/applicant/booking';
-import { addDays } from '@/lib/calendar';
+import { addDays, weekOf } from '@/lib/calendar';
 import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
 import { StatGrid } from '@/components/ui/StatGrid';
@@ -78,6 +78,8 @@ export default function ComponentsPage() {
   const [week, setWeek] = useState(thisWeek);
   const [booked, setBooked] = useState<string | null>(null);
   const [times] = useState(sampleTimes);
+  const [events] = useState(sampleEvents);
+  const [eventId, setEventId] = useState<string | null>(null);
 
   const steps = ['قرارداد', 'نگارش', 'مدارک', 'اپلای', 'نتایج', 'ویزا'].map((label) => ({
     key: label,
@@ -647,6 +649,23 @@ export default function ComponentsPage() {
           </div>
         </Group>
 
+        <Group name="EventCalendar (a seller's week: states, mode icons, a quiet form marker)">
+          <div className="rounded-card bg-surface p-4 shadow-panel">
+            <EventCalendar
+              label="EventCalendar"
+              week={thisWeek}
+              events={events}
+              value={eventId}
+              onChange={setEventId}
+              details={
+                <div className="rounded-card-sm bg-surface p-5 shadow-toast">
+                  کارت رویداد (details)
+                </div>
+              }
+            />
+          </div>
+        </Group>
+
         <Group name="PageSkeleton (loading shape per page kind)">
           {(
             ['dashboard', 'list', 'detail', 'customer', 'form', 'board', 'chat', 'tab'] as const
@@ -932,6 +951,41 @@ function sampleTimes(): CalendarTime[] {
     capacity: 3,
     left: index % 7 === 3 ? 0 : index % 5 === 1 ? 1 : 3,
   }));
+}
+
+/** A week of sample events, one of each look, around now. */
+function sampleEvents(): CalendarEvent[] {
+  const now = new Date();
+  const at = (days: number, hour: number, minute = 0) =>
+    new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour, minute);
+  const event = (
+    id: string,
+    start: Date,
+    minutes: number,
+    look: CalendarEvent['look'],
+    color: string,
+    title: string,
+  ) => ({
+    id,
+    start,
+    minutes,
+    look,
+    color,
+    title,
+    meta: `${start.getHours()}:${String(start.getMinutes()).padStart(2, '0')}`,
+    aria: title,
+    lead: <Icon name={look === 'call' ? 'followUp' : 'phone'} size={12} />,
+    trail: <Icon name="formDone" size={13} className="text-good opacity-75" />,
+    ...(look === 'need' ? { tag: 'ثبت نشده' } : {}),
+  });
+  return [
+    event('a', at(-1, 10), 20, 'done', 'var(--cal-3)', 'سارا محمدی'),
+    event('b', at(-1, 15), 60, 'need', 'var(--cal-7)', 'نگار کریمی'),
+    event('c', new Date(now.getTime() - 10 * 60_000), 45, 'live', 'var(--cal-2)', 'شیما زارعی'),
+    event('d', at(1, 14), 60, 'upcoming', 'var(--cal-7)', 'آرش جعفری'),
+    event('e', at(1, 14), 15, 'call', 'var(--text-2)', 'مهسا قاسمی'),
+    event('f', at(2, 10, 20), 20, 'soon', 'var(--cal-3)', 'بردیا شریفی'),
+  ];
 }
 
 function Group({ name, children }: { name: string; children: ReactNode }) {

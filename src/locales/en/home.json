@@ -243,5 +243,21 @@
     "title": "Your case team",
     "send": "Send the team a ticket",
     "hours": "We reply Saturday to Thursday. Tickets sent on Friday are answered on Saturday."
+  },
+  "sessions": {
+    "title": "Your sessions",
+    "count": "{{n}} sessions",
+    "book": "Book a new session",
+    "upcoming": "Upcoming",
+    "held": "Held",
+    "topic": "Session topic",
+    "note": "Consultant's summary",
+    "details": "Details & invoice",
+    "more": "Older sessions",
+    "time": "{{time}}",
+    "mode": {
+      "online": "Online",
+      "in_person": "In person"
+    }
   }
 }

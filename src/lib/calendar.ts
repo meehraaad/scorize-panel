@@ -119,6 +119,12 @@ export function monthLength(year: number, month: number, kind: CalendarKind) {
 /** Day 0–6 the week starts on (JS getDay): Saturday in Iran, Monday elsewhere. */
 export const weekStart = (kind: CalendarKind) => (kind === 'persian' ? 6 : 1);
 
+/** The first day of the week holding `date` (`startDay`: 0–6 as `Date.getDay`, see `weekStart`). */
+export function weekOf(date: Date, startDay: number) {
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return addDays(day, -((day.getDay() - startDay + 7) % 7));
+}
+
 /** Move by whole months, keeping the day inside the new month. */
 export function addMonths(value: CalendarDay, months: number, kind: CalendarKind): CalendarDay {
   const index = value.year * 12 + (value.month - 1) + months;
@@ -167,3 +173,12 @@ export function parseValue(value: string): Date | null {
   const date = new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(min));
   return Number.isNaN(date.getTime()) ? null : date;
 }
+
+// ── Event colours ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The CSS colour of a Google Calendar colour id (`meeting_color_id`, '1'–'11') as a theme token
+ * (`--cal-*` in tokens.css, both themes); none or unknown: the brand's (`--cal-0`).
+ */
+export const eventColor = (id: string | null | undefined) =>
+  `var(--cal-${id && /^(?:[1-9]|1[01])$/.test(id) ? id : '0'})`;

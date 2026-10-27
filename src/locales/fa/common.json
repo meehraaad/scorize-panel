@@ -14,8 +14,7 @@
         "documents": "مدارک و نگارش",
         "tickets": "تیکت‌ها",
         "contract": "قرارداد و پرداخت",
-        "services": "آکادمی",
-        "consultations": "جلسه‌ها و مشاوره‌ها"
+        "services": "آکادمی"
       },
       "tabs": {
         "home": "خانه",
@@ -339,6 +338,13 @@
     "days": "روزهای هفته",
     "freeCount": "{{n}} زمان آزاد",
     "dayLineFull": "{{free}} زمان آزاد · {{full}} پر شده"
+  },
+  "eventCalendar": {
+    "holiday": "تعطیل",
+    "nothing": "کاری ندارد",
+    "days": "روزهای هفته",
+    "count": "{{n}} مورد",
+    "nothingDay": "{{day}} کاری در تقویم ندارید."
   },
   "toast": {
     "region": "پیام‌های پنل",

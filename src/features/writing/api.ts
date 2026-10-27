@@ -71,6 +71,7 @@ function useUpdateCache(type: FormType) {
 export function useSaveWriting(type: FormType) {
   const update = useUpdateCache(type);
   return useMutation({
+    networkMode: 'always',
     mutationFn: (changes: { answers?: Answers; contact_phone?: string }) =>
       api<{ updated_at: string }>(url(type), { method: 'PATCH', body: changes }),
     onSuccess: ({ updated_at }, changes) => {
@@ -87,6 +88,7 @@ export function useSaveWriting(type: FormType) {
 export function useUploadPhoto(type: FormType, name: string) {
   const update = useUpdateCache(type);
   return useMutation({
+    mutationKey: [...writingKey(type), 'photo'],
     mutationFn: ({ file, messages }: { file: File; messages?: UploadMessages }) => {
       const body = new FormData();
       body.append(name, file);
@@ -136,6 +138,8 @@ export function receiptInReview(error: unknown) {
 export function useSubmitWriting(type: FormType) {
   const client = useQueryClient();
   return useMutation({
+    networkMode: 'always',
+    retry: false,
     mutationFn: (answers: Answers) =>
       api(`${url(type)}final/`, { method: 'POST', body: { answers } }),
     // The documents and home pages show the writing step: refresh them all.
