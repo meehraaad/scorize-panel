@@ -56,9 +56,9 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   writingOffers: true,
   /**
    * AC1–AC7 `activities/`: the to-do box on every page (supervisor asks, surveys, purchase tasks).
-   * Built in Django, not deployed yet. Off: no box, and supervisor surveys stay a gate.
+   * Supervisor surveys are asked in the box instead of as a gate.
    */
-  activities: false,
+  activities: true,
   /**
    * H70, H71 `research-interests/profile/`: research interests before a case, with how many
    * professors work on them (scorize-revolution `feature/guest-research-interests`). Off: the

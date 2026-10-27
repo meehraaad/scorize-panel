@@ -23,6 +23,7 @@ import { firstCalendarQuery } from '@/lib/applicant/booking';
 import { weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
+import { activitiesQuery } from '@/lib/applicant/activities';
 import { gatesQuery } from '@/lib/applicant/gates';
 import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
@@ -81,7 +82,8 @@ export const applicantPanel: PanelDefinition = {
       // Terms, missing details, supervisor surveys or a closed panel come before any page
       // (canvas V6 section 8).
       ...lazyPage(() => import('@/features/gates/GatesLayout'), ['gates'], {
-        data: () => [gatesQuery],
+        // The to-do box over every page asks for its list with the gates.
+        data: () => [gatesQuery, ON_SERVER.activities && activitiesQuery],
       }),
       children: [
         {

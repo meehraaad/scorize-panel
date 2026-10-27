@@ -1,10 +1,17 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { MOCK_GATE_KEY } from '@/mocks/applicant';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+
+// The gates without the to-do box: with it on, supervisor surveys are asked there instead
+// (ActivityBox.test.tsx).
+vi.mock('@/lib/applicant/onServer', async (original) => {
+  const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
+  return { ON_SERVER: { ...ON_SERVER, activities: false } };
+});
 
 const SARA = 1; // the gates knob only applies to her (src/mocks/applicant.ts)
 

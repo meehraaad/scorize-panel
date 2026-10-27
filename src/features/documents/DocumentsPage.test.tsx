@@ -104,8 +104,9 @@ describe('documents page', () => {
     expect(
       await toasts().findByText('فایل‌ها ارسال شد. سوپروایزر شما با خبر شد.'),
     ).toBeInTheDocument();
+    // The summary comes from the refetched page data (the to-do box refetches with it).
     expect(
-      screen.getByText('۹ از ۱۰ مدرک را فرستاده‌اید. ۱ مدرک دیگر مانده است.'),
+      await screen.findByText('۹ از ۱۰ مدرک را فرستاده‌اید. ۱ مدرک دیگر مانده است.'),
     ).toBeInTheDocument();
     expect(within(required()).queryByLabelText('ریز نمرات کارشناسی (ترجمه‌ی رسمی)')).toBeNull();
     expect(within(files()).getAllByRole('listitem')).toHaveLength(9);
