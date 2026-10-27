@@ -83,12 +83,15 @@ export function ConsultationCalendar() {
   );
   const calls = hidden.has('calls') || onlyUnlogged ? [] : (data?.calls ?? []);
 
+  const sellerOf = (item: CalendarConsultation) =>
+    item.seller ?? t('consultationCalendar.noSeller');
   const events: CalendarEvent[] = [
     ...consultations.map((item) => {
       const status = statusOf(item, nowTime);
       const type = types.get(item.type);
       const start = new Date(item.starts_at);
-      const meta = `${f.time(start)} · ${type?.name ?? ''}`;
+      // Someone else's (a manager's view): whose, in place of the type its colour already shows.
+      const meta = `${f.time(start)} · ${item.mine ? (type?.name ?? '') : sellerOf(item)}`;
       return {
         id: `c${String(item.id)}`,
         start,
@@ -698,6 +701,14 @@ function Details({
           <Icon name="phone" size={16} />
           <span dir="ltr">{formatPhone(item.phone)}</span>
         </li>
+        {chosen.kind === 'consultation' && !chosen.item.mine && (
+          <li className="flex items-center gap-2.5">
+            <Icon name="user" size={16} />
+            {chosen.item.seller
+              ? t('consultationCalendar.seller', { name: chosen.item.seller })
+              : t('consultationCalendar.noSeller')}
+          </li>
+        )}
         {chosen.kind === 'consultation' && (
           <li
             className={`flex items-center gap-2.5 ${chosen.item.form ? '' : 'font-semibold text-danger'}`}

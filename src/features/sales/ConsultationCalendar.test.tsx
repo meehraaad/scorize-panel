@@ -7,6 +7,7 @@ import { toasts } from '@/test/toasts';
 import '@/test/server';
 
 const NIMA = 3; // seller (mock user in src/mocks/handlers.ts)
+const REZA = 4; // sales manager
 
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
@@ -106,6 +107,17 @@ describe('sales: my consultations on a week calendar', () => {
     expect(blocks().some((block) => /حضوری/.test(block.getAttribute('aria-label') ?? ''))).toBe(
       false,
     );
+  });
+
+  it('a manager sees whose each one is, or that nobody has it yet', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    const calendar = await open();
+    expect(within(calendar).getAllByRole('button', { name: /نیما رستمی/ })).toHaveLength(5);
+    await user.click(within(calendar).getByRole('button', { name: /بدون مسئول/ }));
+    expect(within(calendar).getByRole('dialog')).toHaveTextContent('بدون مسئول');
+    await user.click(within(calendar).getByRole('button', { name: /تا ۳۰ دقیقه‌ی دیگر/ }));
+    expect(within(calendar).getByRole('dialog')).toHaveTextContent('مسئول: نیما رستمی');
   });
 
   it('pages weeks and switches to the list', async () => {
