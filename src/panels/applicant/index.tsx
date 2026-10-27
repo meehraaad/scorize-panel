@@ -23,7 +23,6 @@ import { weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { gatesQuery } from '@/lib/applicant/gates';
-import { guestInterestsQuery } from '@/lib/applicant/interests';
 import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
@@ -140,7 +139,8 @@ export const applicantPanel: PanelDefinition = {
                   documentsQuery,
                   guest && ON_SERVER.estimate && estimateOptionsQuery,
                   guest && ON_SERVER.estimate && latestEstimateQuery,
-                  guest && ON_SERVER.guestInterests && guestInterestsQuery,
+                  // When H70 ships (ON_SERVER.guestInterests), add `guestInterestsQuery` here. Left
+                  // out while it's off: its import alone puts the first load over its JS budget.
                 ];
               },
               skeleton: 'list',
