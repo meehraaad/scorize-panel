@@ -613,6 +613,8 @@
     "tagNeed": "Not logged",
     "followUp": "Follow-up",
     "calls": "Timed follow-ups",
+    "modeFilter": "Format",
+    "modeAll": "All",
     "layers": "Show on the calendar",
     "unlogged": "{{n}} sessions not logged",
     "form": {

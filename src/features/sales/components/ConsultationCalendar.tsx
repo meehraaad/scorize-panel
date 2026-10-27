@@ -6,6 +6,7 @@ import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { TogglePill } from '@/components/ui/Choices';
+import { FilterTabs } from '@/components/ui/Filters';
 import { EventCalendar, type CalendarEvent, type EventLook } from '@/components/ui/EventCalendar';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
@@ -53,6 +54,9 @@ type Chosen =
  * the seller calls; in person: the customer comes) and whether the customer filled the tablet
  * form; the timed follow-up calls beside them. Each layer (a type, the calls) can be hidden.
  */
+type ModeFilter = 'all' | CalendarType['mode'];
+const MODES: readonly ModeFilter[] = ['all', 'online', 'in_person'];
+
 export function ConsultationCalendar() {
   const { t } = useTranslation('sales');
   const { t: common } = useTranslation();
@@ -64,6 +68,8 @@ export function ConsultationCalendar() {
   const [week, setWeek] = useState(thisWeek);
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [onlyUnlogged, setOnlyUnlogged] = useState(false);
+  const [mode, setMode] = useState<ModeFilter>('all');
+  const inMode = (held: CalendarType['mode']) => mode === 'all' || held === mode;
   const [chosenId, setChosenId] = useState<string | null>(null);
   const { data, isPending } = useQuery(sellerCalendarQuery(week));
 
@@ -71,7 +77,9 @@ export function ConsultationCalendar() {
   const nowTime = now.getTime();
   const consultations = (data?.consultations ?? []).filter(
     (item) =>
-      !hidden.has(String(item.type)) && (!onlyUnlogged || statusOf(item, nowTime) === 'need'),
+      inMode(item.mode) &&
+      !hidden.has(String(item.type)) &&
+      (!onlyUnlogged || statusOf(item, nowTime) === 'need'),
   );
   const calls = hidden.has('calls') || onlyUnlogged ? [] : (data?.calls ?? []);
 
@@ -140,6 +148,7 @@ export function ConsultationCalendar() {
   const next = all
     .filter((item) => {
       const status = statusOf(item, nowTime);
+      if (!inMode(item.mode)) return false;
       return status === 'live' || status === 'soon' || status === 'upcoming';
     })
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
@@ -223,9 +232,23 @@ export function ConsultationCalendar() {
               onPick={(date) => go(weekOf(date, startDay))}
             />
           </Card>
+          <Card className="p-3">
+            <FilterTabs
+              label={t('consultationCalendar.modeFilter')}
+              value={mode}
+              onChange={(value) => {
+                setMode(value);
+                setChosenId(null);
+              }}
+              options={MODES.map((value) => ({
+                value,
+                label: value === 'all' ? t('consultationCalendar.modeAll') : t(`mode.${value}`),
+              }))}
+            />
+          </Card>
           <Card className="p-3 max-lg:hidden">
             <Layers
-              types={data?.types ?? []}
+              types={(data?.types ?? []).filter((type) => inMode(type.mode))}
               counts={(id) =>
                 id === 'calls'
                   ? (data?.calls.length ?? 0)

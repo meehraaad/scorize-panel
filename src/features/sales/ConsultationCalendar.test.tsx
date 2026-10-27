@@ -90,6 +90,24 @@ describe('sales: my consultations on a week calendar', () => {
     expect(within(calendar).queryAllByRole('button', { name: /ویزای تحصیلی/ })).toHaveLength(0);
   });
 
+  it('only in person, or only online', async () => {
+    const user = userEvent.setup();
+    const calendar = await open();
+    const blocks = () =>
+      within(calendar)
+        .queryAllByRole('button', { pressed: false })
+        .filter((block) => /، (آنلاین|حضوری)، /.test(block.getAttribute('aria-label') ?? ''));
+    await user.click(screen.getByRole('button', { name: /^حضوری/ }));
+    expect(blocks().every((block) => /حضوری/.test(block.getAttribute('aria-label') ?? ''))).toBe(
+      true,
+    );
+    expect(blocks()).toHaveLength(3);
+    await user.click(screen.getByRole('button', { name: /^آنلاین/ }));
+    expect(blocks().some((block) => /حضوری/.test(block.getAttribute('aria-label') ?? ''))).toBe(
+      false,
+    );
+  });
+
   it('pages weeks and switches to the list', async () => {
     const user = userEvent.setup();
     await open();
