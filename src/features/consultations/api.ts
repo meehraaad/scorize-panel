@@ -8,7 +8,6 @@ export {
   consultationsQuery,
   sessionSummariesQuery,
   splitSessions,
-  useSaveConsultationInfo,
   type Consultation,
   type ConsultationDetail,
   type ConsultationInfo,

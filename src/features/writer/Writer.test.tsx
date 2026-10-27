@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -63,7 +63,8 @@ describe('writer panel', () => {
     await user.type(within(versions).getByLabelText(/توضیح برای متقاضی/), 'هر سه نکته اعمال شد.');
     await user.click(within(versions).getByRole('button', { name: 'ارسال برای متقاضی' }));
     expect(await toasts().findByText('نسخه برای متقاضی فرستاده شد.')).toBeInTheDocument();
-    expect(await within(versions).findByText('SOP-Sara-v2.pdf')).toBeInTheDocument();
+    // The picked file's card goes once the form resets; then only the new version carries the name.
+    await waitFor(() => expect(within(versions).getByText('SOP-Sara-v2.pdf')).toBeInTheDocument());
     expect(await screen.findByText('منتظر متقاضی')).toBeInTheDocument();
   });
 

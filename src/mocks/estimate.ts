@@ -107,6 +107,11 @@ function estimateOf(answers: EstimateAnswers): EstimateResult {
   return { id: nextId++, created_at: new Date().toISOString(), countries };
 }
 
+/** A quiz answered earlier by `user` (tests of the home after the quiz). */
+export function addLatestEstimate(user: number) {
+  latest.set(user, { id: nextId++, created_at: new Date().toISOString(), countries: [] });
+}
+
 const invalid = (field: string) =>
   HttpResponse.json({ [field]: ['This value is not valid.'] }, { status: 400 });
 

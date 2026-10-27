@@ -10,8 +10,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 
 /**
  * Back a while after a session, still without a contract: one short card that remembers it (who,
- * when, its notes) and offers a call, shaped by what they said in the survey (cost → Turkey). It
- * takes the place of the readiness checklist, whose steps lead to a session they already had.
+ * when, its notes) and offers a call, shaped by what they said in the survey (cost → Turkey).
  */
 export function PastSessionCard({
   session,

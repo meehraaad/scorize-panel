@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { ON_SERVER, type ServerFeature } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
 import { addHeldConsultation, feedbackSent } from '@/mocks/applicant';
+import { addLatestEstimate } from '@/mocks/estimate';
 import { bookingsSent, setStartOffers } from '@/mocks/journey';
 import { renderApp } from '@/test/renderApp';
 import { toasts } from '@/test/toasts';
@@ -128,17 +129,11 @@ describe('applicant home', () => {
     expect(screen.queryByRole('region', { name: 'همین حالا در دسترس شماست' })).toBeNull();
   });
 
-  it('leads someone without a contract toward one: readiness, ways to start', async () => {
+  it('leads someone without a contract toward one: the consultation, ways to start', async () => {
     loginAs(MARYAM);
     renderApp('/');
-    const readiness = await screen.findByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' });
-    expect(within(readiness).getAllByRole('listitem')).toHaveLength(3);
-    // Nothing done yet: the quiz is the next step.
-    expect(within(readiness).queryByText('انجام شد')).toBeNull();
-    expect(within(readiness).getByRole('link', { name: 'شروع تخمین' })).toHaveAttribute(
-      'href',
-      '/estimate',
-    );
+    await screen.findByRole('region', { name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید' });
+    expect(screen.queryByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' })).toBeNull();
 
     // No free-review upload on the home.
     expect(
@@ -160,6 +155,18 @@ describe('applicant home', () => {
     expect(
       within(contract).getByRole('button', { name: 'درخواست تماس برای قرارداد' }),
     ).toBeInTheDocument();
+  });
+
+  it('after the quiz, with nothing booked: the consultation card leads', async () => {
+    loginAs(MARYAM);
+    addLatestEstimate(MARYAM);
+    renderApp('/');
+    const card = await screen.findByRole('region', {
+      name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید',
+    });
+    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
+    expect(card.compareDocumentPosition(paths) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' })).toBeNull();
   });
 
   it('before a booked session: the countdown, the calendar, its topics and their seller', async () => {
@@ -292,7 +299,7 @@ describe('applicant home', () => {
     expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
   });
 
-  it('remembers a session long past, without the first-visit or readiness blocks', async () => {
+  it('remembers a session long past, without the first-visit blocks', async () => {
     loginAs(MARYAM);
     addHeldConsultation(MARYAM, 45);
     renderApp('/');
@@ -306,7 +313,6 @@ describe('applicant home', () => {
     expect(
       within(card).getByRole('button', { name: 'سؤال دارم، تماس بگیرید' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' })).toBeNull();
     expect(
       screen.queryByRole('region', { name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید' }),

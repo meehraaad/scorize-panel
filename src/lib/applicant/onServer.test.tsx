@@ -25,8 +25,6 @@ describe('features by what Django serves', () => {
     renderApp('/');
     // At phone width the quiz is one card that opens its questions in a sheet.
     expect(await screen.findByRole('button', { name: 'دیدن شانس من' })).toBeInTheDocument();
-    // The readiness card's first step leads to the full quiz page.
-    expect(screen.getByRole('link', { name: 'شروع تخمین' })).toHaveAttribute('href', '/estimate');
   });
 
   it('offers the GPA calculator, webinar sign-up and package pages on the services page', async () => {
