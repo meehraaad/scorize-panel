@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -44,7 +44,8 @@ describe('a page whose code is from before a deploy', () => {
   it('reloads into the new build instead of showing an error', async () => {
     renderFailingPage(OLD_BUILD);
     expect(await screen.findByRole('status')).toBeInTheDocument();
-    expect(reload).toHaveBeenCalled();
+    // The reload runs in an effect, which can land just after the status shows on a busy machine.
+    await waitFor(() => expect(reload).toHaveBeenCalled());
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
