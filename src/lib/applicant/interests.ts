@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 
@@ -35,3 +35,23 @@ export { guestInterestsQuery, type GuestInterests } from '@/lib/applicant/docume
 export function useSaveGuestInterests() {
   return useInterestsMutation(`${BASE}/profile/`);
 }
+
+/** Suggestions while typing: existing interests containing the text, most professors first. */
+export interface InterestSuggestion {
+  name: string;
+  professors: number;
+}
+
+/** From this many letters (Django answers nothing below it). */
+export const MIN_SUGGEST = 2;
+
+export const interestSuggestionsQuery = (text: string) =>
+  queryOptions({
+    queryKey: [...APPLICANT_KEY, 'research-interests', 'search', text.toLowerCase()],
+    queryFn: ({ signal }) =>
+      api<{ results: InterestSuggestion[] }>(`${BASE}/search/?q=${encodeURIComponent(text)}`, {
+        signal,
+      }),
+    staleTime: 5 * 60_000,
+    enabled: text.length >= MIN_SUGGEST,
+  });

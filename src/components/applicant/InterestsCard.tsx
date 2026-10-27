@@ -1,15 +1,23 @@
-import { useState, type SubmitEvent } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TagList } from '@/components/ui/Tags';
 import { isolate, useFormat } from '@/lib/i18n/useFormat';
-import { MAX_INTEREST_LENGTH, MAX_INTERESTS, type SaveInterests } from '@/lib/applicant/interests';
+import {
+  interestSuggestionsQuery,
+  MAX_INTEREST_LENGTH,
+  MAX_INTERESTS,
+  type SaveInterests,
+} from '@/lib/applicant/interests';
 import { toast } from '@/lib/toast';
 
 /**
  * Research interests the professor-email bot searches with: remove a chip, add a topic, up to
- * `MAX_INTERESTS`. `save` is where they go: the case's (documents and applications tabs) or the
+ * `MAX_INTERESTS`. While typing, the topics Django already has are offered, most professors first:
+ * picking one links to those professors, where a new spelling would match none (as the old site's
+ * search did). A topic not in the list can still be written. `save` is where they go: the case's (documents and applications tabs) or the
  * account's before a case. Design: canvas "تب اپلای‌ها و نتایج", علاقه‌های پژوهشی.
  */
 export function InterestsCard({
@@ -31,9 +39,21 @@ export function InterestsCard({
   const [text, setText] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
 
-  const add = (event: SubmitEvent) => {
-    event.preventDefault();
-    const name = text.trim().replace(/\s+/g, ' ');
+  const typed = text.trim().replace(/\s+/g, ' ');
+  // Searched once typing pauses, as `useDebouncedValue` does: importing it here would move it into
+  // the first load (it is shared with the staff panels' lazy pages).
+  const [searched, setSearched] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setSearched(typed), 300);
+    return () => clearTimeout(timer);
+  }, [typed]);
+  const { data: found } = useQuery(interestSuggestionsQuery(searched));
+  const taken = new Set(interests.map((item) => item.toLowerCase()));
+  const suggestions = typed
+    ? (found?.results ?? []).filter(({ name }) => !taken.has(name.toLowerCase()))
+    : [];
+
+  const add = (name: string) => {
     if (!name) return;
     if (full) {
       setProblem(t('interests.full', { max: f.number(MAX_INTERESTS) }));
@@ -52,6 +72,11 @@ export function InterestsCard({
       onError: () => toast.error(t('interests.error')),
       onSuccess: () => setText(''),
     });
+  };
+
+  const submit = (event: SubmitEvent) => {
+    event.preventDefault();
+    add(typed);
   };
 
   return (
@@ -84,7 +109,7 @@ export function InterestsCard({
         <p className="m-0 text-sm leading-7 text-text-2">{t('interests.empty')}</p>
       )}
 
-      <form onSubmit={add} noValidate className="flex flex-col gap-2.5">
+      <form onSubmit={submit} noValidate className="flex flex-col gap-2.5">
         <label htmlFor={`${id}-add`} className="text-sm font-semibold">
           {t('interests.add')}
         </label>
@@ -112,6 +137,31 @@ export function InterestsCard({
           <p id={`${id}-error`} className="m-0 text-sm leading-7 text-danger">
             {problem}
           </p>
+        )}
+        {suggestions.length > 0 && (
+          <ul
+            aria-label={t('interests.suggestions')}
+            dir="ltr"
+            className="m-0 flex list-none flex-wrap justify-end gap-2 p-0"
+          >
+            {suggestions.map(({ name, professors }) => (
+              <li key={name}>
+                <button
+                  type="button"
+                  disabled={save.isPending}
+                  onClick={() => add(name)}
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-neutral-tint px-3.5 text-sm font-medium text-neutral disabled:opacity-50"
+                >
+                  {name}
+                  {professors > 0 && (
+                    <span dir="auto" className="text-xs text-text-2">
+                      {t('interests.professors', { n: f.number(professors) })}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </form>
     </SectionCard>

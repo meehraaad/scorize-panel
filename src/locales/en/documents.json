@@ -100,7 +100,9 @@
     "empty": "No interests yet. Add a few topics so we can find matching professors.",
     "error": "Not saved. Check your internet connection and try again.",
     "full": "At most {{max}} topics. Remove one to add another.",
-    "count": "{{n}} of {{max}}"
+    "count": "{{n}} of {{max}}",
+    "suggestions": "From our list of topics",
+    "professors": "{{n}} professors"
   },
   "preview": {
     "transcript": "Bachelor's transcript (official translation)",
