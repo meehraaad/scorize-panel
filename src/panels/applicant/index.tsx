@@ -206,7 +206,17 @@ export const applicantPanel: PanelDefinition = {
         {
           path: 'contract',
           ...lazyPage(() => import('@/features/contract/ContractPage'), ['contract'], {
-            data: () => [contractQuery],
+            // Without a contract the tab sells the next step: their session notes and admissions
+            // of people like them (the last quiz result). A case with a contract reads neither.
+            data: () => {
+              const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
+              const guest = state === 'guest';
+              return [
+                contractQuery,
+                guest && sessionSummariesQuery(),
+                guest && ON_SERVER.estimate && latestEstimateQuery,
+              ];
+            },
             skeleton: 'detail',
           }),
         },
