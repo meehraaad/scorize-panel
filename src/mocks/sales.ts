@@ -672,7 +672,75 @@ function monthOf(data: SalesState): MonthData {
   };
 }
 
+/** The calendar's types (S47): the mock's three, with Google Calendar colours. */
+const CALENDAR_TYPES = [
+  { ...MASTER, mode: 'online', color: '3' },
+  { ...PHD, mode: 'online', color: '9' },
+  { ...VISA, mode: 'in_person', color: '2' },
+];
+/** In-person arrivals marked in this run (reservation → when). */
+const arrivals = new Map<number, string>();
+
+/** The seller's consultations and timed follow-ups between two days (`YYYY-MM-DD`, both included). */
+function calendarOf(data: SalesState, from: string, to: string) {
+  const start = new Date(`${from}T00:00:00`).getTime();
+  const end = new Date(`${to}T00:00:00`).getTime() + DAY;
+  const inRange = (value: string | null) =>
+    value !== null && new Date(value).getTime() >= start && new Date(value).getTime() < end;
+  const nameOf = (id: number) => data.customers.find((item) => item.id === id);
+  return {
+    types: CALENDAR_TYPES,
+    consultations: data.consultations
+      .filter((item) => inRange(item.starts_at))
+      .map((item) => ({
+        id: item.id,
+        customer: item.customer,
+        name: nameOf(item.customer)?.name ?? '',
+        phone: nameOf(item.customer)?.phone ?? '',
+        type: item.type.id,
+        mode: item.mode,
+        minutes: item.minutes,
+        starts_at: item.starts_at,
+        logged: item.logged,
+        // The tablet form: filled by every other customer.
+        form: item.id % 2 === 1,
+        arrived_at: arrivals.get(item.id) ?? null,
+      })),
+    calls: todayOf(data)
+      .calls.filter((row) => inRange(row.follow_up_at))
+      .map(({ lead, customer, name, phone, reason, follow_up_at }) => ({
+        lead,
+        customer,
+        name,
+        phone,
+        reason,
+        follow_up_at,
+      })),
+  };
+}
+
 export const salesHandlers = [
+  http.get(`${BASE}/consultations/calendar/`, ({ request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const query = new URL(request.url).searchParams;
+    return HttpResponse.json(calendarOf(data, query.get('from') ?? '', query.get('to') ?? ''));
+  }),
+  http.post(`${BASE}/consultations/:id/arrived/`, ({ params }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const found = data.consultations.find((item) => item.id === Number(params.id));
+    if (!found) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    if (found.mode !== 'in_person')
+      return HttpResponse.json(
+        { detail: ['Only an in-person consultation has an arrival.'] },
+        { status: 400 },
+      );
+    const when = arrivals.get(found.id) ?? new Date().toISOString();
+    arrivals.set(found.id, when);
+    return HttpResponse.json({ arrived_at: when });
+  }),
+
   http.get(`${BASE}/today/:section?`, ({ request, params }) => {
     const data = stateOrError();
     if (failed(data)) return data;
@@ -771,4 +839,5 @@ export const salesHandlers = [
 /** Forget the seller's changes (tests, logout). */
 export function resetSalesMocks() {
   state = null;
+  arrivals.clear();
 }

@@ -414,6 +414,7 @@ describe('sales panel, seller pages', () => {
     const user = userEvent.setup();
     const router = renderApp('/sales/leads/consultations');
     expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'فهرست' }));
     await user.click(
       (await screen.findAllByRole('button', { name: /^ثبت جلسه: / }))[0] as HTMLElement,
     );
