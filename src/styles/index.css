@@ -1,7 +1,22 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/vazirmatn';
-@import '@fontsource-variable/noto-kufi-arabic';
 @import './tokens.css';
+
+/*
+ * Headings: Noto Kufi's Arabic subset only. Latin, maths and symbols in a heading fall back to
+ * Vazirmatn (next in --family-display), which keeps the other four faces out of the first CSS.
+ */
+@font-face {
+  font-family: 'Noto Kufi Arabic Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/noto-kufi-arabic/files/noto-kufi-arabic-arabic-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E,
+    U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
 
 /* Wordmark font: installed Arial Black, else the copy the main site serves on the same domain. */
 @font-face {

@@ -211,9 +211,7 @@
     "call": "Call me",
     "sent": "Call request sent.",
     "done": "Done. We’ll call you in the {{time}}.",
-    "book": "A session with a senior consultant: you settle the route, the country and the costs together.",
     "free": "A free call first",
-    "how": "How would you like the session?",
     "modes": {
       "online": {
         "title": "Online"
@@ -222,15 +220,17 @@
         "title": "In person"
       }
     },
-    "kicker": "Expert application consultation",
-    "kickerMinutes": "Expert application consultation · {{n}} min",
-    "first": "First free time",
-    "none": "No free time soon",
-    "when": "{{day}} · {{time}}",
-    "bookAt": "Book {{mode}} · {{time}}",
-    "other": "Other times",
-    "discount": "{{n}}% off",
-    "error": "The free times didn't load; see “Other times”."
+    "none": "No free time soon. Pick another one from the calendar.",
+    "error": "The free times didn't load. Pick a time from the calendar.",
+    "offerTitle": "Before you spend anything, <em>get your route clear</em>",
+    "offerText": "A session with a senior application consultant. You settle the country, the university, the costs and the timeline of your own case together.",
+    "after": "After the session your consultant prepares a contract offer, with its price and instalments. The decision is yours.",
+    "soonest": "Soonest free time",
+    "at": "{{day}}, {{time}}",
+    "modeMinutes": "{{mode}}, {{n}} min",
+    "bookThis": "Book this time",
+    "another": "I want another time",
+    "pick": "Pick a time"
   },
   "topics": {
     "title": "What we’ll talk about in the session",

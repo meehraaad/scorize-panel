@@ -186,25 +186,18 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
   });
 
-  it('first visit: the result locked beside the quiz, and a consultation at its first free time', async () => {
+  it('first visit: the result locked beside the quiz, and the consultation at its soonest free time', async () => {
     onDesktop();
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
     expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
-    const talk = screen.getByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
-    const how = within(talk).getByRole('group', { name: 'جلسه را چطور می‌خواهید؟' });
-    // Each way with its first free time; online is chosen first.
-    const online = await within(how).findByRole('radio', { name: /^آنلاین/ });
-    expect(online).toBeChecked();
-    expect(within(how).getAllByText('اولین وقت خالی')).toHaveLength(2);
-    // "Other times" opens the booking popup on that choice.
-    await user.click(within(how).getByRole('radio', { name: /^حضوری/ }));
-    await user.click(within(talk).getByRole('button', { name: 'زمان‌های دیگر' }));
+    const talk = screen.getByRole('region', { name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید' });
+    // One offer: the soonest free time, whichever way it is held.
+    expect(await within(talk).findByText('نزدیک‌ترین وقت خالی')).toBeInTheDocument();
+    // "Another time" opens the booking popup.
+    await user.click(within(talk).getByRole('button', { name: 'وقت دیگری می‌خواهم' }));
     const dialog = await screen.findByRole('dialog', { name: 'رزرو مشاوره' }, { timeout: 15_000 });
-    expect(
-      await within(dialog).findByRole('radio', { name: 'حضوری' }, { timeout: 15_000 }),
-    ).toBeChecked();
     await user.click(within(dialog).getByRole('button', { name: 'بستن' }));
     expect(screen.queryByRole('dialog', { name: 'رزرو مشاوره' })).toBeNull();
 
@@ -227,7 +220,7 @@ describe('applicant home', () => {
     onTestFinished(() => {
       vi.unstubAllGlobals();
     });
-    await user.click(within(talk).getByRole('button', { name: /^رزرو حضوری · / }));
+    await user.click(within(talk).getByRole('button', { name: 'رزرو همین وقت' }));
     await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
     expect(bookingsSent).toHaveLength(1);
   });
@@ -236,7 +229,9 @@ describe('applicant home', () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     renderApp('/');
-    const talk = await screen.findByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' });
+    const talk = await screen.findByRole('region', {
+      name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید',
+    });
     await user.click(within(talk).getByRole('button', { name: 'اول یک تماس رایگان' }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
@@ -296,6 +291,9 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'ترجیح می‌دهید حرف بزنید؟' })).toBeNull();
+    expect(
+      screen.queryByRole('region', { name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید' }),
+    ).toBeNull();
     expect(screen.queryByRole('region', { name: /چطور بود؟$/ })).toBeNull();
     const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
     expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
