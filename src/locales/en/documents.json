@@ -135,95 +135,61 @@
     "cta": "Request a call about writing"
   },
   "newUser": {
-    "subtitle": "Send your documents for a free review; what you don't have, our writing team writes.",
     "hero": {
       "badge": "Free case review",
-      "title": "Send your documents and an advisor tells you where you can get in.",
-      "text": "Your transcript and language test are enough for an advisor to see your real case and call you. Whatever you don't have yet, our writing team writes for you.",
-      "count": "{{done}} of {{total}} case documents are here",
-      "tray": "Case documents",
-      "state": {
-        "done": "sent",
-        "started": "being written",
-        "todo": "not yet"
-      },
-      "next": "Next: {{kind}}",
+      "title": "Send your documents and an advisor will call you.",
+      "text": "Your transcript and language test are enough.",
       "private": "Only your advisor sees your files."
     },
     "have": {
-      "title": "What you have",
-      "subtitle": "Send any of these you have. For the review, the transcript and language test matter most.",
-      "sent": "Sent",
-      "key": "Key for the review",
-      "optional": "If you have it",
-      "sentMeta": "{{n}} files · {{date}}",
+      "title": "Your documents",
+      "count": "{{n}} of {{total}}",
+      "sentMeta": "Sent · {{n}} files",
       "hint": {
-        "transcript": "Bachelor's or your latest degree",
-        "language": "IELTS, TOEFL, Duolingo or PTE",
+        "transcript": "Key for the review",
+        "language": "IELTS, TOEFL or Duolingo",
         "degree": "Or an enrolment certificate",
-        "passport": "Not needed for the review"
+        "passport": "Optional"
       },
+      "files": "Files",
+      "hide": "Close",
       "more": "Another file",
       "upload": "Upload"
     },
     "write": {
       "title": "What you don't have, we write",
-      "subtitle": "Start the form now. You pay only when you press \"final submit\" and the writer starts.",
-      "badge": "Start free, pay at final submit",
-      "toman": "{{amount}} Toman",
+      "subtitle": "Fill in the form now, pay at the final submit.",
+      "toman": "Toman",
+      "name": {
+        "sop": "SOP",
+        "cv": "CV",
+        "recommendation": "Recommendation"
+      },
       "state": {
-        "none": "Not yet",
         "draft": "Form in progress",
         "paid": "Paid",
         "writing": "Being written",
         "ready": "Ready"
       },
       "pitch": {
-        "sop": "The most important text of your case. The writer writes it from your form answers, for the program you want.",
-        "cv": "A consistent academic CV in English, from the background you give in the form.",
-        "recommendation": "We write the letter; your professor or manager only reads and signs it."
+        "sop": "The key text of your case, for the program you want.",
+        "cv": "A consistent academic CV in English.",
+        "recommendation": "We write it, your professor signs it."
       },
       "voice": "{{name}}'s experience",
-      "priceNote": "at final submit",
-      "discountEnds": "discount until {{date}}",
       "note": {
-        "paid": "Paid. Finish the form so the writer can start.",
+        "paid": "Paid. Finish the form.",
         "writing": "The writer is working on it.",
-        "ready": "It's ready. See the final version."
+        "ready": "It's ready."
       },
-      "start": "Start the {{name}} form",
+      "start": "Start the form",
+      "startFor": "Start the {{name}} form",
       "startError": "The form didn't open. Try again.",
       "continue": "Continue the form",
-      "view": "See the order",
-      "haveIt": "I have it, upload",
-      "haveItFor": "Upload your own {{name}}"
-    },
-    "samples": {
-      "title": "Admissions won with these same documents",
-      "subtitle": "Scorize's newest real admission samples.",
-      "all": "All admission samples",
-      "ielts": "IELTS {{score}}",
-      "toefl": "TOEFL {{score}}",
-      "gpa": "GPA {{gpa}}",
-      "degree": {
-        "high_school": "High school",
-        "bachelor": "Bachelor's",
-        "master": "Master's",
-        "phd": "PhD"
-      }
-    },
-    "sent": {
-      "title": "Files you've sent",
-      "count": "{{n}} files"
+      "view": "See the order"
     },
     "call": {
-      "title": "No time to upload?",
-      "text": "We have your number. An advisor calls and asks for it all by phone.",
-      "steps": {
-        "see": "The advisor sees your documents on your case.",
-        "call": "They tell you the review's result by phone.",
-        "contract": "With a contract, these documents and writings go to your case."
-      },
+      "text": "No time to upload? An advisor calls and asks by phone.",
       "button": "Call me"
     }
   },

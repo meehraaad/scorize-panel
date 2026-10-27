@@ -165,29 +165,31 @@ describe('documents page', () => {
     loginAs(MARYAM);
     const router = renderApp('/documents');
     expect(
-      await screen.findByRole('heading', { name: /مدارک‌تان را بفرستید، مشاور می‌گوید/ }),
+      await screen.findByRole('heading', {
+        name: 'مدارک‌تان را بفرستید، مشاور با شما تماس می‌گیرد.',
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByText('۰ از ۷ مدرک پرونده‌تان این‌جاست')).toBeInTheDocument();
 
-    // What they have: sent at once, for the free review.
-    const have = screen.getByRole('region', { name: 'آنچه دارید' });
+    // Your documents: one list; a file is sent at once and lives in its row.
+    const have = screen.getByRole('region', { name: 'مدارک شما' });
+    expect(within(have).getByText('۰ از ۴')).toBeInTheDocument();
     await user.upload(within(have).getByLabelText('انتخاب فایل ریزنمرات'), pdf('transcript.pdf'));
     expect(await toasts().findByText(/مدرک رسید/)).toBeInTheDocument();
-    expect(await within(have).findByText('فرستاده شد')).toBeInTheDocument();
-    expect(screen.getByText('۱ از ۷ مدرک پرونده‌تان این‌جاست')).toBeInTheDocument();
-    const sent = screen.getByRole('region', { name: 'فایل‌هایی که فرستاده‌اید' });
-    expect(within(sent).getAllByRole('listitem')).toHaveLength(1);
+    expect(await within(have).findByText('فرستاده شد · ۱ فایل')).toBeInTheDocument();
+    expect(within(have).getByText('۱ از ۴')).toBeInTheDocument();
+    await user.click(within(have).getByRole('button', { name: 'فایل‌ها' }));
+    expect(within(have).getByRole('button', { name: 'حذف ریزنمرات' })).toBeInTheDocument();
 
     // What they don't have, we write: the price, paid at the form's final submit.
     const write = screen.getByRole('region', { name: 'آنچه ندارید، ما می‌نویسیم' });
-    const sop = within(write).getByRole('article', { name: 'انگیزه‌نامه (SOP)' });
-    expect(sop).toHaveTextContent('۴٬۵۰۰٬۰۰۰ تومان');
-    expect(within(sop).getByText('۵٬۰۰۰٬۰۰۰ تومان')).toBeInTheDocument();
-    expect(within(sop).getByLabelText('تجربه‌ی نگار رحیمی')).toBeInTheDocument();
-    expect(screen.getByText('University of Toronto')).toBeInTheDocument();
+    const sop = within(write).getByRole('article', { name: 'انگیزه‌نامه' });
+    expect(sop).toHaveTextContent('۴٬۵۰۰٬۰۰۰');
+    expect(within(sop).getByText('۵٬۰۰۰٬۰۰۰')).toBeInTheDocument();
+    // One customer's voice for the whole section.
+    expect(within(write).getAllByLabelText('تجربه‌ی نگار رحیمی')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'با من تماس بگیرید' })).toBeInTheDocument();
 
-    await user.click(within(sop).getByRole('button', { name: 'شروع فرم انگیزه‌نامه (SOP)' }));
+    await user.click(within(sop).getByRole('button', { name: 'شروع فرم انگیزه‌نامه' }));
     expect(
       await screen.findByRole('heading', { name: 'اطلاعات انگیزه‌نامه', level: 1 }),
     ).toBeInTheDocument();
@@ -202,6 +204,6 @@ describe('documents page', () => {
     localStorage.setItem('scorize.mock.access', 'pending');
     renderApp('/documents');
     expect(await screen.findByRole('region', { name: 'قرارداد در حال بررسی' })).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'آنچه دارید' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'مدارک شما' })).toBeNull();
   });
 });

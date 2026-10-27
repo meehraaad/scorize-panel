@@ -63,7 +63,7 @@ export default function DocumentsPage() {
   if (lock === 'guest' && ON_SERVER.writingOffers)
     return (
       <PageStack>
-        <PageHeader title={t('title')} subtitle={t('newUser.subtitle')} />
+        <PageHeader title={t('title')} />
         <NewUserDocuments access={access} />
       </PageStack>
     );
