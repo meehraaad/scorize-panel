@@ -6,8 +6,11 @@ interface ProgressBarProps {
   value: number;
   /** `sm` 6px (forms, hero), `md` 8px (cards). */
   size?: 'sm' | 'md';
-  /** `onHero`: light bar on the dark case card; `good`: money paid, things done; `warn`: too much. */
-  tone?: 'primary' | 'good' | 'warn' | 'onHero';
+  /**
+   * `onHero`: light bar on the dark case card; `luxe`: gold on the premium card; `good`: money paid,
+   * things done; `warn`: too much.
+   */
+  tone?: 'primary' | 'good' | 'warn' | 'onHero' | 'luxe';
   /** Read by screen readers. Without it the bar is decoration next to a visible "3 of 5". */
   label?: string;
   className?: string;
@@ -22,12 +25,13 @@ export function ProgressBar({
   className = '',
 }: ProgressBarProps) {
   const height = size === 'sm' ? 'h-1.5' : 'h-2';
-  const track = tone === 'onHero' ? 'bg-hero-line' : 'bg-track';
+  const track = tone === 'onHero' || tone === 'luxe' ? 'bg-hero-line' : 'bg-track';
   const fill = {
     primary: 'bg-primary',
     good: 'bg-good',
     warn: 'bg-hero-current',
     onHero: 'bg-on-hero',
+    luxe: 'bg-luxe-gold-light',
   }[tone];
   const a11y = label
     ? {
@@ -185,7 +189,7 @@ export function StepList({
 
 /**
  * A round progress meter with the value in words beside it (a quiz's "profile 60% complete").
- * `onHero`: on the dark hero card.
+ * `onHero`: on the dark hero card; `luxe`: gold, on the premium card.
  */
 export function ProgressRing({
   value,
@@ -198,11 +202,11 @@ export function ProgressRing({
   /** Read by screen readers ("Profile 60% complete"). */
   label: string;
   size?: number;
-  tone?: 'surface' | 'onHero';
+  tone?: 'surface' | 'onHero' | 'luxe';
 }) {
   const radius = 27;
   const circumference = 2 * Math.PI * radius;
-  const hero = tone === 'onHero';
+  const hero = tone !== 'surface';
   return (
     <svg
       role="img"
@@ -230,7 +234,11 @@ export function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={`${String((circumference * Math.min(Math.max(value, 0), 100)) / 100)} ${String(circumference)}`}
           className={`transition-[stroke-dasharray] duration-500 motion-reduce:transition-none ${
-            hero ? 'stroke-hero-accent' : 'stroke-primary'
+            tone === 'luxe'
+              ? 'stroke-luxe-gold-light'
+              : hero
+                ? 'stroke-hero-accent'
+                : 'stroke-primary'
           }`}
         />
       )}

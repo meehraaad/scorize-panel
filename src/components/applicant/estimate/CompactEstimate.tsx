@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
-import { Card } from '@/components/ui/Card';
 import { Dialog } from '@/components/ui/Dialog';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { lockButtonOnHero } from '@/components/ui/Lock';
 import { ProgressRing } from '@/components/ui/Progress';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -21,8 +20,6 @@ import { Quiz } from './Quiz';
 
 /** Questions in the quiz (Quiz's steps), for the start button. */
 const QUESTIONS = 5;
-/** Countries named on the start card before "+n". */
-const SHOWN_COUNTRIES = 5;
 
 /**
  * On phones: the quiz as one card with a start button (or the result in brief, with a way to answer
@@ -79,15 +76,13 @@ export function CompactEstimate({
   );
 }
 
-const PERKS = [
-  { key: 'instant', icon: 'chart' },
-  { key: 'consultant', icon: 'user' },
-  { key: 'similar', icon: 'graduation' },
-] as const satisfies readonly { key: string; icon: IconName }[];
+/** The locked chances' look: a shape, blurred, not anyone's chance. */
+const VEILED = [78, 64, 51];
 
 /**
- * Before the quiz: a gauge whose needle waits on their answers, the countries it compares and
- * what they get. `empty`: they answered, but no country had enough outcomes.
+ * Before the quiz, on the premium card: the countries it compares with their chances locked, one
+ * thing the result will tell them, and the way in. `empty`: they answered, but no country had
+ * enough outcomes.
  */
 function StartCard({
   options,
@@ -100,96 +95,77 @@ function StartCard({
 }) {
   const { t } = useTranslation('estimate');
   const f = useFormat();
-  const shown = options.countries.slice(0, SHOWN_COUNTRIES);
-  const more = options.countries.length - shown.length;
+  const shown = options.countries.slice(0, VEILED.length);
 
   return (
-    <Card aria-labelledby="estimate-start" className="flex flex-col gap-4 p-5">
-      <div className="flex items-center gap-4">
-        <Gauge />
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-xs font-semibold text-primary-text">{t('sheet.kicker')}</span>
-          <h2
-            id="estimate-start"
-            className="m-0 font-display text-[17px] leading-relaxed font-bold"
-          >
-            {t(empty ? 'result.emptyTitle' : 'sheet.title')}
-          </h2>
-        </div>
+    <section
+      aria-labelledby="estimate-start"
+      className="flex flex-col gap-[18px] rounded-[22px] px-5 pt-6 pb-5 text-on-hero shadow-luxe bg-luxe"
+    >
+      <div className="flex flex-col gap-2">
+        <h2
+          id="estimate-start"
+          className="m-0 font-display text-[21px] leading-[1.7] font-semibold"
+        >
+          {empty ? (
+            t('result.emptyTitle')
+          ) : (
+            <Trans
+              ns="estimate"
+              i18nKey="sheet.title"
+              components={{ em: <span className="text-luxe-gold-light" /> }}
+            />
+          )}
+        </h2>
+        <p className="m-0 text-sm leading-7 text-on-luxe-2">
+          {t(empty ? 'result.empty' : 'sheet.text')}
+        </p>
       </div>
-      <p className="m-0 text-sm leading-7 text-text-2">
-        {t(empty ? 'result.empty' : 'sheet.text')}
-      </p>
-      {shown.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <span id="estimate-start-countries" className="text-xs text-text-2">
-            {t('sheet.countries')}
-          </span>
-          <ul
-            aria-labelledby="estimate-start-countries"
-            className="m-0 flex list-none flex-wrap gap-2 p-0"
-          >
-            {shown.map((country) => (
-              <li
-                key={country.id}
-                className="inline-flex h-8 items-center rounded-full bg-canvas px-3.5 text-[13px] font-semibold shadow-[inset_0_0_0_1px_var(--hair)]"
-              >
-                {country.name}
-              </li>
-            ))}
-            {more > 0 && (
-              <li className="inline-flex h-8 items-center rounded-full px-2 text-[13px] text-text-2">
-                {t('sheet.more', { n: f.number(more) })}
-              </li>
-            )}
-          </ul>
-        </div>
+      {!empty && shown.length > 0 && (
+        <ul className="m-0 flex list-none flex-col gap-3 rounded-[14px] bg-hero-raised p-4 shadow-[inset_0_0_0_1px_var(--hero-line)]">
+          {shown.map((country, at) => (
+            <li
+              key={country.id}
+              className="flex items-center justify-between gap-3 text-sm font-semibold"
+            >
+              <span className="truncate">{country.name}</span>
+              <span aria-hidden="true" className="inline-flex items-center gap-2">
+                <span className="font-display font-bold text-luxe-gold-light blur-[5px] select-none">
+                  {t('result.percent', { n: f.number(VEILED[at] ?? 0) })}
+                </span>
+                <Icon name="lock" size={14} className="text-luxe-gold" />
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
-      <Button size="lg" className="w-full" onClick={onStart}>
-        {t(empty ? 'result.retake' : 'sheet.start')}
-        {!empty && (
-          <span className="font-medium opacity-85">
-            {t('sheet.questions', { n: f.number(QUESTIONS) })}
-          </span>
-        )}
-      </Button>
-      <ul className="m-0 grid list-none grid-cols-3 gap-2 p-0 pt-3.5 shadow-[inset_0_1px_0_var(--hair)]">
-        {PERKS.map(({ key, icon }) => (
-          <li
-            key={key}
-            className="flex flex-col items-center gap-1.5 text-center text-xs leading-5 text-text-2"
+      {!empty && (
+        <p className="m-0 flex items-start gap-2.5 text-sm leading-7">
+          <span
+            aria-hidden="true"
+            className="mt-0.5 flex size-[22px] flex-none items-center justify-center rounded-full bg-luxe-gold text-[13px] font-extrabold"
           >
-            <Icon name={icon} size={20} className="text-primary-text" />
-            {t(`sheet.perks.${key}`)}
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-/** A half-circle meter from low to high, its needle on a question mark: decoration. */
-function Gauge() {
-  const { t } = useTranslation('estimate');
-  return (
-    <span aria-hidden="true" className="relative flex-none">
-      <svg width="120" height="68" viewBox="0 0 200 112" fill="none">
-        <path d="M20 100 A80 80 0 0 1 58 32" strokeWidth="16" className="stroke-tint" />
-        <path d="M62 29.5 A80 80 0 0 1 138 29.5" strokeWidth="16" className="stroke-hero-accent" />
-        <path d="M142 32 A80 80 0 0 1 180 100" strokeWidth="16" className="stroke-primary" />
-        <path
-          d="M100 100 L128 46"
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeDasharray="2 9"
-          className="stroke-text"
-        />
-        <circle cx="100" cy="100" r="9" className="fill-text" />
-      </svg>
-      <span className="absolute inset-x-0 -bottom-1.5 text-center font-display text-[13px] font-bold text-primary-text">
-        {t('sheet.gaugeMark')}
-      </span>
-    </span>
+            {t('preview.mark')}
+          </span>
+          {t('preview.tease.country')}
+        </p>
+      )}
+      <div className="flex flex-col gap-2.5">
+        <button
+          type="button"
+          onClick={onStart}
+          className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-luxe-gold text-base font-extrabold active:scale-[0.98]"
+        >
+          {t(empty ? 'result.retake' : 'sheet.start')}
+          <Icon name="chevronEnd" size={18} />
+        </button>
+        {!empty && (
+          <p className="m-0 text-center text-xs text-on-luxe-2">
+            {t('sheet.note', { n: f.number(QUESTIONS) })}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -227,7 +203,7 @@ function ResultBrief({
   return (
     <section
       aria-labelledby="estimate-best"
-      className="flex flex-col gap-[18px] rounded-[24px] bg-hero px-5 pt-[22px] pb-5 text-on-hero shadow-hero"
+      className="flex flex-col gap-[18px] rounded-[24px] px-5 pt-[22px] pb-5 text-on-hero shadow-luxe bg-luxe"
     >
       <div className="flex items-center gap-4">
         <span className="relative flex-none">
@@ -235,17 +211,17 @@ function ResultBrief({
             value={best.chance ?? BAND_BAR[best.band]}
             label={t('result.ring', { country: best.country.name, level: level(best) })}
             size={84}
-            tone="onHero"
+            tone="luxe"
           />
           <span
             aria-hidden="true"
-            className="absolute inset-0 flex items-center justify-center font-display text-[17px] font-bold"
+            className="absolute inset-0 flex items-center justify-center font-display text-[17px] font-bold text-luxe-gold-light"
           >
             {level(best)}
           </span>
         </span>
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-[13px] font-semibold text-hero-current">
+          <span className="self-start rounded-full bg-luxe-gold px-3 py-0.5 text-xs font-extrabold">
             {t('result.bestKicker')}
           </span>
           <h2

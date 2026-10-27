@@ -9,10 +9,28 @@ const pill =
 const tile =
   'flex min-h-11 cursor-pointer flex-col gap-1 rounded-2xl px-4 py-3 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
+/** A card with a radio dot: a title and a line under it, checked = primary ring on the tint. */
+const card =
+  'flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint/60 has-checked:shadow-[inset_0_0_0_2px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
+
+/** One part of a segmented control: raised on the track when checked. */
+const segment =
+  'flex min-h-11 cursor-pointer items-center justify-center rounded-[11px] px-3 text-sm font-semibold whitespace-nowrap text-text-2 has-checked:bg-surface has-checked:text-text has-checked:shadow-panel has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
+
+const LOOKS = {
+  pills: { list: 'flex flex-wrap gap-2', item: pill },
+  tiles: { list: 'grid gap-2 sm:grid-cols-2', item: tile },
+  cards: { list: 'grid gap-2.5 sm:grid-cols-2', item: card },
+  segmented: {
+    list: 'grid auto-cols-fr grid-flow-col gap-1 self-start rounded-[14px] bg-track p-1 max-sm:self-stretch',
+    item: segment,
+  },
+};
+
 export interface Choice<T extends string> {
   value: T;
   label: string;
-  /** `tiles` only: a line under the label. */
+  /** `tiles` and `cards` only: a line under the label. */
   hint?: string | undefined;
 }
 
@@ -33,8 +51,11 @@ export function ChoiceGroup<T extends string>({
   options: readonly Choice<T>[];
   value: T | null;
   onChange: (value: T) => void;
-  /** `pills`: a wrapping row of short labels; `tiles`: a grid of labelled boxes. */
-  look?: 'pills' | 'tiles';
+  /**
+   * `pills`: a wrapping row of short labels; `tiles`: a grid of labelled boxes; `cards`: tiles with
+   * a radio dot; `segmented`: a few short labels on one track.
+   */
+  look?: keyof typeof LOOKS;
   /** Under the choices: what the pick does. */
   hint?: ReactNode;
   hideLegend?: boolean;
@@ -45,9 +66,9 @@ export function ChoiceGroup<T extends string>({
       <legend className={hideLegend ? 'sr-only' : 'mb-2.5 p-0 text-sm font-semibold text-text-2'}>
         {legend}
       </legend>
-      <div className={look === 'pills' ? 'flex flex-wrap gap-2' : 'grid gap-2 sm:grid-cols-2'}>
+      <div className={LOOKS[look].list}>
         {options.map((option) => (
-          <label key={option.value} className={look === 'pills' ? pill : tile}>
+          <label key={option.value} className={LOOKS[look].item}>
             <input
               type="radio"
               name={name}
@@ -56,8 +77,25 @@ export function ChoiceGroup<T extends string>({
               onChange={() => onChange(option.value)}
               className="sr-only"
             />
-            {look === 'pills' ? (
+            {look === 'pills' || look === 'segmented' ? (
               option.label
+            ) : look === 'cards' ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className={`size-5 flex-none rounded-full ${
+                    value === option.value
+                      ? 'border-[6px] border-primary bg-surface'
+                      : 'border-[1.5px] border-line-3'
+                  }`}
+                />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[15px] font-bold">{option.label}</span>
+                  {option.hint && (
+                    <span className="text-[13px] leading-6 text-text-2">{option.hint}</span>
+                  )}
+                </span>
+              </>
             ) : (
               <>
                 <span className="text-[15px] font-semibold">{option.label}</span>

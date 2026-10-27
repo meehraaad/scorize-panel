@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { Button } from '@/components/ui/Button';
@@ -107,25 +107,31 @@ function ResultHero({ result, best }: { result: EstimateResult; best: CountryEst
   return (
     <section
       aria-labelledby="estimate-best"
-      className="flex flex-col gap-6 rounded-[24px] bg-hero px-5 py-6 text-on-hero shadow-hero lg:rounded-[32px] lg:px-9 lg:py-8"
+      className="flex flex-col gap-6 rounded-[24px] px-5 py-6 text-on-hero shadow-luxe bg-luxe lg:rounded-[32px] lg:px-9 lg:py-8"
     >
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1.5">
-          <span className="text-[13px] font-semibold text-hero-current">
+          <span className="self-start rounded-full bg-luxe-gold px-3 py-0.5 text-xs font-extrabold">
             {t('result.bestKicker')}
           </span>
           <h2
             id="estimate-best"
-            className="m-0 font-display text-[22px] leading-snug font-bold lg:text-[28px]"
+            aria-label={t('result.best', { country: best.country.name })}
+            className="m-0 font-display text-[22px] leading-snug font-semibold lg:text-[28px]"
           >
-            {t('result.best', { country: best.country.name })}
+            <Trans
+              ns="estimate"
+              i18nKey="result.bestTitle"
+              values={{ country: best.country.name }}
+              components={{ em: <span className="text-luxe-gold-light" /> }}
+            />
           </h2>
           <p className="m-0 text-sm leading-7 text-on-hero-2">
             {t('result.subtitle', { date: f.date(result.created_at) })}
           </p>
         </div>
-        <span className="flex flex-col items-start gap-0.5">
-          <span className="font-display text-[34px] leading-tight font-bold lg:text-[44px]">
+        <span className="flex flex-col items-center gap-0.5">
+          <span className="font-display text-[34px] leading-tight font-bold text-luxe-gold-light lg:text-[44px]">
             {level(best)}
           </span>
           <span className="text-[13px] text-on-hero-2">{t('result.bestChance')}</span>
@@ -143,7 +149,7 @@ function ResultHero({ result, best }: { result: EstimateResult; best: CountryEst
                 <span className="truncate font-semibold">{estimate.country.name}</span>
                 <ProgressBar
                   value={estimate.chance ?? BAND_BAR[estimate.band]}
-                  tone="onHero"
+                  tone="luxe"
                   size="md"
                 />
                 <span className="text-end font-semibold">{level(estimate)}</span>
