@@ -56,7 +56,9 @@ export default function TeamPage() {
         title={t('manager.team.title', { month: data ? f.monthYear(data.from) : '' })}
         subtitle={
           data &&
-          t('manager.team.subtitle', { won: f.number(data.won), target: f.number(data.target) })
+          (data.target > 0
+            ? t('manager.team.subtitle', { won: f.number(data.won), target: f.number(data.target) })
+            : t('manager.team.wonWithoutTarget', { won: f.number(data.won) }))
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -87,18 +89,29 @@ export default function TeamPage() {
               {
                 label: t('manager.team.won'),
                 value: f.number(data.won),
-                note: t('manager.team.wonNote', {
-                  target: f.number(data.target),
-                  days: f.number(data.days_left),
-                }),
+                note:
+                  data.target > 0
+                    ? t('manager.team.wonNote', {
+                        target: f.number(data.target),
+                        days: f.number(data.days_left),
+                      })
+                    : t('manager.team.targetUnset'),
               },
               {
                 label: t('manager.team.sales'),
                 value: s.millions(data.sales),
-                tone: data.sales_change >= 0 ? 'good' : 'urgent',
-                note: t(data.sales_change >= 0 ? 'manager.team.up' : 'manager.team.down', {
-                  n: s.percent(Math.abs(data.sales_change)),
-                }),
+                tone:
+                  data.sales_change === null
+                    ? 'default'
+                    : data.sales_change >= 0
+                      ? 'good'
+                      : 'urgent',
+                note:
+                  data.sales_change === null
+                    ? t('manager.team.noSalesBaseline')
+                    : t(data.sales_change >= 0 ? 'manager.team.up' : 'manager.team.down', {
+                        n: s.percent(Math.abs(data.sales_change)),
+                      }),
               },
               {
                 label: t('manager.team.conversion'),
@@ -107,8 +120,16 @@ export default function TeamPage() {
               },
               {
                 label: t('manager.team.firstCall'),
-                value: s.minutes(data.first_call_minutes),
-                tone: data.first_call_minutes > FIRST_CALL_TARGET_MINUTES ? 'urgent' : 'good',
+                value:
+                  data.first_call_minutes === null
+                    ? t('month.speed.noData')
+                    : s.minutes(data.first_call_minutes),
+                tone:
+                  data.first_call_minutes === null
+                    ? 'default'
+                    : data.first_call_minutes > FIRST_CALL_TARGET_MINUTES
+                      ? 'urgent'
+                      : 'good',
                 note: t('manager.team.goal', { n: s.minutes(FIRST_CALL_TARGET_MINUTES) }),
               },
             ]}
@@ -129,6 +150,13 @@ function Leaderboard({ data }: { data: TeamData }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
+  const sellers = [...data.sellers].sort(
+    (a, b) => b.won - a.won || a.name.localeCompare(b.name) || a.id - b.id,
+  );
+  const ranks = new Map<number, number>();
+  sellers.forEach((seller, index) => {
+    if (!ranks.has(seller.won)) ranks.set(seller.won, index + 1);
+  });
   return (
     <SectionCard id="team-board" title={t('manager.team.leaderboard')}>
       <div className="overflow-x-auto pb-2">
@@ -143,9 +171,11 @@ function Leaderboard({ data }: { data: TeamData }) {
             </tr>
           </thead>
           <tbody>
-            {data.sellers.map((seller, index) => (
+            {sellers.map((seller) => (
               <tr key={seller.id} className="shadow-[inset_0_1px_0_var(--hair)]">
-                <td className={`${cell} font-bold text-text-2`}>{f.number(index + 1)}</td>
+                <td className={`${cell} font-bold text-text-2`}>
+                  {f.number(ranks.get(seller.won) ?? 1)}
+                </td>
                 <th scope="row" className={`${cell} text-start font-semibold`}>
                   <span className="flex items-center gap-2.5">
                     <Avatar name={seller.name} size="sm" />
@@ -154,23 +184,29 @@ function Leaderboard({ data }: { data: TeamData }) {
                 </th>
                 <td className={cell}>
                   <span className="flex flex-col gap-1.5">
-                    {t('manager.team.ofTarget', {
-                      won: f.number(seller.won),
-                      target: f.number(seller.target),
-                    })}
-                    <ProgressBar
-                      value={percentOf(seller.won, seller.target)}
-                      size="sm"
-                      className="w-28"
-                    />
+                    {seller.target > 0
+                      ? t('manager.team.ofTarget', {
+                          won: f.number(seller.won),
+                          target: f.number(seller.target),
+                        })
+                      : t('manager.team.wonWithoutTarget', { won: f.number(seller.won) })}
+                    {seller.target > 0 && (
+                      <ProgressBar
+                        value={percentOf(seller.won, seller.target)}
+                        size="sm"
+                        className="w-28"
+                      />
+                    )}
                   </span>
                 </td>
                 <td className={`${cell} tabular-nums`}>{s.millions(seller.sales)}</td>
                 <td className={cell}>{s.percent(seller.conversion)}</td>
                 <td
-                  className={`${cell} ${seller.first_call_minutes > SLOW_MINUTES ? 'font-semibold text-urgent' : ''}`}
+                  className={`${cell} ${seller.first_call_minutes !== null && seller.first_call_minutes > SLOW_MINUTES ? 'font-semibold text-urgent' : ''}`}
                 >
-                  {s.minutes(seller.first_call_minutes)}
+                  {seller.first_call_minutes === null
+                    ? t('month.speed.noData')
+                    : s.minutes(seller.first_call_minutes)}
                 </td>
                 <td
                   className={`${cell} ${seller.overdue >= MANY_OVERDUE ? 'font-semibold text-urgent' : ''}`}

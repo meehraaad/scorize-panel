@@ -17,7 +17,7 @@ export default function MonthPage() {
   const f = useFormat();
   const { data } = useSuspenseQuery(monthQuery);
   const remaining = Math.max(0, data.target - data.won);
-  const rate = data.funnel.leads ? data.won / data.funnel.leads : 0;
+  const rate = data.funnel.leads ? data.funnel.won / data.funnel.leads : 0;
   const leadsNeeded = rate > 0 ? Math.ceil(remaining / rate) : 0;
 
   return (
@@ -25,9 +25,13 @@ export default function MonthPage() {
       <PageHeader
         title={t('month.title', { month: f.monthYear(data.month) })}
         subtitle={
-          remaining > 0
-            ? t('month.subtitle', { n: f.number(remaining), leads: f.number(leadsNeeded) })
-            : t('month.subtitleDone')
+          data.target <= 0
+            ? t('month.targetUnset')
+            : remaining <= 0
+              ? t('month.subtitleDone')
+              : rate > 0
+                ? t('month.subtitle', { n: f.number(remaining), leads: f.number(leadsNeeded) })
+                : t('month.subtitleNoConversion', { n: f.number(remaining) })
         }
       />
       <Goal data={data} />
@@ -45,7 +49,7 @@ function Goal({ data }: { data: MonthData }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  const share = data.target ? Math.min(1, data.won / data.target) : 1;
+  const share = data.target > 0 ? Math.min(1, data.won / data.target) : 0;
   const tiles = [
     { label: t('month.sales'), value: s.millions(data.sales) },
     {
@@ -71,35 +75,41 @@ function Goal({ data }: { data: MonthData }) {
         <span className="flex items-baseline gap-2 font-display">
           <span className="text-5xl font-bold tabular-nums">{f.number(data.won)}</span>
           <span className="text-base text-on-hero-2">
-            {t('month.ofTarget', { n: f.number(data.target) })}
+            {data.target > 0
+              ? t('month.ofTarget', { n: f.number(data.target) })
+              : t('month.targetUnset')}
           </span>
         </span>
-        <div
-          role="progressbar"
-          aria-label={t('month.progress', {
-            won: f.number(data.won),
-            target: f.number(data.target),
-          })}
-          aria-valuemin={0}
-          aria-valuemax={data.target}
-          aria-valuenow={data.won}
-          className="relative h-3 rounded-full bg-hero-line"
-        >
+        {data.target > 0 && (
           <div
-            className="h-3 rounded-full bg-on-hero"
-            style={{ width: `${String(share * 100)}%` }}
-          />
-          <div
-            aria-hidden="true"
-            className="absolute -top-1 h-5 w-0.5 rounded-full bg-hero-current"
-            style={{ insetInlineStart: `${String(data.elapsed * 100)}%` }}
-          />
-        </div>
+            role="progressbar"
+            aria-label={t('month.progress', {
+              won: f.number(data.won),
+              target: f.number(data.target),
+            })}
+            aria-valuemin={0}
+            aria-valuemax={data.target}
+            aria-valuenow={data.won}
+            className="relative h-3 rounded-full bg-hero-line"
+          >
+            <div
+              className="h-3 rounded-full bg-on-hero"
+              style={{ width: `${String(share * 100)}%` }}
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -top-1 h-5 w-0.5 rounded-full bg-hero-current"
+              style={{ insetInlineStart: `${String(data.elapsed * 100)}%` }}
+            />
+          </div>
+        )}
         <span className="text-sm leading-7 text-on-hero-2">
-          {t('month.marker', {
-            percent: s.percent(data.elapsed),
-            days: f.number(data.working_days_left),
-          })}
+          {data.target > 0
+            ? t('month.marker', {
+                percent: s.percent(data.elapsed),
+                days: f.number(data.working_days_left),
+              })
+            : t('month.workingDaysLeft', { days: f.number(data.working_days_left) })}
         </span>
       </div>
       <dl className="m-0 grid grid-cols-2 gap-2.5">
@@ -174,12 +184,14 @@ function lossOf(values: readonly number[], index: number) {
   return before ? 1 - (values[index] ?? 0) / before : 0;
 }
 
-function Speed({ weeks }: { weeks: number[] }) {
+function Speed({ weeks }: { weeks: MonthData['weeks'] }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const max = Math.max(FIRST_CALL_TARGET_MINUTES, ...weeks);
+  const max = Math.max(FIRST_CALL_TARGET_MINUTES, ...weeks.filter((value) => value !== null));
   const items = weeks.map((minutes, index) =>
-    t('month.speed.item', { n: f.number(index + 1), minutes: f.number(minutes) }),
+    minutes === null
+      ? t('month.speed.itemNoData', { n: f.number(index + 1) })
+      : t('month.speed.item', { n: f.number(index + 1), minutes: f.number(minutes) }),
   );
   return (
     <SectionCard
@@ -205,12 +217,16 @@ function Speed({ weeks }: { weeks: number[] }) {
         {weeks.map((minutes, index) => (
           <div key={index} aria-hidden="true" className="flex flex-1 flex-col items-center gap-1.5">
             <span className="text-xs font-bold tabular-nums">
-              {t('month.speed.value', { n: f.number(minutes) })}
+              {minutes === null
+                ? t('month.speed.noData')
+                : t('month.speed.value', { n: f.number(minutes) })}
             </span>
-            <div
-              className={`w-full max-w-12 rounded-t ${minutes <= FIRST_CALL_TARGET_MINUTES ? 'bg-good' : 'bg-primary'}`}
-              style={{ height: `${String((minutes / max) * 140)}px` }}
-            />
+            {minutes !== null && (
+              <div
+                className={`w-full max-w-12 rounded-t ${minutes <= FIRST_CALL_TARGET_MINUTES ? 'bg-good' : 'bg-primary'}`}
+                style={{ height: `${String((minutes / max) * 140)}px` }}
+              />
+            )}
             <span className="text-xs text-text-2">
               {t('month.speed.week', { n: f.number(index + 1) })}
             </span>

@@ -18,8 +18,8 @@ export interface MonthData {
   rank: { position: number; of: number };
   funnel: { leads: number; reached: number; consulted: number; offered: number; won: number };
   team_conversion: number;
-  /** Median minutes to the first call, week by week. */
-  weeks: number[];
+  /** Median minutes to the first call, week by week; null when no samples exist. */
+  weeks: (number | null)[];
   sources: { source: LeadSource; leads: number; won: number }[];
 }
 

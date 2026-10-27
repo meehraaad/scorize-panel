@@ -29,8 +29,8 @@ export interface SellerLoad {
   open: number;
   /** Open leads with no answered contact yet. */
   uncalled: number;
-  /** Median minutes to the first call this week. */
-  response_minutes: number;
+  /** Median minutes to the first call this week; null without samples. */
+  response_minutes: number | null;
 }
 
 export interface UnassignedLead {
@@ -42,8 +42,8 @@ export interface UnassignedLead {
   cause: string;
   score: number;
   created_at: string;
-  /** The seller automatic assignment would pick. */
-  suggested: number;
+  /** The seller automatic assignment would pick; null when none is available. */
+  suggested: number | null;
 }
 
 export interface AssignData {
@@ -72,22 +72,15 @@ export function useAssignSettings() {
   });
 }
 
-/**
- * Gives leads to sellers with the existing staff endpoint (SaleLeadViewSet.assign_staff, one
- * request per lead), so manual assignment works today.
- */
+/** Assigns the queue through Django's manager API, which timestamps and logs each assignment. */
 export function useAssignLeads() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (assignments: { lead: number; seller: number }[]) =>
-      Promise.all(
-        assignments.map(({ lead, seller }) =>
-          api(`/profile/staff/v1/sale-leads/${String(lead)}/assign_staff/`, {
-            method: 'PATCH',
-            body: { assigned_staff: seller },
-          }),
-        ),
-      ),
+      api<{ assigned: number }>(`${MANAGER_API}/assign/`, {
+        method: 'POST',
+        body: { assignments },
+      }),
     onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
@@ -157,11 +150,11 @@ export interface TeamData {
   target: number;
   days_left: number;
   sales: number;
-  /** Change against the previous range, 0.18 = +18%. */
-  sales_change: number;
+  /** Change against the previous range, 0.18 = +18%; null without prior sales. */
+  sales_change: number | null;
   conversion: number;
   conversion_before: number;
-  first_call_minutes: number;
+  first_call_minutes: number | null;
   sellers: {
     id: number;
     name: string;
@@ -169,7 +162,7 @@ export interface TeamData {
     target: number;
     sales: number;
     conversion: number;
-    first_call_minutes: number;
+    first_call_minutes: number | null;
     overdue: number;
   }[];
   alerts: TeamAlert[];

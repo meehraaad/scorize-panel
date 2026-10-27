@@ -549,7 +549,9 @@
       "value": "{{n}} m",
       "goal": "Goal {{n}} minutes",
       "chart": "{{list}}. Goal {{goal}} minutes.",
-      "item": "week {{n}}: {{minutes}} minutes"
+      "item": "week {{n}}: {{minutes}} minutes",
+      "noData": "No call data",
+      "itemNoData": "week {{n}}: no call data"
     },
     "sources": {
       "title": "Which leads became contracts for me?",
@@ -558,7 +560,10 @@
       "leads": "Leads",
       "won": "Contracts",
       "rate": "Rate"
-    }
+    },
+    "targetUnset": "Monthly target not set",
+    "subtitleNoConversion": "{{n}} more contracts to the target. Not enough conversion data to estimate new leads.",
+    "workingDaysLeft": "{{days}} working days left."
   },
   "leadsSection": {
     "nav": "Leads sections",
@@ -960,7 +965,8 @@
       "empty": "No unassigned leads.",
       "sellerFor": "Seller for {{name}}",
       "suggested": "{{name}} (suggested)",
-      "assign": "Assign"
+      "assign": "Assign",
+      "chooseSeller": "Choose a seller"
     },
     "approvals": {
       "title": "{{n}} contract drafts are waiting for you",
@@ -1058,7 +1064,10 @@
         "firstCall": "Median time to the first call: {{n}}",
         "noCalls": "No calls recorded yet.",
         "work": "{{n}} of the {{total}} people who finished also want to work or live abroad."
-      }
+      },
+      "targetUnset": "Target not set",
+      "wonWithoutTarget": "{{won}} contracts · target not set",
+      "noSalesBaseline": "No sales in the previous period to calculate growth"
     },
     "health": {
       "title": "{{n}} customers and files without a next step",
