@@ -115,8 +115,7 @@ describe('professor list form', () => {
     );
     expect(within(interests).getByText('Sensor Fusion')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'ذخیرهٔ پیش‌نویس' }));
-    expect(await screen.findByText(/ذخیره شد · اکنون/)).toBeInTheDocument();
+    expect(await screen.findByText(/ذخیره شد · اکنون/, {}, { timeout: 4000 })).toBeInTheDocument();
     const answers = await serverAnswers('pl');
     expect(answers['countries']).toEqual(['ca', 'us', 'de']);
     expect(answers['research_interests']).toEqual([
@@ -181,8 +180,7 @@ describe('personal and diversity statement forms', () => {
     const user = userEvent.setup();
     await open('/documents/ps', 'اطلاعات بیانیه‌ی شخصی');
     await user.type(screen.getByLabelText(/فضایی که در آن بزرگ شدید/), 'شهر کوچک، کتابخانه‌ی محله');
-    await user.click(screen.getByRole('button', { name: 'ذخیرهٔ پیش‌نویس' }));
-    expect(await screen.findByText(/ذخیره شد · اکنون/)).toBeInTheDocument();
+    expect(await screen.findByText(/ذخیره شد · اکنون/, {}, { timeout: 4000 })).toBeInTheDocument();
     expect((await serverAnswers('ps'))['personal_mentality']).toBe('شهر کوچک، کتابخانه‌ی محله');
   });
 });

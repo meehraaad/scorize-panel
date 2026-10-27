@@ -1,10 +1,13 @@
 import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
-import type { WritingForm } from '../api';
+import { toast } from '@/lib/toast';
+import { receiptInReview, usePayWriting, type WritingForm } from '../api';
 import type { FormType } from '../formSpec';
 import type { useDraft } from '../useDraft';
 import { useFormText } from '../useFormText';
@@ -12,8 +15,9 @@ import type { useFinal } from '../useFinal';
 import { SaveStatus } from './FormHeader';
 
 /**
- * Bottom of a writing form: save, the final submit (asks first), and why it was refused. An order
- * not paid yet (`purchase`) says its price on the button: the final submit goes to the payment.
+ * Bottom of a writing form: a ticket to the writer, the final submit (asks first), and why it was
+ * refused. An order not paid yet (`purchase`) is bought here whether the form is filled in or not;
+ * its final submit stays off until then. A contract's orders are paid already (no `purchase`).
  */
 export function FinalBar({
   type,
@@ -29,12 +33,24 @@ export function FinalBar({
   const { t } = useTranslation('writing');
   const { text, has } = useFormText(type);
   const f = useFormat();
+  const pay = usePayWriting(type);
+  const navigate = useNavigate();
   // A form may name its own submit button ("Send to the search team").
-  const submitLabel = purchase
-    ? t('final.submitPay', { price: f.number(purchase.price) })
-    : has('submit')
-      ? text('submit')
-      : t('final.submit');
+  const submitLabel = has('submit') ? text('submit') : t('final.submit');
+
+  const buy = async () => {
+    try {
+      await draft.flush();
+      const payment = await pay.mutateAsync();
+      if (payment) {
+        toast.success(t('final.toPay'));
+        void navigate(`/payments/${payment.payment_id}`);
+      } else toast.success(t('final.paid'));
+    } catch (error) {
+      toast.error(t(receiptInReview(error) ? 'final.inReview' : 'final.buyError'));
+    }
+  };
+
   return (
     <Card
       role="region"
@@ -51,7 +67,7 @@ export function FinalBar({
       )}
       {final.confirming ? (
         <InlineConfirm
-          message={t(purchase ? 'final.confirmPay' : 'final.confirm')}
+          message={t('final.confirm')}
           confirmLabel={t('final.confirmYes')}
           cancelLabel={t('final.confirmNo')}
           pending={final.pending || final.uploading}
@@ -61,17 +77,22 @@ export function FinalBar({
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="flex-[1_1_300px] text-sm leading-7 text-text-2">
-            {purchase ? t('final.payNote') : t('final.draftNotice')}
+            {purchase ? t('final.buyNote') : t('final.draftNotice')}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link to={`/tickets/writing/${type}`} className={buttonClass('outline')}>
+              {t('final.ticket')}
+            </Link>
+            {purchase && (
+              <Button disabled={pay.isPending} onClick={() => void buy()}>
+                {t('final.buy', { price: f.number(purchase.price) })}
+              </Button>
+            )}
             <Button
-              variant="outline"
-              disabled={draft.saving || final.pending}
-              onClick={draft.saveNow}
+              variant={purchase ? 'outline' : 'primary'}
+              disabled={!!purchase || final.pending || final.uploading}
+              onClick={final.finalize}
             >
-              {t('final.saveDraft')}
-            </Button>
-            <Button disabled={final.pending || final.uploading} onClick={final.finalize}>
               {submitLabel}
             </Button>
           </div>
