@@ -4,6 +4,7 @@ import { NavLink, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { logout } from '@/lib/auth/logout';
 import { panelHref, type PanelDefinition } from '@/panels/types';
+import { usePinToScreenBottom } from './usePinToScreenBottom';
 
 const MAX_TABS = 4; // + "More" = 5, the most a phone bar fits with readable labels
 
@@ -21,6 +22,8 @@ interface Props {
 export function BottomTabs({ panel, locked }: Props) {
   const { t } = useTranslation();
   const sheet = useRef<HTMLDialogElement>(null);
+  const bar = useRef<HTMLElement>(null);
+  usePinToScreenBottom(bar);
   const { pathname } = useLocation();
   const close = () => sheet.current?.close();
 
@@ -34,12 +37,13 @@ export function BottomTabs({ panel, locked }: Props) {
   return (
     <>
       {/* Pinned while the browser's own toolbar slides in and out on scroll (iOS Safari, Android
-          Chrome): transform-gpu gives the bar its own layer so it moves with the viewport instead of
-          trailing it, and the ::after strip below it paints over any gap the toolbar animation or
-          an overscroll bounce opens under the bar. */}
+          Chrome): usePinToScreenBottom moves the bar down to the screen's edge when the browser
+          leaves it short, and the ::after strip below it paints over any gap the toolbar animation
+          or an overscroll bounce opens under the bar. */}
       <nav
+        ref={bar}
         aria-label={t(panel.navLabel)}
-        className="fixed inset-x-0 bottom-0 z-30 flex transform-gpu border-t border-hair bg-surface pb-[env(safe-area-inset-bottom)] group-has-[[data-workspace-fullscreen]]/panel:hidden after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-24 after:bg-surface lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 flex border-t border-hair bg-surface pb-[env(safe-area-inset-bottom)] group-has-[[data-workspace-fullscreen]]/panel:hidden after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-24 after:bg-surface lg:hidden"
       >
         {tabs.map((item) => (
           <NavLink
