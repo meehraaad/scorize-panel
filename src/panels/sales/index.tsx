@@ -14,7 +14,6 @@ import {
   historyQuery,
   infoQuery,
   leadFilterOf,
-  monthQuery,
   handoffQuery,
   offerQuery,
   outreachQuery,
@@ -144,10 +143,8 @@ export const salesPanel: PanelDefinition = {
     },
     {
       path: 'month',
-      ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], {
-        data: () => [monthQuery],
-        skeleton: 'dashboard',
-      }),
+      // No data on open: the month is read only after the seller types their password.
+      ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], { skeleton: 'form' }),
     },
     // Its old address, before it moved under the leads tab.
     { path: 'consultations', loader: () => redirect('/sales/leads/consultations') },

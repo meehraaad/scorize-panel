@@ -1,5 +1,6 @@
 import { ComingSoonPage } from '@/components/ComingSoonPage';
 import { applicationsQuery } from '@/features/applications/api';
+import { Navigate } from 'react-router';
 import {
   consultationQuery,
   consultationsQuery,
@@ -15,6 +16,7 @@ import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
+import { SESSION_PARAM } from '@/lib/applicant/consultations';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { firstCalendarQuery } from '@/lib/applicant/booking';
 import { weekStart } from '@/lib/calendar';
@@ -25,6 +27,7 @@ import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applica
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
+import { SessionRedirect } from './SessionRedirect';
 import { applicantTickets } from './tickets';
 
 /** Every account has this panel. Design: canvas V6/V7 "پنل متقاضی". */
@@ -70,12 +73,6 @@ export const applicantPanel: PanelDefinition = {
       icon: 'chat',
     },
     { id: 'contract', to: 'contract', label: 'panels.applicant.nav.contract', icon: 'card' },
-    {
-      id: 'consultations',
-      to: 'consultations',
-      label: 'panels.applicant.nav.consultations',
-      icon: 'phone',
-    },
     { id: 'services', to: 'services', label: 'panels.applicant.nav.services', icon: 'play' },
   ],
   routes: [
@@ -90,21 +87,29 @@ export const applicantPanel: PanelDefinition = {
           index: true,
           ...lazyPage(
             () => import('@/features/home/HomePage'),
-            ['home', 'gates', 'estimate', 'journey', 'booking'],
+            ['home', 'gates', 'estimate', 'journey', 'booking', 'consultations'],
             {
               // Without a contract the home is the journey toward one: the admission-chance quiz
               // (or its last result), the tablet form, the next session and what to start with
               // (free times, prices, their seller). A case with a contract (or one in review)
-              // reads none of them.
-              data: () => {
+              // reads none of them. Every home but one in review lists the sessions and what the
+              // consultant wrote after each (there is no consultations page).
+              data: ({ request }) => {
                 const state = queryClient.getQueryData(accessQuery.queryKey)?.state;
+                // A session's details open over the home (`?session=41`).
+                const opened = idParam(
+                  new URL(request.url).searchParams.get(SESSION_PARAM) ?? undefined,
+                );
                 const guest = ON_SERVER.estimate && state !== 'active' && state !== 'pending';
+                const sessions = state !== 'pending';
                 return [
                   overviewQuery,
                   guest && latestEstimateQuery,
                   guest && estimateOptionsQuery,
                   guest && backgroundQuery,
-                  guest && consultationsQuery,
+                  sessions && consultationsQuery,
+                  sessions && sessionSummariesQuery(),
+                  opened !== null && consultationQuery(opened),
                   guest && startQuery,
                   // The consultation card's first free time per mode (the booking page's first read).
                   guest &&
@@ -120,9 +125,24 @@ export const applicantPanel: PanelDefinition = {
           path: 'applications',
           ...lazyPage(
             () => import('@/features/applications/ApplicationsPage'),
-            ['applications', 'home'],
+            ['applications', 'home', 'estimate', 'documents'],
             {
-              data: () => [applicationsQuery],
+              // With a case: its applications and research interests. Without one, the page that
+              // sells the service: the chance form reads the quiz's choices and last result.
+              data: () => {
+                const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
+                const guest = state === 'guest';
+                return [
+                  applicationsQuery,
+                  // The case's research interests. Opened first (access not known yet), it loads
+                  // them too, as the documents tab does: a guest gets a 404 and nothing is shown.
+                  documentsQuery,
+                  guest && ON_SERVER.estimate && estimateOptionsQuery,
+                  guest && ON_SERVER.estimate && latestEstimateQuery,
+                  // When H70 ships (ON_SERVER.guestInterests), add `guestInterestsQuery` here. Left
+                  // out while it's off: its import alone puts the first load over its JS budget.
+                ];
+              },
               skeleton: 'list',
             },
           ),
@@ -260,15 +280,9 @@ export const applicantPanel: PanelDefinition = {
             skeleton: 'detail',
           }),
         },
-        // Booked consultations and one session. Design: canvas V6 section 15 (reached from services).
-        {
-          path: 'consultations',
-          ...lazyPage(
-            () => import('@/features/consultations/ConsultationsPage'),
-            ['consultations', 'booking'],
-            { data: () => [consultationsQuery, sessionSummariesQuery()], skeleton: 'list' },
-          ),
-        },
+        // The consultations pages are gone: the home lists every session and opens one over
+        // itself. Old links (SMS, bookmarks) land there.
+        { path: 'consultations', element: <Navigate to="/" replace /> },
         // Booking one on a week calendar (design: "Consultation Booking Design" canvas).
         ...(ON_SERVER.bookingCalendar
           ? [
@@ -281,23 +295,7 @@ export const applicantPanel: PanelDefinition = {
               },
             ]
           : []),
-        {
-          path: 'consultations/:id',
-          ...lazyPage(
-            () => import('@/features/consultations/ConsultationPage'),
-            ['consultations'],
-            {
-              data: ({ params }) => {
-                const id = idParam(params.id);
-                return [
-                  id !== null && consultationQuery(id),
-                  id !== null && sessionSummariesQuery(id),
-                ];
-              },
-              skeleton: 'detail',
-            },
-          ),
-        },
+        { path: 'consultations/:id', element: <SessionRedirect /> },
         // The free Turkey application (no nav item: the guest home links to it). Canvas V7 section 3.
         ON_SERVER.turkey
           ? {

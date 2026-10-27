@@ -1,8 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { api } from '@/lib/api/client';
 import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
+import type { TasksOverview } from '@/lib/tasks/api';
 import { http, HttpResponse } from 'msw';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
@@ -33,6 +35,20 @@ describe('tasks page (sales panel)', () => {
     );
     expect(screen.queryByText(/قدم بعدی ندارند/)).not.toBeInTheDocument();
     expect(screen.getByText('فردا: ۱ پیگیری')).toBeInTheDocument();
+  });
+
+  it.each([
+    [{ week: 0.86, last_week: 1, target: 0.9 }, '۸۶٪', 'هفته‌ی پیش ۱۰۰٪ · هدف تیم ۹۰٪'],
+    // Nothing done or overdue yet: a dash, not a made-up 100%.
+    [{ week: null, last_week: null, target: 0.9 }, '—', 'هفته‌ی پیش کاری سررسید نشد · هدف تیم ۹۰٪'],
+  ])('on time: shows the shares Django counted (%o)', async (onTime, week, note) => {
+    const overview = await api<TasksOverview>('/staff/v1/tasks/?panel=sales');
+    server.use(
+      http.get('/api/staff/v1/tasks/', () => HttpResponse.json({ ...overview, on_time: onTime })),
+    );
+    await openTasks();
+    expect(screen.getByText(week)).toBeInTheDocument();
+    expect(screen.getByText(note)).toBeInTheDocument();
   });
 
   it('done with a next step makes the next task; without one it needs a reason', async () => {
@@ -97,6 +113,42 @@ describe('tasks page (sales panel)', () => {
     const row = (await screen.findAllByText(/^پذیرش Uppsala/))[0]?.closest('li');
     if (!row) throw new Error('row not found');
     expect(await within(row).findByText('انجام شد')).toBeInTheDocument();
+  });
+
+  it('sent requests: one name and a count, a tick when done, and they open', async () => {
+    const user = userEvent.setup();
+    const overview = await api<TasksOverview>('/staff/v1/tasks/?panel=sales');
+    const requests = await api<{ results: { id: number }[] }>(
+      '/staff/v1/tasks/lists/requests/?panel=sales&page=1',
+    );
+    const request = requests.results[0];
+    if (!request) throw new Error('no request in the mock');
+    server.use(
+      http.get('/api/staff/v1/tasks/', () =>
+        HttpResponse.json({
+          ...overview,
+          sent: [
+            {
+              id: request.id,
+              text: 'نصب سافت‌فون',
+              to: { name: 'مهران درمنکی', others: 45 },
+              at: new Date().toISOString(),
+              status: 'done',
+              comments: 3,
+            },
+          ],
+        }),
+      ),
+    );
+    await openTasks();
+    const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
+    expect(
+      within(sent).getByText(/^به مهران درمنکی و ۴۵ نفر دیگر · .* · ۳ پیام$/),
+    ).toBeInTheDocument();
+    expect(within(sent).getByRole('img', { name: 'انجام شد' })).toBeInTheDocument();
+    await user.click(within(sent).getByRole('button', { name: /نصب سافت‌فون/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).queryByRole('button', { name: /خبر بده/ })).not.toBeInTheDocument();
   });
 
   it('sends an internal request to a colleague', async () => {

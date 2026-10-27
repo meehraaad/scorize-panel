@@ -5,6 +5,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pager } from '@/components/ui/Pager';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { sessionHref } from '@/lib/applicant/consultations';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
@@ -143,10 +144,7 @@ export function ConsultationsCard({ data }: { data: ServicesData }) {
         <ul className="m-0 list-none p-0 pb-2">
           {rows.map((item) => (
             <li key={item.id}>
-              <Link
-                to={`/consultations/${String(item.id)}`}
-                className={`${ROW} text-text hover:bg-canvas`}
-              >
+              <Link to={sessionHref(item.id)} className={`${ROW} text-text hover:bg-canvas`}>
                 <span
                   aria-hidden="true"
                   className="flex size-12 flex-none flex-col items-center justify-center rounded-xl bg-tint text-primary-text"
@@ -172,10 +170,7 @@ export function ConsultationsCard({ data }: { data: ServicesData }) {
       )}
       {pager}
       {data.consultations.total > 0 && (
-        <Link
-          to="/consultations"
-          className="px-5 pb-5 text-sm font-medium text-primary-text lg:px-7 lg:pb-6"
-        >
+        <Link to="/" className="px-5 pb-5 text-sm font-medium text-primary-text lg:px-7 lg:pb-6">
           {t('consultations.all', { n: f.number(data.consultations.total) })}
         </Link>
       )}

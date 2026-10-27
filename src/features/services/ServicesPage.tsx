@@ -12,9 +12,8 @@ import { GpaCard } from './components/GpaCard';
 import { ConsultationsCard, EventsCard, PackagesCard } from './components/ServiceCards';
 import { WebinarCard } from './components/WebinarCard';
 
-/** Consultations have their own page; the other tiles jump to sections of this one. */
-const linkTo = (id: string) =>
-  id === 'consultations' ? { to: '/consultations' } : { href: `#${id}` };
+/** Each tile jumps to its section of this page. */
+const linkTo = (id: string) => ({ href: `#${id}` });
 
 /**
  * "Academy" (was "Other services"): videos and packages first. Design: canvas V6 section 9 (AppServices). Open with or without a contract.

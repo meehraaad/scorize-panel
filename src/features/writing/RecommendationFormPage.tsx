@@ -109,7 +109,11 @@ function RecommendersView({ spec, form }: { spec: FormSpec; form: WritingForm })
         asideWidth="sm"
         asideLabel={t('tipsTitle')}
         main={
-          <form onSubmit={final.finalize} noValidate className="flex flex-col gap-3.5">
+          <form
+            onSubmit={(event) => event.preventDefault()}
+            noValidate
+            className="flex flex-col gap-3.5"
+          >
             {Number.isFinite(limit) && (
               <Notice tone="info">{text('limit', { n: f.number(limit) })}</Notice>
             )}
@@ -125,6 +129,7 @@ function RecommendersView({ spec, form }: { spec: FormSpec; form: WritingForm })
                   })}
                   confirmLabel={t('list.remove')}
                   cancelLabel={t('list.cancel')}
+                  pending={final.pending}
                   onConfirm={() => remove(index)}
                   onCancel={() => setRemoving(null)}
                 />
@@ -135,7 +140,7 @@ function RecommendersView({ spec, form }: { spec: FormSpec; form: WritingForm })
                   item={item}
                   index={index}
                   open={readOnly || open === index}
-                  readOnly={readOnly}
+                  readOnly={readOnly || final.pending}
                   showErrors={final.stillMissing.has(`${LIST}.${String(index)}`)}
                   onToggle={() => toggle(index)}
                   onRemove={() => setRemoving(index)}
@@ -147,6 +152,7 @@ function RecommendersView({ spec, form }: { spec: FormSpec; form: WritingForm })
             {!readOnly &&
               (items.length < limit ? (
                 <button
+                  disabled={final.pending}
                   id={`${type}-${LIST}-add`}
                   type="button"
                   onClick={add}
@@ -168,14 +174,13 @@ function RecommendersView({ spec, form }: { spec: FormSpec; form: WritingForm })
                 {t('list.required')}
               </span>
             )}
-
-            {!readOnly && (
-              <FinalBar type={type} draft={draft} final={final} purchase={form.purchase} />
-            )}
           </form>
         }
-        aside={<FormAside spec={spec} phone={form.contact_phone} readOnly={readOnly} />}
+        aside={
+          <FormAside spec={spec} phone={form.contact_phone} readOnly={readOnly || final.pending} />
+        }
       />
+      {!readOnly && <FinalBar type={type} draft={draft} final={final} purchase={form.purchase} />}
     </div>
   );
 }

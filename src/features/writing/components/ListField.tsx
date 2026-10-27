@@ -125,7 +125,7 @@ export function ListField({
         const showErrors = checked.has(index) || missing.has(`${list.name}.${String(index)}`);
         const gaps = new Set(showErrors ? itemGaps(list, item) : []);
 
-        if (removing === index)
+        if (removing === index && !readOnly)
           return (
             <InlineConfirm
               key={index}

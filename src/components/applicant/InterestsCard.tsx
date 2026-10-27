@@ -4,14 +4,30 @@ import { Button } from '@/components/ui/Button';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TagList } from '@/components/ui/Tags';
 import { isolate, useFormat } from '@/lib/i18n/useFormat';
-import { MAX_INTEREST_LENGTH, useSaveInterests } from '../api';
+import { MAX_INTEREST_LENGTH, MAX_INTERESTS, type SaveInterests } from '@/lib/applicant/interests';
 import { toast } from '@/lib/toast';
 
-/** Research interests the professor-email bot searches with: remove a chip, add a topic. */
-export function InterestsCard({ interests }: { interests: string[] }) {
+/**
+ * Research interests the professor-email bot searches with: remove a chip, add a topic, up to
+ * `MAX_INTERESTS`. `save` is where they go: the case's (documents and applications tabs) or the
+ * account's before a case. Design: canvas "تب اپلای‌ها و نتایج", علاقه‌های پژوهشی.
+ */
+export function InterestsCard({
+  id,
+  interests,
+  save,
+  title,
+  subtitle,
+}: {
+  id: string;
+  interests: string[];
+  save: SaveInterests;
+  title?: string;
+  subtitle?: string;
+}) {
   const { t } = useTranslation('documents');
   const f = useFormat();
-  const save = useSaveInterests();
+  const full = interests.length >= MAX_INTERESTS;
   const [text, setText] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -19,6 +35,10 @@ export function InterestsCard({ interests }: { interests: string[] }) {
     event.preventDefault();
     const name = text.trim().replace(/\s+/g, ' ');
     if (!name) return;
+    if (full) {
+      setProblem(t('interests.full', { max: f.number(MAX_INTERESTS) }));
+      return;
+    }
     if (name.length > MAX_INTEREST_LENGTH) {
       setProblem(t('interests.tooLong', { max: f.number(MAX_INTEREST_LENGTH) }));
       return;
@@ -38,9 +58,14 @@ export function InterestsCard({ interests }: { interests: string[] }) {
     <SectionCard
       variant="panel"
       size="lg"
-      id="docs-interests"
-      title={t('interests.title')}
-      subtitle={t('interests.subtitle')}
+      id={id}
+      title={title ?? t('interests.title')}
+      subtitle={subtitle ?? t('interests.subtitle')}
+      end={
+        <span className="text-[13px] font-semibold text-text-2">
+          {t('interests.count', { n: f.number(interests.length), max: f.number(MAX_INTERESTS) })}
+        </span>
+      }
     >
       {interests.length > 0 ? (
         <TagList
@@ -60,18 +85,18 @@ export function InterestsCard({ interests }: { interests: string[] }) {
       )}
 
       <form onSubmit={add} noValidate className="flex flex-col gap-2.5">
-        <label htmlFor="docs-interest-add" className="text-sm font-semibold">
+        <label htmlFor={`${id}-add`} className="text-sm font-semibold">
           {t('interests.add')}
         </label>
         <div className="flex gap-2">
           <input
-            id="docs-interest-add"
+            id={`${id}-add`}
             type="text"
             dir="ltr"
             value={text}
             maxLength={MAX_INTEREST_LENGTH + 20}
             aria-invalid={problem ? true : undefined}
-            aria-describedby={problem ? 'docs-interest-error' : undefined}
+            aria-describedby={problem ? `${id}-error` : undefined}
             onChange={(event) => {
               setText(event.target.value);
               setProblem(null);
@@ -84,7 +109,7 @@ export function InterestsCard({ interests }: { interests: string[] }) {
           </Button>
         </div>
         {problem && (
-          <p id="docs-interest-error" className="m-0 text-sm leading-7 text-danger">
+          <p id={`${id}-error`} className="m-0 text-sm leading-7 text-danger">
             {problem}
           </p>
         )}

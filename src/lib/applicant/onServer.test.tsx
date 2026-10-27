@@ -16,10 +16,11 @@ describe('features by what Django serves', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('leaves only the Turkey programme and the to-do box off', () => {
+  it('leaves the Turkey programme, the to-do box and the guest research interests off', () => {
     expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
       ['turkey', false],
       ['activities', false],
+      ['guestInterests', false],
     ]);
   });
 
@@ -28,8 +29,6 @@ describe('features by what Django serves', () => {
     renderApp('/');
     // At phone width the quiz is one card that opens its questions in a sheet.
     expect(await screen.findByRole('button', { name: 'دیدن شانس من' })).toBeInTheDocument();
-    // The readiness card's first step leads to the full quiz page.
-    expect(screen.getByRole('link', { name: 'شروع تخمین' })).toHaveAttribute('href', '/estimate');
   });
 
   it('offers the GPA calculator, webinar sign-up and package pages on the services page', async () => {

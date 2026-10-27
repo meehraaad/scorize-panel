@@ -49,8 +49,8 @@ const PAGES: PageCase[] = [
     '/services',
     '/services/packages/1',
     '/services/events/31',
-    '/consultations',
-    '/consultations/41',
+    // A session's details over the home (old /consultations/41 links land here).
+    '/?session=41',
     '/consultations/book',
     '/estimate',
     '/background',
@@ -61,6 +61,8 @@ const PAGES: PageCase[] = [
   { path: '/documents', user: MARYAM },
   // No contract: the ways to start a case, with the seller's session notes.
   { path: '/contract', user: MARYAM },
+  // No contract: the applications tab that sells the service, with the chance form.
+  { path: '/applications', user: MARYAM },
   {
     path: '/applications',
     user: SARA,

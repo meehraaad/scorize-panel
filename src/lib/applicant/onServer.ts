@@ -17,7 +17,8 @@ export type ServerFeature =
   | 'start'
   | 'bookingCalendar'
   | 'writingOffers'
-  | 'activities';
+  | 'activities'
+  | 'guestInterests';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -55,7 +56,12 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   writingOffers: true,
   /**
    * AC1–AC7 `activities/`: the to-do box on every page (supervisor asks, surveys, purchase tasks).
-   * Not built in Django yet. Off: no box.
+   * Built in Django, not deployed yet. Off: no box, and supervisor surveys stay a gate.
    */
   activities: false,
+  /**
+   * H70, H71 `research-interests/profile/`: research interests before a case, with how many
+   * professors work on them. Off: the applications tab without a contract doesn't ask for them.
+   */
+  guestInterests: false,
 };

@@ -563,7 +563,19 @@
     },
     "targetUnset": "Monthly target not set",
     "subtitleNoConversion": "{{n}} more contracts to the target. Not enough conversion data to estimate new leads.",
-    "workingDaysLeft": "{{days}} working days left."
+    "workingDaysLeft": "{{days}} working days left.",
+    "lock": {
+      "title": "My month",
+      "subtitle": "Your sales, commission and rank open only with your account password, every time you open this page.",
+      "card": "Enter your password",
+      "password": "Password",
+      "required": "Enter your password.",
+      "wrong": "The password is wrong.",
+      "tooMany": "Too many wrong tries. Try again in 15 minutes.",
+      "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens.",
+      "submit": "Open my month",
+      "failed": "My month didn't open. Try again."
+    }
   },
   "leadsSection": {
     "nav": "Leads sections",
@@ -642,7 +654,9 @@
     "close": "Close",
     "views": "View",
     "week": "Week",
-    "list": "List"
+    "list": "List",
+    "seller": "Assigned to {{name}}",
+    "noSeller": "Not assigned"
   },
   "purchases": {
     "stats": "Purchases summary",

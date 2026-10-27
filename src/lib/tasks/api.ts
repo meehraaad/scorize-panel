@@ -128,15 +128,17 @@ export interface QueueItem {
 export interface SentRequest {
   id: number;
   text: string;
-  /** A colleague's name, or a team. */
-  to: { name: string } | { team: TaskTeam };
+  /** A team, or the first colleague it went to and how many more (old rows name dozens). */
+  to: { name: string; others: number } | { team: TaskTeam };
   at: string;
   status: TaskStatus;
+  comments: number;
 }
 
 export interface TasksOverview {
   /** Share of tasks done on time (0–1); null until the server measures it (T3). */
-  on_time: { week: number; last_week: number; target: number } | null;
+  /** `week`/`last_week`: 0–1, null while no task of that week is done or overdue. */
+  on_time: { week: number | null; last_week: number | null; target: number } | null;
   /** Active people with no open next step: they get forgotten (T5). */
   orphans: { id: number; name: string }[];
   /** How many rows each list has (the tabs); the rows come a page at a time (`taskListQuery`). */

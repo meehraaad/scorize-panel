@@ -26,6 +26,19 @@ export function inPlace(items: Application[], place: Place): Application[] {
   return items.filter((item) => placeOf(item) === place).sort((a, b) => at(a) - at(b));
 }
 
+/** The application still to be sent whose deadline comes first (passed ones left out), or null. */
+export function nearestDeadline(items: Application[], now = Date.now()): Application | null {
+  const open = items.filter(
+    (item) =>
+      item.deadline !== null &&
+      Date.parse(item.deadline) >= now &&
+      (placeOf(item) === 'awaiting' || placeOf(item) === 'preparing'),
+  );
+  return (
+    open.sort((a, b) => Date.parse(a.deadline ?? '') - Date.parse(b.deadline ?? ''))[0] ?? null
+  );
+}
+
 /** An admission whose "show it on the site?" question is still open. */
 export const isNewAdmission = (item: Application) =>
   item.result === 'accepted' && item.approval === 'approved' && item.showcase === null;

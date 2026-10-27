@@ -1,21 +1,121 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
+import { Notice } from '@/components/ui/Notice';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { TextField } from '@/components/ui/TextField';
+import { ApiError } from '@/lib/api/client';
+import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FIRST_CALL_TARGET_MINUTES } from '@/lib/sales/api';
-import { monthQuery, type MonthData } from './api';
+import { toast } from '@/lib/toast';
+import { useMonthUnlock, type MonthData } from './api/month';
 import { useSalesFormat } from './format';
 
 const FUNNEL = ['leads', 'reached', 'consulted', 'offered', 'won'] as const;
 const SOURCE_COLUMNS = ['source', 'leads', 'won', 'rate'] as const;
 
-/** The seller's month: goal, funnel, first-call speed, which sources convert. Canvas "ماه من". */
+/**
+ * The seller's month: goal, funnel, first-call speed, which sources convert. Canvas "ماه من".
+ * Opens only after the seller types their password, on every visit (nothing is kept in a cache).
+ */
 export default function MonthPage() {
   const { t } = useTranslation('sales');
+  const unlock = useMonthUnlock();
+  return unlock.data ? (
+    <Month data={unlock.data} />
+  ) : (
+    <PasswordGate
+      pending={unlock.isPending}
+      error={unlock.error}
+      onSubmit={(password) => {
+        unlock.mutate(password, {
+          onError: (error) => {
+            if (!(error instanceof ApiError && [400, 409, 429].includes(error.status)))
+              toast.error(t('month.lock.failed'));
+          },
+        });
+      }}
+    />
+  );
+}
+
+/** Asks for the account's password before the month (commission, rank) is shown. */
+function PasswordGate({
+  pending,
+  error,
+  onSubmit,
+}: {
+  pending: boolean;
+  error: Error | null;
+  onSubmit: (password: string) => void;
+}) {
+  const { t } = useTranslation('sales');
+  const user = useUser();
+  const [password, setPassword] = useState('');
+  const [missing, setMissing] = useState(false);
+  const status = error instanceof ApiError ? error.status : null;
+
+  const submit = (event: SubmitEvent) => {
+    event.preventDefault();
+    setMissing(!password);
+    if (password) onSubmit(password);
+  };
+
+  return (
+    <PageStack>
+      <PageHeader title={t('month.lock.title')} subtitle={t('month.lock.subtitle')} />
+      <SectionCard variant="panel" id="month-lock" title={t('month.lock.card')}>
+        {status === 409 ? (
+          <Notice tone="warn">{t('month.lock.noPassword')}</Notice>
+        ) : (
+          <form noValidate onSubmit={submit} className="flex max-w-md flex-col gap-4">
+            {/* Lets password managers fill the right account. */}
+            <input
+              type="email"
+              name="username"
+              autoComplete="username"
+              value={user.email ?? ''}
+              readOnly
+              hidden
+            />
+            <TextField
+              label={t('month.lock.password')}
+              name="password"
+              type="password"
+              dir="ltr"
+              autoComplete="current-password"
+              autoFocus
+              value={password}
+              error={
+                missing
+                  ? t('month.lock.required')
+                  : status === 400
+                    ? t('month.lock.wrong')
+                    : status === 429
+                      ? t('month.lock.tooMany')
+                      : undefined
+              }
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setMissing(false);
+              }}
+            />
+            <Button type="submit" disabled={pending} aria-busy={pending} className="self-start">
+              {t('month.lock.submit')}
+            </Button>
+          </form>
+        )}
+      </SectionCard>
+    </PageStack>
+  );
+}
+
+function Month({ data }: { data: MonthData }) {
+  const { t } = useTranslation('sales');
   const f = useFormat();
-  const { data } = useSuspenseQuery(monthQuery);
   const remaining = Math.max(0, data.target - data.won);
   const rate = data.funnel.leads ? data.funnel.won / data.funnel.leads : 0;
   const leadsNeeded = rate > 0 ? Math.ceil(remaining / rate) : 0;

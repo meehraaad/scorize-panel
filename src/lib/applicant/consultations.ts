@@ -1,15 +1,10 @@
-import {
-  infiniteQueryOptions,
-  queryOptions,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
+import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 
 /**
- * Booked consultations: the list, read by the consultations page and the new-user home (its next
- * session, or the survey after the last one). Any account (booking doesn't need a contract).
+ * Booked consultations: the list, read by the home (the next session, the survey after the last
+ * one, every session) and the services page. What the home does to one is in ./consultationActions. Any account (booking doesn't need a contract).
  * Shapes: docs/backend-changes.md H39, H62.
  */
 
@@ -28,14 +23,11 @@ export interface Consultation {
   feedback: ConsultationFeedback | null;
 }
 
-export const FEEDBACK_CLEAR = ['yes', 'partly', 'no'] as const;
-export const FEEDBACK_NEXT = ['contract', 'think', 'cost', 'compare'] as const;
-
 export interface ConsultationFeedbackAnswer {
   /** The consultant, 1 to 5. */
   rating: number;
-  clear: (typeof FEEDBACK_CLEAR)[number];
-  next: (typeof FEEDBACK_NEXT)[number];
+  clear: 'yes' | 'partly' | 'no';
+  next: 'contract' | 'think' | 'cost' | 'compare';
   comment: string;
 }
 
@@ -51,6 +43,12 @@ export const consultationsQuery = queryOptions({
     api<{ results: Consultation[] }>('/applicant/v1/consultations/', { signal }),
   staleTime: 60_000,
 });
+
+/** The query parameter that opens a session's details over the home (`/?session=41`). */
+export const SESSION_PARAM = 'session';
+
+/** Where a session's details open: over the home, which lists every session. */
+export const sessionHref = (id: number) => `/?${SESSION_PARAM}=${String(id)}`;
 
 /** Upcoming sessions first (soonest first), then past ones (latest first). */
 export function splitSessions(results: Consultation[], now = Date.now()) {
@@ -73,19 +71,6 @@ export function recentSession(results: Consultation[], now = Date.now()) {
   if (upcoming.length || !last) return undefined;
   const ended = now - (new Date(last.starts_at).getTime() + last.minutes * 60_000);
   return ended >= 0 && ended < RECENT_MS ? last : undefined;
-}
-
-/** The survey after a session: once, and the seller hears of it (Django makes or tells a lead). */
-export function useSendFeedback(id: number) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (answer: ConsultationFeedbackAnswer) =>
-      api<ConsultationFeedback>(`/applicant/v1/consultations/${String(id)}/feedback/`, {
-        method: 'POST',
-        body: answer,
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: CONSULTATIONS_KEY }),
-  });
 }
 
 export interface SessionSummary {
@@ -119,5 +104,35 @@ export const sessionSummariesQuery = (reservation?: number) =>
     },
     initialPageParam: null as number | null,
     getNextPageParam: (page) => (page.has_more ? page.results.at(-1)?.id : undefined),
+    staleTime: 30_000,
+  });
+
+/** One session with what the consultant reads beforehand and its invoice (H39–H41). */
+export interface ConsultationInfo {
+  university: string;
+  major: string;
+  degree: string;
+  notes: string;
+}
+
+export interface ConsultationDetail extends Consultation {
+  info: ConsultationInfo;
+  invoice: { amount: number; paid_at: string | null; payment_id: number | null };
+}
+
+/** One session; null when it isn't the user's (or doesn't exist). */
+export const consultationQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...CONSULTATIONS_KEY, id],
+    queryFn: async ({ signal }): Promise<ConsultationDetail | null> => {
+      try {
+        return await api<ConsultationDetail>(`/applicant/v1/consultations/${String(id)}/`, {
+          signal,
+        });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) return null;
+        throw error;
+      }
+    },
     staleTime: 30_000,
   });

@@ -4,13 +4,12 @@ import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useTaskChange, type TaskRequest } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
 import { RequestDialog } from './RequestDialog';
-import { STATUS_TONE } from './status';
+import { StatusMark } from './StatusMark';
 
 /** The one-button move from each status: start it, then finish it. */
 const NEXT = { sent: 'in_progress', seen: 'in_progress', in_progress: 'done' } as const;
@@ -73,9 +72,7 @@ export function Requests({
                 </span>
               </div>
               <div className="flex flex-none flex-col items-end gap-2">
-                <Chip tone={STATUS_TONE[request.status]} small>
-                  {t(`status.${request.status}`)}
-                </Chip>
+                <StatusMark status={request.status} />
                 <div className="flex gap-2">
                   <Button
                     variant="outline"

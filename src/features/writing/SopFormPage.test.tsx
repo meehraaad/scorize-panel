@@ -76,6 +76,17 @@ describe('SOP information form', () => {
     expect(screen.getAllByText('۱۱ از ۲۱ سؤال').length).toBeGreaterThan(0);
   });
 
+  it('does not start final submission from an implicit form submit', async () => {
+    await openForm();
+    const goals = screen.getByLabelText('اهداف کوتاه‌مدت و بلندمدت و علاقه‌ی پژوهشی');
+    const form = goals.closest('form');
+    if (!form) throw new Error('Missing writing form');
+    fireEvent.submit(form);
+    expect(screen.queryByRole('group', { name: /ثبت نهایی شود؟/ })).not.toBeInTheDocument();
+    expect(goals).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByRole('region', { name: 'ذخیرهٔ پیش‌نویس و ثبت نهایی' })).toBeInTheDocument();
+  });
+
   it('moves between sections and saves on the way', async () => {
     const user = userEvent.setup();
     await openForm();

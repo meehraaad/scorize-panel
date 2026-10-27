@@ -3,14 +3,14 @@ import { Link } from 'react-router';
 import { CallRequestButton } from '@/components/applicant/CallRequest';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { sessionHref } from '@/lib/applicant/consultations';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import type { Consultation } from '@/lib/applicant/consultations';
 import { useFormat } from '@/lib/i18n/useFormat';
 
 /**
  * Back a while after a session, still without a contract: one short card that remembers it (who,
- * when, its notes) and offers a call, shaped by what they said in the survey (cost → Turkey). It
- * takes the place of the readiness checklist, whose steps lead to a session they already had.
+ * when, its notes) and offers a call, shaped by what they said in the survey (cost → Turkey).
  */
 export function PastSessionCard({
   session,
@@ -34,7 +34,7 @@ export function PastSessionCard({
       subtitle={`${meta}. ${t(cost ? 'pastSession.textCost' : 'pastSession.text')}`}
       end={
         <span className="flex flex-wrap gap-2 max-sm:w-full [&>*]:flex-auto">
-          <Link to={`/consultations/${String(session.id)}`} className={buttonClass('outline')}>
+          <Link to={sessionHref(session.id)} className={buttonClass('outline')}>
             {t('afterSession.details')}
           </Link>
           <CallRequestButton
