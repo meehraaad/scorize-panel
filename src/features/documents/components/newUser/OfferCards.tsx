@@ -21,7 +21,7 @@ const TONE: Record<OfferState, ChipTone> = {
   ready: 'good',
 };
 // The drawn page's colours: each service its own, from the theme's tints.
-const BAND = { sop: 'bg-hero', cv: 'bg-tint', recommendation: 'bg-info-tint' } as const;
+const BAND = { sop: 'bg-luxe', cv: 'bg-tint', recommendation: 'bg-info-tint' } as const;
 const INK = { sop: 'bg-primary', cv: 'bg-hero-current', recommendation: 'bg-info' } as const;
 
 function stateOf(offer: WritingOffer): OfferState {
