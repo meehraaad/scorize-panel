@@ -13,7 +13,9 @@
     "preparing": "{{n}} being prepared",
     "awaiting": "{{n}} waiting for you",
     "declined": "{{n}} you rejected",
-    "free": "{{n}} not chosen yet"
+    "free": "{{n}} not chosen yet",
+    "nearest": "Nearest deadline",
+    "daysLeft": "{{n}} days"
   },
   "awaiting": {
     "title": "Waiting for your approval",
@@ -187,5 +189,70 @@
     },
     "emptyTitle": "The email bot hasn't started yet",
     "addInterests": "Add research interests"
+  },
+  "guest": {
+    "chip": "Opens when your case starts",
+    "title": "You approve every university. We send and follow up.",
+    "text": "Your supervisor suggests universities with the program, deadline and application fee. Nothing is sent until you approve it, and every result is recorded here the day it comes.",
+    "book": "Book a consultation",
+    "call": "Call me",
+    "price": "Full contract from $500, in instalments. Turkey with no prepayment.",
+    "steps": {
+      "title": "From suggestion to result, all on this page",
+      "subtitle": "Every application takes these four steps",
+      "pick": {
+        "name": "Your supervisor suggests",
+        "text": "University, program, deadline and application fee, with the reason."
+      },
+      "approve": {
+        "name": "You approve",
+        "text": "Approve or decline each university. Nothing is sent without your approval."
+      },
+      "send": {
+        "name": "The team sends it",
+        "text": "The team fills in the university's form and sends your documents."
+      },
+      "result": {
+        "name": "Result and visa",
+        "text": "The result is recorded here the same day and you get a message."
+      }
+    },
+    "start": {
+      "title": "Your first application starts with a consultation",
+      "text": "Your advisor settles the countries, the number of applications and the instalments with you.",
+      "contract": "Ways to start and prices"
+    }
+  },
+  "chance": {
+    "title": "Your admission chance in each country",
+    "formNew": "A few short answers. They stay on your profile, so your advisor won't ask again.",
+    "formEdit": "The answers you gave before. Change any of them and the result updates.",
+    "missing": "{{n}} more to answer",
+    "see": "See my chance",
+    "update": "Update my chance",
+    "current": "Your chance is up to date",
+    "from": "From your estimate of {{date}}. Pick a country to see why.",
+    "stale": "Your answers changed: update the result",
+    "why": "Why {{country}}?",
+    "helps": "{{factor}} helps you",
+    "holds": "{{factor}} holds you back",
+    "noSimilar": "No admissions of people like you in this country yet.",
+    "disclaimer": "From the results of Scorize's past applicants; not a promise of admission.",
+    "empty": "We don't have enough results for this degree yet. Your advisor will review your chance in the session.",
+    "veiledTitle": "Answer these and your chance in each country shows here",
+    "learnTitle": "With these few answers you'll see:",
+    "learn": {
+      "best": "Where your chance is highest, and why",
+      "english": "How much a better English score changes it",
+      "similar": "Where people with a background like yours were admitted"
+    }
+  },
+  "interests": {
+    "title": "What would you like to research?",
+    "subtitle": "Write a few topics in English to see how many professors work on them. They stay in your file.",
+    "professors": "Professors on your topics",
+    "universities": "professors at {{n}} universities",
+    "bot": "Once your case starts, the email bot writes to these professors for you, and their replies show on this page.",
+    "empty": "Write a topic to see how many professors in your countries work on it."
   }
 }

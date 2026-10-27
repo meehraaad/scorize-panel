@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import { daysUntil } from '@/lib/dates';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { ApplicationsData } from '../api';
-import { placeOf, type Place } from '../groups';
+import { nearestDeadline, placeOf, type Place } from '../groups';
 
 /** One segment per application, in this order, then the contract's unused applications. */
 const SEGMENTS: { place: Place; fill: string }[] = [
@@ -13,7 +14,10 @@ const SEGMENTS: { place: Place; fill: string }[] = [
   { place: 'declined', fill: 'bg-on-hero-3' },
 ];
 
-/** Dark card: how many of the contract's applications are used, and where each one is. */
+/**
+ * Luxe card: how many of the contract's applications are used, where each one is, and the nearest
+ * deadline still to be met.
+ */
 export function QuotaCard({ data }: { data: ApplicationsData }) {
   const { t } = useTranslation('applications');
   const { t: th } = useTranslation('home');
@@ -22,17 +26,18 @@ export function QuotaCard({ data }: { data: ApplicationsData }) {
   const count = (place: Place) => data.results.filter((item) => placeOf(item) === place).length;
   const counts = SEGMENTS.map((segment) => ({ ...segment, n: count(segment.place) }));
   const free = Math.max(0, total - used);
+  const next = nearestDeadline(data.results);
   // Segments only while they stay readable; a bigger contract keeps the legend alone.
   const bar = used + free <= 40;
 
   return (
     <section
       aria-labelledby="apps-quota"
-      className="flex flex-col gap-4 rounded-[24px] bg-hero px-5 py-[22px] text-on-hero shadow-hero lg:gap-5 lg:rounded-[32px] lg:px-9 lg:py-8"
+      className="flex flex-col gap-4 rounded-[24px] bg-luxe px-5 py-[22px] text-on-hero shadow-luxe lg:gap-5 lg:rounded-[32px] lg:px-9 lg:py-8"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <span className="text-[13px] font-bold text-hero-current">{t('quota.label')}</span>
+          <span className="text-[13px] font-bold text-luxe-gold-light">{t('quota.label')}</span>
           <h2
             id="apps-quota"
             className="m-0 font-display text-xl leading-snug font-bold lg:text-[28px]"
@@ -69,7 +74,7 @@ export function QuotaCard({ data }: { data: ApplicationsData }) {
 
       <ul
         aria-label={t('quota.legend')}
-        className="m-0 flex list-none flex-wrap gap-x-5 gap-y-1.5 p-0 text-[13px] text-on-hero-2"
+        className="m-0 flex list-none flex-wrap gap-x-5 gap-y-1.5 p-0 text-[13px] text-on-luxe-2"
       >
         {counts
           .filter(({ n }) => n > 0)
@@ -86,6 +91,17 @@ export function QuotaCard({ data }: { data: ApplicationsData }) {
           </li>
         )}
       </ul>
+
+      {next?.deadline && (
+        <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-[22px] shadow-[inset_0_1px_0_var(--luxe-line)]">
+          <span className="text-[13px] text-on-luxe-2">{t('quota.nearest')}</span>
+          <bdi className="font-semibold">{next.university}</bdi>
+          <span className="font-display text-xl font-bold text-luxe-gold-light">
+            {t('quota.daysLeft', { n: f.number(daysUntil(next.deadline)) })}
+          </span>
+          <span className="text-[13px] text-on-luxe-2">{f.dateShort(next.deadline)}</span>
+        </p>
+      )}
     </section>
   );
 }

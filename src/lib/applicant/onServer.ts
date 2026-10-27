@@ -16,7 +16,8 @@ export type ServerFeature =
   | 'background'
   | 'start'
   | 'bookingCalendar'
-  | 'writingOffers';
+  | 'writingOffers'
+  | 'guestInterests';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -52,4 +53,9 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * preview without a contract.
    */
   writingOffers: true,
+  /**
+   * H70, H71 `research-interests/profile/`: research interests before a case, with how many
+   * professors work on them. Off: the applications tab without a contract doesn't ask for them.
+   */
+  guestInterests: false,
 };
