@@ -17,6 +17,7 @@ export type ServerFeature =
   | 'start'
   | 'bookingCalendar'
   | 'writingOffers'
+  | 'activities'
   | 'guestInterests';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
@@ -54,8 +55,14 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    */
   writingOffers: true,
   /**
-   * H70, H71 `research-interests/profile/`: research interests before a case, with how many
-   * professors work on them. Off: the applications tab without a contract doesn't ask for them.
+   * AC1–AC7 `activities/`: the to-do box on every page (supervisor asks, surveys, purchase tasks).
+   * Supervisor surveys are asked in the box instead of as a gate.
    */
-  guestInterests: false,
+  activities: true,
+  /**
+   * H70, H71 `research-interests/profile/`: research interests before a case, with how many
+   * professors work on them (scorize-revolution `feature/guest-research-interests`). Off: the
+   * applications tab without a contract doesn't ask for them.
+   */
+  guestInterests: true,
 };

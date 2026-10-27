@@ -16,12 +16,14 @@ import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
+import { guestInterestsQuery } from '@/lib/applicant/documents';
 import { SESSION_PARAM } from '@/lib/applicant/consultations';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { firstCalendarQuery } from '@/lib/applicant/booking';
 import { weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
+import { activitiesQuery } from '@/lib/applicant/activities';
 import { gatesQuery } from '@/lib/applicant/gates';
 import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applicant/journey';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
@@ -80,7 +82,8 @@ export const applicantPanel: PanelDefinition = {
       // Terms, missing details, supervisor surveys or a closed panel come before any page
       // (canvas V6 section 8).
       ...lazyPage(() => import('@/features/gates/GatesLayout'), ['gates'], {
-        data: () => [gatesQuery],
+        // The to-do box over every page asks for its list with the gates.
+        data: () => [gatesQuery, ON_SERVER.activities && activitiesQuery],
       }),
       children: [
         {
@@ -139,8 +142,7 @@ export const applicantPanel: PanelDefinition = {
                   documentsQuery,
                   guest && ON_SERVER.estimate && estimateOptionsQuery,
                   guest && ON_SERVER.estimate && latestEstimateQuery,
-                  // When H70 ships (ON_SERVER.guestInterests), add `guestInterestsQuery` here. Left
-                  // out while it's off: its import alone puts the first load over its JS budget.
+                  guest && guestInterestsQuery,
                 ];
               },
               skeleton: 'list',
