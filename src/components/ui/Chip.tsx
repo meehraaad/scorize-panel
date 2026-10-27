@@ -32,3 +32,24 @@ export function Chip({ tone, dot = false, small = false, children }: ChipProps) 
     </span>
   );
 }
+
+const TEXT_TONES = {
+  primary: 'text-primary-text',
+  good: 'text-good',
+  warn: 'text-warn',
+  danger: 'text-danger',
+  info: 'text-info',
+  neutral: 'text-text-2',
+} as const satisfies Record<ChipTone, string>;
+
+/** A status as colored text with a dot, for rows in a list where a pill would be too loud. */
+export function StatusText({ tone, children }: { tone: ChipTone; children: ReactNode }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[13px] font-semibold whitespace-nowrap ${TEXT_TONES[tone]}`}
+    >
+      <span aria-hidden="true" className="size-[7px] flex-none rounded-full bg-current" />
+      {children}
+    </span>
+  );
+}

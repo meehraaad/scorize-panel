@@ -59,6 +59,8 @@ const PAGES: PageCase[] = [
   { path: '/', user: MARYAM },
   // No contract: the new user's documents tab (files for the free review, writing offered).
   { path: '/documents', user: MARYAM },
+  // No contract: the ways to start a case, with the seller's session notes.
+  { path: '/contract', user: MARYAM },
   {
     path: '/applications',
     user: SARA,

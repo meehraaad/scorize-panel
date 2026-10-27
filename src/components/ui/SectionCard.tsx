@@ -93,6 +93,43 @@ export function SectionHeading({
   );
 }
 
+/**
+ * A page section without a card: a thin line above, the heading on the start side and the content
+ * beside it (under it on phones). For calm pages where only the main block is raised.
+ */
+export function SideSection({
+  id,
+  title,
+  subtitle,
+  end,
+  className = '',
+  children,
+}: {
+  id: string;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  /** Under the heading: a link, a "show more". */
+  end?: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      aria-labelledby={id}
+      className={`grid gap-x-14 gap-y-4 pt-7 shadow-[inset_0_1px_0_var(--line-2)] lg:grid-cols-[minmax(200px,280px)_minmax(0,1fr)] lg:pt-8 ${className}`}
+    >
+      <div className="flex flex-col gap-1.5">
+        <h2 id={id} className="m-0 font-display text-[22px] leading-relaxed font-bold">
+          {title}
+        </h2>
+        {subtitle && <p className="m-0 text-sm leading-7 text-text-2">{subtitle}</p>}
+        {end}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
+
 /** Small count next to a title ("2 new"). */
 export function Badge({ children }: { children: ReactNode }) {
   return (

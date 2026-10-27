@@ -1,13 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
-import { Chip, type ChipTone } from '@/components/ui/Chip';
+import { StatusText, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
-import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { percentOf } from '@/lib/progress';
 import type { ContractData, Installment, InstallmentStatus } from '../api';
 
 const TONE: Record<InstallmentStatus, ChipTone> = {
@@ -17,14 +15,10 @@ const TONE: Record<InstallmentStatus, ChipTone> = {
   upcoming: 'neutral',
 };
 
-const MARK: Record<InstallmentStatus, string> = {
-  paid: 'bg-good text-surface',
-  due: 'bg-warn-tint text-warn',
-  review: 'bg-info-tint text-info',
-  upcoming: 'text-text-2 shadow-[inset_0_0_0_1.5px_var(--line-2)]',
-};
-
-/** Prepayment and instalments: what is paid, what is due now and what comes later. */
+/**
+ * Prepayment and instalments as one divided list: what is paid, what is due now and what comes
+ * later, each status as colored text. Design: canvas "Scorize New User Dashboard v2", ContractActive.
+ */
 export function InstallmentsCard({ contract }: { contract: ContractData }) {
   const { t } = useTranslation('contract');
   const f = useFormat();
@@ -70,20 +64,11 @@ export function InstallmentsCard({ contract }: { contract: ContractData }) {
           {t('installments.empty')}
         </EmptyState>
       ) : (
-        <>
-          <div className="px-5 pb-2 lg:px-8">
-            <ProgressBar
-              value={percentOf(paid, total)}
-              tone="good"
-              label={t('installments.progress', { percent: f.number(percentOf(paid, total)) })}
-            />
-          </div>
-          <ol className="m-0 list-none p-0 pt-2">
-            {installments.map((item) => (
-              <InstallmentRow key={item.id} item={item} />
-            ))}
-          </ol>
-        </>
+        <ol className="m-0 list-none p-0 pt-2">
+          {installments.map((item) => (
+            <InstallmentRow key={item.id} item={item} />
+          ))}
+        </ol>
       )}
     </SectionCard>
   );
@@ -107,17 +92,7 @@ function InstallmentRow({ item }: { item: Installment }) {
   const payment = item.payment_id === null ? null : `/payments/${String(item.payment_id)}`;
 
   return (
-    <li
-      className={`flex flex-wrap items-center gap-3.5 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:px-8 lg:py-[18px] ${
-        item.status === 'due' ? 'bg-row-highlight' : ''
-      }`}
-    >
-      <span
-        aria-hidden="true"
-        className={`flex size-9 flex-none items-center justify-center rounded-full text-sm font-bold ${MARK[item.status]}`}
-      >
-        {item.status === 'paid' ? <Icon name="check" size={16} /> : f.number(item.number + 1)}
-      </span>
+    <li className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:px-8 lg:py-[18px]">
       <span className="flex min-w-0 flex-[1_1_200px] flex-col gap-1">
         <span className="text-base font-semibold">{name}</span>
         {when && <span className="text-[13px] leading-6 text-text-2">{when}</span>}
@@ -126,9 +101,7 @@ function InstallmentRow({ item }: { item: Installment }) {
         <span className="text-base font-bold tabular-nums">
           {f.price(item.amount, item.currency, (amount) => t('amount', { amount }))}
         </span>
-        <Chip tone={TONE[item.status]} small>
-          {t(`installments.status.${item.status}`)}
-        </Chip>
+        <StatusText tone={TONE[item.status]}>{t(`installments.status.${item.status}`)}</StatusText>
       </span>
       {payment && item.status === 'due' && (
         <div className="flex gap-2 max-sm:w-full">

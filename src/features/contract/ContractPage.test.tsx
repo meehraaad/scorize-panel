@@ -50,6 +50,14 @@ describe('contract page', () => {
     expect(within(hero).getByText('۱۸۰٬۰۰۰٬۰۰۰ تومان')).toBeInTheDocument();
     expect(within(hero).getByText('فعال')).toBeInTheDocument();
 
+    const waiting = screen.getByRole('region', { name: 'منتظر شما' });
+    expect(waiting).toHaveTextContent('قسط ۲ از ۳');
+    expect(within(waiting).getByRole('link', { name: 'پرداخت آنلاین' })).toHaveAttribute(
+      'href',
+      '/payments/501',
+    );
+    expect(waiting).toHaveTextContent('۲ مورد از اطلاعات شما خالی است');
+
     const rows = within(installments()).getAllByRole('listitem');
     expect(rows).toHaveLength(4);
     expect(rows[0]).toHaveTextContent('پیش‌پرداخت');
@@ -123,32 +131,44 @@ describe('contract page', () => {
     localStorage.setItem('scorize.mock.access', 'pending');
     renderApp('/contract');
     const start = await screen.findByRole('region', { name: 'شروع پرونده' });
+    expect(start).toHaveTextContent('پیش‌پرداخت را بپردازید تا پرونده‌تان شروع شود.');
     expect(start).toHaveTextContent('پرداخت نشده');
-    expect(within(start).getByText(/پیش‌پرداخت قرارداد \(۱٬۲۰۰٬۰۰۰ تومان\)/)).toBeInTheDocument();
+    expect(within(start).getByText('۱٬۲۰۰٬۰۰۰')).toBeInTheDocument();
     const current = within(start)
       .getAllByRole('listitem')
       .find((step) => step.getAttribute('aria-current') === 'step');
     expect(current).toHaveTextContent('پیش‌پرداخت');
-    expect(within(start).getByRole('link', { name: 'پرداخت پیش‌پرداخت' })).toHaveAttribute(
+    expect(within(start).getByRole('link', { name: 'پرداخت آنلاین' })).toHaveAttribute(
       'href',
       '/payments/502',
     );
-    // The real contract under it, not a locked preview.
-    const hero = screen.getByRole('region', { name: 'خلاصه‌ی قرارداد' });
-    expect(within(hero).getByText('در انتظار شروع')).toBeInTheDocument();
-    expect(hero.closest('[inert]')).toBeNull();
+    expect(within(start).getByRole('link', { name: 'کارت‌به‌کارت و آپلود رسید' })).toHaveAttribute(
+      'href',
+      '/payments/502?method=receipt',
+    );
+    // The real instalments and details under it, not a locked preview.
+    expect(installments().closest('[inert]')).toBeNull();
+    expect(profile()).toBeInTheDocument();
   });
 
-  it('without a contract, shows a locked preview', async () => {
+  it('without a contract, shows the ways to start a case', async () => {
     loginAs(MARYAM);
     renderApp('/contract');
-    // Canvas V7: the lock banner over a sample contract (more in src/app/locks.test.tsx).
-    expect(await screen.findByRole('region', { name: 'این بخش قفل است' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'رزرو مشاوره‌ی اپلای' })).toHaveAttribute(
+    const turkey = await screen.findByRole('region', { name: 'اپلای ترکیه، رایگان' });
+    expect(turkey).toHaveTextContent('۰ تومان پیش‌پرداخت');
+    const full = screen.getByRole('region', { name: 'قرارداد کامل' });
+    expect(within(full).getByRole('link', { name: 'رزرو مشاوره' })).toHaveAttribute(
       'href',
-      '/consultation/',
+      '/consultations/book',
     );
-    expect(screen.getByText('نام شما', { selector: 'dd' }).closest('[inert]')).not.toBeNull();
+    expect(within(full).getByRole('button', { name: 'با من تماس بگیرید' })).toBeInTheDocument();
+    // No session yet: the journey starts at the consultation.
+    const current = screen
+      .getAllByRole('listitem')
+      .find((step) => step.getAttribute('aria-current') === 'step');
+    expect(current).toHaveTextContent('جلسه‌ی مشاوره');
+    expect(screen.getByRole('region', { name: 'سؤال‌های قبل از شروع' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'این بخش قفل است' })).toBeNull();
   });
 });
 

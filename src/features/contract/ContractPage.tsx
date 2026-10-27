@@ -7,15 +7,22 @@ import { accessQuery, lockOf } from '@/lib/applicant/access';
 import { contractQuery, type ContractData } from './api';
 import { ContractAside } from './components/ContractAside';
 import { ContractHero } from './components/ContractHero';
+import { GuestContract } from './components/guest/GuestContract';
 import { InstallmentsCard } from './components/InstallmentsCard';
 import { ProfileCard } from './components/ProfileCard';
-import { StartCard } from './components/StartCard';
+import { StartHero } from './components/StartHero';
+import { WaitingCard } from './components/WaitingCard';
 import { previewContract } from './preview';
 
 /**
- * "Contract & payment". Design: canvas V6 section 7 "قرارداد و پرداخت" (AppContract); without an
- * approved contract, the locked preview of canvas V7 section 7. An approved contract waiting for its
- * prepayment (S46) shows what is left to start the case, above the contract itself.
+ * "Contract & payment". Design: canvas "Scorize New User Dashboard v2" (ContractActive,
+ * ContractStarting, ContractGuest, ContractGuestSession, ContractOther):
+ * - active: what is waiting for the applicant, the contract on the luxe card, instalments with the
+ *   documents beside them, then their details
+ * - approved and waiting for its prepayment (S46): the prepayment on the luxe card, then the plan
+ * - no contract: the ways to start (Turkey, the full contract), their session notes, admissions of
+ *   people like them, what a contract opens and the questions before one
+ * - ended, or in review without a prepayment: the lock banner over the contract (or a sample)
  */
 export default function ContractPage() {
   const { t } = useTranslation('contract');
@@ -26,32 +33,44 @@ export default function ContractPage() {
   const { prepayment } = access;
   const starting = lock === 'pending' && prepayment && data;
 
+  const columns = (contract: ContractData) => (
+    <>
+      <PageColumns
+        asideLabel={t('aside')}
+        main={<InstallmentsCard contract={contract} />}
+        aside={<ContractAside contract={contract} />}
+      />
+      <ProfileCard contract={contract} />
+    </>
+  );
   const body = (contract: ContractData) => (
     <>
       <ContractHero contract={contract} />
-      <PageColumns
-        asideLabel={t('aside')}
-        main={
-          <>
-            <InstallmentsCard contract={contract} />
-            <ProfileCard contract={contract} />
-          </>
-        }
-        aside={<ContractAside contract={contract} />}
-      />
+      {columns(contract)}
     </>
   );
 
+  if (lock === 'guest')
+    return (
+      <PageStack spacing="wide">
+        <PageHeader title={t('title')} subtitle={t('guest.subtitle')} />
+        <GuestContract access={access} />
+      </PageStack>
+    );
+
   return (
-    <PageStack>
+    <PageStack spacing="wide">
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
       {starting ? (
         <>
-          <StartCard prepayment={prepayment} />
-          {body({ ...data, status: 'pending' })}
+          <StartHero prepayment={prepayment} contract={data} />
+          {columns({ ...data, status: 'pending' })}
         </>
       ) : !lock && data ? (
-        body(data)
+        <>
+          <WaitingCard contract={data} />
+          {body(data)}
+        </>
       ) : (
         <SectionLock section="contract" lock={lock ?? 'guest'} access={access}>
           {lock === 'ended' && data ? body(data) : body(previewContract(t))}
