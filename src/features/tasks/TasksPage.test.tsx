@@ -208,8 +208,14 @@ describe('tasks page (sales panel)', () => {
     let dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
     await user.type(within(dialog).getByLabelText('چه کاری؟'), 'گزارش هفته را بنویس');
     await user.click(within(dialog).getByRole('radio', { name: 'خودم' }));
+    await user.click(within(dialog).getByRole('radio', { name: 'تاریخ و ساعت دیگر' }));
     await user.click(within(dialog).getByRole('button', { name: 'افزودن به کارهای من' }));
-    expect(await screen.findByText('به کارهای شما اضافه شد.')).toBeInTheDocument();
+    expect(await within(dialog).findByText('تاریخ و ساعت را انتخاب کنید.')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' }));
+    await user.click(within(dialog).getByRole('button', { name: 'افزودن به کارهای من' }));
+    expect(
+      await screen.findByText(/^به کارهای شما اضافه شد\. .+ در «پیگیری‌های من» می‌آید\.$/),
+    ).toBeInTheDocument();
     expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'کار تازه' }));

@@ -203,7 +203,7 @@
       "people": "Colleagues",
       "team": "A team"
     },
-    "meHint": "It goes to “My follow-ups” and reminds you when it is due.",
+    "meHint": "It shows in “My follow-ups” from the day it is due, and reminds you then. Until that day it is only counted under later tasks.",
     "people": "Colleagues",
     "picked": "Chosen",
     "remove": "Remove {{name}}",
@@ -215,6 +215,9 @@
     "team": "Which team?",
     "teamHint": "Whoever takes it first owns it.",
     "due": "Due",
+    "other": "Another date and time",
+    "date": "Date and time",
+    "dateRequired": "Choose a date and time.",
     "send": {
       "me": "Add to my tasks",
       "people": "Send request",
@@ -222,7 +225,7 @@
       "many": "Send to {{n}} people"
     },
     "sent": {
-      "me": "Added to your tasks.",
+      "me": "Added to your tasks. It shows in “My follow-ups” on {{when}}.",
       "team": "Put in the team queue.",
       "people": "Sent to {{n}} people."
     }
