@@ -208,10 +208,7 @@ export function SelectField<T extends string>({
     );
   return (
     <div className="flex flex-col gap-2">
-      <label
-        htmlFor={id}
-        className={hideLabel ? 'sr-only' : 'text-sm font-semibold text-text-2'}
-      >
+      <label htmlFor={id} className={hideLabel ? 'sr-only' : 'text-sm font-semibold text-text-2'}>
         {label}
       </label>
       {select}

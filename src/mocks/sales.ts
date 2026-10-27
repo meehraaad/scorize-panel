@@ -3,13 +3,13 @@ import type {
   BoardCard,
   BoardData,
   CallItem,
-  MonthData,
   NextStep,
   Offer,
   PendingReceipt,
   TodayData,
 } from '@/features/sales/api';
 import { BOARD_STAGES } from '@/features/sales/api';
+import type { MonthData } from '@/features/sales/api/month';
 import { type Degree, type LeadSource, type LeadStage, type LostReason } from '@/lib/sales/api';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';

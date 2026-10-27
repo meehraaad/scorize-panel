@@ -11,7 +11,7 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FIRST_CALL_TARGET_MINUTES } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
-import { useMonthUnlock, type MonthData } from './api';
+import { useMonthUnlock, type MonthData } from './api/month';
 import { useSalesFormat } from './format';
 
 const FUNNEL = ['leads', 'reached', 'consulted', 'offered', 'won'] as const;
