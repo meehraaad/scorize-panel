@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useTaskChange, type TaskRequest } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
+import { ReactionSummary } from './Reactions';
 import { RequestDialog } from './RequestDialog';
 import { StatusMark } from './StatusMark';
 
@@ -70,6 +71,7 @@ export function Requests({
                     <span>{t('requests.comments', { n: f.number(request.comments) })}</span>
                   )}
                 </span>
+                <ReactionSummary reactions={request.reactions} />
               </div>
               <div className="flex flex-none flex-col items-end gap-2">
                 <StatusMark status={request.status} />

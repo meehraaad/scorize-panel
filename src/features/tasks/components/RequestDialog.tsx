@@ -5,11 +5,13 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
-import { StepBar } from '@/components/ui/Progress';
+import { ProgressBar, StepBar } from '@/components/ui/Progress';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { requestQuery, useTaskChange } from '@/lib/tasks/api';
+import { requestQuery, useTaskChange, type RequestDetail } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
+import { ReactionBar } from './Reactions';
+import { StatusMark } from './StatusMark';
 import { toast } from '@/lib/toast';
 
 const STEPS = ['sent', 'seen', 'in_progress', 'done'] as const;
@@ -144,6 +146,8 @@ export function RequestDialog({
               {data.body}
             </p>
           )}
+          <ReactionBar panel={config.panel} id={data.id} reactions={data.reactions} />
+          {data.people.length > 0 && <People people={data.people} />}
           <section aria-labelledby="request-thread" className="flex flex-col gap-3">
             <h3 id="request-thread" className="m-0 text-sm font-semibold text-text-2">
               {t('requests.thread')}
@@ -199,5 +203,31 @@ export function RequestDialog({
         </>
       )}
     </Dialog>
+  );
+}
+
+/** A request sent to several people: how many have done it, and each one's step. */
+function People({ people }: { people: RequestDetail['people'] }) {
+  const { t } = useTranslation('tasks');
+  const f = useFormat();
+  const done = people.filter((person) => person.status === 'done').length;
+  return (
+    <section aria-labelledby="request-people" className="flex flex-col gap-2.5">
+      <h3 id="request-people" className="m-0 text-sm font-semibold text-text-2">
+        {t('people.done', { done: f.number(done), total: f.number(people.length) })}
+      </h3>
+      <ProgressBar value={Math.round((done / people.length) * 100)} tone="good" size="sm" />
+      <ul className="m-0 flex max-h-48 list-none flex-col overflow-y-auto p-0">
+        {people.map((person, index) => (
+          <li
+            key={`${person.name}-${String(index)}`}
+            className="flex min-h-10 items-center justify-between gap-3 py-1 text-sm"
+          >
+            <span className="min-w-0 truncate">{person.name}</span>
+            <StatusMark status={person.status} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

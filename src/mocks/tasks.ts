@@ -10,6 +10,7 @@ import type {
   TasksOverview,
 } from '@/lib/tasks/api';
 import { forbidden, notFound, pageOf, storage } from './session';
+import { reactionDetails, resetTaskReactionMocks, withReactions } from './taskReactions';
 import { newId } from './sales';
 import { SUPERVISOR, SUPERVISOR_NAME, addCaseTask } from './supervisor';
 
@@ -42,8 +43,9 @@ export type FullTasks = Omit<TasksOverview, 'counts'> & {
 };
 
 /** `GET tasks/`: the lists' sizes, not their rows. */
-export const overviewOf = ({ mine, requests, team, ...rest }: FullTasks): TasksOverview => ({
+export const overviewOf = ({ mine, requests, team, sent, ...rest }: FullTasks): TasksOverview => ({
   ...rest,
+  sent: withReactions(sent),
   counts: { mine: mine.length, requests: requests.length, team: team.length },
 });
 
@@ -52,7 +54,8 @@ const LISTS: readonly string[] = ['mine', 'requests', 'team'] satisfies TaskList
 /** `GET tasks/lists/<list>/?page=` (404 for another list). */
 export function taskListOf(request: Request, tasks: FullTasks, list: string) {
   if (!LISTS.includes(list)) return notFound();
-  const rows: readonly unknown[] = tasks[list as TaskList];
+  const rows: readonly unknown[] =
+    list === 'requests' ? withReactions(tasks.requests) : tasks[list as TaskList];
   return HttpResponse.json(pageOf(request, rows, TASKS_PAGE));
 }
 
@@ -77,6 +80,8 @@ function supervisorTasksState(): TasksState {
       body: 'قرارداد ویزا امروز ثبت شد. لطفاً برای گرفتن وقت سفارت سوئد با او تماس بگیرید.',
       watchers: [],
       thread: [],
+      reactions: [],
+      people: [],
     },
   ];
   return {
@@ -127,7 +132,8 @@ function supervisorTasksState(): TasksState {
       tomorrow: 4,
       done_today: 3,
       requests: details.map(
-        ({ body: _body, watchers: _watchers, thread: _thread, ...request }) => request,
+        ({ body: _body, watchers: _watchers, thread: _thread, people: _people, ...request }) =>
+          request,
       ),
       team: [
         {
@@ -148,6 +154,8 @@ function supervisorTasksState(): TasksState {
           at: ago(2 * DAY),
           status: 'in_progress',
           comments: 0,
+          reactions: [],
+          progress: null,
         },
       ],
       colleagues: [
@@ -252,8 +260,10 @@ function applyChange(
       return null;
     }
     case 'comment': {
+      // On a request to me, or one I sent (one conversation for all its copies).
       const detail = details.get(id);
-      if (!request || !detail) return notFound();
+      const sent = overview.sent.find((item) => item.id === id);
+      if (!detail) return notFound();
       detail.thread.push({
         id: newId(),
         author: me,
@@ -261,8 +271,9 @@ function applyChange(
         at: new Date().toISOString(),
         text: change.text,
       });
-      request.comments += 1;
-      detail.comments = request.comments;
+      detail.comments += 1;
+      if (request) request.comments = detail.comments;
+      if (sent) sent.comments = detail.comments;
       return null;
     }
   }
@@ -292,8 +303,9 @@ export const taskHandlers = [
   http.get(`${TASKS}/:id/`, ({ params }) => {
     const data = tasksOrError();
     if (data instanceof Response) return data;
-    const detail = data.tasks.details.get(Number(params.id));
-    return detail ? HttpResponse.json(detail) : notFound();
+    const id = Number(params.id);
+    const detail = data.tasks.details.get(id);
+    return detail ? HttpResponse.json({ ...detail, reactions: reactionDetails(id) }) : notFound();
   }),
 
   http.post(`${TASKS}/:id/:action/`, async ({ params, request }) => {
@@ -317,21 +329,70 @@ export const taskHandlers = [
     if (data instanceof Response) return data;
     const task = (await request.json()) as NewTask;
     if (!task.text.trim()) return HttpResponse.json({ text: ['required'] }, { status: 400 });
-    const colleague = data.tasks.overview.colleagues.find((item) => item.id === task.assignee);
-    if (task.kind !== 'mine')
-      data.tasks.overview.sent.unshift({
-        id: newId(),
+    const { overview, details } = data.tasks;
+    // Several colleagues: one copy each, one row for me with their progress (T13).
+    const ids = [
+      ...new Set([...(task.assignee ? [task.assignee] : []), ...(task.assignees ?? [])]),
+    ];
+    const people = ids.flatMap((id) => overview.colleagues.filter((item) => item.id === id));
+    if (task.kind === 'request' && people.length === 0)
+      return HttpResponse.json({ assignee: ['required'] }, { status: 400 });
+    const now = new Date().toISOString();
+    const id = newId();
+    if (
+      task.kind === 'mine' &&
+      !task.user &&
+      new Date(task.due_at).toDateString() === new Date().toDateString()
+    )
+      overview.mine.push({
+        id,
         text: task.text,
-        to: task.team ? { team: task.team } : { name: colleague?.name ?? '', others: 0 },
-        at: new Date().toISOString(),
-        status: task.kind === 'team' ? 'queued' : 'sent',
-        comments: 0,
+        due_at: task.due_at,
+        person: null,
+        source: 'me',
+        snoozed: 0,
+        step: null,
+        action: 'open',
+        note: '',
+        suggested_next: '',
       });
-    data.onPerson(task, task.kind === 'mine' ? data.me : (colleague?.name ?? null));
+    else if (task.kind === 'mine') overview.tomorrow += 1;
+    if (task.kind !== 'mine') {
+      const status = task.kind === 'team' ? 'queued' : 'sent';
+      overview.sent.unshift({
+        id,
+        text: task.text,
+        to: task.team
+          ? { team: task.team }
+          : { name: people[0]?.name ?? '', others: people.length - 1 },
+        at: now,
+        status,
+        comments: 0,
+        reactions: [],
+        progress: people.length > 1 ? { done: 0, total: people.length } : null,
+      });
+      details.set(id, {
+        id,
+        from: { name: data.me, role: '' },
+        created_at: now,
+        text: task.text,
+        person: null,
+        due_at: task.due_at,
+        status,
+        comments: 0,
+        reactions: [],
+        people: people.length > 1 ? people.map(({ name }) => ({ name, status })) : [],
+        body: '',
+        watchers: [],
+        thread: [],
+      });
+    }
+    data.onPerson(task, task.kind === 'mine' ? data.me : (people[0]?.name ?? null));
     return new HttpResponse(null, { status: 201 });
   }),
 ];
 
 export function resetTaskMocks() {
   supervisorTasks = null;
+  resetTaskReactionMocks();
 }
