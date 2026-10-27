@@ -16,6 +16,7 @@ import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { accessQuery, useLockedNav } from '@/lib/applicant/access';
+import { guestInterestsQuery } from '@/lib/applicant/documents';
 import { SESSION_PARAM } from '@/lib/applicant/consultations';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { firstCalendarQuery } from '@/lib/applicant/booking';
@@ -139,8 +140,7 @@ export const applicantPanel: PanelDefinition = {
                   documentsQuery,
                   guest && ON_SERVER.estimate && estimateOptionsQuery,
                   guest && ON_SERVER.estimate && latestEstimateQuery,
-                  // When H70 ships (ON_SERVER.guestInterests), add `guestInterestsQuery` here. Left
-                  // out while it's off: its import alone puts the first load over its JS budget.
+                  guest && guestInterestsQuery,
                 ];
               },
               skeleton: 'list',
