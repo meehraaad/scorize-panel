@@ -2137,7 +2137,7 @@ export const applicantHandlers = [
     )
       return HttpResponse.json({ interests: ['invalid'] }, { status: 400 });
     guestInterests = interests as string[];
-    return new HttpResponse(null, { status: 204 });
+    return HttpResponse.json(guestInterestsOf());
   }),
 
   // Writing information forms: H12–H16, H50, H51. 404 for a type the contract doesn't include.
@@ -2327,7 +2327,7 @@ export const applicantHandlers = [
 /** The account's research interests before a case (H70). */
 let guestInterests: string[] = [];
 
-/** H70 `GET research-interests/profile/`: 74 professors in 9 universities per interest, as a toy. */
+/** H70 `research-interests/profile/` (GET, and PUT's answer): 74 professors in 9 universities per interest, as a toy. */
 function guestInterestsOf() {
   const countries = ['ایتالیا', 'آلمان', 'کانادا'];
   return {

@@ -61,7 +61,8 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   activities: false,
   /**
    * H70, H71 `research-interests/profile/`: research interests before a case, with how many
-   * professors work on them. Off: the applications tab without a contract doesn't ask for them.
+   * professors work on them (scorize-revolution `feature/guest-research-interests`). Off: the
+   * applications tab without a contract doesn't ask for them.
    */
-  guestInterests: false,
+  guestInterests: true,
 };

@@ -69,3 +69,22 @@ export const documentsQuery = queryOptions({
   },
   staleTime: 60_000,
 });
+
+// Kept here, next to the documents' query, rather than in `interests.ts`: the route table loads
+// it, and this module is already in the first load.
+/** Interests and how many professors in Scorize's list work on them, before a case (H70, H71). */
+export interface GuestInterests {
+  interests: string[];
+  /** Professors whose interests match one of these, and their universities. */
+  professors: number;
+  universities: number;
+  /** A few of them, without names: the country and the interest they share. */
+  sample: { country: string; interest: string }[];
+}
+
+export const guestInterestsQuery = queryOptions({
+  queryKey: [...APPLICANT_KEY, 'research-interests', 'guest'],
+  queryFn: ({ signal }) =>
+    api<GuestInterests>('/applicant/v1/research-interests/profile/', { signal }),
+  staleTime: 60_000,
+});
