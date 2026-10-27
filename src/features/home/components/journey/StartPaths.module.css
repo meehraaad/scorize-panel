@@ -75,7 +75,22 @@
     transform: scaleX(-1);
   }
 
+  .contract .art {
+    inset-block-end: auto;
+    aspect-ratio: 2 / 1;
+    mask-image: linear-gradient(180deg, var(--on-hero) 60%, transparent);
+  }
+
+  .contract .art img {
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .contract::after {
+    background: none;
+  }
+
   .contract .content {
-    padding-block-start: 10rem;
+    padding-block-start: max(10rem, 50%);
   }
 }
