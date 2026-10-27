@@ -42,7 +42,7 @@ export function TickButton({
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex size-11 flex-none items-center justify-center rounded-full bg-good-tint text-good shadow-[inset_0_0_0_1.5px_var(--good)] hover:bg-good hover:text-on-primary disabled:opacity-50"
+      className="inline-flex size-11 flex-none items-center justify-center rounded-full bg-good-tint text-good disabled:opacity-50"
     >
       <Icon name="check" size={20} />
     </button>

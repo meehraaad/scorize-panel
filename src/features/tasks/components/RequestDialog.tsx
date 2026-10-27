@@ -227,7 +227,7 @@ function People({ people }: { people: RequestDetail['people'] }) {
         {t('people.done', { done: f.number(done), total: f.number(people.length) })}
       </h3>
       <ProgressBar value={Math.round((done / people.length) * 100)} tone="good" size="sm" />
-      <ul className="m-0 flex max-h-48 list-none flex-col overflow-y-auto p-0">
+      <ul className="m-0 flex max-h-64 list-none flex-col overflow-y-auto p-0">
         {people.map((person, index) => (
           <li
             key={`${person.name}-${String(index)}`}
