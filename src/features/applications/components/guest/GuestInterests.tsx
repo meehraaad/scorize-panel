@@ -27,7 +27,7 @@ export function GuestInterests() {
       />
       <section
         aria-labelledby="apps-professors"
-        className="flex flex-col gap-3.5 rounded-[24px] bg-luxe-soft p-6 text-on-hero shadow-luxe lg:rounded-[32px] lg:p-8"
+        className="flex flex-col gap-3.5 rounded-[24px] p-6 text-on-hero shadow-luxe bg-luxe-soft lg:rounded-[32px] lg:p-8"
       >
         <h2 id="apps-professors" className="m-0 text-[13px] font-bold text-luxe-gold-light">
           {t('interests.professors')}

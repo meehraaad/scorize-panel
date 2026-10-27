@@ -56,8 +56,6 @@ export interface DocumentsData {
   interests: string[];
 }
 
-
-
 export const documentsQuery = queryOptions({
   queryKey: [...APPLICANT_KEY, 'documents'],
   queryFn: async ({ signal }): Promise<DocumentsData | null> => {

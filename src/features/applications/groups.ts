@@ -34,7 +34,9 @@ export function nearestDeadline(items: Application[], now = Date.now()): Applica
       Date.parse(item.deadline) >= now &&
       (placeOf(item) === 'awaiting' || placeOf(item) === 'preparing'),
   );
-  return open.sort((a, b) => Date.parse(a.deadline ?? '') - Date.parse(b.deadline ?? ''))[0] ?? null;
+  return (
+    open.sort((a, b) => Date.parse(a.deadline ?? '') - Date.parse(b.deadline ?? ''))[0] ?? null
+  );
 }
 
 /** An admission whose "show it on the site?" question is still open. */

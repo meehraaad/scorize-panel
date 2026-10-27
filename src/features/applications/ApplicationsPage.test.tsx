@@ -198,9 +198,7 @@ describe('applications page', () => {
       gpa: 18,
       contact: { channel: 'none' },
     });
-    expect(
-      await within(chance).findByRole('heading', { name: 'چرا آلمان؟' }),
-    ).toBeInTheDocument();
+    expect(await within(chance).findByRole('heading', { name: 'چرا آلمان؟' })).toBeInTheDocument();
     expect(within(chance).getByRole('button', { name: 'شانس به‌روز است' })).toBeDisabled();
 
     await user.click(within(chance).getByRole('button', { name: /ایتالیا/ }));

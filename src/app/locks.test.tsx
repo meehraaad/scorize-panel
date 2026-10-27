@@ -44,7 +44,9 @@ describe('locked sections', () => {
     // The applications tab sells the service instead of locking it (src/features/applications).
     expect(screen.queryByRole('region', { name: 'این بخش قفل است' })).toBeNull();
     expect(
-      screen.getByRole('region', { name: 'هر دانشگاه را شما تأیید می‌کنید. فرستادن و پیگیری با ما.' }),
+      screen.getByRole('region', {
+        name: 'هر دانشگاه را شما تأیید می‌کنید. فرستادن و پیگیری با ما.',
+      }),
     ).toBeInTheDocument();
 
     const nav = mainNav();

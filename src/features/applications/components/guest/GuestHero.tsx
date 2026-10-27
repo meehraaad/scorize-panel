@@ -23,10 +23,10 @@ export function GuestHero({ access }: { access: ApplicantAccess }) {
   return (
     <section
       aria-labelledby="apps-guest"
-      className="grid items-center gap-8 overflow-hidden rounded-[24px] bg-luxe p-6 text-on-hero shadow-luxe lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:rounded-[32px] lg:p-9"
+      className="grid items-center gap-8 overflow-hidden rounded-[24px] p-6 text-on-hero shadow-luxe bg-luxe lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:rounded-[32px] lg:p-9"
     >
       <div className="flex flex-col gap-3.5">
-        <span className="inline-flex h-8 items-center gap-2 self-start rounded-full bg-luxe-gold px-4 text-sm font-bold">
+        <span className="inline-flex h-8 items-center gap-2 self-start rounded-full px-4 text-sm font-bold bg-luxe-gold">
           <Icon name="lock" size={14} />
           {t('guest.chip')}
         </span>

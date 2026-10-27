@@ -33,7 +33,7 @@ export function QuotaCard({ data }: { data: ApplicationsData }) {
   return (
     <section
       aria-labelledby="apps-quota"
-      className="flex flex-col gap-4 rounded-[24px] bg-luxe px-5 py-[22px] text-on-hero shadow-luxe lg:gap-5 lg:rounded-[32px] lg:px-9 lg:py-8"
+      className="flex flex-col gap-4 rounded-[24px] px-5 py-[22px] text-on-hero shadow-luxe bg-luxe lg:gap-5 lg:rounded-[32px] lg:px-9 lg:py-8"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">

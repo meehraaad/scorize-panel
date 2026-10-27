@@ -51,7 +51,10 @@ export function GuestApplications({ access }: { access: ApplicantAccess }) {
               key={step}
               className="grid grid-cols-[22px_minmax(0,1fr)] gap-x-3.5 gap-y-1 py-5 shadow-[inset_0_1px_0_var(--hair)]"
             >
-              <span aria-hidden="true" className="row-span-2 font-display font-bold text-primary-text">
+              <span
+                aria-hidden="true"
+                className="row-span-2 font-display font-bold text-primary-text"
+              >
                 {f.number(index + 1)}
               </span>
               <span className="text-base font-bold">{t(`guest.steps.${step}.name`)}</span>
