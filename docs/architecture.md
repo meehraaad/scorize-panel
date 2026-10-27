@@ -36,7 +36,9 @@ src/
 │                          that talk to the API (SectionLock, CallRequestButton; booking/: the
 │                          consultation booking flow, its dialog and page; canvas V7;
 │                          estimate/: the admission-chance quiz and result, guest home + /estimate;
-│                          on phones the home shows one gauge card and asks in a bottom sheet)
+│                          on phones the home shows one gauge card and asks in a bottom sheet;
+│                          activities/: the to-do box floating over every applicant page, shown
+│                          by GatesLayout when no gate is up; off until Django serves AC1–AC7)
 ├── lib/                   Infrastructure (bottom layer)
 │   ├── api/               fetch client (session cookie + CSRF), React Query client
 │   ├── applicant/         Shared by applicant pages: query-key prefix, approve/reject an application,
@@ -353,7 +355,7 @@ option existed.
 
 ## Performance budget
 
-First load (gzip, `pnpm size` checks it in CI): JS ≈ 162 KB (budget 170), CSS ≈ 15 KB (budget 18);
+First load (gzip, `pnpm size` checks it in CI): JS ≈ 170 KB (budget 172), CSS ≈ 18 KB (budget 18);
 fonts are loaded per script as text appears. How pages stay fast (page data, skeletons, preload,
 cache, measuring): docs/performance.md.
 

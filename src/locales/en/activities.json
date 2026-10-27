@@ -1,0 +1,38 @@
+{
+  "title": "Your to-dos",
+  "open": "Your to-dos: {{n}}",
+  "summary": "{{n}} to-dos",
+  "summaryRequired": "{{n}} to-dos · {{required}} required",
+  "collapse": "Collapse to-dos",
+  "source": {
+    "supervisor": "Supervisor",
+    "seller": "Sales advisor",
+    "consultant": "Consultant",
+    "writer": "Writer",
+    "system": "Scorize"
+  },
+  "from": "{{name}}, {{role}}",
+  "due": "By {{date}}",
+  "required": "Required",
+  "optional": "Optional",
+  "started": "{{percent}}% done",
+  "progress": "Progress",
+  "later": "Later",
+  "dismiss": "Dismiss",
+  "send": "Send",
+  "sending": "Sending…",
+  "answer": "Your answer",
+  "score": "Score {{n}} of {{max}}",
+  "pickFirst": "Choose an option first.",
+  "writeFirst": "Write your answer first.",
+  "chooseFile": "Choose a file",
+  "uploaded": "File sent to {{name}}",
+  "go": {
+    "form": "Continue",
+    "pay": "Pay"
+  },
+  "sent": "Thanks, your answer was sent.",
+  "snoozed": "We'll remind you tomorrow.",
+  "dismissed": "Removed from your list.",
+  "error": "Not sent. Check your connection and try again."
+}

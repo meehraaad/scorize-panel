@@ -17,6 +17,7 @@ export type ServerFeature =
   | 'start'
   | 'bookingCalendar'
   | 'writingOffers'
+  | 'activities'
   | 'guestInterests';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
@@ -53,6 +54,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * preview without a contract.
    */
   writingOffers: true,
+  /**
+   * AC1–AC7 `activities/`: the to-do box on every page (supervisor asks, surveys, purchase tasks).
+   * Built in Django, not deployed yet. Off: no box, and supervisor surveys stay a gate.
+   */
+  activities: false,
   /**
    * H70, H71 `research-interests/profile/`: research interests before a case, with how many
    * professors work on them (scorize-revolution `feature/guest-research-interests`). Off: the
