@@ -11,18 +11,18 @@ const tile =
 
 /** A card with a radio dot: a title and a line under it, checked = primary ring on the tint. */
 const card =
-  'flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint/60 has-checked:shadow-[inset_0_0_0_2px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
+  'flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_2px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
 /** One part of a segmented control: raised on the track when checked. */
 const segment =
-  'flex min-h-11 cursor-pointer items-center justify-center rounded-[11px] px-3 text-sm font-semibold whitespace-nowrap text-text-2 has-checked:bg-surface has-checked:text-text has-checked:shadow-panel has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
+  'flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] px-3 text-sm font-semibold whitespace-nowrap text-text-2 has-checked:bg-surface has-checked:text-text has-checked:shadow-panel has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
 const LOOKS = {
   pills: { list: 'flex flex-wrap gap-2', item: pill },
   tiles: { list: 'grid gap-2 sm:grid-cols-2', item: tile },
   cards: { list: 'grid gap-2.5 sm:grid-cols-2', item: card },
   segmented: {
-    list: 'grid auto-cols-fr grid-flow-col gap-1 self-start rounded-[14px] bg-track p-1 max-sm:self-stretch',
+    list: 'grid auto-cols-fr grid-flow-col gap-1 self-start rounded-[14px] bg-track p-1 max-sm:w-full',
     item: segment,
   },
 };

@@ -130,7 +130,7 @@ function StartCard({
             >
               <span className="truncate">{country.name}</span>
               <span aria-hidden="true" className="inline-flex items-center gap-2">
-                <span className="font-display font-bold text-luxe-gold-light blur-[5px] select-none">
+                <span className="font-display font-bold text-luxe-gold-light blur-[2.5px] select-none">
                   {t('result.percent', { n: f.number(VEILED[at] ?? 0) })}
                 </span>
                 <Icon name="lock" size={14} className="text-luxe-gold-light" />
@@ -143,7 +143,7 @@ function StartCard({
         <p className="m-0 flex items-start gap-2.5 text-sm leading-7">
           <span
             aria-hidden="true"
-            className="mt-0.5 flex size-[22px] flex-none items-center justify-center rounded-full bg-luxe-gold text-[13px] font-extrabold"
+            className="mt-0.5 flex size-[22px] flex-none items-center justify-center rounded-full text-[13px] font-extrabold bg-luxe-gold"
           >
             {t('preview.mark')}
           </span>
@@ -154,7 +154,7 @@ function StartCard({
         <button
           type="button"
           onClick={onStart}
-          className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-luxe-gold text-base font-extrabold active:scale-[0.98]"
+          className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] text-base font-extrabold bg-luxe-gold"
         >
           {t(empty ? 'result.retake' : 'sheet.start')}
           <Icon name="chevronEnd" size={18} />
@@ -221,7 +221,7 @@ function ResultBrief({
           </span>
         </span>
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="self-start rounded-full bg-luxe-gold px-3 py-0.5 text-xs font-extrabold">
+          <span className="self-start rounded-full px-3 py-0.5 text-xs font-extrabold bg-luxe-gold">
             {t('result.bestKicker')}
           </span>
           <h2

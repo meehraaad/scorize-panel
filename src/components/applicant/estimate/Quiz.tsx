@@ -200,10 +200,7 @@ export function Quiz({
   };
 
   const steps = (
-    <ol
-      aria-label={t('quiz.steps')}
-      className="m-0 grid list-none grid-cols-5 gap-1.5 p-0 max-sm:gap-1"
-    >
+    <ol aria-label={t('quiz.steps')} className="m-0 grid list-none grid-cols-5 gap-1.5 p-0">
       {STEPS.map((key, position) => (
         <li
           key={key}
@@ -219,7 +216,7 @@ export function Quiz({
           <span
             aria-hidden="true"
             className={`h-1 rounded-full ${
-              position < index ? 'bg-primary' : position === index ? 'bg-primary/45' : 'bg-track'
+              position < index ? 'bg-primary' : position === index ? 'bg-primary/35' : 'bg-track'
             }`}
           />
           <span className={inSheet ? 'sr-only' : ''}>{t(`quiz.step.${key}`)}</span>
@@ -447,7 +444,7 @@ export function Quiz({
         ) : (
           <span />
         )}
-        <Button type="submit" size="lg" className="max-sm:flex-[2] sm:min-w-44">
+        <Button type="submit" size="lg" className="max-sm:flex-1 sm:min-w-44">
           {index < STEPS.length - 1 ? t('quiz.next') : t('quiz.submit')}
           <Icon name="chevronEnd" size={18} />
         </Button>
@@ -473,7 +470,7 @@ export function Quiz({
       <h2
         id="estimate-step"
         tabIndex={-1}
-        className="m-0 font-display text-xl leading-relaxed font-semibold outline-none lg:text-[25px]"
+        className="m-0 font-display text-xl leading-relaxed font-semibold outline-none lg:text-2xl"
       >
         {t(`quiz.title.${step}`)}
       </h2>
@@ -584,7 +581,7 @@ function Analysing() {
                 index < done
                   ? 'bg-live text-hero'
                   : index === done
-                    ? 'shadow-[inset_0_0_0_2px_var(--luxe-gold)]'
+                    ? 'shadow-[inset_0_0_0_2px_var(--hero-current)]'
                     : 'shadow-[inset_0_0_0_2px_var(--hero-line)]'
               }`}
             >
@@ -694,7 +691,7 @@ function LivePreview({
           >
             <span className="truncate">{country.name}</span>
             <span aria-hidden="true" className="inline-flex items-center gap-2">
-              <span className="font-display font-bold text-luxe-gold-light blur-[5px] select-none">
+              <span className="font-display font-bold text-luxe-gold-light blur-[2.5px] select-none">
                 {t('result.percent', { n: f.number(VEILED[at] ?? 0) })}
               </span>
               <Icon name="lock" size={14} className="text-luxe-gold-light" />
@@ -711,7 +708,7 @@ function LivePreview({
             <li key={key} className="flex items-start gap-2.5 text-sm leading-7">
               <span
                 aria-hidden="true"
-                className="mt-0.5 flex size-[22px] flex-none items-center justify-center rounded-full bg-luxe-gold text-[13px] font-extrabold"
+                className="mt-0.5 flex size-[22px] flex-none items-center justify-center rounded-full text-[13px] font-extrabold bg-luxe-gold"
               >
                 {t('preview.mark')}
               </span>

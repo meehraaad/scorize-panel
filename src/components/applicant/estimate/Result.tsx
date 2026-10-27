@@ -111,7 +111,7 @@ function ResultHero({ result, best }: { result: EstimateResult; best: CountryEst
     >
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1.5">
-          <span className="self-start rounded-full bg-luxe-gold px-3 py-0.5 text-xs font-extrabold">
+          <span className="self-start rounded-full px-3 py-0.5 text-xs font-extrabold bg-luxe-gold">
             {t('result.bestKicker')}
           </span>
           <h2
