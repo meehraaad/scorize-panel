@@ -7,12 +7,13 @@ const TOPICS = ['countries', 'costs', 'timeline', 'turkey'] as const;
 /**
  * Before a booked session: what it will cover (country, costs and instalments, timeline, Turkey
  * without paying first), so they come ready to decide, and the contract offer it leads to, locked
- * until the session is over. Design: "Scorize New User Dashboard v2" canvas, UpcomingConsult.
+ * until the session is over. Desktop only: phones keep the session card short.
+ * Design: "Scorize New User Dashboard v2" canvas, UpcomingConsult.
  */
 export function SessionTopics() {
   const { t } = useTranslation('journey');
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div className="grid gap-4 max-lg:hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <Card aria-labelledby="journey-topics" className="flex flex-col gap-4 p-5 lg:p-6">
         <div className="flex flex-col gap-1">
           <h2 id="journey-topics" className="m-0 text-lg font-bold">

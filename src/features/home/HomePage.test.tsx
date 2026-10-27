@@ -246,30 +246,47 @@ describe('applicant home', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
-  it('asks about the consultant after a session, then offers the step that fits', async () => {
+  it('after a session: the summary, the next step, and a survey that opens with the stars', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     addHeldConsultation(MARYAM, 2);
     renderApp('/');
-    const card = await screen.findByRole('region', { name: 'جلسه با نیلوفر شریفی چطور بود؟' });
-    await user.click(within(card).getByRole('button', { name: 'ارسال' }));
-    expect(within(card).getByText('به هر سه سؤال جواب دهید.')).toBeInTheDocument();
+    const summary = await screen.findByRole('region', { name: 'خلاصه‌ی جلسه‌ی شما' });
+    expect(summary).toHaveTextContent('مشاور خلاصه و پیشنهادهای جلسه را به‌زودی همین‌جا می‌نویسد.');
+    expect(within(summary).getByRole('link', { name: 'جزئیات و فاکتور' })).toHaveAttribute(
+      'href',
+      '/?session=90',
+    );
+    const next = screen.getByRole('region', { name: 'پرونده‌ی اپلای‌تان را شروع کنید' });
+    expect(
+      within(next).getByRole('button', { name: 'آماده‌ام، برای قرارداد تماس بگیرید' }),
+    ).toBeInTheDocument();
 
+    const card = screen.getByRole('region', { name: 'جلسه با نیلوفر شریفی چطور بود؟' });
+    expect(within(card).queryByRole('button', { name: 'ارسال' })).toBeNull();
     await user.click(within(card).getByRole('button', { name: '۴ از ۵' }));
     expect(within(card).getByRole('button', { name: '۴ از ۵' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
+    await user.click(within(card).getByRole('button', { name: 'ارسال' }));
+    expect(within(card).getByText('به هر سه سؤال جواب دهید.')).toBeInTheDocument();
     await user.click(within(card).getByRole('radio', { name: 'تا حدی' }));
-    await user.click(within(card).getByRole('radio', { name: /هزینه برایم سؤال است/ }));
+    await user.click(within(card).getByRole('radio', { name: 'هزینه برایم سؤال است' }));
     await user.click(within(card).getByRole('button', { name: 'ارسال' }));
     expect(await toasts().findByText('ممنون! جواب شما به ما رسید.')).toBeInTheDocument();
     expect(feedbackSent).toEqual([
       { id: 90, answer: { rating: 4, clear: 'partly', next: 'cost', comment: '' } },
     ]);
 
-    const thanks = await screen.findByRole('region', { name: 'ممنون از نظرتان' });
-    expect(within(thanks).getByRole('button', { name: 'تماس درباره‌ی ترکیه' })).toBeInTheDocument();
+    // Answered: the survey goes, and the next step follows the answer (cost → Turkey).
+    await waitFor(() => expect(screen.queryByRole('region', { name: /چطور بود؟$/ })).toBeNull());
+    expect(
+      within(screen.getByRole('region', { name: 'پرونده‌ی اپلای‌تان را شروع کنید' })).getByRole(
+        'button',
+        { name: 'تماس درباره‌ی ترکیه' },
+      ),
+    ).toBeInTheDocument();
     // Consulted: no more consultation offer among the ways to start.
     const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
     expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
@@ -282,9 +299,9 @@ describe('applicant home', () => {
     const card = await screen.findByRole('region', {
       name: 'جلسه‌تان با نیلوفر شریفی یادتان هست؟',
     });
-    expect(within(card).getByRole('link', { name: 'جزئیات جلسه' })).toHaveAttribute(
+    expect(within(card).getByRole('link', { name: 'جزئیات و فاکتور' })).toHaveAttribute(
       'href',
-      '/consultations/90',
+      '/?session=90',
     );
     expect(
       within(card).getByRole('button', { name: 'سؤال دارم، تماس بگیرید' }),
@@ -299,17 +316,27 @@ describe('applicant home', () => {
     expect(within(paths).queryByRole('link', { name: 'رزرو مشاوره' })).toBeNull();
   });
 
-  it('puts a booked session first, with what to fill before it', async () => {
+  it('puts a booked session first, with what to fill before it, then every session', async () => {
     loginAs(SARA);
     localStorage.setItem('scorize.mock.access', 'guest');
     renderApp('/');
     const session = await screen.findByRole('region', { name: 'مشاوره‌ی تخصصی اپلای دکترا' });
     expect(within(session).getByText('فرم سوابق را کامل کنید')).toBeInTheDocument();
     const links = within(session).getAllByRole('link', { name: 'تکمیل' });
-    expect(links.map((link) => link.getAttribute('href'))).toEqual([
-      '/background',
-      '/consultations/41',
-    ]);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/background', '/?session=41']);
+
+    // Sessions before it: the list takes the place of the topics.
+    expect(
+      screen.queryByRole('region', { name: 'در جلسه درباره‌ی این‌ها حرف می‌زنیم' }),
+    ).toBeNull();
+    const all = screen.getByRole('region', { name: 'جلسه‌های شما' });
+    const items = within(all).getAllByRole('listitem');
+    expect(items).toHaveLength(4);
+    expect(items[0]).toHaveTextContent('مشاوره‌ی تخصصی اپلای دکترا');
+    expect(items[0]).toHaveTextContent('پیش رو');
+    // The latest held one starts open, with what it was about.
+    expect(items[1]?.querySelector('details')).toHaveAttribute('open');
+    expect(items[1]).toHaveTextContent('انتخاب کشور و دانشگاه بر اساس رزومه.');
   });
 
   it('saves the tablet form', async () => {
