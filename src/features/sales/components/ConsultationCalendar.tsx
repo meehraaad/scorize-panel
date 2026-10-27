@@ -101,7 +101,7 @@ export function ConsultationCalendar() {
           <Icon
             name={item.form ? 'formDone' : 'formMissing'}
             size={13}
-            className={item.form ? 'text-good opacity-75' : 'text-danger opacity-85'}
+            className={item.form ? 'text-good opacity-60' : 'text-danger opacity-80'}
           />
         ),
         tag: status === 'need' ? t('consultationCalendar.tagNeed') : undefined,
@@ -177,7 +177,7 @@ export function ConsultationCalendar() {
             onClick={() => go(addDays(week, 7))}
           />
         </span>
-        <h2 aria-live="polite" className="m-0 me-auto font-display text-lg font-bold">
+        <h2 aria-live="polite" className="m-0 flex-1 font-display text-lg font-bold">
           {range}
         </h2>
         {unlogged > 0 && !onlyUnlogged && (
@@ -200,7 +200,7 @@ export function ConsultationCalendar() {
       <div className="flex flex-wrap items-start gap-4 lg:gap-5">
         <aside
           aria-label={t('consultationCalendar.aside')}
-          className="flex min-w-0 flex-[1_1_260px] flex-col gap-4 lg:max-w-72"
+          className="flex min-w-0 flex-[1_1_260px] flex-col gap-4 lg:max-w-80"
         >
           {next && (
             <NextSession
@@ -243,13 +243,13 @@ export function ConsultationCalendar() {
           </Card>
         </aside>
 
-        <Card className="min-w-0 flex-[999_1_600px] p-3 lg:p-4">
+        <Card className="min-w-0 flex-[999_1_600px] p-3 lg:p-5">
           <ul className="m-0 mb-3 flex list-none flex-wrap items-center justify-end gap-x-4 gap-y-1.5 p-0 text-xs text-text-2">
             <Legend swatch="bg-track">{t('consultationCalendar.status.done')}</Legend>
             <Legend swatch="bg-warn-tint shadow-[inset_0_0_0_1.5px_var(--cal-few)]">
               {t('consultationCalendar.status.need')}
             </Legend>
-            <Legend swatch="bg-[var(--cal-0)]">{t('consultationCalendar.status.live')}</Legend>
+            <Legend swatch="bg-primary">{t('consultationCalendar.status.live')}</Legend>
             <Legend swatch="bg-tint">{t('consultationCalendar.status.upcoming')}</Legend>
             <Legend swatch="bg-surface shadow-[inset_0_0_0_1px_var(--line-3)]">
               {t('consultationCalendar.followUp')}
@@ -353,7 +353,7 @@ function Layers({
             >
               {on && <Icon name="check" size={12} />}
             </span>
-            <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold">{row.label}</span>
+            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{row.label}</span>
             <span className="text-xs text-text-2">{f.number(counts(row.id))}</span>
           </label>
         );
@@ -618,12 +618,12 @@ function Details({
     <section
       role="dialog"
       aria-label={item.name}
-      className="flex flex-col gap-3.5 rounded-card-sm bg-surface p-4 shadow-[0_0_0_1px_var(--hair),0_24px_48px_rgb(27_16_32/0.22)]"
+      className="flex flex-col gap-3.5 rounded-card-sm bg-surface p-4 shadow-toast"
     >
       <div className="flex items-start gap-3">
         <span
           aria-hidden="true"
-          className="mt-1.5 size-3.5 flex-none rounded-[4px]"
+          className="mt-1.5 size-4 flex-none rounded-[3px]"
           style={
             chosen.kind === 'call'
               ? { boxShadow: 'inset 0 0 0 1.5px var(--text-2)' }

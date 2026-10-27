@@ -187,20 +187,20 @@ function Block({
       aria-pressed={chosen}
       onClick={() => onChange(chosen ? null : event.id)}
       style={style}
-      className={`absolute flex flex-col gap-0.5 overflow-hidden rounded-lg text-start font-bold transition-[filter] hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus ${
-        tall ? 'justify-start px-2 py-1' : 'justify-center px-2'
-      } ${large ? 'rounded-xl px-3 text-[13.5px]' : 'text-xs'} ${LOOK[event.look]} ${
+      className={`absolute flex flex-col gap-0.5 overflow-hidden rounded-lg text-start font-bold focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus ${
+        tall ? 'px-2 py-1' : 'justify-center px-2'
+      } ${large ? 'rounded-xl px-3 text-[13px]' : 'text-xs'} ${LOOK[event.look]} ${
         event.warn && event.look !== 'live' ? 'shadow-[inset_0_0_0_1.5px_var(--danger)]' : ''
-      } ${chosen ? 'z-20 outline-2 outline-offset-1 outline-text' : ''}`}
+      } ${chosen ? 'z-20 outline-2 outline-offset-1 outline-focus' : ''}`}
     >
       <span className="flex min-w-0 items-center gap-1.5">
         {event.lead && <span className="flex flex-none">{event.lead}</span>}
         <span className="min-w-0 flex-1 truncate">{event.title}</span>
         {event.trail && <span className="flex flex-none">{event.trail}</span>}
       </span>
-      {tall && <span className="truncate text-[11px] font-semibold opacity-85">{event.meta}</span>}
+      {tall && <span className="truncate text-[11px] font-semibold opacity-80">{event.meta}</span>}
       {event.tag && height > 50 && (
-        <span className="self-start rounded-full bg-[var(--cal-few)] px-2 text-[10.5px] font-extrabold text-hero">
+        <span className="self-start rounded-full bg-[var(--cal-few)] px-2 text-[11px] font-extrabold text-hero">
           {event.tag}
         </span>
       )}
@@ -297,7 +297,7 @@ function Week({ days, value, onChange, details, loading, now }: ViewProps) {
               role="group"
               aria-label={f.weekday(day.date)}
               className={`relative border-s border-hair ${narrow ? 'w-16 flex-none bg-canvas/60' : 'min-w-0 flex-1'} ${
-                !narrow && day.date < today ? 'bg-canvas/30' : ''
+                !narrow && day.date < today ? 'bg-canvas/60' : ''
               }`}
               style={lines}
             >
@@ -389,7 +389,7 @@ function Day({ days, value, onChange, details, loading, now }: ViewProps) {
               aria-checked={isCurrent}
               aria-label={`${f.weekday(day.date)}، ${t('eventCalendar.count', { n: f.number(day.events.length) })}`}
               onClick={() => setPicked(day.date)}
-              className={`flex min-w-0 flex-col items-center gap-1 py-1 ${any || isToday ? 'flex-[1.4]' : 'flex-[0.7]'}`}
+              className={`flex min-w-0 flex-col items-center gap-1 py-1 ${any || isToday ? 'flex-[2]' : 'flex-1'}`}
             >
               <span
                 className={`text-[11px] font-semibold ${isToday ? 'text-primary-text' : any ? 'text-text-2' : 'text-text-3'}`}
@@ -418,7 +418,7 @@ function Day({ days, value, onChange, details, loading, now }: ViewProps) {
                     style={{ '--event': event.color } as CSSProperties}
                     className={`size-1.5 rounded-full ${
                       event.look === 'call'
-                        ? 'shadow-[inset_0_0_0_1.3px_var(--text-2)]'
+                        ? 'shadow-[inset_0_0_0_1.5px_var(--primary)]'
                         : event.look === 'need'
                           ? 'bg-[var(--cal-few)]'
                           : 'bg-[var(--event)]'
