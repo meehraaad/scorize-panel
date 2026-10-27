@@ -13,18 +13,23 @@ import type { TasksConfig } from '../config';
 import { toast } from '@/lib/toast';
 
 const STEPS = ['sent', 'seen', 'in_progress', 'done'] as const;
+/** Old requests went to dozens of people: name a few and count the rest. */
+const WATCHERS_SHOWN = 3;
 
 /**
  * A colleague's request: its steps, what they wrote, the conversation, and finishing it (they are
- * told) or refusing it with a reason. Canvas "جزئیات درخواست همکار".
+ * told) or refusing it with a reason. Canvas "جزئیات درخواست همکار". `sent`: a request I sent,
+ * opened to follow it and talk; only who does it finishes or refuses it.
  */
 export function RequestDialog({
   id,
   config,
+  sent = false,
   onClose,
 }: {
   id: number | null;
   config: TasksConfig;
+  sent?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
@@ -77,6 +82,7 @@ export function RequestDialog({
       footer={
         data &&
         !closed &&
+        !sent &&
         (refusing ? (
           <>
             <Button
@@ -117,7 +123,14 @@ export function RequestDialog({
             )}
             <span>{t('requests.due', { when: f.dateTime(data.due_at) })}</span>
             {data.watchers.length > 0 && (
-              <span>{t('requests.watchers', { names: f.list(data.watchers) })}</span>
+              <span>
+                {data.watchers.length > WATCHERS_SHOWN
+                  ? t('requests.watchersMany', {
+                      names: f.list(data.watchers.slice(0, WATCHERS_SHOWN)),
+                      n: f.number(data.watchers.length - WATCHERS_SHOWN),
+                    })
+                  : t('requests.watchers', { names: f.list(data.watchers) })}
+              </span>
             )}
           </div>
           <StepBar
@@ -126,7 +139,11 @@ export function RequestDialog({
             current={data.status === 'rejected' ? STEPS.length - 1 : current}
             finished={data.status === 'done'}
           />
-          <p className="m-0 rounded-2xl bg-canvas p-4 text-[15px] leading-8">{data.body}</p>
+          {data.body && (
+            <p className="m-0 rounded-2xl bg-canvas p-4 text-[15px] leading-8 [overflow-wrap:anywhere] whitespace-pre-line">
+              {data.body}
+            </p>
+          )}
           <section aria-labelledby="request-thread" className="flex flex-col gap-3">
             <h3 id="request-thread" className="m-0 text-sm font-semibold text-text-2">
               {t('requests.thread')}
@@ -143,7 +160,9 @@ export function RequestDialog({
                   <span className="text-xs text-text-2">
                     {`${comment.author} · ${f.timeAgo(comment.at)}`}
                   </span>
-                  <span className="text-sm leading-7">{comment.text}</span>
+                  <span className="text-sm leading-7 [overflow-wrap:anywhere] whitespace-pre-line">
+                    {comment.text}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -151,7 +170,9 @@ export function RequestDialog({
               <form onSubmit={send} className="flex items-end gap-2">
                 <div className="flex-1">
                   <TextAreaField
-                    label={t('requests.message', { name: first })}
+                    label={
+                      sent ? t('requests.messageSent') : t('requests.message', { name: first })
+                    }
                     rows={2}
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}

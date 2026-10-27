@@ -4,7 +4,9 @@ import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { api } from '@/lib/api/client';
-import type { CustomerData, CustomerInfo, MonthData, TodayData } from './api';
+import type { CustomerData, CustomerInfo, TodayData } from './api';
+import type { MonthData } from './api/month';
+import { MONTH_PASSWORD } from '@/mocks/sales';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
@@ -15,6 +17,18 @@ const ERFAN = 105; // a consulted lead with history and tasks (src/mocks/sales.t
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
 };
+
+const readMonth = () =>
+  api<MonthData>('/sales/v1/month/', { method: 'POST', body: { password: MONTH_PASSWORD } });
+
+/** Opens "my month" and types the password it asks for. */
+async function openMonth(password = MONTH_PASSWORD) {
+  const user = userEvent.setup();
+  const router = renderApp('/sales/month');
+  await user.type(await screen.findByLabelText('رمز عبور'), password);
+  await user.click(screen.getByRole('button', { name: 'باز کردن ماه من' }));
+  return { user, router };
+}
 
 describe('sales panel, seller pages', () => {
   beforeEach(async () => {
@@ -340,15 +354,31 @@ describe('sales panel, seller pages', () => {
   });
 
   it('month: goal and funnel', async () => {
-    renderApp('/sales/month');
+    await openMonth();
     expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: '۷ از ۱۲ قرارداد' })).toBeInTheDocument();
   });
 
+  it('month: asks for the password again on every visit', async () => {
+    const { router } = await openMonth();
+    expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();
+    await router.navigate('/sales/board');
+    expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
+    await router.navigate('/sales/month');
+    expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /^ماه من · / })).not.toBeInTheDocument();
+  });
+
+  it('month: a wrong password shows nothing of the month', async () => {
+    await openMonth('not-it');
+    expect(await screen.findByText('رمز عبور درست نیست.')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
   it('month: estimates leads from the same cohort as the funnel', async () => {
-    const month = await api<MonthData>('/sales/v1/month/');
+    const month = await readMonth();
     server.use(
-      http.get('/api/sales/v1/month/', () =>
+      http.post('/api/sales/v1/month/', () =>
         HttpResponse.json({
           ...month,
           won: 7,
@@ -357,16 +387,16 @@ describe('sales panel, seller pages', () => {
         }),
       ),
     );
-    renderApp('/sales/month');
+    await openMonth();
     expect(
       await screen.findByText('۵ قرارداد دیگر تا هدف. با نرخ تبدیل فعلی، یعنی حدود ۲۵ لید تازه.'),
     ).toBeInTheDocument();
   });
 
   it('month: an unset target is not shown as achieved', async () => {
-    const month = await api<MonthData>('/sales/v1/month/');
-    server.use(http.get('/api/sales/v1/month/', () => HttpResponse.json({ ...month, target: 0 })));
-    renderApp('/sales/month');
+    const month = await readMonth();
+    server.use(http.post('/api/sales/v1/month/', () => HttpResponse.json({ ...month, target: 0 })));
+    await openMonth();
     expect(await screen.findAllByText('هدف ماه تعیین نشده')).toHaveLength(2);
     expect(screen.queryByText('به هدف این ماه رسیدید.')).not.toBeInTheDocument();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
@@ -375,16 +405,16 @@ describe('sales panel, seller pages', () => {
   it.each([0, 10])(
     'month: no conversion estimate with %i leads and zero cohort wins',
     async (leads) => {
-      const month = await api<MonthData>('/sales/v1/month/');
+      const month = await readMonth();
       server.use(
-        http.get('/api/sales/v1/month/', () =>
+        http.post('/api/sales/v1/month/', () =>
           HttpResponse.json({
             ...month,
             funnel: { ...month.funnel, leads, won: 0 },
           }),
         ),
       );
-      renderApp('/sales/month');
+      await openMonth();
       expect(
         await screen.findByText(
           '۵ قرارداد دیگر تا هدف. داده‌ی کافی برای تخمین تعداد لید تازه وجود ندارد.',
@@ -394,16 +424,16 @@ describe('sales panel, seller pages', () => {
   );
 
   it('month: distinguishes missing call measurements from a real zero', async () => {
-    const month = await api<MonthData>('/sales/v1/month/');
+    const month = await readMonth();
     server.use(
-      http.get('/api/sales/v1/month/', () =>
+      http.post('/api/sales/v1/month/', () =>
         HttpResponse.json({
           ...month,
           weeks: [null, 0, 20, null],
         }),
       ),
     );
-    renderApp('/sales/month');
+    await openMonth();
     const chart = await screen.findByRole('img', { name: /هفته‌ی ۱: داده‌ی تماس موجود نیست/ });
     expect(chart).toHaveAccessibleName(/هفته‌ی ۲: ۰ دقیقه/);
     expect(within(chart).getAllByText('داده‌ی تماس موجود نیست')).toHaveLength(2);

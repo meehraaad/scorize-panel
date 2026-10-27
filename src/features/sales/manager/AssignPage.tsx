@@ -277,6 +277,7 @@ function QueueRow({
       <span className="flex items-center gap-2">
         <SelectField
           inline
+          hideLabel
           label={t('manager.assign.sellerFor', { name: lead.name })}
           value={seller}
           onChange={setSeller}
