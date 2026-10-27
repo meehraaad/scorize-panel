@@ -84,7 +84,9 @@ describe('SOP information form', () => {
     fireEvent.submit(form);
     expect(screen.queryByRole('group', { name: /ثبت نهایی شود؟/ })).not.toBeInTheDocument();
     expect(goals).not.toHaveAttribute('aria-invalid');
-    expect(screen.getByRole('region', { name: 'ذخیرهٔ پیش‌نویس و ثبت نهایی' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'خرید، تیکت به نویسنده و ثبت نهایی' }),
+    ).toBeInTheDocument();
   });
 
   it('moves between sections and saves on the way', async () => {
@@ -165,39 +167,26 @@ describe('SOP information form', () => {
     expect(await screen.findByText('انگیزه‌نامه جزو خدمات قرارداد شما نیست.')).toBeInTheDocument();
   });
 
-  it('takes a new user from a complete form to its payment', async () => {
+  it('lets a new user buy before the form is complete', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    // Started from the documents tab before paying, answered in an earlier visit.
-    const api = (path: string, init?: RequestInit) =>
-      fetch(new URL(`/api/applicant/v1/writing/sop/${path}`, window.location.origin), {
-        headers: { 'Content-Type': 'application/json' },
-        ...init,
-      });
-    await api('start/', { method: 'POST' });
-    await api('', { method: 'PATCH', body: JSON.stringify({ answers: COMPLETE_SOP }) });
+    // Started from the documents tab before paying.
+    await fetch(new URL('/api/applicant/v1/writing/sop/start/', window.location.origin), {
+      method: 'POST',
+    });
 
     const router = renderApp('/documents/sop');
-    await user.click(
-      await screen.findByRole('button', { name: 'ثبت نهایی و پرداخت ۴٬۵۰۰٬۰۰۰ تومان' }),
+    const bar = await screen.findByRole('region', { name: 'خرید، تیکت به نویسنده و ثبت نهایی' });
+    expect(
+      within(bar).getByText(/بعد از خرید هم می‌توانید پر کردن فرم را ادامه دهید/),
+    ).toBeInTheDocument();
+    expect(within(bar).getByRole('link', { name: 'تیکت به نویسنده' })).toHaveAttribute(
+      'href',
+      '/tickets/writing/sop',
     );
-    const confirm = screen.getByRole('group', { name: /به صفحه‌ی پرداخت می‌روید/ });
-    await user.click(within(confirm).getByRole('button', { name: 'ثبت نهایی' }));
+    expect(within(bar).getByRole('button', { name: 'ثبت نهایی' })).toBeDisabled();
+    expect(within(bar).queryByRole('button', { name: /ذخیره/ })).toBeNull();
+    await user.click(within(bar).getByRole('button', { name: 'خرید — ۴٬۵۰۰٬۰۰۰ تومان' }));
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/payments/600'));
   });
 });
-
-const COMPLETE_SOP = {
-  grade: 2,
-  field_of_study: 'مهندسی کامپیوتر',
-  university_1: 'دانشگاه صنعتی اصفهان',
-  Rate_1: '17',
-  field_of_study_for_apply: 'Computer Science',
-  city_for_apply: 'Toronto',
-  general_sop: true,
-  reason: 'دلیل',
-  interest: 'علاقه',
-  reason_to_continuation: 'ادامه',
-  project: 'پروژه',
-  job: 'پژوهشگر',
-};

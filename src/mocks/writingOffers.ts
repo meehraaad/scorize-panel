@@ -140,6 +140,14 @@ export const writingOfferHandlers = [
     return HttpResponse.json({ updated_at: order.form.updated_at });
   }),
 
+  // Paying before (or while) filling the form in.
+  http.post(`${BASE}/writing/:type/pay/`, ({ params }) => {
+    const order = ownOrder(params.type);
+    if (!order) return undefined;
+    if (order.paid) return HttpResponse.json({ detail: 'Paid.', code: 'paid' }, { status: 409 });
+    return HttpResponse.json({ payment_id: order.payment_id });
+  }),
+
   http.post(`${BASE}/writing/:type/final/`, async ({ params, request }) => {
     const order = ownOrder(params.type);
     if (!order) return undefined;

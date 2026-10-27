@@ -195,9 +195,7 @@ describe('documents page', () => {
       await screen.findByRole('heading', { name: 'اطلاعات انگیزه‌نامه', level: 1 }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/documents/sop');
-    expect(
-      screen.getByRole('button', { name: 'ثبت نهایی و پرداخت ۴٬۵۰۰٬۰۰۰ تومان' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'خرید — ۴٬۵۰۰٬۰۰۰ تومان' })).toBeInTheDocument();
   });
 
   it('keeps the locked preview for a contract with writing', async () => {

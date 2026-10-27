@@ -26,8 +26,9 @@ export interface WritingForm {
   /** How many of this order the contract has (recommendation letters); absent: one. */
   count?: number;
   /**
-   * An order the person started before paying (no contract, H67): its price, paid at the final
-   * submit. Null or absent once paid, and for a contract's orders.
+   * An order the person started before paying (no contract, H67): its price, paid from the form's
+   * bar before or while filling it in (`usePayWriting`). Null or absent once paid, and for a
+   * contract's orders (a contract with writing has every service in it).
    */
   purchase?: { price: number } | null;
 }
@@ -133,6 +134,20 @@ export function receiptInReview(error: unknown) {
     error.status === 409 &&
     (error.body as { code?: string } | null)?.code === 'in_review'
   );
+}
+
+/**
+ * Pays an order started before paying, filled in or not: its payment for the payment page, or null
+ * when a free price paid it at once (204). 409 `in_review` while a receipt waits, `paid` once paid.
+ */
+export function usePayWriting(type: FormType) {
+  const client = useQueryClient();
+  return useMutation({
+    networkMode: 'always',
+    retry: false,
+    mutationFn: () => api<{ payment_id: number } | null>(`${url(type)}pay/`, { method: 'POST' }),
+    onSettled: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
+  });
 }
 
 export function useSubmitWriting(type: FormType) {
