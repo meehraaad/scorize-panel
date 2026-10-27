@@ -17,7 +17,7 @@ interface ProgressBarProps {
 }
 
 /** The gold fill of a bar on a luxe card (progress, the current step). */
-const GOLD = 'bg-[linear-gradient(90deg,var(--luxe-gold-light),var(--luxe-gold))]';
+const GOLD = 'bg-luxe-gold';
 
 /** A horizontal progress bar. */
 export function ProgressBar({

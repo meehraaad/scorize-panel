@@ -41,21 +41,21 @@ export function StartHero({
       aria-label={t('start.title')}
       className="flex flex-col gap-7 rounded-[24px] px-5 py-6 text-on-hero shadow-luxe bg-luxe lg:rounded-[36px] lg:p-9"
     >
-      <div className="flex flex-wrap gap-x-10 gap-y-7">
-        <div className="flex min-w-0 flex-[1_1_440px] flex-col gap-3.5">
+      <div className="grid gap-x-10 gap-y-7 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-3.5">
           <span className="inline-flex h-7 items-center self-start rounded-full px-3.5 text-[13px] font-bold bg-luxe-gold">
             {t(`start.badge.${status}`)}
           </span>
           <h2 className="m-0 font-display text-[26px] leading-snug font-bold lg:text-4xl">
             {t(`start.headline.${status}`)}
           </h2>
-          <p className="m-0 max-w-[560px] text-[15px] leading-7 text-on-luxe-2 lg:text-base">
+          <p className="m-0 max-w-[620px] text-[15px] leading-7 text-on-luxe-2 lg:text-base">
             {about && `${about}. `}
             {t(`start.text.${status}`)}
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-[1_1_300px] flex-col justify-end gap-3.5 lg:border-s lg:border-[var(--luxe-line)] lg:ps-10">
+        <div className="flex min-w-0 flex-col justify-end gap-3.5 lg:border-s lg:border-[var(--luxe-line)] lg:ps-10">
           <span className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm text-on-luxe-2">{t('start.prepayment')}</span>
             <span className="inline-flex items-center gap-1.5 text-[13px] font-bold text-luxe-gold-light">
@@ -64,7 +64,7 @@ export function StartHero({
             </span>
           </span>
           <span className="flex items-baseline gap-2.5">
-            <span className="font-display text-[40px] leading-tight font-bold tabular-nums lg:text-[50px]">
+            <span className="font-display text-[40px] leading-tight font-bold tabular-nums lg:text-[44px]">
               {f.number(prepayment.amount)}
             </span>
             <span className="text-base text-on-luxe-2">{t('start.toman')}</span>
@@ -72,17 +72,17 @@ export function StartHero({
           {status !== 'paid' && (
             <div className="mt-1.5 flex flex-wrap gap-2.5">
               {status === 'review' ? (
-                <Link to={payment} className={buttonClass('onLuxe', 'flex-[1_1_180px]', 'lg')}>
+                <Link to={payment} className={buttonClass('onLuxe', 'flex-auto', 'lg')}>
                   {t('start.open')}
                 </Link>
               ) : (
                 <>
-                  <Link to={payment} className={buttonClass('gold', 'flex-[1_1_150px]', 'lg')}>
+                  <Link to={payment} className={buttonClass('gold', 'flex-auto', 'lg')}>
                     {t(status === 'declined' ? 'start.again' : 'start.pay')}
                   </Link>
                   <Link
                     to={`${payment}?method=receipt`}
-                    className={buttonClass('onLuxe', 'flex-[1_1_190px]', 'lg')}
+                    className={buttonClass('onLuxe', 'flex-auto', 'lg')}
                   >
                     {t('start.receipt')}
                   </Link>
