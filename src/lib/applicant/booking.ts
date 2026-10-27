@@ -5,7 +5,6 @@ import { APPLICANT_KEY } from '@/lib/applicant/approval';
 import { useBookConsultation } from '@/lib/applicant/journey';
 import { eventColor, toValue, weekOf } from '@/lib/calendar';
 import { toast } from '@/lib/toast';
-import { safeHref } from '@/lib/url';
 
 /**
  * The booking calendar (H66): every consultation one can book, and their times in a range of days,
@@ -75,8 +74,8 @@ export const firstCalendarQuery = (startDay: number, now = new Date()) =>
 export const typeColor = (type: Pick<BookableType, 'color'>) => eventColor(type.color);
 
 /**
- * Books a consultation at a time: off to the bank gateway, or straight to the session when credit
- * pays it. A time taken meanwhile says so (the times are read again).
+ * Books a consultation at a time: on to its purchase page (code, credit, how to pay), or straight
+ * to the session when credit paid it. A time taken meanwhile says so (the times are read again).
  */
 export function useBookSlot(messages: { booked: string; taken: string; error: string }) {
   const navigate = useNavigate();
@@ -85,9 +84,8 @@ export function useBookSlot(messages: { booked: string; taken: string; error: st
     book.mutate(
       { type, starts_at: startsAt },
       {
-        onSuccess: ({ consultation, redirect_url }) => {
-          const target = safeHref(redirect_url);
-          if (target) window.location.assign(target);
+        onSuccess: ({ consultation, payment_id, paid }) => {
+          if (!paid) void navigate(`/payments/${String(payment_id)}`);
           else {
             toast.success(messages.booked);
             void navigate(`/consultations/${String(consultation)}`);

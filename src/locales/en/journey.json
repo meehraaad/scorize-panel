@@ -104,7 +104,8 @@
     "error": "The form wasn't saved. Try again.",
     "complete": "The form is complete; your consultant has everything.",
     "incomplete": "To complete it: your city and at least one degree with its university and GPA.",
-    "back": "Back to home"
+    "back": "Back to home",
+    "forCampaign": "This is the campaign's registration form. Once it's complete and saved, you go back to the campaign."
   },
   "afterSession": {
     "title": "How was your session with {{name}}?",

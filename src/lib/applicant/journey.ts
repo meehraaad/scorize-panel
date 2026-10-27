@@ -180,14 +180,14 @@ export const startQuery = queryOptions({
 });
 
 /**
- * Books a consultation at one of its times (H64): the dashboard's, or any on the booking calendar. `redirect_url`: the bank gateway,
- * which brings the browser back to the panel's payment page; null when credit paid it all.
+ * Books a consultation at one of its times (H64): the dashboard's, or any on the booking calendar.
+ * `payment_id`: its invoice, paid on the purchase page; `paid`: credit paid it all (PAY4).
  */
 export function useBookConsultation() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (body: { type: number; starts_at: string }) =>
-      api<{ consultation: number; payment_id: number; redirect_url: string | null }>(
+      api<{ consultation: number; payment_id: number; paid: boolean }>(
         `${BASE}/consultations/book/`,
         { method: 'POST', body },
       ),

@@ -6,7 +6,15 @@ import type {
   ProfessorEmailPage,
   VisaResult,
 } from '@/features/applications/api';
-import type { ContractData, PaymentData, ProfileField } from '@/features/contract/api';
+import type {
+  CampaignData,
+  ContractData,
+  DiscountResult,
+  OpenPayment,
+  PaymentData,
+  PaymentItem,
+  ProfileField,
+} from '@/features/contract/api';
 import type { CaseFile, DocumentsData, RequiredDocument } from '@/features/documents/api';
 import type { AccessState, ApplicantAccess, CallRequest } from '@/lib/applicant/access';
 import type { Gates } from '@/lib/applicant/gates';
@@ -573,6 +581,8 @@ interface SaraState {
   contract: ContractData;
   /** Invoices: the contract's instalments and purchases from "other services". */
   payments: PaymentData[];
+  /** The one open campaign (PAY10). */
+  campaign: CampaignData;
 }
 
 function saraState(): SaraState {
@@ -593,6 +603,23 @@ function saraState(): SaraState {
     threads: saraThreads(),
     contract: saraContract(),
     payments: saraPayments(),
+    campaign: saraCampaign(),
+  };
+}
+
+function saraCampaign(): CampaignData {
+  return {
+    id: 4,
+    slug: 'apply-week',
+    title: 'هفته‌ی اپلای',
+    description: 'یک هفته همراهی کارشناس برای انتخاب دانشگاه و آماده کردن مدارک.',
+    price: 490_000,
+    old_price: 690_000,
+    form_stage: 'after',
+    wizard: 'basic',
+    seats_left: 12,
+    form_complete: false,
+    registration: null,
   };
 }
 
@@ -707,24 +734,60 @@ function saraContract(): ContractData {
   };
 }
 
-const invoice = (id: number, extra: Partial<PaymentData>): PaymentData => ({
-  id,
-  status: 'unpaid',
-  method: null,
-  installment: null,
-  items: [],
-  total: 0,
-  credit_used: 0,
-  amount: 0,
-  currency: 'IRT',
-  created_at: hoursAgo(26),
-  paid_at: null,
-  seller: SELLER,
-  receipt: null,
-  decline_reason: null,
-  bank: BANK,
+/** One invoice item at its list price; `extra` gives its discounts. */
+const item = (label: string, price: number, extra: Partial<PaymentItem> = {}): PaymentItem => ({
+  label,
+  note: null,
+  kind: 'other',
+  href: null,
+  price,
+  discounted_price: null,
+  code_discount: 0,
+  credit: 0,
+  tax: 0,
+  amount: price,
   ...extra,
 });
+
+const invoice = (id: number, extra: Partial<PaymentData>): PaymentData => {
+  const items = extra.items ?? [];
+  const total = items.reduce((sum, row) => sum + row.amount + row.credit, 0);
+  return {
+    id,
+    status: 'unpaid',
+    method: null,
+    installment: null,
+    items,
+    total,
+    original: items.reduce((sum, row) => sum + row.price, 0),
+    admin_discount: items.reduce(
+      (sum, row) => sum + row.price - (row.discounted_price ?? row.price),
+      0,
+    ),
+    code: null,
+    tax: 0,
+    credit_used: 0,
+    adjustment: 0,
+    amount: total,
+    currency: 'IRT',
+    created_at: hoursAgo(26),
+    expires_at: null,
+    paid_at: null,
+    ref_id: null,
+    seller: SELLER,
+    receipt: null,
+    decline_reason: null,
+    bank: BANK,
+    editable: false,
+    wallet: null,
+    use_credit: false,
+    reward: 0,
+    renew: null,
+    activities: [],
+    token: `TOKEN${String(id)}`,
+    ...extra,
+  };
+};
 
 /** Django writes item labels in the user's language; the fake writes Persian. */
 const fa = (value: number) => value.toLocaleString('fa-IR', { useGrouping: false });
@@ -738,47 +801,63 @@ const instalmentInvoice = (
   invoice(id, {
     installment: number,
     items: [
-      {
-        label:
-          number === 0
-            ? `پیش‌پرداخت قرارداد ${fa(SARA_FILE)}`
-            : `قسط ${fa(number)} قرارداد ${fa(SARA_FILE)}`,
+      item(
+        number === 0
+          ? `پیش‌پرداخت قرارداد ${fa(SARA_FILE)}`
+          : `قسط ${fa(number)} قرارداد ${fa(SARA_FILE)}`,
         amount,
-      },
+        { kind: 'instalment', href: '/contract' },
+      ),
     ],
-    total: amount,
-    amount,
+    seller: null,
     ...extra,
   });
 
+/** Sara's wallet credit, for the purchase page's switch. */
+const SARA_WALLET = 50_000;
+
+/** Two services bought together: a session (with the admin's discount) and a writing order. */
+const services = () => [
+  item('رزرو مشاوره', 900_000, {
+    kind: 'consultation',
+    note: daysFromNow(2),
+    href: '/consultations/31',
+    discounted_price: 800_000,
+    amount: 800_000,
+  }),
+  item('سفارش نگارش', 405_000, { kind: 'writing', href: '/writing/sop' }),
+];
+
+/** The person's own purchase, before the bank: the code and the credit can change. */
+const ownPurchase = (extra: Partial<PaymentData> = {}) => ({
+  seller: null,
+  editable: true,
+  wallet: SARA_WALLET,
+  expires_at: new Date(Date.now() + 18 * 60_000).toISOString(),
+  created_at: new Date(Date.now() - 2 * 60_000).toISOString(),
+  reward: 24_000,
+  ...extra,
+});
+
 /**
- * 501: the due instalment. 502–504: a services purchase in each other state, to see every design
- * state with `pnpm dev:mock` (/payments/502 online, 503 receipt in review, 504 receipt declined).
+ * 501: the due instalment. 502–504, 507–510: a services purchase in each other state, to see every
+ * design state with `pnpm dev:mock` (/payments/502 to buy, 503 receipt in review, 504 receipt
+ * declined, 507 expired, 508 failed, 509 being checked, 510 paid).
  */
 function saraPayments(): PaymentData[] {
-  const services = [
-    { label: 'رزرو مشاوره', amount: 800_000 },
-    { label: 'سفارش نگارش', amount: 405_000 },
-  ];
   return [
     instalmentInvoice(501, 2, 45_000_000),
-    invoice(502, { items: services, total: 1_205_000, credit_used: 5_000, amount: 1_200_000 }),
+    invoice(502, { items: services(), ...ownPurchase() }),
     invoice(503, {
       status: 'review',
       method: 'receipt',
-      items: services,
-      total: 1_205_000,
-      credit_used: 5_000,
-      amount: 1_200_000,
+      items: services(),
       receipt: { url: '#', uploaded_at: hoursAgo(3) },
     }),
     invoice(504, {
       status: 'declined',
       method: 'receipt',
-      items: services,
-      total: 1_205_000,
-      credit_used: 5_000,
-      amount: 1_200_000,
+      items: services(),
       receipt: { url: '#', uploaded_at: hoursAgo(30) },
       decline_reason: 'مبلغ رسید با فاکتور یکی نبود.',
     }),
@@ -786,14 +865,85 @@ function saraPayments(): PaymentData[] {
       status: 'paid',
       method: 'online',
       paid_at: daysFromNow(-241),
+      ref_id: '738201945',
     }),
     instalmentInvoice(506, 1, 30_000_000, {
       status: 'paid',
       method: 'receipt',
       paid_at: daysFromNow(-151),
     }),
+    invoice(507, { status: 'expired', items: services(), seller: null, renew: 'self' }),
+    invoice(508, {
+      status: 'failed',
+      method: 'online',
+      items: services(),
+      seller: null,
+      renew: 'self',
+    }),
+    invoice(509, { status: 'checking', method: 'online', items: services(), seller: null }),
+    invoice(510, {
+      status: 'paid',
+      method: 'online',
+      items: services(),
+      seller: null,
+      paid_at: hoursAgo(1),
+      ref_id: '512907733',
+      reward: 24_000,
+    }),
   ];
 }
+
+/** The fake's discount codes: 10% off everything, and one past its date. */
+const CODES: Record<string, DiscountResult> = { SCORIZE10: 'ok', OLD: 'expired' };
+
+/** Prices an editable invoice again after its code or credit changed (Django: `reprice_payment`). */
+function reprice(payment: PaymentData, code: string | null, useCredit: boolean) {
+  const items = payment.items.map((row) => {
+    const base = row.discounted_price ?? row.price;
+    return { ...row, code_discount: code ? Math.round(base / 10) : 0, credit: 0 };
+  });
+  let credit = useCredit
+    ? Math.min(
+        SARA_WALLET,
+        items.reduce((sum, row) => sum + itemCost(row), 0),
+      )
+    : 0;
+  const creditUsed = credit;
+  for (const row of items) {
+    const take = Math.min(credit, itemCost(row));
+    row.credit = take;
+    row.amount = itemCost(row) - take;
+    credit -= take;
+  }
+  const amount = items.reduce((sum, row) => sum + row.amount, 0);
+  Object.assign(payment, {
+    items,
+    code: code ? { code, discount: items.reduce((sum, row) => sum + row.code_discount, 0) } : null,
+    use_credit: useCredit,
+    credit_used: creditUsed,
+    total: amount + creditUsed,
+    amount,
+  });
+  // Credit that covers it all pays it at once.
+  if (amount === 0)
+    Object.assign(payment, { status: 'paid', method: null, paid_at: new Date().toISOString() });
+}
+
+const itemCost = (row: PaymentItem) => (row.discounted_price ?? row.price) - row.code_discount;
+
+/** PAY7: what the open payments list shows of one invoice. */
+const openRow = (payment: PaymentData): OpenPayment => ({
+  id: payment.id,
+  status: payment.status,
+  labels: payment.items.map((row) => row.label),
+  installment: payment.installment !== null,
+  amount: payment.amount,
+  currency: payment.currency,
+  created_at: payment.created_at,
+  expires_at: payment.expires_at,
+  due_date: payment.installment !== null ? daysFromNow(3).slice(0, 10) : null,
+  seller: payment.seller,
+});
 
 /** Same checks as the panel's form; Django validates again with its own messages. */
 const PROFILE_CHECKS: Partial<Record<ProfileField, RegExp>> = {
@@ -2281,6 +2431,56 @@ export const applicantHandlers = [
     return payment ? HttpResponse.json(payment) : notFound();
   }),
 
+  http.get(`${BASE}/payments/`, () => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    return HttpResponse.json(
+      state.payments
+        .filter((row) => ['unpaid', 'review', 'declined'].includes(row.status))
+        .sort((a, b) => b.id - a.id)
+        .map(openRow),
+    );
+  }),
+
+  http.patch(`${BASE}/payments/:id/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const payment = state.payments.find((row) => row.id === Number(params.id));
+    if (!payment) return notFound();
+    if (!payment.editable || payment.status !== 'unpaid')
+      return HttpResponse.json({ detail: 'Not editable.' }, { status: 409 });
+    const { use_credit } = (await request.json()) as { use_credit: boolean };
+    reprice(payment, payment.code?.code ?? null, use_credit);
+    return HttpResponse.json(payment);
+  }),
+
+  http.post(`${BASE}/payments/:id/discount/`, async ({ params, request }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const payment = state.payments.find((row) => row.id === Number(params.id));
+    if (!payment) return notFound();
+    if (!payment.editable || payment.status !== 'unpaid')
+      return HttpResponse.json({ detail: 'Not editable.' }, { status: 409 });
+    const code = ((await request.json()) as { code: string }).code.trim().toUpperCase();
+    const result: DiscountResult = code ? (CODES[code] ?? 'invalid') : 'ok';
+    if (result === 'ok') reprice(payment, code || null, payment.use_credit);
+    return HttpResponse.json({ result, payment });
+  }),
+
+  // A new invoice at today's price; the old one stays as it was.
+  http.post(`${BASE}/payments/:id/renew/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const payment = state.payments.find((row) => row.id === Number(params.id));
+    if (!payment) return notFound();
+    if (payment.renew === 'seller') return HttpResponse.json({ payment_id: null }, { status: 202 });
+    if (payment.renew !== 'self')
+      return HttpResponse.json({ detail: payment.renew ?? 'not_renewable' }, { status: 409 });
+    const id = Math.max(...state.payments.map((row) => row.id)) + 1;
+    state.payments.push(invoice(id, { items: services(), ...ownPurchase() }));
+    return HttpResponse.json({ payment_id: id }, { status: 201 });
+  }),
+
   // Django would answer the gateway's address; the fake pays at once and sends the browser back
   // to the payment page, like the gateway's callback does.
   http.post(`${BASE}/payments/:id/online/`, ({ params }) => {
@@ -2288,15 +2488,83 @@ export const applicantHandlers = [
     if (failed(state)) return state;
     const payment = state.payments.find((item) => item.id === Number(params.id));
     if (!payment) return notFound();
-    if (payment.status === 'paid' || payment.status === 'review')
+    if (!['unpaid', 'declined'].includes(payment.status))
       return HttpResponse.json({ detail: 'Not payable.' }, { status: 409 });
     const now = new Date().toISOString();
-    Object.assign(payment, { status: 'paid', method: 'online', paid_at: now, receipt: null });
+    Object.assign(payment, {
+      status: 'paid',
+      method: 'online',
+      paid_at: now,
+      receipt: null,
+      ref_id: '600400300',
+    });
     const installment = installmentOf(state, payment);
     if (installment) Object.assign(installment, { status: 'paid', paid_at: now });
     return HttpResponse.json({
       redirect_url: `${import.meta.env.BASE_URL}payments/${String(payment.id)}`,
+      outside_iran: false,
     });
+  }),
+
+  // PAY3: an invoice by its public link, signed out too.
+  http.get(`${BASE}/invoices/:token/`, ({ params }) => {
+    sara ??= saraState();
+    const payment = sara.payments.find((row) => row.token === params.token);
+    if (!payment) return notFound();
+    const user = storage.get();
+    return HttpResponse.json({
+      status: payment.status,
+      items: payment.items.map((row) => ({ label: row.label, amount: row.amount + row.credit })),
+      total: payment.total,
+      credit_used: payment.credit_used,
+      amount: payment.amount,
+      currency: payment.currency,
+      created_at: payment.created_at,
+      paid_at: payment.paid_at,
+      ref_id: payment.ref_id,
+      seller: payment.seller,
+      customer: 'سارا احمدی',
+      phone: user ? null : '0912●●●6789',
+      payment_id: user === SARA ? payment.id : null,
+      other_account: user !== null && user !== SARA,
+    });
+  }),
+
+  http.get(`${BASE}/campaigns/:slug/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    return state.campaign.slug === params.slug ? HttpResponse.json(state.campaign) : notFound();
+  }),
+
+  // PAY10: registers and makes its invoice, paid on the purchase page.
+  http.post(`${BASE}/campaigns/:slug/register/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const { campaign } = state;
+    if (campaign.slug !== params.slug) return notFound();
+    if (campaign.form_stage === 'before' && !campaign.form_complete)
+      return HttpResponse.json({ detail: 'form' }, { status: 409 });
+    if (campaign.registration) return HttpResponse.json({ detail: 'registered' }, { status: 409 });
+    if (campaign.seats_left === 0) return HttpResponse.json({ detail: 'full' }, { status: 409 });
+    const id = Math.max(...state.payments.map((row) => row.id)) + 1;
+    const paid = campaign.price === 0;
+    state.payments.push(
+      invoice(id, {
+        items: [
+          item(campaign.title, campaign.old_price ?? campaign.price, {
+            kind: 'campaign',
+            href: `/campaigns/${campaign.slug}`,
+            discounted_price: campaign.old_price ? campaign.price : null,
+            amount: campaign.price,
+          }),
+        ],
+        ...ownPurchase(),
+        ...(paid ? { status: 'paid', paid_at: new Date().toISOString() } : {}),
+      }),
+    );
+    campaign.registration = { id: 40, status: paid ? 'paid' : 'unpaid', payment_id: id };
+    if (campaign.seats_left !== null) campaign.seats_left -= 1;
+    return HttpResponse.json({ payment_id: id, paid }, { status: 201 });
   }),
 
   http.post(`${BASE}/payments/:id/receipt/`, async ({ params, request }) => {

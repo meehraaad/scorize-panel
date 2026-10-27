@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { CALENDAR_TYPES, bookingsSent, setCalendarTypes } from '@/mocks/journey';
 import { renderApp } from '@/test/renderApp';
@@ -11,28 +11,6 @@ const MARYAM = 2; // no bookings
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
 };
-
-/** `location.assign` (the bank gateway), caught. */
-function catchGateway() {
-  const assign = vi.fn();
-  const { href, origin, protocol, host, hostname, port, pathname, search, hash } = window.location;
-  vi.stubGlobal('location', {
-    href,
-    origin,
-    protocol,
-    host,
-    hostname,
-    port,
-    pathname,
-    search,
-    hash,
-    assign,
-  });
-  onTestFinished(() => {
-    vi.unstubAllGlobals();
-  });
-  return assign;
-}
 
 describe('booking a consultation', () => {
   beforeEach(async () => {
@@ -48,7 +26,7 @@ describe('booking a consultation', () => {
   it('online first, its most booked topic, then a time on the week', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/consultations/book');
+    const router = renderApp('/consultations/book');
     const how = await screen.findByRole('group', { name: 'جلسه چطور برگزار شود؟' });
     expect(within(how).getByRole('radio', { name: /^آنلاین/ })).toBeChecked();
     const topics = screen.getByRole('group', { name: 'موضوع جلسه‌ی آنلاین' });
@@ -73,9 +51,9 @@ describe('booking a consultation', () => {
     expect(within(card).getByText('۵۰۰٬۰۰۰ تومان')).toBeInTheDocument();
     expect(within(card).getByText('فقط یک جای خالی مانده')).toBeInTheDocument();
 
-    const assign = catchGateway();
     await user.click(within(card).getByRole('button', { name: 'رزرو و پرداخت' }));
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/finance/payment-ip-check/AUTH77/'));
+    // On to its purchase page: code, credit and how to pay.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/payments/77'));
     expect(bookingsSent).toEqual([{ type: 3, starts_at: '2026-10-27T06:50:00.000Z' }]);
   });
 

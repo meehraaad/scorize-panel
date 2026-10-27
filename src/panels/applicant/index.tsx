@@ -6,7 +6,12 @@ import {
   consultationsQuery,
   sessionSummariesQuery,
 } from '@/features/consultations/api';
-import { contractQuery, paymentQuery } from '@/features/contract/api';
+import {
+  campaignQuery,
+  contractQuery,
+  openPaymentsQuery,
+  paymentQuery,
+} from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
 import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
 import { turkeyQuery } from '@/features/turkey/api';
@@ -29,7 +34,7 @@ import { backgroundQuery, reviewDocumentsQuery, startQuery } from '@/lib/applica
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
-import { SessionRedirect } from './SessionRedirect';
+import { CampaignFormRedirect, SessionRedirect } from './SessionRedirect';
 import { applicantTickets } from './tickets';
 
 /** Every account has this panel. Design: canvas V6/V7 "پنل متقاضی". */
@@ -243,16 +248,35 @@ export const applicantPanel: PanelDefinition = {
           }),
         },
         {
-          // An invoice: an instalment, or a purchase from "other services".
+          // An invoice from buying to what comes next: an instalment, a services purchase, a booked
+          // session, a campaign, a seller's invoice. Design: canvas "Scorize Payment States".
           path: 'payments/:id',
           ...lazyPage(() => import('@/features/contract/PaymentPage'), ['contract'], {
             data: ({ params }) => {
               const id = idParam(params.id);
-              return [id !== null && paymentQuery(id)];
+              // A paid one lists the to-dos it left (the to-do box's list).
+              return [id !== null && paymentQuery(id), ON_SERVER.activities && activitiesQuery];
             },
             skeleton: 'detail',
           }),
         },
+        // The open payments (canvas A3).
+        {
+          path: 'payments',
+          ...lazyPage(() => import('@/features/contract/OpenPaymentsPage'), ['contract'], {
+            data: () => [openPaymentsQuery],
+            skeleton: 'list',
+          }),
+        },
+        // A campaign registered in the panel (canvas E1, E2); its form is the background form.
+        {
+          path: 'campaigns/:slug',
+          ...lazyPage(() => import('@/features/contract/CampaignPage'), ['contract'], {
+            data: ({ params }) => [campaignQuery(params.slug ?? '')],
+            skeleton: 'detail',
+          }),
+        },
+        { path: 'campaigns/:slug/form', element: <CampaignFormRedirect /> },
         // Design: canvas V6 section 9. Open with or without a contract.
         {
           path: 'services',
