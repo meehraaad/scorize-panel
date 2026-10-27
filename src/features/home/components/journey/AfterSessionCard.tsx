@@ -12,13 +12,15 @@ import { StarRating } from '@/components/ui/StarRating';
 import { sessionHref } from '@/lib/applicant/consultations';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import {
-  FEEDBACK_CLEAR,
-  FEEDBACK_NEXT,
   sessionSummariesQuery,
-  useSendFeedback,
   type Consultation,
   type ConsultationFeedbackAnswer,
 } from '@/lib/applicant/consultations';
+import {
+  FEEDBACK_CLEAR,
+  FEEDBACK_NEXT,
+  useSendFeedback,
+} from '@/lib/applicant/consultationActions';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 

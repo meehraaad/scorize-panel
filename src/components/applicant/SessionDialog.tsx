@@ -18,10 +18,10 @@ import {
   SESSION_PARAM,
   consultationQuery,
   consultationsQuery,
-  useSaveConsultationInfo,
   type ConsultationDetail,
   type ConsultationInfo,
 } from '@/lib/applicant/consultations';
+import { useSaveConsultationInfo } from '@/lib/applicant/consultationActions';
 
 const REQUIRED = ['university', 'major', 'degree'] as const;
 
