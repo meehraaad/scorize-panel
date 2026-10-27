@@ -63,7 +63,7 @@ describe('writer panel', () => {
     await user.type(within(versions).getByLabelText(/توضیح برای متقاضی/), 'هر سه نکته اعمال شد.');
     await user.click(within(versions).getByRole('button', { name: 'ارسال برای متقاضی' }));
     expect(await toasts().findByText('نسخه برای متقاضی فرستاده شد.')).toBeInTheDocument();
-    expect(within(versions).getByText('SOP-Sara-v2.pdf')).toBeInTheDocument();
+    expect(await within(versions).findByText('SOP-Sara-v2.pdf')).toBeInTheDocument();
     expect(await screen.findByText('منتظر متقاضی')).toBeInTheDocument();
   });
 

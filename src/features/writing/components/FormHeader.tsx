@@ -1,6 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink } from 'react-router';
+import { Button } from '@/components/ui/Button';
+import { Dialog } from '@/components/ui/Dialog';
 import { BackLink } from '@/components/ui/BackLink';
 import { tabClass } from '@/components/ui/buttonStyles';
 import { Icon } from '@/components/ui/Icon';
@@ -39,8 +41,31 @@ export function FormHeader({
             {text('subtitle')}
           </p>
         </div>
-        {!form.is_final && <SaveStatus type={type} draft={draft} />}
+        {!form.is_final && (
+          <p className="m-0 max-w-[64ch] text-sm leading-7 text-text-2">{t('final.draftNotice')}</p>
+        )}
       </div>
+      <Dialog
+        open={draft.blocker.state === 'blocked'}
+        title={t('save.leaveTitle')}
+        closeLabel={t('save.stay')}
+        onClose={() => draft.blocker.state === 'blocked' && draft.blocker.reset()}
+      >
+        <p>{t('save.leaveText')}</p>
+        <Button onClick={() => draft.blocker.state === 'blocked' && draft.blocker.reset()}>
+          {t('save.stay')}
+        </Button>
+        <Button variant="outline" disabled={draft.saving} onClick={draft.saveNow}>
+          {t('save.retry')}
+        </Button>
+        <Button
+          variant="danger"
+          disabled={draft.saving}
+          onClick={() => draft.blocker.state === 'blocked' && draft.blocker.proceed()}
+        >
+          {t('save.leave')}
+        </Button>
+      </Dialog>
       <nav
         aria-label={t('tabs.label')}
         className="-mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
@@ -63,7 +88,7 @@ export function FormHeader({
 }
 
 /** "Saving…", "Saved · 2 minutes ago", or a failed save with a retry. */
-function SaveStatus({ type, draft }: { type: FormType; draft: Draft }) {
+export function SaveStatus({ type, draft }: { type: FormType; draft: Draft }) {
   const { t } = useTranslation('writing');
   const f = useFormat();
   const { data } = useSuspenseQuery(writingQuery(type));

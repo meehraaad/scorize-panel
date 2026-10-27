@@ -22,6 +22,9 @@ import { staffData } from './staff';
 
 /** Nima (seller) and Reza (sales manager). */
 const SELLERS = new Set([3, 4]);
+const NIMA = 3;
+/** Nima's SupportStaff.full_name (src/mocks/handlers.ts). */
+const NIMA_NAME = 'نیما رستمی';
 const BASE = '/api/sales/v1';
 /** Django's `RECEIPTS_PAGE` (api/sales/v1/seller.py). */
 const RECEIPTS_PAGE = 10;
@@ -683,6 +686,7 @@ const arrivals = new Map<number, string>();
 
 /** The seller's consultations and timed follow-ups between two days (`YYYY-MM-DD`, both included). */
 function calendarOf(data: SalesState, from: string, to: string) {
+  const lastId = Math.max(...data.consultations.map((item) => item.id));
   const start = new Date(`${from}T00:00:00`).getTime();
   const end = new Date(`${to}T00:00:00`).getTime() + DAY;
   const inRange = (value: string | null) =>
@@ -705,6 +709,9 @@ function calendarOf(data: SalesState, from: string, to: string) {
         // The tablet form: filled by every other customer.
         form: item.id % 2 === 1,
         arrived_at: arrivals.get(item.id) ?? null,
+        // All Nima's; Reza (manager) sees them as someone else's, the last as nobody's yet.
+        mine: storage.get() === NIMA,
+        seller: storage.get() !== NIMA && item.id === lastId ? null : NIMA_NAME,
       })),
     calls: todayOf(data)
       .calls.filter((row) => inRange(row.follow_up_at))
