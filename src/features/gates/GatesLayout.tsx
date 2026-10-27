@@ -23,7 +23,8 @@ export default function GatesLayout() {
   if (data.inactive) return <InactiveGate inactive={data.inactive} />;
   if (data.terms) return <TermsGate terms={data.terms} />;
   if (data.profile) return <ProfileGate profile={data.profile} />;
-  if (!ON_SERVER.activities && data.surveys.length > 0) return <SurveyGate surveys={data.surveys} />;
+  if (!ON_SERVER.activities && data.surveys.length > 0)
+    return <SurveyGate surveys={data.surveys} />;
   return (
     <>
       <Outlet />

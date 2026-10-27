@@ -94,7 +94,7 @@ export default function ActivityBox() {
         type="button"
         aria-expanded="false"
         onClick={() => setChosen(true)}
-        className="fixed end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex min-h-13 items-center gap-2.5 rounded-full bg-hero ps-5 pe-2 text-[15px] font-semibold text-on-hero shadow-toast lg:end-5 lg:bottom-5"
+        className="fixed end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex min-h-12 items-center gap-2.5 rounded-full bg-hero ps-5 pe-2 text-[15px] font-semibold text-on-hero shadow-toast lg:end-5 lg:bottom-5"
       >
         {t('open', { n })}
         <span
@@ -103,7 +103,7 @@ export default function ActivityBox() {
         >
           {n}
           {urgent && (
-            <span className="absolute -end-0.5 -top-0.5 size-2.5 rounded-full bg-hero-danger shadow-[0_0_0_2px_var(--hero)]" />
+            <span className="absolute end-0 top-0 size-2.5 rounded-full bg-hero-danger shadow-[0_0_0_2px_var(--hero)]" />
           )}
         </span>
       </button>
@@ -221,7 +221,7 @@ function TextButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium text-text-2 hover:bg-canvas disabled:opacity-60"
+      className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium text-text-2 hover:bg-canvas disabled:opacity-50"
     >
       {children}
     </button>
