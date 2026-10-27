@@ -14,14 +14,18 @@ beforeEach(async () => {
 it('seller shell and outreach stay usable while activity waits; insights fetch only when seen', async () => {
   localStorage.setItem('scorize.mock.session', '3');
   // The month and the chances load when they scroll into view: a stand-in observer to scroll.
+  // Once scrolled, an observer made later (the section mounted again) sees it at once too.
   const observers: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  let scrolled = false;
   vi.stubGlobal(
     'IntersectionObserver',
     class {
-      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+      constructor(private callback: (entries: { isIntersecting: boolean }[]) => void) {
         observers.push(callback);
       }
-      observe() {}
+      observe() {
+        if (scrolled) this.callback([{ isIntersecting: true }]);
+      }
       disconnect() {}
     },
   );
@@ -52,6 +56,7 @@ it('seller shell and outreach stay usable while activity waits; insights fetch o
     expect(screen.getByRole('link', { name: 'ثبت لید دستی' })).toBeInTheDocument();
     expect(insights).not.toHaveBeenCalled();
     act(() => {
+      scrolled = true;
       for (const callback of observers) callback([{ isIntersecting: true }]);
     });
     await waitFor(() => expect(insights).toHaveBeenCalledOnce());
