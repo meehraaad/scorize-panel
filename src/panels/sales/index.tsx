@@ -6,7 +6,7 @@ import {
   approvalsQuery,
   assignQuery,
   boardQuery,
-  consultationsQuery,
+  sellerCalendarQuery,
   customerQuery,
   firstLeadQuery,
   leadsQuery,
@@ -25,6 +25,9 @@ import {
   funnelQuery,
 } from '@/features/sales/api';
 import { queryClient } from '@/lib/api/queryClient';
+import { weekOf, weekStart } from '@/lib/calendar';
+import i18n from '@/lib/i18n';
+import { calendarKind } from '@/lib/i18n/useCalendar';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
@@ -123,8 +126,11 @@ export const salesPanel: PanelDefinition = {
         {
           path: 'consultations',
           ...lazyPage(() => import('@/features/sales/ConsultationsPage'), [], {
-            data: () => [consultationsQuery('week', null, false, 1)],
-            skeleton: 'list',
+            // Opens on this week's calendar; the list reads its own page when chosen.
+            data: () => [
+              sellerCalendarQuery(weekOf(new Date(), weekStart(calendarKind(i18n.language)))),
+            ],
+            skeleton: 'board',
           }),
         },
       ],

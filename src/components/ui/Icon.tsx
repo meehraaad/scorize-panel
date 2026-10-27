@@ -138,6 +138,27 @@ const PATHS = {
       <path d="M10 8l6 4-6 4z" />
     </>
   ),
+  /** A form filled in (the tablet form). */
+  formDone: (
+    <>
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 4V3h6v1M9 13l2 2 4-4" />
+    </>
+  ),
+  /** A form not filled in yet. */
+  formMissing: (
+    <>
+      <rect x="5" y="4" width="14" height="17" rx="2" />
+      <path d="M9 4V3h6v1M10 11l4 4M14 11l-4 4" />
+    </>
+  ),
+  /** Coming back to someone at a set time: a follow-up. */
+  followUp: (
+    <>
+      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+      <path d="M3 3v5h5M12 7v5l3 2" />
+    </>
+  ),
   video: (
     <>
       <rect x="3" y="6" width="13" height="12" rx="2" />

@@ -596,6 +596,47 @@
     "empty": "No consultations in this range.",
     "metaShort": "{{type}} · {{mode}}"
   },
+  "consultationCalendar": {
+    "aside": "My calendar",
+    "status": {
+      "done": "Held and logged",
+      "need": "Not logged",
+      "live": "In progress",
+      "soon": "Within 30 minutes",
+      "upcoming": "Upcoming"
+    },
+    "tagNeed": "Not logged",
+    "followUp": "Follow-up",
+    "calls": "Timed follow-ups",
+    "layers": "Show on the calendar",
+    "unlogged": "{{n}} sessions not logged",
+    "form": {
+      "done": "Filled in the tablet form",
+      "missing": "Hasn't filled in the tablet form",
+      "legendDone": "Tablet form filled",
+      "legendMissing": "Not filled"
+    },
+    "next": "Next session",
+    "live": "In progress",
+    "range": "{{from}} – {{to}}",
+    "when": "{{day}} · {{from}} – {{to}}",
+    "minutes": "{{n}} minutes",
+    "call": "Call the customer",
+    "callNow": "Call",
+    "logCall": "Log the call",
+    "markArrived": "Customer arrived",
+    "arrived": "Customer is here",
+    "arrivedToast": "{{name}} marked as arrived.",
+    "waiting": "Waiting for the customer",
+    "error": "Not saved. Try again.",
+    "sendForm": "Send the form link",
+    "formText": "Hello {{name}}, please fill in this short form before the session so your advisor is ready: {{url}} Scorize",
+    "remind": "WhatsApp reminder",
+    "close": "Close",
+    "views": "View",
+    "week": "Week",
+    "list": "List"
+  },
   "purchases": {
     "stats": "Purchases summary",
     "total": "Total purchases",

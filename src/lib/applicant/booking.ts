@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 import { useBookConsultation } from '@/lib/applicant/journey';
-import { addDays, toValue } from '@/lib/calendar';
+import { eventColor, toValue, weekOf } from '@/lib/calendar';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 
@@ -67,19 +67,12 @@ export const calendarQuery = (from: string) => {
   });
 };
 
-/** The first day of the week holding `date` (`startDay`: 0–6 as `Date.getDay`, `weekStart`). */
-export function weekOf(date: Date, startDay: number) {
-  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  return addDays(day, -((day.getDay() - startDay + 7) % 7));
-}
-
 /** The booking page's first read: from the week holding today, CALENDAR_READ_DAYS days. */
 export const firstCalendarQuery = (startDay: number, now = new Date()) =>
   calendarQuery(toValue(weekOf(now, startDay), false));
 
 /** The CSS colour of a type: its Google Calendar colour as a theme token. */
-export const typeColor = (type: Pick<BookableType, 'color'>) =>
-  `var(--cal-${type.color && /^(?:[1-9]|1[01])$/.test(type.color) ? type.color : '0'})`;
+export const typeColor = (type: Pick<BookableType, 'color'>) => eventColor(type.color);
 
 /**
  * Books a consultation at a time: off to the bank gateway, or straight to the session when credit

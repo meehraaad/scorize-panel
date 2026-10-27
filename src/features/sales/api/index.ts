@@ -9,6 +9,7 @@ export * from './board';
 export * from './customer';
 export * from './month';
 export * from './consultations';
+export * from './calendar';
 export * from './purchases';
 export * from './payments';
 export * from './info';

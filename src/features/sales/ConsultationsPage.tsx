@@ -1,6 +1,6 @@
 import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
@@ -18,6 +18,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
 import { consultationsQuery, type Consultation, type ConsultationRange } from './api';
+import { ConsultationCalendar } from './components/ConsultationCalendar';
 import { customerPath } from './paths';
 
 const RANGES: readonly ConsultationRange[] = ['today', 'week', 'past', 'all'];
@@ -39,8 +40,40 @@ const statusOf = (item: Consultation, now: number): Status => {
 
 const dayKey = (value: string) => new Date(value).toDateString();
 
-/** Consultations assigned to the seller, by day; past ones without a logged session stand out. */
+type View = 'week' | 'list';
+const VIEWS: readonly View[] = ['week', 'list'];
+
+/**
+ * Consultations assigned to the seller: a week calendar (with the timed follow-ups), or the list
+ * by day where past ones without a logged session stand out.
+ */
 export default function ConsultationsPage() {
+  const { t } = useTranslation('sales');
+  const [view, setView] = useState<View>('week');
+  const switcher = (
+    <FilterTabs
+      label={t('consultationCalendar.views')}
+      value={view}
+      onChange={setView}
+      options={VIEWS.map((value) => ({ value, label: t(`consultationCalendar.${value}`) }))}
+    />
+  );
+  if (view === 'week')
+    return (
+      <PageStack>
+        <PageHeader
+          title={t('consultations.title')}
+          subtitle={t('consultations.subtitle')}
+          actions={switcher}
+        />
+        <ConsultationCalendar />
+      </PageStack>
+    );
+  return <ConsultationsList switcher={switcher} />;
+}
+
+/** The list view: a range, a type, only unlogged; by day, a page at a time. */
+function ConsultationsList({ switcher }: { switcher: ReactNode }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const [range, setRange] = useState<ConsultationRange>('week');
@@ -71,6 +104,7 @@ export default function ConsultationsPage() {
             ? `${t('consultations.subtitle')} ${t('consultations.unlogged', { n: f.number(data.unlogged) })}`
             : t('consultations.subtitle')
         }
+        actions={switcher}
       />
       <div className="flex flex-wrap items-center gap-2.5">
         <FilterTabs
