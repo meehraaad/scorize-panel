@@ -7,14 +7,17 @@ interface ProgressBarProps {
   /** `sm` 6px (forms, hero), `md` 8px (cards). */
   size?: 'sm' | 'md';
   /**
-   * `onHero`: light bar on the dark case card; `luxe`: gold on the premium card; `good`: money paid,
-   * things done; `warn`: too much.
+   * `onHero`: light bar on the dark case card; `gold`: on a luxe card; `good`: money paid, things
+   * done; `warn`: too much.
    */
-  tone?: 'primary' | 'good' | 'warn' | 'onHero' | 'luxe';
+  tone?: 'primary' | 'good' | 'warn' | 'onHero' | 'gold';
   /** Read by screen readers. Without it the bar is decoration next to a visible "3 of 5". */
   label?: string;
   className?: string;
 }
+
+/** The gold fill of a bar on a luxe card (progress, the current step). */
+const GOLD = 'bg-luxe-gold';
 
 /** A horizontal progress bar. */
 export function ProgressBar({
@@ -25,13 +28,13 @@ export function ProgressBar({
   className = '',
 }: ProgressBarProps) {
   const height = size === 'sm' ? 'h-1.5' : 'h-2';
-  const track = tone === 'onHero' || tone === 'luxe' ? 'bg-hero-line' : 'bg-track';
+  const track = tone === 'onHero' || tone === 'gold' ? 'bg-hero-line' : 'bg-track';
   const fill = {
     primary: 'bg-primary',
     good: 'bg-good',
     warn: 'bg-hero-current',
     onHero: 'bg-on-hero',
-    luxe: 'bg-luxe-gold-light',
+    gold: GOLD,
   }[tone];
   const a11y = label
     ? {
@@ -58,8 +61,8 @@ interface StepBarProps {
   current: number;
   /** The current step is finished as well (visa granted, file closed). */
   finished?: boolean;
-  /** `onHero`: on the dark case card. */
-  tone?: 'surface' | 'onHero';
+  /** `onHero`: on the dark case card; `luxe`: on a luxe card (the current step in gold). */
+  tone?: 'surface' | 'onHero' | 'luxe';
   className?: string;
 }
 
@@ -72,9 +75,13 @@ export function StepBar({
   tone = 'surface',
   className = '',
 }: StepBarProps) {
-  const hero = tone === 'onHero';
+  const hero = tone !== 'surface';
   const bar: Record<StepState, string> = hero
-    ? { done: 'bg-on-hero', current: 'bg-hero-current', todo: 'bg-hero-line' }
+    ? {
+        done: 'bg-on-hero',
+        current: tone === 'luxe' ? GOLD : 'bg-hero-current',
+        todo: 'bg-hero-line',
+      }
     : { done: 'bg-primary', current: 'bg-hero-current', todo: 'bg-track' };
   const text: Record<StepState, string> = hero
     ? { done: 'text-on-hero-2', current: 'font-bold text-on-hero', todo: 'text-on-hero-3' }

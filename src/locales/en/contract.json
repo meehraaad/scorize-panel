@@ -58,7 +58,7 @@
   },
   "profile": {
     "title": "Your details",
-    "subtitle": "Needed for university and embassy forms. Every change is recorded in your case.",
+    "subtitle": "For university and embassy forms. Locked ones are set by the team or your account.",
     "missing": "{{n}} missing",
     "empty": "Not entered",
     "field": {
@@ -92,7 +92,8 @@
       "tenDigits": "This number has 10 digits.",
       "latin": "Write it in English letters.",
       "server": "Not saved. Check the value and try again."
-    }
+    },
+    "locked": "Set by the team"
   },
   "files": {
     "title": "Contract documents",
@@ -106,7 +107,8 @@
       "customer_form": "{{date}}",
       "terms": "Accepted · {{date}}"
     },
-    "download": "Download {{name}}"
+    "download": "Download {{name}}",
+    "get": "Download"
   },
   "help": {
     "title": "A question about your contract or an instalment?",
@@ -191,25 +193,151 @@
   },
   "start": {
     "title": "Starting your case",
-    "subtitle": "Your contract is approved. Once the prepayment is in, a supervisor is assigned and your panel opens.",
-    "steps": "Starting your case",
+    "steps": "Steps to start your case",
     "step": {
       "pay": "Prepayment",
       "supervisor": "Supervisor assigned",
       "open": "Case starts"
     },
-    "toman": "{{amount}} toman",
-    "unpaid": "To start your case, pay the contract prepayment ({{amount}}) online or send a transfer receipt.",
-    "declined": "The prepayment receipt ({{amount}}) wasn't accepted. See why on the payment page and send it again.",
-    "review": "We got your prepayment receipt ({{amount}}) and are checking it. Once it's confirmed, your case goes to a supervisor.",
-    "paid": "Your prepayment ({{amount}}) is paid. A supervisor will be assigned to your case soon and will call you.",
-    "pay": "Pay the prepayment",
-    "open": "Payment page",
+    "hint": {
+      "pay": "Online or with a receipt",
+      "supervisor": "After the payment is confirmed",
+      "open": "Your supervisor calls and the panel opens"
+    },
+    "badge": {
+      "unpaid": "One step to your case",
+      "declined": "One step to your case",
+      "review": "Nothing else needed",
+      "paid": "Prepayment done"
+    },
+    "headline": {
+      "unpaid": "Pay the prepayment to start your case.",
+      "declined": "The prepayment receipt wasn't accepted. Send it again.",
+      "review": "We got your receipt and are checking it.",
+      "paid": "Assigning your case a supervisor."
+    },
+    "text": {
+      "unpaid": "Once the payment is confirmed, your country's supervisor is assigned and calls you.",
+      "declined": "See the finance team's reason on the payment page, then send the right receipt or pay online.",
+      "review": "Once finance confirms it, you'll get a text that your case has started.",
+      "paid": "Once assigned, your supervisor calls you and the panel opens."
+    },
+    "prepayment": "Prepayment",
+    "toman": "toman",
     "state": {
       "unpaid": "Not paid",
       "review": "Receipt in review",
       "declined": "Receipt declined",
       "paid": "Paid"
+    },
+    "pay": "Pay online",
+    "again": "Pay or send again",
+    "receipt": "Card transfer and upload receipt",
+    "open": "View receipt"
+  },
+  "waiting": {
+    "title": "Waiting for you",
+    "subtitle": "Only what moves your case forward.",
+    "of": "Instalment {{n}} of {{total}}",
+    "why": "Why now: {{text}}",
+    "payOnline": "Pay online",
+    "receipt": "Card transfer and upload receipt",
+    "missing": "{{n}} of your details are empty",
+    "missingText": "Your supervisor needs these for university and embassy forms.",
+    "fill": "Complete details"
+  },
+  "guest": {
+    "subtitle": "Start Turkey for free, or get a contract for other countries.",
+    "journey": {
+      "label": "Your way to a case",
+      "here": "You are here · {{hint}}",
+      "session": {
+        "name": "Consultation",
+        "hint": "Talk to a consultant"
+      },
+      "choose": {
+        "name": "Choose how to start",
+        "hint": "Turkey or a full contract"
+      },
+      "contract": {
+        "name": "Contract",
+        "hint": "By SMS code for Turkey, on paper for the rest"
+      },
+      "start": {
+        "name": "Case starts",
+        "hint": "Your supervisor calls"
+      }
+    },
+    "turkey": {
+      "chip": "0 toman prepayment",
+      "title": "Apply to Turkey, free",
+      "text": "The university pays. Your documents are enough.",
+      "start": "Start the free apply",
+      "call": "Ask to start Turkey",
+      "note": "Signed with an SMS code"
+    },
+    "full": {
+      "countries": "Canada, Germany, Italy and more",
+      "title": "Full contract",
+      "from": "From",
+      "price": "$500",
+      "instalments": "in instalments",
+      "text": "Your consultant gives the exact amount and instalments in the session.",
+      "book": "Book a consultation",
+      "call": "Call me"
+    },
+    "notes": {
+      "title": "What your consultant wrote",
+      "subtitle": "The note from each session, newest first. The contract offer builds on these.",
+      "with": ", with {{names}}",
+      "more": "Show earlier notes ({{n}})",
+      "older": "Older notes"
+    },
+    "admissions": {
+      "title": "Admissions of people with a background like yours",
+      "note": "From your last admission-chance result, no names.",
+      "all": "All admission samples"
+    },
+    "unlocks": {
+      "title": "Once your case starts, these four parts of the panel open",
+      "subtitle": "Locked in the menu for now.",
+      "supervisor": {
+        "name": "Your own supervisor",
+        "text": "One person for your country who takes your case from start to visa."
+      },
+      "writing": {
+        "name": "Documents and writing",
+        "text": "The writing team writes your SOP, CV and recommendations from your forms."
+      },
+      "applications": {
+        "name": "Applications and results",
+        "text": "Every application, its deadline and its result, right here."
+      },
+      "tickets": {
+        "name": "Tickets with the team",
+        "text": "Every question stays in your case, and the team answers."
+      },
+      "payLabel": "In instalments:",
+      "pay": "A prepayment at signing, the rest monthly or after a step like \"first admission\". Online or with a card-transfer receipt."
+    },
+    "faq": {
+      "title": "Questions before you start",
+      "turkey": {
+        "q": "Is Turkey really free?",
+        "a": "Yes. The university pays Scorize's service fee, so this contract has no prepayment or instalments. The university's own costs, like tuition, are separate."
+      },
+      "both": {
+        "q": "Can I apply to Turkey and another country?",
+        "a": "Yes. Start Turkey and add a contract for other countries in a consultation. The same documents are used for both."
+      },
+      "price": {
+        "q": "How much is a full contract?",
+        "a": "From $500. The exact amount depends on the countries, degree, number of applications and services you choose; your consultant gives the offer with instalments in the session."
+      },
+      "sign": {
+        "q": "How do I sign the contract?",
+        "a": "Turkey with an SMS code, right here. A full contract on paper at the office for now, with your sales consultant."
+      }
     }
   }
 }

@@ -133,7 +133,7 @@ function StartCard({
                 <span className="font-display font-bold text-luxe-gold-light blur-[5px] select-none">
                   {t('result.percent', { n: f.number(VEILED[at] ?? 0) })}
                 </span>
-                <Icon name="lock" size={14} className="text-luxe-gold" />
+                <Icon name="lock" size={14} className="text-luxe-gold-light" />
               </span>
             </li>
           ))}

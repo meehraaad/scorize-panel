@@ -149,7 +149,7 @@ function ResultHero({ result, best }: { result: EstimateResult; best: CountryEst
                 <span className="truncate font-semibold">{estimate.country.name}</span>
                 <ProgressBar
                   value={estimate.chance ?? BAND_BAR[estimate.band]}
-                  tone="luxe"
+                  tone="gold"
                   size="md"
                 />
                 <span className="text-end font-semibold">{level(estimate)}</span>

@@ -1,102 +1,24 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
-import { SectionCard } from '@/components/ui/SectionCard';
+import { StatusText } from '@/components/ui/Chip';
+import { Icon } from '@/components/ui/Icon';
+import { SideSection } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { formatPhone } from '@/lib/site';
-import { normalizePhone, toLatinDigits } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { PROFILE_FIELDS, useSaveProfileField, type ContractData, type ProfileField } from '../api';
-
-type Problem = 'required' | 'email' | 'mobile' | 'phone' | 'tenDigits' | 'latin';
-
-interface FieldRule {
-  /** Written left to right (Latin letters, numbers). */
-  ltr: boolean;
-  input: 'text' | 'email' | 'tel' | 'numeric';
-  autoComplete?: string;
-  /** The value to send, or why it can't be sent. */
-  check: (value: string) => { value: string } | { problem: Problem };
-}
-
-const digitsOnly = (value: string) => toLatinDigits(value).replace(/[\s\-()]/g, '');
-
-const required =
-  (next: FieldRule['check']): FieldRule['check'] =>
-  (value) =>
-    value.trim() ? next(value.trim()) : { problem: 'required' };
-
-const RULES: Partial<Record<ProfileField, FieldRule>> = {
-  phone: {
-    ltr: true,
-    input: 'tel',
-    autoComplete: 'tel',
-    check: required((value) => {
-      const phone = normalizePhone(value);
-      return phone ? { value: phone } : { problem: 'mobile' };
-    }),
-  },
-  national_id: {
-    ltr: true,
-    input: 'numeric',
-    check: required((value) =>
-      /^\d{10}$/.test(digitsOnly(value)) ? { value: digitsOnly(value) } : { problem: 'tenDigits' },
-    ),
-  },
-  passport_name: {
-    ltr: true,
-    input: 'text',
-    check: required((value) =>
-      /^[A-Za-z][A-Za-z .'-]*$/.test(value) ? { value } : { problem: 'latin' },
-    ),
-  },
-  postal_code: {
-    ltr: true,
-    input: 'numeric',
-    autoComplete: 'postal-code',
-    check: required((value) =>
-      /^\d{10}$/.test(digitsOnly(value)) ? { value: digitsOnly(value) } : { problem: 'tenDigits' },
-    ),
-  },
-  home_phone: {
-    ltr: true,
-    input: 'tel',
-    check: required((value) =>
-      /^0\d{10}$/.test(digitsOnly(value)) ? { value: digitsOnly(value) } : { problem: 'phone' },
-    ),
-  },
-  address_en: {
-    ltr: true,
-    input: 'text',
-    check: required((value) => (/^[\x20-\x7E\n]+$/.test(value) ? { value } : { problem: 'latin' })),
-  },
-  relative_name: { ltr: false, input: 'text', check: required((value) => ({ value })) },
-  relative_phone: {
-    ltr: true,
-    input: 'tel',
-    check: required((value) => {
-      const phone = normalizePhone(value);
-      return phone ? { value: phone } : { problem: 'mobile' };
-    }),
-  },
-  relative_email: {
-    ltr: true,
-    input: 'email',
-    check: required((value) =>
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? { value } : { problem: 'email' },
-    ),
-  },
-};
+import { missingDetails, RULES, type FieldRule, type Problem } from './profileRules';
 
 /** Fields shown left to right even though nobody edits them here. */
 const LTR_READONLY = new Set<ProfileField>(['file_id', 'email']);
 const PHONES = new Set<ProfileField>(['phone', 'home_phone', 'relative_phone']);
 
 /**
- * The applicant's details for university and embassy forms. One row is edited at a time, in place;
- * the server has the last word on each value (and keeps a history of changes).
+ * The applicant's details for university and embassy forms, two columns with thin lines (empty ones
+ * in amber, team-set ones with a lock). One row is edited at a time, in place; the server has the
+ * last word on each value (and keeps a history of changes).
  */
 export function ProfileCard({ contract }: { contract: ContractData }) {
   const { t } = useTranslation('contract');
@@ -110,9 +32,7 @@ export function ProfileCard({ contract }: { contract: ContractData }) {
     returnTo.current = null;
   }, [editing]);
   const editable = new Set(contract.editable);
-  const missing = PROFILE_FIELDS.filter(
-    (field) => editable.has(field) && RULES[field] && !contract.profile[field],
-  ).length;
+  const missing = missingDetails(contract).length;
 
   const display = (field: ProfileField, value: string) => {
     if (field === 'birth_date') return f.date(value);
@@ -121,59 +41,79 @@ export function ProfileCard({ contract }: { contract: ContractData }) {
   };
 
   return (
-    <SectionCard
+    <SideSection
       id="contract-profile"
       title={t('profile.title')}
       subtitle={t('profile.subtitle')}
-      end={missing > 0 && <Chip tone="warn">{t('profile.missing', { n: f.number(missing) })}</Chip>}
+      end={
+        missing > 0 && (
+          <StatusText tone="warn">{t('profile.missing', { n: f.number(missing) })}</StatusText>
+        )
+      }
     >
-      <dl className="m-0">
+      <dl className="m-0 grid gap-x-10 lg:grid-cols-2">
         {PROFILE_FIELDS.map((field) => {
           const value = contract.profile[field];
           const rule = editable.has(field) ? RULES[field] : undefined;
           const label = t(`profile.field.${field}`);
+          const ltr = Boolean(value) && (rule?.ltr ?? LTR_READONLY.has(field));
           return (
             <div
               key={field}
-              className="flex min-h-16 flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 shadow-[inset_0_1px_0_var(--hair)] lg:px-8 lg:py-2.5"
+              className={`flex min-h-16 flex-wrap items-center gap-x-3 gap-y-2 py-3 shadow-[inset_0_-1px_0_var(--hair)] ${
+                editing === field ? 'lg:col-span-2' : ''
+              }`}
             >
-              <dt className="flex-[0_0_100%] text-sm text-text-2 sm:flex-[0_0_220px]">{label}</dt>
               {editing === field && rule ? (
-                <dd className="m-0 min-w-0 flex-[1_1_260px]">
-                  <EditRow
-                    field={field}
-                    label={label}
-                    rule={rule}
-                    initial={value ?? ''}
-                    onDone={(done) => {
-                      setEditing(null);
-                      returnTo.current = field;
-                      if (done)
-                        toast.success(t('profile.saved', { field: t(`profile.field.${field}`) }));
-                    }}
-                  />
-                </dd>
+                <>
+                  <dt className="flex-[0_0_100%] text-[13px] text-text-2">{label}</dt>
+                  <dd className="m-0 min-w-0 flex-1">
+                    <EditRow
+                      field={field}
+                      label={label}
+                      rule={rule}
+                      initial={value ?? ''}
+                      onDone={(done) => {
+                        setEditing(null);
+                        returnTo.current = field;
+                        if (done)
+                          toast.success(t('profile.saved', { field: t(`profile.field.${field}`) }));
+                      }}
+                    />
+                  </dd>
+                </>
               ) : (
                 <>
-                  <dd
-                    dir={value && (rule?.ltr ?? LTR_READONLY.has(field)) ? 'ltr' : undefined}
-                    className={`m-0 min-w-0 flex-[1_1_200px] text-start text-[15px] font-medium break-words ${
-                      value ? 'text-text' : 'text-text-2'
-                    } ${value && (rule?.ltr ?? LTR_READONLY.has(field)) ? 'rtl:text-end' : ''}`}
-                  >
-                    {value ? display(field, value) : t('profile.empty')}
-                  </dd>
-                  {rule && (
-                    <Button
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <dt className="text-[13px] text-text-2">{label}</dt>
+                    <dd
+                      dir={ltr ? 'ltr' : undefined}
+                      className={`m-0 text-start text-[15px] font-semibold break-words ${
+                        value ? 'text-text' : 'text-warn'
+                      } ${ltr ? 'rtl:text-end' : ''}`}
+                    >
+                      {value ? display(field, value) : t('profile.empty')}
+                    </dd>
+                  </div>
+                  {rule ? (
+                    <button
+                      type="button"
                       id={`profile-${field}`}
-                      variant={value ? 'outline' : 'primary'}
                       aria-label={t(value ? 'profile.editLabel' : 'profile.addLabel', {
                         field: label,
                       })}
                       onClick={() => setEditing(field)}
+                      className={`inline-flex min-h-11 items-center px-1 text-[13px] text-primary-text ${
+                        value ? 'font-semibold' : 'font-bold'
+                      }`}
                     >
                       {t(value ? 'profile.edit' : 'profile.add')}
-                    </Button>
+                    </button>
+                  ) : (
+                    <span className="flex-none text-text-2">
+                      <Icon name="lock" size={15} />
+                      <span className="sr-only">{t('profile.locked')}</span>
+                    </span>
                   )}
                 </>
               )}
@@ -181,7 +121,7 @@ export function ProfileCard({ contract }: { contract: ContractData }) {
           );
         })}
       </dl>
-    </SectionCard>
+    </SideSection>
   );
 }
 
