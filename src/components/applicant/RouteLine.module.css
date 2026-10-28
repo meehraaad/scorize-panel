@@ -1,0 +1,59 @@
+/* The stops on the way to a case, on a forest or luxe card: one line under the dots, the dot of
+   each stop by its state. */
+.route {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--stops), minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  inset-inline: calc(50% / var(--stops));
+  height: 1.5px;
+  background: var(--luxe-line);
+}
+
+.stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--route-ground);
+  box-shadow: inset 0 0 0 2px var(--luxe-gold-light);
+}
+
+.forest {
+  --route-ground: var(--forest);
+}
+
+.luxe {
+  --route-ground: var(--luxe);
+}
+
+.done {
+  background: var(--luxe-gold-light);
+  box-shadow: none;
+}
+
+.now {
+  background: var(--luxe-gold-light);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--luxe-gold-light) 22%, transparent);
+}
+
+.warn {
+  background: var(--hero-current);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--hero-current) 25%, transparent);
+}

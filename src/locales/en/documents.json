@@ -161,9 +161,6 @@
       "upload": "Upload"
     },
     "write": {
-      "title": "What you don't have, we write",
-      "subtitle": "Fill in the form now, pay at the final submit.",
-      "toman": "Toman",
       "name": {
         "sop": "SOP",
         "cv": "CV",
@@ -180,14 +177,6 @@
         "cv": "A consistent academic CV in English.",
         "recommendation": "We write it, your professor signs it."
       },
-      "voice": "{{name}}'s experience",
-      "note": {
-        "paid": "Paid. Finish the form.",
-        "writing": "The writer is working on it.",
-        "ready": "It's ready."
-      },
-      "start": "Start the form",
-      "startFor": "Start the {{name}} form",
       "startError": "The form didn't open. Try again.",
       "continue": "Continue the form",
       "view": "See the order"
@@ -195,6 +184,82 @@
     "call": {
       "text": "No time to upload? An advisor calls and asks by phone.",
       "button": "Call me"
+    },
+    "texts": {
+      "title": "Your texts",
+      "text": "Don't have them? We write them. Fill in the form now and pay when you submit it.",
+      "write": "We write it · {{price}} toman",
+      "writeFor": "Order the writing of your {{name}}"
+    },
+    "turkey": {
+      "badge": "Turkey contract · online",
+      "title": "Uploading these documents starts your application to Turkey.",
+      "text": "The university pays our fee. Once the team approves them, you sign with an SMS code and your case opens.",
+      "route": "The way to start Turkey",
+      "stop": {
+        "upload": "Upload documents",
+        "sign": "Sign by SMS",
+        "start": "Case starts"
+      },
+      "hint": {
+        "count": "{{n}} of {{total}}",
+        "sign": "After the team's approval",
+        "start": "Right away"
+      },
+      "begin": "Start applying to Turkey",
+      "beginText": "Tell us your degree and field to see the documents Turkey needs.",
+      "next": "Next document: {{name}}",
+      "private": "Only the Scorize team sees your files.",
+      "level": "The list for a {{degree}} degree",
+      "left": "{{n}} required documents left. Each one is reviewed as soon as you upload it.",
+      "allIn": "Every required document is in. We'll let you know the result by SMS.",
+      "others": "Other countries too? The same documents reach your advisor, who can offer a full contract based on them in a consultation.",
+      "book": "Book a consultation"
+    },
+    "status": {
+      "route": "Turkey steps",
+      "stop": {
+        "review": "Document review",
+        "result": "Final result",
+        "sign": "Sign by SMS"
+      },
+      "hint": {
+        "approved": "{{n}} of {{total}} approved",
+        "sms": "By SMS",
+        "start": "and the case starts",
+        "passed": "Accepted",
+        "now": "Now"
+      },
+      "badge": "Turkey contract",
+      "review": {
+        "title": "Your documents for Turkey are being reviewed.",
+        "text": "Every document you upload reaches the Turkey team at once. We'll let you know the result by SMS."
+      },
+      "docs": "Each document's status",
+      "doc": {
+        "missing": "Waiting for upload",
+        "uploaded": "Received",
+        "review": "In review",
+        "approved": "Approved",
+        "rejected": "Upload again"
+      },
+      "upload": "Upload {{name}}",
+      "fix": {
+        "badge": "One thing for you",
+        "title": "Upload your {{name}} again.",
+        "text": "Once you upload it again, the review carries on.",
+        "reupload": "Upload again"
+      },
+      "sign": {
+        "badge": "Every document approved",
+        "title": "Sign the pledge and your Turkey case starts right now.",
+        "terms": "Read the full pledge"
+      },
+      "done": {
+        "title": "Your Turkey case has started.",
+        "text": "A copy of the pledge is in Contract and payments. Your supervisor will call you soon and suggest universities.",
+        "home": "Go to my case"
+      }
     }
   },
   "counts": {

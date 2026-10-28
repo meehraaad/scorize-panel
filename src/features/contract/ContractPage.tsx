@@ -20,8 +20,9 @@ import { previewContract } from './preview';
  * - active: what is waiting for the applicant, the contract on the luxe card, instalments with the
  *   documents beside them, then their details
  * - approved and waiting for its prepayment (S46): the prepayment on the luxe card, then the plan
- * - no contract: the ways to start (Turkey, the full contract), their session notes, admissions of
- *   people like them, what a contract opens and the questions before one
+ * - no contract: what the tab holds after one, the two contracts as tickets (Turkey online, the
+ *   full contract at the office), research interests and the questions before one (canvas
+ *   "قرارداد و پرداخت: بدون قرارداد"
  * - ended, or in review without a prepayment: the lock banner over the contract (or a sample)
  */
 export default function ContractPage() {

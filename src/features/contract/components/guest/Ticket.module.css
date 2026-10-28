@@ -1,0 +1,37 @@
+/* A contract as a boarding pass: the body, a dashed tear line with a notch at each edge, and the
+   stub holding the action. The notches take the page's colour. */
+.ticket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  color: var(--on-hero);
+  box-shadow: var(--luxe-shadow);
+}
+
+.tear {
+  position: relative;
+  height: 0;
+  margin-inline: 20px;
+  border-top: 1.5px dashed var(--luxe-line);
+}
+
+.tear::before,
+.tear::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--canvas);
+}
+
+.tear::before {
+  inset-inline-start: -31px;
+}
+
+.tear::after {
+  inset-inline-end: -31px;
+}

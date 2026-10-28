@@ -1,13 +1,13 @@
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { GuestInterests } from '@/components/applicant/GuestInterests';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { ChanceSection } from './ChanceSection';
 import { GuestHero } from './GuestHero';
-import { GuestInterests } from './GuestInterests';
 
 /** What every application goes through, in order. */
 const STEPS = ['pick', 'approve', 'send', 'result'] as const;
@@ -27,7 +27,7 @@ export function GuestApplications({ access }: { access: ApplicantAccess }) {
       <GuestHero access={access} />
       {ON_SERVER.guestInterests && (
         <Suspense fallback={null}>
-          <GuestInterests />
+          <GuestInterests id="apps-interests" />
         </Suspense>
       )}
       {ON_SERVER.estimate && <ChanceSection />}

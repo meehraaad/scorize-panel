@@ -14,7 +14,7 @@ import {
 } from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
 import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
-import { turkeyQuery } from '@/features/turkey/api';
+import { turkeyQuery } from '@/lib/applicant/turkey';
 import { documentsQuery } from '@/features/documents/api';
 import { writingOffersQuery } from '@/features/documents/offers';
 import { overviewQuery } from '@/features/home/api';
@@ -156,17 +156,26 @@ export const applicantPanel: PanelDefinition = {
         },
         {
           path: 'documents',
-          ...lazyPage(() => import('@/features/documents/DocumentsPage'), ['documents'], {
-            // Without a contract the tab is the new user's: files sent for the free review and
-            // the writing offered next to them. Opened first (access not known yet), it loads
-            // them too, as the home does.
-            data: () => {
-              const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
-              const guest = ON_SERVER.writingOffers && state === 'guest';
-              return [documentsQuery, guest && reviewDocumentsQuery, guest && writingOffersQuery];
+          ...lazyPage(
+            () => import('@/features/documents/DocumentsPage'),
+            ON_SERVER.turkey ? ['documents', 'turkey'] : ['documents'],
+            {
+              // Without a contract the tab is the new user's: the documents (that start Turkey, once
+              // Django serves it) and the writing offered next to them. Opened first (access not
+              // known yet), it loads them too, as the home does.
+              data: () => {
+                const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
+                const guest = ON_SERVER.writingOffers && state === 'guest';
+                return [
+                  documentsQuery,
+                  guest && reviewDocumentsQuery,
+                  guest && writingOffersQuery,
+                  guest && ON_SERVER.turkey && turkeyQuery,
+                ];
+              },
+              skeleton: 'dashboard',
             },
-            skeleton: 'dashboard',
-          }),
+          ),
         },
         // Writing information forms. Design: canvas V6 sections 4 (SOP) and 5 (CV).
         {
@@ -236,20 +245,20 @@ export const applicantPanel: PanelDefinition = {
         // Design: canvas V6 sections 7 (contract) and 11 (payment details).
         {
           path: 'contract',
-          ...lazyPage(() => import('@/features/contract/ContractPage'), ['contract'], {
-            // Without a contract the tab sells the next step: their session notes and admissions
-            // of people like them (the last quiz result). A case with a contract reads neither.
-            data: () => {
-              const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
-              const guest = state === 'guest';
-              return [
-                contractQuery,
-                guest && sessionSummariesQuery(),
-                guest && ON_SERVER.estimate && latestEstimateQuery,
-              ];
+          ...lazyPage(
+            () => import('@/features/contract/ContractPage'),
+            ['contract', 'applications'],
+            {
+              // Without a contract the tab sells the next step: the two contracts and the research
+              // interests they can save already. A case with a contract doesn't read them.
+              data: () => {
+                const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
+                const guest = state === 'guest';
+                return [contractQuery, guest && ON_SERVER.guestInterests && guestInterestsQuery];
+              },
+              skeleton: 'detail',
             },
-            skeleton: 'detail',
-          }),
+          ),
         },
         {
           // An invoice from buying to what comes next: an instalment, a services purchase, a booked
