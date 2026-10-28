@@ -79,8 +79,8 @@ function Conversation({ thread }: { thread: TicketThread }) {
   const names = f.list(thread.team.map((member) => member.name));
   return (
     // The chat fills the dialog: only the messages scroll; the composer stays at the bottom.
-    <div className="-mx-5 -mb-6 flex h-[70dvh] min-h-0 flex-col lg:-mx-7 lg:h-auto lg:flex-1">
-      <p className="m-0 px-5 pb-2 text-sm leading-6 text-text-2 lg:px-7">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <p className="m-0 pb-2 text-sm leading-6 text-text-2">
         {thread.team.length > 0
           ? t('thread.writing.subtitle', { names })
           : t('thread.writing.noTeam')}
