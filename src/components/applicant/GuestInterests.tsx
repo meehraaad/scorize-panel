@@ -8,9 +8,10 @@ import { useFormat } from '@/lib/i18n/useFormat';
 /**
  * Research interests before a contract, kept on the account (the case starts with them), and what
  * they already find: how many professors in Scorize's list work on them, a few without names. The
- * bot writes to them once the case starts. Design: canvas "تب اپلای‌ها و نتایج", بدون قرارداد.
+ * bot writes to them once the case starts. On the applications and contract tabs without a contract.
+ * Design: canvas "تب اپلای‌ها و نتایج", بدون قرارداد.
  */
-export function GuestInterests() {
+export function GuestInterests({ id }: { id: string }) {
   const { t } = useTranslation('applications');
   const f = useFormat();
   const { data } = useSuspenseQuery(guestInterestsQuery);
@@ -19,17 +20,17 @@ export function GuestInterests() {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-5">
       <InterestsCard
-        id="apps-interests"
+        id={id}
         interests={data.interests}
         save={save}
         title={t('interests.title')}
         subtitle={t('interests.subtitle')}
       />
       <section
-        aria-labelledby="apps-professors"
+        aria-labelledby={`${id}-professors`}
         className="flex flex-col gap-3.5 rounded-[24px] p-6 text-on-hero shadow-luxe bg-luxe-soft lg:rounded-[32px] lg:p-8"
       >
-        <h2 id="apps-professors" className="m-0 text-[13px] font-bold text-luxe-gold-light">
+        <h2 id={`${id}-professors`} className="m-0 text-[13px] font-bold text-luxe-gold-light">
           {t('interests.professors')}
         </h2>
         {data.interests.length > 0 ? (

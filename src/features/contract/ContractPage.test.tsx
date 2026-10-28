@@ -143,22 +143,26 @@ describe('contract page', () => {
     expect(profile()).toBeInTheDocument();
   });
 
-  it('without a contract, shows the ways to start a case', async () => {
+  it('without a contract, shows the two contracts as tickets', async () => {
     loginAs(MARYAM);
     renderApp('/contract');
-    const turkey = await screen.findByRole('region', { name: 'اپلای ترکیه، رایگان' });
-    expect(turkey).toHaveTextContent('۰ تومان پیش‌پرداخت');
-    const full = screen.getByRole('region', { name: 'قرارداد کامل' });
+    await screen.findByRole('heading', { name: 'تصمیم‌ها با شماست، کارها با ما.' });
+    const turkey = screen.getByRole('article', { name: 'ترکیه' });
+    expect(turkey).toHaveTextContent('رایگان');
+    expect(within(turkey).getByRole('list', { name: 'مسیر شروع ترکیه' }).children).toHaveLength(3);
+    const full = screen.getByRole('article', { name: 'قرارداد کامل' });
+    expect(
+      within(full).getByRole('list', { name: 'مسیر شروع قرارداد کامل' }).children,
+    ).toHaveLength(4);
     expect(within(full).getByRole('link', { name: 'رزرو مشاوره' })).toHaveAttribute(
       'href',
       '/consultations/book',
     );
-    expect(within(full).getByRole('button', { name: 'با من تماس بگیرید' })).toBeInTheDocument();
-    // No session yet: the journey starts at the consultation.
-    const current = screen
-      .getAllByRole('listitem')
-      .find((step) => step.getAttribute('aria-current') === 'step');
-    expect(current).toHaveTextContent('جلسه‌ی مشاوره');
+    expect(within(full).getByRole('button', { name: 'درخواست تماس' })).toBeInTheDocument();
+    // Research interests can be saved before a contract.
+    expect(
+      await screen.findByRole('region', { name: 'دوست دارید روی چه موضوعی پژوهش کنید؟' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'سؤال‌های قبل از شروع' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'این بخش قفل است' })).toBeNull();
   });

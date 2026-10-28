@@ -401,81 +401,64 @@
     "fill": "Complete details"
   },
   "guest": {
-    "subtitle": "Start Turkey for free, or get a contract for other countries.",
-    "journey": {
-      "label": "Your way to a case",
-      "here": "You are here · {{hint}}",
-      "session": {
-        "name": "Consultation",
-        "hint": "Talk to a consultant"
-      },
+    "subtitle": "Your case starts with one of the two contracts below.",
+    "promise": {
+      "label": "After the contract",
+      "title": "You make the decisions, we do the work.",
       "choose": {
-        "name": "Choose how to start",
-        "hint": "Turkey or a full contract"
+        "name": "You choose",
+        "text": "You approve every university. Nothing is applied without your approval."
       },
-      "contract": {
-        "name": "Contract",
-        "hint": "By SMS code for Turkey, on paper for the rest"
+      "installments": {
+        "name": "Clear instalments",
+        "text": "See every instalment and its date here, and pay online."
       },
-      "start": {
-        "name": "Case starts",
-        "hint": "Your supervisor calls"
+      "together": {
+        "name": "All in one place",
+        "text": "The contract, your receipts and your details, always at hand."
       }
     },
+    "choose": "Which contract?",
+    "fee": "Service fee",
+    "prepayment": "Prepayment",
     "turkey": {
-      "chip": "0 toman prepayment",
-      "title": "Apply to Turkey, free",
-      "text": "The university pays. Your documents are enough.",
-      "start": "Start the free apply",
-      "call": "Ask to start Turkey",
-      "note": "Signed with an SMS code"
+      "name": "Turkey",
+      "line": "Online in this panel. No need to come to the office.",
+      "chip": "Online, today",
+      "route": "The way to start Turkey",
+      "stop": {
+        "upload": "Upload documents",
+        "sign": "Sign by SMS",
+        "start": "Case starts"
+      },
+      "fee": "Free",
+      "prepayment": "None",
+      "start": "Upload documents",
+      "call": "Ask to start Turkey"
     },
     "full": {
-      "countries": "Canada, Germany, Italy and more",
-      "title": "Full contract",
-      "from": "From",
-      "price": "$500",
-      "instalments": "in instalments",
-      "text": "Your consultant gives the exact amount and instalments in the session.",
+      "name": "Full contract",
+      "line": "Canada, Germany, Italy and other countries.",
+      "chip": "At the office",
+      "route": "The way to start the full contract",
+      "stop": {
+        "session": "Consultation",
+        "sign": "Sign at the office",
+        "prepay": "Prepayment",
+        "start": "Case starts"
+      },
+      "fee": "From $500",
+      "prepayment": "When signing, the rest in instalments",
       "book": "Book a consultation",
-      "call": "Call me"
+      "call": "Request a call"
     },
-    "notes": {
-      "title": "What your consultant wrote",
-      "subtitle": "The note from each session, newest first. The contract offer builds on these.",
-      "with": ", with {{names}}",
-      "more": "Show earlier notes ({{n}})",
-      "older": "Older notes"
-    },
-    "admissions": {
-      "title": "Admissions of people with a background like yours",
-      "note": "From your last admission-chance result, no names.",
-      "all": "All admission samples"
-    },
-    "unlocks": {
-      "title": "Once your case starts, these four parts of the panel open",
-      "subtitle": "Locked in the menu for now.",
-      "supervisor": {
-        "name": "Your own supervisor",
-        "text": "One person for your country who takes your case from start to visa."
-      },
-      "writing": {
-        "name": "Documents and writing",
-        "text": "The writing team writes your SOP, CV and recommendations from your forms."
-      },
-      "applications": {
-        "name": "Applications and results",
-        "text": "Every application, its deadline and its result, right here."
-      },
-      "tickets": {
-        "name": "Tickets with the team",
-        "text": "Every question stays in your case, and the team answers."
-      },
-      "payLabel": "In instalments:",
-      "pay": "A prepayment at signing, the rest monthly or after a step like \"first admission\". Online or with a card-transfer receipt."
-    },
+    "both": "Want both? Start Turkey online and add the other countries' contract at your session.",
     "faq": {
       "title": "Questions before you start",
+      "why": {
+        "q": "Why is Turkey online and the rest at the office?",
+        "a": "The Turkey contract costs you nothing and needs only your documents, so it starts with an SMS signature. The full contract has a price and instalments and is written from your session, so it is signed at the office."
+      },
       "turkey": {
         "q": "Is Turkey really free?",
         "a": "Yes. The university pays Scorize's service fee, so this contract has no prepayment or instalments. The university's own costs, like tuition, are separate."
@@ -487,10 +470,6 @@
       "price": {
         "q": "How much is a full contract?",
         "a": "From $500. The exact amount depends on the countries, degree, number of applications and services you choose; your consultant gives the offer with instalments in the session."
-      },
-      "sign": {
-        "q": "How do I sign the contract?",
-        "a": "Turkey with an SMS code, right here. A full contract on paper at the office for now, with your sales consultant."
       }
     }
   },

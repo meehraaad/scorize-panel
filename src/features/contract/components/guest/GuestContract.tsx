@@ -1,97 +1,87 @@
-import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
+import { GuestInterests } from '@/components/applicant/GuestInterests';
 import { FaqList } from '@/components/tickets/FaqList';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { StepBar } from '@/components/ui/Progress';
 import { SideSection } from '@/components/ui/SectionCard';
-import { sessionSummariesQuery } from '@/lib/applicant/consultations';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { Admissions } from './Admissions';
-import { SessionNotes } from './SessionNotes';
-import { StartCards } from './StartCards';
+import { Tickets } from './Tickets';
 
-const STAGES = ['session', 'choose', 'contract', 'start'] as const;
-
-const UNLOCKS = [
-  { key: 'supervisor', icon: 'user' },
-  { key: 'writing', icon: 'pen' },
-  { key: 'applications', icon: 'graduation' },
-  { key: 'tickets', icon: 'send' },
+const PROMISE = [
+  { key: 'choose', icon: 'check' },
+  { key: 'installments', icon: 'card' },
+  { key: 'together', icon: 'document' },
 ] as const satisfies readonly { key: string; icon: IconName }[];
 
-const FAQ = ['turkey', 'both', 'price', 'sign'] as const;
+const FAQ = ['why', 'turkey', 'both', 'price'] as const;
 
 /**
- * "Contract & payment" without a contract: a page that sells the next step instead of a locked
- * preview. Where they are on the way to a case, the two ways to start (Turkey, the full contract),
- * what their consultant wrote after their sessions, admissions of people like them, what the panel
- * opens after a contract, and the questions asked before one. Only the start cards are raised; the
- * rest sits on the page with thin lines. Design: canvas "Scorize New User Dashboard v2",
- * ContractGuest and ContractGuestSession.
+ * "Contract & payment" without a contract: what this tab holds once there is one (the decisions
+ * stay theirs), the two contracts as tickets (Turkey online, the full contract at the office), the
+ * research interests they can already save, and the questions asked before starting. Calm and
+ * spacious on purpose. Design: canvas "قرارداد و پرداخت: بدون قرارداد".
  */
 export function GuestContract({ access }: { access: ApplicantAccess }) {
   const { t } = useTranslation('contract');
-  const { data: notes } = useSuspenseInfiniteQuery(sessionSummariesQuery());
-  // After a session (its notes are shared), the next stage is choosing how to start.
-  const here = notes.pages[0]?.results.length ? 1 : 0;
 
   return (
-    <>
-      <StepBar
-        label={t('guest.journey.label')}
-        steps={STAGES.map((stage, index) => ({
-          key: stage,
-          label: t(`guest.journey.${stage}.name`),
-          hint:
-            index === here
-              ? t('guest.journey.here', { hint: t(`guest.journey.${stage}.hint`) })
-              : t(`guest.journey.${stage}.hint`),
-        }))}
-        current={here}
-      />
-      <StartCards access={access} />
-      <SessionNotes />
-      {ON_SERVER.estimate && (
-        <Suspense fallback={null}>
-          <Admissions />
-        </Suspense>
-      )}
-
+    <div className="flex flex-col gap-12 lg:gap-[72px]">
       <section
-        aria-labelledby="contract-unlocks"
-        className="flex flex-col gap-5 pt-7 shadow-[inset_0_1px_0_var(--line-2)] lg:pt-8"
+        aria-labelledby="contract-promise"
+        className="grid gap-5 rounded-[24px] bg-surface p-5 shadow-panel lg:grid-cols-[minmax(0,0.9fr)_minmax(0,2fr)] lg:items-center lg:gap-11 lg:px-12 lg:py-11"
       >
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-1">
+        <div className="flex flex-col gap-1">
+          <span className="text-[13px] font-bold text-primary-text">
+            {t('guest.promise.label')}
+          </span>
           <h2
-            id="contract-unlocks"
-            className="m-0 max-w-[620px] font-display text-[22px] leading-relaxed font-bold"
+            id="contract-promise"
+            className="m-0 font-display text-lg leading-relaxed font-bold lg:text-[26px]"
           >
-            {t('guest.unlocks.title')}
+            {t('guest.promise.title')}
           </h2>
-          <span className="text-sm text-text-2">{t('guest.unlocks.subtitle')}</span>
         </div>
-        <dl className="m-0 grid gap-x-14 lg:grid-cols-2">
-          {UNLOCKS.map(({ key, icon }) => (
-            <div
+        <ul className="m-0 grid list-none gap-3 p-0 lg:grid-cols-3 lg:gap-6">
+          {PROMISE.map(({ key, icon }) => (
+            <li
               key={key}
-              className="grid grid-cols-[22px_minmax(0,1fr)] gap-x-3.5 gap-y-1 py-5 shadow-[inset_0_1px_0_var(--hair)]"
+              className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 lg:flex lg:flex-col lg:gap-2"
             >
-              <span className="row-span-2 pt-0.5 text-primary-text">
-                <Icon name={icon} size={22} />
+              <span
+                aria-hidden="true"
+                className="flex size-8 items-center justify-center rounded-xl bg-tint text-primary-text lg:size-10"
+              >
+                <Icon name={icon} size={18} />
               </span>
-              <dt className="text-base font-bold">{t(`guest.unlocks.${key}.name`)}</dt>
-              <dd className="m-0 text-sm leading-7 text-text-2">
-                {t(`guest.unlocks.${key}.text`)}
-              </dd>
-            </div>
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm font-extrabold lg:text-[15px]">
+                  {t(`guest.promise.${key}.name`)}
+                </span>
+                <span className="text-[13px] leading-7 text-text-2">
+                  {t(`guest.promise.${key}.text`)}
+                </span>
+              </span>
+            </li>
           ))}
-        </dl>
-        <p className="m-0 rounded-[20px] bg-surface px-6 py-4 text-sm leading-7 text-text-2 shadow-[inset_0_0_0_1px_var(--hair)]">
-          <b className="text-text">{t('guest.unlocks.payLabel')}</b> {t('guest.unlocks.pay')}
+        </ul>
+      </section>
+
+      <section aria-labelledby="contract-choose" className="flex flex-col gap-4 lg:gap-6">
+        <h2 id="contract-choose" className="m-0 font-display text-lg font-bold lg:text-[22px]">
+          {t('guest.choose')}
+        </h2>
+        <Tickets access={access} />
+        <p className="m-0 text-center text-[13px] leading-7 text-text-2 lg:text-sm">
+          {t('guest.both')}
         </p>
       </section>
+
+      {ON_SERVER.guestInterests && (
+        <Suspense fallback={null}>
+          <GuestInterests id="contract-interests" />
+        </Suspense>
+      )}
 
       <SideSection id="contract-faq" title={t('guest.faq.title')}>
         <FaqList
@@ -102,6 +92,6 @@ export function GuestContract({ access }: { access: ApplicantAccess }) {
           }))}
         />
       </SideSection>
-    </>
+    </div>
   );
 }
