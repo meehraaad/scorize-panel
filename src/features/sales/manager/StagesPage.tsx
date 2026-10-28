@@ -172,7 +172,7 @@ export default function StagesPage() {
   const fixed = (stage: (typeof FIXED_START)[number] | (typeof FIXED_END)[number]) => (
     <li
       key={stage}
-      className="flex min-h-13 items-center gap-2.5 rounded-xl bg-track px-3 text-sm text-text-2"
+      className="flex min-h-14 items-center gap-2.5 rounded-xl bg-track px-3 text-sm text-text-2"
     >
       <Icon name="lock" size={14} />
       <span className="flex-1">{t(`stage.${stage}`)}</span>
@@ -200,7 +200,7 @@ export default function StagesPage() {
               })}
         </Notice>
       )}
-      <div className="grid items-start gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(200px,280px)_minmax(0,1fr)]">
         <SectionCard id="stages-list" variant="panel" title={t('manager.stages.list')}>
           <p className="m-0 text-[13px] leading-6 text-text-2">{t('manager.stages.listHint')}</p>
           <ol className="m-0 flex list-none flex-col gap-2 p-0">
@@ -211,7 +211,7 @@ export default function StagesPage() {
                   type="button"
                   aria-current={draft.key === selected ? 'true' : undefined}
                   onClick={() => setSelected(draft.key)}
-                  className={`flex min-h-13 min-w-0 flex-1 flex-col justify-center rounded-xl px-3 text-start text-sm shadow-[inset_0_0_0_1px_var(--line-2)] ${draft.key === selected ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]' : 'bg-surface'}`}
+                  className={`flex min-h-14 min-w-0 flex-1 flex-col justify-center rounded-xl px-3 text-start text-sm shadow-[inset_0_0_0_1px_var(--line-2)] ${draft.key === selected ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]' : 'bg-surface'}`}
                 >
                   <span className="truncate font-medium">
                     {draft.name.trim() || t('manager.stages.unnamed')}

@@ -152,7 +152,7 @@ export function EnterStageDialog({
             >
               <span
                 aria-hidden="true"
-                className={`inline-flex size-7.5 flex-none items-center justify-center rounded-full text-[13px] font-bold ${activity.required ? 'bg-primary text-on-primary' : 'bg-track text-text-2'}`}
+                className={`inline-flex size-8 flex-none items-center justify-center rounded-full text-[13px] font-bold ${activity.required ? 'bg-primary text-on-primary' : 'bg-track text-text-2'}`}
               >
                 {f.number(number)}
               </span>
@@ -160,7 +160,7 @@ export function EnterStageDialog({
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="m-0 text-[15px] font-bold">{title}</h3>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${activity.required ? 'bg-tint text-primary-text' : 'bg-track text-text-2'}`}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${activity.required ? 'bg-tint text-primary-text' : 'bg-track text-text-2'}`}
                   >
                     {tag}
                   </span>
