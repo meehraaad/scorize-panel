@@ -38,10 +38,11 @@ export function useSendFeedback(id: number) {
   });
 }
 
+/** What the session is about (the studies are the background form's, `/background`). */
 export function useSaveConsultationInfo(id: number) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (info: ConsultationInfo) =>
+    mutationFn: (info: Pick<ConsultationInfo, 'notes'>) =>
       api(`/applicant/v1/consultations/${String(id)}/info/`, { method: 'PUT', body: info }),
     // The services page lists sessions too.
     onSuccess: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),

@@ -20,12 +20,16 @@ describe('a session over the home', () => {
     renderApp('/?session=41');
     const dialog = await screen.findByRole('dialog', { name: 'مشاوره‌ی تخصصی اپلای دکترا' });
     await user.click(await within(dialog).findByRole('button', { name: 'ثبت برای مشاور' }));
-    expect(within(dialog).getByLabelText('دانشگاه فعلی')).toHaveFocus();
-    await user.type(within(dialog).getByLabelText('دانشگاه فعلی'), 'دانشگاه صنعتی اصفهان');
-    await user.type(within(dialog).getByLabelText('رشته‌ی فعلی'), 'مهندسی کامپیوتر');
-    await user.type(within(dialog).getByLabelText('مقطع فعلی'), 'کارشناسی ارشد');
+    const topic = within(dialog).getByLabelText('درباره‌ی چه می‌خواهید صحبت کنید؟');
+    expect(topic).toHaveFocus();
+    await user.type(topic, 'فاند دکترای هوش مصنوعی در کانادا');
     await user.click(within(dialog).getByRole('button', { name: 'ثبت برای مشاور' }));
-    expect(await toasts().findByText('اطلاعات جلسه ثبت شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('موضوع جلسه ثبت شد.')).toBeInTheDocument();
+    // The studies are asked once, in the background form.
+    expect(within(dialog).getByRole('link', { name: 'فرم سوابق' })).toHaveAttribute(
+      'href',
+      '/background',
+    );
 
     await user.click(within(dialog).getByRole('button', { name: 'فاکتور مشاوره' }));
     expect(dialog).toHaveTextContent('۸۰۰٬۰۰۰ تومان');
@@ -35,7 +39,9 @@ describe('a session over the home', () => {
   it('opens old session links over the home, read-only once held', async () => {
     renderApp('/consultations/42');
     const dialog = await screen.findByRole('dialog', { name: 'مشاوره‌ی اپلای کارشناسی ارشد' });
-    expect(await within(dialog).findByLabelText('دانشگاه فعلی')).toHaveAttribute('readonly');
+    expect(
+      await within(dialog).findByLabelText('درباره‌ی چه می‌خواهید صحبت کنید؟'),
+    ).toHaveAttribute('readonly');
     expect(within(dialog).queryByRole('button', { name: 'ثبت برای مشاور' })).toBeNull();
     // The case home is behind it, with every session.
     expect(screen.getByRole('region', { name: 'جلسه‌های شما', hidden: true })).toBeInTheDocument();
