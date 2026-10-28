@@ -116,6 +116,9 @@ export type PaymentItemKind =
 
 /** One line of the invoice and how its price came about (PAY6). */
 export interface PaymentItem {
+  /** Its invoice (null for an instalment); `removable`: can be taken out of the cart now. */
+  id: number | null;
+  removable: boolean;
   label: string;
   /** A session's start (ISO), when the item has one. */
   note: string | null;
@@ -301,6 +304,25 @@ export function useUseCredit() {
       body: { use_credit: use },
     }),
   );
+}
+
+/** Takes one item out of the cart before the bank; the rest is priced again. */
+export function useRemoveItem() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, item }: { id: number; item: number }) =>
+      api<PaymentData>(`${BASE}/payments/${String(id)}/items/${String(item)}/`, {
+        method: 'DELETE',
+      }),
+    onSuccess: (payment) => {
+      client.setQueryData(paymentQuery(payment.id).queryKey, payment);
+      // The item's own page (a seat, a booked time) no longer waits for this invoice.
+      void client.invalidateQueries({
+        queryKey: APPLICANT_KEY,
+        predicate: (query) => query.queryKey[1] !== 'payment',
+      });
+    },
+  });
 }
 
 /** Applies a discount code (`''` removes it); `result` says why one didn't apply. */

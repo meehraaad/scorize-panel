@@ -1,5 +1,6 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
@@ -122,6 +123,15 @@ export function Purchase({
         amount={money(subtotal)}
       >
         <ItemRows payment={payment} />
+        {payment.editable && (
+          <Link
+            to="/services"
+            className="flex min-h-12 items-center gap-2 px-5 text-sm font-semibold text-primary-text shadow-[inset_0_1px_0_var(--hair)] lg:px-[26px]"
+          >
+            <Icon name="plus" size={16} />
+            {t('payment.cart.more')}
+          </Link>
+        )}
       </Collapsible>
 
       <Collapsible

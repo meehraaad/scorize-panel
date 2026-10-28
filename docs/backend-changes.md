@@ -422,6 +422,16 @@ from the rows below:
   (`/background?then=/campaigns/<slug>`), and its campaign to-do closes once the background is complete.
 - Production needs memcached for `MemcacheLock` (renew and register take it).
 
+**Cart and "pay" to-do (2026-10-28)**, same branch name, after PAY1–PAY10 were merged:
+
+- One open cart per person (`Payment.is_cart`, **a migration**): a panel purchase (session, webinar, campaign,
+  renewal) joins the open one (unpaid, before the bank, in time) and its 20 minutes count again from the last item.
+  Writing drafts, instalments and seller invoices stay on their own.
+- `DELETE payments/<id>/items/<invoice>/` takes an item out before the bank (it ends on its own payment); items carry
+  `id` and `removable`.
+- A cart (quiet) or a seller's invoice (required) opens a `pay` activity linking `/payments/<id>`, due with it;
+  paying, a receipt, a bank check or the end closes it.
+
 | #     | Change                                                                                                                                                                                                                                                                                                                                       | Why                                                                                                                                      | Until then                                                    | Status |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------ |
 | PAY1  | **Retry after a failed or cancelled payment**, and **online after a declined receipt**: `payments/<id>/online/` reopens a FAILED or RECEIPT_DECLINED payment (new authority, PENDING) instead of 409. H24 adds `last_attempt: failed \| cancelled \| null`                                                                                   | The page shows a pay button for these, but the endpoint answers 409 for anything but PENDING                                             | The pay button fails with a toast                             | ☑      |

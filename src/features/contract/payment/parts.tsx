@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
-import type { PaymentData } from '../api';
+import { toast } from '@/lib/toast';
+import { useRemoveItem, type PaymentData, type PaymentItem } from '../api';
 import { itemPrice, useItemNote, useMoney } from './money';
 
 /** A card that opens to show more: a header row (title, line under it, amount) and its body. */
@@ -85,17 +86,22 @@ export function ItemRows({ payment }: { payment: PaymentData }) {
                   <span className="text-[13px] text-text-2">{t('payment.buy.taxed')}</span>
                 )}
               </span>
-              <span className="flex flex-col items-end text-end">
-                <b className="whitespace-nowrap tabular-nums">{money(price)}</b>
-                {price < item.price && (
-                  <span className="text-xs whitespace-nowrap">
-                    <span className="font-semibold text-primary-text">
-                      {t('payment.buy.percentOff', {
-                        percent: f.number(Math.round((1 - price / item.price) * 100)),
-                      })}
-                    </span>{' '}
-                    <s className="text-text-2 tabular-nums">{f.number(item.price)}</s>
-                  </span>
+              <span className="flex items-center gap-1">
+                <span className="flex flex-col items-end text-end">
+                  <b className="whitespace-nowrap tabular-nums">{money(price)}</b>
+                  {price < item.price && (
+                    <span className="text-xs whitespace-nowrap">
+                      <span className="font-semibold text-primary-text">
+                        {t('payment.buy.percentOff', {
+                          percent: f.number(Math.round((1 - price / item.price) * 100)),
+                        })}
+                      </span>{' '}
+                      <s className="text-text-2 tabular-nums">{f.number(item.price)}</s>
+                    </span>
+                  )}
+                </span>
+                {item.removable && item.id !== null && (
+                  <RemoveItem payment={payment} item={item} id={item.id} />
                 )}
               </span>
             </Row>
@@ -103,6 +109,39 @@ export function ItemRows({ payment }: { payment: PaymentData }) {
         );
       })}
     </ol>
+  );
+}
+
+/** Takes an item out of the cart (before the bank, when more than one is in it). */
+function RemoveItem({
+  payment,
+  item,
+  id,
+}: {
+  payment: PaymentData;
+  item: PaymentItem;
+  id: number;
+}) {
+  const { t } = useTranslation('contract');
+  const remove = useRemoveItem();
+  return (
+    <button
+      type="button"
+      disabled={remove.isPending}
+      aria-label={t('payment.cart.remove', { label: item.label })}
+      onClick={() =>
+        remove.mutate(
+          { id: payment.id, item: id },
+          {
+            onSuccess: () => toast.success(t('payment.cart.removed', { label: item.label })),
+            onError: () => toast.error(t('payment.cart.error')),
+          },
+        )
+      }
+      className="flex size-11 flex-none items-center justify-center rounded-full text-text-2"
+    >
+      <Icon name="trash" size={18} />
+    </button>
   );
 }
 

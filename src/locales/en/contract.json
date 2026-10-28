@@ -328,6 +328,12 @@
       "paidLogin": "Your sign-in on this browser has expired. Sign in to see what's next for this purchase.",
       "loginContinue": "Sign in and continue",
       "sum": "Total"
+    },
+    "cart": {
+      "remove": "Remove “{{label}}” from the cart",
+      "removed": "“{{label}}” was removed from the cart.",
+      "error": "The item wasn't removed. Try again.",
+      "more": "Add another purchase to this cart"
     }
   },
   "preview": {
