@@ -688,7 +688,12 @@ const CARDS_PER_COLUMN = 3;
 
 /** The lead's column key, as Django's `column_of` (user_profile/board.py). */
 function columnOf(data: SalesState, item: MockLead): string {
-  if (item.stage === 'new' || item.stage === 'draft' || item.stage === 'won' || item.stage === 'lost')
+  if (
+    item.stage === 'new' ||
+    item.stage === 'draft' ||
+    item.stage === 'won' ||
+    item.stage === 'lost'
+  )
     return item.stage;
   const own = data.stages.find((stage) => stage.id === item.board_stage);
   if (own?.phase === item.stage) return String(own.id);
@@ -766,8 +771,7 @@ export function stagesOf(data: SalesState): StagesData {
   return {
     stages: data.stages.map((stage) => ({
       ...stage,
-      cards: data.customers.filter((item) => columnOf(data, item.lead) === String(stage.id))
-        .length,
+      cards: data.customers.filter((item) => columnOf(data, item.lead) === String(stage.id)).length,
     })),
     templates: MESSAGE_TEMPLATES.map(({ id, title }) => ({ id, title })),
   };

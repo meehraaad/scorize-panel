@@ -275,9 +275,7 @@ export default function StagesPage() {
             variant="panel"
             title={current.name.trim() || t('manager.stages.unnamed')}
             subtitle={
-              current.cards
-                ? t('manager.stages.cards', { n: f.number(current.cards) })
-                : undefined
+              current.cards ? t('manager.stages.cards', { n: f.number(current.cards) }) : undefined
             }
           >
             <div className="grid gap-4 sm:grid-cols-2">
@@ -303,7 +301,9 @@ export default function StagesPage() {
                 inputMode="numeric"
                 value={current.maxDays}
                 onChange={(event) =>
-                  update(current.key, { maxDays: event.target.value.replace(/\D/g, '').slice(0, 3) })
+                  update(current.key, {
+                    maxDays: event.target.value.replace(/\D/g, '').slice(0, 3),
+                  })
                 }
               />
             </div>

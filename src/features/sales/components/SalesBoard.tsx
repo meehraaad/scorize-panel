@@ -241,11 +241,7 @@ export function SalesBoard({
         >
           <div className="grid h-full min-w-full auto-cols-[minmax(264px,1fr)] grid-flow-col items-stretch gap-3 pb-1 lg:auto-cols-[minmax(288px,1fr)] lg:gap-4">
             {data.columns.map((column) => (
-              <BoardColumn
-                key={columnKey(column)}
-                column={column}
-                disabled={mutation.isPending}
-              >
+              <BoardColumn key={columnKey(column)} column={column} disabled={mutation.isPending}>
                 <SortableContext
                   items={column.cards.map((card) => card.lead)}
                   strategy={verticalListSortingStrategy}
@@ -423,8 +419,7 @@ function BoardColumn({
         </div>
         <span className="ps-4 text-[11px] text-text-2">
           {column.value === null ? t('board.noValue') : s.millions(column.value)}
-          {column.max_days !== null &&
-            ` · ${t('board.maxDays', { n: f.number(column.max_days) })}`}
+          {column.max_days !== null && ` · ${t('board.maxDays', { n: f.number(column.max_days) })}`}
         </span>
         {column.activities.length > 0 && (
           <ul

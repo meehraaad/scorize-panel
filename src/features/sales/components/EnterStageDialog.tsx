@@ -249,7 +249,10 @@ export function EnterStageDialog({
           }
           if (activity.kind === 'message') {
             const template = activity.settings.template;
-            if (!template) return section(<p className="m-0 text-sm text-text-2">{t('board.enter.noTemplate')}</p>);
+            if (!template)
+              return section(
+                <p className="m-0 text-sm text-text-2">{t('board.enter.noTemplate')}</p>,
+              );
             const text = render(template.text, card.name, seller);
             return section(
               <>
@@ -282,7 +285,9 @@ export function EnterStageDialog({
                 : customerPath(card.customer);
           return section(
             <>
-              <p className="m-0 text-sm leading-6 text-text-2">{t(`board.enter.open.${activity.kind}`)}</p>
+              <p className="m-0 text-sm leading-6 text-text-2">
+                {t(`board.enter.open.${activity.kind}`)}
+              </p>
               <Link
                 to={link}
                 className="inline-flex min-h-11 items-center gap-1 self-start text-sm font-semibold text-primary-text"

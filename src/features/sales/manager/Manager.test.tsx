@@ -190,7 +190,9 @@ describe('board stages (S48)', () => {
     const user = userEvent.setup();
     loginAs(REZA);
     renderApp('/sales/manager/stages');
-    expect(await screen.findByRole('heading', { name: 'مرحله‌ها و فعالیت‌ها' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'مرحله‌ها و فعالیت‌ها' }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /^تماس گرفته شد/ }));
     const name = screen.getByLabelText('نام مرحله');

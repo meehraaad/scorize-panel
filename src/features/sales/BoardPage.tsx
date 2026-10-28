@@ -28,8 +28,7 @@ export default function BoardPage() {
   const user = useUser();
   const [params, setParams] = useSearchParams();
   const sellerParam = Number(params.get('seller'));
-  const seller =
-    everyone.sellers.some((item) => item.id === sellerParam) ? sellerParam : null;
+  const seller = everyone.sellers.some((item) => item.id === sellerParam) ? sellerParam : null;
   const query = sellerBoardQuery(seller);
   const filtered = useQuery({
     ...query,
