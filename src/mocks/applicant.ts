@@ -48,11 +48,7 @@ import { sopForm } from '@/features/writing/sopForm';
 import { estimateHandlers, resetEstimateMocks } from './estimate';
 import { journeyHandlers, resetJourneyMocks } from './journey';
 import { forbidden, notFound, storage } from './session';
-import {
-  ownTicketHandlers,
-  resetWritingOfferMocks,
-  writingOfferHandlers,
-} from './writingOffers';
+import { ownTicketHandlers, resetWritingOfferMocks, writingOfferHandlers } from './writingOffers';
 
 /**
  * Fake applicant-panel API (docs/backend-changes.md H1–H41). Only Sara (user 1) has a case; anyone

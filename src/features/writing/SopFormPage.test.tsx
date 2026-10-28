@@ -185,7 +185,9 @@ describe('SOP information form', () => {
     await user.click(within(bar).getByRole('button', { name: 'تیکت به نویسنده' }));
     const ticket = screen.getByRole('dialog', { name: 'تیم نگارش · انگیزه‌نامه' });
     expect(
-      await within(ticket).findByText('تیکت‌ها با عقد قرارداد یا خرید هر یک از خدمات نگارش باز می‌شود'),
+      await within(ticket).findByText(
+        'تیکت‌ها با عقد قرارداد یا خرید هر یک از خدمات نگارش باز می‌شود',
+      ),
     ).toBeInTheDocument();
     await user.click(within(ticket).getByRole('button', { name: 'بستن' }));
     expect(within(bar).getByRole('button', { name: 'ثبت نهایی' })).toBeDisabled();
@@ -209,6 +211,8 @@ describe('SOP information form', () => {
     const text = await within(ticket).findByRole('textbox');
     await user.type(text, 'سلام، درباره‌ی بخش اهداف سؤال دارم');
     await user.click(within(ticket).getByRole('button', { name: /ارسال/ }));
-    expect(await within(ticket).findByText('سلام، درباره‌ی بخش اهداف سؤال دارم')).toBeInTheDocument();
+    expect(
+      await within(ticket).findByText('سلام، درباره‌ی بخش اهداف سؤال دارم'),
+    ).toBeInTheDocument();
   });
 });

@@ -186,10 +186,14 @@ export const applicantPanel: PanelDefinition = {
         // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm).
         {
           path: 'documents/recommendation',
-          ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing', 'tickets'], {
-            data: () => [writingQuery('recommendation')],
-            skeleton: 'form',
-          }),
+          ...lazyPage(
+            () => import('@/features/writing/RecommendationFormPage'),
+            ['writing', 'tickets'],
+            {
+              data: () => [writingQuery('recommendation')],
+              skeleton: 'form',
+            },
+          ),
         },
         {
           path: 'documents/pl',
