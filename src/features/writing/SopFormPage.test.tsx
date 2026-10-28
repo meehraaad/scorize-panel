@@ -2,6 +2,7 @@ import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
+import { payWritingOrder } from '@/mocks/writingOffers';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 
@@ -180,13 +181,38 @@ describe('SOP information form', () => {
     expect(
       within(bar).getByText(/بعد از خرید هم می‌توانید پر کردن فرم را ادامه دهید/),
     ).toBeInTheDocument();
-    expect(within(bar).getByRole('link', { name: 'تیکت به نویسنده' })).toHaveAttribute(
-      'href',
-      '/tickets/writing/sop',
-    );
+    // Before paying, the ticket over the form says what opens it.
+    await user.click(within(bar).getByRole('button', { name: 'تیکت به نویسنده' }));
+    const ticket = screen.getByRole('dialog', { name: 'تیم نگارش · انگیزه‌نامه' });
+    expect(
+      await within(ticket).findByText(
+        'تیکت‌ها با عقد قرارداد یا خرید هر یک از خدمات نگارش باز می‌شود',
+      ),
+    ).toBeInTheDocument();
+    await user.click(within(ticket).getByRole('button', { name: 'بستن' }));
     expect(within(bar).getByRole('button', { name: 'ثبت نهایی' })).toBeDisabled();
     expect(within(bar).queryByRole('button', { name: /ذخیره/ })).toBeNull();
     await user.click(within(bar).getByRole('button', { name: 'خرید — ۴٬۵۰۰٬۰۰۰ تومان' }));
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/payments/600'));
+  });
+
+  it('opens the writer ticket over the form once a new user paid', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    await fetch(new URL('/api/applicant/v1/writing/sop/start/', window.location.origin), {
+      method: 'POST',
+    });
+    payWritingOrder(MARYAM, 'sop');
+
+    renderApp('/documents/sop');
+    const tabs = await screen.findByRole('navigation', { name: 'سفارش‌های نگارش شما' });
+    await user.click(within(tabs).getByRole('button', { name: 'تیکت نگارش' }));
+    const ticket = screen.getByRole('dialog', { name: 'تیم نگارش · انگیزه‌نامه' });
+    const text = await within(ticket).findByRole('textbox');
+    await user.type(text, 'سلام، درباره‌ی بخش اهداف سؤال دارم');
+    await user.click(within(ticket).getByRole('button', { name: /ارسال/ }));
+    expect(
+      await within(ticket).findByText('سلام، درباره‌ی بخش اهداف سؤال دارم'),
+    ).toBeInTheDocument();
   });
 });

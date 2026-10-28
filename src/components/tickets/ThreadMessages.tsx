@@ -13,7 +13,7 @@ import {
   type TicketMessage,
 } from '@/lib/tickets/api';
 import { daysAgo, withDays } from '@/lib/tickets/thread';
-import type { TicketsConfig } from '../config';
+import type { TicketsConfig } from '@/lib/tickets/api';
 
 const MAX_RATING = 5;
 

@@ -40,20 +40,20 @@ export interface PanelDefinition {
   /** Child routes, relative to `path`. Pages must be lazy (see lazyPage). */
   routes: RouteObject[];
   /**
-   * A hook: ids of nav items to show with a lock (still reachable: the page explains why and
-   * shows a preview). The applicant panel locks its sections until there is a contract.
+   * A hook: ids of nav items not shown to this user (their pages stay reachable by link). The
+   * applicant panel hides the tickets tab until there is a contract.
    */
-  useLockedNav?: () => ReadonlySet<string>;
+  useHiddenNav?: () => ReadonlySet<string>;
   /**
-   * Queries the panel's frame reads on every page (e.g. the data behind `useLockedNav`), started
+   * Queries the panel's frame reads on every page (e.g. the data behind `useHiddenNav`), started
    * with the page's own data. Pages declare theirs with `lazyPage(…, data)`.
    */
   data?: () => readonly PageQuery[];
 }
 
-const NO_LOCKS: ReadonlySet<string> = new Set();
-/** For panels without locks. */
-export const useNoLockedNav = () => NO_LOCKS;
+const NONE_HIDDEN: ReadonlySet<string> = new Set();
+/** For panels that show every nav item. */
+export const useNoHiddenNav = () => NONE_HIDDEN;
 
 /** Router path of a panel page, e.g. panelHref(supervisor, 'files') → '/supervisor/files'. */
 export function panelHref(panel: Pick<PanelDefinition, 'path'>, to = '') {

@@ -29,6 +29,21 @@ export interface TicketsEndpoint {
   invalidateKeys?: readonly QueryKey[];
 }
 
+/**
+ * What a panel passes to the tickets page. The page itself is panel-neutral: the applicant panel
+ * passes its endpoint today; the supervisor and writer panels can pass theirs (one applicant's
+ * threads) later, with `viewer: 'staff'`.
+ */
+export interface TicketsConfig extends TicketsEndpoint {
+  /** Router path of the page ('/tickets'). The first thread opens there, others at `<path>/<thread id>`. */
+  path: string;
+  /**
+   * `applicant`: picks a priority (with the very-urgent rules) and rates staff replies.
+   * `staff`: neither; sees the applicant's ratings.
+   */
+  viewer: 'applicant' | 'staff';
+}
+
 /** Ticket.Priority. */
 export const PRIORITIES = [0, 1, 2, 3] as const;
 export type Priority = (typeof PRIORITIES)[number];

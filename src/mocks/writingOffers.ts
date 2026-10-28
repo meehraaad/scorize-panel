@@ -5,6 +5,7 @@ import { cvForm } from '@/features/writing/cvForm';
 import { missingInForm, type Answers, type FormSpec } from '@/features/writing/formSpec';
 import { recommendationForm } from '@/features/writing/recommendationForm';
 import { sopForm } from '@/features/writing/sopForm';
+import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/api';
 import { notFound, storage } from './session';
 
 /**
@@ -12,7 +13,8 @@ import { notFound, storage } from './session';
  * H67), for the tests: the offers next to the new user's documents, opening a form before paying,
  * and that form's final submit asking for the payment (402) until it is paid. A contract with
  * writing has every service in it (`included`). The forms of a person's own orders are answered
- * here; anyone else's fall through to the case's handlers (src/mocks/applicant.ts).
+ * here; anyone else's fall through to the case's handlers (src/mocks/applicant.ts). A paid order
+ * of a person without a case also has its writing ticket (one thread per kind, no supervisors).
  */
 
 const BASE = '/api/applicant/v1';
@@ -30,6 +32,7 @@ interface OwnOrder {
   paid: boolean;
   payment_id: number;
   form: WritingForm;
+  messages: TicketMessage[];
 }
 
 const ordersOf = new Map<number, Map<Kind, OwnOrder>>();
@@ -111,6 +114,7 @@ export const writingOfferHandlers = [
         contact_phone: null,
         orders: [],
       },
+      messages: [],
     });
     ordersOf.set(user, own);
     return HttpResponse.json({ kind: params.kind }, { status: 201 });
@@ -161,6 +165,77 @@ export const writingOfferHandlers = [
     if (!order.paid) return HttpResponse.json({ payment_id: order.payment_id }, { status: 402 });
     const now = new Date().toISOString();
     order.form = { ...order.form, is_final: true, final_at: now, updated_at: now };
+    return new HttpResponse(null, { status: 204 });
+  }),
+];
+
+/** The writing threads of a person's paid orders (none for a case: its handlers answer). */
+function paidOrders(): [Kind, OwnOrder][] {
+  const user = storage.get();
+  if (!user || included(user)) return [];
+  return [...(ordersOf.get(user)?.entries() ?? [])].filter(([, order]) => order.paid);
+}
+
+function paidOrder(kind: unknown): OwnOrder | undefined {
+  const order = ownOrder(kind);
+  return order?.paid ? order : undefined;
+}
+
+const TICKETS = `${BASE}/tickets/writing/:type`;
+
+export const ownTicketHandlers = [
+  http.get(`${BASE}/tickets/`, () => {
+    const paid = paidOrders();
+    if (paid.length === 0) return undefined;
+    const body: TicketsOverview = {
+      threads: paid.map(([kind, order]) => ({
+        id: `writing/${kind}`,
+        department: 'writing',
+        writing: kind,
+        unread: order.messages.filter((message) => !message.mine && !message.seen).length,
+        team: [],
+      })),
+      faqs: [],
+    };
+    return HttpResponse.json(body);
+  }),
+
+  http.get(`${TICKETS}/messages/`, ({ params }) => {
+    const order = paidOrder(params.type);
+    if (!order) return undefined;
+    const body: MessagePage = { messages: order.messages, has_more: false };
+    return HttpResponse.json(body);
+  }),
+
+  http.post(`${TICKETS}/messages/`, async ({ params, request }) => {
+    const order = paidOrder(params.type);
+    if (!order) return undefined;
+    const text = (await request.formData()).get('message');
+    if (typeof text !== 'string' || !text.trim())
+      return HttpResponse.json({ message: ['required'] }, { status: 400 });
+    const message: TicketMessage = {
+      id: order.messages.length + 1,
+      mine: true,
+      author: '',
+      role: null,
+      sent_at: new Date().toISOString(),
+      text: text.trim(),
+      priority: 1,
+      attachment: null,
+      seen: false,
+      rating: null,
+      auto: false,
+    };
+    order.messages.push(message);
+    return HttpResponse.json(message, { status: 201 });
+  }),
+
+  http.post(`${TICKETS}/seen/`, ({ params }) => {
+    const order = paidOrder(params.type);
+    if (!order) return undefined;
+    order.messages.forEach((message) => {
+      if (!message.mine) message.seen = true;
+    });
     return new HttpResponse(null, { status: 204 });
   }),
 ];

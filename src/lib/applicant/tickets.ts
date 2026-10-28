@@ -1,4 +1,4 @@
-import type { TicketsEndpoint } from '@/lib/tickets/api';
+import type { TicketsConfig, TicketsEndpoint } from '@/lib/tickets/api';
 import { APPLICANT_KEY } from './approval';
 
 /**
@@ -12,3 +12,16 @@ export const APPLICANT_TICKETS: TicketsEndpoint = {
 
 /** The supervisors' thread (one per case). */
 export const SUPERVISOR_THREAD = 'supervisor';
+
+/**
+ * The applicant's tickets page (and a writing form's ticket). Writing tickets are the same page:
+ * Django sends one thread per writing order, under the «نگارش و سرچ» department.
+ */
+export const applicantTickets: TicketsConfig = {
+  ...APPLICANT_TICKETS,
+  path: '/tickets',
+  viewer: 'applicant',
+};
+
+/** A writing order's thread id ('writing/sop'). */
+export const writingThread = (type: string) => `writing/${type}`;

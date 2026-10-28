@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import type { IconName } from '@/components/ui/Icon';
 import {
@@ -42,6 +43,27 @@ export function SectionLock({
   const look = LOOK[lock];
 
   const banner = (() => {
+    // Tickets also open with a writing purchase alone, to talk to its writer.
+    if (lock === 'guest' && section === 'tickets')
+      return {
+        title: t('lock.tickets.title'),
+        text: t('lock.tickets.text'),
+        actions: (
+          <>
+            <Link to="/documents" className={buttonClass('outline', lockButtonOnHero)}>
+              {t('lock.tickets.writing')}
+            </Link>
+            <CallRequestButton
+              label={t('lock.guest.call')}
+              className={buttonClass('primary')}
+              phone={access.phone}
+              topic="admission"
+              page={section}
+              reason="guest"
+            />
+          </>
+        ),
+      };
     switch (lock) {
       case 'guest':
         return {

@@ -13,7 +13,7 @@ import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { useIdlePreload, useIntentPreload } from '@/lib/router/preload';
 import { applicantPanel } from '@/panels/applicant';
 import { panelsFor, rememberPanel } from '@/panels/registry';
-import { panelHref, useNoLockedNav, type PanelDefinition } from '@/panels/types';
+import { panelHref, useNoHiddenNav, type PanelDefinition } from '@/panels/types';
 import { AccountMenu } from './AccountMenu';
 import { NavigationProgress } from './NavigationProgress';
 import { BottomTabs } from './BottomTabs';
@@ -38,8 +38,8 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const location = useLocation();
   const format = useFormat();
   const { data: unread = 0 } = useQuery({ ...unreadQuery, enabled: Boolean(user) });
-  const useLocked = panel.useLockedNav ?? useNoLockedNav;
-  const locked = useLocked();
+  const useHidden = panel.useHiddenNav ?? useNoHiddenNav;
+  const hidden = useHidden();
   const skeleton = usePageSkeleton();
   // The next page is usually loading before the click (docs/performance.md, "Preload on intent").
   useIntentPreload();
@@ -55,11 +55,12 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
     return <Navigate to={loginHref(here)} replace />;
   }
 
-  // Sections the user's permissions allow (the manager's section only for managers).
+  // Sections the user's permissions allow (the manager's section only for managers), less the
+  // panel's hidden ones (the applicant's tickets before a contract).
   const visible = {
     ...panel,
     navigation: panel.navigation.filter(
-      (item) => !item.permission || hasPermission(user, item.permission),
+      (item) => !hidden.has(item.id) && (!item.permission || hasPermission(user, item.permission)),
     ),
   };
   const panels = panelsFor(user);
@@ -104,9 +105,6 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
                 to={panelHref(panel, item.to)}
                 end={item.to === ''}
                 className={navLink}
-                aria-label={
-                  locked.has(item.id) ? t('lock.navItem', { name: t(item.label) }) : undefined
-                }
               >
                 {({ isActive }) => (
                   <>
@@ -117,7 +115,6 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
                       />
                     )}
                     {t(item.label)}
-                    {locked.has(item.id) && <NavLock />}
                   </>
                 )}
               </NavLink>
@@ -161,16 +158,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
 
       <PanelFooter />
 
-      <BottomTabs panel={visible} locked={locked} />
+      <BottomTabs panel={visible} />
     </div>
-  );
-}
-
-/** Lock beside a section that opens once there is a contract (the link's name says so). */
-function NavLock() {
-  return (
-    <span className="inline-flex flex-none text-text-3">
-      <Icon name="lock" size={14} />
-    </span>
   );
 }

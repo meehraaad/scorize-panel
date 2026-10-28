@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
@@ -13,6 +13,7 @@ import type { useDraft } from '../useDraft';
 import { useFormText } from '../useFormText';
 import type { useFinal } from '../useFinal';
 import { SaveStatus } from './FormHeader';
+import { WritingTicketButton } from './WritingTicket';
 
 /**
  * Bottom of a writing form: a ticket to the writer, the final submit (asks first), and why it was
@@ -80,9 +81,9 @@ export function FinalBar({
             {purchase ? t('final.buyNote') : t('final.draftNotice')}
           </span>
           <div className="flex flex-wrap gap-2">
-            <Link to={`/tickets/writing/${type}`} className={buttonClass('outline')}>
+            <WritingTicketButton type={type} className={buttonClass('outline')}>
               {t('final.ticket')}
-            </Link>
+            </WritingTicketButton>
             {purchase && (
               <Button disabled={pay.isPending} onClick={() => void buy()}>
                 {t('final.buy', { price: f.number(purchase.price) })}

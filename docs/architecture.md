@@ -248,8 +248,9 @@ backend-changes.md SV.
 
 Every account has the applicant panel. `GET /applicant/v1/access/` (`lib/applicant/access.ts`) says
 whether the user has an active contract, one in review, none, or an ended one, and its services.
-`lockOf(access, section)` turns that into a lock per section; the panel's `useLockedNav` marks
-locked items in the menus. A locked page renders `SectionLock` (`components/applicant/`): the
+`lockOf(access, section)` turns that into a lock per section. The menus show no locks: every tab
+opens, and the panel's `useHiddenNav` only hides the tickets tab until there is a contract (writing
+bought without one opens its tickets from the writing forms, `WritingTicket`). A locked page renders `SectionLock` (`components/applicant/`): the
 banner for the reason, and under it the page's own blocks fed with sample data from the feature's
 `preview.ts` (texts from its dictionary), faded and `inert`. An ended contract shows the real case
 under the banner. Tests: `localStorage['scorize.mock.access']` = `pending` / `noservice` / `ended`

@@ -48,7 +48,7 @@ import { sopForm } from '@/features/writing/sopForm';
 import { estimateHandlers, resetEstimateMocks } from './estimate';
 import { journeyHandlers, resetJourneyMocks } from './journey';
 import { forbidden, notFound, storage } from './session';
-import { resetWritingOfferMocks, writingOfferHandlers } from './writingOffers';
+import { ownTicketHandlers, resetWritingOfferMocks, writingOfferHandlers } from './writingOffers';
 
 /**
  * Fake applicant-panel API (docs/backend-changes.md H1–H41). Only Sara (user 1) has a case; anyone
@@ -2147,6 +2147,7 @@ export const callRequests: CallRequest[] = [];
 export const applicantHandlers = [
   // Before the case's writing forms: a person's own (bought) orders answer there first.
   ...writingOfferHandlers,
+  ...ownTicketHandlers,
   // Any logged-in user: guests get the panel too (locked previews).
   http.get(`${BASE}/access/`, () => {
     const user = storage.get();

@@ -64,16 +64,14 @@ export function lockOf(access: ApplicantAccess, section: LockableSection): Lock 
 }
 
 /**
- * Nav items shown with a lock: every lockable section, until a contract is active. An approved
- * contract waiting for its prepayment keeps the contract tab open: the prepayment is paid there.
+ * Nav items not shown: the tickets tab, until the user has a contract (a writing order without one
+ * opens its tickets from the writing forms). Nothing is hidden while access is loading.
  */
-export function useLockedNav(): ReadonlySet<string> {
+export function useHiddenNav(): ReadonlySet<string> {
   const { data } = useQuery(accessQuery);
-  if (!data || (data.state !== 'guest' && data.state !== 'pending')) return NONE;
-  return data.prepayment ? STARTING : ALL;
+  return data?.state === 'guest' ? NO_CONTRACT : NONE;
 }
-const ALL: ReadonlySet<string> = new Set<string>(LOCKABLE);
-const STARTING: ReadonlySet<string> = new Set<string>(LOCKABLE.filter((id) => id !== 'contract'));
+const NO_CONTRACT: ReadonlySet<string> = new Set(['tickets']);
 const NONE: ReadonlySet<string> = new Set();
 
 export const CALL_TOPICS = ['admission', 'visa', 'turkey', 'writing'] as const;
