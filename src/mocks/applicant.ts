@@ -1720,7 +1720,7 @@ function consultationsFor(user: number): ConsultationDetail[] {
       university: 'دانشگاه صنعتی اصفهان',
       major: 'مهندسی کامپیوتر',
       degree: 'کارشناسی',
-      notes: '',
+      notes: 'می‌خواهم بدانم با این رزومه کدام کشور مناسب‌تر است.',
     },
     invoice: { amount, paid_at: amount ? at(-60, 10) : null, payment_id: null },
     ...extra,
@@ -1787,7 +1787,7 @@ export function addHeldConsultation(user: number, daysAgo = 1) {
     summary: null,
     info_complete: true,
     feedback: null,
-    info: { university: '', major: '', degree: '', notes: '' },
+    info: { university: '', major: '', degree: '', notes: 'انتخاب کشور برای ارشد.' },
     invoice: { amount: 600_000, paid_at: starts, payment_id: null },
   });
 }
@@ -1839,16 +1839,13 @@ const consultationHandlers = [
     if (!found) return notFound();
     if (new Date(found.starts_at).getTime() <= Date.now())
       return HttpResponse.json({ detail: 'This session has already started.' }, { status: 409 });
-    const sent = (await request.json()) as ConsultationDetail['info'];
-    // Django: the first three required (field errors), `notes` may be empty.
-    const blank = (['university', 'major', 'degree'] as const).filter((name) => !sent[name].trim());
-    if (blank.length)
-      return HttpResponse.json(
-        Object.fromEntries(blank.map((name) => [name, ['This field may not be blank.']])),
-        { status: 400 },
-      );
-    Object.assign(found, { info: sent, info_complete: true });
-    return HttpResponse.json(sent);
+    const sent = (await request.json()) as { notes: string };
+    // Django: only what the session is about, required. The studies come from the background form.
+    if (!sent.notes.trim())
+      return HttpResponse.json({ notes: ['This field may not be blank.'] }, { status: 400 });
+    const info = { ...found.info, notes: sent.notes };
+    Object.assign(found, { info, info_complete: true });
+    return HttpResponse.json(info);
   }),
 ];
 
