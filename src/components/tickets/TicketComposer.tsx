@@ -13,7 +13,7 @@ import {
   type Priority,
 } from '@/lib/tickets/api';
 import { toast } from '@/lib/toast';
-import type { TicketsConfig } from '../config';
+import type { TicketsConfig } from '@/lib/tickets/api';
 
 const RULE: FileRule = { types: ATTACHMENT_TYPES, maxBytes: MAX_ATTACHMENT_BYTES };
 

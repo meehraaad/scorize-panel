@@ -1,6 +1,5 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -8,6 +7,7 @@ import { normalizePhone } from '@/lib/text';
 import { useSaveWriting } from '../api';
 import type { FormSpec, FormType } from '../formSpec';
 import { useFormText } from '../useFormText';
+import { WritingTicketButton } from './WritingTicket';
 import { toast } from '@/lib/toast';
 
 /** The side column of a writing form, as its spec asks (see FormSpec.aside). */
@@ -60,9 +60,9 @@ function TicketCard({ type }: { type: FormType }) {
   return (
     <SectionCard variant="panel" id={`${type}-ask`} title={t('ask.title')}>
       <span className="text-sm leading-7 text-text-2">{t('ask.text')}</span>
-      <Link to={`/tickets/writing/${type}`} className={buttonClass('outline', 'self-start')}>
+      <WritingTicketButton type={type} className={buttonClass('outline', 'self-start')}>
         {t('tabs.ticket')}
-      </Link>
+      </WritingTicketButton>
     </SectionCard>
   );
 }

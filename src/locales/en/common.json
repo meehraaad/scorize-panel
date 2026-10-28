@@ -220,7 +220,6 @@
   },
   "lock": {
     "preview": "Preview · sample data, not your case",
-    "navItem": "{{name}} (opens once you have a contract)",
     "section": {
       "applications": "Applications, results and professor emails",
       "documents": "Document uploads, SOP and CV forms and the writing team's files",
@@ -234,6 +233,11 @@
       "text": "What you see below is a sample, so you know what your panel will look like. To start, talk to our advisors.",
       "call": "Ask an advisor to call",
       "consult": "Book an application consultation"
+    },
+    "tickets": {
+      "title": "Tickets open with a contract, or with any writing purchase",
+      "text": "With a contract you talk directly with your case supervisors. Buy any writing service on its own (SOP, CV, recommendation letter, …) and tickets open right away, so you can talk to your writer.",
+      "writing": "Buy a writing service"
     },
     "pending": {
       "label": "Contract in review",

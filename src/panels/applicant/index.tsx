@@ -20,7 +20,7 @@ import { writingOffersQuery } from '@/features/documents/offers';
 import { overviewQuery } from '@/features/home/api';
 import { writingQuery } from '@/features/writing/api';
 import { queryClient } from '@/lib/api/queryClient';
-import { accessQuery, useLockedNav } from '@/lib/applicant/access';
+import { accessQuery, useHiddenNav } from '@/lib/applicant/access';
 import { guestInterestsQuery } from '@/lib/applicant/documents';
 import { SESSION_PARAM } from '@/lib/applicant/consultations';
 import { ON_SERVER } from '@/lib/applicant/onServer';
@@ -35,7 +35,7 @@ import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
 import { CampaignFormRedirect, SessionRedirect } from './SessionRedirect';
-import { applicantTickets } from './tickets';
+import { applicantTickets } from '@/lib/applicant/tickets';
 
 /** Every account has this panel. Design: canvas V6/V7 "پنل متقاضی". */
 export const applicantPanel: PanelDefinition = {
@@ -46,8 +46,8 @@ export const applicantPanel: PanelDefinition = {
   icon: 'user',
   tone: 'neutral',
   navLabel: 'panels.applicant.nav.label',
-  // Without an active contract, sections are a locked preview (canvas V7).
-  useLockedNav,
+  // Without a contract the tickets tab is hidden; other sections show a locked preview (canvas V7).
+  useHiddenNav,
   data: () => [accessQuery],
   navigation: [
     {
@@ -171,14 +171,14 @@ export const applicantPanel: PanelDefinition = {
         // Writing information forms. Design: canvas V6 sections 4 (SOP) and 5 (CV).
         {
           path: 'documents/sop',
-          ...lazyPage(() => import('@/features/writing/SopFormPage'), ['writing'], {
+          ...lazyPage(() => import('@/features/writing/SopFormPage'), ['writing', 'tickets'], {
             data: () => [writingQuery('sop')],
             skeleton: 'form',
           }),
         },
         {
           path: 'documents/cv',
-          ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing'], {
+          ...lazyPage(() => import('@/features/writing/CvFormPage'), ['writing', 'tickets'], {
             data: () => [writingQuery('cv')],
             skeleton: 'form',
           }),
@@ -186,14 +186,14 @@ export const applicantPanel: PanelDefinition = {
         // Design: canvas V8 "فرم‌های نگارش دیگر" (AppRecForm, AppProfForm).
         {
           path: 'documents/recommendation',
-          ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing'], {
+          ...lazyPage(() => import('@/features/writing/RecommendationFormPage'), ['writing', 'tickets'], {
             data: () => [writingQuery('recommendation')],
             skeleton: 'form',
           }),
         },
         {
           path: 'documents/pl',
-          ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing'], {
+          ...lazyPage(() => import('@/features/writing/PlFormPage'), ['writing', 'tickets'], {
             data: () => [writingQuery('pl')],
             skeleton: 'form',
           }),
@@ -202,14 +202,14 @@ export const applicantPanel: PanelDefinition = {
         // PersonalStatement and DiversityStatement.
         {
           path: 'documents/ps',
-          ...lazyPage(() => import('@/features/writing/PsFormPage'), ['writing'], {
+          ...lazyPage(() => import('@/features/writing/PsFormPage'), ['writing', 'tickets'], {
             data: () => [writingQuery('ps')],
             skeleton: 'form',
           }),
         },
         {
           path: 'documents/ds',
-          ...lazyPage(() => import('@/features/writing/DsFormPage'), ['writing'], {
+          ...lazyPage(() => import('@/features/writing/DsFormPage'), ['writing', 'tickets'], {
             data: () => [writingQuery('ds')],
             skeleton: 'form',
           }),

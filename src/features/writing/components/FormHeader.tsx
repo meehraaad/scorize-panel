@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink } from 'react-router';
+import { NavLink } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { BackLink } from '@/components/ui/BackLink';
@@ -11,12 +11,13 @@ import { writingQuery, type WritingForm } from '../api';
 import { FORM_TYPES, type FormType } from '../formSpec';
 import type { useDraft } from '../useDraft';
 import { useFormText } from '../useFormText';
+import { WritingTicketButton } from './WritingTicket';
 
 type Draft = ReturnType<typeof useDraft>;
 
 /**
  * Top of every writing form: back to documents, the form's title, the autosave status, and tabs
- * to the contract's other writing forms and the writing ticket.
+ * to the order's other writing forms and the writing ticket (opened over the form).
  */
 export function FormHeader({
   type,
@@ -79,9 +80,9 @@ export function FormHeader({
             {t(`tabs.${order}`)}
           </NavLink>
         ))}
-        <Link to="/tickets" className={tabClass(false)}>
+        <WritingTicketButton type={type} className={tabClass(false)}>
           {t('tabs.ticket')}
-        </Link>
+        </WritingTicketButton>
       </nav>
     </div>
   );

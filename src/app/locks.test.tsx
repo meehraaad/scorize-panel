@@ -27,8 +27,6 @@ const open = async (path: string, title: string) => {
   await screen.findByRole('heading', { name: title, level: 1 });
 };
 
-/** A locked menu item's name: the section, then the reason for screen readers. */
-const locked = (name: string) => `${name} (بعد از قرارداد فعال می‌شود)`;
 const mainNav = () => screen.getAllByRole('navigation', { name: 'منوی پنل متقاضی' })[0];
 
 describe('locked sections', () => {
@@ -37,7 +35,7 @@ describe('locked sections', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('shows a guest the panel with every section after a contract locked in the menu', async () => {
+  it('shows a guest every section without locks, and no tickets tab', async () => {
     loginAs(MARYAM);
     await open('/applications', 'اپلای‌ها و نتایج');
 
@@ -51,9 +49,30 @@ describe('locked sections', () => {
 
     const nav = mainNav();
     if (!nav) throw new Error('No panel menu');
-    expect(within(nav).getByRole('link', { name: locked('اپلای‌ها و نتایج') })).toBeInTheDocument();
-    expect(within(nav).getByRole('link', { name: locked('قرارداد و پرداخت') })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'اپلای‌ها و نتایج' })).toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'قرارداد و پرداخت' })).toBeInTheDocument();
     expect(within(nav).getByRole('link', { name: 'پرونده‌ی من' })).toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: 'تیکت‌ها' })).toBeNull();
+  });
+
+  it('shows the tickets tab with a contract', async () => {
+    loginAs(SARA, 'pending');
+    await open('/contract', 'قرارداد و پرداخت');
+    const nav = mainNav();
+    if (!nav) throw new Error('No panel menu');
+    expect(within(nav).getByRole('link', { name: 'تیکت‌ها' })).toBeInTheDocument();
+  });
+
+  it('tells a guest on the tickets page that a writing purchase opens them', async () => {
+    loginAs(MARYAM);
+    await open('/tickets', 'تیکت‌ها');
+    expect(
+      screen.getByText('تیکت‌ها با عقد قرارداد یا خرید هر یک از خدمات نگارش باز می‌شود'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'خرید خدمات نگارش' })).toHaveAttribute(
+      'href',
+      '/documents',
+    );
   });
 
   it('sends a call request from the applications tab', async () => {

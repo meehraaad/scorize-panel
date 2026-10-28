@@ -7,8 +7,8 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useMarkSeen, type TicketThread } from '@/lib/tickets/api';
 import { threadPath, type TicketsConfig } from '../config';
-import { ThreadMessages } from './ThreadMessages';
-import { TicketComposer } from './TicketComposer';
+import { ThreadMessages } from '@/components/tickets/ThreadMessages';
+import { TicketComposer } from '@/components/tickets/TicketComposer';
 
 const TITLE_ID = 'ticket-thread-title';
 
