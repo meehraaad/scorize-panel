@@ -3,6 +3,7 @@ import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
 import type { Colleague } from '@/lib/tasks/api';
+import type { ActivityKind, StageActivity, StagePhase } from './board';
 
 /** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
 export const MANAGER_PERMISSION = 'can_assign_to_seller';
@@ -250,5 +251,58 @@ export function useManageTask() {
         body: assignee ? { assignee } : {},
       }),
     onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
+  });
+}
+
+/** A team column as the manager edits it (S48). */
+export interface StageSettings {
+  id: number;
+  name: string;
+  phase: StagePhase;
+  max_days: number | null;
+  /** Open cards showing in it now: removing it asks where they go. */
+  cards: number;
+  activities: StageActivity[];
+}
+
+export interface StagesData {
+  stages: StageSettings[];
+  /** Ready messages a `message` activity can send. */
+  templates: { id: number; title: string }[];
+}
+
+export const stagesQuery = queryOptions({
+  queryKey: [...MANAGER_KEY, 'stages'],
+  queryFn: ({ signal }) => api<StagesData>(`${MANAGER_API}/stages/`, { signal }),
+});
+
+export interface ActivityInput {
+  kind: ActivityKind;
+  required: boolean;
+  days?: number;
+  hour?: number;
+  text?: string;
+  template?: number | null;
+}
+
+export interface StageInput {
+  /** Null for a new column. */
+  id: number | null;
+  name: string;
+  phase: StagePhase;
+  max_days: number | null;
+  activities: ActivityInput[];
+}
+
+/** The whole list at once: Django renames, reorders, adds and removes in one transaction. */
+export function useSaveStages() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { stages: StageInput[]; moves: { source: number; to: number }[] }) =>
+      api<StagesData>(`${MANAGER_API}/stages/`, { method: 'PUT', body }),
+    onSuccess: (data) => {
+      client.setQueryData(stagesQuery.queryKey, data);
+      return client.invalidateQueries({ queryKey: [...SALES_KEY, 'board'] });
+    },
   });
 }

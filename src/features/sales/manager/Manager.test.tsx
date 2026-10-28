@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -176,6 +176,67 @@ describe('sales manager section', () => {
       within(funnel).getByText(
         '۲۵ نفر از ۱۲۰ نفری که پرسش‌نامه را تمام کردند، کار یا زندگی در خارج را هم می‌خواهند.',
       ),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('board stages (S48)', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('the manager renames, adds a stage with a required note, and sellers see it on the board', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/stages');
+    expect(await screen.findByRole('heading', { name: 'مرحله‌ها و فعالیت‌ها' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^تماس گرفته شد/ }));
+    const name = screen.getByLabelText('نام مرحله');
+    await user.clear(name);
+    await user.type(name, 'تماس اول');
+
+    await user.click(screen.getByRole('button', { name: 'مرحله‌ی تازه' }));
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('به هر مرحله یک نام بدهید.');
+    await user.type(screen.getByLabelText('نام مرحله'), 'مذاکره');
+    await user.click(screen.getByRole('button', { name: 'ثبت یادداشت' }));
+    await user.click(screen.getByRole('switch', { name: /^اجباری/ }));
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(
+      await screen.findByText('مرحله‌ها ذخیره شد و تابلوی همه‌ی تیم به‌روز شد.'),
+    ).toBeInTheDocument();
+
+    cleanup();
+    renderApp('/sales/board');
+    expect(await screen.findByRole('region', { name: 'تماس اول' })).toBeInTheDocument();
+    const negotiation = screen.getByRole('region', { name: 'مذاکره' });
+    expect(within(negotiation).getByText('ثبت یادداشت')).toBeInTheDocument();
+    expect(screen.getByLabelText('فروشنده')).toBeInTheDocument();
+  });
+
+  it('a stage that has cards asks where they go before it is removed', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/stages');
+    await user.click(await screen.findByRole('button', { name: /^مشاوره شد/ }));
+    expect(screen.getByText(/بعد از حذف باید مقصدشان را انتخاب کنید/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'حذف مرحله' }));
+    await user.click(screen.getByRole('button', { name: 'مرحله‌ی تازه' }));
+    await user.type(screen.getByLabelText('نام مرحله'), 'جلسه برگزار شد');
+    await user.selectOptions(screen.getByLabelText('در گزارش‌ها جزو'), 'consulted');
+    await user.click(screen.getByRole('button', { name: /^جلسه برگزار شد/ }));
+    await user.click(screen.getByRole('button', { name: 'بردن جلسه برگزار شد به بالا' }));
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/^مقصد کارت‌های مشاوره شد/);
+    await user.selectOptions(
+      screen.getByLabelText(/^کارت‌های «مشاوره شد»/),
+      '503', // «پیشنهاد ارسال شد» (src/mocks/sales.ts)
+    );
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(
+      await screen.findByText('مرحله‌ها ذخیره شد و تابلوی همه‌ی تیم به‌روز شد.'),
     ).toBeInTheDocument();
   });
 });

@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import { BOARD_STAGES, type BoardData } from './api/board';
+import { columnKey, type BoardData, type ColumnKey } from './api/board';
 
-export type BoardStage = (typeof BOARD_STAGES)[number];
-type Order = Partial<Record<BoardStage, number[]>>;
+type Order = Partial<Record<ColumnKey, number[]>>;
+/** A fixed column's stage or a team column's id (S48). */
+const KEY = /^(new|draft|won|[1-9]\d{0,9})$/;
 const EMPTY: Order = {};
 const MAX_SAVED_CARDS = 500;
 const snapshots = new Map<number, { raw: string | null; order: Order }>();
@@ -22,9 +23,8 @@ function readOrder(owner: number): Order {
   try {
     const parsed: unknown = raw ? JSON.parse(raw) : null;
     if (parsed && typeof parsed === 'object') {
-      for (const stage of BOARD_STAGES) {
-        const ids: unknown = Reflect.get(parsed, stage);
-        if (Array.isArray(ids)) {
+      for (const [stage, ids] of Object.entries(parsed as Record<string, unknown>)) {
+        if (KEY.test(stage) && Array.isArray(ids)) {
           order[stage] = [
             ...new Set(
               ids.filter(
@@ -43,7 +43,7 @@ function readOrder(owner: number): Order {
 }
 
 /** Only numeric IDs, scoped to the signed-in account. No card content is stored. */
-function saveOrder(owner: number, stage: BoardStage, visibleIds: number[]): boolean {
+function saveOrder(owner: number, stage: ColumnKey, visibleIds: number[]): boolean {
   const previous = readOrder(owner);
   const visible = new Set(visibleIds);
   const ids = [...visibleIds, ...(previous[stage] ?? []).filter((id) => !visible.has(id))].slice(
@@ -61,7 +61,7 @@ function saveOrder(owner: number, stage: BoardStage, visibleIds: number[]): bool
 
 function applyOrder(data: BoardData, order: Order): BoardData {
   const columns = data.columns.map((column) => {
-    const ids = order[column.stage];
+    const ids = order[columnKey(column)];
     if (!ids?.length) return column;
     const ranks = new Map(ids.map((id, rank) => [id, rank]));
     // Newly arriving cards stay visible at the top; existing cards retain the chosen order.
@@ -99,6 +99,6 @@ export function useBoardOrder(owner: number, data: BoardData) {
   const order = useSyncExternalStore(subscribe, snapshot, () => EMPTY);
   return {
     data: useMemo(() => applyOrder(data, order), [data, order]),
-    save: (stage: BoardStage, ids: number[]) => saveOrder(owner, stage, ids),
+    save: (stage: ColumnKey, ids: number[]) => saveOrder(owner, stage, ids),
   };
 }

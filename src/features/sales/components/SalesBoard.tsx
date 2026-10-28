@@ -26,25 +26,42 @@ import { IconButton } from '@/components/ui/IconButton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
-  MOVABLE_STAGES,
-  isMovableStage,
+  STALE_DAYS,
+  boardQuery,
+  columnKey,
+  isMovableColumn,
   useMoveBoardCard,
   type BoardCard,
+  type BoardColumn as Column,
   type BoardData,
-  type MovableStage,
+  type ColumnKey,
+  type MoveSteps,
 } from '../api';
 import { boardCollisionDetection, boardCoordinates } from '../boardDrag';
-import { useBoardOrder, type BoardStage } from '../boardOrder';
+import { useBoardOrder } from '../boardOrder';
 import { useSalesFormat } from '../format';
 import { salesPath } from '../paths';
 import { DealCard } from './DealCard';
 import { BoardAutoScroll } from './BoardAutoScroll';
+import { EnterStageDialog } from './EnterStageDialog';
 
 const MemoDealCard = memo(DealCard);
 const MemoIconButton = memo(IconButton);
-type PickedCard = { card: BoardCard; stage: BoardStage };
+type PickedCard = { card: BoardCard; column: ColumnKey };
 
-export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; ownerId: number }) {
+export function SalesBoard({
+  data: serverData,
+  ownerId,
+  sellerName = '',
+  queryKey = boardQuery.queryKey,
+}: {
+  data: BoardData;
+  ownerId: number;
+  /** For `{seller}` in a column's ready message. */
+  sellerName?: string;
+  /** The board's query (a sales manager's seller filter), for the optimistic move. */
+  queryKey?: readonly unknown[];
+}) {
   const order = useBoardOrder(ownerId, serverData);
   const data = order.data;
   const { t } = useTranslation('sales');
@@ -55,7 +72,8 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
   const restoreLead = useRef<number | null>(null);
   const [active, setActive] = useState<PickedCard | null>(null);
   const [picked, setPicked] = useState<PickedCard | null>(null);
-  const [destination, setDestination] = useState<MovableStage | null>(null);
+  const [destination, setDestination] = useState<ColumnKey | null>(null);
+  const [entering, setEntering] = useState<{ item: PickedCard; to: Column } | null>(null);
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     // Long press the handle; moving before activation preserves ordinary touch scrolling.
@@ -69,25 +87,23 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
   const findCard = (id: string | number): PickedCard | null => {
     for (const column of data.columns) {
       const card = column.cards.find((item) => item.lead === id);
-      if (card) return { card, stage: column.stage };
+      if (card) return { card, column: columnKey(column) };
     }
     return null;
   };
   const nameOf = (id: string | number) => findCard(id)?.card.name ?? '';
-  const stageOf = (id: string | number) => {
-    const stage =
-      typeof id === 'number'
-        ? findCard(id)?.stage
-        : data.columns.find((column) => column.stage === id)?.stage;
-    return stage ? t(`stage.${stage}`) : '';
-  };
+  const columnOf = (key: ColumnKey | undefined) =>
+    data.columns.find((column) => columnKey(column) === key);
+  const labelOf = (column: Column | undefined) =>
+    column ? (column.name ?? t(`stage.${column.stage}`)) : '';
+  const stageOf = (id: string | number) =>
+    labelOf(columnOf(typeof id === 'number' ? findCard(id)?.column : id));
 
   function targetOf(id: string | number) {
-    const stage = typeof id === 'number' ? findCard(id)?.stage : id;
-    const column = data.columns.find((column) => column.stage === stage);
+    const column = columnOf(typeof id === 'number' ? findCard(id)?.column : id);
     return column
       ? {
-          stage: column.stage,
+          column: columnKey(column),
           index:
             typeof id === 'number'
               ? column.cards.findIndex((card) => card.lead === id)
@@ -96,14 +112,29 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
       : null;
   }
 
-  function move(item: PickedCard, to: MovableStage) {
-    if (busy.current || item.stage === to || !isMovableStage(item.stage)) return;
+  /** A team column first asks for its activities; `new` moves at once. */
+  function move(item: PickedCard, to: ColumnKey) {
+    const column = columnOf(to);
+    if (busy.current || item.column === to || !isMovableColumn(item.column) || !column) return;
+    if (column.id === null) commit(item, column);
+    else setEntering({ item, to: column });
+  }
+
+  function commit(item: PickedCard, to: Column, steps?: MoveSteps) {
+    if (busy.current) return;
     busy.current = true;
+    setEntering(null);
     mutation.mutate(
-      { lead: item.card.lead, from: item.stage, to },
+      {
+        lead: item.card.lead,
+        from: item.column,
+        to: columnKey(to),
+        board: queryKey,
+        ...(steps && { steps }),
+      },
       {
         onSuccess: () =>
-          toast.success(t('board.move.saved', { name: item.card.name, stage: t(`stage.${to}`) })),
+          toast.success(t('board.move.saved', { name: item.card.name, stage: labelOf(to) })),
         onError: () => toast.error(t('board.move.failed', { name: item.card.name })),
         onSettled: () => {
           busy.current = false;
@@ -115,13 +146,13 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
 
   function reorder(item: PickedCard, to: number) {
     if (busy.current) return;
-    const cards = data.columns.find((column) => column.stage === item.stage)?.cards;
+    const cards = columnOf(item.column)?.cards;
     if (!cards) return;
     const from = cards.findIndex((card) => card.lead === item.card.lead);
     if (from < 0 || to < 0 || to >= cards.length || from === to) return;
     if (
       !order.save(
-        item.stage,
+        item.column,
         arrayMove(cards, from, to).map((card) => card.lead),
       )
     ) {
@@ -131,7 +162,7 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
     }
     toast.success(t('board.order.saved', { name: item.card.name, position: f.number(to + 1) }));
   }
-  const pickedCards = data.columns.find((column) => column.stage === picked?.stage)?.cards ?? [];
+  const pickedCards = columnOf(picked?.column)?.cards ?? [];
   const pickedIndex = pickedCards.findIndex((card) => card.lead === picked?.card.lead);
 
   // Query reconciliation can replace the card again. Focus after both DOM updates commit.
@@ -164,7 +195,7 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
             onDragStart: ({ active }) => t('board.move.pickedUp', { name: nameOf(active.id) }),
             onDragOver: ({ over }) => {
               const item = over && typeof over.id === 'number' ? findCard(over.id) : null;
-              const cards = data.columns.find((column) => column.stage === item?.stage)?.cards;
+              const cards = columnOf(item?.column)?.cards;
               return item && cards
                 ? t('board.order.over', {
                     stage: stageOf(item.card.lead),
@@ -178,11 +209,11 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
               const item = findCard(active.id);
               const target = over && targetOf(over.id);
               if (!item || !target) return t('board.move.cancelled');
-              if (item.stage !== target.stage)
+              if (item.column !== target.column)
                 return t('board.move.dropped', { name: item.card.name, stage: stageOf(over.id) });
-              const from = data.columns
-                .find((column) => column.stage === item.stage)
-                ?.cards.findIndex((card) => card.lead === item.card.lead);
+              const from = columnOf(item.column)?.cards.findIndex(
+                (card) => card.lead === item.card.lead,
+              );
               return from !== target.index ? t('board.order.dropped') : t('board.move.cancelled');
             },
             onDragCancel: () => t('board.move.cancelled'),
@@ -198,8 +229,8 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
           if (!item || !over) return;
           const target = targetOf(over.id);
           if (!target) return;
-          if (target.stage === item.stage) reorder(item, target.index);
-          else if (isMovableStage(target.stage)) move(item, target.stage);
+          if (target.column === item.column) reorder(item, target.index);
+          else if (isMovableColumn(target.column)) move(item, target.column);
         }}
       >
         <BoardAutoScroll board={board} />
@@ -210,7 +241,11 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
         >
           <div className="grid h-full min-w-full auto-cols-[minmax(264px,1fr)] grid-flow-col items-stretch gap-3 pb-1 lg:auto-cols-[minmax(288px,1fr)] lg:gap-4">
             {data.columns.map((column) => (
-              <BoardColumn key={column.stage} column={column} disabled={mutation.isPending}>
+              <BoardColumn
+                key={columnKey(column)}
+                column={column}
+                disabled={mutation.isPending}
+              >
                 <SortableContext
                   items={column.cards.map((card) => card.lead)}
                   strategy={verticalListSortingStrategy}
@@ -219,12 +254,13 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
                     <DraggableDeal
                       key={card.lead}
                       card={card}
-                      stage={column.stage}
+                      column={columnKey(column)}
+                      staleDays={column.max_days ?? STALE_DAYS}
                       disabled={mutation.isPending}
                       pending={mutation.isPending && mutation.variables.lead === card.lead}
                       onPick={() => {
                         if (busy.current) return;
-                        setPicked({ card, stage: column.stage });
+                        setPicked({ card, column: columnKey(column) });
                         setDestination(null);
                       }}
                     />
@@ -246,7 +282,7 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
                 <div className="flex h-full flex-col gap-3 rounded-xl border border-primary bg-surface p-4 text-text shadow-board-card ring-2 ring-primary">
                   <span className="text-[15px] font-semibold">{active.card.name}</span>
                   <span className="text-[13px] leading-6 text-text-2">{active.card.summary}</span>
-                  <span className="text-xs text-text-2">{t(`stage.${active.stage}`)}</span>
+                  <span className="text-xs text-text-2">{labelOf(columnOf(active.column))}</span>
                 </div>
               </div>
             )}
@@ -261,7 +297,7 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
         closeLabel={t('close')}
         subtitle={t('board.move.hint')}
         footer={
-          isMovableStage(picked?.stage) ? (
+          isMovableColumn(picked?.column) ? (
             <Button
               disabled={!destination || mutation.isPending}
               onClick={() => {
@@ -301,23 +337,37 @@ export function SalesBoard({ data: serverData, ownerId }: { data: BoardData; own
           </Button>
         </div>
         <p className="m-0 text-sm text-text-2">{t('board.order.scope')}</p>
-        {isMovableStage(picked?.stage) && (
+        {picked && isMovableColumn(picked.column) && (
           <ChoiceGroup
             legend={t('board.move.destination')}
             value={destination}
             onChange={setDestination}
-            options={MOVABLE_STAGES.filter((stage) => stage !== picked.stage).map((stage) => ({
-              value: stage,
-              label: t(`stage.${stage}`),
-            }))}
+            options={data.columns
+              .map((column) => ({ value: columnKey(column), label: labelOf(column) }))
+              .filter(({ value }) => isMovableColumn(value) && value !== picked.column)}
           />
         )}
       </Dialog>
+      {entering && (
+        <EnterStageDialog
+          key={`${String(entering.item.card.lead)}-${columnKey(entering.to)}`}
+          card={entering.item.card}
+          from={labelOf(columnOf(entering.item.column))}
+          to={entering.to}
+          seller={sellerName}
+          pending={mutation.isPending}
+          onClose={() => {
+            restoreLead.current = entering.item.card.lead;
+            setEntering(null);
+          }}
+          onConfirm={(steps) => commit(entering.item, entering.to, steps)}
+        />
+      )}
     </>
   );
 }
 
-const STAGE_DOT: Record<BoardData['columns'][number]['stage'], string> = {
+const STAGE_DOT: Record<Column['stage'], string> = {
   new: 'bg-info',
   contacted: 'bg-warn',
   consulted: 'bg-primary',
@@ -331,25 +381,26 @@ function BoardColumn({
   disabled,
   children,
 }: {
-  column: BoardData['columns'][number];
+  column: Column;
   disabled: boolean;
   children: React.ReactNode;
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  const movable = isMovableStage(column.stage);
+  const key = columnKey(column);
+  const movable = isMovableColumn(key);
   const { setNodeRef, isOver, over } = useDroppable({
-    id: column.stage,
+    id: key,
     disabled,
-    data: { stage: column.stage, type: 'column' },
+    data: { column: key, type: 'column' },
   });
   return (
     <section
       ref={setNodeRef}
       data-board-lane
-      aria-labelledby={`col-${column.stage}`}
-      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-hair bg-board-lane ${isOver || over?.data.current?.stage === column.stage ? 'ring-2 ring-primary ring-inset' : ''}`}
+      aria-labelledby={`col-${key}`}
+      className={`flex min-h-0 flex-col overflow-hidden rounded-2xl border border-hair bg-board-lane ${isOver || over?.data.current?.column === key ? 'ring-2 ring-primary ring-inset' : ''}`}
     >
       <div className="flex min-h-23 flex-none flex-col justify-center gap-2 px-4 pt-3 pb-3">
         <div className="flex items-center gap-2">
@@ -357,8 +408,8 @@ function BoardColumn({
             aria-hidden="true"
             className={`size-2 flex-none rounded-full ${STAGE_DOT[column.stage]}`}
           />
-          <h2 id={`col-${column.stage}`} className="m-0 flex-1 text-[13px] leading-5 font-semibold">
-            {t(`stage.${column.stage}`)}
+          <h2 id={`col-${key}`} className="m-0 flex-1 text-[13px] leading-5 font-semibold">
+            {column.name ?? t(`stage.${column.stage}`)}
           </h2>
           {!movable && (
             <span title={t('board.move.managed')} className="text-text-2">
@@ -372,7 +423,24 @@ function BoardColumn({
         </div>
         <span className="ps-4 text-[11px] text-text-2">
           {column.value === null ? t('board.noValue') : s.millions(column.value)}
+          {column.max_days !== null &&
+            ` · ${t('board.maxDays', { n: f.number(column.max_days) })}`}
         </span>
+        {column.activities.length > 0 && (
+          <ul
+            aria-label={t('board.activities')}
+            className="m-0 flex list-none flex-wrap gap-1 p-0 ps-4"
+          >
+            {column.activities.map((activity) => (
+              <li
+                key={activity.kind}
+                className={`rounded-full px-2 py-0.5 text-[11px] ${activity.required ? 'bg-tint font-medium text-primary-text' : 'bg-surface text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)]'}`}
+              >
+                {t(`board.activity.${activity.kind}`)}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <ul
         data-board-cards
@@ -401,13 +469,15 @@ function BoardColumn({
 
 function DraggableDeal({
   card,
-  stage,
+  column,
+  staleDays,
   disabled,
   pending,
   onPick,
 }: {
   card: BoardCard;
-  stage: BoardData['columns'][number]['stage'];
+  column: ColumnKey;
+  staleDays: number;
   disabled: boolean;
   pending: boolean;
   onPick: () => void;
@@ -424,7 +494,7 @@ function DraggableDeal({
   } = useSortable({
     id: card.lead,
     disabled,
-    data: { stage, type: 'card' },
+    data: { column, type: 'card' },
     attributes: { roleDescription: t('board.move.card') },
   });
   return (
@@ -439,7 +509,7 @@ function DraggableDeal({
       }}
       className={`relative flex-none ${isDragging ? 'opacity-30' : ''}`}
     >
-      <MemoDealCard card={card} />
+      <MemoDealCard card={card} staleDays={staleDays} />
       <MemoIconButton
         ref={setActivatorNodeRef}
         {...attributes}

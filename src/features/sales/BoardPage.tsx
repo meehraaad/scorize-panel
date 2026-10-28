@@ -1,27 +1,43 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { SelectField } from '@/components/ui/Choices';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { PageWorkspace } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { boardQuery, type BoardData } from './api';
+import { boardQuery, sellerBoardQuery, type BoardData } from './api';
 import { SalesBoard } from './components/SalesBoard';
 import { NewLeadDialog } from './components/NewLeadDialog';
 import { useSalesFormat } from './format';
 import { salesPath } from './paths';
 
-/** Deals by stage, oldest-in-stage flagged, with lost reasons below. Canvas "تابلوی فروش". */
+/**
+ * Deals in the team's columns (S48), oldest-in-column flagged, with lost reasons below. A sales
+ * manager sees everyone's cards, or one seller's. Canvas "تابلوی فروش با مرحله‌های تیمی".
+ */
 export default function BoardPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  const { data } = useSuspenseQuery(boardQuery);
+  const { data: everyone } = useSuspenseQuery(boardQuery);
   const user = useUser();
+  const [params, setParams] = useSearchParams();
+  const sellerParam = Number(params.get('seller'));
+  const seller =
+    everyone.sellers.some((item) => item.id === sellerParam) ? sellerParam : null;
+  const query = sellerBoardQuery(seller);
+  const filtered = useQuery({
+    ...query,
+    enabled: seller !== null,
+    placeholderData: keepPreviousData,
+  });
+  const data = seller === null ? everyone : (filtered.data ?? everyone);
+  const manager = everyone.sellers.length > 0;
 
   const [fullscreen, setFullscreen] = useState(false);
   const [newLead, setNewLead] = useState(false);
@@ -39,6 +55,32 @@ export default function BoardPage() {
           })}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              {manager && (
+                <>
+                  <SelectField
+                    inline
+                    label={t('board.seller')}
+                    value={seller === null ? 'all' : String(seller)}
+                    onChange={(value) =>
+                      setParams(value === 'all' ? {} : { seller: value }, { replace: true })
+                    }
+                    options={[
+                      { value: 'all', label: t('board.allSellers') },
+                      ...everyone.sellers.map((item) => ({
+                        value: String(item.id),
+                        label: item.name,
+                      })),
+                    ]}
+                  />
+                  <Link
+                    to={salesPath('manager/stages')}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-hair px-3 text-[13px] font-medium text-text-2 hover:text-text"
+                  >
+                    <Icon name="settings" size={16} />
+                    {t('board.editStages')}
+                  </Link>
+                </>
+              )}
               <div className="flex items-center gap-1 rounded-xl border border-hair bg-canvas p-1">
                 <span
                   aria-current="page"
@@ -77,7 +119,12 @@ export default function BoardPage() {
           }
         />
       </div>
-      <SalesBoard data={data} ownerId={user.id} />
+      <SalesBoard
+        data={data}
+        ownerId={user.id}
+        sellerName={user.staff?.full_name ?? `${user.first_name} ${user.last_name}`}
+        queryKey={query.queryKey}
+      />
       <LostCard lost={data.lost} />
       <NewLeadDialog open={newLead} onClose={() => setNewLead(false)} />
     </PageWorkspace>
