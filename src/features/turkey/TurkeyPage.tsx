@@ -2,7 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { StepBar } from '@/components/ui/Progress';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
-import { turkeyQuery, type TurkeyStep } from './api';
+import { turkeyQuery, type TurkeyStep } from '@/lib/applicant/turkey';
 import { DocsStep } from './components/DocsStep';
 import { DoneStep } from './components/DoneStep';
 import { SignStep } from './components/SignStep';

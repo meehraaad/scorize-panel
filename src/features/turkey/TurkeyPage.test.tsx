@@ -78,41 +78,33 @@ describe('free Turkey application', () => {
       await screen.findByRole('heading', { name: 'مدارک ترکیه را آپلود کنید', level: 1 }),
     ).toBeInTheDocument();
     expect(screen.getByText('فهرست زیر برای مقطع کارشناسی ارشد است.')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'ارسال برای بررسی' }));
-    expect(within(docs()).getByRole('alert')).toHaveTextContent(
-      'اول همه‌ی مدارک لازم را آپلود کنید.',
-    );
-
     const passport = within(row('پاسپورت')).getByLabelText('آپلود پاسپورت');
     await user.upload(passport, new File(['x'], 'p.docx', { type: 'application/msword' }));
     expect(passport).toHaveAccessibleDescription(/این نوع فایل پذیرفته نمی‌شود/);
 
-    for (const [name, file] of [
-      ['پاسپورت', 'passport.pdf'],
-      ['دانشنامه‌ی کارشناسی (ترجمه‌ی رسمی)', 'degree.pdf'],
-      ['ریز نمرات کارشناسی (ترجمه‌ی رسمی)', 'transcript.pdf'],
-      ['عکس پرسنلی', 'photo.pdf'],
-    ] as const) {
-      await user.upload(within(row(name)).getByLabelText(`آپلود ${name}`), pdf(file));
-      expect(await within(row(name)).findByText(`آپلود شد · ${file}`)).toBeInTheDocument();
+    // Each upload goes straight to the team (the fake team answers at once).
+    for (const name of ['پاسپورت', 'دانشنامه‌ی کارشناسی (ترجمه‌ی رسمی)', 'عکس پرسنلی'] as const) {
+      await user.upload(within(row(name)).getByLabelText(`آپلود ${name}`), pdf('file.pdf'));
+      expect(await within(row(name)).findByText('تأیید شد')).toBeInTheDocument();
     }
-    expect(within(docs()).getByText('۴ از ۴')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'ارسال برای بررسی' }));
+    expect(within(docs()).getByText('۳ از ۴')).toBeInTheDocument();
+    expect(within(row('پاسپورت')).queryByLabelText('آپلود پاسپورت')).toBeNull();
 
-    // 3. The team sends the transcript back.
+    // 3. The last one is in: the team sends the transcript back.
+    await user.upload(
+      within(row('ریز نمرات کارشناسی')).getByLabelText('آپلود ریز نمرات کارشناسی (ترجمه‌ی رسمی)'),
+      pdf('transcript.pdf'),
+    );
     expect(
       await screen.findByRole('heading', { name: 'مدارک شما در حال بررسی است', level: 1 }),
     ).toBeInTheDocument();
     const transcript = row('ریز نمرات کارشناسی');
     expect(transcript).toHaveTextContent('نیاز به آپلود دوباره');
     expect(transcript).toHaveTextContent('صفحه‌ی دوم ریز نمرات در فایل نبود');
-    expect(row('پاسپورت')).toHaveTextContent('تأیید شد');
-    expect(within(row('پاسپورت')).queryByLabelText('آپلود پاسپورت')).toBeNull();
     await user.upload(
       within(transcript).getByLabelText('آپلود ریز نمرات کارشناسی (ترجمه‌ی رسمی)'),
       pdf('transcript-all-pages.pdf'),
     );
-    await user.click(await screen.findByRole('button', { name: 'ارسال دوباره' }));
 
     // 4. The pledge, signed with an SMS code.
     expect(

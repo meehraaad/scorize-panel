@@ -7,7 +7,7 @@ export interface Stop {
   key: string;
   label: string;
   /** A short line under the label ("2 of 4", "by SMS"). */
-  hint?: string;
+  hint?: string | undefined;
   state: StopState;
 }
 

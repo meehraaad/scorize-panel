@@ -14,7 +14,7 @@ import {
 } from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
 import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
-import { turkeyQuery } from '@/features/turkey/api';
+import { turkeyQuery } from '@/lib/applicant/turkey';
 import { documentsQuery } from '@/features/documents/api';
 import { writingOffersQuery } from '@/features/documents/offers';
 import { overviewQuery } from '@/features/home/api';
@@ -156,17 +156,26 @@ export const applicantPanel: PanelDefinition = {
         },
         {
           path: 'documents',
-          ...lazyPage(() => import('@/features/documents/DocumentsPage'), ['documents'], {
-            // Without a contract the tab is the new user's: files sent for the free review and
-            // the writing offered next to them. Opened first (access not known yet), it loads
-            // them too, as the home does.
-            data: () => {
-              const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
-              const guest = ON_SERVER.writingOffers && state === 'guest';
-              return [documentsQuery, guest && reviewDocumentsQuery, guest && writingOffersQuery];
+          ...lazyPage(
+            () => import('@/features/documents/DocumentsPage'),
+            ON_SERVER.turkey ? ['documents', 'turkey'] : ['documents'],
+            {
+              // Without a contract the tab is the new user's: the documents (that start Turkey, once
+              // Django serves it) and the writing offered next to them. Opened first (access not
+              // known yet), it loads them too, as the home does.
+              data: () => {
+                const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
+                const guest = ON_SERVER.writingOffers && state === 'guest';
+                return [
+                  documentsQuery,
+                  guest && reviewDocumentsQuery,
+                  guest && writingOffersQuery,
+                  guest && ON_SERVER.turkey && turkeyQuery,
+                ];
+              },
+              skeleton: 'dashboard',
             },
-            skeleton: 'dashboard',
-          }),
+          ),
         },
         // Writing information forms. Design: canvas V6 sections 4 (SOP) and 5 (CV).
         {

@@ -23,7 +23,7 @@ export type ServerFeature =
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
   callRequest: true,
-  /** H30–H35 `turkey/…`. */
+  /** H30–H35 `turkey/…` with H75 (review per upload): the Turkey page and the documents tab's Turkey start. */
   turkey: false,
   /** H7 `GET professor-emails/`. */
   professorEmails: true,

@@ -20,7 +20,7 @@ import type { AccessState, ApplicantAccess, CallRequest } from '@/lib/applicant/
 import type { Gates } from '@/lib/applicant/gates';
 import type { ConsultationDetail } from '@/features/consultations/api';
 import type { EventDetail, GpaCourse, PackageDetail, ServicesData } from '@/features/services/api';
-import type { TurkeyAnswers, TurkeyCase, TurkeyDocument } from '@/features/turkey/api';
+import type { TurkeyAnswers, TurkeyCase, TurkeyDocument } from '@/lib/applicant/turkey';
 import type { ApplicantOverview, ApplicationSummary } from '@/features/home/api';
 import type { WritingForm } from '@/features/writing/api';
 import type {
@@ -1486,8 +1486,9 @@ function turkeyOf(user: number): TurkeyCase {
 const transcriptReturned = new Set<number>();
 
 /**
- * The fake team reviews at once: the first transcript is sent back with a note, everything else is
- * approved. Once all required documents are approved, the pledge opens.
+ * The fake team reviews each upload at once (backend item H75): the first transcript is sent back
+ * with a note, everything else is approved. The step stays `docs` while a required document has no
+ * file, is `review` until all are approved, then the pledge opens.
  */
 function reviewTurkey(user: number, found: TurkeyCase) {
   for (const doc of found.documents) {
@@ -1500,8 +1501,10 @@ function reviewTurkey(user: number, found: TurkeyCase) {
       });
     } else Object.assign(doc, { status: 'approved', note: null });
   }
-  const done = found.documents.every((doc) => !doc.required || doc.status === 'approved');
-  Object.assign(found, done ? { step: 'sign', pledge: PLEDGE } : { step: 'review' });
+  const required = found.documents.filter((doc) => doc.required);
+  if (required.every((doc) => doc.status === 'approved'))
+    Object.assign(found, { step: 'sign', pledge: PLEDGE });
+  else found.step = required.some((doc) => doc.status === 'missing') ? 'docs' : 'review';
 }
 
 const turkeyHandlers = [
@@ -1545,24 +1548,11 @@ const turkeyHandlers = [
     const file = (await request.formData()).get('file');
     if (!(file instanceof File) || file.size > 10 * 1024 * 1024)
       return HttpResponse.json({ file: ['invalid'] }, { status: 400 });
-    Object.assign(doc, { status: 'uploaded', file_name: file.name, note: null });
-    return new HttpResponse(null, { status: 201 });
-  }),
-
-  http.post(`${BASE}/turkey/submit/`, () => {
-    const user = storage.get();
-    if (!user) return forbidden();
-    const found = turkeyOf(user);
     if (found.step !== 'docs' && found.step !== 'review')
       return HttpResponse.json({ detail: 'Not now.' }, { status: 409 });
-    if (
-      found.documents.some(
-        (doc) => doc.required && (doc.status === 'missing' || doc.status === 'rejected'),
-      )
-    )
-      return HttpResponse.json({ detail: 'Missing documents.' }, { status: 400 });
+    Object.assign(doc, { status: 'uploaded', file_name: file.name, note: null });
     reviewTurkey(user, found);
-    return new HttpResponse(null, { status: 204 });
+    return new HttpResponse(null, { status: 201 });
   }),
 
   http.post(`${BASE}/turkey/pledge/send-code/`, () => {

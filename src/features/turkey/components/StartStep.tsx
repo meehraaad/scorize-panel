@@ -5,7 +5,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
-import { TURKEY_DEGREES, useStartTurkey, type TurkeyDegree } from '../api';
+import { TURKEY_DEGREES, useStartTurkey, type TurkeyDegree } from '@/lib/applicant/turkey';
 import { toast } from '@/lib/toast';
 
 const HOW = ['upload', 'review', 'sign'] as const;

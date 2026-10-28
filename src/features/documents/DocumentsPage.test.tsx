@@ -161,7 +161,7 @@ describe('documents page', () => {
     );
   });
 
-  it('asks a new user for their documents, next to the writing we offer', async () => {
+  it('asks a new user for their documents and texts in one list', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
     const router = renderApp('/documents');
@@ -181,16 +181,16 @@ describe('documents page', () => {
     await user.click(within(have).getByRole('button', { name: 'فایل‌ها' }));
     expect(within(have).getByRole('button', { name: 'حذف ریزنمرات' })).toBeInTheDocument();
 
-    // What they don't have, we write: the price, paid at the form's final submit.
-    const write = screen.getByRole('region', { name: 'آنچه ندارید، ما می‌نویسیم' });
-    const sop = within(write).getByRole('article', { name: 'انگیزه‌نامه' });
-    expect(sop).toHaveTextContent('۴٬۵۰۰٬۰۰۰');
-    expect(within(sop).getByText('۵٬۰۰۰٬۰۰۰')).toBeInTheDocument();
-    // One customer's voice for the whole section.
-    expect(within(write).getAllByLabelText('تجربه‌ی نگار رحیمی')).toHaveLength(1);
+    // The texts in the same list: upload one you have, or we write it (paid at the form's final
+    // submit).
+    const sop = within(have)
+      .getAllByRole('listitem')
+      .find((item) => item.textContent.startsWith('انگیزه‌نامه'));
+    if (!sop) throw new Error('No SOP row');
+    expect(within(sop).getByLabelText('انتخاب فایل انگیزه‌نامه')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'با من تماس بگیرید' })).toBeInTheDocument();
 
-    await user.click(within(sop).getByRole('button', { name: 'شروع فرم انگیزه‌نامه' }));
+    await user.click(within(sop).getByRole('button', { name: 'سفارش نگارش انگیزه‌نامه' }));
     expect(
       await screen.findByRole('heading', { name: 'اطلاعات انگیزه‌نامه', level: 1 }),
     ).toBeInTheDocument();

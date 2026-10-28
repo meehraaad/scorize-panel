@@ -13,11 +13,11 @@ import '@/test/server';
  * page marks something seen, are not waterfalls.)
  */
 
-// The admission-chance quiz isn't on the server yet (src/lib/applicant/onServer.ts): its pages are
-// checked as they will be once it is.
+// The admission-chance quiz and Turkey aren't on the server yet (src/lib/applicant/onServer.ts):
+// their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
-  return { ON_SERVER: { ...ON_SERVER, estimate: true } };
+  return { ON_SERVER: { ...ON_SERVER, estimate: true, turkey: true } };
 });
 
 const SARA = 1; // applicant with a contract (src/mocks/applicant.ts)
@@ -61,10 +61,12 @@ const PAGES: PageCase[] = [
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
   { path: '/', user: MARYAM },
-  // No contract: the new user's documents tab (files for the free review, writing offered).
+  // No contract: the new user's documents tab (the documents that start Turkey, writing offered).
   { path: '/documents', user: MARYAM },
-  // No contract: the ways to start a case, with the seller's session notes.
+  // No contract: the two contracts as tickets, with the research interests.
   { path: '/contract', user: MARYAM },
+  // No contract: the free Turkey application.
+  { path: '/turkey', user: MARYAM },
   // No contract: the applications tab that sells the service, with the chance form.
   { path: '/applications', user: MARYAM },
   {

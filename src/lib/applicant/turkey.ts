@@ -20,7 +20,7 @@ export type TurkeyDegree = (typeof TURKEY_DEGREES)[number];
 
 /**
  * - `missing`: nothing uploaded yet (or removed)
- * - `uploaded`: uploaded, not sent for review yet
+ * - `uploaded`: received, waiting for the team (each upload goes for review at once, H75)
  * - `review`: with the team
  * - `approved`, `rejected` (with the team's `note`)
  */
@@ -89,6 +89,7 @@ export function useStartTurkey() {
   );
 }
 
+/** Uploads a document; it goes straight to the team for review (backend item H75). */
 export function useUploadTurkeyDocument() {
   return useTurkeyMutation(
     ({ id, file, messages }: { id: number; file: File; messages?: UploadMessages }) => {
@@ -97,11 +98,6 @@ export function useUploadTurkeyDocument() {
       return uploadFile(`${BASE}/documents/${String(id)}/upload/`, body, file, messages);
     },
   );
-}
-
-/** Sends the uploads for review (again, after a document was sent back). */
-export function useSubmitTurkey() {
-  return useTurkeyMutation(() => api(`${BASE}/submit/`, { method: 'POST' }));
 }
 
 /** Texts the pledge code; answers how long until it may be sent again. */
