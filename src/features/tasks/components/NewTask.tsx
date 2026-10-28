@@ -5,6 +5,7 @@ import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
+import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   TASKS_KEY,
@@ -15,11 +16,11 @@ import {
   type TaskTeam,
 } from '@/lib/tasks/api';
 import { toast } from '@/lib/toast';
-import { quickWhen } from '@/lib/when';
+import { fromLocalInput, quickWhen } from '@/lib/when';
 
 const TARGETS = ['me', 'people', 'team'] as const;
 type Target = (typeof TARGETS)[number];
-const WHENS = ['evening', 'tomorrow', 'week'] as const;
+const WHENS = ['evening', 'tomorrow', 'week', 'other'] as const;
 
 /** «کار تازه» in a page header: opens the composer. */
 export function NewTaskButton({ colleagues }: { colleagues: Colleague[] }) {
@@ -64,6 +65,7 @@ export function NewTaskDialog({
   const [query, setQuery] = useState('');
   const [team, setTeam] = useState<TaskTeam>(TASK_TEAMS[0]);
   const [when, setWhen] = useState<(typeof WHENS)[number]>('tomorrow');
+  const [date, setDate] = useState('');
   const [checked, setChecked] = useState(false);
 
   const q = query.trim();
@@ -74,18 +76,19 @@ export function NewTaskDialog({
   const toggle = (id: number) =>
     setPicked((ids) => (ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]));
   const n = chosen.length;
+  const dueAt = when === 'other' ? fromLocalInput(date) : quickWhen(when).toISOString();
   const sendLabel =
     target === 'people' && n > 1 ? t('new.send.many', { n: f.number(n) }) : t(`new.send.${target}`);
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setChecked(true);
-    if (!text.trim() || (target === 'people' && n === 0)) return;
+    if (!text.trim() || !dueAt || (target === 'people' && n === 0)) return;
     const task: NewTask = {
       user: null,
       text: text.trim(),
       kind: target === 'me' ? 'mine' : target === 'team' ? 'team' : 'request',
-      due_at: quickWhen(when).toISOString(),
+      due_at: dueAt,
       ...(target === 'people' && { assignees: picked }),
       ...(target === 'team' && { team }),
     };
@@ -93,7 +96,11 @@ export function NewTaskDialog({
       onError: () => toast.error(t('error')),
       onSuccess: () => {
         toast.success(
-          target === 'people' ? t('new.sent.people', { n: f.number(n) }) : t(`new.sent.${target}`),
+          target === 'people'
+            ? t('new.sent.people', { n: f.number(n) })
+            : target === 'me'
+              ? t('new.sent.me', { when: f.dateTime(dueAt) })
+              : t('new.sent.team'),
         );
         onClose();
       },
@@ -205,8 +212,21 @@ export function NewTaskDialog({
           legend={t('new.due')}
           value={when}
           onChange={setWhen}
-          options={WHENS.map((value) => ({ value, label: t(`done.whenOption.${value}`) }))}
+          options={WHENS.map((value) => ({
+            value,
+            label: value === 'other' ? t('new.other') : t(`done.whenOption.${value}`),
+          }))}
         />
+        {when === 'other' && (
+          <LazyDatePicker
+            time
+            only="future"
+            label={t('new.date')}
+            value={date}
+            onChange={setDate}
+            error={checked && !dueAt ? t('new.dateRequired') : undefined}
+          />
+        )}
       </form>
     </Dialog>
   );

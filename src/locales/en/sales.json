@@ -322,6 +322,59 @@
       "scope": "Your visible-card order is saved for this account on this browser.",
       "over": "Position {{position}} in {{stage}}.",
       "dropped": "Card reordered. Saving your order."
+    },
+    "seller": "Seller",
+    "allSellers": "All sellers",
+    "editStages": "Stages",
+    "sellerOf": "Seller: {{name}}",
+    "maxDays": "Up to {{n}} days",
+    "activities": "Activities of this stage",
+    "activity": {
+      "follow_up": "Follow-up",
+      "task": "Task for me",
+      "note": "Note",
+      "message": "Ready message",
+      "offer": "Send an offer",
+      "sell": "Sell or book a session",
+      "contract": "Send the contract"
+    },
+    "enter": {
+      "title": "{{name}} goes to “{{stage}}”",
+      "subtitle": "This stage has {{n}} activities. The card moves once the required ones are filled in.",
+      "putBack": "Put the card back",
+      "backHint": "Without a follow-up, the card stays in “{{stage}}”.",
+      "save": "Save and move",
+      "required": "Required",
+      "suggested": "Suggested",
+      "what": "What?",
+      "when": "When?",
+      "whens": {
+        "tomorrow": "Tomorrow 10:00",
+        "three": "In 3 days",
+        "week": "Next week",
+        "other": "Another date and time"
+      },
+      "shows": "Shows on the card and in “My follow-ups” on {{when}}.",
+      "date": "Date and time",
+      "dateRequired": "Choose a date and time.",
+      "textRequired": "Write this.",
+      "followUpText": "Follow up with {{name}}",
+      "add": "Also add: {{what}}",
+      "noteLabel": "Note",
+      "noTemplate": "The manager hasn't chosen a message for this stage yet.",
+      "copy": "Copy message",
+      "copied": "Message copied.",
+      "copyFailed": "Could not copy. Select the text yourself.",
+      "open": {
+        "offer": "Send the offer from the customer's offer page.",
+        "sell": "Sell or book a session from the customer's page.",
+        "contract": "Send the contract from the customer's apply tab."
+      },
+      "openLink": {
+        "offer": "Offer page",
+        "sell": "Customer page",
+        "contract": "Apply tab"
+      }
     }
   },
   "customer": {
@@ -986,7 +1039,8 @@
       "assign": "Lead assignment",
       "approvals": "Contract approvals",
       "team": "Team and lead sources",
-      "followUps": "Follow-up health"
+      "followUps": "Follow-up health",
+      "stages": "Board stages"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1170,6 +1224,67 @@
       "handOver": "Hand to someone else",
       "handTo": "To",
       "hand": "Hand over"
+    },
+    "stages": {
+      "title": "Stages and activities",
+      "subtitle": "For the whole sales team. Each seller sees only their own cards.",
+      "save": "Save",
+      "saved": "Stages saved. The whole team's board is updated.",
+      "stale": "The stages were changed somewhere else meanwhile. Reload the page.",
+      "failed": "Could not save. Try again.",
+      "list": "Board stages",
+      "listHint": "Change the order with the up and down buttons. Locked stages are fixed because the contract and payment move them.",
+      "fixed": {
+        "new": "First stage",
+        "draft": "Manager approval",
+        "won": "Success",
+        "lost": "Reason required"
+      },
+      "unnamed": "Unnamed stage",
+      "info": "{{n}} activities · {{phase}}",
+      "up": "Move {{name}} up",
+      "down": "Move {{name}} down",
+      "add": "New stage",
+      "cards": "{{n}} cards in this stage",
+      "name": "Stage name",
+      "phase": "Counts in reports as",
+      "phaseHint": "Reports and the contract flow know the stage by this.",
+      "maxDays": "Longest stay in the stage (days)",
+      "maxDaysHint": "After that the card shows as late. Empty means no limit.",
+      "activities": "When a card enters this stage",
+      "activitiesHint": "They show in the popup in this order.",
+      "removeActivity": "Remove {{name}}",
+      "followUpAlways": "Required in every middle stage.",
+      "required": "Required",
+      "requiredHint": "The card doesn't move without it.",
+      "opens": {
+        "message": "Shows the message in the popup for the seller to copy and send.",
+        "offer": "Links to the customer's offer page.",
+        "sell": "Links to the customer's page to sell or book a session.",
+        "contract": "Links to the customer's apply tab for the contract."
+      },
+      "days": "Default time",
+      "sameDay": "Same day",
+      "daysLater": "{{n}} days later",
+      "hour": "Hour",
+      "notePrompt": "Note question",
+      "text": "Suggested text",
+      "template": "Message",
+      "noTemplate": "No message",
+      "library": "Add an activity",
+      "remove": "Remove stage",
+      "removeHint": "{{n}} cards are in this stage. After removing it, choose where they go.",
+      "movesTitle": "Cards of removed stages",
+      "moveTo": "Cards of “{{name}}” ({{n}} cards) go to",
+      "chooseTarget": "Choose a stage",
+      "targetRequired": "Choose where these cards go.",
+      "problem": {
+        "name": "Give every stage a name.",
+        "duplicate": "Stage names must be different.",
+        "order": "Put the “Contacted” stages first, then “Consulted”, then “Offer sent”.",
+        "phases": "Each of “Contacted”, “Consulted” and “Offer sent” needs at least one stage.",
+        "moves": "Choose where the cards of {{names}} go, at the bottom of the page."
+      }
     }
   },
   "handoff": {

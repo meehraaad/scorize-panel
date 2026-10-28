@@ -5,14 +5,14 @@ import {
   type CollisionDetection,
   type KeyboardCoordinateGetter,
 } from '@dnd-kit/core';
-import { isMovableStage } from './api/board';
+import { isMovableColumn } from './api/board';
 
-/** Contract stages can be sorted internally, but only the open stages accept a stage move. */
+/** Contract columns can be sorted internally, but only the open columns accept a move. */
 export const boardCollisionDetection: CollisionDetection = (args) => {
-  const from: unknown = args.active.data.current?.stage;
+  const from: unknown = args.active.data.current?.column;
   const droppableContainers = args.droppableContainers.filter((container) => {
-    const to: unknown = container.data.current?.stage;
-    return to === from || (isMovableStage(from) && isMovableStage(to));
+    const to: unknown = container.data.current?.column;
+    return to === from || (isMovableColumn(from) && isMovableColumn(to));
   });
   const candidates = { ...args, droppableContainers };
   const hits = args.pointerCoordinates ? pointerWithin(candidates) : rectIntersection(candidates);
@@ -37,20 +37,20 @@ export const boardCoordinates: KeyboardCoordinateGetter = (
   event.preventDefault();
   const current = context.collisionRect;
   if (!current) return;
-  const source: unknown = context.active?.data.current?.stage;
-  const selected: unknown = context.over?.data.current?.stage ?? source;
+  const source: unknown = context.active?.data.current?.column;
+  const selected: unknown = context.over?.data.current?.column ?? source;
   const centerX = current.left + current.width / 2;
   const centerY = current.top + current.height / 2;
   const candidates = context.droppableContainers
     .getEnabled()
     .flatMap((container) => {
-      const stage: unknown = container.data.current?.stage;
+      const stage: unknown = container.data.current?.column;
       const type: unknown = container.data.current?.type;
       if (
         vertical
           ? type !== 'card' || stage !== selected
           : type !== 'column' ||
-            !(stage === source || (isMovableStage(source) && isMovableStage(stage)))
+            !(stage === source || (isMovableColumn(source) && isMovableColumn(stage)))
       )
         return [];
       const rect = context.droppableRects.get(container.id);
@@ -73,7 +73,7 @@ export const boardCoordinates: KeyboardCoordinateGetter = (
       .find(
         (container) =>
           container.data.current?.type === 'card' &&
-          container.data.current.stage === candidates[0]?.stage,
+          container.data.current.column === candidates[0]?.stage,
       );
     target = (first && context.droppableRects.get(first.id)) ?? target;
   }

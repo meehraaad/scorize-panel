@@ -10,12 +10,19 @@ import { ScoreChip } from './LeadChips';
 
 const DAY = 86_400_000;
 
-export function DealCard({ card }: { card: BoardCard }) {
+export function DealCard({
+  card,
+  staleDays = STALE_DAYS,
+}: {
+  card: BoardCard;
+  /** The column's limit (S48), or the default. */
+  staleDays?: number;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
   const [now] = useState(() => Date.now());
-  const stale = now - new Date(card.stage_since).getTime() > STALE_DAYS * DAY;
+  const stale = now - new Date(card.stage_since).getTime() > staleDays * DAY;
   const next = !card.next
     ? null
     : card.next.kind === 'follow_up'
@@ -30,6 +37,11 @@ export function DealCard({ card }: { card: BoardCard }) {
     >
       <span className="flex min-h-6 items-center gap-2 pe-9">
         <ScoreChip score={card.score} />
+        {card.seller && (
+          <span className="truncate text-[11px] text-text-2">
+            {t('board.sellerOf', { name: card.seller })}
+          </span>
+        )}
       </span>
       <span className="flex flex-col gap-1">
         <span className="line-clamp-2 text-[15px] leading-6 font-semibold">{card.name}</span>
@@ -49,7 +61,7 @@ export function DealCard({ card }: { card: BoardCard }) {
           <Icon name="clock" size={12} />
           {s.age(card.stage_since)}
           {stale && (
-            <span className="sr-only"> · {t('board.stale', { n: f.number(STALE_DAYS) })}</span>
+            <span className="sr-only"> · {t('board.stale', { n: f.number(staleDays) })}</span>
           )}
         </span>
         {next && (

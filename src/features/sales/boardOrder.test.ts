@@ -7,6 +7,10 @@ const board: BoardData = {
   open_value: 500,
   columns: BOARD_STAGES.map((stage) => ({
     stage,
+    id: null,
+    name: null,
+    max_days: null,
+    activities: [],
     count: stage === 'new' ? 3 : 0,
     value: 500,
     cards:
@@ -20,11 +24,13 @@ const board: BoardData = {
             amount: 100,
             paid: null,
             stage_since: '2026-01-01',
+            seller: null,
             next: null,
           }))
         : [],
   })),
   lost: { total: 0, reasons: [] },
+  sellers: [],
 };
 const ids = (data: BoardData) => data.columns[0]?.cards.map((card) => card.lead);
 beforeEach(() => localStorage.clear());

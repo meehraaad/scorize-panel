@@ -6,15 +6,16 @@ import type {
   FunnelData,
   HealthData,
   HealthTeam,
+  StageInput,
   TeamData,
   TeamRange,
 } from '@/features/sales/api';
 import { forbidden, notFound, pageOf, storage } from './session';
-import { failed, stateOrError, type SalesState } from './sales';
+import { failed, saveStages, stagesOf, stateOrError, type SalesState } from './sales';
 import { openHandoff } from './handoff';
 
 /**
- * Fake sales-manager API (docs/backend-changes.md S34–S40, T12). Only Reza (user 4, with
+ * Fake sales-manager API (docs/backend-changes.md S34–S40, T12; the board's stages S48). Only Reza (user 4, with
  * can_assign_to_seller) may use it, like Django's CanAssignToStaff.
  */
 
@@ -485,6 +486,25 @@ export const managerHandlers = [
       ],
     };
     return HttpResponse.json(funnel);
+  }),
+
+  // S48: the team's board columns.
+  http.get(`${BASE}/stages/`, () => {
+    const data = managerOrError();
+    return data instanceof Response ? data : HttpResponse.json(stagesOf(data.sales));
+  }),
+
+  http.put(`${BASE}/stages/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const body = (await request.json()) as {
+      stages: StageInput[];
+      moves: { source: number; to: number }[];
+    };
+    const error = saveStages(data.sales, body);
+    return error
+      ? HttpResponse.json({ stages: [error] }, { status: 400 })
+      : HttpResponse.json(stagesOf(data.sales));
   }),
 
   http.get(`${BASE}/follow-ups/`, ({ request }) => {

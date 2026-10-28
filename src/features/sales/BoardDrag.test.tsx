@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Toaster } from '@/components/ui/Toast';
 import i18n from '@/lib/i18n';
 import { server } from '@/test/server';
-import { BOARD_STAGES, boardQuery, type BoardData } from './api';
+import { BOARD_STAGES, boardQuery, type BoardData, type BoardStage } from './api';
 import { boardOrderKey } from './boardOrder';
 import { SalesBoard } from './components/SalesBoard';
 
@@ -23,11 +23,17 @@ const card = {
   amount: 1_000_000,
   paid: null,
   stage_since: '2026-01-01T00:00:00Z',
+  seller: null,
   next: { kind: 'call_now' as const },
 };
+/** Column keys in order: the team columns are 1–3 (contacted, consulted, offer). */
+const KEYS = ['new', '1', '2', '3', 'draft', 'won'];
+const MOVE = '/api/sales/v1/leads/:id/move/';
+const saveAndMove = async () =>
+  fireEvent.click(await screen.findByRole('button', { name: 'Save and move' }));
 function Harness() {
   const { data } = useSuspenseQuery(boardQuery);
-  return <SalesBoard data={data} ownerId={3} />;
+  return <SalesBoard data={data} ownerId={3} sellerName="Nima" />;
 }
 async function setup(language = 'en') {
   await i18n.changeLanguage(language);
@@ -46,7 +52,7 @@ async function setup(language = 'en') {
   );
   return userEvent.setup();
 }
-function column(stage: (typeof BOARD_STAGES)[number]) {
+function column(stage: BoardStage) {
   return screen.getByRole('region', { name: i18n.t(`stage.${stage}`, { ns: 'sales' }) });
 }
 function handle(name = 'Sara') {
@@ -72,7 +78,7 @@ function layout(rtl = false) {
   ) {
     const section = this.closest('section');
     const stage = section?.getAttribute('aria-labelledby')?.replace('col-', '');
-    const index = BOARD_STAGES.findIndex((value) => value === stage);
+    const index = KEYS.findIndex((value) => value === stage);
     if (index < 0) {
       // Portaled previews retain the active card's size and original position, including RTL.
       if (
@@ -88,7 +94,7 @@ function layout(rtl = false) {
         ?.replace('col-', '');
       const stageIndex = Math.max(
         0,
-        BOARD_STAGES.findIndex((value) => value === activeStage),
+        KEYS.findIndex((value) => value === activeStage),
       );
       const item = active?.closest('li');
       const position = item ? Array.from(item.parentElement?.children ?? []).indexOf(item) : 0;
@@ -120,8 +126,22 @@ beforeEach(() => {
   localStorage.clear();
   data = {
     open_value: 0,
-    columns: BOARD_STAGES.map((stage) => ({
+    columns: BOARD_STAGES.map((stage, index) => ({
       stage,
+      id: index > 0 && index < 4 ? index : null,
+      name: null,
+      max_days: null,
+      activities:
+        index > 0 && index < 4
+          ? [
+              {
+                id: 100 + index,
+                kind: 'follow_up' as const,
+                required: true,
+                settings: { days: 1, hour: 10, text: '' },
+              },
+            ]
+          : [],
       count: stage === 'new' || stage === 'draft' ? 1 : 0,
       value: 0,
       cards:
@@ -132,6 +152,7 @@ beforeEach(() => {
             : [],
     })),
     lost: { total: 0, reasons: [] },
+    sellers: [],
   };
   server.use(http.get('/api/sales/v1/board/', () => HttpResponse.json(data)));
 });
@@ -150,7 +171,7 @@ describe('sales board card moves', () => {
     async (language) => {
       const post = vi.fn();
       server.use(
-        http.post('/api/sales/v1/leads/bulk/', async ({ request }) => {
+        http.post(MOVE, async ({ request }) => {
           post(await request.json());
           data = {
             ...data,
@@ -171,8 +192,22 @@ describe('sales board card moves', () => {
       await user.keyboard(language === 'fa' ? '[ArrowLeft]' : '[ArrowRight]');
       await waitFor(() => expect(column('contacted')).toHaveClass('ring-2'));
       await user.keyboard('[Space]');
+      expect(post).not.toHaveBeenCalled();
+      await user.click(
+        await screen.findByRole('button', {
+          name: i18n.t('board.enter.save', { ns: 'sales' }),
+        }),
+      );
       await waitFor(() =>
-        expect(post).toHaveBeenCalledExactlyOnceWith({ ids: [11], stage: 'contacted' }),
+        expect(post).toHaveBeenCalledExactlyOnceWith({
+          to: '1',
+          steps: {
+            follow_up: {
+              text: i18n.t('board.enter.followUpText', { ns: 'sales', name: 'Sara' }),
+              due_at: expect.any(String) as string,
+            },
+          },
+        }),
       );
       await waitFor(() =>
         expect(within(column('new')).queryByRole('link')).not.toBeInTheDocument(),
@@ -193,7 +228,7 @@ describe('sales board card moves', () => {
 
   it('Escape cancels a keyboard drag and dropping in the source column sends no request', async () => {
     const post = vi.fn(() => new HttpResponse(null, { status: 204 }));
-    server.use(http.post('/api/sales/v1/leads/bulk/', post));
+    server.use(http.post(MOVE, post));
     const user = await setup();
     layout();
     await keyboardPick(user);
@@ -206,7 +241,7 @@ describe('sales board card moves', () => {
 
   it('mouse dragging crosses the activation threshold, highlights a target and saves', async () => {
     const post = vi.fn(() => new HttpResponse(null, { status: 204 }));
-    server.use(http.post('/api/sales/v1/leads/bulk/', post));
+    server.use(http.post(MOVE, post));
     await setup();
     layout();
     fireEvent.mouseDown(handle(), { button: 0, clientX: 180, clientY: 120 });
@@ -214,12 +249,88 @@ describe('sales board card moves', () => {
     fireEvent.mouseMove(document, { clientX: 300, clientY: 120 });
     await waitFor(() => expect(column('contacted')).toHaveClass('ring-2'));
     fireEvent.mouseUp(document);
+    await saveAndMove();
+    await waitFor(() => expect(post).toHaveBeenCalledOnce());
+  });
+
+  it("the popup asks for the column's required note and shows its ready message", async () => {
+    const post = vi.fn();
+    server.use(
+      http.post(MOVE, async ({ request }) => {
+        post(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    data = {
+      ...data,
+      columns: data.columns.map((item) =>
+        item.stage === 'offer'
+          ? {
+              ...item,
+              name: 'Negotiation',
+              activities: [
+                ...item.activities,
+                { id: 201, kind: 'note', required: true, settings: { text: 'What did they ask?' } },
+                {
+                  id: 202,
+                  kind: 'message',
+                  required: false,
+                  settings: { template: { id: 1, title: 'Sent', text: 'Hi {customer}, {seller}' } },
+                },
+              ],
+            }
+          : item,
+      ),
+    };
+    const user = await setup();
+    await user.click(handle());
+    await user.click(screen.getByRole('radio', { name: 'Negotiation' }));
+    await user.click(screen.getByRole('button', { name: 'Move card' }));
+    expect(await screen.findByText('Hi Sara, Nima')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Save and move' }));
+    expect(post).not.toHaveBeenCalled();
+    await user.type(screen.getByLabelText('What did they ask?'), 'The price');
+    await user.click(screen.getByRole('button', { name: 'Save and move' }));
+    await waitFor(() =>
+      expect(post).toHaveBeenCalledExactlyOnceWith({
+        to: '3',
+        steps: {
+          follow_up: { text: 'Follow up with Sara', due_at: expect.any(String) as string },
+          note: { text: 'The price' },
+        },
+      }),
+    );
+  });
+
+  it('putting the card back in the popup sends nothing, and back to new needs no popup', async () => {
+    const post = vi.fn(() => new HttpResponse(null, { status: 204 }));
+    server.use(http.post(MOVE, post));
+    data = {
+      ...data,
+      columns: data.columns.map((item) =>
+        item.stage === 'new'
+          ? { ...item, cards: [], count: 0 }
+          : item.stage === 'contacted'
+            ? { ...item, cards: [{ ...card, next: null }], count: 1 }
+            : item,
+      ),
+    };
+    const user = await setup();
+    await user.click(handle());
+    await user.click(screen.getByRole('radio', { name: 'Consulted' }));
+    await user.click(screen.getByRole('button', { name: 'Move card' }));
+    await user.click(await screen.findByRole('button', { name: 'Put the card back' }));
+    expect(post).not.toHaveBeenCalled();
+    expect(within(column('contacted')).getByRole('link')).toHaveTextContent('Sara');
+    await user.click(handle());
+    await user.click(screen.getByRole('radio', { name: 'New' }));
+    await user.click(screen.getByRole('button', { name: 'Move card' }));
     await waitFor(() => expect(post).toHaveBeenCalledOnce());
   });
 
   it('release outside the board cancels, including over contract-managed columns', async () => {
     const post = vi.fn(() => new HttpResponse(null, { status: 204 }));
-    server.use(http.post('/api/sales/v1/leads/bulk/', post));
+    server.use(http.post(MOVE, post));
     await setup();
     layout();
     for (const x of [920, 1600]) {
@@ -242,7 +353,7 @@ describe('sales board card moves', () => {
       await pending;
       return HttpResponse.json({}, { status: 500 });
     });
-    server.use(http.post('/api/sales/v1/leads/bulk/', post));
+    server.use(http.post(MOVE, post));
     const user = await setup();
     await user.click(handle());
     const dialog = screen.getByRole('dialog');
@@ -251,6 +362,7 @@ describe('sales board card moves', () => {
       within(dialog).getByRole('radio', { name: i18n.t('stage.offer', { ns: 'sales' }) }),
     );
     await user.click(within(dialog).getByRole('button', { name: 'Move card' }));
+    await user.click(await screen.findByRole('button', { name: 'Save and move' }));
     await waitFor(() =>
       expect(within(column('offer')).getByRole('link')).toHaveTextContent('Sara'),
     );
@@ -274,7 +386,7 @@ describe('sales board card moves', () => {
 
   it('touch long press can drag to another column', async () => {
     const post = vi.fn(() => new HttpResponse(null, { status: 204 }));
-    server.use(http.post('/api/sales/v1/leads/bulk/', post));
+    server.use(http.post(MOVE, post));
     await setup();
     layout();
     const touch = (x: number) => ({ identifier: 1, clientX: x, clientY: 120 });
@@ -285,11 +397,12 @@ describe('sales board card moves', () => {
     fireEvent.touchMove(handle(), { touches: [touch(300)] });
     await waitFor(() => expect(column('contacted')).toHaveClass('ring-2'));
     fireEvent.touchEnd(handle(), { changedTouches: [touch(300)] });
+    await saveAndMove();
     await waitFor(() => expect(post).toHaveBeenCalledOnce());
   });
 });
 
-function addCards(stage: (typeof BOARD_STAGES)[number] = 'new') {
+function addCards(stage: BoardStage = 'new') {
   data = {
     ...data,
     columns: data.columns.map((column) =>
@@ -307,7 +420,7 @@ function addCards(stage: (typeof BOARD_STAGES)[number] = 'new') {
     ),
   };
 }
-const customerOrder = (stage: (typeof BOARD_STAGES)[number] = 'new') =>
+const customerOrder = (stage: BoardStage = 'new') =>
   within(column(stage))
     .getAllByRole('link')
     .map((link) => link.getAttribute('href'));
@@ -316,7 +429,7 @@ describe('manual ordering within a sales stage', () => {
   it('mouse reorders to the last card and survives both refetch and remount without changing stages', async () => {
     addCards();
     const post = vi.fn(() => new HttpResponse(null, { status: 204 }));
-    server.use(http.post('/api/sales/v1/leads/bulk/', post));
+    server.use(http.post(MOVE, post));
     await setup();
     layout();
     fireEvent.mouseDown(handle(), { button: 0, clientX: 180, clientY: 120 });

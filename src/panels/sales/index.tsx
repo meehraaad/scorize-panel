@@ -6,6 +6,7 @@ import {
   approvalsQuery,
   assignQuery,
   boardQuery,
+  stagesQuery,
   sellerCalendarQuery,
   customerQuery,
   firstLeadQuery,
@@ -249,6 +250,13 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage'), [], {
             data: () => [healthQuery('all')],
             skeleton: 'list',
+          }),
+        },
+        {
+          path: 'stages',
+          ...lazyPage(() => import('@/features/sales/manager/StagesPage'), [], {
+            data: () => [stagesQuery],
+            skeleton: 'form',
           }),
         },
       ],
