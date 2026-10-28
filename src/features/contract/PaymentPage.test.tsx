@@ -247,18 +247,28 @@ describe('campaign page', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('registers and goes on to pay', async () => {
+  it('registers into the open cart, and the item can come out again', async () => {
     const user = userEvent.setup();
     loginAs(SARA);
     const router = renderApp('/campaigns/apply-week');
     expect(await screen.findByRole('heading', { name: 'هفته‌ی اپلای' })).toBeInTheDocument();
     expect(screen.getByText('۱۲ جای خالی')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ثبت‌نام و پرداخت ۴۹۰٬۰۰۰ تومان' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/payments/511'));
-    expect(
-      await screen.findByRole('heading', { name: 'تکمیل خرید', level: 1 }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^هفته‌ی اپلای/ })).toBeInTheDocument();
+    // Sara's cart (502) was open: the campaign joins it.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/payments/502'));
+    const items = await screen.findByRole('button', { name: /^۳ آیتم/ });
+    expect(items).toHaveTextContent('هفته‌ی اپلای');
+    expect(amountCard()).toHaveTextContent('۱٬۶۹۵٬۰۰۰ تومان');
+
+    await user.click(items);
+    expect(screen.getByRole('link', { name: 'خرید دیگری به این سبد اضافه کنید' })).toHaveAttribute(
+      'href',
+      '/services',
+    );
+    await user.click(screen.getByRole('button', { name: 'حذف «هفته‌ی اپلای» از سبد' }));
+    expect(await toasts().findByText('«هفته‌ی اپلای» از سبد حذف شد.')).toBeInTheDocument();
+    expect(amountCard()).toHaveTextContent('۱٬۲۰۵٬۰۰۰ تومان');
+    expect(screen.getByRole('button', { name: /^۲ آیتم/ })).toBeInTheDocument();
   });
 
   it('says so when the campaign is closed', async () => {

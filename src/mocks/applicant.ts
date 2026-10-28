@@ -734,8 +734,12 @@ function saraContract(): ContractData {
   };
 }
 
+let lastItem = 9000;
+
 /** One invoice item at its list price; `extra` gives its discounts. */
 const item = (label: string, price: number, extra: Partial<PaymentItem> = {}): PaymentItem => ({
+  id: (lastItem += 1),
+  removable: false,
   label,
   note: null,
   kind: 'other',
@@ -930,6 +934,25 @@ function reprice(payment: PaymentData, code: string | null, useCredit: boolean) 
 }
 
 const itemCost = (row: PaymentItem) => (row.discounted_price ?? row.price) - row.code_discount;
+
+/** What Django sends for an invoice: each item of a cart can come out while there are several. */
+const served = (payment: PaymentData): PaymentData => ({
+  ...payment,
+  items: payment.items.map((row) => ({
+    ...row,
+    removable: payment.editable && payment.status === 'unpaid' && payment.items.length > 1,
+  })),
+});
+
+/** Sara's open cart: her own unpaid invoice before the bank, still in time. */
+const openCart = (state: SaraState) =>
+  state.payments.find(
+    (row) =>
+      row.editable &&
+      row.status === 'unpaid' &&
+      row.expires_at !== null &&
+      new Date(row.expires_at).getTime() > Date.now(),
+  );
 
 /** PAY7: what the open payments list shows of one invoice. */
 const openRow = (payment: PaymentData): OpenPayment => ({
@@ -2428,7 +2451,7 @@ export const applicantHandlers = [
     const state = caseOrError();
     if (failed(state)) return state;
     const payment = state.payments.find((item) => item.id === Number(params.id));
-    return payment ? HttpResponse.json(payment) : notFound();
+    return payment ? HttpResponse.json(served(payment)) : notFound();
   }),
 
   http.get(`${BASE}/payments/`, () => {
@@ -2451,7 +2474,7 @@ export const applicantHandlers = [
       return HttpResponse.json({ detail: 'Not editable.' }, { status: 409 });
     const { use_credit } = (await request.json()) as { use_credit: boolean };
     reprice(payment, payment.code?.code ?? null, use_credit);
-    return HttpResponse.json(payment);
+    return HttpResponse.json(served(payment));
   }),
 
   http.post(`${BASE}/payments/:id/discount/`, async ({ params, request }) => {
@@ -2464,7 +2487,22 @@ export const applicantHandlers = [
     const code = ((await request.json()) as { code: string }).code.trim().toUpperCase();
     const result: DiscountResult = code ? (CODES[code] ?? 'invalid') : 'ok';
     if (result === 'ok') reprice(payment, code || null, payment.use_credit);
-    return HttpResponse.json({ result, payment });
+    return HttpResponse.json({ result, payment: served(payment) });
+  }),
+
+  // Takes an item out of the cart: it ends on its own and the rest is priced again.
+  http.delete(`${BASE}/payments/:id/items/:item/`, ({ params }) => {
+    const state = caseOrError();
+    if (failed(state)) return state;
+    const payment = state.payments.find((row) => row.id === Number(params.id));
+    if (!payment) return notFound();
+    if (!payment.editable || payment.status !== 'unpaid')
+      return HttpResponse.json({ detail: 'locked' }, { status: 409 });
+    if (!payment.items.some((row) => row.id === Number(params.item))) return notFound();
+    if (payment.items.length === 1) return HttpResponse.json({ detail: 'last' }, { status: 409 });
+    payment.items = payment.items.filter((row) => row.id !== Number(params.item));
+    reprice(payment, payment.code?.code ?? null, payment.use_credit);
+    return HttpResponse.json(served(payment));
   }),
 
   // A new invoice at today's price; the old one stays as it was.
@@ -2546,22 +2584,27 @@ export const applicantHandlers = [
       return HttpResponse.json({ detail: 'form' }, { status: 409 });
     if (campaign.registration) return HttpResponse.json({ detail: 'registered' }, { status: 409 });
     if (campaign.seats_left === 0) return HttpResponse.json({ detail: 'full' }, { status: 409 });
-    const id = Math.max(...state.payments.map((row) => row.id)) + 1;
-    const paid = campaign.price === 0;
-    state.payments.push(
-      invoice(id, {
-        items: [
-          item(campaign.title, campaign.old_price ?? campaign.price, {
-            kind: 'campaign',
-            href: `/campaigns/${campaign.slug}`,
-            discounted_price: campaign.old_price ? campaign.price : null,
-            amount: campaign.price,
-          }),
-        ],
-        ...ownPurchase(),
-        ...(paid ? { status: 'paid', paid_at: new Date().toISOString() } : {}),
-      }),
-    );
+    const bought = item(campaign.title, campaign.old_price ?? campaign.price, {
+      kind: 'campaign',
+      href: `/campaigns/${campaign.slug}`,
+      discounted_price: campaign.old_price ? campaign.price : null,
+      amount: campaign.price,
+    });
+    // Into her open cart, its time counted again; else a new one.
+    const cart = openCart(state);
+    let id: number;
+    if (cart) {
+      id = cart.id;
+      cart.items.push(bought);
+      cart.expires_at = new Date(Date.now() + 20 * 60_000).toISOString();
+      reprice(cart, cart.code?.code ?? null, cart.use_credit);
+    } else {
+      id = Math.max(...state.payments.map((row) => row.id)) + 1;
+      const fresh = invoice(id, { items: [bought], ...ownPurchase() });
+      state.payments.push(fresh);
+      if (campaign.price === 0) reprice(fresh, null, false);
+    }
+    const paid = state.payments.find((row) => row.id === id)?.status === 'paid';
     campaign.registration = { id: 40, status: paid ? 'paid' : 'unpaid', payment_id: id };
     if (campaign.seats_left !== null) campaign.seats_left -= 1;
     return HttpResponse.json({ payment_id: id, paid }, { status: 201 });
