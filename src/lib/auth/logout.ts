@@ -11,12 +11,15 @@ const LOGOUT_URL = `${API_BASE}/profile/auth/v1/logout/`;
 /**
  * Ends the Django session, then leaves the panel for the site home.
  * A request first, not a page navigation: the session is gone before the page changes. When it
- * doesn't reach Django the user is still logged in, so they stay and are told.
+ * doesn't reach Django, or Django refuses it (a 403 CSRF failure, a 500), the user is still logged
+ * in, so they stay and are told. Django answers 204 even for a session that already ended.
  */
 export async function logout() {
-  try {
-    await request(LOGOUT_URL, { method: 'POST' });
-  } catch {
+  const ended = await request(LOGOUT_URL, { method: 'POST' }).then(
+    (response) => response.ok,
+    () => false,
+  );
+  if (!ended) {
     toast.error(i18n.t('account.logoutFailed'));
     return;
   }
