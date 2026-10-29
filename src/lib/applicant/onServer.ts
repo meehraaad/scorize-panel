@@ -18,7 +18,8 @@ export type ServerFeature =
   | 'bookingCalendar'
   | 'writingOffers'
   | 'activities'
-  | 'guestInterests';
+  | 'guestInterests'
+  | 'foundersAssistant';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -65,4 +66,9 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * applications tab without a contract doesn't ask for them.
    */
   guestInterests: true,
+  /**
+   * AI1–AI5 `api/ai/v1/`: the founders' analysis assistant and its panel (scorize-revolution #34,
+   * with migrations and the `celery_ai` worker). Off: nobody gets the founders panel.
+   */
+  foundersAssistant: false,
 };

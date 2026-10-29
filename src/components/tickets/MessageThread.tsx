@@ -113,6 +113,8 @@ interface MessageBubbleProps {
   time: string;
   dateTime: string;
   text: string;
+  /** Rich content shown in the bubble instead of `text` (an assistant's formatted answer). */
+  body?: ReactNode;
   /** An automatic reply: outlined bubble instead of a filled one. */
   outlined?: boolean;
   attachment?: { name: string; url: string } | null | undefined;
@@ -134,6 +136,7 @@ export function MessageBubble({
   time,
   dateTime,
   text,
+  body,
   outlined = false,
   attachment,
   status,
@@ -167,13 +170,23 @@ export function MessageBubble({
           )}
           <time dateTime={dateTime}>{time}</time>
         </div>
-        <p
-          className={`m-0 rounded-[20px] px-4 py-3 text-[15px] leading-[1.85] break-words whitespace-pre-line ${
-            mine ? 'rounded-ee-md' : 'rounded-es-md'
-          } ${bubble}`}
-        >
-          {text}
-        </p>
+        {body ? (
+          <div
+            className={`rounded-[20px] px-4 py-3 text-[15px] leading-[1.85] break-words ${
+              mine ? 'rounded-ee-md' : 'rounded-es-md'
+            } ${bubble}`}
+          >
+            {body}
+          </div>
+        ) : (
+          <p
+            className={`m-0 rounded-[20px] px-4 py-3 text-[15px] leading-[1.85] break-words whitespace-pre-line ${
+              mine ? 'rounded-ee-md' : 'rounded-es-md'
+            } ${bubble}`}
+          >
+            {text}
+          </p>
+        )}
         {attachment && (
           <a
             href={safeHref(attachment.url)}

@@ -3,6 +3,7 @@ import type { SessionUser } from '@/lib/auth/session';
 import { accountHandlers, resetAccountMocks } from './account';
 import { activityHandlers, resetActivityMocks } from './activities';
 import { applicantHandlers, resetApplicantMocks } from './applicant';
+import { assistantHandlers, resetAssistantMocks } from './assistant';
 import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { salesCustomerHandlers } from './salesCustomer';
@@ -29,6 +30,8 @@ import { resetStaffMocks, staffHandlers } from './staff';
  *                                               cases (src/mocks/handoff.ts)
  *   09120000002 / nima.rostami@scorize.local   staff: sales only (no switcher)
  *   09120000003 / reza.kamrani@scorize.local   staff: sales manager (sales panel + manager section)
+ *   09120000004 / bahar.nouri@scorize.local    founder (group Founders): the founders panel's
+ *                                               assistant (src/mocks/assistant.ts)
  */
 
 export const MOCK_OTP = '123456';
@@ -121,6 +124,20 @@ const users: MockUser[] = [
     is_superuser: false,
     permissions: [{ codename: 'can_assign_to_seller' }],
     group_permissions: [],
+  },
+  {
+    // A partner: the Founders group gives the analysis assistant (the founders panel).
+    id: 5,
+    first_name: 'بهار',
+    last_name: 'نوری',
+    email: 'bahar.nouri@scorize.local',
+    phone_number: '09120000004',
+    password: MOCK_PASSWORD,
+    ...customer,
+    ...workspace(),
+    group_permissions: [
+      { name: 'Founders', permissions: [{ codename: 'use_founders_assistant' }] },
+    ],
   },
 ];
 
@@ -299,6 +316,7 @@ export const handlers = [
   ...supervisorHandlers,
   ...handoffHandlers,
   ...writerHandlers,
+  ...assistantHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -317,6 +335,7 @@ export function resetMockSession() {
   resetHandoffMocks();
   resetWriterMocks();
   resetStaffMocks();
+  resetAssistantMocks();
 }
 
 type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;
