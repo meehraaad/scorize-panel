@@ -26,6 +26,7 @@ src/
 │   ├── applicant/         /panel/            every account (guest state without a contract)
 │   ├── supervisor/        /panel/supervisor/
 │   ├── writer/            /panel/writer/
+│   ├── founders/          /panel/founders/   the partners' analysis assistant (features/assistant)
 │   └── sales/             /panel/sales/
 ├── features/<section>/    Pages and their logic (auth, home, settings, …): Page.tsx (default
 │                          export), components/, api.ts (or api/ with one file per page and

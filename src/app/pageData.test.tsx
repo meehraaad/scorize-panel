@@ -13,17 +13,18 @@ import '@/test/server';
  * page marks something seen, are not waterfalls.)
  */
 
-// The admission-chance quiz and Turkey aren't on the server yet (src/lib/applicant/onServer.ts):
+// The admission-chance quiz, Turkey and the founders assistant aren't on the server yet (onServer.ts):
 // their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
-  return { ON_SERVER: { ...ON_SERVER, estimate: true, turkey: true } };
+  return { ON_SERVER: { ...ON_SERVER, estimate: true, turkey: true, foundersAssistant: true } };
 });
 
 const SARA = 1; // applicant with a contract (src/mocks/applicant.ts)
 const MARYAM = 2; // supervisor and writer (src/mocks/supervisor.ts, writer.ts)
 const NIMA = 3; // seller
 const REZA = 4; // sales manager
+const BAHAR = 5; // a founder (src/mocks/assistant.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -138,6 +139,8 @@ const PAGES: PageCase[] = [
     user: MARYAM,
     later: [{ key: '"messages"', why: "the thread's id comes from the list (backend item H55)" }],
   })),
+  // Founders panel.
+  ...['/founders', '/founders/conversations/900'].map((path) => ({ path, user: BAHAR })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },

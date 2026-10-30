@@ -335,6 +335,23 @@ Design: canvas V8 "پنل نگارش" (WriterQueue, WriterOrder).
 | WR5 | The order's conversation: H17–H20 shapes under `orders/<id>/tickets/` with one thread `writing/<type>` (the order's `SopResumeTicket`), seen from the writer's side (`mine` = written by the writer; no rating endpoint). Today's `…/writing/<type>-manager/<code>/tickets-endpoint/` (`AdminWritingTicketEndpoint`) is read-only, keyed by the order code, sends dates as Jalali text and marks the applicant's messages seen on every read; sending is a form post. Not usable as is                                                                                                                                                                                                                                                                                                                                                  | ☐      |
 | WR6 | A writers' inbox of every order's conversation (the panel's "Tickets" item) is not designed; the menu keeps it as "coming soon"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | ☐      |
 
+## Founders panel API (AI hub)
+
+Shapes: `src/features/assistant/api.ts`; mocked in `src/mocks/assistant.ts` (Bahar, 09120000004, in
+the `Founders` group). All under `/api/ai/v1/`, built in scorize-revolution #34 (`ai/` app, design doc
+"دستیار تحلیلی مدیریت اسکورایز"). The panel is off until it ships (`foundersAssistant` in
+`src/lib/applicant/onServer.ts`). The role: `ai.use_founders_assistant` (the `Founders` group, made
+on `migrate`), in `whoami.group_permissions`.
+
+| #   | Change                                                                                                                                                                                                                            | Status |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AI1 | `GET assistants/`: the assistants the user may use (`slug`, `name`, `description`)                                                                                                                                                | #34    |
+| AI2 | `GET conversations/?page=` (`Page` of `id`, `assistant`, `title`, `created_at`, `updated_at`), `POST conversations/` (`{assistant, text}` → 201, the conversation with its pending answer)                                        | #34    |
+| AI3 | `GET conversations/<id>/`: the conversation and its `messages` (`role`, `text`, `data.tables` = the founder-only tables, `status` pending / running / done / failed, `error`, `feedback`); the panel reads it again while waiting | #34    |
+| AI4 | `POST conversations/<id>/messages/` (`{text}` → 202, the pending answer); 409 while the last question is being answered, 429 past the hourly limit                                                                                | #34    |
+| AI5 | `POST messages/<id>/feedback/` (`{feedback: right\|wrong, note?}`)                                                                                                                                                                | #34    |
+| AI6 | `User.last_workspace` accepts `founders` (`user_profile.enums.Workspace`), so the panel can be the one opened after login                                                                                                         | #34    |
+
 ## Existing staff API: small fixes the panel works around today
 
 The sales panel already runs on Django's staff API (`/api/profile/staff/v1/`, see

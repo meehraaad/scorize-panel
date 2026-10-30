@@ -32,7 +32,8 @@ interface ComposerProps {
     | { text: ReactNode; label: string; checked: boolean; onChange: (checked: boolean) => void }
     | null
     | undefined;
-  attach: {
+  /** Attaching a file; left out where messages are text only (the assistant). */
+  attach?: {
     /** "Attach a file". */
     label: string;
     accept: readonly string[];
@@ -82,7 +83,7 @@ export function Composer({
   canSend,
   onSubmit,
 }: ComposerProps) {
-  const fileError = attach.error ? `${id}-file-error` : null;
+  const fileError = attach?.error ? `${id}-file-error` : null;
   const text = useRef<HTMLTextAreaElement>(null);
 
   // Grow with the text (a chat bar starts one line tall).
@@ -118,7 +119,7 @@ export function Composer({
         </div>
       )}
 
-      {attach.file && (
+      {attach?.file && (
         <div className="col-span-3 lg:order-4">
           <PickedFile
             ext={attach.file.ext}
@@ -130,7 +131,7 @@ export function Composer({
           />
         </div>
       )}
-      {attach.error && (
+      {attach?.error && (
         <p
           id={fileError ?? undefined}
           className="col-span-3 m-0 text-sm leading-6 text-danger lg:order-4"
@@ -173,17 +174,22 @@ export function Composer({
         </div>
       )}
 
-      <div className="lg:order-5">
-        <FileDrop
-          id={`${id}-file`}
-          compact
-          accept={attach.accept}
-          disabled={sending}
-          errorId={fileError}
-          chooseLabel={attach.label}
-          onFile={attach.onFile}
-        />
-      </div>
+      {attach ? (
+        <div className="lg:order-5">
+          <FileDrop
+            id={`${id}-file`}
+            compact
+            accept={attach.accept}
+            disabled={sending}
+            errorId={fileError}
+            chooseLabel={attach.label}
+            onFile={attach.onFile}
+          />
+        </div>
+      ) : (
+        // Keeps the phone bar's grid: text in the middle column, send at the end.
+        <span aria-hidden="true" className="lg:hidden" />
+      )}
       <label htmlFor={`${id}-text`} className="sr-only">
         {label}
       </label>

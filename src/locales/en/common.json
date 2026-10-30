@@ -43,6 +43,17 @@
       },
       "description": "Applicant files, applications, tickets"
     },
+    "founders": {
+      "name": "Management panel",
+      "nav": {
+        "label": "Management panel menu",
+        "assistant": "Analysis assistant"
+      },
+      "tabs": {
+        "assistant": "Assistant"
+      },
+      "description": "Questions to the business data, for the partners"
+    },
     "writer": {
       "name": "Writing panel",
       "nav": {

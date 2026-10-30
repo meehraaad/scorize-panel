@@ -1,0 +1,61 @@
+{
+  "title": "Analysis assistant",
+  "subtitle": "Ask about sales, payments, contracts and cases; answers come from Scorize's own data.",
+  "new": "New conversation",
+  "close": "Close",
+  "chat": "Conversation with the assistant",
+  "messages": "Conversation messages",
+  "question": "Question",
+  "placeholder": "For example: what were last month's sales by type?",
+  "placeholderMore": "Next question…",
+  "waitPlaceholder": "Wait for the last answer…",
+  "send": "Ask",
+  "you": "You",
+  "assistant": "Assistant",
+  "thinking": "Looking at the data…",
+  "failed": "No answer",
+  "failedText": "The answer wasn't ready. Try again in a few minutes.",
+  "welcome": {
+    "title": "Ask the data",
+    "text": "The assistant only reads data and never changes it. Customers' names and phone numbers appear only in the table under an answer, for you, and are never sent to the model.",
+    "examples": "Questions to start with"
+  },
+  "examples": {
+    "leads": "How many new sales leads did we get each month this year?",
+    "sales": "Compare this month's sales with last month",
+    "admissions": "What is the admission rate by country?",
+    "followUps": "List today's follow-ups with phone numbers"
+  },
+  "none": {
+    "title": "No assistant is on for you",
+    "text": "The system administrator gives access to the analysis assistant."
+  },
+  "table": {
+    "private": "Only for you",
+    "empty": "—",
+    "yes": "Yes",
+    "no": "No",
+    "rows": "{{rows}} rows",
+    "truncated": "First {{rows}} rows; narrow the question for the rest."
+  },
+  "feedback": {
+    "label": "Was this right?",
+    "right": "Right",
+    "wrong": "Wrong",
+    "thanks": "Thanks, noted.",
+    "noted": "Noted; this answer will be reviewed.",
+    "error": "Your feedback wasn't saved. Try again."
+  },
+  "history": {
+    "title": "Earlier conversations",
+    "open": "Earlier conversations",
+    "empty": "No conversations yet. Ask your first question.",
+    "untitled": "Untitled conversation",
+    "error": "The conversations didn't load."
+  },
+  "errors": {
+    "busy": "The last question is still being answered.",
+    "tooMany": "Many questions this hour; ask again a little later.",
+    "failed": "The question wasn't sent. Try again."
+  }
+}
