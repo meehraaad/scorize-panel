@@ -1,5 +1,6 @@
-# Serves the built panel under /panel/. The site's main nginx (scorize repo) proxies
-# /panel/ here and everything else (/api, /profile, /static, ...) to Django.
+# Serves the built panel under ${PANEL_BASE} (the image's PANEL_BASE build arg): `/` on panel.scorize.com,
+# `/panel/` where the site's main nginx proxies /panel/ here and everything else (/api, /static, ...) to Django.
+# The image's entrypoint fills ${PANEL_BASE} in at start (nginx's templates feature).
 server {
     listen 8080;
     server_name _;
@@ -18,34 +19,36 @@ server {
 
     # HSTS is set where TLS ends (the site's main nginx / Django, docs/backend-changes.md A8).
 
-    location = /panel/healthz {
+    # The base without its trailing slash redirects to it (never matches when the base is `/`).
+    set $uri_slash "$uri/";
+    if ($uri_slash = "${PANEL_BASE}") {
+        return 301 ${PANEL_BASE}$is_args$args;
+    }
+
+    location = ${PANEL_BASE}healthz {
         access_log off;
         default_type text/plain;
         return 200 'ok';
     }
 
     # Hashed file names never change content: cache for a year.
-    location /panel/assets/ {
+    location ${PANEL_BASE}assets/ {
         add_header Cache-Control "public, max-age=31536000, immutable" always;
         include /etc/nginx/snippets/security-headers.conf;
         try_files $uri =404;
     }
 
     # Must always be re-checked, or users get stuck on an old version.
-    location ~ ^/panel/(sw\.js|workbox-.*\.js|manifest\.webmanifest)$ {
+    location ~ ^${PANEL_BASE}(sw\.js|workbox-.*\.js|manifest\.webmanifest)$ {
         add_header Cache-Control "no-cache" always;
         include /etc/nginx/snippets/security-headers.conf;
         try_files $uri =404;
     }
 
-    # Client-side routes: every unknown path under /panel/ gets the app shell.
-    location /panel/ {
+    # Client-side routes: every unknown path under the base gets the app shell.
+    location ${PANEL_BASE} {
         add_header Cache-Control "no-cache" always;
         include /etc/nginx/snippets/security-headers.conf;
-        try_files $uri /panel/index.html;
-    }
-
-    location = /panel {
-        return 301 /panel/;
+        try_files $uri ${PANEL_BASE}index.html;
     }
 }

@@ -94,7 +94,7 @@ downloads are ignored.
   names the same user. The session is never saved; logout and login wipe it; an hour, a new
   build or another language discards it.
 - **Static files**: hashed assets are `immutable` for a year, `index.html` is `no-cache`, files are
-  pre-gzipped (`nginx.conf`, `Dockerfile`). The service worker (offline precache) is off until
+  pre-gzipped (`nginx.conf.template`, `Dockerfile`). The service worker (offline precache) is off until
   the PWA milestone (`VITE_ENABLE_PWA`, docs/PWA.md).
 - A language change refetches (Django words some fields per language).
 

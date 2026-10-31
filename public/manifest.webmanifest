@@ -1,16 +1,16 @@
 {
-  "id": "/panel/",
+  "id": "./",
   "name": "Scorize",
   "short_name": "Scorize",
   "description": "پنل متقاضی اسکورایز",
   "lang": "fa",
   "dir": "rtl",
-  "start_url": "/panel/",
-  "scope": "/panel/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#F6F4F7",
   "theme_color": "#F6F4F7",
   "icons": [
-    { "src": "/panel/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

@@ -4,16 +4,17 @@ import react from '@vitejs/plugin-react';
 import { type Connect, defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// The panel is served by nginx under /panel/ on the same domain as Django,
-// so the Django session cookie and CSRF token work without CORS.
-const BASE = '/panel/';
+// Where the panel is served, with its trailing slash. `/panel/` on the same domain as Django (local
+// dev, the test server); `/` on panel.scorize.com, whose nginx also proxies /api to Django, so the
+// session cookie and CSRF token work without CORS either way. The image's PANEL_BASE build arg sets it.
+const BASE = (process.env.PANEL_BASE || '/panel/').replace(/\/?$/, '/');
 
 // `/panel` (no trailing slash) would otherwise get Vite's "did you mean /panel/?" page.
 const redirectBareBase = (): Plugin => {
   const bare = BASE.slice(0, -1);
   const redirect: Connect.NextHandleFunction = (req, res, next) => {
     const [path, query] = (req.url ?? '').split(/\?(.*)/s);
-    if (path !== bare) {
+    if (!bare || path !== bare) {
       next();
       return;
     }

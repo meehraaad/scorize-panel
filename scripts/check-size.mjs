@@ -10,7 +10,7 @@ const BUDGET_KB = { js: 172, css: 18 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
-const files = [...html.matchAll(/(?:src|href)="\/panel\/(assets\/[^"]+\.(js|css))"/g)].map(
+const files = [...html.matchAll(/(?:src|href)="[^"]*?\/(assets\/[^"]+\.(js|css))"/g)].map(
   ([, path, type]) => ({ path, type }),
 );
 if (files.length === 0) {

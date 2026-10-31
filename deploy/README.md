@@ -1,7 +1,8 @@
 # انتشار پنل روی سرور
 
 پنل یک stack جدا به اسم `panel` روی سرور production است و بدون بک‌اند (lang) منتشر می‌شود.
-nginx اصلی سایت (در lang، `conf/nginx.conf`) آدرس `/panel/` را به `scorize-panel:8080` روی شبکه‌ی `nginx_django` می‌فرستد.
+روی `panel.scorize.com` (ریشه‌ی دامنه) سرو می‌شود: nginx اصلی سایت (در lang، `conf/nginx.conf`) صفحه‌ها را به
+`scorize-panel:8080` روی شبکه‌ی `nginx_django` و `/api` را به Django می‌فرستد، و `scorize.com/panel/...` را به آن ریدایرکت می‌کند.
 اگر این stack خاموش باشد، سایت اصلی کار می‌کند و فقط `/panel/` خطای 502 می‌دهد.
 
 سرور به گیت‌هاب کند وصل است ولی npm سریع است، پس ایمیج روی خود سرور ساخته می‌شود:
@@ -10,7 +11,7 @@ nginx اصلی سایت (در lang، `conf/nginx.conf`) آدرس `/panel/` را 
 cd /root/scorize-panel
 git pull
 export PANEL_TAG=$(git rev-parse HEAD)
-docker build -t ghcr.io/meehraaad/scorize-panel:$PANEL_TAG .
+docker build --build-arg PANEL_BASE=/ -t ghcr.io/meehraaad/scorize-panel:$PANEL_TAG .
 docker stack deploy -c deploy/stack.yml --resolve-image never panel
 ```
 
