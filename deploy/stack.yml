@@ -1,0 +1,27 @@
+# The panel's own Docker Swarm stack on the production server, released without the backend (lang).
+# The site's main nginx (lang, conf/nginx.conf) proxies /panel/ to `scorize-panel:8080` on the nginx_django
+# network. See deploy/README.md.
+services:
+  web:
+    image: ghcr.io/meehraaad/scorize-panel:${PANEL_TAG:?set PANEL_TAG to the commit to run}
+    networks:
+      nginx_django:
+        aliases: [scorize-panel]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      update_config:
+        parallelism: 1
+        delay: 5s
+        failure_action: rollback
+        monitor: 10s
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        monitor: 10s
+        order: start-first
+networks:
+  nginx_django:
+    external: true
