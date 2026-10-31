@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import indexHtml from '../../index.html?raw';
-import nginxConf from '../../nginx.conf?raw';
+import nginxConf from '../../nginx.conf.template?raw';
 import securityHeaders from '../../security-headers.conf?raw';
 
 async function sha256Base64(text: string) {
