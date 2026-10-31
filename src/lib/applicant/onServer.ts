@@ -68,7 +68,8 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   guestInterests: true,
   /**
    * AI1–AI5 `api/ai/v1/`: the founders' analysis assistant and its panel (scorize-revolution #34,
-   * with migrations and the `celery_ai` worker). Off: nobody gets the founders panel.
+   * with migrations and the `celery_ai` worker). Off: nobody gets the founders panel. On since the
+   * ArvanCloud AI gateway (ai.scorize.com) serves its models in production.
    */
-  foundersAssistant: false,
+  foundersAssistant: true,
 };
