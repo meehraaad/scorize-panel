@@ -79,6 +79,6 @@ describe('roles', () => {
   it('treats superusers as having every permission', () => {
     const admin = { ...base, is_superuser: true };
     expect(hasPermission(admin, 'anything')).toBe(true);
-    expect(getRoles(admin)).toEqual(['supervisor', 'writer', 'sales']);
+    expect(getRoles(admin)).toEqual(['supervisor', 'writer', 'sales', 'founders']);
   });
 });
