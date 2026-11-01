@@ -116,14 +116,14 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 Conversation blocks (`components/tickets/`), same rules (text as props, no fetching), for every
 panel that shows tickets:
 
-| Block                                            | Use it for                                                                                                                                                    |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MessageThread`, `MessageBubble`, `DaySeparator` | A conversation in its own scroll box, kept at the newest message ("show earlier" keeps the reader's place); own vs other side, tag, file, seen, a footer slot |
-| `Composer`                                       | Writing a message: text, priority radios, a must-accept box, attach (`FileDrop compact`), send                                                                |
-| `ThreadHeader`                                   | Top of a conversation card: stacked avatars, title, subtitle                                                                                                  |
-| `ThreadSwitch`, `ThreadTabs`                     | Links between conversations: segmented (departments), pills (writing departments)                                                                             |
-| `FaqList`                                        | Questions that open to their answer (`<details>`)                                                                                                             |
-| `TicketRating`                                   | Stars under a staff reply, then the given score (`StarRating`, `StarScore`)                                                                                   |
+| Block                                            | Use it for                                                                                                                                                                                                                          |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MessageThread`, `MessageBubble`, `DaySeparator` | A conversation in its own scroll box, kept at the newest message ("show earlier" keeps the reader's place); own vs other side, tag, file, seen, a footer slot. `chat`: an AI chat's look (own bubble, plain answers, `avatar` slot) |
+| `Composer`                                       | Writing a message: text, priority radios, a must-accept box, attach (`FileDrop compact`), send. `variant="chat"`: one growing line, Enter sends, Shift+Enter new line                                                               |
+| `ThreadHeader`                                   | Top of a conversation card: stacked avatars, title, subtitle                                                                                                                                                                        |
+| `ThreadSwitch`, `ThreadTabs`                     | Links between conversations: segmented (departments), pills (writing departments)                                                                                                                                                   |
+| `FaqList`                                        | Questions that open to their answer (`<details>`)                                                                                                                                                                                   |
+| `TicketRating`                                   | Stars under a staff reply, then the given score (`StarRating`, `StarScore`)                                                                                                                                                         |
 
 Block extensions made for them: `Avatar stacked`, `FileDrop compact` (icon only on phones),
 `StarScore`, `Icon filled`, the `clock`, `help` and `send` icons. For chat-like pages: `PageFill`
@@ -357,7 +357,7 @@ option existed.
 
 ## Performance budget
 
-First load (gzip, `pnpm size` checks it in CI): JS ≈ 170 KB (budget 172), CSS ≈ 18 KB (budget 18);
+First load (gzip, `pnpm size` checks it in CI): JS ≈ 172 KB (budget 173), CSS ≈ 18.3 KB (budget 18.5);
 fonts are loaded per script as text appears. How pages stay fast (page data, skeletons, preload,
 cache, measuring): docs/performance.md.
 

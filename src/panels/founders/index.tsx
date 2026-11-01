@@ -31,7 +31,7 @@ export const foundersPanel: PanelDefinition = {
       index: true,
       ...lazyPage(assistantPage, ['assistant'], {
         data: () => [assistantsQuery(), conversationsQuery(1)],
-        skeleton: 'chat',
+        skeleton: 'assistant',
       }),
     },
     {
@@ -41,7 +41,7 @@ export const foundersPanel: PanelDefinition = {
           const id = idParam(params.id);
           return [id !== null && conversationQuery(id), conversationsQuery(1)];
         },
-        skeleton: 'chat',
+        skeleton: 'assistant',
       }),
     },
   ],

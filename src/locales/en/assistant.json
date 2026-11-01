@@ -1,8 +1,8 @@
 {
   "title": "Analysis assistant",
-  "subtitle": "Ask about sales, payments, contracts and cases; answers come from Scorize's own data.",
   "new": "New conversation",
   "close": "Close",
+  "cancel": "Cancel",
   "chat": "Conversation with the assistant",
   "messages": "Conversation messages",
   "question": "Question",
@@ -10,6 +10,11 @@
   "placeholderMore": "Next question…",
   "waitPlaceholder": "Wait for the last answer…",
   "send": "Ask",
+  "hint": "Enter to send · Shift+Enter for a new line",
+  "fullscreen": {
+    "enter": "Full screen",
+    "exit": "Exit full screen"
+  },
   "you": "You",
   "assistant": "Assistant",
   "thinking": "Looking at the data…",
@@ -51,7 +56,18 @@
     "open": "Earlier conversations",
     "empty": "No conversations yet. Ask your first question.",
     "untitled": "Untitled conversation",
-    "error": "The conversations didn't load."
+    "error": "The conversations didn't load.",
+    "pinned": "Pinned",
+    "recent": "Recent",
+    "pin": "Pin “{{title}}”",
+    "unpin": "Unpin “{{title}}”",
+    "rename": "Rename “{{title}}”",
+    "renameLabel": "Conversation name",
+    "save": "Save name",
+    "renamed": "Conversation renamed.",
+    "pinDone": "Pinned to the top.",
+    "unpinDone": "Unpinned.",
+    "changeError": "The change wasn’t saved. Try again."
   },
   "errors": {
     "busy": "The last question is still being answered.",

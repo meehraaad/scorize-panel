@@ -124,6 +124,13 @@ interface MessageBubbleProps {
   footer?: ReactNode;
   /** Narrower spacing (home page card). */
   compact?: boolean;
+  /**
+   * An AI chat's look: own messages are a bubble without avatar or name (both stay for screen
+   * readers); the other side's are plain text across the column, under its avatar and name.
+   */
+  chat?: boolean;
+  /** Replaces the letter avatar (the assistant's icon). Decorative. */
+  avatar?: ReactNode;
 }
 
 /** One message of a conversation: avatar, who and when, the text, a file, and what's under it. */
@@ -142,8 +149,25 @@ export function MessageBubble({
   status,
   footer,
   compact = false,
+  chat = false,
+  avatar,
 }: MessageBubbleProps) {
   const mine = side === 'mine';
+  if (chat)
+    return (
+      <ChatMessage
+        mine={mine}
+        author={author}
+        tag={tag}
+        time={time}
+        dateTime={dateTime}
+        text={text}
+        body={body}
+        outlined={outlined}
+        footer={footer}
+        avatar={avatar ?? <Avatar name={avatarName} size="sm" tone="hero" />}
+      />
+    );
   const bubble = outlined
     ? 'bg-transparent shadow-[inset_0_0_0_1px_var(--line-2)]'
     : mine
@@ -199,6 +223,61 @@ export function MessageBubble({
           </a>
         )}
         {status && <span className="text-xs text-text-2">{status}</span>}
+        {footer}
+      </div>
+    </li>
+  );
+}
+
+/** MessageBubble `chat`: a bubble for own messages, plain text for the other side's. */
+function ChatMessage({
+  mine,
+  author,
+  tag,
+  time,
+  dateTime,
+  text,
+  body,
+  outlined,
+  footer,
+  avatar,
+}: Pick<MessageBubbleProps, 'author' | 'tag' | 'time' | 'dateTime' | 'text' | 'body' | 'footer'> & {
+  mine: boolean;
+  outlined: boolean;
+  avatar: ReactNode;
+}) {
+  const content = body ?? <p className="m-0 whitespace-pre-line">{text}</p>;
+  if (mine)
+    return (
+      <li className="flex flex-col items-end gap-1">
+        <span className="sr-only">
+          {author} <time dateTime={dateTime}>{time}</time>
+        </span>
+        <div className="max-w-[85%] rounded-3xl rounded-ee-md bg-tint px-4 py-2.5 text-[15px] leading-[1.85] break-words lg:max-w-[75%]">
+          {content}
+        </div>
+      </li>
+    );
+  return (
+    <li className="flex items-start gap-3">
+      {avatar}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex min-h-9 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-2">
+          <span className="font-semibold text-text">{author}</span>
+          {tag && (
+            <Chip tone={tag.tone} small>
+              {tag.label}
+            </Chip>
+          )}
+          <time dateTime={dateTime}>{time}</time>
+        </div>
+        <div
+          className={`text-[15px] leading-[1.9] break-words ${
+            outlined ? 'rounded-2xl px-4 py-3 shadow-[inset_0_0_0_1px_var(--line-2)]' : ''
+          }`}
+        >
+          {content}
+        </div>
         {footer}
       </div>
     </li>

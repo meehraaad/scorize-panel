@@ -49,6 +49,8 @@ export interface ConversationRow {
   id: number;
   assistant: string;
   title: string;
+  /** Pinned to the top of the list (AI7; missing before it shipped). */
+  pinned?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -131,5 +133,23 @@ export function useFeedback(conversation: number) {
             }
           : data,
       ),
+  });
+}
+
+/**
+ * Rename a conversation or pin it to the top of the list (AI7 `PATCH conversations/<id>/`). Neither
+ * moves it among the others, so the pages are only read again.
+ */
+export function useChangeConversation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: number; title?: string; pinned?: boolean }) =>
+      api<ConversationRow>(`${AI_API}/conversations/${String(id)}/`, { method: 'PATCH', body }),
+    onSuccess: (row) => {
+      client.setQueryData(conversationQuery(row.id).queryKey, (data) =>
+        data ? { ...data, ...row } : data,
+      );
+      return client.invalidateQueries({ queryKey: [...ASSISTANT_KEY, 'conversations'] });
+    },
   });
 }

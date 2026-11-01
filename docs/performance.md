@@ -101,9 +101,11 @@ downloads are ignored.
 ## 5. Measure
 
 - **First-load budget in CI**: `pnpm size` sums the gzip size of what `dist/index.html` loads
-  (scripts, preloaded modules, stylesheets) and fails above JS 172 KB / CSS 18 KB. Today: JS
-  ≈ 170 KB, CSS ≈ 18 KB (JS raised from 170 on 2026-10-27, when the to-do box's chunk links and
-  dictionary loaders took the last bytes). Raise a budget only on purpose, in review.
+  (scripts, preloaded modules, stylesheets) and fails above JS 173 KB / CSS 18.5 KB. Today: JS
+  ≈ 172 KB, CSS ≈ 18.3 KB (JS raised from 170 on 2026-10-27, when the to-do box's chunk links and
+  dictionary loaders took the last bytes; JS 172 → 173 and CSS 18 → 18.5 on 2026-11-01, for the
+  assistant's chat layout: one stylesheet holds every page's classes, and the shared icons ship
+  first). Raise a budget only on purpose, in review.
 - **Real users** (`src/lib/vitals.ts`): LCP, INP, CLS, FCP and TTFB per page pattern, sent with
   `sendBeacon` when the tab is hidden. Off (and not even loaded) until Django's endpoint ships
   (backend-changes V1); the `web-vitals` library is its own chunk.
