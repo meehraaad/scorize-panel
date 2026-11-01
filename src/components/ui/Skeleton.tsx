@@ -22,7 +22,7 @@ export function SkeletonRows({ rows }: { rows: number }) {
  * `tab` is the body of a tab inside a page that keeps its own header (customer, case file).
  */
 export type SkeletonKind =
-  'dashboard' | 'list' | 'detail' | 'customer' | 'form' | 'board' | 'chat' | 'tab';
+  'dashboard' | 'list' | 'detail' | 'customer' | 'form' | 'board' | 'chat' | 'assistant' | 'tab';
 
 /**
  * Fades in after 150 ms, so a fast load shows nothing; once shown, React keeps a Suspense
@@ -36,7 +36,7 @@ export function PageSkeleton({ kind }: { kind: SkeletonKind }) {
       aria-label={t('status.loading')}
       className="flex animate-appear flex-col gap-4 lg:gap-7"
     >
-      {kind !== 'tab' && kind !== 'customer' && <HeaderBones />}
+      {kind !== 'tab' && kind !== 'customer' && kind !== 'assistant' && <HeaderBones />}
       {SHAPES[kind]}
     </div>
   );
@@ -211,6 +211,27 @@ const SHAPES: Record<SkeletonKind, ReactNode> = {
         aside={<CardBones rows={3} />}
       />
     </>
+  ),
+  /** An AI chat: the conversations' column, then the conversation with its bar at the bottom. */
+  assistant: (
+    <div
+      aria-hidden="true"
+      className="flex h-[calc(100dvh-var(--panel-top)-var(--panel-bottom)-40px)] gap-6"
+    >
+      <div className="flex w-[260px] flex-none flex-col gap-4 max-lg:hidden">
+        <Bone className="h-11 w-full" />
+        {Array.from({ length: 5 }, (_, index) => (
+          <Bone key={index} className="h-4 w-4/5" />
+        ))}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-end gap-6">
+        <Bone className="h-16 w-16" />
+        <Bone className="h-5 w-56" />
+        <div className="mt-auto w-full max-w-[780px]">
+          <span className="block h-14 animate-pulse rounded-[26px] bg-track" />
+        </div>
+      </div>
+    </div>
   ),
   tab: <Columns main={<CardBones rows={4} />} aside={<CardBones rows={2} />} />,
 };

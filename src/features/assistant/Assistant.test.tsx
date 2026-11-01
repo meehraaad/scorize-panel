@@ -9,7 +9,7 @@ import { toasts } from '@/test/toasts';
 // The AI hub isn't on the server yet (src/lib/applicant/onServer.ts): tested as it will be.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
-  return { ON_SERVER: { ...ON_SERVER, foundersAssistant: true } };
+  return { ON_SERVER: { ...ON_SERVER, foundersAssistant: true, assistantOrganize: true } };
 });
 
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
@@ -25,7 +25,9 @@ describe('founders panel: the analysis assistant', () => {
   it('asks a first question and shows the answer once it is ready', async () => {
     const user = userEvent.setup();
     renderApp('/founders');
-    expect(await screen.findByRole('heading', { name: 'دستیار تحلیلی', level: 1 })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { name: 'دستیار تحلیلی', level: 1 }),
+    ).toBeInTheDocument();
     expect(screen.getByText('از داده‌ها بپرس')).toBeInTheDocument();
     const history = screen.getByRole('complementary', { name: 'گفتگوهای قبلی' });
     expect(
@@ -37,10 +39,17 @@ describe('founders panel: the analysis assistant', () => {
     const box = screen.getByRole('textbox', { name: 'سؤال' });
     expect(box).toHaveValue('نرخ پذیرش به تفکیک کشور چقدر است؟');
     await user.clear(box);
-    await user.type(box, 'امسال هر ماه چند سرنخ داشتیم؟');
-    await user.click(screen.getByRole('button', { name: 'بپرس' }));
+    // Shift+Enter starts a new line; Enter sends.
+    await user.type(box, 'امسال هر ماه{Shift>}{Enter}{/Shift}چند سرنخ داشتیم؟');
+    expect(box).toHaveValue('امسال هر ماه\nچند سرنخ داشتیم؟');
+    await user.type(box, '{Enter}');
 
-    expect(await screen.findByText('امسال هر ماه چند سرنخ داشتیم؟')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        (_, element) =>
+          element?.tagName === 'P' && element.textContent === 'امسال هر ماه\nچند سرنخ داشتیم؟',
+      ),
+    ).toBeInTheDocument();
     // The answer is written in the background; the page reads the conversation again.
     expect(await screen.findByText('۹۰ سرنخ', {}, ANSWER_WAIT)).toBeInTheDocument();
     expect(screen.getByText('بر اساس تاریخ ثبت سرنخ.')).toBeInTheDocument();
@@ -81,6 +90,31 @@ describe('founders panel: the analysis assistant', () => {
     expect(await screen.findByText('جواب آماده نشد', {}, ANSWER_WAIT)).toBeInTheDocument();
     expect(
       screen.getByText('پاسخ آماده نشد. چند دقیقه بعد دوباره امتحان کنید.'),
+    ).toBeInTheDocument();
+  });
+
+  it('renames and pins a conversation', async () => {
+    const user = userEvent.setup();
+    renderApp('/founders');
+    const history = await screen.findByRole('complementary', { name: 'گفتگوهای قبلی' });
+
+    await user.click(
+      await within(history).findByRole('button', {
+        name: 'تغییر نام «فروش ماه گذشته به تفکیک نوع»',
+      }),
+    );
+    const name = within(history).getByRole('textbox', { name: 'نام گفتگو' });
+    await user.clear(name);
+    await user.type(name, 'فروش مهر{Enter}');
+    expect(await toasts().findByText('نام گفتگو عوض شد.')).toBeInTheDocument();
+    expect(await within(history).findByRole('link', { name: /فروش مهر/ })).toBeInTheDocument();
+
+    await user.click(within(history).getByRole('button', { name: 'سنجاق کردن «فروش مهر»' }));
+    expect(await toasts().findByText('گفتگو بالای فهرست سنجاق شد.')).toBeInTheDocument();
+    const pinned = await within(history).findByRole('region', { name: 'سنجاق‌شده' });
+    expect(within(pinned).getByRole('link', { name: /فروش مهر/ })).toBeInTheDocument();
+    expect(
+      within(pinned).getByRole('button', { name: 'برداشتن سنجاق «فروش مهر»' }),
     ).toBeInTheDocument();
   });
 

@@ -62,6 +62,7 @@ export default function ComponentsPage() {
   const [tags, setTags] = useState(['Machine Learning', 'Computer Vision', 'Explainable AI']);
   const [confirm, setConfirm] = useState(true);
   const [draft, setDraft] = useState('');
+  const [question, setQuestion] = useState('');
   const [priority, setPriority] = useState(1);
   const [accepted, setAccepted] = useState(false);
   const [attached, setAttached] = useState<File | null>(null);
@@ -668,7 +669,17 @@ export default function ComponentsPage() {
 
         <Group name="PageSkeleton (loading shape per page kind)">
           {(
-            ['dashboard', 'list', 'detail', 'customer', 'form', 'board', 'chat', 'tab'] as const
+            [
+              'dashboard',
+              'list',
+              'detail',
+              'customer',
+              'form',
+              'board',
+              'chat',
+              'assistant',
+              'tab',
+            ] as const
           ).map((kind) => (
             <div key={kind} className="flex flex-col gap-2">
               <span dir="ltr" className="font-mono text-sm text-text-2">
@@ -823,6 +834,46 @@ export default function ComponentsPage() {
                   canSend={draft.trim().length > 0 && (priority !== 3 || accepted)}
                   onSubmit={() => setDraft('')}
                 />
+                <div className="flex flex-col bg-canvas">
+                  <MessageThread
+                    label="گفتگو با دستیار (chat)"
+                    firstKey="q"
+                    lastKey="a"
+                    className="max-h-72 px-4 py-6"
+                  >
+                    <MessageBubble
+                      chat
+                      side="mine"
+                      author="شما"
+                      avatarName="شما"
+                      time="۰۹:۲۰"
+                      dateTime="2026-11-01T09:20"
+                      text="فروش ماه گذشته چقدر بود؟"
+                    />
+                    <MessageBubble
+                      chat
+                      side="other"
+                      author="دستیار"
+                      avatarName="دستیار"
+                      time="۰۹:۲۰"
+                      dateTime="2026-11-01T09:20"
+                      text="فروش پرداخت‌شده‌ی مهر ۸٬۵۲۰٬۰۰۰ تومان بود."
+                    />
+                  </MessageThread>
+                  <Composer
+                    variant="chat"
+                    id="demo-chat-composer"
+                    label="سؤال"
+                    placeholder="بپرس… (Enter می‌فرستد)"
+                    value={question}
+                    onChange={setQuestion}
+                    sendLabel="بپرس"
+                    hint="Enter برای فرستادن · Shift+Enter برای خط تازه"
+                    sending={false}
+                    canSend={question.trim().length > 0}
+                    onSubmit={() => setQuestion('')}
+                  />
+                </div>
               </section>
             }
             aside={

@@ -19,7 +19,8 @@ export type ServerFeature =
   | 'writingOffers'
   | 'activities'
   | 'guestInterests'
-  | 'foundersAssistant';
+  | 'foundersAssistant'
+  | 'assistantOrganize';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -72,4 +73,10 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * ArvanCloud AI gateway (ai.scorize.com) serves its models in production.
    */
   foundersAssistant: true,
+  /**
+   * AI7 `PATCH conversations/<id>/`: rename and pin the assistant's conversations
+   * (scorize-revolution `claude/project-thread-9zyigw`, needs `makemigrations ai` + `migrate`
+   * for `Conversation.pinned_at`). Off: the history list has no pin or rename buttons.
+   */
+  assistantOrganize: false,
 };

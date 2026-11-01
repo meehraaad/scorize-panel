@@ -36,6 +36,7 @@ function seed(): Conversation[] {
       id: 900,
       assistant: 'founders',
       title: 'فروش ماه گذشته به تفکیک نوع',
+      pinned: false,
       created_at: at,
       updated_at: at,
       messages: [
@@ -130,7 +131,12 @@ export const assistantHandlers = [
   http.get(`${API}/conversations/`, ({ request }) => {
     if (!loggedIn()) return forbidden();
     const page = Number(new URL(request.url).searchParams.get('page') ?? '1');
-    const sorted = [...conversations].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    // Pinned first (newest pin first in Django; here in the order they were pinned), then newest.
+    const sorted = [...conversations].sort(
+      (a, b) =>
+        Number(b.pinned ?? false) - Number(a.pinned ?? false) ||
+        b.updated_at.localeCompare(a.updated_at),
+    );
     return HttpResponse.json({
       count: sorted.length,
       page_size: PAGE_SIZE,
@@ -147,6 +153,7 @@ export const assistantHandlers = [
       id: 1000 + newId(),
       assistant: body.assistant,
       title: body.text.slice(0, 60),
+      pinned: false,
       created_at: now(),
       updated_at: now(),
       messages: [],
@@ -169,6 +176,21 @@ export const assistantHandlers = [
       waiting.delete(item.id);
     }
     return response;
+  }),
+
+  http.patch(`${API}/conversations/:id/`, async ({ params, request }) => {
+    if (!loggedIn()) return forbidden();
+    const conversation = conversations.find((item) => item.id === Number(params.id));
+    if (!conversation) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    const body = (await request.json()) as { title?: string; pinned?: boolean };
+    if (body.title !== undefined) {
+      const title = body.title.trim();
+      if (!title)
+        return HttpResponse.json({ title: ['This field may not be blank.'] }, { status: 400 });
+      conversation.title = title.slice(0, 128);
+    }
+    if (body.pinned !== undefined) conversation.pinned = body.pinned;
+    return HttpResponse.json(row(conversation));
   }),
 
   http.post(`${API}/conversations/:id/messages/`, async ({ params, request }) => {

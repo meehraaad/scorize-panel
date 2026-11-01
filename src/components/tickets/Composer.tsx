@@ -50,6 +50,13 @@ interface ComposerProps {
   /** Send stays off (nothing typed, rules not accepted). */
   canSend: boolean;
   onSubmit: () => void;
+  /**
+   * `chat`: an AI chat's bar at every size: one line that grows with the text, send inside it,
+   * Enter sends and Shift+Enter starts a new line. Text only (no priority, confirm or attach).
+   */
+  variant?: 'ticket' | 'chat';
+  /** Under the chat bar, from lg ("Enter sends · Shift+Enter: new line"). */
+  hint?: string | undefined;
 }
 
 const CHOICE = {
@@ -82,6 +89,8 @@ export function Composer({
   sending,
   canSend,
   onSubmit,
+  variant = 'ticket',
+  hint,
 }: ComposerProps) {
   const fileError = attach?.error ? `${id}-file-error` : null;
   const text = useRef<HTMLTextAreaElement>(null);
@@ -98,6 +107,41 @@ export function Composer({
     event.preventDefault();
     if (canSend && !sending) onSubmit();
   };
+
+  if (variant === 'chat')
+    return (
+      <form onSubmit={submit} className="flex-none px-3 pt-2 pb-3 lg:px-6 lg:pb-4">
+        <div className="mx-auto flex w-full max-w-[780px] items-end gap-2 rounded-[26px] border border-hair bg-surface p-1.5 ps-4 shadow-panel has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-focus">
+          <label htmlFor={`${id}-text`} className="sr-only">
+            {label}
+          </label>
+          <textarea
+            ref={text}
+            id={`${id}-text`}
+            rows={1}
+            value={value}
+            enterKeyHint="send"
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
+              event.preventDefault();
+              if (canSend && !sending) onSubmit();
+            }}
+            placeholder={placeholder}
+            className="min-h-11 flex-1 resize-none bg-transparent py-2 text-base leading-7 text-text outline-0 placeholder:text-text-2"
+          />
+          <Button
+            type="submit"
+            disabled={!canSend || sending}
+            aria-label={sendLabel}
+            className="size-11 flex-none px-0!"
+          >
+            <Icon name="send" size={18} />
+          </Button>
+        </div>
+        {hint && <p className="m-0 mt-2 text-center text-xs text-text-2 max-lg:hidden">{hint}</p>}
+      </form>
+    );
 
   return (
     <form
