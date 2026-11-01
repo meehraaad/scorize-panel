@@ -20,6 +20,7 @@ import type tickets from '@/locales/fa/tickets.json';
 import type turkey from '@/locales/fa/turkey.json';
 import type writer from '@/locales/fa/writer.json';
 import type assistant from '@/locales/fa/assistant.json';
+import type mail from '@/locales/fa/mail.json';
 import type writing from '@/locales/fa/writing.json';
 
 // Persian is the source dictionary: t('...') keys are type-checked against it,
@@ -50,6 +51,7 @@ declare module 'i18next' {
       supervisor: typeof supervisor;
       writer: typeof writer;
       assistant: typeof assistant;
+      mail: typeof mail;
     };
   }
 }

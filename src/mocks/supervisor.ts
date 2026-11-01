@@ -24,11 +24,15 @@ import type {
   TodayData,
   WaitingCase,
   WritingState,
+  BotSettings,
+  BotSettingsChange,
+  BotStopReason,
 } from '@/features/supervisor/api';
 import type { Degree } from '@/lib/applicant/approval';
 import { APPLICATION_RESULTS, type ApplicationResult } from '@/lib/applications';
 import type { NewTask } from '@/lib/tasks/api';
 import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/api';
+import { mockBotRules } from './mail';
 import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
@@ -818,6 +822,46 @@ function record(item: MockCase, text: string) {
   item.last_activity = new Date().toISOString();
 }
 
+type MockBotSettings = Omit<BotSettings, 'limits'>;
+
+/** Each case's bot settings (scorize-revolution `ApplicantBotSettings`); a case without one has the defaults. */
+const botSettings = new Map<number, MockBotSettings>();
+
+function settingsOf(id: number): MockBotSettings {
+  let settings = botSettings.get(id);
+  if (!settings) {
+    settings = {
+      days: [0, 1, 2, 3, 4],
+      start_hour: 9,
+      end_hour: 17,
+      daily_max: 15,
+      reminder_days: 14,
+      reminders: 2,
+      fallback_timezone: 'Europe/Berlin',
+      // Mahsa's bot paused itself after too many bounces.
+      paused: id === 1215 ? 'bounces' : null,
+      paused_at: id === 1215 ? new Date(Date.now() - 5 * 3_600_000).toISOString() : null,
+    };
+    botSettings.set(id, settings);
+  }
+  return settings;
+}
+
+function botSettingsJson(id: number): BotSettings {
+  const rules = mockBotRules();
+  return {
+    ...settingsOf(id),
+    limits: {
+      days: rules.allowed_days,
+      earliest_hour: rules.earliest_hour,
+      latest_hour: rules.latest_hour,
+      daily_max: rules.per_mailbox_daily,
+      min_reminder_days: rules.min_reminder_days,
+      max_reminders: rules.max_reminders,
+    },
+  };
+}
+
 function caseOr404(params: Record<string, unknown>) {
   const all = casesOrError();
   if (all instanceof Response) return all;
@@ -1179,6 +1223,12 @@ export const supervisorHandlers = [
     const item = caseOr404(params);
     if (item instanceof Response) return item;
     const sent = item.emails.filter((email) => email.sent_at).length;
+    const settings = settingsOf(item.data.id);
+    const stopped: BotStopReason[] = [];
+    if (!item.data.bot.active) stopped.push('bot_off');
+    if (!item.account) stopped.push('no_account');
+    if (settings.paused) stopped.push(`paused_${settings.paused}`);
+    if (!item.emails.some((email) => email.status === 'queued')) stopped.push('nothing_queued');
     return HttpResponse.json<CaseApplications>({
       applies: {
         used: item.applications.filter((app) => app.result && APPLIED.has(app.result)).length,
@@ -1187,9 +1237,10 @@ export const supervisorHandlers = [
       bot: {
         active: item.data.bot.active,
         sent_today: item.data.bot.active ? item.bot_today : 0,
-        daily_limit: 20,
+        daily_limit: settings.daily_max,
         account: item.account,
         problems: item.data.bot.problems,
+        stopped,
       },
       applications: item.applications,
       emails: {
@@ -1248,6 +1299,40 @@ export const supervisorHandlers = [
     item.data.bot.active = active;
     record(item, `${SUPERVISOR_NAME} ربات ایمیل را ${active ? 'راه انداخت' : 'متوقف کرد'}`);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${API}/cases/:id/bot/settings/`, ({ params }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    return HttpResponse.json(botSettingsJson(item.data.id));
+  }),
+
+  http.patch(`${API}/cases/:id/bot/settings/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const change = (await request.json()) as BotSettingsChange;
+    const { limits } = botSettingsJson(item.data.id);
+    const current = settingsOf(item.data.id);
+    const errors: Record<string, string[]> = {};
+    if (change.days?.some((day) => !limits.days.includes(day)))
+      errors['days'] = [`Only these days are allowed: ${limits.days.join(', ')}.`];
+    if ((change.start_hour ?? current.start_hour) >= (change.end_hour ?? current.end_hour))
+      errors['end_hour'] = ['The end must come after the start.'];
+    if (change.daily_max !== undefined && change.daily_max > limits.daily_max)
+      errors['daily_max'] = [`At most ${String(limits.daily_max)} a day.`];
+    if (change.reminder_days !== undefined && change.reminder_days < limits.min_reminder_days)
+      errors['reminder_days'] = [`At least ${String(limits.min_reminder_days)} days.`];
+    if (change.reminders !== undefined && change.reminders > limits.max_reminders)
+      errors['reminders'] = [`At most ${String(limits.max_reminders)} reminders.`];
+    if (Object.keys(errors).length) return HttpResponse.json(errors, { status: 400 });
+    const { paused, ...rest } = change;
+    Object.assign(current, rest);
+    if (paused !== undefined) {
+      current.paused = paused ? 'staff' : null;
+      current.paused_at = paused ? new Date().toISOString() : null;
+    }
+    record(item, `${SUPERVISOR_NAME} تنظیمات ربات ایمیل را تغییر داد`);
+    return HttpResponse.json(botSettingsJson(item.data.id));
   }),
 
   http.get(`${API}/cases/:id/professor-emails/`, ({ params, request }) => {
@@ -1464,5 +1549,6 @@ export const supervisorHandlers = [
 
 export function resetSupervisorMocks() {
   cases = null;
+  botSettings.clear();
   imports.clear();
 }
