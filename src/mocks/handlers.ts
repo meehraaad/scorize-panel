@@ -5,6 +5,7 @@ import { activityHandlers, resetActivityMocks } from './activities';
 import { applicantHandlers, resetApplicantMocks } from './applicant';
 import { assistantHandlers, resetAssistantMocks } from './assistant';
 import { handoffHandlers, resetHandoffMocks } from './handoff';
+import { mailHandlers, resetMailMocks } from './mail';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { salesCustomerHandlers } from './salesCustomer';
 import { managerHandlers, resetManagerMocks } from './salesManager';
@@ -90,6 +91,8 @@ const users: MockUser[] = [
       { codename: 'can_write_cv' },
       // Hands new cases to supervisors (the supervisor panel's "New cases").
       { codename: 'can_assign_supervisor' },
+      // Manages the applicants' mailboxes and the bot rules (the supervisor panel's mail page).
+      { codename: 'manage_mailboxes' },
     ],
     group_permissions: [],
   },
@@ -317,6 +320,7 @@ export const handlers = [
   ...handoffHandlers,
   ...writerHandlers,
   ...assistantHandlers,
+  ...mailHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -336,6 +340,7 @@ export function resetMockSession() {
   resetWriterMocks();
   resetStaffMocks();
   resetAssistantMocks();
+  resetMailMocks();
 }
 
 type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;

@@ -20,7 +20,8 @@ export type ServerFeature =
   | 'activities'
   | 'guestInterests'
   | 'foundersAssistant'
-  | 'assistantOrganize';
+  | 'assistantOrganize'
+  | 'mailServers';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -79,4 +80,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * for `Conversation.pinned_at`). Off: the history list has no pin or rename buttons.
    */
   assistantOrganize: false,
+  /**
+   * MS1–MS8 `api/mail/v1/` and `cases/<id>/bot/settings/`: the managers' mail page (our mail
+   * servers, applicant mailboxes, the email bot's rules) and each case's bot settings
+   * (scorize-revolution #40, needs migrations, the `mail_admin_key` secret and `mail-admin` on each
+   * mail server). Off: no mail page, and the case's bot bar has no settings.
+   */
+  mailServers: false,
 };
