@@ -157,7 +157,7 @@ describe('a case bot settings', () => {
     const dialog = await screen.findByRole('dialog', { name: 'تنظیمات ربات ایمیل' });
     const max = await within(dialog).findByLabelText('سقف ایمیل در روز');
     await user.clear(max);
-    await user.type(max, '40');
+    await user.type(max, '400');
     expect(within(dialog).getByRole('button', { name: 'ذخیره' })).toBeDisabled();
     await user.clear(max);
     await user.type(max, '10');

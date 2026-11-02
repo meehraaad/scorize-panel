@@ -834,7 +834,7 @@ function settingsOf(id: number): MockBotSettings {
       days: [0, 1, 2, 3, 4],
       start_hour: 9,
       end_hour: 17,
-      daily_max: 15,
+      daily_max: 250,
       reminder_days: 14,
       reminders: 2,
       fallback_timezone: 'Europe/Berlin',

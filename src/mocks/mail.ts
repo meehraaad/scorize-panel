@@ -144,9 +144,9 @@ export function resetMailMocks() {
     mailbox('by.hand@gradnexus.com', { server: 2, applicant: 1244, has_password: false }),
   ];
   rules = {
-    per_mailbox_daily: 30,
-    per_mailbox_hourly: 8,
-    per_server_daily: 400,
+    per_mailbox_daily: 250,
+    per_mailbox_hourly: 20,
+    per_server_daily: 2000,
     per_recipient_domain_daily: 10,
     min_gap_minutes: 2,
     max_gap_minutes: 6,
