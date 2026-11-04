@@ -1387,5 +1387,22 @@
     "full": "A customer has at most {{max}} tags. Remove one to add another.",
     "managerHint": "The sales manager adds new tags in “Customer tags”.",
     "archivedName": "{{name}} (archived)"
+  },
+  "voice": {
+    "record": "Dictate note",
+    "stop": "Stop and transcribe",
+    "upload": "Choose audio file",
+    "cancel": "Cancel",
+    "recording": "Recording; up to two minutes.",
+    "processing": "Transcribing audio…",
+    "hint": "Speak Persian or choose audio; up to two minutes and 5 MB. Review the text before adding it.",
+    "microphone": "Microphone unavailable. Allow microphone access or choose an audio file.",
+    "size": "Choose a nonempty file up to 5 MB.",
+    "failed": "Transcription failed. Try a shorter recording or try again.",
+    "empty": "No speech found. Speak clearly and closer to the microphone.",
+    "transcript": "Transcript",
+    "insert": "Add to notes",
+    "length": "This would exceed 5,000 characters. Shorten the text; your transcript stays here.",
+    "discard": "Discard transcript"
   }
 }

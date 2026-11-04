@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { voiceHandlers, resetVoiceMocks } from './voice';
 import type { SessionUser } from '@/lib/auth/session';
 import { accountHandlers, resetAccountMocks } from './account';
 import { activityHandlers, resetActivityMocks } from './activities';
@@ -200,6 +201,7 @@ export const handlers = [
     resetApplicantMocks();
     resetAccountMocks();
     resetSalesMocks();
+    resetVoiceMocks();
     resetTagMocks();
     resetTaskMocks();
     resetManagerMocks();
@@ -313,6 +315,7 @@ export const handlers = [
   ...taskReactionHandlers,
   ...tagHandlers,
   ...salesStaffHandlers,
+  ...voiceHandlers,
   ...applicantHandlers,
   ...accountHandlers,
   ...salesHandlers,
@@ -336,6 +339,7 @@ export function resetMockSession() {
   resetApplicantMocks();
   resetAccountMocks();
   resetSalesMocks();
+  resetVoiceMocks();
   resetTagMocks();
   resetTaskMocks();
   resetManagerMocks();
