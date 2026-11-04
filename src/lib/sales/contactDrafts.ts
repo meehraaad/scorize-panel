@@ -16,6 +16,7 @@ export interface ContactValues {
   lostReason: LostReason | '';
   notes: string;
   customerSummary?: string;
+  voiceTranscript?: string;
   follow: 'evening' | 'tomorrow' | 'three' | 'week' | 'other';
   date: string;
   email: boolean;
@@ -185,4 +186,14 @@ export function useContactDrafts() {
     },
     () => state,
   );
+}
+
+/** Read the current draft when inference finishes, preserving everything typed meanwhile. */
+export function appendContactNotes(key: string, text: string): boolean {
+  const draft = state.drafts.find((item) => item.key === key);
+  if (!draft) return false;
+  const notes = [draft.values.notes.trimEnd(), text.trim()].filter(Boolean).join('\n');
+  if (notes.length > 5000) return false;
+  updateContactDraft(key, { notes });
+  return true;
 }

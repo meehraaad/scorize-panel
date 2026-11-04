@@ -149,3 +149,14 @@ reservation }], has_more }`, newest first, 20 rows per page. There are no intern
 `lib/applicant/consultations.ts` owns the query; the home (its sessions list) preloads it.
 The sales logger sends `customer_summary` separately from `notes`, and its optional `email_summary`
 emails the public text. Publish after applying the new Django field's generated migration.
+
+### Seller contact dictation
+
+The private contact-notes field offers Persian recording/upload when
+`GET /api/sales/v1/voice/` returns `{enabled: true}`. Upload multipart `audio` to the same path,
+then poll `voice/<id>/` for `queued` / `running` / `done` / `failed`. Only `done` includes `text`.
+The seller reviews and edits the transcript before adding it to the current notes; contact-save
+requests stay unchanged. The backend checks seller permission and token ownership on every poll.
+Limit: two minutes and 5 MiB. Backend setup: `lang/docs/seller-voice.md`. Microphone access requires
+HTTPS and the deployed `microphone=(self)` permissions policy. Minimized forms stop recording and
+cancel requests; reviewed text stays in that customer's draft.

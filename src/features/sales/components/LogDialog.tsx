@@ -19,6 +19,8 @@ import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
 import { CallStatus } from './CallStatus';
+import { VoiceNoteInput } from './VoiceNoteInput';
+import { appendContactNotes } from '@/lib/sales/contactDrafts';
 
 const CHANNELS = [
   'call',
@@ -261,6 +263,14 @@ export function LogDialog({
               maxLength={5000}
               value={notes}
               onChange={(event) => change('notes')(event.target.value)}
+            />
+          )}
+
+          {!noAnswer && active && !log.isPending && (
+            <VoiceNoteInput
+              transcript={values.voiceTranscript}
+              onTranscript={change('voiceTranscript')}
+              onText={(text) => appendContactNotes(draft.key, text)}
             />
           )}
 

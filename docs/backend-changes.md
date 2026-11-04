@@ -530,3 +530,11 @@ and `migrate`, the `mail_admin_key` secret and `conf/mail_admin_known_hosts`, `m
 | MS6 | `GET suppressed/?search&page` and `DELETE suppressed/<id>/`: the addresses that bounced for good                                                                             | ☐      |
 | MS7 | `GET / PATCH supervisor/v1/cases/<id>/bot/settings/`: days, hours, daily maximum, reminders, time zone, pause, with the rules' `limits`                                      | ☐      |
 | MS8 | `bot.stopped` on `cases/<id>/applications/`: why the bot isn't sending now                                                                                                   | ☐      |
+
+## Seller voice notes
+
+Implemented alongside this panel in `shamrad/lang`: opt-in `GET/POST /api/sales/v1/voice/` and
+`GET /api/sales/v1/voice/<id>/`, restricted to sellers with owner-bound job tokens. A separate
+CPU worker transcribes Persian; recordings stay off public storage. Deploy the backend speech
+override and panel headers together to enable contact/call note dictation. See backend
+`docs/seller-voice.md` and panel `docs/backend-integration.md`.
