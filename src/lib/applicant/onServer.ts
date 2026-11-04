@@ -92,7 +92,8 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * MS1–MS8 `api/mail/v1/` and `cases/<id>/bot/settings/`: the managers' mail page (our mail
    * servers, applicant mailboxes, the email bot's rules) and each case's bot settings
    * (scorize-revolution #40, needs migrations, the `mail_admin_key` secret and `mail-admin` on each
-   * mail server). Off: no mail page, and the case's bot bar has no settings.
+   * mail server). Off: no mail page, and the case's bot bar has no settings. Deploy the panel with
+   * it only after the backend.
    */
-  mailServers: false,
+  mailServers: true,
 };
