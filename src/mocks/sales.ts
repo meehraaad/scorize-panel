@@ -18,6 +18,7 @@ import type { MonthData } from '@/features/sales/api/month';
 import { type Degree, type LeadSource, type LeadStage, type LostReason } from '@/lib/sales/api';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';
+import { bulkTag } from './salesTags';
 
 /**
  * Fake sales-panel API (docs/backend-changes.md S1–S20) and the staff tasks endpoint (T1–T12).
@@ -969,7 +970,20 @@ export const salesHandlers = [
       ids: number[];
       stage?: LeadStage;
       follow_up_at?: string;
+      add_tag?: number;
+      remove_tag?: number;
     };
+    // Tags (S49): the seller's leads in any stage, by their customer.
+    if (body.add_tag !== undefined || body.remove_tag !== undefined) {
+      bulkTag(
+        data.customers.filter((entry) => body.ids.includes(entry.lead.id)).map((entry) => entry.id),
+        {
+          ...(body.add_tag === undefined ? {} : { add: body.add_tag }),
+          ...(body.remove_tag === undefined ? {} : { remove: body.remove_tag }),
+        },
+      );
+      return new HttpResponse(null, { status: 204 });
+    }
     const openStages: readonly LeadStage[] = ['new', 'contacted', 'consulted', 'offer'];
     if (body.stage && !openStages.includes(body.stage)) {
       return HttpResponse.json({ stage: ['invalid_choice'] }, { status: 400 });

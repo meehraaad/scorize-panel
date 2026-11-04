@@ -23,6 +23,7 @@ import { fetchInfo, saveSection, UnknownNameError } from './legacy/info';
 import { createCustomer, fetchLeads } from './legacy/leads';
 import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
+import { tagsOfCustomer } from './salesTags';
 import { pageOf, storage } from './session';
 import { overviewOf, taskListOf } from './tasks';
 
@@ -64,10 +65,24 @@ export const salesStaffHandlers = [
       source: (query.get('source') ?? 'all') as LeadQuery['source'],
       band: (query.get('band') ?? 'all') as LeadQuery['band'],
       overdue: query.get('overdue') === '1',
+      tag: query.get('tag') ? Number(query.get('tag')) : null,
       search: query.get('search') ?? '',
       page: Number(query.get('page') ?? 1),
     };
-    return answer<LeadsData>(() => fetchLeads(leads));
+    // Each row's customer tags (S49); `?tag=` keeps the customers with it (on this page).
+    return answer<LeadsData>(() =>
+      fetchLeads(leads).then((data) => {
+        const results = data.results
+          .map((row) => ({ ...row, tags: tagsOfCustomer(row.customer) }))
+          .filter((row) => leads.tag === null || row.tags.includes(leads.tag));
+        return {
+          ...data,
+          supports: { ...data.supports, tags: true },
+          ...(leads.tag === null ? {} : { count: results.length }),
+          results,
+        };
+      }),
+    );
   }),
   http.post(`${BASE}/leads/`, async ({ request }) => {
     const lead = (await request.json()) as NewLead;
@@ -87,7 +102,13 @@ export const salesStaffHandlers = [
   }),
 
   http.get(`${BASE}/customers/:id/`, ({ params }) =>
-    answer<CustomerData>(() => fetchCustomer(id(params))),
+    answer<CustomerData>(() =>
+      fetchCustomer(id(params)).then((data) => ({
+        ...data,
+        tags: tagsOfCustomer(data.id),
+        supports: { ...data.supports, tags: true },
+      })),
+    ),
   ),
   http.get(`${BASE}/customers/:id/history/`, ({ params, request }) => {
     const page = Number(new URL(request.url).searchParams.get('page') ?? 1);

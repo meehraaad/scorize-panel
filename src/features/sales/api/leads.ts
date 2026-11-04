@@ -29,6 +29,8 @@ export interface LeadRow {
   /** The last contact: null before the first call. */
   last_contact: { at: string; summary: string } | null;
   created_at: string;
+  /** Customer tag ids (S49), named by `tagsQuery`. */
+  tags: number[];
 }
 
 export type LeadFilter = LeadStage | 'all';
@@ -45,6 +47,7 @@ export const firstLeadQuery = (stage: LeadFilter): LeadQuery => ({
   source: 'all',
   band: 'all',
   overdue: false,
+  tag: null,
   search: '',
   page: 1,
 });
@@ -54,6 +57,8 @@ export interface LeadQuery {
   source: LeadSource | 'all';
   band: 'hot' | 'warm' | 'cold' | 'all';
   overdue: boolean;
+  /** Customers with this tag (S49). */
+  tag: number | null;
   search: string;
   page: number;
 }
@@ -62,7 +67,14 @@ export interface LeadsData {
   /** Per stage, for the tabs (the other filters applied). */
   counts: Record<LeadFilter, number>;
   /** What the server can filter and change; the page hides the rest. */
-  supports: { stages: readonly LeadFilter[]; band: boolean; overdue: boolean; bulk: boolean };
+  supports: {
+    stages: readonly LeadFilter[];
+    band: boolean;
+    overdue: boolean;
+    bulk: boolean;
+    /** Customer tags: the filter, the row chips and bulk tagging (S49). */
+    tags?: boolean;
+  };
   stats: {
     new_waiting: number;
     oldest_new_minutes: number | null;
@@ -86,6 +98,7 @@ function fetchLeads(query: LeadQuery, signal?: AbortSignal) {
   if (query.source !== 'all') params.set('source', query.source);
   if (query.band !== 'all') params.set('band', query.band);
   if (query.overdue) params.set('overdue', '1');
+  if (query.tag !== null) params.set('tag', String(query.tag));
   if (query.search.trim()) params.set('search', query.search.trim());
   return api<LeadsData>(`${SALES_API}/leads/?${params.toString()}`, { signal });
 }
@@ -98,9 +111,12 @@ export const leadsQuery = (query: LeadQuery) =>
   });
 
 export type BulkChange =
-  { stage: Exclude<LeadStage, 'lost' | 'draft' | 'won'> } | { follow_up_at: string };
+  | { stage: Exclude<LeadStage, 'lost' | 'draft' | 'won'> }
+  | { follow_up_at: string }
+  | { add_tag: number }
+  | { remove_tag: number };
 
-/** Several leads at once from the list (S13). */
+/** Several leads at once from the list (S13; tags S49). */
 export function useBulkLeads() {
   const client = useQueryClient();
   return useMutation({

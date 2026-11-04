@@ -15,6 +15,7 @@ import { storage } from './session';
 import { resetSessionSummaries, sessionSummaryHandlers } from './sessionSummaries';
 import { resetWriterMocks, writerHandlers } from './writer';
 import { salesStaffHandlers } from './salesStaff';
+import { resetTagMocks, tagHandlers } from './salesTags';
 import { taskReactionHandlers } from './taskReactions';
 import { resetStaffMocks, staffHandlers } from './staff';
 
@@ -199,6 +200,7 @@ export const handlers = [
     resetApplicantMocks();
     resetAccountMocks();
     resetSalesMocks();
+    resetTagMocks();
     resetTaskMocks();
     resetManagerMocks();
     resetHandoffMocks();
@@ -309,6 +311,7 @@ export const handlers = [
   ...staffHandlers,
   // Reactions for every panel's tasks, before the sellers' generic task actions.
   ...taskReactionHandlers,
+  ...tagHandlers,
   ...salesStaffHandlers,
   ...applicantHandlers,
   ...accountHandlers,
@@ -333,6 +336,7 @@ export function resetMockSession() {
   resetApplicantMocks();
   resetAccountMocks();
   resetSalesMocks();
+  resetTagMocks();
   resetTaskMocks();
   resetManagerMocks();
   resetSupervisorMocks();

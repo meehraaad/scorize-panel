@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router';
 import { tabClass } from '@/components/ui/buttonStyles';
 import { PageStack } from '@/components/ui/PageColumns';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { salesPath } from '../paths';
 
 const SECTIONS = [
@@ -10,9 +11,13 @@ const SECTIONS = [
   { id: 'team', to: 'manager/team' },
   { id: 'followUps', to: 'manager/follow-ups' },
   { id: 'stages', to: 'manager/stages' },
+  { id: 'tags', to: 'manager/tags' },
 ] as const;
 
-/** The sales manager's section: lead assignment, contract approvals, team report, follow-ups, board stages. */
+/**
+ * The sales manager's section: lead assignment, contract approvals, team report, follow-ups, board
+ * stages, customer tags.
+ */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');
   return (
@@ -21,16 +26,18 @@ export default function ManagerLayout() {
         aria-label={t('manager.nav')}
         className="-mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
       >
-        {SECTIONS.map((section) => (
-          <NavLink
-            key={section.id}
-            to={salesPath(section.to)}
-            end
-            className={({ isActive }) => tabClass(isActive)}
-          >
-            {t(`manager.section.${section.id}`)}
-          </NavLink>
-        ))}
+        {SECTIONS.filter((section) => section.id !== 'tags' || ON_SERVER.customerTags).map(
+          (section) => (
+            <NavLink
+              key={section.id}
+              to={salesPath(section.to)}
+              end
+              className={({ isActive }) => tabClass(isActive)}
+            >
+              {t(`manager.section.${section.id}`)}
+            </NavLink>
+          ),
+        )}
       </nav>
       <Outlet />
     </PageStack>
