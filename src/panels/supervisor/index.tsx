@@ -17,6 +17,14 @@ import { prefetchTickets } from '@/features/tickets/config';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import { ASSIGN_PERMISSION } from '@/features/supervisor/api';
+import {
+  botRulesQuery,
+  MAIL_PERMISSION,
+  mailboxesQuery,
+  FIRST_MAILBOXES,
+  serversQuery,
+} from '@/features/mail/api';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
@@ -27,6 +35,14 @@ import type { PanelDefinition } from '../types';
 async function assignersOnly() {
   const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
   return user && hasPermission(user, ASSIGN_PERMISSION) ? null : redirect('/supervisor');
+}
+
+/** The mail page is for managers with `mail_server.manage_mailboxes`, once Django serves it. */
+async function mailManagersOnly() {
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+  return ON_SERVER.mailServers && user && hasPermission(user, MAIL_PERMISSION)
+    ? null
+    : redirect('/supervisor');
 }
 
 /**
@@ -78,6 +94,17 @@ export const supervisorPanel: PanelDefinition = {
       permission: ASSIGN_PERMISSION,
     },
     { id: 'reports', to: 'reports', label: 'panels.supervisor.nav.reports', icon: 'chart' },
+    ...(ON_SERVER.mailServers
+      ? [
+          {
+            id: 'mail',
+            to: 'mail',
+            label: 'panels.supervisor.nav.mail',
+            icon: 'mail',
+            permission: MAIL_PERMISSION,
+          } as const,
+        ]
+      : []),
   ],
   routes: [
     {
@@ -161,8 +188,8 @@ export const supervisorPanel: PanelDefinition = {
     // New cases waiting for a supervisor (managers with can_assign_supervisor).
     {
       path: 'new',
-      loader: assignersOnly,
       ...lazyPage(() => import('@/features/supervisor/HandoffsPage'), ['supervisor'], {
+        guard: assignersOnly,
         data: () => [handoffsQuery],
         skeleton: 'list',
       }),
@@ -172,6 +199,15 @@ export const supervisorPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/supervisor/ReportsPage'), ['supervisor'], {
         data: () => [reportsQuery('month')],
         skeleton: 'dashboard',
+      }),
+    },
+    // Our mail servers and the applicants' mailboxes (managers with manage_mailboxes).
+    {
+      path: 'mail',
+      ...lazyPage(() => import('@/features/mail/MailPage'), ['mail'], {
+        guard: mailManagersOnly,
+        data: () => [serversQuery, botRulesQuery, mailboxesQuery(FIRST_MAILBOXES)],
+        skeleton: 'list',
       }),
     },
   ],

@@ -48,6 +48,11 @@ export interface PageOptions {
    * tabs inside a page with its own frame (customer, case file) use that frame's.
    */
   skeleton?: SkeletonKind;
+  /**
+   * Only some users may open the page: answers a redirect for the others, before the page's data
+   * starts. (A route's own `loader` beside `...lazyPage()` would be replaced by the data loader.)
+   */
+  guard?: () => Promise<Response | null>;
 }
 
 /** What a route's `handle` holds for the panel frame. */
@@ -78,15 +83,16 @@ export function usePageSkeleton(): SkeletonKind {
 export function lazyPage(
   load: () => Promise<{ default: ComponentType }>,
   namespaces: Namespace[] = [],
-  { data, skeleton }: PageOptions = {},
+  { data, skeleton, guard }: PageOptions = {},
 ): Pick<RouteObject, 'lazy' | 'loader' | 'handle'> {
+  const start = (args: LoaderFunctionArgs) => {
+    if (data) prefetchQueries(data(args));
+    return null;
+  };
   return {
-    ...(data && {
-      loader: (args: LoaderFunctionArgs) => {
-        prefetchQueries(data(args));
-        return null;
-      },
-    }),
+    ...(guard
+      ? { loader: async (args: LoaderFunctionArgs) => (await guard()) ?? start(args) }
+      : data && { loader: start }),
     ...(skeleton && { handle: { skeleton } satisfies PageHandle }),
     lazy: async () => {
       const [module] = await Promise.all([load(), i18n.loadNamespaces(namespaces)]);

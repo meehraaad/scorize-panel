@@ -1,0 +1,172 @@
+{
+  "title": "Applicant mailboxes",
+  "subtitle": "Our own mail servers, the applicants' mailboxes and the email bot's rules",
+  "close": "Close",
+  "cancel": "Cancel",
+  "saveError": "Not saved. Try again.",
+  "serverError": "The mail server didn't do it: {{detail}}",
+  "dash": "—",
+  "mb": "{{n}} MB",
+  "gb": "{{n}} GB",
+  "views": "Page sections",
+  "view": {
+    "mailboxes": "Mailboxes",
+    "rules": "Bot rules",
+    "suppressed": "Blocked addresses"
+  },
+  "servers": {
+    "label": "Mail servers",
+    "empty": "No server yet. Add one in the Django admin (MailServer).",
+    "ok": "Healthy",
+    "failed": "Not read",
+    "never": "Not read yet",
+    "inactive": "Off",
+    "checked": "checked {{when}}",
+    "error": "The last read failed: {{error}}. The list is the one before.",
+    "refresh": "Read {{name}} again",
+    "refreshed": "{{name}} read again",
+    "mailboxes": "Mailboxes",
+    "disk": "Disk used",
+    "queue": "Queued",
+    "sent": "Sent today",
+    "bounced": "Bounced today",
+    "rejects": "Reputation rejects",
+    "certificate": "SSL certificate until {{date}}",
+    "certificateSoon": "The SSL certificate ends {{date}}: renew it soon",
+    "rejectsHigh": "{{n}} emails were rejected today for poor reputation: this server's bots pause."
+  },
+  "list": {
+    "label": "Mailboxes",
+    "search": "Search",
+    "searchPlaceholder": "Address, name or file number",
+    "server": "Server",
+    "allServers": "All servers",
+    "problem": "Problem",
+    "allProblems": "All",
+    "empty": "No mailbox found.",
+    "count": "{{n}} mailboxes",
+    "noApplicant": "Not linked to an applicant",
+    "file": "file {{n}}",
+    "usage": "{{used}} of {{quota}}",
+    "usageNoQuota": "{{used}}, no quota",
+    "bot": "Bot",
+    "writing": "Writing",
+    "open": "Details of {{address}}",
+    "add": "New mailbox"
+  },
+  "problem": {
+    "no_applicant": "No applicant",
+    "login_failed": "Login fails",
+    "no_password": "No password saved",
+    "no_quota": "No quota",
+    "near_full": "Nearly full"
+  },
+  "quota": {
+    "label": "Quota",
+    "default": "Server default ({{size}})",
+    "none": "No quota",
+    "hint": "A full mailbox gets no new mail."
+  },
+  "applicant": {
+    "label": "Applicant",
+    "search": "Find an applicant",
+    "placeholder": "Name or file number",
+    "noMatch": "No applicant found.",
+    "option": "{{name}} · file {{file}}",
+    "has": "Accounts: {{emails}}",
+    "chosen": "{{name}} (file {{file}})",
+    "clear": "Remove applicant"
+  },
+  "use": {
+    "bot": "Email bot account",
+    "botHint": "The professor-email bot sends from this mailbox. Each applicant has one bot account.",
+    "writing": "Writing team account",
+    "writingHint": "The writing team writes to professors from this mailbox."
+  },
+  "create": {
+    "title": "New mailbox",
+    "server": "Server",
+    "local": "Address name",
+    "localHint": "English letters, digits, dot, dash; e.g. ali.rezaei",
+    "localError": "Only English letters, digits and . _ - (starting and ending with a letter or digit).",
+    "needApplicant": "Choose the applicant for a bot or writing account.",
+    "submit": "Create mailbox",
+    "taken": "This address already exists.",
+    "done": "{{address}} created",
+    "address": "Address:"
+  },
+  "password": {
+    "title": "Password of {{address}}",
+    "once": "This password is shown only this once. Send it to the applicant or keep it somewhere safe; the bot has its own copy.",
+    "copy": "Copy password",
+    "copied": "Password copied",
+    "new": "New password",
+    "confirm": "Change the password of {{address}}? The old one stops working.",
+    "confirmButton": "Make a new password",
+    "done": "Password of {{address}} changed"
+  },
+  "detail": {
+    "server": "Server {{name}}",
+    "sentToday": "{{n}} emails sent today",
+    "save": "Save",
+    "saved": "Saved",
+    "delete": "Delete mailbox",
+    "deleteConfirm": "Delete {{address}} from the server? Its mail stays on the server's disk, but nobody can log in with it.",
+    "deleteButton": "Delete",
+    "deleted": "{{address}} deleted",
+    "history": "History",
+    "noHistory": "No change made from the panel yet.",
+    "by": "{{who}}, {{when}}",
+    "failed": "Failed: {{error}}",
+    "action": {
+      "create": "Created",
+      "password": "New password",
+      "quota": "Quota",
+      "link": "Linked",
+      "delete": "Deleted"
+    }
+  },
+  "rules": {
+    "intro": "Every applicant's bot works inside these limits. A supervisor can only make one applicant's bot slower or quieter.",
+    "updated": "Last changed {{when}}",
+    "save": "Save rules",
+    "saved": "Bot rules saved",
+    "unchanged": "Nothing changed.",
+    "group": {
+      "volume": "Volume",
+      "timing": "Timing",
+      "reminders": "Reminders and professors",
+      "safety": "Automatic pause"
+    },
+    "field": {
+      "per_mailbox_daily": "Daily limit per mailbox",
+      "per_mailbox_hourly": "Hourly limit per mailbox",
+      "per_server_daily": "Daily limit per server (one IP)",
+      "per_recipient_domain_daily": "Daily limit to one university's domain",
+      "warmup_week1_daily": "New mailbox, first week (a day)",
+      "warmup_week2_daily": "New mailbox, second week (a day)",
+      "min_gap_minutes": "Shortest gap between two emails (minutes)",
+      "max_gap_minutes": "Longest gap between two emails (minutes)",
+      "earliest_hour": "Earliest hour (professor's time)",
+      "latest_hour": "Latest hour (professor's time)",
+      "min_reminder_days": "Shortest wait before a reminder (days)",
+      "max_reminders": "Most reminders",
+      "professor_cooldown_days": "One email per professor, from all applicants, every (days)",
+      "bounce_pause_percent": "Bounce percent that pauses an applicant's bot",
+      "bounce_min_sent": "Sent emails before the bounce percent counts",
+      "reputation_pause_rejects": "Reputation rejects a day that pause a server"
+    },
+    "days": "Allowed days",
+    "daysHint": "In the professor's country. Supervisors choose from these days."
+  },
+  "suppressed": {
+    "intro": "These addresses bounced for good (a 5.x.x error) and no bot writes to them again. If one is here by mistake, remove it.",
+    "search": "Search addresses",
+    "empty": "No address on the list.",
+    "from": "from {{name}}'s bot",
+    "remove": "Remove {{address}}",
+    "removeConfirm": "Take {{address}} off the list? Bots may write to it again.",
+    "removeButton": "Remove",
+    "removed": "{{address}} taken off the list"
+  }
+}
