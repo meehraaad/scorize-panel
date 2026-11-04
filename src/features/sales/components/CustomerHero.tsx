@@ -8,6 +8,7 @@ import { initialOf } from '@/lib/text';
 import { MESSAGE_CHANNELS, STAGES, maskPhone, type Channel } from '@/lib/sales/api';
 import type { CustomerData } from '../api';
 import { useSalesFormat } from '../format';
+import { CustomerTags } from './CustomerTags';
 import { customerPath } from '../paths';
 import { ScoreChip, StageChip } from './LeadChips';
 
@@ -79,6 +80,7 @@ export function CustomerHero({
               <span className="text-[15px] text-on-hero-2">{line.join(' · ')}</span>
             )}
             <span className="text-sm text-on-hero-2">{contact.join(' · ')}</span>
+            {customer.supports.tags && <CustomerTags customer={customer} />}
           </div>
         </div>
         {lead && (

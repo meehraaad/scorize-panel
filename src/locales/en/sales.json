@@ -247,7 +247,12 @@
       "apply": "Apply",
       "clear": "Clear selection",
       "stageTo": "New stage",
-      "when": "Follow-up time"
+      "when": "Follow-up time",
+      "addTag": "Add a tag",
+      "removeTag": "Remove a tag",
+      "tag": "Tag",
+      "addTagDone": "Tag added to the selected customers.",
+      "removeTagDone": "Tag removed from the selected customers."
     },
     "pager": "Showing {{shown}} of {{total}} leads",
     "empty": "No leads match these filters.",
@@ -264,7 +269,9 @@
       "phoneInvalid": "That mobile number isn't valid (09…).",
       "phoneExists": "This number is already registered.",
       "nameRequired": "Enter a first name."
-    }
+    },
+    "tag": "Tag",
+    "allTags": "All tags"
   },
   "board": {
     "title": "Sales board",
@@ -1040,7 +1047,8 @@
       "approvals": "Contract approvals",
       "team": "Team and lead sources",
       "followUps": "Follow-up health",
-      "stages": "Board stages"
+      "stages": "Board stages",
+      "tags": "Customer tags"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1285,6 +1293,35 @@
         "phases": "Each of “Contacted”, “Consulted” and “Offer sent” needs at least one stage.",
         "moves": "Choose where the cards of {{names}} go, at the bottom of the page."
       }
+    },
+    "tags": {
+      "title": "Customer tags",
+      "subtitle": "The sales team's tags. Sellers tag customers from this list.",
+      "new": "New tag",
+      "name": "Tag name",
+      "namePlaceholder": "e.g. VIP",
+      "add": "Add",
+      "added": "Tag added.",
+      "exists": "“{{name}}” is already on the list.",
+      "list": "Tags",
+      "empty": "No tags yet.",
+      "preview": "Tag preview",
+      "customers": "Customers: {{n}}",
+      "tone": "Color",
+      "delete": "Delete tag {{name}}",
+      "deleted": "Tag deleted.",
+      "saved": "Saved.",
+      "active": "Active",
+      "activeHint": "Sellers can add this tag.",
+      "archivedHint": "Stays on customers, but can't be added any more.",
+      "toneName": {
+        "blue": "Blue",
+        "green": "Green",
+        "amber": "Yellow",
+        "red": "Red",
+        "purple": "Purple",
+        "gray": "Gray"
+      }
     }
   },
   "handoff": {
@@ -1332,5 +1369,23 @@
     "keep": "Keep draft",
     "retry": "Try again",
     "saved": "Contact saved."
+  },
+  "tags": {
+    "label": "Tags",
+    "of": "Tags of {{name}}",
+    "add": "Add tag",
+    "edit": "Tags",
+    "remove": "Remove tag {{name}}",
+    "saveError": "The tags weren't saved. Try again.",
+    "pickTitle": "Customer tags",
+    "pickSubtitle": "{{n}} of {{max}} tags",
+    "done": "Done",
+    "search": "Search tags",
+    "searchPlaceholder": "Tag name…",
+    "noMatch": "No tag has this name.",
+    "noneYet": "No tags yet.",
+    "full": "A customer has at most {{max}} tags. Remove one to add another.",
+    "managerHint": "The sales manager adds new tags in “Customer tags”.",
+    "archivedName": "{{name}} (archived)"
   }
 }

@@ -20,7 +20,8 @@ export type ServerFeature =
   | 'activities'
   | 'guestInterests'
   | 'foundersAssistant'
-  | 'assistantOrganize';
+  | 'assistantOrganize'
+  | 'customerTags';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -79,4 +80,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * for `Conversation.pinned_at`). Off: the history list has no pin or rename buttons.
    */
   assistantOrganize: false,
+  /**
+   * S49 `sales/v1/tags/`, `customers/<id>/tags/`, `manager/tags/`: customer tags in the sales
+   * panel (scorize-revolution `claude/project-thread-om4prp`, needs `makemigrations user_profile`
+   * + `migrate`). Off: pages don't preload the tag list or offer the manager's tags page; the
+   * chips and filter still follow each answer's `supports.tags`.
+   */
+  customerTags: false,
 };

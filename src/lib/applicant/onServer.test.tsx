@@ -16,10 +16,11 @@ describe('features by what Django serves', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('leaves only the Turkey programme and pinning assistant conversations off', () => {
+  it('leaves only the Turkey programme, pinning assistant conversations and customer tags off', () => {
     expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
       ['turkey', false],
       ['assistantOrganize', false],
+      ['customerTags', false],
     ]);
   });
 

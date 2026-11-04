@@ -117,16 +117,21 @@ export function TogglePill({
   label,
   checked,
   onChange,
+  disabled = false,
 }: {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
-    <label className={`${pill} gap-2 bg-surface`}>
+    <label
+      className={`${pill} gap-2 bg-surface ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+    >
       <input
         type="checkbox"
         checked={checked}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
         className="sr-only"
       />

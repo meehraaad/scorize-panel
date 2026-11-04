@@ -21,6 +21,7 @@ import {
   LEAD_FILTERS,
   leadFilterOf,
   leadsQuery,
+  tagsQuery,
   type LeadFilter,
   type LeadQuery,
   type LeadsData,
@@ -40,6 +41,7 @@ export default function LeadsPage() {
   const [source, setSource] = useState<LeadQuery['source']>('all');
   const [band, setBand] = useState<LeadQuery['band']>('all');
   const [overdue, setOverdue] = useState(false);
+  const [tag, setTag] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
@@ -48,10 +50,13 @@ export default function LeadsPage() {
     source,
     band,
     overdue,
+    tag,
     search: useDebouncedValue(search.trim()),
     page,
   };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
+  const tagsOn = data?.supports.tags === true;
+  const { data: tags } = useQuery({ ...tagsQuery, enabled: tagsOn });
 
   // Any filter change starts again at page 1 with nothing selected.
   const refilter =
@@ -140,6 +145,21 @@ export default function LeadsPage() {
               ]}
             />
           )}
+          {tagsOn && tags && tags.length > 0 && (
+            <SelectField
+              inline
+              label={t('leads.tag')}
+              value={tag === null ? 'all' : String(tag)}
+              onChange={refilter((value: string) => setTag(value === 'all' ? null : Number(value)))}
+              options={[
+                { value: 'all', label: t('leads.allTags') },
+                ...tags.map((item) => ({
+                  value: String(item.id),
+                  label: item.active ? item.name : t('tags.archivedName', { name: item.name }),
+                })),
+              ]}
+            />
+          )}
           {data?.supports.overdue !== false && (
             <TogglePill
               label={t('leads.overdueOnly')}
@@ -151,7 +171,11 @@ export default function LeadsPage() {
 
         <Card aria-busy={isPending || isPlaceholderData}>
           {selected.size > 0 && data?.supports.bulk && (
-            <BulkBar ids={[...selected]} onDone={() => setSelected(new Set())} />
+            <BulkBar
+              ids={[...selected]}
+              tags={tagsOn ? (tags ?? []).filter((item) => item.active) : []}
+              onDone={() => setSelected(new Set())}
+            />
           )}
           {!data ? (
             <SkeletonRows rows={6} />
@@ -163,6 +187,7 @@ export default function LeadsPage() {
               selected={selected}
               onSelect={setSelected}
               selectable={data.supports.bulk}
+              tags={tagsOn ? tags : undefined}
             />
           )}
           {data && data.count > 0 && (

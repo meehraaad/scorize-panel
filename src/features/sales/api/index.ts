@@ -1,6 +1,6 @@
 /**
  * Seller pages of the sales panel: one response per screen (as the applicant panel does), so a
- * phone waits for one round trip. Django: `/api/sales/v1/` (backend-changes.md S1–S48).
+ * phone waits for one round trip. Django: `/api/sales/v1/` (backend-changes.md S1–S49).
  * `./month` is imported by its page only: no route prefetches it, so it stays out of the first load.
  */
 
@@ -18,3 +18,4 @@ export * from './sell';
 export * from './offer';
 export * from './manager';
 export * from './contract';
+export * from './tags';

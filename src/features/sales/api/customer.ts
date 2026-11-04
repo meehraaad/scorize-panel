@@ -86,8 +86,13 @@ export interface CustomerData {
   colleagues: Colleague[];
   /** Files sent from the panel for a free review (H59), newest first; `kind` is a label. */
   review_files: { id: number; kind: string; url: string; uploaded_at: string }[];
-  /** What the server does with a logged contact: store stage moves (S3), text "no answer" (S16). */
-  supports: { stages: boolean; no_answer_sms: boolean };
+  /** Customer tag ids (S49), named by `tagsQuery`. */
+  tags: number[];
+  /**
+   * What the server does with a logged contact: store stage moves (S3), text "no answer" (S16);
+   * `tags`: customer tags (S49).
+   */
+  supports: { stages: boolean; no_answer_sms: boolean; tags?: boolean };
 }
 
 export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as const;

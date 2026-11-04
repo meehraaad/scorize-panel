@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { TagList } from '@/components/ui/Tags';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { maskPhone } from '@/lib/sales/api';
-import type { LeadRow } from '../api';
+import { tagsOf, type CustomerTag, type LeadRow } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { ContactButtons } from './ContactButtons';
@@ -18,12 +19,15 @@ export function LeadTable({
   selected,
   onSelect,
   selectable,
+  tags,
 }: {
   rows: LeadRow[];
   selected: ReadonlySet<number>;
   onSelect: (selected: ReadonlySet<number>) => void;
   /** Checkboxes for bulk changes, when the server takes them. */
   selectable: boolean;
+  /** The team's tags, to name each row's (S49); none while the server has no tags. */
+  tags?: readonly CustomerTag[] | undefined;
 }) {
   const { t } = useTranslation('sales');
   const { t: tc } = useTranslation();
@@ -81,6 +85,8 @@ export function LeadTable({
               row.countries.length ? f.list(row.countries) : null,
               f.digits(maskPhone(row.phone)),
             ].filter(Boolean);
+            const rowTags = tagsOf(row.tags, tags);
+            const toneOf = new Map(rowTags.map((tag) => [tag.name, tag.tone]));
             return (
               <tr
                 key={row.id}
@@ -106,6 +112,15 @@ export function LeadTable({
                       {row.name}
                     </Link>
                     <span className="text-[13px] text-text-2">{meta.join(' · ')}</span>
+                    {rowTags.length > 0 && (
+                      <TagList
+                        label={t('tags.of', { name: row.name })}
+                        tags={rowTags.map((tag) => tag.name)}
+                        toneOf={(name) => toneOf.get(name) ?? 'neutral'}
+                        size="sm"
+                        latin={false}
+                      />
+                    )}
                   </span>
                 </td>
                 <td className={cell}>

@@ -7,6 +7,8 @@ import {
   assignQuery,
   boardQuery,
   stagesQuery,
+  managerTagsQuery,
+  tagsQuery,
   sellerCalendarQuery,
   customerQuery,
   firstLeadQuery,
@@ -119,6 +121,7 @@ export const salesPanel: PanelDefinition = {
               leadsQuery(
                 firstLeadQuery(leadFilterOf(new URL(request.url).searchParams.get('stage'))),
               ),
+              ON_SERVER.customerTags && tagsQuery,
             ],
             skeleton: 'list',
           }),
@@ -154,7 +157,7 @@ export const salesPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales'], {
         data: (args) => {
           const id = customerOf(args);
-          return [id !== null && customerQuery(id)];
+          return [id !== null && customerQuery(id), ON_SERVER.customerTags && tagsQuery];
         },
         skeleton: 'customer',
       }),
@@ -257,6 +260,13 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/manager/StagesPage'), [], {
             data: () => [stagesQuery],
             skeleton: 'form',
+          }),
+        },
+        {
+          path: 'tags',
+          ...lazyPage(() => import('@/features/sales/manager/TagsPage'), [], {
+            data: () => [managerTagsQuery],
+            skeleton: 'list',
           }),
         },
       ],
