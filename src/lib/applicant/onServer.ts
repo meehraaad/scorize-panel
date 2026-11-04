@@ -21,7 +21,8 @@ export type ServerFeature =
   | 'guestInterests'
   | 'foundersAssistant'
   | 'assistantOrganize'
-  | 'customerTags';
+  | 'customerTags'
+  | 'mailServers';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** H29 `POST call-request/`. */
@@ -87,4 +88,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * offer the manager's tags page; the chips and filter still follow each answer's `supports.tags`.
    */
   customerTags: true,
+  /**
+   * MS1–MS8 `api/mail/v1/` and `cases/<id>/bot/settings/`: the managers' mail page (our mail
+   * servers, applicant mailboxes, the email bot's rules) and each case's bot settings
+   * (scorize-revolution #40, needs migrations, the `mail_admin_key` secret and `mail-admin` on each
+   * mail server). Off: no mail page, and the case's bot bar has no settings.
+   */
+  mailServers: false,
 };

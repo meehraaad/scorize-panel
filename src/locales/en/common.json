@@ -33,7 +33,8 @@
         "tickets": "Tickets",
         "reports": "Reports",
         "tasks": "My tasks",
-        "new": "New cases"
+        "new": "New cases",
+        "mail": "Mailboxes"
       },
       "tabs": {
         "today": "Today",
