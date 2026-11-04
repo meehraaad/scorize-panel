@@ -83,8 +83,8 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /**
    * S49 `sales/v1/tags/`, `customers/<id>/tags/`, `manager/tags/`: customer tags in the sales
    * panel (scorize-revolution `claude/project-thread-om4prp`, needs `makemigrations user_profile`
-   * + `migrate`). Off: pages don't preload the tag list or offer the manager's tags page; the
-   * chips and filter still follow each answer's `supports.tags`.
+   * + `migrate`, deployed together with this panel). Off: pages don't preload the tag list or
+   * offer the manager's tags page; the chips and filter still follow each answer's `supports.tags`.
    */
-  customerTags: false,
+  customerTags: true,
 };
