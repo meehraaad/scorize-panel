@@ -1,4 +1,5 @@
 import { useId, useState, type SubmitEvent } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
@@ -18,8 +19,9 @@ import { LOST_REASONS, STAGES, messageHref, type Channel, type LeadStage } from 
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
-import { VoiceNoteInput } from './VoiceNoteInput';
-import { appendContactNotes } from '@/lib/sales/contactDrafts';
+import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
+import { useVoiceOwner } from '@/lib/voice/lease';
+import { VoiceTextAreaField } from '@/components/voice/VoiceField';
 
 const CHANNELS = [
   'call',
@@ -60,10 +62,12 @@ export function LogDialog({
   onDiscard: () => void;
   onClose: () => void;
 }) {
-  const { t } = useTranslation('sales');
+  const { t } = useTranslation(['sales', 'voice']);
   const f = useFormat();
   const formId = useId();
   const log = useLogContact(customer.id);
+  const voice = useQuery({ ...voiceCapabilityQuery, enabled: active });
+  const voiceBusy = useVoiceOwner() !== null;
   const lead = customer.lead;
   const { start, values } = draft;
   const {
@@ -98,7 +102,7 @@ export function LogDialog({
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (log.isPending) return;
+    if (log.isPending || voiceBusy) return;
     setChecked(true);
     if ((lost && !lostReason) || (asksFollowUp && !followAt)) return;
     // Open the app first: a window opened after the request would be blocked as a popup.
@@ -155,7 +159,7 @@ export function LogDialog({
           />
         ) : (
           <>
-            <Button type="submit" form={formId} disabled={log.isPending}>
+            <Button type="submit" form={formId} disabled={log.isPending || voiceBusy}>
               {message
                 ? t('customer.logDialog.send')
                 : lost
@@ -254,21 +258,18 @@ export function LogDialog({
             />
           )}
           {!noAnswer && (
-            <TextAreaField
+            <VoiceTextAreaField
               label={t('customer.logDialog.notes')}
               placeholder={t('customer.logDialog.notesPlaceholder')}
               hint={t('customer.logDialog.privateHint')}
               maxLength={5000}
               value={notes}
-              onChange={(event) => change('notes')(event.target.value)}
-            />
-          )}
-
-          {!noAnswer && active && !log.isPending && (
-            <VoiceNoteInput
-              transcript={values.voiceTranscript}
-              onTranscript={change('voiceTranscript')}
-              onText={(text) => appendContactNotes(draft.key, text)}
+              onChange={change('notes')}
+              transcribe={transcribeVoice}
+              voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
+              disabled={log.isPending}
+              pendingTranscript={values.voiceTranscript}
+              onPendingTranscriptChange={change('voiceTranscript')}
             />
           )}
 

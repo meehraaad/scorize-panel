@@ -2,8 +2,6 @@ import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { SALES_API, SALES_KEY } from './api';
 
-export const VOICE_MAX_SECONDS = 120;
-export const VOICE_MAX_BYTES = 5 * 1024 * 1024;
 const PATH = `${SALES_API}/voice/`;
 
 export const voiceCapabilityQuery = queryOptions({

@@ -1,0 +1,32 @@
+{
+  "record": "Start voice typing",
+  "recordMore": "Record more",
+  "stop": "Stop and transcribe",
+  "upload": "Choose audio file",
+  "cancel": "Cancel recording or transcription",
+  "idle": "Voice typing · Persian",
+  "opening": "Waiting for microphone…",
+  "recording": "Recording",
+  "processing": "Transcribing…",
+  "done": "Text added; you can edit it",
+  "elapsed": "Recording time: {{time}}",
+  "endingSoon": "Stops automatically in {{seconds}}s",
+  "anotherField": "Finish recording or transcribing the other field first",
+  "safetyHint": "Recording stops after 10 seconds of silence, at two minutes, or when the page is hidden.",
+  "autoStop": {
+    "silence": "Stopped after silence; transcribing…",
+    "limit": "Recording limit reached; transcribing…",
+    "hidden": "Stopped when you left the page; transcribing…"
+  },
+  "error": {
+    "microphone": "Microphone unavailable. Allow access or choose an audio file.",
+    "size": "Choose a nonempty audio file up to 5 MB.",
+    "failed": "Transcription failed. Try again or use a shorter recording.",
+    "empty": "No speech found. Speak clearly and closer to the microphone.",
+    "length": "The text exceeds this field’s limit. Shorten it; your transcript stays here."
+  },
+  "recovered": "Transcript",
+  "pendingHint": "This text has not been added to the field yet.",
+  "insert": "Add to text",
+  "discard": "Discard transcript"
+}
