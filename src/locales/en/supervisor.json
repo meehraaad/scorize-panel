@@ -531,7 +531,7 @@
     "notify": "Tell the applicants their results",
     "notifyHelp": "Each applicant gets a text and a panel notification about their new result.",
     "columns": "File columns:",
-    "columnNames": "file, university, program, deadline, result",
+    "columnNames": "file, university, program, deadline, result, date",
     "sample": "Download a sample file",
     "apply": "Save {{n}} changes",
     "back": "Back",
