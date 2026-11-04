@@ -16,8 +16,9 @@ describe('features by what Django serves', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('leaves only the Turkey programme and pinning assistant conversations off', () => {
+  it('keeps unshipped endpoints off', () => {
     expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
+      ['livePhoneCalls', false],
       ['turkey', false],
       ['assistantOrganize', false],
     ]);

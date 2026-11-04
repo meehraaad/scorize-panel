@@ -1387,5 +1387,25 @@
     "full": "A customer has at most {{max}} tags. Remove one to add another.",
     "managerHint": "The sales manager adds new tags in “Customer tags”.",
     "archivedName": "{{name}} (archived)"
+  },
+  "phoneCall": {
+    "duration": "Call duration",
+    "extension": "Extension {{extension}}",
+    "unknown": "Unknown caller",
+    "noMatch": "No customer profile you can access matches this number. You can keep working while the call continues.",
+    "dismiss": "Dismiss call",
+    "resumeUnknown": "Show call from {{phone}}",
+    "disconnected": "Live call updates are unavailable. The displayed call state may be out of date.",
+    "status": {
+      "ringing": "Ringing",
+      "connected": "In call",
+      "ended": "Call ended",
+      "missed": "Missed call",
+      "cancelled": "Call cancelled"
+    },
+    "direction": {
+      "inbound": "Incoming call",
+      "outbound": "Outgoing call"
+    }
   }
 }

@@ -6,6 +6,11 @@ around each gap (column "Until then").
 
 Status: ☐ open · ☑ done
 
+Live seller call popups/timers: paired backend implementation is prepared on
+`shamrad/lang:codex/seller-live-calls`, with signed bridge ingestion and seller-scoped snapshots.
+Deployment and real handset verification remain open; `ON_SERVER.livePhoneCalls` stays off.
+See [live-phone-calls.md](live-phone-calls.md).
+
 **Status (2026-10-25):** most of this list is built on branch `claude/eager-bohr-8iw6h3` of
 scorize-revolution (tested, not deployed; its `docs/panel-backend-plan.md` has the row-by-row
 status and the deploy checklist), and the panel calls those endpoints (backend-integration.md).

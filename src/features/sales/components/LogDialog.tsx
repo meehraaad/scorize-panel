@@ -18,6 +18,7 @@ import { LOST_REASONS, STAGES, messageHref, type Channel, type LeadStage } from 
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
+import { CallStatus } from './CallStatus';
 
 const CHANNELS = [
   'call',
@@ -175,6 +176,7 @@ export function LogDialog({
       }
     >
       <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-6">
+        {draft.call && <CallStatus call={draft.call} />}
         <fieldset disabled={log.isPending} className="contents">
           <ChoiceGroup
             legend={t('customer.logDialog.channel')}

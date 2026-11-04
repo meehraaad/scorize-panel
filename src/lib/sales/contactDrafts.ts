@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { queryClient } from '@/lib/api/queryClient';
 import { sessionQuery } from '@/lib/auth/session';
 import type { Channel, LostReason } from './api';
+import type { ObservedCall } from './phoneCalls';
 
 export interface LogStart {
   channel: Channel;
@@ -27,20 +28,35 @@ export interface ContactDraft {
   name: string;
   start: LogStart;
   values: ContactValues;
+  call?: ObservedCall;
 }
-interface Workspace {
+export interface ContactWorkspaceState {
   owner: number | null;
   drafts: ContactDraft[];
   active: string | null;
+  unknownCalls: ObservedCall[];
+  activeUnknown: string | null;
+  seenCalls: string[];
 }
 const STORAGE_KEY = 'scorize.contact-drafts.v1';
-const empty = (): Workspace => ({ owner: null, drafts: [], active: null });
+const empty = (): ContactWorkspaceState => ({
+  owner: null,
+  drafts: [],
+  active: null,
+  unknownCalls: [],
+  activeUnknown: null,
+  seenCalls: [],
+});
 let state = empty();
 const listeners = new Set<() => void>();
-function commit(next: Workspace) {
+function commit(next: ContactWorkspaceState) {
   state = next;
   try {
-    if (next.owner === null || next.drafts.length === 0) sessionStorage.removeItem(STORAGE_KEY);
+    if (
+      next.owner === null ||
+      (next.drafts.length === 0 && next.unknownCalls.length === 0 && next.seenCalls.length === 0)
+    )
+      sessionStorage.removeItem(STORAGE_KEY);
     else sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // Blocked or full storage: drafts still survive page navigation in memory.
@@ -52,9 +68,11 @@ function commit(next: Workspace) {
 export function restoreContactDrafts(owner: number) {
   if (state.owner === owner) return;
   let drafts: ContactDraft[] = [];
+  let seenCalls: string[] = [];
+  let unknownCalls: ObservedCall[] = [];
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    const saved = raw ? (JSON.parse(raw) as Workspace) : null;
+    const saved = raw ? (JSON.parse(raw) as ContactWorkspaceState) : null;
     if (saved?.owner === owner && Array.isArray(saved.drafts)) {
       drafts = saved.drafts.filter(
         (draft) =>
@@ -63,11 +81,19 @@ export function restoreContactDrafts(owner: number) {
           typeof draft.name === 'string' &&
           ['call', 'meeting', 'whatsapp', 'telegram', 'sms'].includes(draft.values.channel),
       );
+      seenCalls = Array.isArray(saved.seenCalls)
+        ? saved.seenCalls.filter((id) => typeof id === 'string').slice(-256)
+        : [];
+      unknownCalls = Array.isArray(saved.unknownCalls)
+        ? saved.unknownCalls.filter(
+            (call) => typeof call.id === 'string' && typeof call.phone === 'string',
+          )
+        : [];
     }
   } catch {
     // An invalid saved draft does not prevent the panel from opening.
   }
-  commit({ owner, drafts, active: null });
+  commit({ owner, drafts, active: null, unknownCalls, activeUnknown: null, seenCalls });
 }
 
 export function clearContactDrafts() {
@@ -78,9 +104,15 @@ export function openContactLog(customer: number, name: string, start: LogStart) 
   const user = queryClient.getQueryData(sessionQuery.queryKey);
   if (!user) return;
   restoreContactDrafts(user.id);
-  const key = `${customer}:${start.reservation ?? start.channel}`;
+  const live =
+    start.channel === 'call' &&
+    !start.reservation &&
+    state.drafts.find(
+      (draft) => draft.customer === customer && draft.call && draft.call.ended_at === null,
+    );
+  const key = live ? live.key : `${customer}:${start.reservation ?? start.channel}`;
   if (state.drafts.some((draft) => draft.key === key)) {
-    commit({ ...state, active: key });
+    commit({ ...state, active: key, activeUnknown: null });
     return;
   }
   const draft: ContactDraft = {
@@ -100,7 +132,7 @@ export function openContactLog(customer: number, name: string, start: LogStart) 
       email: false,
     },
   };
-  commit({ ...state, drafts: [...state.drafts, draft], active: key });
+  commit({ ...state, drafts: [...state.drafts, draft], active: key, activeUnknown: null });
 }
 export function updateContactDraft(key: string, change: Partial<ContactValues>) {
   commit({
@@ -117,7 +149,26 @@ export function nameContactDraft(key: string, name: string) {
   });
 }
 export function activateContactDraft(key: string | null) {
-  commit({ ...state, active: key });
+  commit({ ...state, active: key, activeUnknown: null });
+}
+
+export function activateUnknownCall(id: string | null) {
+  commit({ ...state, active: null, activeUnknown: id });
+}
+
+export function dismissUnknownCall(id: string) {
+  commit({
+    ...state,
+    unknownCalls: state.unknownCalls.filter((call) => call.id !== id),
+    activeUnknown: state.activeUnknown === id ? null : state.activeUnknown,
+  });
+}
+
+/** Shared update boundary for optional live-call synchronization. */
+export function updateContactWorkspace(
+  change: (current: ContactWorkspaceState) => ContactWorkspaceState,
+) {
+  commit(change(state));
 }
 export function removeContactDraft(key: string) {
   commit({

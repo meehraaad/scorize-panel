@@ -11,15 +11,19 @@ import {
   removeContactDraft,
   nameContactDraft,
   useContactDrafts,
+  activateUnknownCall,
+  dismissUnknownCall,
   type ContactDraft,
 } from '@/lib/sales/contactDrafts';
 import { customerQuery } from './api';
 import { LogDialog } from './components/LogDialog';
+import { CallStatus } from './components/CallStatus';
 
 export default function ContactWorkspace() {
   const { t } = useTranslation('sales');
-  const { drafts, active } = useContactDrafts();
+  const { drafts, active, unknownCalls, activeUnknown } = useContactDrafts();
   const current = drafts.find((draft) => draft.key === active);
+  const unknown = unknownCalls.find((call) => call.id === activeUnknown);
   return (
     <>
       {drafts.map((draft) => (
@@ -27,9 +31,24 @@ export default function ContactWorkspace() {
           <ContactForm draft={draft} active={draft.key === active} />
         </div>
       ))}
+      {unknown && (
+        <FloatingPanel
+          title={t('phoneCall.unknown')}
+          closeLabel={t('contactDraft.minimize')}
+          onClose={() => activateUnknownCall(null)}
+          footer={
+            <Button variant="outline" onClick={() => dismissUnknownCall(unknown.id)}>
+              {t('phoneCall.dismiss')}
+            </Button>
+          }
+        >
+          <CallStatus call={unknown} />
+          <Notice tone="info">{t('phoneCall.noMatch')}</Notice>
+        </FloatingPanel>
+      )}
       <aside
         aria-label={t('contactDraft.tray')}
-        className={`fixed start-3 end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex max-h-32 flex-wrap gap-2 overflow-y-auto lg:start-5 lg:end-auto lg:bottom-5 lg:max-w-[calc(100vw-490px)] ${current ? 'hidden lg:flex' : ''}`}
+        className={`fixed start-3 end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex max-h-32 flex-wrap gap-2 overflow-y-auto lg:start-5 lg:end-auto lg:bottom-5 lg:max-w-[calc(100vw-490px)] ${current || unknown ? 'hidden lg:flex' : ''}`}
       >
         {drafts
           .filter((draft) => draft.key !== active)
@@ -43,6 +62,22 @@ export default function ContactWorkspace() {
             >
               <Icon name={draft.start.channel === 'meeting' ? 'calendar' : 'phone'} size={18} />
               <span className="truncate">{t('contactDraft.unsaved', { name: draft.name })}</span>
+              {draft.call && <CallStatus call={draft.call} compact />}
+            </Button>
+          ))}
+        {unknownCalls
+          .filter((call) => call.id !== activeUnknown)
+          .map((call) => (
+            <Button
+              key={call.id}
+              variant="outline"
+              onClick={() => activateUnknownCall(call.id)}
+              aria-label={t('phoneCall.resumeUnknown', { phone: call.phone })}
+              className="bg-surface shadow-panel"
+            >
+              <Icon name="phone" size={18} />
+              <span>{t('phoneCall.unknown')}</span>
+              <CallStatus call={call} compact />
             </Button>
           ))}
       </aside>
