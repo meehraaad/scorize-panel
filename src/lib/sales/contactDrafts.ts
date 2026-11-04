@@ -16,6 +16,7 @@ export interface ContactValues {
   notes: string;
   customerSummary?: string;
   voiceTranscript?: string;
+  customerSummaryVoiceTranscript?: string;
   follow: 'evening' | 'tomorrow' | 'three' | 'week' | 'other';
   date: string;
   email: boolean;

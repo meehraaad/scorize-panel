@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
-import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
+import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { FloatingPanel } from '@/components/ui/FloatingPanel';
 import {
@@ -274,12 +274,17 @@ export function LogDialog({
           )}
 
           {!noAnswer && (
-            <TextAreaField
+            <VoiceTextAreaField
               label={t('customer.logDialog.customerSummary')}
               hint={t('customer.logDialog.customerSummaryHint')}
               value={customerSummary}
-              onChange={(event) => change('customerSummary')(event.target.value)}
+              onChange={change('customerSummary')}
               maxLength={5000}
+              transcribe={transcribeVoice}
+              voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
+              disabled={log.isPending}
+              pendingTranscript={values.customerSummaryVoiceTranscript}
+              onPendingTranscriptChange={change('customerSummaryVoiceTranscript')}
             />
           )}
 

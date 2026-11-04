@@ -34,10 +34,16 @@ class Recorder {
   }
 }
 
+function field(name = 'یادداشت') {
+  const wrapper = screen.getByLabelText(name).parentElement?.parentElement;
+  if (!wrapper) throw new Error('Missing voice field');
+  return within(wrapper);
+}
+
 async function open() {
   const user = userEvent.setup();
   renderApp('/sales/customers/101?log=call');
-  await screen.findByRole('button', { name: label('upload') });
+  await screen.findAllByRole('button', { name: label('upload') });
   return user;
 }
 
@@ -63,7 +69,7 @@ describe('seller contact dictation', () => {
     const notes = screen.getByLabelText('یادداشت');
     await user.type(notes, 'یادداشت قبلی');
     await user.upload(
-      screen.getByLabelText(label('upload'), { selector: 'input' }),
+      field().getByLabelText(label('upload'), { selector: 'input' }),
       new File(['audio'], 'note.wav', { type: 'audio/wav' }),
     );
     await screen.findByText(label('processing'));
@@ -80,21 +86,30 @@ describe('seller contact dictation', () => {
     ).toHaveValue('');
   });
 
-  it('keeps the added text in the correct customer draft when minimized', async () => {
-    const user = await open();
-    await user.upload(
-      screen.getByLabelText(label('upload'), { selector: 'input' }),
-      new File(['audio'], 'note.wav', { type: 'audio/wav' }),
-    );
-    await screen.findByText(label('done'));
-    const close = within(screen.getByRole('dialog')).getAllByRole('button', {
-      name: 'کوچک کردن',
-    })[0];
-    if (!close) throw new Error('Missing minimize button');
-    await user.click(close);
-    await user.click(screen.getByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' }));
-    expect(await screen.findByLabelText('یادداشت')).toHaveValue('برای جلسهٔ بعد تماس بگیرید.');
-  });
+  it.each(['یادداشت', 'خلاصه برای مشتری'])(
+    'keeps dictated %s in its own field and draft when minimized',
+    async (name) => {
+      const user = await open();
+      await user.type(screen.getByLabelText(name), 'متن قبلی');
+      await user.upload(
+        field(name).getByLabelText(label('upload'), { selector: 'input' }),
+        new File(['audio'], 'note.wav', { type: 'audio/wav' }),
+      );
+      await screen.findByText(label('done'));
+      const close = within(screen.getByRole('dialog')).getAllByRole('button', {
+        name: 'کوچک کردن',
+      })[0];
+      if (!close) throw new Error('Missing minimize button');
+      await user.click(close);
+      await user.click(screen.getByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' }));
+      expect(await screen.findByLabelText(name)).toHaveValue(
+        'متن قبلی\nبرای جلسهٔ بعد تماس بگیرید.',
+      );
+      expect(
+        screen.getByLabelText(name === 'یادداشت' ? 'خلاصه برای مشتری' : 'یادداشت'),
+      ).toHaveValue('');
+    },
+  );
 
   it('releases the microphone when the draft is minimized and does not submit cancelled audio', async () => {
     const stop = vi.fn();
@@ -111,7 +126,7 @@ describe('seller contact dictation', () => {
       }),
     );
     const user = await open();
-    await user.click(screen.getByRole('button', { name: label('record') }));
+    await user.click(field().getByRole('button', { name: label('record') }));
     await screen.findByText(label('recording'));
     const close = within(screen.getByRole('dialog')).getAllByRole('button', {
       name: 'کوچک کردن',
@@ -137,7 +152,7 @@ describe('seller contact dictation', () => {
     });
     vi.stubGlobal('MediaRecorder', Recorder);
     const user = await open();
-    await user.click(screen.getByRole('button', { name: label('record') }));
+    await user.click(field().getByRole('button', { name: label('record') }));
     await user.click(screen.getByRole('button', { name: label('cancel') }));
     await act(async () => {
       grant?.({ getTracks: () => [{ stop }] });
@@ -152,11 +167,11 @@ describe('seller contact dictation', () => {
     const user = await open();
     await user.type(screen.getByLabelText('یادداشت'), 'Keep this');
     await user.upload(
-      screen.getByLabelText(label('upload'), { selector: 'input' }),
+      field().getByLabelText(label('upload'), { selector: 'input' }),
       new File(['audio'], 'note.wav', { type: 'audio/wav' }),
     );
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(label('error.failed')));
     expect(screen.getByLabelText('یادداشت')).toHaveValue('Keep this');
-    expect(screen.getByRole('button', { name: label('upload') })).toBeEnabled();
+    expect(field().getByRole('button', { name: label('upload') })).toBeEnabled();
   });
 });
