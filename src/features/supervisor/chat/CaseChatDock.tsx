@@ -18,6 +18,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import {
   activateCaseChat,
   closeCaseChat,
+  restoreCaseChats,
   setCaseChatDraft,
   setCaseChatThread,
   useCaseChats,
@@ -54,9 +55,14 @@ const unreadOf = (threads: readonly TicketThread[] | undefined) =>
  * floating window, the others minimized at the bottom with their unread count and unsent text.
  * Design: canvas "Supervisor chat popup".
  */
-export default function CaseChatDock() {
+export default function CaseChatDock({ owner }: { owner: number }) {
   const { t } = useTranslation('supervisor');
-  const { chats, active } = useCaseChats();
+  const { owner: restored, chats, active } = useCaseChats();
+  // This tab's windows come back minimized once the account is known.
+  useEffect(() => {
+    restoreCaseChats(owner);
+  }, [owner]);
+  if (restored !== owner || chats.length === 0) return null;
   const current = chats.find((chat) => chat.case === active);
   const waiting = chats.filter((chat) => chat.case !== active);
   return (
