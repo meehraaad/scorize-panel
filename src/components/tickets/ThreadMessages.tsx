@@ -17,13 +17,27 @@ import type { TicketsConfig } from '@/lib/tickets/api';
 
 const MAX_RATING = 5;
 
-/** The thread's messages, oldest first, by day; earlier pages load on request. */
-export function ThreadMessages({ config, thread }: { config: TicketsConfig; thread: string }) {
+/**
+ * The thread's messages, oldest first, by day; earlier pages load on request.
+ * `compact`: in a narrow box (a chat window). `refetchInterval`: new messages arrive while open.
+ */
+export function ThreadMessages({
+  config,
+  thread,
+  compact = false,
+  refetchInterval,
+}: {
+  config: TicketsConfig;
+  thread: string;
+  compact?: boolean;
+  refetchInterval?: number | undefined;
+}) {
   const { t } = useTranslation('tickets');
   const f = useFormat();
-  const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
-    messagesQuery(config, thread),
-  );
+  const { data, hasNextPage, fetchNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery({
+    ...messagesQuery(config, thread),
+    ...(refetchInterval ? { refetchInterval } : {}),
+  });
   const rate = useRateMessage(config, thread);
   const messages = messagesOf(data.pages);
 
@@ -60,7 +74,7 @@ export function ThreadMessages({ config, thread }: { config: TicketsConfig; thre
       label={t('messages')}
       firstKey={messages[0]?.id}
       lastKey={messages.at(-1)?.id}
-      className="px-3.5 py-[18px] lg:px-7 lg:py-6"
+      className={compact ? 'px-3.5 py-4' : 'px-3.5 py-[18px] lg:px-7 lg:py-6'}
       earlier={
         hasNextPage
           ? {
@@ -77,6 +91,7 @@ export function ThreadMessages({ config, thread }: { config: TicketsConfig; thre
         ) : (
           <Message
             key={item.key}
+            compact={compact}
             message={item.message}
             canRate={config.viewer === 'applicant'}
             rating={rate.isPending}
@@ -90,11 +105,13 @@ export function ThreadMessages({ config, thread }: { config: TicketsConfig; thre
 
 function Message({
   message,
+  compact,
   canRate,
   rating,
   onRate,
 }: {
   message: TicketMessage;
+  compact: boolean;
   canRate: boolean;
   rating: boolean;
   onRate: (score: number) => void;
@@ -112,6 +129,7 @@ function Message({
   return (
     <MessageBubble
       side={mine ? 'mine' : 'other'}
+      compact={compact}
       author={mine ? t('you') : message.author}
       avatarName={message.author}
       role={!mine && message.role ? t(`role.${message.role}`) : undefined}

@@ -1,16 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
+import { Badge } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { openCaseChat } from '@/lib/supervisor/caseChats';
 import { initialOf } from '@/lib/text';
 import type { CaseData } from '../api';
-import { casePath } from '../paths';
 import { StageChip } from './Chips';
 
 const raised =
   'inline-flex h-11 items-center gap-2 rounded-full bg-hero-raised px-4 text-sm font-medium text-on-hero shadow-[inset_0_0_0_1px_var(--hero-line)] hover:bg-hero-line';
 
-/** The dark card on top of a case file: who, which contract, the team, and the two main actions. */
+/**
+ * The dark card on top of a case file: who, which contract, the team, and the two main actions.
+ * The chat opens in a floating window that stays while the supervisor moves around the panel.
+ */
 export function CaseHero({ data, onStage }: { data: CaseData; onStage: () => void }) {
   const { t } = useTranslation('supervisor');
   const { t: tc } = useTranslation();
@@ -54,13 +57,20 @@ export function CaseHero({ data, onStage }: { data: CaseData; onStage: () => voi
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Link
-          to={casePath(data.id, 'tickets')}
+        <button
+          type="button"
+          onClick={() => openCaseChat(data.id, data.name)}
           className="inline-flex h-11 items-center gap-2 rounded-full bg-on-hero px-5 text-[15px] font-semibold text-hero"
         >
           <Icon name="chat" size={18} />
           {t('case.message')}
-        </Link>
+          {data.unread > 0 && (
+            <>
+              <Badge>{f.number(data.unread)}</Badge>
+              <span className="sr-only">{t('case.tabs.unread')}</span>
+            </>
+          )}
+        </button>
         <button type="button" onClick={onStage} className={raised}>
           <Icon name="pen" size={16} />
           {t('case.changeStage')}

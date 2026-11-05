@@ -18,11 +18,12 @@ import { StageDialog } from './components/StageDialog';
 import { casePath, supervisorPath, type CaseTab } from './paths';
 import { useCaseId } from './useCaseId';
 
-const TABS: readonly CaseTab[] = ['', 'documents', 'applications', 'tickets', 'activity'];
+// Tickets have no tab: they open in the chat window (the case card's button).
+const TABS: readonly CaseTab[] = ['', 'documents', 'applications', 'activity'];
 
 /**
  * Frame of a case file: the summary card, the email bot's problems, the tabs (overview, documents,
- * email and applications, tickets, activity) and the stage dialog.
+ * email and applications, activity) and the stage dialog.
  * Design: canvas V1 "پرونده متقاضی" (SupervisorFile, SupervisorApplications), in the V6 look.
  */
 export default function CaseLayout() {
@@ -63,7 +64,6 @@ function Case({ data }: { data: CaseData }) {
 
   const badge: Partial<Record<CaseTab, { n: number; label: string }>> = {
     documents: { n: data.documents_waiting, label: t('case.tabs.waitingReview') },
-    tickets: { n: data.unread, label: t('case.tabs.unread') },
   };
   const count: Partial<Record<CaseTab, number>> = { applications: data.applications };
 

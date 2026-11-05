@@ -9,17 +9,19 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterTabs } from '@/components/ui/Filters';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Icon } from '@/components/ui/Icon';
 import { Pager } from '@/components/ui/Pager';
 import { Badge } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { openCaseChat } from '@/lib/supervisor/caseChats';
 import { inboxQuery, type InboxFilter } from './api';
 import { casePath } from './paths';
 
 /**
  * Every case's supervisors' thread in one list, those waiting for an answer first; a row opens the
- * conversation inside the case file. (The canvas has the nav item "تیکت‌ها ۷" but no screen.)
+ * conversation in the chat window, so the supervisor stays on the list and answers one after another. (The canvas has the nav item "تیکت‌ها ۷" but no screen.)
  */
 export default function InboxPage() {
   const { t } = useTranslation('supervisor');
@@ -65,12 +67,16 @@ export default function InboxPage() {
         ) : (
           <ul className="m-0 list-none p-0">
             {data.results.map((item) => (
-              <li key={item.applicant.id} className="not-first:shadow-[inset_0_1px_0_var(--hair)]">
-                <Link
-                  to={casePath(item.applicant.id, 'tickets')}
-                  className={`flex items-start gap-3 px-5 py-4 text-text hover:bg-canvas lg:px-8 ${
-                    item.waiting_since ? 'bg-row-highlight' : ''
-                  }`}
+              <li
+                key={item.applicant.id}
+                className={`flex items-stretch not-first:shadow-[inset_0_1px_0_var(--hair)] ${
+                  item.waiting_since ? 'bg-row-highlight' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => openCaseChat(item.applicant.id, item.applicant.name)}
+                  className="flex min-w-0 flex-1 items-start gap-3 py-4 ps-5 pe-2 text-start text-text hover:bg-canvas lg:ps-8"
                 >
                   <Avatar name={item.applicant.name} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -107,6 +113,14 @@ export default function InboxPage() {
                       </>
                     )}
                   </span>
+                </button>
+                <Link
+                  to={casePath(item.applicant.id)}
+                  aria-label={t('inbox.openCase', { name: item.applicant.name })}
+                  title={t('inbox.openCase', { name: item.applicant.name })}
+                  className="flex w-14 flex-none items-center justify-center text-text-2 hover:bg-canvas hover:text-text lg:w-16"
+                >
+                  <Icon name="folder" size={20} />
                 </Link>
               </li>
             ))}

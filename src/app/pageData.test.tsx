@@ -144,8 +144,9 @@ const PAGES: PageCase[] = [
   ].map((path) => ({ path, user: MARYAM })),
   // Writer panel.
   ...['/writer', '/writer/orders/1240'].map((path) => ({ path, user: MARYAM })),
-  // Tickets pages: the thread's messages are chained after the list in the loader.
-  ...['/supervisor/files/1227/tickets', '/writer/orders/1240/tickets'].map((path) => ({
+  // Tickets pages: the thread's messages are chained after the list in the loader. (A case's
+  // tickets address in the supervisor panel opens the chat window: Supervisor.test.tsx.)
+  ...['/writer/orders/1240/tickets'].map((path) => ({
     path,
     user: MARYAM,
     later: [{ key: '"messages"', why: "the thread's id comes from the list (backend item H55)" }],

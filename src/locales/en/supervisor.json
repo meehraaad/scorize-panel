@@ -190,7 +190,7 @@
     "summary": "File summary",
     "supervisors": "Supervisor: {{names}}",
     "consultant": "Consultant: {{name}}",
-    "message": "Send a ticket",
+    "message": "Chat",
     "changeStage": "Change file stage",
     "missingTitle": "File not found",
     "missing": "This file doesn't exist, or you aren't one of its supervisors.",
@@ -397,7 +397,19 @@
     "waitingSince": "Waiting since {{when}}",
     "unread": "unread messages",
     "emptyTitle": "Nothing waiting",
-    "empty": "New messages from applicants show up here."
+    "empty": "New messages from applicants show up here.",
+    "openCase": "{{name}}'s file"
+  },
+  "chat": {
+    "tray": "Minimized chats",
+    "minimize": "Minimize chat",
+    "close": "Close chat",
+    "openCase": "Open {{name}}'s file",
+    "resume": "Open chat with {{name}}",
+    "unread": "{{n}} unread",
+    "draft": "Draft",
+    "error": "The chat didn't load. Check your connection.",
+    "retry": "Try again"
   },
   "reports": {
     "title": "Reports",
