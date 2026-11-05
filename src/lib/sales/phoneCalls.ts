@@ -52,7 +52,8 @@ export const phoneCallsQuery = (owner: number) =>
  */
 export const officeExtensionQuery = queryOptions({
   queryKey: [...SALES_KEY, 'office-extension'],
-  queryFn: ({ signal }) => api<{ extension: string | null }>(`${SALES_API}/calls/extension/`, { signal }),
+  queryFn: ({ signal }) =>
+    api<{ extension: string | null }>(`${SALES_API}/calls/extension/`, { signal }),
 });
 
 export function useSetOfficeExtension() {

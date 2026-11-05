@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -37,6 +37,7 @@ describe('office desk phone extension', () => {
     const browser = userEvent.setup();
     mount();
     const field = await screen.findByLabelText('Desk phone extension');
+    await waitFor(() => expect(field).toBeEnabled());
     await browser.type(field, '۱۰۴');
     await browser.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByRole('button', { name: 'Remove extension' })).toBeInTheDocument();
@@ -54,6 +55,7 @@ describe('office desk phone extension', () => {
     const browser = userEvent.setup();
     mount();
     const field = await screen.findByLabelText('Desk phone extension');
+    await waitFor(() => expect(field).toBeEnabled());
     await browser.type(field, '04');
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     await browser.clear(field);

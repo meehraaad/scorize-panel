@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
@@ -28,10 +28,11 @@ export function OfficeExtension() {
         toast.success(extension ? t('officeExtension.saved') : t('officeExtension.cleared'));
       },
       onError: (error) => {
-        if (!(error instanceof ApiError && error.status === 409)) toast.error(t('officeExtension.error'));
+        if (!(error instanceof ApiError && error.status === 409))
+          toast.error(t('officeExtension.error'));
       },
     });
-  const onSubmit = (event: FormEvent) => {
+  const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
     if (!invalid) submit(digits || null);
   };

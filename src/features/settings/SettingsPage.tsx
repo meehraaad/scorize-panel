@@ -12,7 +12,9 @@ import { useUser } from '@/lib/auth/session';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 
 const OfficeExtension = lazy(() =>
-  import('@/features/sales/components/OfficeExtension').then((m) => ({ default: m.OfficeExtension })),
+  import('@/features/sales/components/OfficeExtension').then((m) => ({
+    default: m.OfficeExtension,
+  })),
 );
 
 const optionClass =
