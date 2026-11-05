@@ -206,8 +206,15 @@ describe('page data loads with the page, not after it', () => {
 
     // The page itself opened (no redirect to login or elsewhere).
     expect(location).toBe(path);
+    // The global seller call listener starts after the page; it is background polling, not page data.
+    const phoneCalls = [NIMA, REZA].includes(user)
+      ? JSON.stringify(['sales', 'phone-calls', user])
+      : null;
     const waterfalls = fetches
-      .filter(({ late, key }) => late && !later.some((allowed) => key.includes(allowed.key)))
+      .filter(
+        ({ late, key }) =>
+          late && key !== phoneCalls && !later.some((allowed) => key.includes(allowed.key)),
+      )
       .map(({ key }) => key);
     expect(waterfalls, 'started by the page after it rendered: add them to its route data').toEqual(
       [],

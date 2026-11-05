@@ -1,9 +1,8 @@
 # Seller live calls
 
-Implementation is staged behind `ON_SERVER.livePhoneCalls = false`. Deploy the paired backend
-`shamrad/lang` change and office AMI bridge before enabling it. Deployment and rollback steps live
-in that repository's `docs/seller-phone-calls.md`; no PBX or production configuration is changed by
-this frontend commit.
+`ON_SERVER.livePhoneCalls` enables call popups for sellers with an assigned extension. The paired
+backend and signed office AMI bridge must be running. Deployment and rollback steps live in
+`shamrad/lang` under `docs/seller-phone-calls.md`. Turn this flag off when rolling that service back.
 
 `GET /api/sales/v1/calls/` returns `{enabled, connected, extension, server_time, calls}` using the
 current Django session. The server chooses the seller's extension and applies existing customer

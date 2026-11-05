@@ -26,8 +26,8 @@ export type ServerFeature =
   | 'livePhoneCalls';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
-  /** Seller PBX snapshots: enable after /sales/v1/calls/ and the signed office bridge are deployed. */
-  livePhoneCalls: false,
+  /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
+  livePhoneCalls: true,
   /** H29 `POST call-request/`. */
   callRequest: true,
   /** H30–H35 `turkey/…` with H75 (review per upload): the Turkey page and the documents tab's Turkey start. */
