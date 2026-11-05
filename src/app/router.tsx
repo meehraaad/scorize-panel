@@ -19,8 +19,6 @@ import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
 import { PanelLayout } from './layouts/PanelLayout';
 import { WorkspaceLayout } from './layouts/WorkspaceLayout';
-import { restoreContactDrafts } from '@/lib/sales/contactDrafts';
-import { restoreCaseChats } from '@/lib/supervisor/caseChats';
 import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
 
 /*
@@ -44,8 +42,6 @@ const currentUser = () => queryClient.query({ ...sessionQuery, staleTime: 'stati
 const prefetchFrame = (panel: PanelDefinition, user: { id: number }) => {
   // Before the page renders: it opens from this tab's last answers, if they were this user's.
   restoreCacheFor(user.id);
-  restoreContactDrafts(user.id);
-  restoreCaseChats(user.id);
   prefetchQueries([unreadQuery, ...(panel.data?.() ?? [])]);
 };
 
