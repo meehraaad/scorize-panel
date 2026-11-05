@@ -17,12 +17,32 @@ import type { TicketsConfig } from '@/lib/tickets/api';
 
 const RULE: FileRule = { types: ATTACHMENT_TYPES, maxBytes: MAX_ATTACHMENT_BYTES };
 
-/** New message in the open thread. "Very urgent" needs its rules accepted first (as on the old site). */
-export function TicketComposer({ config, thread }: { config: TicketsConfig; thread: string }) {
+/**
+ * New message in the open thread. "Very urgent" needs its rules accepted first (as on the old site).
+ * `compact`: in a narrow box (a chat window). `initialText` / `onTextChange`: the unsent text is
+ * kept by the caller (a minimized chat keeps it).
+ */
+export function TicketComposer({
+  config,
+  thread,
+  compact = false,
+  initialText = '',
+  onTextChange,
+}: {
+  config: TicketsConfig;
+  thread: string;
+  compact?: boolean;
+  initialText?: string;
+  onTextChange?: (text: string) => void;
+}) {
   const { t } = useTranslation('tickets');
   const f = useFormat();
   const send = useSendMessage(config, thread);
-  const [text, setText] = useState('');
+  const [text, setTextState] = useState(initialText);
+  const setText = (value: string) => {
+    setTextState(value);
+    onTextChange?.(value);
+  };
   const [priority, setPriority] = useState<Priority>(DEFAULT_PRIORITY);
   const [accepted, setAccepted] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -107,6 +127,7 @@ export function TicketComposer({ config, thread }: { config: TicketsConfig; thre
         onFile: pick,
         onRemove: () => setFile(null),
       }}
+      compact={compact}
       sendLabel={t('composer.send')}
       sending={send.isPending}
       canSend={canSend}

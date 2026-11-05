@@ -152,11 +152,14 @@ emails the public text. Publish after applying the new Django field's generated 
 
 ### Seller contact dictation
 
-The private contact-notes field offers Persian recording/upload when
+The private contact-notes and customer-summary fields offer Persian recording/upload when
 `GET /api/sales/v1/voice/` returns `{enabled: true}`. Upload multipart `audio` to the same path,
 then poll `voice/<id>/` for `queued` / `running` / `done` / `failed`. Only `done` includes `text`.
-The seller reviews and edits the transcript before adding it to the current notes; contact-save
-requests stay unchanged. The backend checks seller permission and token ownership on every poll.
+Speech appends directly to the chosen editable field without saving the contact. Existing typing is
+preserved; oversized transcripts stay in an editable recovery field. Contact-save requests stay
+unchanged. The backend checks seller permission and token ownership on every poll.
 Limit: two minutes and 5 MiB. Backend setup: `lang/docs/seller-voice.md`. Microphone access requires
 HTTPS and the deployed `microphone=(self)` permissions policy. Minimized forms stop recording and
-cancel requests; reviewed text stays in that customer's draft.
+cancel requests; inserted text stays in that customer's draft. Recording also stops after ten
+seconds of silence, before the two-minute limit, or when the browser tab becomes hidden.
+See [Reusable voice fields](voice-input.md) for adding dictation to another controlled input.

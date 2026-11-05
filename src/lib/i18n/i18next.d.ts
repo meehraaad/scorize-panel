@@ -1,4 +1,5 @@
 import 'i18next';
+import type voice from '@/locales/fa/voice.json';
 import type account from '@/locales/fa/account.json';
 import type activities from '@/locales/fa/activities.json';
 import type applications from '@/locales/fa/applications.json';
@@ -30,6 +31,7 @@ declare module 'i18next' {
     defaultNS: 'common';
     resources: {
       common: typeof common;
+      voice: typeof voice;
       auth: typeof auth;
       home: typeof home;
       applications: typeof applications;

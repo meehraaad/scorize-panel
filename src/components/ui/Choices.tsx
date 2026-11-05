@@ -233,22 +233,33 @@ export function SelectField<T extends string>({
 export function TextAreaField({
   label,
   hint,
+  footer,
   className = '',
   ...props
-}: ComponentProps<'textarea'> & { label: string; hint?: string | undefined }) {
+}: ComponentProps<'textarea'> & { label: string; hint?: string | undefined; footer?: ReactNode }) {
   const id = useId();
+  const input = (
+    <textarea
+      id={id}
+      rows={4}
+      aria-describedby={hint ? `${id}-hint` : undefined}
+      className={`${box} resize-y py-3 leading-7 ${footer ? 'min-h-44 pb-16' : ''} ${className}`}
+      {...props}
+    />
+  );
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={id} className="text-sm font-semibold text-text-2">
         {label}
       </label>
-      <textarea
-        id={id}
-        rows={4}
-        aria-describedby={hint ? `${id}-hint` : undefined}
-        className={`${box} resize-y py-3 leading-7 ${className}`}
-        {...props}
-      />
+      {footer !== undefined ? (
+        <div className="relative">
+          {input}
+          {footer && <div className="absolute inset-x-2 bottom-2">{footer}</div>}
+        </div>
+      ) : (
+        input
+      )}
       {hint && (
         <p id={`${id}-hint`} className="m-0 text-sm leading-6 text-text-2">
           {hint}
