@@ -8,7 +8,8 @@ Status: ☐ open · ☑ done
 
 Live seller call popups/timers: paired backend implementation is prepared on
 `shamrad/lang:codex/seller-live-calls`, with signed bridge ingestion and seller-scoped snapshots.
-Deployment and real handset verification remain open; `ON_SERVER.livePhoneCalls` stays off.
+The office bridge and backend are deployed; `ON_SERVER.livePhoneCalls` is enabled. Staff extension
+assignments still need to match their current desk phones.
 See [live-phone-calls.md](live-phone-calls.md).
 
 **Status (2026-10-25):** most of this list is built on branch `claude/eager-bohr-8iw6h3` of
