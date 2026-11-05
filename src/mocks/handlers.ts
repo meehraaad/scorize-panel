@@ -13,6 +13,7 @@ import { managerHandlers, resetManagerMocks } from './salesManager';
 import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
 import { resetTaskMocks, taskHandlers } from './tasks';
 import { storage } from './session';
+import { phoneCallHandlers, resetPhoneMocks } from './phoneCalls';
 import { resetSessionSummaries, sessionSummaryHandlers } from './sessionSummaries';
 import { resetWriterMocks, writerHandlers } from './writer';
 import { salesStaffHandlers } from './salesStaff';
@@ -162,6 +163,7 @@ const login = (user: MockUser) => {
 
 const AUTH = '/profile/authentication';
 export const handlers = [
+  ...phoneCallHandlers,
   ...sessionSummaryHandlers,
   ...activityHandlers,
   http.get('/api/profile/auth/v1/whoami/', () => {
@@ -331,6 +333,7 @@ export const handlers = [
 
 /** Test helper: forget the mock login session and server-side flow. */
 export function resetMockSession() {
+  resetPhoneMocks();
   resetSessionSummaries();
   resetActivityMocks();
   storage.set(null);

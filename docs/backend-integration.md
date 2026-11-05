@@ -8,6 +8,9 @@ of every role).
 
 ## Local development
 
+Seller live-call snapshots are implemented but disabled pending backend/office deployment. See
+[live-phone-calls.md](live-phone-calls.md) for the contract and activation checks.
+
 - `pnpm dev` proxies `/api`, `/profile`, `/static`, `/media`, `/admin` to `127.0.0.1:8000`.
 - Nothing to change in Django: the proxy keeps the `Host: localhost:5173` header, so Django's CSRF
   origin check matches the request host and `CSRF_TRUSTED_ORIGINS` isn't needed.

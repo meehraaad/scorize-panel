@@ -22,9 +22,12 @@ export type ServerFeature =
   | 'foundersAssistant'
   | 'assistantOrganize'
   | 'customerTags'
-  | 'mailServers';
+  | 'mailServers'
+  | 'livePhoneCalls';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /** Seller PBX snapshots: enable after /sales/v1/calls/ and the signed office bridge are deployed. */
+  livePhoneCalls: false,
   /** H29 `POST call-request/`. */
   callRequest: true,
   /** H30–H35 `turkey/…` with H75 (review per upload): the Turkey page and the documents tab's Turkey start. */
