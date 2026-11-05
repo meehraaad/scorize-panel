@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api/client';
 import { SALES_API, SALES_KEY } from './api';
 
@@ -20,6 +20,8 @@ export interface ObservedCall extends PhoneCall {
 }
 
 export interface PhoneSnapshot {
+  /** Live calls are on for this seller; `extension` may still be null until they pick their desk phone. */
+  available: boolean;
   enabled: boolean;
   connected: boolean;
   extension: string | null;
@@ -43,6 +45,30 @@ export const phoneCallsQuery = (owner: number) =>
     refetchOnWindowFocus: true,
     retry: false,
   });
+
+/**
+ * The seller's own desk phone on the office PBX. Not the PortSIP `internal_number` from staff admin:
+ * the two are different phone systems.
+ */
+export const officeExtensionQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'office-extension'],
+  queryFn: ({ signal }) => api<{ extension: string | null }>(`${SALES_API}/calls/extension/`, { signal }),
+});
+
+export function useSetOfficeExtension() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (extension: string | null) =>
+      api<{ extension: string | null }>(`${SALES_API}/calls/extension/`, {
+        method: 'PUT',
+        body: { extension },
+      }),
+    onSuccess: (data) => {
+      client.setQueryData(officeExtensionQuery.queryKey, data);
+      return client.invalidateQueries({ queryKey: [...SALES_KEY, 'phone-calls'] });
+    },
+  });
+}
 
 /** Server timestamps, rather than counting interval ticks, survive navigation and tab throttling. */
 export function callSeconds(call: ObservedCall, now: number) {

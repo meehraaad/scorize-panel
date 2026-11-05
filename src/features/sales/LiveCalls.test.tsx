@@ -48,6 +48,7 @@ const call = (change: Partial<PhoneCall> = {}): PhoneCall => ({
   ...change,
 });
 const snapshot = (calls: PhoneCall[], connected = true): PhoneSnapshot => ({
+  available: true,
   enabled: true,
   connected,
   extension: '103',

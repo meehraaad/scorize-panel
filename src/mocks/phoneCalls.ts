@@ -18,6 +18,7 @@ export const phoneCallHandlers = [
     if (owner !== 3 && owner !== 4) return forbidden();
     return HttpResponse.json(
       snapshots.get(owner) ?? {
+        available: false,
         enabled: false,
         connected: false,
         extension: null,

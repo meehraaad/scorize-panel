@@ -11,6 +11,9 @@ import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { ON_SERVER } from '@/lib/applicant/onServer';
+import { phoneCallsQuery } from '@/lib/sales/phoneCalls';
+import { Notice } from '@/components/ui/Notice';
 import { outreachQuery, activityQuery, insightsQuery, type CallBucket } from './api';
 import { CallList } from './components/CallList';
 import { DayCalendar } from './components/DayCalendar';
@@ -40,6 +43,9 @@ export default function TodayPage() {
   const outreach = useQuery(outreachQuery(page, hot.serverPage, bucket));
   const activity = useQuery(activityQuery(activityPage));
   const insights = useQuery({ ...insightsQuery, enabled: insightsSeen });
+  // Same query as the workspace's live-call listener, so this adds no request.
+  const phone = useQuery({ ...phoneCallsQuery(user.id), enabled: ON_SERVER.livePhoneCalls });
+  const needsExtension = phone.data?.available === true && !phone.data.extension;
   const hotData = outreach.data?.hot;
   if (hotData && hotData.page_size !== hotServerSize) setHotServerSize(hotData.page_size);
   const hotPages = slicedPages(hotData?.count ?? 0, HOT_PAGE, hotServerSize);
@@ -78,6 +84,14 @@ export default function TodayPage() {
           </Link>
         }
       />
+      {needsExtension && (
+        <Notice tone="info">
+          {t('officeExtension.missing')}{' '}
+          <Link to="/settings" className="font-medium text-primary-text underline">
+            {t('officeExtension.missingLink')}
+          </Link>
+        </Notice>
+      )}
       <QuerySection pending={outreach.isPending} error={outreach.error} retry={retry(outreach)}>
         {hotData && waiting > 0 && (
           <HotLeads

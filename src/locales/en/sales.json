@@ -1407,5 +1407,19 @@
       "inbound": "Incoming call",
       "outbound": "Outgoing call"
     }
+  },
+  "officeExtension": {
+    "title": "Office phone",
+    "label": "Desk phone extension",
+    "hint": "The three-digit number of the phone on your desk (e.g. 104). Calls to this extension open in your panel. This is not your PortSIP extension.",
+    "invalid": "An extension is three digits and doesn't start with zero.",
+    "taken": "Another seller has picked this extension. Tell your sales manager if that's wrong.",
+    "save": "Save",
+    "clear": "Remove extension",
+    "saved": "Extension saved.",
+    "cleared": "Extension removed.",
+    "error": "The extension wasn't saved. Check your connection and try again.",
+    "missing": "To see desk phone calls in the panel, enter your extension in settings.",
+    "missingLink": "Go to settings"
   }
 }

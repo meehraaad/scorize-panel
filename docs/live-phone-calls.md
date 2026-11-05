@@ -4,9 +4,12 @@
 backend and signed office AMI bridge must be running. Deployment and rollback steps live in
 `shamrad/lang` under `docs/seller-phone-calls.md`. Turn this flag off when rolling that service back.
 
-`GET /api/sales/v1/calls/` returns `{enabled, connected, extension, server_time, calls}` using the
-current Django session. The server chooses the seller's extension and applies existing customer
-permissions. Each call contains `id`, `extension`, `phone`, `direction` (`inbound`/`outbound`),
+`GET /api/sales/v1/calls/` returns `{available, enabled, connected, extension, server_time, calls}`
+using the current Django session. The server chooses the seller's extension and applies existing
+customer permissions. `available` with no `extension` means the seller hasn't picked their desk phone:
+the Today page links to Settings, where `GET`/`PUT /api/sales/v1/calls/extension/` (`{extension:
+"104" | null}`, 409 when another active seller has it) sets it. This is the office PBX desk phone,
+not the PortSIP `internal_number` from staff admin. Each call contains `id`, `extension`, `phone`, `direction` (`inbound`/`outbound`),
 `status` (`ringing`/`connected`/`ended`/`missed`/`cancelled`), ISO `started_at`, nullable
 `answered_at`/`ended_at`, and `customer: {id, name} | null`.
 
