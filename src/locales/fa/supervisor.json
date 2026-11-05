@@ -543,7 +543,7 @@
     "notify": "نتیجه‌ها به متقاضیان اعلام شود",
     "notifyHelp": "هر متقاضی برای نتیجه‌ی تازه‌اش پیامک و اعلان پنل می‌گیرد.",
     "columns": "ستون‌های فایل:",
-    "columnNames": "file, university, program, deadline, result",
+    "columnNames": "file, university, program, deadline, result, date",
     "sample": "دانلود فایل نمونه",
     "apply": "ثبت {{n}} تغییر",
     "back": "مرحله‌ی قبل",

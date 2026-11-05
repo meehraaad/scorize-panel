@@ -1487,9 +1487,9 @@ export const supervisorHandlers = [
     if (all instanceof Response) return all;
     return new HttpResponse(
       [
-        'file,university,program,deadline,result',
-        '1240,TU Munich,MSc Informatics,2026-12-01,accepted',
-        '1240,McGill University,MSc Computer Science,2026-12-15,submitted',
+        'file,university,program,deadline,result,date',
+        '1240,TU Munich,MSc Informatics,2026-12-01,accepted,2026-03-02',
+        '1240,McGill University,MSc Computer Science,2026-12-15,submitted,',
       ].join('\n'),
       {
         headers: {
