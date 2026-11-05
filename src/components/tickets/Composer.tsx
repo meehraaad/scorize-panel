@@ -57,6 +57,8 @@ interface ComposerProps {
   variant?: 'ticket' | 'chat';
   /** Under the chat bar, from lg ("Enter sends · Shift+Enter: new line"). */
   hint?: string | undefined;
+  /** `ticket` in a narrow box (a floating chat window): the phone bar at every size. */
+  compact?: boolean;
 }
 
 const CHOICE = {
@@ -91,7 +93,10 @@ export function Composer({
   onSubmit,
   variant = 'ticket',
   hint,
+  compact = false,
 }: ComposerProps) {
+  // The wide layout's classes, left out when compact keeps the phone bar at every size.
+  const lg = (classes: string) => (compact ? '' : classes);
   const fileError = attach?.error ? `${id}-file-error` : null;
   const text = useRef<HTMLTextAreaElement>(null);
 
@@ -146,10 +151,12 @@ export function Composer({
   return (
     <form
       onSubmit={submit}
-      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-end gap-2 bg-surface px-3 py-3 shadow-[inset_0_1px_0_var(--hair)] lg:gap-x-2.5 lg:gap-y-3.5 lg:px-7 lg:pt-5 lg:pb-6"
+      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-end gap-2 bg-surface px-3 py-3 shadow-[inset_0_1px_0_var(--hair)] ${lg('lg:gap-x-2.5 lg:gap-y-3.5 lg:px-7 lg:pt-5 lg:pb-6')}`}
     >
       {confirm && (
-        <div className="col-span-3 flex flex-col gap-2.5 rounded-2xl bg-warn-tint px-4 py-3.5 lg:order-3">
+        <div
+          className={`col-span-3 flex flex-col gap-2.5 rounded-2xl bg-warn-tint px-4 py-3.5 ${lg('lg:order-3')}`}
+        >
           <p className="m-0 text-[13px] leading-[1.9] text-text">{confirm.text}</p>
           <label className="inline-flex min-h-11 cursor-pointer items-center gap-2.5 self-start text-sm font-semibold">
             <input
@@ -164,7 +171,7 @@ export function Composer({
       )}
 
       {attach?.file && (
-        <div className="col-span-3 lg:order-4">
+        <div className={`col-span-3 ${lg('lg:order-4')}`}>
           <PickedFile
             ext={attach.file.ext}
             name={attach.file.name}
@@ -178,7 +185,7 @@ export function Composer({
       {attach?.error && (
         <p
           id={fileError ?? undefined}
-          className="col-span-3 m-0 text-sm leading-6 text-danger lg:order-4"
+          className={`col-span-3 m-0 text-sm leading-6 text-danger ${lg('lg:order-4')}`}
         >
           {attach.error}
         </p>
@@ -188,7 +195,7 @@ export function Composer({
         <div
           role="radiogroup"
           aria-labelledby={`${id}-priority`}
-          className="col-span-3 -mx-3 flex [scrollbar-width:none] items-center gap-2.5 overflow-x-auto px-3 lg:order-2 lg:mx-0 lg:flex-wrap lg:px-0"
+          className={`col-span-3 -mx-3 flex [scrollbar-width:none] items-center gap-2.5 overflow-x-auto px-3 ${lg('lg:order-2 lg:mx-0 lg:flex-wrap lg:px-0')}`}
         >
           <span id={`${id}-priority`} className="flex-none text-[13px] text-text-2">
             {priority.label}
@@ -219,7 +226,7 @@ export function Composer({
       )}
 
       {attach ? (
-        <div className="lg:order-5">
+        <div className={lg('lg:order-5')}>
           <FileDrop
             id={`${id}-file`}
             compact
@@ -232,7 +239,7 @@ export function Composer({
         </div>
       ) : (
         // Keeps the phone bar's grid: text in the middle column, send at the end.
-        <span aria-hidden="true" className="lg:hidden" />
+        <span aria-hidden="true" className={lg('lg:hidden')} />
       )}
       <label htmlFor={`${id}-text`} className="sr-only">
         {label}
@@ -244,15 +251,17 @@ export function Composer({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="min-h-11 w-full resize-none rounded-[22px] bg-canvas px-4 py-2 text-base leading-7 text-text shadow-[inset_0_0_0_1px_var(--line-2)] outline-0 placeholder:text-text-2 focus-visible:shadow-[inset_0_0_0_2px_var(--focus)] lg:order-1 lg:col-span-3 lg:min-h-[124px] lg:rounded-[18px] lg:py-3.5 lg:leading-[1.9]"
+        className={`min-h-11 w-full resize-none rounded-[22px] bg-canvas px-4 py-2 text-base leading-7 text-text shadow-[inset_0_0_0_1px_var(--line-2)] outline-0 placeholder:text-text-2 focus-visible:shadow-[inset_0_0_0_2px_var(--focus)] ${lg('lg:order-1 lg:col-span-3 lg:min-h-[124px] lg:rounded-[18px] lg:py-3.5 lg:leading-[1.9]')}`}
       />
       <Button
         type="submit"
         disabled={!canSend || sending}
-        className="max-lg:size-11 max-lg:px-0 lg:order-5 lg:col-start-3"
+        className={
+          compact ? 'size-11 px-0' : 'max-lg:size-11 max-lg:px-0 lg:order-5 lg:col-start-3'
+        }
       >
-        <Icon name="send" size={18} className="lg:hidden" />
-        <span className="max-lg:sr-only">{sendLabel}</span>
+        <Icon name="send" size={18} className={lg('lg:hidden')} />
+        <span className={compact ? 'sr-only' : 'max-lg:sr-only'}>{sendLabel}</span>
       </Button>
     </form>
   );

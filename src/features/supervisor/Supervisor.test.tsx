@@ -2,6 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
+import { clearCaseChats } from '@/lib/supervisor/caseChats';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 
@@ -11,6 +12,8 @@ const SARA_CASE = '/supervisor/files/1240';
 describe('supervisor panel', () => {
   beforeEach(async () => {
     localStorage.clear();
+    sessionStorage.clear();
+    clearCaseChats();
     await i18n.changeLanguage('fa');
     localStorage.setItem('scorize.mock.session', String(MARYAM));
   });
@@ -196,27 +199,56 @@ describe('supervisor panel', () => {
     expect(within(logins).getByText('Sc0rize-1240!')).toBeInTheDocument();
   });
 
-  it('tickets: answers inside the case as staff, and the inbox lists who waits', async () => {
+  it('tickets: a chat window over the panel, kept while browsing, minimized with its text', async () => {
     const user = userEvent.setup();
-    renderApp(`${SARA_CASE}/tickets`);
-    const thread = await screen.findByRole('region', { name: 'سوپروایزرهای پرونده' });
-    expect(await within(thread).findByText(/هزینه‌ی فی را خودم بپردازم/)).toBeInTheDocument();
+    renderApp(SARA_CASE);
+    await user.click(await screen.findByRole('button', { name: /گفت‌وگو/ }));
+    const chat = await screen.findByRole('dialog', { name: 'سارا محمدی' });
+    expect(await within(chat).findByText(/هزینه‌ی فی را خودم بپردازم/)).toBeInTheDocument();
     // Staff pick no priority and see the applicant's rating of a colleague's reply.
-    expect(within(thread).queryByRole('radiogroup', { name: 'اولویت' })).toBeNull();
-    expect(within(thread).getByText('امتیاز متقاضی: ۵ از ۵')).toBeInTheDocument();
+    expect(within(chat).queryByRole('radiogroup', { name: 'اولویت' })).toBeNull();
+    expect(within(chat).getByText('امتیاز متقاضی: ۵ از ۵')).toBeInTheDocument();
 
-    await user.type(within(thread).getByLabelText('متن پیام'), 'بله، فی را از پنل پرداخت کنید.');
-    await user.click(within(thread).getByRole('button', { name: 'ارسال' }));
-    expect(await within(thread).findByText('بله، فی را از پنل پرداخت کنید.')).toBeInTheDocument();
+    await user.type(within(chat).getByLabelText('متن پیام'), 'بله، فی را از پنل پرداخت کنید.');
+    await user.click(within(chat).getByRole('button', { name: 'ارسال' }));
+    expect(await within(chat).findByText('بله، فی را از پنل پرداخت کنید.')).toBeInTheDocument();
 
-    cleanup();
+    // The window stays open on another page of the panel.
+    await user.click(screen.getByRole('link', { name: /^پرونده و مدارک/ }));
+    expect(screen.getByRole('dialog', { name: 'سارا محمدی' })).toBeInTheDocument();
+
+    // Minimized, it waits at the bottom with its unsent text.
+    await user.type(within(chat).getByLabelText('متن پیام'), 'رسید را هم بفرستید');
+    await user.click(within(chat).getByRole('button', { name: 'کوچک کردن گفت‌وگو' }));
+    expect(screen.queryByRole('dialog', { name: 'سارا محمدی' })).toBeNull();
+    const tray = screen.getByRole('complementary', { name: 'گفت‌وگوهای کوچک‌شده' });
+    await user.click(within(tray).getByRole('button', { name: /سارا محمدی.*پیش‌نویس/ }));
+    const again = await screen.findByRole('dialog', { name: 'سارا محمدی' });
+    expect(within(again).getByLabelText('متن پیام')).toHaveValue('رسید را هم بفرستید');
+    await user.click(within(again).getByRole('button', { name: 'بستن گفت‌وگو' }));
+    expect(screen.queryByRole('dialog', { name: 'سارا محمدی' })).toBeNull();
+  });
+
+  it('tickets: the inbox lists who waits and answers in the chat window, on the same page', async () => {
+    const user = userEvent.setup();
     renderApp('/supervisor/tickets');
     const inbox = await screen.findByRole('region', { name: 'گفت‌وگوها' });
-    const ali = await within(inbox).findByRole('link', { name: /علی نوری/ });
-    expect(ali).toHaveAttribute('href', '/supervisor/files/1219/tickets');
+    const ali = await within(inbox).findByRole('button', { name: /علی نوری/ });
     expect(within(ali).getByText('خیلی ضروری')).toBeInTheDocument();
-    // Sara was just answered: not waiting any more.
-    expect(within(inbox).queryByRole('link', { name: /سارا محمدی/ })).toBeNull();
+    expect(within(inbox).getByRole('link', { name: 'پرونده‌ی علی نوری' })).toHaveAttribute(
+      'href',
+      '/supervisor/files/1219',
+    );
+    await user.click(ali);
+    expect(await screen.findByRole('dialog', { name: 'علی نوری' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'تیکت‌ها' })).toBeInTheDocument();
+  });
+
+  it("tickets: a case's old tickets address opens its chat over the case file", async () => {
+    renderApp(`${SARA_CASE}/tickets`);
+    expect(await screen.findByRole('dialog', { name: 'سارا محمدی' })).toBeInTheDocument();
+    const tabs = screen.getByRole('navigation', { name: 'بخش‌های پرونده' });
+    expect(within(tabs).queryByRole('link', { name: /تیکت‌ها/ })).toBeNull();
   });
 
   it("tasks: the shared tasks page with the supervisor's follow-ups", async () => {
