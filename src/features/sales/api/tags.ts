@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { ApiError, api } from '@/lib/api/client';
 import { SALES_API, SALES_KEY } from '@/lib/sales/api';
 import type { TagTone } from '@/components/ui/Tags';
 import { customerKey, type CustomerData } from './customer';
@@ -19,6 +19,9 @@ export interface CustomerTag {
 
 /** Django's `MAX_TAGS_PER_CUSTOMER` (api/sales/v1/common.py). */
 export const MAX_TAGS_PER_CUSTOMER = 5;
+
+/** `CustomerTag.name`'s `max_length`. */
+export const MAX_TAG_NAME = 32;
 
 export const TAG_TONES = [
   'blue',
@@ -61,11 +64,34 @@ export function tagsOf(ids: readonly number[], list: readonly CustomerTag[] | un
   return list.filter((tag) => wanted.has(tag.id));
 }
 
+/**
+ * One customer's tag changes run one after another (a React Query mutation scope), so a quick
+ * second tap can't land before the first and leave the older list on the server. Django also
+ * locks the customer's row while it changes their tags.
+ */
+const tagChangesKey = (customer: number) => [...SALES_KEY, 'customer-tags', customer] as const;
+
+function useTagChange(customer: number) {
+  const client = useQueryClient();
+  const mutationKey = tagChangesKey(customer);
+  /** Django's answer is the customer's tags, unless another change is still on its way. */
+  const settle = (tags: number[]) => {
+    if (client.isMutating({ mutationKey }) <= 1)
+      client.setQueryData<CustomerData>(customerKey(customer), (current) =>
+        current ? { ...current, tags } : current,
+      );
+    return client.invalidateQueries({ queryKey: [...SALES_KEY, 'leads'] });
+  };
+  return { client, mutationKey, scope: { id: mutationKey.join(':') }, settle };
+}
+
 /** Replaces a customer's tags, shown at once on the card (undone if Django says no). */
 export function useCustomerTags(customer: number) {
-  const client = useQueryClient();
+  const { client, mutationKey, scope, settle } = useTagChange(customer);
   const key = customerKey(customer);
   return useMutation({
+    mutationKey,
+    scope,
     mutationFn: (tags: number[]) =>
       api<{ tags: number[] }>(`${SALES_API}/customers/${String(customer)}/tags/`, {
         method: 'PUT',
@@ -78,13 +104,57 @@ export function useCustomerTags(customer: number) {
       return { before };
     },
     onError: (_error, _tags, context) => {
+      // A later change still on its way builds on this one: ask Django instead of undoing it.
+      if (client.isMutating({ mutationKey }) > 1)
+        return client.invalidateQueries({ queryKey: key });
       if (context?.before) client.setQueryData(key, context.before);
     },
+    onSuccess: (data) => settle(data.tags),
+  });
+}
+
+export interface TagAdded {
+  /** The team's tag with this name (however it was typed), or the new one. */
+  tag: CustomerTag;
+  /** The customer's tags now. */
+  tags: number[];
+}
+
+/** Why Django didn't put a tag on by name: `archived` / `too_many` are 409s, `full` a 400. */
+export type TagAddRefusal = 'archived' | 'too_many' | 'full' | 'throttled';
+
+export function tagAddRefusal(error: unknown): TagAddRefusal | null {
+  if (!(error instanceof ApiError)) return null;
+  if (error.status === 429) return 'throttled';
+  if (error.status === 400) return 'full';
+  const code = (error.body as { code?: unknown } | null)?.code;
+  return error.status === 409 && (code === 'archived' || code === 'too_many') ? code : null;
+}
+
+/**
+ * Puts a tag on by name: the team's tag with the same key, or a new one Django adds to the list
+ * (the unique key keeps two sellers typing one new word at once to one tag). Searching never calls
+ * this: the picker filters the list it already has, so only a tap on "create" sends a request.
+ */
+export function useAddTagByName(customer: number) {
+  const { client, mutationKey, scope, settle } = useTagChange(customer);
+  return useMutation({
+    mutationKey,
+    scope,
+    mutationFn: (name: string) =>
+      api<TagAdded>(`${SALES_API}/customers/${String(customer)}/tags/`, {
+        method: 'POST',
+        body: { name },
+      }),
     onSuccess: (data) => {
-      client.setQueryData<CustomerData>(key, (current) =>
-        current ? { ...current, tags: data.tags } : current,
+      // The list may be minutes old, and another seller may have just made this tag.
+      client.setQueryData<CustomerTag[]>(TAGS_KEY, (list) =>
+        list && !list.some((tag) => tag.id === data.tag.id) ? [...list, data.tag] : list,
       );
-      return client.invalidateQueries({ queryKey: [...SALES_KEY, 'leads'] });
+      return Promise.all([
+        settle(data.tags),
+        client.invalidateQueries({ queryKey: managerTagsQuery.queryKey }),
+      ]);
     },
   });
 }

@@ -1296,7 +1296,7 @@
     },
     "tags": {
       "title": "Customer tags",
-      "subtitle": "The sales team's tags. Sellers tag customers from this list.",
+      "subtitle": "The sales team's tags. Sellers tag customers from this list and add a tag that isn't on it.",
       "new": "New tag",
       "name": "Tag name",
       "namePlaceholder": "e.g. VIP",
@@ -1385,7 +1385,15 @@
     "noMatch": "No tag has this name.",
     "noneYet": "No tags yet.",
     "full": "A customer has at most {{max}} tags. Remove one to add another.",
-    "managerHint": "The sales manager adds new tags in “Customer tags”.",
+    "createHint": "Not on the list? Type its name and add it; it joins the team list too.",
+    "create": "Add new tag “{{name}}”",
+    "created": "Tag “{{name}}” added.",
+    "refused": {
+      "archived": "“{{name}}” is archived. Ask the sales manager to restore it.",
+      "too_many": "The team's tag list is full. Ask the sales manager to archive one.",
+      "full": "A customer has at most {{max}} tags. Remove one to add another.",
+      "throttled": "You've made many new tags. Try again in a little while."
+    },
     "archivedName": "{{name}} (archived)"
   },
   "phoneCall": {

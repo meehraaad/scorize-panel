@@ -45,12 +45,17 @@ export function SearchField({
   value,
   onChange,
   className = 'flex-[1_1_100%] sm:flex-[0_1_300px]',
+  maxLength,
+  onEnter,
 }: {
   label: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  maxLength?: number;
+  /** Enter in the field (e.g. create what was typed). */
+  onEnter?: () => void;
 }) {
   return (
     <label
@@ -62,6 +67,15 @@ export function SearchField({
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onKeyDown={
+          onEnter &&
+          ((event) => {
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            onEnter();
+          })
+        }
+        maxLength={maxLength}
         placeholder={placeholder}
         className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-text outline-0 placeholder:text-text-2"
       />
