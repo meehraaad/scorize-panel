@@ -11,12 +11,12 @@ import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   TASK_TEAMS,
-  useCreateTask,
   type TaskKind,
   type TaskStatus,
   type TaskSummary,
   type TaskTeam,
 } from '@/lib/tasks/api';
+import { useCreateTask } from '@/lib/tasks/changes';
 import { customerKey, type CustomerData } from '../api';
 import { salesPath } from '../paths';
 import { fromLocalInput, quickWhen } from '@/lib/when';

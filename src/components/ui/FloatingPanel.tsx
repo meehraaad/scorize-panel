@@ -58,7 +58,7 @@ export function FloatingPanel({
         chat
           ? 'h-[calc(100dvh-180px)] lg:h-[min(660px,calc(100dvh-124px))] lg:w-[420px]'
           : `max-h-[calc(100dvh-180px)] lg:max-h-[calc(100dvh-124px)] ${wide ? 'lg:w-[560px]' : 'lg:w-[440px]'}`
-      } ${icon ? 'ring-2 ring-primary/40' : ''}`}
+      } ${icon ? 'ring-2 ring-primary' : ''}`}
     >
       <div
         className={

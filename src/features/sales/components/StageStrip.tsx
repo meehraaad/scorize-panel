@@ -51,8 +51,8 @@ export function StageStrip({
       <legend className="mb-3 p-0 text-sm font-semibold text-text-2">
         {t('customer.logDialog.board.legend')}
       </legend>
-      <div className="-mx-1 overflow-x-auto px-1 pb-1">
-        <div className="flex min-w-max gap-1.5 sm:min-w-0">
+      <div className="overflow-x-auto p-1">
+        <div className="flex gap-1.5">
           {LANES.map((lane) => {
             const isCurrent = lane === current;
             const option: Choice | null = isCurrent
@@ -62,11 +62,11 @@ export function StageStrip({
             return (
               <label
                 key={lane}
-                className={`relative flex min-h-32 w-[88px] flex-col gap-2 rounded-xl p-1.5 sm:w-auto sm:flex-1 ${
+                className={`relative flex min-h-32 w-20 flex-none flex-col gap-2 rounded-xl p-1.5 ${
                   option
                     ? 'cursor-pointer bg-board-lane hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus'
                     : 'bg-board-lane opacity-45'
-                } ${chosen ? 'shadow-[inset_0_0_0_2px_var(--primary)]' : ''}`}
+                } ${chosen ? 'ring-2 ring-primary ring-inset' : ''}`}
               >
                 <input
                   type="radio"
@@ -105,7 +105,7 @@ export function StageStrip({
         </div>
       </div>
       {movable.includes('lost') && (
-        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 self-start rounded-full px-4 text-sm font-medium text-danger shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-danger-tint has-checked:bg-danger-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--danger)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus">
+        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 self-start rounded-full px-4 text-sm font-medium text-danger shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-danger-tint has-checked:bg-danger-tint has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus">
           <input
             type="radio"
             name={group}

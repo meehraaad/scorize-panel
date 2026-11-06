@@ -7,7 +7,8 @@ import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useTaskChange, type QueueItem } from '@/lib/tasks/api';
+import { type QueueItem } from '@/lib/tasks/api';
+import { useTaskChange } from '@/lib/tasks/changes';
 import type { TasksConfig } from '../config';
 import { RequestDialog } from './RequestDialog';
 

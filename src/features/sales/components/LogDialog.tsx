@@ -380,10 +380,11 @@ export function LogDialog({
               size="lg"
               disabled={log.isPending}
               onClick={() => setConfirmDiscard(true)}
+              aria-label={t('contactDraft.discard')}
               className="px-4"
             >
               <Icon name="trash" size={18} />
-              <span className="sr-only sm:not-sr-only">{t('contactDraft.discard')}</span>
+              <span className="hidden sm:inline">{t('contactDraft.discard')}</span>
             </Button>
           </>
         )
@@ -410,7 +411,7 @@ function Step({ number, title, children }: { number: number; title: string; chil
   return (
     <section
       aria-labelledby={id}
-      className="flex flex-col gap-5 border-t border-hair pt-6 first:border-t-0 first:pt-0"
+      className={`flex flex-col gap-5 ${number > 1 ? 'border-t border-hair pt-6' : ''}`}
     >
       <h3 id={id} className="m-0 flex items-center gap-3 font-display text-base font-bold">
         <span

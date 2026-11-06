@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { TASKS_API, TASKS_KEY, requestQuery, type ReactionDetail, type TasksPanel } from './api';
+import { TASKS_API, TASKS_KEY, type ReactionDetail, type TasksPanel } from './api';
+import { requestQuery } from './changes';
 
 // Out of ./api.ts: the panels' first load reads that file for their routes; this is popup-only.
 
