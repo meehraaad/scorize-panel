@@ -17,6 +17,8 @@ export interface OfferOptions {
   approval_above: number;
   /** Instalment counts to start from; the seller can add or remove rows. */
   instalments: number[];
+  /** The standard contract, in order. */
+  clauses: StandardClause[];
 }
 
 /**
@@ -42,6 +44,24 @@ export interface Instalment {
   date: string | null;
 }
 
+/** A clause of the standard contract (Django's `ContractClause`, S51). */
+export interface StandardClause {
+  id: number;
+  title: string;
+  text: string;
+}
+
+/**
+ * How this customer's contract differs from the standard one, a clause at a time (S51): `clause`
+ * is the standard clause changed or removed, or null for a clause added. Only differences are kept.
+ */
+export interface ClauseEdit {
+  clause: number | null;
+  title: string;
+  text: string;
+  removed: boolean;
+}
+
 /** At most this many instalments (Django's `MAX_INSTALMENTS`). */
 export const MAX_INSTALMENTS = 12;
 
@@ -62,6 +82,8 @@ export interface Offer {
    * the price after the discount (400 otherwise); `save` keeps a half-done schedule.
    */
   schedule: Instalment[];
+  /** The clauses changed for this customer; the manager reviews only these. */
+  clauses: ClauseEdit[];
   manager_note: string;
 }
 

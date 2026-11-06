@@ -87,7 +87,26 @@ export function useAssignLeads() {
 }
 
 export type DraftTerm =
-  'services' | 'degree' | 'applies' | 'period' | 'amount' | 'instalments' | 'language';
+  | 'services'
+  | 'degree'
+  | 'countries'
+  | 'applies'
+  | 'period'
+  | 'amount'
+  | 'instalments'
+  | 'language';
+
+/** A clause that differs from the standard contract (S51), with the standard text it changes. */
+export interface ClauseChange {
+  kind: 'changed' | 'added' | 'removed';
+  title: string;
+  text: string;
+  /** Null when added. */
+  base_title: string | null;
+  base_text: string | null;
+  /** New since the manager returned the offer. */
+  since_review: boolean;
+}
 
 export interface ContractDraft {
   id: number;
@@ -101,11 +120,20 @@ export interface ContractDraft {
   discount: number;
   /** Under the name: field, countries, seller, source. */
   meta: string;
-  /** Values localized by the server. */
-  terms: { key: DraftTerm; value: string }[];
+  /**
+   * Values localized by the server. `previous`: what the line said when the manager returned the
+   * offer, when it changed since (null otherwise, and on a first review).
+   */
+  terms: { key: DraftTerm; value: string; previous: string | null }[];
   /** Automatic checks: price list, open debts, discount over the seller's limit… */
   checks: { ok: boolean; text: string }[];
   note: string;
+  /** Only the clauses that differ from the standard contract. */
+  clauses: ClauseChange[];
+  /** Clauses in the standard contract. */
+  standard_clauses: number;
+  /** Returned to the seller before: `previous` and `since_review` mark what changed since. */
+  resubmitted: boolean;
 }
 
 export const approvalsQuery = queryOptions({

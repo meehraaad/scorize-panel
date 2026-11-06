@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import type {
   ApplyFile,
   NewSale,
+  ClauseEdit,
   Offer,
   OfferData,
   Product,
@@ -194,6 +195,49 @@ const ERFAN_FILE: ApplyFile = {
   ],
 };
 
+/** Django's standard contract (`ContractClause`, S51), as the admin keeps it. */
+export const STANDARD_CLAUSES: OfferData['options']['clauses'] = [
+  {
+    id: 1,
+    title: 'موضوع قرارداد',
+    text: 'اسکورایز در انتخاب دانشگاه، آماده‌سازی مدارک و ثبت درخواست پذیرش، مشاوره و همراهی می‌کند.',
+  },
+  {
+    id: 2,
+    title: 'تعهدات متقاضی',
+    text: 'متقاضی مدارک خواسته‌شده را تا ۷ روز پس از درخواست کارشناس ارائه می‌کند.',
+  },
+  {
+    id: 3,
+    title: 'فسخ قرارداد',
+    text: 'تا ۷ روز پس از امضا، با فسخ قرارداد کل مبلغ پرداختی بازگردانده می‌شود.',
+  },
+];
+
+/** Django's `clean_edits`: an "edit" that leaves a standard clause as it is drops out. */
+function cleanClauses(rows: ClauseEdit[]): ClauseEdit[] | null {
+  const kept: ClauseEdit[] = [];
+  for (const row of rows) {
+    if (row.clause === null) {
+      if (row.removed) continue;
+      if (!row.title.trim() || !row.text.trim()) return null;
+      kept.push(row);
+      continue;
+    }
+    const base = STANDARD_CLAUSES.find((clause) => clause.id === row.clause);
+    if (!base || kept.some((edit) => edit.clause === row.clause)) return null;
+    if (row.removed) {
+      kept.push({ ...row, title: base.title, text: base.text });
+      continue;
+    }
+    if (!row.text.trim()) return null;
+    const title = row.title.trim() || base.title;
+    if (title !== base.title || row.text.trim() !== base.text)
+      kept.push({ ...row, title, text: row.text.trim() });
+  }
+  return kept;
+}
+
 const OFFER_OPTIONS: OfferData['options'] = {
   features: [
     { key: 'admission', price: 70_000_000 },
@@ -206,6 +250,7 @@ const OFFER_OPTIONS: OfferData['options'] = {
   discounts: [0, 5, 10, 15],
   approval_above: 10,
   instalments: [1, 2, 3, 4],
+  clauses: STANDARD_CLAUSES,
 };
 
 const customerOrError = (data: SalesState, id: unknown) =>
@@ -309,7 +354,9 @@ export const salesCustomerHandlers = [
     const amount = Math.round(total * (1 - offer.discount / 100));
     if (action !== 'save' && offer.schedule.reduce((sum, row) => sum + row.amount, 0) !== amount)
       return HttpResponse.json({ schedule: ['total'] }, { status: 400 });
-    data.offers.set(item.id, offer);
+    const clauses = cleanClauses(offer.clauses);
+    if (!clauses) return HttpResponse.json({ clauses: ['invalid'] }, { status: 400 });
+    data.offers.set(item.id, { ...offer, clauses });
     item.lead.amount = amount;
     if (action !== 'save') {
       item.lead.stage = action === 'submit' ? 'draft' : 'offer';

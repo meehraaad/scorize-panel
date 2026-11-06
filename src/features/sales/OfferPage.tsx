@@ -24,6 +24,8 @@ import {
   type OfferAction,
   type OfferOptions,
 } from './api';
+import { clausesComplete } from './clauses';
+import { ClauseEditor } from './components/ClauseEditor';
 import { ScheduleEditor } from './components/ScheduleEditor';
 import { useSalesFormat } from './format';
 import { customerPath } from './paths';
@@ -63,6 +65,7 @@ const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => 
     options.instalments.includes(3) ? 3 : (options.instalments[0] ?? 1),
     nextMonth(),
   ),
+  clauses: [],
   manager_note: '',
 });
 
@@ -100,7 +103,7 @@ export default function OfferPage() {
     ? offer.schedule
     : suggestedSchedule(total, offer.schedule.length, offer.start);
   const needsManager = offer.discount > options.approval_above;
-  const rowsDone = scheduleComplete(schedule);
+  const rowsDone = scheduleComplete(schedule) && clausesComplete(offer.clauses);
   const addsUp = scheduleTotal(schedule) === total;
   const valid =
     offer.features.length > 0 &&
@@ -269,6 +272,19 @@ export default function OfferPage() {
               <ScheduleEditor schedule={schedule} total={total} onChange={setSchedule} />
             </SectionCard>
 
+            <SectionCard
+              id="offer-clauses"
+              variant="panel"
+              size="lg"
+              title={t('offer.clauses.section')}
+            >
+              <ClauseEditor
+                standard={options.clauses}
+                edits={offer.clauses}
+                onChange={(edits) => set('clauses', edits)}
+              />
+            </SectionCard>
+
             <SectionCard id="offer-note" variant="panel" size="lg" title={t('offer.note')}>
               <TextAreaField
                 label={t('offer.noteLabel')}
@@ -354,11 +370,13 @@ export default function OfferPage() {
               </Button>
               {!valid && (
                 <span className="text-xs text-text-2">
-                  {!rowsDone
-                    ? t('offer.schedule.incomplete')
-                    : !addsUp
-                      ? t('offer.schedule.mismatch')
-                      : t('offer.incomplete')}
+                  {!clausesComplete(offer.clauses)
+                    ? t('offer.clauses.incomplete')
+                    : !rowsDone
+                      ? t('offer.schedule.incomplete')
+                      : !addsUp
+                        ? t('offer.schedule.mismatch')
+                        : t('offer.incomplete')}
                 </span>
               )}
             </div>
