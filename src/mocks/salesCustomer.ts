@@ -294,12 +294,23 @@ export const salesCustomerHandlers = [
       return HttpResponse.json({ features: ['required'] }, { status: 400 });
     if (action === 'send' && offer.discount > OFFER_OPTIONS.approval_above)
       return HttpResponse.json({ discount: ['needs_approval'] }, { status: 400 });
-    data.offers.set(item.id, offer);
+    // Django's S47 checks: the prepayment first and only first, a date on dated rows.
+    const [first, ...rest] = offer.schedule;
+    if (
+      first?.when !== 'signing' ||
+      rest.some((row) => row.when === 'signing') ||
+      offer.schedule.some((row) => row.amount < 1 || (row.when === 'date' && !row.date))
+    )
+      return HttpResponse.json({ schedule: ['invalid'] }, { status: 400 });
     const total = offer.features.reduce(
       (sum, key) => sum + (OFFER_OPTIONS.features.find((entry) => entry.key === key)?.price ?? 0),
       0,
     );
-    item.lead.amount = Math.round(total * (1 - offer.discount / 100));
+    const amount = Math.round(total * (1 - offer.discount / 100));
+    if (action !== 'save' && offer.schedule.reduce((sum, row) => sum + row.amount, 0) !== amount)
+      return HttpResponse.json({ schedule: ['total'] }, { status: 400 });
+    data.offers.set(item.id, offer);
+    item.lead.amount = amount;
     if (action !== 'save') {
       item.lead.stage = action === 'submit' ? 'draft' : 'offer';
       item.lead.stage_since = new Date().toISOString();

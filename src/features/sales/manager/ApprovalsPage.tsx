@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { approvalsQuery, useDecideDraft, type ApprovalAction, type ContractDraft } from '../api';
 import { customerPath } from '../paths';
@@ -103,7 +104,15 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
     if (action !== 'approve' && !comment.trim()) return;
     decide.mutate(
       { id: draft.id, action, comment: comment.trim() },
-      { onError: () => toast.error(t('error')) },
+      {
+        // 409: the customer has an open contract, or a country is no longer offered.
+        onError: (error) =>
+          toast.error(
+            error instanceof ApiError && error.status === 409
+              ? t('manager.approvals.conflict')
+              : t('error'),
+          ),
+      },
     );
   };
 

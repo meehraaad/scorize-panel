@@ -583,6 +583,17 @@
     "waiting": {
       "signing": "Waiting for the seller to upload the signed contract",
       "payment": "Waiting for the customer's prepayment"
+    },
+    "cancel": {
+      "open": "Cancel {{name}}'s case",
+      "title": "Cancel {{name}}'s case",
+      "text": "The contract is rejected, the case and its instalments are removed, and the lead goes back to the offer stage so the seller can make a new offer.",
+      "reason": "Why it is cancelled",
+      "reasonRequired": "Write why it is cancelled.",
+      "confirm": "Cancel {{name}}'s case",
+      "keep": "Keep it",
+      "done": "{{name}}'s case was cancelled.",
+      "paid": "The prepayment is paid or its receipt is in review: refund or decline it in the admin first."
     }
   }
 }

@@ -207,7 +207,7 @@ function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
             key: 'amount',
             value: `${String(Math.round((item.lead.amount ?? 0) / 1_000_000))} میلیون تومان`,
           },
-          { key: 'instalments', value: `${String(offer?.instalments ?? 3)} قسط` },
+          { key: 'instalments', value: `${String(offer?.schedule.length ?? 3)} قسط` },
           { key: 'language', value: offer?.language_score || 'IELTS 6' },
         ],
         checks: [
@@ -454,7 +454,8 @@ export const managerHandlers = [
     item.lead.stage_since = new Date().toISOString();
     if (action === 'approve') {
       item.lead.stage = 'won';
-      openHandoff(item.id, item.name, item.lead.amount ?? 0, item.countries);
+      const schedule = data.sales.offers.get(item.id)?.schedule;
+      openHandoff(item.id, item.name, item.lead.amount ?? 0, item.countries, schedule);
     } else if (action === 'return') item.lead.stage = 'offer';
     else {
       item.lead.stage = 'lost';

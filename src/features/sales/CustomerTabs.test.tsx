@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
-import { instalmentPlan } from './plan';
+import { scheduleComplete, scheduleTotal, spreadRest, suggestedSchedule } from './plan';
 import '@/test/server';
 import { toasts } from '@/test/toasts';
 
@@ -128,14 +128,56 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
     expect(router.state.location.pathname).toBe(ERFAN);
   });
+
+  it('offer: the instalments are what was agreed in the session and must add up', async () => {
+    const user = userEvent.setup();
+    renderApp(`${ERFAN}/offer`);
+    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
+    const submit = screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' });
+    expect(screen.getByText(/جمع اقساط ۷۰٬۰۰۰٬۰۰۰ تومان از ۷۰٬۰۰۰٬۰۰۰ تومان/)).toBeInTheDocument();
+
+    // The customer pays a bigger prepayment, and the last instalment after the visa.
+    const prepayment = screen.getAllByLabelText('مبلغ (تومان)')[0] as HTMLElement;
+    await user.clear(prepayment);
+    await user.type(prepayment, '40000000');
+    expect(screen.getByText(/۱۲٬۰۰۰٬۰۰۰ تومان بیشتر از مبلغ قرارداد/)).toBeInTheDocument();
+    expect(submit).toBeDisabled();
+    await user.selectOptions(screen.getAllByLabelText('زمان پرداخت')[2] as HTMLElement, 'visa');
+    await user.click(screen.getByRole('button', { name: 'تقسیم باقی‌مانده بین قسط‌ها' }));
+    expect(screen.getByText(/جمع اقساط ۷۰٬۰۰۰٬۰۰۰ تومان از/)).toBeInTheDocument();
+    expect(submit).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: 'افزودن قسط' }));
+    expect(screen.getByText('قسط ۴')).toBeInTheDocument();
+    expect(submit).toBeDisabled(); // the new dated row has no date yet
+    await user.click(screen.getByRole('button', { name: 'حذف قسط ۴' }));
+    expect(submit).toBeEnabled();
+  });
 });
 
-describe('instalmentPlan', () => {
-  it('takes 40% first (rounded to 100,000), the rest evenly, monthly from the start', () => {
-    const plan = instalmentPlan(70_000_000, 3, '2026-11-22');
-    expect(plan.map((item) => item.amount)).toEqual([28_000_000, 21_000_000, 21_000_000]);
-    expect(plan[0]?.due).toBeNull();
-    expect(new Date(plan[1]?.due ?? '').getMonth()).toBe(11);
-    expect(instalmentPlan(5, 1, '2026-11-22')).toEqual([{ due: null, amount: 5 }]);
+describe('instalment schedule', () => {
+  it('suggests 40% at signing (rounded to 100,000), the rest monthly from the start', () => {
+    const rows = suggestedSchedule(70_000_000, 3, '2026-11-22');
+    expect(rows.map((row) => row.amount)).toEqual([28_000_000, 21_000_000, 21_000_000]);
+    expect(rows.map((row) => row.when)).toEqual(['signing', 'date', 'date']);
+    expect(rows[1]?.date).toBe('2026-12-22');
+    expect(suggestedSchedule(5, 1, '2026-11-22')).toEqual([
+      { amount: 5, when: 'signing', date: null },
+    ]);
+  });
+
+  it('spreads what is left after the prepayment, and checks the rows', () => {
+    const rows = spreadRest(
+      [
+        { amount: 50_000_000, when: 'signing', date: null },
+        { amount: 0, when: 'admission', date: null },
+        { amount: 0, when: 'visa', date: null },
+      ],
+      104_500_000,
+    );
+    expect(rows.map((row) => row.amount)).toEqual([50_000_000, 27_250_000, 27_250_000]);
+    expect(scheduleTotal(rows)).toBe(104_500_000);
+    expect(scheduleComplete(rows)).toBe(true);
+    expect(scheduleComplete([{ amount: 1, when: 'date', date: null }])).toBe(false);
   });
 });

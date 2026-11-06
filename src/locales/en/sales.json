@@ -1026,14 +1026,30 @@
     "noDiscount": "No discount",
     "discountManager": "{{n}} (manager approval)",
     "managerNeeded": "A discount above {{n}} needs the sales manager's approval. The offer also goes to the manager before the customer sees it.",
-    "instalments": "Instalments",
-    "once": "One payment",
-    "count": "{{n}} instalments",
-    "plan": {
-      "number": "No.",
-      "due": "Due",
-      "amount": "Amount",
-      "atSigning": "At signing"
+    "schedule": {
+      "title": "Instalments (as agreed in the session)",
+      "hint": "Enter the amount, count and timing of each instalment as you agreed in the session. The first is the prepayment, paid at signing; the others on a date or after a step of the case.",
+      "prepayment": "Instalment 1 · prepayment",
+      "row": "Instalment {{n}}",
+      "when": "When it is paid",
+      "whenOption": {
+        "signing": "At signing",
+        "date": "On a date",
+        "admission": "After the admission",
+        "embassy": "After the embassy appointment",
+        "visa_process": "After the visa process starts",
+        "visa": "After the visa"
+      },
+      "date": "Date",
+      "amount": "Amount (toman)",
+      "remove": "Remove instalment {{n}}",
+      "add": "Add an instalment",
+      "spread": "Spread the rest over the instalments",
+      "total": "Instalments add up to {{sum}} of {{total}}",
+      "left": "{{amount}} left",
+      "over": "{{amount}} over the contract price",
+      "mismatch": "To send it, the instalments must add up to the contract price.",
+      "incomplete": "Each instalment needs an amount, and a dated one its date."
     },
     "note": "4. Note for the manager",
     "noteLabel": "Only the sales manager sees this",
@@ -1144,7 +1160,8 @@
       "commentRequired": "Write a note to return or reject.",
       "approve": "Approve and send to the customer's panel",
       "return": "Return to the seller",
-      "reject": "Reject {{name}}'s draft"
+      "reject": "Reject {{name}}'s draft",
+      "conflict": "Not approved: this customer has an open contract or the offer's terms no longer hold. See the checks or return it to the seller."
     },
     "team": {
       "title": "Sales team · {{month}}",

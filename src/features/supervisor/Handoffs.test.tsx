@@ -67,6 +67,28 @@ describe('contract handoff', () => {
     expect(screen.queryByRole('region', { name: 'آرمان صادقی' })).not.toBeInTheDocument();
   });
 
+  it('cancels a case that will not start, with a reason; not once it is prepaid', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/supervisor/new');
+    await screen.findByRole('heading', { name: 'پرونده‌های تازه', level: 1 });
+
+    // Prepaid: refunded in the admin first.
+    const paid = screen.getByRole('region', { name: 'آرمان صادقی' });
+    expect(within(paid).getByRole('button', { name: 'لغو پرونده‌ی آرمان صادقی' })).toBeDisabled();
+
+    const waiting = screen.getByRole('region', { name: 'کیان مرادی' });
+    await user.click(within(waiting).getByRole('button', { name: 'لغو پرونده‌ی کیان مرادی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'لغو پرونده‌ی کیان مرادی' });
+    await user.click(within(dialog).getByRole('button', { name: 'لغو پرونده‌ی کیان مرادی' }));
+    expect(within(dialog).getByText('علت لغو را بنویسید.')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('علت لغو'), 'مشتری منصرف شد');
+    await user.click(within(dialog).getByRole('button', { name: 'لغو پرونده‌ی کیان مرادی' }));
+    expect(await toasts().findByText('پرونده‌ی کیان مرادی لغو شد.')).toBeInTheDocument();
+    await screen.findByText(/۱ پرونده منتظر سوپروایزر/);
+    expect(screen.queryByRole('region', { name: 'کیان مرادی' })).not.toBeInTheDocument();
+  });
+
   it('is only for those who assign supervisors', async () => {
     loginAs(NIMA);
     const router = renderApp('/supervisor/new');

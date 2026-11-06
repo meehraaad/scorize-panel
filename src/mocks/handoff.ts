@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import type { HandoffContract } from '@/features/sales/api';
+import type { HandoffContract, Instalment } from '@/features/sales/api';
 import type { HandoffCase, HandoffSupervisor } from '@/features/supervisor/api';
 import { ERFAN, failed, stateOrError } from './sales';
 import { forbidden, notFound, storage } from './session';
@@ -39,6 +39,7 @@ function handoff(
   amount: number,
   countries: string[],
   extra: Partial<HandoffContract> = {},
+  schedule?: Instalment[],
 ): MockHandoff {
   nextId += 1;
   return {
@@ -50,10 +51,10 @@ function handoff(
       scans: [],
       prepayment: {
         payment_id: nextId + 2000,
-        amount: Math.round((amount * FIRST_SHARE) / ROUND) * ROUND,
+        amount: schedule?.[0]?.amount ?? Math.round((amount * FIRST_SHARE) / ROUND) * ROUND,
         status: 'unpaid',
       },
-      instalments: 3,
+      instalments: schedule?.length ?? 3,
       supervisors: [],
       ...extra,
     },
@@ -89,9 +90,15 @@ const seed = (): Map<number, MockHandoff> =>
 let handoffs: Map<number, MockHandoff> | null = null;
 const all = () => (handoffs ??= seed());
 
-/** Django's `open_case` on approval: the case file, instalments and the prepayment. */
-export function openHandoff(customer: number, name: string, amount: number, countries: string[]) {
-  all().set(customer, handoff(customer, name, amount, countries));
+/** Django's `open_case` on approval: the case file, the agreed instalments and the prepayment. */
+export function openHandoff(
+  customer: number,
+  name: string,
+  amount: number,
+  countries: string[],
+  schedule?: Instalment[],
+) {
+  all().set(customer, handoff(customer, name, amount, countries, {}, schedule));
 }
 
 export function resetHandoffMocks() {
@@ -156,6 +163,22 @@ export const handoffHandlers = [
         prepayment: contract.prepayment,
       }));
     return HttpResponse.json({ results, supervisors: SUPERVISORS });
+  }),
+
+  // SV20: a case that won't start; refused while the prepayment is paid or in review.
+  http.post(`${SUPERVISOR_API}/handoffs/:id/cancel/`, async ({ params, request }) => {
+    if (!canAssign()) return forbidden();
+    const entry = [...all().entries()].find(
+      ([, item]) => item.contract.case === Number(params.id) && item.contract.state !== 'active',
+    );
+    if (!entry) return notFound();
+    const { reason } = (await request.json()) as { reason?: string };
+    if (!reason?.trim()) return HttpResponse.json({ reason: ['required'] }, { status: 400 });
+    const status = entry[1].contract.prepayment?.status;
+    if (status === 'paid' || status === 'review')
+      return HttpResponse.json({ detail: 'Refund it in the admin first.' }, { status: 409 });
+    all().delete(entry[0]);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.post(`${SUPERVISOR_API}/handoffs/:id/`, async ({ params, request }) => {
