@@ -1,4 +1,4 @@
-import { useId, useState, type SubmitEvent } from 'react';
+import { useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import {
   updateContactDraft,
   type ContactDraft,
   type ContactValues,
+  type LogSession,
 } from '@/lib/sales/contactDrafts';
 import { Icon } from '@/components/ui/Icon';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
@@ -20,6 +21,7 @@ import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
 import { CallStatus } from './CallStatus';
+import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
 import { VoiceTextAreaField } from '@/components/voice/VoiceField';
@@ -47,6 +49,8 @@ const isMessage = (channel: Channel) =>
 /**
  * Log a contact in a few taps: how, what happened, where the lead goes next and when to follow up.
  * A message opens the app with a ready text and records it. Canvas "ثبت سریع تماس".
+ * A consultation's log (a reservation) is the seller's main form: it names the session on top,
+ * skips the channel and walks through three numbered steps.
  */
 export function LogDialog({
   active,
@@ -74,7 +78,7 @@ export function LogDialog({
   const {
     channel,
     outcome,
-    stage,
+    stage: picked,
     lostReason,
     notes,
     customerSummary = '',
@@ -92,13 +96,17 @@ export function LogDialog({
 
   const message = isMessage(channel);
   const call = channel === 'call';
+  /** Logging a booked consultation: the channel is fixed. */
+  const session = !!start.reservation;
   const noAnswer = call && outcome === 'no_answer';
   const talked = !call || outcome === 'talked' || outcome === 'call_later';
+  const rank = lead ? STAGES.indexOf(lead.stage) : -1;
+  const stages = MOVABLE.filter((value) => value === 'lost' || STAGES.indexOf(value) > rank);
+  // A session log starts on "consulted"; a lead already past it keeps its stage.
+  const stage = picked === 'keep' || stages.includes(picked) ? picked : 'keep';
   const lost = talked && stage === 'lost';
   const asksFollowUp = !noAnswer && !lost && !(call && outcome === 'wrong_number');
   const followAt = follow === 'other' ? fromLocalInput(date) : quickWhen(follow).toISOString();
-  const rank = lead ? STAGES.indexOf(lead.stage) : -1;
-  const stages = MOVABLE.filter((value) => value === 'lost' || STAGES.indexOf(value) > rank);
   const chosen = customer.templates.find((item) => String(item.id) === template);
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -135,11 +143,199 @@ export function LogDialog({
     );
   };
 
+  const notesField = (
+    <VoiceTextAreaField
+      label={t(session ? 'customer.logDialog.meetingNotes' : 'customer.logDialog.notes')}
+      placeholder={t(
+        session
+          ? 'customer.logDialog.meetingNotesPlaceholder'
+          : 'customer.logDialog.notesPlaceholder',
+      )}
+      hint={t('customer.logDialog.privateHint')}
+      maxLength={5000}
+      value={notes}
+      onChange={change('notes')}
+      transcribe={transcribeVoice}
+      voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
+      disabled={log.isPending}
+      pendingTranscript={values.voiceTranscript}
+      onPendingTranscriptChange={change('voiceTranscript')}
+    />
+  );
+  const customerFields = (
+    <>
+      <VoiceTextAreaField
+        label={t('customer.logDialog.customerSummary')}
+        hint={t('customer.logDialog.customerSummaryHint')}
+        value={customerSummary}
+        onChange={change('customerSummary')}
+        maxLength={5000}
+        transcribe={transcribeVoice}
+        voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
+        disabled={log.isPending}
+        pendingTranscript={values.customerSummaryVoiceTranscript}
+        onPendingTranscriptChange={change('customerSummaryVoiceTranscript')}
+      />
+      {customer.email && !message && customerSummary.trim() && (
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
+          <input
+            type="checkbox"
+            checked={email}
+            onChange={(event) => change('email')(event.target.checked)}
+            className="size-[18px] accent-primary"
+          />
+          {t('customer.logDialog.emailSummary')}
+        </label>
+      )}
+    </>
+  );
+  const asksStage = talked && !!lead && customer.supports.stages;
+  const nextFields = (
+    <>
+      {asksStage && (
+        <StageStrip
+          name={customer.name}
+          current={lead.stage}
+          movable={stages}
+          value={stage}
+          onChange={change('stage')}
+          followText={
+            asksFollowUp && followAt
+              ? t('customer.logDialog.board.follow', {
+                  day: f.weekdayName(followAt),
+                  time: f.time(followAt),
+                })
+              : null
+          }
+        />
+      )}
+      {lost && (
+        <SelectField
+          label={t('customer.logDialog.lostReason')}
+          value={lostReason}
+          onChange={change('lostReason')}
+          error={checked && !lostReason ? t('customer.logDialog.lostReason') : undefined}
+          options={[
+            { value: '', label: t('customer.logDialog.choose') },
+            ...LOST_REASONS.map((value) => ({ value, label: t(`lost.${value}`) })),
+          ]}
+        />
+      )}
+      {asksFollowUp && (
+        <ChoiceGroup
+          legend={t('customer.logDialog.followUp')}
+          value={follow}
+          onChange={change('follow')}
+          options={FOLLOWS.map((value) => ({
+            value,
+            label: t(`customer.logDialog.followOption.${value}`),
+          }))}
+          hint={
+            followAt &&
+            t('customer.logDialog.followNote', {
+              when: t('customer.logDialog.followWhen', {
+                day: f.weekday(followAt),
+                time: f.time(followAt),
+              }),
+            })
+          }
+        />
+      )}
+      {asksFollowUp && follow === 'other' && (
+        <DatePicker
+          time
+          only="future"
+          label={t('customer.logDialog.followDate')}
+          value={date}
+          onChange={change('date')}
+          error={checked && !followAt ? t('customer.logDialog.followDate') : undefined}
+        />
+      )}
+    </>
+  );
+  const contactFields = (
+    <>
+      <ChoiceGroup
+        legend={t('customer.logDialog.channel')}
+        value={channel}
+        onChange={change('channel')}
+        options={CHANNELS.map((value) => ({ value, label: t(`channel.${value}`) }))}
+      />
+      {call && (
+        <a href={`tel:${customer.phone}`} className={buttonClass('outline', 'self-start')}>
+          <Icon name="phone" size={18} />
+          <span dir="ltr">{f.digits(customer.phone)}</span>
+        </a>
+      )}
+      {message && customer.templates.length > 0 && (
+        <ChoiceGroup
+          legend={t('customer.logDialog.template')}
+          look="tiles"
+          value={template}
+          onChange={change('template')}
+          hint={t('customer.logDialog.templateHint')}
+          options={customer.templates.map((item) => ({
+            value: String(item.id),
+            label: item.title,
+            hint: item.text,
+          }))}
+        />
+      )}
+      {call && (
+        <ChoiceGroup
+          legend={t('customer.logDialog.outcome')}
+          look="tiles"
+          value={outcome}
+          onChange={change('outcome')}
+          options={OUTCOMES.map((value) => ({
+            value,
+            label: t(`customer.logDialog.outcomeOption.${value}`),
+          }))}
+        />
+      )}
+      {noAnswer && (
+        <Notice tone="info">
+          {customer.supports.no_answer_sms
+            ? t('customer.logDialog.noAnswer')
+            : t('customer.logDialog.noAnswerToday')}
+        </Notice>
+      )}
+    </>
+  );
+  const steps: { key: string; title: string; body: ReactNode }[] = session
+    ? [
+        { key: 'meeting', title: t('customer.logDialog.step.meeting'), body: notesField },
+        { key: 'customer', title: t('customer.logDialog.step.customer'), body: customerFields },
+      ]
+    : [
+        { key: 'contact', title: t('customer.logDialog.step.contact'), body: contactFields },
+        ...(noAnswer
+          ? []
+          : [
+              {
+                key: 'notes',
+                title: t('customer.logDialog.step.notes'),
+                body: (
+                  <>
+                    {notesField}
+                    {customerFields}
+                  </>
+                ),
+              },
+            ]),
+      ];
+  if (asksStage || lost || asksFollowUp)
+    steps.push({ key: 'next', title: t('customer.logDialog.step.next'), body: nextFields });
+
   return (
     <FloatingPanel
       active={active}
       onClose={onClose}
-      title={t('customer.logDialog.title', { name: customer.name })}
+      wide
+      icon={session ? 'calendar' : channel === 'call' ? 'phone' : 'chat'}
+      title={t(session ? 'customer.logDialog.meetingTitle' : 'customer.logDialog.title', {
+        name: customer.name,
+      })}
       subtitle={
         lead &&
         t('customer.logDialog.subtitle', {
@@ -147,6 +343,7 @@ export function LogDialog({
           stage: t(`stage.${lead.stage}`),
         })
       }
+      summary={session && start.session && <SessionSummary session={start.session} />}
       closeLabel={t('contactDraft.minimize')}
       footer={
         confirmDiscard ? (
@@ -160,22 +357,34 @@ export function LogDialog({
           />
         ) : (
           <>
-            <Button type="submit" form={formId} disabled={log.isPending || voiceBusy}>
-              {message
-                ? t('customer.logDialog.send')
-                : lost
-                  ? t('customer.logDialog.saveLost')
-                  : t('customer.logDialog.save')}
-            </Button>
-            <Button variant="outline" onClick={onClose}>
-              {t('contactDraft.minimize')}
+            <Button
+              type="submit"
+              form={formId}
+              size="lg"
+              disabled={log.isPending || voiceBusy}
+              className="min-w-0 flex-1"
+            >
+              <Icon name={message ? 'send' : 'check'} size={20} />
+              <span className="truncate">
+                {message
+                  ? t('customer.logDialog.send')
+                  : lost
+                    ? t('customer.logDialog.saveLost')
+                    : session
+                      ? t('customer.logDialog.saveMeeting')
+                      : t('customer.logDialog.save')}
+              </span>
             </Button>
             <Button
-              variant="outline"
+              variant="danger"
+              size="lg"
               disabled={log.isPending}
               onClick={() => setConfirmDiscard(true)}
+              aria-label={t('contactDraft.discard')}
+              className="px-4"
             >
-              {t('contactDraft.discard')}
+              <Icon name="trash" size={18} />
+              <span className="hidden sm:inline">{t('contactDraft.discard')}</span>
             </Button>
           </>
         )
@@ -184,156 +393,65 @@ export function LogDialog({
       <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-6">
         {draft.call && <CallStatus call={draft.call} />}
         <fieldset disabled={log.isPending} className="contents">
-          <ChoiceGroup
-            legend={t('customer.logDialog.channel')}
-            value={channel}
-            onChange={change('channel')}
-            options={CHANNELS.map((value) => ({ value, label: t(`channel.${value}`) }))}
-          />
-
-          {call && (
-            <a href={`tel:${customer.phone}`} className={buttonClass('outline', 'self-start')}>
-              <Icon name="phone" size={18} />
-              <span dir="ltr">{f.digits(customer.phone)}</span>
-            </a>
-          )}
-
-          {message && customer.templates.length > 0 && (
-            <ChoiceGroup
-              legend={t('customer.logDialog.template')}
-              look="tiles"
-              value={template}
-              onChange={change('template')}
-              hint={t('customer.logDialog.templateHint')}
-              options={customer.templates.map((item) => ({
-                value: String(item.id),
-                label: item.title,
-                hint: item.text,
-              }))}
-            />
-          )}
-
-          {call && (
-            <ChoiceGroup
-              legend={t('customer.logDialog.outcome')}
-              look="tiles"
-              value={outcome}
-              onChange={change('outcome')}
-              options={OUTCOMES.map((value) => ({
-                value,
-                label: t(`customer.logDialog.outcomeOption.${value}`),
-              }))}
-            />
-          )}
-          {noAnswer && (
-            <Notice tone="info">
-              {customer.supports.no_answer_sms
-                ? t('customer.logDialog.noAnswer')
-                : t('customer.logDialog.noAnswerToday')}
-            </Notice>
-          )}
-
-          {talked && lead && customer.supports.stages && (
-            <SelectField
-              label={t('customer.logDialog.nextStage')}
-              value={stage}
-              onChange={change('stage')}
-              options={[
-                {
-                  value: 'keep',
-                  label: t('customer.logDialog.keepStage', { stage: t(`stage.${lead.stage}`) }),
-                },
-                ...stages.map((value) => ({ value, label: t(`stage.${value}`) })),
-              ]}
-            />
-          )}
-          {lost && (
-            <SelectField
-              label={t('customer.logDialog.lostReason')}
-              value={lostReason}
-              onChange={change('lostReason')}
-              error={checked && !lostReason ? t('customer.logDialog.lostReason') : undefined}
-              options={[
-                { value: '', label: t('customer.logDialog.choose') },
-                ...LOST_REASONS.map((value) => ({ value, label: t(`lost.${value}`) })),
-              ]}
-            />
-          )}
-          {!noAnswer && (
-            <VoiceTextAreaField
-              label={t('customer.logDialog.notes')}
-              placeholder={t('customer.logDialog.notesPlaceholder')}
-              hint={t('customer.logDialog.privateHint')}
-              maxLength={5000}
-              value={notes}
-              onChange={change('notes')}
-              transcribe={transcribeVoice}
-              voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
-              disabled={log.isPending}
-              pendingTranscript={values.voiceTranscript}
-              onPendingTranscriptChange={change('voiceTranscript')}
-            />
-          )}
-
-          {!noAnswer && (
-            <VoiceTextAreaField
-              label={t('customer.logDialog.customerSummary')}
-              hint={t('customer.logDialog.customerSummaryHint')}
-              value={customerSummary}
-              onChange={change('customerSummary')}
-              maxLength={5000}
-              transcribe={transcribeVoice}
-              voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
-              disabled={log.isPending}
-              pendingTranscript={values.customerSummaryVoiceTranscript}
-              onPendingTranscriptChange={change('customerSummaryVoiceTranscript')}
-            />
-          )}
-
-          {asksFollowUp && (
-            <ChoiceGroup
-              legend={t('customer.logDialog.followUp')}
-              value={follow}
-              onChange={change('follow')}
-              options={FOLLOWS.map((value) => ({
-                value,
-                label: t(`customer.logDialog.followOption.${value}`),
-              }))}
-              hint={
-                followAt &&
-                t('customer.logDialog.followNote', {
-                  when: t('customer.logDialog.followWhen', {
-                    day: f.weekday(followAt),
-                    time: f.time(followAt),
-                  }),
-                })
-              }
-            />
-          )}
-          {asksFollowUp && follow === 'other' && (
-            <DatePicker
-              time
-              only="future"
-              label={t('customer.logDialog.followDate')}
-              value={date}
-              onChange={change('date')}
-              error={checked && !followAt ? t('customer.logDialog.followDate') : undefined}
-            />
-          )}
-
-          {customer.email && !message && !noAnswer && customerSummary.trim() && (
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
-              <input
-                type="checkbox"
-                checked={email}
-                onChange={(event) => change('email')(event.target.checked)}
-                className="size-[18px] accent-primary"
-              />
-              {t('customer.logDialog.emailSummary')}
-            </label>
-          )}
+          {steps.map((step, index) => (
+            <Step key={step.key} number={index + 1} title={step.title}>
+              {step.body}
+            </Step>
+          ))}
         </fieldset>
       </form>
     </FloatingPanel>
+  );
+}
+
+/** One numbered part of the form: a short heading and its fields. */
+function Step({ number, title, children }: { number: number; title: string; children: ReactNode }) {
+  const f = useFormat();
+  const id = useId();
+  return (
+    <section
+      aria-labelledby={id}
+      className={`flex flex-col gap-5 ${number > 1 ? 'border-t border-hair pt-6' : ''}`}
+    >
+      <h3 id={id} className="m-0 flex items-center gap-3 font-display text-base font-bold">
+        <span
+          aria-hidden="true"
+          className="inline-flex size-8 flex-none items-center justify-center rounded-full bg-tint text-sm text-primary-text"
+        >
+          {f.number(number)}
+        </span>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/** Which consultation is being logged: type, day and time, length and how it was held. */
+function SessionSummary({ session }: { session: LogSession }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const facts = [
+    t('customer.logDialog.sessionWhen', {
+      day: f.weekday(session.starts_at),
+      time: f.time(session.starts_at),
+    }),
+    ...(session.minutes
+      ? [t('customer.logDialog.sessionMinutes', { n: f.number(session.minutes) })]
+      : []),
+    ...(session.mode ? [t(`mode.${session.mode}`)] : []),
+  ];
+  return (
+    <div className="flex items-start gap-3 rounded-xl bg-surface px-4 py-3 shadow-[inset_0_0_0_1px_var(--hair)]">
+      <Icon
+        name={session.mode === 'in_person' ? 'building' : 'video'}
+        size={20}
+        className="mt-0.5 flex-none text-primary-text"
+      />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        {session.title && <span className="text-[15px] font-semibold">{session.title}</span>}
+        <span className="text-sm leading-6 text-text-2">{facts.join(' · ')}</span>
+      </div>
+    </div>
   );
 }

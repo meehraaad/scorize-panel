@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 
 /**
  * A non-modal form: the page and navigation remain usable. Closing minimizes the draft.
  * `chat`: a chat window of fixed height whose content fills it unpadded (it scrolls its own
  * messages); `actions` go in the header before the minimize button.
+ * `icon` marks a form that matters (a session log): a tinted header with the icon, and `summary`
+ * (what the form is about) under the title. `wide` gives a long form more room on a desktop.
  */
 export function FloatingPanel({
   active = true,
@@ -14,6 +16,9 @@ export function FloatingPanel({
   onClose,
   actions,
   variant = 'form',
+  icon,
+  summary,
+  wide = false,
   footer,
   children,
 }: {
@@ -24,6 +29,9 @@ export function FloatingPanel({
   onClose: () => void;
   actions?: ReactNode;
   variant?: 'form' | 'chat';
+  icon?: IconName | undefined;
+  summary?: ReactNode;
+  wide?: boolean;
   footer?: ReactNode;
   children: ReactNode;
 }) {
@@ -49,16 +57,24 @@ export function FloatingPanel({
       className={`fixed inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex flex-col overflow-hidden rounded-card bg-surface text-text shadow-panel outline-none lg:inset-x-auto lg:end-5 lg:bottom-5 ${
         chat
           ? 'h-[calc(100dvh-180px)] lg:h-[min(660px,calc(100dvh-124px))] lg:w-[420px]'
-          : 'max-h-[calc(100dvh-180px)] lg:max-h-[calc(100dvh-124px)] lg:w-[440px]'
-      }`}
+          : `max-h-[calc(100dvh-180px)] lg:max-h-[calc(100dvh-124px)] ${wide ? 'lg:w-[560px]' : 'lg:w-[440px]'}`
+      } ${icon ? 'ring-2 ring-primary' : ''}`}
     >
       <div
         className={
           chat
             ? 'flex items-center gap-1 py-2.5 ps-5 pe-2 shadow-[inset_0_-1px_0_var(--hair)]'
-            : 'flex items-start justify-between gap-3 px-5 pt-5 pb-3'
+            : `flex flex-wrap items-start justify-between gap-3 px-5 pt-5 ${icon ? 'border-b border-hair bg-tint pb-4' : 'pb-3'}`
         }
       >
+        {icon && !chat && (
+          <span
+            aria-hidden="true"
+            className="inline-flex size-11 flex-none items-center justify-center rounded-icon bg-primary text-on-primary"
+          >
+            <Icon name={icon} size={22} />
+          </span>
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h2
             id={titleId}
@@ -81,12 +97,13 @@ export function FloatingPanel({
         >
           <Icon name="chevronDown" />
         </button>
+        {summary && !chat && <div className="w-full">{summary}</div>}
       </div>
       <div
         className={
           chat
             ? 'flex min-h-0 flex-1 flex-col'
-            : 'flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 pt-2 pb-6'
+            : `flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 pb-6 ${icon ? 'pt-5' : 'pt-2'}`
         }
       >
         {children}

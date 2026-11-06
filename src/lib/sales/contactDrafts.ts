@@ -4,9 +4,19 @@ import { sessionQuery } from '@/lib/auth/session';
 import type { Channel, LostReason } from './api';
 import type { ObservedCall } from './phoneCalls';
 
+/** The consultation a meeting log is for, shown at the top of the form. */
+export interface LogSession {
+  /** The consultation type's name. */
+  title?: string | undefined;
+  starts_at: string;
+  minutes?: number | null | undefined;
+  mode?: 'online' | 'in_person' | undefined;
+}
+
 export interface LogStart {
   channel: Channel;
   reservation?: number | undefined;
+  session?: LogSession | undefined;
 }
 
 export interface ContactValues {
@@ -125,7 +135,8 @@ export function openContactLog(customer: number, name: string, start: LogStart) 
     values: {
       channel: start.channel,
       outcome: 'talked',
-      stage: 'keep',
+      // A held session usually moves the lead to "consulted" (the seller can change it).
+      stage: start.reservation ? 'consulted' : 'keep',
       lostReason: '',
       notes: '',
       customerSummary: '',

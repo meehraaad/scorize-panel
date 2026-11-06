@@ -526,8 +526,6 @@
         "wrong_number": "Wrong number"
       },
       "noAnswer": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
-      "nextStage": "Next stage",
-      "keepStage": "Stay in \"{{stage}}\"",
       "lostReason": "Reason for losing (required)",
       "notes": "Notes",
       "notesPlaceholder": "What did they say? What matters to them? What worries them?",
@@ -552,7 +550,29 @@
       "followTask": "Follow up after the last contact",
       "privateHint": "Only staff can see these notes.",
       "customerSummary": "Summary for customer",
-      "customerSummaryHint": "Saved with this contact and visible in the customer’s panel. Write your advice and next steps here."
+      "customerSummaryHint": "Saved with this contact and visible in the customer’s panel. Write your advice and next steps here.",
+      "meetingTitle": "Log the session with {{name}}",
+      "sessionWhen": "{{day}}, {{time}}",
+      "sessionMinutes": "{{n}} min",
+      "meetingNotes": "Internal session notes",
+      "meetingNotesPlaceholder": "The customer's goal and situation, what you offered, their concerns and decision",
+      "saveMeeting": "Log session and create follow-up",
+      "step": {
+        "meeting": "What happened in the session?",
+        "customer": "For the customer",
+        "contact": "Contact",
+        "notes": "Notes",
+        "next": "Next step"
+      },
+      "board": {
+        "legend": "Where does it go on the board?",
+        "now": "It's here now",
+        "lost": "Lost",
+        "moves": "The card moves to “{{stage}}”.",
+        "stays": "The card stays in “{{stage}}”.",
+        "lostNote": "The lead closes and leaves the board.",
+        "follow": "{{day}} {{time}}"
+      }
     },
     "tabs": {
       "label": "Customer page sections",

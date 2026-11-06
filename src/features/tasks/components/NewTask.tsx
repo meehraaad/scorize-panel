@@ -10,11 +10,11 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import {
   TASKS_KEY,
   TASK_TEAMS,
-  useCreateTask,
   type Colleague,
   type NewTask,
   type TaskTeam,
 } from '@/lib/tasks/api';
+import { useCreateTask } from '@/lib/tasks/changes';
 import { toast } from '@/lib/toast';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 

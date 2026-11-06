@@ -225,7 +225,16 @@ function ConsultationRow({ item, status }: { item: Consultation; status: Status 
           <ContactLogButton
             customer={item.customer}
             name={item.name}
-            start={{ channel: 'meeting', reservation: item.id }}
+            start={{
+              channel: 'meeting',
+              reservation: item.id,
+              session: {
+                title: item.type.name,
+                starts_at: item.starts_at,
+                minutes: item.minutes,
+                mode: item.mode,
+              },
+            }}
             aria-label={action(t('consultations.log'))}
             className={buttonClass('primary', 'h-11 px-4 text-sm')}
           >
