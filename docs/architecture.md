@@ -357,7 +357,7 @@ option existed.
 
 ## Performance budget
 
-First load (gzip, `pnpm size` checks it in CI): JS ≈ 173.5 KB (budget 174), CSS ≈ 18.3 KB (budget 18.5);
+First load (gzip, `pnpm size` checks it in CI): JS ≈ 174 KB (budget 175), CSS ≈ 18.4 KB (budget 18.5);
 fonts are loaded per script as text appears. How pages stay fast (page data, skeletons, preload,
 cache, measuring): docs/performance.md.
 
