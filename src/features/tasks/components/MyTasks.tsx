@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { parseValue, sameDay } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useTaskChange, type MyTask, type TaskSource } from '@/lib/tasks/api';
 import { quickWhen, type QuickWhen } from '@/lib/when';
@@ -34,15 +35,21 @@ const groupOf = (task: MyTask, now: number): Group => {
   return due - now <= SOON ? 'now' : 'today';
 };
 
-/** My follow-ups for today (a page of them): overdue first, then the next hour, then the rest. */
+/**
+ * My follow-ups for today (a page of them): overdue first, then the next hour, then the rest. With
+ * `day`, the ones due that day: grouped the same way on today, under the day's name otherwise.
+ */
 export function MyTasks({
   tasks: all,
+  day = null,
   tomorrow,
   doneToday,
   pager,
   config,
 }: {
   tasks: MyTask[];
+  /** `YYYY-MM-DD`: the list is that day's. */
+  day?: string | null;
   tomorrow: number;
   doneToday: number | null;
   /** Under the list, when it has more than one page. */
@@ -56,11 +63,44 @@ export function MyTasks({
   const [done, setDone] = useState<MyTask | null>(null);
   const [open, setOpen] = useState<number | null>(null);
 
-  if (all.length === 0) return <EmptyState variant="card">{t('mine.empty')}</EmptyState>;
+  const date = day ? parseValue(day) : null;
+  // Another day than today: one group, under its name.
+  const otherDay = date && !sameDay(date, new Date(now)) ? date : null;
+  if (all.length === 0)
+    return (
+      <EmptyState variant="card">
+        {date ? t('mine.emptyDay', { day: f.weekday(date) }) : t('mine.empty')}
+      </EmptyState>
+    );
 
   return (
     <Card aria-label={t('view.mine.label')}>
+      {otherDay && (
+        <section aria-labelledby="group-day">
+          <h2
+            id="group-day"
+            className="m-0 flex items-center gap-2 px-5 pt-5 pb-2 text-sm font-bold text-neutral lg:px-8"
+          >
+            {f.weekday(otherDay)}
+            <span className="font-normal text-text-2">{f.number(all.length)}</span>
+          </h2>
+          <ul className="m-0 list-none p-0">
+            {all.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                late={new Date(task.due_at).getTime() < now}
+                now={now}
+                config={config}
+                onDone={() => setDone(task)}
+                onOpen={() => setOpen(task.id)}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
       {GROUPS.map((group) => {
+        if (otherDay) return null;
         const tasks = all.filter((task) => groupOf(task, now) === group);
         if (tasks.length === 0) return null;
         return (
@@ -89,10 +129,12 @@ export function MyTasks({
         );
       })}
       {pager}
-      <p className="m-0 flex flex-wrap justify-between gap-2 px-5 py-4 text-sm text-text-2 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
-        <span>{t('mine.tomorrow', { n: f.number(tomorrow) })}</span>
-        {doneToday !== null && <span>{t('mine.doneToday', { n: f.number(doneToday) })}</span>}
-      </p>
+      {!date && (
+        <p className="m-0 flex flex-wrap justify-between gap-2 px-5 py-4 text-sm text-text-2 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
+          <span>{t('mine.tomorrow', { n: f.number(tomorrow) })}</span>
+          {doneToday !== null && <span>{t('mine.doneToday', { n: f.number(doneToday) })}</span>}
+        </p>
+      )}
       <DoneDialog
         key={done?.id ?? 'closed'}
         task={done}

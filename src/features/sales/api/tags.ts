@@ -20,6 +20,9 @@ export interface CustomerTag {
 /** Django's `MAX_TAGS_PER_CUSTOMER` (api/sales/v1/common.py). */
 export const MAX_TAGS_PER_CUSTOMER = 5;
 
+/** `CustomerTag.name`'s `max_length`. */
+export const MAX_TAG_NAME = 32;
+
 export const TAG_TONES = [
   'blue',
   'green',
@@ -29,7 +32,7 @@ export const TAG_TONES = [
   'gray',
 ] as const satisfies readonly TagTone[];
 
-const TAGS_KEY = [...SALES_KEY, 'tags'] as const;
+export const TAGS_KEY = [...SALES_KEY, 'tags'] as const;
 
 /** The team's list. It rarely changes, so a page reads it from cache. */
 export const tagsQuery = queryOptions({
@@ -61,11 +64,34 @@ export function tagsOf(ids: readonly number[], list: readonly CustomerTag[] | un
   return list.filter((tag) => wanted.has(tag.id));
 }
 
+/**
+ * One customer's tag changes run one after another (a React Query mutation scope), so a quick
+ * second tap can't land before the first and leave the older list on the server. Django also
+ * locks the customer's row while it changes their tags.
+ */
+const tagChangesKey = (customer: number) => [...SALES_KEY, 'customer-tags', customer] as const;
+
+export function useTagChange(customer: number) {
+  const client = useQueryClient();
+  const mutationKey = tagChangesKey(customer);
+  /** Django's answer is the customer's tags, unless another change is still on its way. */
+  const settle = (tags: number[]) => {
+    if (client.isMutating({ mutationKey }) <= 1)
+      client.setQueryData<CustomerData>(customerKey(customer), (current) =>
+        current ? { ...current, tags } : current,
+      );
+    return client.invalidateQueries({ queryKey: [...SALES_KEY, 'leads'] });
+  };
+  return { client, mutationKey, scope: { id: mutationKey.join(':') }, settle };
+}
+
 /** Replaces a customer's tags, shown at once on the card (undone if Django says no). */
 export function useCustomerTags(customer: number) {
-  const client = useQueryClient();
+  const { client, mutationKey, scope, settle } = useTagChange(customer);
   const key = customerKey(customer);
   return useMutation({
+    mutationKey,
+    scope,
     mutationFn: (tags: number[]) =>
       api<{ tags: number[] }>(`${SALES_API}/customers/${String(customer)}/tags/`, {
         method: 'PUT',
@@ -78,14 +104,12 @@ export function useCustomerTags(customer: number) {
       return { before };
     },
     onError: (_error, _tags, context) => {
+      // A later change still on its way builds on this one: ask Django instead of undoing it.
+      if (client.isMutating({ mutationKey }) > 1)
+        return client.invalidateQueries({ queryKey: key });
       if (context?.before) client.setQueryData(key, context.before);
     },
-    onSuccess: (data) => {
-      client.setQueryData<CustomerData>(key, (current) =>
-        current ? { ...current, tags: data.tags } : current,
-      );
-      return client.invalidateQueries({ queryKey: [...SALES_KEY, 'leads'] });
-    },
+    onSuccess: (data) => settle(data.tags),
   });
 }
 

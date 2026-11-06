@@ -81,7 +81,8 @@
       "no_time": "Didn't get to it"
     },
     "tomorrow": "Tomorrow: {{n}} follow-ups",
-    "doneToday": "Done today: {{n}}"
+    "doneToday": "Done today: {{n}}",
+    "emptyDay": "No follow-ups on {{day}}."
   },
   "done": {
     "title": "Follow-up done",
@@ -247,5 +248,10 @@
   },
   "people": {
     "done": "{{done}} of {{total}} people have done it"
+  },
+  "day": {
+    "showing": "Only this day's tasks:",
+    "label": "Day",
+    "clear": "Show all days"
   }
 }

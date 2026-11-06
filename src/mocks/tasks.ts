@@ -51,9 +51,43 @@ export const overviewOf = ({ mine, requests, team, sent, ...rest }: FullTasks): 
 
 const LISTS: readonly string[] = ['mine', 'requests', 'team'] satisfies TaskList[];
 
-/** `GET tasks/lists/<list>/?page=` (404 for another list). */
+/** A date's local `YYYY-MM-DD`, as Django's `deadline`. */
+const dayOf = (value: string) => {
+  const date = new Date(value);
+  return `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+/**
+ * Follow-ups due ahead: the overview's list stops at today, so they show only with `?day=`. Two
+ * the day after tomorrow, as the seller calendar's day row says (src/mocks/sales.ts).
+ */
+function aheadOf(tasks: FullTasks): MyTask[] {
+  const first = tasks.mine[0];
+  if (!first) return [];
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  return [11, 15].map((hour, index) => ({
+    ...first,
+    id: 9_000 + index,
+    text: index === 0 ? 'تماس دوباره درباره‌ی پیشنهاد' : 'یادآوری مدارک',
+    due_at: new Date(start.getTime() + 2 * DAY + hour * HOUR).toISOString(),
+    snoozed: 0,
+  }));
+}
+
+/** `GET tasks/lists/<list>/?page=&day=` (404 for another list; `day`: only that day's, not the team's). */
 export function taskListOf(request: Request, tasks: FullTasks, list: string) {
   if (!LISTS.includes(list)) return notFound();
+  const day = new URL(request.url).searchParams.get('day');
+  if (day !== null && !/^\d{4}-\d{2}-\d{2}$/.test(day))
+    return HttpResponse.json({ day: ['Date has wrong format.'] }, { status: 400 });
+  if (day && list !== 'team') {
+    const rows: readonly unknown[] =
+      list === 'requests'
+        ? withReactions(tasks.requests.filter((row) => dayOf(row.due_at) === day))
+        : [...tasks.mine, ...aheadOf(tasks)].filter((row) => dayOf(row.due_at) === day);
+    return HttpResponse.json(pageOf(request, rows, TASKS_PAGE));
+  }
   const rows: readonly unknown[] =
     list === 'requests' ? withReactions(tasks.requests) : tasks[list as TaskList];
   return HttpResponse.json(pageOf(request, rows, TASKS_PAGE));

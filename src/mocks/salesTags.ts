@@ -5,7 +5,7 @@ import { forbidden, notFound, storage } from './session';
 
 /**
  * Customer tags (S49) as api/sales/v1/tags.py answers them: the team's list, each customer's tags,
- * and the manager's changes. The leads list and customer card add each customer's tags from here
+ * putting one on by name (which may add it to the list), and the manager's changes. The leads list and customer card add each customer's tags from here
  * (src/mocks/salesStaff.ts), as Django adds them from `TaggedCustomer`.
  */
 
@@ -100,6 +100,47 @@ export const tagHandlers = [
       return HttpResponse.json({ tags: ['Choose tags from the team list.'] }, { status: 400 });
     state.on.set(customer, wanted);
     return HttpResponse.json({ tags: tagsOfCustomer(customer) });
+  }),
+
+  // Puts a tag on by name: the one with the same key, else a new one (201).
+  http.post(`${BASE}/customers/:id/tags/`, async ({ params, request }) => {
+    if (!seller()) return forbidden();
+    const customer = Number(params.id);
+    const { name } = (await request.json()) as { name?: string };
+    const key = tagKey(name ?? '');
+    if (!key) return HttpResponse.json({ name: ['Write a name.'] }, { status: 400 });
+    const current = state.on.get(customer) ?? [];
+    let tag = state.tags.find((item) => tagKey(item.name) === key);
+    if (tag && current.includes(tag.id))
+      return HttpResponse.json({ tag: row(tag), tags: tagsOfCustomer(customer) });
+    if (tag && !tag.active)
+      return HttpResponse.json(
+        { detail: `«${tag.name}» is archived.`, code: 'archived' },
+        { status: 409 },
+      );
+    if (current.length >= MAX_TAGS_PER_CUSTOMER)
+      return HttpResponse.json({ name: ['A customer has at most 5 tags.'] }, { status: 400 });
+    const created = !tag;
+    if (!tag) {
+      if (state.tags.filter((item) => item.active).length >= MAX_ACTIVE)
+        return HttpResponse.json(
+          { detail: 'The list is full.', code: 'too_many' },
+          { status: 409 },
+        );
+      tag = {
+        id: state.next++,
+        name: (name ?? '').trim().split(/\s+/).join(' '),
+        tone: 'blue',
+        active: true,
+        order: Math.max(0, ...state.tags.map((item) => item.order)) + 1,
+      };
+      state.tags.push(tag);
+    }
+    state.on.set(customer, [...current, tag.id]);
+    return HttpResponse.json(
+      { tag: row(tag), tags: tagsOfCustomer(customer) },
+      { status: created ? 201 : 200 },
+    );
   }),
 
   http.get(`${BASE}/manager/tags/`, () =>
