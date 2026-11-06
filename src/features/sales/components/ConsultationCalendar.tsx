@@ -551,7 +551,16 @@ function Details({
       <ContactLogButton
         customer={consultation.customer}
         name={consultation.name}
-        start={{ channel: 'meeting', reservation: consultation.id }}
+        start={{
+          channel: 'meeting',
+          reservation: consultation.id,
+          session: {
+            title: type?.name,
+            starts_at: consultation.starts_at,
+            minutes: consultation.minutes,
+            mode: consultation.mode,
+          },
+        }}
         aria-label={action(t('consultations.log'))}
         className={look}
       >

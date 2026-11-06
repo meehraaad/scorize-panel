@@ -120,7 +120,11 @@ export default function CustomerPurchasesPage() {
                         <ContactLogButton
                           customer={id}
                           name={''}
-                          start={{ channel: 'meeting', reservation: item.session.reservation }}
+                          start={{
+                            channel: 'meeting',
+                            reservation: item.session.reservation,
+                            session: { title: item.title, starts_at: item.session.starts_at },
+                          }}
                           className={buttonClass('primary', 'h-11 px-4 text-sm')}
                         >
                           {t('purchases.logSession')}

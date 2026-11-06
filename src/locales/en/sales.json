@@ -552,7 +552,20 @@
       "followTask": "Follow up after the last contact",
       "privateHint": "Only staff can see these notes.",
       "customerSummary": "Summary for customer",
-      "customerSummaryHint": "Saved with this contact and visible in the customer’s panel. Write your advice and next steps here."
+      "customerSummaryHint": "Saved with this contact and visible in the customer’s panel. Write your advice and next steps here.",
+      "meetingTitle": "Log the session with {{name}}",
+      "sessionWhen": "{{day}}, {{time}}",
+      "sessionMinutes": "{{n}} min",
+      "meetingNotes": "Internal session notes",
+      "meetingNotesPlaceholder": "The customer's goal and situation, what you offered, their concerns and decision",
+      "saveMeeting": "Log session and create follow-up",
+      "step": {
+        "meeting": "What happened in the session?",
+        "customer": "For the customer",
+        "contact": "Contact",
+        "notes": "Notes",
+        "next": "Next step"
+      }
     },
     "tabs": {
       "label": "Customer page sections",

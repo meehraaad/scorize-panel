@@ -77,7 +77,12 @@ describe('sales: my consultations on a week calendar', () => {
     );
     card = within(calendar).getByRole('dialog');
     await user.click(within(card).getByRole('button', { name: /^ثبت جلسه: / }));
-    expect(await screen.findByRole('radio', { name: 'جلسه‌ی مشاوره' })).toBeChecked();
+    const log = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });
+    // A booked session's log has no channel to choose: it names the session instead.
+    expect(within(log).queryByRole('radio', { name: 'جلسه‌ی مشاوره' })).not.toBeInTheDocument();
+    expect(
+      within(log).getByRole('button', { name: /ثبت جلسه و ساختن پیگیری/ }),
+    ).toBeInTheDocument();
   });
 
   it('only the unlogged, and a type hidden', async () => {

@@ -4,9 +4,19 @@ import { sessionQuery } from '@/lib/auth/session';
 import type { Channel, LostReason } from './api';
 import type { ObservedCall } from './phoneCalls';
 
+/** The consultation a meeting log is for, shown at the top of the form. */
+export interface LogSession {
+  /** The consultation type's name. */
+  title?: string | undefined;
+  starts_at: string;
+  minutes?: number | null | undefined;
+  mode?: 'online' | 'in_person' | undefined;
+}
+
 export interface LogStart {
   channel: Channel;
   reservation?: number | undefined;
+  session?: LogSession | undefined;
 }
 
 export interface ContactValues {

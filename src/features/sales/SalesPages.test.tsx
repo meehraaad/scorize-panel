@@ -448,8 +448,12 @@ describe('sales panel, seller pages', () => {
     await user.click(
       (await screen.findAllByRole('button', { name: /^ثبت جلسه: / }))[0] as HTMLElement,
     );
-    expect(await screen.findByRole('radio', { name: 'جلسه‌ی مشاوره' })).toBeChecked();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const log = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });
+    // A booked session's log has no channel to choose: it names the session instead.
+    expect(within(log).queryByRole('radio', { name: 'جلسه‌ی مشاوره' })).not.toBeInTheDocument();
+    expect(
+      within(log).getByRole('button', { name: /ثبت جلسه و ساختن پیگیری/ }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sales/leads/consultations');
   });
 

@@ -299,7 +299,16 @@ function ConsultationBlock({
       {...actionProps}
       customer={item.customer}
       name={item.name}
-      start={{ channel: 'meeting', reservation: item.id }}
+      start={{
+        channel: 'meeting',
+        reservation: item.id,
+        session: {
+          title: item.type,
+          starts_at: item.starts_at,
+          minutes: item.minutes,
+          mode: item.mode,
+        },
+      }}
     >
       {content}
     </ContactLogButton>
