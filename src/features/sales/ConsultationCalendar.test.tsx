@@ -130,9 +130,10 @@ describe('sales: my consultations on a week calendar', () => {
     expect(brief('سه‌شنبه')).toHaveTextContent('۴ کار مانده');
     expect(brief('سه‌شنبه')).toHaveTextContent('۱ درخواست همکار · ۲ انجام شد');
     expect(brief('پنجشنبه')).toHaveTextContent('۲ کار مانده');
-    expect(brief('سه‌شنبه')).toHaveAttribute('href', '/sales/tasks?view=mine');
+    expect(brief('سه‌شنبه')).toHaveAttribute('href', '/sales/tasks?view=mine&day=2026-10-27');
     await user.click(brief('سه‌شنبه'));
     expect(await screen.findByRole('heading', { name: 'کارهای امروز' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'نمایش همه‌ی روزها' })).toBeInTheDocument();
   });
 
   it('pages weeks and switches to the list', async () => {

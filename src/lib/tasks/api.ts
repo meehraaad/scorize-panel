@@ -6,6 +6,7 @@ import {
   type QueryKey,
 } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { parseValue } from '@/lib/calendar';
 import type { Page } from '@/lib/api/page';
 import type { TaskEmoji } from './reactions';
 
@@ -191,14 +192,44 @@ export interface TaskListRow {
   team: QueueItem;
 }
 
-export const taskListQuery = <L extends TaskList>(panel: TasksPanel, list: L, page: number) =>
+/**
+ * What the tasks page's address asks for: `?view=mine | requests | team` (the list it opens on) and
+ * `?day=YYYY-MM-DD` (only what's due that day; the seller calendar's day row links here).
+ */
+export function tasksAddressOf(params: URLSearchParams): { view: TaskList; day: string | null } {
+  const view = params.get('view');
+  const day = params.get('day') ?? '';
+  return {
+    view: view === 'requests' || view === 'team' ? view : 'mine',
+    day: /^\d{4}-\d{2}-\d{2}$/.test(day) && parseValue(day) ? day : null,
+  };
+}
+
+/** The first page of the list the tasks page opens on (its route's data). */
+export const openingTaskList = (panel: TasksPanel, url: string) => {
+  const { view, day } = tasksAddressOf(new URL(url).searchParams);
+  return taskListQuery(panel, view, 1, view === 'team' ? null : day);
+};
+
+/**
+ * One list of the tasks page, a page at a time. `day` (`YYYY-MM-DD`): only my follow-ups or the
+ * requests due that day, ahead or past (the team queue ignores it).
+ */
+export const taskListQuery = <L extends TaskList>(
+  panel: TasksPanel,
+  list: L,
+  page: number,
+  day: string | null = null,
+) =>
   queryOptions({
-    queryKey: [...TASKS_KEY, panel, 'list', list, page],
-    queryFn: ({ signal }) =>
-      api<Page<TaskListRow[L]>>(
-        `${TASKS_API}/lists/${list}/?panel=${encodeURIComponent(panel)}&page=${String(page)}`,
-        { signal },
-      ),
+    queryKey: [...TASKS_KEY, panel, 'list', list, page, day],
+    queryFn: ({ signal }) => {
+      const query = new URLSearchParams({ panel, page: String(page) });
+      if (day) query.set('day', day);
+      return api<Page<TaskListRow[L]>>(`${TASKS_API}/lists/${list}/?${query.toString()}`, {
+        signal,
+      });
+    },
     placeholderData: keepPreviousData,
   });
 

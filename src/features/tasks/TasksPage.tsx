@@ -7,10 +7,14 @@ import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { Card } from '@/components/ui/Card';
+import { TagList } from '@/components/ui/Tags';
+import { parseValue } from '@/lib/calendar';
+import { useFormat } from '@/lib/i18n/useFormat';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { pagesOf, useClampPage } from '@/lib/api/page';
 import {
   taskListQuery,
+  tasksAddressOf,
   tasksQuery,
   type TaskList,
   type TaskListRow,
@@ -34,12 +38,20 @@ import type { TasksConfig } from './config';
 export function TasksPage({ config }: { config: TasksConfig }) {
   const { t } = useTranslation('tasks');
   const { data } = useSuspenseQuery(tasksQuery(config.panel));
-  // `?view=requests` opens that list (the calendar's day row links here).
-  const [params] = useSearchParams();
-  const asked = params.get('view');
-  const [view, setView] = useState<View>(() =>
-    asked === 'requests' || asked === 'team' ? asked : 'mine',
-  );
+  const f = useFormat();
+  // The list and the day live in the address (`?view=`, `?day=`): the calendar's day row links here.
+  const [params, setParams] = useSearchParams();
+  const { view, day } = tasksAddressOf(params);
+  const change = (key: 'view' | 'day', value: string | null) => {
+    const next = new URLSearchParams(params);
+    if (value === null) next.delete(key);
+    else next.set(key, value);
+    setParams(next, { replace: true });
+  };
+  const setView = (value: View) => change('view', value === 'mine' ? null : value);
+  // The team queue has no due day: it stays whole.
+  const dayShown = view === 'team' ? null : day;
+  const dayLabel = day && f.weekday(parseValue(day) ?? day);
 
   return (
     <PageStack>
@@ -55,12 +67,32 @@ export function TasksPage({ config }: { config: TasksConfig }) {
         }
       />
       <ViewTabs value={view} onChange={setView} counts={data.counts} />
+      {dayLabel && dayShown && (
+        <div className="flex flex-wrap items-center gap-2 text-sm text-text-2">
+          {t('day.showing')}
+          <TagList
+            label={t('day.label')}
+            tags={[dayLabel]}
+            latin={false}
+            removeLabel={() => t('day.clear')}
+            onRemove={() => change('day', null)}
+          />
+        </div>
+      )}
       {view === 'mine' && data.orphans.length > 0 && (
         <Orphans orphans={data.orphans} config={config} />
       )}
       <PageColumns
         asideLabel={t('aside')}
-        main={<TaskListView key={view} list={view} overview={data} config={config} />}
+        main={
+          <TaskListView
+            key={`${view}-${dayShown ?? ''}`}
+            list={view}
+            day={dayShown}
+            overview={data}
+            config={config}
+          />
+        }
         aside={<SentCard sent={data.sent} config={config} />}
       />
     </PageStack>
@@ -70,16 +102,19 @@ export function TasksPage({ config }: { config: TasksConfig }) {
 /** One of the three lists, a page at a time (each tab starts again at page 1). */
 function TaskListView({
   list,
+  day,
   overview,
   config,
 }: {
   list: TaskList;
+  /** `YYYY-MM-DD`: only what's due that day. */
+  day: string | null;
   overview: TasksOverview;
   config: TasksConfig;
 }) {
   const { t } = useTranslation('tasks');
   const [page, setPage] = useState(1);
-  const { data, isPlaceholderData } = useQuery(taskListQuery(config.panel, list, page));
+  const { data, isPlaceholderData } = useQuery(taskListQuery(config.panel, list, page, day));
   const pages = pagesOf(data);
   useClampPage(data, page, setPage);
 
@@ -96,6 +131,7 @@ function TaskListView({
   return list === 'mine' ? (
     <MyTasks
       tasks={rows as TaskListRow['mine'][]}
+      day={day}
       tomorrow={overview.tomorrow}
       doneToday={overview.done_today}
       pager={pager}

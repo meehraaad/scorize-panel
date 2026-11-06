@@ -2,13 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { toValue } from '@/lib/calendar';
 import type { CalendarTaskDay } from '../api';
 import { salesPath } from '../paths';
 
 /**
  * A day's tasks on the calendar's day row, in brief: how many are left (late on a past day), the
  * colleagues' requests among them and how many are done. There's no room to list them: it links
- * to the tasks page, on the list they are in.
+ * to the tasks page, on the list they are in, showing only that day.
  */
 export function TaskBrief({
   day,
@@ -58,7 +59,7 @@ export function TaskBrief({
 
   return (
     <Link
-      to={`${salesPath('tasks')}?view=${view}`}
+      to={`${salesPath('tasks')}?${new URLSearchParams({ view, day: toValue(day, false) }).toString()}`}
       aria-label={aria}
       title={aria}
       className={`flex min-h-11 min-w-0 flex-col justify-center gap-0.5 rounded-lg px-2 py-1 text-xs font-bold hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus ${tone} ${
