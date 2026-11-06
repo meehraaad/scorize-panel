@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { api } from '@/lib/api/client';
+import { toValue } from '@/lib/calendar';
 import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
 import type { TasksOverview } from '@/lib/tasks/api';
@@ -133,6 +134,27 @@ describe('tasks page (sales panel)', () => {
     expect(
       await within(row).findByRole('button', { name: /^انجام شد: پذیرش Uppsala/ }),
     ).toBeInTheDocument();
+  });
+
+  it('opens on the list the address asks for (the calendar links here)', async () => {
+    renderApp('/sales/tasks?view=requests');
+    expect(
+      await screen.findByRole('button', { name: /^درخواست‌ها به من/, pressed: true }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'دیدم، شروع می‌کنم' })).toBeInTheDocument();
+  });
+
+  it('?day= lists only what is due that day, ahead too, until the day is cleared', async () => {
+    const user = userEvent.setup();
+    const ahead = new Date();
+    ahead.setDate(ahead.getDate() + 2);
+    renderApp(`/sales/tasks?day=${toValue(ahead, false)}`);
+    expect(await screen.findByText('یادآوری مدارک')).toBeInTheDocument();
+    expect(screen.getByText('تماس دوباره درباره‌ی پیشنهاد')).toBeInTheDocument();
+    expect(screen.queryByText(/^فردا: /)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'نمایش همه‌ی روزها' }));
+    await waitFor(() => expect(screen.queryByText('یادآوری مدارک')).not.toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'نمایش همه‌ی روزها' })).not.toBeInTheDocument();
   });
 
   it('sent requests: one name and a count, a tick when done, and they open', async () => {

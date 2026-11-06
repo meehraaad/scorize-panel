@@ -15,7 +15,7 @@ import {
 } from '@/features/supervisor/api';
 import { prefetchTickets } from '@/features/tickets/config';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
-import { taskListQuery, tasksQuery } from '@/lib/tasks/api';
+import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
 import { ASSIGN_PERMISSION } from '@/features/supervisor/api';
 import {
   botRulesQuery,
@@ -181,7 +181,10 @@ export const supervisorPanel: PanelDefinition = {
     {
       path: 'tasks',
       ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: () => [tasksQuery('supervisor'), taskListQuery('supervisor', 'mine', 1)],
+        data: ({ request }) => [
+          tasksQuery('supervisor'),
+          openingTaskList('supervisor', request.url),
+        ],
         skeleton: 'list',
       }),
     },
