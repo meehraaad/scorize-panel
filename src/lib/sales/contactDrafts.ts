@@ -135,7 +135,8 @@ export function openContactLog(customer: number, name: string, start: LogStart) 
     values: {
       channel: start.channel,
       outcome: 'talked',
-      stage: 'keep',
+      // A held session usually moves the lead to "consulted" (the seller can change it).
+      stage: start.reservation ? 'consulted' : 'keep',
       lostReason: '',
       notes: '',
       customerSummary: '',

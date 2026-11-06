@@ -172,3 +172,61 @@ describe('persistent contact workspace', () => {
     expect(sessionStorage.getItem('scorize.contact-drafts.v1')).toBeNull();
   });
 });
+
+describe('session log: the next step on the board', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    clearContactDrafts();
+    localStorage.setItem('scorize.mock.session', '3');
+    await i18n.changeLanguage('fa');
+  });
+
+  it('starts on "consulted", shows the card with its follow-up, and sends the stage', async () => {
+    const { fetchCustomer } = await import('@/mocks/legacy/customer');
+    let sent: Record<string, unknown> | null = null;
+    server.use(
+      // Once Django moves leads from a contact log (S16): a lead that was only contacted.
+      http.get('/api/sales/v1/customers/:id/', async ({ params }) => {
+        const data = await fetchCustomer(Number(params.id));
+        return HttpResponse.json({
+          ...data,
+          lead: {
+            id: 1,
+            source: 'campaign',
+            stage: 'contacted',
+            score: null,
+            follow_up_at: null,
+            lost_reason: null,
+            seller: null,
+          },
+          supports: { ...data.supports, stages: true },
+        });
+      }),
+      http.post('/api/sales/v1/customers/:id/contacts/', async ({ request }) => {
+        sent = (await request.json()) as Record<string, unknown>;
+        return new HttpResponse(null, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/sales/leads/consultations');
+    await user.click(await screen.findByRole('button', { name: 'فهرست' }));
+    await user.click(first(await screen.findAllByRole('button', { name: /^ثبت جلسه: / })));
+    const dialog = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });
+    const board = await within(dialog).findByRole('group', { name: 'روی بورد کجا برود؟' });
+
+    expect(within(board).getByRole('radio', { name: 'مشاوره شد' })).toBeChecked();
+    expect(within(board).getByRole('radio', { name: 'تماس گرفته شد' })).not.toBeChecked();
+    expect(within(board).getByRole('radio', { name: 'تازه' })).toBeDisabled();
+    expect(within(board).getByRole('radio', { name: 'قرارداد شد' })).toBeDisabled();
+    expect(within(board).getByText('کارت به ستون «مشاوره شد» می‌رود.')).toBeInTheDocument();
+
+    // "Lost" needs a reason before saving.
+    await user.click(within(board).getByRole('radio', { name: 'از دست رفت' }));
+    await user.click(within(dialog).getByRole('button', { name: /ثبت و بستن لید/ }));
+    expect(sent).toBeNull();
+
+    await user.click(within(board).getByRole('radio', { name: 'مشاوره شد' }));
+    await user.click(within(dialog).getByRole('button', { name: /ثبت جلسه و ساختن پیگیری/ }));
+    await waitFor(() => expect(sent).toMatchObject({ channel: 'meeting', stage: 'consulted' }));
+  });
+});

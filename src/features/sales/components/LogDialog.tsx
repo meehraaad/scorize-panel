@@ -21,6 +21,7 @@ import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
 import { CallStatus } from './CallStatus';
+import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
 import { VoiceTextAreaField } from '@/components/voice/VoiceField';
@@ -77,7 +78,7 @@ export function LogDialog({
   const {
     channel,
     outcome,
-    stage,
+    stage: picked,
     lostReason,
     notes,
     customerSummary = '',
@@ -99,11 +100,13 @@ export function LogDialog({
   const session = !!start.reservation;
   const noAnswer = call && outcome === 'no_answer';
   const talked = !call || outcome === 'talked' || outcome === 'call_later';
+  const rank = lead ? STAGES.indexOf(lead.stage) : -1;
+  const stages = MOVABLE.filter((value) => value === 'lost' || STAGES.indexOf(value) > rank);
+  // A session log starts on "consulted"; a lead already past it keeps its stage.
+  const stage = picked === 'keep' || stages.includes(picked) ? picked : 'keep';
   const lost = talked && stage === 'lost';
   const asksFollowUp = !noAnswer && !lost && !(call && outcome === 'wrong_number');
   const followAt = follow === 'other' ? fromLocalInput(date) : quickWhen(follow).toISOString();
-  const rank = lead ? STAGES.indexOf(lead.stage) : -1;
-  const stages = MOVABLE.filter((value) => value === 'lost' || STAGES.indexOf(value) > rank);
   const chosen = customer.templates.find((item) => String(item.id) === template);
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -190,17 +193,20 @@ export function LogDialog({
   const nextFields = (
     <>
       {asksStage && (
-        <SelectField
-          label={t('customer.logDialog.nextStage')}
+        <StageStrip
+          name={customer.name}
+          current={lead.stage}
+          movable={stages}
           value={stage}
           onChange={change('stage')}
-          options={[
-            {
-              value: 'keep',
-              label: t('customer.logDialog.keepStage', { stage: t(`stage.${lead.stage}`) }),
-            },
-            ...stages.map((value) => ({ value, label: t(`stage.${value}`) })),
-          ]}
+          followText={
+            asksFollowUp && followAt
+              ? t('customer.logDialog.board.follow', {
+                  day: f.weekdayName(followAt),
+                  time: f.time(followAt),
+                })
+              : null
+          }
         />
       )}
       {lost && (

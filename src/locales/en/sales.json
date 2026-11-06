@@ -526,8 +526,6 @@
         "wrong_number": "Wrong number"
       },
       "noAnswer": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
-      "nextStage": "Next stage",
-      "keepStage": "Stay in \"{{stage}}\"",
       "lostReason": "Reason for losing (required)",
       "notes": "Notes",
       "notesPlaceholder": "What did they say? What matters to them? What worries them?",
@@ -565,6 +563,15 @@
         "contact": "Contact",
         "notes": "Notes",
         "next": "Next step"
+      },
+      "board": {
+        "legend": "Where does it go on the board?",
+        "now": "It's here now",
+        "lost": "Lost",
+        "moves": "The card moves to “{{stage}}”.",
+        "stays": "The card stays in “{{stage}}”.",
+        "lostNote": "The lead closes and leaves the board.",
+        "follow": "{{day}} {{time}}"
       }
     },
     "tabs": {
