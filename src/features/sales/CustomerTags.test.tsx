@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
 import { tagKey } from './api';
 
@@ -52,6 +52,46 @@ describe('customer tags (S49)', () => {
       expect(
         within(screen.getByRole('list', { name: 'برچسب‌ها' })).queryByText('وی‌آی‌پی'),
       ).not.toBeInTheDocument(),
+    );
+  });
+
+  it('customer page: types a new name, adds it once, and finds it however it is typed', async () => {
+    loginAs(NIMA);
+    const user = userEvent.setup();
+    let posts = 0;
+    server.events.on('request:start', ({ request }) => {
+      if (request.method === 'POST' && request.url.endsWith('/tags/')) posts += 1;
+    });
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    await user.click(await screen.findByRole('button', { name: 'برچسب‌ها' }));
+    const dialog = await screen.findByRole('dialog', { name: 'برچسب‌های مشتری' });
+    const search = within(dialog).getByRole('searchbox');
+
+    // A name on the list (typed with Arabic ی and spaces) offers no "new tag".
+    await user.type(search, 'وي آي پي');
+    expect(within(dialog).queryByRole('button', { name: /برچسب تازه/ })).not.toBeInTheDocument();
+    // An archived name can't come back from here.
+    await user.clear(search);
+    await user.type(search, 'کمپین تابستان');
+    expect(within(dialog).getByText(/بایگانی شده است/)).toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: /برچسب تازه/ })).not.toBeInTheDocument();
+
+    await user.clear(search);
+    await user.type(search, 'دانشجوی دکتری');
+    expect(posts).toBe(0); // typing sends nothing
+    const create = within(dialog).getByRole('button', {
+      name: 'افزودن برچسب تازه‌ی «دانشجوی دکتری»',
+    });
+    await user.dblClick(create);
+    expect(await toasts().findByText('برچسب «دانشجوی دکتری» اضافه شد.')).toBeInTheDocument();
+    expect(posts).toBe(1);
+    expect(search).toHaveValue('');
+    expect(within(dialog).getByRole('checkbox', { name: 'دانشجوی دکتری' })).toBeChecked();
+    await user.click(within(dialog).getByRole('button', { name: 'تمام' }));
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('list', { name: 'برچسب‌ها' })).getByText('دانشجوی دکتری'),
+      ).toBeInTheDocument(),
     );
   });
 
