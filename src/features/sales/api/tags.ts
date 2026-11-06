@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiError, api } from '@/lib/api/client';
+import { api } from '@/lib/api/client';
 import { SALES_API, SALES_KEY } from '@/lib/sales/api';
 import type { TagTone } from '@/components/ui/Tags';
 import { customerKey, type CustomerData } from './customer';
@@ -32,7 +32,7 @@ export const TAG_TONES = [
   'gray',
 ] as const satisfies readonly TagTone[];
 
-const TAGS_KEY = [...SALES_KEY, 'tags'] as const;
+export const TAGS_KEY = [...SALES_KEY, 'tags'] as const;
 
 /** The team's list. It rarely changes, so a page reads it from cache. */
 export const tagsQuery = queryOptions({
@@ -71,7 +71,7 @@ export function tagsOf(ids: readonly number[], list: readonly CustomerTag[] | un
  */
 const tagChangesKey = (customer: number) => [...SALES_KEY, 'customer-tags', customer] as const;
 
-function useTagChange(customer: number) {
+export function useTagChange(customer: number) {
   const client = useQueryClient();
   const mutationKey = tagChangesKey(customer);
   /** Django's answer is the customer's tags, unless another change is still on its way. */
@@ -110,52 +110,6 @@ export function useCustomerTags(customer: number) {
       if (context?.before) client.setQueryData(key, context.before);
     },
     onSuccess: (data) => settle(data.tags),
-  });
-}
-
-export interface TagAdded {
-  /** The team's tag with this name (however it was typed), or the new one. */
-  tag: CustomerTag;
-  /** The customer's tags now. */
-  tags: number[];
-}
-
-/** Why Django didn't put a tag on by name: `archived` / `too_many` are 409s, `full` a 400. */
-export type TagAddRefusal = 'archived' | 'too_many' | 'full' | 'throttled';
-
-export function tagAddRefusal(error: unknown): TagAddRefusal | null {
-  if (!(error instanceof ApiError)) return null;
-  if (error.status === 429) return 'throttled';
-  if (error.status === 400) return 'full';
-  const code = (error.body as { code?: unknown } | null)?.code;
-  return error.status === 409 && (code === 'archived' || code === 'too_many') ? code : null;
-}
-
-/**
- * Puts a tag on by name: the team's tag with the same key, or a new one Django adds to the list
- * (the unique key keeps two sellers typing one new word at once to one tag). Searching never calls
- * this: the picker filters the list it already has, so only a tap on "create" sends a request.
- */
-export function useAddTagByName(customer: number) {
-  const { client, mutationKey, scope, settle } = useTagChange(customer);
-  return useMutation({
-    mutationKey,
-    scope,
-    mutationFn: (name: string) =>
-      api<TagAdded>(`${SALES_API}/customers/${String(customer)}/tags/`, {
-        method: 'POST',
-        body: { name },
-      }),
-    onSuccess: (data) => {
-      // The list may be minutes old, and another seller may have just made this tag.
-      client.setQueryData<CustomerTag[]>(TAGS_KEY, (list) =>
-        list && !list.some((tag) => tag.id === data.tag.id) ? [...list, data.tag] : list,
-      );
-      return Promise.all([
-        settle(data.tags),
-        client.invalidateQueries({ queryKey: managerTagsQuery.queryKey }),
-      ]);
-    },
   });
 }
 

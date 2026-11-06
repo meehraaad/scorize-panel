@@ -12,15 +12,14 @@ import { toast } from '@/lib/toast';
 import {
   MAX_TAG_NAME,
   MAX_TAGS_PER_CUSTOMER,
-  tagAddRefusal,
   tagKey,
   tagsOf,
   tagsQuery,
-  useAddTagByName,
   useCustomerTags,
   type CustomerData,
   type CustomerTag,
 } from '../api';
+import { tagAddRefusal, useAddTagByName } from '../api/tagAdd';
 
 /**
  * The customer's tags on their card (S49): remove one with its ×, add from the team's list, or
