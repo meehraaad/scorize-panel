@@ -43,15 +43,28 @@ export interface CalendarCall {
   follow_up_at: string;
 }
 
+/** How many of the seller's own tasks fall on a day (S50): only days with any. */
+export interface CalendarTaskDay {
+  /** `YYYY-MM-DD`. */
+  day: string;
+  /** Open follow-ups of mine due that day. */
+  mine: number;
+  /** Open requests from colleagues due that day. */
+  requests: number;
+  /** Of both, how many are closed. */
+  done: number;
+}
+
 export interface SellerCalendar {
   types: CalendarType[];
   consultations: CalendarConsultation[];
   calls: CalendarCall[];
+  tasks: CalendarTaskDay[];
 }
 
 const CALENDAR_KEY = [...SALES_KEY, 'calendar'] as const;
 
-/** A week of the seller's consultations and timed follow-ups (S47), from its first day. */
+/** A week of the seller's consultations, timed follow-ups (S47) and tasks per day (S50). */
 export const sellerCalendarQuery = (week: Date) => {
   const from = toValue(week, false);
   const to = toValue(new Date(week.getFullYear(), week.getMonth(), week.getDate() + 6), false);

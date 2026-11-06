@@ -11,7 +11,15 @@ import { EventCalendar, type CalendarEvent, type EventLook } from '@/components/
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { MiniMonth } from '@/components/ui/MiniMonth';
-import { addDays, eventColor, sameDay, toCalendar, weekOf, weekStart } from '@/lib/calendar';
+import {
+  addDays,
+  eventColor,
+  sameDay,
+  toCalendar,
+  toValue,
+  weekOf,
+  weekStart,
+} from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
@@ -25,6 +33,7 @@ import {
   type CalendarType,
 } from '../api';
 import { customerPath } from '../paths';
+import { TaskBrief } from './TaskBrief';
 
 const MINUTE = 60_000;
 const SOON_MINUTES = 30;
@@ -74,6 +83,8 @@ export function ConsultationCalendar() {
   const { data, isPending } = useQuery(sellerCalendarQuery(week));
 
   const types = new Map((data?.types ?? []).map((type) => [type.id, type]));
+  const taskDays = new Map((data?.tasks ?? []).map((row) => [row.day, row]));
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const nowTime = now.getTime();
   const consultations = (data?.consultations ?? []).filter(
     (item) =>
@@ -305,6 +316,17 @@ export function ConsultationCalendar() {
             onChange={setChosenId}
             loading={isPending}
             now={now}
+            dayRow={{
+              label: t('consultationCalendar.tasks.row'),
+              cell: (day, compact) => (
+                <TaskBrief
+                  day={day}
+                  tasks={taskDays.get(toValue(day, false))}
+                  today={today}
+                  compact={compact}
+                />
+              ),
+            }}
             details={
               chosen && (
                 <Details

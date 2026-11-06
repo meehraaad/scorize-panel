@@ -135,6 +135,14 @@ describe('tasks page (sales panel)', () => {
     ).toBeInTheDocument();
   });
 
+  it('opens on the list the address asks for (the calendar links here)', async () => {
+    renderApp('/sales/tasks?view=requests');
+    expect(
+      await screen.findByRole('button', { name: /^درخواست‌ها به من/, pressed: true }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'دیدم، شروع می‌کنم' })).toBeInTheDocument();
+  });
+
   it('sent requests: one name and a count, a tick when done, and they open', async () => {
     const user = userEvent.setup();
     const overview = await api<TasksOverview>('/staff/v1/tasks/?panel=sales');

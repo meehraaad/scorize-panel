@@ -716,7 +716,17 @@
     "week": "Week",
     "list": "List",
     "seller": "Assigned to {{name}}",
-    "noSeller": "Not assigned"
+    "noSeller": "Not assigned",
+    "tasks": {
+      "row": "Tasks",
+      "open": "{{n}} to do",
+      "late": "{{n}} overdue",
+      "allDone": "All done",
+      "requests": "{{n}} from colleagues",
+      "done": "{{n}} done",
+      "ariaMine": "{{n}} open follow-ups",
+      "aria": "Tasks on {{day}}: {{parts}}. Go to tasks"
+    }
   },
   "purchases": {
     "stats": "Purchases summary",

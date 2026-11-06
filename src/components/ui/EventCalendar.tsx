@@ -32,6 +32,14 @@ export interface CalendarEvent {
   warn?: boolean;
 }
 
+/** A row above the hours with a brief of each day (its tasks), like a calendar app's all-day row. */
+export interface DayRow {
+  /** Beside the row, and read out for it ("Tasks"). */
+  label: string;
+  /** A day's brief; `compact` on a day shrunk for having no events. Null leaves it empty. */
+  cell: (day: Date, compact: boolean) => ReactNode;
+}
+
 interface EventCalendarProps {
   /** What the calendar holds ("My consultations"). */
   label: string;
@@ -43,6 +51,8 @@ interface EventCalendarProps {
   onChange: (id: string | null) => void;
   /** The chosen event's card: beside it on a wide calendar, under the day when narrow. */
   details?: ReactNode;
+  /** A brief of each day above the hours (wide), or above the day's timeline (narrow). */
+  dayRow?: DayRow | undefined;
   loading?: boolean;
   /** Now (tests set it). */
   now?: Date;
@@ -111,6 +121,7 @@ export function EventCalendar({
   value,
   onChange,
   details,
+  dayRow,
   loading = false,
   now: givenNow,
 }: EventCalendarProps) {
@@ -121,7 +132,7 @@ export function EventCalendar({
     const date = addDays(week, index);
     return { date, events: events.filter((event) => sameDay(event.start, date)) };
   });
-  const props = { days, value, onChange, details, loading, now };
+  const props = { days, value, onChange, details, dayRow, loading, now };
   return (
     <section ref={root} aria-label={label} aria-busy={loading || undefined}>
       {wide ? <Week {...props} /> : <Day key={dayKey(week)} {...props} />}
@@ -134,6 +145,7 @@ interface ViewProps {
   value: string | null;
   onChange: (id: string | null) => void;
   details: ReactNode;
+  dayRow: DayRow | undefined;
   loading: boolean;
   now: Date;
 }
@@ -220,7 +232,7 @@ function NowLine({ now, from, hour }: { now: Date; from: number; hour: number })
   );
 }
 
-function Week({ days, value, onChange, details, loading, now }: ViewProps) {
+function Week({ days, value, onChange, details, dayRow, loading, now }: ViewProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const cal = useCalendar();
@@ -274,6 +286,26 @@ function Week({ days, value, onChange, details, loading, now }: ViewProps) {
           );
         })}
       </div>
+      {dayRow && (
+        <div role="group" aria-label={dayRow.label} className="flex border-b border-hair">
+          <span className="flex w-14 flex-none items-center justify-end pe-2 text-[11px] font-semibold text-text-3">
+            {dayRow.label}
+          </span>
+          {days.map((day) => {
+            const narrow = !loading && day.events.length === 0;
+            return (
+              <div
+                key={dayKey(day.date)}
+                className={`flex min-h-12 flex-col justify-center border-s border-hair p-1 ${
+                  narrow ? 'w-16 flex-none bg-canvas/60' : 'min-w-0 flex-1'
+                }`}
+              >
+                {!loading && dayRow.cell(day.date, narrow)}
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className="relative flex" style={{ height }} onKeyDown={onKey}>
         <div aria-hidden="true" className="relative w-14 flex-none">
           {Array.from({ length: to - from - 1 }, (_, index) => from + index + 1).map((hour) => (
@@ -353,7 +385,7 @@ function Week({ days, value, onChange, details, loading, now }: ViewProps) {
   );
 }
 
-function Day({ days, value, onChange, details, loading, now }: ViewProps) {
+function Day({ days, value, onChange, details, dayRow, loading, now }: ViewProps) {
   const { t } = useTranslation();
   const f = useFormat();
   const cal = useCalendar();
@@ -430,6 +462,8 @@ function Day({ days, value, onChange, details, loading, now }: ViewProps) {
           );
         })}
       </div>
+
+      {dayRow && !loading && dayRow.cell(current.date, false)}
 
       {loading ? (
         <div aria-hidden="true" className="flex flex-col gap-2">

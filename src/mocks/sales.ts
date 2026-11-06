@@ -887,6 +887,18 @@ function calendarOf(data: SalesState, from: string, to: string) {
         reason,
         follow_up_at,
       })),
+    // The seller's tasks per day (S50): yesterday one left over, today some done, in two days two.
+    tasks: [
+      { offset: -1, mine: 1, requests: 0, done: 2 },
+      { offset: 0, mine: 3, requests: 1, done: 2 },
+      { offset: 2, mine: 2, requests: 0, done: 0 },
+    ]
+      .map(({ offset, ...counts }) => {
+        const date = new Date(startOfToday() + offset * DAY + DAY / 2);
+        const day = `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        return { day, ...counts };
+      })
+      .filter(({ day }) => day >= from && day <= to),
   };
 }
 

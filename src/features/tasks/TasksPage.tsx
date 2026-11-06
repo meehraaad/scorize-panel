@@ -1,6 +1,7 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -33,7 +34,12 @@ import type { TasksConfig } from './config';
 export function TasksPage({ config }: { config: TasksConfig }) {
   const { t } = useTranslation('tasks');
   const { data } = useSuspenseQuery(tasksQuery(config.panel));
-  const [view, setView] = useState<View>('mine');
+  // `?view=requests` opens that list (the calendar's day row links here).
+  const [params] = useSearchParams();
+  const asked = params.get('view');
+  const [view, setView] = useState<View>(() =>
+    asked === 'requests' || asked === 'team' ? asked : 'mine',
+  );
 
   return (
     <PageStack>

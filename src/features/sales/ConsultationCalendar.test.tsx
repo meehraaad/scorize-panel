@@ -120,6 +120,21 @@ describe('sales: my consultations on a week calendar', () => {
     expect(within(calendar).getByRole('dialog')).toHaveTextContent('مسئول: نیما رستمی');
   });
 
+  it("briefs each day's tasks and opens the tasks page", async () => {
+    const user = userEvent.setup();
+    const calendar = await open();
+    const brief = (day: string) =>
+      within(calendar).getByRole('link', { name: new RegExp(`^کارهای ${day}`) });
+    expect(within(calendar).getAllByRole('link', { name: /^کارهای / })).toHaveLength(3);
+    expect(brief('دوشنبه')).toHaveTextContent('۱ کار عقب‌افتاده');
+    expect(brief('سه‌شنبه')).toHaveTextContent('۴ کار مانده');
+    expect(brief('سه‌شنبه')).toHaveTextContent('۱ درخواست همکار · ۲ انجام شد');
+    expect(brief('پنجشنبه')).toHaveTextContent('۲ کار مانده');
+    expect(brief('سه‌شنبه')).toHaveAttribute('href', '/sales/tasks?view=mine');
+    await user.click(brief('سه‌شنبه'));
+    expect(await screen.findByRole('heading', { name: 'کارهای امروز' })).toBeInTheDocument();
+  });
+
   it('pages weeks and switches to the list', async () => {
     const user = userEvent.setup();
     await open();
