@@ -88,7 +88,12 @@ export default defineConfig(({ mode }) => {
                 priority: 20,
                 includeDependenciesRecursively: false,
               },
-              { name: 'vendor', test: /node_modules[\\/]/ },
+              // Only the libraries every page needs (the shell): any other library (a QR code,
+              // a chart) loads with the page that uses it, never on the first load.
+              {
+                name: 'vendor',
+                test: /node_modules[\\/](@tanstack[\\/]|i18next|react-i18next|react-router)/,
+              },
             ],
           },
         },
