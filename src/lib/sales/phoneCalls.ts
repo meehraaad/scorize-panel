@@ -71,6 +71,35 @@ export function useSetOfficeExtension() {
   });
 }
 
+export interface MobileExtensionState {
+  /** The server offers mobile extensions; otherwise the settings card stays hidden. */
+  available: boolean;
+  status: 'none' | 'pending' | 'ready' | 'failed';
+  extension: string | null;
+  password: string | null;
+  domain: string | null;
+  server: string | null;
+}
+
+/** The seller's own PortSIP login. The office worker makes it within seconds, so pending polls. */
+export const mobileExtensionQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'mobile-extension'],
+  queryFn: ({ signal }) => api<MobileExtensionState>(`${SALES_API}/calls/mobile/`, { signal }),
+  refetchInterval: (query) => (query.state.data?.status === 'pending' ? 3000 : false),
+});
+
+export function useRequestMobileExtension() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (reset: boolean) =>
+      api<MobileExtensionState>(`${SALES_API}/calls/mobile/`, {
+        method: 'POST',
+        body: { reset },
+      }),
+    onSuccess: (data) => client.setQueryData(mobileExtensionQuery.queryKey, data),
+  });
+}
+
 /** Server timestamps, rather than counting interval ticks, survive navigation and tab throttling. */
 export function callSeconds(call: ObservedCall, now: number) {
   const start = Date.parse(call.answered_at ?? call.started_at);

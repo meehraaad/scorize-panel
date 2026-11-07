@@ -23,11 +23,14 @@ export type ServerFeature =
   | 'assistantOrganize'
   | 'customerTags'
   | 'mailServers'
-  | 'livePhoneCalls';
+  | 'livePhoneCalls'
+  | 'mobileExtensions';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
   livePhoneCalls: true,
+  /** The seller's PortSIP login at /sales/v1/calls/mobile/; on once the office worker runs. */
+  mobileExtensions: false,
   /** H29 `POST call-request/`. */
   callRequest: true,
   /** H30–H35 `turkey/…` with H75 (review per upload): the Turkey page and the documents tab's Turkey start. */

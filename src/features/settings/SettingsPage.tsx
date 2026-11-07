@@ -17,6 +17,12 @@ const OfficeExtension = lazy(() =>
   })),
 );
 
+const MobileExtension = lazy(() =>
+  import('@/features/sales/components/MobileExtension').then((m) => ({
+    default: m.MobileExtension,
+  })),
+);
+
 const optionClass =
   'flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-[15px] font-medium text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:text-primary-text has-checked:shadow-none has-focus-visible:outline-2 has-focus-visible:outline-focus';
 
@@ -74,6 +80,14 @@ export default function SettingsPage() {
         <Card className="p-6 lg:p-8">
           <Suspense fallback={null}>
             <OfficeExtension />
+          </Suspense>
+        </Card>
+      )}
+
+      {seller && ON_SERVER.mobileExtensions && (
+        <Card className="p-6 lg:p-8">
+          <Suspense fallback={null}>
+            <MobileExtension />
           </Suspense>
         </Card>
       )}

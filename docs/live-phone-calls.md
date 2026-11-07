@@ -14,6 +14,13 @@ not the PortSIP `internal_number` from staff admin. Each call contains `id`, `ex
 `answered_at`/`ended_at`, and `customer: {id, name} | null`.
 
 One listener in `WorkspaceLayout` polls every two seconds, including across route changes.
+`ON_SERVER.mobileExtensions` adds a Settings card for the seller's own PortSIP login, for calls away
+from the office. `GET`/`POST /api/sales/v1/calls/mobile/` returns `{available, status, extension,
+password, domain, server}` (`status`: `none`/`pending`/`ready`/`failed`); `POST {reset: false}`
+requests one or retries, `POST {reset: true}` changes its password. The office worker makes it, so
+the card polls while pending. It is not `internal_number`. Turn this on after the worker runs on the
+PBX (`shamrad/lang`, `docs/seller-phone-calls.md`). Calls on it open like desk phone calls.
+
 Known customers open the existing contact form; unmatched callers open a number-only card.
 Polling only updates call metadata: typed notes, selected outcomes and minimization survive.
 Dismissed calls do not reopen on every poll; historical completed calls do not auto-open.
