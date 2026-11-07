@@ -6,6 +6,10 @@ import type {
   FunnelData,
   HealthData,
   HealthTeam,
+  LeadImportChange,
+  LeadImportOptions,
+  LeadImportPreview,
+  LeadImportProblem,
   StageInput,
   TeamData,
   TeamRange,
@@ -395,6 +399,82 @@ const healthOf = (state: ManagerState, team: HealthTeam): HealthData => {
 /** Django's `QUEUE_PAGE` (api/sales/v1/manager.py). */
 const QUEUE_PAGE = 20;
 
+/** Django's `imports.COLUMNS` (api/sales/v1/imports.py), a few of each. */
+const IMPORT_COLUMNS: Record<string, readonly string[]> = {
+  phone: ['phone_number', 'phone', 'mobile', 'شماره', 'موبایل'],
+  first: ['first_name', 'name', 'نام'],
+  last: ['last_name', 'نام_خانوادگی'],
+};
+const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+/** `09xxxxxxxxx` from what people type, like Django's `phone_of`. */
+function phoneOf(value: string) {
+  let digits = value.replace(/[۰-۹]/g, (c) => String(PERSIAN_DIGITS.indexOf(c))).replace(/\D/g, '');
+  if (digits.startsWith('0098')) digits = digits.slice(4);
+  else if (digits.startsWith('98') && digits.length === 12) digits = digits.slice(2);
+  if (digits.length === 10 && digits.startsWith('9')) digits = `0${digits}`;
+  return /^09\d{9}$/.test(digits) ? digits : null;
+}
+interface ImportWork {
+  phone: string;
+  name: string;
+}
+const leadImports = new Map<string, ImportWork[]>();
+/** Numbers the fake Django already knows, and whether each has an open lead. */
+const knownPhones = (): Map<string, boolean> =>
+  new Map([
+    ['09120000001', false],
+    ['09120000002', true],
+  ]);
+let KNOWN_PHONES = knownPhones();
+
+function previewLeadImport(name: string, size: number, text: string): LeadImportPreview {
+  const [head = '', ...lines] = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+  const header = head.split(',').map((cell) => cell.trim().toLowerCase().replace(/\s+/g, '_'));
+  const at = (key: string) => header.findIndex((cell) => IMPORT_COLUMNS[key]?.includes(cell));
+  const [phoneAt, firstAt, lastAt] = [at('phone'), at('first'), at('last')];
+  const seen = new Set<string>();
+  const rows: LeadImportPreview['rows'] = [];
+  const work: ImportWork[] = [];
+  lines.forEach((line, index) => {
+    const cells = line.split(',').map((cell) => cell.trim());
+    if (!cells.some(Boolean)) return;
+    const typed = cells[phoneAt] ?? '';
+    const phone = phoneOf(typed);
+    const person = [cells[firstAt], cells[lastAt]].filter(Boolean).join(' ');
+    const known = phone !== null && KNOWN_PHONES.has(phone);
+    const problem: LeadImportProblem | null =
+      phoneAt < 0
+        ? 'missing_column'
+        : phone === null
+          ? 'bad_phone'
+          : seen.has(phone)
+            ? 'duplicate'
+            : KNOWN_PHONES.get(phone)
+              ? 'open_lead'
+              : null;
+    if (phone) seen.add(phone);
+    const change: LeadImportChange = problem ? 'skip' : known ? 'existing' : 'new';
+    rows.push({
+      line: index + 2,
+      phone: phone ?? typed,
+      name: person,
+      customer: known ? 500 + index : null,
+      change,
+      problem,
+    });
+    if (!problem && phone) work.push({ phone, name: person });
+  });
+  const count = (change: LeadImportChange) => rows.filter((row) => row.change === change).length;
+  const token = `lead-import-${String(leadImports.size + 1)}`;
+  leadImports.set(token, work);
+  return {
+    token,
+    file: { name, size, rows: rows.length },
+    counts: { new: count('new'), existing: count('existing'), skip: count('skip') },
+    rows,
+  };
+}
+
 export const managerHandlers = [
   http.get(`${BASE}/assign/`, ({ request }) => {
     const data = managerOrError();
@@ -433,6 +513,59 @@ export const managerHandlers = [
       }
     }
     return HttpResponse.json({ assigned });
+  }),
+
+  http.get(`${BASE}/leads/import/sample/`, () => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    return new HttpResponse(
+      'phone_number,first_name,last_name,email,note\n09121234567,سارا,احمدی,sara@example.com,وبینار کانادا\n',
+      {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': 'attachment; filename="leads-sample.csv"',
+        },
+      },
+    );
+  }),
+
+  http.post(`${BASE}/leads/import/preview/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const file = (await request.formData()).get('file');
+    if (!(file instanceof File)) return HttpResponse.json({ file: ['required'] }, { status: 400 });
+    return HttpResponse.json(previewLeadImport(file.name, file.size, await file.text()));
+  }),
+
+  http.post(`${BASE}/leads/import/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const { token, seller } = (await request.json()) as LeadImportOptions;
+    const work = leadImports.get(token);
+    if (!work) return HttpResponse.json({ token: ['expired'] }, { status: 400 });
+    leadImports.delete(token);
+    let created = 0;
+    let customers = 0;
+    for (const item of work) {
+      const known = KNOWN_PHONES.has(item.phone);
+      if (!known) customers++;
+      KNOWN_PHONES.set(item.phone, true);
+      created++;
+      // Leads for nobody wait in the queue, like Django's.
+      if (seller === null)
+        data.manager.queue.push({
+          lead: 950 + data.manager.queue.length,
+          customer: 600 + data.manager.queue.length,
+          name: item.name || item.phone,
+          degree: null,
+          countries: [],
+          cause: 'فرم سایت یا وبینار',
+          score: 18,
+          created_at: new Date().toISOString(),
+          suggested: null,
+        });
+    }
+    return HttpResponse.json({ created, new_customers: customers });
   }),
 
   http.get(`${BASE}/approvals/`, () => {
@@ -537,4 +670,6 @@ export const managerHandlers = [
 
 export function resetManagerMocks() {
   manager = null;
+  KNOWN_PHONES = knownPhones();
+  leadImports.clear();
 }

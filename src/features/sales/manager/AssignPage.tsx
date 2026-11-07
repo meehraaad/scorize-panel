@@ -11,6 +11,7 @@ import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard, SectionHeading } from '@/components/ui/SectionCard';
 import { pagesOf, useClampPage } from '@/lib/api/page';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   assignQuery,
@@ -24,6 +25,7 @@ import {
 } from '../api';
 import { ScoreChip } from '../components/LeadChips';
 import { useSalesFormat } from '../format';
+import { LeadImportDialog } from './LeadImportDialog';
 import { toast } from '@/lib/toast';
 
 const MODES = ['round_robin', 'least_load', 'match'] as const satisfies readonly AssignMode[];
@@ -50,6 +52,7 @@ export default function AssignPage() {
   const assign = useAssignLeads();
   // Read once: the waiting times don't need to tick here.
   const [now] = useState(() => Date.now());
+  const [importing, setImporting] = useState(false);
   const oldest = data.oldest_at
     ? Math.max(0, Math.round((now - new Date(data.oldest_at).getTime()) / 60_000))
     : 0;
@@ -65,7 +68,21 @@ export default function AssignPage() {
         subtitle={
           data.queue.count ? t('manager.assign.subtitle', { age: s.duration(oldest) }) : undefined
         }
+        actions={
+          ON_SERVER.leadImport && (
+            <Button variant="outline" onClick={() => setImporting(true)}>
+              {t('manager.import.open')}
+            </Button>
+          )
+        }
       />
+      {ON_SERVER.leadImport && (
+        <LeadImportDialog
+          open={importing}
+          onClose={() => setImporting(false)}
+          sellers={data.sellers}
+        />
+      )}
       <AutoCard key={JSON.stringify(data.settings)} settings={data.settings} />
 
       <section aria-labelledby="sellers-title" className="flex flex-col gap-4">
