@@ -34,7 +34,7 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
-import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
+import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
 import type { PanelDefinition } from '../types';
 
@@ -105,7 +105,13 @@ export const salesPanel: PanelDefinition = {
     {
       index: true,
       ...lazyPage(() => import('@/features/sales/TodayPage'), ['sales'], {
-        data: () => [outreachQuery(1), activityQuery(1), receiptsQuery(1)],
+        data: () => [
+          outreachQuery(1, 1, 'overdue'),
+          activityQuery(1),
+          receiptsQuery(1),
+          taskListQuery('sales', 'mine', 1),
+          taskListQuery('sales', 'requests', 1),
+        ],
         skeleton: 'dashboard',
       }),
     },

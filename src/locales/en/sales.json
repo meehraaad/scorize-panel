@@ -72,44 +72,92 @@
   "error": "That didn't work. Please try again.",
   "today": {
     "greeting": "Hello {{name}}",
-    "title": "Hi {{name}}, {{n}} leads are waiting for your call",
-    "titleClear": "Hi {{name}}, no leads are waiting",
-    "subtitle": "{{n}} leads arrived less than 15 minutes ago. The sooner you call, the better the chance of a contract.",
-    "subtitleCalm": "{{n}} people on today's call list. Order: new leads, then overdue follow-ups, then score.",
+    "title": "Hi {{name}}, {{n}} urgent items are waiting for you",
+    "titleClear": "Hi {{name}}, nothing urgent right now",
+    "subtitle": "{{total}} items today: {{now}} due now, the rest at their time below.",
+    "subtitleClear": "{{total}} timed items on your day.",
     "newLead": "Add a lead",
-    "hot": {
-      "eyebrow": "Call right now",
-      "title": "New leads, by waiting time",
+    "next": {
+      "title": "Your next step",
+      "waiting": "New lead · {{time}}",
       "goal": "Team goal: call within {{n}} minutes",
-      "waiting": "minutes waiting",
-      "waitingFor": "waiting since {{time}}",
+      "overdue": "Overdue follow-up · {{due}}",
+      "late": "Follow-up today at {{time}} · past due",
+      "position": "{{n}} of {{total}} urgent items",
       "source": "Source: {{source}}",
-      "pager": "{{from}}–{{to}} of {{total}} waiting leads"
-    },
-    "list": {
-      "title": "Today's follow-ups and calls",
-      "all": "All leads",
-      "filter": "Filter the call list",
-      "tab": {
-        "all": "All",
-        "new": "New leads",
-        "today": "Follow up today",
-        "overdue": "Overdue"
+      "customer": "Customer page",
+      "customerName": "{{name}}'s page",
+      "after": "After the call, log the result in one click:",
+      "outcome": {
+        "talked": "We talked",
+        "no_answer": "No answer",
+        "call_later": "Call back later",
+        "wrong_number": "Wrong number",
+        "lost": "Lost"
       },
-      "dueNew": "New · not called yet",
-      "dueToday": "Follow up today {{time}}",
-      "stage": "Stage: {{stage}}",
-      "order": "Order: new leads, today’s follow-ups, overdue follow-ups, then by score.",
-      "empty": "Nobody is on today's call list.",
-      "pager": "{{from}}–{{to}} of {{total}}"
+      "outcomeName": "Log \"{{outcome}}\" for {{name}}",
+      "skip": "Next person"
     },
-    "tasks": {
-      "title": "My tasks",
-      "all": "All tasks",
-      "overdue": "Overdue",
-      "requests": "Colleague requests",
-      "team": "Team queue",
-      "label": "My tasks: {{overdue}} overdue, {{requests}} requests from colleagues, {{team}} in the team queue"
+    "agenda": {
+      "title": "Today's plan",
+      "subtitle": "{{day}} · leads, follow-ups, tasks, receipts and consultations in one place",
+      "filter": "Show",
+      "filters": {
+        "all": "All",
+        "calls": "Calls",
+        "consultations": "Consultations",
+        "tasks": "Tasks",
+        "receipts": "Receipts"
+      },
+      "now": "Right now",
+      "nowNote": "No time slot: these are due already",
+      "showAll": "Show all ({{n}})",
+      "showLess": "Show less",
+      "nowLine": "Now, {{time}}",
+      "nowShort": "Now",
+      "empty": "Nothing left for today.",
+      "filteredEmpty": "Nothing of this kind today.",
+      "free": "{{time}} free: a good time to call leads waiting for a follow-up.",
+      "freeHours": "{{n}} hours",
+      "freeMinutes": "{{n}} minutes",
+      "freeLink": "See leads",
+      "footer": "Any follow-up or task with a time lands at its hour automatically.",
+      "calendar": "Consultation calendar",
+      "tasks": "All tasks",
+      "more": {
+        "hot": "{{n}} more new leads",
+        "overdue": "{{n}} more overdue follow-ups",
+        "stale": "{{n}} older leads you have not called yet",
+        "tasks": "More on the tasks page"
+      },
+      "tag": {
+        "lead": "New lead",
+        "overdue": "Overdue",
+        "late": "Follow-up {{time}}",
+        "call": "Follow-up",
+        "consultation": "Consultation",
+        "task": "My task",
+        "taskSystem": "Automatic task",
+        "request": "Colleague request",
+        "receipt": "Receipt"
+      },
+      "range": "{{from}}–{{to}}",
+      "consultationMeta": "{{range}} · {{type}} · {{mode}}",
+      "status": {
+        "live": "In progress",
+        "need": "Session not logged",
+        "done": "Session logged",
+        "upcoming": "Upcoming"
+      },
+      "requestFrom": "From {{name}}",
+      "due": "Due {{time}}",
+      "log": "Log session",
+      "logName": "Log the session with {{name}}",
+      "join": "Join",
+      "joinName": "Join the session with {{name}}",
+      "open": "Open",
+      "openName": "Open \"{{text}}\"",
+      "receipt": "{{amount}} · {{what}}"
     },
     "consultations": {
       "type": "{{type}} · {{mode}}",
@@ -117,20 +165,16 @@
       "prepareName": "Prepare for the consultation with {{name}}"
     },
     "receipts": {
-      "title": "Receipts to confirm",
       "view": "View receipt",
       "viewName": "View {{name}}'s receipt",
       "confirm": "Confirm",
       "confirmName": "Confirm {{name}}'s receipt",
-      "what": "{{what}} · {{method}} · {{when}}",
       "method": {
         "card": "Card transfer",
         "iban": "Bank transfer (IBAN)"
       },
-      "empty": "No receipts waiting.",
       "error": "The receipt wasn't confirmed. Please try again.",
-      "confirmed": "{{name}}'s receipt confirmed.",
-      "pager": "{{from}}–{{to}} of {{total}}"
+      "confirmed": "{{name}}'s receipt confirmed."
     },
     "month": {
       "title": "My month",
@@ -143,7 +187,6 @@
     },
     "upsell": {
       "title": "Cross-sell opportunities",
-      "subtitle": "{{n}} customers are ready for their next purchase, found from their files.",
       "admitted": {
         "tag": "Admitted",
         "title": "{{name}} got an offer from {{university}}",
@@ -162,39 +205,18 @@
         "action": "See the list",
         "meta": "They bought a consultation but have no contract yet. Call each of them."
       },
-      "more": "and {{n}} more",
-      "previous": "Previous opportunities",
-      "next": "Next opportunities"
+      "more": "and {{n}} more"
     },
-    "calendar": {
-      "title": "Today's calendar",
-      "subtitle": "{{day}} · {{consultations}} consultations, {{calls}} timed follow-ups",
-      "all": "All consultations",
-      "range": "{{from}}–{{to}}",
-      "meta": "{{range}} · {{meta}}",
-      "callBlock": "{{time}} · follow up with {{name}}",
-      "consultation": "Consultation with {{name}}, {{range}}, {{meta}}, {{status}}",
-      "call": "Follow up with {{name}} at {{time}}",
-      "now": "Now, {{time}}",
-      "empty": "No consultations or timed follow-ups today.",
-      "unlogged": "{{n}} of today's consultations took place and aren't logged yet.",
-      "nextNow": "Right now",
-      "nextIn": "In {{n}} minutes",
-      "nextAt": "Next consultation at {{time}}",
-      "join": "Join the session",
-      "joinName": "Join the session with {{name}}",
-      "status": {
-        "live": "In progress · log the session",
-        "need": "Session not logged",
-        "done": "Session logged",
-        "upcoming": "Upcoming"
-      },
-      "legend": {
-        "upcoming": "Upcoming consultation",
-        "need": "Not logged",
-        "done": "Logged",
-        "call": "Follow-up call"
-      }
+    "aside": {
+      "label": "Month and opportunities",
+      "won": "{{won}} of {{target}} contracts",
+      "noTarget": "{{won}} contracts · no target set",
+      "progress": "{{won}} of {{target}} contracts",
+      "figures": "Conversion {{conversion}} · first call {{firstCall}}",
+      "upsell": "Cross-sell opportunities · {{n}}",
+      "team": "Team queue",
+      "teamText": "{{n}} tasks are waiting in the team queue.",
+      "teamEmpty": "The team queue is empty."
     }
   },
   "leads": {

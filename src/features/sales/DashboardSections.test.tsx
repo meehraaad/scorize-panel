@@ -11,7 +11,7 @@ beforeEach(async () => {
   await i18n.changeLanguage('fa');
 });
 
-it('seller shell and outreach stay usable while activity waits; insights fetch only when seen', async () => {
+it('seller next step stays usable while the day waits; insights fetch only when seen', async () => {
   localStorage.setItem('scorize.mock.session', '3');
   // The month and the chances load when they scroll into view: a stand-in observer to scroll.
   // Once scrolled, an observer made later (the section mounted again) sees it at once too.
@@ -50,9 +50,7 @@ it('seller shell and outreach stay usable while activity waits; insights fetch o
   );
   try {
     renderApp('/sales');
-    expect(
-      await screen.findByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'کار بعدی شما' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'ثبت لید دستی' })).toBeInTheDocument();
     expect(insights).not.toHaveBeenCalled();
     act(() => {
@@ -61,7 +59,7 @@ it('seller shell and outreach stay usable while activity waits; insights fetch o
     });
     await waitFor(() => expect(insights).toHaveBeenCalledOnce());
     expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('errors.sectionTitle'));
-    expect(screen.getByRole('region', { name: 'پیگیری‌ها و تماس‌های امروز' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'کار بعدی شما' })).toBeInTheDocument();
   } finally {
     release();
     vi.unstubAllGlobals();
