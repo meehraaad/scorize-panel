@@ -1,3 +1,4 @@
+import { listRowsOf, type ListRow } from '@/lib/schedule';
 import type { MyTask, TaskRequest } from '@/lib/tasks/api';
 import type { CallItem, HotLead, PendingReceipt, TodayConsultation } from './api';
 
@@ -122,31 +123,8 @@ export const endOf = (item: AgendaItem) =>
   item.kind === 'consultation' ? item.end : (item.at ?? 0) + SHORT_MINUTES * MINUTE;
 
 /** A row of the timetable: an item, the line at the current time, or free time ahead. */
-export type TimelineRow =
-  | { kind: 'item'; item: AgendaItem }
-  | { kind: 'now' }
-  | { kind: 'free'; from: number; minutes: number };
+export type TimelineRow = ListRow<AgendaItem>;
 
 /** The timed items with the "now" line among them and hints for long free stretches ahead. */
-export function timelineOf(items: AgendaItem[], now: number): TimelineRow[] {
-  const rows: TimelineRow[] = [];
-  let placedNow = false;
-  let freeFrom = now;
-  const free = (until: number) => {
-    const from = Math.max(freeFrom, now);
-    const minutes = Math.floor((until - from) / MINUTE);
-    if (minutes >= FREE_MINUTES) rows.push({ kind: 'free', from, minutes });
-  };
-  for (const item of items) {
-    const at = item.at ?? 0;
-    if (!placedNow && at > now) {
-      rows.push({ kind: 'now' });
-      placedNow = true;
-    }
-    if (placedNow) free(at);
-    rows.push({ kind: 'item', item });
-    freeFrom = Math.max(freeFrom, endOf(item));
-  }
-  if (!placedNow) rows.push({ kind: 'now' });
-  return rows;
-}
+export const timelineOf = (items: AgendaItem[], now: number): TimelineRow[] =>
+  listRowsOf(items, now, { at: (item) => item.at ?? 0, end: endOf, freeMinutes: FREE_MINUTES });

@@ -30,7 +30,6 @@ import { Pager } from '@/components/ui/Pager';
 import { ProgressBar, ProgressRing, StepBar, StepDot, StepList } from '@/components/ui/Progress';
 import { Badge, SectionCard, SectionHeading, SideSection } from '@/components/ui/SectionCard';
 import { SheetButton } from '@/components/ui/Sheet';
-import { SlotPicker, type Slot } from '@/components/ui/SlotPicker';
 import { MiniMonth } from '@/components/ui/MiniMonth';
 import { EventCalendar, type CalendarEvent } from '@/components/ui/EventCalendar';
 import { WeekCalendar, type CalendarTime } from '@/components/ui/WeekCalendar';
@@ -73,8 +72,6 @@ export default function ComponentsPage() {
   const [dialog, setDialog] = useState(false);
   const [day, setDay] = useState('');
   const [moment, setMoment] = useState('');
-  const [slot, setSlot] = useState<string | null>(null);
-  const [slots] = useState(sampleSlots);
   const [thisWeek] = useState(() => weekOf(new Date(), i18n.language === 'fa' ? 6 : 1));
   const [week, setWeek] = useState(thisWeek);
   const [booked, setBooked] = useState<string | null>(null);
@@ -563,37 +560,6 @@ export default function ComponentsPage() {
           </div>
         </Group>
 
-        <Group name="SlotPicker (consultation times, 20-minute slots)">
-          <div className="rounded-card bg-surface p-5 shadow-panel lg:p-8">
-            <SlotPicker
-              label="زمان مشاوره"
-              slots={slots}
-              value={slot}
-              onChange={setSlot}
-              minutes={20}
-            />
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
-            <div className="rounded-card bg-surface p-5 shadow-panel">
-              <SlotPicker
-                label="SlotPicker loading"
-                slots={[]}
-                value={null}
-                onChange={() => undefined}
-                loading
-              />
-            </div>
-            <div className="rounded-card bg-surface p-5 shadow-panel">
-              <SlotPicker
-                label="SlotPicker empty (narrow)"
-                slots={[]}
-                value={null}
-                onChange={() => undefined}
-              />
-            </div>
-          </div>
-        </Group>
-
         <Group name="WeekCalendar · MiniMonth (booking; free, a few left, full)">
           <div className="flex flex-wrap items-start gap-4">
             <div className="flex-[1_1_280px] rounded-card bg-surface p-3 shadow-panel lg:max-w-80">
@@ -974,8 +940,8 @@ function fakeUpload(fail: boolean) {
 }
 
 /** Six weeks of 20-minute times (not Thursday/Friday), some taken, from tomorrow. */
-function sampleSlots(): Slot[] {
-  const slots: Slot[] = [];
+function sampleSlots(): { at: string; left: number }[] {
+  const slots: { at: string; left: number }[] = [];
   const today = new Date();
   for (let offset = 1; offset <= 42; offset++) {
     const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);

@@ -7,6 +7,7 @@ import { buttonClass, tabClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { ScheduleList } from '@/components/ui/ScheduleList';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
@@ -224,55 +225,30 @@ function Timeline({ items, now }: { items: AgendaItem[]; now: number }) {
       ? t('today.agenda.freeHours', { n: f.number(Math.round((minutes / 60) * 2) / 2) })
       : t('today.agenda.freeMinutes', { n: f.number(minutes) });
   return (
-    <ol className="m-0 flex list-none flex-col p-0">
-      {timelineOf(items, now).map((row) => {
-        if (row.kind === 'now')
-          return (
-            <li
-              key="now"
-              aria-label={t('today.agenda.nowLine', { time: f.time(new Date(now)) })}
-              className="flex items-center gap-3 py-2"
-            >
-              <span className="w-14 flex-none text-xs font-bold text-danger tabular-nums">
-                {f.time(new Date(now))}
-              </span>
-              <span aria-hidden="true" className="relative h-0.5 flex-1 rounded-full bg-danger">
-                <span className="absolute -start-1 -top-1 size-2.5 rounded-full bg-danger" />
-              </span>
-              <span aria-hidden="true" className="text-xs font-bold text-danger">
-                {t('today.agenda.nowShort')}
-              </span>
-            </li>
-          );
-        if (row.kind === 'free')
-          return (
-            <li key={`free-${String(row.from)}`} className="flex gap-3 py-1.5">
-              <span className="w-14 flex-none" />
-              <span className="flex flex-1 flex-wrap items-center gap-x-3 rounded-2xl border border-dashed border-line-2 px-4 py-1.5">
-                <span className="flex-[1_1_220px] text-sm text-text-2">
-                  {t('today.agenda.free', { time: freeText(row.minutes) })}
-                </span>
-                <Link
-                  to={salesPath('leads')}
-                  className="inline-flex min-h-11 items-center text-sm font-semibold text-primary-text"
-                >
-                  {t('today.agenda.freeLink')}
-                </Link>
-              </span>
-            </li>
-          );
-        return (
-          <li key={row.item.key} className="flex gap-3 py-1.5">
-            <span className="w-14 flex-none pt-3.5 text-sm font-semibold text-text-2 tabular-nums">
-              {f.time(new Date(row.item.at ?? now))}
-            </span>
-            <ul className="m-0 min-w-0 flex-1 list-none p-0">
-              <AgendaRow item={row.item} now={now} />
-            </ul>
-          </li>
-        );
-      })}
-    </ol>
+    <ScheduleList
+      rows={timelineOf(items, now)}
+      now={now}
+      keyOf={(item) => item.key}
+      timeOf={(item) => item.at ?? now}
+      renderItem={(item) => (
+        <ul className="m-0 list-none p-0">
+          <AgendaRow item={item} now={now} />
+        </ul>
+      )}
+      renderFree={({ minutes }) => (
+        <>
+          <span className="flex-[1_1_220px] text-sm text-text-2">
+            {t('today.agenda.free', { time: freeText(minutes) })}
+          </span>
+          <Link
+            to={salesPath('leads')}
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-primary-text"
+          >
+            {t('today.agenda.freeLink')}
+          </Link>
+        </>
+      )}
+    />
   );
 }
 
