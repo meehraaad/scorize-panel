@@ -1446,6 +1446,28 @@
       "outbound": "Outgoing call"
     }
   },
+  "mobileExtension": {
+    "title": "Mobile phone",
+    "intro": "Get your own extension for the PortSIP app, so you can make and take office calls on your phone away from the office. Your desk phone keeps working as it does now.",
+    "request": "Request a mobile extension",
+    "pending": "Your extension is being created. This usually takes under a minute, and you can leave this page.",
+    "failed": "Your extension couldn't be created. Try again, and tell your sales manager if it keeps happening.",
+    "retry": "Try again",
+    "setup": "Enter these details in the PortSIP app on your phone. Keep the password to yourself.",
+    "extension": "Extension",
+    "password": "Password",
+    "domain": "SIP domain",
+    "server": "Server",
+    "transport": "In the app, set the transport to TLS and turn on SRTP encryption.",
+    "copy": "Copy {{label}}",
+    "show": "Show password",
+    "hide": "Hide password",
+    "reset": "Change password",
+    "resetConfirm": "Your phone will stop working until you enter the new password in the app.",
+    "resetYes": "Yes, change it",
+    "resetNo": "Keep this password",
+    "error": "That didn't go through. Check your connection and try again."
+  },
   "officeExtension": {
     "title": "Office phone",
     "label": "Desk phone extension",

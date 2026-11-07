@@ -18,6 +18,7 @@ describe('features by what Django serves', () => {
 
   it('keeps unshipped endpoints off', () => {
     expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
+      ['mobileExtensions', false],
       ['turkey', false],
       ['assistantOrganize', false],
     ]);
