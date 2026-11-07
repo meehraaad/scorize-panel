@@ -63,6 +63,7 @@ const task = (id: number, due: string): MyTask => ({
   action: 'open',
   note: '',
   suggested_next: '',
+  follow_up: false,
 });
 const request = (id: number, due: string, status: TaskRequest['status']): TaskRequest => ({
   id,
@@ -131,6 +132,17 @@ describe('agendaOf', () => {
     );
     expect(now).toHaveLength(1);
     expect(timed).toHaveLength(0);
+  });
+
+  it("shows a customer's follow-up task once, as the call, and keeps their other tasks", () => {
+    const person = { id: 3, name: 'call 3', context: '' };
+    const followUp = { ...task(20, iso(14)), person, follow_up: true };
+    const other = { ...task(21, iso(16)), person };
+    const { timed } = agendaOf(
+      { ...empty, timedCalls: [call(3, iso(14), 'today')], tasks: [followUp, other] },
+      NOW,
+    );
+    expect(timed.map((item) => item.key)).toEqual(['call-3', 'task-21']);
   });
 });
 
