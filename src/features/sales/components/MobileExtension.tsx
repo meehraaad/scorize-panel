@@ -8,32 +8,54 @@ import { Notice } from '@/components/ui/Notice';
 import { mobileExtensionQuery, useRequestMobileExtension } from '@/lib/sales/phoneCalls';
 import { toast } from '@/lib/toast';
 
+/** One login detail in a read-only field, with copy (and, for the password, show/hide) inside it. */
 function CopyRow({
   label,
   value,
-  shown = true,
+  secret,
 }: {
   label: string;
   value: string;
-  shown?: boolean;
+  /** The password: hidden until the eye inside the field is pressed. */
+  secret?: { shown: boolean; toggle: () => void };
 }) {
   const { t } = useTranslation('sales');
   const [copied, setCopied] = useState(false);
+  const shown = !secret || secret.shown;
   return (
-    <div className="flex flex-col gap-1">
-      <dt className="text-sm text-text-2">{label}</dt>
-      <dd className="m-0 flex items-center gap-2">
-        <code dir="ltr" className="min-w-0 flex-1 truncate rounded-xl bg-tint px-3 py-2 text-base">
-          {shown ? value : '••••••••••••'}
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <dt className="text-sm font-medium text-text-2">{label}</dt>
+      <dd
+        dir="ltr"
+        className="m-0 flex h-12 items-center gap-1 rounded-2xl bg-surface ps-4 pe-0.5 shadow-[inset_0_0_0_1px_var(--line-2)]"
+      >
+        <code
+          className={`min-w-0 flex-1 truncate font-mono text-base ${shown ? 'text-text' : 'tracking-widest text-text-3'}`}
+        >
+          {shown ? value : '••••••••••'}
         </code>
+        {secret && (
+          <IconButton
+            icon={secret.shown ? 'eyeOff' : 'eye'}
+            tone="muted"
+            iconSize={18}
+            aria-label={secret.shown ? t('mobileExtension.hide') : t('mobileExtension.show')}
+            aria-pressed={secret.shown}
+            onClick={secret.toggle}
+          />
+        )}
         <IconButton
           icon={copied ? 'check' : 'document'}
           tone="muted"
+          iconSize={18}
           aria-label={t('mobileExtension.copy', { label })}
           onClick={() => {
             void navigator.clipboard
               .writeText(value)
-              .then(() => setCopied(true))
+              .then(() => {
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 2000);
+              })
               .catch(() => setCopied(false));
           }}
         />
@@ -87,9 +109,13 @@ export function MobileExtension() {
       {data.status === 'ready' && data.extension && data.password && (
         <>
           <p className="m-0 text-[15px] leading-7 text-text-2">{t('mobileExtension.setup')}</p>
-          <dl className="m-0 flex flex-col gap-3">
+          <dl className="m-0 grid gap-4 sm:grid-cols-2">
             <CopyRow label={t('mobileExtension.extension')} value={data.extension} />
-            <CopyRow label={t('mobileExtension.password')} value={data.password} shown={revealed} />
+            <CopyRow
+              label={t('mobileExtension.password')}
+              value={data.password}
+              secret={{ shown: revealed, toggle: () => setRevealed((value) => !value) }}
+            />
             <CopyRow label={t('mobileExtension.domain')} value={data.domain ?? ''} />
             <CopyRow label={t('mobileExtension.server')} value={data.server ?? ''} />
           </dl>
@@ -105,9 +131,6 @@ export function MobileExtension() {
             />
           ) : (
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => setRevealed((value) => !value)}>
-                {revealed ? t('mobileExtension.hide') : t('mobileExtension.show')}
-              </Button>
               <Button variant="outline" onClick={() => setConfirming(true)}>
                 {t('mobileExtension.reset')}
               </Button>
