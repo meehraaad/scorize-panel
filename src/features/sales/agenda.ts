@@ -99,7 +99,12 @@ export function agendaOf(sources: AgendaSources, now: number): Agenda {
       consultation,
     });
   }
+  // A follow-up task is the same thing as its customer's call row (the lead's time is the task's): shown once.
+  const called = new Set<number>();
+  for (const item of due) if (item.kind === 'call') called.add(item.call.customer);
+  for (const item of timed) if (item.kind === 'call') called.add(item.call.customer);
   for (const task of sources.tasks) {
+    if (task.follow_up && task.person && called.has(task.person.id)) continue;
     const at = new Date(task.due_at).getTime();
     if (at >= endOfDay.getTime()) continue;
     const item: AgendaItem = { kind: 'task', key: `task-${String(task.id)}`, at, task };

@@ -79,13 +79,18 @@ export interface MobileExtensionState {
   password: string | null;
   domain: string | null;
   server: string | null;
+  /** Linphone's setup link for the QR. It expires after 10 minutes, so a ready card refreshes it. */
+  linphone: string | null;
 }
 
-/** The seller's own PortSIP login. The office worker makes it within seconds, so pending polls. */
+/** The seller's own mobile login. The office worker makes it within seconds, so pending polls. */
 export const mobileExtensionQuery = queryOptions({
   queryKey: [...SALES_KEY, 'mobile-extension'],
   queryFn: ({ signal }) => api<MobileExtensionState>(`${SALES_API}/calls/mobile/`, { signal }),
-  refetchInterval: (query) => (query.state.data?.status === 'pending' ? 3000 : false),
+  refetchInterval: (query) => {
+    const status = query.state.data?.status;
+    return status === 'pending' ? 3000 : status === 'ready' ? 5 * 60_000 : false;
+  },
 });
 
 export function useRequestMobileExtension() {
