@@ -102,8 +102,11 @@ export function agendaOf(sources: AgendaSources, now: number): Agenda {
   const called = new Set<number>();
   for (const item of due) if (item.kind === 'call') called.add(item.call.customer);
   for (const item of timed) if (item.kind === 'call') called.add(item.call.customer);
+  // A receipt's review task is the receipt row.
+  const receipts = new Set(sources.receipts.map((receipt) => receipt.payment));
   for (const task of sources.tasks) {
     if (task.follow_up && task.person && called.has(task.person.id)) continue;
+    if (task.receipt !== null && receipts.has(task.receipt)) continue;
     const at = new Date(task.due_at).getTime();
     if (at >= endOfDay.getTime()) continue;
     const item: AgendaItem = { kind: 'task', key: `task-${String(task.id)}`, at, task };
