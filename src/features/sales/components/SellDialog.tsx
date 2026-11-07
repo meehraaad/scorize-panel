@@ -300,10 +300,12 @@ function SlotSchedule({
           chosen && (
             <p className="m-0 flex items-center gap-2 rounded-2xl bg-surface px-4 py-3 text-sm font-semibold shadow-toast">
               <Icon name="check" size={16} className="text-good" />
-              {t('sell.slotOption', {
-                when: `${f.weekday(chosen.starts_at)} · ${f.time(chosen.starts_at)}`,
-                consultant: chosen.consultant,
-              })}
+              {chosen.consultant
+                ? t('sell.slotOption', {
+                    when: `${f.weekday(chosen.starts_at)} · ${f.time(chosen.starts_at)}`,
+                    consultant: chosen.consultant,
+                  })
+                : `${f.weekday(chosen.starts_at)} · ${f.time(chosen.starts_at)}`}
             </p>
           )
         }
