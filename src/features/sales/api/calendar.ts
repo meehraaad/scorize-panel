@@ -90,3 +90,45 @@ export function useMarkArrived() {
     onSettled: () => client.invalidateQueries({ queryKey: CALENDAR_KEY }),
   });
 }
+
+export interface FollowUpChange {
+  lead: number;
+  /** ISO time. */
+  at: string;
+  /** What to do then; empty keeps a moved follow-up's text. */
+  text?: string;
+}
+
+/**
+ * Sets a lead's one follow-up from the calendar (a new one, or one dragged to another time) through
+ * `leads/bulk/`. A moved call jumps there at once; the calendars and lists reload after.
+ */
+export function useSetFollowUp() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ lead, at, text }: FollowUpChange) =>
+      api(`${SALES_API}/leads/bulk/`, {
+        method: 'POST',
+        body: { ids: [lead], follow_up_at: at, ...(text ? { follow_up_text: text } : {}) },
+      }),
+    onMutate: async ({ lead, at }) => {
+      await client.cancelQueries({ queryKey: CALENDAR_KEY });
+      const before = client.getQueriesData<SellerCalendar>({ queryKey: CALENDAR_KEY });
+      client.setQueriesData<SellerCalendar>(
+        { queryKey: CALENDAR_KEY },
+        (data) =>
+          data && {
+            ...data,
+            calls: data.calls.map((call) =>
+              call.lead === lead ? { ...call, follow_up_at: at } : call,
+            ),
+          },
+      );
+      return { before };
+    },
+    onError: (_error, _change, context) => {
+      for (const [key, data] of context?.before ?? []) client.setQueryData(key, data);
+    },
+    onSettled: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}

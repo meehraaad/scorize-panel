@@ -1,4 +1,4 @@
-import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -228,5 +228,24 @@ describe('session log: the next step on the board', () => {
     await user.click(within(board).getByRole('radio', { name: 'مشاوره شد' }));
     await user.click(within(dialog).getByRole('button', { name: /ثبت جلسه و ساختن پیگیری/ }));
     await waitFor(() => expect(sent).toMatchObject({ channel: 'meeting', stage: 'consulted' }));
+  });
+
+  it("picks another date's follow-up time on the seller's week", async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105?log=call');
+    const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
+    await user.click(await within(dialog).findByRole('radio', { name: 'تاریخ دیگر' }));
+    const week = await within(dialog).findByRole('region', {
+      name: 'هفته‌ی من برای انتخاب وقت پیگیری',
+    });
+    await user.click(within(dialog).getByRole('button', { name: 'هفته‌ی بعد' }));
+    // The first day of next week; the grid starts at 9, an hour is 44px: 14:00.
+    fireEvent.click(first(within(week).getAllByTestId('schedule-slot')), { clientY: 220 });
+    expect(
+      await within(week).findByRole('button', { name: /^وقت انتخاب‌شده: .* ساعت ۱۴:۰۰$/ }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /تاریخ و ساعت پیگیری/ })).toHaveTextContent(
+      '۱۴:۰۰',
+    );
   });
 });

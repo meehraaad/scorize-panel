@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -148,5 +148,61 @@ describe('sales: my consultations on a week calendar', () => {
     expect(await screen.findByRole('heading', { name: '۹ تا ۱۵ آبان ۱۴۰۵' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'فهرست' }));
     expect(await screen.findByRole('group', { name: 'بازه' })).toBeInTheDocument();
+  });
+
+  describe('follow-ups', () => {
+    const callBlock = (calendar: HTMLElement) =>
+      within(calendar).getAllByRole('button', { name: /، .* · پیگیری$/ })[0] as HTMLElement;
+
+    it('a free spot opens a new follow-up at that time, for a customer found by name', async () => {
+      const user = userEvent.setup();
+      const calendar = await open();
+      // Wednesday's column (Saturday first); the grid starts at 9, an hour is 66px: 14:00.
+      fireEvent.click(screen.getAllByTestId('schedule-slot')[4] as HTMLElement, { clientY: 330 });
+      const dialog = await screen.findByRole('dialog', { name: 'پیگیری تازه' });
+      expect(within(dialog).getByRole('button', { name: /روز و ساعت/ })).toHaveTextContent('۱۴:۰۰');
+      await user.click(within(dialog).getByRole('button', { name: 'ثبت پیگیری' }));
+      expect(within(dialog).getByText('یک مشتری انتخاب کنید.')).toBeInTheDocument();
+      const name = callBlock(calendar).getAttribute('aria-label')?.split('، ')[0] ?? '';
+      await user.type(within(dialog).getByRole('textbox', { name: /مشتری/ }), name);
+      await user.click((await within(dialog).findAllByRole('radio'))[0] as HTMLElement);
+      await user.click(within(dialog).getByRole('button', { name: 'ثبت پیگیری' }));
+      expect(
+        await toasts().findByText(/^پیگیری برای چهارشنبه .* ساعت ۱۴:۰۰ ثبت شد\.$/),
+      ).toBeInTheDocument();
+    });
+
+    it('a passed spot is refused', async () => {
+      await open();
+      fireEvent.click(screen.getAllByTestId('schedule-slot')[0] as HTMLElement, { clientY: 330 });
+      expect(await toasts().findByText(/این زمان گذشته است/)).toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'پیگیری تازه' })).toBeNull();
+    });
+
+    it('a call dragged to another day and time moves there', async () => {
+      const calendar = await open();
+      const block = callBlock(calendar);
+      const thursday = within(calendar)
+        .getAllByRole('group')
+        .find((group) => group.dataset['scheduleDay'] === '5') as HTMLElement;
+      document.elementsFromPoint = () => [block, thursday];
+      fireEvent.pointerDown(block, { button: 0, pointerType: 'mouse', clientX: 0, clientY: 0 });
+      fireEvent.pointerMove(block, { pointerType: 'mouse', clientX: 300, clientY: 66 });
+      fireEvent.pointerUp(block, { pointerType: 'mouse', clientX: 300, clientY: 66 });
+      fireEvent.click(block);
+      expect(await toasts().findByText(/^پیگیری به پنجشنبه .* رفت\.$/)).toBeInTheDocument();
+      expect(within(calendar).queryByRole('dialog')).toBeNull();
+      Reflect.deleteProperty(document, 'elementsFromPoint');
+    });
+
+    it("moves from the call's card too (no mouse)", async () => {
+      const user = userEvent.setup();
+      const calendar = await open();
+      await user.click(callBlock(calendar));
+      const card = within(calendar).getByRole('dialog');
+      await user.click(within(card).getByRole('button', { name: /^تغییر زمان/ }));
+      const dialog = await screen.findByRole('dialog', { name: /^زمان تازه برای پیگیری / });
+      expect(within(dialog).queryByRole('textbox', { name: /مشتری/ })).toBeNull();
+    });
   });
 });

@@ -31,6 +31,8 @@ export interface CalendarEvent {
   tag?: string | undefined;
   /** A thin red edge: something to do before it (a missing form). */
   warn?: boolean;
+  /** Can be dragged to another time (with the calendar's `onMove`). */
+  movable?: boolean;
 }
 
 interface EventCalendarProps {
@@ -49,6 +51,13 @@ interface EventCalendarProps {
   loading?: boolean;
   /** Now (tests set it). */
   now?: Date;
+  /** Clicking an empty spot: that time, to add something there (see `Schedule`). */
+  onSlotPick?: ((start: Date) => void) | undefined;
+  /** A `movable` event dragged to a new start (see `Schedule`). */
+  onMove?: ((id: string, start: Date) => void) | undefined;
+  /** One hour's height, px, wide and narrow (smaller inside a dialog). */
+  hourHeight?: number;
+  narrowHourHeight?: number;
 }
 
 const LOOK: Record<EventLook, string> = {
@@ -75,6 +84,7 @@ function eventItem(event: CalendarEvent): ScheduleItem {
     color: event.color,
     aria: event.aria,
     dot: DOT[event.look],
+    movable: event.movable,
     look: ({ tall, large, chosen }: BlockShape) =>
       `flex flex-col gap-0.5 rounded-lg font-bold ${tall ? 'px-2 py-1' : 'justify-center px-2'} ${
         large ? 'rounded-xl px-3 text-[13px]' : 'text-xs'
@@ -117,6 +127,10 @@ export function EventCalendar({
   dayRow,
   loading = false,
   now,
+  onSlotPick,
+  onMove,
+  hourHeight,
+  narrowHourHeight,
 }: EventCalendarProps) {
   const { t } = useTranslation();
   const f = useFormat();
@@ -142,7 +156,11 @@ export function EventCalendar({
           {t('eventCalendar.nothingDay', { day: f.weekday(date) })}
         </p>
       )}
+      onSlotPick={onSlotPick}
+      onMove={onMove}
       {...(now ? { now } : {})}
+      {...(hourHeight ? { hourHeight } : {})}
+      {...(narrowHourHeight ? { narrowHourHeight } : {})}
     />
   );
 }

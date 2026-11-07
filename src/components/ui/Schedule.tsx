@@ -1,4 +1,11 @@
-import { useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { addDays, sameDay, toCalendar } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
@@ -38,6 +45,8 @@ export interface ScheduleItem {
   content: (shape: BlockShape) => ReactNode;
   /** Its dot on the narrow day strip (a background class); default its colour. */
   dot?: string | undefined;
+  /** Can be dragged to another time or day (with the schedule's `onMove`; a mouse or pen). */
+  movable?: boolean | undefined;
 }
 
 /** A row above the hours with a brief of each day (its tasks), like a calendar app's all-day row. */
@@ -97,6 +106,18 @@ export interface ScheduleProps {
   color?: string;
   /** Now, for the current-time line (tests set it). */
   now?: Date;
+  /**
+   * Clicking or tapping an empty spot of a day: that time, snapped down to `snap` minutes (to add
+   * something there). Mouse and touch only: pair it with a button that adds one from the keyboard.
+   */
+  onSlotPick?: ((start: Date) => void) | undefined;
+  /**
+   * A `movable` item dragged to another time or day: its new start, snapped to `snap` minutes.
+   * Dragging needs a mouse or pen: give the item's card another way to move it.
+   */
+  onMove?: ((id: string, start: Date) => void) | undefined;
+  /** Minutes the picked and dropped times snap to. */
+  snap?: number;
 }
 
 const DEFAULT_FROM = 9;
@@ -106,6 +127,26 @@ const MIN_BLOCK = 22;
 
 const minutesOf = (date: Date) => date.getHours() * 60 + date.getMinutes();
 const dayKey = (date: Date) => date.toDateString();
+const DAY_MINUTES = 24 * 60;
+/** A time of a day, `minutes` after its midnight, kept inside the day. */
+const timeOn = (day: Date, minutes: number, snap: number) =>
+  new Date(
+    day.getFullYear(),
+    day.getMonth(),
+    day.getDate(),
+    0,
+    Math.min(Math.max(minutes, 0), DAY_MINUTES - snap),
+  );
+/** The column (`data-schedule-day`, its day's index) under a point, behind a dragged block. */
+function dayIndexAt(x: number, y: number): number | null {
+  const under =
+    typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(x, y) : [];
+  for (const element of under) {
+    const index = element instanceof HTMLElement ? element.dataset['scheduleDay'] : undefined;
+    if (index !== undefined) return Number(index);
+  }
+  return null;
+}
 
 /** Side-by-side lanes for items that overlap, like a calendar app's day. */
 function layOut(items: readonly ScheduleItem[]) {
@@ -176,6 +217,9 @@ export function Schedule({
   toolbar,
   color = 'var(--primary)',
   now: givenNow,
+  onSlotPick,
+  onMove,
+  snap = 15,
 }: ScheduleProps) {
   const [now] = useState(() => givenNow ?? new Date());
   const root = useRef<HTMLElement>(null);
@@ -199,6 +243,16 @@ export function Schedule({
     hours,
     empty: nothingOpen ? empty : undefined,
     daySummary,
+    onSlotPick,
+    snap,
+    onDrop: onMove
+      ? (item: ScheduleItem, column: number, minutes: number) => {
+          const day = days[column]?.date;
+          if (!day) return;
+          const start = timeOn(day, Math.round(minutes / snap) * snap, snap);
+          if (start.getTime() !== item.start.getTime()) onMove(item.id, start);
+        }
+      : undefined,
   };
   return (
     <section
@@ -234,6 +288,41 @@ interface ViewProps {
   hours: 'workday' | 'fit';
   empty: ReactNode;
   daySummary: (day: ScheduleDay) => string;
+  onSlotPick: ((start: Date) => void) | undefined;
+  snap: number;
+  /** A movable block let go over a column (its index in `days`) at that many minutes into the day. */
+  onDrop: ((item: ScheduleItem, column: number, minutes: number) => void) | undefined;
+}
+
+/** The empty part of a day under its blocks: a click or tap there picks that time. */
+function SlotPicker({
+  day,
+  from,
+  hour,
+  snap,
+  onPick,
+}: {
+  day: Date;
+  from: number;
+  hour: number;
+  snap: number;
+  onPick: (start: Date) => void;
+}) {
+  return (
+    // The keyboard way to add is the page's own button: this layer is for the pointer only.
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-hidden="true"
+      data-testid="schedule-slot"
+      className="absolute inset-0 cursor-copy hover:bg-tint/40"
+      onClick={(event) => {
+        const top = event.currentTarget.getBoundingClientRect().top;
+        const minutes = from * 60 + ((event.clientY - top) / hour) * 60;
+        onPick(timeOn(day, Math.floor(minutes / snap) * snap, snap));
+      }}
+    />
+  );
 }
 
 function Block({
@@ -245,6 +334,8 @@ function Block({
   chosen,
   onChange,
   large = false,
+  column,
+  onDrop,
 }: {
   item: ScheduleItem;
   lane: number;
@@ -254,7 +345,50 @@ function Block({
   chosen: boolean;
   onChange: (id: string | null) => void;
   large?: boolean;
+  /** Its day's index in the week, where it lands when let go outside any column. */
+  column: number;
+  onDrop: ViewProps['onDrop'];
 }) {
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const dragged = useRef(false);
+  const [offset, setOffset] = useState<{ x: number; y: number } | null>(null);
+  const movable = Boolean(item.movable && onDrop && !item.disabled);
+  const dragging = movable
+    ? {
+        onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
+          // Touch scrolls the page: a finger moves the item from its card instead.
+          if (event.button !== 0 || event.pointerType === 'touch') return;
+          drag.current = { x: event.clientX, y: event.clientY, moved: false };
+          try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          } catch {
+            // Without capture (old browsers, tests) the drag still ends where the pointer is let go.
+          }
+        },
+        onPointerMove: (event: PointerEvent<HTMLButtonElement>) => {
+          const start = drag.current;
+          if (!start) return;
+          const x = event.clientX - start.x;
+          const y = event.clientY - start.y;
+          if (!start.moved && Math.hypot(x, y) < 6) return;
+          start.moved = true;
+          setOffset({ x, y });
+        },
+        onPointerUp: (event: PointerEvent<HTMLButtonElement>) => {
+          const start = drag.current;
+          drag.current = null;
+          setOffset(null);
+          if (!start?.moved) return;
+          dragged.current = true;
+          const minutes = minutesOf(item.start) + ((event.clientY - start.y) / hour) * 60;
+          onDrop?.(item, dayIndexAt(event.clientX, event.clientY) ?? column, minutes);
+        },
+        onPointerCancel: () => {
+          drag.current = null;
+          setOffset(null);
+        },
+      }
+    : {};
   const top = ((minutesOf(item.start) - from * 60) / 60) * hour;
   const height = Math.max(large ? 44 : MIN_BLOCK, (item.minutes / 60) * hour - 3);
   const shape: BlockShape = { height, tall: height > 34, large, chosen };
@@ -264,6 +398,7 @@ function Block({
     height,
     insetInlineStart: `calc(${String((lane * 100) / lanes)}% + 3px)`,
     width: `calc(${String(100 / lanes)}% - 6px)`,
+    ...(offset && { transform: `translate(${String(offset.x)}px, ${String(offset.y)}px)` }),
   } as CSSProperties;
   return (
     <button
@@ -271,9 +406,16 @@ function Block({
       aria-label={item.aria}
       aria-pressed={chosen}
       disabled={item.disabled}
-      onClick={() => onChange(chosen ? null : item.id)}
+      onClick={() => {
+        // The click that ends a drag doesn't choose the block.
+        if (dragged.current) dragged.current = false;
+        else onChange(chosen ? null : item.id);
+      }}
+      {...dragging}
       style={style}
-      className={`absolute overflow-hidden text-start focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus ${item.look(shape)}`}
+      className={`absolute overflow-hidden text-start focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus ${
+        movable ? 'cursor-grab' : ''
+      } ${offset ? 'z-50 cursor-grabbing opacity-90' : ''} ${item.look(shape)}`}
     >
       {item.content(shape)}
     </button>
@@ -284,7 +426,7 @@ function NowLine({ now, from, hour }: { now: Date; from: number; hour: number })
   return (
     <span
       aria-hidden="true"
-      className="absolute inset-x-0 z-30 h-0.5 bg-danger"
+      className="pointer-events-none absolute inset-x-0 z-30 h-0.5 bg-danger"
       style={{ top: ((minutesOf(now) - from * 60) / 60) * hour }}
     >
       <span className="absolute -start-1.5 -top-[5px] size-3 rounded-full bg-danger" />
@@ -308,6 +450,9 @@ function Week({
   empty,
   hour,
   emptyColumn,
+  onSlotPick,
+  snap,
+  onDrop,
 }: ViewProps & { hour: number; emptyColumn: (date: Date, today: Date) => string }) {
   const f = useFormat();
   const cal = useCalendar();
@@ -403,13 +548,23 @@ function Week({
               key={dayKey(day.date)}
               role="group"
               aria-label={f.weekday(day.date)}
+              data-schedule-day={column}
               className={`relative border-s border-hair ${narrow ? 'w-16 flex-none bg-canvas/60' : 'min-w-0 flex-1'} ${
                 !narrow && day.date < today ? 'bg-canvas/60' : ''
               }`}
               style={hourLines(hour)}
             >
+              {!loading && onSlotPick && (
+                <SlotPicker
+                  day={day.date}
+                  from={from}
+                  hour={hour}
+                  snap={snap}
+                  onPick={onSlotPick}
+                />
+              )}
               {narrow && (
-                <span className="absolute inset-x-1 top-3 text-center text-[11px] leading-5 font-semibold text-text-3">
+                <span className="pointer-events-none absolute inset-x-1 top-3 text-center text-[11px] leading-5 font-semibold text-text-3">
                   {emptyColumn(day.date, today)}
                 </span>
               )}
@@ -431,6 +586,8 @@ function Week({
                     hour={hour}
                     chosen={item.id === value && !item.disabled}
                     onChange={onChange}
+                    column={column}
+                    onDrop={onDrop}
                   />
                 ))}
               {isToday && minutesOf(now) > from * 60 && minutesOf(now) < to * 60 && (
@@ -479,6 +636,9 @@ function Day({
   hour,
   pickableDaysOnly,
   emptyDay,
+  onSlotPick,
+  snap,
+  onDrop,
 }: ViewProps & {
   hour: number;
   pickableDaysOnly: boolean;
@@ -502,7 +662,8 @@ function Day({
       days[0]);
   const { from, to } = current?.items.length
     ? hoursOf(current.items, hours)
-    : { from: DEFAULT_FROM, to: DEFAULT_FROM + 3 };
+    : // Nothing yet: a few hours, or the working day when one may add something to it.
+      { from: DEFAULT_FROM, to: onSlotPick ? DEFAULT_TO : DEFAULT_FROM + 3 };
   const chosen = current?.items.find((item) => item.id === value && !item.disabled);
 
   return (
@@ -580,7 +741,7 @@ function Day({
         </div>
       ) : !current ? (
         empty
-      ) : current.items.length === 0 ? (
+      ) : current.items.length === 0 && !onSlotPick ? (
         emptyDay?.(current.date)
       ) : (
         <>
@@ -591,6 +752,7 @@ function Day({
           <div
             role="group"
             aria-label={f.weekday(current.date)}
+            data-schedule-day={days.indexOf(current)}
             className="relative ms-12"
             style={{ height: (to - from) * hour + 8, ...hourLines(hour) }}
           >
@@ -604,6 +766,15 @@ function Day({
                 {f.time(new Date(2000, 0, 1, h))}
               </span>
             ))}
+            {onSlotPick && (
+              <SlotPicker
+                day={current.date}
+                from={from}
+                hour={hour}
+                snap={snap}
+                onPick={onSlotPick}
+              />
+            )}
             {layOut(current.items).map(({ item, lane, lanes }) => (
               <Block
                 key={item.id}
@@ -615,6 +786,8 @@ function Day({
                 chosen={item.id === value && !item.disabled}
                 onChange={onChange}
                 large
+                column={days.indexOf(current)}
+                onDrop={onDrop}
               />
             ))}
             {sameDay(current.date, today) &&

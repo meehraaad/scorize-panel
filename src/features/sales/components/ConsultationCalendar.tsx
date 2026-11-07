@@ -18,14 +18,17 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
 import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
+import { Button } from '@/components/ui/Button';
 import {
   sellerCalendarQuery,
   useMarkArrived,
+  useSetFollowUp,
   type CalendarCall,
   type CalendarConsultation,
   type CalendarType,
 } from '../api';
 import { customerPath } from '../paths';
+import { FollowUpDialog } from './FollowUpDialog';
 import { TaskBrief } from './TaskBrief';
 
 const MINUTE = 60_000;
@@ -50,6 +53,12 @@ const statusOf = (item: CalendarConsultation, now: number): Status => {
 type Chosen =
   { kind: 'consultation'; item: CalendarConsultation } | { kind: 'call'; item: CalendarCall };
 
+/** The follow-up dialog: a new one at a time, or a customer's moved (`lead`). */
+interface Setting {
+  at: Date | null;
+  lead?: { id: number; name: string };
+}
+
 /**
  * "My consultations" as a week calendar (design: "Seller Consultations Calendar" canvas): the
  * paid sessions in their type's colour and their state's look, with how they are held (online:
@@ -73,6 +82,34 @@ export function ConsultationCalendar() {
   const inMode = (held: CalendarType['mode']) => mode === 'all' || held === mode;
   const [chosenId, setChosenId] = useState<string | null>(null);
   const { data, isPending } = useQuery(sellerCalendarQuery(week));
+  const setFollowUp = useSetFollowUp();
+  const [setting, setSetting] = useState<Setting | null>(null);
+  /** A time picked or dropped on the calendar, unless it has passed. */
+  const ahead = (start: Date) => {
+    if (start.getTime() >= Date.now()) return true;
+    toast.error(t('followUpDialog.past'));
+    return false;
+  };
+  const pickSlot = (start: Date) => {
+    setChosenId(null);
+    if (ahead(start)) setSetting({ at: start });
+  };
+  const moveCall = (id: string, start: Date) => {
+    const call = data?.calls.find((row) => `l${String(row.lead)}` === id);
+    if (!call || !ahead(start)) return;
+    setFollowUp.mutate(
+      { lead: call.lead, at: start.toISOString() },
+      {
+        onSuccess: () =>
+          toast.success(
+            t('followUpDialog.moved', {
+              when: t('followUpDialog.when', { day: f.weekday(start), time: f.time(start) }),
+            }),
+          ),
+        onError: () => toast.error(t('error')),
+      },
+    );
+  };
 
   const types = new Map((data?.types ?? []).map((type) => [type.id, type]));
   const taskDays = new Map((data?.tasks ?? []).map((row) => [row.day, row]));
@@ -135,6 +172,7 @@ export function ConsultationCalendar() {
         meta,
         aria: `${item.name}، ${meta}`,
         lead: <Icon name="followUp" size={12} />,
+        movable: true,
       };
     }),
   ];
@@ -168,6 +206,10 @@ export function ConsultationCalendar() {
       <div className="flex flex-wrap items-center gap-2.5">
         <WeekNav week={week} onWeekChange={go} thisWeek={thisWeek} heading="h2" />
         <span className="flex-1" />
+        <Button variant="outline" onClick={() => setSetting({ at: null })}>
+          <Icon name="plus" size={16} />
+          {t('followUpDialog.new')}
+        </Button>
         {unlogged > 0 && !onlyUnlogged && (
           <button
             type="button"
@@ -281,6 +323,8 @@ export function ConsultationCalendar() {
             onChange={setChosenId}
             loading={isPending}
             now={now}
+            onSlotPick={pickSlot}
+            onMove={moveCall}
             dayRow={{
               label: t('consultationCalendar.tasks.row'),
               cell: (day, compact) => (
@@ -299,12 +343,21 @@ export function ConsultationCalendar() {
                   type={chosen.kind === 'consultation' ? types.get(chosen.item.type) : undefined}
                   now={nowTime}
                   onClose={() => setChosenId(null)}
+                  onMoveCall={(call) =>
+                    setSetting({
+                      at: new Date(call.follow_up_at),
+                      lead: { id: call.lead, name: call.name },
+                    })
+                  }
                 />
               )
             }
           />
         </Card>
       </div>
+      {setting && (
+        <FollowUpDialog open onClose={() => setSetting(null)} at={setting.at} lead={setting.lead} />
+      )}
     </div>
   );
 }
@@ -487,11 +540,14 @@ function Details({
   type,
   now,
   onClose,
+  onMoveCall,
 }: {
   chosen: Chosen;
   type: CalendarType | undefined;
   now: number;
   onClose: () => void;
+  /** Another time for a follow-up call (dragging's keyboard and phone twin). */
+  onMoveCall: (call: CalendarCall) => void;
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -517,8 +573,17 @@ function Details({
   let actions: ReactNode;
   let statusLine: ReactNode = null;
   if (chosen.kind === 'call') {
+    const call = chosen.item;
     actions = (
       <>
+        <button
+          type="button"
+          onClick={() => onMoveCall(call)}
+          aria-label={action(t('followUpDialog.change'))}
+          className={outline}
+        >
+          {t('followUpDialog.change')}
+        </button>
         <ContactLogButton
           customer={item.customer}
           name={item.name}

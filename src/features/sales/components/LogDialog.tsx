@@ -21,6 +21,7 @@ import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
 import { CallStatus } from './CallStatus';
+import { FollowUpSlots } from './FollowUpSlots';
 import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
@@ -250,6 +251,9 @@ export function LogDialog({
           onChange={change('date')}
           error={checked && !followAt ? t('customer.logDialog.followDate') : undefined}
         />
+      )}
+      {asksFollowUp && follow === 'other' && (
+        <FollowUpSlots value={date} onChange={change('date')} />
       )}
     </>
   );

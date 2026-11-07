@@ -1572,5 +1572,33 @@
     "error": "The extension wasn't saved. Check your connection and try again.",
     "missing": "To see desk phone calls in the panel, enter your extension in settings.",
     "missingLink": "Go to settings"
+  },
+  "followUpDialog": {
+    "new": "New follow-up",
+    "title": "New follow-up",
+    "moveTitle": "A new time for {{name}}'s follow-up",
+    "subtitle": "This time becomes the customer's follow-up, on Today, tasks and the calendar.",
+    "customer": "Customer",
+    "customerHint": "Type a name or phone number.",
+    "customerRequired": "Choose a customer.",
+    "matches": "Customers found",
+    "noMatch": "No open lead with this name or number.",
+    "date": "Day and time",
+    "dateRequired": "Choose a day and time.",
+    "past": "This time has passed. Choose one in the future.",
+    "text": "What to do (optional)",
+    "textPlaceholder": "e.g. ask about the visa",
+    "save": "Set follow-up",
+    "move": "Move",
+    "change": "Change time",
+    "when": "{{day}} at {{time}}",
+    "saved": "Follow-up set for {{when}}.",
+    "moved": "Follow-up moved to {{when}}."
+  },
+  "followUpSlots": {
+    "label": "My week, to pick the follow-up time",
+    "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
+    "picked": "New follow-up",
+    "pickedAria": "Picked time: {{day}} at {{time}}"
   }
 }
