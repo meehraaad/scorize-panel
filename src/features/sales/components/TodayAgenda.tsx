@@ -1,21 +1,21 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { Button } from '@/components/ui/Button';
-import { buttonClass, tabClass } from '@/components/ui/buttonStyles';
-import { Card } from '@/components/ui/Card';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { ScheduleList } from '@/components/ui/ScheduleList';
+import { DayPlan } from '@/components/ui/DayPlan';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
   AGENDA_FILTERS,
+  FREE_MINUTES,
+  endOf,
   filterOf,
-  timelineOf,
   type Agenda,
   type AgendaFilter,
   type AgendaItem,
@@ -73,168 +73,59 @@ export function TodayAgenda({
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const [filter, setFilter] = useState<AgendaFilter>('all');
-  const [expanded, setExpanded] = useState(false);
-
-  const all = [...agenda.now, ...agenda.timed];
-  const count = (key: AgendaFilter) =>
-    key === 'all' ? all.length : all.filter((item) => filterOf(item) === key).length;
-  const shows = (item: AgendaItem) => filter === 'all' || filterOf(item) === filter;
-  const due = agenda.now.filter(shows);
-  const timed = agenda.timed.filter(shows);
-  const dueShown = expanded ? due : due.slice(0, NOW_SHOWN);
-  const showCalls = filter === 'all' || filter === 'calls';
-  const links = [
-    showCalls &&
-      more.hot > 0 && {
-        key: 'hot',
-        to: salesPath('leads?stage=new'),
-        text: t('today.agenda.more.hot', { n: f.number(more.hot) }),
-      },
-    showCalls &&
-      more.overdue > 0 && {
-        key: 'overdue',
-        to: salesPath('leads'),
-        text: t('today.agenda.more.overdue', { n: f.number(more.overdue) }),
-      },
-    showCalls &&
-      more.stale > 0 && {
-        key: 'stale',
-        to: salesPath('leads?stage=new'),
-        text: t('today.agenda.more.stale', { n: f.number(more.stale) }),
-      },
-    (filter === 'all' || filter === 'tasks') &&
-      more.tasks && { key: 'tasks', to: salesPath('tasks'), text: t('today.agenda.more.tasks') },
-  ].filter((link) => link !== false);
-
-  return (
-    <Card aria-labelledby="agenda-title" className="flex min-w-0 flex-col gap-4 p-4 lg:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 id="agenda-title" className="m-0 font-display text-xl font-bold">
-            {t('today.agenda.title')}
-          </h2>
-          <span className="text-sm text-text-2">
-            {t('today.agenda.subtitle', { day: f.weekday(new Date(now)) })}
-          </span>
-        </div>
-        <div
-          role="group"
-          aria-label={t('today.agenda.filter')}
-          className="flex flex-wrap gap-1 rounded-2xl bg-canvas p-1"
-        >
-          {AGENDA_FILTERS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={filter === key}
-              onClick={() => setFilter(key)}
-              className={`${tabClass(filter === key)} min-h-11 gap-1.5 px-3 text-sm`}
-            >
-              {t(`today.agenda.filters.${key}`)}
-              <span className="tabular-nums">{f.number(count(key))}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {(due.length > 0 || links.length > 0) && (
-        <section
-          aria-labelledby="agenda-now"
-          className="flex flex-col gap-2 rounded-2xl bg-danger-tint/50 p-3 lg:p-4"
-        >
-          <div className="flex flex-wrap items-baseline gap-x-2">
-            <h3 id="agenda-now" className="m-0 text-sm font-bold text-danger">
-              {t('today.agenda.now')}
-            </h3>
-            <span className="text-xs text-text-2">{t('today.agenda.nowNote')}</span>
-          </div>
-          {due.length > 0 && (
-            <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {dueShown.map((item) => (
-                <AgendaRow key={item.key} item={item} now={now} due />
-              ))}
-            </ul>
-          )}
-          {due.length > NOW_SHOWN && (
-            <button
-              type="button"
-              aria-expanded={expanded}
-              onClick={() => setExpanded((value) => !value)}
-              className="min-h-11 self-start rounded-xl px-3 text-sm font-semibold text-primary-text hover:bg-surface"
-            >
-              {expanded
-                ? t('today.agenda.showLess')
-                : t('today.agenda.showAll', { n: f.number(due.length) })}
-            </button>
-          )}
-          {links.length > 0 && (
-            <ul className="m-0 flex list-none flex-wrap gap-x-4 p-0">
-              {links.map((link) => (
-                <li key={link.key}>
-                  <Link
-                    to={link.to}
-                    className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary-text"
-                  >
-                    {link.text}
-                    <Icon name="chevronEnd" size={14} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
-
-      {all.length === 0 ? (
-        <p className="m-0 py-6 text-center text-sm text-text-2">{t('today.agenda.empty')}</p>
-      ) : due.length === 0 && timed.length === 0 && links.length === 0 ? (
-        <p className="m-0 py-6 text-center text-sm text-text-2">
-          {t('today.agenda.filteredEmpty')}
-        </p>
-      ) : (
-        <Timeline items={timed} now={now} />
-      )}
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-3 shadow-[inset_0_1px_0_var(--hair)]">
-        <span className="flex-[1_1_240px] text-xs leading-6 text-text-2">
-          {t('today.agenda.footer')}
-        </span>
-        <Link
-          to={salesPath('leads/consultations')}
-          className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
-        >
-          {t('today.agenda.calendar')}
-        </Link>
-        <Link
-          to={salesPath('tasks')}
-          className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
-        >
-          {t('today.agenda.tasks')}
-        </Link>
-      </div>
-    </Card>
-  );
-}
-
-function Timeline({ items, now }: { items: AgendaItem[]; now: number }) {
-  const { t } = useTranslation('sales');
-  const f = useFormat();
   const freeText = (minutes: number) =>
     minutes >= 60
       ? t('today.agenda.freeHours', { n: f.number(Math.round((minutes / 60) * 2) / 2) })
       : t('today.agenda.freeMinutes', { n: f.number(minutes) });
+  const links = (filter: AgendaFilter) => {
+    const showCalls = filter === 'all' || filter === 'calls';
+    return [
+      showCalls &&
+        more.hot > 0 && {
+          key: 'hot',
+          to: salesPath('leads?stage=new'),
+          text: t('today.agenda.more.hot', { n: f.number(more.hot) }),
+        },
+      showCalls &&
+        more.overdue > 0 && {
+          key: 'overdue',
+          to: salesPath('leads'),
+          text: t('today.agenda.more.overdue', { n: f.number(more.overdue) }),
+        },
+      showCalls &&
+        more.stale > 0 && {
+          key: 'stale',
+          to: salesPath('leads?stage=new'),
+          text: t('today.agenda.more.stale', { n: f.number(more.stale) }),
+        },
+      (filter === 'all' || filter === 'tasks') &&
+        more.tasks && { key: 'tasks', to: salesPath('tasks'), text: t('today.agenda.more.tasks') },
+    ].filter((link) => link !== false);
+  };
+
   return (
-    <ScheduleList
-      rows={timelineOf(items, now)}
-      now={now}
+    <DayPlan
+      id="agenda-title"
+      title={t('today.agenda.title')}
+      subtitle={t('today.agenda.subtitle', { day: f.weekday(new Date(now)) })}
+      due={agenda.now}
+      timed={agenda.timed}
       keyOf={(item) => item.key}
       timeOf={(item) => item.at ?? now}
-      renderItem={(item) => (
-        <ul className="m-0 list-none p-0">
-          <AgendaRow item={item} now={now} />
-        </ul>
-      )}
+      endOf={endOf}
+      renderItem={(item, due) => <AgendaRow key={item.key} item={item} now={now} due={due} />}
+      filters={{
+        label: t('today.agenda.filter'),
+        of: filterOf,
+        options: AGENDA_FILTERS.map((value) => ({
+          value,
+          label: t(`today.agenda.filters.${value}`),
+        })),
+      }}
+      nowTitle={t('today.agenda.now')}
+      nowNote={t('today.agenda.nowNote')}
+      links={links}
+      freeMinutes={FREE_MINUTES}
       renderFree={({ minutes }) => (
         <>
           <span className="flex-[1_1_220px] text-sm text-text-2">
@@ -248,6 +139,28 @@ function Timeline({ items, now }: { items: AgendaItem[]; now: number }) {
           </Link>
         </>
       )}
+      empty={t('today.agenda.empty')}
+      shown={NOW_SHOWN}
+      now={now}
+      footer={
+        <>
+          <span className="flex-[1_1_240px] text-xs leading-6 text-text-2">
+            {t('today.agenda.footer')}
+          </span>
+          <Link
+            to={salesPath('leads/consultations')}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
+          >
+            {t('today.agenda.calendar')}
+          </Link>
+          <Link
+            to={salesPath('tasks')}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
+          >
+            {t('today.agenda.tasks')}
+          </Link>
+        </>
+      }
     />
   );
 }
