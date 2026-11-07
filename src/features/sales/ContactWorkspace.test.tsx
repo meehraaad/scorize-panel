@@ -165,7 +165,7 @@ describe('persistent contact workspace', () => {
       JSON.stringify({ owner: 999, drafts: [{ key: 'other' }], active: 'other' }),
     );
     renderApp('/sales');
-    await screen.findByRole('heading', { name: 'سلام نیما، ۳ لید منتظر تماس شماست' });
+    await screen.findByRole('heading', { name: /^سلام نیما، .* کار فوری منتظر شماست$/ });
     expect(
       screen.queryByRole('complementary', { name: 'تماس‌ها و جلسه‌های ثبت‌نشده' }),
     ).not.toBeInTheDocument();

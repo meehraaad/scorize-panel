@@ -131,8 +131,11 @@ Both combined `today/` endpoints remain compatible. The panel now uses these foc
   Both calendar lists use `?page=` and stay independent of the call-list filter.
 - Seller `today/insights/`: month summary and upsell suggestions; disabled until that part of the page
   scrolls into view.
-- The panel shows hot leads and receipts three at a time, cut out of the server's pages
-  (`slicePage` in `src/lib/api/page.ts`): the server's page sizes can stay as they are.
+- The seller's home (`src/features/sales/TodayPage.tsx`) reads `today/outreach/?bucket=overdue`
+  (new leads and overdue follow-ups), `today/activity/`, `receipts/` and the first page of
+  `staff/v1/tasks/lists/mine/` and `lists/requests/`, and merges them into one timetable
+  (`src/features/sales/agenda.ts`): what is due now on top, the rest at its hour. Older uncalled
+  leads (`calls.counts.new`) and rows past the first server page are links to the full lists (S51).
 
 Requests keep their sales/supervisor query prefixes and periodic refresh. Task changes invalidate
 Today activity; case-ticket changes invalidate waiting cases and the inbox. Login/logout still

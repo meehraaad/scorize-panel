@@ -112,7 +112,13 @@ export function clearContactDrafts() {
   commit(empty());
 }
 
-export function openContactLog(customer: number, name: string, start: LogStart) {
+/** `values`: answers already given (the Today card's one-click outcome), over the defaults. */
+export function openContactLog(
+  customer: number,
+  name: string,
+  start: LogStart,
+  values: Partial<ContactValues> = {},
+) {
   const user = queryClient.getQueryData(sessionQuery.queryKey);
   if (!user) return;
   restoreContactDrafts(user.id);
@@ -124,7 +130,14 @@ export function openContactLog(customer: number, name: string, start: LogStart) 
     );
   const key = live ? live.key : `${customer}:${start.reservation ?? start.channel}`;
   if (state.drafts.some((draft) => draft.key === key)) {
-    commit({ ...state, active: key, activeUnknown: null });
+    commit({
+      ...state,
+      drafts: state.drafts.map((draft) =>
+        draft.key === key ? { ...draft, values: { ...draft.values, ...values } } : draft,
+      ),
+      active: key,
+      activeUnknown: null,
+    });
     return;
   }
   const draft: ContactDraft = {
@@ -143,6 +156,7 @@ export function openContactLog(customer: number, name: string, start: LogStart) 
       follow: 'tomorrow',
       date: '',
       email: false,
+      ...values,
     },
   };
   commit({ ...state, drafts: [...state.drafts, draft], active: key, activeUnknown: null });

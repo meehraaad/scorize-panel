@@ -165,7 +165,9 @@ describe('panels', () => {
         name: /پنل فروش/,
       }),
     );
-    expect(await screen.findByRole('heading', { name: /^سلام نیما، .*لید/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /^سلام نیما، .*کار فوری/ }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/sales');
 
     // And from work, back to the applicant panel again.
