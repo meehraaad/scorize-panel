@@ -81,6 +81,17 @@ describe('contract page', () => {
     expect(screen.getByRole('link', { name: 'ارسال تیکت' })).toHaveAttribute('href', '/tickets');
   });
 
+  it('shows the contract text approved for the applicant, a clause at a time', async () => {
+    const user = userEvent.setup();
+    await openContract();
+    const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
+    expect(within(clauses).getByText('۲ بند، همان‌طور که برای شما تأیید شد')).toBeInTheDocument();
+    const text = within(clauses).getByText(/تا ۱۴ روز پس از امضا/);
+    expect(text).not.toBeVisible();
+    await user.click(within(clauses).getByText('فسخ قرارداد'));
+    expect(text).toBeVisible();
+  });
+
   it('edits a detail in place, checks it and saves it', async () => {
     const user = userEvent.setup();
     await openContract();

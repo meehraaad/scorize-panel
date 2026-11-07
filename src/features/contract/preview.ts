@@ -39,6 +39,7 @@ export function previewContract(t: TFunction<'contract'>): ContractData {
     start_date: days(-120),
     end_date: days(245),
     pledge_signed_at: null,
+    clauses: [],
     installments: [
       installment(1, 60_000_000, 'paid', t('preview.prepayment')),
       installment(2, 30_000_000, 'paid', t('preview.afterForms')),

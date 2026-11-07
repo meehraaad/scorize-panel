@@ -1,7 +1,8 @@
 import { http, HttpResponse } from 'msw';
-import type { HandoffContract, Instalment } from '@/features/sales/api';
+import type { ContractDocument, HandoffContract, Instalment } from '@/features/sales/api';
 import type { HandoffCase, HandoffSupervisor } from '@/features/supervisor/api';
 import { ERFAN, failed, stateOrError } from './sales';
+import { STANDARD_CLAUSES } from './salesCustomer';
 import { forbidden, notFound, storage } from './session';
 import { SUPERVISOR } from './supervisor';
 
@@ -163,6 +164,47 @@ export const handoffHandlers = [
         prepayment: contract.prepayment,
       }));
     return HttpResponse.json({ results, supervisors: SUPERVISORS });
+  }),
+
+  // S52: the approved contract to print and sign.
+  http.get(`${SALES}/customers/:id/contract/document/`, ({ params }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const item = all().get(Number(params.id));
+    if (!item) return notFound();
+    const { contract, row } = item;
+    const prepayment = contract.prepayment?.amount ?? 0;
+    const rest = Math.max(contract.instalments - 1, 0);
+    const later = rest ? Math.round((row.amount - prepayment) / rest) : 0;
+    const body: ContractDocument = {
+      number: contract.id,
+      file_id: String(contract.case),
+      approved_at: row.approved_at,
+      customer: { name: row.name, national_code: '0012345678', phone: row.phone, email: '' },
+      seller: row.seller,
+      features: row.features,
+      degrees: row.degrees,
+      countries: row.countries,
+      applies: 6,
+      start_date: '2026-12-01',
+      end_date: '2027-12-01',
+      months: 12,
+      language_score: 'IELTS 6.5',
+      language_deadline: '2027-03-01',
+      amount: row.amount,
+      installments: [
+        { id: 1, number: 0, amount: prepayment, due_date: null, condition: 'پیش پرداخت' },
+        ...Array.from({ length: rest }, (_, index) => ({
+          id: index + 2,
+          number: index + 1,
+          amount: later,
+          due_date: index === rest - 1 ? null : '2027-01-01',
+          condition: index === rest - 1 ? 'بعد از پذیرش' : null,
+        })),
+      ],
+      clauses: STANDARD_CLAUSES.map(({ title, text }) => ({ title, text })),
+    };
+    return HttpResponse.json(body);
   }),
 
   // SV20: a case that won't start; refused while the prepayment is paid or in review.

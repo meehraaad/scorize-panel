@@ -91,6 +91,8 @@ export interface ContractData {
   /** Turkey: when the pledge was signed with the SMS code. */
   pledge_signed_at: string | null;
   installments: Installment[];
+  /** The contract's text as approved for this case (S52); empty for older contracts. */
+  clauses: { title: string; text: string }[];
   profile: Record<ProfileField, string | null>;
   /** Fields the applicant may change (the rest are set by the team or the account). */
   editable: ProfileField[];

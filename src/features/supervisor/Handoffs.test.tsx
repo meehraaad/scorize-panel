@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
@@ -34,6 +34,25 @@ describe('contract handoff', () => {
     await user.upload(within(card).getByLabelText('قرارداد امضاشده'), pdf('signed.pdf'));
     expect(await within(card).findByRole('link', { name: /اسکن ۱/ })).toBeInTheDocument();
     expect(within(card).getByText(/منتظر پیش‌پرداخت مشتری است/)).toBeInTheDocument();
+  });
+
+  it('prints the approved contract to sign, with its clauses and instalments', async () => {
+    const user = userEvent.setup();
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+    loginAs(NIMA);
+    const router = renderApp('/sales/customers/112/apply');
+    const card = await screen.findByRole('region', { name: 'قرارداد تا شروع پرونده' });
+    await user.click(within(card).getByRole('link', { name: 'چاپ قرارداد برای امضا' }));
+    const doc = await screen.findByRole('article', { name: 'قرارداد خدمات اسکورایز' });
+    expect(router.state.location.pathname).toBe('/sales/customers/112/contract');
+    expect(within(doc).getByText(/طرف دوم \(متقاضی\): کیان مرادی/)).toBeInTheDocument();
+    expect(within(doc).getByText('بند ۳. فسخ قرارداد')).toBeInTheDocument();
+    const payments = within(doc).getByRole('table');
+    expect(within(payments).getByText('هنگام امضا')).toBeInTheDocument();
+    expect(within(payments).getByText('بعد از پذیرش')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'چاپ' }));
+    expect(print).toHaveBeenCalledOnce();
+    print.mockRestore();
   });
 
   it('starts a ready case with the chosen supervisor; others wait', async () => {

@@ -10,6 +10,7 @@ import {
   managerTagsQuery,
   tagsQuery,
   sellerCalendarQuery,
+  contractDocumentQuery,
   customerQuery,
   firstLeadQuery,
   leadsQuery,
@@ -219,6 +220,17 @@ export const salesPanel: PanelDefinition = {
           return id === null ? [] : [customerQuery(id), offerQuery(id)];
         },
         skeleton: 'form',
+      }),
+    },
+    // The approved contract to print and sign (S52): a page of its own, without the customer card.
+    {
+      path: 'customers/:id/contract',
+      ...lazyPage(() => import('@/features/sales/ContractPrintPage'), ['sales'], {
+        data: (args) => {
+          const id = customerOf(args);
+          return id === null ? [] : [customerQuery(id), contractDocumentQuery(id)];
+        },
+        skeleton: 'detail',
       }),
     },
     // The sales manager's section (nav item and routes need can_assign_to_seller).

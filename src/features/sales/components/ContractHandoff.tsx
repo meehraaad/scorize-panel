@@ -1,6 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { FileDrop, FileTile } from '@/components/ui/Files';
 import { StepBar } from '@/components/ui/Progress';
@@ -18,6 +20,7 @@ import {
   type Prepayment,
 } from '../api';
 import { useSalesFormat } from '../format';
+import { customerPath } from '../paths';
 
 const RULE = { types: SCAN_TYPES, maxBytes: MAX_SCAN_BYTES };
 const INPUT_ID = 'contract-scan';
@@ -75,6 +78,13 @@ function HandoffCard({ customer, contract }: { customer: number; contract: Hando
         current={HANDOFF_STEPS.indexOf(contract.state)}
         finished={active}
       />
+
+      <Link
+        to={`${customerPath(customer)}/contract`}
+        className={buttonClass('outline', 'self-start text-sm')}
+      >
+        {t('handoff.print')}
+      </Link>
 
       {contract.prepayment && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-canvas px-4 py-3">

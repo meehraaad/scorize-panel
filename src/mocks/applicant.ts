@@ -649,6 +649,17 @@ function saraContract(): ContractData {
     start_date: daysFromNow(-241),
     end_date: daysFromNow(124),
     pledge_signed_at: null,
+    // The contract's text as approved (S52): the standard clauses with what the seller agreed.
+    clauses: [
+      {
+        title: 'موضوع قرارداد',
+        text: 'اسکورایز در انتخاب دانشگاه، آماده‌سازی مدارک و ثبت درخواست پذیرش، مشاوره و همراهی می‌کند.',
+      },
+      {
+        title: 'فسخ قرارداد',
+        text: 'تا ۱۴ روز پس از امضا، با فسخ قرارداد کل مبلغ پرداختی بازگردانده می‌شود.',
+      },
+    ],
     installments: [
       {
         id: 1,

@@ -1441,7 +1441,8 @@
       "tooBig": "This file is {{size}}; the limit is {{max}}.",
       "badType": "Only PDF, JPG or PNG.",
       "error": "The contract scan wasn't sent"
-    }
+    },
+    "print": "Print the contract to sign"
   },
   "contactDraft": {
     "tray": "Unsaved calls and sessions",
@@ -1513,5 +1514,39 @@
     "error": "The extension wasn't saved. Check your connection and try again.",
     "missing": "To see desk phone calls in the panel, enter your extension in settings.",
     "missingLink": "Go to settings"
+  },
+  "print": {
+    "none": "-",
+    "noClauses": "The standard contract hasn't been set up in the admin yet; this copy has no clauses.",
+    "title": "Scorize services contract",
+    "meta": "Contract {{number}} · file {{file}} · approved {{date}}",
+    "parties": "The parties",
+    "first": "First party: Scorize",
+    "second": "Second party (applicant): {{name}} · national ID {{code}} · phone {{phone}} · email {{email}}",
+    "terms": "Subject and terms",
+    "services": "Services",
+    "degree": "Degree",
+    "countries": "Countries",
+    "applies": "Applications",
+    "period": "Length",
+    "periodValue": "From {{start}} to {{end}} ({{months}} months)",
+    "language": "Language score",
+    "languageValue": "{{score}} by {{date}}",
+    "payments": "Price and instalments: {{amount}}",
+    "instalment": "Instalment",
+    "when": "When",
+    "amount": "Amount",
+    "prepayment": "Prepayment",
+    "row": "Instalment {{n}}",
+    "atSigning": "At signing",
+    "clauses": "Contract clauses",
+    "clause": "Clause {{n}}. {{title}}",
+    "signatures": "Signatures",
+    "sign": {
+      "first": "Signature and stamp of the first party (Scorize)",
+      "second": "Signature of the second party (applicant)"
+    },
+    "signLine": "Name, signature and date",
+    "print": "Print"
   }
 }
