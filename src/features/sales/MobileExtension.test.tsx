@@ -17,6 +17,7 @@ const EMPTY: MobileExtensionState = {
   password: null,
   domain: null,
   server: null,
+  linphone: null,
 };
 const READY: MobileExtensionState = {
   available: true,
@@ -25,6 +26,7 @@ const READY: MobileExtensionState = {
   password: 'Secret123Secret123Secret123',
   domain: 'scorize.sitakpbx',
   server: '77.238.105.91:5061',
+  linphone: 'https://panel.scorize.com/api/sales/v1/calls/mobile/linphone/signed-token/',
 };
 
 function mount() {
@@ -67,6 +69,20 @@ describe('mobile extension', () => {
     await browser.click(screen.getByRole('button', { name: 'Show password' }));
     expect(screen.getByText(READY.password as string)).toBeInTheDocument();
     expect(screen.getByText('scorize.sitakpbx')).toBeInTheDocument();
+  });
+
+  it('offers a Linphone QR next to the login details', async () => {
+    server.use(http.get(ENDPOINT, () => HttpResponse.json(READY)));
+    mount();
+    expect(await screen.findByRole('img', { name: 'QR code that sets up Linphone' })).toBeInTheDocument();
+    expect(screen.getByText(/Fetch remote configuration/)).toBeInTheDocument();
+  });
+
+  it('shows no QR without a link', async () => {
+    server.use(http.get(ENDPOINT, () => HttpResponse.json({ ...READY, linphone: null })));
+    mount();
+    expect(await screen.findByText('302')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'QR code that sets up Linphone' })).not.toBeInTheDocument();
   });
 
   it('asks before changing the password', async () => {
