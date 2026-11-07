@@ -11,15 +11,8 @@ import { EventCalendar, type CalendarEvent, type EventLook } from '@/components/
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { MiniMonth } from '@/components/ui/MiniMonth';
-import {
-  addDays,
-  eventColor,
-  sameDay,
-  toCalendar,
-  toValue,
-  weekOf,
-  weekStart,
-} from '@/lib/calendar';
+import { WeekNav } from '@/components/ui/WeekNav';
+import { addDays, eventColor, sameDay, toValue, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
@@ -68,7 +61,6 @@ const MODES: readonly ModeFilter[] = ['all', 'online', 'in_person'];
 
 export function ConsultationCalendar() {
   const { t } = useTranslation('sales');
-  const { t: common } = useTranslation();
   const f = useFormat();
   const cal = useCalendar();
   const startDay = weekStart(cal.kind);
@@ -166,12 +158,6 @@ export function ConsultationCalendar() {
       return status === 'live' || status === 'soon' || status === 'upcoming';
     })
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
-  const end = addDays(week, 6);
-  const sameMonth = toCalendar(week, cal.kind).month === toCalendar(end, cal.kind).month;
-  const range = common('weekCalendar.range', {
-    from: sameMonth ? cal.number.format(toCalendar(week, cal.kind).day) : f.dateShort(week),
-    to: f.date(end),
-  });
   const go = (target: Date) => {
     setWeek(target);
     setChosenId(null);
@@ -180,29 +166,8 @@ export function ConsultationCalendar() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2.5">
-        <button
-          type="button"
-          disabled={week.getTime() === thisWeek.getTime()}
-          onClick={() => go(thisWeek)}
-          className="min-h-11 rounded-full bg-surface px-4 text-sm font-semibold shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-canvas disabled:opacity-50"
-        >
-          {common('weekCalendar.thisWeek')}
-        </button>
-        <span className="flex">
-          <IconButton
-            icon="chevronStart"
-            aria-label={common('weekCalendar.previous')}
-            onClick={() => go(addDays(week, -7))}
-          />
-          <IconButton
-            icon="chevronEnd"
-            aria-label={common('weekCalendar.next')}
-            onClick={() => go(addDays(week, 7))}
-          />
-        </span>
-        <h2 aria-live="polite" className="m-0 flex-1 font-display text-lg font-bold">
-          {range}
-        </h2>
+        <WeekNav week={week} onWeekChange={go} thisWeek={thisWeek} heading="h2" />
+        <span className="flex-1" />
         {unlogged > 0 && !onlyUnlogged && (
           <button
             type="button"

@@ -355,6 +355,9 @@
     "freeCount": "{{n}} free",
     "dayLineFull": "{{free}} free · {{full}} full"
   },
+  "schedule": {
+    "days": "Days of the week"
+  },
   "eventCalendar": {
     "holiday": "Closed",
     "nothing": "Nothing",

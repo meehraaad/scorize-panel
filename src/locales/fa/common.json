@@ -355,6 +355,9 @@
     "freeCount": "{{n}} زمان آزاد",
     "dayLineFull": "{{free}} زمان آزاد · {{full}} پر شده"
   },
+  "schedule": {
+    "days": "روزهای هفته"
+  },
   "eventCalendar": {
     "holiday": "تعطیل",
     "nothing": "کاری ندارد",
