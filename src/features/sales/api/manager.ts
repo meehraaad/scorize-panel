@@ -1,5 +1,5 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { API_BASE, api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
 import type { Colleague } from '@/lib/tasks/api';
@@ -304,5 +304,78 @@ export function useSaveStages() {
       client.setQueryData(stagesQuery.queryKey, data);
       return client.invalidateQueries({ queryKey: [...SALES_KEY, 'board'] });
     },
+  });
+}
+
+/**
+ * Leads from a CSV (S55): the server reads the file and answers what each row would do, then adds
+ * the leads when the manager confirms. Columns: phone_number, and optionally first_name,
+ * last_name, email, note.
+ */
+
+/** A new customer and lead, a lead for a known customer, or left out. */
+export type LeadImportChange = 'new' | 'existing' | 'skip';
+
+/** Why a row is left out. */
+export type LeadImportProblem = 'missing_column' | 'bad_phone' | 'duplicate' | 'open_lead';
+
+export interface LeadImportRow {
+  /** Line in the file (the header is line 1). */
+  line: number;
+  phone: string;
+  name: string;
+  /** The known customer with this number; null for a new one. */
+  customer: number | null;
+  change: LeadImportChange;
+  problem: LeadImportProblem | null;
+}
+
+export interface LeadImportPreview {
+  /** Hands the checked file to the apply step (the server keeps it 15 minutes). */
+  token: string;
+  file: { name: string; size: number; rows: number };
+  counts: Record<LeadImportChange, number>;
+  rows: LeadImportRow[];
+}
+
+/** What the leads' source shows: a campaign, webinar or event list, or the manager's own. */
+export type LeadImportSource = 'campaign' | 'manual';
+
+export interface LeadImportOptions {
+  token: string;
+  source: LeadImportSource;
+  /** Added to every lead's description, after the row's own note. */
+  note: string;
+  /** null: the assignment queue. */
+  seller: number | null;
+  /** The welcome SMS for new customers. */
+  notify: boolean;
+}
+
+export const leadImportSampleHref = `${API_BASE}${MANAGER_API}/leads/import/sample/`;
+
+/** Reads the file and answers what it would add; nothing is stored yet. */
+export function usePreviewLeadImport() {
+  return useMutation({
+    mutationFn: (file: File) => {
+      const body = new FormData();
+      body.append('file', file);
+      return api<LeadImportPreview>(`${MANAGER_API}/leads/import/preview/`, {
+        method: 'POST',
+        body,
+      });
+    },
+  });
+}
+
+export function useApplyLeadImport() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (options: LeadImportOptions) =>
+      api<{ created: number; new_customers: number }>(`${MANAGER_API}/leads/import/`, {
+        method: 'POST',
+        body: options,
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }

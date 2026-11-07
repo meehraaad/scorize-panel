@@ -38,11 +38,7 @@ export interface ImportPreview {
   rows: ImportRow[];
 }
 
-/** A CSV the server accepts (some systems send no type, or Excel's, for .csv). */
-export const isCsv = (file: File) =>
-  file.name.toLowerCase().endsWith('.csv') &&
-  ['text/csv', 'application/vnd.ms-excel', 'text/plain', ''].includes(file.type);
-export const MAX_CSV_BYTES = 2 * 1024 * 1024;
+export { isCsv, MAX_CSV_BYTES } from '@/lib/csv';
 
 export const importSampleHref = `${API_BASE}${SUPERVISOR_API}/cases/import/sample/`;
 

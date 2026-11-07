@@ -58,6 +58,55 @@ describe('sales manager section', () => {
     ).toBeInTheDocument();
   });
 
+  it('adds leads from a CSV after showing what each row does', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    loginAs(REZA);
+    renderApp('/sales/manager');
+    await user.click(await screen.findByRole('button', { name: 'افزودن از فایل CSV' }));
+    const dialog = await screen.findByRole('dialog', { name: 'افزودن لید از فایل CSV' });
+    expect(within(dialog).getByRole('link', { name: 'دریافت فایل نمونه' })).toHaveAttribute(
+      'href',
+      '/api/sales/v1/manager/leads/import/sample/',
+    );
+
+    await user.upload(
+      within(dialog).getByLabelText('انتخاب فایل CSV'),
+      new File(['x'], 'leads.xlsx', { type: 'application/vnd.ms-excel' }),
+    );
+    expect(within(dialog).getByText('فقط فایل CSV.')).toBeInTheDocument();
+
+    const csv = [
+      'شماره,نام,نام خانوادگی',
+      '۰۹۱۲۱۱۱۱۱۱۱,سارا,احمدی',
+      '+989120000001,,',
+      '09120000002,,',
+      '12,,',
+      '09121111111,,',
+    ].join('\n');
+    await user.upload(
+      within(dialog).getByLabelText('انتخاب فایل CSV'),
+      new File([csv], 'expo.csv', { type: 'text/csv' }),
+    );
+    const summary = await within(dialog).findByRole('list', { name: 'خلاصه‌ی فایل' });
+    expect(within(summary).getByText('۱ مشتری تازه')).toBeInTheDocument();
+    expect(within(summary).getByText('۱ مشتری قبلی')).toBeInTheDocument();
+    expect(within(summary).getByText('۳ ردیف کنار گذاشته شد')).toBeInTheDocument();
+    expect(within(dialog).getByText('لید باز دارد')).toBeInTheDocument();
+    expect(within(dialog).getByText('شماره نامعتبر')).toBeInTheDocument();
+    expect(within(dialog).getByText('شماره تکراری در فایل')).toBeInTheDocument();
+
+    await user.type(
+      within(dialog).getByLabelText('یادداشت برای همه‌ی لیدها (اختیاری)'),
+      'نمایشگاه',
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'افزودن ۲ لید' }));
+    expect(await within(dialog).findByText('۲ لید ثبت شد (۱ مشتری تازه).')).toBeInTheDocument();
+    await user.click(within(dialog).getAllByRole('button', { name: 'بستن' }).at(-1) as HTMLElement);
+
+    // They wait in the queue for a seller.
+    expect(await screen.findByRole('heading', { name: '۶ لید بی‌صاحب است' })).toBeInTheDocument();
+  });
+
   it('disables assignment when every seller is away and no suggestion exists', async () => {
     loginAs(REZA);
     const data = await api<AssignData>('/sales/v1/manager/assign/');

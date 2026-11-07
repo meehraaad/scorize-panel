@@ -1374,6 +1374,73 @@
         "purple": "Purple",
         "gray": "Gray"
       }
+    },
+    "import": {
+      "open": "Add from CSV",
+      "title": "Add leads from a CSV",
+      "subtitle": "Each number becomes a customer with a new lead. You see what every row does before anything is saved.",
+      "close": "Close",
+      "cancel": "Cancel",
+      "back": "Another file",
+      "steps": "Import steps",
+      "step": "{{n}}. {{name}}",
+      "stepName": {
+        "file": "File",
+        "review": "Review",
+        "done": "Added"
+      },
+      "choose": "Choose a CSV file",
+      "reading": "Reading the file…",
+      "drop": "or drop the file here",
+      "problem": {
+        "badType": "CSV files only (.csv).",
+        "tooBig": "The file is larger than 2 MB."
+      },
+      "readError": "The file couldn't be read. Try again.",
+      "columns": "Columns:",
+      "columnNames": "phone_number, first_name, last_name, email, note",
+      "columnsOptional": "Only the phone number is required. Up to 500 rows per file.",
+      "sample": "Download a sample file",
+      "csv": "CSV",
+      "fileMeta": "{{rows}} rows · {{size}} KB",
+      "otherFile": "Choose another file",
+      "summary": "File summary",
+      "count": {
+        "new": "{{n}} new customers",
+        "existing": "{{n}} existing customers",
+        "skip": "{{n}} rows left out"
+      },
+      "empty": "This file has no rows.",
+      "rows": "Rows",
+      "more": "Show {{n}} more rows",
+      "noName": "No name",
+      "noPhone": "No number",
+      "line": "Row {{n}}",
+      "change": {
+        "new": "New customer and lead",
+        "existing": "Lead for an existing customer"
+      },
+      "skip": {
+        "missing_column": "No phone column",
+        "bad_phone": "Invalid number",
+        "duplicate": "Repeated in the file",
+        "open_lead": "Has an open lead"
+      },
+      "source": "Lead source",
+      "sourceOption": {
+        "campaign": "Campaign or webinar",
+        "manual": "Manual"
+      },
+      "note": "Note for every lead (optional)",
+      "noteHint": "For example the campaign or event name. It follows the row's own note.",
+      "to": "Assign to",
+      "queue": "Unassigned queue",
+      "queueHint": "With automatic assignment on, they are shared out among the sellers right away.",
+      "notify": "Welcome SMS for new customers",
+      "notifyHelp": "The same SMS a manually added lead gets. Off, nobody gets an SMS.",
+      "apply": "Add {{n}} leads",
+      "applyError": "The leads weren't added. Try again.",
+      "done": "{{n}} leads added ({{customers}} new customers)."
     }
   },
   "handoff": {
