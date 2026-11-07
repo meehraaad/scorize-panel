@@ -137,6 +137,7 @@ function supervisorTasksState(): TasksState {
           action: 'open',
           note: '',
           suggested_next: 'رسید پرداخت را در پرونده بگذار',
+          follow_up: false,
         },
         {
           id: 112,
@@ -149,6 +150,7 @@ function supervisorTasksState(): TasksState {
           action: 'open',
           note: '',
           suggested_next: 'نظرها را برای تیم نگارش بفرست',
+          follow_up: false,
         },
         {
           id: 113,
@@ -161,6 +163,7 @@ function supervisorTasksState(): TasksState {
           action: 'message',
           note: '',
           suggested_next: '',
+          follow_up: false,
         },
       ],
       tomorrow: 4,
@@ -281,6 +284,7 @@ function applyChange(
           action: 'call',
           note: '',
           suggested_next: '',
+          follow_up: false,
         });
       return null;
     }
@@ -414,6 +418,7 @@ export const taskHandlers = [
         action: 'open',
         note: '',
         suggested_next: '',
+        follow_up: false,
       });
     else if (task.kind === 'mine') overview.tomorrow += 1;
     if (task.kind !== 'mine') {

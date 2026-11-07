@@ -130,6 +130,7 @@ function myTaskOf(todo: DjangoTodo): MyTask {
     action: todo.user ? (ACTION[todo.type] ?? 'open') : 'open',
     note: '',
     suggested_next: '',
+    follow_up: !!todo.user && todo.type === TODO_TYPE.lead_follow_up,
   };
 }
 

@@ -97,6 +97,11 @@ export interface MyTask {
   note: string;
   /** The system's idea for the next step (prefilled when it is done). */
   suggested_next: string;
+  /**
+   * The customer's follow-up (sales): its time is the lead's `follow_up_at`, so Today shows it once, as the call
+   * (Django `api/staff/v1/follow_ups.py`).
+   */
+  follow_up: boolean;
 }
 
 /** A colleague's request to me. */
