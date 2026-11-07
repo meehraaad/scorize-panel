@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -67,6 +67,27 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
 
     expect(await screen.findByRole('region', { name: 'نگارش رزومه' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe(`${ERFAN}/payments`);
+  });
+
+  it('sells a consultation at a time picked on the schedule', async () => {
+    const user = userEvent.setup();
+    const router = renderApp(ERFAN);
+    await user.click(await screen.findByText('فروش تازه'));
+    await user.click(screen.getByRole('button', { name: /^فروش محصول/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'فروش محصول به عرفان ملکی' });
+    await user.click(await within(dialog).findByRole('checkbox', { name: /اپلای ارشد/ }));
+    const times = within(dialog).getByRole('region', { name: /^زمان مشاوره‌ی اپلای ارشد/ });
+    await user.click(screen.getByRole('button', { name: 'ساختن پرداخت و ارسال فاکتور با پیامک' }));
+    expect(await within(dialog).findByText('زمان مشاوره را انتخاب کنید.')).toBeInTheDocument();
+
+    // Each free time is a block naming its consultant; the chosen one is summed up beside it.
+    const [block] = within(times).getAllByRole('button', { name: /حسین رحیمی/ });
+    if (!block) throw new Error('no free time');
+    await user.click(block);
+    expect(block).toHaveAttribute('aria-pressed', 'true');
+    expect(within(times).getByText(/· حسین رحیمی$/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ساختن پرداخت و ارسال فاکتور با پیامک' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe(`${ERFAN}/payments`));
   });
 
   it('details: automatically saves a section', async () => {

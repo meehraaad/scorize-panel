@@ -8,7 +8,11 @@ import { WeekNav } from './WeekNav';
 
 /** A scheduled time: its start (ISO, as the API sends it), seats left (0: full) and capacity. */
 export interface CalendarTime {
+  /** Tells apart times that start together (two consultants at 11); default `at`. */
+  id?: string;
   at: string;
+  /** Who or where (a consultant), read out and shown on the day's timeline. */
+  note?: string;
   left: number;
   capacity: number;
 }
@@ -29,7 +33,7 @@ interface WeekCalendarProps {
   minutes: number;
   /** The blocks' colour (a CSS colour, e.g. a `--cal-*` token). */
   color: string;
-  /** The chosen time's `at`; null before a choice. */
+  /** The chosen time's `id` (its `at` when it has none); null before a choice. */
   value: string | null;
   onChange: (at: string | null) => void;
   /** Beside the chosen time on a wide calendar (a calendar event's card); under the day when narrow. */
@@ -80,12 +84,12 @@ function useTimeItems(minutes: number, color: string) {
           ? Array.from({ length: time.capacity }, (_, index) => index < time.left)
           : [];
       return {
-        id: time.at,
+        id: time.id ?? time.at,
         start,
         minutes,
         color,
         disabled: full,
-        aria: [f.weekday(start), range, state].filter(Boolean).join('، '),
+        aria: [f.weekday(start), range, time.note, state].filter(Boolean).join('، '),
         look: ({ tall, large, chosen }: BlockShape) =>
           large
             ? `flex items-center justify-between gap-2 rounded-xl px-3 text-sm font-bold tabular-nums ${toneOf(time, chosen)}`
@@ -101,8 +105,11 @@ function useTimeItems(minutes: number, color: string) {
               </span>
             </span>
             <span className={`flex items-center ${large ? 'gap-2' : 'gap-1.5'}`}>
-              {state && (
+              {state ? (
                 <span className={large ? 'text-xs' : 'text-[11px] font-extrabold'}>{state}</span>
+              ) : (
+                large &&
+                time.note && <span className="truncate text-xs font-semibold">{time.note}</span>
               )}
               <Seats dots={dots} chosen={chosen} />
             </span>

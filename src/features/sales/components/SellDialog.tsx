@@ -3,13 +3,16 @@ import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
+import { ChoiceGroup } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { FilterTabs } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
 import { Notice } from '@/components/ui/Notice';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { TextField } from '@/components/ui/TextField';
+import { WeekCalendar } from '@/components/ui/WeekCalendar';
+import { addDays, weekOf, weekStart } from '@/lib/calendar';
+import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   productsQuery,
@@ -17,6 +20,7 @@ import {
   useSell,
   type CustomerData,
   type PaymentMethod,
+  type Product,
   type ProductCategory,
   type SaleQuote,
 } from '../api';
@@ -25,6 +29,9 @@ import { customerPath } from '../paths';
 import { toast } from '@/lib/toast';
 
 const CATEGORIES = ['consultation', 'writing', 'package', 'event'] as const;
+/** Products don't say a session's length yet: blocks are drawn an hour long. */
+const SESSION_MINUTES = 60;
+
 const METHODS = ['online', 'receipt'] as const satisfies readonly PaymentMethod[];
 
 /**
@@ -42,7 +49,6 @@ export function SellDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('sales');
-  const f = useFormat();
   const s = useSalesFormat();
   const navigate = useNavigate();
   const { data } = useQuery({ ...productsQuery, enabled: category !== null });
@@ -156,21 +162,12 @@ export function SellDialog({
         {checked && chosen.length === 0 && <Notice tone="error">{t('sell.nothingPicked')}</Notice>}
 
         {consultation && (
-          <SelectField
-            label={t('sell.slot', { product: consultation.title })}
+          <SlotSchedule
+            key={consultation.id}
+            product={consultation}
             value={slot}
             onChange={setSlot}
-            error={checked && !slot ? t('sell.slotRequired') : undefined}
-            options={[
-              { value: '', label: t('customer.logDialog.choose') },
-              ...consultation.slots.map((item) => ({
-                value: String(item.id),
-                label: t('sell.slotOption', {
-                  when: `${f.weekday(item.starts_at)} · ${f.time(item.starts_at)}`,
-                  consultant: item.consultant,
-                }),
-              })),
-            ]}
+            error={checked && !slot}
           />
         )}
 
@@ -245,5 +242,83 @@ export function SellDialog({
         />
       </form>
     </Dialog>
+  );
+}
+
+/**
+ * The consultation's free times on the schedule, in its "picking a time" shape: in the sell
+ * window it is narrow, so a day strip and the day's times, each with its consultant.
+ */
+function SlotSchedule({
+  product,
+  value,
+  onChange,
+  error,
+}: {
+  product: Product;
+  /** The chosen slot's id, '' before a choice. */
+  value: string;
+  onChange: (slot: string) => void;
+  error: boolean;
+}) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const cal = useCalendar();
+  const startDay = weekStart(cal.kind);
+  const [now] = useState(() => new Date());
+  const thisWeek = weekOf(now, startDay);
+  const starts = product.slots.map((item) => new Date(item.starts_at)).sort((a, b) => +a - +b);
+  const first = starts[0] ? weekOf(starts[0], startDay) : thisWeek;
+  const last = starts.at(-1);
+  const lastWeek = last ? weekOf(last, startDay) : thisWeek;
+  const [week, setWeek] = useState(first < thisWeek ? thisWeek : first);
+  const chosen = product.slots.find((item) => String(item.id) === value);
+  const nextFree = starts.find((start) => start >= addDays(week, 7));
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-semibold">{t('sell.slot', { product: product.title })}</span>
+      <WeekCalendar
+        label={t('sell.slot', { product: product.title })}
+        week={week}
+        onWeekChange={setWeek}
+        firstWeek={thisWeek < first ? thisWeek : first}
+        lastWeek={lastWeek}
+        times={product.slots.map((item) => ({
+          id: String(item.id),
+          at: item.starts_at,
+          note: item.consultant,
+          left: 1,
+          capacity: 1,
+        }))}
+        minutes={SESSION_MINUTES}
+        color="var(--cal-0)"
+        value={value || null}
+        onChange={(id) => onChange(id ?? '')}
+        now={now}
+        details={
+          chosen && (
+            <p className="m-0 flex items-center gap-2 rounded-2xl bg-surface px-4 py-3 text-sm font-semibold shadow-toast">
+              <Icon name="check" size={16} className="text-good" />
+              {t('sell.slotOption', {
+                when: `${f.weekday(chosen.starts_at)} · ${f.time(chosen.starts_at)}`,
+                consultant: chosen.consultant,
+              })}
+            </p>
+          )
+        }
+        empty={
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-5 text-center shadow-[0_12px_32px_rgb(27_16_32/0.12)]">
+            <span className="text-sm font-semibold">{t('sell.slotEmpty')}</span>
+            {nextFree && (
+              <Button variant="outline" onClick={() => setWeek(weekOf(nextFree, startDay))}>
+                {t('sell.slotNextFree')}
+              </Button>
+            )}
+          </div>
+        }
+      />
+      {error && <Notice tone="error">{t('sell.slotRequired')}</Notice>}
+    </div>
   );
 }

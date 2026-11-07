@@ -999,6 +999,8 @@
     "nothingPicked": "Pick at least one product.",
     "slot": "Time for {{product}}",
     "slotRequired": "Pick a consultation time.",
+    "slotEmpty": "No free times this week.",
+    "slotNextFree": "First free week",
     "slotOption": "{{when}} · {{consultant}}",
     "code": "Discount code",
     "apply": "Apply",

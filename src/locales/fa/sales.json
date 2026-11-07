@@ -999,6 +999,8 @@
     "nothingPicked": "دست‌کم یک محصول انتخاب کنید.",
     "slot": "زمان {{product}}",
     "slotRequired": "زمان مشاوره را انتخاب کنید.",
+    "slotEmpty": "این هفته زمان آزادی ندارد.",
+    "slotNextFree": "اولین هفته‌ی آزاد",
     "slotOption": "{{when}} · {{consultant}}",
     "code": "کد تخفیف",
     "apply": "اعمال",

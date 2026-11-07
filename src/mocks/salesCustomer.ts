@@ -256,6 +256,8 @@ export const salesCustomerHandlers = [
     const sale = (await request.json()) as NewSale;
     const chosen = PRODUCTS.filter((product) => sale.products.includes(product.id));
     if (chosen.length === 0) return HttpResponse.json({ products: ['required'] }, { status: 400 });
+    if (chosen.some((product) => product.category === 'consultation') && !sale.slot)
+      return HttpResponse.json({ slot: ['required'] }, { status: 400 });
     // Django keeps one invoice per product; a discount lowers the invoices' amounts.
     const { total, subtotal } = quoteOf(sale.products, sale.discount_code);
     const id = addPayment(
