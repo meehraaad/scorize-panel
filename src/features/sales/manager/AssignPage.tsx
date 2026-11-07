@@ -11,7 +11,6 @@ import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard, SectionHeading } from '@/components/ui/SectionCard';
 import { pagesOf, useClampPage } from '@/lib/api/page';
-import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   assignQuery,
@@ -69,20 +68,16 @@ export default function AssignPage() {
           data.queue.count ? t('manager.assign.subtitle', { age: s.duration(oldest) }) : undefined
         }
         actions={
-          ON_SERVER.leadImport && (
-            <Button variant="outline" onClick={() => setImporting(true)}>
-              {t('manager.import.open')}
-            </Button>
-          )
+          <Button variant="outline" onClick={() => setImporting(true)}>
+            {t('manager.import.open')}
+          </Button>
         }
       />
-      {ON_SERVER.leadImport && (
-        <LeadImportDialog
-          open={importing}
-          onClose={() => setImporting(false)}
-          sellers={data.sellers}
-        />
-      )}
+      <LeadImportDialog
+        open={importing}
+        onClose={() => setImporting(false)}
+        sellers={data.sellers}
+      />
       <AutoCard key={JSON.stringify(data.settings)} settings={data.settings} />
 
       <section aria-labelledby="sellers-title" className="flex flex-col gap-4">
