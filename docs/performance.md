@@ -119,3 +119,10 @@ downloads are ignored.
 | Django | backend-changes H55 (tickets in one request), V1 (speed reports; then set `VITALS_ON_SERVER`), V2 (p95 under 300 ms, `Server-Timing`), V3 (no N+1), V4 (compressed API answers) |
 | Panel  | Brotli next to the pre-gzipped assets needs an nginx image with the brotli module (the `Dockerfile` uses `nginx-unprivileged`)                                                  |
 | Panel  | The service worker (PWA milestone): repeat visits then load the app's code from the device, even offline                                                                        |
+
+## Libraries load with their page
+
+Only the shell's libraries (React, React Router, React Query, i18next) are in the shared `react` and
+`vendor` chunks of the first load (`codeSplitting` in `vite.config.ts`). Any other library (a QR code,
+a chart, drag and drop) goes into the chunk of the page that imports it. Add a library to `vendor`
+only when every page needs it.
