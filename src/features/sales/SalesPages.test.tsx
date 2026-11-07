@@ -65,10 +65,25 @@ describe('sales panel, seller pages', () => {
       ).not.toBeInTheDocument();
     });
     await user.click(within(day).getByRole('button', { name: /^مشاوره/ }));
+    // A consultation's card opens the consultations calendar's card, with its actions.
+    const session = await waitFor(() => {
+      const card = within(day)
+        .getAllByRole('button')
+        .find((button) => button.getAttribute('aria-haspopup') === 'dialog');
+      if (!card) throw new Error('no consultation card yet');
+      return card;
+    });
+    await user.click(session);
+    const popup = await screen.findByRole('dialog', { name: session.textContent });
+    await user.click(within(popup).getByRole('button', { name: 'بستن' }));
+
+    // Tomorrow: its timed follow-ups and consultations.
+    await user.click(within(day).getByRole('button', { name: 'روز بعد' }));
     expect(
-      within(day).getAllByRole('link', { name: /^آماده شدن برای مشاوره‌ی / }).length +
-        within(day).queryAllByRole('button', { name: /^ثبت جلسه‌ی / }).length,
-    ).toBeGreaterThan(0);
+      await within(day).findByRole('heading', { name: 'برنامه‌ی فردا' }),
+    ).toBeInTheDocument();
+    await user.click(within(day).getByRole('button', { name: 'امروز' }));
+    expect(within(day).getByRole('heading', { name: 'برنامه‌ی امروز' })).toBeInTheDocument();
 
     // The next step: the oldest new lead first; "next person" moves on.
     const next = screen.getByRole('region', { name: 'کار بعدی شما' });

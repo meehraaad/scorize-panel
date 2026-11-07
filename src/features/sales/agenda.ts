@@ -1,6 +1,12 @@
 import { listRowsOf, type ListRow } from '@/lib/schedule';
 import type { MyTask, TaskRequest } from '@/lib/tasks/api';
-import type { CallItem, HotLead, PendingReceipt, TodayConsultation } from './api';
+import type {
+  CallItem,
+  HotLead,
+  PendingReceipt,
+  SellerCalendar,
+  TodayConsultation,
+} from './api';
 
 const MINUTE = 60_000;
 /** Consultation types without a length, and calls and tasks, take this long on the day. */
@@ -136,3 +142,30 @@ export type TimelineRow = ListRow<AgendaItem>;
 /** The timed items with the "now" line among them and hints for long free stretches ahead. */
 export const timelineOf = (items: AgendaItem[], now: number): TimelineRow[] =>
   listRowsOf(items, now, { at: (item) => item.at ?? 0, end: endOf, freeMinutes: FREE_MINUTES });
+
+/**
+ * Another day's plan, from the seller's calendar for that day: its consultations and timed
+ * follow-ups by the hour. Nothing is "due now" on another day; its tasks are only counted.
+ */
+export function dayAgendaOf(day: SellerCalendar): Agenda {
+  const typeName = new Map(day.types.map((type) => [type.id, type.name]));
+  const timed: AgendaItem[] = day.calls.map((call) => ({
+    kind: 'call',
+    key: `call-${String(call.lead)}`,
+    at: new Date(call.follow_up_at).getTime(),
+    // The calendar sends no stage or score; a timed row shows neither.
+    call: { ...call, score: 0, stage: 'new', bucket: 'today' },
+  }));
+  for (const consultation of day.consultations) {
+    const at = new Date(consultation.starts_at).getTime();
+    timed.push({
+      kind: 'consultation',
+      key: `consultation-${String(consultation.id)}`,
+      at,
+      end: at + (consultation.minutes ?? DEFAULT_MINUTES) * MINUTE,
+      consultation: { ...consultation, type: typeName.get(consultation.type) ?? '', meeting_url: null },
+    });
+  }
+  timed.sort((a, b) => (a.at ?? 0) - (b.at ?? 0) || a.key.localeCompare(b.key));
+  return { now: [], timed };
+}

@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ContactLogButton } from '@/components/sales/ContactLogButton';
@@ -6,7 +7,10 @@ import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui/IconButton';
 import { DayPlan } from '@/components/ui/DayPlan';
+import { SkeletonRows } from '@/components/ui/Skeleton';
+import { addDays, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useConfirmReceipt } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
@@ -14,12 +18,17 @@ import { safeHref } from '@/lib/url';
 import {
   AGENDA_FILTERS,
   FREE_MINUTES,
+  dayAgendaOf,
   endOf,
   filterOf,
   type Agenda,
   type AgendaFilter,
   type AgendaItem,
 } from '../agenda';
+import { sellerDayQuery, type SellerCalendar } from '../api';
+import type { Chosen } from '../consultationStatus';
+import { EventDetails } from './EventDetails';
+import { FollowUpDialog } from './FollowUpDialog';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';
 
@@ -56,6 +65,9 @@ const TILE: Record<ChipTone, string> = {
 };
 
 const small = 'h-11 w-full px-4 text-sm sm:w-32';
+/** A card's title: its link or button stretches over the whole card. */
+const cardTitle =
+  'cursor-pointer text-start text-[15px] font-semibold outline-none after:absolute after:inset-0 after:rounded-2xl';
 
 /**
  * Today's timetable (canvas "داشبورد امروز"): one list for new leads, follow-ups, consultations,
@@ -73,11 +85,39 @@ export function TodayAgenda({
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
+  // Days from today: 0 is today's whole plan; another day shows its calendar (timed follow-ups and
+  // consultations) and how many tasks fall on it. The day's calendar also fills the popup a
+  // consultation or follow-up opens (the consultations calendar's card).
+  const [offset, setOffset] = useState(0);
+  const [chosenKey, setChosenKey] = useState<string | null>(null);
+  const [moving, setMoving] = useState<{ at: Date; lead: { id: number; name: string } } | null>(
+    null,
+  );
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const day = addDays(today, offset);
+  const other = useQuery(sellerDayQuery(day));
+  const shown =
+    offset === 0 ? agenda : other.data ? dayAgendaOf(other.data) : { now: [], timed: [] };
+  const dayTasks = other.data?.tasks.find((row) => row.day === toValue(day, false));
+  const openTasks = offset !== 0 && dayTasks ? dayTasks.mine + dayTasks.requests : 0;
+  const chosen = chosenKey && other.data ? chosenOf(other.data, chosenKey) : undefined;
+  const opens = (item: AgendaItem) =>
+    other.data && chosenOf(other.data, item.key) ? () => setChosenKey(item.key) : undefined;
+  const title =
+    offset === 0
+      ? t('today.agenda.title')
+      : offset === -1
+        ? t('today.agenda.titleOf.yesterday')
+        : offset === 1
+          ? t('today.agenda.titleOf.tomorrow')
+          : t('today.agenda.titleOf.other', { day: f.weekday(day) });
   const freeText = (minutes: number) =>
     minutes >= 60
       ? t('today.agenda.freeHours', { n: f.number(Math.round((minutes / 60) * 2) / 2) })
       : t('today.agenda.freeMinutes', { n: f.number(minutes) });
   const links = (filter: AgendaFilter) => {
+    if (offset !== 0) return [];
     const showCalls = filter === 'all' || filter === 'calls';
     return [
       showCalls &&
@@ -103,17 +143,56 @@ export function TodayAgenda({
     ].filter((link) => link !== false);
   };
 
-  return (
+  const plan = (
     <DayPlan
       id="agenda-title"
-      title={t('today.agenda.title')}
-      subtitle={t('today.agenda.subtitle', { day: f.weekday(new Date(now)) })}
-      due={agenda.now}
-      timed={agenda.timed}
+      title={title}
+      subtitle={
+        offset === 0
+          ? t('today.agenda.subtitle', { day: f.weekday(new Date(now)) })
+          : t('today.agenda.otherSubtitle', { day: f.date(day) })
+      }
+      nav={
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            disabled={offset === 0}
+            onClick={() => {
+              setOffset(0);
+              setChosenKey(null);
+            }}
+            className="min-h-11 rounded-full bg-surface px-4 text-sm font-semibold shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-canvas disabled:opacity-50"
+          >
+            {t('today.agenda.dayNav.today')}
+          </button>
+          <IconButton
+            icon="chevronStart"
+            aria-label={t('today.agenda.dayNav.previous')}
+            onClick={() => {
+              setOffset((value) => value - 1);
+              setChosenKey(null);
+            }}
+          />
+          <IconButton
+            icon="chevronEnd"
+            aria-label={t('today.agenda.dayNav.next')}
+            onClick={() => {
+              setOffset((value) => value + 1);
+              setChosenKey(null);
+            }}
+          />
+        </div>
+      }
+      today={offset === 0}
+      loading={offset !== 0 && other.isPending ? <SkeletonRows rows={3} /> : undefined}
+      due={shown.now}
+      timed={shown.timed}
       keyOf={(item) => item.key}
       timeOf={(item) => item.at ?? now}
       endOf={endOf}
-      renderItem={(item, due) => <AgendaRow key={item.key} item={item} now={now} due={due} />}
+      renderItem={(item, due) => (
+        <AgendaRow key={item.key} item={item} now={now} due={due} onOpen={opens(item)} />
+      )}
       filters={{
         label: t('today.agenda.filter'),
         of: filterOf,
@@ -123,7 +202,6 @@ export function TodayAgenda({
         })),
       }}
       nowTitle={t('today.agenda.now')}
-      nowNote={t('today.agenda.nowNote')}
       links={links}
       freeMinutes={FREE_MINUTES}
       renderFree={({ minutes }) => (
@@ -139,14 +217,19 @@ export function TodayAgenda({
           </Link>
         </>
       )}
-      empty={t('today.agenda.empty')}
+      empty={t(offset === 0 ? 'today.agenda.empty' : 'today.agenda.otherEmpty')}
       shown={NOW_SHOWN}
       now={now}
       footer={
         <>
-          <span className="flex-[1_1_240px] text-xs leading-6 text-text-2">
-            {t('today.agenda.footer')}
-          </span>
+          {openTasks > 0 && (
+            <Link
+              to={salesPath('tasks')}
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-primary-text"
+            >
+              {t('today.agenda.dayTasks', { n: f.number(openTasks) })}
+            </Link>
+          )}
           <Link
             to={salesPath('leads/consultations')}
             className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
@@ -163,10 +246,82 @@ export function TodayAgenda({
       }
     />
   );
+  return (
+    <>
+      {plan}
+      {chosen && other.data && (
+        <DetailsPopup onClose={() => setChosenKey(null)}>
+          <EventDetails
+            chosen={chosen}
+            type={
+              chosen.kind === 'consultation'
+                ? other.data.types.find((type) => type.id === chosen.item.type)
+                : undefined
+            }
+            now={now}
+            onClose={() => setChosenKey(null)}
+            onMoveCall={(call) => {
+              setChosenKey(null);
+              setMoving({
+                at: new Date(call.follow_up_at),
+                lead: { id: call.lead, name: call.name },
+              });
+            }}
+          />
+        </DetailsPopup>
+      )}
+      {moving && (
+        <FollowUpDialog open onClose={() => setMoving(null)} at={moving.at} lead={moving.lead} />
+      )}
+    </>
+  );
+}
+
+/** The agenda key's event in the day's calendar (`consultation-12`, `call-7`). */
+function chosenOf(day: SellerCalendar, key: string): Chosen | undefined {
+  const [kind, id] = key.split('-');
+  if (kind === 'consultation') {
+    const item = day.consultations.find((row) => String(row.id) === id);
+    return item && { kind, item };
+  }
+  if (kind === 'call') {
+    const item = day.calls.find((row) => String(row.lead) === id);
+    return item && { kind, item };
+  }
+  return undefined;
+}
+
+/** The calendar's event card as a centred popup (closes on Escape or a click outside). */
+function DetailsPopup({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    ref.current?.showModal();
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(event) => event.target === event.currentTarget && ref.current?.close()}
+      className="m-auto w-[min(420px,calc(100vw-32px))] overflow-visible bg-transparent p-0 text-text backdrop:bg-black/40"
+    >
+      {children}
+    </dialog>
+  );
 }
 
 /** One row of the day: what kind it is, who or what, when, and its one main action. */
-function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; due?: boolean }) {
+function AgendaRow({
+  item,
+  now,
+  due = false,
+  onOpen,
+}: {
+  item: AgendaItem;
+  now: number;
+  due?: boolean;
+  /** Opens its calendar card (a consultation, a timed follow-up); without it, the card links. */
+  onOpen?: (() => void) | undefined;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
@@ -181,6 +336,7 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
           icon="phone"
           title={lead.name}
           tag={t('today.agenda.tag.lead')}
+          to={customerPath(lead.customer)}
           meta={lead.reason}
           when={<span className="text-danger">{f.timeAgo(lead.created_at)}</span>}
           action={
@@ -213,6 +369,8 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
                 ? t('today.agenda.tag.late', { time: time(at) })
                 : t('today.agenda.tag.call')
           }
+          to={customerPath(call.customer)}
+          onOpen={onOpen}
           meta={call.reason}
           when={
             due && (
@@ -240,18 +398,13 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
       const { consultation } = item;
       const status = statusOf(item, now);
       const range = t('today.agenda.range', { from: time(item.at), to: time(item.end) });
-      const session = {
-        title: consultation.type,
-        starts_at: consultation.starts_at,
-        minutes: consultation.minutes,
-        mode: consultation.mode,
-      };
       return (
         <Row
           tone={status === 'need' ? 'warn' : status === 'done' ? 'good' : 'primary'}
           icon="calendar"
           title={consultation.name}
           tag={t('today.agenda.tag.consultation')}
+          to={customerPath(consultation.customer)}
           meta={t('today.agenda.consultationMeta', {
             range,
             type: consultation.type,
@@ -260,37 +413,7 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
           status={t(`today.agenda.status.${status}`)}
           done={status === 'done'}
           highlight={status === 'live' || status === 'upcoming'}
-          action={
-            status === 'need' || status === 'live' ? (
-              <ContactLogButton
-                customer={consultation.customer}
-                name={consultation.name}
-                start={{ channel: 'meeting', reservation: consultation.id, session }}
-                aria-label={t('today.agenda.logName', { name: consultation.name })}
-                className={buttonClass('primary', small)}
-              >
-                {t('today.agenda.log')}
-              </ContactLogButton>
-            ) : status === 'upcoming' && consultation.meeting_url ? (
-              <a
-                href={safeHref(consultation.meeting_url)}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={t('today.agenda.joinName', { name: consultation.name })}
-                className={buttonClass('primary', small)}
-              >
-                {t('today.agenda.join')}
-              </a>
-            ) : (
-              <Link
-                to={customerPath(consultation.customer)}
-                aria-label={t('today.consultations.prepareName', { name: consultation.name })}
-                className={buttonClass('outline', small)}
-              >
-                {t('today.consultations.prepare')}
-              </Link>
-            )
-          }
+          onOpen={onOpen}
         />
       );
     }
@@ -305,10 +428,16 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
           tag={t(
             task.source === 'system' ? 'today.agenda.tag.taskSystem' : 'today.agenda.tag.task',
           )}
+          to={
+            person
+              ? customerPath(person.id, task.action === 'message' ? 'message' : undefined)
+              : salesPath('tasks')
+          }
           meta={person ? [person.name, person.context].filter(Boolean).join(' · ') : ''}
           when={due && <span className="text-warn">{time(item.at)}</span>}
           action={
-            person && task.action === 'call' ? (
+            person &&
+            task.action === 'call' && (
               <ContactLogButton
                 customer={person.id}
                 name={person.name}
@@ -319,18 +448,6 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
                 <Icon name="phone" size={16} />
                 {t('call')}
               </ContactLogButton>
-            ) : (
-              <Link
-                to={
-                  person
-                    ? customerPath(person.id, task.action === 'message' ? 'message' : undefined)
-                    : salesPath('tasks')
-                }
-                aria-label={t('today.agenda.openName', { text: task.text })}
-                className={buttonClass('outline', small)}
-              >
-                {t('today.agenda.open')}
-              </Link>
             )
           }
         />
@@ -344,6 +461,7 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
           icon="chat"
           title={request.text}
           tag={t('today.agenda.tag.request')}
+          to={salesPath('tasks?view=requests')}
           meta={[t('today.agenda.requestFrom', { name: request.from.name }), request.person?.name]
             .filter(Boolean)
             .join(' · ')}
@@ -351,15 +469,6 @@ function AgendaRow({ item, now, due = false }: { item: AgendaItem; now: number; 
             <span className={due ? 'text-warn' : 'text-text-2'}>
               {t('today.agenda.due', { time: time(item.at) })}
             </span>
-          }
-          action={
-            <Link
-              to={salesPath('tasks?view=requests')}
-              aria-label={t('today.agenda.openName', { text: request.text })}
-              className={buttonClass('outline', small)}
-            >
-              {t('today.agenda.open')}
-            </Link>
           }
         />
       );
@@ -381,6 +490,7 @@ function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }
       icon="card"
       title={receipt.name}
       tag={t('today.agenda.tag.receipt')}
+      to={customerPath(receipt.customer)}
       meta={
         <>
           {t('today.agenda.receipt', { amount: s.toman(receipt.amount), what: receipt.what })}
@@ -392,7 +502,7 @@ function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }
             target="_blank"
             rel="noreferrer"
             aria-label={t('today.receipts.viewName', { name: receipt.name })}
-            className="font-medium text-primary-text underline-offset-4 hover:underline"
+            className="relative z-10 font-medium text-primary-text underline-offset-4 hover:underline"
           >
             {t('today.receipts.view')}
           </a>
@@ -429,6 +539,8 @@ function Row({
   icon,
   title,
   tag,
+  to,
+  onOpen,
   meta,
   status,
   when,
@@ -440,21 +552,25 @@ function Row({
   icon: IconName;
   title: string;
   tag: string;
+  /** Where a click anywhere on the card goes (the person, or the task list). */
+  to: string;
+  /** Instead of following `to`, a click opens this (the calendar card popup). */
+  onOpen?: (() => void) | undefined;
   meta: ReactNode;
   status?: string;
   when?: ReactNode;
-  action: ReactNode;
+  action?: ReactNode;
   done?: boolean;
   highlight?: boolean;
 }) {
   return (
     <li
-      className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl p-3 ${
+      className={`relative flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl p-3 transition-colors has-[[data-card]:focus-visible]:outline-2 has-[[data-card]:focus-visible]:outline-primary ${
         highlight
           ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]'
           : done
-            ? 'bg-canvas opacity-80'
-            : 'bg-surface shadow-[inset_0_0_0_1px_var(--line-2)]'
+            ? 'bg-canvas opacity-80 hover:opacity-100'
+            : 'bg-surface shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-canvas'
       }`}
     >
       <span
@@ -465,9 +581,26 @@ function Row({
       </span>
       <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
         <span className="flex flex-wrap items-center gap-2">
-          <span className={`text-[15px] font-semibold ${done ? 'text-text-2 line-through' : ''}`}>
-            {title}
-          </span>
+          {/* The title covers the whole card; the buttons sit above it. */}
+          {onOpen ? (
+            <button
+              type="button"
+              data-card=""
+              onClick={onOpen}
+              aria-haspopup="dialog"
+              className={`${cardTitle} ${done ? 'text-text-2 line-through' : 'text-text'}`}
+            >
+              {title}
+            </button>
+          ) : (
+            <Link
+              to={to}
+              data-card=""
+              className={`${cardTitle} ${done ? 'text-text-2 line-through' : 'text-text'}`}
+            >
+              {title}
+            </Link>
+          )}
           <Chip tone={tone} small>
             {tag}
           </Chip>
@@ -476,7 +609,7 @@ function Row({
         {status && <span className="text-xs font-semibold text-text-2">{status}</span>}
       </span>
       {when && <span className="text-[13px] font-semibold whitespace-nowrap">{when}</span>}
-      <span className="w-full flex-none sm:w-auto">{action}</span>
+      {action && <span className="relative z-10 w-full flex-none sm:w-auto">{action}</span>}
     </li>
   );
 }

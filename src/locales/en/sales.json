@@ -110,13 +110,24 @@
         "receipts": "Receipts"
       },
       "now": "Right now",
-      "nowNote": "No time slot: these are due already",
       "empty": "Nothing left for today.",
       "free": "{{time}} free: a good time to call leads waiting for a follow-up.",
       "freeHours": "{{n}} hours",
       "freeMinutes": "{{n}} minutes",
       "freeLink": "See leads",
-      "footer": "Any follow-up or task with a time lands at its hour automatically.",
+      "titleOf": {
+        "yesterday": "Yesterday's plan",
+        "tomorrow": "Tomorrow's plan",
+        "other": "Plan for {{day}}"
+      },
+      "otherSubtitle": "{{day}} · timed follow-ups and consultations",
+      "otherEmpty": "No follow-ups or consultations on this day.",
+      "dayTasks": "{{n}} tasks on this day",
+      "dayNav": {
+        "today": "Today",
+        "previous": "Previous day",
+        "next": "Next day"
+      },
       "calendar": "Consultation calendar",
       "tasks": "All tasks",
       "more": {
@@ -146,18 +157,10 @@
       },
       "requestFrom": "From {{name}}",
       "due": "Due {{time}}",
-      "log": "Log session",
-      "logName": "Log the session with {{name}}",
-      "join": "Join",
-      "joinName": "Join the session with {{name}}",
-      "open": "Open",
-      "openName": "Open \"{{text}}\"",
       "receipt": "{{amount}} · {{what}}"
     },
     "consultations": {
-      "type": "{{type}} · {{mode}}",
-      "prepare": "Prepare",
-      "prepareName": "Prepare for the consultation with {{name}}"
+      "type": "{{type}} · {{mode}}"
     },
     "receipts": {
       "view": "View receipt",

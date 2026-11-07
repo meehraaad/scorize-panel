@@ -23,6 +23,7 @@ import {
   paymentsQuery,
   purchasesQuery,
   receiptsQuery,
+  sellerDayQuery,
   teamQuery,
   funnelQuery,
 } from '@/features/sales/api';
@@ -111,6 +112,8 @@ export const salesPanel: PanelDefinition = {
           receiptsQuery(1),
           taskListQuery('sales', 'mine', 1),
           taskListQuery('sales', 'requests', 1),
+          // Today's calendar: the popup a consultation or follow-up card opens.
+          sellerDayQuery(new Date(new Date().setHours(0, 0, 0, 0))),
         ],
         skeleton: 'dashboard',
       }),

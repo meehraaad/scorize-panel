@@ -79,6 +79,20 @@ export const sellerCalendarQuery = (week: Date) => {
   });
 };
 
+/** One day of the seller's calendar (Today's plan for another day). */
+export const sellerDayQuery = (day: Date) => {
+  const value = toValue(day, false);
+  return queryOptions({
+    queryKey: [...CALENDAR_KEY, 'day', value],
+    queryFn: ({ signal }) =>
+      api<SellerCalendar>(
+        `${SALES_API}/consultations/calendar/?${new URLSearchParams({ from: value, to: value }).toString()}`,
+        { signal },
+      ),
+    staleTime: 60_000,
+  });
+};
+
 /** An in-person customer arrived at the office (S47). */
 export function useMarkArrived() {
   const client = useQueryClient();
