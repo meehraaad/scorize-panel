@@ -131,6 +131,7 @@ function myTaskOf(todo: DjangoTodo): MyTask {
     note: '',
     suggested_next: '',
     follow_up: !!todo.user && todo.type === TODO_TYPE.lead_follow_up,
+    receipt: null,
   };
 }
 

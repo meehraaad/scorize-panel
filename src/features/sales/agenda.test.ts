@@ -64,6 +64,7 @@ const task = (id: number, due: string): MyTask => ({
   note: '',
   suggested_next: '',
   follow_up: false,
+  receipt: null,
 });
 const request = (id: number, due: string, status: TaskRequest['status']): TaskRequest => ({
   id,
@@ -143,6 +144,12 @@ describe('agendaOf', () => {
       NOW,
     );
     expect(timed.map((item) => item.key)).toEqual(['call-3', 'task-21']);
+  });
+
+  it('shows a receipt once, not also as its review task', () => {
+    const review = { ...task(30, iso(13)), receipt: 7 };
+    const { now, timed } = agendaOf({ ...empty, receipts: [receipt(7)], tasks: [review] }, NOW);
+    expect([...now, ...timed].map((item) => item.key)).toEqual(['receipt-7']);
   });
 });
 

@@ -138,6 +138,7 @@ function supervisorTasksState(): TasksState {
           note: '',
           suggested_next: 'رسید پرداخت را در پرونده بگذار',
           follow_up: false,
+          receipt: null,
         },
         {
           id: 112,
@@ -151,6 +152,7 @@ function supervisorTasksState(): TasksState {
           note: '',
           suggested_next: 'نظرها را برای تیم نگارش بفرست',
           follow_up: false,
+          receipt: null,
         },
         {
           id: 113,
@@ -164,6 +166,7 @@ function supervisorTasksState(): TasksState {
           note: '',
           suggested_next: '',
           follow_up: false,
+          receipt: null,
         },
       ],
       tomorrow: 4,
@@ -285,6 +288,7 @@ function applyChange(
           note: '',
           suggested_next: '',
           follow_up: false,
+          receipt: null,
         });
       return null;
     }
@@ -419,6 +423,7 @@ export const taskHandlers = [
         note: '',
         suggested_next: '',
         follow_up: false,
+        receipt: null,
       });
     else if (task.kind === 'mine') overview.tomorrow += 1;
     if (task.kind !== 'mine') {

@@ -102,6 +102,8 @@ export interface MyTask {
    * (Django `api/staff/v1/follow_ups.py`).
    */
   follow_up: boolean;
+  /** A receipt to review: its payment (Django `finance/receipt_tasks.py`). Today shows the receipt once. */
+  receipt: number | null;
 }
 
 /** A colleague's request to me. */
