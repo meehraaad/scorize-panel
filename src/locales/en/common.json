@@ -340,6 +340,11 @@
     "freeCount": "{{n}} free",
     "dayLineFull": "{{free}} free · {{full}} full"
   },
+  "dayPlan": {
+    "showAll": "Show all ({{n}})",
+    "showLess": "Show less",
+    "filteredEmpty": "Nothing of this kind today."
+  },
   "schedule": {
     "nowLine": "Now, {{time}}",
     "now": "Now",

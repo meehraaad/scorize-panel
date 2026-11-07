@@ -340,6 +340,11 @@
     "freeCount": "{{n}} زمان آزاد",
     "dayLineFull": "{{free}} زمان آزاد · {{full}} پر شده"
   },
+  "dayPlan": {
+    "showAll": "نمایش همه ({{n}})",
+    "showLess": "نمایش کمتر",
+    "filteredEmpty": "در این دسته برای امروز چیزی نیست."
+  },
   "schedule": {
     "nowLine": "اکنون، {{time}}",
     "now": "الان",
