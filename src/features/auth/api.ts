@@ -19,6 +19,8 @@ export interface AuthResult {
   tries_left?: number;
   /** TOO_MANY_REQUESTS: seconds until this IP, phone or account may try again (A1, A3). */
   retry_after?: number;
+  /** OTP_SENT by email: the address it went to, masked ("al•••@gmail.com"). */
+  email?: string;
 }
 
 async function post(step: string, body?: object): Promise<AuthResult> {
@@ -28,6 +30,7 @@ async function post(step: string, body?: object): Promise<AuthResult> {
     errors?: unknown;
     tries_left?: unknown;
     retry_after?: unknown;
+    email?: unknown;
   } | null;
   // Anything without a numeric code (HTML error page, proxy error, CSRF failure) is unexpected.
   if (typeof payload?.code !== 'number') throw new ApiError(status, data);
@@ -41,6 +44,7 @@ async function post(step: string, body?: object): Promise<AuthResult> {
     ...(errors ? { errors } : {}),
     ...(typeof payload.tries_left === 'number' ? { tries_left: payload.tries_left } : {}),
     ...(typeof payload.retry_after === 'number' ? { retry_after: payload.retry_after } : {}),
+    ...(typeof payload.email === 'string' ? { email: payload.email } : {}),
   };
 }
 
@@ -63,6 +67,8 @@ export const authApi = {
         : { email: identifier.value },
     ),
   sendOtp: () => post('send-otp'),
+  /** The login code by email instead, for when the SMS doesn't arrive (an account that exists). */
+  sendEmailOtp: () => post('send-email-otp'),
   verifyOtp: (otp: string) => post('otp', { otp }),
   password: (password: string) => post('password', { password }),
   preRegister: (details: RegistrationDetails) => post('pre-registration-check', details),

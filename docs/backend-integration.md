@@ -28,6 +28,7 @@ State lives in the **Django session** between steps, so the order matters:
 ```
 begin {phone_number | email}
  ├─ SEND_OTP        → send-otp → otp {otp}                     → AUTHENTICATED
+ │                    └─ send-email-otp (SMS didn't arrive)    → OTP_SENT {email} → otp {otp}
  ├─ ENTER_PASSWORD  → password {password}                      → AUTHENTICATED
  │                    └─ begin-password-reset                  → PASSWORD_RESET_STARTED (email sent)
  └─ USER_DOES_NOT_EXIST
@@ -41,6 +42,9 @@ password-reset {token, password, password_confirmation}        (link from the re
   (`OTP_TIMEOUT`); 5 wrong tries (`MAX_OTP_TRY_COUNT`) → `OTP_MAX_TRY_EXCEEDED`. `INVALID_OTP`
   carries `tries_left`; too many codes or logins from one IP, phone or account answer
   `TOO_MANY_REQUESTS` (22, HTTP 429) with `retry_after` in seconds. The panel shows both.
+- `send-email-otp` emails a code to the account's address (masked `email` in the answer) for when
+  the SMS provider is down; it lives 10 minutes, one a minute and five a day per account, and the
+  texted code keeps working beside it. Login only (the account must exist).
 - All POSTs need the `X-CSRFToken` header. The cookie comes from `GET /api/profile/auth/v1/csrf/`
   (204). Logging in rotates the session and the CSRF token; the client reads the cookie on every
   request.

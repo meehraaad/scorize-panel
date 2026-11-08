@@ -28,8 +28,8 @@ export type AuthMessage = ParseKeys<'auth'>;
 export interface Feedback {
   tone: 'error' | 'info' | 'success';
   message: AuthMessage;
-  /** Numbers the message shows ("{{n}} tries left", "in {{minutes}} minutes"). */
-  values?: Record<string, number>;
+  /** Values the message shows ("{{n}} tries left", "in {{minutes}} minutes", the masked email). */
+  values?: Record<string, number | string>;
 }
 
 /**
@@ -230,6 +230,32 @@ export function useAuthFlow({
           setFeedback({ tone: 'info', message: 'errors.otpTimeout' });
         } else {
           fail('errors.unexpected');
+        }
+      }),
+
+    /** SMS not arriving (the provider may be down): the same login's code by email. */
+    emailOtp: () =>
+      run(async () => {
+        if (step.name !== 'otp' || step.purpose !== 'login') return;
+        const result = await authApi.sendEmailOtp();
+        if (await handleCommon(result)) return;
+        switch (result.code) {
+          case AuthCode.OTP_SENT:
+            setStep({ ...step, sentAt: Date.now() });
+            setFeedback({
+              tone: 'success',
+              message: 'otp.emailed',
+              values: { email: result.email ?? '' },
+            });
+            return;
+          case AuthCode.INVALID_AUTHENTICATION_METHOD:
+            fail('otp.noEmail');
+            return;
+          case AuthCode.USER_DOES_NOT_EXIST:
+            fail('errors.userNotFound');
+            return;
+          default:
+            fail('errors.unexpected');
         }
       }),
 

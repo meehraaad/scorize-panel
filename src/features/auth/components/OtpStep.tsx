@@ -19,6 +19,8 @@ interface Props {
   error: string | undefined;
   onSubmit: (otp: string) => void;
   onResend: () => void;
+  /** Login only: send the code by email instead (SMS can be down). */
+  onEmail?: (() => void) | undefined;
   onChangePhone: () => void;
   /** The user changed the code: the last error no longer applies. */
   onEdit: () => void;
@@ -43,6 +45,7 @@ export function OtpStep({
   error,
   onSubmit,
   onResend,
+  onEmail,
   onChangePhone,
   onEdit,
 }: Props) {
@@ -172,6 +175,17 @@ export function OtpStep({
             </>
           )}
         </p>
+        {onEmail && (
+          <button
+            type="button"
+            onClick={onEmail}
+            disabled={pending}
+            className="inline-flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-primary-text hover:underline"
+          >
+            <Icon name="mail" size={16} />
+            {t('otp.byEmail')}
+          </button>
+        )}
       </div>
       <Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="w-full">
         {t(purpose === 'register' ? 'otp.submitRegister' : 'otp.submit')}

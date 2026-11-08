@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -28,6 +28,19 @@ describe('login', () => {
 
     expect(await screen.findByRole('heading', { name: 'تیکت‌ها' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/tickets');
+  });
+
+  it('sends the login code by email when the SMS does not arrive', async () => {
+    const user = userEvent.setup();
+    const router = renderAt('/login');
+    await user.type(await screen.findByLabelText('شماره موبایل یا ایمیل'), '09120000000');
+    await user.click(screen.getByRole('button', { name: 'ادامه' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'پیامک نمی‌رسد؟ کد را به ایمیلم بفرست' }),
+    );
+    expect(await screen.findByText(/کد ورود به .*•••@.* ایمیل شد/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText('کد تأیید'), MOCK_OTP);
+    await waitFor(() => expect(router.state.location.pathname).not.toBe('/login'));
   });
 
   it('shows a translated error for a wrong code', async () => {

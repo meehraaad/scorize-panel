@@ -57,6 +57,7 @@ export default function LoginPage() {
           error={otpError ? t(otpError.message, otpError.values ?? {}) : undefined}
           onSubmit={actions.verifyOtp}
           onResend={actions.resendOtp}
+          onEmail={step.purpose === 'login' ? actions.emailOtp : undefined}
           onChangePhone={() => actions.restart(step.phone)}
           onEdit={actions.clearFeedback}
         />

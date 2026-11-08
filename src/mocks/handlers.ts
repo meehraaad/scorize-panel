@@ -238,6 +238,18 @@ export const handlers = [
     return code(13, 201);
   }),
 
+  // The code by email (Django `send-email-otp/`): to the account of the phone number being logged into.
+  http.post(`${AUTH}/send-email-otp/`, () => {
+    if (!flow) return code(3, 400);
+    const user = users.find((candidate) => candidate.phone_number === flow?.phone);
+    if (!user) return code(8, 404);
+    if (!user.email) return code(4, 400, { required_method: 1 });
+    flow.otpSentAt = Date.now();
+    flow.tries = 0;
+    const [name = '', domain = ''] = user.email.split('@');
+    return code(13, 201, { email: `${name.slice(0, 2)}•••@${domain}` });
+  }),
+
   http.post(`${AUTH}/otp/`, async ({ request }) => {
     if (!flow) return code(3, 400);
     if (!flow.phone) return code(4, 400, { required_method: 0 });
