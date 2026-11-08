@@ -28,6 +28,7 @@ import {
 import { sellerDayQuery, type SellerCalendar } from '../api';
 import type { Chosen } from '../consultationStatus';
 import { EventDetails } from './EventDetails';
+import { OwnerTag } from './OwnerTag';
 import { FollowUpDialog } from './FollowUpDialog';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';
@@ -338,6 +339,7 @@ function AgendaRow({
           tag={t('today.agenda.tag.lead')}
           to={customerPath(lead.customer)}
           meta={lead.reason}
+          owner={lead.seller}
           when={<span className="text-danger">{f.timeAgo(lead.created_at)}</span>}
           action={
             <ContactLogButton
@@ -372,6 +374,7 @@ function AgendaRow({
           to={customerPath(call.customer)}
           onOpen={onOpen}
           meta={call.reason}
+          owner={call.seller}
           when={
             due && (
               <span className="text-warn">
@@ -411,6 +414,7 @@ function AgendaRow({
             mode: t(`mode.${consultation.mode}`),
           })}
           status={t(`today.agenda.status.${status}`)}
+          owner={consultation.seller}
           done={status === 'done'}
           highlight={status === 'live' || status === 'upcoming'}
           onOpen={onOpen}
@@ -543,6 +547,7 @@ function Row({
   onOpen,
   meta,
   status,
+  owner,
   when,
   action,
   done = false,
@@ -558,6 +563,8 @@ function Row({
   onOpen?: (() => void) | undefined;
   meta: ReactNode;
   status?: string;
+  /** Whose it is, on a sales manager's day. */
+  owner?: string | null | undefined;
   when?: ReactNode;
   action?: ReactNode;
   done?: boolean;
@@ -604,6 +611,7 @@ function Row({
           <Chip tone={tone} small>
             {tag}
           </Chip>
+          <OwnerTag seller={owner} />
         </span>
         {meta && <span className="text-[13px] leading-6 text-text-2">{meta}</span>}
         {status && <span className="text-xs font-semibold text-text-2">{status}</span>}

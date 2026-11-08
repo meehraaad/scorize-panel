@@ -7,6 +7,7 @@ import { STALE_DAYS, type BoardCard } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { ScoreChip } from './LeadChips';
+import { OwnerTag } from './OwnerTag';
 
 const DAY = 86_400_000;
 
@@ -37,11 +38,7 @@ export function DealCard({
     >
       <span className="flex min-h-6 items-center gap-2 pe-9">
         <ScoreChip score={card.score} />
-        {card.seller && (
-          <span className="truncate text-[11px] text-text-2">
-            {t('board.sellerOf', { name: card.seller })}
-          </span>
-        )}
+        <OwnerTag seller={card.seller} />
       </span>
       <span className="flex flex-col gap-1">
         <span className="line-clamp-2 text-[15px] leading-6 font-semibold">{card.name}</span>

@@ -8,6 +8,7 @@ import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { ContactButtons } from './ContactButtons';
 import { ScoreChip, StageChip } from './LeadChips';
+import { OwnerTag } from './OwnerTag';
 
 const COLUMNS = ['customer', 'source', 'score', 'stage', 'next'] as const;
 
@@ -112,6 +113,7 @@ export function LeadTable({
                       {row.name}
                     </Link>
                     <span className="text-[13px] text-text-2">{meta.join(' · ')}</span>
+                    <OwnerTag seller={row.seller} />
                     {rowTags.length > 0 && (
                       <TagList
                         label={t('tags.of', { name: row.name })}

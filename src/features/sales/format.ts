@@ -27,6 +27,16 @@ export function useSalesFormat() {
   };
 
   return {
+    /**
+     * Whose a row is, on a sales manager's lists ("Seller: Sara", "No seller"); null for a seller,
+     * whose lists hold only their own.
+     */
+    owner: (seller: string | null | undefined) =>
+      seller === null || seller === undefined
+        ? null
+        : seller
+          ? t('owner.of', { name: seller })
+          : t('owner.none'),
     /** "Hot · 86". */
     score: (score: number) =>
       t('score', { band: t(`band.${scoreBand(score)}`), score: f.number(score) }),

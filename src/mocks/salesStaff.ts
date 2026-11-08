@@ -56,6 +56,13 @@ async function answer<T>(work: () => Promise<T>, status = 200) {
 }
 
 const id = (params: Record<string, unknown>) => Number(params.id);
+/** Reza (src/mocks/handlers.ts) manages sales; his seller filter lists the team. */
+const MANAGER = 4;
+const SELLER_NAME = 'نیما رستمی';
+const MANAGER_TEAM = [
+  { id: 8, name: SELLER_NAME },
+  { id: 9, name: 'رضا کاظمی' },
+];
 
 export const salesStaffHandlers = [
   http.get(`${BASE}/leads/`, ({ request }) => {
@@ -72,12 +79,20 @@ export const salesStaffHandlers = [
     // Each row's customer tags (S49); `?tag=` keeps the customers with it (on this page).
     return answer<LeadsData>(() =>
       fetchLeads(leads).then((data) => {
+        // A sales manager's rows name their seller ('' nobody's yet); the legacy rows don't say whose,
+        // so the mock gives every third one to nobody.
+        const manager = storage.get() === MANAGER;
         const results = data.results
-          .map((row) => ({ ...row, tags: tagsOfCustomer(row.customer) }))
+          .map((row) => ({
+            ...row,
+            tags: tagsOfCustomer(row.customer),
+            ...(manager ? { seller: row.id % 3 === 0 ? '' : SELLER_NAME } : {}),
+          }))
           .filter((row) => leads.tag === null || row.tags.includes(leads.tag));
         return {
           ...data,
           supports: { ...data.supports, tags: true },
+          sellers: manager ? MANAGER_TEAM : [],
           ...(leads.tag === null ? {} : { count: results.length }),
           results,
         };

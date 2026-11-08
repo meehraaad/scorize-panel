@@ -15,6 +15,8 @@ export interface HotLead {
   /** What happened, written by the server ("A 4.5M payment for … failed · master's"). */
   reason: string;
   source: LeadSource;
+  /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
+  seller?: string | null;
 }
 
 /** Why a lead is on today's call list. */
@@ -31,6 +33,8 @@ export interface CallItem {
   stage: LeadStage;
   bucket: CallBucket;
   follow_up_at: string | null;
+  /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
+  seller?: string | null;
 }
 
 export interface TodayConsultation {
@@ -46,6 +50,8 @@ export interface TodayConsultation {
   /** A ContactHistory exists for it (the session was logged). */
   logged: boolean;
   meeting_url: string | null;
+  /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
+  seller?: string | null;
 }
 
 /** A card-transfer receipt waiting for a seller (Payment.Status.PENDING_RECEIPT). */

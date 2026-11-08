@@ -24,6 +24,7 @@ import {
   type Chosen,
   type Status,
 } from '../consultationStatus';
+import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 
 /*
@@ -103,6 +104,7 @@ export function EventDetails({
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
+  const s = useSalesFormat();
   const outline = buttonClass('outline', 'h-11 px-4 text-sm');
   const primary = buttonClass('primary', 'h-11 px-4 text-sm');
   const item = chosen.item;
@@ -326,6 +328,12 @@ export function EventDetails({
             {chosen.item.seller
               ? t('consultationCalendar.seller', { name: chosen.item.seller })
               : t('consultationCalendar.noSeller')}
+          </li>
+        )}
+        {chosen.kind === 'call' && s.owner(chosen.item.seller) && (
+          <li className={`flex items-center gap-2.5 ${chosen.item.seller ? '' : 'text-warn'}`}>
+            <Icon name="user" size={16} />
+            {s.owner(chosen.item.seller)}
           </li>
         )}
         {chosen.kind === 'consultation' && (

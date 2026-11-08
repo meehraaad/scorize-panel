@@ -124,6 +124,15 @@ describe('sales panel, seller pages', () => {
     );
   });
 
+  it("leads: a sales manager's rows name their seller, with a seller filter", async () => {
+    loginAs(4);
+    renderApp('/sales/leads');
+    const table = await screen.findByRole('table');
+    expect(within(table).getAllByText('فروشنده: نیما رستمی').length).toBeGreaterThan(0);
+    expect(within(table).getAllByText('بدون فروشنده').length).toBeGreaterThan(0);
+    expect(screen.getByRole('combobox', { name: 'فروشنده' })).toBeInTheDocument();
+  });
+
   it('leads: adds a lead by hand and opens the customer', async () => {
     const user = userEvent.setup();
     const router = renderApp('/sales/leads');

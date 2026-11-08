@@ -41,6 +41,8 @@ export interface CalendarCall {
   phone: string;
   reason: string;
   follow_up_at: string;
+  /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
+  seller?: string | null;
 }
 
 /** How many of the seller's own tasks fall on a day (S50): only days with any. */
