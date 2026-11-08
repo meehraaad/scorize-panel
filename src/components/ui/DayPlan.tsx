@@ -119,34 +119,36 @@ export function DayPlan<T, F extends string>({
           {subtitle && <span className="text-sm text-text-2">{subtitle}</span>}
         </div>
         {nav}
-        {filters && (
-          <div
-            role="group"
-            aria-label={filters.label}
-            className="flex flex-wrap gap-0.5 rounded-full bg-canvas p-0.5"
-          >
-            {filters.options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={filter === option.value}
-                onClick={() => setFilter(option.value)}
-                // Small to the eye; the tap area still reaches 44px (`after`).
-                className={`relative inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium whitespace-nowrap after:absolute after:inset-x-0 after:-inset-y-1.5 ${
-                  filter === option.value
-                    ? 'bg-surface text-text shadow-panel'
-                    : 'text-text-2 hover:text-text'
-                }`}
-              >
-                {option.label}
-                <span className="text-[11px] text-text-2 tabular-nums">
-                  {f.number(count(option.value))}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* The filters sit with the list they narrow, so the header keeps room for the day. */}
+      {filters && (
+        <div
+          role="group"
+          aria-label={filters.label}
+          className="flex flex-wrap gap-0.5 self-start rounded-full bg-canvas p-0.5"
+        >
+          {filters.options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={filter === option.value}
+              onClick={() => setFilter(option.value)}
+              // Small to the eye; the tap area still reaches 44px (`after`).
+              className={`relative inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium whitespace-nowrap after:absolute after:inset-x-0 after:-inset-y-1.5 ${
+                filter === option.value
+                  ? 'bg-surface text-text shadow-panel'
+                  : 'text-text-2 hover:text-text'
+              }`}
+            >
+              {option.label}
+              <span className="text-[11px] text-text-2 tabular-nums">
+                {f.number(count(option.value))}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {(dueNow.length > 0 || more.length > 0) && (
         <section
