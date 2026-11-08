@@ -718,6 +718,12 @@ function buildCase(seed: CaseSeed): MockCase {
     unread: seed.unread ?? 0,
     documents_waiting: 0,
     applications: 0,
+    notes: {
+      supervisor: seed.id === 1240 ? 'ترجیح متقاضی ایتالیاست؛ برای بورسیه‌ی استانی آماده باشیم.' : '',
+      manager: '',
+      // The mock supervisor isn't a manager: they read the manager's note but can't change it.
+      manager_editable: false,
+    },
   };
 
   return {
@@ -1174,6 +1180,19 @@ export const supervisorHandlers = [
     item.data.stage = stage;
     record(item, `${SUPERVISOR_NAME} وضعیت پرونده را تغییر داد${note ? `: ${note}` : ''}`);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.patch(`${API}/cases/:id/notes/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const body = (await request.json()) as Partial<Record<'supervisor' | 'manager', string>>;
+    if (body.manager !== undefined && !item.data.notes.manager_editable) {
+      return HttpResponse.json({ detail: 'Only managers write the manager note.' }, { status: 403 });
+    }
+    if (body.supervisor !== undefined) item.data.notes.supervisor = body.supervisor.trim();
+    if (body.manager !== undefined) item.data.notes.manager = body.manager.trim();
+    record(item, `${SUPERVISOR_NAME}: یادداشت ویرایش شد`);
+    return HttpResponse.json(item.data.notes);
   }),
 
   // ── Documents ──

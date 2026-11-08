@@ -73,7 +73,19 @@ export interface CaseData {
   unread: number;
   documents_waiting: number;
   applications: number;
+  notes: CaseNotes;
 }
+
+/** Staff-only notes on the case; the applicant never sees them. */
+export interface CaseNotes {
+  /** Any supervisor of the case writes it. */
+  supervisor: string;
+  /** The executive manager's note: every supervisor reads it, only managers write it. */
+  manager: string;
+  manager_editable: boolean;
+}
+
+export type CaseNoteKind = 'supervisor' | 'manager';
 
 export const caseKey = (id: number) => [...SUPERVISOR_KEY, 'case', id] as const;
 
@@ -103,5 +115,14 @@ export function useSupervisorMutation<T, R = unknown>(mutationFn: (variables: T)
 export function useChangeStage(id: number) {
   return useSupervisorMutation(({ stage, note }: { stage: CaseStage; note: string }) =>
     api(`${SUPERVISOR_API}/cases/${String(id)}/stage/`, { method: 'POST', body: { stage, note } }),
+  );
+}
+
+export function useSaveNote(id: number) {
+  return useSupervisorMutation(({ kind, text }: { kind: CaseNoteKind; text: string }) =>
+    api<CaseNotes>(`${SUPERVISOR_API}/cases/${String(id)}/notes/`, {
+      method: 'PATCH',
+      body: { [kind]: text },
+    }),
   );
 }

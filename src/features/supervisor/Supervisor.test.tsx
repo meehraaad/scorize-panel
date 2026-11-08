@@ -92,6 +92,25 @@ describe('supervisor panel', () => {
     expect(await screen.findByText(/وضعیت پرونده را تغییر داد: پذیرش مونیخ/)).toBeInTheDocument();
   });
 
+  it('case overview: internal notes, the manager note read-only for a supervisor', async () => {
+    const user = userEvent.setup();
+    renderApp(SARA_CASE);
+    const notes = await screen.findByRole('region', { name: 'یادداشت‌های داخلی' });
+    expect(notes).toHaveTextContent('ترجیح متقاضی ایتالیاست');
+    // Maryam isn't a manager: only her own note has an edit button.
+    expect(
+      within(notes).queryByRole('button', { name: 'ویرایش یادداشت مدیر اجرایی' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(within(notes).getByRole('button', { name: 'ویرایش یادداشت سوپروایزر' }));
+    const field = within(notes).getByLabelText('یادداشت سوپروایزر');
+    await user.clear(field);
+    await user.type(field, 'مدرک زبان تا آخر ماه می‌رسد');
+    await user.click(within(notes).getByRole('button', { name: 'ذخیره‌ی یادداشت' }));
+    expect(await screen.findByText(/ذخیره شد/)).toBeInTheDocument();
+    expect(await within(notes).findByText('مدرک زبان تا آخر ماه می‌رسد')).toBeInTheDocument();
+  });
+
   it('shows why the email bot is stuck, with a link to fix it', async () => {
     renderApp('/supervisor/files/1227');
     expect(

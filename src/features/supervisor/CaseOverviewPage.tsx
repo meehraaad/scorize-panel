@@ -15,6 +15,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
 import { safeHref } from '@/lib/url';
 import { caseQuery, type CaseData, type InstallmentStatus } from './api';
+import { CaseNotes } from './components/CaseNotes';
 import { NewTaskDialog } from './components/NewTaskDialog';
 import { casePath, supervisorPath } from './paths';
 import { useCaseId } from './useCaseId';
@@ -37,6 +38,7 @@ export default function CaseOverviewPage() {
       }
       aside={
         <>
+          <CaseNotes data={data} />
           <Tasks data={data} />
           <Activity data={data} />
         </>
