@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { API_BASE, api } from '@/lib/api/client';
 import { caseKey, useSupervisorMutation } from './case';
 import { SUPERVISOR_API } from './common';
 
@@ -61,3 +61,7 @@ export function useRequestDocument(id: number) {
     api(`${SUPERVISOR_API}/cases/${String(id)}/documents/`, { method: 'POST', body: document }),
   );
 }
+
+/** Every file of the case (documents, writing, contract) as one zip: a plain download link (SV22). */
+export const documentsZipHref = (caseId: number) =>
+  `${API_BASE}${SUPERVISOR_API}/cases/${String(caseId)}/documents/zip/`;

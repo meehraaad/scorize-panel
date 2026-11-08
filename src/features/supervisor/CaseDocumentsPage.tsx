@@ -2,6 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip } from '@/components/ui/Chip';
 import { TextAreaField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -14,7 +15,13 @@ import { TagList } from '@/components/ui/Tags';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
 import { safeHref } from '@/lib/url';
-import { documentsQuery, useReviewDocument, type CaseDocument, type CaseWriting } from './api';
+import {
+  documentsQuery,
+  documentsZipHref,
+  useReviewDocument,
+  type CaseDocument,
+  type CaseWriting,
+} from './api';
 import { DocumentChip } from './components/Chips';
 import { RequestDocumentDialog } from './components/RequestDocumentDialog';
 import { useCaseId } from './useCaseId';
@@ -72,10 +79,20 @@ function Documents({ caseId, documents }: { caseId: number; documents: CaseDocum
         total: f.number(documents.length),
       })}
       end={
-        <Button variant="outline" className="h-11 px-4 text-sm" onClick={() => setAsking(true)}>
-          <Icon name="plus" size={16} />
-          {t('documents.request')}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={documentsZipHref(caseId)}
+            download
+            className={buttonClass('outline', 'h-11 px-4 text-sm')}
+          >
+            <Icon name="download" size={16} />
+            {t('documents.zip')}
+          </a>
+          <Button variant="outline" className="h-11 px-4 text-sm" onClick={() => setAsking(true)}>
+            <Icon name="plus" size={16} />
+            {t('documents.request')}
+          </Button>
+        </div>
       }
     >
       <div className="px-5 pb-2 lg:px-8">

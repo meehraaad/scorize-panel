@@ -317,7 +317,8 @@
       "title": "Research interests",
       "empty": "The applicant hasn't recorded any research interests yet.",
       "hint": "The email bot finds professors with these keywords. The applicant edits them in their own panel."
-    }
+    },
+    "zip": "Download all (zip)"
   },
   "requestDialog": {
     "title": "Request a document",

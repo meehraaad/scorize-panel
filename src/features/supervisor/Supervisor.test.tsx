@@ -127,6 +127,10 @@ describe('supervisor panel', () => {
     const user = userEvent.setup();
     renderApp(`${SARA_CASE}/documents`);
     const card = await screen.findByRole('region', { name: 'مدارک خواسته‌شده' });
+    expect(within(card).getByRole('link', { name: 'دانلود همه (زیپ)' })).toHaveAttribute(
+      'href',
+      '/api/supervisor/v1/cases/1240/documents/zip/',
+    );
     const tabs = screen.getByRole('navigation', { name: 'بخش‌های پرونده' });
     expect(
       within(tabs).getByRole('link', { name: /^پرونده و مدارک\s*۱\s*مدرک منتظر بررسی$/ }),
