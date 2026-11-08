@@ -93,6 +93,8 @@ export interface CustomerData {
    * `tags`: customer tags (S49).
    */
   supports: { stages: boolean; no_answer_sms: boolean; tags?: boolean };
+  /** Who first reached the customer, and who their closed contract counts for (S58). */
+  attribution?: { first_contact: string | null; won_by: string | null };
 }
 
 export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as const;
@@ -109,7 +111,16 @@ export const customerQuery = (id: number) =>
   });
 
 export type HistoryKind =
-  'call' | 'no_answer' | 'message' | 'meeting' | 'note' | 'payment' | 'payment_failed' | 'lead';
+  | 'call'
+  | 'no_answer'
+  | 'message'
+  | 'meeting'
+  | 'note'
+  | 'payment'
+  | 'payment_failed'
+  | 'lead'
+  /** The lead went to another seller: `title` is who got it, `previous` who had it. */
+  | 'assign';
 
 export interface HistoryEvent {
   /** Unique across kinds ("contact-12", "payment-4"), like contact_history_list_generator. */
@@ -124,6 +135,8 @@ export interface HistoryEvent {
   title: string | null;
   text: string;
   customer_summary?: string;
+  /** `assign`: who had the lead before. */
+  previous?: string | null;
   /** The stage the contact moved the lead to. */
   stage: LeadStage | null;
 }

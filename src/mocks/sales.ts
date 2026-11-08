@@ -623,6 +623,7 @@ function todayOf(data: SalesState): TodayData {
     }));
   const nameOf = (id: number) => data.customers.find((item) => item.id === id)?.name ?? '';
   return {
+    instalments: instalmentsToday(data),
     hot: fresh
       .filter((item) => Date.now() - new Date(item.lead.created_at).getTime() < DAY)
       .sort((a, b) => a.lead.created_at.localeCompare(b.lead.created_at))
@@ -814,10 +815,71 @@ export function saveStages(
   return null;
 }
 
-function monthOf(data: SalesState): MonthData {
-  const won = data.customers.filter((item) => item.lead.stage === 'won').length + 6;
+/** First days of this month and the eleven before it, newest first (`YYYY-MM-DD`). */
+function monthsBack(): string[] {
+  const now = new Date();
+  return Array.from({ length: 12 }, (_, index) =>
+    toDay(new Date(now.getFullYear(), now.getMonth() - index, 1)),
+  );
+}
+
+const toDay = (date: Date) =>
+  `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+/** The won customers' contracts and a few instalments, as Django's month sends them (S58). */
+function contractsOf(data: SalesState): Pick<MonthData, 'contracts' | 'instalments'> {
+  const won = data.customers.filter((item) => item.lead.stage === 'won');
+  const today = new Date();
   return {
-    month: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
+    contracts: won.map((item, index) => ({
+      lead: item.lead.id,
+      customer: item.id,
+      name: item.name,
+      title: `پذیرش + ویزا · ${item.countries.join('، ')}`,
+      amount: 120_000_000 + index * 10_000_000,
+      amount_text: null,
+      won_at: new Date(today.getTime() - (index + 1) * DAY).toISOString(),
+      seller: NIMA_NAME,
+      seller_id: 8,
+      status: 'فعال',
+    })),
+    instalments: won.flatMap((item, index) => [
+      {
+        id: index * 2 + 1,
+        customer: item.id,
+        name: item.name,
+        title: 'قسط دوم',
+        amount: 40_000_000,
+        amount_text: null,
+        due: toDay(new Date(today.getTime() - 2 * DAY)),
+        condition: null,
+        state: 'overdue' as const,
+      },
+      {
+        id: index * 2 + 2,
+        customer: item.id,
+        name: item.name,
+        title: 'بعد از پذیرش',
+        amount: 30_000_000,
+        amount_text: null,
+        due: null,
+        condition: 'بعد از پذیرش',
+        state: 'waiting' as const,
+      },
+    ]),
+  };
+}
+
+function monthOf(data: SalesState, month?: string): MonthData {
+  const won = data.customers.filter((item) => item.lead.stage === 'won').length + 6;
+  const months = monthsBack();
+  const current = !month || month.slice(0, 7) === months[0]?.slice(0, 7);
+  const first = months.find((item) => item.slice(0, 7) === month?.slice(0, 7)) ?? months[0] ?? '';
+  return {
+    ...(current ? contractsOf(data) : { contracts: [], instalments: [] }),
+    months,
+    current,
+    month: first,
     won,
     target: 12,
     elapsed: 0.74,
@@ -836,6 +898,17 @@ function monthOf(data: SalesState): MonthData {
       { source: 'campaign', leads: 12, won: 1 },
       { source: 'chance_estimate', leads: 7, won: 0 },
     ],
+  };
+}
+
+/** Today's instalments: the unpaid ones with a date, as `today/insights/` sends them. */
+function instalmentsToday(data: SalesState) {
+  const rows = contractsOf(data).instalments.filter((row) => row.state === 'overdue');
+  return {
+    overdue: rows.length,
+    total: rows.length,
+    rows: rows.slice(0, 5),
+    more: rows.length > 5,
   };
 }
 
@@ -966,7 +1039,11 @@ export const salesHandlers = [
         ),
       });
     if (params.section === 'insights')
-      return HttpResponse.json({ month: today.month, upsell: today.upsell });
+      return HttpResponse.json({
+        month: today.month,
+        upsell: today.upsell,
+        instalments: instalmentsToday(data),
+      });
     return HttpResponse.json(today);
   }),
 
@@ -1067,9 +1144,9 @@ export const salesHandlers = [
   http.post(`${BASE}/month/`, async ({ request }) => {
     const data = stateOrError();
     if (failed(data)) return data;
-    const body = (await request.json()) as { password?: string };
+    const body = (await request.json()) as { password?: string; month?: string };
     return body.password === MONTH_PASSWORD
-      ? HttpResponse.json(monthOf(data))
+      ? HttpResponse.json(monthOf(data, body.month))
       : HttpResponse.json({ password: ['The password is wrong.'] }, { status: 400 });
   }),
 ];

@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type LeadSource, type LeadStage } from '@/lib/sales/api';
+import type { Instalment } from './month';
 
 /** A new lead nobody has called yet (top of "Today", oldest first). */
 export interface HotLead {
@@ -93,6 +94,16 @@ export interface TodayData {
   consultations: TodayConsultation[];
   month: MonthSummary;
   upsell: Upsell[];
+  /** Unpaid instalments of my contracts due within a week or already due (S58). */
+  instalments: TodayInstalments;
+}
+
+export interface TodayInstalments {
+  overdue: number;
+  total: number;
+  /** The most urgent few. */
+  rows: Instalment[];
+  more: boolean;
 }
 
 /**
@@ -136,6 +147,8 @@ export const activityQuery = (page: number) =>
 export const insightsQuery = queryOptions({
   queryKey: [...SALES_KEY, 'today', 'insights'],
   queryFn: ({ signal }) =>
-    api<Pick<TodayData, 'month' | 'upsell'>>(`${SALES_API}/today/insights/`, { signal }),
+    api<Pick<TodayData, 'month' | 'upsell' | 'instalments'>>(`${SALES_API}/today/insights/`, {
+      signal,
+    }),
   refetchInterval: 60_000,
 });

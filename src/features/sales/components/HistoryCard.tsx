@@ -20,6 +20,7 @@ const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   payment: { icon: 'card', tone: 'bg-good-tint text-good' },
   payment_failed: { icon: 'card', tone: 'bg-warn-tint text-warn' },
   lead: { icon: 'star', tone: 'bg-tint text-primary-text' },
+  assign: { icon: 'user', tone: 'bg-neutral-tint text-neutral' },
 };
 
 /** Calls, messages, sessions, purchases and payments in one timeline, newest first. */
@@ -70,11 +71,17 @@ function EventRow({ event }: { event: HistoryEvent }) {
   const look = LOOK[event.kind];
   const author = event.author ?? t('customer.history.system');
   // Django's history doesn't say who a lead went to.
-  const key = event.kind === 'lead' && !event.author ? 'leadNew' : event.kind;
+  const key =
+    event.kind === 'lead' && !event.author
+      ? 'leadNew'
+      : event.kind === 'assign' && !event.previous
+        ? 'assignFirst'
+        : event.kind;
   const title = t(`customer.history.event.${key}`, {
     author,
     channel: event.channel ? t(`channel.${event.channel}`) : '',
-    title: event.title ?? '',
+    title: event.title ?? (event.kind === 'assign' ? t('due.none') : ''),
+    previous: event.previous ?? '',
   });
   return (
     <li className="flex gap-4 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">

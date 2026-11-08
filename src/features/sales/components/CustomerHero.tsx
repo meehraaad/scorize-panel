@@ -54,6 +54,12 @@ export function CustomerHero({
       }),
   ].filter(Boolean);
   const due = lead && s.due(lead.follow_up_at, lead.stage, lead.stage !== 'new');
+  // Whose work this customer is (S58): the first answered contact, and who the contract counts for.
+  const attribution = [
+    customer.attribution?.first_contact &&
+      t('customer.firstContact', { name: customer.attribution.first_contact }),
+    customer.attribution?.won_by && t('customer.wonBy', { name: customer.attribution.won_by }),
+  ].filter(Boolean);
 
   return (
     <section
@@ -80,6 +86,9 @@ export function CustomerHero({
               <span className="text-[15px] text-on-hero-2">{line.join(' · ')}</span>
             )}
             <span className="text-sm text-on-hero-2">{contact.join(' · ')}</span>
+            {attribution.length > 0 && (
+              <span className="text-sm text-on-hero-2">{attribution.join(' · ')}</span>
+            )}
             {customer.supports.tags && <CustomerTags customer={customer} />}
           </div>
         </div>

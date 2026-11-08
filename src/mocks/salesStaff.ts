@@ -136,12 +136,39 @@ export const salesStaffHandlers = [
   http.get(`${BASE}/consultations/`, ({ request }) => {
     const query = new URL(request.url).searchParams;
     const type = query.get('type');
+    const range = (query.get('range') ?? 'today') as ConsultationRange;
+    const date = query.get('date');
     return answer<ConsultationsData>(() =>
       fetchConsultations(
-        (query.get('range') ?? 'today') as ConsultationRange,
+        range === 'day' ? 'all' : range,
         type ? Number(type) : null,
         query.get('unlogged') === '1',
-      ).then((data) => ({ ...data, ...pageOf(request, data.results, CONSULTATIONS_PAGE) })),
+      ).then((data) => {
+        if (range !== 'day' || !date) {
+          const { counts, ...rest } = data;
+          return {
+            ...rest,
+            counts: date ? { ...counts, day: 0 } : counts,
+            ...pageOf(request, data.results, CONSULTATIONS_PAGE),
+          };
+        }
+        // One chosen day (S58): its sessions, counted by type; the mock logs no contacts.
+        const results = data.results.filter((item) => item.starts_at.slice(0, 10) === date);
+        const byType = new Map<string, number>();
+        for (const item of results)
+          byType.set(item.type.name, (byType.get(item.type.name) ?? 0) + 1);
+        return {
+          ...data,
+          counts: { ...data.counts, day: results.length },
+          day: {
+            sessions: [...byType].map(([name, count]) => ({ type: name, count })),
+            kinds: [],
+            contacts: [],
+            more: false,
+          },
+          ...pageOf(request, results, CONSULTATIONS_PAGE),
+        };
+      }),
     );
   }),
 
@@ -151,6 +178,7 @@ export const salesStaffHandlers = [
         ...data,
         tags: tagsOfCustomer(data.id),
         supports: { ...data.supports, tags: true },
+        attribution: { first_contact: null, won_by: null },
       })),
     ),
   ),

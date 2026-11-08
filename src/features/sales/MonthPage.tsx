@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { SelectField } from '@/components/ui/Choices';
 import { Notice } from '@/components/ui/Notice';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -11,7 +12,8 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FIRST_CALL_TARGET_MINUTES } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
-import { useMonthUnlock, type MonthData } from './api/month';
+import { ContractList, InstalmentList } from './components/MonthLists';
+import { useMonthUnlock, type Instalment, type MonthContract, type MonthData } from './api/month';
 import { useSalesFormat } from './format';
 
 const FUNNEL = ['leads', 'reached', 'consulted', 'offered', 'won'] as const;
@@ -24,20 +26,28 @@ const SOURCE_COLUMNS = ['source', 'leads', 'won', 'rate'] as const;
 export default function MonthPage() {
   const { t } = useTranslation('sales');
   const unlock = useMonthUnlock();
-  return unlock.data ? (
-    <Month data={unlock.data} />
+  // Kept in the page's state only (never a cache), so another month opens without asking again.
+  const [opened, setOpened] = useState<{ password: string; data: MonthData } | null>(null);
+  const open = (password: string, month?: string) => {
+    unlock.mutate(
+      { password, ...(month ? { month } : {}) },
+      {
+        onSuccess: (data) => setOpened({ password, data }),
+        onError: (error) => {
+          if (!(error instanceof ApiError && [400, 409, 429].includes(error.status)))
+            toast.error(t('month.lock.failed'));
+          else if (opened) toast.error(t('month.lock.failed'));
+        },
+      },
+    );
+  };
+  return opened ? (
+    <Month data={opened.data} onMonth={(month) => open(opened.password, month)} />
   ) : (
     <PasswordGate
       pending={unlock.isPending}
       error={unlock.error}
-      onSubmit={(password) => {
-        unlock.mutate(password, {
-          onError: (error) => {
-            if (!(error instanceof ApiError && [400, 409, 429].includes(error.status)))
-              toast.error(t('month.lock.failed'));
-          },
-        });
-      }}
+      onSubmit={(password) => open(password)}
     />
   );
 }
@@ -113,7 +123,7 @@ function PasswordGate({
   );
 }
 
-function Month({ data }: { data: MonthData }) {
+function Month({ data, onMonth }: { data: MonthData; onMonth: (month: string) => void }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const remaining = Math.max(0, data.target - data.won);
@@ -124,17 +134,30 @@ function Month({ data }: { data: MonthData }) {
     <PageStack>
       <PageHeader
         title={t('month.title', { month: f.monthYear(data.month) })}
+        actions={
+          <SelectField
+            inline
+            label={t('month.pick')}
+            value={data.month}
+            onChange={onMonth}
+            options={data.months.map((month) => ({ value: month, label: f.monthYear(month) }))}
+          />
+        }
         subtitle={
-          data.target <= 0
-            ? t('month.targetUnset')
-            : remaining <= 0
-              ? t('month.subtitleDone')
-              : rate > 0
-                ? t('month.subtitle', { n: f.number(remaining), leads: f.number(leadsNeeded) })
-                : t('month.subtitleNoConversion', { n: f.number(remaining) })
+          !data.current
+            ? t('month.subtitlePast', { n: f.number(data.won) })
+            : data.target <= 0
+              ? t('month.targetUnset')
+              : remaining <= 0
+                ? t('month.subtitleDone')
+                : rate > 0
+                  ? t('month.subtitle', { n: f.number(remaining), leads: f.number(leadsNeeded) })
+                  : t('month.subtitleNoConversion', { n: f.number(remaining) })
         }
       />
       <Goal data={data} />
+      <Contracts rows={data.contracts} />
+      <Instalments rows={data.instalments} />
       <PageColumns
         asideLabel={t('month.speed.title')}
         main={<Funnel data={data} />}
@@ -196,20 +219,24 @@ function Goal({ data }: { data: MonthData }) {
               className="h-3 rounded-full bg-on-hero"
               style={{ width: `${String(share * 100)}%` }}
             />
-            <div
-              aria-hidden="true"
-              className="absolute -top-1 h-5 w-0.5 rounded-full bg-hero-current"
-              style={{ insetInlineStart: `${String(data.elapsed * 100)}%` }}
-            />
+            {data.current && (
+              <div
+                aria-hidden="true"
+                className="absolute -top-1 h-5 w-0.5 rounded-full bg-hero-current"
+                style={{ insetInlineStart: `${String(data.elapsed * 100)}%` }}
+              />
+            )}
           </div>
         )}
         <span className="text-sm leading-7 text-on-hero-2">
-          {data.target > 0
-            ? t('month.marker', {
-                percent: s.percent(data.elapsed),
-                days: f.number(data.working_days_left),
-              })
-            : t('month.workingDaysLeft', { days: f.number(data.working_days_left) })}
+          {!data.current
+            ? t('month.over')
+            : data.target > 0
+              ? t('month.marker', {
+                  percent: s.percent(data.elapsed),
+                  days: f.number(data.working_days_left),
+                })
+              : t('month.workingDaysLeft', { days: f.number(data.working_days_left) })}
         </span>
       </div>
       <dl className="m-0 grid grid-cols-2 gap-2.5">
@@ -397,6 +424,32 @@ function Sources({ data }: { data: MonthData }) {
           </tbody>
         </table>
       </div>
+    </SectionCard>
+  );
+}
+
+function Contracts({ rows }: { rows: MonthContract[] }) {
+  const { t } = useTranslation('sales');
+  return (
+    <SectionCard
+      id="month-contracts"
+      title={t('month.contracts.title')}
+      subtitle={t('month.contracts.subtitle')}
+    >
+      <ContractList rows={rows} />
+    </SectionCard>
+  );
+}
+
+function Instalments({ rows }: { rows: Instalment[] }) {
+  const { t } = useTranslation('sales');
+  return (
+    <SectionCard
+      id="month-instalments"
+      title={t('month.instalments.title')}
+      subtitle={t('month.instalments.subtitle')}
+    >
+      <InstalmentList rows={rows} />
     </SectionCard>
   );
 }

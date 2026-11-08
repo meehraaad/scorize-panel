@@ -419,6 +419,8 @@ interface ImportWork {
   name: string;
 }
 const leadImports = new Map<string, ImportWork[]>();
+/** Contracts the manager moved to another seller in this run (S58). */
+const movedLeads = new Set<number>();
 /** Numbers the fake Django already knows, and whether each has an open lead. */
 const knownPhones = (): Map<string, boolean> =>
   new Map([
@@ -603,6 +605,41 @@ export const managerHandlers = [
     return HttpResponse.json(teamOf(range));
   }),
 
+  // S58: a seller's contracts in the range, and moving one (with a reason) to another seller.
+  http.get(`${BASE}/team/contracts/`, ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const seller = Number(new URL(request.url).searchParams.get('seller'));
+    if (!seller) return HttpResponse.json({ seller: ['Choose a seller.'] }, { status: 400 });
+    const rows =
+      seller === teamOf('month').sellers[0]?.id
+        ? [
+            {
+              lead: 9001,
+              customer: 122,
+              name: 'سارا حیدری',
+              title: 'پذیرش + ویزا · کانادا',
+              amount: 120_000_000,
+              amount_text: null,
+              won_at: new Date().toISOString(),
+              seller: teamOf('month').sellers[0]?.name ?? '',
+              seller_id: seller,
+              status: 'فعال',
+            },
+          ].filter((row) => !movedLeads.has(row.lead))
+        : [];
+    return HttpResponse.json(rows);
+  }),
+  http.post(`${BASE}/contracts/:lead/credit/`, async ({ params, request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const body = (await request.json()) as { seller?: number; reason?: string };
+    if (!body.seller || !body.reason?.trim())
+      return HttpResponse.json({ reason: ['Say why.'] }, { status: 400 });
+    movedLeads.add(Number(params.lead));
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get(`${BASE}/estimate-funnel/`, () => {
     const data = managerOrError();
     if (data instanceof Response) return data;
@@ -669,6 +706,7 @@ export const managerHandlers = [
 ];
 
 export function resetManagerMocks() {
+  movedLeads.clear();
   manager = null;
   KNOWN_PHONES = knownPhones();
   leadImports.clear();
