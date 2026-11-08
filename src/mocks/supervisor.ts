@@ -719,7 +719,8 @@ function buildCase(seed: CaseSeed): MockCase {
     documents_waiting: 0,
     applications: 0,
     notes: {
-      supervisor: seed.id === 1240 ? 'ترجیح متقاضی ایتالیاست؛ برای بورسیه‌ی استانی آماده باشیم.' : '',
+      supervisor:
+        seed.id === 1240 ? 'ترجیح متقاضی ایتالیاست؛ برای بورسیه‌ی استانی آماده باشیم.' : '',
       manager: '',
       // The mock supervisor isn't a manager: they read the manager's note but can't change it.
       manager_editable: false,
@@ -1187,7 +1188,10 @@ export const supervisorHandlers = [
     if (item instanceof Response) return item;
     const body = (await request.json()) as Partial<Record<'supervisor' | 'manager', string>>;
     if (body.manager !== undefined && !item.data.notes.manager_editable) {
-      return HttpResponse.json({ detail: 'Only managers write the manager note.' }, { status: 403 });
+      return HttpResponse.json(
+        { detail: 'Only managers write the manager note.' },
+        { status: 403 },
+      );
     }
     if (body.supervisor !== undefined) item.data.notes.supervisor = body.supervisor.trim();
     if (body.manager !== undefined) item.data.notes.manager = body.manager.trim();
