@@ -71,7 +71,7 @@ describe('writer panel', () => {
   it('opens the order’s conversation with the applicant', async () => {
     renderApp('/writer/orders/1240/tickets');
     expect(
-      await screen.findByRole('heading', { name: 'گفت‌وگو با سارا محمدی', level: 1 }),
+      await screen.findByRole('heading', { name: 'تیکت سارا محمدی', level: 1 }),
     ).toBeInTheDocument();
     expect(await screen.findByText(/فقط پاراگراف آخر هم کمی کوتاه‌تر شود/)).toBeInTheDocument();
   });

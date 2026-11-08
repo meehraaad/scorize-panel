@@ -134,7 +134,7 @@ describe('tickets page', () => {
     expect(document.activeElement?.tagName).toBe('TEXTAREA');
     expect(
       screen.getByText(
-        'گفت‌وگو با تیم نگارش درباره‌ی نوشته‌های شما. اصلاحات را مکتوب و دقیق بنویسید.',
+        'تیکت شما با تیم نگارش درباره‌ی نوشته‌های شما. اصلاحات را مکتوب و دقیق بنویسید.',
       ),
     ).toBeInTheDocument();
 

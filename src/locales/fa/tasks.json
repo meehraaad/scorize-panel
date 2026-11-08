@@ -157,7 +157,7 @@
     "from": "از {{name}} ({{role}}) به شما · {{when}}",
     "watchers": "ناظر: {{names}}",
     "steps": "وضعیت درخواست",
-    "thread": "گفت‌وگو",
+    "thread": "تیکت",
     "noThread": "هنوز پیامی نیست.",
     "message": "پیام برای {{name}}",
     "send": "ارسال",

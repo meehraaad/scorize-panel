@@ -202,7 +202,7 @@ describe('supervisor panel', () => {
   it('tickets: a chat window over the panel, kept while browsing, minimized with its text', async () => {
     const user = userEvent.setup();
     renderApp(SARA_CASE);
-    await user.click(await screen.findByRole('button', { name: /گفت‌وگو/ }));
+    await user.click(await screen.findByRole('button', { name: /^تیکت(?!‌)/ }));
     const chat = await screen.findByRole('dialog', { name: 'سارا محمدی' });
     expect(await within(chat).findByText(/هزینه‌ی فی را خودم بپردازم/)).toBeInTheDocument();
     // Staff pick no priority and see the applicant's rating of a colleague's reply.
@@ -219,20 +219,20 @@ describe('supervisor panel', () => {
 
     // Minimized, it waits at the bottom with its unsent text.
     await user.type(within(chat).getByLabelText('متن پیام'), 'رسید را هم بفرستید');
-    await user.click(within(chat).getByRole('button', { name: 'کوچک کردن گفت‌وگو' }));
+    await user.click(within(chat).getByRole('button', { name: 'کوچک کردن تیکت' }));
     expect(screen.queryByRole('dialog', { name: 'سارا محمدی' })).toBeNull();
-    const tray = screen.getByRole('complementary', { name: 'گفت‌وگوهای کوچک‌شده' });
+    const tray = screen.getByRole('complementary', { name: 'تیکت‌های کوچک‌شده' });
     await user.click(within(tray).getByRole('button', { name: /سارا محمدی.*پیش‌نویس/ }));
     const again = await screen.findByRole('dialog', { name: 'سارا محمدی' });
     expect(within(again).getByLabelText('متن پیام')).toHaveValue('رسید را هم بفرستید');
-    await user.click(within(again).getByRole('button', { name: 'بستن گفت‌وگو' }));
+    await user.click(within(again).getByRole('button', { name: 'بستن تیکت' }));
     expect(screen.queryByRole('dialog', { name: 'سارا محمدی' })).toBeNull();
   });
 
   it('tickets: the inbox lists who waits and answers in the chat window, on the same page', async () => {
     const user = userEvent.setup();
     renderApp('/supervisor/tickets');
-    const inbox = await screen.findByRole('region', { name: 'گفت‌وگوها' });
+    const inbox = await screen.findByRole('region', { name: 'تیکت‌ها' });
     const ali = await within(inbox).findByRole('button', { name: /علی نوری/ });
     expect(within(ali).getByText('خیلی ضروری')).toBeInTheDocument();
     expect(within(inbox).getByRole('link', { name: 'پرونده‌ی علی نوری' })).toHaveAttribute(
