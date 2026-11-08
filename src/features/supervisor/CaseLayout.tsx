@@ -74,7 +74,7 @@ function Case({ data }: { data: CaseData }) {
       <BotProblems caseId={data.id} problems={data.bot.problems} />
       <nav
         aria-label={t('case.tabs.label')}
-        className="-mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
+        className="relative -mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
       >
         {TABS.map((tab) => {
           const waiting = badge[tab];

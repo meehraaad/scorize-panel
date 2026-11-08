@@ -10,6 +10,7 @@ import { MONTH_PASSWORD } from '@/mocks/sales';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
+import { onDesktop } from '@/test/viewport';
 
 const NIMA = 3; // seller (mock user in src/mocks/handlers.ts)
 const ERFAN = 105; // a consulted lead with history and tasks (src/mocks/sales.ts)
@@ -110,8 +111,10 @@ describe('sales panel, seller pages', () => {
   it('leads: new and contacted from Django, with search', async () => {
     const user = userEvent.setup();
     renderApp('/sales/leads?stage=new');
-    const table = await screen.findByRole('table');
-    expect(within(table).getAllByRole('row')).toHaveLength(11); // header + 10 not called yet
+    // Phones get one card per lead, not a table wider than the screen.
+    const cards = await screen.findByRole('list', { name: 'فهرست لیدها' });
+    expect(cards.children).toHaveLength(10); // not called yet
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     const tabs = screen.getByRole('group', { name: 'مرحله' });
     expect(within(tabs).getAllByRole('button')).toHaveLength(3); // all, new, contacted
@@ -126,6 +129,7 @@ describe('sales panel, seller pages', () => {
 
   it("leads: a sales manager's rows name their seller, with a seller filter", async () => {
     loginAs(4);
+    onDesktop();
     renderApp('/sales/leads');
     const table = await screen.findByRole('table');
     expect(within(table).getAllByText('فروشنده: نیما رستمی').length).toBeGreaterThan(0);

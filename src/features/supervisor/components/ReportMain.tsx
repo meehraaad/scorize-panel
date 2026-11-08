@@ -104,7 +104,7 @@ export function CountryTable({ countries }: { countries: ReportsData['countries'
       {countries.length === 0 ? (
         <EmptyState variant="padded">{t('reports.countries.empty')}</EmptyState>
       ) : (
-        <div className="overflow-x-auto pb-3">
+        <div className="relative overflow-x-auto pb-3">
           <table className="w-full min-w-[560px] border-collapse text-[15px]">
             <thead>
               <tr>

@@ -69,7 +69,7 @@ export function FormHeader({
       </Dialog>
       <nav
         aria-label={t('tabs.label')}
-        className="-mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
+        className="relative -mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
       >
         {FORM_TYPES.filter((order) => form.orders.includes(order)).map((order) => (
           <NavLink

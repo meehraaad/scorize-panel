@@ -352,7 +352,7 @@ function Sources({ data }: { data: MonthData }) {
       title={t('month.sources.title')}
       subtitle={t('month.sources.subtitle')}
     >
-      <div className="overflow-x-auto pb-3">
+      <div className="relative overflow-x-auto pb-3">
         <table className="w-full min-w-[560px] border-collapse">
           <thead>
             <tr className="text-[13px] text-text-2">

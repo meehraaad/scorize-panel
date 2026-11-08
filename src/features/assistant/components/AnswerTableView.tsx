@@ -34,7 +34,7 @@ export function AnswerTableView({ table }: { table: AnswerTable }) {
           {t('table.private')}
         </span>
       </div>
-      <div className="max-h-[420px] overflow-x-auto overflow-y-auto overscroll-contain">
+      <div className="relative max-h-[420px] overflow-x-auto overflow-y-auto overscroll-contain">
         <table className="w-full border-collapse text-[13px]">
           <thead className="sticky top-0 bg-surface">
             <tr>

@@ -24,7 +24,7 @@ export default function ManagerLayout() {
     <PageStack>
       <nav
         aria-label={t('manager.nav')}
-        className="-mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
+        className="relative -mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
       >
         {SECTIONS.filter((section) => section.id !== 'tags' || ON_SERVER.customerTags).map(
           (section) => (

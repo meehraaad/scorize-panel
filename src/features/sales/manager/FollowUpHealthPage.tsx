@@ -155,7 +155,7 @@ function People({ data }: { data: HealthData }) {
       title={t('manager.health.people')}
       subtitle={t('manager.health.peopleHint')}
     >
-      <div className="overflow-x-auto pb-2">
+      <div className="relative overflow-x-auto pb-2">
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead>
             <tr className="text-[13px] text-text-2">

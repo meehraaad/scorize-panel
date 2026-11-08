@@ -79,7 +79,7 @@ export function ThreadTabs({
   return (
     <nav
       aria-label={label}
-      className={`flex [scrollbar-width:none] items-center gap-2 overflow-x-auto px-3.5 py-2.5 shadow-[inset_0_-1px_0_var(--hair)] ${compact ? 'flex-none' : 'lg:flex-wrap lg:px-7 lg:py-3.5'}`}
+      className={`relative flex [scrollbar-width:none] items-center gap-2 overflow-x-auto px-3.5 py-2.5 shadow-[inset_0_-1px_0_var(--hair)] ${compact ? 'flex-none' : 'lg:flex-wrap lg:px-7 lg:py-3.5'}`}
     >
       {lead && <span className="me-1 flex-none text-[13px] text-text-2">{lead}</span>}
       {items.map((item) => (

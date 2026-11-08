@@ -27,7 +27,7 @@ export function ApplicationTable({
   );
 
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="w-full min-w-[960px] border-collapse text-start">
         <thead>
           <tr className="text-[13px] font-medium text-text-2 shadow-[inset_0_-1px_0_var(--hair)]">

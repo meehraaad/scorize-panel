@@ -73,7 +73,7 @@ export default function CustomerPaymentsPage() {
           >
             {t('payments.title')}
           </h2>
-          <div className="overflow-x-auto pb-2">
+          <div className="relative overflow-x-auto pb-2">
             <table className="w-full min-w-[640px] border-collapse">
               <thead>
                 <tr className="text-[13px] text-text-2">

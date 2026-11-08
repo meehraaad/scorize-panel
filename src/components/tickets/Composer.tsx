@@ -195,7 +195,7 @@ export function Composer({
         <div
           role="radiogroup"
           aria-labelledby={`${id}-priority`}
-          className={`col-span-3 -mx-3 flex [scrollbar-width:none] items-center gap-2.5 overflow-x-auto px-3 ${lg('lg:order-2 lg:mx-0 lg:flex-wrap lg:px-0')}`}
+          className={`relative col-span-3 -mx-3 flex [scrollbar-width:none] items-center gap-2.5 overflow-x-auto px-3 ${lg('lg:order-2 lg:mx-0 lg:flex-wrap lg:px-0')}`}
         >
           <span id={`${id}-priority`} className="flex-none text-[13px] text-text-2">
             {priority.label}

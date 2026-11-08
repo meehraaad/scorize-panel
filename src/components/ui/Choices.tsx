@@ -15,7 +15,7 @@ const card =
 
 /** One part of a segmented control: raised on the track when checked. */
 const segment =
-  'flex min-h-11 cursor-pointer items-center justify-center rounded-[10px] px-3 text-sm font-semibold whitespace-nowrap text-text-2 has-checked:bg-surface has-checked:text-text has-checked:shadow-panel has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
+  'flex min-h-11 min-w-0 cursor-pointer items-center justify-center rounded-[10px] px-2 py-1.5 text-center text-sm leading-5 font-semibold text-balance text-text-2 sm:px-3 has-checked:bg-surface has-checked:text-text has-checked:shadow-panel has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
 const LOOKS = {
   pills: { list: 'flex flex-wrap gap-2', item: pill },

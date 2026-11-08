@@ -159,7 +159,7 @@ function Leaderboard({ data }: { data: TeamData }) {
   });
   return (
     <SectionCard id="team-board" title={t('manager.team.leaderboard')}>
-      <div className="overflow-x-auto pb-2">
+      <div className="relative overflow-x-auto pb-2">
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead>
             <tr className="text-[13px] text-text-2">
@@ -288,7 +288,7 @@ function Sources({ data }: { data: TeamData }) {
       title={t('manager.team.sources')}
       subtitle={t('manager.team.sourcesHint')}
     >
-      <div className="overflow-x-auto pb-2">
+      <div className="relative overflow-x-auto pb-2">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="text-[13px] text-text-2">

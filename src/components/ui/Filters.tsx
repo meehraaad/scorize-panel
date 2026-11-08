@@ -18,7 +18,7 @@ export function FilterTabs<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className="-mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
+      className="relative -mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
     >
       {options.map((option) => (
         <button

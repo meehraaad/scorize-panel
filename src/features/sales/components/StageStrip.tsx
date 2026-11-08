@@ -51,7 +51,7 @@ export function StageStrip({
       <legend className="mb-3 p-0 text-sm font-semibold text-text-2">
         {t('customer.logDialog.board.legend')}
       </legend>
-      <div className="overflow-x-auto p-1">
+      <div className="relative overflow-x-auto p-1">
         <div className="flex gap-1.5">
           {LANES.map((lane) => {
             const isCurrent = lane === current;
