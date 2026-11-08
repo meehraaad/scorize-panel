@@ -103,6 +103,29 @@ function fetchLeads(query: LeadQuery, signal?: AbortSignal) {
   return api<LeadsData>(`${SALES_API}/leads/?${params.toString()}`, { signal });
 }
 
+/** One of the seller's open leads found by name or phone (S56). */
+export interface LeadMatch {
+  id: number;
+  customer: number;
+  name: string;
+  phone: string;
+  stage: LeadStage;
+  follow_up_at: string | null;
+}
+
+/** Up to 8 open leads matching what the seller typed, best first (S56): the customer pickers. */
+export const leadSearchQuery = (typed: string) =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'lead-search', typed],
+    queryFn: ({ signal }) =>
+      api<{ results: LeadMatch[] }>(
+        `${SALES_API}/leads/search/?${new URLSearchParams({ q: typed }).toString()}`,
+        { signal },
+      ),
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+
 export const leadsQuery = (query: LeadQuery) =>
   queryOptions({
     queryKey: [...SALES_KEY, 'leads', query],

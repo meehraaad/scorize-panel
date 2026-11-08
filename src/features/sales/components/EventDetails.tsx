@@ -273,7 +273,13 @@ export function EventDetails({
           }
         />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-base font-bold">{item.name}</span>
+          <Link
+            to={customerPath(item.customer)}
+            onClick={onClose}
+            className="-my-2.5 inline-flex min-h-11 items-center self-start text-base font-bold text-text underline-offset-4 hover:text-primary-text hover:underline focus-visible:underline"
+          >
+            {item.name}
+          </Link>
           <span className="text-[13px]">
             {t('consultationCalendar.when', {
               day: f.weekday(start),

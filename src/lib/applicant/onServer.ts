@@ -24,9 +24,15 @@ export type ServerFeature =
   | 'customerTags'
   | 'mailServers'
   | 'livePhoneCalls'
-  | 'mobileExtensions';
+  | 'mobileExtensions'
+  | 'leadSearch';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * S56 `GET /sales/v1/leads/search/?q=`: the customer picker's light search (lang
+   * `claude/project-thread-45w72o`). Off: the picker searches with the leads list as before.
+   */
+  leadSearch: true,
   /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
   livePhoneCalls: true,
   /** The seller's PortSIP login at /sales/v1/calls/mobile/; on once the office worker runs. */

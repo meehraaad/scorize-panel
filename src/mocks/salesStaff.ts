@@ -84,6 +84,35 @@ export const salesStaffHandlers = [
       }),
     );
   }),
+  // S56: the customer picker's light search, best match first.
+  http.get(`${BASE}/leads/search/`, ({ request }) => {
+    const typed = (new URL(request.url).searchParams.get('q') ?? '').trim();
+    if (typed.replace(/\s/g, '').length < 2) return HttpResponse.json({ results: [] });
+    const all: LeadQuery = {
+      stage: 'all',
+      source: 'all',
+      band: 'all',
+      overdue: false,
+      tag: null,
+      search: typed,
+      page: 1,
+    };
+    return answer(() =>
+      fetchLeads(all).then((data) => ({
+        results: data.results
+          .filter((row) => ['new', 'contacted', 'consulted', 'offer'].includes(row.stage))
+          .slice(0, 8)
+          .map(({ id, customer, name, phone, stage, follow_up_at }) => ({
+            id,
+            customer,
+            name,
+            phone,
+            stage,
+            follow_up_at,
+          })),
+      })),
+    );
+  }),
   http.post(`${BASE}/leads/`, async ({ request }) => {
     const lead = (await request.json()) as NewLead;
     return answer(() => createCustomer(lead), 201);

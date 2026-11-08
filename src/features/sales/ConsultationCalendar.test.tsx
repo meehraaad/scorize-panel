@@ -53,6 +53,9 @@ describe('sales: my consultations on a week calendar', () => {
     await user.click(within(calendar).getByRole('button', { name: /تا ۳۰ دقیقه‌ی دیگر/ }));
     const card = within(calendar).getByRole('dialog');
     expect(within(card).getByText('منتظر مراجعه‌ی مشتری')).toBeInTheDocument();
+    // The name opens the customer's page.
+    const name = within(card).getAllByRole('link')[0] as HTMLElement;
+    expect(name).toHaveAttribute('href', expect.stringMatching(/\/customers\/\d+$/));
     expect(within(card).getByText('فرم تبلت را هنوز پر نکرده')).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: 'فرستادن لینک فرم' })).toHaveAttribute(
       'href',
@@ -164,8 +167,14 @@ describe('sales: my consultations on a week calendar', () => {
       await user.click(within(dialog).getByRole('button', { name: 'ثبت پیگیری' }));
       expect(within(dialog).getByText('یک مشتری انتخاب کنید.')).toBeInTheDocument();
       const name = callBlock(calendar).getAttribute('aria-label')?.split('، ')[0] ?? '';
-      await user.type(within(dialog).getByRole('textbox', { name: /مشتری/ }), name);
-      await user.click((await within(dialog).findAllByRole('radio'))[0] as HTMLElement);
+      const picker = within(dialog).getByRole('combobox', { name: 'مشتری' });
+      await user.type(picker, name);
+      const match = (await within(dialog).findAllByRole('option'))[0] as HTMLElement;
+      // Each match says its stage and its follow-up.
+      expect(match).toHaveTextContent(/·/);
+      await user.keyboard('{ArrowDown}{ArrowUp}{Enter}');
+      expect(within(dialog).getByText(name)).toBeInTheDocument();
+      expect(within(dialog).queryByRole('combobox')).toBeNull();
       await user.click(within(dialog).getByRole('button', { name: 'ثبت پیگیری' }));
       expect(
         await toasts().findByText(/^پیگیری برای چهارشنبه .* ساعت ۱۴:۰۰ ثبت شد\.$/),

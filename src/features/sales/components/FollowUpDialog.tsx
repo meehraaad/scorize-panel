@@ -1,21 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
+import { TextAreaField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
-import { TextField } from '@/components/ui/TextField';
 import { toValue } from '@/lib/calendar';
-import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
 import { fromLocalInput } from '@/lib/when';
-import { firstLeadQuery, leadsQuery, useSetFollowUp } from '../api';
+import { useSetFollowUp, type LeadMatch } from '../api';
+import { CustomerPicker } from './CustomerPicker';
 import { useFormat } from '@/lib/i18n/useFormat';
-
-/** Leads a follow-up can be set on (the server skips the rest). */
-const OPEN = new Set(['new', 'contacted', 'consulted', 'offer']);
-const SHOWN = 6;
 
 /**
  * A follow-up set from the calendar: a new one at a picked time (the seller finds the customer),
@@ -37,19 +31,12 @@ export function FollowUpDialog({
   const { t } = useTranslation('sales');
   const f = useFormat();
   const save = useSetFollowUp();
-  const [search, setSearch] = useState('');
-  const [chosen, setChosen] = useState<string | null>(null);
+  const [picked, setPicked] = useState<LeadMatch | null>(null);
   const [date, setDate] = useState(() => (at ? toValue(at, true) : ''));
   const [text, setText] = useState('');
   const [checked, setChecked] = useState(false);
   const [openedAt] = useState(() => Date.now());
-  const typed = search.trim();
-  const found = useQuery({
-    ...leadsQuery({ ...firstLeadQuery('all'), search: typed }),
-    enabled: open && !lead && typed.length >= 2,
-  });
-  const rows = (found.data?.results ?? []).filter((row) => OPEN.has(row.stage)).slice(0, SHOWN);
-  const target = lead?.id ?? (chosen ? Number(chosen) : null);
+  const target = lead?.id ?? picked?.id ?? null;
   const when = fromLocalInput(date);
   const past = when !== null && new Date(when).getTime() < openedAt;
 
@@ -93,37 +80,11 @@ export function FollowUpDialog({
     >
       <form id="follow-up" noValidate onSubmit={submit} className="flex flex-col gap-5">
         {!lead && (
-          <div className="flex flex-col gap-3">
-            <TextField
-              label={t('followUpDialog.customer')}
-              hint={t('followUpDialog.customerHint')}
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setChosen(null);
-              }}
-              error={checked && target === null ? t('followUpDialog.customerRequired') : undefined}
-              autoComplete="off"
-            />
-            {typed.length >= 2 &&
-              !found.isPending &&
-              (rows.length ? (
-                <ChoiceGroup
-                  legend={t('followUpDialog.matches')}
-                  hideLegend
-                  look="tiles"
-                  value={chosen}
-                  onChange={setChosen}
-                  options={rows.map((row) => ({
-                    value: String(row.id),
-                    label: row.name,
-                    hint: row.phone ? formatPhone(row.phone) : t(`stage.${row.stage}`),
-                  }))}
-                />
-              ) : (
-                <p className="m-0 text-sm text-text-2">{t('followUpDialog.noMatch')}</p>
-              ))}
-          </div>
+          <CustomerPicker
+            value={picked}
+            onChange={setPicked}
+            error={checked && target === null ? t('followUpDialog.customerRequired') : undefined}
+          />
         )}
         <DatePicker
           time
