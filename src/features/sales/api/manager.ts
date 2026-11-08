@@ -24,6 +24,10 @@ export interface AssignSettings {
    */
   day_start: string | null;
   day_end: string | null;
+  /**
+   * Minutes a new lead waits for its first call; then it escalates and leaves Today's hot leads.
+   */
+  escalate_after: number;
 }
 
 export interface SellerLoad {

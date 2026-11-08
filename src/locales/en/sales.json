@@ -1110,6 +1110,11 @@
       "subtitle": "The oldest has waited {{age}}. With automatic assignment this queue stays empty.",
       "auto": "Automatic assignment",
       "autoText": "Each new lead goes straight away to a seller who is in and not in a session, with a notification. Leads in the queue are handed out every 5 minutes.",
+      "wait": "If nobody calls, wait",
+      "waitMinutes": "{{n}} minutes",
+      "waitHours": "{{n}} hours",
+      "waitDays": "{{n}} days",
+      "waitText": "After this, a lead nobody called leaves Today's hot leads, loses its freshness points, and the alert or hand-on happens.",
       "dayStart": "Working day starts",
       "dayEnd": "Working day ends",
       "anyTime": "Any time",
@@ -1120,7 +1125,7 @@
         "least_load": "Lowest workload",
         "match": "By country and degree"
       },
-      "escalation": "If nobody calls within 15 minutes",
+      "escalation": "Then",
       "escalationOption": {
         "alert": "Alert me",
         "next": "Give it to the next seller",

@@ -58,7 +58,7 @@ describe('sales manager section', () => {
     ).toBeInTheDocument();
   });
 
-  it('sets working hours for automatic assignment', async () => {
+  it('sets working hours and the wait for a first call', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
     const saved: unknown[] = [];
@@ -77,6 +77,8 @@ describe('sales manager section', () => {
     expect(screen.getByText(/بیرون از ساعت کاری، لید تازه در صف می‌ماند/)).toBeInTheDocument();
     await user.selectOptions(start, 'any');
     expect(saved.at(-1)).toMatchObject({ day_start: null, day_end: null });
+    await user.selectOptions(screen.getByLabelText('اگر کسی تماس نگرفت، صبر تا'), '۴ ساعت');
+    expect(saved.at(-1)).toMatchObject({ escalate_after: 240 });
   });
 
   it('adds leads from a CSV after showing what each row does', async () => {

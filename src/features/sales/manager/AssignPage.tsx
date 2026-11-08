@@ -34,6 +34,10 @@ const HOURS = Array.from(
   (_, n) => `${String(Math.floor(n / 2)).padStart(2, '0')}:${n % 2 ? '30' : '00'}`,
 );
 const ANY_TIME = 'any';
+/** How long a new lead may wait for its first call, in minutes. */
+const WAITS = [15, 30, 60, 120, 240, 1440, 2880, 4320, 10080];
+const HOUR = 60;
+const DAY = 24 * HOUR;
 const DAY_START = '09:00';
 const DAY_END = '21:00';
 const ESCALATIONS = ['alert', 'next', 'both'] as const satisfies readonly Escalation[];
@@ -192,6 +196,22 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
             }))}
           />
           <SelectField
+            label={t('manager.assign.wait')}
+            value={String(form.escalate_after)}
+            onChange={(value) => update({ escalate_after: Number(value) })}
+            options={[...new Set([...WAITS, form.escalate_after])]
+              .sort((a, b) => a - b)
+              .map((minutes) => ({
+                value: String(minutes),
+                label:
+                  minutes % DAY === 0
+                    ? t('manager.assign.waitDays', { n: f.number(minutes / DAY) })
+                    : minutes % HOUR === 0
+                      ? t('manager.assign.waitHours', { n: f.number(minutes / HOUR) })
+                      : t('manager.assign.waitMinutes', { n: f.number(minutes) }),
+              }))}
+          />
+          <SelectField
             label={t('manager.assign.escalation')}
             value={form.escalation}
             onChange={(escalation) => update({ escalation })}
@@ -236,8 +256,11 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
           )}
         </div>
       )}
-      {form.on && form.day_start !== null && (
-        <span className="text-sm leading-6 text-text-2">{t('manager.assign.hoursText')}</span>
+      {form.on && (
+        <span className="text-sm leading-6 text-text-2">
+          {t('manager.assign.waitText')}
+          {form.day_start !== null && ` ${t('manager.assign.hoursText')}`}
+        </span>
       )}
     </Card>
   );
