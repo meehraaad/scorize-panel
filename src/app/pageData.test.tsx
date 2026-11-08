@@ -108,7 +108,7 @@ const PAGES: PageCase[] = [
   ...[
     '/sales/leads',
     '/sales/leads?stage=new',
-    '/sales/leads/consultations',
+    '/sales/calendar',
     '/sales/board',
     '/sales/month',
     '/sales/tasks',

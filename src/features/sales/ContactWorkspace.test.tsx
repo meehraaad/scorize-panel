@@ -208,7 +208,7 @@ describe('session log: the next step on the board', () => {
       }),
     );
     const user = userEvent.setup();
-    renderApp('/sales/leads/consultations');
+    renderApp('/sales/calendar');
     await user.click(await screen.findByRole('button', { name: 'فهرست' }));
     await user.click(first(await screen.findAllByRole('button', { name: /^ثبت جلسه: / })));
     const dialog = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });

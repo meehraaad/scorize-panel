@@ -231,7 +231,7 @@ export function TodayAgenda({
             </Link>
           )}
           <Link
-            to={salesPath('leads/consultations')}
+            to={salesPath('calendar')}
             className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
           >
             {t('today.agenda.calendar')}

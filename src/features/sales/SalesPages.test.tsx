@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -79,9 +79,7 @@ describe('sales panel, seller pages', () => {
 
     // Tomorrow: its timed follow-ups and consultations.
     await user.click(within(day).getByRole('button', { name: 'روز بعد' }));
-    expect(
-      await within(day).findByRole('heading', { name: 'برنامه‌ی فردا' }),
-    ).toBeInTheDocument();
+    expect(await within(day).findByRole('heading', { name: 'برنامه‌ی فردا' })).toBeInTheDocument();
     await user.click(within(day).getByRole('button', { name: 'امروز' }));
     expect(within(day).getByRole('heading', { name: 'برنامه‌ی امروز' })).toBeInTheDocument();
 
@@ -413,7 +411,7 @@ describe('sales panel, seller pages', () => {
 
   it('consultations: past sessions open the session log without leaving the list', async () => {
     const user = userEvent.setup();
-    const router = renderApp('/sales/leads/consultations');
+    const router = renderApp('/sales/calendar');
     expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'فهرست' }));
     await user.click(
@@ -425,15 +423,15 @@ describe('sales panel, seller pages', () => {
     expect(
       within(log).getByRole('button', { name: /ثبت جلسه و ساختن پیگیری/ }),
     ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/sales/leads/consultations');
+    expect(router.state.location.pathname).toBe('/sales/calendar');
   });
 
-  it('consultations: a sub-tab of the leads tab, also at its old address', async () => {
-    const router = renderApp('/sales/consultations');
-    expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/sales/leads/consultations');
-    const sections = screen.getByRole('navigation', { name: 'بخش‌های لیدها' });
-    await userEvent.click(within(sections).getByRole('link', { name: 'لیدها' }));
-    expect(await screen.findByRole('heading', { name: 'لیدهای من' })).toBeInTheDocument();
+  it('calendar: its own nav tab, also at its two old addresses', async () => {
+    for (const old of ['/sales/consultations', '/sales/leads/consultations']) {
+      const router = renderApp(old);
+      expect(await screen.findByRole('heading', { name: 'مشاوره‌های من' })).toBeInTheDocument();
+      expect(router.state.location.pathname).toBe('/sales/calendar');
+      cleanup();
+    }
   });
 });

@@ -30,7 +30,7 @@ describe('sales: my consultations on a week calendar', () => {
   });
 
   const open = async () => {
-    renderApp('/sales/leads/consultations');
+    renderApp('/sales/calendar');
     return screen.findByRole('region', { name: 'مشاوره‌های من' });
   };
 

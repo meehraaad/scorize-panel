@@ -66,18 +66,25 @@ export const salesPanel: PanelDefinition = {
       icon: 'home',
     },
     {
-      id: 'leads',
-      to: 'leads',
-      label: 'panels.sales.nav.leads',
-      tab: 'panels.sales.tabs.leads',
-      icon: 'user',
-    },
-    {
       id: 'board',
       to: 'board',
       label: 'panels.sales.nav.board',
       tab: 'panels.sales.tabs.board',
       icon: 'grid',
+    },
+    {
+      id: 'calendar',
+      to: 'calendar',
+      label: 'panels.sales.nav.calendar',
+      tab: 'panels.sales.tabs.calendar',
+      icon: 'calendar',
+    },
+    {
+      id: 'leads',
+      to: 'leads',
+      label: 'panels.sales.nav.leads',
+      tab: 'panels.sales.tabs.leads',
+      icon: 'user',
     },
     {
       id: 'tasks',
@@ -118,7 +125,6 @@ export const salesPanel: PanelDefinition = {
         skeleton: 'dashboard',
       }),
     },
-    // Leads and "my consultations" share one nav tab, with a sub-tab each.
     {
       path: 'leads',
       ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
@@ -135,8 +141,17 @@ export const salesPanel: PanelDefinition = {
             skeleton: 'list',
           }),
         },
+        // Its address while it was a sub-tab of the leads.
+        { path: 'consultations', loader: () => redirect('/sales/calendar') },
+      ],
+    },
+    // The seller's calendar has its own nav tab: consultations and timed follow-ups.
+    {
+      path: 'calendar',
+      ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
+      children: [
         {
-          path: 'consultations',
+          index: true,
           ...lazyPage(() => import('@/features/sales/ConsultationsPage'), [], {
             // Opens on this week's calendar; the list reads its own page when chosen.
             data: () => [
@@ -159,8 +174,8 @@ export const salesPanel: PanelDefinition = {
       // No data on open: the month is read only after the seller types their password.
       ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], { skeleton: 'form' }),
     },
-    // Its old address, before it moved under the leads tab.
-    { path: 'consultations', loader: () => redirect('/sales/leads/consultations') },
+    // Its first address.
+    { path: 'consultations', loader: () => redirect('/sales/calendar') },
     {
       path: 'customers/:id',
       ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales'], {

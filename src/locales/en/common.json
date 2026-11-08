@@ -73,18 +73,20 @@
       "nav": {
         "label": "Sales panel menu",
         "today": "Today",
-        "leads": "Leads & consultations",
         "board": "Sales board",
+        "calendar": "My calendar",
+        "leads": "Customers",
         "tasks": "My tasks",
-        "month": "My month",
+        "month": "My performance",
         "manager": "Sales management"
       },
       "tabs": {
         "today": "Today",
-        "leads": "Leads",
         "board": "Board",
+        "calendar": "Calendar",
+        "leads": "Customers",
         "tasks": "Tasks",
-        "month": "My month"
+        "month": "Performance"
       },
       "description": "Leads, consultations, offers and contracts"
     }
