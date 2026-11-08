@@ -62,7 +62,7 @@ export interface SellerCalendar {
   tasks: CalendarTaskDay[];
 }
 
-const CALENDAR_KEY = [...SALES_KEY, 'calendar'] as const;
+export const CALENDAR_KEY = [...SALES_KEY, 'calendar'] as const;
 
 /** A week of the seller's consultations, timed follow-ups (S47) and tasks per day (S50). */
 export const sellerCalendarQuery = (week: Date) => {

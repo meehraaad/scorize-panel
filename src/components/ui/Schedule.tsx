@@ -3,6 +3,7 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent,
   type ReactNode,
 } from 'react';
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { addDays, sameDay, toCalendar } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { Icon } from './Icon';
 import { WEEK_WIDTH, useWide } from './useWide';
 
 /** How big a block is drawn, for what it shows inside. */
@@ -55,6 +57,53 @@ export interface DayRow {
   label: string;
   /** A day's brief; `compact` on a day shrunk for having no items. Null leaves it empty. */
   cell: (day: Date, compact: boolean) => ReactNode;
+  /**
+   * A click on a day's cell (outside its brief) adds something on that day, from today on. The
+   * label names that button ("New task on Sunday").
+   */
+  onAdd?: ((day: Date) => void) | undefined;
+  addLabel?: ((day: Date) => string) | undefined;
+}
+
+/** A day row's cell: its brief, over a button that adds on that day when the row has `onAdd`. */
+function DayRowCell({
+  row,
+  day,
+  compact,
+  canAdd,
+}: {
+  row: DayRow;
+  day: Date;
+  compact: boolean;
+  canAdd: boolean;
+}) {
+  const brief = row.cell(day, compact);
+  if (!row.onAdd || !canAdd) return brief;
+  const add = row.onAdd;
+  return (
+    <div className="group relative flex min-h-11 min-w-0 flex-1 flex-col justify-center">
+      <button
+        type="button"
+        aria-label={row.addLabel?.(day)}
+        onClick={() => add(day)}
+        className="absolute inset-0 flex cursor-copy items-center justify-center rounded-lg text-text-3 hover:bg-tint/40 hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
+      >
+        {!brief && (
+          <Icon
+            name="plus"
+            size={16}
+            className="opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
+          />
+        )}
+      </button>
+      {/* The brief keeps its own link; the rest of the cell is the add button under it. */}
+      {brief && (
+        <div className="pointer-events-none relative z-10 flex min-w-0 flex-col [&>*]:pointer-events-auto">
+          {brief}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** A day as the schedule sees it. */
@@ -294,7 +343,13 @@ interface ViewProps {
   onDrop: ((item: ScheduleItem, column: number, minutes: number) => void) | undefined;
 }
 
-/** The empty part of a day under its blocks: a click or tap there picks that time. */
+/** How tall the hover preview of a new item is, in minutes (a Google Calendar–style ghost). */
+const GHOST_MINUTES = 30;
+
+/**
+ * The empty part of a day under its blocks: a click or tap there picks that time. With a mouse, a
+ * faint block follows the pointer and shows the time a click would add at.
+ */
 function SlotPicker({
   day,
   from,
@@ -308,6 +363,13 @@ function SlotPicker({
   snap: number;
   onPick: (start: Date) => void;
 }) {
+  const f = useFormat();
+  const [hover, setHover] = useState<number | null>(null);
+  const minutesAt = (event: MouseEvent<HTMLButtonElement>) => {
+    const top = event.currentTarget.getBoundingClientRect().top;
+    const minutes = from * 60 + ((event.clientY - top) / hour) * 60;
+    return Math.min(Math.max(Math.floor(minutes / snap) * snap, 0), DAY_MINUTES - snap);
+  };
   return (
     // The keyboard way to add is the page's own button: this layer is for the pointer only.
     <button
@@ -315,13 +377,28 @@ function SlotPicker({
       tabIndex={-1}
       aria-hidden="true"
       data-testid="schedule-slot"
-      className="absolute inset-0 cursor-copy hover:bg-tint/40"
-      onClick={(event) => {
-        const top = event.currentTarget.getBoundingClientRect().top;
-        const minutes = from * 60 + ((event.clientY - top) / hour) * 60;
-        onPick(timeOn(day, Math.floor(minutes / snap) * snap, snap));
+      className="absolute inset-0 cursor-copy"
+      onPointerMove={(event) => {
+        if (event.pointerType !== 'mouse') return;
+        const minutes = minutesAt(event);
+        if (minutes !== hover) setHover(minutes);
       }}
-    />
+      onPointerLeave={() => setHover(null)}
+      onClick={(event) => onPick(timeOn(day, minutesAt(event), snap))}
+    >
+      {hover !== null && (
+        <span
+          className="pointer-events-none absolute inset-x-1 flex items-start gap-1 overflow-hidden rounded-md bg-tint px-1.5 py-0.5 text-start text-[11px] font-semibold text-primary-text shadow-[inset_0_0_0_1.5px_var(--primary)]"
+          style={{
+            top: ((hover - from * 60) / 60) * hour,
+            height: Math.max((GHOST_MINUTES / 60) * hour, MIN_BLOCK),
+          }}
+        >
+          <Icon name="plus" size={12} className="mt-0.5 flex-none" />
+          <span className="tabular-nums">{f.time(timeOn(day, hover, snap))}</span>
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -521,7 +598,14 @@ function Week({
                   narrow ? 'w-16 flex-none bg-canvas/60' : 'min-w-0 flex-1'
                 }`}
               >
-                {!loading && dayRow.cell(day.date, narrow)}
+                {!loading && (
+                  <DayRowCell
+                    row={dayRow}
+                    day={day.date}
+                    compact={narrow}
+                    canAdd={day.date >= today}
+                  />
+                )}
               </div>
             );
           })}
@@ -731,7 +815,14 @@ function Day({
         })}
       </div>
 
-      {dayRow && !loading && current && dayRow.cell(current.date, false)}
+      {dayRow && !loading && current && (
+        <DayRowCell
+          row={dayRow}
+          day={current.date}
+          compact={false}
+          canAdd={current.date >= today}
+        />
+      )}
 
       {loading ? (
         <div aria-hidden="true" className="flex flex-col gap-2">

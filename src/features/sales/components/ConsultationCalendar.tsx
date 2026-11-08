@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Suspense, lazy, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { TogglePill } from '@/components/ui/Choices';
@@ -11,9 +11,11 @@ import { WeekNav } from '@/components/ui/WeekNav';
 import { addDays, eventColor, sameDay, toValue, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { tasksQuery } from '@/lib/tasks/api';
 import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/Button';
 import {
+  CALENDAR_KEY,
   sellerCalendarQuery,
   useSetFollowUp,
   type CalendarConsultation,
@@ -31,6 +33,22 @@ import { FollowUpDialog } from './FollowUpDialog';
 import { TaskBrief } from './TaskBrief';
 
 const MINUTE = 60_000;
+/** A task added on a day without a time is due at this hour (or the next full hour, today). */
+const TASK_HOUR = 10;
+
+// Only when a day of the tasks row is clicked.
+const NewTaskDialog = lazy(() =>
+  import('@/components/tasks/NewTask').then((module) => ({ default: module.NewTaskDialog })),
+);
+
+/** When a task added on `day` is due: 10:00 that day, or the next full hour once 10:00 has passed. */
+const dueOn = (day: Date, now: Date) => {
+  const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), TASK_HOUR);
+  if (at > now) return at;
+  const next = new Date(now);
+  next.setHours(now.getHours() + 1, 0, 0, 0);
+  return next;
+};
 
 /** The follow-up dialog: a new one at a time, or a customer's moved (`lead`). */
 interface Setting {
@@ -63,6 +81,10 @@ export function ConsultationCalendar() {
   const { data, isPending } = useQuery(sellerCalendarQuery(week));
   const setFollowUp = useSetFollowUp();
   const [setting, setSetting] = useState<Setting | null>(null);
+  /** A day of the tasks row was clicked: a new task due then. */
+  const [newTaskOn, setNewTaskOn] = useState<Date | null>(null);
+  const colleagues = useQuery({ ...tasksQuery('sales'), enabled: newTaskOn !== null });
+  const client = useQueryClient();
   /** A time picked or dropped on the calendar, unless it has passed. */
   const ahead = (start: Date) => {
     if (start.getTime() >= Date.now()) return true;
@@ -314,6 +336,11 @@ export function ConsultationCalendar() {
                   compact={compact}
                 />
               ),
+              onAdd: (day) => {
+                setChosenId(null);
+                setNewTaskOn(dueOn(day, new Date()));
+              },
+              addLabel: (day) => t('consultationCalendar.tasks.add', { day: f.weekday(day) }),
             }}
             details={
               chosen && (
@@ -336,6 +363,17 @@ export function ConsultationCalendar() {
       </div>
       {setting && (
         <FollowUpDialog open onClose={() => setSetting(null)} at={setting.at} lead={setting.lead} />
+      )}
+      {newTaskOn && (
+        <Suspense fallback={null}>
+          <NewTaskDialog
+            open
+            due={newTaskOn}
+            colleagues={colleagues.data?.colleagues ?? []}
+            onClose={() => setNewTaskOn(null)}
+            onCreated={() => void client.invalidateQueries({ queryKey: CALENDAR_KEY })}
+          />
+        </Suspense>
       )}
     </div>
   );

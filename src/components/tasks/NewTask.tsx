@@ -6,6 +6,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
+import { toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   TASKS_KEY,
@@ -51,21 +52,27 @@ export function NewTaskDialog({
   open,
   colleagues,
   onClose,
+  due,
+  onCreated,
 }: {
   open: boolean;
   colleagues: Colleague[];
   onClose: () => void;
+  /** Opened on a day of the calendar: a task for me, due then. */
+  due?: Date | undefined;
+  /** After it is saved (the opener refreshes what shows the new task). */
+  onCreated?: (() => void) | undefined;
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const create = useCreateTask(TASKS_KEY);
   const [text, setText] = useState('');
-  const [target, setTarget] = useState<Target>('people');
+  const [target, setTarget] = useState<Target>(due ? 'me' : 'people');
   const [picked, setPicked] = useState<number[]>([]);
   const [query, setQuery] = useState('');
   const [team, setTeam] = useState<TaskTeam>(TASK_TEAMS[0]);
-  const [when, setWhen] = useState<(typeof WHENS)[number]>('tomorrow');
-  const [date, setDate] = useState('');
+  const [when, setWhen] = useState<(typeof WHENS)[number]>(due ? 'other' : 'tomorrow');
+  const [date, setDate] = useState(due ? toValue(due, true) : '');
   const [checked, setChecked] = useState(false);
 
   const q = query.trim();
@@ -95,6 +102,7 @@ export function NewTaskDialog({
     create.mutate(task, {
       onError: () => toast.error(t('error')),
       onSuccess: () => {
+        onCreated?.();
         toast.success(
           target === 'people'
             ? t('new.sent.people', { n: f.number(n) })

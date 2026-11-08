@@ -753,6 +753,7 @@
     "seller": "Assigned to {{name}}",
     "noSeller": "Not assigned",
     "tasks": {
+      "add": "New task on {{day}}",
       "row": "Tasks",
       "open": "{{n}} to do",
       "late": "{{n}} overdue",

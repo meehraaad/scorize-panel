@@ -24,7 +24,7 @@ import { MyTasks } from './components/MyTasks';
 import { OnTime } from './components/OnTime';
 import { Orphans } from './components/Orphans';
 import { Requests } from './components/Requests';
-import { NewTaskButton } from './components/NewTask';
+import { NewTaskButton } from '@/components/tasks/NewTask';
 import { SentCard } from './components/SideCards';
 import { TeamQueue } from './components/TeamQueue';
 import { ViewTabs, type View } from './components/ViewTabs';

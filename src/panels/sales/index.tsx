@@ -148,7 +148,8 @@ export const salesPanel: PanelDefinition = {
     // The seller's calendar has its own nav tab: consultations and timed follow-ups.
     {
       path: 'calendar',
-      ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
+      // `tasks`: a click on a day's tasks opens the new-task composer.
+      ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales', 'tasks']),
       children: [
         {
           index: true,

@@ -172,6 +172,26 @@ describe('sales: my consultations on a week calendar', () => {
       ).toBeInTheDocument();
     });
 
+    it('a mouse over an empty spot shows the time a click would add at', async () => {
+      await open();
+      const wednesday = screen.getAllByTestId('schedule-slot')[4] as HTMLElement;
+      fireEvent.pointerMove(wednesday, { pointerType: 'mouse', clientY: 330 });
+      expect(wednesday).toHaveTextContent('۱۴:۰۰');
+      fireEvent.pointerLeave(wednesday);
+      expect(wednesday).toHaveTextContent('');
+    });
+
+    it("a click on a day's tasks cell adds a task for me that day", async () => {
+      const user = userEvent.setup();
+      const calendar = await open();
+      await user.click(
+        within(calendar).getByRole('button', { name: 'کار تازه برای چهارشنبه ۶ آبان' }),
+      );
+      const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+      expect(within(dialog).getByRole('radio', { name: 'خودم' })).toBeChecked();
+      expect(within(dialog).getByRole('button', { name: /تاریخ/ })).toHaveTextContent('۱۰:۰۰');
+    });
+
     it('a passed spot is refused', async () => {
       await open();
       fireEvent.click(screen.getAllByTestId('schedule-slot')[0] as HTMLElement, { clientY: 330 });
