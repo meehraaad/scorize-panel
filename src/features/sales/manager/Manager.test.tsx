@@ -58,6 +58,27 @@ describe('sales manager section', () => {
     ).toBeInTheDocument();
   });
 
+  it('sets working hours for automatic assignment', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    const saved: unknown[] = [];
+    server.use(
+      http.put('/api/sales/v1/manager/assign/settings/', async ({ request }) => {
+        saved.push(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    renderApp('/sales/manager');
+    const start = await screen.findByLabelText('شروع ساعت کاری');
+    expect(screen.queryByLabelText('پایان ساعت کاری')).toBeNull();
+    await user.selectOptions(start, '08:30');
+    await user.selectOptions(screen.getByLabelText('پایان ساعت کاری'), '20:00');
+    expect(saved.at(-1)).toMatchObject({ day_start: '08:30', day_end: '20:00' });
+    expect(screen.getByText(/بیرون از ساعت کاری، لید تازه در صف می‌ماند/)).toBeInTheDocument();
+    await user.selectOptions(start, 'any');
+    expect(saved.at(-1)).toMatchObject({ day_start: null, day_end: null });
+  });
+
   it('adds leads from a CSV after showing what each row does', async () => {
     const user = userEvent.setup({ applyAccept: false });
     loginAs(REZA);
