@@ -4,6 +4,7 @@ import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
 import type { Colleague } from '@/lib/tasks/api';
 import type { ActivityKind, StageActivity, StagePhase } from './board';
+import type { MonthContract } from './month';
 
 /** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
 export const MANAGER_PERMISSION = 'can_assign_to_seller';
@@ -212,6 +213,30 @@ export const funnelQuery = (range: TeamRange) =>
   });
 
 /** The same report as a spreadsheet (S38). */
+/** A seller's contracts over the team page's range (S59). */
+export const teamContractsQuery = (range: TeamRange, seller: number) =>
+  queryOptions({
+    queryKey: [...MANAGER_KEY, 'team', range, 'contracts', seller],
+    queryFn: ({ signal }) =>
+      api<MonthContract[]>(
+        `${MANAGER_API}/team/contracts/?range=${range}&seller=${String(seller)}`,
+        { signal },
+      ),
+  });
+
+/** Moves a closed contract to another seller, with a reason the customer's history keeps (S59). */
+export function useMoveContract() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ lead, seller, reason }: { lead: number; seller: number; reason: string }) =>
+      api(`${MANAGER_API}/contracts/${String(lead)}/credit/`, {
+        method: 'POST',
+        body: { seller, reason },
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
 export const teamExportHref = (range: TeamRange) =>
   `/api${MANAGER_API}/team/export/?range=${range}`;
 

@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { ProgressBar } from '@/components/ui/Progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
-import type { MonthSummary, TodayData, Upsell } from '../api';
+import type { MonthSummary, TodayData, TodayInstalments, Upsell } from '../api';
+import type { Instalment } from '../api/month';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';
 
@@ -18,15 +19,18 @@ export function TodayAside({
   month,
   upsell,
   tasks,
+  instalments,
 }: {
   month: MonthSummary | undefined;
   upsell: Upsell[];
   tasks: TodayData['tasks'] | undefined;
+  instalments?: TodayInstalments | undefined;
 }) {
   const { t } = useTranslation('sales');
   return (
     <aside aria-label={t('today.aside.label')} className="flex min-w-0 flex-col gap-7 lg:pt-2">
       {month && <MonthLine month={month} />}
+      {instalments && instalments.total > 0 && <InstalmentList instalments={instalments} />}
       {upsell.length > 0 && <UpsellList items={upsell} />}
       {tasks && <TeamLine team={tasks.team} />}
     </aside>
@@ -150,6 +154,54 @@ function UpsellList({ items }: { items: Upsell[] }) {
             </li>
           );
         })}
+      </ul>
+    </section>
+  );
+}
+
+/** Instalments of my contracts due this week or already late: a line each, to the customer's payments. */
+function InstalmentList({ instalments }: { instalments: TodayInstalments }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const s = useSalesFormat();
+  const when = (row: Instalment) =>
+    row.due ? f.date(row.due) : (row.condition ?? t('instalment.state.due'));
+  return (
+    <section aria-labelledby="today-instalments" className="flex flex-col">
+      <div className="flex items-center gap-2 pb-2">
+        <h2 id="today-instalments" className={heading}>
+          {instalments.overdue > 0
+            ? t('today.instalments.titleLate', {
+                n: f.number(instalments.total),
+                late: f.number(instalments.overdue),
+              })
+            : t('today.instalments.title', { n: f.number(instalments.total) })}
+        </h2>
+        <Link to={salesPath('month')} className={more}>
+          {t('today.month.details')}
+        </Link>
+      </div>
+      <ul className="m-0 flex list-none flex-col p-0">
+        {instalments.rows.map((row) => (
+          <li key={row.id} className="shadow-[inset_0_1px_0_var(--hair)]">
+            <Link
+              to={`${customerPath(row.customer)}/payments`}
+              className="flex min-h-11 flex-col justify-center gap-0.5 py-2.5 text-text hover:text-primary-text"
+            >
+              <span className="text-[13px] leading-6 font-semibold">
+                {t('today.instalments.row', {
+                  name: row.name,
+                  amount: row.amount === null ? (row.amount_text ?? '') : s.millions(row.amount),
+                })}
+              </span>
+              <span
+                className={`text-xs ${row.state === 'overdue' ? 'text-urgent' : 'text-text-2'}`}
+              >
+                {t(`instalment.state.${row.state}`)} · {when(row)}
+              </span>
+            </Link>
+          </li>
+        ))}
       </ul>
     </section>
   );

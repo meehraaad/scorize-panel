@@ -21,6 +21,47 @@ export interface MonthData {
   /** Median minutes to the first call, week by week; null when no samples exist. */
   weeks: (number | null)[];
   sources: { source: LeadSource; leads: number; won: number }[];
+  /** The month's contracts that count for the seller, newest first (S59). */
+  contracts: MonthContract[];
+  /** Instalments due in the month, and the unpaid ones already due, oldest first. */
+  instalments: Instalment[];
+  /** First days of the months the seller can open, newest first (this month first). */
+  months: string[];
+  /** Whether it is this month (a past one has no "where you should be today"). */
+  current: boolean;
+}
+
+/** A closed contract and the seller it counts for (fixed when the case starts). */
+export interface MonthContract {
+  lead: number;
+  customer: number;
+  name: string;
+  /** What it covers, localized ("پذیرش + ویزا · کانادا"). */
+  title: string;
+  /** Toman; null for another currency (`amount_text`). */
+  amount: number | null;
+  amount_text: string | null;
+  won_at: string;
+  seller: string;
+  seller_id: number | null;
+  /** The contract's status, localized. */
+  status: string;
+}
+
+export type InstalmentState = 'paid' | 'overdue' | 'due' | 'waiting';
+
+/** An instalment of a contract that counts for the seller. */
+export interface Instalment {
+  id: number;
+  customer: number;
+  name: string;
+  title: string;
+  amount: number | null;
+  amount_text: string | null;
+  /** Null when it is due on a condition (`condition`, "after admission"). */
+  due: string | null;
+  condition: string | null;
+  state: InstalmentState;
 }
 
 /**
@@ -30,7 +71,10 @@ export interface MonthData {
  */
 export function useMonthUnlock() {
   return useMutation({
-    mutationFn: (password: string) =>
-      api<MonthData>(`${SALES_API}/month/`, { method: 'POST', body: { password } }),
+    mutationFn: ({ password, month }: { password: string; month?: string }) =>
+      api<MonthData>(`${SALES_API}/month/`, {
+        method: 'POST',
+        body: month ? { password, month } : { password },
+      }),
   });
 }

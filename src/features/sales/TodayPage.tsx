@@ -169,6 +169,7 @@ export default function TodayPage() {
               month={insights.data?.month}
               upsell={insights.data?.upsell ?? []}
               tasks={activity.data?.tasks}
+              instalments={insights.data?.instalments}
             />
           </QuerySection>
         </div>

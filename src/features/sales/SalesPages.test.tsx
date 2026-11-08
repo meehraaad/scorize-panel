@@ -351,6 +351,151 @@ describe('sales panel, seller pages', () => {
     expect(screen.queryByRole('heading', { name: /^ماه من · / })).not.toBeInTheDocument();
   });
 
+  it('month: its contracts and instalments, and a past month without the password again', async () => {
+    const month = await readMonth();
+    const asked: (string | undefined)[] = [];
+    server.use(
+      http.post('/api/sales/v1/month/', async ({ request }) => {
+        const body = (await request.json()) as { month?: string };
+        asked.push(body.month);
+        const past = body.month === month.months[1];
+        return HttpResponse.json({
+          ...month,
+          month: past ? month.months[1] : month.months[0],
+          current: !past,
+          contracts: past
+            ? []
+            : [
+                {
+                  lead: 1,
+                  customer: ERFAN,
+                  name: 'عرفان مرادی',
+                  title: 'پذیرش + ویزا · کانادا',
+                  amount: 120_000_000,
+                  amount_text: null,
+                  won_at: new Date().toISOString(),
+                  seller: 'نیما',
+                  seller_id: 8,
+                  status: 'فعال',
+                },
+              ],
+          instalments: [
+            {
+              id: 5,
+              customer: ERFAN,
+              name: 'عرفان مرادی',
+              title: 'قسط دوم',
+              amount: 40_000_000,
+              amount_text: null,
+              due: '2026-11-01',
+              condition: null,
+              state: 'overdue',
+            },
+          ],
+        });
+      }),
+    );
+    const { user } = await openMonth();
+    const contracts = await screen.findByRole('region', { name: 'قراردادهای این ماه' });
+    expect(within(contracts).getByRole('link', { name: 'عرفان مرادی' })).toHaveAttribute(
+      'href',
+      `/sales/customers/${String(ERFAN)}`,
+    );
+    const instalments = screen.getByRole('region', { name: 'قسط‌های این ماه' });
+    expect(within(instalments).getByText('عقب‌افتاده')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('ماه'), month.months[1] ?? '');
+    expect(
+      await screen.findByText('در این ماه قراردادی به نام شما بسته نشده.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('این ماه تمام شده است.')).toBeInTheDocument();
+    expect(asked).toEqual([undefined, month.months[1]]);
+  });
+
+  it('calendar list: one chosen day with its sessions and logged contacts', async () => {
+    const user = userEvent.setup();
+    const asked: string[] = [];
+    server.use(
+      http.get('/api/sales/v1/consultations/', ({ request }) => {
+        const query = new URL(request.url).searchParams;
+        asked.push(`${query.get('range') ?? ''} ${query.get('date') ?? ''}`);
+        return HttpResponse.json({
+          counts: { today: 0, week: 0, past: 0, all: 0, day: 0 },
+          unlogged: 0,
+          types: [],
+          sellers: [],
+          count: 0,
+          page_size: 20,
+          results: [],
+          ...(query.get('range') === 'day'
+            ? {
+                day: {
+                  sessions: [{ type: 'ارزیابی', count: 2 }],
+                  kinds: [{ kind: 'call', count: 3 }],
+                  contacts: [
+                    {
+                      id: 1,
+                      customer: ERFAN,
+                      name: 'عرفان مرادی',
+                      kind: 'call',
+                      channel: null,
+                      at: new Date().toISOString(),
+                      author: 'نیما',
+                      text: 'تماس ورودی، قیمت پرسید',
+                    },
+                  ],
+                  more: false,
+                },
+              }
+            : {}),
+        });
+      }),
+    );
+    renderApp('/sales/calendar');
+    await user.click(await screen.findByRole('button', { name: 'فهرست' }));
+    await user.click(await screen.findByRole('button', { name: /^یک روز/ }));
+    const report = await screen.findByRole('region', { name: 'کارهای این روز' });
+    expect(within(report).getByText('ارزیابی: ۲')).toBeInTheDocument();
+    expect(within(report).getByText('تماس: ۳')).toBeInTheDocument();
+    expect(within(report).getByText('تماس ورودی، قیمت پرسید')).toBeInTheDocument();
+    expect(asked.at(-1)).toMatch(/^day \d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('customer: whose work it is, and who the lead went to', async () => {
+    server.use(
+      http.get('/api/sales/v1/customers/:id/history/', () =>
+        HttpResponse.json({
+          results: [
+            {
+              id: 'assign-1',
+              kind: 'assign',
+              at: new Date().toISOString(),
+              author: 'رضا',
+              channel: null,
+              title: 'نیما',
+              previous: 'کاوه',
+              text: '',
+              stage: null,
+            },
+          ],
+          next: null,
+        }),
+      ),
+    );
+    const customer = await api<CustomerData>(`/sales/v1/customers/${String(ERFAN)}/`);
+    server.use(
+      http.get('/api/sales/v1/customers/:id/', () =>
+        HttpResponse.json({
+          ...customer,
+          attribution: { first_contact: 'کاوه', won_by: 'نیما' },
+        }),
+      ),
+    );
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    expect(await screen.findByText('اولین تماس: کاوه · قرارداد به نام: نیما')).toBeInTheDocument();
+    expect(await screen.findByText('لید از کاوه به نیما رسید · رضا')).toBeInTheDocument();
+  });
+
   it('month: a wrong password shows nothing of the month', async () => {
     await openMonth('not-it');
     expect(await screen.findByText('رمز عبور درست نیست.')).toBeInTheDocument();

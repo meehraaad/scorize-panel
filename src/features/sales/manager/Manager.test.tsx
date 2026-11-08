@@ -7,6 +7,7 @@ import { api } from '@/lib/api/client';
 import type { AssignData, TeamData } from '../api';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
+import { toasts } from '@/test/toasts';
 
 // The quiz funnel follows the quiz (src/lib/applicant/onServer.ts): switch everything on.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -233,6 +234,27 @@ describe('sales manager section', () => {
     await user.selectOptions(within(oldest).getByLabelText('به'), '33');
     await user.click(within(oldest).getByRole('button', { name: 'بسپار' }));
     expect(await within(oldest).findByText(/مسئول: امید رنجبر/)).toBeInTheDocument();
+  });
+
+  it("team: a seller's contracts, and moving one with a reason", async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/team');
+    await user.click(await screen.findByRole('button', { name: 'قراردادهای مهدی توکلی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'قراردادهای مهدی توکلی' });
+    expect(await within(dialog).findByText('سارا حیدری')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'انتقال قرارداد سارا حیدری' }));
+    // The reason is required: it goes on the customer's history.
+    await user.click(within(dialog).getByRole('button', { name: 'انتقال قرارداد' }));
+    expect(within(dialog).getByText('دلیل انتقال را بنویسید.')).toBeInTheDocument();
+    const to = within(dialog).getByLabelText('به نام');
+    await user.selectOptions(to, within(to).getAllByRole('option')[1] as HTMLOptionElement);
+    await user.type(within(dialog).getByLabelText('دلیل'), 'جلسه را او برگزار کرد');
+    await user.click(within(dialog).getByRole('button', { name: 'انتقال قرارداد' }));
+    expect(await toasts().findByText('قرارداد منتقل شد.')).toBeInTheDocument();
+    expect(
+      await within(dialog).findByText('در این بازه قراردادی به نام این فروشنده نیست.'),
+    ).toBeInTheDocument();
   });
 
   it('shows the quiz funnel with the step that loses the most people', async () => {

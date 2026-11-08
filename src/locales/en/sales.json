@@ -222,6 +222,11 @@
       "team": "Team queue",
       "teamText": "{{n}} tasks are waiting in the team queue.",
       "teamEmpty": "The team queue is empty."
+    },
+    "instalments": {
+      "title": "{{n}} instalments due this week",
+      "titleLate": "{{n}} instalments due, {{late}} overdue",
+      "row": "{{name}} · {{amount}}"
     }
   },
   "leads": {
@@ -497,7 +502,9 @@
         "payment": "Bought {{title}}",
         "payment_failed": "Payment failed",
         "lead": "Lead created and given to {{author}}",
-        "leadNew": "Lead created"
+        "leadNew": "Lead created",
+        "assign": "Lead moved from {{previous}} to {{title}} · {{author}}",
+        "assignFirst": "Lead given to {{title}} · {{author}}"
       },
       "system": "System",
       "stageTag": "Stage: {{stage}}"
@@ -619,7 +626,9 @@
       "title": "Documents for a free review",
       "subtitle": "Sent from the panel; give them the result by phone.",
       "open": "Open {{kind}}"
-    }
+    },
+    "firstContact": "First contact: {{name}}",
+    "wonBy": "Contract for: {{name}}"
   },
   "month": {
     "title": "My month · {{month}}",
@@ -681,6 +690,22 @@
       "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens.",
       "submit": "Open my month",
       "failed": "My month didn't open. Try again."
+    },
+    "pick": "Month",
+    "subtitlePast": "{{n}} contracts were closed this month.",
+    "over": "This month is over.",
+    "contracts": {
+      "title": "This month's contracts",
+      "subtitle": "Each contract is yours from the day its case starts and doesn't move when the lead does. Only the sales manager can move it, with a reason.",
+      "empty": "No contract was closed for you this month.",
+      "closed": "Closed {{date}}",
+      "for": "For {{seller}}"
+    },
+    "instalments": {
+      "title": "This month's instalments",
+      "subtitle": "Instalments of your contracts due this month, and unpaid ones already past due.",
+      "empty": "No instalments this month.",
+      "due": "Due {{date}}"
     }
   },
   "consultations": {
@@ -692,7 +717,8 @@
       "today": "Today",
       "week": "This week",
       "past": "Past",
-      "all": "All"
+      "all": "All",
+      "day": "One day"
     },
     "type": "Type",
     "allTypes": "All",
@@ -712,7 +738,24 @@
     "customer": "Customer page",
     "actionsFor": "{{action}}: {{name}}",
     "empty": "No consultations in this range.",
-    "metaShort": "{{type}} · {{mode}}"
+    "metaShort": "{{type}} · {{mode}}",
+    "seller": "Seller",
+    "allSellers": "Everyone",
+    "day": "Day",
+    "dayReport": {
+      "title": "The day's work",
+      "subtitle": "{{sessions}} sessions and {{contacts}} logged calls or messages",
+      "counts": "Count of each kind",
+      "count": "{{label}}: {{n}}",
+      "empty": "No call or message was logged this day.",
+      "more": "More contacts were logged than are shown here.",
+      "kind": {
+        "call": "Call",
+        "no_answer": "Unanswered call",
+        "message": "Message",
+        "meeting": "Session log"
+      }
+    }
   },
   "consultationCalendar": {
     "aside": "My calendar",
@@ -1452,6 +1495,24 @@
       "apply": "Add {{n}} leads",
       "applyError": "The leads weren't added. Try again.",
       "done": "{{n}} leads added ({{customers}} new customers)."
+    },
+    "contracts": {
+      "open": "{{name}}'s contracts",
+      "title": "{{name}}'s contracts",
+      "subtitle": "The contracts counted for this seller in this range.",
+      "close": "Close",
+      "move": "Move",
+      "moveFor": "Move {{name}}'s contract",
+      "moveTitle": "Move {{name}}'s contract to another seller",
+      "to": "To",
+      "toRequired": "Choose a seller.",
+      "reason": "Reason",
+      "reasonHint": "The reason goes on the customer's history, where every seller sees it.",
+      "reasonRequired": "Say why you move it.",
+      "confirm": "Move the contract",
+      "cancel": "Cancel",
+      "moved": "Contract moved.",
+      "empty": "No contract counts for this seller in this range."
     }
   },
   "handoff": {
@@ -1618,5 +1679,13 @@
     "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
     "picked": "New follow-up",
     "pickedAria": "Picked time: {{day}} at {{time}}"
+  },
+  "instalment": {
+    "state": {
+      "paid": "Paid",
+      "overdue": "Overdue",
+      "due": "Due",
+      "waiting": "Waiting on a condition"
+    }
   }
 }
