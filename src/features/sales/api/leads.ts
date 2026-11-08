@@ -31,6 +31,8 @@ export interface LeadRow {
   created_at: string;
   /** Customer tag ids (S49), named by `tagsQuery`. */
   tags: number[];
+  /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
+  seller?: string | null;
 }
 
 export type LeadFilter = LeadStage | 'all';
@@ -61,6 +63,8 @@ export interface LeadQuery {
   tag: number | null;
   search: string;
   page: number;
+  /** A sales manager's seller filter: a SupportStaff id, or the leads nobody has yet. */
+  seller?: number | 'none' | null;
 }
 
 export interface LeadsData {
@@ -89,6 +93,8 @@ export interface LeadsData {
   count: number;
   page_size: number;
   results: LeadRow[];
+  /** A sales manager's seller filter (SupportStaff ids); empty or absent for a seller. */
+  sellers?: { id: number; name: string }[];
 }
 
 /** The seller's leads (managers: everyone's), with per-stage counts and the stats line (S11). */
@@ -100,6 +106,8 @@ function fetchLeads(query: LeadQuery, signal?: AbortSignal) {
   if (query.overdue) params.set('overdue', '1');
   if (query.tag !== null) params.set('tag', String(query.tag));
   if (query.search.trim()) params.set('search', query.search.trim());
+  if (query.seller !== undefined && query.seller !== null)
+    params.set('seller', String(query.seller));
   return api<LeadsData>(`${SALES_API}/leads/?${params.toString()}`, { signal });
 }
 
@@ -111,6 +119,8 @@ export interface LeadMatch {
   phone: string;
   stage: LeadStage;
   follow_up_at: string | null;
+  /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
+  seller?: string | null;
 }
 
 /** Up to 8 open leads matching what the seller typed, best first (S56): the customer pickers. */

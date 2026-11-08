@@ -31,7 +31,10 @@ import { useSalesFormat } from './format';
 import { LeadTable } from './components/LeadTable';
 import { NewLeadDialog } from './components/NewLeadDialog';
 
-/** Every lead of the seller, by stage, with its score and next follow-up. Canvas "لیدها". */
+/**
+ * Every lead of the seller, by stage, with its score and next follow-up; a sales manager's are
+ * everyone's, each naming its seller, with a seller filter. Canvas "لیدها".
+ */
 export default function LeadsPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -42,6 +45,7 @@ export default function LeadsPage() {
   const [band, setBand] = useState<LeadQuery['band']>('all');
   const [overdue, setOverdue] = useState(false);
   const [tag, setTag] = useState<number | null>(null);
+  const [seller, setSeller] = useState<number | 'none' | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
@@ -53,6 +57,8 @@ export default function LeadsPage() {
     tag,
     search: useDebouncedValue(search.trim()),
     page,
+    // Absent unless chosen: the first page stays the one the route prefetched.
+    ...(seller === null ? {} : { seller }),
   };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
   const tagsOn = data?.supports.tags === true;
@@ -157,6 +163,21 @@ export default function LeadsPage() {
                   value: String(item.id),
                   label: item.active ? item.name : t('tags.archivedName', { name: item.name }),
                 })),
+              ]}
+            />
+          )}
+          {data?.sellers && data.sellers.length > 0 && (
+            <SelectField
+              inline
+              label={t('owner.filter')}
+              value={seller === null ? 'all' : String(seller)}
+              onChange={refilter((value: string) =>
+                setSeller(value === 'all' ? null : value === 'none' ? 'none' : Number(value)),
+              )}
+              options={[
+                { value: 'all', label: t('owner.all') },
+                { value: 'none', label: t('owner.unassigned') },
+                ...data.sellers.map((item) => ({ value: String(item.id), label: item.name })),
               ]}
             />
           )}

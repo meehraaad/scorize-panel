@@ -57,6 +57,13 @@
   "toman": "{{amount}} تومان",
   "percent": "{{n}}٪",
   "minutes": "{{n}} دقیقه",
+  "owner": {
+    "of": "فروشنده: {{name}}",
+    "none": "بدون فروشنده",
+    "filter": "فروشنده",
+    "all": "همه‌ی فروشنده‌ها",
+    "unassigned": "بدون فروشنده"
+  },
   "due": {
     "now": "الان",
     "overdue": "{{n}} روز عقب‌افتاده",
@@ -353,7 +360,6 @@
     "seller": "فروشنده",
     "allSellers": "همه‌ی فروشنده‌ها",
     "editStages": "مرحله‌ها",
-    "sellerOf": "فروشنده: {{name}}",
     "maxDays": "حداکثر {{n}} روز",
     "activities": "فعالیت‌های این مرحله",
     "activity": {

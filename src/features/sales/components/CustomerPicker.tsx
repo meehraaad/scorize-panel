@@ -6,6 +6,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { formatPhone } from '@/lib/site';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { firstLeadQuery, leadSearchQuery, leadsQuery, type LeadMatch } from '../api';
+import { OwnerTag } from './OwnerTag';
 
 /** Leads a follow-up can be set on (the server skips the rest). */
 const OPEN = new Set(['new', 'contacted', 'consulted', 'offer']);
@@ -54,6 +55,7 @@ export function CustomerPicker({
             phone: row.phone,
             stage: row.stage,
             follow_up_at: row.follow_up_at,
+            ...(row.seller === undefined ? {} : { seller: row.seller }),
           }))
   ).slice(0, SHOWN);
   const typing = typed.replace(/\s/g, '').length >= MIN_LETTERS;
@@ -164,7 +166,10 @@ export function CustomerPicker({
   function Match({ row }: { row: LeadMatch }) {
     return (
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[15px] font-semibold">{row.name}</span>
+        <span className="flex flex-wrap items-center gap-x-2">
+          <span className="text-[15px] font-semibold">{row.name}</span>
+          <OwnerTag seller={row.seller} />
+        </span>
         <span className="text-xs text-text-2">
           {[
             row.phone && <bdi key="phone">{formatPhone(row.phone)}</bdi>,

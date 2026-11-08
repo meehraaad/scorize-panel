@@ -57,6 +57,13 @@
   "toman": "{{amount}} toman",
   "percent": "{{n}}%",
   "minutes": "{{n}} minutes",
+  "owner": {
+    "of": "Seller: {{name}}",
+    "none": "No seller",
+    "filter": "Seller",
+    "all": "All sellers",
+    "unassigned": "No seller yet"
+  },
   "due": {
     "now": "Now",
     "overdue": "{{n}} days overdue",
@@ -353,7 +360,6 @@
     "seller": "Seller",
     "allSellers": "All sellers",
     "editStages": "Stages",
-    "sellerOf": "Seller: {{name}}",
     "maxDays": "Up to {{n}} days",
     "activities": "Activities of this stage",
     "activity": {

@@ -163,7 +163,13 @@ export function dayAgendaOf(day: SellerCalendar): Agenda {
       key: `consultation-${String(consultation.id)}`,
       at,
       end: at + (consultation.minutes ?? DEFAULT_MINUTES) * MINUTE,
-      consultation: { ...consultation, type: typeName.get(consultation.type) ?? '', meeting_url: null },
+      consultation: {
+        ...consultation,
+        type: typeName.get(consultation.type) ?? '',
+        meeting_url: null,
+        // Someone else's on a manager's day: whose ('' nobody's).
+        seller: consultation.mine ? null : (consultation.seller ?? ''),
+      },
     });
   }
   timed.sort((a, b) => (a.at ?? 0) - (b.at ?? 0) || a.key.localeCompare(b.key));

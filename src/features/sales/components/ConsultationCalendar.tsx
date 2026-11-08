@@ -29,6 +29,7 @@ import {
   type Status,
 } from '../consultationStatus';
 import { EventDetails, StartAction } from './EventDetails';
+import { useSalesFormat } from '../format';
 import { FollowUpDialog } from './FollowUpDialog';
 import { TaskBrief } from './TaskBrief';
 
@@ -68,6 +69,7 @@ const MODES: readonly ModeFilter[] = ['all', 'online', 'in_person'];
 export function ConsultationCalendar() {
   const { t } = useTranslation('sales');
   const f = useFormat();
+  const s = useSalesFormat();
   const cal = useCalendar();
   const startDay = weekStart(cal.kind);
   const [now] = useState(() => new Date());
@@ -162,7 +164,10 @@ export function ConsultationCalendar() {
     }),
     ...calls.map((item) => {
       const start = new Date(item.follow_up_at);
-      const meta = `${f.time(start)} · ${t('consultationCalendar.followUp')}`;
+      // A manager's calendar says whose call it is.
+      const meta = [f.time(start), t('consultationCalendar.followUp'), s.owner(item.seller)]
+        .filter(Boolean)
+        .join(' · ');
       return {
         id: `l${String(item.lead)}`,
         start,
