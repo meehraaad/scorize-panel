@@ -28,6 +28,18 @@ import { LeadImportDialog } from './LeadImportDialog';
 import { toast } from '@/lib/toast';
 
 const MODES = ['round_robin', 'least_load', 'match'] as const satisfies readonly AssignMode[];
+/** Working-hour choices, every half hour. */
+const HOURS = Array.from(
+  { length: 48 },
+  (_, n) => `${String(Math.floor(n / 2)).padStart(2, '0')}:${n % 2 ? '30' : '00'}`,
+);
+const ANY_TIME = 'any';
+/** How long a new lead may wait for its first call, in minutes. */
+const WAITS = [15, 30, 60, 120, 240, 1440, 2880, 4320, 10080];
+const HOUR = 60;
+const DAY = 24 * HOUR;
+const DAY_START = '09:00';
+const DAY_END = '21:00';
 const ESCALATIONS = ['alert', 'next', 'both'] as const satisfies readonly Escalation[];
 /** Open leads that fill a seller's bar. */
 const FULL_LOAD = 20;
@@ -141,6 +153,7 @@ export default function AssignPage() {
 
 function AutoCard({ settings }: { settings: AssignSettings }) {
   const { t } = useTranslation('sales');
+  const f = useFormat();
   const save = useAssignSettings();
   const [form, setForm] = useState(settings);
   const update = (change: Partial<AssignSettings>) => {
@@ -183,6 +196,22 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
             }))}
           />
           <SelectField
+            label={t('manager.assign.wait')}
+            value={String(form.escalate_after)}
+            onChange={(value) => update({ escalate_after: Number(value) })}
+            options={[...new Set([...WAITS, form.escalate_after])]
+              .sort((a, b) => a - b)
+              .map((minutes) => ({
+                value: String(minutes),
+                label:
+                  minutes % DAY === 0
+                    ? t('manager.assign.waitDays', { n: f.number(minutes / DAY) })
+                    : minutes % HOUR === 0
+                      ? t('manager.assign.waitHours', { n: f.number(minutes / HOUR) })
+                      : t('manager.assign.waitMinutes', { n: f.number(minutes) }),
+              }))}
+          />
+          <SelectField
             label={t('manager.assign.escalation')}
             value={form.escalation}
             onChange={(escalation) => update({ escalation })}
@@ -191,7 +220,47 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
               label: t(`manager.assign.escalationOption.${value}`),
             }))}
           />
+          <SelectField
+            label={t('manager.assign.dayStart')}
+            value={form.day_start ?? ANY_TIME}
+            onChange={(value) =>
+              update(
+                value === ANY_TIME
+                  ? { day_start: null, day_end: null }
+                  : {
+                      day_start: value,
+                      day_end:
+                        form.day_end && form.day_end !== value
+                          ? form.day_end
+                          : value === DAY_END
+                            ? DAY_START
+                            : DAY_END,
+                    },
+              )
+            }
+            options={[
+              { value: ANY_TIME, label: t('manager.assign.anyTime') },
+              ...HOURS.map((value) => ({ value, label: f.digits(value) })),
+            ]}
+          />
+          {form.day_start !== null && (
+            <SelectField
+              label={t('manager.assign.dayEnd')}
+              value={form.day_end ?? DAY_END}
+              onChange={(value) => update({ day_end: value })}
+              options={HOURS.filter((value) => value !== form.day_start).map((value) => ({
+                value,
+                label: f.digits(value),
+              }))}
+            />
+          )}
         </div>
+      )}
+      {form.on && (
+        <span className="text-sm leading-6 text-text-2">
+          {t('manager.assign.waitText')}
+          {form.day_start !== null && ` ${t('manager.assign.hoursText')}`}
+        </span>
       )}
     </Card>
   );

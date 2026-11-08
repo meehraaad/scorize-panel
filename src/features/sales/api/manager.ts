@@ -18,6 +18,16 @@ export interface AssignSettings {
   mode: AssignMode;
   /** What happens when a lead isn't called within the team goal. */
   escalation: Escalation;
+  /**
+   * The team's working hours (`HH:MM`, Tehran); both null: any time. Outside them new leads wait in
+   * the queue (handed out when the day starts) and nothing escalates.
+   */
+  day_start: string | null;
+  day_end: string | null;
+  /**
+   * Minutes a new lead waits for its first call; then it escalates and leaves Today's hot leads.
+   */
+  escalate_after: number;
 }
 
 export interface SellerLoad {

@@ -46,7 +46,14 @@ const OMID = 33;
 const KAVEH = 34;
 
 const managerState = (): ManagerState => ({
-  settings: { on: true, mode: 'least_load', escalation: 'alert' },
+  settings: {
+    on: true,
+    mode: 'least_load',
+    escalation: 'alert',
+    day_start: null,
+    day_end: null,
+    escalate_after: 2880,
+  },
   queue: [
     {
       lead: 901,
