@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { FaceMark } from '@/components/customers/CustomerFace';
 import { Icon } from '@/components/ui/Icon';
+import type { Face } from '@/lib/face/api';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { callDuration, callSeconds, type ObservedCall } from '@/lib/sales/phoneCalls';
 import { initialOf } from '@/lib/text';
@@ -25,6 +27,7 @@ const LABEL = {
  * page), the call's state with the stage, how long, and a minimize button. Dark while the call is
  * live; light once it ends (with "not logged yet" while the form is still open). Without a `call`
  * (a log opened by hand) the state line says `label`; `titleLabel` then names the popup.
+ * `face`: the customer's emoji and color (S66) in place of the first letter, when the team set one.
  * `children`: what we know about the customer, under the row (the brief and the profile chips).
  */
 export function CallStrip({
@@ -34,6 +37,7 @@ export function CallStrip({
   titleLabel,
   titleId,
   name,
+  face,
   href,
   chips = [],
   notLogged = false,
@@ -50,6 +54,7 @@ export function CallStrip({
   titleLabel?: string | undefined;
   titleId: string;
   name?: string | undefined;
+  face?: Face | null | undefined;
   href?: string | undefined;
   /** Short facts after the state (stage, score). */
   chips?: readonly string[];
@@ -90,14 +95,22 @@ export function CallStrip({
       className={`flex flex-col gap-3 px-5 pt-3.5 pb-4 ${over ? 'bg-board text-text' : 'bg-hero text-on-hero'}`}
     >
       <div className="flex items-center gap-3">
-        {name && (
-          <span
-            aria-hidden="true"
-            className={`inline-flex size-10 flex-none items-center justify-center rounded-full font-bold ${over ? 'bg-surface text-text-2' : 'bg-hero-accent text-hero'}`}
-          >
-            {initialOf(name)}
-          </span>
-        )}
+        {name &&
+          (face ? (
+            <FaceMark
+              name={name}
+              face={face}
+              className="size-10 rounded-full"
+              plain={over ? 'bg-surface text-text-2' : 'bg-hero-accent text-hero'}
+            />
+          ) : (
+            <span
+              aria-hidden="true"
+              className={`inline-flex size-10 flex-none items-center justify-center rounded-full font-bold ${over ? 'bg-surface text-text-2' : 'bg-hero-accent text-hero'}`}
+            >
+              {initialOf(name)}
+            </span>
+          ))}
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <h2
             id={titleId}

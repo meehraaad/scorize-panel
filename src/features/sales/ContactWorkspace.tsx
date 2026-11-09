@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { FaceDot } from '@/components/customers/FaceDot';
 import { Button } from '@/components/ui/Button';
 import { FloatingPanel } from '@/components/ui/FloatingPanel';
 import { Icon } from '@/components/ui/Icon';
@@ -53,6 +54,7 @@ export default function ContactWorkspace() {
                   className={`size-2.5 flex-none rounded-full ${live ? 'bg-live' : 'bg-warn'}`}
                 />
                 <Icon name={draft.start.channel === 'meeting' ? 'calendar' : 'phone'} size={18} />
+                <DraftFace draft={draft} />
                 <span className="truncate">
                   {live ? draft.name : t('contactDraft.unsaved', { name: draft.name })}
                 </span>
@@ -90,6 +92,12 @@ export default function ContactWorkspace() {
       </aside>
     </>
   );
+}
+
+/** The customer's emoji beside their name on a minimized popup; the open form already loaded them. */
+function DraftFace({ draft }: { draft: ContactDraft }) {
+  const customer = useQuery(customerQuery(draft.customer));
+  return <FaceDot name={draft.name} face={customer.data?.face} size="sm" />;
 }
 
 function ContactForm({ draft, active }: { draft: ContactDraft; active: boolean }) {

@@ -408,6 +408,7 @@ export function LogDialog({
                 call={liveCall}
                 titleId={titleId}
                 name={customer.name}
+                face={customer.face}
                 href={customerPath(customer.id)}
                 chips={chips}
                 notLogged
@@ -426,6 +427,7 @@ export function LogDialog({
                   titleLabel={t('customer.logDialog.title', { name: customer.name })}
                   titleId={titleId}
                   name={customer.name}
+                  face={customer.face}
                   href={customerPath(customer.id)}
                   chips={chips}
                   closeLabel={t('contactDraft.minimize')}
