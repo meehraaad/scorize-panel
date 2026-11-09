@@ -6,7 +6,9 @@ import type {
   AssignSettings,
   ClauseChange,
   ClauseEdit,
+  ContractBuilder,
   ContractDraft,
+  TextVersion,
   DraftTerm,
   FunnelData,
   HealthData,
@@ -152,6 +154,78 @@ const managerState = (): ManagerState => ({
 });
 
 let manager: ManagerState | null = null;
+let builder: ContractBuilder | null = null;
+
+/** Django's contract builder (S64): the standard clauses, the price list and the offer's rules. */
+const builderState = (): ContractBuilder => ({
+  clauses: STANDARD_CLAUSES.map((clause) => ({
+    ...clause,
+    is_active: true,
+    updated_at: ago(30 * 24 * HOUR),
+  })),
+  prices: [
+    { feature: 'admission', price: 70_000_000, is_active: true },
+    { feature: 'visa', price: 40_000_000, is_active: true },
+    { feature: 'writing', price: 25_000_000, is_active: true },
+  ],
+  rules: {
+    approval_above: 10,
+    discounts: [0, 5, 10, 15],
+    durations: [6, 12, 18],
+    max_instalments: 4,
+    min_prepayment: 30,
+    max_applies: 30,
+  },
+  versions: [],
+});
+
+/** Django's `changes`: what a version changed from the one before. */
+function textChanges(
+  before: ContractBuilder['clauses'],
+  after: ContractBuilder['clauses'],
+): TextVersion['changes'] {
+  const rows: TextVersion['changes'] = [];
+  for (const clause of after) {
+    const was = before.find((item) => item.id === clause.id);
+    if (!was) rows.push({ kind: 'added', title: clause.title, text: clause.text, before: null });
+    else if (was.title !== clause.title || was.text !== clause.text)
+      rows.push({ kind: 'changed', title: clause.title, text: clause.text, before: was.text });
+    else if (was.locked !== clause.locked)
+      rows.push({
+        kind: clause.locked ? 'locked' : 'unlocked',
+        title: clause.title,
+        text: clause.text,
+        before: null,
+      });
+  }
+  for (const clause of before)
+    if (!after.some((item) => item.id === clause.id))
+      rows.push({ kind: 'removed', title: clause.title, text: clause.text, before: null });
+  return rows;
+}
+
+/** Keeps the text after a change as a new version (the first change also keeps the text before). */
+function keepVersion(state: ContractBuilder, before: ContractBuilder['clauses'], note: string) {
+  const active = state.clauses.filter((clause) => clause.is_active);
+  const last = state.versions[0];
+  if (!last)
+    state.versions.unshift({
+      number: 1,
+      created_at: new Date().toISOString(),
+      note: '',
+      author: '',
+      clauses: before.length,
+      changes: [],
+    });
+  state.versions.unshift({
+    number: (state.versions[0]?.number ?? 0) + 1,
+    created_at: new Date().toISOString(),
+    note,
+    author: 'رضا کریمی',
+    clauses: active.length,
+    changes: textChanges(before, active),
+  });
+}
 
 /** The commission rules (S60) in force this month, as api/sales/v1/commission.py lists them. */
 const freshRules = (): CommissionRule[] => [
@@ -369,6 +443,31 @@ function clauseChanges(edits: ClauseEdit[], reviewed: ClauseEdit[] | undefined):
   });
 }
 
+/** Django's `figures_of`, held to the builder's rules. */
+function figuresOf(
+  amount: number,
+  discount: number,
+  schedule?: number[],
+): ContractDraft['figures'] {
+  const rules = (builder ?? builderState()).rules;
+  const rows = schedule?.length
+    ? schedule
+    : // Like the terms the list shows: 40% at signing, then two halves.
+      [0.4, 0.3, 0.3].map((share) => Math.round(amount * share));
+  const first = rows[0] ?? 0;
+  return {
+    list_price: Math.round((amount * 100) / (100 - discount)),
+    amount,
+    discount,
+    approval_above: rules.approval_above,
+    prepayment: first,
+    prepayment_percent: amount ? Math.floor((first * 100) / amount) : 100,
+    min_prepayment: rules.min_prepayment,
+    instalments: rows.length,
+    max_instalments: rules.max_instalments,
+  };
+}
+
 function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
   const fromLeads = sales.customers
     .filter((item) => item.lead.stage === 'draft' && !state.decided.has(item.lead.id))
@@ -409,6 +508,17 @@ function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
         clauses: clauseChanges(offer?.clauses ?? [], state.reviewed.get(item.lead.id)?.clauses),
         standard_clauses: STANDARD_CLAUSES.length,
         resubmitted: state.reviewed.has(item.lead.id),
+        figures: figuresOf(
+          item.lead.amount ?? 0,
+          discount,
+          offer?.schedule.map((row) => row.amount),
+        ),
+        parties: [
+          { party: 'seller', name: 'نیما رستمی', agreed_at: item.lead.stage_since },
+          { party: 'consultant', name: 'کاوه احمدی', agreed_at: item.lead.stage_since },
+          { party: 'manager', name: '', agreed_at: null },
+          { party: 'customer', name: item.name, agreed_at: null },
+        ],
       };
     });
   return fromLeads;
@@ -769,6 +879,110 @@ export const managerHandlers = [
     return HttpResponse.json({ created, new_customers: customers });
   }),
 
+  http.get(`${BASE}/contract/`, () => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    builder ??= builderState();
+    return HttpResponse.json(builder);
+  }),
+
+  http.post(`${BASE}/contract/clauses/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = (builder ??= builderState());
+    const body = (await request.json()) as { title: string; text: string; locked?: boolean };
+    if (!body.title.trim() || !body.text.trim())
+      return HttpResponse.json({ title: ['required'] }, { status: 400 });
+    const before = state.clauses.filter((clause) => clause.is_active);
+    const id = Math.max(0, ...state.clauses.map((clause) => clause.id)) + 1;
+    state.clauses = [
+      ...before,
+      {
+        id,
+        title: body.title.trim(),
+        text: body.text.trim(),
+        locked: body.locked ?? false,
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      },
+      ...state.clauses.filter((clause) => !clause.is_active),
+    ];
+    keepVersion(state, before, `بند «${body.title.trim()}» اضافه شد`);
+    return HttpResponse.json({ id }, { status: 201 });
+  }),
+
+  http.put(`${BASE}/contract/clauses/order/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = (builder ??= builderState());
+    const { ids } = (await request.json()) as { ids: number[] };
+    const before = state.clauses.filter((clause) => clause.is_active);
+    if (ids.length !== before.length || before.some((clause) => !ids.includes(clause.id)))
+      return HttpResponse.json({ ids: ['invalid'] }, { status: 400 });
+    state.clauses = [
+      ...ids.flatMap((id) => before.filter((clause) => clause.id === id)),
+      ...state.clauses.filter((clause) => !clause.is_active),
+    ];
+    keepVersion(state, before, 'ترتیب بندها عوض شد');
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.patch(`${BASE}/contract/clauses/:id/`, async ({ params, request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = (builder ??= builderState());
+    const clause = state.clauses.find((item) => item.id === Number(params.id));
+    if (!clause) return notFound();
+    const body = (await request.json()) as Partial<ContractBuilder['clauses'][number]>;
+    const before = state.clauses.filter((item) => item.is_active).map((item) => ({ ...item }));
+    Object.assign(clause, body, { updated_at: new Date().toISOString() });
+    // Taken out: after the active ones; back: at the end of the contract.
+    state.clauses = [
+      ...state.clauses.filter((item) => item.is_active && item !== clause),
+      ...(clause.is_active ? [clause] : []),
+      ...state.clauses.filter((item) => !item.is_active),
+    ];
+    if (body.is_active === undefined) {
+      const index = before.findIndex((item) => item.id === clause.id);
+      const active = state.clauses.filter((item) => item.is_active && item !== clause);
+      active.splice(index, 0, clause);
+      state.clauses = [...active, ...state.clauses.filter((item) => !item.is_active)];
+    }
+    const note =
+      body.is_active === false
+        ? `بند «${clause.title}» برداشته شد`
+        : body.is_active
+          ? `بند «${clause.title}» برگشت`
+          : `بند «${clause.title}» تغییر کرد`;
+    keepVersion(state, before, note);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put(`${BASE}/contract/prices/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = (builder ??= builderState());
+    const { prices } = (await request.json()) as { prices: ContractBuilder['prices'] };
+    state.prices = state.prices.map((row) => {
+      const next = prices.find((item) => item.feature === row.feature);
+      return next ? { ...next, is_active: next.is_active && !!next.price } : row;
+    });
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put(`${BASE}/contract/rules/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = (builder ??= builderState());
+    const rules = (await request.json()) as ContractBuilder['rules'];
+    state.rules = {
+      ...rules,
+      discounts: [...new Set([0, ...rules.discounts])].sort((a, b) => a - b),
+      durations: [...new Set(rules.durations)].sort((a, b) => a - b),
+    };
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get(`${BASE}/approvals/`, () => {
     const data = managerOrError();
     if (data instanceof Response) return data;
@@ -973,6 +1187,7 @@ export const managerHandlers = [
 export function resetManagerMocks() {
   movedLeads.clear();
   manager = null;
+  builder = null;
   commissionRules = freshRules();
   nextRule = 10;
   KNOWN_PHONES = knownPhones();

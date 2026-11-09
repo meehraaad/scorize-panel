@@ -8,6 +8,7 @@ import { salesPath } from '../paths';
 const SECTIONS = [
   { id: 'assign', to: 'manager' },
   { id: 'approvals', to: 'manager/approvals' },
+  { id: 'contract', to: 'manager/contract' },
   { id: 'team', to: 'manager/team' },
   { id: 'commission', to: 'manager/commission' },
   { id: 'followUps', to: 'manager/follow-ups' },
@@ -16,8 +17,8 @@ const SECTIONS = [
 ] as const;
 
 /**
- * The sales manager's section: lead assignment, contract approvals, team report, commission rules,
- * follow-ups, board stages, customer tags.
+ * The sales manager's section: lead assignment, the agreement desk, the contract builder, team
+ * report, commission rules, follow-ups, board stages, customer tags.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');

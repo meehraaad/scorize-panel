@@ -85,6 +85,8 @@ export function ClauseEditor({
           const removed = row.edit?.removed ?? false;
           const name = edit.title || t('offer.clauses.untitled', { n: f.number(index + 1) });
           const open = editing === row.key;
+          // A fixed clause (S64) stays as the manager wrote it.
+          const locked = row.base?.locked ?? false;
           return (
             <li
               key={row.key}
@@ -94,6 +96,11 @@ export function ClauseEditor({
                 <span className={`text-sm font-bold ${removed ? 'text-text-2 line-through' : ''}`}>
                   {f.number(index + 1)}. {name}
                 </span>
+                {locked && (
+                  <Chip tone="neutral" small>
+                    {t('offer.clauses.locked')}
+                  </Chip>
+                )}
                 {row.edit && (
                   <Chip tone={removed ? 'danger' : 'warn'} small>
                     {t(
@@ -125,42 +132,44 @@ export function ClauseEditor({
                 </p>
               )}
 
-              <div className="flex flex-wrap gap-2">
-                {!removed && (
-                  <Button
-                    variant="outline"
-                    aria-expanded={open}
-                    onClick={() => setEditing(open ? null : row.key)}
-                  >
-                    {open ? t('offer.clauses.done') : t('offer.clauses.edit', { name })}
-                  </Button>
-                )}
-                {row.base && row.edit && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      update(row, null);
-                      setEditing(null);
-                    }}
-                  >
-                    {t('offer.clauses.restore', { name: row.base.title })}
-                  </Button>
-                )}
-                {!removed && (
-                  <Button
-                    variant="danger"
-                    onClick={() => {
-                      update(
-                        row,
-                        row.base ? { ...editOf({ ...row, edit: null }), removed: true } : null,
-                      );
-                      setEditing(null);
-                    }}
-                  >
-                    {t('offer.clauses.remove', { name })}
-                  </Button>
-                )}
-              </div>
+              {!locked && (
+                <div className="flex flex-wrap gap-2">
+                  {!removed && (
+                    <Button
+                      variant="outline"
+                      aria-expanded={open}
+                      onClick={() => setEditing(open ? null : row.key)}
+                    >
+                      {open ? t('offer.clauses.done') : t('offer.clauses.edit', { name })}
+                    </Button>
+                  )}
+                  {row.base && row.edit && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        update(row, null);
+                        setEditing(null);
+                      }}
+                    >
+                      {t('offer.clauses.restore', { name: row.base.title })}
+                    </Button>
+                  )}
+                  {!removed && (
+                    <Button
+                      variant="danger"
+                      onClick={() => {
+                        update(
+                          row,
+                          row.base ? { ...editOf({ ...row, edit: null }), removed: true } : null,
+                        );
+                        setEditing(null);
+                      }}
+                    >
+                      {t('offer.clauses.remove', { name })}
+                    </Button>
+                  )}
+                </div>
+              )}
             </li>
           );
         })}

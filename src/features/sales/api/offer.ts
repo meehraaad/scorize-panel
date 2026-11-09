@@ -15,6 +15,9 @@ export interface OfferOptions {
   /** Percent; above `approval_above` the manager must approve before the customer sees it. */
   discounts: number[];
   approval_above: number;
+  /** Percent of the amount at signing; less needs the manager (S64). */
+  min_prepayment: number;
+  max_applies: number;
   /** Instalment counts to start from; the seller can add or remove rows. */
   instalments: number[];
   /** The standard contract, in order. */
@@ -49,6 +52,8 @@ export interface StandardClause {
   id: number;
   title: string;
   text: string;
+  /** A fixed clause (S64): the seller can't change or remove it. */
+  locked: boolean;
 }
 
 /**
