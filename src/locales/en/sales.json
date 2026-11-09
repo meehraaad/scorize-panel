@@ -1563,7 +1563,7 @@
           "sales": "{{n}} of sales or more in a month: {{percent}}% of the month's sales"
         },
         "tiered": {
-          "contracts": "From {{n}} contracts up: {{percent}}%",
+          "contracts": "From contract {{n}} on: {{percent}}% on each contract",
           "sales": "From {{n}} of sales up: {{percent}}% of that part of the sales"
         },
         "bonus": {
@@ -1598,7 +1598,7 @@
       },
       "rewardHint": {
         "percent": "The highest step reached counts, on all the month's sales.",
-        "tiered": "Like tax brackets: only the part of the sales above this step earns this percent, up to the next step.",
+        "tiered": "Like tax brackets. By sales: only the part of the sales above this step earns this percent, up to the next step. By contracts: each contract earns its own step's percent (say contracts 1–4 at 2%, from 5 on at 3%), on the month's average contract.",
         "bonus": "Once a month on reaching the step. The highest bonus reached counts.",
         "per_contract": "For every contract of the month once the step is reached. The highest amount reached counts."
       },
