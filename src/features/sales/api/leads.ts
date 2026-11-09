@@ -136,6 +136,50 @@ export const leadSearchQuery = (typed: string) =>
     placeholderData: keepPreviousData,
   });
 
+/** Whether the seller may open a found customer, take them, or they are another seller's (S63). */
+export type CustomerAccess = 'mine' | 'free' | 'other';
+
+/** Anyone with an account, found by name, email or phone (S63), like the old CRM's search. */
+export interface CustomerMatch {
+  customer: number;
+  name: string;
+  phone: string;
+  email: string;
+  access: CustomerAccess;
+  /** With `other`: whose they are. */
+  seller: string | null;
+  /** Their open lead's stage, if any. */
+  stage: LeadStage | null;
+}
+
+/** Up to 10 active users matching what the seller typed, the seller's or not, best first (S63). */
+export const customerSearchQuery = (typed: string) =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'customer-search', typed],
+    queryFn: ({ signal }) =>
+      api<{ results: CustomerMatch[] }>(
+        `${SALES_API}/customers/search/?${new URLSearchParams({ q: typed }).toString()}`,
+        { signal },
+      ),
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+
+/**
+ * A found customer nobody has made the seller's (S63). Another seller's answers 409 with
+ * `{code: 'other_seller', seller}`.
+ */
+export function useTakeCustomer() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (customer: number) =>
+      api<{ customer: number }>(`${SALES_API}/customers/${String(customer)}/take/`, {
+        method: 'POST',
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
 export const leadsQuery = (query: LeadQuery) =>
   queryOptions({
     queryKey: [...SALES_KEY, 'leads', query],

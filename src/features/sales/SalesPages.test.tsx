@@ -149,6 +149,81 @@ describe('sales panel, seller pages', () => {
     expect(router.state.location.pathname).toMatch(/^\/sales\/customers\/\d+$/);
   });
 
+  it('leads: searches every customer, opens mine, takes a free one, names another seller', async () => {
+    let taken: string | null = null;
+    server.use(
+      http.get('/api/sales/v1/customers/search/', ({ request }) => {
+        const q = new URL(request.url).searchParams.get('q');
+        if (q === 'هیچ') return HttpResponse.json({ results: [] });
+        return HttpResponse.json({
+          results: [
+            {
+              customer: ERFAN,
+              name: 'عرفان ملکی',
+              phone: '09120000105',
+              email: '',
+              access: 'mine',
+              seller: null,
+              stage: 'consulted',
+            },
+            {
+              customer: 777,
+              name: 'مینا آزاد',
+              phone: '09127770000',
+              email: 'mina@example.com',
+              access: 'free',
+              seller: null,
+              stage: null,
+            },
+            {
+              customer: 778,
+              name: 'مینا دیگری',
+              phone: '',
+              email: '',
+              access: 'other',
+              seller: 'سارا',
+              stage: 'new',
+            },
+          ],
+        });
+      }),
+      http.post('/api/sales/v1/customers/:id/take/', ({ params }) => {
+        taken = String(params.id);
+        return HttpResponse.json({ customer: Number(params.id) });
+      }),
+    );
+    const user = userEvent.setup();
+    const router = renderApp('/sales/leads');
+    await user.click(await screen.findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
+    const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
+    await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'هیچ');
+    expect(await within(dialog).findByText('کسی با این مشخصات پیدا نشد.')).toBeInTheDocument();
+    await user.clear(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }));
+    await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'مینا');
+    const results = await within(dialog).findByRole('list', { name: 'مشتری‌های پیدا شده' });
+    expect(within(results).getByRole('link', { name: 'باز کردن صفحه' })).toHaveAttribute(
+      'href',
+      `/sales/customers/${String(ERFAN)}`,
+    );
+    expect(within(results).getByText('مشتریِ سارا')).toBeInTheDocument();
+    await user.click(within(results).getByRole('button', { name: 'برداشتن مشتری' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/sales/customers/777'));
+    expect(taken).toBe('777');
+    expect(await toasts().findByText('مینا آزاد به مشتری‌های شما اضافه شد.')).toBeInTheDocument();
+  });
+
+  it('leads: nobody found in every customer offers a new lead', async () => {
+    server.use(
+      http.get('/api/sales/v1/customers/search/', () => HttpResponse.json({ results: [] })),
+    );
+    const user = userEvent.setup();
+    renderApp('/sales/leads?find=1');
+    const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
+    await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'کسی نیست');
+    await user.click(await within(dialog).findByRole('button', { name: 'ثبت به‌عنوان لید تازه' }));
+    expect(await screen.findByRole('dialog', { name: 'ثبت لید دستی' })).toBeInTheDocument();
+  });
+
   it('customer: logs an unanswered call; the history shows it and a follow-up is set', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}?log=call`);
