@@ -183,15 +183,15 @@ function Composer({ url, name }: { url: string; name: string }) {
               {f.number(MAX_NOTE - text.length)}
             </span>
           )}
-          <Button
+          <IconButton
             type="submit"
+            icon="send"
+            tone="primary"
+            iconSize={18}
             disabled={!ready}
             aria-label={t('add')}
             title={t('add')}
-            className="relative size-10 px-0 before:absolute before:-inset-0.5 disabled:bg-track disabled:text-text-2 disabled:opacity-100"
-          >
-            <Icon name="send" size={18} />
-          </Button>
+          />
         </span>
       </div>
     </form>
