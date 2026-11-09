@@ -389,21 +389,36 @@ export function LogDialog({
       onClose={onClose}
       wide
       hero={
-        liveCall &&
-        ((titleId) => (
-          <CallStrip
-            call={liveCall}
-            titleId={titleId}
-            name={customer.name}
-            href={customerPath(customer.id)}
-            chips={chips}
-            notLogged
-            closeLabel={t('contactDraft.minimize')}
-            onClose={onClose}
-          />
-        ))
+        liveCall
+          ? (titleId) => (
+              <CallStrip
+                call={liveCall}
+                titleId={titleId}
+                name={customer.name}
+                href={customerPath(customer.id)}
+                chips={chips}
+                notLogged
+                closeLabel={t('contactDraft.minimize')}
+                onClose={onClose}
+              />
+            )
+          : session
+            ? undefined
+            : (titleId) => (
+                <CallStrip
+                  phone={customer.phone}
+                  label={t('customer.logDialog.stripLabel')}
+                  titleLabel={t('customer.logDialog.title', { name: customer.name })}
+                  titleId={titleId}
+                  name={customer.name}
+                  href={customerPath(customer.id)}
+                  chips={chips}
+                  closeLabel={t('contactDraft.minimize')}
+                  onClose={onClose}
+                />
+              )
       }
-      icon={liveCall ? undefined : session ? 'calendar' : channel === 'call' ? 'phone' : 'chat'}
+      icon={session ? 'calendar' : undefined}
       title={t(session ? 'customer.logDialog.meetingTitle' : 'customer.logDialog.title', {
         name: customer.name,
       })}
@@ -473,8 +488,8 @@ export function LogDialog({
             done={t(start.via === 'new' ? 'callStrip.created' : 'callStrip.found')}
           />
         )}
-        {liveCall && !start.via && customer.supports.call_brief && (
-          <CallBrief customer={customer.id} />
+        {!session && !start.via && customer.supports.call_brief && (
+          <CallBrief customer={customer.id} live={!!liveCall} />
         )}
         <fieldset disabled={log.isPending} className="contents">
           {session

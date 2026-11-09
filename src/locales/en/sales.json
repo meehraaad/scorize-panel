@@ -554,6 +554,7 @@
       }
     },
     "logDialog": {
+      "stripLabel": "Log a contact",
       "title": "Log contact with {{name}}",
       "subtitle": "Lead: {{source}} · current stage: {{stage}}",
       "channel": "How?",
@@ -1909,6 +1910,7 @@
     "addCustomer": "Add customer"
   },
   "callBrief": {
+    "glance": "At a glance",
     "title": "Before you answer",
     "last": "Last time, {{when}}: “{{notes}}”",
     "lastNoNotes": "Last call: {{when}}",

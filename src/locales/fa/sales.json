@@ -554,6 +554,7 @@
       }
     },
     "logDialog": {
+      "stripLabel": "ثبت ارتباط",
       "title": "ثبت ارتباط با {{name}}",
       "subtitle": "لید: {{source}} · مرحله‌ی فعلی: {{stage}}",
       "channel": "از چه راهی؟",
@@ -1909,6 +1910,7 @@
     "addCustomer": "ثبت مشتری"
   },
   "callBrief": {
+    "glance": "در یک نگاه",
     "title": "پیش از جواب دادن",
     "last": "آخرین بار، {{when}}: «{{notes}}»",
     "lastNoNotes": "آخرین تماس: {{when}}",
