@@ -706,6 +706,12 @@
       "subtitle": "Instalments of your contracts due this month, and unpaid ones already past due.",
       "empty": "No instalments this month.",
       "due": "Due {{date}}"
+    },
+    "commissionStep": "{{percent}}% of sales",
+    "commissionStepNext": "{{step}} · {{next}}",
+    "commissionNext": {
+      "contracts": "{{n}} more contracts to {{percent}}%",
+      "sales": "{{n}} more sales to {{percent}}%"
     }
   },
   "consultations": {
@@ -1145,7 +1151,8 @@
       "team": "Team and lead sources",
       "followUps": "Follow-up health",
       "stages": "Board stages",
-      "tags": "Customer tags"
+      "tags": "Customer tags",
+      "commission": "Commission"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1250,7 +1257,8 @@
         "sales": "Sales",
         "conversion": "Conversion",
         "firstCall": "First call",
-        "overdue": "Overdue follow-ups"
+        "overdue": "Overdue follow-ups",
+        "commission": "Commission"
       },
       "ofTarget": "{{won}} of {{target}}",
       "alerts": "Needs your attention",
@@ -1292,7 +1300,8 @@
       },
       "targetUnset": "Target not set",
       "wonWithoutTarget": "{{won}} contracts · target not set",
-      "noSalesBaseline": "No sales in the previous period to calculate growth"
+      "noSalesBaseline": "No sales in the previous period to calculate growth",
+      "commissionUnset": "No rule"
     },
     "health": {
       "title": "{{n}} customers and files without a next step",
@@ -1513,6 +1522,44 @@
       "cancel": "Cancel",
       "moved": "Contract moved.",
       "empty": "No contract counts for this seller in this range."
+    },
+    "commission": {
+      "title": "Commission rules",
+      "subtitle": "Set the sellers' commission steps. Each seller earns the highest step they reach in a month: that percent of all their sales that month. Changes apply from this month; past months stay as they were.",
+      "new": "New rule",
+      "list": "This month's rules",
+      "empty": "No rules yet. For example: \"4 contracts in a month: 2%\" and \"8 contracts: 3%\".",
+      "everyone": "All sellers",
+      "seller": "For",
+      "basis": "Based on",
+      "basisName": {
+        "contracts": "Contracts in the month",
+        "sales": "Sales in the month"
+      },
+      "threshold": {
+        "contracts": "At least (contracts)",
+        "sales": "At least (million toman)"
+      },
+      "percent": "Commission percent",
+      "hint": "Enter the step and the percent.",
+      "rule": {
+        "contracts": "{{n}} contracts or more in a month: {{percent}}% of the month's sales",
+        "sales": "{{n}} of sales or more in a month: {{percent}}% of the month's sales"
+      },
+      "since": "Since {{month}}",
+      "add": "Add rule",
+      "added": "Rule added",
+      "save": "Save",
+      "saved": "Rule changed from this month",
+      "cancel": "Cancel",
+      "edit": "Edit \"{{rule}}\"",
+      "editForm": "Edit rule",
+      "delete": "Remove \"{{rule}}\"",
+      "deleteConfirm": "Remove this rule from this month on? Past months stay as they were.",
+      "deleteYes": "Remove",
+      "deleted": "Rule removed",
+      "thresholdError": "Enter a valid number (whole for contracts).",
+      "percentError": "Enter a percent above zero, up to 100."
     }
   },
   "handoff": {

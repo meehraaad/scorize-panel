@@ -37,6 +37,7 @@ const LEADERBOARD = [
   'conversion',
   'firstCall',
   'overdue',
+  'commission',
 ] as const;
 const SOURCE_COLUMNS = ['source', 'leads', 'won', 'rate', 'sales'] as const;
 /** A seller this slow to call, or with this many overdue follow-ups, is flagged. */
@@ -175,7 +176,7 @@ function Leaderboard({
   return (
     <SectionCard id="team-board" title={t('manager.team.leaderboard')}>
       <div className="relative overflow-x-auto pb-2">
-        <table className="w-full min-w-[760px] border-collapse text-sm">
+        <table className="w-full min-w-[860px] border-collapse text-sm">
           <thead>
             <tr className="text-[13px] text-text-2">
               {LEADERBOARD.map((column) => (
@@ -232,6 +233,11 @@ function Leaderboard({
                   className={`${cell} ${seller.overdue >= MANY_OVERDUE ? 'font-semibold text-urgent' : ''}`}
                 >
                   {f.number(seller.overdue)}
+                </td>
+                <td className={`${cell} tabular-nums`}>
+                  {seller.commission === null
+                    ? t('manager.team.commissionUnset')
+                    : s.millions(seller.commission)}
                 </td>
               </tr>
             ))}

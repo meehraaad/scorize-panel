@@ -9,14 +9,15 @@ const SECTIONS = [
   { id: 'assign', to: 'manager' },
   { id: 'approvals', to: 'manager/approvals' },
   { id: 'team', to: 'manager/team' },
+  { id: 'commission', to: 'manager/commission' },
   { id: 'followUps', to: 'manager/follow-ups' },
   { id: 'stages', to: 'manager/stages' },
   { id: 'tags', to: 'manager/tags' },
 ] as const;
 
 /**
- * The sales manager's section: lead assignment, contract approvals, team report, follow-ups, board
- * stages, customer tags.
+ * The sales manager's section: lead assignment, contract approvals, team report, commission rules,
+ * follow-ups, board stages, customer tags.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');

@@ -173,11 +173,29 @@ function Goal({ data }: { data: MonthData }) {
   const f = useFormat();
   const s = useSalesFormat();
   const share = data.target > 0 ? Math.min(1, data.won / data.target) : 0;
-  const tiles = [
+  /** "3% of sales · 60 million more to 4%" (S60): the step reached and, this month, the next one. */
+  const commissionNote = ({
+    commission_percent: percent,
+    commission_next: next,
+    current,
+  }: MonthData) => {
+    if (percent === null) return undefined;
+    const reached = t('month.commissionStep', { percent: f.number(percent) });
+    if (!current || !next) return reached;
+    return t('month.commissionStepNext', {
+      step: reached,
+      next: t(`month.commissionNext.${next.basis}`, {
+        n: next.basis === 'contracts' ? f.number(next.remaining) : s.millions(next.remaining),
+        percent: f.number(next.percent),
+      }),
+    });
+  };
+  const tiles: { label: string; value: string; note?: string | undefined }[] = [
     { label: t('month.sales'), value: s.millions(data.sales) },
     {
       label: t('month.commission'),
       value: data.commission === null ? t('month.commissionUnset') : s.millions(data.commission),
+      note: commissionNote(data),
     },
     { label: t('month.drafts'), value: f.number(data.drafts_waiting) },
     {
@@ -247,6 +265,7 @@ function Goal({ data }: { data: MonthData }) {
           >
             <dt className="text-xs text-on-hero-2">{tile.label}</dt>
             <dd className="m-0 text-lg font-bold">{tile.value}</dd>
+            {tile.note && <dd className="m-0 text-xs leading-5 text-on-hero-2">{tile.note}</dd>}
           </div>
         ))}
       </dl>

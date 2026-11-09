@@ -885,7 +885,10 @@ function monthOf(data: SalesState, month?: string): MonthData {
     elapsed: 0.74,
     working_days_left: 8,
     sales: 640_000_000,
-    commission: null,
+    // The team's steps (src/mocks/salesManager.ts): 8 contracts → 3%, so the next is 700 million → 4%.
+    commission: 19_200_000,
+    commission_percent: 3,
+    commission_next: { basis: 'sales', remaining: 60_000_000, percent: 4 },
     drafts_waiting: data.customers.filter((item) => item.lead.stage === 'draft').length,
     rank: { position: 2, of: 5 },
     funnel: { leads: 48, reached: 41, consulted: 18, offered: 12, won },

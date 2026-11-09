@@ -176,6 +176,8 @@ export interface TeamData {
     conversion: number;
     first_call_minutes: number | null;
     overdue: number;
+    /** Toman over the range from the commission rules (S60); null when no rule is set for them. */
+    commission: number | null;
   }[];
   alerts: TeamAlert[];
   sources: { source: LeadSource | 'referral'; leads: number; won: number; sales: number }[];
@@ -412,5 +414,66 @@ export function useApplyLeadImport() {
         body: options,
       }),
     onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
+/** What a commission step counts: closed contracts, or tomans of paid sales, in a month (S60). */
+export type CommissionBasis = 'contracts' | 'sales';
+
+/**
+ * A commission step: with at least `threshold` contracts (or tomans of sales) in a month, the
+ * seller earns `percent` of the month's sales. A seller earns the best step they reach.
+ */
+export interface CommissionRule {
+  id: number;
+  /** SupportStaff id; null: every seller. */
+  seller: number | null;
+  seller_name: string | null;
+  basis: CommissionBasis;
+  threshold: number;
+  percent: number;
+  /** First day of the month it applies from. */
+  since: string;
+}
+
+export interface CommissionRuleInput {
+  seller: number | null;
+  basis: CommissionBasis;
+  threshold: number;
+  percent: number;
+}
+
+export interface CommissionRules {
+  rules: CommissionRule[];
+  sellers: { id: number; name: string }[];
+}
+
+export const commissionQuery = queryOptions({
+  queryKey: [...MANAGER_KEY, 'commission'],
+  queryFn: ({ signal }) => api<CommissionRules>(`${MANAGER_API}/commission/`, { signal }),
+});
+
+/** Adds a rule, or changes one (`id`) from this month on; past months keep the rules they had. */
+export function useSaveCommissionRule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: CommissionRuleInput & { id?: number }) =>
+      api<CommissionRule>(
+        id === undefined
+          ? `${MANAGER_API}/commission/`
+          : `${MANAGER_API}/commission/${String(id)}/`,
+        { method: id === undefined ? 'POST' : 'PUT', body },
+      ),
+    // The team report's commissions change too.
+    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
+  });
+}
+
+export function useDeleteCommissionRule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      api(`${MANAGER_API}/commission/${String(id)}/`, { method: 'DELETE' }),
+    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
   });
 }

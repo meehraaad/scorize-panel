@@ -12,8 +12,12 @@ export interface MonthData {
   working_days_left: number;
   /** Toman. */
   sales: number;
-  /** Toman; null until a commission rate is set (S18). */
+  /** Toman; null until a commission rate or rule is set (S18, S60). */
   commission: number | null;
+  /** The commission step reached, in percent (0: none yet); null without rules. */
+  commission_percent: number | null;
+  /** The closest better step not reached yet: contracts or tomans still to go. */
+  commission_next: { basis: 'contracts' | 'sales'; remaining: number; percent: number } | null;
   drafts_waiting: number;
   rank: { position: number; of: number };
   funnel: { leads: number; reached: number; consulted: number; offered: number; won: number };

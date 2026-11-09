@@ -274,6 +274,78 @@ describe('sales manager section', () => {
   });
 });
 
+describe('commission rules (S60)', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('the manager adds a step for one seller, refuses a repeated one, changes and removes', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/commission');
+    expect(await screen.findByRole('heading', { name: 'قانون‌های پورسانت' })).toBeInTheDocument();
+    // Each change refetches the rules: find the groups again after it.
+    const group = (name: string) => screen.getByRole('region', { name });
+    expect(
+      within(group('همه‌ی فروشنده‌ها')).getByText('با ۴ قرارداد یا بیشتر در ماه: ۲٪ از فروش ماه'),
+    ).toBeInTheDocument();
+
+    const form = screen.getByRole('form', { name: 'قانون تازه' });
+    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '۴');
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '۵');
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    expect(
+      await within(form).findByText('There is already a rule for this step.'),
+    ).toBeInTheDocument();
+
+    await user.selectOptions(within(form).getByLabelText('برای'), '31');
+    await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
+    await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '900');
+    await user.clear(within(form).getByLabelText('درصد پورسانت'));
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '5');
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    expect(await toasts().findByText('قانون اضافه شد')).toBeInTheDocument();
+    expect(
+      within(await screen.findByRole('region', { name: 'مهدی توکلی' })).getByText(
+        /^با ۹۰۰ میلیون تومان فروش یا بیشتر/,
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(group('همه‌ی فروشنده‌ها')).getByRole('button', {
+        name: 'ویرایش «با ۴ قرارداد یا بیشتر در ماه: ۲٪ از فروش ماه»',
+      }),
+    );
+    const edit = within(group('همه‌ی فروشنده‌ها')).getByRole('form', { name: 'ویرایش قانون' });
+    await user.clear(within(edit).getByLabelText('درصد پورسانت'));
+    await user.type(within(edit).getByLabelText('درصد پورسانت'), '2.5');
+    await user.click(within(edit).getByRole('button', { name: 'ذخیره' }));
+    // The form shows the rule as typed: wait for it to close, then read the saved row.
+    expect(await toasts().findByText('قانون از این ماه عوض شد')).toBeInTheDocument();
+    await vi.waitFor(() => expect(edit).not.toBeInTheDocument());
+    expect(
+      within(group('همه‌ی فروشنده‌ها')).getByText('با ۴ قرارداد یا بیشتر در ماه: ۲٫۵٪ از فروش ماه'),
+    ).toBeInTheDocument();
+
+    await user.click(within(group('مهدی توکلی')).getByRole('button', { name: /^حذف/ }));
+    await user.click(within(group('مهدی توکلی')).getByRole('button', { name: 'بردار' }));
+    await vi.waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'مهدی توکلی' })).not.toBeInTheDocument(),
+    );
+  });
+
+  it("the team report shows each seller's commission", async () => {
+    loginAs(REZA);
+    renderApp('/sales/manager/team');
+    const board = await screen.findByRole('region', { name: 'رتبه‌بندی فروشنده‌ها' });
+    expect(within(board).getByRole('columnheader', { name: 'پورسانت' })).toBeInTheDocument();
+    // Mahdi: 9 contracts and 820 million reach the 700 million step (4%).
+    const mahdi = within(board).getByRole('row', { name: /مهدی توکلی/ });
+    expect(mahdi).toHaveTextContent('۳۲٫۸ میلیون تومان');
+  });
+});
+
 describe('board stages (S48)', () => {
   beforeEach(async () => {
     localStorage.clear();

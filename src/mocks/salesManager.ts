@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import type {
   AssignData,
+  CommissionRule,
+  CommissionRuleInput,
   AssignSettings,
   ContractDraft,
   FunnelData,
@@ -44,6 +46,13 @@ const MAHDI = 31;
 const SARA = 32;
 const OMID = 33;
 const KAVEH = 34;
+const SELLER_NAMES = new Map([
+  [MAHDI, 'مهدی توکلی'],
+  [NIMA, 'نیما رستمی'],
+  [SARA, 'سارا جهانی'],
+  [OMID, 'امید رنجبر'],
+  [KAVEH, 'کاوه نادری'],
+]);
 
 const managerState = (): ManagerState => ({
   settings: {
@@ -132,6 +141,71 @@ const managerState = (): ManagerState => ({
 });
 
 let manager: ManagerState | null = null;
+
+/** The commission rules (S60) in force this month, as api/sales/v1/commission.py lists them. */
+const freshRules = (): CommissionRule[] => [
+  {
+    id: 1,
+    seller: null,
+    seller_name: null,
+    basis: 'contracts',
+    threshold: 4,
+    percent: 2,
+    since: '2026-10-23',
+  },
+  {
+    id: 2,
+    seller: null,
+    seller_name: null,
+    basis: 'contracts',
+    threshold: 8,
+    percent: 3,
+    since: '2026-10-23',
+  },
+  {
+    id: 3,
+    seller: null,
+    seller_name: null,
+    basis: 'sales',
+    threshold: 700_000_000,
+    percent: 4,
+    since: '2026-10-23',
+  },
+];
+let commissionRules = freshRules();
+let nextRule = 10;
+
+/** The best step a seller reaches, as Django's `commission_of` (no fixed rate from a target here). */
+function commissionOf(seller: number, won: number, sales: number): number | null {
+  const mine = commissionRules.filter((rule) => rule.seller === null || rule.seller === seller);
+  if (mine.length === 0) return null;
+  const reached = mine.filter(
+    (rule) => (rule.basis === 'contracts' ? won : sales) >= rule.threshold,
+  );
+  const percent = Math.max(0, ...reached.map((rule) => rule.percent));
+  return Math.round((sales * percent) / 100);
+}
+
+/** Django's RuleSerializer checks, with its error shapes. */
+function ruleError(body: CommissionRuleInput, id?: number): Record<string, string[]> | null {
+  if (!(body.percent > 0 && body.percent <= 100))
+    return { percent: ['Give a percent above zero.'] };
+  if (body.threshold < 0 || (body.basis === 'contracts' && body.threshold > 1000))
+    return { threshold: ['At most 1000 contracts.'] };
+  if (body.seller !== null && !SELLER_NAMES.has(body.seller))
+    return { seller: ['Choose an active seller.'] };
+  if (
+    commissionRules.some(
+      (rule) =>
+        rule.id !== id &&
+        rule.seller === body.seller &&
+        rule.basis === body.basis &&
+        rule.threshold === body.threshold,
+    )
+  )
+    return { threshold: ['There is already a rule for this step.'] };
+  return null;
+}
 
 function managerOrError(): { sales: SalesState; manager: ManagerState } | Response {
   const user = storage.get();
@@ -263,6 +337,7 @@ const teamOf = (range: TeamRange): TeamData => {
         conversion: 0.16,
         first_call_minutes: 14,
         overdue: 0,
+        commission: null,
       },
       {
         id: NIMA,
@@ -273,6 +348,7 @@ const teamOf = (range: TeamRange): TeamData => {
         conversion: 0.15,
         first_call_minutes: 22,
         overdue: 3,
+        commission: null,
       },
       {
         id: OMID,
@@ -283,6 +359,7 @@ const teamOf = (range: TeamRange): TeamData => {
         conversion: 0.13,
         first_call_minutes: 12,
         overdue: 1,
+        commission: null,
       },
       {
         id: SARA,
@@ -293,6 +370,7 @@ const teamOf = (range: TeamRange): TeamData => {
         conversion: 0.08,
         first_call_minutes: 31,
         overdue: 4,
+        commission: null,
       },
       {
         id: KAVEH,
@@ -303,6 +381,7 @@ const teamOf = (range: TeamRange): TeamData => {
         conversion: 0.06,
         first_call_minutes: 40,
         overdue: 6,
+        commission: null,
       },
     ],
     alerts: [
@@ -609,7 +688,64 @@ export const managerHandlers = [
     const data = managerOrError();
     if (data instanceof Response) return data;
     const range = (new URL(request.url).searchParams.get('range') ?? 'month') as TeamRange;
-    return HttpResponse.json(teamOf(range));
+    const team = teamOf(range);
+    return HttpResponse.json({
+      ...team,
+      sellers: team.sellers.map((seller) => ({
+        ...seller,
+        commission: commissionOf(seller.id, seller.won, seller.sales),
+      })),
+    });
+  }),
+
+  http.get(`${BASE}/commission/`, () => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    return HttpResponse.json({
+      rules: commissionRules,
+      sellers: [...SELLER_NAMES].map(([id, name]) => ({ id, name })),
+    });
+  }),
+
+  http.post(`${BASE}/commission/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const body = (await request.json()) as CommissionRuleInput;
+    const error = ruleError(body);
+    if (error) return HttpResponse.json(error, { status: 400 });
+    const rule: CommissionRule = {
+      id: nextRule++,
+      ...body,
+      seller_name: body.seller === null ? null : (SELLER_NAMES.get(body.seller) ?? null),
+      since: new Date().toISOString().slice(0, 10),
+    };
+    commissionRules.push(rule);
+    return HttpResponse.json(rule, { status: 201 });
+  }),
+
+  http.put(`${BASE}/commission/:id/`, async ({ params, request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const index = commissionRules.findIndex((rule) => rule.id === Number(params.id));
+    if (index < 0) return notFound();
+    const body = (await request.json()) as CommissionRuleInput;
+    const error = ruleError(body, Number(params.id));
+    if (error) return HttpResponse.json(error, { status: 400 });
+    const rule: CommissionRule = {
+      ...(commissionRules[index] as CommissionRule),
+      ...body,
+      seller_name: body.seller === null ? null : (SELLER_NAMES.get(body.seller) ?? null),
+    };
+    commissionRules[index] = rule;
+    return HttpResponse.json(rule);
+  }),
+
+  http.delete(`${BASE}/commission/:id/`, ({ params }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    if (!commissionRules.some((rule) => rule.id === Number(params.id))) return notFound();
+    commissionRules = commissionRules.filter((rule) => rule.id !== Number(params.id));
+    return new HttpResponse(null, { status: 204 });
   }),
 
   // S59: a seller's contracts in the range, and moving one (with a reason) to another seller.
@@ -715,6 +851,8 @@ export const managerHandlers = [
 export function resetManagerMocks() {
   movedLeads.clear();
   manager = null;
+  commissionRules = freshRules();
+  nextRule = 10;
   KNOWN_PHONES = knownPhones();
   leadImports.clear();
 }

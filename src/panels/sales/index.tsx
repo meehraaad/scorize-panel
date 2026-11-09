@@ -6,6 +6,7 @@ import {
   approvalsQuery,
   assignQuery,
   boardQuery,
+  commissionQuery,
   stagesQuery,
   managerTagsQuery,
   tagsQuery,
@@ -271,6 +272,13 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
             data: () => [teamQuery('month'), ON_SERVER.estimate && funnelQuery('month')],
             skeleton: 'dashboard',
+          }),
+        },
+        {
+          path: 'commission',
+          ...lazyPage(() => import('@/features/sales/manager/CommissionPage'), [], {
+            data: () => [commissionQuery],
+            skeleton: 'form',
           }),
         },
         {
