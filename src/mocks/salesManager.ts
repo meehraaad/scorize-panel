@@ -64,6 +64,7 @@ const managerState = (): ManagerState => ({
     day_start: null,
     day_end: null,
     escalate_after: 2880,
+    skipped_sellers: [],
   },
   queue: [
     {
@@ -276,6 +277,7 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       office_extension: 250,
       mobile_extension: 301,
       hidden: state.hidden.has(NIMA),
+      auto: !state.settings.skipped_sellers.includes(NIMA),
     },
     {
       id: MAHDI,
@@ -288,6 +290,7 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       office_extension: 251,
       mobile_extension: null,
       hidden: state.hidden.has(MAHDI),
+      auto: !state.settings.skipped_sellers.includes(MAHDI),
     },
     {
       id: SARA,
@@ -300,6 +303,7 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       office_extension: 252,
       mobile_extension: 302,
       hidden: state.hidden.has(SARA),
+      auto: !state.settings.skipped_sellers.includes(SARA),
     },
     {
       id: OMID,
@@ -312,6 +316,7 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       office_extension: null,
       mobile_extension: null,
       hidden: state.hidden.has(OMID),
+      auto: !state.settings.skipped_sellers.includes(OMID),
     },
     {
       id: KAVEH,
@@ -324,6 +329,7 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       office_extension: 253,
       mobile_extension: null,
       hidden: state.hidden.has(KAVEH),
+      auto: !state.settings.skipped_sellers.includes(KAVEH),
     },
   ];
 };

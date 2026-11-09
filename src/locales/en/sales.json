@@ -1208,6 +1208,9 @@
         "away": "On leave"
       },
       "busyUntil": "In a session until {{time}}",
+      "who": "Who gets leads automatically",
+      "whoText": "A seller left unselected gets no automatic leads, but you can still give them leads by hand. A new seller is selected automatically.",
+      "noAuto": "No automatic leads",
       "deskExtension": "Office extension",
       "mobileExtension": "Mobile extension",
       "noExtension": "None",

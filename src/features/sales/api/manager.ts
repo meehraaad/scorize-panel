@@ -29,6 +29,8 @@ export interface AssignSettings {
    * Minutes a new lead waits for its first call; then it escalates and leaves Today's hot leads.
    */
   escalate_after: number;
+  /** Sellers (SupportStaff ids) automatic assignment passes over; a new seller takes part. */
+  skipped_sellers: number[];
 }
 
 export interface SellerLoad {
@@ -49,6 +51,8 @@ export interface SellerLoad {
   mobile_extension: number | null;
   /** Hidden from the load cards by a manager (display only: still gets leads). */
   hidden: boolean;
+  /** Takes part in automatic assignment (not in `skipped_sellers`). */
+  auto: boolean;
 }
 
 export interface UnassignedLead {

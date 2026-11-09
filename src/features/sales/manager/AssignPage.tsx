@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
+import { ChoiceGroup, SelectField, TogglePill } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -92,7 +92,11 @@ export default function AssignPage() {
         onClose={() => setImporting(false)}
         sellers={data.sellers}
       />
-      <AutoCard key={JSON.stringify(data.settings)} settings={data.settings} />
+      <AutoCard
+        key={JSON.stringify(data.settings)}
+        settings={data.settings}
+        sellers={data.sellers}
+      />
 
       <SellerLoads sellers={data.sellers} />
 
@@ -144,7 +148,7 @@ export default function AssignPage() {
   );
 }
 
-function AutoCard({ settings }: { settings: AssignSettings }) {
+function AutoCard({ settings, sellers }: { settings: AssignSettings; sellers: SellerLoad[] }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const save = useAssignSettings();
@@ -249,6 +253,28 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
           )}
         </div>
       )}
+      {form.on && sellers.length > 0 && (
+        <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
+          <legend className="mb-3 p-0 text-[15px] font-semibold">{t('manager.assign.who')}</legend>
+          <div className="flex flex-wrap gap-2">
+            {sellers.map((seller) => (
+              <TogglePill
+                key={seller.id}
+                label={seller.name}
+                checked={!form.skipped_sellers.includes(seller.id)}
+                onChange={(checked) =>
+                  update({
+                    skipped_sellers: checked
+                      ? form.skipped_sellers.filter((id) => id !== seller.id)
+                      : [...form.skipped_sellers, seller.id],
+                  })
+                }
+              />
+            ))}
+          </div>
+          <span className="text-sm leading-6 text-text-2">{t('manager.assign.whoText')}</span>
+        </fieldset>
+      )}
       {form.on && (
         <span className="text-sm leading-6 text-text-2">
           {t('manager.assign.waitText')}
@@ -266,7 +292,8 @@ function SellerLoads({ sellers }: { sellers: SellerLoad[] }) {
   const hide = useHiddenSellers();
   const [showHidden, setShowHidden] = useState(false);
   const hidden = sellers.filter((seller) => seller.hidden);
-  const shown = showHidden || hidden.length === 0 ? sellers : sellers.filter((seller) => !seller.hidden);
+  const shown =
+    showHidden || hidden.length === 0 ? sellers : sellers.filter((seller) => !seller.hidden);
   const toggle = (seller: SellerLoad) => {
     const ids = hidden.map((item) => item.id).filter((id) => id !== seller.id);
     hide.mutate(seller.hidden ? ids : [...ids, seller.id], {
@@ -340,7 +367,13 @@ function SellerCard({
           <span
             className={`text-xs ${seller.status === 'available' ? 'text-good' : seller.status === 'busy' ? 'text-warn' : 'text-text-2'}`}
           >
-            {seller.hidden ? `${status} · ${t('manager.assign.hiddenTag')}` : status}
+            {[
+              status,
+              !seller.auto && t('manager.assign.noAuto'),
+              seller.hidden && t('manager.assign.hiddenTag'),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
         </span>
         <IconButton

@@ -131,6 +131,26 @@ describe('sales manager section', () => {
     expect(await screen.findByRole('heading', { name: '۶ لید بی‌صاحب است' })).toBeInTheDocument();
   });
 
+  it('lets the manager choose who gets leads automatically', async () => {
+    loginAs(REZA);
+    const user = userEvent.setup();
+    renderApp('/sales/manager');
+    const who = await screen.findByRole('group', { name: 'چه کسانی لید خودکار بگیرند' });
+    const sara = within(who).getByRole('checkbox', { name: 'سارا جهانی' });
+    expect(sara).toBeChecked();
+    await user.click(sara);
+    const loads = screen.getByRole('region', { name: 'بار کاری فروشنده‌ها، همین الان' });
+    expect(
+      await within(within(loads).getByLabelText('سارا جهانی')).findByText(/بدون تخصیص خودکار/),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', { name: 'چه کسانی لید خودکار بگیرند' })).getByRole(
+        'checkbox',
+        { name: 'سارا جهانی' },
+      ),
+    ).not.toBeChecked();
+  });
+
   it("shows each seller's two extensions and hides a seller until shown again", async () => {
     loginAs(REZA);
     const user = userEvent.setup();
@@ -140,7 +160,9 @@ describe('sales manager section', () => {
     expect(within(nima).getByText('۲۵۰')).toBeInTheDocument();
     expect(within(nima).getByText('۳۰۱')).toBeInTheDocument();
 
-    await user.click(within(nima).getByRole('button', { name: 'پنهان کردن نیما رستمی از این فهرست' }));
+    await user.click(
+      within(nima).getByRole('button', { name: 'پنهان کردن نیما رستمی از این فهرست' }),
+    );
     expect(await toasts().findByText('نیما رستمی از این فهرست پنهان شد.')).toBeInTheDocument();
     const shown = await within(loads).findByRole('button', { name: 'پنهان‌شده‌ها (۱)' });
     expect(within(loads).queryByLabelText('نیما رستمی')).not.toBeInTheDocument();
@@ -375,9 +397,7 @@ describe('commission rules (S60)', () => {
     await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'tiered');
     await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '5');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '3');
-    expect(
-      within(form).getByText('از قرارداد ۵ به بعد: هر قرارداد ۳٪'),
-    ).toBeInTheDocument();
+    expect(within(form).getByText('از قرارداد ۵ به بعد: هر قرارداد ۳٪')).toBeInTheDocument();
     await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
     await user.clear(within(form).getByLabelText('درصد پورسانت'));
     await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '300');
