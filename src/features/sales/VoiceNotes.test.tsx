@@ -73,10 +73,10 @@ describe('seller contact dictation', () => {
       new File(['audio'], 'note.wav', { type: 'audio/wav' }),
     );
     await screen.findByText(label('processing'));
-    expect(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^ثبت · پیگیری/ })).toBeDisabled();
     await user.type(notes, ' و توضیح تازه');
     await screen.findByText(label('done'));
-    expect(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /^ثبت · پیگیری/ })).toBeEnabled();
     expect(notes).toHaveValue('یادداشت قبلی و توضیح تازه\nبرای جلسهٔ بعد تماس بگیرید.');
     await user.type(notes, ' اصلاح شد.');
     expect(notes).toHaveValue('یادداشت قبلی و توضیح تازه\nبرای جلسهٔ بعد تماس بگیرید. اصلاح شد.');
@@ -86,7 +86,7 @@ describe('seller contact dictation', () => {
     ).toHaveValue('');
   });
 
-  it.each(['یادداشت', 'خلاصه برای مشتری'])(
+  it.each(['یادداشت', 'یادداشت برای خود مشتری'])(
     'keeps dictated %s in its own field and draft when minimized',
     async (name) => {
       const user = await open();
@@ -106,7 +106,7 @@ describe('seller contact dictation', () => {
         'متن قبلی\nبرای جلسهٔ بعد تماس بگیرید.',
       );
       expect(
-        screen.getByLabelText(name === 'یادداشت' ? 'خلاصه برای مشتری' : 'یادداشت'),
+        screen.getByLabelText(name === 'یادداشت' ? 'یادداشت برای خود مشتری' : 'یادداشت'),
       ).toHaveValue('');
     },
   );

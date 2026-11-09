@@ -2,6 +2,7 @@ import { summaryForContact } from './sessionSummaries';
 import { http, HttpResponse } from 'msw';
 import { ApiError } from '@/lib/api/client';
 import type {
+  CallBrief,
   ConsultationRange,
   ConsultationsData,
   ContactLog,
@@ -186,11 +187,26 @@ export const salesStaffHandlers = [
       fetchCustomer(id(params)).then((data) => ({
         ...data,
         tags: tagsOfCustomer(data.id),
-        supports: { ...data.supports, tags: true },
+        supports: { ...data.supports, tags: true, call_brief: true, summary_sms: false },
         attribution: { first_contact: null, won_by: null },
       })),
     ),
   ),
+  // The call popup's "before you answer" box: the old site keeps none of it in one place.
+  http.get(`${BASE}/customers/:id/call-brief/`, () =>
+    HttpResponse.json<CallBrief>({
+      last_contact: null,
+      follow_up: null,
+      unpaid: [],
+      consultations_elsewhere: [],
+    }),
+  ),
+  http.put(`${BASE}/customers/:id/second-phone/`, async ({ request }) => {
+    const { phone } = (await request.json()) as { phone: string };
+    return /^09\d{9}$/.test(phone)
+      ? HttpResponse.json({ phone })
+      : HttpResponse.json({ phone: ['invalid'] }, { status: 400 });
+  }),
   http.get(`${BASE}/customers/:id/history/`, ({ params, request }) => {
     const page = Number(new URL(request.url).searchParams.get('page') ?? 1);
     return answer<HistoryPage>(async () => {

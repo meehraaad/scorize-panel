@@ -582,7 +582,7 @@
       "retryTask": "Call again; the last call wasn’t answered",
       "followTask": "Follow up after the last contact",
       "privateHint": "Only staff can see these notes.",
-      "customerSummary": "Summary for customer",
+      "customerSummary": "Note for the customer",
       "customerSummaryHint": "Saved with this contact and visible in the customer’s panel. Write your advice and next steps here.",
       "meetingTitle": "Log the session with {{name}}",
       "sessionWhen": "{{day}}, {{time}}",
@@ -605,7 +605,12 @@
         "stays": "The card stays in “{{stage}}”.",
         "lostNote": "The lead closes and leaves the board.",
         "follow": "{{day}} {{time}}"
-      }
+      },
+      "fromCalendar": "From the calendar",
+      "calendarTitle": "When to follow up with {{name}}?",
+      "calendarHint": "Tap a free spot; that time becomes the follow-up.",
+      "smsSummary": "Also text them (the note is in their panel)",
+      "saveWithFollow": "Save · follow up {{day}} {{time}}"
     },
     "tabs": {
       "label": "Customer page sections",
@@ -1735,19 +1740,60 @@
     }
   },
   "unknownCall": {
-    "subtitle": "Take the caller's details to log the call right here.",
     "who": "Who is calling?",
     "mode": {
       "new": "New customer",
       "existing": "One of my customers"
     },
-    "create": "Create customer and log the call",
-    "pick": "Log the call for this customer",
-    "notePlaceholder": "e.g. came from Instagram, asked about Canada",
+    "notePlaceholder": "e.g. master's in computer science, Canada, fall 2027",
     "smsHint": "An account is made for the customer and they get the panel login SMS. If the number already has an account, that account becomes your customer.",
     "created": "The customer's account was made and the login SMS sent.",
     "addedExisting": "This number already had an account; it is now your customer.",
     "otherSeller": "This number is {{seller}}'s customer. Talk to them or the sales manager.",
-    "otherSellerUnnamed": "This number is another seller's customer. Talk to the sales manager."
+    "otherSellerUnnamed": "This number is another seller's customer. Talk to the sales manager.",
+    "continue": "Next: log the call",
+    "continueWith": "Next: log the call with {{name}}",
+    "notWork": "Not a work call",
+    "optional": "Optional",
+    "originLegend": "How did they find us?",
+    "origin": {
+      "instagram": "Instagram",
+      "referral": "Referral",
+      "site": "Website",
+      "google": "Google",
+      "webinar": "Webinar",
+      "other": "Other"
+    },
+    "about": "One line about them",
+    "existingHint": "When one of your customers calls from another number (a parent's phone, a second line, work), find them so the call is logged on their file.",
+    "keepLegend": "Keep this number for {{name}}?",
+    "keep": {
+      "second": "Yes, as their second phone",
+      "once": "No, just this once"
+    },
+    "keepHint": "Next time this number calls, the popup shows this customer straight away.",
+    "phoneKept": "Saved as {{name}}'s second phone.",
+    "phoneTaken": "This number belongs to another account and wasn't saved; the call is still logged for this customer."
+  },
+  "callStrip": {
+    "unknownNumber": "Unknown number",
+    "notLogged": "Not logged yet",
+    "stepWho": "Who is it?",
+    "stepLog": "Log the call",
+    "created": "Customer created",
+    "found": "Customer found",
+    "missedTitle": "Missed call",
+    "missedHint": "This number isn't one of your customers. Call back, or add them as a customer now.",
+    "callBack": "Call back",
+    "addCustomer": "Add customer"
+  },
+  "callBrief": {
+    "title": "Before you answer",
+    "last": "Last time, {{when}}: “{{notes}}”",
+    "lastNoNotes": "Last call: {{when}}",
+    "followUp": "Follow-up {{when}}: “{{text}}”",
+    "at": "{{day}} {{time}}",
+    "unpaid": "Unpaid: {{amount}} toman",
+    "elsewhere": "Had a consultation with {{consultant}} · {{title}}, {{when}}"
   }
 }

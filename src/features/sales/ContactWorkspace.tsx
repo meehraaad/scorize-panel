@@ -38,31 +38,52 @@ export default function ContactWorkspace() {
       >
         {drafts
           .filter((draft) => draft.key !== active)
-          .map((draft) => (
-            <Button
-              key={draft.key}
-              variant="outline"
-              onClick={() => activateContactDraft(draft.key)}
-              aria-label={t('contactDraft.resume', { name: draft.name })}
-              className="max-w-full bg-surface shadow-panel"
-            >
-              <Icon name={draft.start.channel === 'meeting' ? 'calendar' : 'phone'} size={18} />
-              <span className="truncate">{t('contactDraft.unsaved', { name: draft.name })}</span>
-              {draft.call && <CallStatus call={draft.call} compact />}
-            </Button>
-          ))}
+          .map((draft) => {
+            const live = !!draft.call && draft.call.ended_at === null;
+            return (
+              <Button
+                key={draft.key}
+                variant={live ? 'dark' : 'outline'}
+                onClick={() => activateContactDraft(draft.key)}
+                aria-label={t('contactDraft.resume', { name: draft.name })}
+                className={`max-w-full shadow-panel ${live ? '' : 'bg-warn-tint'}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`size-2.5 flex-none rounded-full ${live ? 'bg-live' : 'bg-warn'}`}
+                />
+                <Icon name={draft.start.channel === 'meeting' ? 'calendar' : 'phone'} size={18} />
+                <span className="truncate">
+                  {live ? draft.name : t('contactDraft.unsaved', { name: draft.name })}
+                </span>
+                {draft.call && <CallStatus call={draft.call} compact />}
+              </Button>
+            );
+          })}
         {unknownCalls
           .filter((call) => call.id !== activeUnknown)
           .map((call) => (
             <Button
               key={call.id}
-              variant="outline"
+              variant={call.ended_at === null ? 'dark' : 'outline'}
               onClick={() => activateUnknownCall(call.id)}
               aria-label={t('phoneCall.resumeUnknown', { phone: call.phone })}
-              className="bg-surface shadow-panel"
+              className="shadow-panel"
             >
+              <span
+                aria-hidden="true"
+                className={`size-2.5 flex-none rounded-full ${
+                  call.ended_at === null
+                    ? 'bg-live'
+                    : call.status === 'missed'
+                      ? 'bg-danger'
+                      : 'bg-text-3'
+                }`}
+              />
               <Icon name="phone" size={18} />
-              <span>{t('phoneCall.unknown')}</span>
+              <span>
+                {t(call.status === 'missed' ? 'callStrip.missedTitle' : 'phoneCall.unknown')}
+              </span>
               <CallStatus call={call} compact />
             </Button>
           ))}

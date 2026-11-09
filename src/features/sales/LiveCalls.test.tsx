@@ -129,21 +129,87 @@ describe('live seller calls', () => {
     setPhoneSnapshot(3, snapshot([call({ customer: null })]));
     const browser = userEvent.setup();
     mount();
-    const dialog = await screen.findByRole('dialog', { name: 'Unknown caller' });
+    const dialog = await screen.findByRole('dialog', { name: '09121234567' });
     expect(within(dialog).getAllByText('09121234567').length).toBeGreaterThan(0);
     expect(within(dialog).queryByLabelText('Notes')).not.toBeInTheDocument();
-    expect(within(dialog).getByLabelText('Mobile number')).toHaveValue('09121234567');
-    await browser.click(
-      within(dialog).getByRole('button', { name: 'Create customer and log the call' }),
-    );
+    // The call's own number needs no field.
+    expect(within(dialog).queryByLabelText('Mobile number')).not.toBeInTheDocument();
+    await browser.click(within(dialog).getByRole('button', { name: 'Next: log the call' }));
     expect(within(dialog).getByText('Enter a first name.')).toBeInTheDocument();
     await browser.type(within(dialog).getByLabelText('First name'), 'Sara');
-    await browser.click(
-      within(dialog).getByRole('button', { name: 'Create customer and log the call' }),
-    );
+    await browser.click(within(dialog).getByRole('button', { name: 'Next: log the call' }));
     expect(await screen.findByLabelText('Notes')).toBeInTheDocument();
-    expect(screen.queryByRole('dialog', { name: 'Unknown caller' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: '09121234567' })).not.toBeInTheDocument();
     expect(sent).toMatchObject({ first_name: 'Sara', phone: '09121234567', from_call: true });
+  });
+
+  it('finds a customer calling from another number and keeps it as their second phone', async () => {
+    let kept: unknown = null;
+    server.use(
+      http.get('/api/sales/v1/leads/search/', () =>
+        HttpResponse.json({
+          results: [
+            {
+              id: 7,
+              customer: 101,
+              name: 'کیانا رضوی',
+              phone: '09120000000',
+              stage: 'consulted',
+              follow_up_at: null,
+            },
+          ],
+        }),
+      ),
+      http.put('/api/sales/v1/customers/101/second-phone/', async ({ request }) => {
+        kept = await request.json();
+        return HttpResponse.json({ phone: '09121234567' });
+      }),
+    );
+    setPhoneSnapshot(3, snapshot([call({ customer: null })]));
+    const browser = userEvent.setup();
+    mount();
+    const dialog = await screen.findByRole('dialog', { name: '09121234567' });
+    await browser.click(within(dialog).getByRole('radio', { name: 'One of my customers' }));
+    await browser.type(within(dialog).getByRole('combobox'), 'کیانا');
+    await browser.click(await within(dialog).findByRole('option', { name: /کیانا رضوی/ }));
+    expect(within(dialog).getByRole('radio', { name: 'Yes, as their second phone' })).toBeChecked();
+    await browser.click(within(dialog).getByRole('button', { name: /Next: log the call with/ }));
+    expect(await screen.findByLabelText('Notes')).toBeInTheDocument();
+    expect(kept).toEqual({ phone: '09121234567' });
+  });
+
+  it('shows what to know before answering a known customer', async () => {
+    server.use(
+      http.get('/api/sales/v1/customers/101/call-brief/', () =>
+        HttpResponse.json({
+          last_contact: { at: new Date().toISOString(), notes: 'Asked about fees', by: 'Seller' },
+          follow_up: null,
+          unpaid: [{ id: 1, amount: 1_500_000 }],
+          consultations_elsewhere: [
+            { consultant: 'Maryam Sadeghi', title: 'Apply', at: new Date().toISOString() },
+          ],
+        }),
+      ),
+    );
+    setPhoneSnapshot(3, snapshot([call()]));
+    mount();
+    const brief = await screen.findByRole('region', { name: 'Before you answer' });
+    expect(within(brief).getByText(/Maryam Sadeghi/)).toBeInTheDocument();
+    expect(within(brief).getByText(/Asked about fees/)).toBeInTheDocument();
+    // A live call is a phone call: no "which channel" question.
+    expect(screen.queryByRole('radiogroup', { name: /How/ })).not.toBeInTheDocument();
+  });
+
+  it('shows a missed unknown call as a small call-back card', async () => {
+    setPhoneSnapshot(3, snapshot([call({ customer: null, status: 'missed' })]));
+    mount();
+    const card = await screen.findByRole('dialog', { name: 'Missed call' });
+    expect(within(card).getByRole('link', { name: 'Call back' })).toHaveAttribute(
+      'href',
+      'tel:09121234567',
+    );
+    await userEvent.click(within(card).getByRole('button', { name: 'Add customer' }));
+    expect(await screen.findByRole('dialog', { name: '09121234567' })).toBeInTheDocument();
   });
 
   it("tells the seller when an unknown caller is another seller's customer", async () => {
@@ -158,11 +224,9 @@ describe('live seller calls', () => {
     setPhoneSnapshot(3, snapshot([call({ customer: null })]));
     const browser = userEvent.setup();
     mount();
-    const dialog = await screen.findByRole('dialog', { name: 'Unknown caller' });
+    const dialog = await screen.findByRole('dialog', { name: '09121234567' });
     await browser.type(within(dialog).getByLabelText('First name'), 'Sara');
-    await browser.click(
-      within(dialog).getByRole('button', { name: 'Create customer and log the call' }),
-    );
+    await browser.click(within(dialog).getByRole('button', { name: 'Next: log the call' }));
     expect(await within(dialog).findByText(/Reza Karimi/)).toBeInTheDocument();
   });
 
@@ -180,8 +244,8 @@ describe('live seller calls', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const unknown = call({ id: 'b'.repeat(40), customer: null });
     await update(snapshot([ended, unknown]));
-    await screen.findByRole('dialog', { name: 'Unknown caller' });
-    await userEvent.click(screen.getByRole('button', { name: 'Dismiss call' }));
+    await screen.findByRole('dialog', { name: '09121234567' });
+    await userEvent.click(screen.getByRole('button', { name: 'Not a work call' }));
     await update(snapshot([ended, unknown]));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
