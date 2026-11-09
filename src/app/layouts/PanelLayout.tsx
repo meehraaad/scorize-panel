@@ -40,6 +40,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const { data: unread = 0 } = useQuery({ ...unreadQuery, enabled: Boolean(user) });
   const useHidden = panel.useHiddenNav ?? useNoHiddenNav;
   const hidden = useHidden();
+  const HeaderAction = panel.headerAction;
   const skeleton = usePageSkeleton();
   // The next page is usually loading before the click (docs/performance.md, "Preload on intent").
   useIntentPreload();
@@ -123,6 +124,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
 
           <div className="flex flex-none items-center gap-1.5">
             <span aria-hidden="true" className="me-1 hidden h-6 w-px bg-hair xl:block" />
+            {HeaderAction && <HeaderAction />}
             <Link
               to="/account#notifications"
               className="relative inline-flex size-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-canvas hover:text-text"

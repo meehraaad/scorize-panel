@@ -97,7 +97,8 @@
   },
   "header": {
     "notifications": "Notifications",
-    "notificationsUnread": "Notifications, {{n}} unread"
+    "notificationsUnread": "Notifications, {{n}} unread",
+    "customerSearch": "Search all customers"
   },
   "account": {
     "menu": "Account",

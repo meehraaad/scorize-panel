@@ -1,4 +1,5 @@
 import type { ParseKeys } from 'i18next';
+import type { ComponentType } from 'react';
 import type { RouteObject } from 'react-router';
 import type { IconName } from '@/components/ui/Icon';
 import type { Role } from '@/lib/auth/roles';
@@ -49,6 +50,11 @@ export interface PanelDefinition {
    * with the page's own data. Pages declare theirs with `lazyPage(…, data)`.
    */
   data?: () => readonly PageQuery[];
+  /**
+   * A control in the header next to the notifications, on every page of the panel (the sales
+   * panel's customer search). Keep it small: it is part of the panel's first load.
+   */
+  headerAction?: ComponentType;
 }
 
 const NONE_HIDDEN: ReadonlySet<string> = new Set();

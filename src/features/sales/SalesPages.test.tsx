@@ -194,7 +194,9 @@ describe('sales panel, seller pages', () => {
     );
     const user = userEvent.setup();
     const router = renderApp('/sales/leads');
-    await user.click(await screen.findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
+    // The page's own button (the header has the same search).
+    const page = await screen.findByRole('main');
+    await user.click(await within(page).findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
     const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'هیچ');
     expect(await within(dialog).findByText('کسی با این مشخصات پیدا نشد.')).toBeInTheDocument();
@@ -221,6 +223,20 @@ describe('sales panel, seller pages', () => {
     const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'کسی نیست');
     await user.click(await within(dialog).findByRole('button', { name: 'ثبت به‌عنوان لید تازه' }));
+    expect(await screen.findByRole('dialog', { name: 'ثبت لید دستی' })).toBeInTheDocument();
+  });
+
+  it('header: searches every customer from any page; nobody found opens the new lead', async () => {
+    server.use(
+      http.get('/api/sales/v1/customers/search/', () => HttpResponse.json({ results: [] })),
+    );
+    const user = userEvent.setup();
+    const router = renderApp('/sales/board');
+    await user.click(await screen.findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
+    const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
+    await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'کسی نیست');
+    await user.click(await within(dialog).findByRole('button', { name: 'ثبت به‌عنوان لید تازه' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/sales/leads'));
     expect(await screen.findByRole('dialog', { name: 'ثبت لید دستی' })).toBeInTheDocument();
   });
 

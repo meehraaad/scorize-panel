@@ -30,6 +30,7 @@ import {
   teamQuery,
   funnelQuery,
 } from '@/features/sales/api';
+import HeaderCustomerSearch from '@/features/sales/components/HeaderCustomerSearch';
 import { queryClient } from '@/lib/api/queryClient';
 import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
@@ -117,6 +118,8 @@ export const salesPanel: PanelDefinition = {
       permission: MANAGER_PERMISSION,
     },
   ],
+  // Search every customer from any page (S63), not only the leads page's button.
+  ...(ON_SERVER.customerSearch && { headerAction: HeaderCustomerSearch }),
   // Each route lists what its page shows first (docs/performance.md, "Page data").
   routes: [
     {

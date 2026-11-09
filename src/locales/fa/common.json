@@ -97,7 +97,8 @@
   },
   "header": {
     "notifications": "اعلان‌ها",
-    "notificationsUnread": "اعلان‌ها، {{n}} خوانده‌نشده"
+    "notificationsUnread": "اعلان‌ها، {{n}} خوانده‌نشده",
+    "customerSearch": "جستجو در همه‌ی مشتری‌ها"
   },
   "account": {
     "menu": "حساب کاربری",
