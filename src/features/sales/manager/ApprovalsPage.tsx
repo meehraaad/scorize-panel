@@ -11,14 +11,20 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { StatGrid } from '@/components/ui/StatGrid';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { approvalsQuery, useDecideDraft, type ApprovalAction, type ContractDraft } from '../api';
+import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { ClauseChanges } from './ClauseChanges';
 import { toast } from '@/lib/toast';
 
-/** Contract drafts waiting for the sales manager. Canvas "تأیید قراردادها". */
+/**
+ * The manager's agreement desk (S36, S62, S64): offers waiting for the sales manager, each with who
+ * agreed, its numbers held to the contract builder's rules, the automatic checks and only the
+ * clauses that differ from the standard contract. Canvas "صفحه‌ی مشتری", board "توافق · مدیر فروش".
+ */
 export default function ApprovalsPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -131,6 +137,23 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
         </Link>
       </div>
 
+      <ul
+        aria-label={t('manager.approvals.parties')}
+        className="m-0 flex list-none flex-wrap gap-2 p-0"
+      >
+        {draft.parties.map((party) => (
+          <li key={party.party}>
+            <Chip tone={party.agreed_at ? 'good' : 'warn'}>
+              {t(party.agreed_at ? 'manager.approvals.agreed' : 'manager.approvals.waiting', {
+                role: t(`manager.approvals.party.${party.party}`),
+              })}
+            </Chip>
+          </li>
+        ))}
+      </ul>
+
+      <Figures draft={draft} />
+
       <section aria-labelledby="draft-terms" className="flex flex-col gap-2.5">
         <h3 id="draft-terms" className="m-0 text-sm font-semibold text-text-2">
           {t('manager.approvals.contract')}
@@ -219,5 +242,49 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
         </Button>
       </div>
     </Card>
+  );
+}
+
+/** The offer's numbers, each against the rule the manager set; a number past it shows in red. */
+function Figures({ draft }: { draft: ContractDraft }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const s = useSalesFormat();
+  const n = draft.figures;
+  const percent = (value: number) => s.percent(value / 100);
+  return (
+    <StatGrid
+      compact
+      label={t('manager.approvals.figures')}
+      stats={[
+        {
+          label: t('manager.approvals.figure.amount'),
+          value: s.millions(n.amount),
+          ...(n.list_price !== n.amount && {
+            note: t('manager.approvals.figure.list', { amount: s.millions(n.list_price) }),
+          }),
+        },
+        {
+          label: t('manager.approvals.figure.discount'),
+          value: percent(n.discount),
+          tone: n.discount > n.approval_above ? 'urgent' : 'default',
+          note: t('manager.approvals.figure.discountRule', { n: percent(n.approval_above) }),
+        },
+        {
+          label: t('manager.approvals.figure.prepayment'),
+          value: percent(n.prepayment_percent),
+          tone: n.prepayment_percent < n.min_prepayment ? 'urgent' : 'default',
+          note: n.min_prepayment
+            ? t('manager.approvals.figure.prepaymentRule', { n: percent(n.min_prepayment) })
+            : s.millions(n.prepayment),
+        },
+        {
+          label: t('manager.approvals.figure.instalments'),
+          value: f.number(n.instalments),
+          tone: n.instalments > n.max_instalments ? 'urgent' : 'default',
+          note: t('manager.approvals.figure.instalmentsRule', { n: f.number(n.max_instalments) }),
+        },
+      ]}
+    />
   );
 }

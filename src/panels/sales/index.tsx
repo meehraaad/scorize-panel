@@ -9,6 +9,7 @@ import {
   commissionQuery,
   stagesQuery,
   managerTagsQuery,
+  contractBuilderQuery,
   tagsQuery,
   sellerCalendarQuery,
   contractDocumentQuery,
@@ -285,6 +286,13 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/manager/ApprovalsPage'), [], {
             data: () => [approvalsQuery],
             skeleton: 'list',
+          }),
+        },
+        {
+          path: 'contract',
+          ...lazyPage(() => import('@/features/sales/manager/ContractBuilderPage'), [], {
+            data: () => [contractBuilderQuery],
+            skeleton: 'form',
           }),
         },
         {

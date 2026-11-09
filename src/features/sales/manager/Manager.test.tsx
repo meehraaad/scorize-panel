@@ -558,3 +558,61 @@ describe('board stages (S48)', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('contract builder and agreement desk (S64)', () => {
+  beforeEach(() => {
+    loginAs(REZA);
+  });
+
+  it('the manager adds a fixed clause, orders it and reads it in the versions', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/manager/contract');
+    const clauses = await screen.findByRole('region', { name: 'بندهای قرارداد' });
+    expect(within(clauses).getByText('۱. موضوع قرارداد')).toBeInTheDocument();
+    await user.click(within(clauses).getByRole('button', { name: '+ بند تازه' }));
+    await user.type(within(clauses).getByLabelText('عنوان بند'), 'بورسیه');
+    await user.type(within(clauses).getByLabelText('متن بند'), 'با بورسیه، قسط آخر کمتر.');
+    await user.click(within(clauses).getByRole('switch', { name: /بند ثابت/ }));
+    await user.click(within(clauses).getByRole('button', { name: 'ذخیره' }));
+    expect(await within(clauses).findByText('۴. بورسیه')).toBeInTheDocument();
+
+    await user.click(within(clauses).getByRole('button', { name: 'بالا بردن بورسیه' }));
+    expect(await within(clauses).findByText('۳. بورسیه')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'نسخه‌ها' }));
+    const versions = await screen.findByRole('region', { name: 'نسخه‌های متن قرارداد' });
+    expect(within(versions).getByText('ترتیب بندها عوض شد')).toBeInTheDocument();
+    expect(within(versions).getByText('بند «بورسیه» اضافه شد')).toBeInTheDocument();
+    expect(within(versions).getByText('متن پیش از اولین تغییر')).toBeInTheDocument();
+  });
+
+  it('rules are saved, and the desk holds the offer to them', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/manager/contract?tab=prices');
+    const rules = await screen.findByRole('region', { name: 'قانون‌های پیشنهاد' });
+    const prepayment = within(rules).getByLabelText('کمترین پیش‌پرداخت (٪)');
+    await user.clear(prepayment);
+    await user.type(prepayment, '50');
+    await user.click(within(rules).getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText('قانون‌ها ذخیره شد.')).toBeInTheDocument();
+
+    cleanup();
+    renderApp('/sales/manager/approvals');
+    const figures = await screen.findByRole('region', { name: 'اعداد پیشنهاد' });
+    expect(within(figures).getByText('کمترین ۵۰٪')).toBeInTheDocument();
+    const parties = screen.getByRole('list', { name: 'موافقت‌ها' });
+    expect(within(parties).getByText('فروشنده موافق')).toBeInTheDocument();
+    expect(within(parties).getByText('منتظر شما')).toBeInTheDocument();
+  });
+
+  it('a seller cannot change a fixed clause', async () => {
+    loginAs(NIMA);
+    renderApp('/sales/customers/105/offer');
+    const clauses = await screen.findByRole('region', { name: '۴. بندهای قرارداد' });
+    expect(within(clauses).getByText('ثابت')).toBeInTheDocument();
+    expect(
+      within(clauses).queryByRole('button', { name: 'ویرایش موضوع قرارداد' }),
+    ).not.toBeInTheDocument();
+    expect(within(clauses).getByRole('button', { name: 'ویرایش فسخ قرارداد' })).toBeInTheDocument();
+  });
+});

@@ -2,6 +2,7 @@ import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@ta
 import { API_BASE, api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
+import type { AgreementParty } from '@/lib/agreement/api';
 import type { Colleague } from '@/lib/tasks/api';
 import type { ActivityKind, StageActivity, StagePhase } from './board';
 import type { MonthContract } from './month';
@@ -165,6 +166,25 @@ export interface ContractDraft {
   standard_clauses: number;
   /** Returned to the seller before: `previous` and `since_review` mark what changed since. */
   resubmitted: boolean;
+  /** The numbers the manager weighs, each with the rule it is held to (S64). */
+  figures: DraftFigures;
+  /** Who agreed on the last version (S62); the manager's approval is the manager's agreement. */
+  parties: { party: AgreementParty; name: string; agreed_at: string | null }[];
+}
+
+export interface DraftFigures {
+  /** Toman. */
+  list_price: number;
+  amount: number;
+  /** Percent, and the most a seller gives without the manager. */
+  discount: number;
+  approval_above: number;
+  /** The first instalment (toman), its share of the amount and the smallest share allowed (percent). */
+  prepayment: number;
+  prepayment_percent: number;
+  min_prepayment: number;
+  instalments: number;
+  max_instalments: number;
 }
 
 export const approvalsQuery = queryOptions({
@@ -536,3 +556,98 @@ export function useDeleteCommissionRule() {
     onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
   });
 }
+
+// region The contract builder (S64)
+/** A clause of the standard contract as the manager keeps it. `locked`: a seller can't change it. */
+export interface BuilderClause {
+  id: number;
+  title: string;
+  text: string;
+  locked: boolean;
+  /** False: taken out of the contract (kept, can come back). */
+  is_active: boolean;
+  updated_at: string;
+}
+
+export interface BuilderPrice {
+  feature: 'admission' | 'visa' | 'writing';
+  /** Toman; null when never priced. */
+  price: number | null;
+  is_active: boolean;
+}
+
+export interface OfferRules {
+  /** Percent: a larger discount goes to the manager first. */
+  approval_above: number;
+  /** Percents a seller can pick (0 always). */
+  discounts: number[];
+  /** Months. */
+  durations: number[];
+  max_instalments: number;
+  /** Percent of the amount at signing; less goes to the manager first. */
+  min_prepayment: number;
+  max_applies: number;
+}
+
+export type TextChangeKind = 'added' | 'changed' | 'removed' | 'locked' | 'unlocked' | 'moved';
+
+/** The standard contract after one change, newest first. */
+export interface TextVersion {
+  number: number;
+  created_at: string;
+  /** What changed, in Persian from Django; empty for the text before the first change. */
+  note: string;
+  author: string;
+  clauses: number;
+  changes: { kind: TextChangeKind; title: string; text: string; before: string | null }[];
+}
+
+export interface ContractBuilder {
+  clauses: BuilderClause[];
+  prices: BuilderPrice[];
+  rules: OfferRules;
+  versions: TextVersion[];
+}
+
+const BUILDER_API = `${MANAGER_API}/contract`;
+
+export const contractBuilderQuery = queryOptions({
+  queryKey: [...MANAGER_KEY, 'contract'],
+  queryFn: ({ signal }) => api<ContractBuilder>(`${BUILDER_API}/`, { signal }),
+});
+
+function useBuilderMutation<T>(send: (body: T) => Promise<unknown>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: send,
+    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
+export type ClauseInput = Partial<Pick<BuilderClause, 'title' | 'text' | 'locked' | 'is_active'>>;
+
+/** Adds a clause (no `id`) or changes one: its text, fixed or not, taken out or back. */
+export const useSaveClause = () =>
+  useBuilderMutation(({ id, ...body }: ClauseInput & { id?: number }) =>
+    id === undefined
+      ? api<{ id: number }>(`${BUILDER_API}/clauses/`, { method: 'POST', body })
+      : api(`${BUILDER_API}/clauses/${String(id)}/`, { method: 'PATCH', body }),
+  );
+
+/** The contract's clauses in their new order (every active clause, once). */
+export const useOrderClauses = () =>
+  useBuilderMutation((ids: number[]) =>
+    api(`${BUILDER_API}/clauses/order/`, { method: 'PUT', body: { ids } }),
+  );
+
+export const useSavePrices = () =>
+  useBuilderMutation(
+    (prices: { feature: BuilderPrice['feature']; price: number; is_active: boolean }[]) =>
+      api(`${BUILDER_API}/prices/`, { method: 'PUT', body: { prices } }),
+  );
+
+export const useSaveRules = () =>
+  useBuilderMutation((rules: OfferRules) =>
+    api(`${BUILDER_API}/rules/`, { method: 'PUT', body: rules }),
+  );
+// endregion

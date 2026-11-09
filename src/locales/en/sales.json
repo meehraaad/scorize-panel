@@ -1197,19 +1197,21 @@
       "restore": "Restore the standard text of {{name}}",
       "remove": "Remove {{name}}",
       "add": "Add a clause",
-      "incomplete": "Each clause needs a text, and a new one a title too."
+      "incomplete": "Each clause needs a text, and a new one a title too.",
+      "locked": "Fixed"
     }
   },
   "manager": {
     "nav": "Sales management sections",
     "section": {
       "assign": "Lead assignment",
-      "approvals": "Contract approvals",
+      "approvals": "Agreement desk",
       "team": "Team and lead sources",
       "followUps": "Follow-up health",
       "stages": "Board stages",
       "tags": "Customer tags",
-      "commission": "Commission"
+      "commission": "Commission",
+      "contract": "Contract"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1315,6 +1317,26 @@
         "sinceReview": "Changed after the return",
         "addedText": "Added: ",
         "removedText": "Removed: "
+      },
+      "parties": "Agreements",
+      "agreed": "{{role}} agreed",
+      "waiting": "Waiting for {{role}}",
+      "party": {
+        "seller": "seller",
+        "consultant": "consultant",
+        "manager": "you",
+        "customer": "customer"
+      },
+      "figures": "Offer figures",
+      "figure": {
+        "amount": "Amount",
+        "list": "List: {{amount}}",
+        "discount": "Discount",
+        "discountRule": "Limit without approval {{n}}",
+        "prepayment": "Prepayment",
+        "prepaymentRule": "Minimum {{n}}",
+        "instalments": "Instalments",
+        "instalmentsRule": "At most {{n}}"
       }
     },
     "team": {
@@ -1680,6 +1702,77 @@
         "per_contract": "Per contract (million toman)"
       },
       "amountError": "Enter an amount above zero."
+    },
+    "builder": {
+      "title": "Contract builder",
+      "subtitle": "The standard contract, prices and offer rules sellers start from.",
+      "tabs": "Contract sections",
+      "tab": {
+        "clauses": "Clauses",
+        "prices": "Prices and rules",
+        "versions": "Versions"
+      },
+      "save": "Save",
+      "cancel": "Cancel",
+      "clauses": {
+        "title": "Contract clauses",
+        "subtitle": "Sellers can't change a fixed clause for a customer.",
+        "add": "+ New clause",
+        "empty": "No clauses yet.",
+        "out": "Clauses taken out",
+        "locked": "Fixed",
+        "up": "Move {{name}} up",
+        "down": "Move {{name}} down",
+        "edit": "Edit {{name}}",
+        "name": "Clause title",
+        "text": "Clause text",
+        "textHint": "Offers already written keep the text their seller saw.",
+        "fix": "Fixed clause",
+        "fixText": "Sellers can't change or remove this clause.",
+        "remove": "Take out {{name}}",
+        "restore": "Bring back {{name}}",
+        "added": "Clause added.",
+        "saved": "Clause saved.",
+        "removed": "Clause taken out of the contract.",
+        "back": "Clause back in the contract."
+      },
+      "prices": {
+        "title": "Service prices",
+        "subtitle": "Only priced, active services show in a seller's offer.",
+        "feature": {
+          "admission": "Admission services (toman)",
+          "visa": "Visa services (toman)",
+          "writing": "Writing services (toman)"
+        },
+        "none": "No price",
+        "offered": "Offered",
+        "saved": "Prices saved."
+      },
+      "rules": {
+        "title": "Offer rules",
+        "subtitle": "An offer outside these comes to you first.",
+        "approval_above": "Discount limit without approval (%)",
+        "approval_aboveHint": "A larger discount comes to you first.",
+        "min_prepayment": "Smallest prepayment (%)",
+        "min_prepaymentHint": "Share of the amount paid at signing.",
+        "max_instalments": "Most instalments",
+        "max_instalmentsHint": "Including the prepayment.",
+        "max_applies": "Most applications",
+        "max_appliesHint": "Sellers can't write more.",
+        "discounts": "Discounts a seller picks from",
+        "durations": "Contract length",
+        "percent": "{{n}}%",
+        "months": "{{n}} months",
+        "saved": "Rules saved."
+      },
+      "versions": {
+        "title": "Contract text versions",
+        "subtitle": "Each change to the clauses is a new version. Open offers keep the text their seller saw.",
+        "empty": "No changes to the text yet.",
+        "first": "The text before the first change",
+        "current": "Current",
+        "meta": "Version {{n}} · {{clauses}} clauses"
+      }
     }
   },
   "handoff": {

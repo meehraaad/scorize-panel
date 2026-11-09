@@ -202,16 +202,20 @@ export const STANDARD_CLAUSES: OfferData['options']['clauses'] = [
     id: 1,
     title: 'موضوع قرارداد',
     text: 'اسکورایز در انتخاب دانشگاه، آماده‌سازی مدارک و ثبت درخواست پذیرش، مشاوره و همراهی می‌کند.',
+    // A fixed clause (S64): the seller can't change it.
+    locked: true,
   },
   {
     id: 2,
     title: 'تعهدات متقاضی',
     text: 'متقاضی مدارک خواسته‌شده را تا ۷ روز پس از درخواست کارشناس ارائه می‌کند.',
+    locked: false,
   },
   {
     id: 3,
     title: 'فسخ قرارداد',
     text: 'تا ۷ روز پس از امضا، با فسخ قرارداد کل مبلغ پرداختی بازگردانده می‌شود.',
+    locked: false,
   },
 ];
 
@@ -227,6 +231,11 @@ function cleanClauses(rows: ClauseEdit[]): ClauseEdit[] | null {
     }
     const base = STANDARD_CLAUSES.find((clause) => clause.id === row.clause);
     if (!base || kept.some((edit) => edit.clause === row.clause)) return null;
+    const changed =
+      row.removed ||
+      (row.title.trim() || base.title) !== base.title ||
+      row.text.trim() !== base.text;
+    if (base.locked && changed) return null;
     if (row.removed) {
       kept.push({ ...row, title: base.title, text: base.text });
       continue;
@@ -250,6 +259,8 @@ const OFFER_OPTIONS: OfferData['options'] = {
   countries: ['هلند', 'آلمان', 'کانادا', 'ایتالیا', 'سوئد', 'انگلستان', 'آمریکا', 'ترکیه'],
   discounts: [0, 5, 10, 15],
   approval_above: 10,
+  min_prepayment: 30,
+  max_applies: 30,
   instalments: [1, 2, 3, 4],
   clauses: STANDARD_CLAUSES,
 };

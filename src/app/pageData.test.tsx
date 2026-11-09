@@ -124,6 +124,7 @@ const PAGES: PageCase[] = [
   ...[
     '/sales/manager',
     '/sales/manager/approvals',
+    '/sales/manager/contract',
     '/sales/manager/team',
     '/sales/manager/commission',
     '/sales/manager/follow-ups',
