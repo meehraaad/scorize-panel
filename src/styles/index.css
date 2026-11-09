@@ -54,6 +54,14 @@
   --color-on-primary: var(--on-primary);
   --color-primary-text: var(--primary-text);
   --color-tint: var(--tint);
+  --color-face-plum: var(--face-plum);
+  --color-face-rose: var(--face-rose);
+  --color-face-orange: var(--face-orange);
+  --color-face-yellow: var(--face-yellow);
+  --color-face-green: var(--face-green);
+  --color-face-teal: var(--face-teal);
+  --color-face-blue: var(--face-blue);
+  --color-face-gray: var(--face-gray);
   --color-focus: var(--focus);
   --color-hero: var(--hero);
   --color-on-hero: var(--on-hero);

@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
+import { CustomerFace } from '@/components/customers/CustomerFace';
 import { Icon } from '@/components/ui/Icon';
 import { Badge } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { openCaseChat } from '@/lib/supervisor/caseChats';
-import { initialOf } from '@/lib/text';
-import type { CaseData } from '../api';
+import { caseKey, SUPERVISOR_API, type CaseData } from '../api';
 import { StageChip } from './Chips';
 
 const raised =
@@ -37,12 +37,15 @@ export function CaseHero({ data, onStage }: { data: CaseData; onStage: () => voi
       className="flex flex-col gap-6 rounded-card-sm bg-hero p-5 text-on-hero shadow-hero lg:rounded-[32px] lg:px-9 lg:py-8"
     >
       <div className="flex min-w-0 items-start gap-4">
-        <span
-          aria-hidden="true"
-          className="flex size-14 flex-none items-center justify-center rounded-full bg-hero-raised text-xl font-bold"
-        >
-          {initialOf(data.name)}
-        </span>
+        <CustomerFace
+          round
+          name={data.name}
+          face={data.face ?? null}
+          url={`${SUPERVISOR_API}/cases/${String(data.id)}/face/`}
+          queryKey={caseKey(data.id)}
+          className="size-14 text-xl"
+          plain="bg-hero-raised text-on-hero"
+        />
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="m-0 font-display text-2xl font-bold lg:text-[28px]">{data.name}</h1>

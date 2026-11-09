@@ -19,6 +19,7 @@ import { type Degree, type LeadSource, type LeadStage, type LostReason } from '@
 import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';
 import { bulkTag } from './salesTags';
+import { resetFaces } from './face';
 import { addToNotebook, changeInNotebook, notebookOf, resetNotebookMocks } from './notebook';
 
 /**
@@ -1182,4 +1183,5 @@ export function resetSalesMocks() {
   state = null;
   arrivals.clear();
   resetNotebookMocks();
+  resetFaces();
 }

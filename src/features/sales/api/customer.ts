@@ -14,6 +14,7 @@ import {
   type LeadStage,
   type LostReason,
 } from '@/lib/sales/api';
+import type { Face } from '@/lib/face/api';
 import type { Colleague, TaskSummary } from '@/lib/tasks/api';
 
 export type ProfileKey =
@@ -88,6 +89,8 @@ export interface CustomerData {
   review_files: { id: number; kind: string; url: string; uploaded_at: string }[];
   /** Customer tag ids (S49), named by `tagsQuery`. */
   tags: number[];
+  /** The emoji and color the team gave the customer (S66); null: the first letter. */
+  face?: Face | null;
   /**
    * What the server does with a logged contact: store stage moves (S3), text "no answer" (S16);
    * `tags`: customer tags (S49).

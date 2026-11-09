@@ -26,6 +26,7 @@ import { STAFF_API, type DjangoUser, type Page } from './djangoStaff';
 import { createCustomer, fetchLeads } from './legacy/leads';
 import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
+import { faceOf, putFace } from './face';
 import { tagsOfCustomer } from './salesTags';
 import { pageOf, storage } from './session';
 import { overviewOf, taskListOf } from './tasks';
@@ -223,11 +224,14 @@ export const salesStaffHandlers = [
       fetchCustomer(id(params)).then((data) => ({
         ...data,
         tags: tagsOfCustomer(data.id),
+        face: faceOf(data.id),
         supports: { ...data.supports, tags: true, call_brief: true, summary_sms: false },
         attribution: { first_contact: null, won_by: null },
       })),
     ),
   ),
+  // The customer's emoji and color (S66): the same one the supervisor mock shows on the case.
+  http.put(`${BASE}/customers/:id/face/`, ({ params, request }) => putFace(id(params), request)),
   // The call popup's "before you answer" box: the old site keeps none of it in one place.
   http.get(`${BASE}/customers/:id/call-brief/`, () =>
     HttpResponse.json<CallBrief>({

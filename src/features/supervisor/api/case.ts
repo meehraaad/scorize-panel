@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
+import type { Face } from '@/lib/face/api';
 import { SUPERVISOR_API, type CaseStage, type Money, SUPERVISOR_KEY } from './common';
 
 /** Why the professor-email bot can't send for this applicant. */
@@ -74,6 +75,8 @@ export interface CaseData {
   documents_waiting: number;
   applications: number;
   notes: CaseNotes;
+  /** The emoji and color the team gave the customer (S66), the same as on the sales page. */
+  face?: Face | null;
 }
 
 /** Staff-only notes on the case; the applicant never sees them. */

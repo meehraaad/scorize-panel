@@ -34,5 +34,29 @@
     "crm": "Old sales note",
     "supervisor": "Old supervisor note",
     "manager": "Old case description"
+  },
+  "face": {
+    "change": "Change {{name}}’s emoji and color",
+    "title": "Customer’s emoji and color",
+    "subtitle": "The whole team, sales and supervisors, sees this one",
+    "close": "Close",
+    "color": "Color",
+    "emoji": "Emoji",
+    "letter": "First letter of the name",
+    "save": "Save",
+    "clear": "Back to the first letter",
+    "saved": "Customer’s emoji and color saved",
+    "cleared": "The first letter shows again",
+    "error": "Not saved. Try again",
+    "colors": {
+      "plum": "Plum",
+      "rose": "Pink",
+      "orange": "Orange",
+      "yellow": "Yellow",
+      "green": "Green",
+      "teal": "Teal",
+      "blue": "Blue",
+      "gray": "Gray"
+    }
   }
 }

@@ -112,6 +112,16 @@
   --cal-10: #0b8043;
   --cal-11: #d50000;
   --cal-few: #e9b949; /* a time with only a few seats left */
+
+  /* A customer's picture (S66): soft fills behind their emoji or first letter (UserInfo.face_color). */
+  --face-plum: #f6dfee;
+  --face-rose: #fde0e3;
+  --face-orange: #ffe4cc;
+  --face-yellow: #fff0bf;
+  --face-green: #dcf3e4;
+  --face-teal: #d4f0ee;
+  --face-blue: #dfe9fd;
+  --face-gray: #ebe8ee;
 }
 
 [data-theme='dark'] {
@@ -210,6 +220,15 @@
   --cal-10: #2fa564;
   --cal-11: #f04848;
   --cal-few: #f0bc5e;
+
+  --face-plum: #5a2449;
+  --face-rose: #5c2a32;
+  --face-orange: #5c3a20;
+  --face-yellow: #554617;
+  --face-green: #1f4a33;
+  --face-teal: #1a4745;
+  --face-blue: #233c63;
+  --face-gray: #3a3a40;
 }
 
 :root {

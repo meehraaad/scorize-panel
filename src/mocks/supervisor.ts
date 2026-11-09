@@ -32,6 +32,7 @@ import type { Degree } from '@/lib/applicant/approval';
 import { APPLICATION_RESULTS, type ApplicationResult } from '@/lib/applications';
 import type { NewTask } from '@/lib/tasks/api';
 import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/api';
+import { faceOf, putFace } from './face';
 import { mockBotRules } from './mail';
 import { addToNotebook, changeInNotebook, importOldNotes, notebookOf } from './notebook';
 import { forbidden, notFound, pageOf, storage } from './session';
@@ -777,6 +778,7 @@ function caseData(item: MockCase): CaseData {
     unread: item.unread,
     documents_waiting: item.documents.filter((doc) => doc.state === 'review').length,
     applications: item.applications.length,
+    face: faceOf(item.data.user),
   };
 }
 
@@ -1173,6 +1175,11 @@ export const supervisorHandlers = [
   http.get(`${API}/cases/:id/`, ({ params }) => {
     const item = caseOr404(params);
     return item instanceof Response ? item : HttpResponse.json(caseData(item));
+  }),
+
+  http.put(`${API}/cases/:id/face/`, ({ params, request }) => {
+    const item = caseOr404(params);
+    return item instanceof Response ? item : putFace(item.data.user, request);
   }),
 
   http.post(`${API}/cases/:id/stage/`, async ({ params, request }) => {

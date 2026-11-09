@@ -1,14 +1,14 @@
 import { lazy, Suspense, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { CustomerFace } from '@/components/customers/CustomerFace';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { StepBar } from '@/components/ui/Progress';
 import { SheetButton } from '@/components/ui/Sheet';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { initialOf } from '@/lib/text';
-import { MESSAGE_CHANNELS, STAGES, type Channel } from '@/lib/sales/api';
-import type { CustomerData } from '../api';
+import { MESSAGE_CHANNELS, SALES_API, STAGES, type Channel } from '@/lib/sales/api';
+import { customerKey, type CustomerData } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { CustomerTags } from './CustomerTags';
@@ -57,12 +57,14 @@ export function CustomerHead({
     <section aria-label={t('customer.summary')} className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <div className="flex min-w-0 items-center gap-4">
-          <span
-            aria-hidden="true"
-            className="flex size-12 flex-none items-center justify-center rounded-2xl bg-primary text-xl font-extrabold text-on-primary sm:size-[60px] sm:rounded-[20px] sm:text-2xl"
-          >
-            {initialOf(customer.name)}
-          </span>
+          <CustomerFace
+            name={customer.name}
+            face={customer.face ?? null}
+            url={`${SALES_API}/customers/${String(customer.id)}/face/`}
+            queryKey={customerKey(customer.id)}
+            className="size-12 rounded-2xl text-xl sm:size-[60px] sm:rounded-[20px] sm:text-2xl"
+            plain="bg-primary text-on-primary"
+          />
           <div className="flex min-w-0 flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="m-0 font-display text-[22px] font-extrabold lg:text-[26px]">
