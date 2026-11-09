@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 import type { LeadStage } from '@/lib/sales/api';
-import type { CustomerColumn, CustomerData } from './api';
+import type { CustomerColumn, CustomerData, StageActivity } from './api';
 
 /** The middle stages the sales manager's columns sit in (the board's `STAGE_PHASES`). */
 const PHASES = ['contacted', 'consulted', 'offer'] as const;
@@ -20,6 +20,8 @@ export interface Lane {
   stage: Exclude<LeadStage, 'lost'>;
   /** A team column's id; null for a fixed lane (or a middle stage before Django sends columns). */
   column: number | null;
+  /** What a team column asks for when a card enters it (S48); none for a fixed lane. */
+  activities: StageActivity[];
 }
 
 /**
@@ -36,6 +38,7 @@ export function lanesOf(
     name: t(`stage.${stage}`),
     stage,
     column: null,
+    activities: [],
   });
   const columns: CustomerColumn[] =
     customer.supports.columns && customer.columns?.length ? customer.columns : [];
@@ -48,6 +51,7 @@ export function lanesOf(
           name: column.name,
           stage: column.phase,
           column: column.id,
+          activities: column.activities ?? [],
         }))
     : PHASES.map((stage) => ({
         key: stage,
@@ -55,6 +59,7 @@ export function lanesOf(
         name: t(`stage.${stage}`),
         stage,
         column: null,
+        activities: [],
       }));
   return [fixed('new'), ...middle, fixed('draft'), fixed('won')];
 }
@@ -69,7 +74,9 @@ export function laneOf(
 ): Lane | null {
   if (lead.stage === 'lost') return null;
   return (
-    lanes.find((lane) => lane.column !== null && lane.column === lead.column && lane.stage === lead.stage) ??
+    lanes.find(
+      (lane) => lane.column !== null && lane.column === lead.column && lane.stage === lead.stage,
+    ) ??
     lanes.find((lane) => lane.stage === lead.stage) ??
     null
   );
@@ -80,11 +87,28 @@ export function laneOf(
  * "consulted"), which is that stage's first lane.
  */
 export function pickedLane(lanes: readonly Lane[], choice: string): Lane | null {
-  return lanes.find((lane) => lane.key === choice) ?? lanes.find((lane) => lane.stage === choice) ?? null;
+  return (
+    lanes.find((lane) => lane.key === choice) ?? lanes.find((lane) => lane.stage === choice) ?? null
+  );
 }
 
 /** Lanes a contact log can move the lead to: the team's columns after where it is now. */
 export function movableLanes(lanes: readonly Lane[], current: Lane | null): Lane[] {
   const from = current ? lanes.indexOf(current) : -1;
   return lanes.filter((lane, index) => index > from && isPhase(lane.stage));
+}
+
+/**
+ * Lanes the customer page can move the card to, as a drag on the board can: `new` and the team's
+ * columns, for an open lead. Draft and won follow the contract; a lost lead is reopened from the log.
+ */
+export function boardMoveTargets(lanes: readonly Lane[], current: Lane | null): Lane[] {
+  if (!current || current.stage === 'draft' || current.stage === 'won') return [];
+  return lanes.filter(
+    (lane) =>
+      lane !== current &&
+      lane.stage !== 'draft' &&
+      lane.stage !== 'won' &&
+      (lane.column !== null || lane.stage === 'new'),
+  );
 }

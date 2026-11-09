@@ -48,10 +48,10 @@ export function EnterStageDialog({
   onClose,
   onConfirm,
 }: {
-  card: BoardCard;
+  card: Pick<BoardCard, 'name' | 'customer'>;
   /** The column the card left, by name. */
   from: string;
-  to: BoardColumn;
+  to: Pick<BoardColumn, 'stage' | 'name' | 'activities'>;
   seller: string;
   pending: boolean;
   onClose: () => void;

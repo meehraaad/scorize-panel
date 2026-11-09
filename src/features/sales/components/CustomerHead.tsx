@@ -6,14 +6,21 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { StepBar } from '@/components/ui/Progress';
 import { SheetButton } from '@/components/ui/Sheet';
+import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { toast } from '@/lib/toast';
 import { MESSAGE_CHANNELS, SALES_API, type Channel } from '@/lib/sales/api';
-import { customerKey, type CustomerData } from '../api';
-import { laneOf, lanesOf } from '../boardLanes';
+import { customerKey, useMoveBoardCard, type CustomerData, type MoveSteps } from '../api';
+import { boardMoveTargets, laneOf, lanesOf, type Lane } from '../boardLanes';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { CustomerTags } from './CustomerTags';
 import { ScoreChip, StageChip } from './LeadChips';
+
+// Opens when a column is picked on the stage bar: the board's own "entering a stage" popup.
+const EnterStageDialog = lazy(() =>
+  import('./EnterStageDialog').then((module) => ({ default: module.EnterStageDialog })),
+);
 
 // Opens on a click: the date picker it uses is not part of the page's first load.
 const FollowUpDialog = lazy(() =>
@@ -111,19 +118,79 @@ export function CustomerHead({
   );
 }
 
+/**
+ * The board's lanes, the lead's one marked. A lane the card can go to is a button: it moves the
+ * card on the board as a drag there would (`leads/<id>/move/`), first asking for what a team
+ * column wants on entering it.
+ */
 function StageBar({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
+  const user = useUser();
+  const move = useMoveBoardCard();
+  const [entering, setEntering] = useState<Lane | null>(null);
   const lanes = lanesOf(customer, t);
   const lead = customer.lead;
   const current = lead ? laneOf(lanes, lead) : null;
+  // Moving needs the columns' ids, which Django sends with `supports.columns`.
+  const targets = customer.supports.columns ? boardMoveTargets(lanes, current) : [];
+  const card = { name: customer.name, customer: customer.id };
+
+  function commit(to: Lane, steps?: MoveSteps) {
+    if (!lead || !current) return;
+    setEntering(null);
+    move.mutate(
+      { lead: lead.id, from: current.key, to: to.key, ...(steps && { steps }) },
+      {
+        onSuccess: () =>
+          toast.success(t('board.move.saved', { name: customer.name, stage: to.name })),
+        onError: () => toast.error(t('board.move.failed', { name: customer.name })),
+      },
+    );
+  }
+
   return (
-    <StepBar
-      tone="plum"
-      label={t('customer.stages')}
-      steps={lanes.map((lane) => ({ key: lane.key, label: lane.label }))}
-      current={current ? lanes.indexOf(current) : -1}
-      finished={lead?.stage === 'won'}
-    />
+    <>
+      <StepBar
+        tone="plum"
+        label={t('customer.stages')}
+        steps={lanes.map((lane) => ({ key: lane.key, label: lane.label }))}
+        current={current ? lanes.indexOf(current) : -1}
+        finished={lead?.stage === 'won'}
+        {...(targets.length > 0 && {
+          pick: {
+            can: (index: number) => targets.includes(lanes[index] as Lane),
+            label: (step: { key: string }) =>
+              t('customer.moveTo', {
+                stage: lanes.find((lane) => lane.key === step.key)?.name ?? '',
+              }),
+            onPick: (index: number) => {
+              const to = lanes[index];
+              if (!to || move.isPending) return;
+              if (to.column === null) commit(to);
+              else setEntering(to);
+            },
+            disabled: move.isPending,
+          },
+        })}
+      />
+      {targets.length > 0 && (
+        <p className="m-0 -mt-2 text-xs text-text-3">{t('customer.moveHint')}</p>
+      )}
+      {entering && current && (
+        <Suspense fallback={null}>
+          <EnterStageDialog
+            key={entering.key}
+            card={card}
+            from={current.name}
+            to={{ stage: entering.stage, name: entering.name, activities: entering.activities }}
+            seller={user.staff?.full_name ?? `${user.first_name} ${user.last_name}`}
+            pending={move.isPending}
+            onClose={() => setEntering(null)}
+            onConfirm={(steps) => commit(entering, steps)}
+          />
+        </Suspense>
+      )}
+    </>
   );
 }
 

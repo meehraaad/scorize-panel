@@ -71,7 +71,9 @@ const MANAGER_TEAM = [
 
 function columnsOf(): NonNullable<CustomerData['columns']> {
   const data = stateOrError();
-  return failed(data) ? [] : data.stages.map(({ id, name, phase }) => ({ id, name, phase }));
+  return failed(data)
+    ? []
+    : data.stages.map(({ id, name, phase, activities }) => ({ id, name, phase, activities }));
 }
 
 export const salesStaffHandlers = [

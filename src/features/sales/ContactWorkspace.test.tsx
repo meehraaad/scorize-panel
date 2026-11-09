@@ -269,7 +269,11 @@ describe('session log: the next step on the board', () => {
 
     // The customer page's bar: the board's lanes, the team's columns by their own names.
     const bar = await screen.findByRole('list', { name: 'مراحل فروش' });
-    expect(within(bar).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+    expect(
+      within(bar)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent),
+    ).toEqual([
       expect.stringContaining('تازه'),
       expect.stringContaining('اولین تماس'),
       expect.stringContaining('جلسه‌ی اول'),
@@ -288,6 +292,55 @@ describe('session log: the next step on the board', () => {
     expect(within(board).getByText('کارت به ستون «جلسه‌ی دوم» می‌رود.')).toBeInTheDocument();
     await user.click(first(within(dialog).getAllByRole('button', { name: /^ثبت/ })));
     await waitFor(() => expect(sent).toMatchObject({ stage: 'consulted', column: 703 }));
+  });
+
+  it("moves the card on the board from the customer page's stage bar", async () => {
+    const { fetchCustomer } = await import('@/mocks/legacy/customer');
+    let moved: { lead: string; body: Record<string, unknown> } | null = null;
+    const followUp = { id: 1, kind: 'follow_up', required: true, settings: { days: 1, hour: 10 } };
+    server.use(
+      http.get('/api/sales/v1/customers/:id/', async ({ params }) => {
+        const data = await fetchCustomer(Number(params.id));
+        return HttpResponse.json({
+          ...data,
+          lead: {
+            id: 41,
+            source: 'campaign',
+            stage: 'contacted',
+            score: null,
+            follow_up_at: null,
+            lost_reason: null,
+            seller: null,
+            column: 701,
+          },
+          columns: [
+            { id: 701, name: 'اولین تماس', phase: 'contacted', activities: [followUp] },
+            { id: 702, name: 'جلسه‌ی اول', phase: 'consulted', activities: [followUp] },
+          ],
+          supports: { ...data.supports, stages: true, columns: true },
+        });
+      }),
+      http.post('/api/sales/v1/leads/:id/move/', async ({ params, request }) => {
+        moved = {
+          lead: String(params.id),
+          body: (await request.json()) as Record<string, unknown>,
+        };
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105');
+    const bar = await screen.findByRole('list', { name: 'مراحل فروش' });
+    // Draft and won follow the contract; the lane it is in is not a target.
+    expect(within(bar).queryByRole('button', { name: /پیش‌نویس/ })).toBeNull();
+    expect(within(bar).queryByRole('button', { name: /اولین تماس/ })).toBeNull();
+    await user.click(within(bar).getByRole('button', { name: 'انتقال کارت به «جلسه‌ی اول»' }));
+
+    const dialog = await screen.findByRole('dialog', { name: /به «جلسه‌ی اول» می‌رود/ });
+    await user.click(within(dialog).getByRole('button', { name: /ثبت و جابه‌جایی/ }));
+    await waitFor(() =>
+      expect(moved).toMatchObject({ lead: '41', body: { to: '702', steps: { follow_up: {} } } }),
+    );
   });
 
   it("picks another date's follow-up time on the seller's week", async () => {

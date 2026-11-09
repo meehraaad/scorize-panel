@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { stepState, type StepState } from '@/lib/progress';
 import { Icon } from './Icon';
 
@@ -66,6 +67,16 @@ interface StepBarProps {
    * `plum`: on the page, the steps so far in light plum and the current one in plum.
    */
   tone?: 'surface' | 'onHero' | 'luxe' | 'plum';
+  /**
+   * Steps that can be picked (moving a card on the sales board from the customer page): each
+   * such step is a button named by `pickLabel`; the others stay plain.
+   */
+  pick?: {
+    can: (index: number) => boolean;
+    label: (step: StepBarProps['steps'][number]) => string;
+    onPick: (index: number) => void;
+    disabled?: boolean;
+  };
   className?: string;
 }
 
@@ -76,6 +87,7 @@ export function StepBar({
   current,
   finished = false,
   tone = 'surface',
+  pick,
   className = '',
 }: StepBarProps) {
   const hero = tone === 'onHero' || tone === 'luxe';
@@ -108,30 +120,63 @@ export function StepBar({
           <li
             key={step.key}
             aria-current={state === 'current' ? 'step' : undefined}
-            className="flex min-w-0 flex-col gap-2"
+            className="flex min-w-0 flex-col"
           >
-            <span
-              aria-hidden="true"
-              className={`${tone === 'plum' ? 'h-[5px]' : 'h-1'} rounded-full ${overview ? (hero ? 'bg-hero-line' : 'bg-track') : bar[state]}`}
-            />
-            <span
-              className={`truncate text-[11px] lg:text-sm ${
-                overview ? `font-medium ${hero ? 'text-on-hero' : 'text-text'}` : text[state]
-              }`}
+            <StepTarget
+              pick={pick?.can(index) ? pick : undefined}
+              index={index}
+              label={pick?.label(step) ?? ''}
             >
-              {step.label}
-            </span>
-            {step.hint && (
               <span
-                className={`hidden text-xs leading-6 lg:block ${hero ? 'text-on-hero-2' : 'text-text-2'}`}
+                aria-hidden="true"
+                className={`${tone === 'plum' ? 'h-[5px]' : 'h-1'} rounded-full ${overview ? (hero ? 'bg-hero-line' : 'bg-track') : bar[state]}`}
+              />
+              <span
+                className={`truncate text-[11px] lg:text-sm ${
+                  overview ? `font-medium ${hero ? 'text-on-hero' : 'text-text'}` : text[state]
+                }`}
               >
-                {step.hint}
+                {step.label}
               </span>
-            )}
+              {step.hint && (
+                <span
+                  className={`hidden text-xs leading-6 lg:block ${hero ? 'text-on-hero-2' : 'text-text-2'}`}
+                >
+                  {step.hint}
+                </span>
+              )}
+            </StepTarget>
           </li>
         );
       })}
     </ol>
+  );
+}
+
+/** A step's segment and name: a button when it can be picked, a plain block otherwise. */
+function StepTarget({
+  pick,
+  index,
+  label,
+  children,
+}: {
+  pick: StepBarProps['pick'];
+  index: number;
+  label: string;
+  children: ReactNode;
+}) {
+  if (!pick) return <div className="flex min-w-0 flex-col gap-2">{children}</div>;
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={pick.disabled}
+      onClick={() => pick.onPick(index)}
+      className="group -mx-0.5 flex min-h-11 min-w-0 cursor-pointer flex-col gap-2 rounded-lg px-0.5 pt-1.5 pb-1 text-start hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-wait"
+    >
+      {children}
+    </button>
   );
 }
 

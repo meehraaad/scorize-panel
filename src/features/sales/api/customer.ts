@@ -16,7 +16,7 @@ import {
 } from '@/lib/sales/api';
 import type { Face } from '@/lib/face/api';
 import type { Colleague, TaskSummary } from '@/lib/tasks/api';
-import type { StagePhase } from './board';
+import type { StageActivity, StagePhase } from './board';
 
 export type ProfileKey =
   | 'current_degree'
@@ -44,6 +44,8 @@ export interface CustomerColumn {
   id: number;
   name: string;
   phase: StagePhase;
+  /** What the column asks for when a card enters it, as on the board. */
+  activities?: StageActivity[];
 }
 
 export interface CustomerData {
