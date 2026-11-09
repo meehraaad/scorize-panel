@@ -1,9 +1,9 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { ColleaguePicker } from './ColleaguePicker';
 import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
-import { SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { toValue } from '@/lib/calendar';
@@ -69,16 +69,11 @@ export function NewTaskDialog({
   const [text, setText] = useState('');
   const [target, setTarget] = useState<Target>(due ? 'me' : 'people');
   const [picked, setPicked] = useState<number[]>([]);
-  const [query, setQuery] = useState('');
   const [team, setTeam] = useState<TaskTeam>(TASK_TEAMS[0]);
   const [when, setWhen] = useState<(typeof WHENS)[number]>(due ? 'other' : 'tomorrow');
   const [date, setDate] = useState(due ? toValue(due, true) : '');
   const [checked, setChecked] = useState(false);
 
-  const q = query.trim();
-  const shown = colleagues.filter(
-    (colleague) => !q || colleague.name.includes(q) || colleague.role.includes(q),
-  );
   const chosen = colleagues.filter((colleague) => picked.includes(colleague.id));
   const toggle = (id: number) =>
     setPicked((ids) => (ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]));
@@ -168,34 +163,15 @@ export function NewTaskDialog({
                 ))}
               </ul>
             )}
-            <SearchField
-              label={t('new.search')}
-              placeholder={t('new.search')}
-              value={query}
-              onChange={setQuery}
-              className="w-full"
+            <ColleaguePicker
+              multiple
+              colleagues={colleagues}
+              picked={picked}
+              onToggle={toggle}
+              label={t('new.people')}
+              searchLabel={t('new.search')}
+              noMatch={t('new.noMatch')}
             />
-            <ul className="m-0 flex max-h-64 list-none flex-col gap-0.5 overflow-y-auto p-0">
-              {shown.map((colleague) => (
-                <li key={colleague.id}>
-                  <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-2.5 py-1.5 hover:bg-canvas has-checked:bg-tint has-focus-visible:outline-2 has-focus-visible:outline-focus">
-                    <input
-                      type="checkbox"
-                      checked={picked.includes(colleague.id)}
-                      onChange={() => toggle(colleague.id)}
-                      className="size-5 flex-none accent-primary"
-                    />
-                    <span className="flex min-w-0 flex-col">
-                      <span className="text-sm font-semibold">{colleague.name}</span>
-                      <span className="text-xs text-text-2">{colleague.role}</span>
-                    </span>
-                  </label>
-                </li>
-              ))}
-              {shown.length === 0 && (
-                <li className="px-2.5 py-2 text-sm text-text-2">{t('new.noMatch')}</li>
-              )}
-            </ul>
             <span
               className={`text-sm leading-6 ${checked && n === 0 ? 'text-danger' : 'text-text-2'}`}
             >

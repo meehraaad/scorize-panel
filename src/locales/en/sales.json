@@ -474,7 +474,8 @@
         "team": "A team"
       },
       "peer": "Which colleague?",
-      "peerOption": "{{name}} · {{role}}",
+      "peerSearch": "Search colleagues by name or role",
+      "peerNoMatch": "No colleague matches that name or role.",
       "peerHint": "They get an SMS. When they mark it seen or done, you're told.",
       "team": "Which team?",
       "teamHint": "Goes to the team's queue; whoever takes it owns it.",

@@ -1,6 +1,7 @@
-import { useState, type SubmitEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { ColleaguePicker } from '@/components/tasks/ColleaguePicker';
 import { Button } from '@/components/ui/Button';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
@@ -152,7 +153,8 @@ function NewTaskForm({
   const create = useCreateTask(customerKey(customer.id));
   const [text, setText] = useState('');
   const [kind, setKind] = useState<TaskKind>('mine');
-  const [peer, setPeer] = useState(String(customer.colleagues[0]?.id ?? ''));
+  const [peer, setPeer] = useState(customer.colleagues[0]?.id);
+  const peerHint = useId();
   const [team, setTeam] = useState<TaskTeam>('writing');
   const [when, setWhen] = useState<When>('evening');
   const [date, setDate] = useState('');
@@ -172,7 +174,7 @@ function NewTaskForm({
         text: text.trim(),
         kind,
         due_at: dueAt,
-        ...(kind === 'request' ? { assignee: Number(peer) } : {}),
+        ...(kind === 'request' && peer !== undefined ? { assignee: peer } : {}),
         ...(kind === 'team' ? { team } : {}),
       },
       {
@@ -207,16 +209,23 @@ function NewTaskForm({
         options={KINDS.map((value) => ({ value, label: t(`customer.newTask.forOption.${value}`) }))}
       />
       {kind === 'request' && customer.colleagues.length > 0 && (
-        <SelectField
-          label={t('customer.newTask.peer')}
-          hint={t('customer.newTask.peerHint')}
-          value={peer}
-          onChange={setPeer}
-          options={customer.colleagues.map((colleague) => ({
-            value: String(colleague.id),
-            label: t('customer.newTask.peerOption', { name: colleague.name, role: colleague.role }),
-          }))}
-        />
+        <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
+          <legend className="mb-2 text-sm font-semibold text-text-2">
+            {t('customer.newTask.peer')}
+          </legend>
+          <ColleaguePicker
+            colleagues={customer.colleagues}
+            picked={peer === undefined ? [] : [peer]}
+            onToggle={setPeer}
+            label={t('customer.newTask.peer')}
+            searchLabel={t('customer.newTask.peerSearch')}
+            noMatch={t('customer.newTask.peerNoMatch')}
+            describedBy={peerHint}
+          />
+          <span id={peerHint} className="text-sm leading-6 text-text-2">
+            {t('customer.newTask.peerHint')}
+          </span>
+        </fieldset>
       )}
       {kind === 'team' && (
         <SelectField

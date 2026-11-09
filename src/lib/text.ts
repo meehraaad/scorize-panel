@@ -29,3 +29,27 @@ export function normalizePhone(input: string): string | null {
 
 /** The first letter of a name, for avatars. */
 export const initialOf = (name: string) => Array.from(name.trim())[0] ?? '';
+
+/**
+ * Text folded for searching on the device: Arabic ي/ك as Persian ی/ک, no half-spaces or
+ * diacritics, ASCII digits, lower case and single spaces. Both the query and the text go through it.
+ */
+export function searchKey(value: string) {
+  return toLatinDigits(value)
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[ۀة]/g, 'ه')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/[ً-ْٰ‌‏‎]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+/** Whether every word of `query` is in one of `fields` (folded with `searchKey`). */
+export function matchesSearch(query: string, ...fields: string[]) {
+  const words = searchKey(query).split(' ').filter(Boolean);
+  if (words.length === 0) return true;
+  const text = searchKey(fields.join(' '));
+  return words.every((word) => text.includes(word));
+}
