@@ -554,7 +554,14 @@
       }
     },
     "logDialog": {
-      "stageLabel": "مرحله",
+      "board": {
+        "legend": "کجای کار است؟",
+        "lost": "از دست رفت",
+        "lostAsk": "از دست رفت؟",
+        "moves": "کارت به ستون «{{stage}}» می‌رود.",
+        "stays": "کارت در ستون «{{stage}}» می‌ماند.",
+        "lostNote": "لید بسته می‌شود و از بورد بیرون می‌رود."
+      },
       "addCustomerNote": "یادداشت برای خود مشتری",
       "stripLabel": "ثبت ارتباط",
       "title": "ثبت ارتباط با {{name}}",
@@ -612,7 +619,11 @@
       "calendarTitle": "پیگیری {{name}} کی باشد؟",
       "calendarHint": "روی یک جای خالی بزنید؛ همان زمان پیگیری می‌شود.",
       "smsSummary": "پیامک هم برود",
-      "saveWithFollow": "ثبت · پیگیری {{day}} {{time}}"
+      "saveWithFollow": "ثبت · پیگیری {{day}} {{time}}",
+      "channelOption": {
+        "call": "تلفنی",
+        "meeting": "حضوری"
+      }
     },
     "tabs": {
       "label": "بخش‌های صفحه‌ی مشتری",
@@ -1990,16 +2001,18 @@
     "saved": "در اطلاعات مشتری ذخیره شد",
     "gpa": "معدل {{gpa}}",
     "field": {
-      "wanted_degree": "مقطع",
+      "wanted_degree": "مقطع هدف",
       "countries": "کشور",
       "budget": "بودجه",
-      "language": "زبان"
+      "language": "مدرک زبان",
+      "education": "مدرک تحصیلی"
     },
     "question": {
       "wanted_degree": "چه مقطعی؟",
-      "countries": "کدام کشور؟",
+      "countries": "کدام کشورها؟",
       "budget": "بودجه؟",
-      "language": "زبانش؟"
+      "language": "مدرک زبان؟",
+      "education": "آخرین مدرک؟"
     },
     "budget": {
       "1": "زیر ۵۰۰ م",
@@ -2012,11 +2025,12 @@
       "usa": "آمریکا",
       "italy": "ایتالیا"
     },
-    "language": {
-      "none": "مدرک ندارد",
-      "basic": "در حال خواندن",
-      "certificate": "مدرک دارد"
-    }
+    "wants": "می‌خواهد {{degree}}",
+    "save": "ذخیره",
+    "studyField": "رشته",
+    "gpaLabel": "معدل",
+    "score": "نمره",
+    "noCertificate": "مدرک زبان ندارد"
   },
   "callStrip": {
     "unknownNumber": "شماره‌ی ناشناس",

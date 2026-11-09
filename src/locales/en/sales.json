@@ -554,7 +554,14 @@
       }
     },
     "logDialog": {
-      "stageLabel": "Stage",
+      "board": {
+        "legend": "Where is it now?",
+        "lost": "Lost",
+        "lostAsk": "Lost?",
+        "moves": "The card moves to “{{stage}}”.",
+        "stays": "The card stays in “{{stage}}”.",
+        "lostNote": "The lead closes and leaves the board."
+      },
       "addCustomerNote": "Note for the customer",
       "stripLabel": "Log a contact",
       "title": "Log contact with {{name}}",
@@ -612,7 +619,11 @@
       "calendarTitle": "When to follow up with {{name}}?",
       "calendarHint": "Tap a free spot; that time becomes the follow-up.",
       "smsSummary": "Text it too",
-      "saveWithFollow": "Save · follow up {{day}} {{time}}"
+      "saveWithFollow": "Save · follow up {{day}} {{time}}",
+      "channelOption": {
+        "call": "By phone",
+        "meeting": "In person"
+      }
     },
     "tabs": {
       "label": "Customer page sections",
@@ -1990,16 +2001,18 @@
     "saved": "Saved to the customer's info",
     "gpa": "GPA {{gpa}}",
     "field": {
-      "wanted_degree": "Degree",
+      "wanted_degree": "Wanted degree",
       "countries": "Country",
       "budget": "Budget",
-      "language": "Language"
+      "language": "Language certificate",
+      "education": "Degree"
     },
     "question": {
       "wanted_degree": "Which degree?",
-      "countries": "Which country?",
+      "countries": "Which countries?",
       "budget": "Budget?",
-      "language": "Their language?"
+      "language": "Language certificate?",
+      "education": "Last degree?"
     },
     "budget": {
       "1": "Under 500M",
@@ -2012,11 +2025,12 @@
       "usa": "United States",
       "italy": "Italy"
     },
-    "language": {
-      "none": "No certificate",
-      "basic": "Studying",
-      "certificate": "Has a certificate"
-    }
+    "wants": "Wants {{degree}}",
+    "save": "Save",
+    "studyField": "Field",
+    "gpaLabel": "GPA",
+    "score": "Score",
+    "noCertificate": "No language certificate"
   },
   "callStrip": {
     "unknownNumber": "Unknown number",
