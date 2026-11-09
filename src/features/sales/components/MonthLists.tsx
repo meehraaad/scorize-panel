@@ -94,7 +94,7 @@ export function InstalmentList({ rows }: { rows: Instalment[] }) {
         >
           <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
             <Link
-              to={`${customerPath(item.customer)}/payments`}
+              to={`${customerPath(item.customer)}/money`}
               className="text-base font-semibold text-text hover:underline"
             >
               {item.name}

@@ -33,6 +33,7 @@ import { APPLICATION_RESULTS, type ApplicationResult } from '@/lib/applications'
 import type { NewTask } from '@/lib/tasks/api';
 import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/api';
 import { mockBotRules } from './mail';
+import { addToNotebook, changeInNotebook, importOldNotes, notebookOf } from './notebook';
 import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
@@ -1181,6 +1182,24 @@ export const supervisorHandlers = [
     item.data.stage = stage;
     record(item, `${SUPERVISOR_NAME} وضعیت پرونده را تغییر داد${note ? `: ${note}` : ''}`);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // The shared notebook (S61): the same list the sales mock shows on the customer.
+  http.get(`${API}/cases/:id/notebook/`, ({ params }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    importOldNotes(item.data.user, item.data.notes);
+    return notebookOf(item.data.user, SUPERVISOR_NAME);
+  }),
+  http.post(`${API}/cases/:id/notebook/`, ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    return addToNotebook(item.data.user, SUPERVISOR_NAME, 'supervisor', request);
+  }),
+  http.patch(`${API}/cases/:id/notebook/:note/`, ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    return changeInNotebook(item.data.user, Number(params.note), SUPERVISOR_NAME, request);
   }),
 
   http.patch(`${API}/cases/:id/notes/`, async ({ params, request }) => {

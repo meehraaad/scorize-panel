@@ -22,6 +22,7 @@ import type turkey from '@/locales/fa/turkey.json';
 import type writer from '@/locales/fa/writer.json';
 import type assistant from '@/locales/fa/assistant.json';
 import type mail from '@/locales/fa/mail.json';
+import type notes from '@/locales/fa/notes.json';
 import type writing from '@/locales/fa/writing.json';
 
 // Persian is the source dictionary: t('...') keys are type-checked against it,
@@ -32,6 +33,7 @@ declare module 'i18next' {
     resources: {
       common: typeof common;
       voice: typeof voice;
+      notes: typeof notes;
       auth: typeof auth;
       home: typeof home;
       applications: typeof applications;

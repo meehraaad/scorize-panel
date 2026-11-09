@@ -5,13 +5,14 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import type { CustomerData } from '../api';
 import { customerPath } from '../paths';
 
-const TABS = ['summary', 'purchases', 'payments', 'info', 'apply'] as const;
+/** Purchases, payments, the contract and its instalments are one tab: "contract and money". */
+const TABS = ['summary', 'money', 'info', 'apply'] as const;
 
 /** Sections of the customer page, as links (each is its own URL). */
 export function CustomerTabs({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const count = { purchases: customer.counts.purchases, payments: customer.counts.payments };
+  const money = customer.counts.purchases + customer.counts.payments;
   return (
     <nav
       aria-label={t('customer.tabs.label')}
@@ -25,8 +26,8 @@ export function CustomerTabs({ customer }: { customer: CustomerData }) {
           className={({ isActive }) => tabClass(isActive)}
         >
           {t(`customer.tabs.${tab}`)}
-          {(tab === 'purchases' || tab === 'payments') && count[tab] > 0 && (
-            <span className="text-[13px] font-normal text-text-2">{f.number(count[tab])}</span>
+          {tab === 'money' && money > 0 && (
+            <span className="text-[13px] font-normal text-text-2">{f.number(money)}</span>
           )}
         </NavLink>
       ))}

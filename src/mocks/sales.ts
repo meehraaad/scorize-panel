@@ -19,6 +19,7 @@ import { type Degree, type LeadSource, type LeadStage, type LostReason } from '@
 import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';
 import { bulkTag } from './salesTags';
+import { addToNotebook, changeInNotebook, notebookOf, resetNotebookMocks } from './notebook';
 
 /**
  * Fake sales-panel API (docs/backend-changes.md S1–S20) and the staff tasks endpoint (T1–T12).
@@ -1141,12 +1142,27 @@ export const salesHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  // Planned (S17): a quick note. Django's history has no notes yet, so it doesn't show there.
-  http.post(`${BASE}/customers/:id/notes/`, ({ params }) => {
+  // The shared notebook (S61): the same list the supervisor mock shows on the case.
+  http.get(`${BASE}/customers/:id/notes/`, ({ params }) => {
     const data = stateOrError();
     if (failed(data)) return data;
-    return data.customers.some((entry) => entry.id === Number(params.id))
-      ? new HttpResponse(null, { status: 201 })
+    const id = Number(params.id);
+    return data.customers.some((entry) => entry.id === id) ? notebookOf(id, SELLER) : notFound();
+  }),
+  http.post(`${BASE}/customers/:id/notes/`, ({ params, request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const id = Number(params.id);
+    return data.customers.some((entry) => entry.id === id)
+      ? addToNotebook(id, SELLER, 'sales', request)
+      : notFound();
+  }),
+  http.patch(`${BASE}/customers/:id/notes/:note/`, ({ params, request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const id = Number(params.id);
+    return data.customers.some((entry) => entry.id === id)
+      ? changeInNotebook(id, Number(params.note), SELLER, request)
       : notFound();
   }),
 
@@ -1165,4 +1181,5 @@ export const salesHandlers = [
 export function resetSalesMocks() {
   state = null;
   arrivals.clear();
+  resetNotebookMocks();
 }

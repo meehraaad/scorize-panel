@@ -259,18 +259,6 @@
     "activity": {
       "title": "Latest activity",
       "all": "All activity"
-    },
-    "notes": {
-      "title": "Internal notes",
-      "private": "Only Scorize staff see these notes; the applicant doesn't.",
-      "supervisor": "Supervisor note",
-      "manager": "Executive manager note",
-      "empty": "No note yet.",
-      "add": "Write",
-      "edit": "Edit",
-      "editLabel": "Edit {{note}}",
-      "save": "Save note",
-      "saved": "Note saved"
     }
   },
   "taskDialog": {

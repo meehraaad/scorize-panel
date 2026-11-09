@@ -26,7 +26,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
 
   it('payments: confirms a receipt; a pending online payment has its link', async () => {
     const user = userEvent.setup();
-    renderApp(`${ERFAN}/payments`);
+    renderApp(`${ERFAN}/money`);
     const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'تأیید رسید' }));
     expect(await within(detail).findByText('پرداخت کامل شد.')).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
 
   it('payments: declining a receipt asks first and takes an optional reason', async () => {
     const user = userEvent.setup();
-    renderApp(`${ERFAN}/payments`);
+    renderApp(`${ERFAN}/money`);
     const detail = await screen.findByRole('region', { name: WRITING });
     await user.click(within(detail).getByRole('button', { name: 'رد رسید' }));
     await user.type(within(detail).getByLabelText('علت رد (اختیاری)'), 'مبلغ یکی نیست');
@@ -66,7 +66,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await user.click(screen.getByRole('button', { name: 'ساختن پرداخت و ارسال فاکتور با پیامک' }));
 
     expect(await screen.findByRole('region', { name: 'نگارش رزومه' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(`${ERFAN}/payments`);
+    expect(router.state.location.pathname).toBe(`${ERFAN}/money`);
   });
 
   it('sells a consultation at a time picked on the schedule', async () => {
@@ -87,7 +87,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(block).toHaveAttribute('aria-pressed', 'true');
     expect(within(times).getByText(/· حسین رحیمی$/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ساختن پرداخت و ارسال فاکتور با پیامک' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe(`${ERFAN}/payments`));
+    await waitFor(() => expect(router.state.location.pathname).toBe(`${ERFAN}/money`));
   });
 
   it('details: automatically saves a section', async () => {
@@ -101,13 +101,42 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
   });
 
   it('purchases: one row per Django invoice, by kind', async () => {
-    renderApp(`${ERFAN}/purchases`);
+    renderApp(`${ERFAN}/money`);
     const writing = await screen.findByRole('region', { name: 'نگارش' });
     expect(within(writing).getByText('نگارش رزومه')).toBeInTheDocument();
     const consultations = screen.getByRole('region', { name: 'مشاوره‌ها' });
     // The paid session and the failed attempt.
     expect(within(consultations).getAllByText('مشاوره‌ی اپلای ارشد')).toHaveLength(2);
     expect(within(consultations).getByText('پرداخت ناموفق')).toBeInTheDocument();
+  });
+
+  it('old purchases and payments addresses open the one contract-and-money tab', async () => {
+    const router = renderApp(`${ERFAN}/payments?payment=4902`);
+    expect(
+      await screen.findByRole('region', { name: 'بسته‌ی نمونه انگیزه‌نامه‌ها' }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`${ERFAN}/money`);
+    expect(screen.getByRole('link', { name: /^قرارداد و پول/ })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  it('notebook: the team notes are in the shared column, a new one goes to everyone', async () => {
+    const user = userEvent.setup();
+    renderApp(ERFAN);
+    // A phone: the shared column opens from the header.
+    await user.click(await screen.findByRole('button', { name: 'درباره‌ی مشتری و یادداشت‌ها' }));
+    const notes = await screen.findByRole('region', { name: 'یادداشت‌ها' });
+    expect(await within(notes).findByText(/پدرش هزینه را می‌دهد/)).toBeInTheDocument();
+    expect(within(notes).getByText('یادداشت قدیمی فروش')).toBeInTheDocument();
+    await user.type(within(notes).getByLabelText(/^یادداشت درباره‌ی/), 'تا آخر هفته خبر می‌دهد');
+    await user.click(within(notes).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('یادداشت ذخیره شد.')).toBeInTheDocument();
+    expect(await within(notes).findByText('تا آخر هفته خبر می‌دهد')).toBeInTheDocument();
+    // Mine: I can change it.
+    await user.click(within(notes).getByRole('button', { name: 'ویرایش' }));
+    expect(within(notes).getByLabelText('متن یادداشت')).toHaveValue('تا آخر هفته خبر می‌دهد');
   });
 
   it('details: countries are found by name; an unknown one is reported', async () => {

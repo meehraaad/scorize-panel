@@ -491,9 +491,14 @@ describe('sales panel, seller pages', () => {
         }),
       ),
     );
+    const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
-    expect(await screen.findByText('اولین تماس: کاوه · قرارداد به نام: نیما')).toBeInTheDocument();
     expect(await screen.findByText('لید از کاوه به نیما رسید · رضا')).toBeInTheDocument();
+    // In the shared column (a sheet on phones).
+    await user.click(screen.getByRole('button', { name: 'درباره‌ی مشتری و یادداشت‌ها' }));
+    const about = await screen.findByRole('region', { name: 'درباره‌ی مشتری' });
+    expect(within(about).getByText('اولین تماس').nextSibling).toHaveTextContent('کاوه');
+    expect(within(about).getByText('قرارداد به نام').nextSibling).toHaveTextContent('نیما');
   });
 
   it('month: a wrong password shows nothing of the month', async () => {

@@ -1,5 +1,4 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
@@ -8,8 +7,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { historyQuery, useAddNote, type HistoryEvent, type HistoryKind } from '../api';
-import { toast } from '@/lib/toast';
+import { historyQuery, type HistoryEvent, type HistoryKind } from '../api';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
@@ -37,7 +35,6 @@ export function HistoryCard({ customer }: { customer: number }) {
       title={t('customer.history.title')}
       subtitle={t('customer.history.subtitle')}
     >
-      <QuickNote customer={customer} />
       {isPending ? (
         <SkeletonRows rows={4} />
       ) : events.length === 0 ? (
@@ -118,38 +115,5 @@ function EventRow({ event }: { event: HistoryEvent }) {
         )}
       </div>
     </li>
-  );
-}
-
-function QuickNote({ customer }: { customer: number }) {
-  const { t } = useTranslation('sales');
-  const add = useAddNote(customer);
-  const [text, setText] = useState('');
-  const submit = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!text.trim()) return;
-    add.mutate(text.trim(), {
-      onError: () => toast.error(t('error')),
-      onSuccess: () => setText(''),
-    });
-  };
-  return (
-    <form onSubmit={submit} className="flex flex-col gap-2 px-5 pb-4 lg:px-8">
-      <label htmlFor="quick-note" className="text-sm font-semibold text-text-2">
-        {t('customer.history.note')}
-      </label>
-      <div className="flex gap-2">
-        <input
-          id="quick-note"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder={t('customer.history.notePlaceholder')}
-          className="h-11 min-w-0 flex-1 rounded-full bg-surface px-4 text-[15px] text-text shadow-[inset_0_0_0_1px_var(--line-2)] outline-none placeholder:text-text-3 focus-visible:shadow-[inset_0_0_0_2px_var(--focus)]"
-        />
-        <Button type="submit" variant="outline" disabled={add.isPending || !text.trim()}>
-          {t('customer.history.save')}
-        </Button>
-      </div>
-    </form>
   );
 }

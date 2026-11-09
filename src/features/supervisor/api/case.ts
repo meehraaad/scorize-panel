@@ -85,8 +85,6 @@ export interface CaseNotes {
   manager_editable: boolean;
 }
 
-export type CaseNoteKind = 'supervisor' | 'manager';
-
 export const caseKey = (id: number) => [...SUPERVISOR_KEY, 'case', id] as const;
 
 export const caseQuery = (id: number) =>
@@ -115,14 +113,5 @@ export function useSupervisorMutation<T, R = unknown>(mutationFn: (variables: T)
 export function useChangeStage(id: number) {
   return useSupervisorMutation(({ stage, note }: { stage: CaseStage; note: string }) =>
     api(`${SUPERVISOR_API}/cases/${String(id)}/stage/`, { method: 'POST', body: { stage, note } }),
-  );
-}
-
-export function useSaveNote(id: number) {
-  return useSupervisorMutation(({ kind, text }: { kind: CaseNoteKind; text: string }) =>
-    api<CaseNotes>(`${SUPERVISOR_API}/cases/${String(id)}/notes/`, {
-      method: 'PATCH',
-      body: { [kind]: text },
-    }),
   );
 }

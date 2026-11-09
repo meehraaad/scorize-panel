@@ -418,9 +418,6 @@
   "customer": {
     "back": "My leads",
     "summary": "Customer summary",
-    "budget": "budget {{budget}}",
-    "meta": "Source: {{source}} · Seller: {{seller}}",
-    "followUp": "Next follow-up",
     "noFollowUp": "Not set",
     "lostBecause": "Lost: {{reason}}",
     "log": "Call and log",
@@ -488,9 +485,6 @@
     "history": {
       "title": "History",
       "subtitle": "Calls, messages, sessions, purchases and payments in one place",
-      "note": "Quick note",
-      "notePlaceholder": "E.g. his father pays; he'll answer by the end of the week",
-      "save": "Save",
       "more": "Older entries",
       "empty": "Nothing recorded yet.",
       "event": {
@@ -522,7 +516,6 @@
       "backgroundNoField": "{{degree}}, GPA {{gpa}}"
     },
     "profile": {
-      "title": "Profile",
       "key": {
         "current_degree": "Current degree",
         "wanted_degree": "Wanted degree",
@@ -534,16 +527,6 @@
         "military": "Military service",
         "referral": "How they found us"
       }
-    },
-    "purchases": {
-      "title": "Purchases and payments",
-      "status": {
-        "paid": "Paid",
-        "pending": "Awaiting payment",
-        "failed": "Failed"
-      },
-      "credit": "Wallet credit",
-      "none": "No purchases yet."
     },
     "logDialog": {
       "title": "Log contact with {{name}}",
@@ -610,10 +593,9 @@
     "tabs": {
       "label": "Customer page sections",
       "summary": "Summary",
-      "purchases": "Purchases and consultations",
-      "payments": "Payments",
+      "money": "Contract and money",
       "info": "Details",
-      "apply": "Application file"
+      "apply": "File"
     },
     "newSale": {
       "label": "New sale",
@@ -627,8 +609,10 @@
       "subtitle": "Sent from the panel; give them the result by phone.",
       "open": "Open {{kind}}"
     },
-    "firstContact": "First contact: {{name}}",
-    "wonBy": "Contract for: {{name}}"
+    "firstCall": {
+      "title": "Ask in the first call",
+      "more": "and {{n}} more"
+    }
   },
   "month": {
     "title": "My month · {{month}}",
@@ -1796,5 +1780,37 @@
     "addedExisting": "This number already had an account; it is now your customer.",
     "otherSeller": "This number is {{seller}}'s customer. Talk to them or the sales manager.",
     "otherSellerUnnamed": "This number is another seller's customer. Talk to the sales manager."
+  },
+  "side": {
+    "title": "About the customer",
+    "open": "About the customer and notes",
+    "close": "Close",
+    "edit": "Edit",
+    "contact": "Contact",
+    "phone": "Mobile",
+    "email": "Email",
+    "source": "Source",
+    "goal": "Goal",
+    "background": "Background",
+    "more": "More",
+    "team": "Team",
+    "seller": "Seller",
+    "firstContact": "First contact",
+    "wonBy": "Contract credited to",
+    "emptyTitle": "We don't know their goal or background yet",
+    "fill": "Fill in details",
+    "filled": "{{n}} of {{all}} filled in"
+  },
+  "next": {
+    "label": "Next step",
+    "first": "First step",
+    "lost": "Lost",
+    "log": "Log a call",
+    "move": "Another time",
+    "set": "Set a follow-up"
+  },
+  "money": {
+    "emptyTitle": "No purchases yet",
+    "empty": "Purchases, payments and the contract show here."
   }
 }

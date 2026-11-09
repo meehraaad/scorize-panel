@@ -15,8 +15,9 @@ import {
 } from '@/features/supervisor/api';
 import { prefetchTickets } from '@/features/tickets/config';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { notebookQuery } from '@/lib/notes/api';
 import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
-import { ASSIGN_PERMISSION } from '@/features/supervisor/api';
+import { ASSIGN_PERMISSION, SUPERVISOR_API } from '@/features/supervisor/api';
 import {
   botRulesQuery,
   MAIL_PERMISSION,
@@ -123,7 +124,7 @@ export const supervisorPanel: PanelDefinition = {
     },
     {
       path: 'files/:id',
-      ...lazyPage(() => import('@/features/supervisor/CaseLayout'), ['supervisor'], {
+      ...lazyPage(() => import('@/features/supervisor/CaseLayout'), ['supervisor', 'notes'], {
         data: ({ params }) => {
           const id = idParam(params.id);
           return [id !== null && caseQuery(id)];
@@ -131,7 +132,17 @@ export const supervisorPanel: PanelDefinition = {
         skeleton: 'detail',
       }),
       children: [
-        { index: true, ...lazyPage(() => import('@/features/supervisor/CaseOverviewPage')) },
+        {
+          index: true,
+          ...lazyPage(() => import('@/features/supervisor/CaseOverviewPage'), [], {
+            data: ({ params }) => {
+              const id = idParam(params.id);
+              return [
+                id !== null && notebookQuery(`${SUPERVISOR_API}/cases/${String(id)}/notebook/`),
+              ];
+            },
+          }),
+        },
         {
           path: 'documents',
           ...lazyPage(() => import('@/features/supervisor/CaseDocumentsPage'), [], {
