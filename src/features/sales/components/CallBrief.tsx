@@ -7,13 +7,14 @@ import { callBriefQuery } from '../api';
 /**
  * "Before you answer": what a seller reads while a known customer's phone rings. Consultations with
  * someone else come first (who to ask), then the last contact, today's follow-up and unpaid bills.
- * Nothing to say: no box.
+ * Nothing to say: no box. Opened by hand (`live` false) it is the same box under "at a glance".
  */
-export function CallBrief({ customer }: { customer: number }) {
+export function CallBrief({ customer, live = true }: { customer: number; live?: boolean }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const { data } = useQuery(callBriefQuery(customer));
   if (!data) return null;
+  const title = t(live ? 'callBrief.title' : 'callBrief.glance');
   const rows: { key: string; icon: IconName; text: string }[] = [
     ...(data.last_contact
       ? [
@@ -55,10 +56,10 @@ export function CallBrief({ customer }: { customer: number }) {
   if (!rows.length && !data.consultations_elsewhere.length) return null;
   return (
     <section
-      aria-label={t('callBrief.title')}
+      aria-label={title}
       className="-mx-5 -mt-5 flex flex-col gap-2.5 border-b border-hair bg-row-highlight px-5 py-4"
     >
-      <h3 className="m-0 text-xs font-bold text-primary-text">{t('callBrief.title')}</h3>
+      <h3 className="m-0 text-xs font-bold text-primary-text">{title}</h3>
       {data.consultations_elsewhere.map((item) => (
         <p
           key={`${item.consultant}-${item.at}`}

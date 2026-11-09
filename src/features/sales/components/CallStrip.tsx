@@ -24,9 +24,14 @@ const LABEL = {
  * The call popup's header, the same in every step: who is on the line, how long, and a minimize
  * button. Dark while the call is live; light once it ends (with "not logged yet" while the form is
  * still open). `name`: the customer (a link to their page); without it the number is the title.
+ * Without a `call` (a log opened by hand) it is the same dark header with `label` in place of the
+ * call's status and no timer; `titleLabel` then names the popup.
  */
 export function CallStrip({
   call,
+  phone: phoneNumber,
+  label,
+  titleLabel,
   titleId,
   name,
   href,
@@ -35,7 +40,13 @@ export function CallStrip({
   closeLabel,
   onClose,
 }: {
-  call: ObservedCall;
+  call?: ObservedCall | undefined;
+  /** Without a call: the customer's number. */
+  phone?: string | undefined;
+  /** Without a call: what the popup is for, in place of the status line. */
+  label?: string | undefined;
+  /** The popup's accessible name when it isn't just the customer's name. */
+  titleLabel?: string | undefined;
   titleId: string;
   name?: string | undefined;
   href?: string | undefined;
@@ -47,11 +58,11 @@ export function CallStrip({
   const { t } = useTranslation('sales');
   const f = useFormat();
   const now = useNow();
-  const over = call.ended_at !== null;
-  const live = !over && call.status in LABEL;
+  const over = !!call && call.ended_at !== null;
+  const live = !!call && !over && call.status in LABEL;
   const phone = (
     <span dir="ltr" className="font-medium tabular-nums">
-      {f.digits(call.phone)}
+      {f.digits(call?.phone ?? phoneNumber ?? '')}
     </span>
   );
   const title: ReactNode = name ? (
@@ -74,25 +85,29 @@ export function CallStrip({
       className={`flex flex-col gap-3 px-5 pt-4 pb-5 ${over ? 'bg-board text-text' : 'bg-hero text-on-hero'}`}
     >
       <div className="flex items-center justify-between gap-3">
-        <p
-          role="status"
-          className={`m-0 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[13px] ${over ? 'text-text-2' : 'text-on-hero-2'}`}
-        >
-          <span
-            aria-hidden="true"
-            className={`size-2.5 flex-none rounded-full ${DOT[call.status]}`}
-          />
-          <span
-            className={`font-semibold ${live ? LABEL[call.status as keyof typeof LABEL] : over ? 'text-text' : ''}`}
+        {call ? (
+          <p
+            role="status"
+            className={`m-0 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[13px] ${over ? 'text-text-2' : 'text-on-hero-2'}`}
           >
-            {t(`phoneCall.status.${call.status}`)}
-          </span>
-          <span>
-            {t(`phoneCall.direction.${call.direction}`)}
-            {' · '}
-            {t('phoneCall.extension', { extension: f.digits(call.extension) })}
-          </span>
-        </p>
+            <span
+              aria-hidden="true"
+              className={`size-2.5 flex-none rounded-full ${DOT[call.status]}`}
+            />
+            <span
+              className={`font-semibold ${live ? LABEL[call.status as keyof typeof LABEL] : over ? 'text-text' : ''}`}
+            >
+              {t(`phoneCall.status.${call.status}`)}
+            </span>
+            <span>
+              {t(`phoneCall.direction.${call.direction}`)}
+              {' · '}
+              {t('phoneCall.extension', { extension: f.digits(call.extension) })}
+            </span>
+          </p>
+        ) : (
+          <p className="m-0 min-w-0 text-[13px] font-semibold text-on-hero-2">{label}</p>
+        )}
         <button
           type="button"
           onClick={onClose}
@@ -118,7 +133,7 @@ export function CallStrip({
                 {t('callStrip.unknownNumber')}
               </span>
             )}
-            <h2 id={titleId} className="m-0 font-display text-lg font-bold">
+            <h2 id={titleId} aria-label={titleLabel} className="m-0 font-display text-lg font-bold">
               {title}
             </h2>
             {name && (
@@ -138,22 +153,24 @@ export function CallStrip({
             )}
           </div>
         </div>
-        <div className="flex flex-none flex-col items-end gap-1">
-          {notLogged && over && (
-            <span className="rounded-full bg-warn-tint px-2.5 py-0.5 text-xs font-semibold text-warn">
-              {t('callStrip.notLogged')}
+        {call && (
+          <div className="flex flex-none flex-col items-end gap-1">
+            {notLogged && over && (
+              <span className="rounded-full bg-warn-tint px-2.5 py-0.5 text-xs font-semibold text-warn">
+                {t('callStrip.notLogged')}
+              </span>
+            )}
+            <span
+              dir="ltr"
+              aria-label={t('phoneCall.duration')}
+              className={`font-mono text-xl tabular-nums ${over ? 'text-text-2' : live ? LABEL[call.status as keyof typeof LABEL] : ''}`}
+            >
+              {f.digits(callDuration(callSeconds(call, now)))}
             </span>
-          )}
-          <span
-            dir="ltr"
-            aria-label={t('phoneCall.duration')}
-            className={`font-mono text-xl tabular-nums ${over ? 'text-text-2' : live ? LABEL[call.status as keyof typeof LABEL] : ''}`}
-          >
-            {f.digits(callDuration(callSeconds(call, now)))}
-          </span>
-        </div>
+          </div>
+        )}
       </div>
-      {!call.connected && !over && (
+      {call && !call.connected && !over && (
         <p className="m-0 text-[13px] leading-6 text-on-hero-2">{t('phoneCall.disconnected')}</p>
       )}
     </div>
