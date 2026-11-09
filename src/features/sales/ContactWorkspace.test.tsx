@@ -55,7 +55,7 @@ describe('persistent contact workspace', () => {
       'Follow up on funding',
     );
     await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'ثبت و ساختن پیگیری' }),
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^ثبت · پیگیری/ }),
     );
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(
@@ -86,10 +86,10 @@ describe('persistent contact workspace', () => {
       within(dialog).getByLabelText(i18n.t('customer.logDialog.customerSummary', { ns: 'sales' })),
       'Customer-facing summary',
     );
-    await user.click(within(dialog).getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
+    await user.click(within(dialog).getByRole('button', { name: /^ثبت · پیگیری/ }));
     await toasts().findByText(i18n.t('error', { ns: 'sales' }));
     await waitFor(() =>
-      expect(within(dialog).getByRole('button', { name: 'ثبت و ساختن پیگیری' })).toBeEnabled(),
+      expect(within(dialog).getByRole('button', { name: /^ثبت · پیگیری/ })).toBeEnabled(),
     );
     expect(within(dialog).getByLabelText('یادداشت')).toHaveValue('Keep this draft');
     await minimize(user);
@@ -142,7 +142,7 @@ describe('persistent contact workspace', () => {
     await waitFor(() => expect(notes()).toBeInTheDocument());
     await user.type(notes(), 'Save while browsing');
     await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'ثبت و ساختن پیگیری' }),
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^ثبت · پیگیری/ }),
     );
     expect(notes()).toBeDisabled();
     await minimize(user);
@@ -234,16 +234,18 @@ describe('session log: the next step on the board', () => {
     const user = userEvent.setup();
     renderApp('/sales/customers/105?log=call');
     const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
-    await user.click(await within(dialog).findByRole('radio', { name: 'تاریخ دیگر' }));
-    const week = await within(dialog).findByRole('region', {
+    await user.click(await within(dialog).findByRole('button', { name: 'از تقویم' }));
+    const picker = await screen.findByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' });
+    const week = await within(picker).findByRole('region', {
       name: 'هفته‌ی من برای انتخاب وقت پیگیری',
     });
-    await user.click(within(dialog).getByRole('button', { name: 'هفته‌ی بعد' }));
-    // The first day of next week; the grid starts at 9, an hour is 44px: 14:00.
+    await user.click(within(picker).getByRole('button', { name: 'هفته‌ی بعد' }));
+    // The first day of next week; the grid starts at 9, an hour is 44px: 14:00. One click picks it.
     fireEvent.click(first(within(week).getAllByTestId('schedule-slot')), { clientY: 220 });
-    expect(
-      await within(week).findByRole('button', { name: /^وقت انتخاب‌شده: .* ساعت ۱۴:۰۰$/ }),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' })).toBeNull(),
+    );
+    expect(within(dialog).getByRole('radio', { name: 'تاریخ دیگر' })).toBeChecked();
     expect(within(dialog).getByRole('button', { name: /تاریخ و ساعت پیگیری/ })).toHaveTextContent(
       '۱۴:۰۰',
     );

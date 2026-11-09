@@ -16,7 +16,7 @@ export function CallStatus({ call, compact = false }: { call: ObservedCall; comp
   );
   if (compact)
     return (
-      <span className="inline-flex items-center gap-2 text-sm text-text-2">
+      <span className="inline-flex items-center gap-2 text-sm opacity-80">
         <span>{t(`phoneCall.status.${call.status}`)}</span>
         {timer}
       </span>

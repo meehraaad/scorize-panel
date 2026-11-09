@@ -17,6 +17,8 @@ export interface LogStart {
   channel: Channel;
   reservation?: number | undefined;
   session?: LogSession | undefined;
+  /** An unknown caller the seller just added (`new`) or found (`picked`): the popup's step 1 is done. */
+  via?: 'new' | 'picked' | undefined;
 }
 
 export interface ContactValues {
@@ -31,6 +33,8 @@ export interface ContactValues {
   follow: 'evening' | 'tomorrow' | 'three' | 'week' | 'other';
   date: string;
   email: boolean;
+  /** Also text the customer that the note waits in their panel. */
+  sms?: boolean;
   template?: string;
 }
 
@@ -184,10 +188,15 @@ export function callDraft(call: ObservedCall, customer: number, name: string): C
 }
 
 /** An unknown caller the seller found or added: the call turns into that customer's session log. */
-export function attachUnknownCall(id: string, customer: number, name: string) {
+export function attachUnknownCall(
+  id: string,
+  customer: number,
+  name: string,
+  via: 'new' | 'picked',
+) {
   const call = state.unknownCalls.find((item) => item.id === id);
   if (!call) return;
-  const draft = callDraft(call, customer, name);
+  const draft = { ...callDraft(call, customer, name), start: { channel: 'call' as const, via } };
   commit({
     ...state,
     unknownCalls: state.unknownCalls.filter((item) => item.id !== id),

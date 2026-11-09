@@ -20,7 +20,10 @@ import { LOST_REASONS, STAGES, messageHref, type Channel, type LeadStage } from 
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
-import { CallStatus } from './CallStatus';
+import { CallBrief } from './CallBrief';
+import { CallSteps, CallStrip } from './CallStrip';
+import { Dialog } from '@/components/ui/Dialog';
+import { customerPath } from '../paths';
 import { FollowUpSlots } from './FollowUpSlots';
 import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
@@ -86,6 +89,7 @@ export function LogDialog({
     follow,
     date,
     email,
+    sms = false,
   } = values;
   const template = values.template ?? String(customer.templates[0]?.id ?? '');
   const change =
@@ -94,6 +98,9 @@ export function LogDialog({
       updateContactDraft(draft.key, { [key]: value });
   const [checked, setChecked] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [picking, setPicking] = useState(false);
+  /** A live (or just ended) office call: the channel is the phone and the strip names the call. */
+  const liveCall = draft.call;
 
   const message = isMessage(channel);
   const call = channel === 'call';
@@ -128,6 +135,9 @@ export function LogDialog({
         follow_up_at: asksFollowUp ? followAt : null,
         customer_summary: noAnswer ? '' : customerSummary.trim(),
         email_summary: !noAnswer && email && !!customerSummary.trim(),
+        ...(customer.supports.summary_sms
+          ? { sms_summary: !noAnswer && sms && !!customerSummary.trim() }
+          : {}),
         ...(message && chosen ? { template: chosen.id } : {}),
         ...(start.reservation ? { reservation: start.reservation } : {}),
         follow_up_text: noAnswer
@@ -164,7 +174,7 @@ export function LogDialog({
     />
   );
   const customerFields = (
-    <>
+    <div className="flex flex-col gap-2 rounded-card border border-hair bg-row-highlight p-4">
       <VoiceTextAreaField
         label={t('customer.logDialog.customerSummary')}
         hint={t('customer.logDialog.customerSummaryHint')}
@@ -188,7 +198,18 @@ export function LogDialog({
           {t('customer.logDialog.emailSummary')}
         </label>
       )}
-    </>
+      {customer.supports.summary_sms && !message && customerSummary.trim() && (
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
+          <input
+            type="checkbox"
+            checked={sms}
+            onChange={(event) => change('sms')(event.target.checked)}
+            className="size-[18px] accent-primary"
+          />
+          {t('customer.logDialog.smsSummary')}
+        </label>
+      )}
+    </div>
   );
   const asksStage = talked && !!lead && customer.supports.stages;
   const nextFields = (
@@ -252,20 +273,43 @@ export function LogDialog({
           error={checked && !followAt ? t('customer.logDialog.followDate') : undefined}
         />
       )}
-      {asksFollowUp && follow === 'other' && (
-        <FollowUpSlots value={date} onChange={change('date')} />
+      {asksFollowUp && (
+        <Button variant="outline" className="self-start" onClick={() => setPicking(true)}>
+          <Icon name="calendar" size={18} />
+          {t('customer.logDialog.fromCalendar')}
+        </Button>
       )}
+      <Dialog
+        open={picking}
+        onClose={() => setPicking(false)}
+        size="wide"
+        title={t('customer.logDialog.calendarTitle', { name: customer.name })}
+        subtitle={t('customer.logDialog.calendarHint')}
+        closeLabel={t('close')}
+      >
+        {picking && (
+          <FollowUpSlots
+            value={date}
+            onChange={(value) => {
+              updateContactDraft(draft.key, { follow: 'other', date: value });
+              setPicking(false);
+            }}
+          />
+        )}
+      </Dialog>
     </>
   );
   const contactFields = (
     <>
-      <ChoiceGroup
-        legend={t('customer.logDialog.channel')}
-        value={channel}
-        onChange={change('channel')}
-        options={CHANNELS.map((value) => ({ value, label: t(`channel.${value}`) }))}
-      />
-      {call && (
+      {!liveCall && (
+        <ChoiceGroup
+          legend={t('customer.logDialog.channel')}
+          value={channel}
+          onChange={change('channel')}
+          options={CHANNELS.map((value) => ({ value, label: t(`channel.${value}`) }))}
+        />
+      )}
+      {call && !liveCall && (
         <a href={`tel:${customer.phone}`} className={buttonClass('outline', 'self-start')}>
           <Icon name="phone" size={18} />
           <span dir="ltr">{f.digits(customer.phone)}</span>
@@ -331,12 +375,31 @@ export function LogDialog({
   if (asksStage || lost || asksFollowUp)
     steps.push({ key: 'next', title: t('customer.logDialog.step.next'), body: nextFields });
 
+  const chips = [
+    ...(lead ? [t(`stage.${lead.stage}`)] : []),
+    ...(customer.headline.countries.length ? [customer.headline.countries.join('، ')] : []),
+  ];
   return (
     <FloatingPanel
       active={active}
       onClose={onClose}
       wide
-      icon={session ? 'calendar' : channel === 'call' ? 'phone' : 'chat'}
+      hero={
+        liveCall &&
+        ((titleId) => (
+          <CallStrip
+            call={liveCall}
+            titleId={titleId}
+            name={customer.name}
+            href={customerPath(customer.id)}
+            chips={chips}
+            notLogged
+            closeLabel={t('contactDraft.minimize')}
+            onClose={onClose}
+          />
+        ))
+      }
+      icon={liveCall ? undefined : session ? 'calendar' : channel === 'call' ? 'phone' : 'chat'}
       title={t(session ? 'customer.logDialog.meetingTitle' : 'customer.logDialog.title', {
         name: customer.name,
       })}
@@ -376,7 +439,12 @@ export function LogDialog({
                     ? t('customer.logDialog.saveLost')
                     : session
                       ? t('customer.logDialog.saveMeeting')
-                      : t('customer.logDialog.save')}
+                      : asksFollowUp && followAt
+                        ? t('customer.logDialog.saveWithFollow', {
+                            day: f.weekdayName(followAt),
+                            time: f.time(followAt),
+                          })
+                        : t('customer.logDialog.save')}
               </span>
             </Button>
             <Button
@@ -395,7 +463,15 @@ export function LogDialog({
       }
     >
       <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-6">
-        {draft.call && <CallStatus call={draft.call} />}
+        {liveCall && start.via && (
+          <CallSteps
+            step={2}
+            done={t(start.via === 'new' ? 'callStrip.created' : 'callStrip.found')}
+          />
+        )}
+        {liveCall && !start.via && customer.supports.call_brief && (
+          <CallBrief customer={customer.id} />
+        )}
         <fieldset disabled={log.isPending} className="contents">
           {steps.map((step, index) => (
             <Step key={step.key} number={index + 1} title={step.title}>

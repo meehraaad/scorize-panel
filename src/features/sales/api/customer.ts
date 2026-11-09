@@ -92,7 +92,15 @@ export interface CustomerData {
    * What the server does with a logged contact: store stage moves (S3), text "no answer" (S16);
    * `tags`: customer tags (S49).
    */
-  supports: { stages: boolean; no_answer_sms: boolean; tags?: boolean };
+  supports: {
+    stages: boolean;
+    no_answer_sms: boolean;
+    tags?: boolean;
+    /** The log's `sms_summary` is sent (its SMS template is approved). */
+    summary_sms?: boolean;
+    /** `call-brief/` exists: the call popup's "before you answer" box. */
+    call_brief?: boolean;
+  };
   /** Who first reached the customer, and who their closed contract counts for (S59). */
   attribution?: { first_contact: string | null; won_by: string | null };
 }
@@ -173,6 +181,8 @@ export interface ContactLog {
   /** Creates "my follow-up" at this time; null: none (a lost lead). */
   follow_up_at: string | null;
   email_summary: boolean;
+  /** Text the customer that a note waits in their panel (`supports.summary_sms`). */
+  sms_summary?: boolean;
   /** Messages: the template sent. */
   template?: number;
   /** Logging a consultation session. */
@@ -187,6 +197,38 @@ export function useLogContact(customer: number) {
     mutationFn: (log: ContactLog) =>
       api(`${customerApi(customer)}/contacts/`, { method: 'POST', body: log }),
     onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+  });
+}
+
+/** What a seller reads while the phone rings (the call popup's "before you answer" box). */
+export interface CallBrief {
+  last_contact: { at: string; notes: string; by: string } | null;
+  /** `at`: a date-time, or a date for a task with only a day. */
+  follow_up: { at: string; text: string } | null;
+  /** Payments waiting to be paid, toman. */
+  unpaid: { id: number; amount: number }[];
+  /** Consultations the customer had with someone other than this seller. */
+  consultations_elsewhere: { consultant: string; title: string; at: string }[];
+}
+
+export const callBriefQuery = (customer: number) =>
+  queryOptions({
+    queryKey: [...customerKey(customer), 'call-brief'] as const,
+    queryFn: ({ signal }) => api<CallBrief>(`${customerApi(customer)}/call-brief/`, { signal }),
+    staleTime: 60_000,
+  });
+
+/** A caller's other number kept as the customer's second phone; 409 `taken`: another account's. */
+export function useSetSecondPhone() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ customer, phone }: { customer: number; phone: string }) =>
+      api<{ phone: string }>(`${customerApi(customer)}/second-phone/`, {
+        method: 'PUT',
+        body: { phone },
+      }),
+    onSuccess: (_answer, { customer }) =>
+      client.invalidateQueries({ queryKey: customerKey(customer) }),
   });
 }
 
