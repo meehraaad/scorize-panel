@@ -25,17 +25,13 @@ import { Dialog } from '@/components/ui/Dialog';
 import { customerPath } from '../paths';
 import { FollowUpSlots } from './FollowUpSlots';
 import { ProfileChips } from './ProfileChips';
+import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
 import { VoiceTextAreaField } from '@/components/voice/VoiceField';
 
-const CHANNELS = [
-  'call',
-  'whatsapp',
-  'telegram',
-  'sms',
-  'meeting',
-] as const satisfies readonly Channel[];
+/** How a contact happened, picked by hand (a message is logged from the message buttons). */
+const CHANNELS = ['call', 'meeting'] as const satisfies readonly Channel[];
 const OUTCOMES = [
   'talked',
   'no_answer',
@@ -234,15 +230,11 @@ export function LogDialog({
   const nextFields = (
     <>
       {asksStage && (
-        <SelectField
-          inline
-          label={t('customer.logDialog.stageLabel')}
+        <StageStrip
+          current={lead.stage}
+          movable={stages}
           value={stage}
           onChange={change('stage')}
-          options={[
-            { value: 'keep', label: t(`stage.${lead.stage}`) },
-            ...stages.map((value) => ({ value, label: t(`stage.${value}`) })),
-          ]}
         />
       )}
       {lost && (
@@ -321,7 +313,10 @@ export function LogDialog({
           legend={t('customer.logDialog.channel')}
           value={channel}
           onChange={change('channel')}
-          options={CHANNELS.map((value) => ({ value, label: t(`channel.${value}`) }))}
+          options={CHANNELS.map((value) => ({
+            value,
+            label: t(`customer.logDialog.channelOption.${value}`),
+          }))}
         />
       )}
       {call && !liveCall && (

@@ -664,7 +664,7 @@ describe('sales panel, seller pages', () => {
     );
     const log = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });
     // A booked session's log has no channel to choose: it names the session instead.
-    expect(within(log).queryByRole('radio', { name: 'جلسه‌ی مشاوره' })).not.toBeInTheDocument();
+    expect(within(log).queryByRole('radio', { name: 'حضوری' })).not.toBeInTheDocument();
     expect(
       within(log).getByRole('button', { name: /ثبت جلسه و ساختن پیگیری/ }),
     ).toBeInTheDocument();
