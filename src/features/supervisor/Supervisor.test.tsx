@@ -106,7 +106,7 @@ describe('supervisor panel', () => {
       within(notes).getByLabelText(/^یادداشت درباره‌ی/),
       'مدرک زبان تا آخر ماه می‌رسد',
     );
-    await user.click(within(notes).getByRole('checkbox', { name: 'درباره‌ی قرارداد' }));
+    await user.click(within(notes).getByRole('button', { name: 'درباره‌ی قرارداد', pressed: false }));
     await user.click(within(notes).getByRole('button', { name: 'ثبت' }));
     expect(await screen.findByText('یادداشت ذخیره شد.')).toBeInTheDocument();
     expect(await within(notes).findByText('مدرک زبان تا آخر ماه می‌رسد')).toBeInTheDocument();

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
+import { useId, useState, type KeyboardEvent, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
-import { Icon } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
@@ -26,9 +26,6 @@ const AVATAR: Record<Note['role'], string> = {
   manager: 'bg-hero text-on-hero',
   staff: 'bg-neutral-tint text-neutral',
 };
-
-const check = 'size-[18px] flex-none accent-primary';
-const checkLabel = 'inline-flex min-h-11 cursor-pointer items-center gap-2 pe-2 text-[13px]';
 
 /**
  * The customer's shared notebook (S61), the same in every panel: write a note about the person or
@@ -67,7 +64,7 @@ export function Notebook({ url, name }: { url: string; name: string }) {
             ))}
           <Composer url={url} name={name} />
           {data.length === 0 ? (
-            <p className="m-0 text-sm text-text-2">{t('empty')}</p>
+            <NotesEmpty />
           ) : (
             <ol aria-label={t('list')} className="m-0 flex list-none flex-col p-0">
               {data
@@ -83,15 +80,49 @@ export function Notebook({ url, name }: { url: string; name: string }) {
   );
 }
 
+const MAX_NOTE = 2000;
+
+/** A pill that turns on and off inside the composer's toolbar (pin, about the contract). */
+function ToggleChip({
+  on,
+  icon,
+  onToggle,
+  children,
+}: {
+  on: boolean;
+  icon: IconName;
+  onToggle: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onToggle}
+      className={`relative inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors before:absolute before:inset-x-0 before:-inset-y-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)] ${
+        on
+          ? 'bg-tint text-primary-text shadow-[inset_0_0_0_1px_var(--primary)]'
+          : 'text-text-2 hover:bg-track hover:text-text'
+      }`}
+    >
+      <Icon name={icon} size={15} />
+      {children}
+    </button>
+  );
+}
+
 function Composer({ url, name }: { url: string; name: string }) {
   const { t } = useTranslation('notes');
+  const f = useFormat();
   const add = useAddNote(url);
+  const inputId = useId();
   const [text, setText] = useState('');
   const [about, setAbout] = useState<NoteAbout>('customer');
   const [pinned, setPinned] = useState(false);
-  const submit = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!text.trim()) return;
+  const ready = text.trim().length > 0 && !add.isPending;
+
+  const send = () => {
+    if (!ready) return;
     add.mutate(
       { text: text.trim(), about, pinned },
       {
@@ -105,48 +136,85 @@ function Composer({ url, name }: { url: string; name: string }) {
       },
     );
   };
+  const submit = (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    send();
+  };
+  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      send();
+    }
+  };
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-1">
-      <TextAreaField
-        label={t('new', { name })}
-        hideLabel
-        placeholder={t('placeholder')}
+    <form
+      onSubmit={submit}
+      className="flex flex-col rounded-2xl bg-surface shadow-[inset_0_0_0_1px_var(--line-2)] transition-shadow focus-within:shadow-[inset_0_0_0_2px_var(--focus)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] hover:focus-within:shadow-[inset_0_0_0_2px_var(--focus)]"
+    >
+      <label htmlFor={inputId} className="sr-only">
+        {t('new', { name })}
+      </label>
+      <textarea
+        id={inputId}
         rows={2}
-        maxLength={2000}
+        maxLength={MAX_NOTE}
         value={text}
+        placeholder={t('placeholder')}
+        aria-keyshortcuts="Control+Enter Meta+Enter"
         onChange={(event) => setText(event.target.value)}
-        className="resize-none text-[15px] leading-7"
+        onKeyDown={onKeyDown}
+        className="block max-h-64 min-h-20 w-full resize-none bg-transparent px-4 pt-3.5 pb-1 text-[15px] leading-7 text-text outline-none [field-sizing:content] placeholder:text-text-3"
       />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="flex flex-wrap items-center">
-          <label className={checkLabel}>
-            <input
-              type="checkbox"
-              checked={pinned}
-              onChange={(event) => setPinned(event.target.checked)}
-              className={check}
-            />
-            {t('pinIt')}
-          </label>
-          <label className={checkLabel}>
-            <input
-              type="checkbox"
-              checked={about === 'contract'}
-              onChange={(event) => setAbout(event.target.checked ? 'contract' : 'customer')}
-              className={check}
-            />
-            {t('aboutContract')}
-          </label>
-        </span>
-        <Button
-          type="submit"
-          className="h-10 px-5 text-[13px]"
-          disabled={add.isPending || !text.trim()}
+      <div className="flex flex-wrap items-center gap-1 px-2 pt-1 pb-2">
+        <ToggleChip on={pinned} icon="pin" onToggle={() => setPinned((value) => !value)}>
+          {t('pinIt')}
+        </ToggleChip>
+        <ToggleChip
+          on={about === 'contract'}
+          icon="document"
+          onToggle={() => setAbout((value) => (value === 'contract' ? 'customer' : 'contract'))}
         >
-          {t('add')}
-        </Button>
+          {t('aboutContract')}
+        </ToggleChip>
+        <span className="ms-auto flex items-center gap-3">
+          {text.length > MAX_NOTE * 0.8 && (
+            <span className="text-xs text-text-2 tabular-nums">
+              {f.number(MAX_NOTE - text.length)}
+            </span>
+          )}
+          <span aria-hidden="true" className="hidden text-xs text-text-2 sm:inline">
+            {t('shortcut')}
+          </span>
+          <Button
+            type="submit"
+            disabled={!ready}
+            className="h-9 gap-1.5 px-4 text-[13px] disabled:bg-track disabled:text-text-2 disabled:opacity-100"
+          >
+            <Icon name="send" size={15} />
+            {t('add')}
+          </Button>
+        </span>
       </div>
     </form>
+  );
+}
+
+function NotesEmpty() {
+  const { t } = useTranslation('notes');
+  return (
+    <div className="flex items-center gap-3 rounded-2xl px-1 py-2">
+      <span
+        aria-hidden="true"
+        className="flex size-10 flex-none items-center justify-center rounded-xl bg-tint text-primary-text"
+      >
+        <Icon name="pen" size={18} />
+      </span>
+      <span className="flex flex-col">
+        <span className="text-sm font-semibold">{t('empty')}</span>
+        <span className="text-[13px] leading-6 text-text-2">{t('emptyHint')}</span>
+      </span>
+    </div>
   );
 }
 

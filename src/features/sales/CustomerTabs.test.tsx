@@ -133,7 +133,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(await within(notes).findByText(/پدرش هزینه را می‌دهد/)).toBeInTheDocument();
     expect(within(notes).getByText('یادداشت قدیمی فروش')).toBeInTheDocument();
     await user.type(within(notes).getByLabelText(/^یادداشت درباره‌ی/), 'تا آخر هفته خبر می‌دهد');
-    await user.click(within(notes).getByRole('checkbox', { name: 'سنجاق' }));
+    await user.click(within(notes).getByRole('button', { name: 'سنجاق', pressed: false }));
     await user.click(within(notes).getByRole('button', { name: 'ثبت' }));
     expect(await toasts().findByText('یادداشت ذخیره شد.')).toBeInTheDocument();
     expect(await within(notes).findByText('تا آخر هفته خبر می‌دهد')).toBeInTheDocument();
