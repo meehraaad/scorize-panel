@@ -7,15 +7,13 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { StepBar } from '@/components/ui/Progress';
 import { SheetButton } from '@/components/ui/Sheet';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { MESSAGE_CHANNELS, SALES_API, STAGES, type Channel } from '@/lib/sales/api';
+import { MESSAGE_CHANNELS, SALES_API, type Channel } from '@/lib/sales/api';
 import { customerKey, type CustomerData } from '../api';
+import { laneOf, lanesOf } from '../boardLanes';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { CustomerTags } from './CustomerTags';
 import { ScoreChip, StageChip } from './LeadChips';
-
-/** Stages on the bar (a lost lead shows its chip instead of a step). */
-const BAR = STAGES.filter((stage) => stage !== 'lost');
 
 // Opens on a click: the date picker it uses is not part of the page's first load.
 const FollowUpDialog = lazy(() =>
@@ -70,7 +68,9 @@ export function CustomerHead({
               <h1 className="m-0 font-display text-[22px] font-extrabold lg:text-[26px]">
                 {customer.name}
               </h1>
-              {lead && <StageChip stage={lead.stage} />}
+              {lead && (
+                <StageChip stage={lead.stage} name={laneOf(lanesOf(customer, t), lead)?.name} />
+              )}
               {lead && lead.score !== null && <ScoreChip score={lead.score} />}
             </div>
             {line.length > 0 && <span className="text-sm text-text-2">{line.join(' · ')}</span>}
@@ -105,16 +105,25 @@ export function CustomerHead({
 
       {lead && <NextStep customer={customer} onCall={() => onLog('call')} />}
 
-      {lead && lead.stage !== 'lost' && (
-        <StepBar
-          tone="plum"
-          label={t('customer.stages')}
-          steps={BAR.map((stage) => ({ key: stage, label: t(`stageShort.${stage}`) }))}
-          current={BAR.indexOf(lead.stage)}
-          finished={lead.stage === 'won'}
-        />
-      )}
+      {/* The board's lanes, the manager's columns included; a lost lead shows its chip instead. */}
+      {lead && lead.stage !== 'lost' && <StageBar customer={customer} />}
     </section>
+  );
+}
+
+function StageBar({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation('sales');
+  const lanes = lanesOf(customer, t);
+  const lead = customer.lead;
+  const current = lead ? laneOf(lanes, lead) : null;
+  return (
+    <StepBar
+      tone="plum"
+      label={t('customer.stages')}
+      steps={lanes.map((lane) => ({ key: lane.key, label: lane.label }))}
+      current={current ? lanes.indexOf(current) : -1}
+      finished={lead?.stage === 'won'}
+    />
   );
 }
 

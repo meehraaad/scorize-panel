@@ -231,6 +231,65 @@ describe('session log: the next step on the board', () => {
     await waitFor(() => expect(sent).toMatchObject({ channel: 'meeting', stage: 'consulted' }));
   });
 
+  it("shows the manager's columns, on the customer page and in the log, and sends the column", async () => {
+    const { fetchCustomer } = await import('@/mocks/legacy/customer');
+    let sent: Record<string, unknown> | null = null;
+    const columns = [
+      { id: 701, name: 'اولین تماس', phase: 'contacted' },
+      { id: 702, name: 'جلسه‌ی اول', phase: 'consulted' },
+      { id: 703, name: 'جلسه‌ی دوم', phase: 'consulted' },
+      { id: 704, name: 'پیشنهاد قیمت', phase: 'offer' },
+    ];
+    server.use(
+      http.get('/api/sales/v1/customers/:id/', async ({ params }) => {
+        const data = await fetchCustomer(Number(params.id));
+        return HttpResponse.json({
+          ...data,
+          lead: {
+            id: 1,
+            source: 'campaign',
+            stage: 'consulted',
+            score: null,
+            follow_up_at: null,
+            lost_reason: null,
+            seller: null,
+            column: 702,
+          },
+          columns,
+          supports: { ...data.supports, stages: true, columns: true },
+        });
+      }),
+      http.post('/api/sales/v1/customers/:id/contacts/', async ({ request }) => {
+        sent = (await request.json()) as Record<string, unknown>;
+        return new HttpResponse(null, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105?log=call');
+
+    // The customer page's bar: the board's lanes, the team's columns by their own names.
+    const bar = await screen.findByRole('list', { name: 'مراحل فروش' });
+    expect(within(bar).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      expect.stringContaining('تازه'),
+      expect.stringContaining('اولین تماس'),
+      expect.stringContaining('جلسه‌ی اول'),
+      expect.stringContaining('جلسه‌ی دوم'),
+      expect.stringContaining('پیشنهاد قیمت'),
+      expect.stringContaining('پیش‌نویس'),
+      expect.stringContaining('قرارداد'),
+    ]);
+
+    const dialog = await screen.findByRole('dialog', { name: /^ثبت ارتباط با / });
+    await user.click(within(dialog).getByRole('radio', { name: /صحبت کردیم/ }));
+    const board = await within(dialog).findByRole('group', { name: 'کجای کار است؟' });
+    expect(within(board).getByRole('radio', { name: 'جلسه‌ی اول' })).toBeChecked();
+    expect(within(board).getByRole('radio', { name: 'اولین تماس' })).toBeDisabled();
+    await user.click(within(board).getByRole('radio', { name: 'جلسه‌ی دوم' }));
+    expect(within(board).getByText('کارت به ستون «جلسه‌ی دوم» می‌رود.')).toBeInTheDocument();
+    await user.click(first(within(dialog).getAllByRole('button', { name: /^ثبت/ })));
+    await waitFor(() => expect(sent).toMatchObject({ stage: 'consulted', column: 703 }));
+  });
+
   it("picks another date's follow-up time on the seller's week", async () => {
     const user = userEvent.setup();
     renderApp('/sales/customers/105?log=call');

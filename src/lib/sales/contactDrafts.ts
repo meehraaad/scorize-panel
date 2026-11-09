@@ -21,10 +21,16 @@ export interface LogStart {
   via?: 'new' | 'picked' | undefined;
 }
 
+export type StageChoice = 'keep' | 'lost' | 'contacted' | 'consulted' | 'offer' | `${number}`;
+
 export interface ContactValues {
   channel: Channel;
   outcome: 'talked' | 'no_answer' | 'call_later' | 'wrong_number';
-  stage: 'keep' | 'contacted' | 'consulted' | 'offer' | 'lost';
+  /**
+   * Where the log moves the lead: `keep`, `lost`, a team column's id (as on the board, S48), or a
+   * middle stage (its first column; a session log starts on `consulted`).
+   */
+  stage: StageChoice;
   lostReason: LostReason | '';
   notes: string;
   customerSummary?: string;

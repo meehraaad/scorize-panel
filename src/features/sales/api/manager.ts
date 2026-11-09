@@ -407,7 +407,11 @@ export function useSaveStages() {
       api<StagesData>(`${MANAGER_API}/stages/`, { method: 'PUT', body }),
     onSuccess: (data) => {
       client.setQueryData(stagesQuery.queryKey, data);
-      return client.invalidateQueries({ queryKey: [...SALES_KEY, 'board'] });
+      // The customer page's stage bar and the contact log show the same columns as the board.
+      return Promise.all([
+        client.invalidateQueries({ queryKey: [...SALES_KEY, 'board'] }),
+        client.invalidateQueries({ queryKey: [...SALES_KEY, 'customer'] }),
+      ]);
     },
   });
 }

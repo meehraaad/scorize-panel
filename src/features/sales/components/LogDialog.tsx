@@ -10,12 +10,13 @@ import {
   type ContactDraft,
   type ContactValues,
   type LogSession,
+  type StageChoice,
 } from '@/lib/sales/contactDrafts';
 import { Icon } from '@/components/ui/Icon';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { LOST_REASONS, STAGES, messageHref, type Channel, type LeadStage } from '@/lib/sales/api';
+import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
@@ -25,6 +26,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { customerPath } from '../paths';
 import { FollowUpSlots } from './FollowUpSlots';
 import { ProfileChips } from './ProfileChips';
+import { laneOf, lanesOf, movableLanes, pickedLane } from '../boardLanes';
 import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
@@ -40,8 +42,6 @@ const OUTCOMES = [
 ] as const satisfies readonly CallOutcome[];
 /** Quick follow-up times; any other is a pick on the calendar (`other`). */
 const FOLLOWS = ['evening', 'tomorrow', 'three'] as const;
-/** Stages a contact can move a lead to (drafts and contracts come from the offer page). */
-const MOVABLE = ['contacted', 'consulted', 'offer', 'lost'] as const satisfies readonly LeadStage[];
 
 const isMessage = (channel: Channel) =>
   channel === 'whatsapp' || channel === 'telegram' || channel === 'sms';
@@ -68,6 +68,7 @@ export function LogDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation(['sales', 'voice']);
+  const { t: tSales } = useTranslation('sales');
   const f = useFormat();
   const formId = useId();
   const log = useLogContact(customer.id);
@@ -105,10 +106,19 @@ export function LogDialog({
   const session = !!start.reservation;
   const noAnswer = call && outcome === 'no_answer';
   const talked = !call || outcome === 'talked' || outcome === 'call_later';
-  const rank = lead ? STAGES.indexOf(lead.stage) : -1;
-  const stages = MOVABLE.filter((value) => value === 'lost' || STAGES.indexOf(value) > rank);
-  // A session log starts on "consulted"; a lead already past it keeps its stage.
-  const stage = picked === 'keep' || stages.includes(picked) ? picked : 'keep';
+  // The board's lanes, the sales manager's columns included (S48): the log moves the card the
+  // board shows, forward only; drafts and contracts come from the offer page.
+  const lanes = lanesOf(customer, tSales);
+  const currentLane = lead ? laneOf(lanes, lead) : null;
+  const movable = lead && lead.stage !== 'lost' ? movableLanes(lanes, currentLane) : [];
+  // A session log starts on "consulted" (its first column); a lead already past it keeps its lane.
+  const target = picked === 'keep' || picked === 'lost' ? null : pickedLane(lanes, picked);
+  const stage: StageChoice =
+    picked === 'lost'
+      ? 'lost'
+      : target && movable.includes(target)
+        ? (target.key as StageChoice)
+        : 'keep';
   const lost = talked && stage === 'lost';
   const asksFollowUp = !noAnswer && !lost && !(call && outcome === 'wrong_number');
   const followAt = follow === 'other' ? fromLocalInput(date) : quickWhen(follow).toISOString();
@@ -126,7 +136,10 @@ export function LogDialog({
       {
         channel,
         ...(call ? { outcome } : {}),
-        ...(talked && stage !== 'keep' ? { stage } : {}),
+        ...(talked && lost ? { stage: 'lost' as const } : {}),
+        ...(talked && target && stage !== 'keep' && !lost
+          ? { stage: target.stage, ...(target.column !== null ? { column: target.column } : {}) }
+          : {}),
         ...(lost && lostReason ? { lost_reason: lostReason } : {}),
         notes: notes.trim() || (message ? (chosen?.title ?? '') : ''),
         follow_up_at: asksFollowUp ? followAt : null,
@@ -231,8 +244,10 @@ export function LogDialog({
     <>
       {asksStage && (
         <StageStrip
-          current={lead.stage}
-          movable={stages}
+          lanes={lanes}
+          current={currentLane}
+          movable={movable}
+          lostAllowed
           value={stage}
           onChange={change('stage')}
         />
@@ -395,7 +410,9 @@ export function LogDialog({
       <ProfileChips customer={customer.id} dark={dark} />
     </>
   );
-  const chips = lead ? [t(`stage.${lead.stage}`)] : [];
+  /** The lead's lane as the board names it (a team column's own name). */
+  const stageName = lead ? (currentLane?.name ?? t(`stage.${lead.stage}`)) : '';
+  const chips = lead ? [stageName] : [];
   return (
     <FloatingPanel
       active={active}
@@ -445,7 +462,7 @@ export function LogDialog({
         lead &&
         t('customer.logDialog.subtitle', {
           source: t(`source.${lead.source}`),
-          stage: t(`stage.${lead.stage}`),
+          stage: stageName,
         })
       }
       summary={session && start.session && <SessionSummary session={start.session} />}

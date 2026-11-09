@@ -25,11 +25,12 @@ export function ScoreChip({ score }: { score: number }) {
   );
 }
 
-export function StageChip({ stage }: { stage: LeadStage }) {
+/** `name`: the board column's own name (S48) in place of the stage's. */
+export function StageChip({ stage, name }: { stage: LeadStage; name?: string | undefined }) {
   const { t } = useTranslation('sales');
   return (
     <Chip tone={STAGE_TONE[stage]} small>
-      {t(`stage.${stage}`)}
+      {name ?? t(`stage.${stage}`)}
     </Chip>
   );
 }

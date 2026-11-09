@@ -27,6 +27,7 @@ import { createCustomer, fetchLeads } from './legacy/leads';
 import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
 import { faceOf, putFace } from './face';
+import { failed, stateOrError } from './sales';
 import { tagsOfCustomer } from './salesTags';
 import { pageOf, storage } from './session';
 import { overviewOf, taskListOf } from './tasks';
@@ -67,6 +68,11 @@ const MANAGER_TEAM = [
   { id: 8, name: SELLER_NAME },
   { id: 9, name: 'رضا کاظمی' },
 ];
+
+function columnsOf(): NonNullable<CustomerData['columns']> {
+  const data = stateOrError();
+  return failed(data) ? [] : data.stages.map(({ id, name, phase }) => ({ id, name, phase }));
+}
 
 export const salesStaffHandlers = [
   http.get(`${BASE}/leads/`, ({ request }) => {
@@ -226,7 +232,15 @@ export const salesStaffHandlers = [
         ...data,
         tags: tagsOfCustomer(data.id),
         face: faceOf(data.id),
-        supports: { ...data.supports, tags: true, call_brief: true, summary_sms: false },
+        // The board's team columns (S48), as the board mock keeps them.
+        columns: columnsOf(),
+        supports: {
+          ...data.supports,
+          tags: true,
+          call_brief: true,
+          summary_sms: false,
+          columns: true,
+        },
         attribution: { first_contact: null, won_by: null },
       })),
     ),

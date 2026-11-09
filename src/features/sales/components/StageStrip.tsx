@@ -1,41 +1,41 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LeadStage } from '@/lib/sales/api';
-import type { ContactValues } from '@/lib/sales/contactDrafts';
-
-/** The board's stages left to right (team columns sit inside the middle ones). */
-const LANES = ['new', 'contacted', 'consulted', 'offer', 'draft', 'won'] as const;
-
-type Choice = ContactValues['stage'];
-/** The lanes a log can move a card into (drafts and contracts come from the offer page). */
-const PICKABLE = ['contacted', 'consulted', 'offer'] as const satisfies readonly Choice[];
+import type { StageChoice } from '@/lib/sales/contactDrafts';
+import type { Lane } from '../boardLanes';
 
 /**
- * Where the lead is now, on one segmented track of the board's stages. The current stage means
- * "keep"; earlier stages and the contract ones (made from the offer page) can't be picked. "Lost?"
- * is a quiet choice under the track. Canvas "پاپ‌آپ تماس", board 2.
+ * Where the lead is now, on one segmented track of the board's lanes: the same columns the sales
+ * manager set up for the board (S48). The current lane means "keep"; earlier lanes and the
+ * contract ones (made from the offer page) can't be picked. "Lost?" is a quiet choice under the
+ * track. Canvas "پاپ‌آپ تماس", board 2.
  */
 export function StageStrip({
+  lanes,
   current,
   movable,
+  lostAllowed,
   value,
   onChange,
 }: {
-  current: LeadStage;
-  /** Stages this log may move the lead to (forward ones and `lost`). */
-  movable: readonly LeadStage[];
-  value: Choice;
-  onChange: (value: Choice) => void;
+  lanes: readonly Lane[];
+  /** The lane the lead is in now. */
+  current: Lane | null;
+  /** Lanes this log may move the lead to (the columns after the current one). */
+  movable: readonly Lane[];
+  lostAllowed: boolean;
+  /** `keep`, `lost`, or the picked lane's key. */
+  value: StageChoice;
+  onChange: (value: StageChoice) => void;
 }) {
   const { t } = useTranslation('sales');
   const group = useId();
   const noteId = useId();
   const lost = value === 'lost';
-  const target: LeadStage = value === 'keep' ? current : value;
+  const target = value === 'keep' ? current : lanes.find((lane) => lane.key === value);
   const note = lost
     ? t('customer.logDialog.board.lostNote')
     : t(value === 'keep' ? 'customer.logDialog.board.stays' : 'customer.logDialog.board.moves', {
-        stage: t(`stage.${target}`),
+        stage: target?.name ?? '',
       });
 
   return (
@@ -45,15 +45,17 @@ export function StageStrip({
       </legend>
       <div className="overflow-x-auto">
         <div className="grid min-w-max auto-cols-fr grid-flow-col gap-1 rounded-[14px] bg-track p-1">
-          {LANES.map((lane) => {
+          {lanes.map((lane) => {
             const isCurrent = lane === current;
-            const option: Choice | null = isCurrent
+            const option: StageChoice | null = isCurrent
               ? 'keep'
-              : (PICKABLE.find((stage) => stage === lane && movable.includes(stage)) ?? null);
+              : movable.includes(lane)
+                ? (lane.key as StageChoice)
+                : null;
             const chosen = !lost && lane === target;
             return (
               <label
-                key={lane}
+                key={lane.key}
                 className={`flex min-h-11 items-center justify-center rounded-[10px] px-3 text-center text-[13px] leading-5 whitespace-nowrap has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
                   chosen
                     ? 'bg-surface font-semibold text-text shadow-panel'
@@ -69,15 +71,15 @@ export function StageStrip({
                   checked={chosen}
                   disabled={!option}
                   onChange={() => option && onChange(option)}
-                  aria-label={t(`stage.${lane}`)}
+                  aria-label={lane.name}
                 />
-                {t(`stageShort.${lane}`)}
+                {lane.label}
               </label>
             );
           })}
         </div>
       </div>
-      {movable.includes('lost') && (
+      {lostAllowed && (
         <label className="-mt-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 self-start rounded-full px-3 text-[13px] text-text-2 underline-offset-4 hover:text-danger hover:underline has-checked:bg-danger-tint has-checked:font-semibold has-checked:text-danger has-checked:no-underline has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus">
           <input
             type="radio"

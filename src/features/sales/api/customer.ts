@@ -16,6 +16,7 @@ import {
 } from '@/lib/sales/api';
 import type { Face } from '@/lib/face/api';
 import type { Colleague, TaskSummary } from '@/lib/tasks/api';
+import type { StagePhase } from './board';
 
 export type ProfileKey =
   | 'current_degree'
@@ -38,6 +39,13 @@ export type ProfileItem =
       text: string;
     };
 
+/** A team column of the board, as the customer page lists them. */
+export interface CustomerColumn {
+  id: number;
+  name: string;
+  phase: StagePhase;
+}
+
 export interface CustomerData {
   /** User id. */
   id: number;
@@ -54,7 +62,11 @@ export interface CustomerData {
     follow_up_at: string | null;
     lost_reason: LostReason | null;
     seller: string | null;
+    /** The team column it shows in on the board (S48); null for new, draft, won and lost. */
+    column?: number | null;
   } | null;
+  /** The board's team columns in the manager's order (S48, `supports.columns`). */
+  columns?: CustomerColumn[];
   /** The line under the name. */
   headline: {
     degree: Degree | null;
@@ -103,6 +115,8 @@ export interface CustomerData {
     summary_sms?: boolean;
     /** `call-brief/` exists: the call popup's "before you answer" box. */
     call_brief?: boolean;
+    /** `columns` and `lead.column` are sent, and the contact log takes `column` (S48). */
+    columns?: boolean;
   };
   /** Who first reached the customer, and who their closed contract counts for (S59). */
   attribution?: { first_contact: string | null; won_by: string | null };
@@ -178,6 +192,8 @@ export interface ContactLog {
   /** Calls only. */
   outcome?: CallOutcome;
   stage?: LeadStage;
+  /** A team column (`supports.columns`): the lead moves there and takes its stage. */
+  column?: number;
   lost_reason?: LostReason;
   notes: string;
   customer_summary: string;
