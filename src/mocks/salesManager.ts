@@ -38,6 +38,8 @@ interface ManagerState {
   assigned: Map<number, number>;
   decided: Set<number>;
   reminded: Set<number>;
+  /** Sellers hidden from the load cards. */
+  hidden: Set<number>;
   oldest: HealthData['oldest'];
 }
 
@@ -112,6 +114,7 @@ const managerState = (): ManagerState => ({
   assigned: new Map(),
   decided: new Set(),
   reminded: new Set(),
+  hidden: new Set(),
   oldest: [
     {
       task: 801,
@@ -270,6 +273,9 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       open: 18 + extra(NIMA),
       uncalled: 6,
       response_minutes: 22,
+      office_extension: 250,
+      mobile_extension: 301,
+      hidden: state.hidden.has(NIMA),
     },
     {
       id: MAHDI,
@@ -279,6 +285,9 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       open: 11 + extra(MAHDI),
       uncalled: 1,
       response_minutes: 14,
+      office_extension: 251,
+      mobile_extension: null,
+      hidden: state.hidden.has(MAHDI),
     },
     {
       id: SARA,
@@ -288,6 +297,9 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       open: 15 + extra(SARA),
       uncalled: 3,
       response_minutes: 31,
+      office_extension: 252,
+      mobile_extension: 302,
+      hidden: state.hidden.has(SARA),
     },
     {
       id: OMID,
@@ -297,6 +309,9 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       open: 7 + extra(OMID),
       uncalled: 0,
       response_minutes: 12,
+      office_extension: null,
+      mobile_extension: null,
+      hidden: state.hidden.has(OMID),
     },
     {
       id: KAVEH,
@@ -306,6 +321,9 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
       open: 9,
       uncalled: 2,
       response_minutes: 40,
+      office_extension: 253,
+      mobile_extension: null,
+      hidden: state.hidden.has(KAVEH),
     },
   ];
 };
@@ -624,6 +642,14 @@ export const managerHandlers = [
     if (data instanceof Response) return data;
     data.manager.settings = (await request.json()) as AssignSettings;
     return HttpResponse.json(data.manager.settings);
+  }),
+
+  http.put(`${BASE}/assign/hidden/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const { sellers: ids } = (await request.json()) as { sellers: number[] };
+    data.manager.hidden = new Set(ids);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.post(`${BASE}/assign/`, async ({ request }) => {

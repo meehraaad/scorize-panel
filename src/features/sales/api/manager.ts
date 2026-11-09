@@ -43,6 +43,12 @@ export interface SellerLoad {
   uncalled: number;
   /** Median minutes to the first call this week; null without samples. */
   response_minutes: number | null;
+  /** The desk phone's extension; null without one. */
+  office_extension: number | null;
+  /** The Linphone extension on the seller's mobile (301–399); null without one. */
+  mobile_extension: number | null;
+  /** Hidden from the load cards by a manager (display only: still gets leads). */
+  hidden: boolean;
 }
 
 export interface UnassignedLead {
@@ -81,6 +87,16 @@ export function useAssignSettings() {
     mutationFn: (settings: AssignSettings) =>
       api(`${MANAGER_API}/assign/settings/`, { method: 'PUT', body: settings }),
     onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
+  });
+}
+
+/** Which sellers the load cards hide (one list for every manager); `sellers` is the whole new list. */
+export function useHiddenSellers() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (sellers: number[]) =>
+      api(`${MANAGER_API}/assign/hidden/`, { method: 'PUT', body: { sellers } }),
+    onSuccess: () => client.invalidateQueries({ queryKey: [...MANAGER_KEY, 'assign'] }),
   });
 }
 

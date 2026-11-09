@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { IconButton } from '@/components/ui/IconButton';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { ProgressBar } from '@/components/ui/Progress';
@@ -16,6 +17,7 @@ import {
   assignQuery,
   useAssignLeads,
   useAssignSettings,
+  useHiddenSellers,
   type AssignMode,
   type AssignSettings,
   type Escalation,
@@ -92,16 +94,7 @@ export default function AssignPage() {
       />
       <AutoCard key={JSON.stringify(data.settings)} settings={data.settings} />
 
-      <section aria-labelledby="sellers-title" className="flex flex-col gap-4">
-        <SectionHeading id="sellers-title" title={t('manager.assign.sellers')} />
-        <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-5">
-          {data.sellers.map((seller) => (
-            <li key={seller.id}>
-              <SellerCard seller={seller} />
-            </li>
-          ))}
-        </ul>
-      </section>
+      <SellerLoads sellers={data.sellers} />
 
       <SectionCard
         id="queue-title"
@@ -266,31 +259,111 @@ function AutoCard({ settings }: { settings: AssignSettings }) {
   );
 }
 
-function SellerCard({ seller }: { seller: SellerLoad }) {
+/** The load cards; a manager hides some (one list for every manager) and shows them again. */
+function SellerLoads({ sellers }: { sellers: SellerLoad[] }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const hide = useHiddenSellers();
+  const [showHidden, setShowHidden] = useState(false);
+  const hidden = sellers.filter((seller) => seller.hidden);
+  const shown = showHidden || hidden.length === 0 ? sellers : sellers.filter((seller) => !seller.hidden);
+  const toggle = (seller: SellerLoad) => {
+    const ids = hidden.map((item) => item.id).filter((id) => id !== seller.id);
+    hide.mutate(seller.hidden ? ids : [...ids, seller.id], {
+      onSuccess: () =>
+        toast.success(
+          t(seller.hidden ? 'manager.assign.unhidden' : 'manager.assign.hiddenDone', {
+            name: seller.name,
+          }),
+        ),
+      onError: () => toast.error(t('error')),
+    });
+  };
+  return (
+    <section aria-labelledby="sellers-title" className="flex flex-col gap-4">
+      <SectionHeading
+        id="sellers-title"
+        title={t('manager.assign.sellers')}
+        end={
+          hidden.length > 0 && (
+            <Button
+              variant="outline"
+              className="h-11 px-4 text-sm"
+              aria-pressed={showHidden}
+              onClick={() => setShowHidden(!showHidden)}
+            >
+              {showHidden
+                ? t('manager.assign.hideHidden')
+                : t('manager.assign.showHidden', { n: f.number(hidden.length) })}
+            </Button>
+          )
+        }
+      />
+      <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-5">
+        {shown.map((seller) => (
+          <li key={seller.id}>
+            <SellerCard seller={seller} pending={hide.isPending} onToggle={() => toggle(seller)} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SellerCard({
+  seller,
+  pending,
+  onToggle,
+}: {
+  seller: SellerLoad;
+  pending: boolean;
+  onToggle: () => void;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
+  const extension = (value: number | null) =>
+    value === null ? t('manager.assign.noExtension') : f.digits(String(value));
   const status =
     seller.status === 'busy' && seller.busy_until
       ? t('manager.assign.busyUntil', { time: f.time(seller.busy_until) })
       : t(`manager.assign.status.${seller.status}`);
   return (
     <Card
-      className={`flex flex-col gap-3 p-4 ${seller.status === 'away' ? 'opacity-60' : ''}`}
+      className={`flex flex-col gap-3 p-4 ${seller.status === 'away' || seller.hidden ? 'opacity-60' : ''}`}
       aria-label={seller.name}
     >
       <span className="flex items-center gap-2.5">
         <Avatar name={seller.name} size="sm" />
-        <span className="flex min-w-0 flex-col">
+        <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-[15px] font-semibold">{seller.name}</span>
           <span
             className={`text-xs ${seller.status === 'available' ? 'text-good' : seller.status === 'busy' ? 'text-warn' : 'text-text-2'}`}
           >
-            {status}
+            {seller.hidden ? `${status} · ${t('manager.assign.hiddenTag')}` : status}
           </span>
         </span>
+        <IconButton
+          icon={seller.hidden ? 'eye' : 'eyeOff'}
+          tone="muted"
+          iconSize={18}
+          className="-me-2"
+          disabled={pending}
+          aria-label={t(seller.hidden ? 'manager.assign.unhide' : 'manager.assign.hide', {
+            name: seller.name,
+          })}
+          onClick={onToggle}
+        />
       </span>
       <dl className="m-0 flex flex-col gap-2 text-sm">
+        <div className="flex justify-between">
+          <dt className="text-text-2">{t('manager.assign.deskExtension')}</dt>
+          <dd className="m-0 font-semibold">{extension(seller.office_extension)}</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-text-2">{t('manager.assign.mobileExtension')}</dt>
+          <dd className="m-0 font-semibold">{extension(seller.mobile_extension)}</dd>
+        </div>
         <div className="flex justify-between">
           <dt className="text-text-2">{t('manager.assign.open')}</dt>
           <dd className="m-0 font-semibold">{f.number(seller.open)}</dd>

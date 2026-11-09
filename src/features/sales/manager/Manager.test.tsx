@@ -131,6 +131,33 @@ describe('sales manager section', () => {
     expect(await screen.findByRole('heading', { name: '۶ لید بی‌صاحب است' })).toBeInTheDocument();
   });
 
+  it("shows each seller's two extensions and hides a seller until shown again", async () => {
+    loginAs(REZA);
+    const user = userEvent.setup();
+    renderApp('/sales/manager');
+    const loads = await screen.findByRole('region', { name: 'بار کاری فروشنده‌ها، همین الان' });
+    const nima = within(loads).getByLabelText('نیما رستمی');
+    expect(within(nima).getByText('۲۵۰')).toBeInTheDocument();
+    expect(within(nima).getByText('۳۰۱')).toBeInTheDocument();
+
+    await user.click(within(nima).getByRole('button', { name: 'پنهان کردن نیما رستمی از این فهرست' }));
+    expect(await toasts().findByText('نیما رستمی از این فهرست پنهان شد.')).toBeInTheDocument();
+    const shown = await within(loads).findByRole('button', { name: 'پنهان‌شده‌ها (۱)' });
+    expect(within(loads).queryByLabelText('نیما رستمی')).not.toBeInTheDocument();
+
+    await user.click(shown);
+    await user.click(
+      within(within(loads).getByLabelText('نیما رستمی')).getByRole('button', {
+        name: 'نمایش دوباره‌ی نیما رستمی',
+      }),
+    );
+    expect(await toasts().findByText('نیما رستمی دوباره نمایش داده می‌شود.')).toBeInTheDocument();
+    expect(
+      await within(loads).findByRole('button', { name: 'پنهان کردن نیما رستمی از این فهرست' }),
+    ).toBeInTheDocument();
+    expect(within(loads).queryByRole('button', { name: /پنهان‌شده‌ها/ })).not.toBeInTheDocument();
+  });
+
   it('disables assignment when every seller is away and no suggestion exists', async () => {
     loginAs(REZA);
     const data = await api<AssignData>('/sales/v1/manager/assign/');
