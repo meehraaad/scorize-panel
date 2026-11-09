@@ -149,7 +149,7 @@ describe('sales panel, seller pages', () => {
     expect(router.state.location.pathname).toMatch(/^\/sales\/customers\/\d+$/);
   });
 
-  it('leads: searches every customer, opens mine, takes a free one, names another seller', async () => {
+  it('header: searches every customer, opens mine, takes a free one, names another seller', async () => {
     let taken: string | null = null;
     server.use(
       http.get('/api/sales/v1/customers/search/', ({ request }) => {
@@ -194,9 +194,7 @@ describe('sales panel, seller pages', () => {
     );
     const user = userEvent.setup();
     const router = renderApp('/sales/leads');
-    // The page's own button (the header has the same search).
-    const page = await screen.findByRole('main');
-    await user.click(await within(page).findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
+    await user.click(await screen.findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
     const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'هیچ');
     expect(await within(dialog).findByText('کسی با این مشخصات پیدا نشد.')).toBeInTheDocument();
@@ -212,18 +210,6 @@ describe('sales panel, seller pages', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/sales/customers/777'));
     expect(taken).toBe('777');
     expect(await toasts().findByText('مینا آزاد به مشتری‌های شما اضافه شد.')).toBeInTheDocument();
-  });
-
-  it('leads: nobody found in every customer offers a new lead', async () => {
-    server.use(
-      http.get('/api/sales/v1/customers/search/', () => HttpResponse.json({ results: [] })),
-    );
-    const user = userEvent.setup();
-    renderApp('/sales/leads?find=1');
-    const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
-    await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'کسی نیست');
-    await user.click(await within(dialog).findByRole('button', { name: 'ثبت به‌عنوان لید تازه' }));
-    expect(await screen.findByRole('dialog', { name: 'ثبت لید دستی' })).toBeInTheDocument();
   });
 
   it('header: searches every customer from any page; nobody found opens the new lead', async () => {

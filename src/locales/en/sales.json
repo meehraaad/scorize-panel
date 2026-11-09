@@ -305,7 +305,6 @@
     "tag": "Tag",
     "allTags": "All tags",
     "find": {
-      "button": "Search all customers",
       "title": "Search all customers",
       "subtitle": "Anyone with an account on the site, yours or not.",
       "label": "Search customers",

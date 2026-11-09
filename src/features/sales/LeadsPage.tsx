@@ -13,7 +13,6 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
-import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES } from '@/lib/sales/api';
@@ -30,7 +29,6 @@ import {
 import { BulkBar } from './components/BulkBar';
 import { useSalesFormat } from './format';
 import { LeadTable } from './components/LeadTable';
-import { CustomerSearchDialog } from './components/CustomerSearchDialog';
 import { NewLeadDialog } from './components/NewLeadDialog';
 
 /**
@@ -85,19 +83,15 @@ export default function LeadsPage() {
     ),
   );
   const openNew = params.get('new') === '1';
-  const openFind = params.get('find') === '1';
-  // `?new=1` and `?find=1` open the new-lead and the search-everyone dialogs (one at a time).
-  const setDialog = (dialog: 'new' | 'find' | null) =>
+  const setOpenNew = (open: boolean) =>
     setParams(
       (current) => {
-        current.delete('new');
-        current.delete('find');
-        if (dialog) current.set(dialog, '1');
+        if (open) current.set('new', '1');
+        else current.delete('new');
         return current;
       },
       { replace: true },
     );
-  const setOpenNew = (open: boolean) => setDialog(open ? 'new' : null);
 
   const pages = pagesOf(data);
 
@@ -107,18 +101,10 @@ export default function LeadsPage() {
         title={t('leads.title')}
         subtitle={data ? t('leads.subtitle', { n: f.number(data.counts.all) }) : undefined}
         actions={
-          <div className="flex flex-wrap gap-2">
-            {ON_SERVER.customerSearch && (
-              <Button variant="outline" onClick={() => setDialog('find')}>
-                <Icon name="search" size={18} />
-                {t('leads.find.button')}
-              </Button>
-            )}
-            <Button onClick={() => setOpenNew(true)}>
-              <Icon name="plus" size={18} />
-              {t('leads.add')}
-            </Button>
-          </div>
+          <Button onClick={() => setOpenNew(true)}>
+            <Icon name="plus" size={18} />
+            {t('leads.add')}
+          </Button>
         }
       />
       {data && <LeadStats stats={data.stats} />}
@@ -244,13 +230,6 @@ export default function LeadsPage() {
       </section>
 
       <NewLeadDialog open={openNew} onClose={() => setOpenNew(false)} />
-      {ON_SERVER.customerSearch && (
-        <CustomerSearchDialog
-          open={openFind}
-          onClose={() => setDialog(null)}
-          onAddNew={() => setDialog('new')}
-        />
-      )}
     </PageStack>
   );
 }
