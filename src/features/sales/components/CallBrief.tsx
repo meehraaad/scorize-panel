@@ -1,86 +1,84 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Icon, type IconName } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { callBriefQuery } from '../api';
 
 /**
- * "Before you answer": what a seller reads while a known customer's phone rings. Consultations with
- * someone else come first (who to ask), then the last contact, today's follow-up and unpaid bills.
- * Nothing to say: no box. Opened by hand (`live` false) it is the same box under "at a glance".
+ * What a seller should know before answering, in one line under the call strip: a consultation with
+ * someone else first (who to ask), else the last contact; the rest (follow-up, unpaid bills) behind
+ * "+n". `dark`: on the live strip; light once the call ended. Nothing to say: nothing shown.
  */
-export function CallBrief({ customer, live = true }: { customer: number; live?: boolean }) {
+export function CallBrief({
+  customer,
+  live = true,
+  dark = true,
+}: {
+  customer: number;
+  live?: boolean;
+  dark?: boolean;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
+  const [open, setOpen] = useState(false);
   const { data } = useQuery(callBriefQuery(customer));
   if (!data) return null;
-  const title = t(live ? 'callBrief.title' : 'callBrief.glance');
-  const rows: { key: string; icon: IconName; text: string }[] = [
+  const lines = [
+    ...data.consultations_elsewhere.map((item) =>
+      t('callBrief.elsewhere', {
+        consultant: item.consultant,
+        title: item.title,
+        when: f.timeAgo(item.at),
+      }),
+    ),
     ...(data.last_contact
       ? [
-          {
-            key: 'last',
-            icon: 'chat' as const,
-            text: data.last_contact.notes
-              ? t('callBrief.last', {
-                  when: f.timeAgo(data.last_contact.at),
-                  notes: data.last_contact.notes,
-                })
-              : t('callBrief.lastNoNotes', { when: f.timeAgo(data.last_contact.at) }),
-          },
+          data.last_contact.notes
+            ? t('callBrief.last', {
+                when: f.timeAgo(data.last_contact.at),
+                notes: data.last_contact.notes,
+              })
+            : t('callBrief.lastNoNotes', { when: f.timeAgo(data.last_contact.at) }),
         ]
       : []),
     ...(data.follow_up
       ? [
-          {
-            key: 'follow',
-            icon: 'clock' as const,
-            text: t('callBrief.followUp', {
-              when: data.follow_up.at.includes('T')
-                ? t('callBrief.at', {
-                    day: f.weekday(data.follow_up.at),
-                    time: f.time(data.follow_up.at),
-                  })
-                : f.weekday(data.follow_up.at),
-              text: data.follow_up.text,
-            }),
-          },
+          t('callBrief.followUp', {
+            when: data.follow_up.at.includes('T')
+              ? t('callBrief.at', {
+                  day: f.weekday(data.follow_up.at),
+                  time: f.time(data.follow_up.at),
+                })
+              : f.weekday(data.follow_up.at),
+            text: data.follow_up.text,
+          }),
         ]
       : []),
-    ...data.unpaid.map((payment) => ({
-      key: `unpaid-${String(payment.id)}`,
-      icon: 'card' as const,
-      text: t('callBrief.unpaid', { amount: f.number(payment.amount) }),
-    })),
+    ...data.unpaid.map((payment) => t('callBrief.unpaid', { amount: f.number(payment.amount) })),
   ];
-  if (!rows.length && !data.consultations_elsewhere.length) return null;
+  if (!lines.length) return null;
+  const shown = open ? lines : lines.slice(0, 1);
+  const hidden = lines.length - shown.length;
   return (
     <section
-      aria-label={title}
-      className="-mx-5 -mt-5 flex flex-col gap-2.5 border-b border-hair bg-row-highlight px-5 py-4"
+      aria-label={t(live ? 'callBrief.title' : 'callBrief.glance')}
+      className={`flex flex-col gap-1 rounded-xl px-3 py-2 text-xs leading-6 ${dark ? 'bg-hero-raised text-hero-current' : 'bg-warn-tint text-warn'}`}
     >
-      <h3 className="m-0 text-xs font-bold text-primary-text">{title}</h3>
-      {data.consultations_elsewhere.map((item) => (
-        <p
-          key={`${item.consultant}-${item.at}`}
-          className="m-0 flex items-start gap-2.5 rounded-xl bg-warn-tint px-3 py-2 text-[13px] leading-6 text-warn"
+      {shown.map((line) => (
+        <p key={line} className="m-0 line-clamp-2 break-words">
+          {line}
+        </p>
+      ))}
+      {(hidden > 0 || open) && lines.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          className="min-h-8 self-start font-semibold underline-offset-4 hover:underline"
         >
-          <Icon name="user" size={16} className="mt-1 flex-none" />
-          <span>
-            {t('callBrief.elsewhere', {
-              consultant: item.consultant,
-              title: item.title,
-              when: f.timeAgo(item.at),
-            })}
-          </span>
-        </p>
-      ))}
-      {rows.map((row) => (
-        <p key={row.key} className="m-0 flex items-start gap-2.5 text-[13px] leading-6">
-          <Icon name={row.icon} size={16} className="mt-1 flex-none text-text-2" />
-          <span className="min-w-0 break-words">{row.text}</span>
-        </p>
-      ))}
+          {open ? t('callBrief.less') : t('callBrief.more', { n: f.number(hidden) })}
+        </button>
+      )}
     </section>
   );
 }

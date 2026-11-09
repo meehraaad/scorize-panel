@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
-import { DatePicker } from '@/components/ui/DatePicker';
 import { FloatingPanel } from '@/components/ui/FloatingPanel';
 import {
   updateContactDraft,
@@ -25,7 +24,7 @@ import { CallSteps, CallStrip } from './CallStrip';
 import { Dialog } from '@/components/ui/Dialog';
 import { customerPath } from '../paths';
 import { FollowUpSlots } from './FollowUpSlots';
-import { StageStrip } from './StageStrip';
+import { ProfileChips } from './ProfileChips';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
 import { VoiceTextAreaField } from '@/components/voice/VoiceField';
@@ -43,8 +42,8 @@ const OUTCOMES = [
   'call_later',
   'wrong_number',
 ] as const satisfies readonly CallOutcome[];
-/** Quick follow-up times; anything further is a pick on the calendar. */
-const FOLLOWS = ['evening', 'tomorrow', 'three', 'other'] as const;
+/** Quick follow-up times; any other is a pick on the calendar (`other`). */
+const FOLLOWS = ['evening', 'tomorrow', 'three'] as const;
 /** Stages a contact can move a lead to (drafts and contracts come from the offer page). */
 const MOVABLE = ['contacted', 'consulted', 'offer', 'lost'] as const satisfies readonly LeadStage[];
 
@@ -91,6 +90,7 @@ export function LogDialog({
     date,
     email,
     sms = false,
+    customerOpen = false,
   } = values;
   const template = values.template ?? String(customer.templates[0]?.id ?? '');
   const change =
@@ -163,8 +163,8 @@ export function LogDialog({
           ? 'customer.logDialog.meetingNotesPlaceholder'
           : 'customer.logDialog.notesPlaceholder',
       )}
-      hint={t('customer.logDialog.privateHint')}
-      rows={session ? 4 : 3}
+      hint={session ? t('customer.logDialog.privateHint') : undefined}
+      rows={session ? 4 : 2}
       maxLength={5000}
       value={notes}
       onChange={change('notes')}
@@ -175,60 +175,74 @@ export function LogDialog({
       onPendingTranscriptChange={change('voiceTranscript')}
     />
   );
-  const customerFields = (
-    <div className="flex flex-col gap-1 rounded-card border border-hair bg-row-highlight p-4">
-      <VoiceTextAreaField
-        label={t('customer.logDialog.customerSummary')}
-        hint={t('customer.logDialog.customerSummaryHint')}
-        value={customerSummary}
-        onChange={change('customerSummary')}
-        rows={2}
-        maxLength={5000}
-        transcribe={transcribeVoice}
-        voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
-        disabled={log.isPending}
-        pendingTranscript={values.customerSummaryVoiceTranscript}
-        onPendingTranscriptChange={change('customerSummaryVoiceTranscript')}
-      />
-      {!message && (customer.email || customer.supports.summary_sms) && (
-        <div className="flex flex-wrap gap-x-5">
-          {customer.email && (
-            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-text-2">
-              <input
-                type="checkbox"
-                checked={email}
-                disabled={!customerSummary.trim()}
-                onChange={(event) => change('email')(event.target.checked)}
-                className="size-[18px] accent-primary"
-              />
-              {t('customer.logDialog.emailSummary')}
-            </label>
-          )}
-          {customer.supports.summary_sms && (
-            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-text-2">
-              <input
-                type="checkbox"
-                checked={sms}
-                disabled={!customerSummary.trim()}
-                onChange={(event) => change('sms')(event.target.checked)}
-                className="size-[18px] accent-primary"
-              />
-              {t('customer.logDialog.smsSummary')}
-            </label>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  const customerFields =
+    !session && !customerSummary && !customerOpen ? (
+      <button
+        type="button"
+        onClick={() => change('customerOpen')(true)}
+        className="-my-2 inline-flex min-h-11 items-center gap-1.5 self-start text-[13px] font-semibold text-primary-text hover:underline"
+      >
+        <Icon name="plus" size={16} />
+        {t('customer.logDialog.addCustomerNote')}
+      </button>
+    ) : (
+      <div className="flex flex-col gap-1 rounded-card border border-hair bg-row-highlight p-3">
+        <VoiceTextAreaField
+          label={t('customer.logDialog.customerSummary')}
+          hint={t('customer.logDialog.customerSummaryHint')}
+          value={customerSummary}
+          onChange={change('customerSummary')}
+          rows={2}
+          maxLength={5000}
+          transcribe={transcribeVoice}
+          voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
+          disabled={log.isPending}
+          pendingTranscript={values.customerSummaryVoiceTranscript}
+          onPendingTranscriptChange={change('customerSummaryVoiceTranscript')}
+        />
+        {!message && (customer.email || customer.supports.summary_sms) && (
+          <div className="flex flex-wrap gap-x-5">
+            {customer.email && (
+              <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-text-2">
+                <input
+                  type="checkbox"
+                  checked={email}
+                  disabled={!customerSummary.trim()}
+                  onChange={(event) => change('email')(event.target.checked)}
+                  className="size-[18px] accent-primary"
+                />
+                {t('customer.logDialog.emailSummary')}
+              </label>
+            )}
+            {customer.supports.summary_sms && (
+              <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-text-2">
+                <input
+                  type="checkbox"
+                  checked={sms}
+                  disabled={!customerSummary.trim()}
+                  onChange={(event) => change('sms')(event.target.checked)}
+                  className="size-[18px] accent-primary"
+                />
+                {t('customer.logDialog.smsSummary')}
+              </label>
+            )}
+          </div>
+        )}
+      </div>
+    );
   const asksStage = talked && !!lead && customer.supports.stages;
   const nextFields = (
     <>
       {asksStage && (
-        <StageStrip
-          current={lead.stage}
-          movable={stages}
+        <SelectField
+          inline
+          label={t('customer.logDialog.stageLabel')}
           value={stage}
           onChange={change('stage')}
+          options={[
+            { value: 'keep', label: t(`stage.${lead.stage}`) },
+            ...stages.map((value) => ({ value, label: t(`stage.${value}`) })),
+          ]}
         />
       )}
       {lost && (
@@ -246,6 +260,7 @@ export function LogDialog({
       {asksFollowUp && (
         <ChoiceGroup
           legend={t('customer.logDialog.followUp')}
+          hideLegend
           value={follow}
           onChange={change('follow')}
           options={FOLLOWS.map((value) => ({
@@ -256,32 +271,28 @@ export function LogDialog({
             <button
               type="button"
               onClick={() => setPicking(true)}
-              className="inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              aria-pressed={follow === 'other'}
+              className={`inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                follow === 'other' && followAt
+                  ? 'bg-hero text-on-hero'
+                  : 'text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint'
+              }`}
             >
               <Icon name="calendar" size={16} />
-              {t('customer.logDialog.fromCalendar')}
+              {follow === 'other' && followAt
+                ? t('customer.logDialog.followWhen', {
+                    day: f.weekdayName(followAt),
+                    time: f.time(followAt),
+                  })
+                : t('customer.logDialog.fromCalendar')}
             </button>
-          }
-          hint={
-            followAt &&
-            t('customer.logDialog.followNote', {
-              when: t('customer.logDialog.followWhen', {
-                day: f.weekday(followAt),
-                time: f.time(followAt),
-              }),
-            })
           }
         />
       )}
-      {asksFollowUp && follow === 'other' && (
-        <DatePicker
-          time
-          only="future"
-          label={t('customer.logDialog.followDate')}
-          value={date}
-          onChange={change('date')}
-          error={checked && !followAt ? t('customer.logDialog.followDate') : undefined}
-        />
+      {asksFollowUp && checked && !followAt && (
+        <p role="alert" className="m-0 -mt-2 text-sm text-danger">
+          {t('customer.logDialog.followDate')}
+        </p>
       )}
       <Dialog
         open={picking}
@@ -336,7 +347,8 @@ export function LogDialog({
       {call && (
         <ChoiceGroup
           legend={t('customer.logDialog.outcome')}
-          look="squares"
+          hideLegend
+          look="segmented"
           value={outcome}
           onChange={change('outcome')}
           options={OUTCOMES.map((value) => ({
@@ -379,10 +391,16 @@ export function LogDialog({
   if (asksStage || lost || asksFollowUp)
     steps.push({ key: 'next', title: t('customer.logDialog.step.next'), body: nextFields });
 
-  const chips = [
-    ...(lead ? [t(`stage.${lead.stage}`)] : []),
-    ...(customer.headline.countries.length ? [customer.headline.countries.join('، ')] : []),
-  ];
+  /** What we know about the customer, on the strip: the brief, then the profile chips. */
+  const about = (dark: boolean) => (
+    <>
+      {!start.via && customer.supports.call_brief && (
+        <CallBrief customer={customer.id} live={!!liveCall} dark={dark} />
+      )}
+      <ProfileChips customer={customer.id} dark={dark} />
+    </>
+  );
+  const chips = lead ? [t(`stage.${lead.stage}`)] : [];
   return (
     <FloatingPanel
       active={active}
@@ -400,7 +418,9 @@ export function LogDialog({
                 notLogged
                 closeLabel={t('contactDraft.minimize')}
                 onClose={onClose}
-              />
+              >
+                {about(liveCall.ended_at === null)}
+              </CallStrip>
             )
           : session
             ? undefined
@@ -415,7 +435,9 @@ export function LogDialog({
                   chips={chips}
                   closeLabel={t('contactDraft.minimize')}
                   onClose={onClose}
-                />
+                >
+                  {about(true)}
+                </CallStrip>
               )
       }
       icon={session ? 'calendar' : undefined}
@@ -487,9 +509,6 @@ export function LogDialog({
             step={2}
             done={t(start.via === 'new' ? 'callStrip.created' : 'callStrip.found')}
           />
-        )}
-        {!session && !start.via && customer.supports.call_brief && (
-          <CallBrief customer={customer.id} live={!!liveCall} />
         )}
         <fieldset disabled={log.isPending} className="contents">
           {session

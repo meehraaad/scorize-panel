@@ -44,6 +44,7 @@ async function open() {
   const user = userEvent.setup();
   renderApp('/sales/customers/101?log=call');
   await screen.findAllByRole('button', { name: label('upload') });
+  await user.click(screen.getByRole('button', { name: 'یادداشت برای خود مشتری' }));
   return user;
 }
 

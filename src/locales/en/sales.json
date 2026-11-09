@@ -554,6 +554,8 @@
       }
     },
     "logDialog": {
+      "stageLabel": "Stage",
+      "addCustomerNote": "Note for the customer",
       "stripLabel": "Log a contact",
       "title": "Log contact with {{name}}",
       "subtitle": "Lead: {{source}} · current stage: {{stage}}",
@@ -564,7 +566,7 @@
       "outcomeOption": {
         "talked": "We talked",
         "no_answer": "No answer",
-        "call_later": "Call back later",
+        "call_later": "Call later",
         "wrong_number": "Wrong number"
       },
       "noAnswer": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
@@ -574,7 +576,7 @@
       "followUp": "Next step",
       "followOption": {
         "evening": "This evening",
-        "tomorrow": "Tomorrow",
+        "tomorrow": "Tomorrow 10:00",
         "three": "In 3 days",
         "week": "Next week",
         "other": "Another date"
@@ -605,14 +607,6 @@
         "contact": "Contact",
         "notes": "Notes",
         "next": "Next step"
-      },
-      "board": {
-        "legend": "Where is it now?",
-        "lost": "Lost",
-        "lostAsk": "Lost?",
-        "moves": "The card moves to “{{stage}}”.",
-        "stays": "The card stays in “{{stage}}”.",
-        "lostNote": "The lead closes and leaves the board."
       },
       "fromCalendar": "From the calendar",
       "calendarTitle": "When to follow up with {{name}}?",
@@ -1897,6 +1891,40 @@
     "phoneKept": "Saved as {{name}}'s second phone.",
     "phoneTaken": "This number belongs to another account and wasn't saved; the call is still logged for this customer."
   },
+  "callProfile": {
+    "title": "At a glance",
+    "ask": "+ {{what}}",
+    "saved": "Saved to the customer's info",
+    "gpa": "GPA {{gpa}}",
+    "field": {
+      "wanted_degree": "Degree",
+      "countries": "Country",
+      "budget": "Budget",
+      "language": "Language"
+    },
+    "question": {
+      "wanted_degree": "Which degree?",
+      "countries": "Which country?",
+      "budget": "Budget?",
+      "language": "Their language?"
+    },
+    "budget": {
+      "1": "Under 500M",
+      "2": "500M to 1B",
+      "3": "Over 1B"
+    },
+    "country": {
+      "canada": "Canada",
+      "germany": "Germany",
+      "usa": "United States",
+      "italy": "Italy"
+    },
+    "language": {
+      "none": "No certificate",
+      "basic": "Studying",
+      "certificate": "Has a certificate"
+    }
+  },
   "callStrip": {
     "unknownNumber": "Unknown number",
     "notLogged": "Not logged yet",
@@ -1910,6 +1938,8 @@
     "addCustomer": "Add customer"
   },
   "callBrief": {
+    "more": "+{{n}} more",
+    "less": "Less",
     "glance": "At a glance",
     "title": "Before you answer",
     "last": "Last time, {{when}}: “{{notes}}”",

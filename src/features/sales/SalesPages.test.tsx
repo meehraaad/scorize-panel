@@ -252,6 +252,7 @@ describe('sales panel, seller pages', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).queryByLabelText('مرحله‌ی بعدی')).not.toBeInTheDocument();
     await user.type(within(dialog).getByLabelText('چه گذشت؟'), 'قرار شد بورسیه‌ها را بفرستم');
+    await user.click(within(dialog).getByRole('button', { name: 'یادداشت برای خود مشتری' }));
     await user.type(
       within(dialog).getByLabelText('یادداشت برای خود مشتری'),
       'رزومه‌ی خود را تکمیل کنید',

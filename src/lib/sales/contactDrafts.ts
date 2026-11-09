@@ -35,6 +35,8 @@ export interface ContactValues {
   email: boolean;
   /** Also text the customer that the note waits in their panel. */
   sms?: boolean;
+  /** The note for the customer is open (it starts folded in a contact log). */
+  customerOpen?: boolean;
   template?: string;
 }
 

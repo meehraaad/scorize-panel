@@ -253,7 +253,7 @@ export function TextAreaField({
       id={id}
       rows={4}
       aria-describedby={hint ? `${id}-hint` : undefined}
-      className={`${box} resize-y py-3 leading-7 ${footer ? `${(props.rows ?? 4) <= 3 ? 'min-h-36' : 'min-h-44'} pb-16` : ''} ${className}`}
+      className={`${box} resize-y py-3 leading-7 ${footer ? `${(props.rows ?? 4) <= 2 ? 'min-h-28' : (props.rows ?? 4) <= 3 ? 'min-h-36' : 'min-h-44'} pb-16` : ''} ${className}`}
       {...props}
     />
   );

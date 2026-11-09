@@ -82,6 +82,7 @@ describe('persistent contact workspace', () => {
     renderApp('/sales/customers/105?log=call');
     let dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
     await user.type(within(dialog).getByLabelText('چه گذشت؟'), 'Keep this draft');
+    await user.click(within(dialog).getByRole('button', { name: 'یادداشت برای خود مشتری' }));
     await user.type(
       within(dialog).getByLabelText(i18n.t('customer.logDialog.customerSummary', { ns: 'sales' })),
       'Customer-facing summary',
@@ -181,7 +182,7 @@ describe('session log: the next step on the board', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('starts on "consulted", shows the card with its follow-up, and sends the stage', async () => {
+  it('starts on "consulted", offers only the next stages, and sends the stage', async () => {
     const { fetchCustomer } = await import('@/mocks/legacy/customer');
     let sent: Record<string, unknown> | null = null;
     server.use(
@@ -212,20 +213,19 @@ describe('session log: the next step on the board', () => {
     await user.click(await screen.findByRole('button', { name: 'فهرست' }));
     await user.click(first(await screen.findAllByRole('button', { name: /^ثبت جلسه: / })));
     const dialog = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });
-    const board = await within(dialog).findByRole('group', { name: 'کجای کار است؟' });
+    const stage = await within(dialog).findByRole('combobox', { name: 'مرحله' });
 
-    expect(within(board).getByRole('radio', { name: 'مشاوره شد' })).toBeChecked();
-    expect(within(board).getByRole('radio', { name: 'تماس گرفته شد' })).not.toBeChecked();
-    expect(within(board).getByRole('radio', { name: 'تازه' })).toBeDisabled();
-    expect(within(board).getByRole('radio', { name: 'قرارداد شد' })).toBeDisabled();
-    expect(within(board).getByText('کارت به ستون «مشاوره شد» می‌رود.')).toBeInTheDocument();
+    expect(stage).toHaveValue('consulted');
+    expect(within(stage).getByRole('option', { name: 'تماس گرفته شد' })).toHaveValue('keep');
+    expect(within(stage).queryByRole('option', { name: 'تازه' })).toBeNull();
+    expect(within(stage).queryByRole('option', { name: 'قرارداد شد' })).toBeNull();
 
     // "Lost" needs a reason before saving.
-    await user.click(within(board).getByRole('radio', { name: 'از دست رفت' }));
+    await user.selectOptions(stage, 'lost');
     await user.click(within(dialog).getByRole('button', { name: /ثبت و بستن لید/ }));
     expect(sent).toBeNull();
 
-    await user.click(within(board).getByRole('radio', { name: 'مشاوره شد' }));
+    await user.selectOptions(stage, 'consulted');
     await user.click(within(dialog).getByRole('button', { name: /ثبت جلسه و ساختن پیگیری/ }));
     await waitFor(() => expect(sent).toMatchObject({ channel: 'meeting', stage: 'consulted' }));
   });
@@ -245,9 +245,6 @@ describe('session log: the next step on the board', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' })).toBeNull(),
     );
-    expect(within(dialog).getByRole('radio', { name: 'تاریخ دیگر' })).toBeChecked();
-    expect(within(dialog).getByRole('button', { name: /تاریخ و ساعت پیگیری/ })).toHaveTextContent(
-      '۱۴:۰۰',
-    );
+    expect(within(dialog).getByRole('button', { pressed: true })).toHaveTextContent('۱۴:۰۰');
   });
 });

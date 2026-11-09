@@ -195,7 +195,11 @@ describe('live seller calls', () => {
     mount();
     const brief = await screen.findByRole('region', { name: 'Before you answer' });
     expect(within(brief).getByText(/Maryam Sadeghi/)).toBeInTheDocument();
+    // The rest waits behind "+2 more".
+    expect(within(brief).queryByText(/Asked about fees/)).toBeNull();
+    await userEvent.click(within(brief).getByRole('button', { name: '+2 more' }));
     expect(within(brief).getByText(/Asked about fees/)).toBeInTheDocument();
+    expect(within(brief).getByText(/Unpaid/)).toBeInTheDocument();
     // A live call is a phone call: no "which channel" question.
     expect(screen.queryByRole('radiogroup', { name: /How/ })).not.toBeInTheDocument();
   });

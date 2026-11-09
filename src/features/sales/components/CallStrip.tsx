@@ -21,11 +21,11 @@ const LABEL = {
 } as const;
 
 /**
- * The call popup's header, the same in every step: who is on the line, how long, and a minimize
- * button. Dark while the call is live; light once it ends (with "not logged yet" while the form is
- * still open). `name`: the customer (a link to their page); without it the number is the title.
- * Without a `call` (a log opened by hand) it is the same dark header with `label` in place of the
- * call's status and no timer; `titleLabel` then names the popup.
+ * The call popup's header, the same in every step, on one row: who is on the line (a link to their
+ * page), the call's state with the stage, how long, and a minimize button. Dark while the call is
+ * live; light once it ends (with "not logged yet" while the form is still open). Without a `call`
+ * (a log opened by hand) the state line says `label`; `titleLabel` then names the popup.
+ * `children`: what we know about the customer, under the row (the brief and the profile chips).
  */
 export function CallStrip({
   call,
@@ -39,74 +39,110 @@ export function CallStrip({
   notLogged = false,
   closeLabel,
   onClose,
+  children,
 }: {
   call?: ObservedCall | undefined;
   /** Without a call: the customer's number. */
   phone?: string | undefined;
-  /** Without a call: what the popup is for, in place of the status line. */
+  /** Without a call: what the popup is for, in place of the call's state. */
   label?: string | undefined;
   /** The popup's accessible name when it isn't just the customer's name. */
   titleLabel?: string | undefined;
   titleId: string;
   name?: string | undefined;
   href?: string | undefined;
+  /** Short facts after the state (stage, score). */
   chips?: readonly string[];
   notLogged?: boolean;
   closeLabel: string;
   onClose: () => void;
+  children?: ReactNode;
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const now = useNow();
   const over = !!call && call.ended_at !== null;
   const live = !!call && !over && call.status in LABEL;
-  const phone = (
-    <span dir="ltr" className="font-medium tabular-nums">
-      {f.digits(call?.phone ?? phoneNumber ?? '')}
+  const number = f.digits(call?.phone ?? phoneNumber ?? '');
+  const muted = over ? 'text-text-2' : 'text-on-hero-2';
+  const title: ReactNode = !name ? (
+    <span dir="ltr" className="tabular-nums">
+      {number}
     </span>
-  );
-  const title: ReactNode = name ? (
-    href ? (
-      <Link
-        to={href}
-        className="inline-flex items-center gap-1 text-inherit no-underline hover:underline"
-      >
-        {name}
-        <Icon name="chevronEnd" size={16} />
-      </Link>
-    ) : (
-      name
-    )
+  ) : href ? (
+    <Link
+      to={href}
+      className="inline-flex max-w-full items-center gap-1 text-inherit no-underline hover:underline"
+    >
+      <span className="truncate">{name}</span>
+      <Icon name="chevronEnd" size={16} className="flex-none" />
+    </Link>
   ) : (
-    phone
+    name
   );
+  const facts = [
+    ...(call ? [t(`phoneCall.direction.${call.direction}`)] : name && number ? [number] : []),
+    ...(name ? [] : [t('callStrip.unknownNumber')]),
+    ...chips,
+  ];
   return (
     <div
-      className={`flex flex-col gap-3 px-5 pt-4 pb-5 ${over ? 'bg-board text-text' : 'bg-hero text-on-hero'}`}
+      className={`flex flex-col gap-3 px-5 pt-3.5 pb-4 ${over ? 'bg-board text-text' : 'bg-hero text-on-hero'}`}
     >
-      <div className="flex items-center justify-between gap-3">
-        {call ? (
-          <p
-            role="status"
-            className={`m-0 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[13px] ${over ? 'text-text-2' : 'text-on-hero-2'}`}
+      <div className="flex items-center gap-3">
+        {name && (
+          <span
+            aria-hidden="true"
+            className={`inline-flex size-10 flex-none items-center justify-center rounded-full font-bold ${over ? 'bg-surface text-text-2' : 'bg-hero-accent text-hero'}`}
           >
-            <span
-              aria-hidden="true"
-              className={`size-2.5 flex-none rounded-full ${DOT[call.status]}`}
-            />
-            <span
-              className={`font-semibold ${live ? LABEL[call.status as keyof typeof LABEL] : over ? 'text-text' : ''}`}
-            >
-              {t(`phoneCall.status.${call.status}`)}
-            </span>
-            <span>
-              {t(`phoneCall.direction.${call.direction}`)}
-              {' · '}
-              {t('phoneCall.extension', { extension: f.digits(call.extension) })}
-            </span>
+            {initialOf(name)}
+          </span>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <h2
+            id={titleId}
+            aria-label={titleLabel}
+            className="m-0 truncate font-display text-[17px] font-bold"
+          >
+            {title}
+          </h2>
+          <p
+            role={call ? 'status' : undefined}
+            className={`m-0 flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs ${muted}`}
+          >
+            {call ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className={`size-2 flex-none rounded-full ${DOT[call.status]}`}
+                />
+                <span
+                  className={`font-semibold ${live ? LABEL[call.status as keyof typeof LABEL] : over ? 'text-text' : ''}`}
+                >
+                  {t(`phoneCall.status.${call.status}`)}
+                </span>
+              </>
+            ) : (
+              <span className="font-semibold">{label}</span>
+            )}
+            {facts.map((fact) => (
+              <span key={fact}>· {fact}</span>
+            ))}
+            {notLogged && over && (
+              <span className="rounded-full bg-warn-tint px-2 font-semibold text-warn">
+                {t('callStrip.notLogged')}
+              </span>
+            )}
           </p>
-        ) : (
-          <p className="m-0 min-w-0 text-[13px] font-semibold text-on-hero-2">{label}</p>
+        </div>
+        {call && (
+          <span
+            dir="ltr"
+            aria-label={t('phoneCall.duration')}
+            className={`flex-none font-mono text-lg tabular-nums ${over ? 'text-text-2' : live ? LABEL[call.status as keyof typeof LABEL] : ''}`}
+          >
+            {f.digits(callDuration(callSeconds(call, now)))}
+          </span>
         )}
         <button
           type="button"
@@ -117,62 +153,10 @@ export function CallStrip({
           <Icon name="chevronDown" />
         </button>
       </div>
-      <div className="flex items-end justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          {name && (
-            <span
-              aria-hidden="true"
-              className={`inline-flex size-11 flex-none items-center justify-center rounded-full text-lg font-bold ${over ? 'bg-surface text-text-2' : 'bg-hero-accent text-hero'}`}
-            >
-              {initialOf(name)}
-            </span>
-          )}
-          <div className="flex min-w-0 flex-col gap-1">
-            {!name && (
-              <span className={`text-[13px] ${over ? 'text-text-2' : 'text-on-hero-2'}`}>
-                {t('callStrip.unknownNumber')}
-              </span>
-            )}
-            <h2 id={titleId} aria-label={titleLabel} className="m-0 font-display text-lg font-bold">
-              {title}
-            </h2>
-            {name && (
-              <div
-                className={`flex flex-wrap items-center gap-1.5 text-xs ${over ? 'text-text-2' : 'text-on-hero-2'}`}
-              >
-                {phone}
-                {chips.map((chip) => (
-                  <span
-                    key={chip}
-                    className={`rounded-full px-2.5 py-0.5 ${over ? 'bg-surface' : 'bg-hero-raised'}`}
-                  >
-                    {chip}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        {call && (
-          <div className="flex flex-none flex-col items-end gap-1">
-            {notLogged && over && (
-              <span className="rounded-full bg-warn-tint px-2.5 py-0.5 text-xs font-semibold text-warn">
-                {t('callStrip.notLogged')}
-              </span>
-            )}
-            <span
-              dir="ltr"
-              aria-label={t('phoneCall.duration')}
-              className={`font-mono text-xl tabular-nums ${over ? 'text-text-2' : live ? LABEL[call.status as keyof typeof LABEL] : ''}`}
-            >
-              {f.digits(callDuration(callSeconds(call, now)))}
-            </span>
-          </div>
-        )}
-      </div>
       {call && !call.connected && !over && (
         <p className="m-0 text-[13px] leading-6 text-on-hero-2">{t('phoneCall.disconnected')}</p>
       )}
+      {children}
     </div>
   );
 }
