@@ -183,16 +183,14 @@ function Composer({ url, name }: { url: string; name: string }) {
               {f.number(MAX_NOTE - text.length)}
             </span>
           )}
-          <span aria-hidden="true" className="hidden text-xs text-text-2 sm:inline">
-            {t('shortcut')}
-          </span>
           <Button
             type="submit"
             disabled={!ready}
-            className="h-9 gap-1.5 px-4 text-[13px] disabled:bg-track disabled:text-text-2 disabled:opacity-100"
+            aria-label={t('add')}
+            title={t('add')}
+            className="relative size-10 px-0 before:absolute before:-inset-0.5 disabled:bg-track disabled:text-text-2 disabled:opacity-100"
           >
-            <Icon name="send" size={15} />
-            {t('add')}
+            <Icon name="send" size={18} />
           </Button>
         </span>
       </div>
