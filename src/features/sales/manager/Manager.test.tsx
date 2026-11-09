@@ -335,7 +335,7 @@ describe('commission rules (S60)', () => {
     );
   });
 
-  it('adds a tiered step on the sales amount, and lists the fixed bonus', async () => {
+  it('adds tiered steps on the sales amount or the contracts, and lists the fixed bonus', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
     renderApp('/sales/manager/commission');
@@ -346,13 +346,13 @@ describe('commission rules (S60)', () => {
 
     const form = screen.getByRole('form', { name: 'قانون تازه' });
     await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'tiered');
-    // Tiered steps only go by the sales amount.
-    expect(within(form).getByLabelText('بر اساس')).toHaveValue('sales');
+    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '5');
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '3');
     expect(
-      within(within(form).getByLabelText('بر اساس')).queryByRole('option', {
-        name: 'تعداد قرارداد در ماه',
-      }),
-    ).not.toBeInTheDocument();
+      within(form).getByText('از قرارداد ۵ به بعد: هر قرارداد ۳٪'),
+    ).toBeInTheDocument();
+    await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
+    await user.clear(within(form).getByLabelText('درصد پورسانت'));
     await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '300');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '2');
     await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));

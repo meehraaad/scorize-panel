@@ -293,11 +293,6 @@ function RuleForm({
           hint={t(`manager.commission.rewardHint.${reward}`)}
           onChange={(next) => {
             if (IN_PERCENT.has(next) !== inPercent) setValue('');
-            // Tiered steps are parts of the sales amount.
-            if (next === 'tiered' && basis !== 'sales') {
-              setBasis('sales');
-              setThreshold('');
-            }
             setReward(next);
             setErrors({});
           }}
@@ -315,12 +310,10 @@ function RuleForm({
             setThreshold('');
             setErrors({});
           }}
-          options={BASES.filter((option) => reward !== 'tiered' || option === 'sales').map(
-            (option) => ({
-              value: option,
-              label: t(`manager.commission.basisName.${option}`),
-            }),
-          )}
+          options={BASES.map((option) => ({
+            value: option,
+            label: t(`manager.commission.basisName.${option}`),
+          }))}
         />
         <TextField
           label={t(`manager.commission.threshold.${basis}`)}

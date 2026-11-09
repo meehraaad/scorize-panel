@@ -204,14 +204,23 @@ function commissionOf(seller: number, won: number, sales: number): number | null
       0,
       ...reached.filter((rule) => rule.reward === reward).map((rule) => rule[field] ?? 0),
     );
-  const tiers = mine
-    .filter((rule) => rule.reward === 'tiered')
-    .sort((a, b) => a.threshold - b.threshold);
-  const tiered = tiers.reduce((sum, tier, index) => {
+  const tiersOf = (basis: CommissionRule['basis']) =>
+    mine
+      .filter((rule) => rule.reward === 'tiered' && rule.basis === basis)
+      .sort((a, b) => a.threshold - b.threshold);
+  const bySales = tiersOf('sales').reduce((sum, tier, index, tiers) => {
     const top = tiers[index + 1]?.threshold ?? sales;
     return sum + (Math.max(0, Math.min(sales, top) - tier.threshold) * (tier.percent ?? 0)) / 100;
   }, 0);
-  const share = Math.max((sales * best('percent', 'percent')) / 100, tiered);
+  // Contract by contract, on an average contract (Django's `tiered_by_contracts`).
+  const points = tiersOf('contracts').reduce((sum, tier, index, tiers) => {
+    const last = (tiers[index + 1]?.threshold ?? won + 1) - 1;
+    return (
+      sum + Math.max(0, Math.min(won, last) - Math.max(tier.threshold, 1) + 1) * (tier.percent ?? 0)
+    );
+  }, 0);
+  const byContracts = won ? ((sales / won) * points) / 100 : 0;
+  const share = Math.max((sales * best('percent', 'percent')) / 100, bySales, byContracts);
   return Math.round(share + best('bonus', 'amount') + best('per_contract', 'amount') * won);
 }
 
@@ -222,8 +231,6 @@ function ruleError(body: CommissionRuleInput, id?: number): Record<string, strin
     return { percent: ['Give a percent above zero.'] };
   if (!inPercent && !(body.amount && body.amount > 0))
     return { amount: ['Give an amount above zero.'] };
-  if (body.reward === 'tiered' && body.basis !== 'sales')
-    return { basis: ['Tiered steps go by the amount of sales.'] };
   if (body.threshold < 0 || (body.basis === 'contracts' && body.threshold > 1000))
     return { threshold: ['At most 1000 contracts.'] };
   if (body.seller !== null && !SELLER_NAMES.has(body.seller))
