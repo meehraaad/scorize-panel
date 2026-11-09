@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { FaceDot } from '@/components/customers/FaceDot';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -68,8 +69,9 @@ export function Requests({
                       {t('requests.about')}{' '}
                       <Link
                         to={config.personPath(request.person.id)}
-                        className="font-medium text-primary-text"
+                        className="inline-flex items-center gap-1.5 align-middle font-medium text-primary-text"
                       >
+                        <FaceDot name={request.person.name} face={request.person.face} size="sm" />
                         {request.person.name}
                       </Link>
                     </span>

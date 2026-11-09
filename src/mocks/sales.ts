@@ -19,7 +19,7 @@ import { type Degree, type LeadSource, type LeadStage, type LostReason } from '@
 import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';
 import { bulkTag } from './salesTags';
-import { resetFaces } from './face';
+import { faceOf, resetFaces } from './face';
 import { addToNotebook, changeInNotebook, notebookOf, resetNotebookMocks } from './notebook';
 
 /**
@@ -717,6 +717,7 @@ function boardOf(data: SalesState, manager: boolean): BoardData {
     stage_since: item.lead.stage_since,
     seller: manager ? NIMA_NAME : null,
     next: nextOf(item.lead),
+    face: faceOf(item.id),
   });
   const fixed = (stage: 'new' | 'draft' | 'won') => ({
     stage,

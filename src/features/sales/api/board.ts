@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Face } from '@/lib/face/api';
 import { SALES_API, SALES_KEY, type LostReason } from '@/lib/sales/api';
 
 /** The lead stages under the columns: `new`, the team's columns (each in one middle stage), `draft`, `won`. */
@@ -70,6 +71,8 @@ export interface BoardCard {
   /** A sales manager's board of everyone: whose card it is. */
   seller: string | null;
   next: NextStep | null;
+  /** The emoji and color the team gave the customer (S66); null: none. */
+  face?: Face | null;
 }
 
 export interface BoardColumn {

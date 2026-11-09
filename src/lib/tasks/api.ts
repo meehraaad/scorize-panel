@@ -1,5 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Face } from '@/lib/face/api';
 import { parseValue } from '@/lib/calendar';
 import type { Page } from '@/lib/api/page';
 import type { TaskEmoji } from './reactions';
@@ -85,7 +86,7 @@ export interface MyTask {
   text: string;
   due_at: string;
   /** Null for an internal task about nobody. */
-  person: { id: number; name: string; context: string } | null;
+  person: { id: number; name: string; context: string; face?: Face | null } | null;
   source: TaskSource;
   /** How many times it was pushed back. */
   snoozed: number;
@@ -112,7 +113,7 @@ export interface TaskRequest {
   from: { name: string; role: string };
   created_at: string;
   text: string;
-  person: { id: number; name: string } | null;
+  person: { id: number; name: string; face?: Face | null } | null;
   due_at: string;
   status: TaskStatus;
   comments: number;
@@ -125,7 +126,7 @@ export interface QueueItem {
   team: TaskTeam | 'sales';
   automatic: boolean;
   text: string;
-  person: { id: number; name: string } | null;
+  person: { id: number; name: string; face?: Face | null } | null;
   queued_at: string;
   /** Taken by me (it moved to my follow-ups), or by someone else. */
   taken: 'me' | 'other' | null;

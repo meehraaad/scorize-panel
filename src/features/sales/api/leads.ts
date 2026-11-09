@@ -1,5 +1,6 @@
 import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Face } from '@/lib/face/api';
 import {
   SALES_API,
   SALES_KEY,
@@ -31,6 +32,8 @@ export interface LeadRow {
   created_at: string;
   /** Customer tag ids (S49), named by `tagsQuery`. */
   tags: number[];
+  /** The emoji and color the team gave the customer (S66); null: none. */
+  face?: Face | null;
   /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
   seller?: string | null;
 }

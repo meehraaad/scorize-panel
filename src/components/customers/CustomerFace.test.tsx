@@ -66,3 +66,26 @@ describe("customer's emoji and color (S66)", () => {
     );
   });
 });
+
+describe('the face beside the name in lists (S66)', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    resetFaces();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('shows on the leads list once set on the customer page', async () => {
+    loginAs(NIMA);
+    const user = userEvent.setup();
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    await user.click(await screen.findByRole('button', { name: /تغییر ایموجی و رنگ/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'ایموجی و رنگ مشتری' });
+    await user.click(within(dialog).getByRole('button', { name: '🦉' }));
+    await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('ایموجی و رنگ مشتری ذخیره شد')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'لیدهای من' }));
+    const row = (await screen.findAllByRole('link', { name: /عرفان ملکی/ }))[0];
+    expect(row).toHaveTextContent('🦉');
+  });
+});

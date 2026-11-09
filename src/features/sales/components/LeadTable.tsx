@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { FaceDot } from '@/components/customers/FaceDot';
 import { TagList } from '@/components/ui/Tags';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { DESKTOP_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
@@ -86,8 +87,9 @@ export function LeadTable({
                   <span className="flex min-w-0 flex-col gap-1">
                     <Link
                       to={customerPath(row.customer)}
-                      className="text-base font-semibold break-words text-text hover:underline"
+                      className="inline-flex items-center gap-2 text-base font-semibold break-words text-text hover:underline"
                     >
+                      <FaceDot name={row.name} face={row.face} />
                       {row.name}
                     </Link>
                     <span className="text-[13px] break-words text-text-2">{meta.join(' · ')}</span>
@@ -212,8 +214,9 @@ export function LeadTable({
                   <span className="flex flex-col gap-1">
                     <Link
                       to={customerPath(row.customer)}
-                      className="text-base font-semibold text-text hover:underline"
+                      className="inline-flex items-center gap-2 text-base font-semibold text-text hover:underline"
                     >
+                      <FaceDot name={row.name} face={row.face} />
                       {row.name}
                     </Link>
                     <span className="text-[13px] text-text-2">{meta.join(' · ')}</span>

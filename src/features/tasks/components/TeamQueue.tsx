@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { FaceDot } from '@/components/customers/FaceDot';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
@@ -64,7 +65,11 @@ export function TeamQueue({
                   {item.person && (
                     <>
                       {t('requests.about')}{' '}
-                      <Link to={config.personPath(item.person.id)} className="text-primary-text">
+                      <Link
+                        to={config.personPath(item.person.id)}
+                        className="inline-flex items-center gap-1.5 align-middle text-primary-text"
+                      >
+                        <FaceDot name={item.person.name} face={item.person.face} size="sm" />
                         {item.person.name}
                       </Link>
                       {' · '}

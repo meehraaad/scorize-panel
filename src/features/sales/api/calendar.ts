@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Face } from '@/lib/face/api';
 import { toValue } from '@/lib/calendar';
 import { SALES_API, SALES_KEY } from '@/lib/sales/api';
 
@@ -31,6 +32,8 @@ export interface CalendarConsultation {
   mine: boolean;
   /** Who it is assigned to; null while nobody is. */
   seller: string | null;
+  /** The emoji and color the team gave the customer (S66); null: none. */
+  face?: Face | null;
 }
 
 /** An open lead with a follow-up time in the range. */
@@ -43,6 +46,8 @@ export interface CalendarCall {
   follow_up_at: string;
   /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
   seller?: string | null;
+  /** The emoji and color the team gave the customer (S66); null: none. */
+  face?: Face | null;
 }
 
 /** How many of the seller's own tasks fall on a day (S50): only days with any. */

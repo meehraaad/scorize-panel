@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { FaceDot } from '@/components/customers/FaceDot';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { STALE_DAYS, type BoardCard } from '../api';
@@ -41,7 +42,10 @@ export function DealCard({
         <OwnerTag seller={card.seller} />
       </span>
       <span className="flex flex-col gap-1">
-        <span className="line-clamp-2 text-[15px] leading-6 font-semibold">{card.name}</span>
+        <span className="flex items-start gap-2">
+          <FaceDot name={card.name} face={card.face} />
+          <span className="line-clamp-2 text-[15px] leading-6 font-semibold">{card.name}</span>
+        </span>
         <span className="line-clamp-2 text-[13px] leading-6 text-text-2">{card.summary}</span>
       </span>
       {card.paid !== null || card.amount !== null ? (

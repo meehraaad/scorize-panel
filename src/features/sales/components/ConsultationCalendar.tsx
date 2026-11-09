@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Suspense, lazy, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FaceDot } from '@/components/customers/FaceDot';
 import { Card } from '@/components/ui/Card';
 import { TogglePill } from '@/components/ui/Choices';
 import { FilterTabs } from '@/components/ui/Filters';
@@ -150,7 +151,12 @@ export function ConsultationCalendar() {
           t(`consultationCalendar.status.${status}`),
           t(item.form ? 'consultationCalendar.form.done' : 'consultationCalendar.form.missing'),
         ].join('، '),
-        lead: <Icon name={item.mode === 'online' ? 'phone' : 'building'} size={12} />,
+        lead: (
+          <span className="inline-flex items-center gap-1">
+            <FaceDot name={item.name} face={item.face} size="sm" />
+            <Icon name={item.mode === 'online' ? 'phone' : 'building'} size={12} />
+          </span>
+        ),
         trail: (
           <Icon
             name={item.form ? 'formDone' : 'formMissing'}
@@ -177,7 +183,12 @@ export function ConsultationCalendar() {
         title: item.name,
         meta,
         aria: `${item.name}، ${meta}`,
-        lead: <Icon name="followUp" size={12} />,
+        lead: (
+          <span className="inline-flex items-center gap-1">
+            <FaceDot name={item.name} face={item.face} size="sm" />
+            <Icon name="followUp" size={12} />
+          </span>
+        ),
         movable: true,
       };
     }),
@@ -488,7 +499,10 @@ function NextSession({
         </span>
       </span>
       <button type="button" onClick={onOpen} className="flex flex-col gap-1 text-start">
-        <span className="text-lg font-bold">{item.name}</span>
+        <span className="inline-flex items-center gap-2 text-lg font-bold">
+          <FaceDot name={item.name} face={item.face} />
+          {item.name}
+        </span>
         <span className="inline-flex items-center gap-1.5 text-[13px] text-on-hero-2">
           <Icon name={item.mode === 'online' ? 'phone' : 'building'} size={14} />
           {[type?.name, t(`mode.${item.mode}`)].filter(Boolean).join(' · ')}

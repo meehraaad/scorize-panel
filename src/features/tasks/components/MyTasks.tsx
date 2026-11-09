@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { FaceDot } from '@/components/customers/FaceDot';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
@@ -205,7 +206,11 @@ function TaskRow({
         </button>
         {task.person && (
           <span className="text-[13px] text-text-2">
-            <Link to={config.personPath(task.person.id)} className="font-medium text-primary-text">
+            <Link
+              to={config.personPath(task.person.id)}
+              className="inline-flex items-center gap-1.5 align-middle font-medium text-primary-text"
+            >
+              <FaceDot name={task.person.name} face={task.person.face} size="sm" />
               {task.person.name}
             </Link>
             {task.person.context && ` · ${task.person.context}`}

@@ -90,6 +90,7 @@ export const salesStaffHandlers = [
           .map((row) => ({
             ...row,
             tags: tagsOfCustomer(row.customer),
+            face: faceOf(row.customer),
             ...(manager ? { seller: row.id % 3 === 0 ? '' : SELLER_NAME } : {}),
           }))
           .filter((row) => leads.tag === null || row.tags.includes(leads.tag));
