@@ -47,7 +47,12 @@
     "submit": "See my chance",
     "throttled": "You've sent the quiz several times in the last hour. Try again a little later.",
     "error": "Your result couldn't be worked out. Try again.",
-    "counterStep": "Question {{n}} of {{total}}, {{step}}"
+    "counterStep": "Question {{n}} of {{total}}, {{step}}",
+    "age": "Age",
+    "workYears": "Years of work",
+    "optionalHint": "Optional: to show the other ways to go (work and residence)",
+    "ageError": "Enter an age from {{min}} to {{max}}.",
+    "workYearsError": "Enter from 0 to {{max}} years."
   },
   "goal": {
     "study": "Study",
@@ -126,7 +131,10 @@
     "allCountries": "All",
     "budget": "Budget",
     "note": "These answers are saved to your profile, so your consultant doesn't have to ask again.",
-    "gpaOf": "{{gpa}} out of {{scale}}"
+    "gpaOf": "{{gpa}} out of {{scale}}",
+    "age": "Age",
+    "workYears": "Work",
+    "years": "{{n}} years"
   },
   "result": {
     "title": "Your admission chance",
@@ -220,5 +228,23 @@
     "label": "Your answers so far",
     "gpa": "GPA {{gpa}}",
     "allCountries": "All countries"
+  },
+  "study": {
+    "title": "Studying and staying",
+    "firstYear": "First year (tuition and living)",
+    "tomans": "About {{min}}–{{max}} million tomans",
+    "tomansOne": "About {{min}} million tomans",
+    "noRate": "In tomans: no exchange rate available",
+    "range": "{{min}}–{{max}}",
+    "costs": "Tuition {{tuition}} a year; living {{living}} a year",
+    "afterGraduating": "After graduating",
+    "visaMonths": "{{visa}}, {{months}} months",
+    "source": "Official source (checked {{date}})",
+    "fit": {
+      "fits": "Within your budget",
+      "tight": "Cheaper universities only",
+      "over": "Over your budget",
+      "unknown": "Can’t compare with your budget"
+    }
   }
 }

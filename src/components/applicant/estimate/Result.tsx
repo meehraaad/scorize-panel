@@ -13,18 +13,23 @@ import { ProgressBar, StepList } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
+import { safeHref } from '@/lib/url';
 import {
   BAND_BAR,
   BAND_TONE,
+  CURRENCY_CODE,
+  FIT_TONE,
   type CountryEstimate,
   type EstimateAnswers,
   type EstimateResult,
+  type StudyInfo,
 } from '@/lib/applicant/estimate';
 
 /**
  * The result: the best country and every country compared on the dark card, the consultant beside
  * it, then per country what moves the chance, what a better English score would change and
- * admissions of people like them (`detailsTo` instead: a link to them, for the guest home). Right
+ * admissions of people like them, and studying there as a way to stay (costs against the budget,
+ * the stay after graduating, the route from there) (`detailsTo` instead: a link to them, for the guest home). Right
  * after the quiz, `contact` says when the consultant will call.
  * Design: the "Scorize New User Dashboard" canvas.
  */
@@ -286,6 +291,8 @@ function CountryCard({ estimate }: { estimate: CountryEstimate }) {
         </div>
       )}
 
+      {estimate.study && <StudySection study={estimate.study} countryId={estimate.country.id} />}
+
       {estimate.similar.length > 0 && (
         <div className="flex flex-col gap-2">
           <h3 className="m-0 text-sm font-bold">{t('result.similar')}</h3>
@@ -307,5 +314,83 @@ function CountryCard({ estimate }: { estimate: CountryEstimate }) {
         </div>
       )}
     </Card>
+  );
+}
+
+const MILLION = 1_000_000;
+
+/**
+ * Studying there as a way to stay: a year's costs (in tomans when there is a rate, and in the
+ * country's currency), how they fit the budget answered, the stay after graduating and the route
+ * from there, with the official page staff checked it against.
+ */
+function StudySection({ study, countryId }: { study: StudyInfo; countryId: number }) {
+  const { t } = useTranslation('estimate');
+  const f = useFormat();
+  const id = `estimate-study-${String(countryId)}`;
+  const code = CURRENCY_CODE[study.currency];
+  const tomans = study.first_year_toman;
+  const href = safeHref(study.source_url);
+  const tuition =
+    study.tuition.min === study.tuition.max
+      ? f.money(study.tuition.min, code)
+      : t('study.range', {
+          min: f.money(study.tuition.min, code),
+          max: f.money(study.tuition.max, code),
+        });
+
+  return (
+    <section
+      aria-labelledby={id}
+      className="flex flex-col gap-3 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)]"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 id={id} className="m-0 text-sm font-bold">
+          {t('study.title')}
+        </h3>
+        <Chip tone={FIT_TONE[study.budget_fit]} dot>
+          {t(`study.fit.${study.budget_fit}`)}
+        </Chip>
+      </div>
+      <dl className="m-0 flex flex-col gap-2 text-sm leading-7">
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-text-2">{t('study.firstYear')}</dt>
+          <dd className="m-0 font-semibold">
+            {tomans
+              ? t(tomans.min === tomans.max ? 'study.tomansOne' : 'study.tomans', {
+                  min: f.number(tomans.min / MILLION),
+                  max: f.number(tomans.max / MILLION),
+                })
+              : t('study.noRate')}
+          </dd>
+          <dd className="m-0 text-xs leading-6 text-text-2">
+            {t('study.costs', { tuition, living: f.money(study.living, code) })}
+          </dd>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <dt className="text-text-2">{t('study.afterGraduating')}</dt>
+          <dd className="m-0 font-semibold">
+            {study.post_study_months === null
+              ? study.post_study_visa
+              : t('study.visaMonths', {
+                  visa: study.post_study_visa,
+                  months: f.number(study.post_study_months),
+                })}
+          </dd>
+          <dd className="m-0">{study.after_study}</dd>
+        </div>
+      </dl>
+      {href && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center gap-1.5 self-start text-xs font-semibold text-primary-text"
+        >
+          {t('study.source', { date: f.date(study.checked_at) })}
+          <Icon name="chevronEnd" size={14} />
+        </a>
+      )}
+    </section>
   );
 }

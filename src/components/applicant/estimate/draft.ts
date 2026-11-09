@@ -33,6 +33,9 @@ export interface Draft {
   countries: number[];
   budget: Budget;
   start: Start;
+  /** Optional: empty sends none. */
+  age: string;
+  work_years: string;
   channel: ContactChannel;
   time: ContactTime;
   /** Optional: none picked sends none. */
@@ -51,6 +54,8 @@ export const FIRST: Draft = {
   countries: [],
   budget: 'between_500m_1b',
   start: 'next_year',
+  age: '',
+  work_years: '',
   channel: 'call',
   time: 'now',
   referral: null,
@@ -69,6 +74,8 @@ export function draftFrom(prefill: EstimatePrefill): Draft {
     score: english && 'exam' in english ? String(english.score) : '',
     budget: prefill.budget ?? FIRST.budget,
     countries: prefill.countries,
+    age: prefill.age === null ? '' : String(prefill.age),
+    work_years: prefill.work_years === null ? '' : String(prefill.work_years),
   };
 }
 
@@ -86,8 +93,20 @@ export function gpaOn20(draft: Draft) {
   return Math.round(gpa * (20 / scale) * 100) / 100;
 }
 
+export const AGE_RANGE = { min: 16, max: 70 } as const;
+export const MAX_WORK_YEARS = 50;
+
+/** A whole number typed in `[min, max]`, null when left empty, NaN when it isn't one. */
+export function wholeIn(text: string, min: number, max: number) {
+  if (!text.trim()) return null;
+  const value = numberOf(text);
+  return Number.isInteger(value) && value >= min && value <= max ? value : NaN;
+}
+
 /** The answers as Django takes them (`EstimateRequestSerializer`). */
 export function answersOf(draft: Draft): EstimateAnswers {
+  const age = valid(wholeIn(draft.age, AGE_RANGE.min, AGE_RANGE.max));
+  const workYears = valid(wholeIn(draft.work_years, 0, MAX_WORK_YEARS));
   return {
     goal: draft.goal,
     degree: draft.degree,
@@ -100,8 +119,14 @@ export function answersOf(draft: Draft): EstimateAnswers {
     budget: draft.budget,
     countries: draft.countries,
     start: draft.start,
+    ...(age !== undefined && { age }),
+    ...(workYears !== undefined && { work_years: workYears }),
     contact:
       draft.channel === 'none' ? { channel: 'none' } : { channel: draft.channel, time: draft.time },
     ...(draft.referral && { referral: draft.referral }),
   };
 }
+
+/** A valid optional number, else undefined (left out): empty or invalid. */
+const valid = (value: number | null) =>
+  value !== null && Number.isFinite(value) ? value : undefined;

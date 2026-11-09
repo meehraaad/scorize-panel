@@ -6,6 +6,7 @@ import type {
   EstimateOptions,
   EstimatePrefill,
   EstimateResult,
+  StudyInfo,
 } from '@/lib/applicant/estimate';
 import { accountOf } from './account';
 import { forbidden, notFound, storage } from './session';
@@ -14,7 +15,8 @@ import { forbidden, notFound, storage } from './session';
  * Django's admission-chance quiz (scorize-revolution `api/applicant/v1/estimate.py`), for the
  * tests: the same shapes, a toy estimate. A GPA of 17 or more (out of 20) is a high band, an
  * English certificate of 7 adds one, no certificate takes one away; percentages are off (null)
- * as on the server by default.
+ * as on the server by default. Germany has checked facts on studying there (`study`), Italy none;
+ * its first year fits a budget over 500 million tomans.
  */
 
 const BASE = '/api/applicant/v1/estimate';
@@ -43,6 +45,22 @@ export const ESTIMATE_OPTIONS: Omit<EstimateOptions, 'prefill'> = {
   referrals: ['telegram', 'instagram', 'google', 'friends', 'other'],
 };
 
+/** Germany's `pathways.StudyRoute`, as `study_info` sends it for `budget`. */
+function germanStudy(budget: EstimateAnswers['budget']): StudyInfo {
+  return {
+    currency: 'eur',
+    tuition: { min: 0, max: 3000 },
+    living: 11904,
+    first_year_toman: { min: 1_310_000_000, max: 1_640_000_000 },
+    budget_fit: budget === 'more_than_1b' ? 'fits' : 'over',
+    post_study_visa: 'اقامت جست‌وجوی کار پس از فارغ‌التحصیلی',
+    post_study_months: 18,
+    after_study: 'با کار مرتبط با رشته: بلوکارت اروپا یا اقامت نیروی متخصص.',
+    source_url: 'https://www.make-it-in-germany.com/en/study-vocational-training/study-in-germany',
+    checked_at: '2026-10-01T10:00:00+03:30',
+  };
+}
+
 const BANDS: Band[] = ['low', 'medium', 'high'];
 const IELTS_OF_LEVEL = { none: null, under_6: 5.5, '6_to_6_5': 6, '7_plus': 7 } as const;
 
@@ -59,6 +77,8 @@ const NOTHING: Omit<EstimatePrefill, 'referral'> = {
   english: null,
   budget: null,
   countries: [],
+  age: null,
+  work_years: null,
 };
 let nextId = 1;
 
@@ -103,6 +123,7 @@ function estimateOf(answers: EstimateAnswers): EstimateResult {
       english < 0 && band !== 'high'
         ? [{ english: 7, band_from: band, band_to: BANDS[BANDS.indexOf(band) + 1] ?? 'high' }]
         : [],
+    study: country.id === 10 ? germanStudy(answers.budget) : null,
   }));
   return { id: nextId++, created_at: new Date().toISOString(), countries };
 }
@@ -143,6 +164,10 @@ export const estimateHandlers = [
     if (!(answers.gpa > 0 && answers.gpa <= 100)) return invalid('gpa');
     if (answers.referral && !ESTIMATE_OPTIONS.referrals.includes(answers.referral))
       return invalid('referral');
+    if (answers.age !== undefined && !(answers.age >= 16 && answers.age <= 70))
+      return invalid('age');
+    if (answers.work_years !== undefined && !(answers.work_years >= 0 && answers.work_years <= 50))
+      return invalid('work_years');
     estimateAnswers.push(answers);
     // Once: an earlier answer is kept.
     const account = accountOf(user).data;
@@ -154,6 +179,8 @@ export const estimateHandlers = [
       english: answers.english,
       budget: answers.budget,
       countries: answers.countries,
+      age: answers.age ?? null,
+      work_years: answers.work_years || null,
     });
     const result = estimateOf(answers);
     latest.set(user, result);

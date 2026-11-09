@@ -35,6 +35,10 @@ export interface EstimatePrefill {
   english: EstimateAnswers['english'] | null;
   budget: Budget | null;
   countries: number[];
+  /** From the birth date, else the last quiz. */
+  age: number | null;
+  /** Years of work, when the profile has any. */
+  work_years: number | null;
   /** "How did you hear about us", once answered (here or on the account page): asked only until then. */
   referral: Referral | null;
 }
@@ -67,6 +71,10 @@ export interface EstimateAnswers {
   /** Empty: every country with outcomes for the degree. */
   countries: number[];
   start: Start;
+  /** Optional (16–70): the work and migration routes need it. */
+  age?: number;
+  /** Optional (0–50): saved to the profile. */
+  work_years?: number;
   contact: { channel: 'none' } | { channel: 'call' | 'whatsapp'; time: ContactTime };
   /** Optional; the server keeps an earlier answer. */
   referral?: Referral;
@@ -77,6 +85,45 @@ export interface EstimateAnswers {
 export const BAND_BAR: Record<Band, number> = { high: 85, medium: 55, low: 25 };
 
 export const BAND_TONE: Record<Band, ChipTone> = { high: 'good', medium: 'warn', low: 'neutral' };
+
+export type StudyCurrency = 'eur' | 'usd' | 'cad' | 'pound';
+/** `tight`: only the cheaper universities fit the budget; `unknown`: no exchange rate. */
+export type BudgetFit = 'fits' | 'tight' | 'over' | 'unknown';
+
+/** ISO codes of the study costs' currencies, for Intl. */
+export const CURRENCY_CODE: Record<StudyCurrency, string> = {
+  eur: 'EUR',
+  usd: 'USD',
+  cad: 'CAD',
+  pound: 'GBP',
+};
+
+export const FIT_TONE: Record<BudgetFit, ChipTone> = {
+  fits: 'good',
+  tight: 'warn',
+  over: 'danger',
+  unknown: 'neutral',
+};
+
+/**
+ * Studying in the country as a way to stay there, as staff keep it (checked against `source_url`):
+ * a year's costs, how they fit the budget, the stay after graduating and the route from there.
+ */
+export interface StudyInfo {
+  currency: StudyCurrency;
+  /** A year, cheaper to dearer universities. */
+  tuition: { min: number; max: number };
+  /** A year. */
+  living: number;
+  /** Tuition and living in tomans, rounded; null without an exchange rate. */
+  first_year_toman: { min: number; max: number } | null;
+  budget_fit: BudgetFit;
+  post_study_visa: string;
+  post_study_months: number | null;
+  after_study: string;
+  source_url: string;
+  checked_at: string;
+}
 
 export interface CountryEstimate {
   country: { id: number; name: string };
@@ -90,6 +137,8 @@ export interface CountryEstimate {
   similar: { university: string; field: string | null; year: number }[];
   /** A better English score that would raise the band. */
   improvements: { english: number; band_from: Band; band_to: Band }[];
+  /** Null: no checked facts on studying there yet. */
+  study: StudyInfo | null;
 }
 
 export interface EstimateResult {

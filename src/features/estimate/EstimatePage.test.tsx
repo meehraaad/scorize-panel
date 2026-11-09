@@ -179,6 +179,46 @@ describe('admission-chance quiz', () => {
     ]);
   });
 
+  it('asks age and work (optional) and shows studying in a country as a way to stay', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/estimate');
+    await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
+    await user.click(next());
+    await user.selectOptions(screen.getByLabelText('رشته‌ی تحصیلی'), 'مهندسی');
+    await user.type(screen.getByLabelText('معدل آخرین مقطع'), '17');
+    await user.type(screen.getByLabelText('سن'), '12');
+    await user.click(next());
+    expect(screen.getByLabelText('سن')).toHaveFocus();
+    expect(screen.getByLabelText('سن')).toHaveAccessibleDescription(
+      'سن را عددی از ۱۶ تا ۷۰ بنویسید.',
+    );
+    await user.clear(screen.getByLabelText('سن'));
+    await user.type(screen.getByLabelText('سن'), '۲۹');
+    await user.type(screen.getByLabelText('سال‌های سابقه‌ی کار'), '4');
+    await user.click(next());
+    await user.click(screen.getByRole('radio', { name: /۷ و بالاتر/ }));
+    await user.click(next());
+    await user.click(screen.getByRole('checkbox', { name: 'آلمان' }));
+    await user.click(next());
+    await user.click(screen.getByRole('radio', { name: /فعلاً نه/ }));
+    await user.click(screen.getByRole('button', { name: 'دیدن شانس من' }));
+
+    await screen.findByRole('heading', { name: 'شانس پذیرش شما', level: 1 });
+    expect(estimateAnswers[0]).toMatchObject({ age: 29, work_years: 4, countries: [10] });
+    const germany = screen.getByRole('region', { name: 'آلمان' });
+    const study = within(germany).getByRole('region', { name: 'تحصیل و ماندن' });
+    expect(within(study).getByText('بیشتر از بودجه')).toBeInTheDocument();
+    expect(within(study).getByText('حدود ۱٬۳۱۰ تا ۱٬۶۴۰ میلیون تومان')).toBeInTheDocument();
+    expect(
+      within(study).getByText('اقامت جست‌وجوی کار پس از فارغ‌التحصیلی، ۱۸ ماه'),
+    ).toBeInTheDocument();
+    expect(within(study).getByRole('link', { name: /منبع رسمی/ })).toHaveAttribute(
+      'href',
+      'https://www.make-it-in-germany.com/en/study-vocational-training/study-in-germany',
+    );
+  });
+
   it('asks how they heard about Scorize on the last step, until answered', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);

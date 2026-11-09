@@ -16,18 +16,22 @@ import {
   type EstimateOptions,
 } from '@/lib/applicant/estimate';
 import {
+  AGE_RANGE,
   GPA_EXAMPLE,
   GPA_SCALES,
+  MAX_WORK_YEARS,
   answersOf,
   draftFrom,
   gpaOn20,
   numberOf,
+  wholeIn,
   type Draft,
 } from './draft';
 
 const STEPS = ['goal', 'background', 'english', 'plan', 'contact'] as const;
 type Step = (typeof STEPS)[number];
-type Field = 'field_group' | 'gpa' | 'score';
+type Field = 'field_group' | 'gpa' | 'age' | 'work_years' | 'score';
+const FIELDS: readonly Field[] = ['field_group', 'gpa', 'age', 'work_years', 'score'];
 
 /**
  * The quiz, one short step at a time (one hand on a phone), each step's heading its question, with
@@ -67,7 +71,7 @@ export function Quiz({
     setDraft((current) => ({ ...current, [key]: value }));
     // A field's error goes once it changes (the exam and the scale belong to their number).
     const field = key === 'exam' ? 'score' : key === 'gpaScale' ? 'gpa' : key;
-    if (field === 'field_group' || field === 'gpa' || field === 'score')
+    if ((FIELDS as readonly string[]).includes(field))
       setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
@@ -77,6 +81,13 @@ export function Quiz({
     if (current === 'background') {
       if (!draft.field_group) found.field_group = t('quiz.required');
       if (Number.isNaN(gpaOn20(draft))) found.gpa = t('quiz.gpaError', gpaHintValues);
+      if (Number.isNaN(wholeIn(draft.age, AGE_RANGE.min, AGE_RANGE.max)))
+        found.age = t('quiz.ageError', {
+          min: f.number(AGE_RANGE.min),
+          max: f.number(AGE_RANGE.max),
+        });
+      if (Number.isNaN(wholeIn(draft.work_years, 0, MAX_WORK_YEARS)))
+        found.work_years = t('quiz.workYearsError', { max: f.number(MAX_WORK_YEARS) });
     }
     if (current === 'english' && draft.english === 'score' && exam) {
       const score = numberOf(draft.score);
@@ -84,7 +95,7 @@ export function Quiz({
         found.score = t('quiz.scoreError', { min: f.number(exam.min), max: f.number(exam.max) });
     }
     setErrors(found);
-    const first = (['field_group', 'gpa', 'score'] as const).find((field) => found[field]);
+    const first = FIELDS.find((field) => found[field]);
     if (first) document.getElementById(`estimate-${first}`)?.focus();
     return !first;
   };
@@ -199,6 +210,27 @@ export function Quiz({
             value={draft.gpaScale}
             onChange={(value) => set('gpaScale', value)}
           />
+          {/* Optional: the other ways to go abroad (work and migration routes) need them. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
+              id="estimate-age"
+              label={t('quiz.age')}
+              hint={t('quiz.optionalHint')}
+              inputMode="numeric"
+              value={draft.age}
+              error={errors.age}
+              onChange={(event) => set('age', event.target.value)}
+            />
+            <TextField
+              id="estimate-work_years"
+              label={t('quiz.workYears')}
+              hint={t('quiz.optionalHint')}
+              inputMode="numeric"
+              value={draft.work_years}
+              error={errors.work_years}
+              onChange={(event) => set('work_years', event.target.value)}
+            />
+          </div>
         </>
       )}
       {step === 'english' && (
@@ -552,6 +584,18 @@ function LivePreview({
         ? t('summary.gpaOf', { gpa: f.number(gpa), scale: f.number(Number(draft.gpaScale)) })
         : '—',
     ],
+    ...(draft.age.trim()
+      ? [['background', t('summary.age'), f.number(numberOf(draft.age))] as [Step, string, string]]
+      : []),
+    ...(draft.work_years.trim()
+      ? [
+          [
+            'background',
+            t('summary.workYears'),
+            t('summary.years', { n: f.number(numberOf(draft.work_years)) }),
+          ] as [Step, string, string],
+        ]
+      : []),
     [
       'english',
       t('summary.english'),
