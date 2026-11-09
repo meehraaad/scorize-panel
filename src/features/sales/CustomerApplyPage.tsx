@@ -55,6 +55,7 @@ export default function CustomerApplyPage() {
       <ContractHandoff customer={id} />
       <Notice tone="info">{t('apply.readOnly')}</Notice>
       <StatGrid
+        compact
         label={t('apply.stats')}
         stats={[
           { label: t('apply.fileStatus'), value: data.status },

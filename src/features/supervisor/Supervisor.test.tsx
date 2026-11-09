@@ -106,11 +106,12 @@ describe('supervisor panel', () => {
       within(notes).getByLabelText(/^یادداشت درباره‌ی/),
       'مدرک زبان تا آخر ماه می‌رسد',
     );
-    await user.click(within(notes).getByRole('radio', { name: 'قرارداد' }));
-    await user.click(within(notes).getByRole('button', { name: 'ذخیره' }));
+    await user.click(within(notes).getByRole('checkbox', { name: 'درباره‌ی قرارداد' }));
+    await user.click(within(notes).getByRole('button', { name: 'ثبت' }));
     expect(await screen.findByText('یادداشت ذخیره شد.')).toBeInTheDocument();
     expect(await within(notes).findByText('مدرک زبان تا آخر ماه می‌رسد')).toBeInTheDocument();
-    expect(within(notes).getByText(`${SUPERVISOR_NAME} · سوپروایزر`)).toBeInTheDocument();
+    expect(within(notes).getByText(SUPERVISOR_NAME)).toBeInTheDocument();
+    expect(within(notes).getAllByText('قرارداد').length).toBeGreaterThan(0);
 
     await user.click(within(notes).getAllByRole('button', { name: 'سنجاق کن' })[0] as HTMLElement);
     expect(await within(notes).findByRole('button', { name: 'برداشتن سنجاق' })).toBeInTheDocument();

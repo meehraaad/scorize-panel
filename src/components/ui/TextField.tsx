@@ -80,6 +80,8 @@ interface TextAreaFieldProps extends ComponentProps<'textarea'> {
   label: string;
   hint?: string | undefined;
   error?: string | undefined;
+  /** The label is read by screen readers only (the card's title already says what it is for). */
+  hideLabel?: boolean;
 }
 
 /** The multi-line sibling of TextField: same label, hint and error wiring. */
@@ -89,6 +91,7 @@ export function TextAreaField({
   error,
   id,
   rows = 5,
+  hideLabel = false,
   className = '',
   ...props
 }: TextAreaFieldProps) {
@@ -99,7 +102,10 @@ export function TextAreaField({
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={inputId} className="text-[15px] font-medium text-text">
+      <label
+        htmlFor={inputId}
+        className={hideLabel ? 'sr-only' : 'text-[15px] font-medium text-text'}
+      >
         {label}
       </label>
       <textarea

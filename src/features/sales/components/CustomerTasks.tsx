@@ -6,6 +6,7 @@ import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -39,24 +40,52 @@ type When = (typeof WHENS)[number];
 /** Open tasks about this customer, and a form to add one (for me, a colleague or a team). */
 export function CustomerTasks({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
+  const f = useFormat();
   const first = customer.name.split(' ')[0] ?? customer.name;
+  const [adding, setAdding] = useState(false);
   return (
     <SectionCard
       id="customer-tasks"
       title={t('customer.tasks.title', { name: first })}
+      badge={
+        customer.tasks.length > 0 ? (
+          <span className="text-base font-medium text-text-2">
+            {f.number(customer.tasks.length)}
+          </span>
+        ) : undefined
+      }
       end={
-        <Link to={salesPath('tasks')} className="text-sm font-medium text-primary-text">
-          {t('customer.tasks.all')}
-        </Link>
+        <span className="flex items-center gap-1">
+          <Link
+            to={salesPath('tasks')}
+            className="inline-flex min-h-11 items-center px-2 text-sm font-medium text-text-2 hover:text-text"
+          >
+            {t('customer.tasks.all')}
+          </Link>
+          <button
+            type="button"
+            aria-expanded={adding}
+            onClick={() => setAdding((open) => !open)}
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-tint px-4 text-[13px] font-semibold text-primary-text"
+          >
+            <Icon name={adding ? 'close' : 'plus'} size={15} />
+            {t(adding ? 'cancel' : 'customer.tasks.add')}
+          </button>
+        </span>
       }
     >
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <TaskList tasks={customer.tasks} />
-        <NewTaskForm customer={customer} name={first} />
-      </div>
+      {adding && <NewTaskForm customer={customer} name={first} onDone={() => setAdding(false)} />}
+      <TaskList tasks={customer.tasks} />
     </SectionCard>
   );
 }
+
+/** The kind of task as an icon tile: mine, asked of a colleague, or a team's queue. */
+const KIND_LOOK: Record<TaskKind, { icon: IconName; tone: string }> = {
+  mine: { icon: 'clock', tone: 'bg-tint text-primary-text' },
+  request: { icon: 'user', tone: 'bg-info-tint text-info' },
+  team: { icon: 'send', tone: 'bg-info-tint text-info' },
+};
 
 function TaskList({ tasks }: { tasks: TaskSummary[] }) {
   const { t } = useTranslation('sales');
@@ -86,14 +115,18 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
         return (
           <li
             key={task.id}
-            className="flex items-start gap-3 px-5 py-3.5 shadow-[inset_0_1px_0_var(--hair)] lg:px-8"
+            className="flex items-center gap-3 px-5 py-3.5 shadow-[inset_0_1px_0_var(--hair)] lg:px-8"
           >
             <span
               aria-hidden="true"
-              className={`mt-2 size-2 flex-none rounded-full ${late ? 'bg-hero-current' : 'bg-primary'}`}
-            />
+              className={`flex size-[38px] flex-none items-center justify-center rounded-xl ${
+                late ? 'bg-warn-tint text-warn' : KIND_LOOK[task.kind].tone
+              }`}
+            >
+              <Icon name={KIND_LOOK[task.kind].icon} size={18} />
+            </span>
             <span className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="text-[15px] leading-7 font-medium">{task.text}</span>
+              <span className="text-[15px] leading-7 font-semibold">{task.text}</span>
               <span className={`text-xs ${late ? 'text-urgent' : 'text-text-2'}`}>{meta}</span>
             </span>
             <Chip tone={STATUS_TONE[task.status]} small>
@@ -106,7 +139,15 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
   );
 }
 
-function NewTaskForm({ customer, name }: { customer: CustomerData; name: string }) {
+function NewTaskForm({
+  customer,
+  name,
+  onDone,
+}: {
+  customer: CustomerData;
+  name: string;
+  onDone: () => void;
+}) {
   const { t } = useTranslation('sales');
   const create = useCreateTask(customerKey(customer.id));
   const [text, setText] = useState('');
@@ -140,6 +181,7 @@ function NewTaskForm({ customer, name }: { customer: CustomerData; name: string 
           setText('');
           setMissing(false);
           toast.success(t('customer.newTask.created'));
+          onDone();
         },
       },
     );
@@ -149,7 +191,7 @@ function NewTaskForm({ customer, name }: { customer: CustomerData; name: string 
     <form
       noValidate
       onSubmit={submit}
-      className="flex flex-col gap-4 bg-canvas px-5 py-5 lg:rounded-es-card lg:px-7"
+      className="mx-5 mb-4 flex flex-col gap-4 rounded-2xl bg-canvas p-5 lg:mx-8"
     >
       <TextField
         label={t('customer.newTask.label', { name })}

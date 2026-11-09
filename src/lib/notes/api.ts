@@ -41,7 +41,7 @@ export const notebookQuery = (url: string) =>
 export function useAddNote(url: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: { text: string; about: NoteAbout }) =>
+    mutationFn: (body: { text: string; about: NoteAbout; pinned?: boolean }) =>
       api<Note>(url, { method: 'POST', body }),
     onSuccess: () => client.invalidateQueries({ queryKey: notebookKey(url) }),
   });

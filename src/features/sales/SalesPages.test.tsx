@@ -309,6 +309,7 @@ describe('sales panel, seller pages', () => {
     const tasks = await screen.findByRole('region', { name: 'کارهای باز عرفان' });
     expect(within(tasks).getAllByRole('listitem')).toHaveLength(4);
     const sent = within(tasks).getAllByText('فرستاده شد').length;
+    await user.click(within(tasks).getByRole('button', { name: 'کار تازه' }));
     await user.type(within(tasks).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
     await user.click(within(tasks).getByRole('radio', { name: 'یک همکار' }));
     await user.click(within(tasks).getByRole('button', { name: 'فرستادن درخواست به همکار' }));
@@ -576,7 +577,7 @@ describe('sales panel, seller pages', () => {
     expect(await screen.findByText('لید از کاوه به نیما رسید · رضا')).toBeInTheDocument();
     // In the shared column (a sheet on phones).
     await user.click(screen.getByRole('button', { name: 'درباره‌ی مشتری و یادداشت‌ها' }));
-    const about = await screen.findByRole('region', { name: 'درباره‌ی مشتری' });
+    const about = await screen.findByRole('region', { name: /^درباره‌ی / });
     expect(within(about).getByText('اولین تماس').nextSibling).toHaveTextContent('کاوه');
     expect(within(about).getByText('قرارداد به نام').nextSibling).toHaveTextContent('نیما');
   });
