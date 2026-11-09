@@ -45,9 +45,15 @@ describe('contract handoff', () => {
     await user.click(within(card).getByRole('link', { name: 'چاپ قرارداد برای امضا' }));
     const doc = await screen.findByRole('article', { name: 'قرارداد خدمات اسکورایز' });
     expect(router.state.location.pathname).toBe('/sales/customers/112/contract');
-    expect(within(doc).getByText(/طرف دوم \(متقاضی\): کیان مرادی/)).toBeInTheDocument();
-    expect(within(doc).getByText('بند ۳. فسخ قرارداد')).toBeInTheDocument();
-    const payments = within(doc).getByRole('table');
+    const parties = within(doc).getByRole('region', { name: 'طرفین قرارداد' });
+    expect(within(parties).getByText('کیان مرادی')).toBeInTheDocument();
+    expect(within(doc).getByRole('heading', { name: 'فسخ قرارداد' })).toBeInTheDocument();
+    // The clause written for this customer is marked; who agreed online, on which version.
+    expect(within(doc).getAllByText('توافقی').length).toBeGreaterThan(0);
+    expect(
+      within(doc).getByRole('region', { name: 'موافقت آنلاین روی نسخه‌ی ۲' }),
+    ).toHaveTextContent('نیما رستمی');
+    const payments = within(doc).getByRole('region', { name: /^مبلغ و اقساط/ });
     expect(within(payments).getByText('هنگام امضا')).toBeInTheDocument();
     expect(within(payments).getByText('بعد از پذیرش')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'چاپ' }));

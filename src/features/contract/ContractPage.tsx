@@ -4,11 +4,13 @@ import { SectionLock } from '@/components/applicant/SectionLock';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { accessQuery, lockOf } from '@/lib/applicant/access';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { contractQuery, type ContractData } from './api';
 import { ClausesCard } from './components/ClausesCard';
 import { ContractAside } from './components/ContractAside';
 import { ContractHero } from './components/ContractHero';
 import { GuestContract } from './components/guest/GuestContract';
+import { OfferAgreement } from './components/OfferAgreement';
 import { InstallmentsCard } from './components/InstallmentsCard';
 import { ProfileCard } from './components/ProfileCard';
 import { StartHero } from './components/StartHero';
@@ -21,7 +23,7 @@ import { previewContract } from './preview';
  * - active: what is waiting for the applicant, the contract on the luxe card, instalments with the
  *   documents beside them, then their details
  * - approved and waiting for its prepayment (S46): the prepayment on the luxe card, then the plan
- * - no contract: what the tab holds after one, the two contracts as tickets (Turkey online, the
+ * - no contract: the offer a seller sent, to agree to (S62), then what the tab holds after one, the two contracts as tickets (Turkey online, the
  *   full contract at the office), research interests and the questions before one (canvas
  *   "قرارداد و پرداخت: بدون قرارداد"
  * - ended, or in review without a prepayment: the lock banner over the contract (or a sample)
@@ -57,6 +59,7 @@ export default function ContractPage() {
     return (
       <PageStack spacing="wide">
         <PageHeader title={t('title')} subtitle={t('guest.subtitle')} />
+        {ON_SERVER.offerAgreement && <OfferAgreement />}
         <GuestContract access={access} />
       </PageStack>
     );

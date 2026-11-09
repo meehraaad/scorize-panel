@@ -1,7 +1,9 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
+import { queryClient } from '@/lib/api/queryClient';
+import { answerCustomerRemarks } from '@/mocks/agreement';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 import { toasts } from '@/test/toasts';
@@ -152,6 +154,31 @@ describe('contract page', () => {
     // The real instalments and details under it, not a locked preview.
     expect(installments().closest('[inert]')).toBeNull();
     expect(profile()).toBeInTheDocument();
+  });
+
+  it('without a contract: agrees to the offer once the question is answered (S62)', async () => {
+    loginAs(MARYAM);
+    const user = userEvent.setup();
+    renderApp('/contract');
+    const hero = await screen.findByRole('region', { name: 'پیشنهاد قرارداد شما' });
+    expect(within(hero).getByText('نسخه‌ی ۲')).toBeInTheDocument();
+    const clauses = screen.getByRole('region', { name: 'بندهای قرارداد' });
+    // Only the clause written for her is open; the standard ones are under "all clauses".
+    expect(within(clauses).getByText('تغییر کرده')).toBeInTheDocument();
+
+    await user.click(within(clauses).getByRole('button', { name: 'سؤال یا درخواست تغییر' }));
+    await user.click(within(clauses).getByRole('radio', { name: 'تعهدات اسکورایز' }));
+    await user.type(within(clauses).getByLabelText('سؤال یا درخواست تغییر'), 'هلند هم می‌شود؟');
+    await user.click(within(clauses).getByRole('button', { name: 'ارسال' }));
+    expect(await toasts().findByText('برای کارشناس فروش رفت.')).toBeInTheDocument();
+    expect(await within(clauses).findByText('منتظر پاسخ')).toBeInTheDocument();
+    expect(within(hero).getByRole('button', { name: 'موافقم' })).toBeDisabled();
+
+    answerCustomerRemarks('بله');
+    await queryClient.invalidateQueries();
+    await waitFor(() => expect(within(hero).getByRole('button', { name: 'موافقم' })).toBeEnabled());
+    await user.click(within(hero).getByRole('button', { name: 'موافقم' }));
+    expect(await within(hero).findByText(/موافقت شما ثبت شد/)).toBeInTheDocument();
   });
 
   it('without a contract, shows the two contracts as tickets', async () => {

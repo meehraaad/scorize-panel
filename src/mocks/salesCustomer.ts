@@ -8,6 +8,7 @@ import type {
   Product,
   SaleQuote,
 } from '@/features/sales/api';
+import { recordVersion } from './agreement';
 import { notFound } from './session';
 import { ERFAN, failed, stateOrError, type SalesState } from './sales';
 import { addPayment, staffData } from './staff';
@@ -361,6 +362,13 @@ export const salesCustomerHandlers = [
     data.offers.set(item.id, { ...offer, clauses });
     item.lead.amount = amount;
     if (action !== 'save') {
+      recordVersion(
+        { id: item.id, name: item.name },
+        { ...offer, clauses },
+        amount,
+        action === 'submit' ? 'submitted' : 'sent',
+        STANDARD_CLAUSES,
+      );
       item.lead.stage = action === 'submit' ? 'draft' : 'offer';
       item.lead.stage_since = new Date().toISOString();
       item.lead.manager = action === 'submit';

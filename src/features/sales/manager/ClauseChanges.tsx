@@ -1,30 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { Chip } from '@/components/ui/Chip';
+import { DiffText } from '@/components/ui/DiffText';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { wordDiff } from '@/lib/textDiff';
 import type { ClauseChange } from '../api';
 
-/** A text with what was removed struck through and what was added highlighted. */
+/** A clause's text with the changes marked (the shared block, with this page's words). */
 function Diff({ before, after }: { before: string; after: string }) {
   const { t } = useTranslation('sales');
   return (
-    <>
-      {wordDiff(before, after).map((part, index) =>
-        part.kind === 'same' ? (
-          <span key={index}>{part.text}</span>
-        ) : part.kind === 'added' ? (
-          <ins key={index} className="rounded bg-good-tint px-0.5 text-good no-underline">
-            <span className="sr-only">{t('manager.approvals.clauses.addedText')}</span>
-            {part.text}
-          </ins>
-        ) : (
-          <del key={index} className="rounded bg-danger-tint px-0.5 text-danger">
-            <span className="sr-only">{t('manager.approvals.clauses.removedText')}</span>
-            {part.text}
-          </del>
-        ),
-      )}
-    </>
+    <DiffText
+      before={before}
+      after={after}
+      addedLabel={t('manager.approvals.clauses.addedText')}
+      removedLabel={t('manager.approvals.clauses.removedText')}
+    />
   );
 }
 

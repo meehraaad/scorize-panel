@@ -203,6 +203,15 @@ export const handoffHandlers = [
         })),
       ],
       clauses: STANDARD_CLAUSES.map(({ title, text }) => ({ title, text })),
+      agreement: {
+        version: 2,
+        changed: STANDARD_CLAUSES.slice(0, 1).map(({ title }) => title),
+        parties: [
+          { party: 'seller', name: 'نیما رستمی', agreed_at: '2026-11-08T10:00:00Z' },
+          { party: 'customer', name: row.name, agreed_at: '2026-11-08T13:10:00Z' },
+          { party: 'manager', name: 'رضا', agreed_at: '2026-11-08T15:40:00Z' },
+        ],
+      },
     };
     return HttpResponse.json(body);
   }),

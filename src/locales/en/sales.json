@@ -1872,11 +1872,8 @@
     "none": "-",
     "noClauses": "The standard contract hasn't been set up in the admin yet; this copy has no clauses.",
     "title": "Scorize services contract",
-    "meta": "Contract {{number}} · file {{file}} · approved {{date}}",
     "parties": "The parties",
-    "first": "First party: Scorize",
-    "second": "Second party (applicant): {{name}} · national ID {{code}} · phone {{phone}} · email {{email}}",
-    "terms": "Subject and terms",
+    "terms": "Contract summary",
     "services": "Services",
     "degree": "Degree",
     "countries": "Countries",
@@ -1893,13 +1890,69 @@
     "row": "Instalment {{n}}",
     "atSigning": "At signing",
     "clauses": "Contract clauses",
-    "clause": "Clause {{n}}. {{title}}",
     "signatures": "Signatures",
     "sign": {
-      "first": "Signature and stamp of the first party (Scorize)",
-      "second": "Signature of the second party (applicant)"
+      "first": "Signature and stamp",
+      "second": "Signature and fingerprint"
     },
-    "signLine": "Name, signature and date",
-    "print": "Print"
+    "print": "Print",
+    "number": "Number",
+    "date": "Date",
+    "file": "File",
+    "version": "Version",
+    "firstLabel": "First party",
+    "secondLabel": "Second party",
+    "company": "Scorize",
+    "code": "National ID {{code}}",
+    "phone": "Phone {{phone}}",
+    "mark": "agreed",
+    "markLegend": " = changed for this contract",
+    "sellerSigns": "{{name}} · sales advisor",
+    "online": "Agreed online on version {{n}}",
+    "agreedBy": "{{who}} {{when}}",
+    "footer": "Contract {{number}} · version {{version}}",
+    "initials": "Second party's initials: .........."
+  },
+  "agreement": {
+    "title": "Contract agreement",
+    "version": "Version {{n}}",
+    "allAgreed": "Everyone agrees",
+    "waiting": "Waiting for the {{party}}",
+    "parties": "Who agreed",
+    "agreed": "agreed",
+    "notYet": "not yet",
+    "party": {
+      "seller": "seller",
+      "consultant": "session consultant",
+      "manager": "sales manager",
+      "customer": "customer"
+    },
+    "compare": {
+      "legend": "Compare with",
+      "previous": "Version {{n}}",
+      "standard": "Standard contract"
+    },
+    "noChanges": {
+      "previous": "Same as the previous version.",
+      "standard": "The standard contract, unchanged."
+    },
+    "changes": "Changes",
+    "remarks": "Questions and requests",
+    "from": "{{party}} · {{name}}",
+    "answer": "Answer",
+    "answerLabel": "Your answer",
+    "answered": "Answer sent.",
+    "unanswered": "Not answered",
+    "send": "Send",
+    "edit": "Edit the offer",
+    "review": "Review and approve",
+    "clause": "About",
+    "wholeOffer": "The whole offer",
+    "askLabel": "Question or change",
+    "ask": "Ask or suggest",
+    "asked": "Sent to the seller.",
+    "agree": "I agree with version {{n}}",
+    "youAgreed": "Your agreement is saved.",
+    "stale": "The offer just changed. Read the new version."
   }
 }

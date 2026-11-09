@@ -22,6 +22,7 @@ import {
   handoffQuery,
   offerQuery,
   outreachQuery,
+  agreementQuery,
   paymentsQuery,
   purchasesQuery,
   receiptsQuery,
@@ -214,7 +215,7 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/CustomerMoneyPage'), [], {
             data: (args) => {
               const id = customerOf(args);
-              return [id !== null && purchasesQuery(id), id !== null && paymentsQuery(id)];
+              return id === null ? [] : [purchasesQuery(id), paymentsQuery(id), agreementQuery(id)];
             },
           }),
         },

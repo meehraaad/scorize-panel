@@ -9,6 +9,7 @@ import {
 import {
   campaignQuery,
   contractQuery,
+  offerAgreementQuery,
   openPaymentsQuery,
   paymentQuery,
 } from '@/features/contract/api';
@@ -254,7 +255,11 @@ export const applicantPanel: PanelDefinition = {
               data: () => {
                 const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
                 const guest = state === 'guest';
-                return [contractQuery, guest && ON_SERVER.guestInterests && guestInterestsQuery];
+                return [
+                  contractQuery,
+                  guest && ON_SERVER.guestInterests && guestInterestsQuery,
+                  guest && ON_SERVER.offerAgreement && offerAgreementQuery,
+                ];
               },
               skeleton: 'detail',
             },

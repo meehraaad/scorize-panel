@@ -1,4 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { AgreementParty } from '@/lib/agreement/api';
 import { api } from '@/lib/api/client';
 import { SALES_API, type Degree } from '@/lib/sales/api';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
@@ -85,6 +86,15 @@ export interface ContractDocument {
   }[];
   /** The contract's text as approved: the standard clauses with this customer's changes. */
   clauses: { title: string; text: string }[];
+  /**
+   * Who agreed online on the approved version (S62), and the clauses written for this customer
+   * (titles); null for a contract made before the agreement desk.
+   */
+  agreement?: {
+    version: number;
+    changed: string[];
+    parties: { party: AgreementParty; name: string; agreed_at: string }[];
+  } | null;
 }
 
 export const contractDocumentQuery = (id: number) =>
