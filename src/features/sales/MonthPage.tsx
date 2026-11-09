@@ -176,17 +176,21 @@ function Goal({ data }: { data: MonthData }) {
   /** "3% of sales · 60 million more to 4%" (S60): the step reached and, this month, the next one. */
   const commissionNote = ({
     commission_percent: percent,
+    commission_extra: extra,
     commission_next: next,
     current,
   }: MonthData) => {
     if (percent === null) return undefined;
-    const reached = t('month.commissionStep', { percent: f.number(percent) });
+    const reached = extra
+      ? t('month.commissionStepExtra', { percent: f.number(percent), amount: s.millions(extra) })
+      : t('month.commissionStep', { percent: f.number(percent) });
     if (!current || !next) return reached;
     return t('month.commissionStepNext', {
       step: reached,
-      next: t(`month.commissionNext.${next.basis}`, {
+      next: t(`month.commissionNext.${next.reward}.${next.basis}`, {
         n: next.basis === 'contracts' ? f.number(next.remaining) : s.millions(next.remaining),
-        percent: f.number(next.percent),
+        percent: f.number(next.percent ?? 0),
+        amount: s.millions(next.amount ?? 0),
       }),
     });
   };

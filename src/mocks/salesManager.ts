@@ -150,7 +150,9 @@ const freshRules = (): CommissionRule[] => [
     seller_name: null,
     basis: 'contracts',
     threshold: 4,
+    reward: 'percent',
     percent: 2,
+    amount: null,
     since: '2026-10-23',
   },
   {
@@ -159,7 +161,9 @@ const freshRules = (): CommissionRule[] => [
     seller_name: null,
     basis: 'contracts',
     threshold: 8,
+    reward: 'percent',
     percent: 3,
+    amount: null,
     since: '2026-10-23',
   },
   {
@@ -168,28 +172,58 @@ const freshRules = (): CommissionRule[] => [
     seller_name: null,
     basis: 'sales',
     threshold: 700_000_000,
+    reward: 'percent',
     percent: 4,
+    amount: null,
+    since: '2026-10-23',
+  },
+  {
+    id: 4,
+    seller: null,
+    seller_name: null,
+    basis: 'contracts',
+    threshold: 10,
+    reward: 'bonus',
+    percent: null,
+    amount: 5_000_000,
     since: '2026-10-23',
   },
 ];
 let commissionRules = freshRules();
 let nextRule = 10;
 
-/** The best step a seller reaches, as Django's `commission_of` (no fixed rate from a target here). */
+/** A seller's commission, as Django's `commission_of` (no fixed rate from a target here). */
 function commissionOf(seller: number, won: number, sales: number): number | null {
   const mine = commissionRules.filter((rule) => rule.seller === null || rule.seller === seller);
   if (mine.length === 0) return null;
   const reached = mine.filter(
     (rule) => (rule.basis === 'contracts' ? won : sales) >= rule.threshold,
   );
-  const percent = Math.max(0, ...reached.map((rule) => rule.percent));
-  return Math.round((sales * percent) / 100);
+  const best = (reward: CommissionRule['reward'], field: 'percent' | 'amount') =>
+    Math.max(
+      0,
+      ...reached.filter((rule) => rule.reward === reward).map((rule) => rule[field] ?? 0),
+    );
+  const tiers = mine
+    .filter((rule) => rule.reward === 'tiered')
+    .sort((a, b) => a.threshold - b.threshold);
+  const tiered = tiers.reduce((sum, tier, index) => {
+    const top = tiers[index + 1]?.threshold ?? sales;
+    return sum + (Math.max(0, Math.min(sales, top) - tier.threshold) * (tier.percent ?? 0)) / 100;
+  }, 0);
+  const share = Math.max((sales * best('percent', 'percent')) / 100, tiered);
+  return Math.round(share + best('bonus', 'amount') + best('per_contract', 'amount') * won);
 }
 
 /** Django's RuleSerializer checks, with its error shapes. */
 function ruleError(body: CommissionRuleInput, id?: number): Record<string, string[]> | null {
-  if (!(body.percent > 0 && body.percent <= 100))
+  const inPercent = body.reward === 'percent' || body.reward === 'tiered';
+  if (inPercent && !(body.percent && body.percent > 0 && body.percent <= 100))
     return { percent: ['Give a percent above zero.'] };
+  if (!inPercent && !(body.amount && body.amount > 0))
+    return { amount: ['Give an amount above zero.'] };
+  if (body.reward === 'tiered' && body.basis !== 'sales')
+    return { basis: ['Tiered steps go by the amount of sales.'] };
   if (body.threshold < 0 || (body.basis === 'contracts' && body.threshold > 1000))
     return { threshold: ['At most 1000 contracts.'] };
   if (body.seller !== null && !SELLER_NAMES.has(body.seller))
@@ -200,6 +234,7 @@ function ruleError(body: CommissionRuleInput, id?: number): Record<string, strin
         rule.id !== id &&
         rule.seller === body.seller &&
         rule.basis === body.basis &&
+        rule.reward === body.reward &&
         rule.threshold === body.threshold,
     )
   )

@@ -18,26 +18,41 @@ import {
   useDeleteCommissionRule,
   useSaveCommissionRule,
   type CommissionBasis,
+  type CommissionReward,
   type CommissionRule,
   type CommissionRules,
 } from '../api';
 import { useSalesFormat } from '../format';
 
 const BASES = ['contracts', 'sales'] as const satisfies readonly CommissionBasis[];
+const REWARDS = [
+  'percent',
+  'tiered',
+  'bonus',
+  'per_contract',
+] as const satisfies readonly CommissionReward[];
+/** Rewards in percent; the others are an amount in toman. */
+const IN_PERCENT = new Set<CommissionReward>(['percent', 'tiered']);
 const MILLION = 1_000_000;
 const EVERYONE = 'all';
 
-type Field = 'seller' | 'threshold' | 'percent';
+type Field = 'seller' | 'basis' | 'threshold' | 'value';
 type Errors = Partial<Record<Field, string>>;
 
 /** The field errors Django sends (`{threshold: ['…']}`), or null for another failure. */
 function errorsOf(error: unknown): Errors | null {
   if (!(error instanceof ApiError) || error.status !== 400) return null;
-  const body = (error.body ?? {}) as Partial<Record<Field, string[]>>;
+  const body = (error.body ?? {}) as Partial<Record<string, string[]>>;
   const errors: Errors = {};
-  for (const field of ['seller', 'threshold', 'percent'] as const) {
-    const message = body[field]?.[0];
-    if (message) errors[field] = message;
+  for (const [from, to] of [
+    ['seller', 'seller'],
+    ['basis', 'basis'],
+    ['threshold', 'threshold'],
+    ['percent', 'value'],
+    ['amount', 'value'],
+  ] as const) {
+    const message = body[from]?.[0];
+    if (message) errors[to] = message;
   }
   return Object.keys(errors).length > 0 ? errors : null;
 }
@@ -46,15 +61,18 @@ function errorsOf(error: unknown): Errors | null {
 const numberOf = (value: string) =>
   value.trim() === '' ? Number.NaN : Number(toLatinNumber(value.trim()));
 
+type RuleShape = Pick<CommissionRule, 'basis' | 'threshold' | 'reward' | 'percent' | 'amount'>;
+
 /** One rule as a sentence: "4 contracts or more in a month: 3% of the month's sales". */
 function useRuleText() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  return (rule: { basis: CommissionBasis; threshold: number; percent: number }) =>
-    t(`manager.commission.rule.${rule.basis}`, {
+  return (rule: RuleShape) =>
+    t(`manager.commission.rule.${rule.reward}.${rule.basis}`, {
       n: rule.basis === 'contracts' ? f.number(rule.threshold) : s.millions(rule.threshold),
-      percent: f.number(rule.percent),
+      percent: f.number(rule.percent ?? 0),
+      amount: s.millions(rule.amount ?? 0),
     });
 }
 
@@ -184,36 +202,39 @@ function RuleForm({
   const [seller, setSeller] = useState(
     rule?.seller === null || !rule ? EVERYONE : String(rule.seller),
   );
+  const [reward, setReward] = useState<CommissionReward>(rule?.reward ?? 'percent');
   const [basis, setBasis] = useState<CommissionBasis>(rule?.basis ?? 'contracts');
   const [threshold, setThreshold] = useState(
     rule ? String(rule.basis === 'sales' ? rule.threshold / MILLION : rule.threshold) : '',
   );
-  const [percent, setPercent] = useState(rule ? String(rule.percent) : '');
+  const [value, setValue] = useState(
+    rule ? String(IN_PERCENT.has(rule.reward) ? rule.percent : (rule.amount ?? 0) / MILLION) : '',
+  );
   const [errors, setErrors] = useState<Errors>({});
 
+  const inPercent = IN_PERCENT.has(reward);
   const typed = numberOf(threshold);
-  const amount = basis === 'sales' ? Math.round(typed * MILLION) : typed;
-  const rate = numberOf(percent);
-  const valid =
-    Number.isFinite(typed) &&
-    typed >= 0 &&
-    (basis === 'sales' || Number.isInteger(typed)) &&
-    Number.isFinite(rate) &&
-    rate > 0 &&
-    rate <= 100;
+  const step = basis === 'sales' ? Math.round(typed * MILLION) : typed;
+  const number = numberOf(value);
+  const thresholdOk =
+    Number.isFinite(typed) && typed >= 0 && (basis === 'sales' || Number.isInteger(typed));
+  const valueOk = Number.isFinite(number) && number > 0 && (!inPercent || number <= 100);
+  const shape: RuleShape = {
+    basis,
+    threshold: step,
+    reward,
+    percent: inPercent ? Math.round(number * 100) / 100 : null,
+    amount: inPercent ? null : Math.round(number * MILLION),
+  };
 
   const submit = () => {
-    if (!valid) {
+    if (!thresholdOk || !valueOk) {
       setErrors({
-        ...(!(
-          Number.isFinite(typed) &&
-          typed >= 0 &&
-          (basis === 'sales' || Number.isInteger(typed))
-        ) && {
-          threshold: t('manager.commission.thresholdError'),
-        }),
-        ...(!(Number.isFinite(rate) && rate > 0 && rate <= 100) && {
-          percent: t('manager.commission.percentError'),
+        ...(!thresholdOk && { threshold: t('manager.commission.thresholdError') }),
+        ...(!valueOk && {
+          value: t(
+            inPercent ? 'manager.commission.percentError' : 'manager.commission.amountError',
+          ),
         }),
       });
       return;
@@ -222,9 +243,7 @@ function RuleForm({
       {
         ...(rule && { id: rule.id }),
         seller: seller === EVERYONE ? null : Number(seller),
-        basis,
-        threshold: amount,
-        percent: Math.round(rate * 100) / 100,
+        ...shape,
       },
       {
         onSuccess: () => {
@@ -233,7 +252,7 @@ function RuleForm({
           if (rule) onDone?.();
           else {
             setThreshold('');
-            setPercent('');
+            setValue('');
           }
         },
         onError: (failure) => {
@@ -254,12 +273,12 @@ function RuleForm({
         submit();
       }}
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <SelectField
           label={t('manager.commission.seller')}
           value={seller}
-          onChange={(value) => {
-            setSeller(value);
+          onChange={(next) => {
+            setSeller(next);
             setErrors({});
           }}
           error={errors.seller}
@@ -269,17 +288,39 @@ function RuleForm({
           ]}
         />
         <SelectField
+          label={t('manager.commission.reward')}
+          value={reward}
+          hint={t(`manager.commission.rewardHint.${reward}`)}
+          onChange={(next) => {
+            if (IN_PERCENT.has(next) !== inPercent) setValue('');
+            // Tiered steps are parts of the sales amount.
+            if (next === 'tiered' && basis !== 'sales') {
+              setBasis('sales');
+              setThreshold('');
+            }
+            setReward(next);
+            setErrors({});
+          }}
+          options={REWARDS.map((option) => ({
+            value: option,
+            label: t(`manager.commission.rewardName.${option}`),
+          }))}
+        />
+        <SelectField
           label={t('manager.commission.basis')}
           value={basis}
-          onChange={(value) => {
-            setBasis(value);
+          error={errors.basis}
+          onChange={(next) => {
+            setBasis(next);
             setThreshold('');
             setErrors({});
           }}
-          options={BASES.map((value) => ({
-            value,
-            label: t(`manager.commission.basisName.${value}`),
-          }))}
+          options={BASES.filter((option) => reward !== 'tiered' || option === 'sales').map(
+            (option) => ({
+              value: option,
+              label: t(`manager.commission.basisName.${option}`),
+            }),
+          )}
         />
         <TextField
           label={t(`manager.commission.threshold.${basis}`)}
@@ -292,19 +333,23 @@ function RuleForm({
           error={errors.threshold}
         />
         <TextField
-          label={t('manager.commission.percent')}
+          label={t(
+            reward === 'bonus' || reward === 'per_contract'
+              ? `manager.commission.amount.${reward}`
+              : 'manager.commission.percent',
+          )}
           inputMode="decimal"
-          value={percent}
+          value={value}
           onChange={(event) => {
-            setPercent(event.target.value);
-            setErrors(({ percent: _gone, ...rest }) => rest);
+            setValue(event.target.value);
+            setErrors(({ value: _gone, ...rest }) => rest);
           }}
-          error={errors.percent}
+          error={errors.value}
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-text-2" aria-live="polite">
-          {valid ? text({ basis, threshold: amount, percent: rate }) : t('manager.commission.hint')}
+          {thresholdOk && valueOk ? text(shape) : t('manager.commission.hint')}
         </span>
         <span className="flex flex-wrap gap-2">
           {rule && (

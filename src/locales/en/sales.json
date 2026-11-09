@@ -709,9 +709,24 @@
     },
     "commissionStep": "{{percent}}% of sales",
     "commissionStepNext": "{{step}} · {{next}}",
+    "commissionStepExtra": "{{percent}}% of sales + {{amount}} bonus",
     "commissionNext": {
-      "contracts": "{{n}} more contracts to {{percent}}%",
-      "sales": "{{n}} more sales to {{percent}}%"
+      "percent": {
+        "contracts": "{{n}} more contracts to {{percent}}%",
+        "sales": "{{n}} more sales to {{percent}}%"
+      },
+      "tiered": {
+        "contracts": "{{n}} more contracts to the {{percent}}% step",
+        "sales": "{{n}} more sales to the {{percent}}% step"
+      },
+      "bonus": {
+        "contracts": "{{n}} more contracts to a {{amount}} bonus",
+        "sales": "{{n}} more sales to a {{amount}} bonus"
+      },
+      "per_contract": {
+        "contracts": "{{n}} more contracts to {{amount}} per contract",
+        "sales": "{{n}} more sales to {{amount}} per contract"
+      }
     }
   },
   "consultations": {
@@ -1525,10 +1540,10 @@
     },
     "commission": {
       "title": "Commission rules",
-      "subtitle": "Set the sellers' commission steps. Each seller earns the highest step they reach in a month: that percent of all their sales that month. Changes apply from this month; past months stay as they were.",
+      "subtitle": "Set the sellers' commission steps. Each rule is one of four kinds: a percent of the month's sales, tiered percents (each part of the sales at its own percent), a fixed bonus, or an amount per contract. Bonuses and per-contract amounts add to the percent. Changes apply from this month; past months stay as they were.",
       "new": "New rule",
       "list": "This month's rules",
-      "empty": "No rules yet. For example: \"4 contracts in a month: 2%\" and \"8 contracts: 3%\".",
+      "empty": "No rules yet. For example: \"4 contracts in a month: 2%\" and \"10 contracts: 5 million bonus\".",
       "everyone": "All sellers",
       "seller": "For",
       "basis": "Based on",
@@ -1541,10 +1556,24 @@
         "sales": "At least (million toman)"
       },
       "percent": "Commission percent",
-      "hint": "Enter the step and the percent.",
+      "hint": "Enter the step and the reward.",
       "rule": {
-        "contracts": "{{n}} contracts or more in a month: {{percent}}% of the month's sales",
-        "sales": "{{n}} of sales or more in a month: {{percent}}% of the month's sales"
+        "percent": {
+          "contracts": "{{n}} contracts or more in a month: {{percent}}% of the month's sales",
+          "sales": "{{n}} of sales or more in a month: {{percent}}% of the month's sales"
+        },
+        "tiered": {
+          "contracts": "From {{n}} contracts up: {{percent}}%",
+          "sales": "From {{n}} of sales up: {{percent}}% of that part of the sales"
+        },
+        "bonus": {
+          "contracts": "{{n}} contracts or more in a month: {{amount}} bonus",
+          "sales": "{{n}} of sales or more in a month: {{amount}} bonus"
+        },
+        "per_contract": {
+          "contracts": "{{n}} contracts or more in a month: {{amount}} per contract",
+          "sales": "{{n}} of sales or more in a month: {{amount}} per contract"
+        }
       },
       "since": "Since {{month}}",
       "add": "Add rule",
@@ -1559,7 +1588,25 @@
       "deleteYes": "Remove",
       "deleted": "Rule removed",
       "thresholdError": "Enter a valid number (whole for contracts).",
-      "percentError": "Enter a percent above zero, up to 100."
+      "percentError": "Enter a percent above zero, up to 100.",
+      "reward": "Reward",
+      "rewardName": {
+        "percent": "Percent of all sales",
+        "tiered": "Tiered percent",
+        "bonus": "Fixed bonus",
+        "per_contract": "Amount per contract"
+      },
+      "rewardHint": {
+        "percent": "The highest step reached counts, on all the month's sales.",
+        "tiered": "Like tax brackets: only the part of the sales above this step earns this percent, up to the next step.",
+        "bonus": "Once a month on reaching the step. The highest bonus reached counts.",
+        "per_contract": "For every contract of the month once the step is reached. The highest amount reached counts."
+      },
+      "amount": {
+        "bonus": "Bonus (million toman)",
+        "per_contract": "Per contract (million toman)"
+      },
+      "amountError": "Enter an amount above zero."
     }
   },
   "handoff": {
