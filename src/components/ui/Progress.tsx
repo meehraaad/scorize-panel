@@ -123,6 +123,7 @@ export function StepBar({
             className="flex min-w-0 flex-col"
           >
             <StepTarget
+              boxed={!!pick}
               pick={pick?.can(index) ? pick : undefined}
               index={index}
               label={pick?.label(step) ?? ''}
@@ -154,18 +155,25 @@ export function StepBar({
 }
 
 /** A step's segment and name: a button when it can be picked, a plain block otherwise. */
+/** The same box for every step of a bar that has pickable ones, so the steps stay level. */
+const PICK_BOX = 'flex min-h-11 min-w-0 flex-col gap-2 rounded-lg px-0.5 pt-1.5 pb-1 text-start';
+
 function StepTarget({
+  boxed,
   pick,
   index,
   label,
   children,
 }: {
+  /** The bar has pickable steps: plain ones take the buttons' box too. */
+  boxed: boolean;
   pick: StepBarProps['pick'];
   index: number;
   label: string;
   children: ReactNode;
 }) {
-  if (!pick) return <div className="flex min-w-0 flex-col gap-2">{children}</div>;
+  if (!pick)
+    return <div className={boxed ? PICK_BOX : 'flex min-w-0 flex-col gap-2'}>{children}</div>;
   return (
     <button
       type="button"
@@ -173,7 +181,7 @@ function StepTarget({
       title={label}
       disabled={pick.disabled}
       onClick={() => pick.onPick(index)}
-      className="group -mx-0.5 flex min-h-11 min-w-0 cursor-pointer flex-col gap-2 rounded-lg px-0.5 pt-1.5 pb-1 text-start hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-wait"
+      className={`${PICK_BOX} cursor-pointer hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-wait`}
     >
       {children}
     </button>

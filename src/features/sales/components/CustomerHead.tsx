@@ -173,9 +173,6 @@ function StageBar({ customer }: { customer: CustomerData }) {
           },
         })}
       />
-      {targets.length > 0 && (
-        <p className="m-0 -mt-2 text-xs text-text-3">{t('customer.moveHint')}</p>
-      )}
       {entering && current && (
         <Suspense fallback={null}>
           <EnterStageDialog

@@ -651,8 +651,7 @@
     },
     "message": "Message",
     "sellerLine": "Seller: {{name}}",
-    "moveTo": "Move the card to “{{stage}}”",
-    "moveHint": "Tap another stage to move the card on the sales board."
+    "moveTo": "Move the card to “{{stage}}”"
   },
   "month": {
     "title": "My month · {{month}}",
