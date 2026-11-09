@@ -58,7 +58,7 @@ export function FloatingPanel({
           onClose();
         }
       }}
-      className={`fixed inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex flex-col overflow-hidden rounded-card bg-surface text-text shadow-panel outline-none lg:inset-x-auto lg:end-5 lg:bottom-5 ${
+      className={`fixed inset-x-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex flex-col overflow-hidden rounded-card bg-surface text-text shadow-float outline-none lg:inset-x-auto lg:end-5 lg:bottom-5 ${
         chat
           ? 'h-[calc(100dvh-180px)] lg:h-[min(660px,calc(100dvh-124px))] lg:w-[420px]'
           : `max-h-[calc(100dvh-180px)] lg:max-h-[calc(100dvh-124px)] ${wide ? 'lg:w-[560px]' : 'lg:w-[440px]'}`
