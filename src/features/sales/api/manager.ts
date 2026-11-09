@@ -5,6 +5,7 @@ import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/
 import type { AgreementParty } from '@/lib/agreement/api';
 import type { Colleague } from '@/lib/tasks/api';
 import type { ActivityKind, StageActivity, StagePhase } from './board';
+import type { ContractDocument } from './contract';
 import type { MonthContract } from './month';
 
 /** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
@@ -119,6 +120,7 @@ export function useAssignLeads() {
 }
 
 export type DraftTerm =
+  | 'template'
   | 'services'
   | 'degree'
   | 'countries'
@@ -142,6 +144,8 @@ export interface ClauseChange {
 
 export interface ContractDraft {
   id: number;
+  /** The kind of contract the seller started from (S68); `id` null: the standard one. */
+  template: { id: number | null; name: string };
   customer: number;
   name: string;
   created_at: string;
@@ -192,6 +196,14 @@ export const approvalsQuery = queryOptions({
   queryFn: ({ signal }) =>
     api<{ drafts: ContractDraft[] }>(`${MANAGER_API}/approvals/`, { signal }),
 });
+
+/** An offer's whole contract as it will print, before the manager approves it (S68). */
+export const approvalDocumentQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...MANAGER_KEY, 'approvals', id, 'document'],
+    queryFn: ({ signal }) =>
+      api<ContractDocument>(`${MANAGER_API}/approvals/${String(id)}/document/`, { signal }),
+  });
 
 export type ApprovalAction = 'approve' | 'return' | 'reject';
 
@@ -606,7 +618,24 @@ export interface TextVersion {
   changes: { kind: TextChangeKind; title: string; text: string; before: string | null }[];
 }
 
+/**
+ * A kind of contract (S68): the standard one (`id` null, can't be renamed or put away) or a
+ * template the manager keeps beside it (free apply to Turkey, visa only…), each with its own
+ * clauses, prices, rules and versions.
+ */
+export interface ContractTemplate {
+  id: number | null;
+  name: string;
+  description: string;
+  /** False: sellers can't start an offer from it. */
+  is_active: boolean;
+}
+
 export interface ContractBuilder {
+  /** The kind of contract shown. */
+  template: ContractTemplate;
+  /** Every kind of contract, the standard one first; `clauses`: how many it has. */
+  templates: (ContractTemplate & { clauses: number })[];
   clauses: BuilderClause[];
   prices: BuilderPrice[];
   rules: OfferRules;
@@ -615,12 +644,24 @@ export interface ContractBuilder {
 
 const BUILDER_API = `${MANAGER_API}/contract`;
 
-export const contractBuilderQuery = queryOptions({
-  queryKey: [...MANAGER_KEY, 'contract'],
-  queryFn: ({ signal }) => api<ContractBuilder>(`${BUILDER_API}/`, { signal }),
-});
+/** `?template=` for a template; nothing for the standard contract. */
+const kindQuery = (template: number | null) =>
+  template === null ? '' : `?template=${String(template)}`;
 
-function useBuilderMutation<T>(send: (body: T) => Promise<unknown>) {
+/** The builder's page address' template: an id, or null (none, or not a number) for the standard one. */
+export function templateParam(value: string | null): number | null {
+  const id = Number(value);
+  return value && Number.isInteger(id) && id > 0 ? id : null;
+}
+
+export const contractBuilderQuery = (template: number | null) =>
+  queryOptions({
+    queryKey: [...MANAGER_KEY, 'contract', template ?? 'standard'],
+    queryFn: ({ signal }) =>
+      api<ContractBuilder>(`${BUILDER_API}/${kindQuery(template)}`, { signal }),
+  });
+
+function useBuilderMutation<T, R = unknown>(send: (body: T) => Promise<R>) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: send,
@@ -630,28 +671,48 @@ function useBuilderMutation<T>(send: (body: T) => Promise<unknown>) {
 
 export type ClauseInput = Partial<Pick<BuilderClause, 'title' | 'text' | 'locked' | 'is_active'>>;
 
-/** Adds a clause (no `id`) or changes one: its text, fixed or not, taken out or back. */
-export const useSaveClause = () =>
+/**
+ * A new kind of contract (S68): empty, or (`copy`) a copy of `copy_from`'s clauses, prices and
+ * rules (null: the standard contract).
+ */
+export const useCreateTemplate = () =>
+  useBuilderMutation(
+    (body: { name: string; description: string; copy: boolean; copy_from: number | null }) =>
+      api<{ id: number }>(`${BUILDER_API}/templates/`, { method: 'POST', body }),
+  );
+
+/** Renames a template, changes its description, or puts it away from sellers (`is_active`). */
+export const useUpdateTemplate = () =>
+  useBuilderMutation(({ id, ...body }: { id: number } & Partial<Omit<ContractTemplate, 'id'>>) =>
+    api(`${BUILDER_API}/templates/${String(id)}/`, { method: 'PATCH', body }),
+  );
+
+/** Adds a clause to this kind of contract (no `id`) or changes one: its text, fixed or not, taken out or back. */
+export const useSaveClause = (template: number | null) =>
   useBuilderMutation(({ id, ...body }: ClauseInput & { id?: number }) =>
     id === undefined
-      ? api<{ id: number }>(`${BUILDER_API}/clauses/`, { method: 'POST', body })
+      ? api<{ id: number }>(`${BUILDER_API}/clauses/${kindQuery(template)}`, {
+          method: 'POST',
+          body,
+        })
       : api(`${BUILDER_API}/clauses/${String(id)}/`, { method: 'PATCH', body }),
   );
 
 /** The contract's clauses in their new order (every active clause, once). */
-export const useOrderClauses = () =>
+export const useOrderClauses = (template: number | null) =>
   useBuilderMutation((ids: number[]) =>
-    api(`${BUILDER_API}/clauses/order/`, { method: 'PUT', body: { ids } }),
+    api(`${BUILDER_API}/clauses/order/${kindQuery(template)}`, { method: 'PUT', body: { ids } }),
   );
 
-export const useSavePrices = () =>
+/** This kind of contract's prices; a template may offer a service at 0 toman (free), the standard one may not. */
+export const useSavePrices = (template: number | null) =>
   useBuilderMutation(
     (prices: { feature: BuilderPrice['feature']; price: number; is_active: boolean }[]) =>
-      api(`${BUILDER_API}/prices/`, { method: 'PUT', body: { prices } }),
+      api(`${BUILDER_API}/prices/${kindQuery(template)}`, { method: 'PUT', body: { prices } }),
   );
 
-export const useSaveRules = () =>
+export const useSaveRules = (template: number | null) =>
   useBuilderMutation((rules: OfferRules) =>
-    api(`${BUILDER_API}/rules/`, { method: 'PUT', body: rules }),
+    api(`${BUILDER_API}/rules/${kindQuery(template)}`, { method: 'PUT', body: rules }),
   );
 // endregion

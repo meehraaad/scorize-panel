@@ -219,8 +219,21 @@ export const STANDARD_CLAUSES: OfferData['options']['clauses'] = [
   },
 ];
 
-/** Django's `clean_edits`: an "edit" that leaves a standard clause as it is drops out. */
-function cleanClauses(rows: ClauseEdit[]): ClauseEdit[] | null {
+/** A template's text (S68): free apply to Turkey, one fixed clause. */
+export const TURKEY_CLAUSES: OfferData['options']['clauses'] = [
+  {
+    id: 101,
+    title: 'تعهدنامه‌ی اپلای رایگان',
+    text: 'متقاضی پس از پذیرش، ثبت‌نام را از طریق اسکورایز انجام می‌دهد و مستقیم ثبت‌نام نمی‌کند.',
+    locked: true,
+  },
+];
+
+/** Django's `clean_edits`: an "edit" that leaves a clause of its contract as it is drops out. */
+function cleanClauses(
+  rows: ClauseEdit[],
+  standard: OfferData['options']['clauses'] = STANDARD_CLAUSES,
+): ClauseEdit[] | null {
   const kept: ClauseEdit[] = [];
   for (const row of rows) {
     if (row.clause === null) {
@@ -229,7 +242,7 @@ function cleanClauses(rows: ClauseEdit[]): ClauseEdit[] | null {
       kept.push(row);
       continue;
     }
-    const base = STANDARD_CLAUSES.find((clause) => clause.id === row.clause);
+    const base = standard.find((clause) => clause.id === row.clause);
     if (!base || kept.some((edit) => edit.clause === row.clause)) return null;
     const changed =
       row.removed ||
@@ -248,7 +261,15 @@ function cleanClauses(rows: ClauseEdit[]): ClauseEdit[] | null {
   return kept;
 }
 
+/** The kinds of contract a seller starts from (S68): the standard one, and free apply to Turkey. */
+export const OFFER_TEMPLATES: OfferData['options']['templates'] = [
+  { id: null, name: 'قرارداد استاندارد', description: '' },
+  { id: 1, name: 'اپلای رایگان ترکیه', description: 'فقط اپلای ترکیه، بدون هزینه و قسط' },
+];
+
 const OFFER_OPTIONS: OfferData['options'] = {
+  template: null,
+  templates: OFFER_TEMPLATES,
   features: [
     { key: 'admission', price: 70_000_000 },
     { key: 'visa', price: 40_000_000 },
@@ -264,6 +285,18 @@ const OFFER_OPTIONS: OfferData['options'] = {
   instalments: [1, 2, 3, 4],
   clauses: STANDARD_CLAUSES,
 };
+
+/** Django's options of the free Turkey template: admission at 0 toman, its own clause. */
+const TURKEY_OPTIONS: OfferData['options'] = {
+  ...OFFER_OPTIONS,
+  template: 1,
+  features: [{ key: 'admission', price: 0 }],
+  durations: [6, 12],
+  discounts: [0],
+  clauses: TURKEY_CLAUSES,
+};
+
+const optionsOf = (template: number | null) => (template === 1 ? TURKEY_OPTIONS : OFFER_OPTIONS);
 
 const customerOrError = (data: SalesState, id: unknown) =>
   data.customers.find((item) => item.id === Number(id)) ?? null;
@@ -329,14 +362,20 @@ export const salesCustomerHandlers = [
     return HttpResponse.json({ payment: id }, { status: 201 });
   }),
 
-  http.get(`${BASE}/customers/:id/offer/`, ({ params }) => {
+  http.get(`${BASE}/customers/:id/offer/`, ({ params, request }) => {
     const data = stateOrError();
     if (failed(data)) return data;
     const item = customerOrError(data, params.id);
     if (!item) return notFound();
     const draft = data.offers.get(item.id) ?? null;
+    // `?template=`: that kind's options (`standard`: the standard one); none: the draft's.
+    const asked = new URL(request.url).searchParams.get('template');
+    const template =
+      asked === null ? (draft?.template ?? null) : asked === 'standard' ? null : Number(asked);
+    if (template !== null && !OFFER_TEMPLATES.some((kind) => kind.id === template))
+      return notFound();
     const body: OfferData = {
-      options: OFFER_OPTIONS,
+      options: optionsOf(template),
       draft,
       state: item.lead.stage === 'draft' ? 'submitted' : draft ? 'saved' : 'none',
     };
@@ -348,27 +387,34 @@ export const salesCustomerHandlers = [
     if (failed(data)) return data;
     const item = customerOrError(data, params.id);
     if (!item) return notFound();
-    const { action, ...offer } = (await request.json()) as Offer & { action: string };
+    const { action, ...body } = (await request.json()) as Offer & { action: string };
+    const offer: Offer = { ...body, template: body.template ?? null };
+    if (offer.template !== null && !OFFER_TEMPLATES.some((kind) => kind.id === offer.template))
+      return HttpResponse.json({ template: ['invalid'] }, { status: 400 });
+    const options = optionsOf(offer.template);
     if (offer.features.length === 0 || offer.countries.length === 0)
       return HttpResponse.json({ features: ['required'] }, { status: 400 });
-    if (action === 'send' && offer.discount > OFFER_OPTIONS.approval_above)
+    if (offer.features.some((key) => !options.features.some((entry) => entry.key === key)))
+      return HttpResponse.json({ features: ['no_price'] }, { status: 400 });
+    if (action === 'send' && offer.discount > options.approval_above)
       return HttpResponse.json({ discount: ['needs_approval'] }, { status: 400 });
-    // Django's S47 checks: the prepayment first and only first, a date on dated rows.
+    // Django's S47 checks: the prepayment first and only first, a date on dated rows (no rows: a
+    // free contract, S68).
     const [first, ...rest] = offer.schedule;
     if (
-      first?.when !== 'signing' ||
+      (first && first.when !== 'signing') ||
       rest.some((row) => row.when === 'signing') ||
       offer.schedule.some((row) => row.amount < 1 || (row.when === 'date' && !row.date))
     )
       return HttpResponse.json({ schedule: ['invalid'] }, { status: 400 });
     const total = offer.features.reduce(
-      (sum, key) => sum + (OFFER_OPTIONS.features.find((entry) => entry.key === key)?.price ?? 0),
+      (sum, key) => sum + (options.features.find((entry) => entry.key === key)?.price ?? 0),
       0,
     );
     const amount = Math.round(total * (1 - offer.discount / 100));
     if (action !== 'save' && offer.schedule.reduce((sum, row) => sum + row.amount, 0) !== amount)
       return HttpResponse.json({ schedule: ['total'] }, { status: 400 });
-    const clauses = cleanClauses(offer.clauses);
+    const clauses = cleanClauses(offer.clauses, options.clauses);
     if (!clauses) return HttpResponse.json({ clauses: ['invalid'] }, { status: 400 });
     data.offers.set(item.id, { ...offer, clauses });
     item.lead.amount = amount;
@@ -378,7 +424,7 @@ export const salesCustomerHandlers = [
         { ...offer, clauses },
         amount,
         action === 'submit' ? 'submitted' : 'sent',
-        STANDARD_CLAUSES,
+        options.clauses,
       );
       item.lead.stage = action === 'submit' ? 'draft' : 'offer';
       item.lead.stage_since = new Date().toISOString();

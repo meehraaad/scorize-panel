@@ -567,7 +567,9 @@ describe('contract builder and agreement desk (S64)', () => {
   it('the manager adds a fixed clause, orders it and reads it in the versions', async () => {
     const user = userEvent.setup();
     renderApp('/sales/manager/contract');
-    const clauses = await screen.findByRole('region', { name: 'بندهای قرارداد' });
+    // The editor's list comes first; the preview's sheet has the same heading.
+    const [clauses] = await screen.findAllByRole('region', { name: 'بندهای قرارداد' });
+    if (!clauses) throw new Error('no clauses');
     expect(within(clauses).getByText('۱. موضوع قرارداد')).toBeInTheDocument();
     await user.click(within(clauses).getByRole('button', { name: '+ بند تازه' }));
     await user.type(within(clauses).getByLabelText('عنوان بند'), 'بورسیه');
@@ -603,6 +605,64 @@ describe('contract builder and agreement desk (S64)', () => {
     const parties = screen.getByRole('list', { name: 'موافقت‌ها' });
     expect(within(parties).getByText('فروشنده موافق')).toBeInTheDocument();
     expect(within(parties).getByText('منتظر شما')).toBeInTheDocument();
+  });
+
+  it('the preview shows a clause as it is typed, before it is saved (S68)', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/manager/contract');
+    const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
+    expect(within(preview).getByText(/موضوع قرارداد/)).toBeInTheDocument();
+    const [clauses] = screen.getAllByRole('region', { name: 'بندهای قرارداد' });
+    if (!clauses) throw new Error('no clauses');
+    await user.click(within(clauses).getByRole('button', { name: '+ بند تازه' }));
+    await user.type(within(clauses).getByLabelText('عنوان بند'), 'بورسیه');
+    await user.type(within(clauses).getByLabelText('متن بند'), 'متن در حال نوشتن');
+    expect(within(preview).getByText(/بورسیه/)).toBeInTheDocument();
+    expect(within(preview).getByText('متن در حال نوشتن')).toBeInTheDocument();
+    // The whole sheet opens full screen too.
+    await user.click(within(preview).getByRole('button', { name: 'تمام‌صفحه' }));
+    expect(await screen.findByRole('dialog', { name: 'پیش‌نمایش قرارداد' })).toBeInTheDocument();
+  });
+
+  it('the manager makes a second kind of contract as a copy and switches between them (S68)', async () => {
+    const user = userEvent.setup();
+    const router = renderApp('/sales/manager/contract');
+    const kinds = await screen.findByRole('region', { name: 'نوع قرارداد' });
+    await user.click(within(kinds).getByRole('button', { name: '+ قرارداد تازه' }));
+    await user.type(within(kinds).getByLabelText('نام قرارداد'), 'فقط ویزا');
+    await user.click(within(kinds).getByRole('radio', { name: /کپی از «قرارداد استاندارد»/ }));
+    await user.click(within(kinds).getByRole('button', { name: 'ساختن قرارداد' }));
+    expect(await screen.findByText('«فقط ویزا» ساخته شد.')).toBeInTheDocument();
+    // It opens on the new one, with the standard text copied.
+    await screen.findByRole('radio', { name: /فقط ویزا/, checked: true });
+    expect(router.state.location.search).toMatch(/template=\d+/);
+    const [clauses] = screen.getAllByRole('region', { name: 'بندهای قرارداد' });
+    if (!clauses) throw new Error('no clauses');
+    expect(within(clauses).getByText('۱. موضوع قرارداد')).toBeInTheDocument();
+    // Back to the standard contract.
+    await user.click(screen.getByRole('radio', { name: /^قرارداد استاندارد/ }));
+    expect(router.state.location.search).not.toMatch(/template=/);
+  });
+
+  it('the manager reads the whole contract before approving (S68)', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/manager/approvals');
+    await user.click(await screen.findByRole('button', { name: 'خواندن کل قرارداد' }));
+    const dialog = await screen.findByRole('dialog', { name: /^قرارداد / });
+    expect(within(dialog).getAllByText(/موضوع قرارداد/).length).toBeGreaterThan(0);
+    expect(within(dialog).getByRole('link', { name: 'صفحه‌ی چاپ و PDF' })).toBeInTheDocument();
+  });
+
+  it('a seller picks the free Turkey contract: its own text, and nothing to pay (S68)', async () => {
+    loginAs(NIMA);
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105/offer');
+    const kind = await screen.findByRole('region', { name: 'نوع قرارداد' });
+    await user.click(within(kind).getByRole('radio', { name: /اپلای رایگان ترکیه/ }));
+    expect(
+      await screen.findByText('تعهدنامه‌ی اپلای رایگان', { exact: false }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('موضوع قرارداد', { exact: false })).not.toBeInTheDocument();
   });
 
   it('a seller cannot change a fixed clause', async () => {

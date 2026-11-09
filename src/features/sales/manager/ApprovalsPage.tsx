@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
@@ -7,23 +7,33 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { TextAreaField } from '@/components/ui/Choices';
+import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { QuerySection } from '@/components/ui/QuerySection';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { approvalsQuery, useDecideDraft, type ApprovalAction, type ContractDraft } from '../api';
+import {
+  approvalDocumentQuery,
+  approvalsQuery,
+  useDecideDraft,
+  type ApprovalAction,
+  type ContractDraft,
+} from '../api';
+import { ContractSheet } from '../components/ContractSheet';
 import { useSalesFormat } from '../format';
-import { customerPath } from '../paths';
+import { customerPath, salesPath } from '../paths';
 import { ClauseChanges } from './ClauseChanges';
 import { toast } from '@/lib/toast';
 
 /**
  * The manager's agreement desk (S36, S62, S64): offers waiting for the sales manager, each with who
  * agreed, its numbers held to the contract builder's rules, the automatic checks and only the
- * clauses that differ from the standard contract. Canvas "صفحه‌ی مشتری", board "توافق · مدیر فروش".
+ * clauses that differ from the standard contract; and the whole contract as it will print (S68),
+ * to read before deciding. Canvas "صفحه‌ی مشتری", board "توافق · مدیر فروش".
  */
 export default function ApprovalsPage() {
   const { t } = useTranslation('sales');
@@ -81,6 +91,11 @@ export default function ApprovalsPage() {
                         <Chip tone="neutral" small>
                           {draft.seller}
                         </Chip>
+                        {draft.template.id !== null && (
+                          <Chip tone="info" small>
+                            {draft.template.name}
+                          </Chip>
+                        )}
                         {draft.discount > 0 && (
                           <Chip tone="warn" small>
                             {t('manager.approvals.discount', { n: f.number(draft.discount) })}
@@ -104,6 +119,7 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
   const decide = useDecideDraft();
   const [comment, setComment] = useState('');
   const [tried, setTried] = useState(false);
+  const [reading, setReading] = useState(false);
 
   const act = (action: ApprovalAction) => {
     setTried(true);
@@ -132,9 +148,12 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
           </h2>
           <span className="text-sm text-text-2">{draft.meta}</span>
         </div>
-        <Link to={customerPath(draft.customer)} className={buttonClass('outline', 'text-sm')}>
-          {t('manager.approvals.customer')}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setReading(true)}>{t('manager.approvals.read')}</Button>
+          <Link to={customerPath(draft.customer)} className={buttonClass('outline', 'text-sm')}>
+            {t('manager.approvals.customer')}
+          </Link>
+        </div>
       </div>
 
       <ul
@@ -187,6 +206,14 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
       </section>
 
       <ClauseChanges changes={draft.clauses} standard={draft.standard_clauses} />
+      <button
+        type="button"
+        onClick={() => setReading(true)}
+        className="-mt-3 flex min-h-11 items-center gap-2 self-start text-sm font-semibold text-primary-text hover:underline"
+      >
+        <Icon name="document" size={18} />
+        {t('manager.approvals.readAll')}
+      </button>
 
       <section aria-labelledby="draft-checks" className="flex flex-col gap-2.5">
         <h3 id="draft-checks" className="m-0 text-sm font-semibold text-text-2">
@@ -241,7 +268,40 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
           {t('manager.approvals.reject', { name: draft.name })}
         </Button>
       </div>
+      <Dialog
+        open={reading}
+        onClose={() => setReading(false)}
+        size="wide"
+        title={t('manager.approvals.preview.title', { name: draft.name })}
+        subtitle={t('manager.approvals.preview.subtitle')}
+        closeLabel={t('close')}
+        footer={
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to={salesPath(`manager/approvals/${String(draft.id)}/contract`)}
+              className={buttonClass('outline', 'text-sm')}
+            >
+              {t('manager.approvals.preview.print')}
+            </Link>
+            <Button variant="outline" onClick={() => setReading(false)}>
+              {t('close')}
+            </Button>
+          </div>
+        }
+      >
+        <DraftContract id={draft.id} />
+      </Dialog>
     </Card>
+  );
+}
+
+/** The offer's whole contract as it will print (S68), read before deciding. */
+function DraftContract({ id }: { id: number }) {
+  const query = useQuery(approvalDocumentQuery(id));
+  return (
+    <QuerySection pending={query.isPending} error={query.error} retry={() => void query.refetch()}>
+      {query.data && <ContractSheet doc={query.data} framed={false} />}
+    </QuerySection>
   );
 }
 

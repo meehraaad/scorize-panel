@@ -7,7 +7,9 @@ import type {
   ClauseChange,
   ClauseEdit,
   ContractBuilder,
+  ContractDocument,
   ContractDraft,
+  ContractTemplate,
   TextVersion,
   DraftTerm,
   FunnelData,
@@ -24,7 +26,7 @@ import type {
 import { forbidden, notFound, pageOf, storage } from './session';
 import { failed, saveStages, stagesOf, stateOrError, type SalesState } from './sales';
 import { openHandoff } from './handoff';
-import { STANDARD_CLAUSES } from './salesCustomer';
+import { OFFER_TEMPLATES, STANDARD_CLAUSES, TURKEY_CLAUSES } from './salesCustomer';
 
 /**
  * Fake sales-manager API (docs/backend-changes.md S34–S40, T12; the board's stages S48). Only Reza (user 4, with
@@ -155,9 +157,19 @@ const managerState = (): ManagerState => ({
 
 let manager: ManagerState | null = null;
 let builder: ContractBuilder | null = null;
+/** The templates beside the standard contract (S68), by id: free apply to Turkey to start with. */
+let others: Map<number, ContractBuilder> | null = null;
+const STANDARD_TEMPLATE: ContractTemplate = {
+  id: null,
+  name: 'قرارداد استاندارد',
+  description: '',
+  is_active: true,
+};
 
 /** Django's contract builder (S64): the standard clauses, the price list and the offer's rules. */
 const builderState = (): ContractBuilder => ({
+  template: STANDARD_TEMPLATE,
+  templates: [],
   clauses: STANDARD_CLAUSES.map((clause) => ({
     ...clause,
     is_active: true,
@@ -178,6 +190,56 @@ const builderState = (): ContractBuilder => ({
   },
   versions: [],
 });
+
+/** Free apply to Turkey (S68): one fixed clause, admission at 0 toman, no instalments. */
+const turkeyState = (): ContractBuilder => ({
+  ...builderState(),
+  template: {
+    id: 1,
+    name: OFFER_TEMPLATES[1]?.name ?? '',
+    description: OFFER_TEMPLATES[1]?.description ?? '',
+    is_active: true,
+  },
+  clauses: TURKEY_CLAUSES.map((clause) => ({
+    ...clause,
+    is_active: true,
+    updated_at: ago(10 * 24 * HOUR),
+  })),
+  prices: [
+    { feature: 'admission', price: 0, is_active: true },
+    { feature: 'visa', price: null, is_active: false },
+    { feature: 'writing', price: null, is_active: false },
+  ],
+  rules: { ...builderState().rules, discounts: [0], durations: [6, 12], max_instalments: 1 },
+});
+
+/** One kind of contract's builder state (`?template=`), or null for one that doesn't exist. */
+function kindState(template: number | null): ContractBuilder | null {
+  if (template === null) return (builder ??= builderState());
+  others ??= new Map([[1, turkeyState()]]);
+  return others.get(template) ?? null;
+}
+
+const kindOf = (request: Request) => {
+  const value = new URL(request.url).searchParams.get('template');
+  return value === null || value === 'standard' ? null : Number(value);
+};
+
+/** Django's `ContractBuilderView`: the kind shown, and every kind with its count of clauses. */
+function builderBody(state: ContractBuilder): ContractBuilder {
+  kindState(null);
+  kindState(1);
+  const all = [builder, ...(others ?? new Map<number, ContractBuilder>()).values()].filter(
+    (item): item is ContractBuilder => item !== null,
+  );
+  return {
+    ...state,
+    templates: all.map((item) => ({
+      ...item.template,
+      clauses: item.clauses.filter((clause) => clause.is_active).length,
+    })),
+  };
+}
 
 /** Django's `changes`: what a version changed from the one before. */
 function textChanges(
@@ -449,7 +511,7 @@ function figuresOf(
   discount: number,
   schedule?: number[],
 ): ContractDraft['figures'] {
-  const rules = (builder ?? builderState()).rules;
+  const rules = (kindState(null) ?? builderState()).rules;
   const rows = schedule?.length
     ? schedule
     : // Like the terms the list shows: 40% at signing, then two halves.
@@ -474,8 +536,11 @@ function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
     .map((item): ContractDraft => {
       const offer = sales.offers.get(item.id);
       const discount = offer?.discount ?? 15;
+      const template = offer?.template ?? null;
+      const kind = OFFER_TEMPLATES.find((entry) => entry.id === template) ?? STANDARD_TEMPLATE;
       return {
         id: item.lead.id,
+        template: { id: template, name: kind.name },
         customer: item.id,
         name: item.name,
         created_at: item.lead.stage_since,
@@ -484,6 +549,7 @@ function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
         discount,
         meta: `${item.countries.join('، ')} · فروشنده: نیما رستمی`,
         terms: termsWithPrevious(state.reviewed.get(item.lead.id)?.terms, [
+          ...(template === null ? [] : [{ key: 'template' as const, value: kind.name }]),
           { key: 'services', value: offer ? offer.features.join('، ') : 'پذیرش و ویزا' },
           { key: 'degree', value: 'ارشد' },
           { key: 'countries', value: (offer?.countries ?? item.countries).join('، ') },
@@ -506,7 +572,7 @@ function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
         note:
           offer?.manager_note || 'ددلاین‌ها از بهمن شروع می‌شود؛ تخفیف برای بستن همین هفته است.',
         clauses: clauseChanges(offer?.clauses ?? [], state.reviewed.get(item.lead.id)?.clauses),
-        standard_clauses: STANDARD_CLAUSES.length,
+        standard_clauses: (template === null ? STANDARD_CLAUSES : TURKEY_CLAUSES).length,
         resubmitted: state.reviewed.has(item.lead.id),
         figures: figuresOf(
           item.lead.amount ?? 0,
@@ -879,17 +945,66 @@ export const managerHandlers = [
     return HttpResponse.json({ created, new_customers: customers });
   }),
 
-  http.get(`${BASE}/contract/`, () => {
+  http.get(`${BASE}/contract/`, ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    builder ??= builderState();
-    return HttpResponse.json(builder);
+    const state = kindState(kindOf(request));
+    if (!state) return notFound();
+    return HttpResponse.json(builderBody(state));
+  }),
+
+  http.post(`${BASE}/contract/templates/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const body = (await request.json()) as {
+      name: string;
+      description: string;
+      copy: boolean;
+      copy_from: number | null;
+    };
+    if (!body.name.trim()) return HttpResponse.json({ name: ['required'] }, { status: 400 });
+    kindState(null);
+    kindState(1);
+    const all = others ?? new Map<number, ContractBuilder>();
+    const id = Math.max(0, ...all.keys()) + 1;
+    const source = body.copy ? kindState(body.copy_from) : null;
+    if (body.copy && !source) return notFound();
+    const fresh = builderState();
+    all.set(id, {
+      ...(source ?? {
+        ...fresh,
+        prices: fresh.prices.map((row) => ({ ...row, price: null, is_active: false })),
+      }),
+      clauses: (source?.clauses ?? [])
+        .filter((clause) => clause.is_active)
+        .map((clause, index) => ({ ...clause, id: id * 1000 + index })),
+      template: {
+        id,
+        name: body.name.trim(),
+        description: body.description.trim(),
+        is_active: true,
+      },
+      versions: [],
+    });
+    others = all;
+    return HttpResponse.json({ id }, { status: 201 });
+  }),
+
+  http.patch(`${BASE}/contract/templates/:id/`, async ({ params, request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = kindState(Number(params.id));
+    if (!state) return notFound();
+    const body = (await request.json()) as Partial<ContractTemplate>;
+    state.template = { ...state.template, ...body, id: state.template.id };
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.post(`${BASE}/contract/clauses/`, async ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const state = (builder ??= builderState());
+    const state = kindState(kindOf(request));
+    if (!state) return notFound();
     const body = (await request.json()) as { title: string; text: string; locked?: boolean };
     if (!body.title.trim() || !body.text.trim())
       return HttpResponse.json({ title: ['required'] }, { status: 400 });
@@ -914,7 +1029,8 @@ export const managerHandlers = [
   http.put(`${BASE}/contract/clauses/order/`, async ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const state = (builder ??= builderState());
+    const state = kindState(kindOf(request));
+    if (!state) return notFound();
     const { ids } = (await request.json()) as { ids: number[] };
     const before = state.clauses.filter((clause) => clause.is_active);
     if (ids.length !== before.length || before.some((clause) => !ids.includes(clause.id)))
@@ -930,9 +1046,13 @@ export const managerHandlers = [
   http.patch(`${BASE}/contract/clauses/:id/`, async ({ params, request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const state = (builder ??= builderState());
-    const clause = state.clauses.find((item) => item.id === Number(params.id));
-    if (!clause) return notFound();
+    kindState(null);
+    kindState(1);
+    const state = [builder, ...(others ?? new Map<number, ContractBuilder>()).values()].find(
+      (item) => item?.clauses.some((entry) => entry.id === Number(params.id)),
+    );
+    const clause = state?.clauses.find((item) => item.id === Number(params.id));
+    if (!state || !clause) return notFound();
     const body = (await request.json()) as Partial<ContractBuilder['clauses'][number]>;
     const before = state.clauses.filter((item) => item.is_active).map((item) => ({ ...item }));
     Object.assign(clause, body, { updated_at: new Date().toISOString() });
@@ -961,7 +1081,8 @@ export const managerHandlers = [
   http.put(`${BASE}/contract/prices/`, async ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const state = (builder ??= builderState());
+    const state = kindState(kindOf(request));
+    if (!state) return notFound();
     const { prices } = (await request.json()) as { prices: ContractBuilder['prices'] };
     state.prices = state.prices.map((row) => {
       const next = prices.find((item) => item.feature === row.feature);
@@ -973,7 +1094,8 @@ export const managerHandlers = [
   http.put(`${BASE}/contract/rules/`, async ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const state = (builder ??= builderState());
+    const state = kindState(kindOf(request));
+    if (!state) return notFound();
     const rules = (await request.json()) as ContractBuilder['rules'];
     state.rules = {
       ...rules,
@@ -987,6 +1109,64 @@ export const managerHandlers = [
     const data = managerOrError();
     if (data instanceof Response) return data;
     return HttpResponse.json({ drafts: draftsOf(data.sales, data.manager) });
+  }),
+
+  // Django's `ApprovalDocumentView` (S68): the offer's whole contract before approval.
+  http.get(`${BASE}/approvals/:id/document/`, ({ params }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const item = data.sales.customers.find((entry) => entry.lead.id === Number(params.id));
+    if (!item) return notFound();
+    const offer = data.sales.offers.get(item.id);
+    const template = offer?.template ?? null;
+    const standard = template === null ? STANDARD_CLAUSES : TURKEY_CLAUSES;
+    const edits = offer?.clauses ?? [];
+    const amount = item.lead.amount ?? 0;
+    const schedule = offer?.schedule ?? [
+      { amount: Math.round(amount * 0.4), when: 'signing' as const, date: null },
+      { amount: amount - Math.round(amount * 0.4), when: 'admission' as const, date: null },
+    ];
+    const start = offer?.start ?? new Date().toISOString().slice(0, 10);
+    const months = offer?.months ?? 12;
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + months);
+    const body: ContractDocument = {
+      number: null,
+      file_id: null,
+      approved_at: null,
+      draft: true,
+      template:
+        template === null ? '' : (OFFER_TEMPLATES.find((kind) => kind.id === template)?.name ?? ''),
+      customer: { name: item.name, national_code: null, phone: item.phone, email: '' },
+      seller: 'نیما رستمی',
+      features: offer?.features ?? ['admission', 'visa'],
+      degrees: [offer?.degree ?? 2],
+      countries: offer?.countries ?? item.countries,
+      applies: offer?.applies ?? 8,
+      start_date: start,
+      end_date: end.toISOString().slice(0, 10),
+      months,
+      language_score: offer?.language_score ?? '',
+      language_deadline: offer?.language_deadline || null,
+      amount,
+      installments: schedule.map((row, index) => ({
+        id: index,
+        number: index,
+        amount: row.amount,
+        due_date: row.when === 'date' ? row.date : null,
+        condition: row.when === 'signing' || row.when === 'date' ? null : 'بعد از پذیرش',
+      })),
+      clauses: [
+        ...standard.flatMap((clause) => {
+          const edit = edits.find((entry) => entry.clause === clause.id);
+          if (edit?.removed) return [];
+          return [edit ? { title: edit.title, text: edit.text } : clause];
+        }),
+        ...edits.filter((edit) => edit.clause === null),
+      ].map(({ title, text }) => ({ title, text })),
+      agreement: null,
+    };
+    return HttpResponse.json(body);
   }),
 
   http.post(`${BASE}/approvals/:id/`, async ({ params, request }) => {
@@ -1188,6 +1368,7 @@ export function resetManagerMocks() {
   movedLeads.clear();
   manager = null;
   builder = null;
+  others = null;
   commissionRules = freshRules();
   nextRule = 10;
   KNOWN_PHONES = knownPhones();

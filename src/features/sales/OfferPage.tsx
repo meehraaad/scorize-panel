@@ -1,10 +1,10 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
-import { SelectField, TextAreaField } from '@/components/ui/Choices';
+import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Notice } from '@/components/ui/Notice';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
@@ -16,12 +16,14 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import {
   customerQuery,
   offerQuery,
+  templateParam,
   useSaveOffer,
   type ContractFeature,
   type CustomerData,
   type Instalment,
   type Offer,
   type OfferAction,
+  type OfferData,
   type OfferOptions,
 } from './api';
 import { clausesComplete } from './clauses';
@@ -50,8 +52,18 @@ const priceOf = (offer: Pick<Offer, 'features' | 'discount'>, options: OfferOpti
       (1 - offer.discount / 100),
   );
 
+/** The standard contract's value in the kind-of-contract choice (its id is null). */
+const STANDARD = 'standard';
+
+/** The service an offer starts with: admission if this kind of contract offers it. */
+const firstFeature = (options: OfferOptions): ContractFeature[] =>
+  options.features.some((item) => item.key === 'admission')
+    ? ['admission']
+    : options.features.slice(0, 1).map((item) => item.key);
+
 const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => ({
-  features: ['admission'],
+  template: options.template,
+  features: firstFeature(options),
   degree: customer.headline.degree ?? options.degrees[0] ?? 2,
   applies: 6,
   start: nextMonth(),
@@ -61,7 +73,7 @@ const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => 
   countries: customer.headline.countries.filter((country) => options.countries.includes(country)),
   discount: 0,
   schedule: suggestedSchedule(
-    priceOf({ features: ['admission'], discount: 0 }, options),
+    priceOf({ features: firstFeature(options), discount: 0 }, options),
     options.instalments.includes(3) ? 3 : (options.instalments[0] ?? 1),
     nextMonth(),
   ),
@@ -70,24 +82,80 @@ const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => 
 });
 
 /**
- * Build an offer for a customer, then send it as is, or send the contract draft to the sales
- * manager; once approved it opens in the customer's panel. Canvas "پیشنهاد و پیش‌نویس قرارداد".
+ * The draft moved to another kind of contract (S68): its services that this kind offers, none of
+ * its clause edits (they were to the other kind's text), and instalments that follow the price.
+ */
+const draftOn = (draft: Offer, options: OfferOptions): Offer => {
+  if (draft.template === options.template) return draft;
+  const features = draft.features.filter((key) =>
+    options.features.some((item) => item.key === key),
+  );
+  return {
+    ...draft,
+    template: options.template,
+    features: features.length ? features : firstFeature(options),
+    clauses: [],
+  };
+};
+
+/**
+ * Build an offer for a customer from a kind of contract (S68: the standard one, or a template the
+ * manager keeps, e.g. free apply to Turkey), then send it as is, or send the contract draft to the
+ * sales manager; once approved it opens in the customer's panel. Canvas "پیشنهاد و پیش‌نویس
+ * قرارداد".
  */
 export default function OfferPage() {
+  const id = Number(useParams().id);
+  const [params, setParams] = useSearchParams();
+  const picked = params.get('template');
+  const { data: customer } = useSuspenseQuery(customerQuery(id));
+  const { data } = useSuspenseQuery(
+    offerQuery(id, picked === null ? undefined : templateParam(picked)),
+  );
+  return (
+    <OfferForm
+      key={data.options.template ?? STANDARD}
+      id={id}
+      customer={customer}
+      data={data}
+      onTemplate={(template) =>
+        setParams(
+          (search) => {
+            search.set('template', template === null ? STANDARD : String(template));
+            return search;
+          },
+          { replace: true },
+        )
+      }
+    />
+  );
+}
+
+function OfferForm({
+  id,
+  customer,
+  data,
+  onTemplate,
+}: {
+  id: number;
+  customer: CustomerData;
+  data: OfferData;
+  onTemplate: (template: number | null) => void;
+}) {
   const { t } = useTranslation('sales');
   const { t: tc } = useTranslation();
   const f = useFormat();
   const s = useSalesFormat();
   const navigate = useNavigate();
-  const id = Number(useParams().id);
-  const { data: customer } = useSuspenseQuery(customerQuery(id));
-  const { data } = useSuspenseQuery(offerQuery(id));
   const save = useSaveOffer(id);
   const { options } = data;
-  const [offer, setOffer] = useState<Offer>(() => data.draft ?? startingOffer(customer, options));
+  const sameKind = data.draft !== null && data.draft.template === options.template;
+  const [offer, setOffer] = useState<Offer>(() =>
+    data.draft ? draftOn(data.draft, options) : startingOffer(customer, options),
+  );
   // Until the seller edits the instalments, they follow the price and the start date; once edited
-  // (or saved before), they stay as agreed in the session.
-  const [custom, setCustom] = useState(data.draft !== null);
+  // (or saved before on this kind of contract), they stay as agreed in the session.
+  const [custom, setCustom] = useState(sameKind);
   const set = <K extends keyof Offer>(key: K, value: Offer[K]) =>
     setOffer((current) => ({ ...current, [key]: value }));
   const setSchedule = (rows: Instalment[]) => {
@@ -99,11 +167,16 @@ export default function OfferPage() {
     options.features.find((item) => item.key === key)?.price ?? 0;
   const base = offer.features.reduce((sum, key) => sum + price(key), 0);
   const total = priceOf(offer, options);
-  const schedule = custom
-    ? offer.schedule
-    : suggestedSchedule(total, offer.schedule.length, offer.start);
+  // A free contract (a template's services at 0 toman, S68) has no instalments.
+  const free = total === 0 && offer.features.length > 0;
+  const schedule = free
+    ? []
+    : custom
+      ? offer.schedule
+      : suggestedSchedule(total, offer.schedule.length, offer.start);
   const needsManager = offer.discount > options.approval_above;
-  const rowsDone = scheduleComplete(schedule) && clausesComplete(offer.clauses);
+  const rowsDone = (free || scheduleComplete(schedule)) && clausesComplete(offer.clauses);
+  const kinds = options.templates.length > 1;
   const addsUp = scheduleTotal(schedule) === total;
   const valid =
     offer.features.length > 0 &&
@@ -136,6 +209,23 @@ export default function OfferPage() {
         asideLabel={t('offer.preview')}
         main={
           <>
+            {kinds && (
+              <SectionCard id="offer-kind" variant="panel" size="lg" title={t('offer.kind.title')}>
+                <ChoiceGroup
+                  legend={t('offer.kind.title')}
+                  hideLegend
+                  look="cards"
+                  value={options.template === null ? STANDARD : String(options.template)}
+                  onChange={(value) => onTemplate(value === STANDARD ? null : Number(value))}
+                  options={options.templates.map((kind) => ({
+                    value: kind.id === null ? STANDARD : String(kind.id),
+                    label: kind.name,
+                    hint: kind.description || undefined,
+                  }))}
+                  hint={offer.clauses.length > 0 ? t('offer.kind.resets') : undefined}
+                />
+              </SectionCard>
+            )}
             <SectionCard id="offer-features" variant="panel" size="lg" title={t('offer.features')}>
               <fieldset className="m-0 grid gap-3 border-0 p-0 md:grid-cols-3">
                 <legend className="sr-only">{t('offer.features')}</legend>
@@ -163,7 +253,9 @@ export default function OfferPage() {
                     <span className="text-[13px] leading-6 text-text-2">
                       {t(`offer.featureHint.${item.key}`)}
                     </span>
-                    <span className="text-sm font-semibold">{s.toman(item.price)}</span>
+                    <span className="text-sm font-semibold">
+                      {item.price === 0 ? t('offer.freePrice') : s.toman(item.price)}
+                    </span>
                   </label>
                 ))}
               </fieldset>
@@ -269,7 +361,11 @@ export default function OfferPage() {
                   {t('offer.managerNeeded', { n: s.percent(options.approval_above / 100) })}
                 </Notice>
               )}
-              <ScheduleEditor schedule={schedule} total={total} onChange={setSchedule} />
+              {free ? (
+                <Notice tone="info">{t('offer.free')}</Notice>
+              ) : (
+                <ScheduleEditor schedule={schedule} total={total} onChange={setSchedule} />
+              )}
             </SectionCard>
 
             <SectionCard
@@ -319,12 +415,14 @@ export default function OfferPage() {
                 )}
                 <span className="text-2xl font-bold tabular-nums">{s.toman(total)}</span>
                 <span className="text-xs text-on-hero-2">
-                  {schedule.length <= 1
-                    ? t('offer.planOnce')
-                    : t('offer.planNote', {
-                        n: f.number(schedule.length),
-                        first: s.toman(schedule[0]?.amount ?? 0),
-                      })}
+                  {free
+                    ? t('offer.planFree')
+                    : schedule.length <= 1
+                      ? t('offer.planOnce')
+                      : t('offer.planNote', {
+                          n: f.number(schedule.length),
+                          first: s.toman(schedule[0]?.amount ?? 0),
+                        })}
                 </span>
               </div>
             </section>

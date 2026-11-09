@@ -1,10 +1,11 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, TextAreaField, TogglePill } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
+import { Dialog } from '@/components/ui/Dialog';
 import { DiffText } from '@/components/ui/DiffText';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
@@ -16,32 +17,53 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
   contractBuilderQuery,
+  templateParam,
+  useCreateTemplate,
   useOrderClauses,
   useSaveClause,
   useSavePrices,
   useSaveRules,
+  useUpdateTemplate,
   type BuilderClause,
   type BuilderPrice,
+  type ContractBuilder,
   type OfferRules,
   type TextVersion,
 } from '../api';
+import { ContractSheet } from '../components/ContractSheet';
 import { useSalesFormat } from '../format';
+import { previewClauses, sampleDocument, type ClauseDraft } from './contractPreview';
 
 const TABS = ['clauses', 'prices', 'versions'] as const;
 type Tab = (typeof TABS)[number];
 /** What the manager picks from for the offer's discounts and durations. */
 const DISCOUNT_STEPS = [5, 10, 15, 20, 25, 30];
 const DURATION_STEPS = [3, 6, 9, 12, 18, 24];
+/** The standard contract's value in the kinds-of-contract choice (its id is null). */
+const STANDARD = 'standard';
 
 /**
- * The sales manager's contract builder (S64): the standard contract's clauses (write, order, fix
- * so sellers can't change them, take out), the price list and the offer's rules, and the text's
- * versions. Canvas "صفحه‌ی مشتری", boards "ساخت قرارداد".
+ * The sales manager's contract builder (S64): the kinds of contract (S68: the standard one and the
+ * templates beside it, e.g. free apply to Turkey or visa only), and for the one picked its clauses
+ * (write, order, fix so sellers can't change them, take out) beside the contract as it will print,
+ * its price list and offer rules, and its text's versions. Canvas "صفحه‌ی مشتری", boards
+ * "ساخت قرارداد".
  */
 export default function ContractBuilderPage() {
   const { t } = useTranslation('sales');
   const [params, setParams] = useSearchParams();
   const tab: Tab = TABS.find((value) => value === params.get('tab')) ?? 'clauses';
+  const template = templateParam(params.get('template'));
+  const { data } = useSuspenseQuery(contractBuilderQuery(template));
+  const pick = (id: number | null) =>
+    setParams((search) => {
+      if (id === null) search.delete('template');
+      else search.set('template', String(id));
+      return search;
+    });
+  // Each kind of contract keeps its own forms: switching starts them from its own data.
+  const kind = template ?? STANDARD;
+
   return (
     <>
       <PageHeader
@@ -66,19 +88,266 @@ export default function ContractBuilderPage() {
           />
         }
       />
-      {tab === 'clauses' ? <Clauses /> : tab === 'prices' ? <PricesAndRules /> : <Versions />}
+      <Templates key={`templates-${kind}`} data={data} onPick={pick} />
+      {tab === 'clauses' ? (
+        <Clauses key={`clauses-${kind}`} data={data} />
+      ) : tab === 'prices' ? (
+        <PricesAndRules key={`prices-${kind}`} data={data} />
+      ) : (
+        <Versions data={data} />
+      )}
     </>
   );
 }
 
-// region Clauses
-function Clauses() {
+// region Kinds of contract (S68)
+function Templates({
+  data,
+  onPick,
+}: {
+  data: ContractBuilder;
+  onPick: (id: number | null) => void;
+}) {
   const { t } = useTranslation('sales');
-  const { data } = useSuspenseQuery(contractBuilderQuery);
-  const order = useOrderClauses();
+  const f = useFormat();
+  const [adding, setAdding] = useState(false);
+  const current = data.template;
+  return (
+    <SectionCard
+      id="templates"
+      variant="panel"
+      title={t('manager.builder.templates.title')}
+      subtitle={t('manager.builder.templates.subtitle')}
+    >
+      <ChoiceGroup
+        legend={t('manager.builder.templates.title')}
+        hideLegend
+        value={current.id === null ? STANDARD : String(current.id)}
+        onChange={(value) => onPick(value === STANDARD ? null : Number(value))}
+        options={data.templates.map((row) => ({
+          value: row.id === null ? STANDARD : String(row.id),
+          label: row.is_active
+            ? t('manager.builder.templates.option', { name: row.name, n: f.number(row.clauses) })
+            : t('manager.builder.templates.optionOff', { name: row.name }),
+        }))}
+        extra={
+          !adding && (
+            <Button variant="outline" onClick={() => setAdding(true)}>
+              {t('manager.builder.templates.add')}
+            </Button>
+          )
+        }
+      />
+      {adding && (
+        <NewTemplate
+          from={current}
+          onDone={(id) => {
+            setAdding(false);
+            if (id !== undefined) onPick(id);
+          }}
+        />
+      )}
+      {current.id === null ? (
+        <p className="m-0 text-sm leading-7 text-text-2">
+          {t('manager.builder.templates.standardNote')}
+        </p>
+      ) : (
+        <TemplateSettings template={{ ...current, id: current.id }} />
+      )}
+    </SectionCard>
+  );
+}
+
+/** A new kind of contract: empty, or a copy of the one shown (its clauses, prices and rules). */
+function NewTemplate({
+  from,
+  onDone,
+}: {
+  from: ContractBuilder['template'];
+  onDone: (id?: number) => void;
+}) {
+  const { t } = useTranslation('sales');
+  const create = useCreateTemplate();
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [start, setStart] = useState<'copy' | 'empty'>('copy');
+  return (
+    <form
+      className="flex flex-col gap-3 rounded-2xl bg-canvas p-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!name.trim()) return;
+        create.mutate(
+          {
+            name: name.trim(),
+            description: description.trim(),
+            copy: start === 'copy',
+            copy_from: from.id,
+          },
+          {
+            onSuccess: ({ id }) => {
+              toast.success(t('manager.builder.templates.added', { name: name.trim() }));
+              onDone(id);
+            },
+            onError: () => toast.error(t('error')),
+          },
+        );
+      }}
+    >
+      <TextField
+        label={t('manager.builder.templates.name')}
+        placeholder={t('manager.builder.templates.namePlaceholder')}
+        value={name}
+        maxLength={100}
+        onChange={(event) => setName(event.target.value)}
+      />
+      <TextField
+        label={t('manager.builder.templates.description')}
+        hint={t('manager.builder.templates.descriptionHint')}
+        value={description}
+        maxLength={300}
+        onChange={(event) => setDescription(event.target.value)}
+      />
+      <ChoiceGroup
+        legend={t('manager.builder.templates.start')}
+        look="cards"
+        value={start}
+        onChange={setStart}
+        options={[
+          {
+            value: 'copy',
+            label: t('manager.builder.templates.copy', { name: from.name }),
+            hint: t('manager.builder.templates.copyHint'),
+          },
+          {
+            value: 'empty',
+            label: t('manager.builder.templates.empty'),
+            hint: t('manager.builder.templates.emptyHint'),
+          },
+        ]}
+      />
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" disabled={!name.trim() || create.isPending}>
+          {t('manager.builder.templates.create')}
+        </Button>
+        <Button variant="outline" onClick={() => onDone()}>
+          {t('manager.builder.cancel')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+/** A template's name, description, and whether sellers can start from it. */
+function TemplateSettings({
+  template,
+}: {
+  template: ContractBuilder['template'] & { id: number };
+}) {
+  const { t } = useTranslation('sales');
+  const update = useUpdateTemplate();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(template.name);
+  const [description, setDescription] = useState(template.description);
+  const send = (body: Parameters<typeof update.mutate>[0], done: string, after?: () => void) =>
+    update.mutate(body, {
+      onSuccess: () => {
+        toast.success(done);
+        after?.();
+      },
+      onError: () => toast.error(t('error')),
+    });
+
+  if (editing)
+    return (
+      <form
+        className="flex flex-col gap-3 rounded-2xl bg-canvas p-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (name.trim())
+            send(
+              { id: template.id, name: name.trim(), description: description.trim() },
+              t('manager.builder.templates.saved'),
+              () => setEditing(false),
+            );
+        }}
+      >
+        <TextField
+          label={t('manager.builder.templates.name')}
+          value={name}
+          maxLength={100}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <TextField
+          label={t('manager.builder.templates.description')}
+          value={description}
+          maxLength={300}
+          onChange={(event) => setDescription(event.target.value)}
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={!name.trim() || update.isPending}>
+            {t('manager.builder.save')}
+          </Button>
+          <Button variant="outline" onClick={() => setEditing(false)}>
+            {t('manager.builder.cancel')}
+          </Button>
+        </div>
+      </form>
+    );
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-canvas px-4 py-3">
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[15px] font-bold">{template.name}</span>
+        <span className="text-[13px] text-text-2">
+          {template.description || t('manager.builder.templates.noDescription')}
+        </span>
+      </span>
+      <span className="flex flex-wrap items-center gap-3">
+        <Switch
+          label={t('manager.builder.templates.offered')}
+          checked={template.is_active}
+          disabled={update.isPending}
+          onChange={(is_active) =>
+            send(
+              { id: template.id, is_active },
+              t(
+                is_active
+                  ? 'manager.builder.templates.turnedOn'
+                  : 'manager.builder.templates.turnedOff',
+                { name: template.name },
+              ),
+            )
+          }
+        />
+        <IconButton
+          icon="pen"
+          tone="muted"
+          aria-label={t('manager.builder.templates.rename', { name: template.name })}
+          onClick={() => setEditing(true)}
+        />
+      </span>
+    </div>
+  );
+}
+// endregion
+
+// region Clauses, beside the contract as it will print
+function Clauses({ data }: { data: ContractBuilder }) {
+  const { t } = useTranslation('sales');
+  const template = data.template.id;
+  const order = useOrderClauses(template);
   const active = data.clauses.filter((clause) => clause.is_active);
   const out = data.clauses.filter((clause) => !clause.is_active);
   const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState<ClauseDraft | null>(null);
+  const [big, setBig] = useState(false);
+  const { clauses, highlight } = previewClauses(
+    active,
+    draft,
+    t('manager.builder.preview.newClause'),
+  );
+  const doc = sampleDocument(data, clauses, t('manager.builder.preview.customer'));
+  const empty = t('manager.builder.preview.empty');
 
   const move = (index: number, by: -1 | 1) => {
     const ids = active.map((clause) => clause.id);
@@ -89,66 +358,108 @@ function Clauses() {
   };
 
   return (
-    <>
-      <SectionCard
-        id="clauses"
-        variant="panel"
-        title={t('manager.builder.clauses.title', { n: active.length })}
-        subtitle={t('manager.builder.clauses.subtitle')}
-        end={
-          !adding && (
-            <Button variant="outline" onClick={() => setAdding(true)}>
-              {t('manager.builder.clauses.add')}
-            </Button>
-          )
-        }
-      >
-        {adding && <ClauseForm onDone={() => setAdding(false)} />}
-        {active.length === 0 ? (
-          <EmptyState>{t('manager.builder.clauses.empty')}</EmptyState>
-        ) : (
-          <ol className="m-0 flex list-none flex-col gap-3 p-0">
-            {active.map((clause, index) => (
-              <ClauseRow
-                key={clause.id}
-                clause={clause}
-                index={index}
-                first={index === 0}
-                last={index === active.length - 1}
-                moving={order.isPending}
-                onMove={(by) => move(index, by)}
-              />
-            ))}
-          </ol>
-        )}
-      </SectionCard>
-      {out.length > 0 && (
-        <SectionCard id="clauses-out" variant="panel" title={t('manager.builder.clauses.out')}>
-          <ul className="m-0 flex list-none flex-col p-0">
-            {out.map((clause) => (
-              <OutRow key={clause.id} clause={clause} />
-            ))}
-          </ul>
+    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="flex min-w-0 flex-col gap-5">
+        <SectionCard
+          id="clauses"
+          variant="panel"
+          title={t('manager.builder.clauses.title', { n: active.length })}
+          subtitle={t('manager.builder.clauses.subtitle')}
+          end={
+            !adding && (
+              <Button variant="outline" onClick={() => setAdding(true)}>
+                {t('manager.builder.clauses.add')}
+              </Button>
+            )
+          }
+        >
+          {adding && (
+            <ClauseForm template={template} onDraft={setDraft} onDone={() => setAdding(false)} />
+          )}
+          {active.length === 0 ? (
+            <EmptyState>{t('manager.builder.clauses.empty')}</EmptyState>
+          ) : (
+            <ol className="m-0 flex list-none flex-col gap-3 p-0">
+              {active.map((clause, index) => (
+                <ClauseRow
+                  key={clause.id}
+                  template={template}
+                  clause={clause}
+                  index={index}
+                  first={index === 0}
+                  last={index === active.length - 1}
+                  moving={order.isPending}
+                  onMove={(by) => move(index, by)}
+                  onDraft={setDraft}
+                />
+              ))}
+            </ol>
+          )}
         </SectionCard>
-      )}
-    </>
+        {out.length > 0 && (
+          <SectionCard id="clauses-out" variant="panel" title={t('manager.builder.clauses.out')}>
+            <ul className="m-0 flex list-none flex-col p-0">
+              {out.map((clause) => (
+                <OutRow key={clause.id} template={template} clause={clause} />
+              ))}
+            </ul>
+          </SectionCard>
+        )}
+      </div>
+
+      <section
+        aria-labelledby="contract-preview"
+        className="flex min-w-0 flex-col gap-3 rounded-card bg-surface p-4 shadow-panel sm:p-5 xl:sticky xl:top-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <h2 id="contract-preview" className="m-0 text-base font-bold">
+              {t('manager.builder.preview.title')}
+            </h2>
+            <span className="text-[13px] text-text-2">{t('manager.builder.preview.hint')}</span>
+          </span>
+          <Button variant="outline" className="h-10 px-4 text-[13px]" onClick={() => setBig(true)}>
+            {t('manager.builder.preview.open')}
+          </Button>
+        </div>
+        {/* Beside the clauses on wide screens; on smaller ones the button opens it whole. */}
+        <div className="hidden max-h-[calc(100dvh-10rem)] overflow-y-auto rounded-2xl bg-canvas p-3 xl:block">
+          <ContractSheet doc={doc} framed={false} highlight={highlight} emptyClauses={empty} />
+        </div>
+      </section>
+
+      <Dialog
+        open={big}
+        onClose={() => setBig(false)}
+        size="wide"
+        title={t('manager.builder.preview.title')}
+        subtitle={data.template.name}
+        closeLabel={t('close')}
+      >
+        <ContractSheet doc={doc} framed={false} emptyClauses={empty} />
+      </Dialog>
+    </div>
   );
 }
 
 function ClauseRow({
+  template,
   clause,
   index,
   first,
   last,
   moving,
   onMove,
+  onDraft,
 }: {
+  template: number | null;
   clause: BuilderClause;
   index: number;
   first: boolean;
   last: boolean;
   moving: boolean;
   onMove: (by: -1 | 1) => void;
+  onDraft: (draft: ClauseDraft | null) => void;
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -190,7 +501,12 @@ function ClauseRow({
         />
       </div>
       {editing ? (
-        <ClauseForm clause={clause} onDone={() => setEditing(false)} />
+        <ClauseForm
+          template={template}
+          clause={clause}
+          onDraft={onDraft}
+          onDone={() => setEditing(false)}
+        />
       ) : (
         <p className="m-0 line-clamp-3 text-sm leading-7 whitespace-pre-line text-neutral">
           {clause.text}
@@ -200,14 +516,34 @@ function ClauseRow({
   );
 }
 
-/** A new clause (no `clause`) or one being changed: title, text, fixed or not; or take it out. */
-function ClauseForm({ clause, onDone }: { clause?: BuilderClause; onDone: () => void }) {
+/**
+ * A new clause (no `clause`) or one being changed: title, text, fixed or not; or take it out.
+ * What is typed shows in the preview at once (`onDraft`), before it is saved.
+ */
+function ClauseForm({
+  template,
+  clause,
+  onDraft,
+  onDone,
+}: {
+  template: number | null;
+  clause?: BuilderClause;
+  onDraft: (draft: ClauseDraft | null) => void;
+  onDone: () => void;
+}) {
   const { t } = useTranslation('sales');
-  const save = useSaveClause();
+  const save = useSaveClause(template);
   const [title, setTitle] = useState(clause?.title ?? '');
   const [text, setText] = useState(clause?.text ?? '');
   const [locked, setLocked] = useState(clause?.locked ?? false);
   const ready = title.trim() !== '' && text.trim() !== '';
+  const id = clause?.id ?? null;
+
+  useEffect(() => {
+    onDraft({ id, title, text });
+  }, [id, title, text, onDraft]);
+  // Closed (saved or not): the preview shows the saved text again.
+  useEffect(() => () => onDraft(null), [onDraft]);
 
   const send = (body: Parameters<typeof save.mutate>[0], done: string) =>
     save.mutate(body, {
@@ -274,9 +610,9 @@ function ClauseForm({ clause, onDone }: { clause?: BuilderClause; onDone: () => 
   );
 }
 
-function OutRow({ clause }: { clause: BuilderClause }) {
+function OutRow({ template, clause }: { template: number | null; clause: BuilderClause }) {
   const { t } = useTranslation('sales');
-  const save = useSaveClause();
+  const save = useSaveClause(template);
   return (
     <li className="flex items-center justify-between gap-3 py-2.5 shadow-[inset_0_1px_0_var(--hair)] first:shadow-none">
       <span className="min-w-0 truncate text-sm text-text-2">{clause.title}</span>
@@ -302,20 +638,21 @@ function OutRow({ clause }: { clause: BuilderClause }) {
 // endregion
 
 // region Prices and rules
-function PricesAndRules() {
-  const { data } = useSuspenseQuery(contractBuilderQuery);
+function PricesAndRules({ data }: { data: ContractBuilder }) {
   return (
     <>
-      <Prices prices={data.prices} />
-      <Rules rules={data.rules} />
+      <Prices template={data.template.id} prices={data.prices} />
+      <Rules template={data.template.id} rules={data.rules} />
     </>
   );
 }
 
-function Prices({ prices }: { prices: BuilderPrice[] }) {
+function Prices({ template, prices }: { template: number | null; prices: BuilderPrice[] }) {
   const { t } = useTranslation('sales');
   const s = useSalesFormat();
-  const save = useSavePrices();
+  const save = useSavePrices(template);
+  // A template may offer a service free (free apply to Turkey); the standard contract may not.
+  const free = template !== null;
   const [rows, setRows] = useState(prices);
   const change = (index: number, row: Partial<BuilderPrice>) =>
     setRows(rows.map((item, at) => (at === index ? { ...item, ...row } : item)));
@@ -324,7 +661,7 @@ function Prices({ prices }: { prices: BuilderPrice[] }) {
       id="prices"
       variant="panel"
       title={t('manager.builder.prices.title')}
-      subtitle={t('manager.builder.prices.subtitle')}
+      subtitle={t(free ? 'manager.builder.prices.subtitleFree' : 'manager.builder.prices.subtitle')}
     >
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
         {rows.map((row, index) => (
@@ -340,7 +677,13 @@ function Prices({ prices }: { prices: BuilderPrice[] }) {
               step={1_000_000}
               label={t(`manager.builder.prices.feature.${row.feature}`)}
               value={row.price === null ? '' : String(row.price)}
-              hint={row.price ? s.toman(row.price) : t('manager.builder.prices.none')}
+              hint={
+                row.price
+                  ? s.toman(row.price)
+                  : free && row.price === 0
+                    ? t('manager.builder.prices.free')
+                    : t('manager.builder.prices.none')
+              }
               onChange={(event) =>
                 change(index, {
                   price:
@@ -352,8 +695,8 @@ function Prices({ prices }: { prices: BuilderPrice[] }) {
             />
             <Switch
               label={t('manager.builder.prices.offered')}
-              checked={row.is_active && !!row.price}
-              disabled={!row.price}
+              checked={row.is_active && (free ? row.price !== null : !!row.price)}
+              disabled={free ? row.price === null : !row.price}
               onChange={(is_active) => change(index, { is_active })}
             />
           </li>
@@ -383,10 +726,10 @@ function Prices({ prices }: { prices: BuilderPrice[] }) {
   );
 }
 
-function Rules({ rules }: { rules: OfferRules }) {
+function Rules({ template, rules }: { template: number | null; rules: OfferRules }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const save = useSaveRules();
+  const save = useSaveRules(template);
   const [form, setForm] = useState(rules);
   const set = <K extends keyof OfferRules>(key: K, value: OfferRules[K]) =>
     setForm({ ...form, [key]: value });
@@ -466,9 +809,8 @@ function Rules({ rules }: { rules: OfferRules }) {
 // endregion
 
 // region Versions
-function Versions() {
+function Versions({ data }: { data: ContractBuilder }) {
   const { t } = useTranslation('sales');
-  const { data } = useSuspenseQuery(contractBuilderQuery);
   return (
     <SectionCard
       id="versions"

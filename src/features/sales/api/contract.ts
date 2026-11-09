@@ -58,10 +58,15 @@ export const handoffQuery = (id: number) =>
 /** One page of the signed contract, or the whole file. */
 /** S52: the approved contract as it is printed and signed. */
 export interface ContractDocument {
-  number: number;
-  /** The applicant file number. */
-  file_id: string;
+  /** Null before the manager approves: an offer's contract read as a preview (S68). */
+  number: number | null;
+  /** The applicant file number; null before approval. */
+  file_id: string | null;
   approved_at: string | null;
+  /** Not approved yet: a preview (S68). */
+  draft?: boolean;
+  /** The kind of contract (S68), e.g. "اپلای رایگان ترکیه"; empty for the standard one. */
+  template?: string;
   customer: { name: string; national_code: string | null; phone: string | null; email: string };
   seller: string;
   features: ('admission' | 'writing' | 'visa')[];
@@ -76,7 +81,7 @@ export interface ContractDocument {
   language_deadline: string | null;
   /** Toman. */
   amount: number;
-  /** The prepayment first (number 0); `condition` localized by the server. */
+  /** The prepayment first (number 0); `condition` localized by the server. Empty: a free contract. */
   installments: {
     id: number;
     number: number;

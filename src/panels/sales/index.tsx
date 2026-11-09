@@ -3,6 +3,7 @@ import {
   MANAGER_PERMISSION,
   activityQuery,
   applyQuery,
+  approvalDocumentQuery,
   approvalsQuery,
   assignQuery,
   boardQuery,
@@ -10,6 +11,7 @@ import {
   stagesQuery,
   managerTagsQuery,
   contractBuilderQuery,
+  templateParam,
   tagsQuery,
   sellerCalendarQuery,
   contractDocumentQuery,
@@ -252,7 +254,12 @@ export const salesPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/sales/OfferPage'), ['sales'], {
         data: (args) => {
           const id = customerOf(args);
-          return id === null ? [] : [customerQuery(id), offerQuery(id)];
+          if (id === null) return [];
+          const template = new URL(args.request.url).searchParams.get('template');
+          return [
+            customerQuery(id),
+            offerQuery(id, template === null ? undefined : templateParam(template)),
+          ];
         },
         skeleton: 'form',
       }),
@@ -264,6 +271,18 @@ export const salesPanel: PanelDefinition = {
         data: (args) => {
           const id = customerOf(args);
           return id === null ? [] : [customerQuery(id), contractDocumentQuery(id)];
+        },
+        skeleton: 'detail',
+      }),
+    },
+    // An offer's contract before approval (S68), to print: a page of its own, outside the section's tabs.
+    {
+      path: 'manager/approvals/:id/contract',
+      ...lazyPage(() => import('@/features/sales/manager/ApprovalPrintPage'), ['sales'], {
+        guard: managerOnly,
+        data: ({ params }) => {
+          const id = idParam(params.id);
+          return id === null ? [] : [approvalDocumentQuery(id)];
         },
         skeleton: 'detail',
       }),
@@ -291,7 +310,11 @@ export const salesPanel: PanelDefinition = {
         {
           path: 'contract',
           ...lazyPage(() => import('@/features/sales/manager/ContractBuilderPage'), [], {
-            data: () => [contractBuilderQuery],
+            data: ({ request }) => [
+              contractBuilderQuery(
+                templateParam(new URL(request.url).searchParams.get('template')),
+              ),
+            ],
             skeleton: 'form',
           }),
         },

@@ -5,8 +5,19 @@ import { customerKey } from './customer';
 
 export type ContractFeature = 'admission' | 'visa' | 'writing';
 
+/** A kind of contract a seller can start from (S68); `id` null: the standard one. */
+export interface OfferTemplate {
+  id: number | null;
+  name: string;
+  description: string;
+}
+
 export interface OfferOptions {
-  /** Price of each service, toman. */
+  /** The kind of contract these options are of (S68). */
+  template: number | null;
+  /** Every kind of contract on offer, the standard one first. */
+  templates: OfferTemplate[];
+  /** Price of each service, toman; 0: free (a template's, S68). */
   features: { key: ContractFeature; price: number }[];
   degrees: Degree[];
   /** Months. */
@@ -90,6 +101,8 @@ export interface Offer {
   /** The clauses changed for this customer; the manager reviews only these. */
   clauses: ClauseEdit[];
   manager_note: string;
+  /** The kind of contract (S68); null: the standard one. */
+  template: number | null;
 }
 
 export interface OfferData {
@@ -100,11 +113,26 @@ export interface OfferData {
   state: 'none' | 'saved' | 'sent' | 'submitted';
 }
 
-export const offerQuery = (id: number) =>
+/**
+ * The offer page's options and draft. `template`: the options of that kind of contract (S68);
+ * undefined: the draft's kind, or the standard one.
+ */
+export const offerQuery = (id: number, template?: number | null) =>
   queryOptions({
-    queryKey: [...customerKey(id), 'offer'],
+    queryKey: [
+      ...customerKey(id),
+      'offer',
+      template === undefined ? 'draft' : (template ?? 'standard'),
+    ],
     queryFn: ({ signal }) =>
-      api<OfferData>(`${SALES_API}/customers/${String(id)}/offer/`, { signal }),
+      api<OfferData>(
+        `${SALES_API}/customers/${String(id)}/offer/${
+          template === undefined
+            ? ''
+            : `?template=${template === null ? 'standard' : String(template)}`
+        }`,
+        { signal },
+      ),
   });
 
 /**
