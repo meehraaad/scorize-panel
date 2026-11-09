@@ -1,7 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { createContext, useContext, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { SelectField } from '@/components/ui/Choices';
@@ -9,7 +8,6 @@ import { Dialog } from '@/components/ui/Dialog';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
-import { PageColumns } from '@/components/ui/PageColumns';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { safeHref } from '@/lib/url';
@@ -22,7 +20,6 @@ import {
   type ExamEntry,
   type Option,
 } from './api';
-import { customerPath } from './paths';
 import { useCustomerId } from './useCustomerId';
 import { useInfoAutosave, type InfoDraft, type SectionName } from './useInfoAutosave';
 
@@ -86,38 +83,22 @@ function CustomerInfoEditor({ id, initial }: { id: number; initial: CustomerInfo
   const { draft: data, blocker } = autosave;
   return (
     <AutosaveContext value={autosave}>
-      <PageColumns
-        asideLabel={t('info.aside')}
-        main={
-          <>
-            <PersonalCard />
-            <GoalCard />
-            <EducationCard />
-            <ExamsCard />
-          </>
-        }
-        aside={
-          <>
-            <SectionCard id="info-tablet" variant="panel" title={t('info.tablet.title')}>
-              <p className="m-0 text-sm leading-7 text-neutral">{t('info.tablet.text')}</p>
-              <a
-                href={safeHref(data.tablet_url)}
-                target="_blank"
-                rel="noreferrer"
-                className={buttonClass('outline', 'self-start')}
-              >
-                {t('info.tablet.open')}
-              </a>
-            </SectionCard>
-            <SectionCard id="info-similar" variant="panel" title={t('info.similar.title')}>
-              <p className="m-0 text-sm leading-7 text-neutral">{t('info.similar.text')}</p>
-              <Link to={customerPath(id)} className="text-sm text-primary-text">
-                {t('info.similar.link')}
-              </Link>
-            </SectionCard>
-          </>
-        }
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-text-2">{t('info.shared')}</span>
+        <a
+          href={safeHref(data.tablet_url)}
+          target="_blank"
+          rel="noreferrer"
+          className={buttonClass('outline', 'h-10 px-4 text-[13px]')}
+        >
+          <Icon name="expand" size={15} />
+          {t('info.tablet.open')}
+        </a>
+      </div>
+      <PersonalCard />
+      <GoalCard />
+      <EducationCard />
+      <ExamsCard />
       <Dialog
         open={blocker.state === 'blocked'}
         onClose={() => blocker.state === 'blocked' && blocker.reset()}

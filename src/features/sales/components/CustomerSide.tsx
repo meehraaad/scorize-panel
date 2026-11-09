@@ -51,84 +51,87 @@ export function CustomerSide({ customer }: { customer: CustomerData }) {
       <SectionCard
         id="customer-side"
         variant="panel"
-        title={t('side.title')}
+        title={t('side.about', { name: customer.name.split(' ')[0] ?? customer.name })}
+        subtitle={t('side.same')}
         end={
           <Link
             to={info}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
+            className="inline-flex h-10 items-center rounded-full bg-tint px-4 text-[13px] font-semibold text-primary-text"
           >
             {t('side.edit')}
           </Link>
         }
       >
-        <Rows
-          label={t('side.contact')}
-          rows={[
-            { label: t('side.phone'), value: f.digits(maskPhone(customer.phone)), ltr: true },
-            ...(customer.email
-              ? [{ label: t('side.email'), value: customer.email, ltr: true }]
-              : []),
-            ...(customer.lead
-              ? [{ label: t('side.source'), value: t(`source.${customer.lead.source}`) }]
-              : []),
-          ]}
-        />
-        {filled === 0 ? (
-          <div className="flex flex-col gap-2 rounded-2xl bg-canvas p-4">
-            <span className="text-sm font-semibold">{t('side.emptyTitle')}</span>
-            <ProgressBar value={0} />
-            <Link
-              to={info}
-              className="inline-flex min-h-11 items-center self-start text-sm font-medium text-primary-text"
-            >
-              {t('side.fill')}
-            </Link>
-          </div>
-        ) : (
-          <>
-            {GROUPS.map((group) => {
-              const rows = group.keys
-                .map((key) => byKey.get(key))
-                .filter((item): item is ProfileItem => item !== undefined)
-                .map((item) => ({
-                  label: t(`customer.profile.key.${item.key}`),
-                  value: value(item),
-                }));
-              return rows.length > 0 ? (
-                <Rows key={group.id} label={t(`side.${group.id}`)} rows={rows} />
-              ) : null;
-            })}
-            {filled < ALL && (
-              <span className="text-xs text-text-2">
-                {t('side.filled', { n: f.number(filled), all: f.number(ALL) })}
+        <div className="flex flex-col gap-3">
+          <Rows
+            label={t('side.contact')}
+            rows={[
+              { label: t('side.phone'), value: f.digits(maskPhone(customer.phone)), ltr: true },
+              ...(customer.email
+                ? [{ label: t('side.email'), value: customer.email, ltr: true }]
+                : []),
+              ...(customer.lead
+                ? [{ label: t('side.source'), value: t(`source.${customer.lead.source}`) }]
+                : []),
+            ]}
+          />
+          {filled === 0 ? (
+            <div className="flex flex-col gap-2 rounded-2xl bg-canvas p-4">
+              <span className="text-sm font-semibold">{t('side.emptyTitle')}</span>
+              <ProgressBar value={0} />
+              <Link
+                to={info}
+                className="inline-flex min-h-11 items-center self-start text-sm font-medium text-primary-text"
+              >
+                {t('side.fill')}
+              </Link>
+            </div>
+          ) : (
+            <>
+              {GROUPS.map((group) => {
+                const rows = group.keys
+                  .map((key) => byKey.get(key))
+                  .filter((item): item is ProfileItem => item !== undefined)
+                  .map((item) => ({
+                    label: t(`customer.profile.key.${item.key}`),
+                    value: value(item),
+                  }));
+                return rows.length > 0 ? (
+                  <Rows key={group.id} label={t(`side.${group.id}`)} rows={rows} />
+                ) : null;
+              })}
+              {filled < ALL && (
+                <span className="text-xs text-text-2">
+                  {t('side.filled', { n: f.number(filled), all: f.number(ALL) })}
+                </span>
+              )}
+            </>
+          )}
+          {team.length > 0 && <Rows label={t('side.team')} rows={team} />}
+          {customer.review_files.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-text-2">
+                {t('customer.reviewFiles.title')}
               </span>
-            )}
-          </>
-        )}
-        {team.length > 0 && <Rows label={t('side.team')} rows={team} />}
-        {customer.review_files.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-text-2">
-              {t('customer.reviewFiles.title')}
-            </span>
-            <ul className="m-0 flex list-none flex-col p-0">
-              {customer.review_files.map((file) => (
-                <li key={file.id} className="flex items-center justify-between gap-3 text-sm">
-                  <a
-                    href={safeHref(file.url)}
-                    target="_blank"
-                    rel="noopener"
-                    aria-label={t('customer.reviewFiles.open', { kind: file.kind })}
-                    className="inline-flex min-h-11 items-center font-medium text-primary-text"
-                  >
-                    {file.kind}
-                  </a>
-                  <span className="text-text-2">{f.dateShort(file.uploaded_at)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+              <ul className="m-0 flex list-none flex-col p-0">
+                {customer.review_files.map((file) => (
+                  <li key={file.id} className="flex items-center justify-between gap-3 text-sm">
+                    <a
+                      href={safeHref(file.url)}
+                      target="_blank"
+                      rel="noopener"
+                      aria-label={t('customer.reviewFiles.open', { kind: file.kind })}
+                      className="inline-flex min-h-11 items-center font-medium text-primary-text"
+                    >
+                      {file.kind}
+                    </a>
+                    <span className="text-text-2">{f.dateShort(file.uploaded_at)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </SectionCard>
       <Notebook
         url={`${SALES_API}/customers/${String(customer.id)}/notes/`}
@@ -146,15 +149,15 @@ function Rows({
   rows: { label: string; value: string; ltr?: boolean }[];
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-xs font-semibold text-text-2">{label}</span>
-      <dl className="m-0 flex flex-col gap-2">
+    <div className="flex flex-col gap-1 pt-3 shadow-[inset_0_1px_0_var(--hair)] first:pt-0 first:shadow-none">
+      <span className="text-xs font-bold text-primary-text">{label}</span>
+      <dl className="m-0 flex flex-col">
         {rows.map((row) => (
-          <div key={row.label} className="flex items-baseline justify-between gap-3 text-sm">
+          <div key={row.label} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
             <dt className="flex-none text-text-2">{row.label}</dt>
             <dd
               dir={row.ltr ? 'ltr' : undefined}
-              className="m-0 min-w-0 text-end font-medium break-words"
+              className="m-0 min-w-0 text-end font-semibold break-words"
             >
               {row.value}
             </dd>

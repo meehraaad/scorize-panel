@@ -61,8 +61,11 @@ interface StepBarProps {
   current: number;
   /** The current step is finished as well (visa granted, file closed). */
   finished?: boolean;
-  /** `onHero`: on the dark case card; `luxe`: on a luxe card (the current step in gold). */
-  tone?: 'surface' | 'onHero' | 'luxe';
+  /**
+   * `onHero`: on the dark case card; `luxe`: on a luxe card (the current step in gold);
+   * `plum`: on the page, the steps so far in light plum and the current one in plum.
+   */
+  tone?: 'surface' | 'onHero' | 'luxe' | 'plum';
   className?: string;
 }
 
@@ -75,17 +78,21 @@ export function StepBar({
   tone = 'surface',
   className = '',
 }: StepBarProps) {
-  const hero = tone !== 'surface';
+  const hero = tone === 'onHero' || tone === 'luxe';
   const bar: Record<StepState, string> = hero
     ? {
         done: 'bg-on-hero',
         current: tone === 'luxe' ? GOLD : 'bg-hero-current',
         todo: 'bg-hero-line',
       }
-    : { done: 'bg-primary', current: 'bg-hero-current', todo: 'bg-track' };
+    : tone === 'plum'
+      ? { done: 'bg-primary/35', current: 'bg-primary', todo: 'bg-track' }
+      : { done: 'bg-primary', current: 'bg-hero-current', todo: 'bg-track' };
   const text: Record<StepState, string> = hero
     ? { done: 'text-on-hero-2', current: 'font-bold text-on-hero', todo: 'text-on-hero-3' }
-    : { done: 'text-text', current: 'font-bold text-text', todo: 'text-text-2' };
+    : tone === 'plum'
+      ? { done: 'text-text-2', current: 'font-bold text-primary-text', todo: 'text-text-2' }
+      : { done: 'text-text', current: 'font-bold text-text', todo: 'text-text-2' };
   // No step reached yet: every step reads as plainly as the others (what the journey holds).
   const overview = current < 0;
 
@@ -105,7 +112,7 @@ export function StepBar({
           >
             <span
               aria-hidden="true"
-              className={`h-1 rounded-full ${overview ? (hero ? 'bg-hero-line' : 'bg-track') : bar[state]}`}
+              className={`${tone === 'plum' ? 'h-[5px]' : 'h-1'} rounded-full ${overview ? (hero ? 'bg-hero-line' : 'bg-track') : bar[state]}`}
             />
             <span
               className={`truncate text-[11px] lg:text-sm ${
@@ -213,7 +220,7 @@ export function ProgressRing({
 }) {
   const radius = 27;
   const circumference = 2 * Math.PI * radius;
-  const hero = tone !== 'surface';
+  const hero = tone === 'onHero' || tone === 'luxe';
   return (
     <svg
       role="img"

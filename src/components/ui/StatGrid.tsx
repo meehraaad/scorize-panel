@@ -16,20 +16,41 @@ export interface Stat {
   tone?: keyof typeof TONES;
 }
 
-/** A row of numbers in tiles (2 columns on phones, 4 on wide screens). */
-export function StatGrid({ label, stats }: { label: string; stats: readonly Stat[] }) {
+/**
+ * A row of numbers in tiles (2 columns on phones, 4 on wide screens). `compact`: smaller tiles
+ * that share one row however many there are (a tab's figures under a page header).
+ */
+export function StatGrid({
+  label,
+  stats,
+  compact = false,
+}: {
+  label: string;
+  stats: readonly Stat[];
+  compact?: boolean;
+}) {
   return (
     <section aria-label={label}>
-      <dl className="m-0 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
+      <dl
+        className={
+          compact
+            ? 'm-0 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3'
+            : 'm-0 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4'
+        }
+      >
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col gap-2 rounded-card-sm bg-surface p-4 shadow-panel lg:rounded-card lg:px-6 lg:py-[22px]"
+            className={
+              compact
+                ? 'flex flex-col gap-1 rounded-card-sm bg-surface px-[18px] py-4 shadow-panel'
+                : 'flex flex-col gap-2 rounded-card-sm bg-surface p-4 shadow-panel lg:rounded-card lg:px-6 lg:py-[22px]'
+            }
           >
             <dt className="text-sm text-text-2">{stat.label}</dt>
             <dd className="m-0 flex items-baseline gap-1.5">
               <span
-                className={`text-[26px] leading-none font-bold tabular-nums lg:text-[32px] ${TONES[stat.tone ?? 'default']}`}
+                className={`${compact ? 'text-[21px] leading-8 font-extrabold' : 'text-[26px] leading-none font-bold lg:text-[32px]'} tabular-nums ${TONES[stat.tone ?? 'default']}`}
               >
                 {stat.value}
               </span>

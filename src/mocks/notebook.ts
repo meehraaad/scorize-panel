@@ -60,7 +60,7 @@ export function notebookOf(user: number, me: string) {
 }
 
 export async function addToNotebook(user: number, me: string, role: NoteRole, request: Request) {
-  const body = (await request.json()) as { text?: string; about?: NoteAbout };
+  const body = (await request.json()) as { text?: string; about?: NoteAbout; pinned?: boolean };
   const text = body.text?.trim() ?? '';
   if (!text) return HttpResponse.json({ text: ['This field may not be blank.'] }, { status: 400 });
   const note: Note = {
@@ -68,7 +68,7 @@ export async function addToNotebook(user: number, me: string, role: NoteRole, re
     text,
     about: body.about ?? 'customer',
     role,
-    pinned: false,
+    pinned: body.pinned === true,
     author: me,
     imported: null,
     created_at: new Date().toISOString(),

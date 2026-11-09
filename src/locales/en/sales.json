@@ -456,7 +456,8 @@
         "done": "Done",
         "rejected": "Refused",
         "queued": "In team queue"
-      }
+      },
+      "add": "New task"
     },
     "team": {
       "writing": "Writing team",
@@ -517,7 +518,15 @@
         "assignFirst": "Lead given to {{title}} · {{author}}"
       },
       "system": "System",
-      "stageTag": "Stage: {{stage}}"
+      "stageTag": "Stage: {{stage}}",
+      "filter": "Show",
+      "filters": {
+        "all": "All",
+        "contact": "Calls and messages",
+        "money": "Money",
+        "team": "Team"
+      },
+      "emptyFilter": "Nothing of this kind."
     },
     "score": {
       "title": "Lead score",
@@ -632,7 +641,9 @@
     "firstCall": {
       "title": "Ask in the first call",
       "more": "and {{n}} more"
-    }
+    },
+    "message": "Message",
+    "sellerLine": "Seller: {{name}}"
   },
   "month": {
     "title": "My month · {{month}}",
@@ -847,7 +858,8 @@
     "group": {
       "consultation": "Consultations",
       "writing": "Writing",
-      "product": "Products and webinars"
+      "product": "Products and webinars",
+      "all": "All"
     },
     "add": {
       "consultation": "Book a consultation",
@@ -864,7 +876,9 @@
       "pending": "Awaiting payment",
       "failed": "Payment failed"
     },
-    "logSession": "Log session"
+    "logSession": "Log session",
+    "title": "Purchases",
+    "filter": "Show"
   },
   "payments": {
     "title": "Payments",
@@ -927,7 +941,6 @@
     }
   },
   "info": {
-    "aside": "About the details",
     "save": "Save",
     "done": "Saved",
     "choose": "Choose",
@@ -971,14 +984,7 @@
       "remove": "Remove test {{n}}"
     },
     "tablet": {
-      "title": "Customer in the office?",
-      "text": "Open the tablet form so they fill in their details, education and scores themselves. This page updates on its own.",
       "open": "Open the tablet form"
-    },
-    "similar": {
-      "title": "Similar cases",
-      "text": "Each change to degree or GPA updates the list of applicants with a similar background in the summary.",
-      "link": "See in the summary"
     },
     "notFound": "“{{value}}” wasn’t found. Write the name as it is on the site.",
     "choice": {
@@ -1014,7 +1020,8 @@
       "leaveText": "Your changes are being saved. If a section needs attention, close this dialog to correct it. Leaving before saving finishes will lose unsaved changes.",
       "stay": "Keep editing",
       "leave": "Leave without saving"
-    }
+    },
+    "shared": "Every change saves itself, and the whole team sees the same."
   },
   "apply": {
     "none": "This customer has no application file yet.",
@@ -1928,7 +1935,9 @@
     "wonBy": "Contract credited to",
     "emptyTitle": "We don't know their goal or background yet",
     "fill": "Fill in details",
-    "filled": "{{n}} of {{all}} filled in"
+    "filled": "{{n}} of {{all}} filled in",
+    "about": "About {{name}}",
+    "same": "The same for the whole team"
   },
   "next": {
     "label": "Next step",

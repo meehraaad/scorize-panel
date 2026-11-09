@@ -100,14 +100,16 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(await within(personal).findByText('همهٔ تغییرات ذخیره شد')).toBeInTheDocument();
   });
 
-  it('purchases: one row per Django invoice, by kind', async () => {
+  it('purchases: one row per Django invoice, filtered by kind', async () => {
+    const user = userEvent.setup();
     renderApp(`${ERFAN}/money`);
-    const writing = await screen.findByRole('region', { name: 'نگارش' });
-    expect(within(writing).getByText('نگارش رزومه')).toBeInTheDocument();
-    const consultations = screen.getByRole('region', { name: 'مشاوره‌ها' });
+    const purchases = await screen.findByRole('region', { name: 'خریدها' });
+    expect(within(purchases).getByText('نگارش رزومه')).toBeInTheDocument();
+    await user.click(within(purchases).getByRole('radio', { name: 'مشاوره' }));
+    expect(within(purchases).queryByText('نگارش رزومه')).not.toBeInTheDocument();
     // The paid session and the failed attempt.
-    expect(within(consultations).getAllByText('مشاوره‌ی اپلای ارشد')).toHaveLength(2);
-    expect(within(consultations).getByText('پرداخت ناموفق')).toBeInTheDocument();
+    expect(within(purchases).getAllByText('مشاوره‌ی اپلای ارشد')).toHaveLength(2);
+    expect(within(purchases).getByText('پرداخت ناموفق')).toBeInTheDocument();
   });
 
   it('old purchases and payments addresses open the one contract-and-money tab', async () => {
@@ -131,9 +133,14 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(await within(notes).findByText(/پدرش هزینه را می‌دهد/)).toBeInTheDocument();
     expect(within(notes).getByText('یادداشت قدیمی فروش')).toBeInTheDocument();
     await user.type(within(notes).getByLabelText(/^یادداشت درباره‌ی/), 'تا آخر هفته خبر می‌دهد');
-    await user.click(within(notes).getByRole('button', { name: 'ذخیره' }));
+    await user.click(within(notes).getByRole('checkbox', { name: 'سنجاق' }));
+    await user.click(within(notes).getByRole('button', { name: 'ثبت' }));
     expect(await toasts().findByText('یادداشت ذخیره شد.')).toBeInTheDocument();
     expect(await within(notes).findByText('تا آخر هفته خبر می‌دهد')).toBeInTheDocument();
+    // Pinned when written.
+    expect(within(notes).getAllByRole('button', { name: 'برداشتن سنجاق' }).length).toBeGreaterThan(
+      0,
+    );
     // Mine: I can change it.
     await user.click(within(notes).getByRole('button', { name: 'ویرایش' }));
     expect(within(notes).getByLabelText('متن یادداشت')).toHaveValue('تا آخر هفته خبر می‌دهد');

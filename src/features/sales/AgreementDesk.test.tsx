@@ -145,7 +145,7 @@ describe('contract agreement desk (S62)', () => {
 
   it('no desk before the offer is sent', async () => {
     renderApp(MONEY);
-    await screen.findByRole('region', { name: 'نگارش' });
+    await screen.findByRole('region', { name: 'خریدها' });
     expect(screen.queryByRole('region', { name: 'توافق قرارداد' })).not.toBeInTheDocument();
   });
 });
