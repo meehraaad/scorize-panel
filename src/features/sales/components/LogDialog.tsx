@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode, type SubmitEvent } from 'react';
+import { Fragment, useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -43,7 +43,8 @@ const OUTCOMES = [
   'call_later',
   'wrong_number',
 ] as const satisfies readonly CallOutcome[];
-const FOLLOWS = ['evening', 'tomorrow', 'three', 'week', 'other'] as const;
+/** Quick follow-up times; anything further is a pick on the calendar. */
+const FOLLOWS = ['evening', 'tomorrow', 'three', 'other'] as const;
 /** Stages a contact can move a lead to (drafts and contracts come from the offer page). */
 const MOVABLE = ['contacted', 'consulted', 'offer', 'lost'] as const satisfies readonly LeadStage[];
 
@@ -163,6 +164,7 @@ export function LogDialog({
           : 'customer.logDialog.notesPlaceholder',
       )}
       hint={t('customer.logDialog.privateHint')}
+      rows={session ? 4 : 3}
       maxLength={5000}
       value={notes}
       onChange={change('notes')}
@@ -174,12 +176,13 @@ export function LogDialog({
     />
   );
   const customerFields = (
-    <div className="flex flex-col gap-2 rounded-card border border-hair bg-row-highlight p-4">
+    <div className="flex flex-col gap-1 rounded-card border border-hair bg-row-highlight p-4">
       <VoiceTextAreaField
         label={t('customer.logDialog.customerSummary')}
         hint={t('customer.logDialog.customerSummaryHint')}
         value={customerSummary}
         onChange={change('customerSummary')}
+        rows={2}
         maxLength={5000}
         transcribe={transcribeVoice}
         voiceEnabled={active && !log.isPending && !!voice.data?.enabled}
@@ -187,27 +190,33 @@ export function LogDialog({
         pendingTranscript={values.customerSummaryVoiceTranscript}
         onPendingTranscriptChange={change('customerSummaryVoiceTranscript')}
       />
-      {customer.email && !message && customerSummary.trim() && (
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
-          <input
-            type="checkbox"
-            checked={email}
-            onChange={(event) => change('email')(event.target.checked)}
-            className="size-[18px] accent-primary"
-          />
-          {t('customer.logDialog.emailSummary')}
-        </label>
-      )}
-      {customer.supports.summary_sms && !message && customerSummary.trim() && (
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
-          <input
-            type="checkbox"
-            checked={sms}
-            onChange={(event) => change('sms')(event.target.checked)}
-            className="size-[18px] accent-primary"
-          />
-          {t('customer.logDialog.smsSummary')}
-        </label>
+      {!message && (customer.email || customer.supports.summary_sms) && (
+        <div className="flex flex-wrap gap-x-5">
+          {customer.email && (
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-text-2">
+              <input
+                type="checkbox"
+                checked={email}
+                disabled={!customerSummary.trim()}
+                onChange={(event) => change('email')(event.target.checked)}
+                className="size-[18px] accent-primary"
+              />
+              {t('customer.logDialog.emailSummary')}
+            </label>
+          )}
+          {customer.supports.summary_sms && (
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-text-2">
+              <input
+                type="checkbox"
+                checked={sms}
+                disabled={!customerSummary.trim()}
+                onChange={(event) => change('sms')(event.target.checked)}
+                className="size-[18px] accent-primary"
+              />
+              {t('customer.logDialog.smsSummary')}
+            </label>
+          )}
+        </div>
       )}
     </div>
   );
@@ -216,19 +225,10 @@ export function LogDialog({
     <>
       {asksStage && (
         <StageStrip
-          name={customer.name}
           current={lead.stage}
           movable={stages}
           value={stage}
           onChange={change('stage')}
-          followText={
-            asksFollowUp && followAt
-              ? t('customer.logDialog.board.follow', {
-                  day: f.weekdayName(followAt),
-                  time: f.time(followAt),
-                })
-              : null
-          }
         />
       )}
       {lost && (
@@ -252,6 +252,16 @@ export function LogDialog({
             value,
             label: t(`customer.logDialog.followOption.${value}`),
           }))}
+          extra={
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className="inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <Icon name="calendar" size={16} />
+              {t('customer.logDialog.fromCalendar')}
+            </button>
+          }
           hint={
             followAt &&
             t('customer.logDialog.followNote', {
@@ -272,12 +282,6 @@ export function LogDialog({
           onChange={change('date')}
           error={checked && !followAt ? t('customer.logDialog.followDate') : undefined}
         />
-      )}
-      {asksFollowUp && (
-        <Button variant="outline" className="self-start" onClick={() => setPicking(true)}>
-          <Icon name="calendar" size={18} />
-          {t('customer.logDialog.fromCalendar')}
-        </Button>
       )}
       <Dialog
         open={picking}
@@ -332,7 +336,7 @@ export function LogDialog({
       {call && (
         <ChoiceGroup
           legend={t('customer.logDialog.outcome')}
-          look="tiles"
+          look="squares"
           value={outcome}
           onChange={change('outcome')}
           options={OUTCOMES.map((value) => ({
@@ -462,7 +466,7 @@ export function LogDialog({
         )
       }
     >
-      <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-6">
+      <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-5">
         {liveCall && start.via && (
           <CallSteps
             step={2}
@@ -473,11 +477,13 @@ export function LogDialog({
           <CallBrief customer={customer.id} />
         )}
         <fieldset disabled={log.isPending} className="contents">
-          {steps.map((step, index) => (
-            <Step key={step.key} number={index + 1} title={step.title}>
-              {step.body}
-            </Step>
-          ))}
+          {session
+            ? steps.map((step, index) => (
+                <Step key={step.key} number={index + 1} title={step.title}>
+                  {step.body}
+                </Step>
+              ))
+            : steps.map((step) => <Fragment key={step.key}>{step.body}</Fragment>)}
         </fieldset>
       </form>
     </FloatingPanel>

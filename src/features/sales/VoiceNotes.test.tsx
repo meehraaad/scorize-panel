@@ -34,7 +34,7 @@ class Recorder {
   }
 }
 
-function field(name = 'یادداشت') {
+function field(name = 'چه گذشت؟') {
   const wrapper = screen.getByLabelText(name).parentElement?.parentElement;
   if (!wrapper) throw new Error('Missing voice field');
   return within(wrapper);
@@ -66,7 +66,7 @@ describe('seller contact dictation', () => {
 
   it('adds speech directly to the field without losing notes typed while inference runs', async () => {
     const user = await open();
-    const notes = screen.getByLabelText('یادداشت');
+    const notes = screen.getByLabelText('چه گذشت؟');
     await user.type(notes, 'یادداشت قبلی');
     await user.upload(
       field().getByLabelText(label('upload'), { selector: 'input' }),
@@ -86,7 +86,7 @@ describe('seller contact dictation', () => {
     ).toHaveValue('');
   });
 
-  it.each(['یادداشت', 'یادداشت برای خود مشتری'])(
+  it.each(['چه گذشت؟', 'یادداشت برای خود مشتری'])(
     'keeps dictated %s in its own field and draft when minimized',
     async (name) => {
       const user = await open();
@@ -106,7 +106,7 @@ describe('seller contact dictation', () => {
         'متن قبلی\nبرای جلسهٔ بعد تماس بگیرید.',
       );
       expect(
-        screen.getByLabelText(name === 'یادداشت' ? 'یادداشت برای خود مشتری' : 'یادداشت'),
+        screen.getByLabelText(name === 'چه گذشت؟' ? 'یادداشت برای خود مشتری' : 'چه گذشت؟'),
       ).toHaveValue('');
     },
   );
@@ -165,13 +165,13 @@ describe('seller contact dictation', () => {
   it('shows a retryable failure without changing existing notes', async () => {
     server.use(http.get(`${PATH}:id/`, () => HttpResponse.json({ status: 'failed' })));
     const user = await open();
-    await user.type(screen.getByLabelText('یادداشت'), 'Keep this');
+    await user.type(screen.getByLabelText('چه گذشت؟'), 'Keep this');
     await user.upload(
       field().getByLabelText(label('upload'), { selector: 'input' }),
       new File(['audio'], 'note.wav', { type: 'audio/wav' }),
     );
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(label('error.failed')));
-    expect(screen.getByLabelText('یادداشت')).toHaveValue('Keep this');
+    expect(screen.getByLabelText('چه گذشت؟')).toHaveValue('Keep this');
     expect(field().getByRole('button', { name: label('upload') })).toBeEnabled();
   });
 });

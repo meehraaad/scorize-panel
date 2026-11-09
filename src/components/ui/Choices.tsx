@@ -9,6 +9,10 @@ const pill =
 const tile =
   'flex min-h-11 cursor-pointer flex-col gap-1 rounded-2xl px-4 py-3 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
+/** A short square: one label centred, four in a row on wider screens (call outcomes). */
+const square =
+  'flex min-h-16 cursor-pointer items-center justify-center rounded-2xl px-2 py-2 text-center text-[13px] leading-5 font-medium text-balance shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint has-checked:font-semibold has-checked:text-primary-text has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
+
 /** A card with a radio dot: a title and a line under it, checked = primary ring on the tint. */
 const card =
   'flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_2px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
@@ -20,6 +24,7 @@ const segment =
 const LOOKS = {
   pills: { list: 'flex flex-wrap gap-2', item: pill },
   tiles: { list: 'grid gap-2 sm:grid-cols-2', item: tile },
+  squares: { list: 'grid grid-cols-2 gap-2 sm:grid-cols-4', item: square },
   cards: { list: 'grid gap-2.5 sm:grid-cols-2', item: card },
   segmented: {
     list: 'grid auto-cols-fr grid-flow-col gap-1 self-start rounded-[14px] bg-track p-1 max-sm:w-full',
@@ -46,6 +51,7 @@ export function ChoiceGroup<T extends string>({
   look = 'pills',
   hint,
   hideLegend = false,
+  extra,
 }: {
   legend: string;
   options: readonly Choice<T>[];
@@ -53,12 +59,15 @@ export function ChoiceGroup<T extends string>({
   onChange: (value: T) => void;
   /**
    * `pills`: a wrapping row of short labels; `tiles`: a grid of labelled boxes; `cards`: tiles with
-   * a radio dot; `segmented`: a few short labels on one track.
+   * a radio dot; `squares`: short centred labels, four in a row; `segmented`: a few short labels
+   * on one track.
    */
   look?: keyof typeof LOOKS;
   /** Under the choices: what the pick does. */
   hint?: ReactNode;
   hideLegend?: boolean;
+  /** After the last choice, in the same row: a button that picks another way (the calendar). */
+  extra?: ReactNode;
 }) {
   const name = useId();
   return (
@@ -77,7 +86,7 @@ export function ChoiceGroup<T extends string>({
               onChange={() => onChange(option.value)}
               className="sr-only"
             />
-            {look === 'pills' || look === 'segmented' ? (
+            {look === 'pills' || look === 'segmented' || look === 'squares' ? (
               option.label
             ) : look === 'cards' ? (
               <>
@@ -106,6 +115,7 @@ export function ChoiceGroup<T extends string>({
             )}
           </label>
         ))}
+        {extra}
       </div>
       {hint && <span className="text-sm leading-6 text-text-2">{hint}</span>}
     </fieldset>
@@ -243,7 +253,7 @@ export function TextAreaField({
       id={id}
       rows={4}
       aria-describedby={hint ? `${id}-hint` : undefined}
-      className={`${box} resize-y py-3 leading-7 ${footer ? 'min-h-44 pb-16' : ''} ${className}`}
+      className={`${box} resize-y py-3 leading-7 ${footer ? `${(props.rows ?? 4) <= 3 ? 'min-h-36' : 'min-h-44'} pb-16` : ''} ${className}`}
       {...props}
     />
   );

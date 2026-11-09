@@ -100,7 +100,7 @@ describe('live seller calls', () => {
     await update(snapshot([call()]));
     expect(await screen.findByText('Ringing')).toBeInTheDocument();
     const dialog = screen.getByRole('dialog');
-    const notes = await within(dialog).findByLabelText('Notes');
+    const notes = await within(dialog).findByLabelText('What happened?');
     await browser.type(notes, 'Keep these notes');
     const answered = call({ status: 'connected', answered_at: new Date().toISOString() });
     await update(snapshot([answered]));
@@ -113,7 +113,7 @@ describe('live seller calls', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const resume = await screen.findByRole('button', { name: /Resume/ });
     await browser.click(resume);
-    expect(screen.getByLabelText('Notes')).toHaveValue('Keep these notes');
+    expect(screen.getByLabelText('What happened?')).toHaveValue('Keep these notes');
     await update(snapshot([{ ...answered, status: 'ended', ended_at: new Date().toISOString() }]));
     expect(await screen.findByText('Call ended')).toBeInTheDocument();
   });
@@ -131,14 +131,14 @@ describe('live seller calls', () => {
     mount();
     const dialog = await screen.findByRole('dialog', { name: '09121234567' });
     expect(within(dialog).getAllByText('09121234567').length).toBeGreaterThan(0);
-    expect(within(dialog).queryByLabelText('Notes')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('What happened?')).not.toBeInTheDocument();
     // The call's own number needs no field.
     expect(within(dialog).queryByLabelText('Mobile number')).not.toBeInTheDocument();
     await browser.click(within(dialog).getByRole('button', { name: 'Next: log the call' }));
     expect(within(dialog).getByText('Enter a first name.')).toBeInTheDocument();
     await browser.type(within(dialog).getByLabelText('First name'), 'Sara');
     await browser.click(within(dialog).getByRole('button', { name: 'Next: log the call' }));
-    expect(await screen.findByLabelText('Notes')).toBeInTheDocument();
+    expect(await screen.findByLabelText('What happened?')).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: '09121234567' })).not.toBeInTheDocument();
     expect(sent).toMatchObject({ first_name: 'Sara', phone: '09121234567', from_call: true });
   });
@@ -174,7 +174,7 @@ describe('live seller calls', () => {
     await browser.click(await within(dialog).findByRole('option', { name: /کیانا رضوی/ }));
     expect(within(dialog).getByRole('radio', { name: 'Yes, as their second phone' })).toBeChecked();
     await browser.click(within(dialog).getByRole('button', { name: /Next: log the call with/ }));
-    expect(await screen.findByLabelText('Notes')).toBeInTheDocument();
+    expect(await screen.findByLabelText('What happened?')).toBeInTheDocument();
     expect(kept).toEqual({ phone: '09121234567' });
   });
 

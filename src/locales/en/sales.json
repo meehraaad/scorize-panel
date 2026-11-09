@@ -559,9 +559,9 @@
       },
       "noAnswer": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
       "lostReason": "Reason for losing (required)",
-      "notes": "Notes",
+      "notes": "What happened?",
       "notesPlaceholder": "What did they say? What matters to them? What worries them?",
-      "followUp": "Next follow-up",
+      "followUp": "Next step",
       "followOption": {
         "evening": "This evening",
         "tomorrow": "Tomorrow",
@@ -571,7 +571,7 @@
       },
       "followNote": "A follow-up is made for you: {{when}}",
       "followDate": "Follow-up date and time",
-      "emailSummary": "Also email this customer summary",
+      "emailSummary": "Email it too",
       "send": "Send and record",
       "save": "Save and set follow-up",
       "saveLost": "Save and close the lead",
@@ -580,9 +580,9 @@
       "noAnswerToday": "A follow-up for tomorrow is made. The “unanswered call” SMS isn’t sent from the panel yet; send it yourself if needed.",
       "retryTask": "Call again; the last call wasn’t answered",
       "followTask": "Follow up after the last contact",
-      "privateHint": "Only staff can see these notes.",
+      "privateHint": "Only the team sees this.",
       "customerSummary": "Note for the customer",
-      "customerSummaryHint": "Saved with this contact and visible in the customer’s panel. Write your advice and next steps here.",
+      "customerSummaryHint": "The customer sees this in their panel.",
       "meetingTitle": "Log the session with {{name}}",
       "sessionWhen": "{{day}}, {{time}}",
       "sessionMinutes": "{{n}} min",
@@ -597,18 +597,17 @@
         "next": "Next step"
       },
       "board": {
-        "legend": "Where does it go on the board?",
-        "now": "It's here now",
+        "legend": "Where is it now?",
         "lost": "Lost",
+        "lostAsk": "Lost?",
         "moves": "The card moves to “{{stage}}”.",
         "stays": "The card stays in “{{stage}}”.",
-        "lostNote": "The lead closes and leaves the board.",
-        "follow": "{{day}} {{time}}"
+        "lostNote": "The lead closes and leaves the board."
       },
       "fromCalendar": "From the calendar",
       "calendarTitle": "When to follow up with {{name}}?",
       "calendarHint": "Tap a free spot; that time becomes the follow-up.",
-      "smsSummary": "Also text them (the note is in their panel)",
+      "smsSummary": "Text it too",
       "saveWithFollow": "Save · follow up {{day}} {{time}}"
     },
     "tabs": {

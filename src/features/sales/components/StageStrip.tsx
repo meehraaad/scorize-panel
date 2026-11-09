@@ -1,6 +1,5 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Icon } from '@/components/ui/Icon';
 import type { LeadStage } from '@/lib/sales/api';
 import type { ContactValues } from '@/lib/sales/contactDrafts';
 
@@ -12,28 +11,21 @@ type Choice = ContactValues['stage'];
 const PICKABLE = ['contacted', 'consulted', 'offer'] as const satisfies readonly Choice[];
 
 /**
- * Where the lead's card goes on the board, picked on a small copy of the board: one lane per
- * stage, the card in the chosen lane with its next follow-up. The current lane means "keep";
- * earlier lanes and the contract lanes (made from the offer page) can't be picked. "Lost" sits
- * apart under the lanes.
+ * Where the lead is now, on one segmented track of the board's stages. The current stage means
+ * "keep"; earlier stages and the contract ones (made from the offer page) can't be picked. "Lost?"
+ * is a quiet choice under the track. Canvas "پاپ‌آپ تماس", board 2.
  */
 export function StageStrip({
-  name,
   current,
   movable,
   value,
   onChange,
-  followText,
 }: {
-  /** The customer, on the card. */
-  name: string;
   current: LeadStage;
   /** Stages this log may move the lead to (forward ones and `lost`). */
   movable: readonly LeadStage[];
   value: Choice;
   onChange: (value: Choice) => void;
-  /** The follow-up the log creates, shown on the card; null when none. */
-  followText: string | null;
 }) {
   const { t } = useTranslation('sales');
   const group = useId();
@@ -51,8 +43,8 @@ export function StageStrip({
       <legend className="mb-3 p-0 text-sm font-semibold text-text-2">
         {t('customer.logDialog.board.legend')}
       </legend>
-      <div className="relative overflow-x-auto p-1">
-        <div className="flex gap-1.5">
+      <div className="overflow-x-auto">
+        <div className="grid min-w-max auto-cols-fr grid-flow-col gap-1 rounded-[14px] bg-track p-1">
           {LANES.map((lane) => {
             const isCurrent = lane === current;
             const option: Choice | null = isCurrent
@@ -62,11 +54,13 @@ export function StageStrip({
             return (
               <label
                 key={lane}
-                className={`relative flex min-h-32 w-20 flex-none flex-col gap-2 rounded-xl p-1.5 ${
-                  option
-                    ? 'cursor-pointer bg-board-lane hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus'
-                    : 'bg-board-lane opacity-45'
-                } ${chosen ? 'ring-2 ring-primary ring-inset' : ''}`}
+                className={`flex min-h-11 items-center justify-center rounded-[10px] px-3 text-center text-[13px] leading-5 whitespace-nowrap has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
+                  chosen
+                    ? 'bg-surface font-semibold text-text shadow-panel'
+                    : option
+                      ? 'cursor-pointer text-text-2 hover:text-text'
+                      : 'text-text-3'
+                }`}
               >
                 <input
                   type="radio"
@@ -77,44 +71,23 @@ export function StageStrip({
                   onChange={() => option && onChange(option)}
                   aria-label={t(`stage.${lane}`)}
                 />
-                <span
-                  className={`truncate px-1 pt-0.5 text-xs font-semibold ${chosen ? 'text-primary-text' : 'text-text-2'}`}
-                >
-                  {t(`stageShort.${lane}`)}
-                </span>
-                {chosen ? (
-                  <span className="flex flex-col gap-1.5 rounded-lg border border-hair bg-surface p-2 shadow-board-card">
-                    <span className="line-clamp-2 text-xs leading-5 font-semibold">{name}</span>
-                    {followText && (
-                      <span className="flex items-start gap-1 text-[11px] leading-4 text-text-2">
-                        <Icon name="clock" size={12} className="mt-0.5 flex-none" />
-                        {followText}
-                      </span>
-                    )}
-                  </span>
-                ) : (
-                  isCurrent && (
-                    <span className="rounded-lg border border-dashed border-line-3 p-2 text-[11px] leading-4 text-text-2">
-                      {t('customer.logDialog.board.now')}
-                    </span>
-                  )
-                )}
+                {t(`stageShort.${lane}`)}
               </label>
             );
           })}
         </div>
       </div>
       {movable.includes('lost') && (
-        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 self-start rounded-full px-4 text-sm font-medium text-danger shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-danger-tint has-checked:bg-danger-tint has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus">
+        <label className="-mt-1 inline-flex min-h-11 cursor-pointer items-center gap-1.5 self-start rounded-full px-3 text-[13px] text-text-2 underline-offset-4 hover:text-danger hover:underline has-checked:bg-danger-tint has-checked:font-semibold has-checked:text-danger has-checked:no-underline has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus">
           <input
             type="radio"
             name={group}
             className="sr-only"
             checked={lost}
             onChange={() => onChange('lost')}
+            aria-label={t('customer.logDialog.board.lost')}
           />
-          <Icon name="close" size={16} />
-          {t('customer.logDialog.board.lost')}
+          {t('customer.logDialog.board.lostAsk')}
         </label>
       )}
       <p id={noteId} aria-live="polite" className="m-0 text-[13px] leading-6 text-text-2">

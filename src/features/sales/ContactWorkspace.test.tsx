@@ -13,7 +13,7 @@ function first<T>(items: T[]): T {
   if (item === undefined) throw new Error('Expected at least one item');
   return item;
 }
-const notes = () => within(screen.getByRole('dialog')).getByLabelText('یادداشت');
+const notes = () => within(screen.getByRole('dialog')).getByLabelText('چه گذشت؟');
 
 const minimize = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(
@@ -51,7 +51,7 @@ describe('persistent contact workspace', () => {
     expect(screen.getByRole('dialog', { name: 'ثبت ارتباط با پویا عسگری' })).toBeInTheDocument();
     await minimize(user);
     await user.click(resume);
-    expect(within(screen.getByRole('dialog')).getByLabelText('یادداشت')).toHaveValue(
+    expect(within(screen.getByRole('dialog')).getByLabelText('چه گذشت؟')).toHaveValue(
       'Follow up on funding',
     );
     await user.click(
@@ -62,7 +62,7 @@ describe('persistent contact workspace', () => {
       screen.queryByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ادامه‌ی ثبت ارتباط با پویا عسگری' }));
-    expect(within(screen.getByRole('dialog')).getByLabelText('یادداشت')).toHaveValue(
+    expect(within(screen.getByRole('dialog')).getByLabelText('چه گذشت؟')).toHaveValue(
       'Second customer',
     );
     await minimize(user);
@@ -81,7 +81,7 @@ describe('persistent contact workspace', () => {
     );
     renderApp('/sales/customers/105?log=call');
     let dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
-    await user.type(within(dialog).getByLabelText('یادداشت'), 'Keep this draft');
+    await user.type(within(dialog).getByLabelText('چه گذشت؟'), 'Keep this draft');
     await user.type(
       within(dialog).getByLabelText(i18n.t('customer.logDialog.customerSummary', { ns: 'sales' })),
       'Customer-facing summary',
@@ -91,7 +91,7 @@ describe('persistent contact workspace', () => {
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: /^ثبت · پیگیری/ })).toBeEnabled(),
     );
-    expect(within(dialog).getByLabelText('یادداشت')).toHaveValue('Keep this draft');
+    expect(within(dialog).getByLabelText('چه گذشت؟')).toHaveValue('Keep this draft');
     await minimize(user);
     // A reload creates fresh module memory; preserve the tab's saved data while clearing it here.
     const saved = sessionStorage.getItem('scorize.contact-drafts.v1');
@@ -104,7 +104,7 @@ describe('persistent contact workspace', () => {
       await screen.findByRole('button', { name: 'ادامه‌ی ثبت ارتباط با عرفان ملکی' }),
     );
     dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
-    expect(within(dialog).getByLabelText('یادداشت')).toHaveValue('Keep this draft');
+    expect(within(dialog).getByLabelText('چه گذشت؟')).toHaveValue('Keep this draft');
     expect(
       within(dialog).getByLabelText(i18n.t('customer.logDialog.customerSummary', { ns: 'sales' })),
     ).toHaveValue('Customer-facing summary');
@@ -118,7 +118,7 @@ describe('persistent contact workspace', () => {
     expect(confirmation.closest('footer')).toBeVisible();
     expect(within(dialog).getAllByRole('button', { name: 'حذف پیش‌نویس' })).toHaveLength(1);
     await user.click(within(dialog).getByRole('button', { name: 'نگه داشتن پیش‌نویس' }));
-    expect(within(dialog).getByLabelText('یادداشت')).toHaveValue('Keep this draft');
+    expect(within(dialog).getByLabelText('چه گذشت؟')).toHaveValue('Keep this draft');
     await user.click(within(dialog).getByRole('button', { name: 'حذف پیش‌نویس' }));
     await user.click(first(within(dialog).getAllByRole('button', { name: 'حذف پیش‌نویس' })));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -212,7 +212,7 @@ describe('session log: the next step on the board', () => {
     await user.click(await screen.findByRole('button', { name: 'فهرست' }));
     await user.click(first(await screen.findAllByRole('button', { name: /^ثبت جلسه: / })));
     const dialog = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });
-    const board = await within(dialog).findByRole('group', { name: 'روی بورد کجا برود؟' });
+    const board = await within(dialog).findByRole('group', { name: 'کجای کار است؟' });
 
     expect(within(board).getByRole('radio', { name: 'مشاوره شد' })).toBeChecked();
     expect(within(board).getByRole('radio', { name: 'تماس گرفته شد' })).not.toBeChecked();
