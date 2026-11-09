@@ -4,7 +4,10 @@ import type {
   CommissionRule,
   CommissionRuleInput,
   AssignSettings,
+  ClauseChange,
+  ClauseEdit,
   ContractDraft,
+  DraftTerm,
   FunnelData,
   HealthData,
   HealthTeam,
@@ -19,6 +22,7 @@ import type {
 import { forbidden, notFound, pageOf, storage } from './session';
 import { failed, saveStages, stagesOf, stateOrError, type SalesState } from './sales';
 import { openHandoff } from './handoff';
+import { STANDARD_CLAUSES } from './salesCustomer';
 
 /**
  * Fake sales-manager API (docs/backend-changes.md S34–S40, T12; the board's stages S48). Only Reza (user 4, with
@@ -37,6 +41,8 @@ interface ManagerState {
   /** Leads given out, by seller. */
   assigned: Map<number, number>;
   decided: Set<number>;
+  /** What the manager saw when returning an offer (Django's `SalesOffer.reviewed`), by lead. */
+  reviewed: Map<number, { terms: Partial<Record<DraftTerm, string>>; clauses: ClauseEdit[] }>;
   reminded: Set<number>;
   oldest: HealthData['oldest'];
 }
@@ -111,6 +117,7 @@ const managerState = (): ManagerState => ({
   ],
   assigned: new Map(),
   decided: new Set(),
+  reviewed: new Map(),
   reminded: new Set(),
   oldest: [
     {
@@ -310,6 +317,34 @@ const sellers = (state: ManagerState): AssignData['sellers'] => {
   ];
 };
 
+/** Django's `terms_lines`: after a return, what each changed line said then. */
+function termsWithPrevious(
+  before: Partial<Record<DraftTerm, string>> | undefined,
+  lines: { key: DraftTerm; value: string }[],
+): ContractDraft['terms'] {
+  return lines.map((line) => {
+    const then = before?.[line.key];
+    return { ...line, previous: then !== undefined && then !== line.value ? then : null };
+  });
+}
+
+/** Django's `review_rows`: each edit with the standard text it changes. */
+function clauseChanges(edits: ClauseEdit[], reviewed: ClauseEdit[] | undefined): ClauseChange[] {
+  const same = (a: ClauseEdit, b: ClauseEdit) =>
+    a.clause === b.clause && a.title === b.title && a.text === b.text && a.removed === b.removed;
+  return edits.map((edit) => {
+    const base = STANDARD_CLAUSES.find((clause) => clause.id === edit.clause);
+    return {
+      kind: edit.clause === null ? 'added' : edit.removed ? 'removed' : 'changed',
+      title: edit.title,
+      text: edit.text,
+      base_title: base?.title ?? null,
+      base_text: base?.text ?? null,
+      since_review: reviewed !== undefined && !reviewed.some((before) => same(before, edit)),
+    };
+  });
+}
+
 function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
   const fromLeads = sales.customers
     .filter((item) => item.lead.stage === 'draft' && !state.decided.has(item.lead.id))
@@ -325,18 +360,19 @@ function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
         seller: 'نیما رستمی',
         discount,
         meta: `${item.countries.join('، ')} · فروشنده: نیما رستمی`,
-        terms: [
+        terms: termsWithPrevious(state.reviewed.get(item.lead.id)?.terms, [
           { key: 'services', value: offer ? offer.features.join('، ') : 'پذیرش و ویزا' },
-          { key: 'degree', value: `ارشد · ${item.countries.join('، ')}` },
+          { key: 'degree', value: 'ارشد' },
+          { key: 'countries', value: (offer?.countries ?? item.countries).join('، ') },
           { key: 'applies', value: String(offer?.applies ?? 8) },
           { key: 'period', value: `${String(offer?.months ?? 12)} ماه` },
           {
             key: 'amount',
             value: `${String(Math.round((item.lead.amount ?? 0) / 1_000_000))} میلیون تومان`,
           },
-          { key: 'instalments', value: `${String(offer?.instalments ?? 3)} قسط` },
+          { key: 'instalments', value: `${String(offer?.schedule.length ?? 3)} قسط` },
           { key: 'language', value: offer?.language_score || 'IELTS 6' },
-        ],
+        ]),
         checks: [
           discount > 10
             ? { ok: false, text: `تخفیف ${String(discount)}٪ از سقف ۱۰٪ فروشنده بیشتر است` }
@@ -346,6 +382,9 @@ function draftsOf(sales: SalesState, state: ManagerState): ContractDraft[] {
         ],
         note:
           offer?.manager_note || 'ددلاین‌ها از بهمن شروع می‌شود؛ تخفیف برای بستن همین هفته است.',
+        clauses: clauseChanges(offer?.clauses ?? [], state.reviewed.get(item.lead.id)?.clauses),
+        standard_clauses: STANDARD_CLAUSES.length,
+        resubmitted: state.reviewed.has(item.lead.id),
       };
     });
   return fromLeads;
@@ -712,12 +751,21 @@ export const managerHandlers = [
     const { action, comment } = (await request.json()) as { action: string; comment: string };
     if (action !== 'approve' && !comment.trim())
       return HttpResponse.json({ comment: ['required'] }, { status: 400 });
-    data.manager.decided.add(item.lead.id);
+    if (action === 'return') {
+      const draft = draftsOf(data.sales, data.manager).find((entry) => entry.id === item.lead.id);
+      data.manager.reviewed.set(item.lead.id, {
+        terms: Object.fromEntries((draft?.terms ?? []).map((term) => [term.key, term.value])),
+        clauses: data.sales.offers.get(item.id)?.clauses ?? [],
+      });
+    }
+    // A returned offer comes back to this list when the seller sends it again.
+    if (action !== 'return') data.manager.decided.add(item.lead.id);
     item.lead.manager = false;
     item.lead.stage_since = new Date().toISOString();
     if (action === 'approve') {
       item.lead.stage = 'won';
-      openHandoff(item.id, item.name, item.lead.amount ?? 0, item.countries);
+      const schedule = data.sales.offers.get(item.id)?.schedule;
+      openHandoff(item.id, item.name, item.lead.amount ?? 0, item.countries, schedule);
     } else if (action === 'return') item.lead.stage = 'offer';
     else {
       item.lead.stage = 'lost';

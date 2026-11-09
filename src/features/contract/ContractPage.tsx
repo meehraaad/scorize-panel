@@ -5,6 +5,7 @@ import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { accessQuery, lockOf } from '@/lib/applicant/access';
 import { contractQuery, type ContractData } from './api';
+import { ClausesCard } from './components/ClausesCard';
 import { ContractAside } from './components/ContractAside';
 import { ContractHero } from './components/ContractHero';
 import { GuestContract } from './components/guest/GuestContract';
@@ -41,6 +42,7 @@ export default function ContractPage() {
         main={<InstallmentsCard contract={contract} />}
         aside={<ContractAside contract={contract} />}
       />
+      <ClausesCard contract={contract} />
       <ProfileCard contract={contract} />
     </>
   );

@@ -1098,16 +1098,7 @@
     "noDiscount": "No discount",
     "discountManager": "{{n}} (manager approval)",
     "managerNeeded": "A discount above {{n}} needs the sales manager's approval. The offer also goes to the manager before the customer sees it.",
-    "instalments": "Instalments",
-    "once": "One payment",
-    "count": "{{n}} instalments",
-    "plan": {
-      "number": "No.",
-      "due": "Due",
-      "amount": "Amount",
-      "atSigning": "At signing"
-    },
-    "note": "4. Note for the manager",
+    "note": "5. Note for the manager",
     "noteLabel": "Only the sales manager sees this",
     "preview": "What the customer sees in their panel",
     "contractOf": "{{features}} contract",
@@ -1140,6 +1131,51 @@
     "done": {
       "save": "Draft saved.",
       "send": "Offer sent to the customer."
+    },
+    "schedule": {
+      "title": "Instalments (as agreed in the session)",
+      "hint": "Enter the amount, count and timing of each instalment as you agreed in the session. The first is the prepayment, paid at signing; the others on a date or after a step of the case.",
+      "prepayment": "Instalment 1 · prepayment",
+      "row": "Instalment {{n}}",
+      "when": "When it is paid",
+      "whenOption": {
+        "signing": "At signing",
+        "date": "On a date",
+        "admission": "After the admission",
+        "embassy": "After the embassy appointment",
+        "visa_process": "After the visa process starts",
+        "visa": "After the visa"
+      },
+      "date": "Date",
+      "amount": "Amount (toman)",
+      "remove": "Remove instalment {{n}}",
+      "add": "Add an instalment",
+      "spread": "Spread the rest over the instalments",
+      "total": "Instalments add up to {{sum}} of {{total}}",
+      "left": "{{amount}} left",
+      "over": "{{amount}} over the contract price",
+      "mismatch": "To send it, the instalments must add up to the contract price.",
+      "incomplete": "Each instalment needs an amount, and a dated one its date."
+    },
+    "clauses": {
+      "section": "4. Contract clauses",
+      "hint": "This is the standard contract. Edit or remove any clause you agreed differently with the customer, or add a new one. The sales manager reviews only the clauses you changed.",
+      "noStandard": "The standard contract hasn't been set up in the admin yet. You can add this customer's own clauses.",
+      "count": "{{changed}} clauses changed · {{added}} added",
+      "untitled": "Clause {{n}}",
+      "state": {
+        "changed": "Changed",
+        "removed": "Removed",
+        "added": "New clause"
+      },
+      "title": "Clause title",
+      "text": "Clause text",
+      "edit": "Edit {{name}}",
+      "done": "Close editing",
+      "restore": "Restore the standard text of {{name}}",
+      "remove": "Remove {{name}}",
+      "add": "Add a clause",
+      "incomplete": "Each clause needs a text, and a new one a title too."
     }
   },
   "manager": {
@@ -1215,7 +1251,8 @@
         "period": "Length",
         "amount": "Amount",
         "instalments": "Instalments",
-        "language": "Language score"
+        "language": "Language score",
+        "countries": "Countries"
       },
       "checks": "Automatic checks",
       "ok": "OK:",
@@ -1226,7 +1263,24 @@
       "commentRequired": "Write a note to return or reject.",
       "approve": "Approve and send to the customer's panel",
       "return": "Return to the seller",
-      "reject": "Reject {{name}}'s draft"
+      "reject": "Reject {{name}}'s draft",
+      "conflict": "Not approved: this customer has an open contract or the offer's terms no longer hold. See the checks or return it to the seller.",
+      "resubmitted": "This offer was returned once; what changed since is highlighted.",
+      "changed": "(changed)",
+      "previous": "Before: {{value}}",
+      "clauses": {
+        "title": "Changes to the contract text",
+        "summary": "{{n}} clauses differ from the standard contract; the rest of its {{standard}} clauses are unchanged.",
+        "none": "Every clause is as in the standard contract.",
+        "kind": {
+          "changed": "Changed",
+          "removed": "Removed",
+          "added": "New clause"
+        },
+        "sinceReview": "Changed after the return",
+        "addedText": "Added: ",
+        "removedText": "Removed: "
+      }
     },
     "team": {
       "title": "Sales team · {{month}}",
@@ -1626,7 +1680,8 @@
       "tooBig": "This file is {{size}}; the limit is {{max}}.",
       "badType": "Only PDF, JPG or PNG.",
       "error": "The contract scan wasn't sent"
-    }
+    },
+    "print": "Print the contract to sign"
   },
   "contactDraft": {
     "tray": "Unsaved calls and sessions",
@@ -1812,5 +1867,39 @@
   "money": {
     "emptyTitle": "No purchases yet",
     "empty": "Purchases, payments and the contract show here."
+  },
+  "print": {
+    "none": "-",
+    "noClauses": "The standard contract hasn't been set up in the admin yet; this copy has no clauses.",
+    "title": "Scorize services contract",
+    "meta": "Contract {{number}} · file {{file}} · approved {{date}}",
+    "parties": "The parties",
+    "first": "First party: Scorize",
+    "second": "Second party (applicant): {{name}} · national ID {{code}} · phone {{phone}} · email {{email}}",
+    "terms": "Subject and terms",
+    "services": "Services",
+    "degree": "Degree",
+    "countries": "Countries",
+    "applies": "Applications",
+    "period": "Length",
+    "periodValue": "From {{start}} to {{end}} ({{months}} months)",
+    "language": "Language score",
+    "languageValue": "{{score}} by {{date}}",
+    "payments": "Price and instalments: {{amount}}",
+    "instalment": "Instalment",
+    "when": "When",
+    "amount": "Amount",
+    "prepayment": "Prepayment",
+    "row": "Instalment {{n}}",
+    "atSigning": "At signing",
+    "clauses": "Contract clauses",
+    "clause": "Clause {{n}}. {{title}}",
+    "signatures": "Signatures",
+    "sign": {
+      "first": "Signature and stamp of the first party (Scorize)",
+      "second": "Signature of the second party (applicant)"
+    },
+    "signLine": "Name, signature and date",
+    "print": "Print"
   }
 }

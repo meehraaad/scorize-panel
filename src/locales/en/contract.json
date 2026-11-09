@@ -502,5 +502,9 @@
     "next": "After this",
     "sms": "A confirmation text was sent to you.",
     "call": "Our adviser will call you to arrange the next step."
+  },
+  "clauses": {
+    "title": "Contract text",
+    "subtitle": "{{n}} clauses, as approved for you"
   }
 }
