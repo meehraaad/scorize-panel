@@ -1638,7 +1638,6 @@
     "duration": "Call duration",
     "extension": "Extension {{extension}}",
     "unknown": "Unknown caller",
-    "noMatch": "No customer profile you can access matches this number. You can keep working while the call continues.",
     "dismiss": "Dismiss call",
     "resumeUnknown": "Show call from {{phone}}",
     "disconnected": "Live call updates are unavailable. The displayed call state may be out of date.",
@@ -1734,5 +1733,21 @@
       "due": "Due",
       "waiting": "Waiting on a condition"
     }
+  },
+  "unknownCall": {
+    "subtitle": "Take the caller's details to log the call right here.",
+    "who": "Who is calling?",
+    "mode": {
+      "new": "New customer",
+      "existing": "One of my customers"
+    },
+    "create": "Create customer and log the call",
+    "pick": "Log the call for this customer",
+    "notePlaceholder": "e.g. came from Instagram, asked about Canada",
+    "smsHint": "An account is made for the customer and they get the panel login SMS. If the number already has an account, that account becomes your customer.",
+    "created": "The customer's account was made and the login SMS sent.",
+    "addedExisting": "This number already had an account; it is now your customer.",
+    "otherSeller": "This number is {{seller}}'s customer. Talk to them or the sales manager.",
+    "otherSellerUnnamed": "This number is another seller's customer. Talk to the sales manager."
   }
 }

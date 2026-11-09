@@ -12,6 +12,7 @@ import type {
   LeadQuery,
   LeadsData,
   NewLead,
+  NewLeadAnswer,
   PaymentsData,
   PurchasesData,
 } from '@/features/sales/api';
@@ -130,7 +131,15 @@ export const salesStaffHandlers = [
   }),
   http.post(`${BASE}/leads/`, async ({ request }) => {
     const lead = (await request.json()) as NewLead;
-    return answer(() => createCustomer(lead), 201);
+    let made: NewLeadAnswer;
+    try {
+      made = await createCustomer(lead);
+    } catch (error) {
+      if (error instanceof ApiError)
+        return HttpResponse.json(error.body as object, { status: error.status });
+      throw error;
+    }
+    return HttpResponse.json(made, { status: made.existing ? 200 : 201 });
   }),
 
   http.get(`${BASE}/consultations/`, ({ request }) => {

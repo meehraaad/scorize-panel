@@ -118,13 +118,52 @@ describe('live seller calls', () => {
     expect(await screen.findByText('Call ended')).toBeInTheDocument();
   });
 
-  it('shows unknown callers without requesting an unrelated customer profile', async () => {
+  it('turns an unknown caller into a new customer and their session log in the same popup', async () => {
+    let sent: unknown = null;
+    server.use(
+      http.post('/api/sales/v1/leads/', async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json({ customer: 101, existing: false }, { status: 201 });
+      }),
+    );
     setPhoneSnapshot(3, snapshot([call({ customer: null })]));
+    const browser = userEvent.setup();
     mount();
     const dialog = await screen.findByRole('dialog', { name: 'Unknown caller' });
-    expect(within(dialog).getByText('09121234567')).toBeInTheDocument();
-    expect(within(dialog).getByText(/No customer profile/)).toBeInTheDocument();
+    expect(within(dialog).getAllByText('09121234567').length).toBeGreaterThan(0);
     expect(within(dialog).queryByLabelText('Notes')).not.toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Mobile number')).toHaveValue('09121234567');
+    await browser.click(
+      within(dialog).getByRole('button', { name: 'Create customer and log the call' }),
+    );
+    expect(within(dialog).getByText('Enter a first name.')).toBeInTheDocument();
+    await browser.type(within(dialog).getByLabelText('First name'), 'Sara');
+    await browser.click(
+      within(dialog).getByRole('button', { name: 'Create customer and log the call' }),
+    );
+    expect(await screen.findByLabelText('Notes')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Unknown caller' })).not.toBeInTheDocument();
+    expect(sent).toMatchObject({ first_name: 'Sara', phone: '09121234567', from_call: true });
+  });
+
+  it("tells the seller when an unknown caller is another seller's customer", async () => {
+    server.use(
+      http.post('/api/sales/v1/leads/', () =>
+        HttpResponse.json(
+          { detail: 'x', code: 'other_seller', seller: 'Reza Karimi' },
+          { status: 409 },
+        ),
+      ),
+    );
+    setPhoneSnapshot(3, snapshot([call({ customer: null })]));
+    const browser = userEvent.setup();
+    mount();
+    const dialog = await screen.findByRole('dialog', { name: 'Unknown caller' });
+    await browser.type(within(dialog).getByLabelText('First name'), 'Sara');
+    await browser.click(
+      within(dialog).getByRole('button', { name: 'Create customer and log the call' }),
+    );
+    expect(await within(dialog).findByText(/Reza Karimi/)).toBeInTheDocument();
   });
 
   it('does not open historical ended calls or reopen a dismissed unknown call on every poll', async () => {

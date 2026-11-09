@@ -179,23 +179,21 @@ export async function fetchLeads(query: LeadQuery, signal?: AbortSignal): Promis
 export type BulkChange =
   { stage: Exclude<LeadStage, 'lost' | 'draft' | 'won'> } | { follow_up_at: string };
 
-export interface NewLead {
-  first_name: string;
-  last_name: string;
-  phone: string;
-  note: string;
-}
+export type { NewLead, NewLeadAnswer } from '@/features/sales/api';
+import type { NewLead, NewLeadAnswer } from '@/features/sales/api';
 
 /**
  * A customer typed in by the seller (referral, walk-in): Django's UserViewSet.create (the crm
  * "new user"), with the note in UserInfo. Django can't make the lead itself yet (S14), so the
  * customer opens without one. Errors come back as `{phone: ['invalid' | 'exists']}`.
  */
-export async function createCustomer(lead: NewLead): Promise<{ customer: number }> {
+export async function createCustomer(lead: NewLead): Promise<NewLeadAnswer> {
   const users = `${STAFF_API}/users`;
   const found = await api<Page<DjangoUser>>(`${users}/?search=${encodeURIComponent(lead.phone)}`);
-  if (found.results.some((user) => user.phone_number === lead.phone))
-    throw new ApiError(400, { phone: ['exists'] });
+  const known = found.results.find((user) => user.phone_number === lead.phone);
+  // From a call, Django makes a known number this seller's lead instead of refusing it.
+  if (known && lead.from_call) return { customer: known.id, existing: true };
+  if (known) throw new ApiError(400, { phone: ['exists'] });
   let user: DjangoUser;
   try {
     user = await api<DjangoUser>(`${users}/`, {
@@ -209,5 +207,5 @@ export async function createCustomer(lead: NewLead): Promise<{ customer: number 
   }
   if (lead.note)
     await api(`${users}/${String(user.id)}/info/`, { method: 'POST', body: { notes: lead.note } });
-  return { customer: user.id };
+  return { customer: user.id, existing: false };
 }

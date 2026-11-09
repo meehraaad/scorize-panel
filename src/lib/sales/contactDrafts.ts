@@ -161,6 +161,42 @@ export function openContactLog(
   };
   commit({ ...state, drafts: [...state.drafts, draft], active: key, activeUnknown: null });
 }
+/** A live call's session log for `customer`: the call's own draft, opened with call defaults. */
+export function callDraft(call: ObservedCall, customer: number, name: string): ContactDraft {
+  return {
+    key: `pbx:${call.id}`,
+    customer,
+    name,
+    start: { channel: 'call' },
+    call,
+    values: {
+      channel: 'call',
+      outcome: 'talked',
+      stage: 'keep',
+      lostReason: '',
+      notes: '',
+      customerSummary: '',
+      follow: 'tomorrow',
+      date: '',
+      email: false,
+    },
+  };
+}
+
+/** An unknown caller the seller found or added: the call turns into that customer's session log. */
+export function attachUnknownCall(id: string, customer: number, name: string) {
+  const call = state.unknownCalls.find((item) => item.id === id);
+  if (!call) return;
+  const draft = callDraft(call, customer, name);
+  commit({
+    ...state,
+    unknownCalls: state.unknownCalls.filter((item) => item.id !== id),
+    drafts: [...state.drafts.filter((item) => item.key !== draft.key), draft],
+    active: draft.key,
+    activeUnknown: null,
+  });
+}
+
 export function updateContactDraft(key: string, change: Partial<ContactValues>) {
   commit({
     ...state,

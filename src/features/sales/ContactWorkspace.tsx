@@ -12,12 +12,12 @@ import {
   nameContactDraft,
   useContactDrafts,
   activateUnknownCall,
-  dismissUnknownCall,
   type ContactDraft,
 } from '@/lib/sales/contactDrafts';
 import { customerQuery } from './api';
 import { LogDialog } from './components/LogDialog';
 import { CallStatus } from './components/CallStatus';
+import { UnknownCallPanel } from './components/UnknownCallPanel';
 
 export default function ContactWorkspace() {
   const { t } = useTranslation('sales');
@@ -31,21 +31,7 @@ export default function ContactWorkspace() {
           <ContactForm draft={draft} active={draft.key === active} />
         </div>
       ))}
-      {unknown && (
-        <FloatingPanel
-          title={t('phoneCall.unknown')}
-          closeLabel={t('contactDraft.minimize')}
-          onClose={() => activateUnknownCall(null)}
-          footer={
-            <Button variant="outline" onClick={() => dismissUnknownCall(unknown.id)}>
-              {t('phoneCall.dismiss')}
-            </Button>
-          }
-        >
-          <CallStatus call={unknown} />
-          <Notice tone="info">{t('phoneCall.noMatch')}</Notice>
-        </FloatingPanel>
-      )}
+      {unknown && <UnknownCallPanel key={unknown.id} call={unknown} />}
       <aside
         aria-label={t('contactDraft.tray')}
         className={`fixed start-3 end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex max-h-32 flex-wrap gap-2 overflow-y-auto lg:start-5 lg:end-auto lg:bottom-5 lg:max-w-[calc(100vw-490px)] ${current || unknown ? 'hidden lg:flex' : ''}`}

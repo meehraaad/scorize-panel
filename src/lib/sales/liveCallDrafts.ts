@@ -1,6 +1,6 @@
 import { queryClient } from '@/lib/api/queryClient';
 import { sessionQuery } from '@/lib/auth/session';
-import { restoreContactDrafts, updateContactWorkspace } from './contactDrafts';
+import { callDraft, restoreContactDrafts, updateContactWorkspace } from './contactDrafts';
 import { isActiveCall, type ObservedCall, type PhoneSnapshot } from './phoneCalls';
 
 /** Update only call metadata: a new event must never overwrite a seller's notes or chosen outcome. */
@@ -40,7 +40,6 @@ export function syncPhoneCalls(
     for (const call of observed) {
       if (state.seenCalls.includes(call.id) || !isActiveCall(call) || !call.connected) continue;
       if (call.customer) {
-        const key = `pbx:${call.id}`;
         // Reuse an already-open manual call draft for this customer; never merge two physical calls.
         const manual = drafts.find(
           (draft) =>
@@ -53,28 +52,9 @@ export function syncPhoneCalls(
           drafts = drafts.map((draft) => (draft.key === manual.key ? { ...draft, call } : draft));
           active = manual.key;
         } else {
-          drafts = [
-            ...drafts,
-            {
-              key,
-              customer: call.customer.id,
-              name: call.customer.name,
-              start: { channel: 'call' },
-              call,
-              values: {
-                channel: 'call',
-                outcome: 'talked',
-                stage: 'keep',
-                lostReason: '',
-                notes: '',
-                customerSummary: '',
-                follow: 'tomorrow',
-                date: '',
-                email: false,
-              },
-            },
-          ];
-          active = key;
+          const draft = callDraft(call, call.customer.id, call.customer.name);
+          drafts = [...drafts, draft];
+          active = draft.key;
         }
         activeUnknown = null;
       } else {

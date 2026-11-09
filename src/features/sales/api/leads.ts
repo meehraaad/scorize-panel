@@ -164,6 +164,14 @@ export interface NewLead {
   last_name: string;
   phone: string;
   note: string;
+  /** From an unknown caller's popup: a number that has an account becomes this seller's (no SMS). */
+  from_call?: boolean;
+}
+
+/** `existing`: the number already had an account, so no welcome SMS went. */
+export interface NewLeadAnswer {
+  customer: number;
+  existing?: boolean;
 }
 
 /**
@@ -171,7 +179,7 @@ export interface NewLead {
  * and their lead (source `manual`, S14). Errors come back as `{phone: ['invalid' | 'exists']}`.
  */
 const createLead = (lead: NewLead) =>
-  api<{ customer: number }>(`${SALES_API}/leads/`, { method: 'POST', body: lead });
+  api<NewLeadAnswer>(`${SALES_API}/leads/`, { method: 'POST', body: lead });
 
 export function useCreateLead() {
   const client = useQueryClient();
