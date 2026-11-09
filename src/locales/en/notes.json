@@ -1,0 +1,34 @@
+{
+  "title": "Notes",
+  "list": "Notes",
+  "new": "Note about {{name}}",
+  "placeholder": "Write for the whole team…",
+  "save": "Save",
+  "cancel": "Cancel",
+  "saved": "Note saved.",
+  "error": "That didn't work. Try again.",
+  "empty": "No notes yet.",
+  "by": "{{author}} · {{role}}",
+  "removed": "Former staff",
+  "edited": "edited",
+  "edit": "Edit",
+  "editLabel": "Note text",
+  "pin": "Pin",
+  "unpin": "Unpin",
+  "about": {
+    "legend": "About",
+    "customer": "Customer",
+    "contract": "Contract"
+  },
+  "role": {
+    "sales": "Sales",
+    "supervisor": "Supervisor",
+    "manager": "Manager",
+    "staff": "Staff"
+  },
+  "imported": {
+    "crm": "Old sales note",
+    "supervisor": "Old supervisor note",
+    "manager": "Old case description"
+  }
+}

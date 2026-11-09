@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
+import { SelectField, TextAreaField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Notice } from '@/components/ui/Notice';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
@@ -19,13 +19,17 @@ import {
   useSaveOffer,
   type ContractFeature,
   type CustomerData,
+  type Instalment,
   type Offer,
   type OfferAction,
   type OfferOptions,
 } from './api';
+import { clausesComplete } from './clauses';
+import { ClauseEditor } from './components/ClauseEditor';
+import { ScheduleEditor } from './components/ScheduleEditor';
 import { useSalesFormat } from './format';
 import { customerPath } from './paths';
-import { instalmentPlan } from './plan';
+import { scheduleComplete, scheduleTotal, suggestedSchedule } from './plan';
 import { toast } from '@/lib/toast';
 
 const FLOW = ['draft', 'manager', 'panel', 'signed'] as const;
@@ -37,6 +41,15 @@ const nextMonth = () => {
   return `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
 };
 
+const priceOf = (offer: Pick<Offer, 'features' | 'discount'>, options: OfferOptions) =>
+  Math.round(
+    offer.features.reduce(
+      (sum, key) => sum + (options.features.find((item) => item.key === key)?.price ?? 0),
+      0,
+    ) *
+      (1 - offer.discount / 100),
+  );
+
 const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => ({
   features: ['admission'],
   degree: customer.headline.degree ?? options.degrees[0] ?? 2,
@@ -47,7 +60,12 @@ const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => 
   language_deadline: '',
   countries: customer.headline.countries.filter((country) => options.countries.includes(country)),
   discount: 0,
-  instalments: options.instalments.includes(3) ? 3 : (options.instalments[0] ?? 1),
+  schedule: suggestedSchedule(
+    priceOf({ features: ['admission'], discount: 0 }, options),
+    options.instalments.includes(3) ? 3 : (options.instalments[0] ?? 1),
+    nextMonth(),
+  ),
+  clauses: [],
   manager_note: '',
 });
 
@@ -67,21 +85,37 @@ export default function OfferPage() {
   const save = useSaveOffer(id);
   const { options } = data;
   const [offer, setOffer] = useState<Offer>(() => data.draft ?? startingOffer(customer, options));
+  // Until the seller edits the instalments, they follow the price and the start date; once edited
+  // (or saved before), they stay as agreed in the session.
+  const [custom, setCustom] = useState(data.draft !== null);
   const set = <K extends keyof Offer>(key: K, value: Offer[K]) =>
     setOffer((current) => ({ ...current, [key]: value }));
+  const setSchedule = (rows: Instalment[]) => {
+    setCustom(true);
+    set('schedule', rows);
+  };
 
   const price = (key: ContractFeature) =>
     options.features.find((item) => item.key === key)?.price ?? 0;
   const base = offer.features.reduce((sum, key) => sum + price(key), 0);
-  const total = Math.round(base * (1 - offer.discount / 100));
-  const plan = instalmentPlan(total, offer.instalments, offer.start);
+  const total = priceOf(offer, options);
+  const schedule = custom
+    ? offer.schedule
+    : suggestedSchedule(total, offer.schedule.length, offer.start);
   const needsManager = offer.discount > options.approval_above;
-  const valid = offer.features.length > 0 && offer.countries.length > 0 && offer.applies > 0;
+  const rowsDone = scheduleComplete(schedule) && clausesComplete(offer.clauses);
+  const addsUp = scheduleTotal(schedule) === total;
+  const valid =
+    offer.features.length > 0 &&
+    offer.countries.length > 0 &&
+    offer.applies > 0 &&
+    rowsDone &&
+    addsUp;
   const names = f.list(offer.features.map((key) => t(`apply.feature.${key}`)));
 
   const act = (action: OfferAction) =>
     save.mutate(
-      { offer, action },
+      { offer: { ...offer, schedule }, action },
       {
         onError: () => toast.error(t('error')),
         onSuccess: () => {
@@ -235,43 +269,20 @@ export default function OfferPage() {
                   {t('offer.managerNeeded', { n: s.percent(options.approval_above / 100) })}
                 </Notice>
               )}
-              <ChoiceGroup
-                legend={t('offer.instalments')}
-                value={String(offer.instalments)}
-                onChange={(value) => set('instalments', Number(value))}
-                options={options.instalments.map((count) => ({
-                  value: String(count),
-                  label: count === 1 ? t('offer.once') : t('offer.count', { n: f.number(count) }),
-                }))}
+              <ScheduleEditor schedule={schedule} total={total} onChange={setSchedule} />
+            </SectionCard>
+
+            <SectionCard
+              id="offer-clauses"
+              variant="panel"
+              size="lg"
+              title={t('offer.clauses.section')}
+            >
+              <ClauseEditor
+                standard={options.clauses}
+                edits={offer.clauses}
+                onChange={(edits) => set('clauses', edits)}
               />
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="text-[13px] text-text-2">
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {t('offer.plan.number')}
-                    </th>
-                    <th scope="col" className="py-2 text-start font-medium">
-                      {t('offer.plan.due')}
-                    </th>
-                    <th scope="col" className="py-2 text-end font-medium">
-                      {t('offer.plan.amount')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {plan.map((item, index) => (
-                    <tr key={index} className="shadow-[inset_0_1px_0_var(--hair)]">
-                      <td className="py-2.5">{f.number(index + 1)}</td>
-                      <td className="py-2.5">
-                        {item.due ? f.date(item.due) : t('offer.plan.atSigning')}
-                      </td>
-                      <td className="py-2.5 text-end font-semibold tabular-nums">
-                        {s.toman(item.amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </SectionCard>
 
             <SectionCard id="offer-note" variant="panel" size="lg" title={t('offer.note')}>
@@ -308,11 +319,11 @@ export default function OfferPage() {
                 )}
                 <span className="text-2xl font-bold tabular-nums">{s.toman(total)}</span>
                 <span className="text-xs text-on-hero-2">
-                  {offer.instalments <= 1
+                  {schedule.length <= 1
                     ? t('offer.planOnce')
                     : t('offer.planNote', {
-                        n: f.number(offer.instalments),
-                        first: s.toman(plan[0]?.amount ?? 0),
+                        n: f.number(schedule.length),
+                        first: s.toman(schedule[0]?.amount ?? 0),
                       })}
                 </span>
               </div>
@@ -350,10 +361,24 @@ export default function OfferPage() {
               >
                 {t('offer.send')}
               </Button>
-              <Button variant="outline" disabled={save.isPending} onClick={() => act('save')}>
+              <Button
+                variant="outline"
+                disabled={!rowsDone || save.isPending}
+                onClick={() => act('save')}
+              >
                 {t('offer.save')}
               </Button>
-              {!valid && <span className="text-xs text-text-2">{t('offer.incomplete')}</span>}
+              {!valid && (
+                <span className="text-xs text-text-2">
+                  {!clausesComplete(offer.clauses)
+                    ? t('offer.clauses.incomplete')
+                    : !rowsDone
+                      ? t('offer.schedule.incomplete')
+                      : !addsUp
+                        ? t('offer.schedule.mismatch')
+                        : t('offer.incomplete')}
+                </span>
+              )}
             </div>
           </>
         }

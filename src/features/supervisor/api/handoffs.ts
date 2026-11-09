@@ -4,8 +4,10 @@ import type { Degree } from '@/lib/applicant/approval';
 import { SUPERVISOR_API, SUPERVISOR_KEY } from './common';
 
 /**
- * New cases waiting for a supervisor (docs/backend-changes.md SV18, SV19), for managers with
- * `can_assign_supervisor`. Assigning starts the case: the contract becomes active.
+ * New cases waiting for a supervisor (docs/backend-changes.md SV18–SV20), for managers with
+ * `can_assign_supervisor`. Assigning starts the case: the contract becomes active. Cancelling one
+ * that won't start rejects the contract (409 while the prepayment is paid or its receipt in review:
+ * that is refunded in Django's admin).
  */
 export const ASSIGN_PERMISSION = 'can_assign_supervisor';
 
@@ -50,6 +52,15 @@ export const handoffsQuery = queryOptions({
   queryKey: [...SUPERVISOR_KEY, 'handoffs'],
   queryFn: ({ signal }) => api<HandoffsData>(`${SUPERVISOR_API}/handoffs/`, { signal }),
 });
+
+export function useCancelHandoff() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      api(`${SUPERVISOR_API}/handoffs/${String(id)}/cancel/`, { method: 'POST', body: { reason } }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SUPERVISOR_KEY }),
+  });
+}
 
 export function useAssignSupervisor() {
   const client = useQueryClient();

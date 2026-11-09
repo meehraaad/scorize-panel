@@ -418,9 +418,6 @@
   "customer": {
     "back": "My leads",
     "summary": "Customer summary",
-    "budget": "budget {{budget}}",
-    "meta": "Source: {{source}} · Seller: {{seller}}",
-    "followUp": "Next follow-up",
     "noFollowUp": "Not set",
     "lostBecause": "Lost: {{reason}}",
     "log": "Call and log",
@@ -488,9 +485,6 @@
     "history": {
       "title": "History",
       "subtitle": "Calls, messages, sessions, purchases and payments in one place",
-      "note": "Quick note",
-      "notePlaceholder": "E.g. his father pays; he'll answer by the end of the week",
-      "save": "Save",
       "more": "Older entries",
       "empty": "Nothing recorded yet.",
       "event": {
@@ -522,7 +516,6 @@
       "backgroundNoField": "{{degree}}, GPA {{gpa}}"
     },
     "profile": {
-      "title": "Profile",
       "key": {
         "current_degree": "Current degree",
         "wanted_degree": "Wanted degree",
@@ -534,16 +527,6 @@
         "military": "Military service",
         "referral": "How they found us"
       }
-    },
-    "purchases": {
-      "title": "Purchases and payments",
-      "status": {
-        "paid": "Paid",
-        "pending": "Awaiting payment",
-        "failed": "Failed"
-      },
-      "credit": "Wallet credit",
-      "none": "No purchases yet."
     },
     "logDialog": {
       "title": "Log contact with {{name}}",
@@ -615,10 +598,9 @@
     "tabs": {
       "label": "Customer page sections",
       "summary": "Summary",
-      "purchases": "Purchases and consultations",
-      "payments": "Payments",
       "info": "Details",
-      "apply": "Application file"
+      "apply": "File",
+      "money": "Contract and money"
     },
     "newSale": {
       "label": "New sale",
@@ -632,8 +614,10 @@
       "subtitle": "Sent from the panel; give them the result by phone.",
       "open": "Open {{kind}}"
     },
-    "firstContact": "First contact: {{name}}",
-    "wonBy": "Contract for: {{name}}"
+    "firstCall": {
+      "title": "Ask in the first call",
+      "more": "and {{n}} more"
+    }
   },
   "month": {
     "title": "My month · {{month}}",
@@ -1119,16 +1103,7 @@
     "noDiscount": "No discount",
     "discountManager": "{{n}} (manager approval)",
     "managerNeeded": "A discount above {{n}} needs the sales manager's approval. The offer also goes to the manager before the customer sees it.",
-    "instalments": "Instalments",
-    "once": "One payment",
-    "count": "{{n}} instalments",
-    "plan": {
-      "number": "No.",
-      "due": "Due",
-      "amount": "Amount",
-      "atSigning": "At signing"
-    },
-    "note": "4. Note for the manager",
+    "note": "5. Note for the manager",
     "noteLabel": "Only the sales manager sees this",
     "preview": "What the customer sees in their panel",
     "contractOf": "{{features}} contract",
@@ -1161,6 +1136,51 @@
     "done": {
       "save": "Draft saved.",
       "send": "Offer sent to the customer."
+    },
+    "schedule": {
+      "title": "Instalments (as agreed in the session)",
+      "hint": "Enter the amount, count and timing of each instalment as you agreed in the session. The first is the prepayment, paid at signing; the others on a date or after a step of the case.",
+      "prepayment": "Instalment 1 · prepayment",
+      "row": "Instalment {{n}}",
+      "when": "When it is paid",
+      "whenOption": {
+        "signing": "At signing",
+        "date": "On a date",
+        "admission": "After the admission",
+        "embassy": "After the embassy appointment",
+        "visa_process": "After the visa process starts",
+        "visa": "After the visa"
+      },
+      "date": "Date",
+      "amount": "Amount (toman)",
+      "remove": "Remove instalment {{n}}",
+      "add": "Add an instalment",
+      "spread": "Spread the rest over the instalments",
+      "total": "Instalments add up to {{sum}} of {{total}}",
+      "left": "{{amount}} left",
+      "over": "{{amount}} over the contract price",
+      "mismatch": "To send it, the instalments must add up to the contract price.",
+      "incomplete": "Each instalment needs an amount, and a dated one its date."
+    },
+    "clauses": {
+      "section": "4. Contract clauses",
+      "hint": "This is the standard contract. Edit or remove any clause you agreed differently with the customer, or add a new one. The sales manager reviews only the clauses you changed.",
+      "noStandard": "The standard contract hasn't been set up in the admin yet. You can add this customer's own clauses.",
+      "count": "{{changed}} clauses changed · {{added}} added",
+      "untitled": "Clause {{n}}",
+      "state": {
+        "changed": "Changed",
+        "removed": "Removed",
+        "added": "New clause"
+      },
+      "title": "Clause title",
+      "text": "Clause text",
+      "edit": "Edit {{name}}",
+      "done": "Close editing",
+      "restore": "Restore the standard text of {{name}}",
+      "remove": "Remove {{name}}",
+      "add": "Add a clause",
+      "incomplete": "Each clause needs a text, and a new one a title too."
     }
   },
   "manager": {
@@ -1249,7 +1269,8 @@
         "period": "Length",
         "amount": "Amount",
         "instalments": "Instalments",
-        "language": "Language score"
+        "language": "Language score",
+        "countries": "Countries"
       },
       "checks": "Automatic checks",
       "ok": "OK:",
@@ -1260,7 +1281,24 @@
       "commentRequired": "Write a note to return or reject.",
       "approve": "Approve and send to the customer's panel",
       "return": "Return to the seller",
-      "reject": "Reject {{name}}'s draft"
+      "reject": "Reject {{name}}'s draft",
+      "conflict": "Not approved: this customer has an open contract or the offer's terms no longer hold. See the checks or return it to the seller.",
+      "resubmitted": "This offer was returned once; what changed since is highlighted.",
+      "changed": "(changed)",
+      "previous": "Before: {{value}}",
+      "clauses": {
+        "title": "Changes to the contract text",
+        "summary": "{{n}} clauses differ from the standard contract; the rest of its {{standard}} clauses are unchanged.",
+        "none": "Every clause is as in the standard contract.",
+        "kind": {
+          "changed": "Changed",
+          "removed": "Removed",
+          "added": "New clause"
+        },
+        "sinceReview": "Changed after the return",
+        "addedText": "Added: ",
+        "removedText": "Removed: "
+      }
     },
     "team": {
       "title": "Sales team · {{month}}",
@@ -1660,7 +1698,8 @@
       "tooBig": "This file is {{size}}; the limit is {{max}}.",
       "badType": "Only PDF, JPG or PNG.",
       "error": "The contract scan wasn't sent"
-    }
+    },
+    "print": "Print the contract to sign"
   },
   "contactDraft": {
     "tray": "Unsaved calls and sessions",
@@ -1855,5 +1894,124 @@
     "at": "{{day}} {{time}}",
     "unpaid": "Unpaid: {{amount}} toman",
     "elsewhere": "Had a consultation with {{consultant}} · {{title}}, {{when}}"
+  },
+  "side": {
+    "title": "About the customer",
+    "open": "About the customer and notes",
+    "close": "Close",
+    "edit": "Edit",
+    "contact": "Contact",
+    "phone": "Mobile",
+    "email": "Email",
+    "source": "Source",
+    "goal": "Goal",
+    "background": "Background",
+    "more": "More",
+    "team": "Team",
+    "seller": "Seller",
+    "firstContact": "First contact",
+    "wonBy": "Contract credited to",
+    "emptyTitle": "We don't know their goal or background yet",
+    "fill": "Fill in details",
+    "filled": "{{n}} of {{all}} filled in"
+  },
+  "next": {
+    "label": "Next step",
+    "first": "First step",
+    "lost": "Lost",
+    "log": "Log a call",
+    "move": "Another time",
+    "set": "Set a follow-up"
+  },
+  "money": {
+    "emptyTitle": "No purchases yet",
+    "empty": "Purchases, payments and the contract show here."
+  },
+  "print": {
+    "none": "-",
+    "noClauses": "The standard contract hasn't been set up in the admin yet; this copy has no clauses.",
+    "title": "Scorize services contract",
+    "parties": "The parties",
+    "terms": "Contract summary",
+    "services": "Services",
+    "degree": "Degree",
+    "countries": "Countries",
+    "applies": "Applications",
+    "period": "Length",
+    "periodValue": "From {{start}} to {{end}} ({{months}} months)",
+    "language": "Language score",
+    "languageValue": "{{score}} by {{date}}",
+    "payments": "Price and instalments: {{amount}}",
+    "instalment": "Instalment",
+    "when": "When",
+    "amount": "Amount",
+    "prepayment": "Prepayment",
+    "row": "Instalment {{n}}",
+    "atSigning": "At signing",
+    "clauses": "Contract clauses",
+    "signatures": "Signatures",
+    "sign": {
+      "first": "Signature and stamp",
+      "second": "Signature and fingerprint"
+    },
+    "print": "Print",
+    "number": "Number",
+    "date": "Date",
+    "file": "File",
+    "version": "Version",
+    "firstLabel": "First party",
+    "secondLabel": "Second party",
+    "company": "Scorize",
+    "code": "National ID {{code}}",
+    "phone": "Phone {{phone}}",
+    "mark": "agreed",
+    "markLegend": " = changed for this contract",
+    "sellerSigns": "{{name}} · sales advisor",
+    "online": "Agreed online on version {{n}}",
+    "agreedBy": "{{who}} {{when}}",
+    "footer": "Contract {{number}} · version {{version}}",
+    "initials": "Second party's initials: .........."
+  },
+  "agreement": {
+    "title": "Contract agreement",
+    "version": "Version {{n}}",
+    "allAgreed": "Everyone agrees",
+    "waiting": "Waiting for the {{party}}",
+    "parties": "Who agreed",
+    "agreed": "agreed",
+    "notYet": "not yet",
+    "party": {
+      "seller": "seller",
+      "consultant": "session consultant",
+      "manager": "sales manager",
+      "customer": "customer"
+    },
+    "compare": {
+      "legend": "Compare with",
+      "previous": "Version {{n}}",
+      "standard": "Standard contract"
+    },
+    "noChanges": {
+      "previous": "Same as the previous version.",
+      "standard": "The standard contract, unchanged."
+    },
+    "changes": "Changes",
+    "remarks": "Questions and requests",
+    "from": "{{party}} · {{name}}",
+    "answer": "Answer",
+    "answerLabel": "Your answer",
+    "answered": "Answer sent.",
+    "unanswered": "Not answered",
+    "send": "Send",
+    "edit": "Edit the offer",
+    "review": "Review and approve",
+    "clause": "About",
+    "wholeOffer": "The whole offer",
+    "askLabel": "Question or change",
+    "ask": "Ask or suggest",
+    "asked": "Sent to the seller.",
+    "agree": "I agree with version {{n}}",
+    "youAgreed": "Your agreement is saved.",
+    "stale": "The offer just changed. Read the new version."
   }
 }

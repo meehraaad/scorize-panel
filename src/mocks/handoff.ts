@@ -1,7 +1,8 @@
 import { http, HttpResponse } from 'msw';
-import type { HandoffContract } from '@/features/sales/api';
+import type { ContractDocument, HandoffContract, Instalment } from '@/features/sales/api';
 import type { HandoffCase, HandoffSupervisor } from '@/features/supervisor/api';
 import { ERFAN, failed, stateOrError } from './sales';
+import { STANDARD_CLAUSES } from './salesCustomer';
 import { forbidden, notFound, storage } from './session';
 import { SUPERVISOR } from './supervisor';
 
@@ -39,6 +40,7 @@ function handoff(
   amount: number,
   countries: string[],
   extra: Partial<HandoffContract> = {},
+  schedule?: Instalment[],
 ): MockHandoff {
   nextId += 1;
   return {
@@ -50,10 +52,10 @@ function handoff(
       scans: [],
       prepayment: {
         payment_id: nextId + 2000,
-        amount: Math.round((amount * FIRST_SHARE) / ROUND) * ROUND,
+        amount: schedule?.[0]?.amount ?? Math.round((amount * FIRST_SHARE) / ROUND) * ROUND,
         status: 'unpaid',
       },
-      instalments: 3,
+      instalments: schedule?.length ?? 3,
       supervisors: [],
       ...extra,
     },
@@ -89,9 +91,15 @@ const seed = (): Map<number, MockHandoff> =>
 let handoffs: Map<number, MockHandoff> | null = null;
 const all = () => (handoffs ??= seed());
 
-/** Django's `open_case` on approval: the case file, instalments and the prepayment. */
-export function openHandoff(customer: number, name: string, amount: number, countries: string[]) {
-  all().set(customer, handoff(customer, name, amount, countries));
+/** Django's `open_case` on approval: the case file, the agreed instalments and the prepayment. */
+export function openHandoff(
+  customer: number,
+  name: string,
+  amount: number,
+  countries: string[],
+  schedule?: Instalment[],
+) {
+  all().set(customer, handoff(customer, name, amount, countries, {}, schedule));
 }
 
 export function resetHandoffMocks() {
@@ -156,6 +164,72 @@ export const handoffHandlers = [
         prepayment: contract.prepayment,
       }));
     return HttpResponse.json({ results, supervisors: SUPERVISORS });
+  }),
+
+  // S52: the approved contract to print and sign.
+  http.get(`${SALES}/customers/:id/contract/document/`, ({ params }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const item = all().get(Number(params.id));
+    if (!item) return notFound();
+    const { contract, row } = item;
+    const prepayment = contract.prepayment?.amount ?? 0;
+    const rest = Math.max(contract.instalments - 1, 0);
+    const later = rest ? Math.round((row.amount - prepayment) / rest) : 0;
+    const body: ContractDocument = {
+      number: contract.id,
+      file_id: String(contract.case),
+      approved_at: row.approved_at,
+      customer: { name: row.name, national_code: '0012345678', phone: row.phone, email: '' },
+      seller: row.seller,
+      features: row.features,
+      degrees: row.degrees,
+      countries: row.countries,
+      applies: 6,
+      start_date: '2026-12-01',
+      end_date: '2027-12-01',
+      months: 12,
+      language_score: 'IELTS 6.5',
+      language_deadline: '2027-03-01',
+      amount: row.amount,
+      installments: [
+        { id: 1, number: 0, amount: prepayment, due_date: null, condition: 'پیش پرداخت' },
+        ...Array.from({ length: rest }, (_, index) => ({
+          id: index + 2,
+          number: index + 1,
+          amount: later,
+          due_date: index === rest - 1 ? null : '2027-01-01',
+          condition: index === rest - 1 ? 'بعد از پذیرش' : null,
+        })),
+      ],
+      clauses: STANDARD_CLAUSES.map(({ title, text }) => ({ title, text })),
+      agreement: {
+        version: 2,
+        changed: STANDARD_CLAUSES.slice(0, 1).map(({ title }) => title),
+        parties: [
+          { party: 'seller', name: 'نیما رستمی', agreed_at: '2026-11-08T10:00:00Z' },
+          { party: 'customer', name: row.name, agreed_at: '2026-11-08T13:10:00Z' },
+          { party: 'manager', name: 'رضا', agreed_at: '2026-11-08T15:40:00Z' },
+        ],
+      },
+    };
+    return HttpResponse.json(body);
+  }),
+
+  // SV20: a case that won't start; refused while the prepayment is paid or in review.
+  http.post(`${SUPERVISOR_API}/handoffs/:id/cancel/`, async ({ params, request }) => {
+    if (!canAssign()) return forbidden();
+    const entry = [...all().entries()].find(
+      ([, item]) => item.contract.case === Number(params.id) && item.contract.state !== 'active',
+    );
+    if (!entry) return notFound();
+    const { reason } = (await request.json()) as { reason?: string };
+    if (!reason?.trim()) return HttpResponse.json({ reason: ['required'] }, { status: 400 });
+    const status = entry[1].contract.prepayment?.status;
+    if (status === 'paid' || status === 'review')
+      return HttpResponse.json({ detail: 'Refund it in the admin first.' }, { status: 409 });
+    all().delete(entry[0]);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.post(`${SUPERVISOR_API}/handoffs/:id/`, async ({ params, request }) => {

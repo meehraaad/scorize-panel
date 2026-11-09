@@ -51,7 +51,7 @@ export function CustomerTags({ customer }: { customer: CustomerData }) {
       <button
         type="button"
         onClick={() => setPicking(true)}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium text-on-hero-2 shadow-[inset_0_0_0_1px_var(--hero-line)] hover:bg-hero-raised hover:text-on-hero"
+        className="inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:text-text"
       >
         <Icon name="plus" size={16} />
         {tags.length ? t('tags.edit') : t('tags.add')}

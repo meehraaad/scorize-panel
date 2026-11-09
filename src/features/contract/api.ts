@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
+import type { Agreement } from '@/lib/agreement/api';
 import type { ContractFeature } from '@/lib/applicant/access';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
@@ -91,6 +92,8 @@ export interface ContractData {
   /** Turkey: when the pledge was signed with the SMS code. */
   pledge_signed_at: string | null;
   installments: Installment[];
+  /** The contract's text as approved for this case (S52); empty for older contracts. */
+  clauses: { title: string; text: string }[];
   profile: Record<ProfileField, string | null>;
   /** Fields the applicant may change (the rest are set by the team or the account). */
   editable: ProfileField[];
@@ -404,3 +407,30 @@ export function useRegisterCampaign() {
     ),
   );
 }
+
+/** The contract offer waiting for the customer's agreement (S62); null when there is none. */
+export const offerAgreementQuery = queryOptions({
+  queryKey: [...APPLICANT_KEY, 'offer'],
+  queryFn: ({ signal }) =>
+    api<{ agreement: Agreement | null }>(`${BASE}/offer/`, { signal }).then(
+      (data) => data.agreement,
+    ),
+});
+
+function useOfferChange<T>(mutationFn: (variables: T) => Promise<unknown>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSettled: () => client.invalidateQueries({ queryKey: offerAgreementQuery.queryKey }),
+  });
+}
+
+export const useAgreeToOffer = () =>
+  useOfferChange((version: number) =>
+    api(`${BASE}/offer/agree/`, { method: 'POST', body: { version } }),
+  );
+
+export const useAskAboutOffer = () =>
+  useOfferChange((body: { version: number; clause: string; text: string }) =>
+    api(`${BASE}/offer/remarks/`, { method: 'POST', body }),
+  );

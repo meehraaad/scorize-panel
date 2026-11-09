@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
-import { SelectField } from '@/components/ui/Choices';
+import { SelectField, TextAreaField } from '@/components/ui/Choices';
+import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -15,6 +16,7 @@ import { safeHref } from '@/lib/url';
 import {
   handoffsQuery,
   useAssignSupervisor,
+  useCancelHandoff,
   type HandoffCase,
   type HandoffSupervisor,
 } from './api';
@@ -27,8 +29,9 @@ const PAYMENT_TONE: Record<NonNullable<HandoffCase['prepayment']>['status'], Chi
 };
 
 /**
- * New cases from approved sales offers, waiting for a supervisor (SV18, SV19). A case can be
- * assigned once the signed contract is uploaded and the prepayment paid; that starts it.
+ * New cases from approved sales offers, waiting for a supervisor (SV18–SV20). A case can be
+ * assigned once the signed contract is uploaded and the prepayment paid; that starts it. One that
+ * won't start is cancelled with a reason, unless its prepayment is paid (refunded in the admin).
  */
 export default function HandoffsPage() {
   const { t } = useTranslation('supervisor');
@@ -76,7 +79,9 @@ function HandoffRow({
   const f = useFormat();
   const assign = useAssignSupervisor();
   const [chosen, setChosen] = useState(String(item.suggested ?? supervisors[0]?.id ?? ''));
+  const [cancelling, setCancelling] = useState(false);
   const ready = item.state === 'supervisor';
+  const money = item.prepayment?.status === 'paid' || item.prepayment?.status === 'review';
   const titleId = `handoff-${String(item.case)}`;
 
   const submit = () => {
@@ -172,9 +177,90 @@ function HandoffRow({
           {t('handoffs.assign')}
         </Button>
       </div>
-      {item.state !== 'supervisor' && (
-        <span className="text-xs text-text-2">{t(`handoffs.waiting.${item.state}`)}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {item.state !== 'supervisor' ? (
+          <span className="text-xs text-text-2">{t(`handoffs.waiting.${item.state}`)}</span>
+        ) : (
+          <span />
+        )}
+        <Button
+          variant="danger"
+          disabled={money}
+          onClick={() => setCancelling(true)}
+          aria-describedby={money ? `${titleId}-paid` : undefined}
+        >
+          {t('handoffs.cancel.open', { name: item.name })}
+        </Button>
+      </div>
+      {money && (
+        <span id={`${titleId}-paid`} className="text-xs text-text-2">
+          {t('handoffs.cancel.paid')}
+        </span>
       )}
+      <CancelDialog item={item} open={cancelling} onClose={() => setCancelling(false)} />
     </Card>
+  );
+}
+
+function CancelDialog({
+  item,
+  open,
+  onClose,
+}: {
+  item: HandoffCase;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('supervisor');
+  const cancel = useCancelHandoff();
+  const [reason, setReason] = useState('');
+  const [tried, setTried] = useState(false);
+
+  const submit = () => {
+    setTried(true);
+    if (!reason.trim()) return;
+    cancel.mutate(
+      { id: item.case, reason: reason.trim() },
+      {
+        onSuccess: () => {
+          toast.success(t('handoffs.cancel.done', { name: item.name }));
+          onClose();
+        },
+        onError: (error) =>
+          toast.error(
+            error instanceof ApiError && error.status === 409
+              ? t('handoffs.cancel.paid')
+              : t('saveError'),
+          ),
+      },
+    );
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('handoffs.cancel.title', { name: item.name })}
+      subtitle={t('handoffs.cancel.text')}
+      closeLabel={t('close')}
+      footer={
+        <div className="flex flex-wrap gap-2">
+          <Button variant="danger" disabled={cancel.isPending} onClick={submit}>
+            {t('handoffs.cancel.confirm', { name: item.name })}
+          </Button>
+          <Button variant="outline" onClick={onClose}>
+            {t('handoffs.cancel.keep')}
+          </Button>
+        </div>
+      }
+    >
+      <TextAreaField
+        label={t('handoffs.cancel.reason')}
+        rows={3}
+        value={reason}
+        onChange={(event) => setReason(event.target.value)}
+        hint={tried && !reason.trim() ? t('handoffs.cancel.reasonRequired') : undefined}
+      />
+    </Dialog>
   );
 }

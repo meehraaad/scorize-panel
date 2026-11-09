@@ -185,7 +185,7 @@ function InstalmentList({ instalments }: { instalments: TodayInstalments }) {
         {instalments.rows.map((row) => (
           <li key={row.id} className="shadow-[inset_0_1px_0_var(--hair)]">
             <Link
-              to={`${customerPath(row.customer)}/payments`}
+              to={`${customerPath(row.customer)}/money`}
               className="flex min-h-11 flex-col justify-center gap-0.5 py-2.5 text-text hover:text-primary-text"
             >
               <span className="text-[13px] leading-6 font-semibold">

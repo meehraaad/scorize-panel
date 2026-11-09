@@ -113,13 +113,13 @@ const PAGES: PageCase[] = [
     '/sales/month',
     '/sales/tasks',
     `/sales/customers/${String(ERFAN)}`,
-    `/sales/customers/${String(ERFAN)}/purchases`,
-    `/sales/customers/${String(ERFAN)}/payments`,
+    `/sales/customers/${String(ERFAN)}/money`,
     `/sales/customers/${String(ERFAN)}/info`,
     `/sales/customers/${String(ERFAN)}/apply`,
     `/sales/customers/${String(ERFAN)}/offer`,
     // An approved contract waiting for its signed scan (src/mocks/handoff.ts).
     '/sales/customers/112/apply',
+    '/sales/customers/112/contract',
   ].map((path) => ({ path, user: NIMA })),
   ...[
     '/sales/manager',

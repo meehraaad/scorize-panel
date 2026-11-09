@@ -5,6 +5,7 @@ import i18n from '@/lib/i18n';
 import { clearCaseChats } from '@/lib/supervisor/caseChats';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { SUPERVISOR_NAME } from '@/mocks/supervisor';
 
 const MARYAM = 2; // supervisor (src/mocks/supervisor.ts)
 const SARA_CASE = '/supervisor/files/1240';
@@ -92,23 +93,27 @@ describe('supervisor panel', () => {
     expect(await screen.findByText(/وضعیت پرونده را تغییر داد: پذیرش مونیخ/)).toBeInTheDocument();
   });
 
-  it('case overview: internal notes, the manager note read-only for a supervisor', async () => {
+  it('case overview: the shared notebook, with the old supervisor note moved in', async () => {
     const user = userEvent.setup();
     renderApp(SARA_CASE);
-    const notes = await screen.findByRole('region', { name: 'یادداشت‌های داخلی' });
-    expect(notes).toHaveTextContent('ترجیح متقاضی ایتالیاست');
-    // Maryam isn't a manager: only her own note has an edit button.
-    expect(
-      within(notes).queryByRole('button', { name: 'ویرایش یادداشت مدیر اجرایی' }),
-    ).not.toBeInTheDocument();
+    const notes = await screen.findByRole('region', { name: 'یادداشت‌ها' });
+    expect(await within(notes).findByText(/ترجیح متقاضی ایتالیاست/)).toBeInTheDocument();
+    expect(within(notes).getByText('یادداشت قدیمی سوپروایزر')).toBeInTheDocument();
+    // Not hers: no edit button, but anyone pins.
+    expect(within(notes).queryByRole('button', { name: 'ویرایش' })).not.toBeInTheDocument();
 
-    await user.click(within(notes).getByRole('button', { name: 'ویرایش یادداشت سوپروایزر' }));
-    const field = within(notes).getByLabelText('یادداشت سوپروایزر');
-    await user.clear(field);
-    await user.type(field, 'مدرک زبان تا آخر ماه می‌رسد');
-    await user.click(within(notes).getByRole('button', { name: 'ذخیره‌ی یادداشت' }));
-    expect(await screen.findByText(/ذخیره شد/)).toBeInTheDocument();
+    await user.type(
+      within(notes).getByLabelText(/^یادداشت درباره‌ی/),
+      'مدرک زبان تا آخر ماه می‌رسد',
+    );
+    await user.click(within(notes).getByRole('radio', { name: 'قرارداد' }));
+    await user.click(within(notes).getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText('یادداشت ذخیره شد.')).toBeInTheDocument();
     expect(await within(notes).findByText('مدرک زبان تا آخر ماه می‌رسد')).toBeInTheDocument();
+    expect(within(notes).getByText(`${SUPERVISOR_NAME} · سوپروایزر`)).toBeInTheDocument();
+
+    await user.click(within(notes).getAllByRole('button', { name: 'سنجاق کن' })[0] as HTMLElement);
+    expect(await within(notes).findByRole('button', { name: 'برداشتن سنجاق' })).toBeInTheDocument();
   });
 
   it('shows why the email bot is stuck, with a link to fix it', async () => {

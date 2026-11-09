@@ -263,6 +263,72 @@ describe('sales manager section', () => {
     ).toBeInTheDocument();
   });
 
+  it('the manager reviews only the clauses the seller changed, and after a return only what changed since', async () => {
+    const user = userEvent.setup();
+    loginAs(NIMA);
+    renderApp('/sales/customers/105/offer');
+    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
+    const clauses = screen.getByRole('region', { name: '۴. بندهای قرارداد' });
+    await user.click(within(clauses).getByRole('button', { name: 'ویرایش فسخ قرارداد' }));
+    const text = within(clauses).getByLabelText('متن بند');
+    await user.clear(text);
+    await user.type(
+      text,
+      'تا ۱۴ روز پس از امضا، با فسخ قرارداد کل مبلغ پرداختی بازگردانده می‌شود.',
+    );
+    await user.click(within(clauses).getByRole('button', { name: 'حذف تعهدات متقاضی' }));
+    expect(within(clauses).getByText('۲ بند تغییر کرده · ۰ بند اضافه شده')).toBeInTheDocument();
+    await user.click(within(clauses).getByRole('button', { name: 'افزودن بند' }));
+    await user.click(
+      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+    );
+    expect(screen.getByText('هر بند متن می‌خواهد و بند تازه عنوان هم.')).toBeInTheDocument();
+    await user.type(within(clauses).getByLabelText('عنوان بند'), 'بورسیه');
+    await user.type(within(clauses).getByLabelText('متن بند'), 'با بورسیه، قسط آخر ۱۰٪ کمتر.');
+    await user.click(
+      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+    );
+    await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
+
+    cleanup();
+    loginAs(REZA);
+    renderApp('/sales/manager/approvals');
+    await user.click(await screen.findByRole('button', { name: /^عرفان ملکی/ }));
+    const changes = await screen.findByRole('region', { name: 'تغییرات متن قرارداد' });
+    expect(within(changes).getByText(/۳ بند با قرارداد استاندارد فرق دارد/)).toBeInTheDocument();
+    // Word by word: the 7 days became 14, the rest is as the standard says.
+    expect(changes.querySelector('del')).toHaveTextContent('۷');
+    expect(changes.querySelector('ins')).toHaveTextContent('۱۴');
+    expect(within(changes).getByText('حذف شده')).toBeInTheDocument();
+    expect(within(changes).getByText('بند جدید')).toBeInTheDocument();
+    expect(within(changes).queryByText('موضوع قرارداد')).not.toBeInTheDocument(); // unchanged
+    await user.type(screen.getByLabelText(/توضیح برای فروشنده/), 'بند بورسیه را بردار');
+    await user.click(screen.getByRole('button', { name: 'بازگرداندن به فروشنده' }));
+
+    cleanup();
+    loginAs(NIMA);
+    renderApp('/sales/customers/105/offer');
+    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
+    await user.click(screen.getByRole('button', { name: 'حذف بورسیه' }));
+    const applies = screen.getByLabelText('تعداد اپلای');
+    await user.clear(applies);
+    await user.type(applies, '4');
+    await user.click(
+      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+    );
+    await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
+
+    cleanup();
+    loginAs(REZA);
+    renderApp('/sales/manager/approvals');
+    await user.click(await screen.findByRole('button', { name: /^عرفان ملکی/ }));
+    expect(await screen.findByText(/یک بار برگشت خورده/)).toBeInTheDocument();
+    expect(screen.getByText('قبلاً: 6')).toBeInTheDocument(); // the mock doesn't localize digits
+    const after = screen.getByRole('region', { name: 'تغییرات متن قرارداد' });
+    expect(within(after).getByText(/۲ بند با قرارداد استاندارد فرق دارد/)).toBeInTheDocument();
+    expect(within(after).queryByText('تغییر بعد از برگشت')).not.toBeInTheDocument();
+  });
+
   it('team report and follow-up health: remind and hand over an old task', async () => {
     const user = userEvent.setup();
     loginAs(REZA);

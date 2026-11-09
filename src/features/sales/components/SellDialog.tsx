@@ -99,7 +99,7 @@ export function SellDialog({
         onError: () => toast.error(t('error')),
         onSuccess: ({ payment }) => {
           onClose();
-          void navigate(`${customerPath(customer.id)}/payments?payment=${String(payment)}`);
+          void navigate(`${customerPath(customer.id)}/money?payment=${String(payment)}`);
         },
       },
     );

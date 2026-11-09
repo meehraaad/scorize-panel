@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
@@ -36,6 +36,31 @@ describe('contract handoff', () => {
     expect(within(card).getByText(/منتظر پیش‌پرداخت مشتری است/)).toBeInTheDocument();
   });
 
+  it('prints the approved contract to sign, with its clauses and instalments', async () => {
+    const user = userEvent.setup();
+    const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+    loginAs(NIMA);
+    const router = renderApp('/sales/customers/112/apply');
+    const card = await screen.findByRole('region', { name: 'قرارداد تا شروع پرونده' });
+    await user.click(within(card).getByRole('link', { name: 'چاپ قرارداد برای امضا' }));
+    const doc = await screen.findByRole('article', { name: 'قرارداد خدمات اسکورایز' });
+    expect(router.state.location.pathname).toBe('/sales/customers/112/contract');
+    const parties = within(doc).getByRole('region', { name: 'طرفین قرارداد' });
+    expect(within(parties).getByText('کیان مرادی')).toBeInTheDocument();
+    expect(within(doc).getByRole('heading', { name: 'فسخ قرارداد' })).toBeInTheDocument();
+    // The clause written for this customer is marked; who agreed online, on which version.
+    expect(within(doc).getAllByText('توافقی').length).toBeGreaterThan(0);
+    expect(
+      within(doc).getByRole('region', { name: 'موافقت آنلاین روی نسخه‌ی ۲' }),
+    ).toHaveTextContent('نیما رستمی');
+    const payments = within(doc).getByRole('region', { name: /^مبلغ و اقساط/ });
+    expect(within(payments).getByText('هنگام امضا')).toBeInTheDocument();
+    expect(within(payments).getByText('بعد از پذیرش')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'چاپ' }));
+    expect(print).toHaveBeenCalledOnce();
+    print.mockRestore();
+  });
+
   it('starts a ready case with the chosen supervisor; others wait', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
@@ -65,6 +90,28 @@ describe('contract handoff', () => {
     ).toBeInTheDocument();
     await screen.findByText(/۱ پرونده منتظر سوپروایزر/);
     expect(screen.queryByRole('region', { name: 'آرمان صادقی' })).not.toBeInTheDocument();
+  });
+
+  it('cancels a case that will not start, with a reason; not once it is prepaid', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/supervisor/new');
+    await screen.findByRole('heading', { name: 'پرونده‌های تازه', level: 1 });
+
+    // Prepaid: refunded in the admin first.
+    const paid = screen.getByRole('region', { name: 'آرمان صادقی' });
+    expect(within(paid).getByRole('button', { name: 'لغو پرونده‌ی آرمان صادقی' })).toBeDisabled();
+
+    const waiting = screen.getByRole('region', { name: 'کیان مرادی' });
+    await user.click(within(waiting).getByRole('button', { name: 'لغو پرونده‌ی کیان مرادی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'لغو پرونده‌ی کیان مرادی' });
+    await user.click(within(dialog).getByRole('button', { name: 'لغو پرونده‌ی کیان مرادی' }));
+    expect(within(dialog).getByText('علت لغو را بنویسید.')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('علت لغو'), 'مشتری منصرف شد');
+    await user.click(within(dialog).getByRole('button', { name: 'لغو پرونده‌ی کیان مرادی' }));
+    expect(await toasts().findByText('پرونده‌ی کیان مرادی لغو شد.')).toBeInTheDocument();
+    await screen.findByText(/۱ پرونده منتظر سوپروایزر/);
+    expect(screen.queryByRole('region', { name: 'کیان مرادی' })).not.toBeInTheDocument();
   });
 
   it('is only for those who assign supervisors', async () => {

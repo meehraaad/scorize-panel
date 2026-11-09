@@ -233,12 +233,3 @@ export function useSetSecondPhone() {
 }
 
 /** A quick note on the customer's history (S17). */
-export function useAddNote(customer: number) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (text: string) =>
-      api(`${customerApi(customer)}/notes/`, { method: 'POST', body: { text } }),
-    // A note shows only in the history: the card (about 10 queries in Django, S41) stays as is.
-    onSuccess: () => client.invalidateQueries({ queryKey: historyKey(customer) }),
-  });
-}

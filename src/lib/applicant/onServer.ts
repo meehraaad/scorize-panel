@@ -25,9 +25,15 @@ export type ServerFeature =
   | 'mailServers'
   | 'livePhoneCalls'
   | 'mobileExtensions'
-  | 'leadSearch';
+  | 'leadSearch'
+  | 'offerAgreement';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * S62 `GET /applicant/v1/offer/`: the contract offer waiting for the customer's agreement, on
+   * the contract tab without a contract (lang `claude/project-thread-kr4w45`).
+   */
+  offerAgreement: true,
   /**
    * S56 `GET /sales/v1/leads/search/?q=`: the customer picker's light search (lang
    * `claude/project-thread-45w72o`). Off: the picker searches with the leads list as before.

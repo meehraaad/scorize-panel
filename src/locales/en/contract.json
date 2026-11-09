@@ -502,5 +502,60 @@
     "next": "After this",
     "sms": "A confirmation text was sent to you.",
     "call": "Our adviser will call you to arrange the next step."
+  },
+  "clauses": {
+    "title": "Contract text",
+    "subtitle": "{{n}} clauses, as approved for you"
+  },
+  "offer": {
+    "title": "Your contract offer",
+    "version": "Version {{n}}",
+    "line": {
+      "services": "Services",
+      "degree": "Degree",
+      "countries": "Countries",
+      "applies": "Applications",
+      "period": "Length",
+      "instalments": "Instalments",
+      "language": "Language score",
+      "amount": "Price"
+    },
+    "agree": "I agree",
+    "youAgreed": "Your agreement is saved. Waiting for the others.",
+    "allAgreed": "Everyone agrees. We'll call you to sign.",
+    "agreedToast": "Your agreement is saved.",
+    "changed": "The offer just changed. Read the new version.",
+    "error": "That didn't work. Try again.",
+    "waitAnswer": "We'll answer your question first.",
+    "clauses": "Contract clauses",
+    "changedCount": "{{n}} clauses written for you; the rest is the standard contract.",
+    "standard": "The standard contract.",
+    "parties": "Who agreed",
+    "agreed": "agreed",
+    "notYet": "not yet",
+    "party": {
+      "seller": "Sales advisor",
+      "consultant": "Consultant",
+      "manager": "Sales manager",
+      "customer": "You"
+    },
+    "change": {
+      "changed": "Changed",
+      "added": "New clause",
+      "removed": "Removed"
+    },
+    "added": "added:",
+    "removed": "removed:",
+    "all": "All {{n}} clauses",
+    "questions": "Your questions",
+    "answer": "Answer",
+    "waiting": "Waiting for an answer",
+    "about": "About",
+    "whole": "The whole contract",
+    "askLabel": "Question or change request",
+    "send": "Send",
+    "cancel": "Cancel",
+    "ask": "Question or change request",
+    "sent": "Sent to your sales advisor."
   }
 }

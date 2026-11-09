@@ -11,9 +11,11 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { approvalsQuery, useDecideDraft, type ApprovalAction, type ContractDraft } from '../api';
 import { customerPath } from '../paths';
+import { ClauseChanges } from './ClauseChanges';
 import { toast } from '@/lib/toast';
 
 /** Contract drafts waiting for the sales manager. Canvas "تأیید قراردادها". */
@@ -103,7 +105,15 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
     if (action !== 'approve' && !comment.trim()) return;
     decide.mutate(
       { id: draft.id, action, comment: comment.trim() },
-      { onError: () => toast.error(t('error')) },
+      {
+        // 409: the customer has an open contract, or a country is no longer offered.
+        onError: (error) =>
+          toast.error(
+            error instanceof ApiError && error.status === 409
+              ? t('manager.approvals.conflict')
+              : t('error'),
+          ),
+      },
     );
   };
 
@@ -125,15 +135,35 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
         <h3 id="draft-terms" className="m-0 text-sm font-semibold text-text-2">
           {t('manager.approvals.contract')}
         </h3>
+        {draft.resubmitted && (
+          <p className="m-0 text-sm text-text-2">{t('manager.approvals.resubmitted')}</p>
+        )}
         <dl className="m-0 flex flex-col gap-2">
           {draft.terms.map((term) => (
-            <div key={term.key} className="flex items-baseline justify-between gap-3 text-sm">
-              <dt className="text-text-2">{t(`manager.approvals.term.${term.key}`)}</dt>
-              <dd className="m-0 text-end font-medium">{term.value}</dd>
+            <div
+              key={term.key}
+              className={`flex items-baseline justify-between gap-3 text-sm ${term.previous === null ? '' : '-mx-3 rounded-xl bg-warn-tint px-3 py-2'}`}
+            >
+              <dt className="text-text-2">
+                {t(`manager.approvals.term.${term.key}`)}
+                {term.previous !== null && (
+                  <span className="sr-only"> {t('manager.approvals.changed')}</span>
+                )}
+              </dt>
+              <dd className="m-0 flex flex-col items-end gap-0.5 text-end font-medium">
+                <span>{term.value}</span>
+                {term.previous !== null && (
+                  <span className="text-xs font-normal text-text-2 line-through">
+                    {t('manager.approvals.previous', { value: term.previous })}
+                  </span>
+                )}
+              </dd>
             </div>
           ))}
         </dl>
       </section>
+
+      <ClauseChanges changes={draft.clauses} standard={draft.standard_clauses} />
 
       <section aria-labelledby="draft-checks" className="flex flex-col gap-2.5">
         <h3 id="draft-checks" className="m-0 text-sm font-semibold text-text-2">

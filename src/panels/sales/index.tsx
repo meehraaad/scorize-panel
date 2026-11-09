@@ -11,6 +11,7 @@ import {
   managerTagsQuery,
   tagsQuery,
   sellerCalendarQuery,
+  contractDocumentQuery,
   customerQuery,
   firstLeadQuery,
   leadsQuery,
@@ -21,6 +22,7 @@ import {
   handoffQuery,
   offerQuery,
   outreachQuery,
+  agreementQuery,
   paymentsQuery,
   purchasesQuery,
   receiptsQuery,
@@ -36,12 +38,18 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { notebookQuery } from '@/lib/notes/api';
+import { SALES_API } from '@/lib/sales/api';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
 import type { PanelDefinition } from '../types';
 
 /** A customer page's id, or null (the page says the customer doesn't exist). */
 const customerOf = ({ params }: LoaderFunctionArgs) => idParam(params.id);
+
+/** `customers/:id/purchases|payments` (with `?payment=`) → the one "contract and money" tab. */
+const toMoney = ({ params, request }: LoaderFunctionArgs) =>
+  redirect(`/sales/customers/${params.id ?? ''}/money${new URL(request.url).search}`);
 
 /** Sellers without the manager's permission are sent back to the panel's home. */
 async function managerOnly() {
@@ -180,10 +188,14 @@ export const salesPanel: PanelDefinition = {
     { path: 'consultations', loader: () => redirect('/sales/calendar') },
     {
       path: 'customers/:id',
-      ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales'], {
+      ...lazyPage(() => import('@/features/sales/CustomerLayout'), ['sales', 'notes'], {
         data: (args) => {
           const id = customerOf(args);
-          return [id !== null && customerQuery(id), ON_SERVER.customerTags && tagsQuery];
+          return [
+            id !== null && customerQuery(id),
+            ON_SERVER.customerTags && tagsQuery,
+            id !== null && notebookQuery(`${SALES_API}/customers/${String(id)}/notes/`),
+          ];
         },
         skeleton: 'customer',
       }),
@@ -199,23 +211,17 @@ export const salesPanel: PanelDefinition = {
           }),
         },
         {
-          path: 'purchases',
-          ...lazyPage(() => import('@/features/sales/CustomerPurchasesPage'), [], {
+          path: 'money',
+          ...lazyPage(() => import('@/features/sales/CustomerMoneyPage'), [], {
             data: (args) => {
               const id = customerOf(args);
-              return [id !== null && purchasesQuery(id)];
+              return id === null ? [] : [purchasesQuery(id), paymentsQuery(id), agreementQuery(id)];
             },
           }),
         },
-        {
-          path: 'payments',
-          ...lazyPage(() => import('@/features/sales/CustomerPaymentsPage'), [], {
-            data: (args) => {
-              const id = customerOf(args);
-              return [id !== null && paymentsQuery(id)];
-            },
-          }),
-        },
+        // Their first addresses (links in old messages and other pages): one tab now.
+        { path: 'purchases', loader: toMoney },
+        { path: 'payments', loader: toMoney },
         {
           path: 'info',
           ...lazyPage(() => import('@/features/sales/CustomerInfoPage'), [], {
@@ -245,6 +251,17 @@ export const salesPanel: PanelDefinition = {
           return id === null ? [] : [customerQuery(id), offerQuery(id)];
         },
         skeleton: 'form',
+      }),
+    },
+    // The approved contract to print and sign (S52): a page of its own, without the customer card.
+    {
+      path: 'customers/:id/contract',
+      ...lazyPage(() => import('@/features/sales/ContractPrintPage'), ['sales'], {
+        data: (args) => {
+          const id = customerOf(args);
+          return id === null ? [] : [customerQuery(id), contractDocumentQuery(id)];
+        },
+        skeleton: 'detail',
       }),
     },
     // The sales manager's section (nav item and routes need can_assign_to_seller).

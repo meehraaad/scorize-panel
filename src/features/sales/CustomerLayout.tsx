@@ -6,17 +6,21 @@ import { BackLink } from '@/components/ui/BackLink';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageSkeleton } from '@/components/ui/Skeleton';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
+import { useMediaQuery } from '@/lib/useMediaQuery';
 import { whenIdle } from '@/lib/whenIdle';
 import { openContactLog } from '@/lib/sales/contactDrafts';
 import type { Channel } from '@/lib/sales/api';
 import { customerQuery, type ProductCategory } from './api';
-import { CustomerHero } from './components/CustomerHero';
+import { CustomerHead } from './components/CustomerHead';
+import { CustomerSide } from './components/CustomerSide';
 import { CustomerTabs } from './components/CustomerTabs';
 import { salesPath, type LogIntent } from './paths';
 import { useCustomerId } from './useCustomerId';
 
 const INTENTS: readonly LogIntent[] = ['call', 'message', 'meeting'];
 const CATEGORIES: readonly ProductCategory[] = ['consultation', 'writing', 'package', 'event'];
+/** From here the shared column sits beside the page; below it, the header opens it in a sheet. */
+const SIDE_QUERY = '(min-width: 1280px)';
 
 // The dialogs (and the date picker they use) open on a click: their code is not part of the
 // page's first load. It is fetched once the browser is idle, so a click still opens them at once.
@@ -24,8 +28,9 @@ const loadSellDialog = () => import('./components/SellDialog');
 const SellDialog = lazy(() => loadSellDialog().then((module) => ({ default: module.SellDialog })));
 
 /**
- * Frame of every customer page: the summary card with its actions, the sub-tabs (summary,
- * purchases, payments, details, application file) and the product-sale dialog. Canvas "صفحه‌ی مشتری".
+ * Frame of every customer page: the sales work area (header with the next step, the sub-tabs:
+ * summary, contract and money, details, application file) beside the shared column (what the team
+ * knows, and the notebook), and the product-sale dialog. Canvas "صفحه‌ی مشتری".
  * `?log=call|message|meeting` opens the contact log; `?sell=<category>` the product sale.
  */
 export default function CustomerLayout() {
@@ -74,20 +79,35 @@ export default function CustomerLayout() {
       { replace: true },
     );
   const openLog = (channel: Channel) => openContactLog(id, data.name, { channel });
+  const wide = useMediaQuery(SIDE_QUERY);
+  const side = <CustomerSide customer={data} />;
 
   return (
     <PageStack>
       <BackLink to={salesPath('leads')}>{t('customer.back')}</BackLink>
-      <CustomerHero
-        customer={data}
-        onLog={openLog}
-        onSell={() => update((current) => current.set('sell', 'consultation'))}
-      />
-      <CustomerTabs customer={data} />
-      {/* Tab data must not hold up the customer actions or the contact dialog. */}
-      <Suspense fallback={<PageSkeleton kind="tab" />}>
-        <Outlet />
-      </Suspense>
+      <div className="flex items-start gap-7">
+        <div className="flex min-w-0 flex-1 flex-col gap-4 lg:gap-6">
+          <CustomerHead
+            customer={data}
+            onLog={openLog}
+            onSell={() => update((current) => current.set('sell', 'consultation'))}
+            side={wide ? null : side}
+          />
+          <CustomerTabs customer={data} />
+          {/* Tab data must not hold up the customer actions or the contact dialog. */}
+          <Suspense fallback={<PageSkeleton kind="tab" />}>
+            <Outlet />
+          </Suspense>
+        </div>
+        {wide && (
+          <aside
+            aria-label={t('side.title')}
+            className="sticky top-6 flex w-[min(380px,30%)] flex-none flex-col gap-4"
+          >
+            {side}
+          </aside>
+        )}
+      </div>
       {/* Product sales remain local to the customer page. */}
       <Suspense fallback={null}>
         {category && (

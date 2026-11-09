@@ -2,6 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { Notebook } from '@/components/notes/Notebook';
 import { Button } from '@/components/ui/Button';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -14,8 +15,7 @@ import { daysBetween, daysUntil, isPast } from '@/lib/dates';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
 import { safeHref } from '@/lib/url';
-import { caseQuery, type CaseData, type InstallmentStatus } from './api';
-import { CaseNotes } from './components/CaseNotes';
+import { caseQuery, SUPERVISOR_API, type CaseData, type InstallmentStatus } from './api';
 import { NewTaskDialog } from './components/NewTaskDialog';
 import { casePath, supervisorPath } from './paths';
 import { useCaseId } from './useCaseId';
@@ -38,7 +38,10 @@ export default function CaseOverviewPage() {
       }
       aside={
         <>
-          <CaseNotes data={data} />
+          <Notebook
+            url={`${SUPERVISOR_API}/cases/${String(data.id)}/notebook/`}
+            name={data.name.split(' ')[0] ?? data.name}
+          />
           <Tasks data={data} />
           <Activity data={data} />
         </>

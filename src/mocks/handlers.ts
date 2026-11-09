@@ -8,6 +8,7 @@ import { assistantHandlers, resetAssistantMocks } from './assistant';
 import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { mailHandlers, resetMailMocks } from './mail';
 import { resetSalesMocks, salesHandlers } from './sales';
+import { agreementHandlers, resetAgreementMocks } from './agreement';
 import { salesCustomerHandlers } from './salesCustomer';
 import { managerHandlers, resetManagerMocks } from './salesManager';
 import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
@@ -203,6 +204,8 @@ export const handlers = [
     resetApplicantMocks();
     resetAccountMocks();
     resetSalesMocks();
+    resetAgreementMocks();
+    resetAgreementMocks();
     resetVoiceMocks();
     resetTagMocks();
     resetTaskMocks();
@@ -334,6 +337,7 @@ export const handlers = [
   ...accountHandlers,
   ...salesHandlers,
   ...salesCustomerHandlers,
+  ...agreementHandlers,
   ...managerHandlers,
   ...taskHandlers,
   ...supervisorHandlers,
@@ -354,6 +358,7 @@ export function resetMockSession() {
   resetApplicantMocks();
   resetAccountMocks();
   resetSalesMocks();
+  resetAgreementMocks();
   resetVoiceMocks();
   resetTagMocks();
   resetTaskMocks();

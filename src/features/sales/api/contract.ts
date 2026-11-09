@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { AgreementParty } from '@/lib/agreement/api';
 import { api } from '@/lib/api/client';
-import { SALES_API } from '@/lib/sales/api';
+import { SALES_API, type Degree } from '@/lib/sales/api';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
 import { customerKey } from './customer';
 
@@ -55,6 +56,54 @@ export const handoffQuery = (id: number) =>
   });
 
 /** One page of the signed contract, or the whole file. */
+/** S52: the approved contract as it is printed and signed. */
+export interface ContractDocument {
+  number: number;
+  /** The applicant file number. */
+  file_id: string;
+  approved_at: string | null;
+  customer: { name: string; national_code: string | null; phone: string | null; email: string };
+  seller: string;
+  features: ('admission' | 'writing' | 'visa')[];
+  degrees: Degree[];
+  /** Localized by the server. */
+  countries: string[];
+  applies: number;
+  start_date: string;
+  end_date: string;
+  months: number;
+  language_score: string;
+  language_deadline: string | null;
+  /** Toman. */
+  amount: number;
+  /** The prepayment first (number 0); `condition` localized by the server. */
+  installments: {
+    id: number;
+    number: number;
+    amount: number;
+    due_date: string | null;
+    condition: string | null;
+  }[];
+  /** The contract's text as approved: the standard clauses with this customer's changes. */
+  clauses: { title: string; text: string }[];
+  /**
+   * Who agreed online on the approved version (S62), and the clauses written for this customer
+   * (titles); null for a contract made before the agreement desk.
+   */
+  agreement?: {
+    version: number;
+    changed: string[];
+    parties: { party: AgreementParty; name: string; agreed_at: string }[];
+  } | null;
+}
+
+export const contractDocumentQuery = (id: number) =>
+  queryOptions({
+    queryKey: [...customerKey(id), 'contract', 'document'],
+    queryFn: ({ signal }) =>
+      api<ContractDocument>(`${SALES_API}/customers/${String(id)}/contract/document/`, { signal }),
+  });
+
 export function useUploadScan(id: number) {
   const client = useQueryClient();
   return useMutation({
