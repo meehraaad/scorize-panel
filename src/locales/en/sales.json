@@ -303,7 +303,24 @@
       "nameRequired": "Enter a first name."
     },
     "tag": "Tag",
-    "allTags": "All tags"
+    "allTags": "All tags",
+    "find": {
+      "button": "Search all customers",
+      "title": "Search all customers",
+      "subtitle": "Anyone with an account on the site, yours or not.",
+      "label": "Search customers",
+      "placeholder": "Name, email or mobile number",
+      "hint": "Type at least two letters of a name or email, or four digits of a number.",
+      "results": "Customers found",
+      "none": "Nobody matches that.",
+      "addNew": "Add as a new lead",
+      "noName": "No name",
+      "open": "Open page",
+      "take": "Take customer",
+      "other": "{{seller}}'s customer",
+      "taken": "{{name}} is now your customer.",
+      "takenByOther": "This customer is an open lead of {{seller}}."
+    }
   },
   "board": {
     "title": "Sales board",

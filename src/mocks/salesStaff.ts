@@ -1,6 +1,6 @@
 import { summaryForContact } from './sessionSummaries';
 import { http, HttpResponse } from 'msw';
-import { ApiError } from '@/lib/api/client';
+import { ApiError, api } from '@/lib/api/client';
 import type {
   CallBrief,
   ConsultationRange,
@@ -22,6 +22,7 @@ import { fetchConsultations } from './legacy/consultations';
 import { fetchCustomer, fetchHistory, logContact } from './legacy/customer';
 import { changeTask, createTask, taskRequest, tasksOverview } from './legacy/django';
 import { fetchInfo, saveSection, UnknownNameError } from './legacy/info';
+import { STAFF_API, type DjangoUser, type Page } from './djangoStaff';
 import { createCustomer, fetchLeads } from './legacy/leads';
 import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
@@ -130,6 +131,41 @@ export const salesStaffHandlers = [
       })),
     );
   }),
+  // S63: every customer, like the old CRM's search; the seller's own leads open, the rest are free.
+  http.get(`${BASE}/customers/search/`, ({ request }) => {
+    const typed = (new URL(request.url).searchParams.get('q') ?? '').trim();
+    if (typed.replace(/\s/g, '').length < 2) return HttpResponse.json({ results: [] });
+    return answer(async () => {
+      const [users, mine] = await Promise.all([
+        api<Page<DjangoUser>>(`${STAFF_API}/users/?search=${encodeURIComponent(typed)}`),
+        fetchLeads({
+          stage: 'all',
+          source: 'all',
+          band: 'all',
+          overdue: false,
+          search: '',
+          page: 1,
+        }),
+      ]);
+      const leads = new Map(mine.results.map((row) => [row.customer, row.stage]));
+      return {
+        results: users.results.slice(0, 10).map((user) => ({
+          customer: user.id,
+          name: `${user.first_name} ${user.last_name}`.trim(),
+          phone: user.phone_number ?? '',
+          email: user.email ?? '',
+          access: storage.get() === MANAGER || leads.has(user.id) ? 'mine' : 'free',
+          seller: null,
+          stage: leads.get(user.id) ?? null,
+        })),
+      };
+    });
+  }),
+  http.post(`${BASE}/customers/:id/take/`, ({ params }) =>
+    isSeller()
+      ? HttpResponse.json({ customer: id(params) })
+      : HttpResponse.json({ detail: 'forbidden' }, { status: 403 }),
+  ),
   http.post(`${BASE}/leads/`, async ({ request }) => {
     const lead = (await request.json()) as NewLead;
     let made: NewLeadAnswer;

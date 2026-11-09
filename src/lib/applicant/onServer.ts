@@ -26,6 +26,7 @@ export type ServerFeature =
   | 'livePhoneCalls'
   | 'mobileExtensions'
   | 'leadSearch'
+  | 'customerSearch'
   | 'offerAgreement';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
@@ -39,6 +40,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * `claude/project-thread-45w72o`). Off: the picker searches with the leads list as before.
    */
   leadSearch: true,
+  /**
+   * S63 `GET /sales/v1/customers/search/?q=` and `POST customers/<id>/take/`: the leads page's
+   * search in every customer, like the old CRM's (lang `claude/pensive-dirac-ekeuff`).
+   */
+  customerSearch: true,
   /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
   livePhoneCalls: true,
   /** The seller's PortSIP login at /sales/v1/calls/mobile/; on once the office worker runs. */
