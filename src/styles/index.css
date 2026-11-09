@@ -94,6 +94,7 @@
   --shadow-board-card: var(--board-card-shadow);
   --shadow-hero: var(--hero-shadow);
   --shadow-toast: var(--toast-shadow);
+  --shadow-float: var(--float-shadow);
   --shadow-luxe: var(--luxe-shadow);
 
   --container-page: var(--page-width);
