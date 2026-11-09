@@ -335,6 +335,43 @@ describe('commission rules (S60)', () => {
     );
   });
 
+  it('adds a tiered step on the sales amount, and lists the fixed bonus', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/commission');
+    const everyone = await screen.findByRole('region', { name: 'همه‌ی فروشنده‌ها' });
+    expect(
+      within(everyone).getByText('با ۱۰ قرارداد یا بیشتر در ماه: ۵ میلیون تومان پاداش'),
+    ).toBeInTheDocument();
+
+    const form = screen.getByRole('form', { name: 'قانون تازه' });
+    await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'tiered');
+    // Tiered steps only go by the sales amount.
+    expect(within(form).getByLabelText('بر اساس')).toHaveValue('sales');
+    expect(
+      within(within(form).getByLabelText('بر اساس')).queryByRole('option', {
+        name: 'تعداد قرارداد در ماه',
+      }),
+    ).not.toBeInTheDocument();
+    await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '300');
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '2');
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    expect(await toasts().findByText('قانون اضافه شد')).toBeInTheDocument();
+    expect(
+      await within(screen.getByRole('region', { name: 'همه‌ی فروشنده‌ها' })).findByText(
+        'از ۳۰۰ میلیون تومان فروش به بالا: ۲٪ از همین بخش فروش',
+      ),
+    ).toBeInTheDocument();
+
+    await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'per_contract');
+    await user.selectOptions(within(form).getByLabelText('بر اساس'), 'contracts');
+    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '6');
+    await user.type(within(form).getByLabelText('مبلغ هر قرارداد (میلیون تومان)'), '1.5');
+    expect(
+      within(form).getByText('با ۶ قرارداد یا بیشتر در ماه: ۱٫۵ میلیون تومان برای هر قرارداد'),
+    ).toBeInTheDocument();
+  });
+
   it("the team report shows each seller's commission", async () => {
     loginAs(REZA);
     renderApp('/sales/manager/team');

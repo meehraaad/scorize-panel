@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { SALES_API, type LeadSource } from '@/lib/sales/api';
+import type { CommissionReward } from './manager';
 
 export interface MonthData {
   /** First day of the month. */
@@ -14,10 +15,18 @@ export interface MonthData {
   sales: number;
   /** Toman; null until a commission rate or rule is set (S18, S60). */
   commission: number | null;
-  /** The commission step reached, in percent (0: none yet); null without rules. */
+  /** The share of the sales the commission makes, in percent (0: none yet); null without rules. */
   commission_percent: number | null;
-  /** The closest better step not reached yet: contracts or tomans still to go. */
-  commission_next: { basis: 'contracts' | 'sales'; remaining: number; percent: number } | null;
+  /** Toman of it from bonuses and per-contract amounts; null without rules. */
+  commission_extra: number | null;
+  /** The closest better step not reached yet: contracts or tomans still to go, and what it earns. */
+  commission_next: {
+    basis: 'contracts' | 'sales';
+    remaining: number;
+    reward: CommissionReward;
+    percent: number | null;
+    amount: number | null;
+  } | null;
   drafts_waiting: number;
   rank: { position: number; of: number };
   funnel: { leads: number; reached: number; consulted: number; offered: number; won: number };

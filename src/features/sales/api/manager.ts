@@ -421,9 +421,14 @@ export function useApplyLeadImport() {
 export type CommissionBasis = 'contracts' | 'sales';
 
 /**
- * A commission step: with at least `threshold` contracts (or tomans of sales) in a month, the
- * seller earns `percent` of the month's sales. A seller earns the best step they reach.
+ * What a step earns: `percent` of all the month's sales (the best one reached), `tiered` (sales
+ * only, like tax brackets: the part of the sales above the step earns its percent, up to the next
+ * tiered step), a fixed `bonus` (the best one reached), or an amount `per_contract` for each of
+ * the month's contracts (the best one reached). Bonus and per-contract amounts add to the percent.
  */
+export type CommissionReward = 'percent' | 'tiered' | 'bonus' | 'per_contract';
+
+/** A commission step: with at least `threshold` contracts (or tomans of sales) in a month, `reward`. */
 export interface CommissionRule {
   id: number;
   /** SupportStaff id; null: every seller. */
@@ -431,7 +436,11 @@ export interface CommissionRule {
   seller_name: string | null;
   basis: CommissionBasis;
   threshold: number;
-  percent: number;
+  reward: CommissionReward;
+  /** `percent` and `tiered`; null for the others. */
+  percent: number | null;
+  /** Toman: `bonus` and `per_contract`; null for the others. */
+  amount: number | null;
   /** First day of the month it applies from. */
   since: string;
 }
@@ -440,7 +449,9 @@ export interface CommissionRuleInput {
   seller: number | null;
   basis: CommissionBasis;
   threshold: number;
-  percent: number;
+  reward: CommissionReward;
+  percent: number | null;
+  amount: number | null;
 }
 
 export interface CommissionRules {
