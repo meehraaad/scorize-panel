@@ -164,7 +164,7 @@ function Composer({ url, name }: { url: string; name: string }) {
         aria-keyshortcuts="Control+Enter Meta+Enter"
         onChange={(event) => setText(event.target.value)}
         onKeyDown={onKeyDown}
-        className="block max-h-64 min-h-20 w-full resize-none bg-transparent px-4 pt-3.5 pb-1 text-[15px] leading-7 text-text outline-none [field-sizing:content] placeholder:text-text-3"
+        className="block [field-sizing:content] max-h-64 min-h-20 w-full resize-none bg-transparent px-4 pt-3.5 pb-1 text-[15px] leading-7 text-text outline-none placeholder:text-text-3"
       />
       <div className="flex flex-wrap items-center gap-1 px-2 pt-1 pb-2">
         <ToggleChip on={pinned} icon="pin" onToggle={() => setPinned((value) => !value)}>

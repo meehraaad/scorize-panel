@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { Suspense, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
@@ -105,7 +105,11 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
             )}
           </div>
 
-          {Extra && <Extra />}
+          {Extra && (
+            <Suspense fallback={null}>
+              <Extra />
+            </Suspense>
+          )}
 
           <div className="flex flex-col gap-1 border-t border-hair pt-1">
             <Link to="/account" className={itemClass}>

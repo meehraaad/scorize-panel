@@ -1,7 +1,22 @@
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/ui/Icon';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useBreak } from './usePhoneStatus';
+import { phoneBreakQuery, useSetPhoneBreak } from '@/lib/sales/phoneCalls';
+import { toast } from '@/lib/toast';
+
+function useBreak() {
+  const { t } = useTranslation('sales');
+  const { data } = useQuery({ ...phoneBreakQuery, enabled: ON_SERVER.phoneBreak });
+  const set = useSetPhoneBreak();
+  const toggle = (onBreak: boolean) =>
+    set.mutate(onBreak, {
+      onSuccess: () => toast.success(t(onBreak ? 'phoneBreak.started' : 'phoneBreak.ended')),
+      onError: () => toast.error(t('error')),
+    });
+  return { data, toggle, pending: set.isPending };
+}
 
 const itemClass =
   'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-[15px] text-text hover:bg-canvas disabled:opacity-50';
@@ -10,7 +25,7 @@ const itemClass =
  * Account menu block: the seller's phone status and the break button (a break from team calls:
  * lunch, a meeting). Only for sellers a team can ring (a desk phone or a mobile extension).
  */
-export function PhoneBreakMenu() {
+export default function PhoneBreakMenu() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const { data, toggle, pending } = useBreak();

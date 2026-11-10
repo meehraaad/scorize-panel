@@ -34,8 +34,7 @@ import {
   funnelQuery,
 } from '@/features/sales/api';
 import HeaderCustomerSearch from '@/features/sales/components/HeaderCustomerSearch';
-import { PhoneBreakMenu } from '@/features/sales/components/PhoneBreak';
-import { usePhoneStatus } from '@/features/sales/components/usePhoneStatus';
+import { PhoneBreakMenu, usePhoneStatus } from '@/features/sales/components/usePhoneStatus';
 import { queryClient } from '@/lib/api/queryClient';
 import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
