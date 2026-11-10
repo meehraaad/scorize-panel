@@ -44,7 +44,7 @@ import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { notebookQuery } from '@/lib/notes/api';
 import { SALES_API } from '@/lib/sales/api';
-import { officeHoursQuery } from '@/lib/sales/phoneCalls';
+import { officeHoursQuery, phoneTeamsQuery } from '@/lib/sales/phoneCalls';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
 import type { PanelDefinition } from '../types';
@@ -360,6 +360,17 @@ export const salesPanel: PanelDefinition = {
                 path: 'hours',
                 ...lazyPage(() => import('@/features/sales/manager/OfficeHoursPage'), [], {
                   data: () => [officeHoursQuery],
+                  skeleton: 'form',
+                }),
+              },
+            ]
+          : []),
+        ...(ON_SERVER.phoneTeams
+          ? [
+              {
+                path: 'phone-teams',
+                ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
+                  data: () => [phoneTeamsQuery],
                   skeleton: 'form',
                 }),
               },
