@@ -56,11 +56,11 @@ export interface PanelDefinition {
    */
   headerAction?: ComponentType;
   /**
-   * Panel-specific state in the account menu: `useStatus` colours a ring on the avatar (`call`
+   * Panel-specific state in the account menu: `useStatus` colours a ring on the avatar (`queue`
    * green, `rest` orange) and `Menu` is a block inside the dropdown (the sales panel's phone break).
    */
   account?: {
-    useStatus: () => 'call' | 'rest' | null;
+    useStatus: () => 'queue' | 'rest' | null;
     Menu: ComponentType;
   };
 }

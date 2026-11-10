@@ -102,7 +102,7 @@
   },
   "account": {
     "menu": "Account",
-    "onCall": "On a call",
+    "inQueue": "In call queue",
     "onBreak": "On a break",
     "current": "Current panel",
     "profile": "Account",

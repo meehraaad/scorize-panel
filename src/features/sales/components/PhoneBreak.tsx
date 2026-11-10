@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useBreak, useOnCall } from './usePhoneStatus';
+import { useBreak } from './usePhoneStatus';
 
 const itemClass =
   'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-[15px] text-text hover:bg-canvas disabled:opacity-50';
@@ -14,31 +14,28 @@ export function PhoneBreakMenu() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const { data, toggle, pending } = useBreak();
-  const onCall = useOnCall();
   if (!data?.can) return null;
   const onBreak = data.on_break;
 
   return (
     <div className="flex flex-col gap-1 border-t border-hair pt-1">
-      {(onCall || (onBreak && data.since)) && (
-        <div role="status" className="flex flex-col gap-1 px-3 py-2 text-sm text-text-2">
-          <span className="flex items-center gap-2 font-medium text-text">
-            <span
-              aria-hidden="true"
-              className={`size-2.5 flex-none rounded-full ${onCall ? 'bg-(--hue-green)' : 'bg-(--hue-orange)'}`}
-            />
-            {onCall
-              ? t('phoneBreak.onCall')
-              : t('phoneBreak.on', { time: f.time(data.since as string) })}
+      <div role="status" className="flex flex-col gap-1 px-3 py-2 text-sm text-text-2">
+        <span className="flex items-center gap-2 font-medium text-text">
+          <span
+            aria-hidden="true"
+            className={`size-2.5 flex-none rounded-full ${onBreak ? 'bg-(--hue-orange)' : 'bg-(--hue-green)'}`}
+          />
+          {onBreak && data.since
+            ? t('phoneBreak.on', { time: f.time(data.since) })
+            : t(onBreak ? 'phoneBreak.onShort' : 'phoneBreak.inQueue')}
+        </span>
+        {onBreak && (
+          <span>
+            {data.teams.length > 0 && `${t('phoneBreak.teams', { teams: f.list(data.teams) })} `}
+            {t('phoneBreak.direct')}
           </span>
-          {onBreak && !onCall && (
-            <span>
-              {data.teams.length > 0 && `${t('phoneBreak.teams', { teams: f.list(data.teams) })} `}
-              {t('phoneBreak.direct')}
-            </span>
-          )}
-        </div>
-      )}
+        )}
+      </div>
       <button
         type="button"
         className={itemClass}

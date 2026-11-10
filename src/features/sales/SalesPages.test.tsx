@@ -693,7 +693,8 @@ describe('break from team calls', () => {
   it('starts and ends a break from the account menu, and rings the avatar orange', async () => {
     const user = userEvent.setup();
     renderApp('/sales');
-    await user.click(await screen.findByRole('button', { name: 'حساب کاربری' }));
+    await user.click(await screen.findByRole('button', { name: /^حساب کاربری: در صف تماس$/ }));
+    expect(await screen.findByText('در صف تماس تیمی هستید')).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'استراحت' }));
     expect(
       await toasts().findByText('استراحت شروع شد؛ تماس تیمی به شما نمی‌رسد'),
@@ -706,7 +707,7 @@ describe('break from team calls', () => {
     expect(await toasts().findByText('دوباره تماس تیمی به شما می‌رسد')).toBeInTheDocument();
     expect(screen.queryByText(/در استراحت هستید/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'استراحت' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'حساب کاربری' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'حساب کاربری: در صف تماس' })).toBeInTheDocument();
   });
 
   it('shows no button to someone no team rings', async () => {

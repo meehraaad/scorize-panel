@@ -2625,7 +2625,8 @@
   "phoneBreak": {
     "start": "Take a break",
     "hint": "While on a break, no team call reaches you. Until midnight, or until you end it.",
-    "onCall": "On a call",
+    "inQueue": "You are in the team call queue",
+    "onShort": "You are on a break",
     "end": "End break",
     "started": "Break started; team calls won't reach you",
     "ended": "Team calls reach you again",

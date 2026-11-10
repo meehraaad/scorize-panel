@@ -17,7 +17,7 @@ interface Props {
 }
 
 const RINGS = {
-  call: 'shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-green)]',
+  queue: 'shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-green)]',
   rest: 'shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-orange)]',
 } as const;
 
@@ -76,7 +76,7 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
         type="button"
         aria-label={
           status
-            ? `${t('account.menu')}: ${t(status === 'call' ? 'account.onCall' : 'account.onBreak')}`
+            ? `${t('account.menu')}: ${t(status === 'queue' ? 'account.inQueue' : 'account.onBreak')}`
             : t('account.menu')
         }
         aria-expanded={open}
