@@ -7,6 +7,7 @@ import { api } from '@/lib/api/client';
 import type { AssignData, TeamData } from '../api';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
+import { startPhoneBreak } from '@/mocks/phoneCalls';
 import { toasts } from '@/test/toasts';
 
 // The quiz funnel follows the quiz (src/lib/applicant/onServer.ts): switch everything on.
@@ -832,7 +833,7 @@ describe('office phone hours', () => {
     loginAs(REZA);
     renderApp('/sales/manager/phone/hours');
     expect(await screen.findByRole('heading', { name: 'ساعت کاری تلفن' })).toBeInTheDocument();
-    expect(screen.getByText(/هنوز ساعت‌های خود سانترال است/)).toBeInTheDocument();
+    expect(screen.getByText(/هنوز ساعت‌های خود وویپ است/)).toBeInTheDocument();
     const week = screen.getByRole('region', { name: 'ساعت پاسخ‌گویی' });
     expect(within(week).getByLabelText('یکشنبه، از ساعت')).toHaveValue('10:30');
     expect(within(week).getByRole('switch', { name: /^شنبه/ })).not.toBeChecked();
@@ -887,7 +888,7 @@ describe('phone teams', () => {
     renderApp('/sales/manager/phone/teams');
     expect(await screen.findByRole('heading', { name: 'تیم‌های تلفن' })).toBeInTheDocument();
     const card = screen.getByRole('region', { name: 'moshavere-foroosh' });
-    expect(within(card).getByText(/همان تنظیم خود سانترال/)).toBeInTheDocument();
+    expect(within(card).getByText(/همان تنظیم خود وویپ/)).toBeInTheDocument();
     expect(within(card).getByText(/داخلی‌های ۲۳۰ در این صف هستند/)).toBeInTheDocument();
     expect(within(card).getByText(/با کد ورود وارد این صف شده‌اند: ۱۰۳/)).toBeInTheDocument();
     expect(within(card).getByRole('checkbox', { name: /^نیما رضایی/ })).toBeChecked();
@@ -922,6 +923,22 @@ describe('phone teams', () => {
     expect(await screen.findByRole('region', { name: 'ویزا' })).toBeInTheDocument();
   });
 
+  it('shows who is on a break, on the list and on the team card', async () => {
+    startPhoneBreak(8, '2026-11-10T09:10:00Z');
+    loginAs(REZA);
+    renderApp('/sales/manager/phone/teams');
+    const who = await screen.findByRole('region', { name: 'الان چه کسی تماس تیمی می‌گیرد' });
+    expect(within(who).getByText(/^۱ نفر در استراحت است/)).toBeInTheDocument();
+    const nima = within(who).getByText('نیما رضایی').closest('li') as HTMLElement;
+    expect(within(nima).getByText(/^در استراحت از /)).toBeInTheDocument();
+    const reza = within(who).getByText('رضا کامرانی').closest('li') as HTMLElement;
+    expect(within(reza).getByText('در هیچ تیمی نیست')).toBeInTheDocument();
+    const card = screen.getByRole('region', { name: 'moshavere-foroosh' });
+    expect(
+      within(card).getByRole('checkbox', { name: /^نیما رضایی · .* · در استراحت$/ }),
+    ).toBeChecked();
+  });
+
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
     const router = renderApp('/sales/manager/phone/teams');
@@ -945,9 +962,7 @@ describe('phone menus', () => {
     expect(within(main).getByLabelText('کلید ۱ به کجا برود')).toHaveValue('team');
     expect(within(main).getByLabelText('مقصد کلید ۱')).toHaveValue('1000');
     expect(within(main).getByLabelText('مقصد کلید ۲۲۳')).toHaveValue('223');
-    expect(
-      within(main).getByText('تنظیم خاص سانترال؛ همان‌طور که هست می‌ماند.'),
-    ).toBeInTheDocument();
+    expect(within(main).getByText('تنظیم خاص وویپ؛ همان‌طور که هست می‌ماند.')).toBeInTheDocument();
 
     await user.click(within(main).getByRole('button', { name: 'افزودن کلید' }));
     const keys = within(main).getAllByLabelText('کلید');
@@ -994,7 +1009,7 @@ describe('voice messages', () => {
     const main = screen.getByRole('region', { name: 'منوی اصلی' });
     expect(within(main).getByText('پخش در: منوی اصلی')).toBeInTheDocument();
     const closed = screen.getByRole('region', { name: 'بیرون از ساعت کاری' });
-    expect(within(closed).getByText(/آخرین فایل روی سانترال نرفت/)).toBeInTheDocument();
+    expect(within(closed).getByText(/آخرین فایل روی وویپ نرفت/)).toBeInTheDocument();
 
     const input = within(main).getByLabelText('فایل صوتی تازه برای منوی اصلی', {
       selector: 'input',
@@ -1005,7 +1020,7 @@ describe('voice messages', () => {
     );
     await user.upload(input, new File(['ID3 sound'], 'greeting.mp3', { type: 'audio/mpeg' }));
     expect(await toasts().findByText('پیام صوتی فرستاده شد')).toBeInTheDocument();
-    expect(await within(main).findByText('فایل تازه در راه سانترال است…')).toBeInTheDocument();
+    expect(await within(main).findByText('فایل تازه در راه وویپ است…')).toBeInTheDocument();
   });
 
   it('is hidden from sellers', async () => {

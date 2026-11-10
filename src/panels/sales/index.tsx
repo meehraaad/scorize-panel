@@ -50,6 +50,7 @@ import {
   phoneTeamsQuery,
   phoneBreakQuery,
   phoneVoicesQuery,
+  teamBreaksQuery,
 } from '@/lib/sales/phoneCalls';
 import { PHONE_SECTIONS } from '@/features/sales/manager/phoneSections';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
@@ -395,7 +396,10 @@ export const salesPanel: PanelDefinition = {
                         {
                           path: 'teams',
                           ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
-                            data: () => [phoneTeamsQuery],
+                            data: () => [
+                              phoneTeamsQuery,
+                              ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
+                            ],
                             skeleton: 'form',
                           }),
                         },

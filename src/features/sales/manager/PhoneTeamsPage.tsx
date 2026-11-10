@@ -1,7 +1,9 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { Avatar } from '@/components/ui/Avatar';
+import { Chip } from '@/components/ui/Chip';
 import { TogglePill } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
@@ -9,11 +11,14 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   phoneTeamsQuery,
+  teamBreaksQuery,
   useSavePhoneTeam,
   type PhoneTeam,
+  type TeamBreakPerson,
   type TeamPerson,
 } from '@/lib/sales/phoneCalls';
 import { toLatinNumber } from '@/lib/text';
@@ -34,6 +39,11 @@ export default function PhoneTeamsPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const { data } = useSuspenseQuery(phoneTeamsQuery);
+  // Read in the route's page data; off while the endpoint isn't on the server.
+  const breaks = useQuery({ ...teamBreaksQuery, enabled: ON_SERVER.teamBreaks }).data;
+  const onBreak = new Map(
+    (breaks?.people ?? []).filter((person) => person.on_break).map((person) => [person.id, person]),
+  );
 
   return (
     <>
@@ -45,19 +55,81 @@ export default function PhoneTeamsPage() {
             : t('manager.teams.notSeen')
         }
       />
+      {breaks && breaks.people.length > 0 && <WhoRings people={breaks.people} />}
       {data.teams.length === 0 ? (
         <SectionCard id="phone-teams-empty" variant="panel" title={t('manager.teams.title')}>
           <EmptyState>{t('manager.teams.empty')}</EmptyState>
         </SectionCard>
       ) : (
-        data.teams.map((team) => <TeamCard key={team.number} team={team} people={data.people} />)
+        data.teams.map((team) => (
+          <TeamCard key={team.number} team={team} people={data.people} onBreak={onBreak} />
+        ))
       )}
       <NewTeam />
     </>
   );
 }
 
-function TeamCard({ team, people }: { team: PhoneTeam; people: TeamPerson[] }) {
+/** Who gets team calls now: everyone a team can ring, with today's breaks first. */
+function WhoRings({ people }: { people: TeamBreakPerson[] }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const resting = people.filter((person) => person.on_break);
+  const sorted = [...resting, ...people.filter((person) => !person.on_break)];
+  return (
+    <SectionCard
+      id="phone-team-breaks"
+      variant="panel"
+      title={t('manager.teams.breaks.title')}
+      subtitle={
+        resting.length > 0
+          ? t('manager.teams.breaks.resting', {
+              count: resting.length,
+              n: f.number(resting.length),
+            })
+          : t('manager.teams.breaks.none')
+      }
+    >
+      <ul className="m-0 flex list-none flex-col p-0">
+        {sorted.map((person) => (
+          <li
+            key={person.id}
+            className="flex min-h-14 items-center gap-3 border-b border-line-2 py-2 last:border-b-0"
+          >
+            <Avatar name={person.name} size="sm" tone={person.on_break ? 'tint' : 'hero'} />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="text-[15px] font-semibold text-text">{person.name}</span>
+              <span className="text-[13px] text-text-2">
+                {person.teams.length > 0 ? f.list(person.teams) : t('manager.teams.breaks.noTeam')}
+              </span>
+            </div>
+            {person.on_break && person.since ? (
+              <Chip tone="warn" dot>
+                {t('manager.teams.breaks.since', { time: f.time(person.since) })}
+              </Chip>
+            ) : person.teams.length > 0 ? (
+              <Chip tone="good" dot>
+                {t('manager.teams.breaks.ringing')}
+              </Chip>
+            ) : (
+              <Chip tone="neutral">{t('manager.teams.breaks.outside')}</Chip>
+            )}
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
+  );
+}
+
+function TeamCard({
+  team,
+  people,
+  onBreak,
+}: {
+  team: PhoneTeam;
+  people: TeamPerson[];
+  onBreak: Map<number, TeamBreakPerson>;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const save = useSavePhoneTeam();
@@ -138,7 +210,11 @@ function TeamCard({ team, people }: { team: PhoneTeam; people: TeamPerson[] }) {
               {people.map((person) => (
                 <TogglePill
                   key={person.id}
-                  label={`${person.name} · ${f.digits(person.desk ?? person.mobile ?? '')}`}
+                  label={[
+                    person.name,
+                    f.digits(person.desk ?? person.mobile ?? ''),
+                    ...(onBreak.has(person.id) ? [t('manager.teams.breaks.onBreak')] : []),
+                  ].join(' · ')}
                   checked={members.includes(person.id)}
                   onChange={(on) =>
                     setMembers((list) =>

@@ -2010,7 +2010,18 @@
       "new": "New team",
       "newHint": "Its queue number is picked for you. After adding it, pick its people on its card. A menu key is also needed for customers to reach it.",
       "add": "Add team",
-      "added": "Team “{{name}}” added"
+      "added": "Team “{{name}}” added",
+      "breaks": {
+        "title": "Who gets team calls now",
+        "resting_one": "{{n}} person is on a break. Team calls skip them, but their own number still rings. A break ends when they end it, or at midnight.",
+        "resting_other": "{{n}} people are on a break. Team calls skip them, but their own numbers still ring. A break ends when they end it, or at midnight.",
+        "none": "No one is on a break; team calls ring everyone.",
+        "since": "On a break since {{time}}",
+        "ringing": "Rings",
+        "outside": "In no team",
+        "noTeam": "No team",
+        "onBreak": "on a break"
+      }
     },
     "menus": {
       "title": "Phone menus",

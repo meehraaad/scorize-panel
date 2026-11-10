@@ -32,7 +32,8 @@ export type ServerFeature =
   | 'phoneTeams'
   | 'phoneMenus'
   | 'phoneVoices'
-  | 'phoneBreak';
+  | 'phoneBreak'
+  | 'teamBreaks';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /**
@@ -48,6 +49,8 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   phoneVoices: true,
   /** `GET/PUT /sales/v1/calls/break/`: a seller's break from team calls (lang `claude/seller-break`). */
   phoneBreak: true,
+  /** `GET /sales/v1/calls/breaks/`: who is on a break, on the manager's phone teams page (lang `test`). */
+  teamBreaks: true,
   /**
    * S62 `GET /applicant/v1/offer/`: the contract offer waiting for the customer's agreement, on
    * the contract tab without a contract (lang `claude/project-thread-kr4w45`).
