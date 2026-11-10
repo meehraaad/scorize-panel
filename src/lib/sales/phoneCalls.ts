@@ -152,6 +152,61 @@ export function useSaveOfficeHours() {
   });
 }
 
+/** Someone who can ring in a team: they have a desk phone or a working mobile extension. */
+export interface TeamPerson {
+  id: number;
+  name: string;
+  desk: string | null;
+  mobile: string | null;
+}
+
+/** A team the office line rings (a PBX queue, `number` 1000-1099). */
+export interface PhoneTeam {
+  number: string;
+  name: string;
+  /** False: what the PBX has, not managed from the panel yet. */
+  saved: boolean;
+  /** TeamPerson ids. */
+  members: number[];
+  /** `09xxxxxxxxx`. */
+  outside_numbers: string[];
+  /** Extensions on the PBX's team that are no one's; saving drops them. */
+  unknown: string[];
+  /** Extensions logged in with the queue login code: left as they are. */
+  dynamic: string[];
+}
+
+export interface PhoneTeams {
+  teams: PhoneTeam[];
+  people: TeamPerson[];
+  /** When the office worker last reported the PBX; null: never. */
+  seen_at: string | null;
+}
+
+export interface PhoneTeamInput {
+  name: string;
+  members: number[];
+  outside_numbers: string[];
+}
+
+export const phoneTeamsQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'phone-teams'],
+  queryFn: ({ signal }) => api<PhoneTeams>(`${SALES_API}/calls/teams/`, { signal }),
+});
+
+/** Saves a team (`number`), or adds one with the next free number. */
+export function useSavePhoneTeam() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ number, ...body }: PhoneTeamInput & { number?: string }) =>
+      api<PhoneTeams>(
+        number === undefined ? `${SALES_API}/calls/teams/` : `${SALES_API}/calls/teams/${number}/`,
+        { method: number === undefined ? 'POST' : 'PUT', body },
+      ),
+    onSuccess: (data) => client.setQueryData(phoneTeamsQuery.queryKey, data),
+  });
+}
+
 /** Server timestamps, rather than counting interval ticks, survive navigation and tab throttling. */
 export function callSeconds(call: ObservedCall, now: number) {
   const start = Date.parse(call.answered_at ?? call.started_at);

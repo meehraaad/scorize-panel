@@ -1240,7 +1240,8 @@
       "tags": "Customer tags",
       "commission": "Commission",
       "contract": "Contract",
-      "hours": "Phone hours"
+      "hours": "Phone hours",
+      "phoneTeams": "Phone teams"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1930,6 +1931,34 @@
       },
       "save": "Save hours",
       "saved": "Saved; the PBX updates within a few seconds"
+    },
+    "teams": {
+      "title": "Phone teams",
+      "seen": "The PBX was last read {{time}}.",
+      "notSeen": "No report from the PBX yet.",
+      "empty": "Once the PBX reports, its teams show here.",
+      "untitled": "Team {{number}}",
+      "number": "Queue {{number}}",
+      "fromPbx": "Queue {{number}} · the PBX's own setup; once saved, it follows this page",
+      "formLabel": "Team {{name}}",
+      "name": "Team name",
+      "nameHint": "Write a name of up to 40 characters, without ; , | [ ] \" < >",
+      "members": "Who rings",
+      "membersHint": "Each person's desk phone rings, and their mobile too when it's linked. Someone without a desk phone rings on their mobile.",
+      "noPeople": "No one has a desk phone or a mobile extension yet.",
+      "outside": "Outside number",
+      "phoneHint": "Write a mobile number like 09121234567.",
+      "addPhone": "Add number",
+      "removePhone": "Remove {{phone}}",
+      "unknown": "Extensions {{list}} are in this queue but belong to no one; saving drops them.",
+      "dynamic": "Logged in to this queue with the login code: {{list}}. They stay as they are.",
+      "save": "Save team",
+      "saved": "Team “{{name}}” saved; the PBX updates within a few seconds",
+      "refused": "This team wasn't saved. Check the name and numbers.",
+      "new": "New team",
+      "newHint": "Its queue number is picked for you. After adding it, pick its people on its card. A menu key is also needed for customers to reach it.",
+      "add": "Add team",
+      "added": "Team “{{name}}” added"
     }
   },
   "handoff": {

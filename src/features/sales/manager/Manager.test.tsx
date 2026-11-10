@@ -818,3 +818,58 @@ describe('office phone hours', () => {
     expect(router.state.location.pathname).toBe('/sales');
   });
 });
+
+describe('phone teams', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it("shows the PBX's team, changes its name, people and outside numbers, and adds a team", async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/phone-teams');
+    expect(await screen.findByRole('heading', { name: 'تیم‌های تلفن' })).toBeInTheDocument();
+    const card = screen.getByRole('region', { name: 'moshavere-foroosh' });
+    expect(within(card).getByText(/همان تنظیم خود سانترال/)).toBeInTheDocument();
+    expect(within(card).getByText(/داخلی‌های ۲۳۰ در این صف هستند/)).toBeInTheDocument();
+    expect(within(card).getByText(/با کد ورود وارد این صف شده‌اند: ۱۰۳/)).toBeInTheDocument();
+    expect(within(card).getByRole('checkbox', { name: /^نیما رضایی/ })).toBeChecked();
+
+    await user.clear(within(card).getByLabelText('نام تیم'));
+    await user.type(within(card).getByLabelText('نام تیم'), 'فروش;');
+    await user.click(within(card).getByRole('button', { name: 'ذخیره‌ی تیم' }));
+    expect(within(card).getByText(/یک نام تا ۴۰ حرف بنویسید/)).toBeInTheDocument();
+    await user.type(within(card).getByLabelText('نام تیم'), '{Backspace}');
+
+    await user.click(within(card).getByRole('checkbox', { name: /^رضا کامرانی/ }));
+    await user.type(within(card).getByLabelText('شماره‌ی بیرون از شرکت'), '912');
+    await user.click(within(card).getByRole('button', { name: 'افزودن شماره' }));
+    expect(
+      within(card).getByText('یک شماره‌ی موبایل مثل 09121234567 بنویسید.'),
+    ).toBeInTheDocument();
+    await user.clear(within(card).getByLabelText('شماره‌ی بیرون از شرکت'));
+    await user.type(within(card).getByLabelText('شماره‌ی بیرون از شرکت'), '۰۹۱۲۱۲۳۴۵۶۷');
+    await user.click(within(card).getByRole('button', { name: 'افزودن شماره' }));
+    await user.click(within(card).getByRole('button', { name: 'برداشتن ۰۹۹۶۲۸۳۳۹۱۸' }));
+    await user.click(within(card).getByRole('button', { name: 'ذخیره‌ی تیم' }));
+    expect(await toasts().findByText(/^تیم «فروش» ذخیره شد/)).toBeInTheDocument();
+    const saved = await api<{ teams: { members: number[]; outside_numbers: string[] }[] }>(
+      '/sales/v1/calls/teams/',
+    );
+    expect(saved.teams[0]).toMatchObject({ members: [8, 9], outside_numbers: ['09121234567'] });
+
+    const add = screen.getByRole('form', { name: 'تیم تازه' });
+    await user.type(within(add).getByLabelText('نام تیم'), 'ویزا');
+    await user.click(within(add).getByRole('button', { name: 'افزودن تیم' }));
+    expect(await toasts().findByText('تیم «ویزا» اضافه شد')).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'ویزا' })).toBeInTheDocument();
+  });
+
+  it('is hidden from sellers', async () => {
+    loginAs(NIMA);
+    const router = renderApp('/sales/manager/phone-teams');
+    await screen.findByRole('heading', { name: /^سلام نیما، / });
+    expect(router.state.location.pathname).toBe('/sales');
+  });
+});
