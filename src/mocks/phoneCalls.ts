@@ -7,6 +7,7 @@ import type {
   PhoneSnapshot,
   PhoneTeamInput,
   PhoneTeams,
+  PhoneVoices,
 } from '@/lib/sales/phoneCalls';
 import { forbidden, storage } from './session';
 
@@ -78,6 +79,26 @@ const freshMenus = (): PhoneMenus => ({
 });
 let menus = freshMenus();
 
+const freshVoices = (): PhoneVoices => ({
+  seen_at: '2026-11-10T14:00:00Z',
+  voices: [
+    { id: '1', name: 'ivr-main', menus: ['ivr-main'], last: null },
+    {
+      id: '2',
+      name: 'ivr-outtime',
+      menus: ['ivr-outtime'],
+      last: {
+        status: 'failed',
+        error: 'ffmpeg could not read this sound file',
+        uploaded_at: '2026-11-10T13:00:00Z',
+        done_at: '2026-11-10T13:00:05Z',
+        by: 'رضا کامرانی',
+      },
+    },
+  ],
+});
+let voices = freshVoices();
+
 export function setPhoneSnapshot(owner: number, snapshot: PhoneSnapshot) {
   snapshots.set(owner, snapshot);
 }
@@ -87,6 +108,7 @@ export function resetPhoneMocks() {
   hours = freshHours();
   teams = freshTeams();
   menus = freshMenus();
+  voices = freshVoices();
 }
 
 /** Django's checks in OfficeHoursSerializer, with its messages. */
@@ -111,6 +133,35 @@ function teamErrors(body: PhoneTeamInput) {
 }
 
 export const phoneCallHandlers = [
+  // Voice messages: an upload waits for the PBX (here it stays waiting).
+  http.get('/api/sales/v1/calls/voices/', () =>
+    storage.get() === 4 ? HttpResponse.json(voices) : forbidden(),
+  ),
+  http.post('/api/sales/v1/calls/voices/:id/', async ({ request, params }) => {
+    if (storage.get() !== 4) return forbidden();
+    if (!voices.voices.some((voice) => voice.id === params.id))
+      return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    const file = (await request.formData()).get('file');
+    if (!(file instanceof File)) return HttpResponse.json({ file: ['required'] }, { status: 400 });
+    voices = {
+      ...voices,
+      voices: voices.voices.map((voice) =>
+        voice.id === params.id
+          ? {
+              ...voice,
+              last: {
+                status: 'pending',
+                error: '',
+                uploaded_at: new Date().toISOString(),
+                done_at: null,
+                by: 'رضا کامرانی',
+              },
+            }
+          : voice,
+      ),
+    };
+    return HttpResponse.json(voices, { status: 201 });
+  }),
   // Phone menus: sales managers only; a key to a team or menu the PBX hasn't is refused like Django.
   http.get('/api/sales/v1/calls/menus/', () =>
     storage.get() === 4 ? HttpResponse.json(menus) : forbidden(),

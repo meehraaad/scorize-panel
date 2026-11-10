@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api/client';
+import { uploadFile, type UploadMessages } from '@/lib/upload';
 import { SALES_API, SALES_KEY } from './api';
 
 export interface PhoneCall {
@@ -255,6 +256,52 @@ export function useSavePhoneMenu() {
     mutationFn: ({ id, keys }: { id: string; keys: MenuKey[] }) =>
       api<PhoneMenus>(`${SALES_API}/calls/menus/${id}/`, { method: 'PUT', body: { keys } }),
     onSuccess: (data) => client.setQueryData(phoneMenusQuery.queryKey, data),
+  });
+}
+
+/** One of the greetings the menus play (a PBX recording), with its latest upload. */
+export interface PhoneVoice {
+  id: string;
+  name: string;
+  /** The PBX names of the menus that play it. */
+  menus: string[];
+  last: {
+    status: 'pending' | 'done' | 'failed';
+    error: string;
+    uploaded_at: string;
+    done_at: string | null;
+    by: string | null;
+  } | null;
+}
+
+export interface PhoneVoices {
+  voices: PhoneVoice[];
+  seen_at: string | null;
+}
+
+/** Waiting uploads reach the PBX within seconds, so the page checks again while one waits. */
+export const phoneVoicesQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'phone-voices'],
+  queryFn: ({ signal }) => api<PhoneVoices>(`${SALES_API}/calls/voices/`, { signal }),
+  refetchInterval: (query) =>
+    query.state.data?.voices.some((voice) => voice.last?.status === 'pending') ? 5000 : false,
+});
+
+/** A new greeting file for one recording: MP3, WAV, M4A or OGG, up to 10 MB. */
+export function useUploadVoice(recording: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, messages }: { file: File; messages?: UploadMessages }) => {
+      const body = new FormData();
+      body.append('file', file);
+      return uploadFile<PhoneVoices>(
+        `${SALES_API}/calls/voices/${recording}/`,
+        body,
+        file,
+        messages,
+      );
+    },
+    onSuccess: (data) => client.setQueryData(phoneVoicesQuery.queryKey, data),
   });
 }
 

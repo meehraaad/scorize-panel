@@ -979,3 +979,39 @@ describe('phone menus', () => {
     expect(router.state.location.pathname).toBe('/sales');
   });
 });
+
+describe('voice messages', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('lists the greetings, refuses a non-sound file, and sends a new one', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    loginAs(REZA);
+    renderApp('/sales/manager/phone-voices');
+    expect(await screen.findByRole('heading', { name: 'پیام‌های صوتی' })).toBeInTheDocument();
+    const main = screen.getByRole('region', { name: 'منوی اصلی' });
+    expect(within(main).getByText('پخش در: منوی اصلی')).toBeInTheDocument();
+    const closed = screen.getByRole('region', { name: 'بیرون از ساعت کاری' });
+    expect(within(closed).getByText(/آخرین فایل روی سانترال نرفت/)).toBeInTheDocument();
+
+    const input = within(main).getByLabelText('فایل صوتی تازه برای منوی اصلی', {
+      selector: 'input',
+    });
+    await user.upload(input, new File(['x'], 'notes.pdf', { type: 'application/pdf' }));
+    expect(within(main).getByRole('alert')).toHaveTextContent(
+      'یک فایل MP3، WAV، M4A یا OGG انتخاب کنید.',
+    );
+    await user.upload(input, new File(['ID3 sound'], 'greeting.mp3', { type: 'audio/mpeg' }));
+    expect(await toasts().findByText('پیام صوتی فرستاده شد')).toBeInTheDocument();
+    expect(await within(main).findByText('فایل تازه در راه سانترال است…')).toBeInTheDocument();
+  });
+
+  it('is hidden from sellers', async () => {
+    loginAs(NIMA);
+    const router = renderApp('/sales/manager/phone-voices');
+    await screen.findByRole('heading', { name: /^سلام نیما، / });
+    expect(router.state.location.pathname).toBe('/sales');
+  });
+});
