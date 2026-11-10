@@ -873,3 +873,53 @@ describe('phone teams', () => {
     expect(router.state.location.pathname).toBe('/sales');
   });
 });
+
+describe('phone menus', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it("shows the PBX's keys, refuses a repeated key, and saves changes", async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/phone-menus');
+    expect(await screen.findByRole('heading', { name: 'منوهای تلفن' })).toBeInTheDocument();
+    const main = screen.getByRole('region', { name: 'منوی اصلی' });
+    expect(within(main).getByLabelText('کلید ۱ به کجا برود')).toHaveValue('team');
+    expect(within(main).getByLabelText('مقصد کلید ۱')).toHaveValue('1000');
+    expect(within(main).getByLabelText('مقصد کلید ۲۲۳')).toHaveValue('223');
+    expect(
+      within(main).getByText('تنظیم خاص سانترال؛ همان‌طور که هست می‌ماند.'),
+    ).toBeInTheDocument();
+
+    await user.click(within(main).getByRole('button', { name: 'افزودن کلید' }));
+    const keys = within(main).getAllByLabelText('کلید');
+    const added = keys[keys.length - 1] as HTMLElement;
+    await user.type(added, '۱');
+    await user.click(within(main).getByRole('button', { name: 'ذخیره‌ی منو' }));
+    expect(within(main).getAllByText('این کلید دو بار آمده است.')).toHaveLength(2);
+    await user.clear(added);
+    await user.type(added, '0');
+    await user.selectOptions(within(main).getByLabelText('کلید ۰ به کجا برود'), 'menu');
+    expect(within(main).getByLabelText('مقصد کلید ۰')).toHaveValue('5');
+    await user.selectOptions(within(main).getByLabelText('کلید ۴ به کجا برود'), 'hangup');
+    await user.click(within(main).getByRole('button', { name: 'برداشتن کلید ۹' }));
+    await user.click(within(main).getByRole('button', { name: 'ذخیره‌ی منو' }));
+    expect(await toasts().findByText(/^«منوی اصلی» ذخیره شد/)).toBeInTheDocument();
+    const saved = await api<{ menus: { id: string; keys: unknown[] }[] }>('/sales/v1/calls/menus/');
+    expect(saved.menus[0]?.keys).toEqual([
+      { key: '1', kind: 'team', target: '1000' },
+      { key: '4', kind: 'hangup', target: '' },
+      { key: '223', kind: 'direct', target: '223' },
+      { key: '0', kind: 'menu', target: '5' },
+    ]);
+  });
+
+  it('is hidden from sellers', async () => {
+    loginAs(NIMA);
+    const router = renderApp('/sales/manager/phone-menus');
+    await screen.findByRole('heading', { name: /^سلام نیما، / });
+    expect(router.state.location.pathname).toBe('/sales');
+  });
+});

@@ -207,6 +207,57 @@ export function useSavePhoneTeam() {
   });
 }
 
+/**
+ * Where a menu key goes: a team (`target` its queue), another menu (its id), a message box, an
+ * extension (any time), an extension only in the direct-number hours, hang up, or `other`: a
+ * PBX destination the panel doesn't know, which can stay or go but not be made.
+ */
+export type MenuKeyKind = 'team' | 'menu' | 'message' | 'extension' | 'direct' | 'hangup' | 'other';
+
+export interface MenuKey {
+  /** `0`-`9999`, `*` or `#`. */
+  key: string;
+  kind: MenuKeyKind;
+  target: string;
+}
+
+export interface PhoneMenu {
+  /** The PBX's menu (IVR) id. */
+  id: string;
+  /** The PBX's own name, like `ivr-main`. */
+  name: string;
+  /** False: the PBX's own keys, not managed from the panel yet. */
+  saved: boolean;
+  keys: MenuKey[];
+}
+
+export interface PhoneMenus {
+  menus: PhoneMenu[];
+  options: {
+    teams: { number: string; name: string }[];
+    menus: { id: string; name: string }[];
+    messages: string[];
+    people: TeamPerson[];
+    /** Extensions with a direct-number-hours condition. */
+    directs: string[];
+  };
+  seen_at: string | null;
+}
+
+export const phoneMenusQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'phone-menus'],
+  queryFn: ({ signal }) => api<PhoneMenus>(`${SALES_API}/calls/menus/`, { signal }),
+});
+
+export function useSavePhoneMenu() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, keys }: { id: string; keys: MenuKey[] }) =>
+      api<PhoneMenus>(`${SALES_API}/calls/menus/${id}/`, { method: 'PUT', body: { keys } }),
+    onSuccess: (data) => client.setQueryData(phoneMenusQuery.queryKey, data),
+  });
+}
+
 /** Server timestamps, rather than counting interval ticks, survive navigation and tab throttling. */
 export function callSeconds(call: ObservedCall, now: number) {
   const start = Date.parse(call.answered_at ?? call.started_at);
