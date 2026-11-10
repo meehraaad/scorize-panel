@@ -830,7 +830,7 @@ describe('office phone hours', () => {
   it("shows the PBX's hours, refuses a closing time before opening, and saves the week", async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/hours');
+    renderApp('/sales/manager/phone/hours');
     expect(await screen.findByRole('heading', { name: 'ساعت کاری تلفن' })).toBeInTheDocument();
     expect(screen.getByText(/هنوز ساعت‌های خود سانترال است/)).toBeInTheDocument();
     const week = screen.getByRole('region', { name: 'ساعت پاسخ‌گویی' });
@@ -855,7 +855,7 @@ describe('office phone hours', () => {
   it('closes the line for today at once, and adds and removes a closed day', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/hours');
+    renderApp('/sales/manager/phone/hours');
     const today = await screen.findByRole('region', { name: 'امروز' });
     await user.click(within(today).getByRole('radio', { name: 'بسته' }));
     expect(await toasts().findByText('خط تلفن تا نیمه‌شب بسته است')).toBeInTheDocument();
@@ -869,7 +869,7 @@ describe('office phone hours', () => {
 
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/hours');
+    const router = renderApp('/sales/manager/phone/hours');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });
@@ -884,7 +884,7 @@ describe('phone teams', () => {
   it("shows the PBX's team, changes its name, people and outside numbers, and adds a team", async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/phone-teams');
+    renderApp('/sales/manager/phone/teams');
     expect(await screen.findByRole('heading', { name: 'تیم‌های تلفن' })).toBeInTheDocument();
     const card = screen.getByRole('region', { name: 'moshavere-foroosh' });
     expect(within(card).getByText(/همان تنظیم خود سانترال/)).toBeInTheDocument();
@@ -924,7 +924,7 @@ describe('phone teams', () => {
 
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/phone-teams');
+    const router = renderApp('/sales/manager/phone/teams');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });
@@ -939,7 +939,7 @@ describe('phone menus', () => {
   it("shows the PBX's keys, refuses a repeated key, and saves changes", async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/phone-menus');
+    renderApp('/sales/manager/phone/menus');
     expect(await screen.findByRole('heading', { name: 'منوهای تلفن' })).toBeInTheDocument();
     const main = screen.getByRole('region', { name: 'منوی اصلی' });
     expect(within(main).getByLabelText('کلید ۱ به کجا برود')).toHaveValue('team');
@@ -974,7 +974,7 @@ describe('phone menus', () => {
 
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/phone-menus');
+    const router = renderApp('/sales/manager/phone/menus');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });
@@ -989,7 +989,7 @@ describe('voice messages', () => {
   it('lists the greetings, refuses a non-sound file, and sends a new one', async () => {
     const user = userEvent.setup({ applyAccept: false });
     loginAs(REZA);
-    renderApp('/sales/manager/phone-voices');
+    renderApp('/sales/manager/phone/voices');
     expect(await screen.findByRole('heading', { name: 'پیام‌های صوتی' })).toBeInTheDocument();
     const main = screen.getByRole('region', { name: 'منوی اصلی' });
     expect(within(main).getByText('پخش در: منوی اصلی')).toBeInTheDocument();
@@ -1010,7 +1010,7 @@ describe('voice messages', () => {
 
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/phone-voices');
+    const router = renderApp('/sales/manager/phone/voices');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });
