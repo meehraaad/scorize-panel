@@ -51,6 +51,7 @@ import {
   phoneBreakQuery,
   phoneVoicesQuery,
 } from '@/lib/sales/phoneCalls';
+import { PHONE_SECTIONS } from '@/features/sales/manager/phoneSections';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
 import type { PanelDefinition } from '../types';
@@ -363,50 +364,78 @@ export const salesPanel: PanelDefinition = {
             skeleton: 'list',
           }),
         },
-        ...(ON_SERVER.officeHours
+        // The office line: one tab, a sub-tab per setting (PhoneLayout).
+        ...(PHONE_SECTIONS.length
           ? [
               {
-                path: 'hours',
-                ...lazyPage(() => import('@/features/sales/manager/OfficeHoursPage'), [], {
-                  data: () => [officeHoursQuery],
-                  skeleton: 'form',
-                }),
+                path: 'phone',
+                ...lazyPage(() => import('@/features/sales/manager/PhoneLayout'), []),
+                children: [
+                  {
+                    index: true,
+                    loader: () => redirect(`/sales/manager/phone/${PHONE_SECTIONS[0]?.path ?? ''}`),
+                  },
+                  ...(ON_SERVER.officeHours
+                    ? [
+                        {
+                          path: 'hours',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/OfficeHoursPage'),
+                            [],
+                            {
+                              data: () => [officeHoursQuery],
+                              skeleton: 'form',
+                            },
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneTeams
+                    ? [
+                        {
+                          path: 'teams',
+                          ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
+                            data: () => [phoneTeamsQuery],
+                            skeleton: 'form',
+                          }),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneMenus
+                    ? [
+                        {
+                          path: 'menus',
+                          ...lazyPage(() => import('@/features/sales/manager/PhoneMenusPage'), [], {
+                            data: () => [phoneMenusQuery],
+                            skeleton: 'form',
+                          }),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneVoices
+                    ? [
+                        {
+                          path: 'voices',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/PhoneVoicesPage'),
+                            [],
+                            {
+                              data: () => [phoneVoicesQuery],
+                              skeleton: 'list',
+                            },
+                          ),
+                        },
+                      ]
+                    : []),
+                ],
               },
             ]
           : []),
-        ...(ON_SERVER.phoneTeams
-          ? [
-              {
-                path: 'phone-teams',
-                ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
-                  data: () => [phoneTeamsQuery],
-                  skeleton: 'form',
-                }),
-              },
-            ]
-          : []),
-        ...(ON_SERVER.phoneMenus
-          ? [
-              {
-                path: 'phone-menus',
-                ...lazyPage(() => import('@/features/sales/manager/PhoneMenusPage'), [], {
-                  data: () => [phoneMenusQuery],
-                  skeleton: 'form',
-                }),
-              },
-            ]
-          : []),
-        ...(ON_SERVER.phoneVoices
-          ? [
-              {
-                path: 'phone-voices',
-                ...lazyPage(() => import('@/features/sales/manager/PhoneVoicesPage'), [], {
-                  data: () => [phoneVoicesQuery],
-                  skeleton: 'list',
-                }),
-              },
-            ]
-          : []),
+        // Old addresses (bookmarks) of the phone pages.
+        { path: 'hours', loader: () => redirect('/sales/manager/phone/hours') },
+        { path: 'phone-teams', loader: () => redirect('/sales/manager/phone/teams') },
+        { path: 'phone-menus', loader: () => redirect('/sales/manager/phone/menus') },
+        { path: 'phone-voices', loader: () => redirect('/sales/manager/phone/voices') },
       ],
     },
     {

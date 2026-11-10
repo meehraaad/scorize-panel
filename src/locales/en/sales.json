@@ -1253,10 +1253,7 @@
       "tags": "Customer tags",
       "commission": "Commission",
       "contract": "Contract",
-      "hours": "Phone hours",
-      "phoneTeams": "Phone teams",
-      "phoneMenus": "Phone menus",
-      "phoneVoices": "Voice messages"
+      "phone": "Phone"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -2072,6 +2069,15 @@
       "tooLarge": "The file is larger than 10 MB.",
       "sent": "Voice message sent",
       "sentMeta": "The PBX plays it within a few seconds; the old file is kept."
+    },
+    "phone": {
+      "nav": "Phone sections",
+      "section": {
+        "hours": "Office hours",
+        "teams": "Teams",
+        "menus": "Menus",
+        "voices": "Voice messages"
+      }
     }
   },
   "handoff": {
