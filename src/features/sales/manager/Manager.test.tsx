@@ -764,3 +764,57 @@ describe('contract builder and agreement desk (S64)', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('office phone hours', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it("shows the PBX's hours, refuses a closing time before opening, and saves the week", async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/hours');
+    expect(await screen.findByRole('heading', { name: 'ساعت کاری تلفن' })).toBeInTheDocument();
+    expect(screen.getByText(/هنوز ساعت‌های خود سانترال است/)).toBeInTheDocument();
+    const week = screen.getByRole('region', { name: 'ساعت پاسخ‌گویی' });
+    expect(within(week).getByLabelText('یکشنبه، از ساعت')).toHaveValue('10:30');
+    expect(within(week).getByRole('switch', { name: /^شنبه/ })).not.toBeChecked();
+
+    await user.click(within(week).getByRole('switch', { name: /^شنبه/ }));
+    await user.selectOptions(within(week).getByLabelText('شنبه، از ساعت'), '10:00');
+    await user.selectOptions(within(week).getByLabelText('شنبه، تا ساعت'), '09:00');
+    await user.click(screen.getByRole('button', { name: 'ذخیره‌ی ساعت‌ها' }));
+    expect(within(week).getByText('ساعت پایان را بعد از ساعت شروع بگذارید.')).toBeInTheDocument();
+    expect(within(week).getByLabelText('شنبه، تا ساعت')).toHaveFocus();
+
+    await user.selectOptions(within(week).getByLabelText('شنبه، تا ساعت'), '14:00');
+    await user.click(screen.getByRole('button', { name: 'ذخیره‌ی ساعت‌ها' }));
+    expect(await toasts().findByText(/^ذخیره شد/)).toBeInTheDocument();
+    expect(await screen.findByText(/آخرین تغییر: رضا کامرانی/)).toBeInTheDocument();
+    const saved = await api<{ week: { day: string }[] }>('/sales/v1/calls/hours/');
+    expect(saved.week.map((row) => row.day)).toEqual(['sat', 'sun', 'mon', 'tue', 'wed', 'thu']);
+  });
+
+  it('closes the line for today at once, and adds and removes a closed day', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/hours');
+    const today = await screen.findByRole('region', { name: 'امروز' });
+    await user.click(within(today).getByRole('radio', { name: 'بسته' }));
+    expect(await toasts().findByText('خط تلفن تا نیمه‌شب بسته است')).toBeInTheDocument();
+    expect(await screen.findByText('خط تلفن الان بسته است')).toBeInTheDocument();
+
+    const closed = screen.getByRole('region', { name: 'روزهای تعطیل' });
+    expect(within(closed).getByText('روز تعطیلی اضافه نشده است.')).toBeInTheDocument();
+    await user.click(within(closed).getByRole('button', { name: 'افزودن روز' }));
+    expect(within(closed).getByText('اول روز را انتخاب کنید.')).toBeInTheDocument();
+  });
+
+  it('is hidden from sellers', async () => {
+    loginAs(NIMA);
+    const router = renderApp('/sales/manager/hours');
+    await screen.findByRole('heading', { name: /^سلام نیما، / });
+    expect(router.state.location.pathname).toBe('/sales');
+  });
+});

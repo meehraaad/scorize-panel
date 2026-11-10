@@ -1239,7 +1239,8 @@
       "stages": "Board stages",
       "tags": "Customer tags",
       "commission": "Commission",
-      "contract": "Contract"
+      "contract": "Contract",
+      "hours": "Phone hours"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1872,6 +1873,63 @@
         "insertOne": "Add {{name}} to the text",
         "unknown": "These variables aren't defined and stay blank in the contract: {{names}}"
       }
+    },
+    "hours": {
+      "title": "Phone hours",
+      "openNow": "The phone line is open now",
+      "closedNow": "The phone line is closed now",
+      "notSaved": "These are still the PBX's own hours. Once you save, the PBX follows this page.",
+      "updated": "Last changed by {{name}}, {{time}}",
+      "someone": "a sales manager",
+      "formLabel": "Phone line hours",
+      "today": {
+        "title": "Today",
+        "subtitle": "Until midnight; tomorrow the line follows the hours again.",
+        "legend": "The phone line today",
+        "auto": "Follow the hours",
+        "open": "Open",
+        "closed": "Closed",
+        "saved": {
+          "auto": "The phone line follows the hours again",
+          "open": "The phone line is open until midnight",
+          "closed": "The phone line is closed until midnight"
+        }
+      },
+      "week": {
+        "title": "Answering hours",
+        "subtitle": "In these hours customers reach the phone menu. Outside them they hear the closed message and the call ends."
+      },
+      "direct": {
+        "title": "Direct extensions",
+        "subtitle": "When a customer can dial a person's extension from the menu."
+      },
+      "day": {
+        "sat": "Saturday",
+        "sun": "Sunday",
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday"
+      },
+      "dayOff": "Closed",
+      "from": "{{day}}, from",
+      "to": "{{day}}, until",
+      "errors": {
+        "order": "Set the closing time after the opening time.",
+        "empty": "Open the line on at least one day. To close it for a while, use Today or closed days."
+      },
+      "closedDays": {
+        "title": "Closed days",
+        "subtitle": "On these days the phone line is closed all day. Past days drop off by themselves.",
+        "pick": "Closed day",
+        "pickFirst": "Pick the day first.",
+        "add": "Add day",
+        "remove": "Remove {{day}}",
+        "empty": "No closed days added."
+      },
+      "save": "Save hours",
+      "saved": "Saved; the PBX updates within a few seconds"
     }
   },
   "handoff": {
