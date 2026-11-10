@@ -149,8 +149,7 @@ describe('sales panel, seller pages', () => {
     expect(router.state.location.pathname).toMatch(/^\/sales\/customers\/\d+$/);
   });
 
-  it('header: searches every customer, opens mine, takes a free one, names another seller', async () => {
-    let taken: string | null = null;
+  it('header: searches every customer, opens mine and a free one, names another seller', async () => {
     server.use(
       http.get('/api/sales/v1/customers/search/', ({ request }) => {
         const q = new URL(request.url).searchParams.get('q');
@@ -187,13 +186,9 @@ describe('sales panel, seller pages', () => {
           ],
         });
       }),
-      http.post('/api/sales/v1/customers/:id/take/', ({ params }) => {
-        taken = String(params.id);
-        return HttpResponse.json({ customer: Number(params.id) });
-      }),
     );
     const user = userEvent.setup();
-    const router = renderApp('/sales/leads');
+    renderApp('/sales/leads');
     await user.click(await screen.findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
     const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'هیچ');
@@ -201,15 +196,14 @@ describe('sales panel, seller pages', () => {
     await user.clear(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }));
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'مینا');
     const results = await within(dialog).findByRole('list', { name: 'مشتری‌های پیدا شده' });
-    expect(within(results).getByRole('link', { name: 'باز کردن صفحه' })).toHaveAttribute(
-      'href',
+    const opens = within(results).getAllByRole('link', { name: 'باز کردن صفحه' });
+    expect(opens.map((link) => link.getAttribute('href'))).toEqual([
       `/sales/customers/${String(ERFAN)}`,
-    );
+      '/sales/customers/777',
+    ]);
     expect(within(results).getByText('مشتریِ سارا')).toBeInTheDocument();
-    await user.click(within(results).getByRole('button', { name: 'برداشتن مشتری' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/sales/customers/777'));
-    expect(taken).toBe('777');
-    expect(await toasts().findByText('مینا آزاد به مشتری‌های شما اضافه شد.')).toBeInTheDocument();
+    // One nobody has opens too: a seller only opens customers, never takes them from search.
+    expect(within(results).queryByRole('button', { name: 'برداشتن مشتری' })).toBeNull();
   });
 
   it('header: searches every customer from any page; nobody found opens the new lead', async () => {

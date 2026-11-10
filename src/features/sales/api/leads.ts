@@ -168,21 +168,6 @@ export const customerSearchQuery = (typed: string) =>
     placeholderData: keepPreviousData,
   });
 
-/**
- * A found customer nobody has made the seller's (S63). Another seller's answers 409 with
- * `{code: 'other_seller', seller}`.
- */
-export function useTakeCustomer() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (customer: number) =>
-      api<{ customer: number }>(`${SALES_API}/customers/${String(customer)}/take/`, {
-        method: 'POST',
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 export const leadsQuery = (query: LeadQuery) =>
   queryOptions({
     queryKey: [...SALES_KEY, 'leads', query],

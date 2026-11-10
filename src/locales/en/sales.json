@@ -315,10 +315,7 @@
       "addNew": "Add as a new lead",
       "noName": "No name",
       "open": "Open page",
-      "take": "Take customer",
-      "other": "{{seller}}'s customer",
-      "taken": "{{name}} is now your customer.",
-      "takenByOther": "This customer is an open lead of {{seller}}."
+      "other": "{{seller}}'s customer"
     }
   },
   "board": {

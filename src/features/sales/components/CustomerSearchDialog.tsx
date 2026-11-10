@@ -1,17 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Dialog } from '@/components/ui/Dialog';
 import { SearchField } from '@/components/ui/Filters';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { ApiError } from '@/lib/api/client';
 import { formatPhone } from '@/lib/site';
-import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { customerSearchQuery, useTakeCustomer, type CustomerMatch } from '../api';
+import { customerSearchQuery } from '../api';
 import { customerPath } from '../paths';
 
 /** Fewer letters than this match too much (the server answers nothing). */
@@ -20,7 +18,7 @@ const SEARCH_DELAY_MS = 300;
 
 /**
  * Finding anyone with an account by name, email or phone, the seller's or not, like the old CRM's
- * search (S63). The seller's own open; one nobody has can be taken; another seller's names them.
+ * search (S63). The seller's own and one nobody has open their page; another seller's names them.
  * Nobody found: the typed person can be added as a new lead.
  */
 export function CustomerSearchDialog({
@@ -33,8 +31,6 @@ export function CustomerSearchDialog({
   onAddNew: () => void;
 }) {
   const { t } = useTranslation('sales');
-  const navigate = useNavigate();
-  const take = useTakeCustomer();
   const [search, setSearch] = useState('');
   const typed = search.trim();
   const settled = useDebouncedValue(typed, SEARCH_DELAY_MS);
@@ -42,21 +38,6 @@ export function CustomerSearchDialog({
   const found = useQuery({ ...customerSearchQuery(settled), enabled: open && ready });
   const rows = ready ? (found.data?.results ?? []) : [];
   const searching = ready && (settled !== typed || found.isFetching);
-
-  const takeCustomer = (row: CustomerMatch) =>
-    take.mutate(row.customer, {
-      onSuccess: ({ customer }) => {
-        toast.success(t('leads.find.taken', { name: row.name }));
-        onClose();
-        void navigate(customerPath(customer));
-      },
-      onError: (error) => {
-        const body = error instanceof ApiError ? (error.body as { seller?: string } | null) : null;
-        toast.error(
-          body?.seller ? t('leads.find.takenByOther', { seller: body.seller }) : t('error'),
-        );
-      },
-    });
 
   return (
     <Dialog
@@ -107,7 +88,7 @@ export function CustomerSearchDialog({
                       .flatMap((part, index) => (index ? [' · ', part] : [part]))}
                   </span>
                 </span>
-                {row.access === 'mine' && (
+                {row.access !== 'other' && (
                   <Link
                     to={customerPath(row.customer)}
                     onClick={onClose}
@@ -115,15 +96,6 @@ export function CustomerSearchDialog({
                   >
                     {t('leads.find.open')}
                   </Link>
-                )}
-                {row.access === 'free' && (
-                  <Button
-                    className="flex-none"
-                    disabled={take.isPending}
-                    onClick={() => takeCustomer(row)}
-                  >
-                    {t('leads.find.take')}
-                  </Button>
                 )}
                 {row.access === 'other' && (
                   <span className="flex-none text-sm font-medium text-text-2">
