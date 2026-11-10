@@ -3,6 +3,7 @@ import type {
   MenuKey,
   OfficeHoursInput,
   OfficeHoursState,
+  PhoneBreakState,
   PhoneMenus,
   PhoneSnapshot,
   PhoneTeamInput,
@@ -99,6 +100,11 @@ const freshVoices = (): PhoneVoices => ({
 });
 let voices = freshVoices();
 
+/** Breaks by user; every seller here has a phone a team rings. */
+let breaks = new Map<number, PhoneBreakState>();
+const breakOf = (user: number): PhoneBreakState =>
+  breaks.get(user) ?? { can: true, on_break: false, since: null, teams: ['moshavere-foroosh'] };
+
 export function setPhoneSnapshot(owner: number, snapshot: PhoneSnapshot) {
   snapshots.set(owner, snapshot);
 }
@@ -109,6 +115,7 @@ export function resetPhoneMocks() {
   teams = freshTeams();
   menus = freshMenus();
   voices = freshVoices();
+  breaks = new Map();
 }
 
 /** Django's checks in OfficeHoursSerializer, with its messages. */
@@ -133,6 +140,22 @@ function teamErrors(body: PhoneTeamInput) {
 }
 
 export const phoneCallHandlers = [
+  // A seller's break from team calls.
+  http.get('/api/sales/v1/calls/break/', () => {
+    const user = storage.get();
+    return user ? HttpResponse.json(breakOf(user)) : forbidden();
+  }),
+  http.put('/api/sales/v1/calls/break/', async ({ request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const { on_break } = (await request.json()) as { on_break: boolean };
+    breaks.set(user, {
+      ...breakOf(user),
+      on_break,
+      since: on_break ? new Date().toISOString() : null,
+    });
+    return HttpResponse.json(breakOf(user));
+  }),
   // Voice messages: an upload waits for the PBX (here it stays waiting).
   http.get('/api/sales/v1/calls/voices/', () =>
     storage.get() === 4 ? HttpResponse.json(voices) : forbidden(),

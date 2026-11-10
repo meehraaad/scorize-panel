@@ -680,3 +680,40 @@ describe('sales panel, seller pages', () => {
     }
   });
 });
+
+describe('break from team calls', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+    loginAs(NIMA);
+  });
+
+  it('starts and ends a break from the Today header', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales');
+    await user.click(await screen.findByRole('button', { name: 'استراحت' }));
+    expect(
+      await toasts().findByText('استراحت شروع شد؛ تماس تیمی به شما نمی‌رسد'),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/در استراحت هستید و تماس تیمی به شما نمی‌رسد/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/تیم‌ها: moshavere-foroosh/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'پایان استراحت' }));
+    expect(await toasts().findByText('دوباره تماس تیمی به شما می‌رسد')).toBeInTheDocument();
+    expect(screen.queryByText(/در استراحت هستید/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'استراحت' })).toBeInTheDocument();
+  });
+
+  it('shows no button to someone no team rings', async () => {
+    server.use(
+      http.get('/api/sales/v1/calls/break/', () =>
+        HttpResponse.json({ can: false, on_break: false, since: null, teams: [] }),
+      ),
+    );
+    renderApp('/sales');
+    await screen.findByRole('heading', { name: /^سلام نیما، / });
+    expect(screen.queryByRole('button', { name: 'استراحت' })).not.toBeInTheDocument();
+  });
+});
