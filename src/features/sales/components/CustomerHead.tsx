@@ -60,7 +60,11 @@ export function CustomerHead({
 
   return (
     <section aria-label={t('customer.summary')} className="flex flex-col gap-5">
-      <div className="flex animate-rise flex-col gap-5 rounded-card p-5 shadow-aurora bg-aurora lg:p-7">
+      {/* Lit in the customer's picked colour (their face colour), else the brand plum. */}
+      <div
+        data-hue={customer.face?.color || undefined}
+        className="flex animate-rise flex-col gap-5 rounded-card p-5 shadow-aurora bg-aurora lg:p-7"
+      >
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
           <div className="flex min-w-0 items-center gap-4">
             <CustomerFace

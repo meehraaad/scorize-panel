@@ -188,13 +188,18 @@
   );
   color: var(--on-luxe-gold);
 }
-/* The customer page's hero: the surface lit by wine from the start corner (behind the face),
-   gold from the bottom end and a faint violet at the top. Pair with shadow-aurora. */
+/* The customer page's hero: the surface lit from the start corner (behind the face) in the
+   customer's colour (data-hue on the card, else the brand plum), gold from the bottom end and a
+   faint violet at the top. Pair with shadow-aurora. */
 @utility bg-aurora {
   --aurora-start: 100%;
   --aurora-end: 0%;
   background:
-    radial-gradient(60% 130% at var(--aurora-start) 0%, var(--aurora-wine) 0%, transparent 62%),
+    radial-gradient(
+      60% 130% at var(--aurora-start) 0%,
+      color-mix(in srgb, var(--hue, var(--primary)) var(--aurora-strength), transparent) 0%,
+      transparent 62%
+    ),
     radial-gradient(50% 110% at var(--aurora-end) 100%, var(--aurora-gold) 0%, transparent 66%),
     radial-gradient(45% 80% at 45% 0%, var(--aurora-plum) 0%, transparent 70%),
     linear-gradient(180deg, rgb(255 255 255 / 0.04) 0%, transparent 35%), var(--surface);
@@ -205,9 +210,12 @@
 }
 @utility shadow-aurora {
   box-shadow:
-    inset 0 0 0 1px var(--aurora-rim),
+    inset 0 0 0 1px
+      color-mix(in srgb, var(--hue, var(--primary)) var(--aurora-rim-strength), transparent),
     inset 0 1px 0 rgb(255 255 255 / 0.06),
-    var(--aurora-shadow);
+    var(--aurora-shadow-base),
+    0 24px 60px -28px
+      color-mix(in srgb, var(--hue, var(--primary)) var(--aurora-shadow-strength), transparent);
 }
 /* A plum orb (the customer's face without a colour): lit from the top, deep at the bottom. */
 @utility bg-plum-orb {
@@ -234,6 +242,32 @@
 }
 
 @layer base {
+  /* A customer's picked colour (face colour) as --hue, for gradients lit in it (bg-aurora). */
+  [data-hue='plum'] {
+    --hue: var(--hue-plum);
+  }
+  [data-hue='rose'] {
+    --hue: var(--hue-rose);
+  }
+  [data-hue='orange'] {
+    --hue: var(--hue-orange);
+  }
+  [data-hue='yellow'] {
+    --hue: var(--hue-yellow);
+  }
+  [data-hue='green'] {
+    --hue: var(--hue-green);
+  }
+  [data-hue='teal'] {
+    --hue: var(--hue-teal);
+  }
+  [data-hue='blue'] {
+    --hue: var(--hue-blue);
+  }
+  [data-hue='gray'] {
+    --hue: var(--hue-gray);
+  }
+
   html {
     background: var(--canvas);
     color: var(--text);

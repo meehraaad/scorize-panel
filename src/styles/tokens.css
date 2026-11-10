@@ -72,11 +72,13 @@
   --on-forest-2: #d6efe0;
 
   /* Customer page hero (bg-aurora): soft wine and gold light on the surface, and the plum orb. */
-  --aurora-wine: rgb(149 23 104 / 0.11);
+  /* The light's colour is the customer's picked face colour (data-hue), else the brand plum. */
+  --aurora-strength: 18%;
+  --aurora-rim-strength: 16%;
   --aurora-plum: rgb(110 60 170 / 0.07);
   --aurora-gold: rgb(212 166 92 / 0.16);
-  --aurora-rim: rgb(149 23 104 / 0.1);
-  --aurora-shadow: 0 1px 2px rgb(27 16 32 / 0.04), 0 24px 60px -28px rgb(149 23 104 / 0.28);
+  --aurora-shadow-strength: 30%;
+  --aurora-shadow-base: 0 1px 2px rgb(27 16 32 / 0.04);
   --orb-top: #c03a8f;
   --orb-bottom: #5c0b3e;
   --cta-glow: rgb(149 23 104 / 0.35);
@@ -132,6 +134,15 @@
   --face-teal: #d4f0ee;
   --face-blue: #dfe9fd;
   --face-gray: #ebe8ee;
+  /* Saturated twins of the face colours, for the customer hero's light. */
+  --hue-plum: #951768;
+  --hue-rose: #d6336c;
+  --hue-orange: #e8590c;
+  --hue-yellow: #d99a00;
+  --hue-green: #1f9d55;
+  --hue-teal: #0f9488;
+  --hue-blue: #2f6fe0;
+  --hue-gray: #6b6475;
 }
 
 [data-theme='dark'] {
@@ -193,11 +204,12 @@
   --forest-gold: rgb(212 166 92 / 0.14);
   --on-forest-2: #d6efe0;
 
-  --aurora-wine: rgb(176 34 120 / 0.3);
+  --aurora-strength: 30%;
+  --aurora-rim-strength: 16%;
   --aurora-plum: rgb(110 60 190 / 0.16);
   --aurora-gold: rgb(212 166 92 / 0.12);
-  --aurora-rim: rgb(242 169 214 / 0.13);
-  --aurora-shadow: 0 30px 70px -30px rgb(0 0 0 / 0.6);
+  --aurora-shadow-strength: 22%;
+  --aurora-shadow-base: 0 30px 70px -30px rgb(0 0 0 / 0.6);
   --orb-top: #c8449a;
   --orb-bottom: #4d0934;
   --cta-glow: rgb(176 34 120 / 0.55);
@@ -248,6 +260,14 @@
   --face-teal: #1a4745;
   --face-blue: #233c63;
   --face-gray: #3a3a40;
+  --hue-plum: #c0388f;
+  --hue-rose: #e8577f;
+  --hue-orange: #f07a2c;
+  --hue-yellow: #e8b42a;
+  --hue-green: #34b46c;
+  --hue-teal: #22b3a5;
+  --hue-blue: #4f8af0;
+  --hue-gray: #8a8494;
 }
 
 :root {
