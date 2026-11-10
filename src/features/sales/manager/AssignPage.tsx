@@ -357,7 +357,7 @@ function SellerCard({
       : t(`manager.assign.status.${seller.status}`);
   return (
     <Card
-      className={`flex flex-col gap-3 p-4 ${seller.status === 'away' || seller.hidden ? 'opacity-60' : ''}`}
+      className={`flex flex-col gap-3 p-4 ${seller.hidden ? 'opacity-60' : ''}`}
       aria-label={seller.name}
     >
       <span className="flex items-center gap-2.5">
@@ -443,8 +443,8 @@ function QueueRow({
   const f = useFormat();
   const s = useSalesFormat();
   const [seller, setSeller] = useState(lead.suggested === null ? '' : String(lead.suggested));
-  const available = sellers.filter((item) => item.status !== 'away');
-  const canAssign = available.some((item) => String(item.id) === seller);
+  // Anyone on the team can take it: being on leave or in a session right now doesn't matter.
+  const canAssign = sellers.some((item) => String(item.id) === seller);
   const minutes = Math.round((now - new Date(lead.created_at).getTime()) / 60_000);
   const meta = [
     lead.degree !== null ? tc(`degree.${lead.degree}`) : null,
@@ -470,7 +470,7 @@ function QueueRow({
           onChange={setSeller}
           options={[
             { value: '', label: t('manager.assign.chooseSeller') },
-            ...available.map((item) => ({
+            ...sellers.map((item) => ({
               value: String(item.id),
               label:
                 item.id === lead.suggested

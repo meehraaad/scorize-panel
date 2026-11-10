@@ -34,6 +34,8 @@ import {
   funnelQuery,
 } from '@/features/sales/api';
 import HeaderCustomerSearch from '@/features/sales/components/HeaderCustomerSearch';
+import { PhoneBreakMenu } from '@/features/sales/components/PhoneBreak';
+import { usePhoneStatus } from '@/features/sales/components/usePhoneStatus';
 import { queryClient } from '@/lib/api/queryClient';
 import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
@@ -50,7 +52,9 @@ import {
   phoneTeamsQuery,
   phoneBreakQuery,
   phoneVoicesQuery,
+  teamBreaksQuery,
 } from '@/lib/sales/phoneCalls';
+import { PHONE_SECTIONS } from '@/features/sales/manager/phoneSections';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
 import type { PanelDefinition } from '../types';
@@ -130,6 +134,10 @@ export const salesPanel: PanelDefinition = {
   ],
   // Search every customer from any page (S63), not only the leads page's button.
   ...(ON_SERVER.customerSearch && { headerAction: HeaderCustomerSearch }),
+  // The avatar ring reads the break state on every page.
+  ...(ON_SERVER.phoneBreak && { data: () => [phoneBreakQuery] }),
+  // Phone state on the avatar ring and the break button in the account menu.
+  ...(ON_SERVER.phoneBreak && { account: { useStatus: usePhoneStatus, Menu: PhoneBreakMenu } }),
   // Each route lists what its page shows first (docs/performance.md, "Page data").
   routes: [
     {
@@ -144,7 +152,6 @@ export const salesPanel: PanelDefinition = {
           // Today's calendar: the popup a consultation or follow-up card opens.
           sellerDayQuery(new Date(new Date().setHours(0, 0, 0, 0))),
           // The header's break from team calls.
-          ...(ON_SERVER.phoneBreak ? [phoneBreakQuery] : []),
         ],
         skeleton: 'dashboard',
       }),
@@ -221,7 +228,8 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/CustomerSummaryPage'), [], {
             data: (args) => {
               const id = customerOf(args);
-              return [id !== null && historyQuery(id)];
+              // The contract card (S71): the open offer, or the approved contract.
+              return id === null ? [] : [historyQuery(id), offerQuery(id), handoffQuery(id)];
             },
           }),
         },
@@ -362,50 +370,98 @@ export const salesPanel: PanelDefinition = {
             skeleton: 'list',
           }),
         },
-        ...(ON_SERVER.officeHours
+        // The office line: one tab, a sub-tab per setting (PhoneLayout).
+        ...(PHONE_SECTIONS.length
           ? [
               {
-                path: 'hours',
-                ...lazyPage(() => import('@/features/sales/manager/OfficeHoursPage'), [], {
-                  data: () => [officeHoursQuery],
-                  skeleton: 'form',
-                }),
+                path: 'phone',
+                ...lazyPage(() => import('@/features/sales/manager/PhoneLayout'), []),
+                children: [
+                  {
+                    index: true,
+                    loader: () => redirect(`/sales/manager/phone/${PHONE_SECTIONS[0]?.path ?? ''}`),
+                  },
+                  {
+                    path: 'overview',
+                    ...lazyPage(() => import('@/features/sales/manager/PhoneOverviewPage'), [], {
+                      data: () => [
+                        ...(ON_SERVER.officeHours ? [officeHoursQuery] : []),
+                        ...(ON_SERVER.phoneTeams ? [phoneTeamsQuery] : []),
+                        ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
+                        ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
+                        ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
+                      ],
+                      skeleton: 'list',
+                    }),
+                  },
+                  ...(ON_SERVER.officeHours
+                    ? [
+                        {
+                          path: 'hours',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/OfficeHoursPage'),
+                            [],
+                            {
+                              data: () => [officeHoursQuery],
+                              skeleton: 'form',
+                            },
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneTeams
+                    ? [
+                        {
+                          path: 'teams',
+                          ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
+                            data: () => [
+                              phoneTeamsQuery,
+                              ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
+                              ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
+                            ],
+                            skeleton: 'form',
+                          }),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneMenus
+                    ? [
+                        {
+                          path: 'menus',
+                          ...lazyPage(() => import('@/features/sales/manager/PhoneMenusPage'), [], {
+                            data: () => [
+                              phoneMenusQuery,
+                              ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
+                            ],
+                            skeleton: 'form',
+                          }),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneVoices
+                    ? [
+                        {
+                          path: 'voices',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/PhoneVoicesPage'),
+                            [],
+                            {
+                              data: () => [phoneVoicesQuery],
+                              skeleton: 'list',
+                            },
+                          ),
+                        },
+                      ]
+                    : []),
+                ],
               },
             ]
           : []),
-        ...(ON_SERVER.phoneTeams
-          ? [
-              {
-                path: 'phone-teams',
-                ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
-                  data: () => [phoneTeamsQuery],
-                  skeleton: 'form',
-                }),
-              },
-            ]
-          : []),
-        ...(ON_SERVER.phoneMenus
-          ? [
-              {
-                path: 'phone-menus',
-                ...lazyPage(() => import('@/features/sales/manager/PhoneMenusPage'), [], {
-                  data: () => [phoneMenusQuery],
-                  skeleton: 'form',
-                }),
-              },
-            ]
-          : []),
-        ...(ON_SERVER.phoneVoices
-          ? [
-              {
-                path: 'phone-voices',
-                ...lazyPage(() => import('@/features/sales/manager/PhoneVoicesPage'), [], {
-                  data: () => [phoneVoicesQuery],
-                  skeleton: 'list',
-                }),
-              },
-            ]
-          : []),
+        // Old addresses (bookmarks) of the phone pages.
+        { path: 'hours', loader: () => redirect('/sales/manager/phone/hours') },
+        { path: 'phone-teams', loader: () => redirect('/sales/manager/phone/teams') },
+        { path: 'phone-menus', loader: () => redirect('/sales/manager/phone/menus') },
+        { path: 'phone-voices', loader: () => redirect('/sales/manager/phone/voices') },
       ],
     },
     {

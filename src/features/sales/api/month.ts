@@ -19,13 +19,15 @@ export interface MonthData {
   commission_percent: number | null;
   /** Toman of it from bonuses and per-contract amounts; null without rules. */
   commission_extra: number | null;
-  /** The closest better step not reached yet: contracts or tomans still to go, and what it earns. */
+  /** The closest better range not reached yet: contracts or sales still to go, and what it earns. */
   commission_next: {
     basis: 'contracts' | 'sales';
     remaining: number;
     reward: CommissionReward;
     percent: number | null;
     amount: number | null;
+    /** The rule's currency: `remaining` sales and `amount` are in it. */
+    currency: string;
   } | null;
   drafts_waiting: number;
   rank: { position: number; of: number };

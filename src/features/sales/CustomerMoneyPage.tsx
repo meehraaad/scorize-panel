@@ -1,14 +1,12 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
-import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { agreementQuery, paymentsQuery, purchasesQuery } from './api';
 import { AgreementDesk } from './components/AgreementDesk';
 import CustomerPaymentsPage from './CustomerPaymentsPage';
 import CustomerPurchasesPage from './CustomerPurchasesPage';
-import { customerPath } from './paths';
 import { useCustomerId } from './useCustomerId';
 
 /**
@@ -45,9 +43,20 @@ export default function CustomerMoneyPage() {
             >
               {t('customer.newSale.product')}
             </Button>
-            <Link to={`${customerPath(id)}/offer`} className={buttonClass('outline')}>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setParams(
+                  (current) => {
+                    current.set('contract', 'new');
+                    return current;
+                  },
+                  { replace: true },
+                )
+              }
+            >
               {t('customer.newSale.offer')}
-            </Link>
+            </Button>
           </div>
         }
       >

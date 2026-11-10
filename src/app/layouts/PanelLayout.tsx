@@ -142,7 +142,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
                 />
               )}
             </Link>
-            <AccountMenu user={user} customerLink={customerLink} />
+            <AccountMenu user={user} customerLink={customerLink} extra={panel.account} />
           </div>
         </div>
       </header>

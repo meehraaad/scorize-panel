@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
-import { useFormat } from '@/lib/i18n/useFormat';
+import { TOMAN, useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import {
@@ -31,12 +31,14 @@ const REWARDS = [
   'bonus',
   'per_contract',
 ] as const satisfies readonly CommissionReward[];
-/** Rewards in percent; the others are an amount in toman. */
+/** Rewards in percent; the others are an amount in the rule's currency. */
 const IN_PERCENT = new Set<CommissionReward>(['percent', 'tiered']);
 const MILLION = 1_000_000;
 const EVERYONE = 'all';
+/** Toman amounts are typed in millions; other currencies as they are. */
+const scaleOf = (currency: string) => (currency === TOMAN ? MILLION : 1);
 
-type Field = 'seller' | 'basis' | 'threshold' | 'value';
+type Field = 'seller' | 'basis' | 'threshold' | 'until' | 'currency' | 'value';
 type Errors = Partial<Record<Field, string>>;
 
 /** The field errors Django sends (`{threshold: ['…']}`), or null for another failure. */
@@ -48,6 +50,8 @@ function errorsOf(error: unknown): Errors | null {
     ['seller', 'seller'],
     ['basis', 'basis'],
     ['threshold', 'threshold'],
+    ['until', 'until'],
+    ['currency', 'currency'],
     ['percent', 'value'],
     ['amount', 'value'],
   ] as const) {
@@ -61,19 +65,38 @@ function errorsOf(error: unknown): Errors | null {
 const numberOf = (value: string) =>
   value.trim() === '' ? Number.NaN : Number(toLatinNumber(value.trim()));
 
-type RuleShape = Pick<CommissionRule, 'basis' | 'threshold' | 'reward' | 'percent' | 'amount'>;
+type RuleShape = Pick<
+  CommissionRule,
+  'basis' | 'threshold' | 'until' | 'currency' | 'reward' | 'percent' | 'amount'
+>;
 
-/** One rule as a sentence: "4 contracts or more in a month: 3% of the month's sales". */
+/**
+ * One rule as a sentence: "4 contracts or more in a month: 3% of the month's sales", "Sales from
+ * 0 to under 4,000 euros in a month: 4% of the month's sales".
+ */
 function useRuleText() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
-  return (rule: RuleShape) =>
-    t(`manager.commission.rule.${rule.reward}.${rule.basis}`, {
-      n: rule.basis === 'contracts' ? f.number(rule.threshold) : s.millions(rule.threshold),
-      percent: f.number(rule.percent ?? 0),
-      amount: s.millions(rule.amount ?? 0),
-    });
+  return (rule: RuleShape) => {
+    const count = (value: number) =>
+      rule.basis === 'contracts' ? f.number(value) : s.inCurrency(value, rule.currency);
+    return t(
+      `manager.commission.rule.${rule.reward}.${rule.basis}.${rule.until === null ? 'open' : 'range'}`,
+      {
+        n: count(rule.threshold),
+        to: count(rule.until ?? 0),
+        percent: f.number(rule.percent ?? 0),
+        amount: s.inCurrency(rule.amount ?? 0, rule.currency),
+      },
+    );
+  };
+}
+
+/** "Euro", "Toman": a currency's name in the page's language (its code when unknown). */
+function useCurrencyName() {
+  const { t } = useTranslation('sales');
+  return (code: string) => t(`manager.commission.currencyName.${code}`, { defaultValue: code });
 }
 
 /**
@@ -100,7 +123,7 @@ export default function CommissionPage() {
         subtitle={t('manager.commission.subtitle')}
       />
       <SectionCard id="new-commission-rule" variant="panel" title={t('manager.commission.new')}>
-        <RuleForm sellers={data.sellers} />
+        <RuleForm sellers={data.sellers} currencies={data.currencies} />
       </SectionCard>
       <SectionCard id="commission-rules" variant="panel" title={t('manager.commission.list')}>
         {groups.length === 0 ? (
@@ -116,7 +139,12 @@ export default function CommissionPage() {
                 <h3 className="m-0 text-[15px] font-semibold text-text">{group.name}</h3>
                 <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
                   {group.rules.map((rule) => (
-                    <RuleRow key={rule.id} rule={rule} sellers={data.sellers} />
+                    <RuleRow
+                      key={rule.id}
+                      rule={rule}
+                      sellers={data.sellers}
+                      currencies={data.currencies}
+                    />
                   ))}
                 </ul>
               </section>
@@ -128,7 +156,15 @@ export default function CommissionPage() {
   );
 }
 
-function RuleRow({ rule, sellers }: { rule: CommissionRule; sellers: CommissionRules['sellers'] }) {
+function RuleRow({
+  rule,
+  sellers,
+  currencies,
+}: {
+  rule: CommissionRule;
+  sellers: CommissionRules['sellers'];
+  currencies: CommissionRules['currencies'];
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const text = useRuleText();
@@ -138,7 +174,12 @@ function RuleRow({ rule, sellers }: { rule: CommissionRule; sellers: CommissionR
   if (mode === 'edit')
     return (
       <li className="rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)]">
-        <RuleForm sellers={sellers} rule={rule} onDone={() => setMode('view')} />
+        <RuleForm
+          sellers={sellers}
+          currencies={currencies}
+          rule={rule}
+          onDone={() => setMode('view')}
+        />
       </li>
     );
   return (
@@ -189,48 +230,74 @@ function RuleRow({ rule, sellers }: { rule: CommissionRule; sellers: CommissionR
 /** A new rule's form, or a rule's (`rule`) while it is being changed. */
 function RuleForm({
   sellers,
+  currencies,
   rule,
   onDone,
 }: {
   sellers: CommissionRules['sellers'];
+  currencies: CommissionRules['currencies'];
   rule?: CommissionRule;
   onDone?: () => void;
 }) {
   const { t } = useTranslation('sales');
   const text = useRuleText();
+  const currencyName = useCurrencyName();
   const save = useSaveCommissionRule();
   const [seller, setSeller] = useState(
     rule?.seller === null || !rule ? EVERYONE : String(rule.seller),
   );
   const [reward, setReward] = useState<CommissionReward>(rule?.reward ?? 'percent');
   const [basis, setBasis] = useState<CommissionBasis>(rule?.basis ?? 'contracts');
+  const [currency, setCurrency] = useState(rule?.currency ?? currencies[0] ?? TOMAN);
+  /** A sales amount or a bonus as typed: millions for the toman. */
+  const typedOf = (amount: number) => String(amount / scaleOf(rule?.currency ?? TOMAN));
   const [threshold, setThreshold] = useState(
-    rule ? String(rule.basis === 'sales' ? rule.threshold / MILLION : rule.threshold) : '',
+    rule ? (rule.basis === 'sales' ? typedOf(rule.threshold) : String(rule.threshold)) : '',
+  );
+  const [until, setUntil] = useState(
+    rule?.until == null ? '' : rule.basis === 'sales' ? typedOf(rule.until) : String(rule.until),
   );
   const [value, setValue] = useState(
-    rule ? String(IN_PERCENT.has(rule.reward) ? rule.percent : (rule.amount ?? 0) / MILLION) : '',
+    rule ? (IN_PERCENT.has(rule.reward) ? String(rule.percent) : typedOf(rule.amount ?? 0)) : '',
   );
   const [errors, setErrors] = useState<Errors>({});
 
   const inPercent = IN_PERCENT.has(reward);
+  const scale = scaleOf(currency);
+  /** The currency matters for sales ranges and for amounts. */
+  const usesCurrency = basis === 'sales' || !inPercent;
+  const unit = currency === TOMAN ? t('manager.commission.millionUnit') : currencyName(currency);
+  const inUnits = (typed: number) => (basis === 'sales' ? Math.round(typed * scale) : typed);
   const typed = numberOf(threshold);
-  const step = basis === 'sales' ? Math.round(typed * MILLION) : typed;
+  const typedUntil = until.trim() === '' ? null : numberOf(until);
   const number = numberOf(value);
-  const thresholdOk =
-    Number.isFinite(typed) && typed >= 0 && (basis === 'sales' || Number.isInteger(typed));
+  const countOk = (n: number) =>
+    Number.isFinite(n) && n >= 0 && (basis === 'sales' || Number.isInteger(n));
+  const thresholdOk = countOk(typed);
+  const untilOk =
+    typedUntil === null || (countOk(typedUntil) && (!thresholdOk || typedUntil > typed));
   const valueOk = Number.isFinite(number) && number > 0 && (!inPercent || number <= 100);
   const shape: RuleShape = {
     basis,
-    threshold: step,
+    threshold: inUnits(typed),
+    until: typedUntil === null ? null : inUnits(typedUntil),
+    currency,
     reward,
     percent: inPercent ? Math.round(number * 100) / 100 : null,
-    amount: inPercent ? null : Math.round(number * MILLION),
+    amount: inPercent ? null : Math.round(number * scale * 100) / 100,
   };
 
   const submit = () => {
-    if (!thresholdOk || !valueOk) {
+    if (!thresholdOk || !untilOk || !valueOk) {
       setErrors({
         ...(!thresholdOk && { threshold: t('manager.commission.thresholdError') }),
+        ...(!untilOk && {
+          until: t(
+            countOk(typedUntil)
+              ? 'manager.commission.untilError'
+              : 'manager.commission.thresholdError',
+          ),
+        }),
         ...(!valueOk && {
           value: t(
             inPercent ? 'manager.commission.percentError' : 'manager.commission.amountError',
@@ -252,6 +319,7 @@ function RuleForm({
           if (rule) onDone?.();
           else {
             setThreshold('');
+            setUntil('');
             setValue('');
           }
         },
@@ -308,6 +376,7 @@ function RuleForm({
           onChange={(next) => {
             setBasis(next);
             setThreshold('');
+            setUntil('');
             setErrors({});
           }}
           options={BASES.map((option) => ({
@@ -315,8 +384,21 @@ function RuleForm({
             label: t(`manager.commission.basisName.${option}`),
           }))}
         />
+        {usesCurrency && currencies.length > 0 && (
+          <SelectField
+            label={t('manager.commission.currency')}
+            value={currency}
+            hint={basis === 'sales' ? t('manager.commission.currencyHint') : undefined}
+            error={errors.currency}
+            onChange={(next) => {
+              setCurrency(next);
+              setErrors(({ currency: _gone, ...rest }) => rest);
+            }}
+            options={currencies.map((code) => ({ value: code, label: currencyName(code) }))}
+          />
+        )}
         <TextField
-          label={t(`manager.commission.threshold.${basis}`)}
+          label={t(`manager.commission.threshold.${basis}`, { unit })}
           inputMode="decimal"
           value={threshold}
           onChange={(event) => {
@@ -326,11 +408,22 @@ function RuleForm({
           error={errors.threshold}
         />
         <TextField
-          label={t(
+          label={t(`manager.commission.until.${basis}`, { unit })}
+          inputMode="decimal"
+          value={until}
+          hint={t('manager.commission.untilHint')}
+          onChange={(event) => {
+            setUntil(event.target.value);
+            setErrors(({ until: _gone, ...rest }) => rest);
+          }}
+          error={errors.until}
+        />
+        <TextField
+          label={
             reward === 'bonus' || reward === 'per_contract'
-              ? `manager.commission.amount.${reward}`
-              : 'manager.commission.percent',
-          )}
+              ? t(`manager.commission.amount.${reward}`, { unit })
+              : t('manager.commission.percent')
+          }
           inputMode="decimal"
           value={value}
           onChange={(event) => {
@@ -342,7 +435,7 @@ function RuleForm({
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-text-2" aria-live="polite">
-          {thresholdOk && valueOk ? text(shape) : t('manager.commission.hint')}
+          {thresholdOk && untilOk && valueOk ? text(shape) : t('manager.commission.hint')}
         </span>
         <span className="flex flex-wrap gap-2">
           {rule && (

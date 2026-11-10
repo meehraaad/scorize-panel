@@ -509,29 +509,43 @@ export function useApplyLeadImport() {
   });
 }
 
-/** What a commission step counts: closed contracts, or tomans of paid sales, in a month (S60). */
+/** What a commission step counts: closed contracts, or paid sales (in the rule's currency), in a month (S60). */
 export type CommissionBasis = 'contracts' | 'sales';
 
 /**
- * What a step earns: `percent` of all the month's sales (the best one reached), `tiered` (sales
- * only, like tax brackets: the part of the sales above the step earns its percent, up to the next
- * tiered step), a fixed `bonus` (the best one reached), or an amount `per_contract` for each of
- * the month's contracts (the best one reached). Bonus and per-contract amounts add to the percent.
+ * What a range earns: `percent` of all the month's sales (the range the month is in), `tiered`
+ * (like tax brackets: the part of the sales inside the range earns its percent; by contracts, each
+ * contract in the range), a fixed `bonus`, or an amount `per_contract` for each of the month's
+ * contracts (the range the month is in). Bonus and per-contract amounts add to the percent.
  */
 export type CommissionReward = 'percent' | 'tiered' | 'bonus' | 'per_contract';
 
-/** A commission step: with at least `threshold` contracts (or tomans of sales) in a month, `reward`. */
+/**
+ * Django's `CurrencyUnit`, as ISO codes (`IRT`: the toman). Sales in another currency are converted
+ * with `finance.ExchangeRate`.
+ */
+export type CommissionCurrency = string;
+
+/**
+ * A commission range: with `threshold` up to (not including) `until` contracts, or sales in
+ * `currency`, in a month, `reward`. `until` null: no upper limit.
+ */
 export interface CommissionRule {
   id: number;
   /** SupportStaff id; null: every seller. */
   seller: number | null;
   seller_name: string | null;
   basis: CommissionBasis;
+  /** The range's start: contracts, or sales in `currency`. */
   threshold: number;
+  /** The range's end, not included; null: no limit. */
+  until: number | null;
+  /** The currency of sales thresholds and of `amount`. */
+  currency: CommissionCurrency;
   reward: CommissionReward;
   /** `percent` and `tiered`; null for the others. */
   percent: number | null;
-  /** Toman: `bonus` and `per_contract`; null for the others. */
+  /** In `currency`: `bonus` and `per_contract`; null for the others. */
   amount: number | null;
   /** First day of the month it applies from. */
   since: string;
@@ -541,6 +555,8 @@ export interface CommissionRuleInput {
   seller: number | null;
   basis: CommissionBasis;
   threshold: number;
+  until: number | null;
+  currency: CommissionCurrency;
   reward: CommissionReward;
   percent: number | null;
   amount: number | null;
@@ -549,6 +565,8 @@ export interface CommissionRuleInput {
 export interface CommissionRules {
   rules: CommissionRule[];
   sellers: { id: number; name: string }[];
+  /** The currencies a rule can be in (`CurrencyUnit`), the toman first. */
+  currencies: CommissionCurrency[];
 }
 
 export const commissionQuery = queryOptions({

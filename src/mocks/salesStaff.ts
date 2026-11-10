@@ -141,7 +141,7 @@ export const salesStaffHandlers = [
       })),
     );
   }),
-  // S63: every customer, like the old CRM's search; the seller's own leads open, the rest are free.
+  // S63: every customer, like the old CRM's search; any of them opens (the seller's own or not).
   http.get(`${BASE}/customers/search/`, ({ request }) => {
     const typed = (new URL(request.url).searchParams.get('q') ?? '').trim();
     if (typed.replace(/\s/g, '').length < 2) return HttpResponse.json({ results: [] });

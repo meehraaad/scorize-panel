@@ -137,10 +137,11 @@ const PAGES: PageCase[] = [
     '/sales/manager/follow-ups',
     '/sales/manager/stages',
     '/sales/manager/tags',
-    '/sales/manager/hours',
-    '/sales/manager/phone-teams',
-    '/sales/manager/phone-menus',
-    '/sales/manager/phone-voices',
+    '/sales/manager/phone/overview',
+    '/sales/manager/phone/hours',
+    '/sales/manager/phone/teams',
+    '/sales/manager/phone/menus',
+    '/sales/manager/phone/voices',
   ].map((path) => ({ path, user: REZA })),
   // Supervisor panel.
   ...[

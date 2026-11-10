@@ -1,14 +1,16 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
+import { SelectField, TextAreaField } from '@/components/ui/Choices';
+import { Dialog } from '@/components/ui/Dialog';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Notice } from '@/components/ui/Notice';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { StepBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TagList } from '@/components/ui/Tags';
 import { TextField } from '@/components/ui/TextField';
@@ -26,8 +28,11 @@ import {
   type OfferData,
   type OfferOptions,
 } from './api';
-import { clausesComplete } from './clauses';
+import { clausesComplete, offerText } from './clauses';
 import { ClauseEditor } from './components/ClauseEditor';
+import { ContractChooser } from './components/ContractChooser';
+import { ContractSheet } from './components/ContractSheet';
+import type { ContractDocument } from './api';
 import { ScheduleEditor } from './components/ScheduleEditor';
 import { useSalesFormat } from './format';
 import { customerPath } from './paths';
@@ -35,6 +40,9 @@ import { scheduleComplete, scheduleTotal, suggestedSchedule } from './plan';
 import { toast } from '@/lib/toast';
 
 const FLOW = ['draft', 'manager', 'panel', 'signed'] as const;
+/** The offer built a step at a time (S71): `?step=1…4`. */
+const STEPS = ['s1', 's2', 's3', 's4'] as const;
+const stepOf = (value: string | null) => Math.min(Math.max(Number(value) || 1, 1), STEPS.length);
 
 /** The first day of next month, as an ISO date (yyyy-mm-dd). */
 const nextMonth = () => {
@@ -123,34 +131,105 @@ export default function OfferPage() {
   const { data } = useSuspenseQuery(
     offerQuery(id, picked === null ? undefined : templateParam(picked)),
   );
+  const update = (change: (search: URLSearchParams) => void, replace = true) =>
+    setParams(
+      (search) => {
+        change(search);
+        return search;
+      },
+      { replace },
+    );
   return (
     <OfferForm
       key={data.options.template ?? STANDARD}
       id={id}
       customer={customer}
       data={data}
+      step={stepOf(params.get('step'))}
+      onStep={(step) => update((search) => search.set('step', String(step)), false)}
       onTemplate={(template) =>
-        setParams(
-          (search) => {
-            search.set('template', template === null ? STANDARD : String(template));
-            return search;
-          },
-          { replace: true },
-        )
+        update((search) => {
+          search.set('template', template === null ? STANDARD : String(template));
+          search.delete('step');
+        })
       }
     />
   );
+}
+
+/**
+ * The contract as it will print (S71, the last step): this customer's text with the variables
+ * coloured in, the services, the price and the instalments. Not approved yet: a draft.
+ */
+function offerDocument(
+  offer: Offer,
+  options: OfferData['options'],
+  customer: CustomerData,
+  schedule: Instalment[],
+  total: number,
+  kind: string,
+): ContractDocument {
+  const months = new Date(offer.start);
+  months.setMonth(months.getMonth() + offer.months);
+  return {
+    number: null,
+    file_id: null,
+    approved_at: null,
+    draft: true,
+    template: options.template === null ? '' : kind,
+    customer: { name: customer.name, national_code: null, phone: null, email: '' },
+    seller: '',
+    features: offer.features,
+    degrees: [offer.degree],
+    countries: offer.countries,
+    applies: offer.applies,
+    start_date: offer.start,
+    end_date: months.toISOString().slice(0, 10),
+    months: offer.months,
+    language_score: offer.language_score,
+    language_deadline: offer.language_deadline || null,
+    amount: total,
+    installments: schedule.map((row, index) => ({
+      id: index,
+      number: index,
+      amount: row.amount,
+      due_date: row.when === 'date' || row.when === 'signing' ? row.date : null,
+      condition: null,
+    })),
+    clauses: offerText(options.clauses, offer.clauses),
+    // This customer's clauses framed, as on the approved contract.
+    agreement: {
+      version: 0,
+      changed: offerText(options.clauses, offer.clauses)
+        .filter((clause) =>
+          offer.clauses.some(
+            (edit) =>
+              !edit.removed &&
+              (edit.clause === null
+                ? clause.key?.startsWith('a')
+                : clause.key === `c${String(edit.clause)}`),
+          ),
+        )
+        .map((clause) => clause.key ?? clause.title),
+      parties: [],
+    },
+  };
 }
 
 function OfferForm({
   id,
   customer,
   data,
+  step,
+  onStep,
   onTemplate,
 }: {
   id: number;
   customer: CustomerData;
   data: OfferData;
+  /** 1…4: services and details, price, text and variables, preview and send. */
+  step: number;
+  onStep: (step: number) => void;
   onTemplate: (template: number | null) => void;
 }) {
   const { t } = useTranslation('sales');
@@ -199,6 +278,23 @@ function OfferForm({
     addsUp &&
     filled;
   const names = f.list(offer.features.map((key) => t(`apply.feature.${key}`)));
+  const kind =
+    options.templates.find((row) => row.id === options.template)?.name ?? t('chooser.title');
+  const [choosing, setChoosing] = useState(false);
+  const [big, setBig] = useState(false);
+  // What the system fills, as this customer's contract will say it (Django's `values_of`).
+  const values: Record<string, string> = {
+    ...Object.fromEntries(options.builtins.map((row) => [row.name, ''])),
+    'نام مشتری': customer.name,
+    'مبلغ قرارداد': s.toman(total),
+    کشورها: f.list(offer.countries),
+    مقطع: tc(`degree.${offer.degree}`),
+    'تعداد اپلای': f.number(offer.applies),
+    'مدت قرارداد': t('offer.monthsOption', { n: f.number(offer.months) }),
+    ...offer.variables,
+  };
+  const steps = STEPS.map((key) => ({ key, label: t(`offer.steps.${key}`) }));
+  const label = (index: number) => steps[index - 1]?.label ?? '';
 
   const act = (action: OfferAction) =>
     save.mutate(
@@ -212,220 +308,313 @@ function OfferForm({
       },
     );
 
+  const doc = offerDocument(offer, options, customer, schedule, total, kind);
+  const sendButtons = (
+    <>
+      <Button disabled={!valid || save.isPending} onClick={() => act('submit')}>
+        {t('offer.submit')}
+      </Button>
+      <Button
+        variant="outline"
+        disabled={!valid || needsManager || save.isPending}
+        onClick={() => act('send')}
+      >
+        {t('offer.send')}
+      </Button>
+    </>
+  );
+
   return (
     <PageStack>
       <BackLink to={customerPath(id)}>{customer.name}</BackLink>
       <PageHeader
-        title={t('offer.title', { name: customer.name })}
-        subtitle={t('offer.subtitle')}
+        title={kind}
+        subtitle={t('offer.forCustomer', { name: customer.name })}
+        actions={
+          kinds ? (
+            <Button variant="outline" onClick={() => setChoosing(true)}>
+              {t('offer.change')}
+            </Button>
+          ) : undefined
+        }
       />
+      {choosing && (
+        <ContractChooser
+          customer={id}
+          name={customer.name}
+          onClose={() => setChoosing(false)}
+          onPick={onTemplate}
+        />
+      )}
+      <Dialog
+        open={big}
+        onClose={() => setBig(false)}
+        size="wide"
+        title={t('offer.previewTitle')}
+        subtitle={kind}
+        closeLabel={t('close')}
+      >
+        <ContractSheet doc={doc} framed={false} values={values} />
+      </Dialog>
       <PageColumns
         asideLabel={t('offer.preview')}
         main={
           <>
-            {kinds && (
-              <SectionCard id="offer-kind" variant="panel" size="lg" title={t('offer.kind.title')}>
-                <ChoiceGroup
-                  legend={t('offer.kind.title')}
-                  hideLegend
-                  look="cards"
-                  value={options.template === null ? STANDARD : String(options.template)}
-                  onChange={(value) => onTemplate(value === STANDARD ? null : Number(value))}
-                  options={options.templates.map((kind) => ({
-                    value: kind.id === null ? STANDARD : String(kind.id),
-                    label: kind.name,
-                    hint: kind.description || undefined,
-                  }))}
-                  hint={offer.clauses.length > 0 ? t('offer.kind.resets') : undefined}
+            <nav
+              aria-label={t('offer.steps.label')}
+              className="rounded-card-sm bg-surface p-3 shadow-panel lg:p-4"
+            >
+              <StepBar
+                label={t('offer.steps.label')}
+                steps={steps}
+                current={step - 1}
+                tone="plum"
+                pick={{
+                  can: (index) => index !== step - 1,
+                  label: (row) => t('offer.steps.go', { step: row.label }),
+                  onPick: (index) => onStep(index + 1),
+                }}
+              />
+            </nav>
+            {step === 1 && (
+              <>
+                <SectionCard
+                  id="offer-features"
+                  variant="panel"
+                  size="lg"
+                  title={t('offer.features')}
+                >
+                  <fieldset className="m-0 grid gap-3 border-0 p-0 md:grid-cols-3">
+                    <legend className="sr-only">{t('offer.features')}</legend>
+                    {options.features.map((item) => (
+                      <label
+                        key={item.key}
+                        className="flex min-h-11 cursor-pointer flex-col gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-focus"
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="text-base font-bold">
+                            {t(`apply.feature.${item.key}`)}
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={offer.features.includes(item.key)}
+                            onChange={(event) =>
+                              set(
+                                'features',
+                                event.target.checked
+                                  ? [...offer.features, item.key]
+                                  : offer.features.filter((key) => key !== item.key),
+                              )
+                            }
+                            className="size-[18px] accent-primary"
+                          />
+                        </span>
+                        <span className="text-[13px] leading-6 text-text-2">
+                          {t(`offer.featureHint.${item.key}`)}
+                        </span>
+                        <span className="text-sm font-semibold">
+                          {item.price === 0 ? t('offer.freePrice') : s.toman(item.price)}
+                        </span>
+                      </label>
+                    ))}
+                  </fieldset>
+                </SectionCard>
+
+                <SectionCard
+                  id="offer-details"
+                  variant="panel"
+                  size="lg"
+                  title={t('offer.details')}
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <SelectField
+                      label={t('offer.degree')}
+                      value={String(offer.degree)}
+                      onChange={(value) => set('degree', Number(value) as Offer['degree'])}
+                      options={options.degrees.map((degree) => ({
+                        value: String(degree),
+                        label: tc(`degree.${degree}`),
+                      }))}
+                    />
+                    <TextField
+                      type="number"
+                      min={1}
+                      label={t('offer.applies')}
+                      value={String(offer.applies)}
+                      onChange={(event) => set('applies', Number(event.target.value))}
+                    />
+                    <DatePicker
+                      only="future"
+                      label={t('offer.start')}
+                      value={offer.start}
+                      onChange={(value) => set('start', value)}
+                    />
+                    <SelectField
+                      label={t('offer.months')}
+                      value={String(offer.months)}
+                      onChange={(value) => set('months', Number(value))}
+                      options={options.durations.map((months) => ({
+                        value: String(months),
+                        label: t('offer.monthsOption', { n: f.number(months) }),
+                      }))}
+                    />
+                    <TextField
+                      label={t('offer.languageScore')}
+                      dir="ltr"
+                      placeholder="IELTS 6.5"
+                      value={offer.language_score}
+                      onChange={(event) => set('language_score', event.target.value)}
+                    />
+                    <DatePicker
+                      only="future"
+                      clearable
+                      label={t('offer.languageDeadline')}
+                      value={offer.language_deadline}
+                      onChange={(value) => set('language_deadline', value)}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    <span className="text-sm font-semibold text-text-2">
+                      {t('offer.countries')}
+                    </span>
+                    <TagList
+                      latin={false}
+                      label={t('offer.countries')}
+                      tags={offer.countries}
+                      removeLabel={(country) => t('offer.removeCountry', { country })}
+                      onRemove={(country) =>
+                        set(
+                          'countries',
+                          offer.countries.filter((item) => item !== country),
+                        )
+                      }
+                    />
+                    <SelectField
+                      inline
+                      label={t('offer.addCountry')}
+                      value=""
+                      onChange={(country) =>
+                        country && set('countries', [...offer.countries, country])
+                      }
+                      options={[
+                        { value: '', label: t('customer.logDialog.choose') },
+                        ...options.countries
+                          .filter((country) => !offer.countries.includes(country))
+                          .map((country) => ({ value: country, label: country })),
+                      ]}
+                    />
+                  </div>
+                </SectionCard>
+              </>
+            )}
+
+            {step === 2 && (
+              <SectionCard id="offer-price" variant="panel" size="lg" title={t('offer.price')}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextField label={t('offer.base')} value={s.toman(base)} readOnly />
+                  <SelectField
+                    label={t('offer.discount')}
+                    value={String(offer.discount)}
+                    onChange={(value) => set('discount', Number(value))}
+                    options={options.discounts.map((percent) => ({
+                      value: String(percent),
+                      label:
+                        percent === 0
+                          ? t('offer.noDiscount')
+                          : percent > options.approval_above
+                            ? t('offer.discountManager', { n: s.percent(percent / 100) })
+                            : s.percent(percent / 100),
+                    }))}
+                  />
+                </div>
+                {needsManager && (
+                  <Notice tone="info">
+                    {t('offer.managerNeeded', { n: s.percent(options.approval_above / 100) })}
+                  </Notice>
+                )}
+                {free ? (
+                  <Notice tone="info">{t('offer.free')}</Notice>
+                ) : (
+                  <ScheduleEditor schedule={schedule} total={total} onChange={setSchedule} />
+                )}
+              </SectionCard>
+            )}
+
+            {step === 3 && (
+              <SectionCard
+                id="offer-clauses"
+                variant="panel"
+                size="lg"
+                title={t('offer.textTitle')}
+              >
+                {options.variables.length > 0 && (
+                  <fieldset className="m-0 flex flex-col gap-3 rounded-2xl border-0 bg-canvas p-4">
+                    <legend className="float-start mb-1 p-0 text-sm font-bold">
+                      {t('offer.variables.title')}
+                    </legend>
+                    <p className="m-0 text-[13px] leading-6 text-text-2">
+                      {t('offer.variables.hint')}
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {options.variables.map((row) => (
+                        <TextField
+                          key={row.name}
+                          label={row.name}
+                          value={offer.variables[row.name] ?? ''}
+                          onChange={(event) =>
+                            set('variables', { ...offer.variables, [row.name]: event.target.value })
+                          }
+                        />
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
+                <ClauseEditor
+                  standard={options.clauses}
+                  edits={offer.clauses}
+                  onChange={(edits) => set('clauses', edits)}
+                  values={offer.variables}
                 />
               </SectionCard>
             )}
-            <SectionCard id="offer-features" variant="panel" size="lg" title={t('offer.features')}>
-              <fieldset className="m-0 grid gap-3 border-0 p-0 md:grid-cols-3">
-                <legend className="sr-only">{t('offer.features')}</legend>
-                {options.features.map((item) => (
-                  <label
-                    key={item.key}
-                    className="flex min-h-11 cursor-pointer flex-col gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-focus"
-                  >
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="text-base font-bold">{t(`apply.feature.${item.key}`)}</span>
-                      <input
-                        type="checkbox"
-                        checked={offer.features.includes(item.key)}
-                        onChange={(event) =>
-                          set(
-                            'features',
-                            event.target.checked
-                              ? [...offer.features, item.key]
-                              : offer.features.filter((key) => key !== item.key),
-                          )
-                        }
-                        className="size-[18px] accent-primary"
-                      />
-                    </span>
-                    <span className="text-[13px] leading-6 text-text-2">
-                      {t(`offer.featureHint.${item.key}`)}
-                    </span>
-                    <span className="text-sm font-semibold">
-                      {item.price === 0 ? t('offer.freePrice') : s.toman(item.price)}
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-            </SectionCard>
 
-            <SectionCard id="offer-details" variant="panel" size="lg" title={t('offer.details')}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <SelectField
-                  label={t('offer.degree')}
-                  value={String(offer.degree)}
-                  onChange={(value) => set('degree', Number(value) as Offer['degree'])}
-                  options={options.degrees.map((degree) => ({
-                    value: String(degree),
-                    label: tc(`degree.${degree}`),
-                  }))}
-                />
-                <TextField
-                  type="number"
-                  min={1}
-                  label={t('offer.applies')}
-                  value={String(offer.applies)}
-                  onChange={(event) => set('applies', Number(event.target.value))}
-                />
-                <DatePicker
-                  only="future"
-                  label={t('offer.start')}
-                  value={offer.start}
-                  onChange={(value) => set('start', value)}
-                />
-                <SelectField
-                  label={t('offer.months')}
-                  value={String(offer.months)}
-                  onChange={(value) => set('months', Number(value))}
-                  options={options.durations.map((months) => ({
-                    value: String(months),
-                    label: t('offer.monthsOption', { n: f.number(months) }),
-                  }))}
-                />
-                <TextField
-                  label={t('offer.languageScore')}
-                  dir="ltr"
-                  placeholder="IELTS 6.5"
-                  value={offer.language_score}
-                  onChange={(event) => set('language_score', event.target.value)}
-                />
-                <DatePicker
-                  only="future"
-                  clearable
-                  label={t('offer.languageDeadline')}
-                  value={offer.language_deadline}
-                  onChange={(value) => set('language_deadline', value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2.5">
-                <span className="text-sm font-semibold text-text-2">{t('offer.countries')}</span>
-                <TagList
-                  latin={false}
-                  label={t('offer.countries')}
-                  tags={offer.countries}
-                  removeLabel={(country) => t('offer.removeCountry', { country })}
-                  onRemove={(country) =>
-                    set(
-                      'countries',
-                      offer.countries.filter((item) => item !== country),
-                    )
+            {step === 4 && (
+              <>
+                <SectionCard
+                  id="offer-preview"
+                  variant="panel"
+                  size="lg"
+                  title={t('offer.previewTitle')}
+                  subtitle={t('offer.previewHint')}
+                  end={
+                    <Button variant="outline" onClick={() => setBig(true)}>
+                      {t('offer.fullScreen')}
+                    </Button>
                   }
-                />
-                <SelectField
-                  inline
-                  label={t('offer.addCountry')}
-                  value=""
-                  onChange={(country) => country && set('countries', [...offer.countries, country])}
-                  options={[
-                    { value: '', label: t('customer.logDialog.choose') },
-                    ...options.countries
-                      .filter((country) => !offer.countries.includes(country))
-                      .map((country) => ({ value: country, label: country })),
-                  ]}
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard id="offer-price" variant="panel" size="lg" title={t('offer.price')}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextField label={t('offer.base')} value={s.toman(base)} readOnly />
-                <SelectField
-                  label={t('offer.discount')}
-                  value={String(offer.discount)}
-                  onChange={(value) => set('discount', Number(value))}
-                  options={options.discounts.map((percent) => ({
-                    value: String(percent),
-                    label:
-                      percent === 0
-                        ? t('offer.noDiscount')
-                        : percent > options.approval_above
-                          ? t('offer.discountManager', { n: s.percent(percent / 100) })
-                          : s.percent(percent / 100),
-                  }))}
-                />
-              </div>
-              {needsManager && (
-                <Notice tone="info">
-                  {t('offer.managerNeeded', { n: s.percent(options.approval_above / 100) })}
-                </Notice>
-              )}
-              {free ? (
-                <Notice tone="info">{t('offer.free')}</Notice>
-              ) : (
-                <ScheduleEditor schedule={schedule} total={total} onChange={setSchedule} />
-              )}
-            </SectionCard>
-
-            <SectionCard
-              id="offer-clauses"
-              variant="panel"
-              size="lg"
-              title={t('offer.clauses.section')}
-            >
-              {options.variables.length > 0 && (
-                <fieldset className="m-0 flex flex-col gap-3 rounded-2xl border-0 bg-canvas p-4">
-                  <legend className="float-start mb-1 p-0 text-sm font-bold">
-                    {t('offer.variables.title')}
-                  </legend>
-                  <p className="m-0 text-[13px] leading-6 text-text-2">
-                    {t('offer.variables.hint')}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {options.variables.map((row) => (
-                      <TextField
-                        key={row.name}
-                        label={row.name}
-                        value={offer.variables[row.name] ?? ''}
-                        onChange={(event) =>
-                          set('variables', { ...offer.variables, [row.name]: event.target.value })
-                        }
-                      />
-                    ))}
+                >
+                  <div className="max-h-[70dvh] overflow-y-auto rounded-2xl bg-canvas p-3 lg:p-5">
+                    <ContractSheet doc={doc} framed={false} values={values} />
                   </div>
-                </fieldset>
-              )}
-              <ClauseEditor
-                standard={options.clauses}
-                edits={offer.clauses}
-                onChange={(edits) => set('clauses', edits)}
-                values={offer.variables}
-              />
-            </SectionCard>
+                </SectionCard>
+                <SectionCard id="offer-note" variant="panel" size="lg" title={t('offer.note')}>
+                  <TextAreaField
+                    label={t('offer.noteLabel')}
+                    rows={3}
+                    value={offer.manager_note}
+                    onChange={(event) => set('manager_note', event.target.value)}
+                  />
+                </SectionCard>
+              </>
+            )}
 
-            <SectionCard id="offer-note" variant="panel" size="lg" title={t('offer.note')}>
-              <TextAreaField
-                label={t('offer.noteLabel')}
-                rows={3}
-                value={offer.manager_note}
-                onChange={(event) => set('manager_note', event.target.value)}
-              />
-            </SectionCard>
+            <StepButtons
+              back={step > 1 ? t('offer.steps.back', { step: label(step - 1) }) : null}
+              next={step < STEPS.length ? t('offer.steps.next', { step: label(step + 1) }) : null}
+              onBack={() => onStep(step - 1)}
+              onNext={() => onStep(step + 1)}
+            >
+              {step === STEPS.length && sendButtons}
+            </StepButtons>
           </>
         }
         aside={
@@ -486,16 +675,6 @@ function OfferForm({
             </SectionCard>
 
             <div className="flex flex-col gap-2">
-              <Button disabled={!valid || save.isPending} onClick={() => act('submit')}>
-                {t('offer.submit')}
-              </Button>
-              <Button
-                variant="outline"
-                disabled={!valid || needsManager || save.isPending}
-                onClick={() => act('send')}
-              >
-                {t('offer.send')}
-              </Button>
               <Button
                 variant="outline"
                 disabled={!rowsDone || save.isPending}
@@ -521,5 +700,36 @@ function OfferForm({
         }
       />
     </PageStack>
+  );
+}
+
+/** Back and next under a step; the last one holds the buttons that send the offer. */
+function StepButtons({
+  back,
+  next,
+  onBack,
+  onNext,
+  children,
+}: {
+  back: string | null;
+  next: string | null;
+  onBack: () => void;
+  onNext: () => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      {back ? (
+        <Button variant="outline" onClick={onBack}>
+          {back}
+        </Button>
+      ) : (
+        <span />
+      )}
+      <div className="flex flex-wrap gap-2">
+        {next && <Button onClick={onNext}>{next}</Button>}
+        {children}
+      </div>
+    </div>
   );
 }

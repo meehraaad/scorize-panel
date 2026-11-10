@@ -6,12 +6,22 @@ import { logout } from '@/lib/auth/logout';
 import { applicantPanel } from '@/panels/applicant';
 import { panelHref } from '@/panels/types';
 import type { SessionUser } from '@/lib/auth/session';
+import type { PanelDefinition } from '@/panels/types';
 
 interface Props {
   user: SessionUser;
   /** Staff: a quiet link to the panel as a regular customer (it isn't one of their panels). */
   customerLink: boolean;
+  /** The panel's own state and menu block (sales: phone break). */
+  extra?: PanelDefinition['account'];
 }
+
+const RINGS = {
+  queue: 'shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-green)]',
+  rest: 'shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-orange)]',
+} as const;
+
+const NO_STATUS = () => null;
 
 const itemClass =
   'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-[15px] text-text hover:bg-canvas';
@@ -20,8 +30,10 @@ const itemClass =
  * Account button + dropdown (desktop and mobile header): who is logged in, settings, logout.
  * Switching panels is the PanelSwitcher beside the logo. Disclosure pattern: Esc and outside click close it.
  */
-export function AccountMenu({ user, customerLink }: Props) {
+export function AccountMenu({ user, customerLink, extra }: Props) {
   const { t } = useTranslation();
+  const status = (extra?.useStatus ?? NO_STATUS)();
+  const Extra = extra?.Menu;
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -62,11 +74,19 @@ export function AccountMenu({ user, customerLink }: Props) {
       <button
         ref={button}
         type="button"
-        aria-label={t('account.menu')}
+        aria-label={
+          status
+            ? `${t('account.menu')}: ${t(status === 'queue' ? 'account.inQueue' : 'account.onBreak')}`
+            : t('account.menu')
+        }
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex size-11 items-center justify-center rounded-full bg-hero font-display text-[15px] font-bold text-hero-accent shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--line-2)] transition-shadow hover:shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--primary)]"
+        className={`inline-flex size-11 items-center justify-center rounded-full bg-hero font-display text-[15px] font-bold text-hero-accent transition-shadow ${
+          status
+            ? RINGS[status]
+            : 'shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--line-2)] hover:shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--primary)]'
+        }`}
       >
         {initial}
       </button>
@@ -84,6 +104,8 @@ export function AccountMenu({ user, customerLink }: Props) {
               </span>
             )}
           </div>
+
+          {Extra && <Extra />}
 
           <div className="flex flex-col gap-1 border-t border-hair pt-1">
             <Link to="/account" className={itemClass}>

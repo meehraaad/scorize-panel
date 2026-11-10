@@ -9,6 +9,7 @@ import type {
   PhoneTeamInput,
   PhoneTeams,
   PhoneVoices,
+  TeamBreaks,
 } from '@/lib/sales/phoneCalls';
 import { forbidden, storage } from './session';
 
@@ -105,6 +106,30 @@ let breaks = new Map<number, PhoneBreakState>();
 const breakOf = (user: number): PhoneBreakState =>
   breaks.get(user) ?? { can: true, on_break: false, since: null, teams: ['moshavere-foroosh'] };
 
+/** A seller (by id, the same as their TeamPerson id here) on a break since `since`. */
+export function startPhoneBreak(user: number, since: string) {
+  breaks.set(user, { ...breakOf(user), on_break: true, since });
+}
+
+/** Django's team_breaks_view: everyone a team can ring, with today's break. */
+function teamBreaks(): TeamBreaks {
+  return {
+    seen_at: teams.seen_at,
+    people: teams.people.map((person) => {
+      const state = breakOf(person.id);
+      return {
+        id: person.id,
+        name: person.name,
+        teams: teams.teams
+          .filter((team) => team.members.includes(person.id))
+          .map((team) => team.name),
+        on_break: state.on_break,
+        since: state.since,
+      };
+    }),
+  };
+}
+
 export function setPhoneSnapshot(owner: number, snapshot: PhoneSnapshot) {
   snapshots.set(owner, snapshot);
 }
@@ -156,6 +181,10 @@ export const phoneCallHandlers = [
     });
     return HttpResponse.json(breakOf(user));
   }),
+  // Who is on a break: sales managers only.
+  http.get('/api/sales/v1/calls/breaks/', () =>
+    storage.get() === 4 ? HttpResponse.json(teamBreaks()) : forbidden(),
+  ),
   // Voice messages: an upload waits for the PBX (here it stays waiting).
   http.get('/api/sales/v1/calls/voices/', () =>
     storage.get() === 4 ? HttpResponse.json(voices) : forbidden(),

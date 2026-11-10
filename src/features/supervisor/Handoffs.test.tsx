@@ -49,7 +49,7 @@ describe('contract handoff', () => {
     expect(within(parties).getByText('کیان مرادی')).toBeInTheDocument();
     // Articles print with their number (S69), their clauses as ۴-۱، ۴-۲.
     expect(within(doc).getByRole('heading', { name: 'ماده ۳: فسخ قرارداد' })).toBeInTheDocument();
-    expect(within(doc).getByText('۴-۱')).toBeInTheDocument();
+    expect(within(doc).getByText('۴\u200f-\u200f۱')).toBeInTheDocument();
     // The clause written for this customer is marked; who agreed online, on which version.
     expect(within(doc).getAllByText('توافقی').length).toBeGreaterThan(0);
     expect(

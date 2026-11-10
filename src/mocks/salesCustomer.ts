@@ -306,8 +306,26 @@ function cleanClauses(
 
 /** The kinds of contract a seller starts from (S68): the standard one, and free apply to Turkey. */
 export const OFFER_TEMPLATES: OfferData['options']['templates'] = [
-  { id: null, name: 'قرارداد استاندارد', description: '' },
-  { id: 1, name: 'اپلای رایگان ترکیه', description: 'فقط اپلای ترکیه، بدون هزینه و قسط' },
+  {
+    id: null,
+    name: 'قرارداد استاندارد',
+    description: '',
+    features: [
+      { key: 'admission', price: 70_000_000 },
+      { key: 'visa', price: 40_000_000 },
+      { key: 'writing', price: 25_000_000 },
+    ],
+    articles: 4,
+    variables: 1,
+  },
+  {
+    id: 1,
+    name: 'اپلای رایگان ترکیه',
+    description: 'فقط اپلای ترکیه، بدون هزینه و قسط',
+    features: [{ key: 'admission', price: 0 }],
+    articles: 1,
+    variables: 0,
+  },
 ];
 
 const OFFER_OPTIONS: OfferData['options'] = {
@@ -411,8 +429,8 @@ export const salesCustomerHandlers = [
   http.get(`${BASE}/customers/:id/offer/`, ({ params, request }) => {
     const data = stateOrError();
     if (failed(data)) return data;
-    const item = customerOrError(data, params.id);
-    if (!item) return notFound();
+    // A customer of the staff mock (added by hand) has no offer yet: Django answers with none.
+    const item = customerOrError(data, params.id) ?? { id: Number(params.id), lead: null };
     const draft = data.offers.get(item.id) ?? null;
     // `?template=`: that kind's options (`standard`: the standard one); none: the draft's.
     const asked = new URL(request.url).searchParams.get('template');
@@ -420,10 +438,13 @@ export const salesCustomerHandlers = [
       asked === null ? (draft?.template ?? null) : asked === 'standard' ? null : Number(asked);
     if (template !== null && !OFFER_TEMPLATES.some((kind) => kind.id === template))
       return notFound();
+    const status = data.offerStates.get(item.id) ?? null;
     const body: OfferData = {
       options: optionsOf(template),
       draft,
-      state: item.lead.stage === 'draft' ? 'submitted' : draft ? 'saved' : 'none',
+      state: item.lead?.stage === 'draft' ? 'submitted' : draft ? 'saved' : 'none',
+      comment: status?.state === 'returned' ? (data.returnComments.get(item.id) ?? '') : '',
+      status,
     };
     return HttpResponse.json(body);
   }),
@@ -474,6 +495,20 @@ export const salesCustomerHandlers = [
       return HttpResponse.json({ variables: ['required'] }, { status: 400 });
     data.offers.set(item.id, { ...offer, clauses, variables });
     item.lead.amount = amount;
+    // Django's `status_of` (S71): what the customer page's contract card says.
+    const now = new Date().toISOString();
+    const was = data.offerStates.get(item.id);
+    data.offerStates.set(item.id, {
+      state: action === 'submit' ? 'submitted' : action === 'send' ? 'sent' : 'saved',
+      template: offer.template,
+      name: OFFER_TEMPLATES.find((kind) => kind.id === offer.template)?.name ?? '',
+      amount,
+      updated_at: now,
+      sent_at: action === 'send' ? now : (was?.sent_at ?? null),
+      submitted_at: action === 'submit' ? now : (was?.submitted_at ?? null),
+      reviewed_at: was?.reviewed_at ?? null,
+      reviewer: '',
+    });
     if (action !== 'save') {
       recordVersion(
         { id: item.id, name: item.name },

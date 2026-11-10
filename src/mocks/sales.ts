@@ -8,6 +8,7 @@ import type {
   MoveSteps,
   NextStep,
   Offer,
+  OfferStatus,
   PendingReceipt,
   StageActivity,
   StageInput,
@@ -539,6 +540,10 @@ export interface SalesState {
   customers: MockCustomer[];
   consultations: MockConsultation[];
   offers: Map<number, Offer>;
+  /** Where each open offer is (Django's `SalesOffer.state`, S71), by customer. */
+  offerStates: Map<number, OfferStatus>;
+  /** The manager's comment on a returned offer, by customer. */
+  returnComments: Map<number, string>;
   stages: MockStage[];
 }
 
@@ -546,6 +551,8 @@ const salesState = (): SalesState => ({
   customers: customers(),
   consultations: consultations(),
   offers: new Map(),
+  offerStates: new Map(),
+  returnComments: new Map(),
   stages: defaultStages(),
 });
 
@@ -888,7 +895,7 @@ function monthOf(data: SalesState, month?: string): MonthData {
     elapsed: 0.74,
     working_days_left: 8,
     sales: 640_000_000,
-    // The team's steps (src/mocks/salesManager.ts): 8 contracts → 3%, so the next is 700 million → 4%.
+    // The team's ranges (src/mocks/salesManager.ts): 8 contracts → 3%, so the next is 700 million → 4%.
     commission: 19_200_000,
     commission_percent: 3,
     commission_extra: 0,
@@ -898,6 +905,7 @@ function monthOf(data: SalesState, month?: string): MonthData {
       reward: 'percent',
       percent: 4,
       amount: null,
+      currency: 'IRT',
     },
     drafts_waiting: data.customers.filter((item) => item.lead.stage === 'draft').length,
     rank: { position: 2, of: 5 },

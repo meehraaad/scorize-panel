@@ -102,6 +102,8 @@
   },
   "account": {
     "menu": "حساب کاربری",
+    "inQueue": "در صف تماس",
+    "onBreak": "در استراحت",
     "current": "پنل فعلی",
     "profile": "حساب کاربری",
     "settings": "تنظیمات",
@@ -385,7 +387,7 @@
   },
   "clauseNumber": {
     "article": "ماده {{n}}",
-    "clause": "{{article}}-{{n}}",
+    "clause": "{{article}}‏-‏{{n}}",
     "note": "تبصره {{n}}",
     "kinds": {
       "article": "ماده",

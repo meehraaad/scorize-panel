@@ -7,6 +7,7 @@ import { api } from '@/lib/api/client';
 import type { AssignData, TeamData } from '../api';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
+import { startPhoneBreak } from '@/mocks/phoneCalls';
 import { toasts } from '@/test/toasts';
 
 // The quiz funnel follows the quiz (src/lib/applicant/onServer.ts): switch everything on.
@@ -180,7 +181,7 @@ describe('sales manager section', () => {
     expect(within(loads).queryByRole('button', { name: /پنهان‌شده‌ها/ })).not.toBeInTheDocument();
   });
 
-  it('disables assignment when every seller is away and no suggestion exists', async () => {
+  it('offers sellers on leave, and disables assignment until one is chosen', async () => {
     loginAs(REZA);
     const data = await api<AssignData>('/sales/v1/manager/assign/');
     server.use(
@@ -204,6 +205,11 @@ describe('sales manager section', () => {
     expect(within(queue).getByRole('button', { name: 'تخصیص پیشنهادی برای همه' })).toBeDisabled();
     for (const button of within(queue).getAllByRole('button', { name: 'تخصیص' })) {
       expect(button).toBeDisabled();
+    }
+    for (const choose of within(queue).getAllByRole('combobox')) {
+      for (const seller of data.sellers) {
+        expect(within(choose).getByRole('option', { name: seller.name })).toBeInTheDocument();
+      }
     }
     expect(screen.getAllByText('داده‌ی تماس موجود نیست')).toHaveLength(data.sellers.length);
   });
@@ -266,9 +272,10 @@ describe('sales manager section', () => {
   it('the manager reviews only the clauses the seller changed, and after a return only what changed since', async () => {
     const user = userEvent.setup();
     loginAs(NIMA);
-    renderApp('/sales/customers/105/offer');
-    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
-    const clauses = screen.getByRole('region', { name: '۴. بندهای قرارداد' });
+    // The text is the third step of building the contract (S71).
+    renderApp('/sales/customers/105/offer?step=3');
+    await screen.findByRole('heading', { level: 1, name: 'قرارداد استاندارد' });
+    const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
     // Named as the contract prints them (S69).
     await user.click(within(clauses).getByRole('button', { name: 'ویرایش ماده ۳: فسخ قرارداد' }));
     const text = within(clauses).getByLabelText('متن بند');
@@ -280,14 +287,12 @@ describe('sales manager section', () => {
     await user.click(within(clauses).getByRole('button', { name: 'حذف ماده ۲: تعهدات متقاضی' }));
     expect(within(clauses).getByText('۲ بند تغییر کرده · ۰ بند اضافه شده')).toBeInTheDocument();
     await user.click(within(clauses).getByRole('button', { name: '+ ماده‌ی تازه' }));
-    await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    );
     expect(screen.getByText('هر بند متن می‌خواهد و ماده‌ی تازه عنوان هم.')).toBeInTheDocument();
     await user.type(within(clauses).getByLabelText('عنوان ماده'), 'بورسیه');
     await user.type(within(clauses).getByLabelText('متن بند'), 'با بورسیه، قسط آخر ۱۰٪ کمتر.');
+    await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
     await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
 
@@ -308,14 +313,16 @@ describe('sales manager section', () => {
 
     cleanup();
     loginAs(NIMA);
-    renderApp('/sales/customers/105/offer');
-    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
+    renderApp('/sales/customers/105/offer?step=3');
+    await screen.findByRole('heading', { level: 1, name: 'قرارداد استاندارد' });
     await user.click(screen.getByRole('button', { name: /^حذف ماده .: بورسیه$/ }));
-    const applies = screen.getByLabelText('تعداد اپلای');
+    await user.click(screen.getByRole('button', { name: 'رفتن به «خدمات و جزئیات»' }));
+    const applies = await screen.findByLabelText('تعداد اپلای');
     await user.clear(applies);
     await user.type(applies, '4');
+    await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
     await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
 
@@ -396,7 +403,7 @@ describe('commission rules (S60)', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('the manager adds a step for one seller, refuses a repeated one, changes and removes', async () => {
+  it('the manager adds a range for one seller, refuses an overlapping one, changes and removes', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
     renderApp('/sales/manager/commission');
@@ -404,20 +411,20 @@ describe('commission rules (S60)', () => {
     // Each change refetches the rules: find the groups again after it.
     const group = (name: string) => screen.getByRole('region', { name });
     expect(
-      within(group('همه‌ی فروشنده‌ها')).getByText('با ۴ قرارداد یا بیشتر در ماه: ۲٪ از فروش ماه'),
+      within(group('همه‌ی فروشنده‌ها')).getByText(
+        'با ۴ تا کمتر از ۸ قرارداد در ماه: ۲٪ از فروش ماه',
+      ),
     ).toBeInTheDocument();
 
     const form = screen.getByRole('form', { name: 'قانون تازه' });
-    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '۴');
+    await user.type(within(form).getByLabelText('از چند قرارداد'), '۴');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '۵');
     await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
-    expect(
-      await within(form).findByText('There is already a rule for this step.'),
-    ).toBeInTheDocument();
+    expect(await within(form).findByText('This range overlaps another rule.')).toBeInTheDocument();
 
     await user.selectOptions(within(form).getByLabelText('برای'), '31');
     await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
-    await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '900');
+    await user.type(within(form).getByLabelText('از فروش (میلیون تومان)'), '900');
     await user.clear(within(form).getByLabelText('درصد پورسانت'));
     await user.type(within(form).getByLabelText('درصد پورسانت'), '5');
     await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
@@ -430,7 +437,7 @@ describe('commission rules (S60)', () => {
 
     await user.click(
       within(group('همه‌ی فروشنده‌ها')).getByRole('button', {
-        name: 'ویرایش «با ۴ قرارداد یا بیشتر در ماه: ۲٪ از فروش ماه»',
+        name: 'ویرایش «با ۴ تا کمتر از ۸ قرارداد در ماه: ۲٪ از فروش ماه»',
       }),
     );
     const edit = within(group('همه‌ی فروشنده‌ها')).getByRole('form', { name: 'ویرایش قانون' });
@@ -441,7 +448,9 @@ describe('commission rules (S60)', () => {
     expect(await toasts().findByText('قانون از این ماه عوض شد')).toBeInTheDocument();
     await vi.waitFor(() => expect(edit).not.toBeInTheDocument());
     expect(
-      within(group('همه‌ی فروشنده‌ها')).getByText('با ۴ قرارداد یا بیشتر در ماه: ۲٫۵٪ از فروش ماه'),
+      within(group('همه‌ی فروشنده‌ها')).getByText(
+        'با ۴ تا کمتر از ۸ قرارداد در ماه: ۲٫۵٪ از فروش ماه',
+      ),
     ).toBeInTheDocument();
 
     await user.click(within(group('مهدی توکلی')).getByRole('button', { name: /^حذف/ }));
@@ -462,12 +471,12 @@ describe('commission rules (S60)', () => {
 
     const form = screen.getByRole('form', { name: 'قانون تازه' });
     await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'tiered');
-    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '5');
+    await user.type(within(form).getByLabelText('از چند قرارداد'), '5');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '3');
     expect(within(form).getByText('از قرارداد ۵ به بعد: هر قرارداد ۳٪')).toBeInTheDocument();
     await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
     await user.clear(within(form).getByLabelText('درصد پورسانت'));
-    await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '300');
+    await user.type(within(form).getByLabelText('از فروش (میلیون تومان)'), '300');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '2');
     await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
     expect(await toasts().findByText('قانون اضافه شد')).toBeInTheDocument();
@@ -479,10 +488,48 @@ describe('commission rules (S60)', () => {
 
     await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'per_contract');
     await user.selectOptions(within(form).getByLabelText('بر اساس'), 'contracts');
-    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '6');
+    await user.type(within(form).getByLabelText('از چند قرارداد'), '6');
     await user.type(within(form).getByLabelText('مبلغ هر قرارداد (میلیون تومان)'), '1.5');
     expect(
       within(form).getByText('با ۶ قرارداد یا بیشتر در ماه: ۱٫۵ میلیون تومان برای هر قرارداد'),
+    ).toBeInTheDocument();
+  });
+
+  it('adds sales ranges in euro: 0 to 4,000 at 4%, from 4,000 up at 5%', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/commission');
+    const form = await screen.findByRole('form', { name: 'قانون تازه' });
+    // For one seller: the team's own "700 million or more" would overlap "4,000 euros or more".
+    await user.selectOptions(within(form).getByLabelText('برای'), '31');
+    await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
+    await user.selectOptions(within(form).getByLabelText('واحد پول'), 'EUR');
+    await user.type(within(form).getByLabelText('از فروش (یورو)'), '0');
+    await user.type(within(form).getByLabelText('تا کمتر از (یورو)'), '4000');
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '4');
+    expect(
+      within(form).getByText('با فروش ماه از ۰ یورو تا کمتر از ۴٬۰۰۰ یورو: ۴٪ از فروش ماه'),
+    ).toBeInTheDocument();
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    expect(await toasts().findByText('قانون اضافه شد')).toBeInTheDocument();
+
+    // "Up to" must be above "from".
+    await user.type(within(form).getByLabelText('از فروش (یورو)'), '4000');
+    await user.type(within(form).getByLabelText('تا کمتر از (یورو)'), '3000');
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '5');
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    expect(within(form).getByText('«تا» باید از «از» بیشتر باشد.')).toBeInTheDocument();
+    await user.clear(within(form).getByLabelText('تا کمتر از (یورو)'));
+    expect(
+      within(form).getByText('با ۴٬۰۰۰ یورو فروش یا بیشتر در ماه: ۵٪ از فروش ماه'),
+    ).toBeInTheDocument();
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    const mahdi = await screen.findByRole('region', { name: 'مهدی توکلی' });
+    expect(
+      await within(mahdi).findByText('با ۴٬۰۰۰ یورو فروش یا بیشتر در ماه: ۵٪ از فروش ماه'),
+    ).toBeInTheDocument();
+    expect(
+      within(mahdi).getByText('با فروش ماه از ۰ یورو تا کمتر از ۴٬۰۰۰ یورو: ۴٪ از فروش ماه'),
     ).toBeInTheDocument();
   });
 
@@ -663,8 +710,13 @@ describe('contract builder and agreement desk (S64)', () => {
     loginAs(NIMA);
     const user = userEvent.setup();
     renderApp('/sales/customers/105/offer');
-    const kind = await screen.findByRole('region', { name: 'نوع قرارداد' });
-    await user.click(within(kind).getByRole('radio', { name: /اپلای رایگان ترکیه/ }));
+    // The kind is changed with the same chooser as on the customer page (S71).
+    await user.click(await screen.findByRole('button', { name: 'عوض کردن قرارداد' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کدام قرارداد؟' });
+    await user.click(within(dialog).getByRole('radio', { name: /اپلای رایگان ترکیه/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'ادامه با «اپلای رایگان ترکیه»' }));
+    await screen.findByRole('heading', { level: 1, name: 'اپلای رایگان ترکیه' });
+    await user.click(screen.getByRole('button', { name: 'رفتن به «متن و متغیرها»' }));
     expect(
       await screen.findByText('تعهدنامه‌ی اپلای رایگان', { exact: false }),
     ).toBeInTheDocument();
@@ -677,8 +729,8 @@ describe('contract builder and agreement desk (S64)', () => {
     const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
     // Article ۴ has untitled clauses ۴-۱، ۴-۲ and a note.
     expect(within(preview).getByText('ماده ۴: تعهدات مؤسسه')).toBeInTheDocument();
-    expect(within(preview).getByText('۴-۱')).toBeInTheDocument();
-    expect(within(preview).getByText('۴-۲')).toBeInTheDocument();
+    expect(within(preview).getByText('۴\u200f-\u200f۱')).toBeInTheDocument();
+    expect(within(preview).getByText('۴\u200f-\u200f۲')).toBeInTheDocument();
     expect(within(preview).getByText(/تبصره ۱/)).toBeInTheDocument();
     // The variables show with the samples: the default search count, a sample customer.
     expect(within(preview).getByText('10')).toBeInTheDocument();
@@ -703,7 +755,7 @@ describe('contract builder and agreement desk (S64)', () => {
     expect(within(preview).getByText('آلمان')).toBeInTheDocument();
     await user.click(within(clauses).getByRole('button', { name: 'ذخیره' }));
     // At the end of the text: the third clause of article ۴, after its note.
-    expect(await within(clauses).findByText('۴-۳')).toBeInTheDocument();
+    expect(await within(clauses).findByText('۴\u200f-\u200f۳')).toBeInTheDocument();
   });
 
   it('the seller fills a variable and adds a clause into an article (S69)', async () => {
@@ -718,8 +770,8 @@ describe('contract builder and agreement desk (S64)', () => {
           .then((body: unknown) => posts.push(body));
     };
     server.events.on('request:start', listen);
-    renderApp('/sales/customers/105/offer');
-    const clauses = await screen.findByRole('region', { name: '۴. بندهای قرارداد' });
+    renderApp('/sales/customers/105/offer?step=3');
+    const clauses = await screen.findByRole('region', { name: 'متن قرارداد' });
     const count = within(clauses).getByLabelText('تعداد سرچ');
     expect(count).toHaveValue('10');
     await user.clear(count);
@@ -732,6 +784,11 @@ describe('contract builder and agreement desk (S64)', () => {
     await user.type(within(clauses).getByLabelText('متن بند'), 'هزینه‌ی سفارت با متقاضی است.');
     // A note added after the article's note: تبصره ۲.
     expect(within(clauses).getByText('تبصره ۲')).toBeInTheDocument();
+    // The preview fills the value in the text.
+    await user.click(screen.getByRole('button', { name: 'بعدی: پیش‌نمایش و ارسال' }));
+    const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
+    expect(within(preview).getByText('15')).toBeInTheDocument();
+    expect(within(preview).getAllByText('عرفان ملکی').length).toBeGreaterThan(1); // the parties and the clause
     await user.click(
       screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
@@ -753,8 +810,8 @@ describe('contract builder and agreement desk (S64)', () => {
 
   it('a seller cannot change a fixed clause', async () => {
     loginAs(NIMA);
-    renderApp('/sales/customers/105/offer');
-    const clauses = await screen.findByRole('region', { name: '۴. بندهای قرارداد' });
+    renderApp('/sales/customers/105/offer?step=3');
+    const clauses = await screen.findByRole('region', { name: 'متن قرارداد' });
     expect(within(clauses).getAllByText('ثابت').length).toBeGreaterThan(0);
     expect(
       within(clauses).queryByRole('button', { name: 'ویرایش ماده ۱: موضوع قرارداد' }),
@@ -774,14 +831,23 @@ describe('office phone hours', () => {
   it("shows the PBX's hours, refuses a closing time before opening, and saves the week", async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/hours');
+    renderApp('/sales/manager/phone/hours');
     expect(await screen.findByRole('heading', { name: 'ساعت کاری تلفن' })).toBeInTheDocument();
-    expect(screen.getByText(/هنوز ساعت‌های خود سانترال است/)).toBeInTheDocument();
+    expect(screen.getByText(/هنوز ساعت‌های خود وویپ است/)).toBeInTheDocument();
     const week = screen.getByRole('region', { name: 'ساعت پاسخ‌گویی' });
+    expect(within(week).getByRole('switch', { name: /^یکشنبه/ })).toHaveAccessibleName(
+      /۱۰:۳۰–۱۹:۰۰/,
+    );
+    expect(within(week).queryByLabelText('یکشنبه، از ساعت')).not.toBeInTheDocument();
+    await user.click(within(week).getByRole('button', { name: 'ساعت‌های یکشنبه' }));
     expect(within(week).getByLabelText('یکشنبه، از ساعت')).toHaveValue('10:30');
+    expect(within(week).getByLabelText('یکشنبه، تماس مستقیم از ساعت')).toHaveValue('11:30');
     expect(within(week).getByRole('switch', { name: /^شنبه/ })).not.toBeChecked();
+    expect(screen.getByText('همه چیز ذخیره شده است')).toBeInTheDocument();
 
     await user.click(within(week).getByRole('switch', { name: /^شنبه/ }));
+    expect(screen.getByText('تغییرها هنوز ذخیره نشده‌اند')).toBeInTheDocument();
+    await user.click(within(week).getByRole('button', { name: 'ساعت‌های شنبه' }));
     await user.selectOptions(within(week).getByLabelText('شنبه، از ساعت'), '10:00');
     await user.selectOptions(within(week).getByLabelText('شنبه، تا ساعت'), '09:00');
     await user.click(screen.getByRole('button', { name: 'ذخیره‌ی ساعت‌ها' }));
@@ -796,10 +862,30 @@ describe('office phone hours', () => {
     expect(saved.week.map((row) => row.day)).toEqual(['sat', 'sun', 'mon', 'tue', 'wed', 'thu']);
   });
 
+  it("copies one day's hours to every open day", async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/phone/hours');
+    const week = await screen.findByRole('region', { name: 'ساعت پاسخ‌گویی' });
+    await user.click(within(week).getByRole('button', { name: 'ساعت‌های یکشنبه' }));
+    await user.selectOptions(within(week).getByLabelText('یکشنبه، از ساعت'), '09:00');
+    await user.click(
+      within(week).getByRole('button', { name: 'همین ساعت‌ها برای همه‌ی روزهای باز' }),
+    );
+    expect(within(week).getByRole('switch', { name: /^دوشنبه/ })).toHaveAccessibleName(
+      /۰۹:۰۰–۱۹:۰۰/,
+    );
+    expect(within(week).getByRole('switch', { name: /^شنبه/ })).toHaveAccessibleName(/تعطیل/);
+    await user.click(screen.getByRole('button', { name: 'برگرداندن تغییرها' }));
+    expect(within(week).getByRole('switch', { name: /^دوشنبه/ })).toHaveAccessibleName(
+      /۱۰:۳۰–۱۹:۰۰/,
+    );
+  });
+
   it('closes the line for today at once, and adds and removes a closed day', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/hours');
+    renderApp('/sales/manager/phone/hours');
     const today = await screen.findByRole('region', { name: 'امروز' });
     await user.click(within(today).getByRole('radio', { name: 'بسته' }));
     expect(await toasts().findByText('خط تلفن تا نیمه‌شب بسته است')).toBeInTheDocument();
@@ -813,9 +899,41 @@ describe('office phone hours', () => {
 
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/hours');
+    const router = renderApp('/sales/manager/phone/hours');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
+  });
+});
+
+describe('phone overview', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('opens on the overview: line status, summaries, the call map and what needs attention', async () => {
+    startPhoneBreak(8, '2026-11-10T09:10:00Z');
+    loginAs(REZA);
+    const router = renderApp('/sales/manager/phone');
+    expect(await screen.findByRole('heading', { name: 'خط تلفن', level: 1 })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales/manager/phone/overview');
+    expect(screen.getByRole('heading', { name: 'خط تلفن الان باز است' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /۲ منو · ۴ کلید/ })).toHaveAttribute(
+      'href',
+      '/sales/manager/phone/menus',
+    );
+
+    const map = screen.getByRole('region', { name: /چه می‌شنود و به کجا می‌رسد/ });
+    expect(within(map).getByRole('link', { name: /moshavere-foroosh.*تیم/ })).toBeInTheDocument();
+    expect(within(map).getByText('۰ از ۱ نفر زنگ می‌خورند')).toBeInTheDocument();
+
+    const issues = screen.getByRole('region', { name: /نیاز به توجه/ });
+    expect(
+      within(issues).getByText(/داخلی‌های ۲۳۰ در تیم «moshavere-foroosh»/),
+    ).toBeInTheDocument();
+    expect(
+      within(issues).getByText(/آخرین فایل پیام «بیرون از ساعت کاری» روی وویپ نرفت/),
+    ).toBeInTheDocument();
   });
 });
 
@@ -828,10 +946,10 @@ describe('phone teams', () => {
   it("shows the PBX's team, changes its name, people and outside numbers, and adds a team", async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/phone-teams');
+    renderApp('/sales/manager/phone/teams');
     expect(await screen.findByRole('heading', { name: 'تیم‌های تلفن' })).toBeInTheDocument();
     const card = screen.getByRole('region', { name: 'moshavere-foroosh' });
-    expect(within(card).getByText(/همان تنظیم خود سانترال/)).toBeInTheDocument();
+    expect(within(card).getByText(/همان تنظیم خود وویپ/)).toBeInTheDocument();
     expect(within(card).getByText(/داخلی‌های ۲۳۰ در این صف هستند/)).toBeInTheDocument();
     expect(within(card).getByText(/با کد ورود وارد این صف شده‌اند: ۱۰۳/)).toBeInTheDocument();
     expect(within(card).getByRole('checkbox', { name: /^نیما رضایی/ })).toBeChecked();
@@ -859,6 +977,9 @@ describe('phone teams', () => {
     );
     expect(saved.teams[0]).toMatchObject({ members: [8, 9], outside_numbers: ['09121234567'] });
 
+    const all = screen.getByRole('list', { name: 'همه‌ی تیم‌ها' });
+    expect(within(all).getByText('منوی اصلی · کلید ۱')).toBeInTheDocument();
+
     const add = screen.getByRole('form', { name: 'تیم تازه' });
     await user.type(within(add).getByLabelText('نام تیم'), 'ویزا');
     await user.click(within(add).getByRole('button', { name: 'افزودن تیم' }));
@@ -866,9 +987,25 @@ describe('phone teams', () => {
     expect(await screen.findByRole('region', { name: 'ویزا' })).toBeInTheDocument();
   });
 
+  it('shows who is on a break, on the list and on the team card', async () => {
+    startPhoneBreak(8, '2026-11-10T09:10:00Z');
+    loginAs(REZA);
+    renderApp('/sales/manager/phone/teams');
+    const who = await screen.findByRole('region', { name: 'الان چه کسی تماس تیمی می‌گیرد' });
+    expect(within(who).getByText(/^۱ نفر در استراحت است/)).toBeInTheDocument();
+    const nima = within(who).getByText('نیما رضایی').closest('li') as HTMLElement;
+    expect(within(nima).getByText(/^در استراحت از /)).toBeInTheDocument();
+    const reza = within(who).getByText('رضا کامرانی').closest('li') as HTMLElement;
+    expect(within(reza).getByText('در هیچ تیمی نیست')).toBeInTheDocument();
+    const card = screen.getByRole('region', { name: 'moshavere-foroosh' });
+    expect(
+      within(card).getByRole('checkbox', { name: /^نیما رضایی · .* · در استراحت$/ }),
+    ).toBeChecked();
+  });
+
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/phone-teams');
+    const router = renderApp('/sales/manager/phone/teams');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });
@@ -883,15 +1020,13 @@ describe('phone menus', () => {
   it("shows the PBX's keys, refuses a repeated key, and saves changes", async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/phone-menus');
+    renderApp('/sales/manager/phone/menus');
     expect(await screen.findByRole('heading', { name: 'منوهای تلفن' })).toBeInTheDocument();
     const main = screen.getByRole('region', { name: 'منوی اصلی' });
     expect(within(main).getByLabelText('کلید ۱ به کجا برود')).toHaveValue('team');
     expect(within(main).getByLabelText('مقصد کلید ۱')).toHaveValue('1000');
     expect(within(main).getByLabelText('مقصد کلید ۲۲۳')).toHaveValue('223');
-    expect(
-      within(main).getByText('تنظیم خاص سانترال؛ همان‌طور که هست می‌ماند.'),
-    ).toBeInTheDocument();
+    expect(within(main).getByText('تنظیم خاص وویپ؛ همان‌طور که هست می‌ماند.')).toBeInTheDocument();
 
     await user.click(within(main).getByRole('button', { name: 'افزودن کلید' }));
     const keys = within(main).getAllByLabelText('کلید');
@@ -918,7 +1053,7 @@ describe('phone menus', () => {
 
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/phone-menus');
+    const router = renderApp('/sales/manager/phone/menus');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });
@@ -933,12 +1068,12 @@ describe('voice messages', () => {
   it('lists the greetings, refuses a non-sound file, and sends a new one', async () => {
     const user = userEvent.setup({ applyAccept: false });
     loginAs(REZA);
-    renderApp('/sales/manager/phone-voices');
+    renderApp('/sales/manager/phone/voices');
     expect(await screen.findByRole('heading', { name: 'پیام‌های صوتی' })).toBeInTheDocument();
     const main = screen.getByRole('region', { name: 'منوی اصلی' });
     expect(within(main).getByText('پخش در: منوی اصلی')).toBeInTheDocument();
     const closed = screen.getByRole('region', { name: 'بیرون از ساعت کاری' });
-    expect(within(closed).getByText(/آخرین فایل روی سانترال نرفت/)).toBeInTheDocument();
+    expect(within(closed).getByText(/آخرین فایل روی وویپ نرفت/)).toBeInTheDocument();
 
     const input = within(main).getByLabelText('فایل صوتی تازه برای منوی اصلی', {
       selector: 'input',
@@ -949,12 +1084,12 @@ describe('voice messages', () => {
     );
     await user.upload(input, new File(['ID3 sound'], 'greeting.mp3', { type: 'audio/mpeg' }));
     expect(await toasts().findByText('پیام صوتی فرستاده شد')).toBeInTheDocument();
-    expect(await within(main).findByText('فایل تازه در راه سانترال است…')).toBeInTheDocument();
+    expect(await within(main).findByText('فایل تازه در راه وویپ است…')).toBeInTheDocument();
   });
 
   it('is hidden from sellers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/phone-voices');
+    const router = renderApp('/sales/manager/phone/voices');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });

@@ -149,8 +149,7 @@ describe('sales panel, seller pages', () => {
     expect(router.state.location.pathname).toMatch(/^\/sales\/customers\/\d+$/);
   });
 
-  it('header: searches every customer, opens mine, takes a free one, names another seller', async () => {
-    let taken: string | null = null;
+  it('header: searches every customer and opens any of them, naming another seller', async () => {
     server.use(
       http.get('/api/sales/v1/customers/search/', ({ request }) => {
         const q = new URL(request.url).searchParams.get('q');
@@ -187,13 +186,9 @@ describe('sales panel, seller pages', () => {
           ],
         });
       }),
-      http.post('/api/sales/v1/customers/:id/take/', ({ params }) => {
-        taken = String(params.id);
-        return HttpResponse.json({ customer: Number(params.id) });
-      }),
     );
     const user = userEvent.setup();
-    const router = renderApp('/sales/leads');
+    renderApp('/sales/leads');
     await user.click(await screen.findByRole('button', { name: 'جستجو در همه‌ی مشتری‌ها' }));
     const dialog = await screen.findByRole('dialog', { name: 'جستجو در همه‌ی مشتری‌ها' });
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'هیچ');
@@ -201,15 +196,22 @@ describe('sales panel, seller pages', () => {
     await user.clear(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }));
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'مینا');
     const results = await within(dialog).findByRole('list', { name: 'مشتری‌های پیدا شده' });
-    expect(within(results).getByRole('link', { name: 'باز کردن صفحه' })).toHaveAttribute(
-      'href',
+    const opens = within(results).getAllByRole('link', { name: 'باز کردن صفحه' });
+    expect(opens.map((link) => link.getAttribute('href'))).toEqual([
       `/sales/customers/${String(ERFAN)}`,
-    );
-    expect(within(results).getByText('مشتریِ سارا')).toBeInTheDocument();
-    await user.click(within(results).getByRole('button', { name: 'برداشتن مشتری' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/sales/customers/777'));
-    expect(taken).toBe('777');
-    expect(await toasts().findByText('مینا آزاد به مشتری‌های شما اضافه شد.')).toBeInTheDocument();
+      '/sales/customers/777',
+      '/sales/customers/778',
+    ]);
+    // A free row and another seller's row both open; the other seller is named beside it.
+    for (const name of ['مینا آزاد', 'مینا دیگری']) {
+      const row = within(results).getByText(name).closest('li');
+      expect(row).not.toBeNull();
+      expect(within(row as HTMLElement).getByRole('link', { name: 'باز کردن صفحه' })).toBeVisible();
+    }
+    const other = within(results).getByText('مینا دیگری').closest('li') as HTMLElement;
+    expect(within(other).getByText('مشتریِ سارا')).toBeInTheDocument();
+    // One nobody has opens too: a seller only opens customers, never takes them from search.
+    expect(within(results).queryByRole('button', { name: 'برداشتن مشتری' })).toBeNull();
   });
 
   it('header: searches every customer from any page; nobody found opens the new lead', async () => {
@@ -688,32 +690,36 @@ describe('break from team calls', () => {
     loginAs(NIMA);
   });
 
-  it('starts and ends a break from the Today header', async () => {
+  it('starts and ends a break from the account menu, and rings the avatar orange', async () => {
     const user = userEvent.setup();
     renderApp('/sales');
+    await user.click(await screen.findByRole('button', { name: /^حساب کاربری: در صف تماس$/ }));
+    expect(await screen.findByText('در صف تماس تیمی هستید')).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'استراحت' }));
     expect(
       await toasts().findByText('استراحت شروع شد؛ تماس تیمی به شما نمی‌رسد'),
     ).toBeInTheDocument();
-    expect(
-      await screen.findByText(/در استراحت هستید و تماس تیمی به شما نمی‌رسد/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/^از ساعت .* در استراحت هستید/)).toBeInTheDocument();
     expect(screen.getByText(/تیم‌ها: moshavere-foroosh/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'حساب کاربری: در استراحت' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'پایان استراحت' }));
     expect(await toasts().findByText('دوباره تماس تیمی به شما می‌رسد')).toBeInTheDocument();
     expect(screen.queryByText(/در استراحت هستید/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'استراحت' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'حساب کاربری: در صف تماس' })).toBeInTheDocument();
   });
 
   it('shows no button to someone no team rings', async () => {
+    const user = userEvent.setup();
     server.use(
       http.get('/api/sales/v1/calls/break/', () =>
         HttpResponse.json({ can: false, on_break: false, since: null, teams: [] }),
       ),
     );
     renderApp('/sales');
-    await screen.findByRole('heading', { name: /^سلام نیما، / });
+    await user.click(await screen.findByRole('button', { name: 'حساب کاربری' }));
+    expect(await screen.findByRole('link', { name: 'تنظیمات' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'استراحت' })).not.toBeInTheDocument();
   });
 });

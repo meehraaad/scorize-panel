@@ -26,12 +26,16 @@ const SIDE_QUERY = '(min-width: 1280px)';
 // page's first load. It is fetched once the browser is idle, so a click still opens them at once.
 const loadSellDialog = () => import('./components/SellDialog');
 const SellDialog = lazy(() => loadSellDialog().then((module) => ({ default: module.SellDialog })));
+const ContractChooser = lazy(() =>
+  import('./components/ContractChooser').then((module) => ({ default: module.ContractChooser })),
+);
 
 /**
  * Frame of every customer page: the sales work area (header with the next step, the sub-tabs:
  * summary, contract and money, details, application file) beside the shared column (what the team
  * knows, and the notebook), and the product-sale dialog. Canvas "صفحه‌ی مشتری".
- * `?log=call|message|meeting` opens the contact log; `?sell=<category>` the product sale.
+ * `?log=call|message|meeting` opens the contact log; `?sell=<category>` the product sale;
+ * `?contract=new` the choice of a contract to start (S71).
  */
 export default function CustomerLayout() {
   const { t } = useTranslation('sales');
@@ -69,6 +73,7 @@ export default function CustomerLayout() {
   }, [intent, channel, reservation, id, data.name, setParams]);
   const sell = params.get('sell');
   const category = CATEGORIES.find((value) => value === sell) ?? null;
+  const choosing = params.get('contract') === 'new';
 
   const update = (change: (current: URLSearchParams) => void) =>
     setParams(
@@ -91,6 +96,7 @@ export default function CustomerLayout() {
             customer={data}
             onLog={openLog}
             onSell={() => update((current) => current.set('sell', 'consultation'))}
+            onContract={() => update((current) => current.set('contract', 'new'))}
             side={wide ? null : side}
           />
           <CustomerTabs customer={data} />
@@ -115,6 +121,13 @@ export default function CustomerLayout() {
             customer={data}
             category={category}
             onClose={() => update((current) => current.delete('sell'))}
+          />
+        )}
+        {choosing && (
+          <ContractChooser
+            customer={data.id}
+            name={data.name}
+            onClose={() => update((current) => current.delete('contract'))}
           />
         )}
       </Suspense>

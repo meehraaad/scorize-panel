@@ -319,6 +319,8 @@ const freshRules = (): CommissionRule[] => [
     seller_name: null,
     basis: 'contracts',
     threshold: 4,
+    until: 8,
+    currency: 'IRT',
     reward: 'percent',
     percent: 2,
     amount: null,
@@ -330,6 +332,8 @@ const freshRules = (): CommissionRule[] => [
     seller_name: null,
     basis: 'contracts',
     threshold: 8,
+    until: null,
+    currency: 'IRT',
     reward: 'percent',
     percent: 3,
     amount: null,
@@ -341,6 +345,8 @@ const freshRules = (): CommissionRule[] => [
     seller_name: null,
     basis: 'sales',
     threshold: 700_000_000,
+    until: null,
+    currency: 'IRT',
     reward: 'percent',
     percent: 4,
     amount: null,
@@ -352,6 +358,8 @@ const freshRules = (): CommissionRule[] => [
     seller_name: null,
     basis: 'contracts',
     threshold: 10,
+    until: null,
+    currency: 'IRT',
     reward: 'bonus',
     percent: null,
     amount: 5_000_000,
@@ -361,37 +369,65 @@ const freshRules = (): CommissionRule[] => [
 let commissionRules = freshRules();
 let nextRule = 10;
 
-/** A seller's commission, as Django's `commission_of` (no fixed rate from a target here). */
+/** Django's `CurrencyUnit` as ISO codes, the toman first. */
+const CURRENCIES = ['IRT', 'EUR', 'USD', 'CAD', 'GBP'];
+/** Toman per unit: a fixed stand-in for `finance.ExchangeRate`. */
+const TOMAN_PER: Record<string, number> = {
+  IRT: 1,
+  EUR: 110_000,
+  USD: 100_000,
+  CAD: 72_000,
+  GBP: 128_000,
+};
+const toToman = (value: number, currency: string) => value * (TOMAN_PER[currency] ?? 1);
+
+/** Where a rule's range ends; `Infinity` when it has no limit. */
+const topOf = (rule: Pick<CommissionRule, 'until'>) => rule.until ?? Number.POSITIVE_INFINITY;
+
+/**
+ * A seller's commission in toman, as Django's `commission_of` (no fixed rate from a target here):
+ * the month's sales are converted into each rule's currency, and a rule counts when the month is
+ * inside its range (`threshold` ≤ month < `until`).
+ */
 function commissionOf(seller: number, won: number, sales: number): number | null {
   const mine = commissionRules.filter((rule) => rule.seller === null || rule.seller === seller);
   if (mine.length === 0) return null;
-  const reached = mine.filter(
-    (rule) => (rule.basis === 'contracts' ? won : sales) >= rule.threshold,
+  const measure = (rule: CommissionRule) =>
+    rule.basis === 'contracts' ? won : sales / (TOMAN_PER[rule.currency] ?? 1);
+  const inside = mine.filter(
+    (rule) => measure(rule) >= rule.threshold && measure(rule) < topOf(rule),
   );
-  const best = (reward: CommissionRule['reward'], field: 'percent' | 'amount') =>
-    Math.max(
-      0,
-      ...reached.filter((rule) => rule.reward === reward).map((rule) => rule[field] ?? 0),
-    );
+  const best = (reward: CommissionRule['reward'], value: (rule: CommissionRule) => number) =>
+    Math.max(0, ...inside.filter((rule) => rule.reward === reward).map(value));
   const tiersOf = (basis: CommissionRule['basis']) =>
-    mine
-      .filter((rule) => rule.reward === 'tiered' && rule.basis === basis)
-      .sort((a, b) => a.threshold - b.threshold);
-  const bySales = tiersOf('sales').reduce((sum, tier, index, tiers) => {
-    const top = tiers[index + 1]?.threshold ?? sales;
-    return sum + (Math.max(0, Math.min(sales, top) - tier.threshold) * (tier.percent ?? 0)) / 100;
+    mine.filter((rule) => rule.reward === 'tiered' && rule.basis === basis);
+  // The part of the sales inside each range, at its percent.
+  const bySales = tiersOf('sales').reduce((sum, tier) => {
+    const month = measure(tier);
+    const part = Math.max(0, Math.min(month, topOf(tier)) - tier.threshold);
+    return sum + toToman((part * (tier.percent ?? 0)) / 100, tier.currency);
   }, 0);
   // Contract by contract, on an average contract (Django's `tiered_by_contracts`).
-  const points = tiersOf('contracts').reduce((sum, tier, index, tiers) => {
-    const last = (tiers[index + 1]?.threshold ?? won + 1) - 1;
-    return (
-      sum + Math.max(0, Math.min(won, last) - Math.max(tier.threshold, 1) + 1) * (tier.percent ?? 0)
-    );
+  const points = tiersOf('contracts').reduce((sum, tier) => {
+    const last = Math.min(won, topOf(tier) - 1);
+    return sum + Math.max(0, last - Math.max(tier.threshold, 1) + 1) * (tier.percent ?? 0);
   }, 0);
   const byContracts = won ? ((sales / won) * points) / 100 : 0;
-  const share = Math.max((sales * best('percent', 'percent')) / 100, bySales, byContracts);
-  return Math.round(share + best('bonus', 'amount') + best('per_contract', 'amount') * won);
+  const share = Math.max(
+    (sales * best('percent', (rule) => rule.percent ?? 0)) / 100,
+    bySales,
+    byContracts,
+  );
+  return Math.round(
+    share +
+      best('bonus', (rule) => toToman(rule.amount ?? 0, rule.currency)) +
+      best('per_contract', (rule) => toToman(rule.amount ?? 0, rule.currency)) * won,
+  );
 }
+
+/** A range's bound in toman for sales; contracts stay a count. */
+const inToman = (rule: CommissionRuleInput, value: number) =>
+  rule.basis === 'sales' ? toToman(value, rule.currency) : value;
 
 /** Django's RuleSerializer checks, with its error shapes. */
 function ruleError(body: CommissionRuleInput, id?: number): Record<string, string[]> | null {
@@ -402,6 +438,9 @@ function ruleError(body: CommissionRuleInput, id?: number): Record<string, strin
     return { amount: ['Give an amount above zero.'] };
   if (body.threshold < 0 || (body.basis === 'contracts' && body.threshold > 1000))
     return { threshold: ['At most 1000 contracts.'] };
+  if (body.until !== null && body.until <= body.threshold)
+    return { until: ['Must be more than the start.'] };
+  if (!CURRENCIES.includes(body.currency)) return { currency: ['Choose a currency.'] };
   if (body.seller !== null && !SELLER_NAMES.has(body.seller))
     return { seller: ['Choose an active seller.'] };
   if (
@@ -411,10 +450,12 @@ function ruleError(body: CommissionRuleInput, id?: number): Record<string, strin
         rule.seller === body.seller &&
         rule.basis === body.basis &&
         rule.reward === body.reward &&
-        rule.threshold === body.threshold,
+        // Sales ranges in toman, so rules in different currencies compare too.
+        inToman(rule, rule.threshold) < inToman(body, topOf(body)) &&
+        inToman(body, body.threshold) < inToman(rule, topOf(rule)),
     )
   )
-    return { threshold: ['There is already a rule for this step.'] };
+    return { threshold: ['This range overlaps another rule.'] };
   return null;
 }
 
@@ -1267,6 +1308,22 @@ export const managerHandlers = [
     }
     // A returned offer comes back to this list when the seller sends it again.
     if (action !== 'return') data.manager.decided.add(item.lead.id);
+    // The customer page's contract card (S71): returned, or no open offer any more.
+    const status = data.sales.offerStates.get(item.id);
+    if (action === 'return') {
+      const at = new Date().toISOString();
+      data.sales.returnComments.set(item.id, comment);
+      if (status)
+        data.sales.offerStates.set(item.id, {
+          ...status,
+          state: 'returned',
+          reviewed_at: at,
+          reviewer: 'رضا امیری',
+        });
+    } else {
+      data.sales.offerStates.delete(item.id);
+      data.sales.returnComments.delete(item.id);
+    }
     item.lead.manager = false;
     item.lead.stage_since = new Date().toISOString();
     if (action === 'approve') {
@@ -1301,6 +1358,7 @@ export const managerHandlers = [
     return HttpResponse.json({
       rules: commissionRules,
       sellers: [...SELLER_NAMES].map(([id, name]) => ({ id, name })),
+      currencies: CURRENCIES,
     });
   }),
 

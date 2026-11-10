@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FileDrop } from '@/components/ui/Files';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -38,7 +39,11 @@ export default function PhoneVoicesPage() {
           <EmptyState>{t('manager.voices.empty')}</EmptyState>
         </SectionCard>
       ) : (
-        data.voices.map((voice) => <VoiceCard key={voice.id} voice={voice} />)
+        <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-7">
+          {data.voices.map((voice) => (
+            <VoiceCard key={voice.id} voice={voice} />
+          ))}
+        </div>
       )}
     </>
   );
@@ -90,6 +95,29 @@ function VoiceCard({ voice }: { voice: PhoneVoice }) {
       id={`phone-voice-${voice.id}`}
       variant="panel"
       title={title}
+      badge={
+        <Chip
+          small
+          dot
+          tone={
+            last?.status === 'done'
+              ? 'good'
+              : last?.status === 'pending'
+                ? 'info'
+                : last?.status === 'failed'
+                  ? 'danger'
+                  : voice.menus.length === 0
+                    ? 'warn'
+                    : 'neutral'
+          }
+        >
+          {t(
+            `manager.voices.badge.${
+              last?.status ?? (voice.menus.length === 0 ? 'unused' : 'voip')
+            }`,
+          )}
+        </Chip>
+      }
       subtitle={
         voice.menus.length > 0
           ? t('manager.voices.plays', { menus: f.list(voice.menus.map(name)) })

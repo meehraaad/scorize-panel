@@ -315,10 +315,7 @@
       "addNew": "Add as a new lead",
       "noName": "No name",
       "open": "Open page",
-      "take": "Take customer",
-      "other": "{{seller}}'s customer",
-      "taken": "{{name}} is now your customer.",
-      "takenByOther": "This customer is an open lead of {{seller}}."
+      "other": "{{seller}}'s customer"
     }
   },
   "board": {
@@ -1110,13 +1107,13 @@
   "offer": {
     "title": "Offer for {{name}}",
     "subtitle": "Build the offer. Send just the offer, or send the contract draft to the manager; once approved it opens in the customer's panel.",
-    "features": "1. Contract services",
+    "features": "The contract's services",
     "featureHint": {
       "admission": "Choosing universities, applying, professor email bot, following up results",
       "visa": "Embassy file, appointment, interview preparation",
       "writing": "Motivation letter, CV and recommendations for every application"
     },
-    "details": "2. Details",
+    "details": "Details",
     "degree": "Degree",
     "applies": "Number of applications",
     "start": "Start date",
@@ -1127,13 +1124,13 @@
     "countries": "Countries",
     "removeCountry": "Remove {{country}}",
     "addCountry": "Add a country",
-    "price": "3. Price and instalments",
+    "price": "Price and instalments",
     "base": "Base price (from the services)",
     "discount": "Discount",
     "noDiscount": "No discount",
     "discountManager": "{{n}} (manager approval)",
     "managerNeeded": "A discount above {{n}} needs the sales manager's approval. The offer also goes to the manager before the customer sees it.",
-    "note": "5. Note for the manager",
+    "note": "Note for the manager",
     "noteLabel": "Only the sales manager sees this",
     "preview": "What the customer sees in their panel",
     "contractOf": "{{features}} contract",
@@ -1227,7 +1224,23 @@
       "title": "Contract variables",
       "hint": "These values go into this customer's contract. The system fills the name, the amount and the rest of the customer's details itself.",
       "incomplete": "Fill in every contract variable."
-    }
+    },
+    "steps": {
+      "label": "Steps to build the contract",
+      "s1": "Services and details",
+      "s2": "Price and instalments",
+      "s3": "Text and variables",
+      "s4": "Preview and send",
+      "next": "Next: {{step}}",
+      "back": "Back: {{step}}",
+      "go": "Go to “{{step}}”"
+    },
+    "forCustomer": "New contract for {{name}}",
+    "change": "Change the contract",
+    "previewTitle": "Contract preview",
+    "previewHint": "The page that is printed and signed; variables are coloured and this customer's clauses framed.",
+    "fullScreen": "Full screen",
+    "textTitle": "Contract text"
   },
   "manager": {
     "nav": "Sales management sections",
@@ -1240,10 +1253,7 @@
       "tags": "Customer tags",
       "commission": "Commission",
       "contract": "Contract",
-      "hours": "Phone hours",
-      "phoneTeams": "Phone teams",
-      "phoneMenus": "Phone menus",
-      "phoneVoices": "Voice messages"
+      "phone": "Phone"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1690,27 +1700,66 @@
         "sales": "Sales in the month"
       },
       "threshold": {
-        "contracts": "At least (contracts)",
-        "sales": "At least (million toman)"
+        "contracts": "From (contracts)",
+        "sales": "From ({{unit}})"
       },
+      "until": {
+        "contracts": "Up to, not including (contracts)",
+        "sales": "Up to, not including ({{unit}})"
+      },
+      "untilHint": "Leave empty for no limit. This number itself falls in the next range.",
+      "currency": "Currency",
+      "currencyHint": "The month's sales are converted to this currency at the system's daily rate.",
+      "currencyName": {
+        "IRT": "Toman",
+        "EUR": "Euro",
+        "USD": "US dollar",
+        "CAD": "Canadian dollar",
+        "GBP": "Pound"
+      },
+      "millionUnit": "million toman",
       "percent": "Commission percent",
       "hint": "Enter the step and the reward.",
       "rule": {
         "percent": {
-          "contracts": "{{n}} contracts or more in a month: {{percent}}% of the month's sales",
-          "sales": "{{n}} of sales or more in a month: {{percent}}% of the month's sales"
+          "contracts": {
+            "open": "{{n}} contracts or more in a month: {{percent}}% of the month's sales",
+            "range": "{{n}} to under {{to}} contracts in a month: {{percent}}% of the month's sales"
+          },
+          "sales": {
+            "open": "{{n}} of sales or more in a month: {{percent}}% of the month's sales",
+            "range": "Sales from {{n}} to under {{to}} in a month: {{percent}}% of the month's sales"
+          }
         },
         "tiered": {
-          "contracts": "From contract {{n}} on: {{percent}}% on each contract",
-          "sales": "From {{n}} of sales up: {{percent}}% of that part of the sales"
+          "contracts": {
+            "open": "From contract {{n}} on: {{percent}}% on each contract",
+            "range": "From contract {{n}} to before contract {{to}}: {{percent}}% on each contract"
+          },
+          "sales": {
+            "open": "From {{n}} of sales up: {{percent}}% of that part of the sales",
+            "range": "Sales from {{n}} to {{to}}: {{percent}}% of that part of the sales"
+          }
         },
         "bonus": {
-          "contracts": "{{n}} contracts or more in a month: {{amount}} bonus",
-          "sales": "{{n}} of sales or more in a month: {{amount}} bonus"
+          "contracts": {
+            "open": "{{n}} contracts or more in a month: {{amount}} bonus",
+            "range": "{{n}} to under {{to}} contracts in a month: {{amount}} bonus"
+          },
+          "sales": {
+            "open": "{{n}} of sales or more in a month: {{amount}} bonus",
+            "range": "Sales from {{n}} to under {{to}} in a month: {{amount}} bonus"
+          }
         },
         "per_contract": {
-          "contracts": "{{n}} contracts or more in a month: {{amount}} per contract",
-          "sales": "{{n}} of sales or more in a month: {{amount}} per contract"
+          "contracts": {
+            "open": "{{n}} contracts or more in a month: {{amount}} per contract",
+            "range": "{{n}} to under {{to}} contracts in a month: {{amount}} per contract"
+          },
+          "sales": {
+            "open": "{{n}} of sales or more in a month: {{amount}} per contract",
+            "range": "Sales from {{n}} to under {{to}} in a month: {{amount}} per contract"
+          }
         }
       },
       "since": "Since {{month}}",
@@ -1726,6 +1775,7 @@
       "deleteYes": "Remove",
       "deleted": "Rule removed",
       "thresholdError": "Enter a valid number (whole for contracts).",
+      "untilError": "\"Up to\" must be more than \"From\".",
       "percentError": "Enter a percent above zero, up to 100.",
       "reward": "Reward",
       "rewardName": {
@@ -1735,14 +1785,14 @@
         "per_contract": "Amount per contract"
       },
       "rewardHint": {
-        "percent": "The highest step reached counts, on all the month's sales.",
-        "tiered": "Like tax brackets. By sales: only the part of the sales above this step earns this percent, up to the next step. By contracts: each contract earns its own step's percent (say contracts 1–4 at 2%, from 5 on at 3%), on the month's average contract.",
-        "bonus": "Once a month on reaching the step. The highest bonus reached counts.",
-        "per_contract": "For every contract of the month once the step is reached. The highest amount reached counts."
+        "percent": "All the month's sales earn the percent of the range the seller is in. Say 0 to 4,000 euro at 4% and 4,000 euro up at 5%: with 6,000 euro of sales, 5% of all 6,000.",
+        "tiered": "Like tax brackets. By sales: only the part of the sales inside this range earns this percent. By contracts: each contract earns its own range's percent (say contracts 1–4 at 2%, from 5 on at 3%), on the month's average contract.",
+        "bonus": "Once a month, when the seller is in this range.",
+        "per_contract": "For every contract of the month, when the seller is in this range."
       },
       "amount": {
-        "bonus": "Bonus (million toman)",
-        "per_contract": "Per contract (million toman)"
+        "bonus": "Bonus ({{unit}})",
+        "per_contract": "Per contract ({{unit}})"
       },
       "amountError": "Enter an amount above zero."
     },
@@ -1900,7 +1950,7 @@
       },
       "week": {
         "title": "Answering hours",
-        "subtitle": "In these hours customers reach the phone menu. Outside them they hear the closed message and the call ends."
+        "subtitle": "Light bar: when callers reach the phone menu. Thin dark bar: when they can dial a person's extension. Open a day to change it."
       },
       "direct": {
         "title": "Direct extensions",
@@ -1932,7 +1982,19 @@
         "empty": "No closed days added."
       },
       "save": "Save hours",
-      "saved": "Saved; the PBX updates within a few seconds"
+      "saved": "Saved; the PBX updates within a few seconds",
+      "legend": {
+        "week": "Answering",
+        "direct": "Direct calls to extensions"
+      },
+      "editDay": "Hours of {{day}}",
+      "directFrom": "{{day}}, direct calls from",
+      "directTo": "{{day}}, direct calls until",
+      "copyToAll": "Use these hours for every open day",
+      "copied": "Hours of {{day}} set for every open day; remember to save",
+      "unsaved": "Changes not saved yet",
+      "allSaved": "Everything is saved",
+      "undo": "Undo changes"
     },
     "teams": {
       "title": "Phone teams",
@@ -1960,7 +2022,25 @@
       "new": "New team",
       "newHint": "Its queue number is picked for you. After adding it, pick its people on its card. A menu key is also needed for customers to reach it.",
       "add": "Add team",
-      "added": "Team “{{name}}” added"
+      "added": "Team “{{name}}” added",
+      "breaks": {
+        "title": "Who gets team calls now",
+        "resting_one": "{{n}} person is on a break. Team calls skip them, but their own number still rings. A break ends when they end it, or at midnight.",
+        "resting_other": "{{n}} people are on a break. Team calls skip them, but their own numbers still ring. A break ends when they end it, or at midnight.",
+        "none": "No one is on a break; team calls ring everyone.",
+        "since": "On a break since {{time}}",
+        "ringing": "Rings",
+        "outside": "In no team",
+        "noTeam": "No team",
+        "onBreak": "on a break"
+      },
+      "all": "All teams",
+      "edit": "Edit",
+      "editTeam": "Edit team {{name}}",
+      "reachedFrom": "{{menu}} · key {{key}}",
+      "unreached": "No key reaches it",
+      "unknownShort_one": "{{n}} extension of no one",
+      "unknownShort_other": "{{n}} extensions of no one"
     },
     "menus": {
       "title": "Phone menus",
@@ -2002,7 +2082,19 @@
         "ivr-poshtibani": "Support",
         "ivr-poshtibani-gharardadha": "Contract support",
         "ivr-hamkari": "Work with us"
-      }
+      },
+      "pick": "Menus",
+      "keyCount_one": "{{n}} key",
+      "keyCount_other": "{{n}} keys",
+      "fromVoip": "from the VoIP",
+      "keypad": {
+        "title": "Keypad",
+        "subtitle": "Which keys are taken and which are free.",
+        "twice": "Twice!",
+        "free": "Free"
+      },
+      "greeting": "What this menu plays",
+      "newGreeting": "New file"
     },
     "voices": {
       "title": "Voice messages",
@@ -2018,7 +2110,68 @@
       "type": "Pick an MP3, WAV, M4A or OGG file.",
       "tooLarge": "The file is larger than 10 MB.",
       "sent": "Voice message sent",
-      "sentMeta": "The PBX plays it within a few seconds; the old file is kept."
+      "sentMeta": "The PBX plays it within a few seconds; the old file is kept.",
+      "badge": {
+        "done": "On the VoIP",
+        "pending": "On its way",
+        "failed": "Not sent",
+        "unused": "Unused",
+        "voip": "The VoIP's own file"
+      }
+    },
+    "phone": {
+      "nav": "Phone sections",
+      "section": {
+        "overview": "Overview",
+        "hours": "Office hours",
+        "teams": "Teams",
+        "menus": "Menus",
+        "voices": "Voice messages"
+      }
+    },
+    "overview": {
+      "title": "Phone line",
+      "now": "Now",
+      "openMeans": "Callers hear the main menu and its keys take them to the right team or person.",
+      "closedMeans": "Callers hear the \"we are closed\" message.",
+      "todayOnly": "Today only, until midnight",
+      "hoursLine": "Open {{days}} days a week · {{open}} to {{close}}",
+      "hoursNone": "No day is open.",
+      "menusLine": "{{menus}} menus · {{keys}} keys",
+      "teamsLine": "{{teams}} teams · {{people}} people with a phone",
+      "resting_one": "{{n}} on a break",
+      "resting_other": "{{n}} on a break",
+      "voicesLine_one": "{{n}} voice message",
+      "voicesLine_other": "{{n}} voice messages",
+      "edit": "See and edit",
+      "map": {
+        "title": "What a caller hears and where they end up",
+        "subtitle": "Built from these settings. Click a step to edit it there.",
+        "call": "Call",
+        "incoming": "Incoming call",
+        "when": "Which hours?",
+        "inHours": "In office hours",
+        "outHours": "Out of office hours",
+        "hears": "Plays \"{{menu}}\"",
+        "closedMessage": "\"We are closed\" message, then hang up",
+        "keys": "Keys of \"{{menu}}\"",
+        "rings": "Who rings",
+        "ringing": "{{ringing}} of {{all}} people ring"
+      },
+      "issues": {
+        "title": "Needs attention",
+        "subtitle": "What the VoIP reported that is probably wrong.",
+        "none": "Everything looks right.",
+        "teamUnreached": "No menu key reaches the team \"{{name}}\"; callers cannot get to it.",
+        "unknownExtensions": "Extensions {{list}} are in the team \"{{name}}\" but belong to no one.",
+        "voiceFailed": "The last file of \"{{name}}\" did not reach the VoIP.",
+        "voiceUnused": "\"{{name}}\" plays in no menu.",
+        "fix": {
+          "menus": "Go to menus",
+          "teams": "Go to teams",
+          "voices": "Go to messages"
+        }
+      }
     }
   },
   "handoff": {
@@ -2416,9 +2569,64 @@
     "youAgreed": "Your agreement is saved.",
     "stale": "The offer just changed. Read the new version."
   },
+  "chooser": {
+    "title": "Which contract?",
+    "subtitle": "New contract for {{name}}",
+    "kinds": "Kind of contract",
+    "from": "from {{price}}",
+    "free": "Free",
+    "size": "{{articles}} articles · {{variables}} variables",
+    "go": "Continue with “{{name}}”",
+    "cancel": "Cancel",
+    "open": "An open contract: “{{name}}” · {{state}} · {{when}}",
+    "continue": "Continue it",
+    "hint": "Only the contracts the sales manager has turned on are here.",
+    "replaces": "Saving this contract replaces the open “{{name}}”."
+  },
+  "contractCard": {
+    "title": "Contract · {{name}}",
+    "state": {
+      "saved": "Draft",
+      "sent": "Sent to the customer",
+      "submitted": "Waiting for the manager",
+      "returned": "Returned",
+      "approved": "Approved"
+    },
+    "text": {
+      "saved": "Saved, not sent yet; until you send it, neither the customer nor the manager sees it.",
+      "sent": "Sent to the customer to read and agree; then send it for the manager's approval.",
+      "submitted": "Sent to the sales manager. Once approved it opens in the customer's panel and prints to sign.",
+      "returned": "The manager returned it. Fix it and send it again; the manager rereads only what you changed.",
+      "approved": "The contract is open in the customer's panel. Sign the printed copy and upload the scan so the case reaches a supervisor."
+    },
+    "act": {
+      "continue": "Continue building",
+      "edit": "Edit the contract",
+      "fix": "Fix the contract",
+      "print": "Print to sign",
+      "scan": "Upload the signed scan",
+      "preview": "Preview"
+    },
+    "comment": "{{name}}'s note:",
+    "commentNoName": "The manager's note:",
+    "steps": "The contract's way",
+    "made": "Contract built",
+    "customer": "Customer agrees",
+    "manager": "Sales manager approves",
+    "returned": "Returned by the manager",
+    "resend": "Send again",
+    "sign": "Print and sign",
+    "case": "Case starts",
+    "later": "Later",
+    "amount": "Amount",
+    "free": "Free",
+    "approvedTitle": "Approved contract"
+  },
   "phoneBreak": {
     "start": "Take a break",
     "hint": "While on a break, no team call reaches you. Until midnight, or until you end it.",
+    "inQueue": "You are in the team call queue",
+    "onShort": "You are on a break",
     "end": "End break",
     "started": "Break started; team calls won't reach you",
     "ended": "Team calls reach you again",

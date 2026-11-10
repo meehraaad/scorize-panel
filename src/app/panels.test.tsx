@@ -149,7 +149,7 @@ describe('panels', () => {
     const router = renderApp('/sales');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
 
-    await user.click(screen.getByRole('button', { name: 'حساب کاربری' }));
+    await user.click(screen.getByRole('button', { name: /^حساب کاربری/ }));
     await user.click(screen.getByRole('link', { name: 'پنل کاربر عادی' }));
     expect(
       await screen.findByRole('heading', { name: 'سلام نیما، به اسکورایز خوش آمدید' }),

@@ -332,6 +332,29 @@ export function useSetPhoneBreak() {
   });
 }
 
+/** Someone a team can ring, as the sales manager sees them: ringing, or on a break since `since`. */
+export interface TeamBreakPerson {
+  /** TeamPerson id. */
+  id: number;
+  name: string;
+  /** The teams that ring them now, by the name saved in the panel. */
+  teams: string[];
+  on_break: boolean;
+  since: string | null;
+}
+
+export interface TeamBreaks {
+  people: TeamBreakPerson[];
+  seen_at: string | null;
+}
+
+/** Who gets team calls now and who is on a break (sales managers only); refreshed every minute. */
+export const teamBreaksQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'team-breaks'],
+  queryFn: ({ signal }) => api<TeamBreaks>(`${SALES_API}/calls/breaks/`, { signal }),
+  refetchInterval: 60_000,
+});
+
 /** Server timestamps, rather than counting interval ticks, survive navigation and tab throttling. */
 export function callSeconds(call: ObservedCall, now: number) {
   const start = Date.parse(call.answered_at ?? call.started_at);

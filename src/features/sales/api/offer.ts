@@ -11,6 +11,27 @@ export interface OfferTemplate {
   id: number | null;
   name: string;
   description: string;
+  /** Its services and their prices, toman (S71): what its card on the customer page shows. */
+  features: { key: ContractFeature; price: number }[];
+  /** How many articles its text has, and how many blanks the seller fills (S71). */
+  articles: number;
+  variables: number;
+}
+
+/** The customer's open offer, as the contract card on their page says it (S71). */
+export interface OfferStatus {
+  state: 'saved' | 'sent' | 'submitted' | 'returned';
+  template: number | null;
+  /** The kind of contract's name. */
+  name: string;
+  /** Toman, after the discount. */
+  amount: number;
+  updated_at: string;
+  sent_at: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  /** Who returned it; empty unless returned. */
+  reviewer: string;
 }
 
 export interface OfferOptions {
@@ -137,6 +158,10 @@ export interface OfferData {
   draft: Offer | null;
   /** Where the draft is: still editable, or sent. */
   state: 'none' | 'saved' | 'sent' | 'submitted';
+  /** The sales manager's comment on a returned offer. */
+  comment: string;
+  /** The open offer for the customer page's card (S71); null: none. */
+  status: OfferStatus | null;
 }
 
 /**

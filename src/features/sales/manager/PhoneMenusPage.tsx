@@ -1,17 +1,22 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
+import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   phoneMenusQuery,
+  phoneVoicesQuery,
   useSavePhoneMenu,
   type MenuKey,
   type MenuKeyKind,
@@ -20,7 +25,10 @@ import {
 } from '@/lib/sales/phoneCalls';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
-import { useMenuName } from './phoneNames';
+import { salesPath } from '../paths';
+import { KeyBadge } from './KeyBadge';
+import { repeatedKeys } from './phoneMap';
+import { useKeyTarget, useMenuName } from './phoneNames';
 
 const KINDS = [
   'team',
@@ -50,6 +58,9 @@ export default function PhoneMenusPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const { data } = useSuspenseQuery(phoneMenusQuery);
+  const menuName = useMenuName();
+  const [params] = useSearchParams();
+  const picked = data.menus.find((menu) => menu.id === params.get('menu')) ?? data.menus[0];
 
   return (
     <>
@@ -66,7 +77,37 @@ export default function PhoneMenusPage() {
           <EmptyState>{t('manager.menus.empty')}</EmptyState>
         </SectionCard>
       ) : (
-        data.menus.map((menu) => <MenuCard key={menu.id} menu={menu} options={data.options} />)
+        <>
+          {data.menus.length > 1 && (
+            <nav aria-label={t('manager.menus.pick')} className="flex flex-wrap gap-2">
+              {data.menus.map((menu) => {
+                const current = menu.id === picked?.id;
+                return (
+                  <Link
+                    key={menu.id}
+                    to={`${salesPath('manager/phone/menus')}?menu=${menu.id}`}
+                    aria-current={current ? 'page' : undefined}
+                    className={`flex min-h-12 flex-col justify-center rounded-2xl px-4 py-1.5 text-start ${
+                      current
+                        ? 'bg-hero text-on-hero'
+                        : 'bg-surface text-text shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)]'
+                    }`}
+                  >
+                    <span className="text-sm font-semibold">{menuName(menu.name)}</span>
+                    <span className={`text-xs ${current ? 'text-on-hero-2' : 'text-text-2'}`}>
+                      {t('manager.menus.keyCount', {
+                        count: menu.keys.length,
+                        n: f.number(menu.keys.length),
+                      })}
+                      {!menu.saved && ` · ${t('manager.menus.fromVoip')}`}
+                    </span>
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+          {picked && <MenuCard key={picked.id} menu={picked} options={data.options} />}
+        </>
       )}
     </>
   );
@@ -138,94 +179,211 @@ function MenuCard({ menu, options }: { menu: PhoneMenu; options: Options }) {
   };
 
   const name = menuName(menu.name);
+  const twice = repeatedKeys(rows);
   return (
-    <SectionCard
-      id={`phone-menu-${menu.id}`}
-      variant="panel"
-      title={name}
-      subtitle={menu.saved ? undefined : t('manager.menus.fromPbx')}
-    >
-      <form
-        ref={form}
-        aria-label={t('manager.menus.formLabel', { name })}
-        className="flex flex-col gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
-        {rows.length === 0 ? (
-          <p className="m-0 text-[15px] text-text-2">{t('manager.menus.noKeys')}</p>
-        ) : (
-          <ul className="m-0 flex list-none flex-col p-0">
-            {rows.map((row) => (
-              <li
-                key={row.rowId}
-                className="flex flex-col gap-2 border-b border-line-2 py-3 last:border-b-0 sm:flex-row sm:items-start"
-              >
-                <div className="sm:w-28">
-                  <TextField
-                    label={t('manager.menus.key')}
-                    value={f.digits(row.key)}
-                    dir="ltr"
-                    inputMode="numeric"
-                    maxLength={4}
-                    onChange={(event) =>
-                      set(row.rowId, { key: toLatinNumber(event.target.value).trim() })
-                    }
-                    error={tried ? keyError(row) : undefined}
-                  />
-                </div>
-                <div className="min-w-40 flex-1">
-                  <SelectField
-                    label={t('manager.menus.kindLabel', { key: f.digits(row.key) })}
-                    options={[...(row.kind === 'other' ? (['other'] as const) : []), ...KINDS].map(
-                      (kind) => ({ value: kind, label: t(`manager.menus.kind.${kind}`) }),
-                    )}
-                    value={row.kind}
-                    onChange={(kind) =>
-                      set(row.rowId, { kind, target: firstTarget(kind, options, menu.id) })
-                    }
-                  />
-                </div>
-                <div className="min-w-48 flex-[2]">
-                  <TargetField
-                    row={row}
-                    menuId={menu.id}
-                    options={options}
-                    onChange={(target) => set(row.rowId, { target })}
-                    error={tried ? targetError(row) : undefined}
-                  />
-                </div>
-                <IconButton
-                  icon="trash"
-                  tone="danger"
-                  className="sm:mt-7"
-                  aria-label={t('manager.menus.remove', { key: f.digits(row.key) })}
-                  onClick={() => setRows((list) => list.filter((item) => item.rowId !== row.rowId))}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="flex flex-wrap justify-between gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              const rowId = next.current++;
-              setRows((list) => [
-                ...list,
-                { rowId, key: '', kind: 'team', target: firstTarget('team', options, menu.id) },
-              ]);
+    <PageColumns
+      asideLabel={t('manager.menus.keypad.title')}
+      main={
+        <SectionCard
+          id={`phone-menu-${menu.id}`}
+          variant="panel"
+          title={name}
+          subtitle={menu.saved ? undefined : t('manager.menus.fromPbx')}
+        >
+          <form
+            ref={form}
+            aria-label={t('manager.menus.formLabel', { name })}
+            className="flex flex-col gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              submit();
             }}
           >
-            {t('manager.menus.addKey')}
-          </Button>
-          <Button type="submit" disabled={save.isPending}>
-            {t('manager.menus.save')}
-          </Button>
-        </div>
-      </form>
+            {rows.length === 0 ? (
+              <p className="m-0 text-[15px] text-text-2">{t('manager.menus.noKeys')}</p>
+            ) : (
+              <ul className="m-0 flex list-none flex-col p-0">
+                {rows.map((row) => (
+                  <li
+                    key={row.rowId}
+                    className="flex flex-col gap-2 border-b border-line-2 py-3 last:border-b-0 sm:flex-row sm:items-start"
+                  >
+                    <span className="hidden sm:mt-8 sm:block">
+                      <KeyBadge
+                        value={row.key ? f.digits(row.key) : '?'}
+                        tone={tried && keyError(row) ? 'danger' : 'primary'}
+                      />
+                    </span>
+                    <div className="sm:w-24">
+                      <TextField
+                        label={t('manager.menus.key')}
+                        value={f.digits(row.key)}
+                        dir="ltr"
+                        inputMode="numeric"
+                        maxLength={4}
+                        className="text-center text-lg font-bold"
+                        onChange={(event) =>
+                          set(row.rowId, { key: toLatinNumber(event.target.value).trim() })
+                        }
+                        error={tried ? keyError(row) : undefined}
+                      />
+                    </div>
+                    <div className="min-w-40 flex-1">
+                      <SelectField
+                        label={t('manager.menus.kindLabel', { key: f.digits(row.key) })}
+                        options={[
+                          ...(row.kind === 'other' ? (['other'] as const) : []),
+                          ...KINDS,
+                        ].map((kind) => ({ value: kind, label: t(`manager.menus.kind.${kind}`) }))}
+                        value={row.kind}
+                        onChange={(kind) =>
+                          set(row.rowId, { kind, target: firstTarget(kind, options, menu.id) })
+                        }
+                      />
+                    </div>
+                    <div className="min-w-48 flex-[2]">
+                      <TargetField
+                        row={row}
+                        menuId={menu.id}
+                        options={options}
+                        onChange={(target) => set(row.rowId, { target })}
+                        error={tried ? targetError(row) : undefined}
+                      />
+                    </div>
+                    <IconButton
+                      icon="trash"
+                      tone="danger"
+                      className="sm:mt-7"
+                      aria-label={t('manager.menus.remove', { key: f.digits(row.key) })}
+                      onClick={() =>
+                        setRows((list) => list.filter((item) => item.rowId !== row.rowId))
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-wrap justify-between gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const rowId = next.current++;
+                  setRows((list) => [
+                    ...list,
+                    { rowId, key: '', kind: 'team', target: firstTarget('team', options, menu.id) },
+                  ]);
+                }}
+              >
+                {t('manager.menus.addKey')}
+              </Button>
+              <Button type="submit" disabled={save.isPending}>
+                {t('manager.menus.save')}
+              </Button>
+            </div>
+          </form>
+        </SectionCard>
+      }
+      aside={
+        <>
+          <Keypad rows={rows} twice={twice} options={options} />
+          {ON_SERVER.phoneVoices && <Greeting menu={menu.name} />}
+        </>
+      }
+    />
+  );
+}
+
+type KeyState = 'twice' | 'used' | 'free';
+const PAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+
+/** The phone's keypad with this menu's keys on it: taken (and where to), free, or used twice. */
+function Keypad({
+  rows,
+  twice,
+  options,
+}: {
+  rows: MenuKey[];
+  twice: Set<string>;
+  options: Options;
+}) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const target = useKeyTarget(options);
+  const byKey = new Map(rows.map((row) => [row.key, row]));
+  const long = rows.filter((row) => row.key && !PAD.includes(row.key));
+  return (
+    <SectionCard
+      id="phone-menu-keypad"
+      variant="panel"
+      title={t('manager.menus.keypad.title')}
+      subtitle={t('manager.menus.keypad.subtitle')}
+    >
+      <ul className="m-0 grid list-none grid-cols-3 gap-2 p-0">
+        {PAD.map((key) => {
+          const row = byKey.get(key);
+          const state: KeyState = twice.has(key) ? 'twice' : row ? 'used' : 'free';
+          return (
+            <li
+              key={key}
+              className={`flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-center ${
+                state === 'twice'
+                  ? 'bg-danger-tint text-danger'
+                  : state === 'used'
+                    ? 'bg-tint text-primary-text'
+                    : 'text-text-3 shadow-[inset_0_0_0_1px_var(--line-2)]'
+              }`}
+            >
+              <span className="text-lg font-bold">{f.digits(key)}</span>
+              <span className="w-full truncate text-[11px] leading-4">
+                {state === 'twice'
+                  ? t('manager.menus.keypad.twice')
+                  : row
+                    ? target(row)
+                    : t('manager.menus.keypad.free')}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      {long.length > 0 && (
+        <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+          {long.map((row, index) => (
+            <li key={index} className="flex items-center gap-2 text-[13px] text-text-2">
+              <KeyBadge
+                value={f.digits(row.key)}
+                size="sm"
+                tone={twice.has(row.key) ? 'danger' : 'muted'}
+              />
+              <span className="min-w-0 truncate">{target(row)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
+  );
+}
+
+/** The greeting this menu plays, with a link to replace its file. */
+function Greeting({ menu }: { menu: string }) {
+  const { t } = useTranslation('sales');
+  const name = useMenuName();
+  const voices = useQuery(phoneVoicesQuery).data;
+  const voice = voices?.voices.find((item) => item.menus.includes(menu));
+  if (!voice) return null;
+  return (
+    <SectionCard id="phone-menu-greeting" variant="panel" title={t('manager.menus.greeting')}>
+      <div className="flex items-center gap-3">
+        <span className="flex size-11 flex-none items-center justify-center rounded-xl bg-tint text-primary-text">
+          <Icon name="microphone" size={20} />
+        </span>
+        <span className="min-w-0 flex-1 text-[15px] font-semibold">{name(voice.name)}</span>
+        <Link
+          to={salesPath('manager/phone/voices')}
+          className="text-sm font-semibold whitespace-nowrap text-primary-text"
+        >
+          {t('manager.menus.newGreeting')}
+        </Link>
+      </div>
     </SectionCard>
   );
 }
