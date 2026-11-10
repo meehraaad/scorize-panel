@@ -105,6 +105,53 @@ export function useRequestMobileExtension() {
   });
 }
 
+export type Weekday = 'sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri';
+/** Saturday first, like the Persian week. */
+export const WEEKDAYS: readonly Weekday[] = ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'];
+
+/** One weekday's opening, Tehran time (`HH:MM`); closing is later the same day. */
+export interface OpenHours {
+  day: Weekday;
+  open: string;
+  close: string;
+}
+
+/** Today's hand switch: '' follows the hours; it ends at midnight. */
+export type LineForce = '' | 'open' | 'closed';
+
+export interface OfficeHoursInput {
+  /** When customers reach the main menu; a missing day is closed. */
+  week: OpenHours[];
+  /** When a caller may dial a person's number from the menu. */
+  direct: OpenHours[];
+  /** `YYYY-MM-DD`: the line is closed all day. */
+  closed_days: string[];
+  force: LineForce;
+}
+
+export interface OfficeHoursState extends OfficeHoursInput {
+  /** False until a manager saves once: the PBX still runs its own hours, shown here. */
+  saved: boolean;
+  open_now: boolean;
+  updated_at: string | null;
+  updated_by: string | null;
+}
+
+/** The office line's hours (sales managers only), applied to the PBX by the office worker. */
+export const officeHoursQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'office-hours'],
+  queryFn: ({ signal }) => api<OfficeHoursState>(`${SALES_API}/calls/hours/`, { signal }),
+});
+
+export function useSaveOfficeHours() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: OfficeHoursInput) =>
+      api<OfficeHoursState>(`${SALES_API}/calls/hours/`, { method: 'PUT', body }),
+    onSuccess: (data) => client.setQueryData(officeHoursQuery.queryKey, data),
+  });
+}
+
 /** Server timestamps, rather than counting interval ticks, survive navigation and tab throttling. */
 export function callSeconds(call: ObservedCall, now: number) {
   const start = Date.parse(call.answered_at ?? call.started_at);

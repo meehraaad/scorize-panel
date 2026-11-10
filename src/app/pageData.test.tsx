@@ -13,8 +13,8 @@ import '@/test/server';
  * page marks something seen, are not waterfalls.)
  */
 
-// The admission-chance quiz, Turkey, the founders assistant, the mail page and customer tags
-// aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
+// The admission-chance quiz, Turkey, the founders assistant, the mail page, customer tags and the
+// office line's hours aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
   return {
@@ -25,6 +25,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       foundersAssistant: true,
       customerTags: true,
       mailServers: true,
+      officeHours: true,
     },
   };
 });
@@ -133,6 +134,7 @@ const PAGES: PageCase[] = [
     '/sales/manager/follow-ups',
     '/sales/manager/stages',
     '/sales/manager/tags',
+    '/sales/manager/hours',
   ].map((path) => ({ path, user: REZA })),
   // Supervisor panel.
   ...[
