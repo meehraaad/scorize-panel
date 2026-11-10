@@ -385,7 +385,7 @@
   },
   "clauseNumber": {
     "article": "ماده {{n}}",
-    "clause": "{{article}}-{{n}}",
+    "clause": "{{article}}‏-‏{{n}}",
     "note": "تبصره {{n}}",
     "kinds": {
       "article": "ماده",

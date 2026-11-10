@@ -677,8 +677,8 @@ describe('contract builder and agreement desk (S64)', () => {
     const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
     // Article ۴ has untitled clauses ۴-۱، ۴-۲ and a note.
     expect(within(preview).getByText('ماده ۴: تعهدات مؤسسه')).toBeInTheDocument();
-    expect(within(preview).getByText('۴-۱')).toBeInTheDocument();
-    expect(within(preview).getByText('۴-۲')).toBeInTheDocument();
+    expect(within(preview).getByText('۴\u200f-\u200f۱')).toBeInTheDocument();
+    expect(within(preview).getByText('۴\u200f-\u200f۲')).toBeInTheDocument();
     expect(within(preview).getByText(/تبصره ۱/)).toBeInTheDocument();
     // The variables show with the samples: the default search count, a sample customer.
     expect(within(preview).getByText('10')).toBeInTheDocument();
@@ -703,7 +703,7 @@ describe('contract builder and agreement desk (S64)', () => {
     expect(within(preview).getByText('آلمان')).toBeInTheDocument();
     await user.click(within(clauses).getByRole('button', { name: 'ذخیره' }));
     // At the end of the text: the third clause of article ۴, after its note.
-    expect(await within(clauses).findByText('۴-۳')).toBeInTheDocument();
+    expect(await within(clauses).findByText('۴\u200f-\u200f۳')).toBeInTheDocument();
   });
 
   it('the seller fills a variable and adds a clause into an article (S69)', async () => {
