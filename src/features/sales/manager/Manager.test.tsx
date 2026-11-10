@@ -180,7 +180,7 @@ describe('sales manager section', () => {
     expect(within(loads).queryByRole('button', { name: /پنهان‌شده‌ها/ })).not.toBeInTheDocument();
   });
 
-  it('disables assignment when every seller is away and no suggestion exists', async () => {
+  it('offers sellers on leave, and disables assignment until one is chosen', async () => {
     loginAs(REZA);
     const data = await api<AssignData>('/sales/v1/manager/assign/');
     server.use(
@@ -204,6 +204,11 @@ describe('sales manager section', () => {
     expect(within(queue).getByRole('button', { name: 'تخصیص پیشنهادی برای همه' })).toBeDisabled();
     for (const button of within(queue).getAllByRole('button', { name: 'تخصیص' })) {
       expect(button).toBeDisabled();
+    }
+    for (const choose of within(queue).getAllByRole('combobox')) {
+      for (const seller of data.sellers) {
+        expect(within(choose).getByRole('option', { name: seller.name })).toBeInTheDocument();
+      }
     }
     expect(screen.getAllByText('داده‌ی تماس موجود نیست')).toHaveLength(data.sellers.length);
   });
