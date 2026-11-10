@@ -1,7 +1,9 @@
 import { http, HttpResponse } from 'msw';
 import type {
+  MenuKey,
   OfficeHoursInput,
   OfficeHoursState,
+  PhoneMenus,
   PhoneSnapshot,
   PhoneTeamInput,
   PhoneTeams,
@@ -44,6 +46,38 @@ const freshTeams = (): PhoneTeams => ({
 });
 let teams = freshTeams();
 
+const freshMenus = (): PhoneMenus => ({
+  seen_at: '2026-11-10T14:00:00Z',
+  options: {
+    teams: [
+      { number: '1000', name: 'moshavere-foroosh' },
+      { number: '1001', name: 'poshtibani' },
+    ],
+    menus: [
+      { id: '1', name: 'ivr-main' },
+      { id: '5', name: 'ivr-outtime' },
+    ],
+    messages: ['feedbacks', 'peyghamgir'],
+    people: freshTeams().people,
+    directs: ['223'],
+  },
+  menus: [
+    {
+      id: '1',
+      name: 'ivr-main',
+      saved: false,
+      keys: [
+        { key: '1', kind: 'team', target: '1000' },
+        { key: '4', kind: 'message', target: 'feedbacks' },
+        { key: '223', kind: 'direct', target: '223' },
+        { key: '9', kind: 'other', target: 'custom-thing,s,1' },
+      ],
+    },
+    { id: '5', name: 'ivr-outtime', saved: false, keys: [] },
+  ],
+});
+let menus = freshMenus();
+
 export function setPhoneSnapshot(owner: number, snapshot: PhoneSnapshot) {
   snapshots.set(owner, snapshot);
 }
@@ -52,6 +86,7 @@ export function resetPhoneMocks() {
   snapshots = new Map();
   hours = freshHours();
   teams = freshTeams();
+  menus = freshMenus();
 }
 
 /** Django's checks in OfficeHoursSerializer, with its messages. */
@@ -76,6 +111,34 @@ function teamErrors(body: PhoneTeamInput) {
 }
 
 export const phoneCallHandlers = [
+  // Phone menus: sales managers only; a key to a team or menu the PBX hasn't is refused like Django.
+  http.get('/api/sales/v1/calls/menus/', () =>
+    storage.get() === 4 ? HttpResponse.json(menus) : forbidden(),
+  ),
+  http.put('/api/sales/v1/calls/menus/:id/', async ({ request, params }) => {
+    if (storage.get() !== 4) return forbidden();
+    const { keys } = (await request.json()) as { keys: MenuKey[] };
+    if (!menus.menus.some((menu) => menu.id === params.id))
+      return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    const wrong = keys.find(
+      (key) =>
+        (key.kind === 'team' && !menus.options.teams.some((team) => team.number === key.target)) ||
+        (key.kind === 'menu' &&
+          (key.target === params.id || !menus.options.menus.some((m) => m.id === key.target))),
+    );
+    if (wrong)
+      return HttpResponse.json(
+        { keys: [`Key ${wrong.key} goes nowhere the PBX has.`] },
+        { status: 400 },
+      );
+    menus = {
+      ...menus,
+      menus: menus.menus.map((menu) =>
+        menu.id === params.id ? { ...menu, keys, saved: true } : menu,
+      ),
+    };
+    return HttpResponse.json(menus);
+  }),
   // Phone teams: sales managers only, like IsSalesManager.
   http.get('/api/sales/v1/calls/teams/', () =>
     storage.get() === 4 ? HttpResponse.json(teams) : forbidden(),

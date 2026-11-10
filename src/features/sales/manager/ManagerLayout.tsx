@@ -16,17 +16,19 @@ const SECTIONS = [
   { id: 'tags', to: 'manager/tags' },
   { id: 'hours', to: 'manager/hours' },
   { id: 'phoneTeams', to: 'manager/phone-teams' },
+  { id: 'phoneMenus', to: 'manager/phone-menus' },
 ] as const;
 
 const OFF = new Set<string>([
   ...(ON_SERVER.customerTags ? [] : ['tags']),
   ...(ON_SERVER.officeHours ? [] : ['hours']),
   ...(ON_SERVER.phoneTeams ? [] : ['phoneTeams']),
+  ...(ON_SERVER.phoneMenus ? [] : ['phoneMenus']),
 ]);
 
 /**
  * The sales manager's section: lead assignment, the agreement desk, the contract builder, team
- * report, commission rules, follow-ups, board stages, customer tags, the office line's hours and teams.
+ * report, commission rules, follow-ups, board stages, customer tags, the office line's hours, teams and menus.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');
