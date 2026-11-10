@@ -1241,7 +1241,8 @@
       "commission": "Commission",
       "contract": "Contract",
       "hours": "Phone hours",
-      "phoneTeams": "Phone teams"
+      "phoneTeams": "Phone teams",
+      "phoneMenus": "Phone menus"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1959,6 +1960,48 @@
       "newHint": "Its queue number is picked for you. After adding it, pick its people on its card. A menu key is also needed for customers to reach it.",
       "add": "Add team",
       "added": "Team “{{name}}” added"
+    },
+    "menus": {
+      "title": "Phone menus",
+      "empty": "Once the PBX reports, its menus show here.",
+      "fromPbx": "The PBX's own setup; once saved, it follows this page",
+      "formLabel": "Keys of {{name}}",
+      "noKeys": "This menu has no keys.",
+      "key": "Key",
+      "keyHint": "A number of up to 4 digits, * or #",
+      "keyTwice": "This key is used twice.",
+      "kindLabel": "Where key {{key}} goes",
+      "targetLabel": "Key {{key}} goes to",
+      "targetHint": "Pick where it goes.",
+      "remove": "Remove key {{key}}",
+      "addKey": "Add key",
+      "save": "Save menu",
+      "saved": "“{{name}}” saved; the PBX updates within a few seconds",
+      "refused": "This menu wasn't saved. Check where the keys go.",
+      "otherKept": "A PBX setup of its own; it stays as it is.",
+      "none": "Nothing to pick for this kind.",
+      "extension": "Extension {{ext}}",
+      "kind": {
+        "team": "A team",
+        "extension": "A person (any time)",
+        "direct": "A person (direct-number hours only)",
+        "message": "Leave a message",
+        "menu": "Another menu",
+        "hangup": "Hang up",
+        "other": "A PBX setup of its own"
+      },
+      "message": {
+        "feedbacks": "Feedback",
+        "peyghamgir": "Voicemail"
+      },
+      "known": {
+        "ivr-main": "Main menu",
+        "ivr-outtime": "After hours",
+        "Holidays": "Holidays",
+        "ivr-poshtibani": "Support",
+        "ivr-poshtibani-gharardadha": "Contract support",
+        "ivr-hamkari": "Work with us"
+      }
     }
   },
   "handoff": {

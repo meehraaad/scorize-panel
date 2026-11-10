@@ -29,7 +29,8 @@ export type ServerFeature =
   | 'customerSearch'
   | 'offerAgreement'
   | 'officeHours'
-  | 'phoneTeams';
+  | 'phoneTeams'
+  | 'phoneMenus';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /**
@@ -39,6 +40,8 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   officeHours: false,
   /** `GET/POST/PUT /sales/v1/calls/teams/`: the office line's teams (lang `claude/phone-teams`). */
   phoneTeams: false,
+  /** `GET/PUT /sales/v1/calls/menus/`: what each phone menu key does (lang `claude/phone-menus`). */
+  phoneMenus: false,
   /**
    * S62 `GET /applicant/v1/offer/`: the contract offer waiting for the customer's agreement, on
    * the contract tab without a contract (lang `claude/project-thread-kr4w45`).
