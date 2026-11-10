@@ -14,11 +14,17 @@ const SECTIONS = [
   { id: 'followUps', to: 'manager/follow-ups' },
   { id: 'stages', to: 'manager/stages' },
   { id: 'tags', to: 'manager/tags' },
+  { id: 'hours', to: 'manager/hours' },
 ] as const;
+
+const OFF = new Set<string>([
+  ...(ON_SERVER.customerTags ? [] : ['tags']),
+  ...(ON_SERVER.officeHours ? [] : ['hours']),
+]);
 
 /**
  * The sales manager's section: lead assignment, the agreement desk, the contract builder, team
- * report, commission rules, follow-ups, board stages, customer tags.
+ * report, commission rules, follow-ups, board stages, customer tags, the office line's hours.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');
@@ -28,18 +34,16 @@ export default function ManagerLayout() {
         aria-label={t('manager.nav')}
         className="relative -mx-4 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
       >
-        {SECTIONS.filter((section) => section.id !== 'tags' || ON_SERVER.customerTags).map(
-          (section) => (
-            <NavLink
-              key={section.id}
-              to={salesPath(section.to)}
-              end
-              className={({ isActive }) => tabClass(isActive)}
-            >
-              {t(`manager.section.${section.id}`)}
-            </NavLink>
-          ),
-        )}
+        {SECTIONS.filter((section) => !OFF.has(section.id)).map((section) => (
+          <NavLink
+            key={section.id}
+            to={salesPath(section.to)}
+            end
+            className={({ isActive }) => tabClass(isActive)}
+          >
+            {t(`manager.section.${section.id}`)}
+          </NavLink>
+        ))}
       </nav>
       <Outlet />
     </PageStack>
