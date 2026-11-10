@@ -48,6 +48,7 @@ import {
   officeHoursQuery,
   phoneMenusQuery,
   phoneTeamsQuery,
+  phoneBreakQuery,
   phoneVoicesQuery,
 } from '@/lib/sales/phoneCalls';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
@@ -142,6 +143,8 @@ export const salesPanel: PanelDefinition = {
           taskListQuery('sales', 'requests', 1),
           // Today's calendar: the popup a consultation or follow-up card opens.
           sellerDayQuery(new Date(new Date().setHours(0, 0, 0, 0))),
+          // The header's break from team calls.
+          ...(ON_SERVER.phoneBreak ? [phoneBreakQuery] : []),
         ],
         skeleton: 'dashboard',
       }),

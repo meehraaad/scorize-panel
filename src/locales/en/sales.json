@@ -2415,5 +2415,15 @@
     "agree": "I agree with version {{n}}",
     "youAgreed": "Your agreement is saved.",
     "stale": "The offer just changed. Read the new version."
+  },
+  "phoneBreak": {
+    "start": "Take a break",
+    "hint": "While on a break, no team call reaches you. Until midnight, or until you end it.",
+    "end": "End break",
+    "started": "Break started; team calls won't reach you",
+    "ended": "Team calls reach you again",
+    "on": "On a break since {{time}}: team calls don't reach you.",
+    "teams": "Teams: {{teams}}.",
+    "direct": "Calls to your own number still ring. The break ends by itself at midnight."
   }
 }

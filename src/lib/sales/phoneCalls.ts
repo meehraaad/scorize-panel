@@ -305,6 +305,33 @@ export function useUploadVoice(recording: string) {
   });
 }
 
+/** The seller's own break from team calls; it ends when they end it, or at midnight. */
+export interface PhoneBreakState {
+  /** False: no desk phone or mobile extension, so no team rings them. */
+  can: boolean;
+  on_break: boolean;
+  since: string | null;
+  /** The PBX teams that ring them. */
+  teams: string[];
+}
+
+export const phoneBreakQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'phone-break'],
+  queryFn: ({ signal }) => api<PhoneBreakState>(`${SALES_API}/calls/break/`, { signal }),
+});
+
+export function useSetPhoneBreak() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (onBreak: boolean) =>
+      api<PhoneBreakState>(`${SALES_API}/calls/break/`, {
+        method: 'PUT',
+        body: { on_break: onBreak },
+      }),
+    onSuccess: (data) => client.setQueryData(phoneBreakQuery.queryKey, data),
+  });
+}
+
 /** Server timestamps, rather than counting interval ticks, survive navigation and tab throttling. */
 export function callSeconds(call: ObservedCall, now: number) {
   const start = Date.parse(call.answered_at ?? call.started_at);
