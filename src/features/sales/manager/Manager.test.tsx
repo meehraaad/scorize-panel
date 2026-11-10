@@ -835,10 +835,19 @@ describe('office phone hours', () => {
     expect(await screen.findByRole('heading', { name: 'ساعت کاری تلفن' })).toBeInTheDocument();
     expect(screen.getByText(/هنوز ساعت‌های خود وویپ است/)).toBeInTheDocument();
     const week = screen.getByRole('region', { name: 'ساعت پاسخ‌گویی' });
+    expect(within(week).getByRole('switch', { name: /^یکشنبه/ })).toHaveAccessibleName(
+      /۱۰:۳۰–۱۹:۰۰/,
+    );
+    expect(within(week).queryByLabelText('یکشنبه، از ساعت')).not.toBeInTheDocument();
+    await user.click(within(week).getByRole('button', { name: 'ساعت‌های یکشنبه' }));
     expect(within(week).getByLabelText('یکشنبه، از ساعت')).toHaveValue('10:30');
+    expect(within(week).getByLabelText('یکشنبه، تماس مستقیم از ساعت')).toHaveValue('11:30');
     expect(within(week).getByRole('switch', { name: /^شنبه/ })).not.toBeChecked();
+    expect(screen.getByText('همه چیز ذخیره شده است')).toBeInTheDocument();
 
     await user.click(within(week).getByRole('switch', { name: /^شنبه/ }));
+    expect(screen.getByText('تغییرها هنوز ذخیره نشده‌اند')).toBeInTheDocument();
+    await user.click(within(week).getByRole('button', { name: 'ساعت‌های شنبه' }));
     await user.selectOptions(within(week).getByLabelText('شنبه، از ساعت'), '10:00');
     await user.selectOptions(within(week).getByLabelText('شنبه، تا ساعت'), '09:00');
     await user.click(screen.getByRole('button', { name: 'ذخیره‌ی ساعت‌ها' }));
@@ -851,6 +860,26 @@ describe('office phone hours', () => {
     expect(await screen.findByText(/آخرین تغییر: رضا کامرانی/)).toBeInTheDocument();
     const saved = await api<{ week: { day: string }[] }>('/sales/v1/calls/hours/');
     expect(saved.week.map((row) => row.day)).toEqual(['sat', 'sun', 'mon', 'tue', 'wed', 'thu']);
+  });
+
+  it("copies one day's hours to every open day", async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/phone/hours');
+    const week = await screen.findByRole('region', { name: 'ساعت پاسخ‌گویی' });
+    await user.click(within(week).getByRole('button', { name: 'ساعت‌های یکشنبه' }));
+    await user.selectOptions(within(week).getByLabelText('یکشنبه، از ساعت'), '09:00');
+    await user.click(
+      within(week).getByRole('button', { name: 'همین ساعت‌ها برای همه‌ی روزهای باز' }),
+    );
+    expect(within(week).getByRole('switch', { name: /^دوشنبه/ })).toHaveAccessibleName(
+      /۰۹:۰۰–۱۹:۰۰/,
+    );
+    expect(within(week).getByRole('switch', { name: /^شنبه/ })).toHaveAccessibleName(/تعطیل/);
+    await user.click(screen.getByRole('button', { name: 'برگرداندن تغییرها' }));
+    expect(within(week).getByRole('switch', { name: /^دوشنبه/ })).toHaveAccessibleName(
+      /۱۰:۳۰–۱۹:۰۰/,
+    );
   });
 
   it('closes the line for today at once, and adds and removes a closed day', async () => {
@@ -873,6 +902,38 @@ describe('office phone hours', () => {
     const router = renderApp('/sales/manager/phone/hours');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
+  });
+});
+
+describe('phone overview', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('opens on the overview: line status, summaries, the call map and what needs attention', async () => {
+    startPhoneBreak(8, '2026-11-10T09:10:00Z');
+    loginAs(REZA);
+    const router = renderApp('/sales/manager/phone');
+    expect(await screen.findByRole('heading', { name: 'خط تلفن', level: 1 })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales/manager/phone/overview');
+    expect(screen.getByRole('heading', { name: 'خط تلفن الان باز است' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /۲ منو · ۴ کلید/ })).toHaveAttribute(
+      'href',
+      '/sales/manager/phone/menus',
+    );
+
+    const map = screen.getByRole('region', { name: /چه می‌شنود و به کجا می‌رسد/ });
+    expect(within(map).getByRole('link', { name: /moshavere-foroosh.*تیم/ })).toBeInTheDocument();
+    expect(within(map).getByText('۰ از ۱ نفر زنگ می‌خورند')).toBeInTheDocument();
+
+    const issues = screen.getByRole('region', { name: /نیاز به توجه/ });
+    expect(
+      within(issues).getByText(/داخلی‌های ۲۳۰ در تیم «moshavere-foroosh»/),
+    ).toBeInTheDocument();
+    expect(
+      within(issues).getByText(/آخرین فایل پیام «بیرون از ساعت کاری» روی وویپ نرفت/),
+    ).toBeInTheDocument();
   });
 });
 
@@ -915,6 +976,9 @@ describe('phone teams', () => {
       '/sales/v1/calls/teams/',
     );
     expect(saved.teams[0]).toMatchObject({ members: [8, 9], outside_numbers: ['09121234567'] });
+
+    const all = screen.getByRole('list', { name: 'همه‌ی تیم‌ها' });
+    expect(within(all).getByText('منوی اصلی · کلید ۱')).toBeInTheDocument();
 
     const add = screen.getByRole('form', { name: 'تیم تازه' });
     await user.type(within(add).getByLabelText('نام تیم'), 'ویزا');

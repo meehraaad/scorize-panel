@@ -1950,7 +1950,7 @@
       },
       "week": {
         "title": "Answering hours",
-        "subtitle": "In these hours customers reach the phone menu. Outside them they hear the closed message and the call ends."
+        "subtitle": "Light bar: when callers reach the phone menu. Thin dark bar: when they can dial a person's extension. Open a day to change it."
       },
       "direct": {
         "title": "Direct extensions",
@@ -1982,7 +1982,19 @@
         "empty": "No closed days added."
       },
       "save": "Save hours",
-      "saved": "Saved; the PBX updates within a few seconds"
+      "saved": "Saved; the PBX updates within a few seconds",
+      "legend": {
+        "week": "Answering",
+        "direct": "Direct calls to extensions"
+      },
+      "editDay": "Hours of {{day}}",
+      "directFrom": "{{day}}, direct calls from",
+      "directTo": "{{day}}, direct calls until",
+      "copyToAll": "Use these hours for every open day",
+      "copied": "Hours of {{day}} set for every open day; remember to save",
+      "unsaved": "Changes not saved yet",
+      "allSaved": "Everything is saved",
+      "undo": "Undo changes"
     },
     "teams": {
       "title": "Phone teams",
@@ -2021,7 +2033,14 @@
         "outside": "In no team",
         "noTeam": "No team",
         "onBreak": "on a break"
-      }
+      },
+      "all": "All teams",
+      "edit": "Edit",
+      "editTeam": "Edit team {{name}}",
+      "reachedFrom": "{{menu}} · key {{key}}",
+      "unreached": "No key reaches it",
+      "unknownShort_one": "{{n}} extension of no one",
+      "unknownShort_other": "{{n}} extensions of no one"
     },
     "menus": {
       "title": "Phone menus",
@@ -2063,7 +2082,19 @@
         "ivr-poshtibani": "Support",
         "ivr-poshtibani-gharardadha": "Contract support",
         "ivr-hamkari": "Work with us"
-      }
+      },
+      "pick": "Menus",
+      "keyCount_one": "{{n}} key",
+      "keyCount_other": "{{n}} keys",
+      "fromVoip": "from the VoIP",
+      "keypad": {
+        "title": "Keypad",
+        "subtitle": "Which keys are taken and which are free.",
+        "twice": "Twice!",
+        "free": "Free"
+      },
+      "greeting": "What this menu plays",
+      "newGreeting": "New file"
     },
     "voices": {
       "title": "Voice messages",
@@ -2079,15 +2110,67 @@
       "type": "Pick an MP3, WAV, M4A or OGG file.",
       "tooLarge": "The file is larger than 10 MB.",
       "sent": "Voice message sent",
-      "sentMeta": "The PBX plays it within a few seconds; the old file is kept."
+      "sentMeta": "The PBX plays it within a few seconds; the old file is kept.",
+      "badge": {
+        "done": "On the VoIP",
+        "pending": "On its way",
+        "failed": "Not sent",
+        "unused": "Unused",
+        "voip": "The VoIP's own file"
+      }
     },
     "phone": {
       "nav": "Phone sections",
       "section": {
+        "overview": "Overview",
         "hours": "Office hours",
         "teams": "Teams",
         "menus": "Menus",
         "voices": "Voice messages"
+      }
+    },
+    "overview": {
+      "title": "Phone line",
+      "now": "Now",
+      "openMeans": "Callers hear the main menu and its keys take them to the right team or person.",
+      "closedMeans": "Callers hear the \"we are closed\" message.",
+      "todayOnly": "Today only, until midnight",
+      "hoursLine": "Open {{days}} days a week · {{open}} to {{close}}",
+      "hoursNone": "No day is open.",
+      "menusLine": "{{menus}} menus · {{keys}} keys",
+      "teamsLine": "{{teams}} teams · {{people}} people with a phone",
+      "resting_one": "{{n}} on a break",
+      "resting_other": "{{n}} on a break",
+      "voicesLine_one": "{{n}} voice message",
+      "voicesLine_other": "{{n}} voice messages",
+      "edit": "See and edit",
+      "map": {
+        "title": "What a caller hears and where they end up",
+        "subtitle": "Built from these settings. Click a step to edit it there.",
+        "call": "Call",
+        "incoming": "Incoming call",
+        "when": "Which hours?",
+        "inHours": "In office hours",
+        "outHours": "Out of office hours",
+        "hears": "Plays \"{{menu}}\"",
+        "closedMessage": "\"We are closed\" message, then hang up",
+        "keys": "Keys of \"{{menu}}\"",
+        "rings": "Who rings",
+        "ringing": "{{ringing}} of {{all}} people ring"
+      },
+      "issues": {
+        "title": "Needs attention",
+        "subtitle": "What the VoIP reported that is probably wrong.",
+        "none": "Everything looks right.",
+        "teamUnreached": "No menu key reaches the team \"{{name}}\"; callers cannot get to it.",
+        "unknownExtensions": "Extensions {{list}} are in the team \"{{name}}\" but belong to no one.",
+        "voiceFailed": "The last file of \"{{name}}\" did not reach the VoIP.",
+        "voiceUnused": "\"{{name}}\" plays in no menu.",
+        "fix": {
+          "menus": "Go to menus",
+          "teams": "Go to teams",
+          "voices": "Go to messages"
+        }
       }
     }
   },

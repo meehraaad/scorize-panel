@@ -1,12 +1,13 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { TogglePill } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
+import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
@@ -14,6 +15,7 @@ import { ApiError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
+  phoneMenusQuery,
   phoneTeamsQuery,
   teamBreaksQuery,
   useSavePhoneTeam,
@@ -23,6 +25,9 @@ import {
 } from '@/lib/sales/phoneCalls';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
+import { teamEntrances, type KeyPlace } from './phoneMap';
+import { useMenuName } from './phoneNames';
+import { WhoRings } from './WhoRings';
 
 const MOBILE = /^09\d{9}$/;
 const NAME = /^[^\r\n;,|\\[\]"<>]{1,40}$/;
@@ -41,9 +46,13 @@ export default function PhoneTeamsPage() {
   const { data } = useSuspenseQuery(phoneTeamsQuery);
   // Read in the route's page data; off while the endpoint isn't on the server.
   const breaks = useQuery({ ...teamBreaksQuery, enabled: ON_SERVER.teamBreaks }).data;
+  const menus = useQuery({ ...phoneMenusQuery, enabled: ON_SERVER.phoneMenus }).data;
+  const entrances = menus ? teamEntrances(menus) : undefined;
   const onBreak = new Map(
     (breaks?.people ?? []).filter((person) => person.on_break).map((person) => [person.id, person]),
   );
+  const [picked, setPicked] = useState(data.teams[0]?.number);
+  const team = data.teams.find((item) => item.number === picked) ?? data.teams[0];
 
   return (
     <>
@@ -55,69 +64,132 @@ export default function PhoneTeamsPage() {
             : t('manager.teams.notSeen')
         }
       />
-      {breaks && breaks.people.length > 0 && <WhoRings people={breaks.people} />}
-      {data.teams.length === 0 ? (
-        <SectionCard id="phone-teams-empty" variant="panel" title={t('manager.teams.title')}>
-          <EmptyState>{t('manager.teams.empty')}</EmptyState>
-        </SectionCard>
-      ) : (
-        data.teams.map((team) => (
-          <TeamCard key={team.number} team={team} people={data.people} onBreak={onBreak} />
-        ))
+      {data.teams.length > 0 && (
+        <ul
+          aria-label={t('manager.teams.all')}
+          className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          {data.teams.map((item) => (
+            <TeamSummary
+              key={item.number}
+              team={item}
+              people={data.people}
+              onBreak={onBreak}
+              places={entrances?.get(item.number)}
+              picked={item.number === team?.number}
+              onPick={() => setPicked(item.number)}
+            />
+          ))}
+        </ul>
       )}
-      <NewTeam />
+      <PageColumns
+        asideLabel={t('manager.teams.breaks.title')}
+        main={
+          <>
+            {team ? (
+              <TeamCard key={team.number} team={team} people={data.people} onBreak={onBreak} />
+            ) : (
+              <SectionCard id="phone-teams-empty" variant="panel" title={t('manager.teams.title')}>
+                <EmptyState>{t('manager.teams.empty')}</EmptyState>
+              </SectionCard>
+            )}
+            <NewTeam onAdded={setPicked} />
+          </>
+        }
+        aside={breaks && breaks.people.length > 0 && <WhoRings people={breaks.people} />}
+      />
     </>
   );
 }
 
-/** Who gets team calls now: everyone a team can ring, with today's breaks first. */
-function WhoRings({ people }: { people: TeamBreakPerson[] }) {
+/** A team at a glance: who rings (and who is on a break), and which keys reach it. */
+function TeamSummary({
+  team,
+  people,
+  onBreak,
+  places,
+  picked,
+  onPick,
+}: {
+  team: PhoneTeam;
+  people: TeamPerson[];
+  onBreak: Map<number, TeamBreakPerson>;
+  places: KeyPlace[] | undefined;
+  picked: boolean;
+  onPick: () => void;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const resting = people.filter((person) => person.on_break);
-  const sorted = [...resting, ...people.filter((person) => !person.on_break)];
+  const menuName = useMenuName();
+  const names = new Map(people.map((person) => [person.id, person.name]));
+  const resting = team.members.filter((id) => onBreak.has(id)).length;
+  const title = team.name || t('manager.teams.untitled', { number: f.digits(team.number) });
   return (
-    <SectionCard
-      id="phone-team-breaks"
-      variant="panel"
-      title={t('manager.teams.breaks.title')}
-      subtitle={
-        resting.length > 0
-          ? t('manager.teams.breaks.resting', {
-              count: resting.length,
-              n: f.number(resting.length),
-            })
-          : t('manager.teams.breaks.none')
-      }
+    <li
+      className={`flex flex-col gap-3 rounded-[22px] bg-surface p-5 shadow-panel ${
+        picked ? 'shadow-[var(--panel-shadow),inset_0_0_0_2px_var(--primary)]' : ''
+      }`}
     >
-      <ul className="m-0 flex list-none flex-col p-0">
-        {sorted.map((person) => (
-          <li
-            key={person.id}
-            className="flex min-h-14 items-center gap-3 border-b border-line-2 py-2 last:border-b-0"
-          >
-            <Avatar name={person.name} size="sm" tone={person.on_break ? 'tint' : 'hero'} />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="text-[15px] font-semibold text-text">{person.name}</span>
-              <span className="text-[13px] text-text-2">
-                {person.teams.length > 0 ? f.list(person.teams) : t('manager.teams.breaks.noTeam')}
-              </span>
-            </div>
-            {person.on_break && person.since ? (
-              <Chip tone="warn" dot>
-                {t('manager.teams.breaks.since', { time: f.time(person.since) })}
-              </Chip>
-            ) : person.teams.length > 0 ? (
-              <Chip tone="good" dot>
-                {t('manager.teams.breaks.ringing')}
-              </Chip>
-            ) : (
-              <Chip tone="neutral">{t('manager.teams.breaks.outside')}</Chip>
-            )}
-          </li>
-        ))}
-      </ul>
-    </SectionCard>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="truncate font-display text-base font-bold">{title}</span>
+          <span className="text-[13px] text-text-2">
+            {t('manager.teams.number', { number: f.digits(team.number) })} ·{' '}
+            {t('manager.overview.map.ringing', {
+              ringing: f.number(team.members.length - resting),
+              all: f.number(team.members.length),
+            })}
+          </span>
+        </div>
+        <Button
+          variant={picked ? 'dark' : 'outline'}
+          className="h-9! px-3.5! text-sm!"
+          aria-pressed={picked}
+          aria-label={t('manager.teams.editTeam', { name: title })}
+          onClick={onPick}
+        >
+          {t('manager.teams.edit')}
+        </Button>
+      </div>
+      {team.members.length > 0 && (
+        <span className="flex ps-2.5">
+          {team.members.map((id) => (
+            <span key={id} className={`not-first:-ms-2.5 ${onBreak.has(id) ? 'opacity-40' : ''}`}>
+              <Avatar name={names.get(id) ?? ''} size="sm" stacked />
+            </span>
+          ))}
+        </span>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        {places === undefined ? null : places.length > 0 ? (
+          places.map((place) => (
+            <Chip key={`${place.menuId}-${place.key}`} tone="primary" small>
+              {t('manager.teams.reachedFrom', {
+                menu: menuName(place.menu),
+                key: f.digits(place.key),
+              })}
+            </Chip>
+          ))
+        ) : (
+          <Chip tone="warn" small>
+            {t('manager.teams.unreached')}
+          </Chip>
+        )}
+        {resting > 0 && (
+          <Chip tone="warn" small dot>
+            {t('manager.overview.resting', { count: resting, n: f.number(resting) })}
+          </Chip>
+        )}
+        {team.unknown.length > 0 && (
+          <Chip tone="danger" small>
+            {t('manager.teams.unknownShort', {
+              count: team.unknown.length,
+              n: f.number(team.unknown.length),
+            })}
+          </Chip>
+        )}
+      </div>
+    </li>
   );
 }
 
@@ -295,7 +367,7 @@ function TeamCard({
 }
 
 /** A new team gets the next free number; its people are picked on its card afterwards. */
-function NewTeam() {
+function NewTeam({ onAdded }: { onAdded: (number: string) => void }) {
   const { t } = useTranslation('sales');
   const save = useSavePhoneTeam();
   const [name, setName] = useState('');
@@ -310,7 +382,9 @@ function NewTeam() {
     save.mutate(
       { name: name.trim(), members: [], outside_numbers: [] },
       {
-        onSuccess: () => {
+        onSuccess: (teams) => {
+          const added = teams.teams.find((team) => team.saved && team.name === name.trim());
+          if (added) onAdded(added.number);
           toast.success(t('manager.teams.added', { name: name.trim() }));
           setName('');
         },

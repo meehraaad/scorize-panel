@@ -381,6 +381,19 @@ export const salesPanel: PanelDefinition = {
                     index: true,
                     loader: () => redirect(`/sales/manager/phone/${PHONE_SECTIONS[0]?.path ?? ''}`),
                   },
+                  {
+                    path: 'overview',
+                    ...lazyPage(() => import('@/features/sales/manager/PhoneOverviewPage'), [], {
+                      data: () => [
+                        ...(ON_SERVER.officeHours ? [officeHoursQuery] : []),
+                        ...(ON_SERVER.phoneTeams ? [phoneTeamsQuery] : []),
+                        ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
+                        ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
+                        ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
+                      ],
+                      skeleton: 'list',
+                    }),
+                  },
                   ...(ON_SERVER.officeHours
                     ? [
                         {
@@ -403,6 +416,7 @@ export const salesPanel: PanelDefinition = {
                           ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
                             data: () => [
                               phoneTeamsQuery,
+                              ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
                               ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
                             ],
                             skeleton: 'form',
@@ -415,7 +429,10 @@ export const salesPanel: PanelDefinition = {
                         {
                           path: 'menus',
                           ...lazyPage(() => import('@/features/sales/manager/PhoneMenusPage'), [], {
-                            data: () => [phoneMenusQuery],
+                            data: () => [
+                              phoneMenusQuery,
+                              ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
+                            ],
                             skeleton: 'form',
                           }),
                         },
