@@ -38,13 +38,17 @@ export const FACE_FILL: Record<FaceColor, string> = {
   gray: 'bg-face-gray',
 };
 
-/** What a seller picks from: moods, animals, goals and study. */
+/** What a seller picks from: moods, fun faces, animals, goals, study and things. */
 // prettier-ignore
 export const FACE_EMOJIS = [
   '🙂', '😊', '😎', '🤓', '🧐', '🤩', '🥳', '😇', '🤔', '😌', '😅', '😴',
   '🦊', '🐼', '🦁', '🐯', '🐨', '🐸', '🦉', '🐬', '🐝', '🦄', '🐢', '🐧',
   '🎓', '📚', '✈️', '🌍', '🚀', '🎯', '💼', '🏆', '💎', '🔥', '⭐', '❤️',
   '🌱', '🍀', '🌸', '🌻', '☕', '🎨', '🎵', '⚽', '💰', '⏰', '🧩', '👑',
+  '💩', '🤡', '👻', '👽', '🤖', '🤠', '🥸', '🤑', '🤯', '🥶', '🥵', '🤪',
+  '😈', '🙈', '🫠', '😬', '🙄', '😤', '😭', '🥺', '🤐', '🤫', '🫡', '🤗',
+  '🐶', '🐱', '🐵', '🐷', '🐮', '🐔', '🦖', '🐙', '🦋', '🐌', '🦀', '🐳',
+  '🍕', '🍔', '🍩', '🍉', '🌶️', '🥑', '🎁', '🎈', '💡', '📌', '⚠️', '❓',
 ] as const;
 
 /** Saves the face and puts it on the page's data (`queryKey`: the customer or the case). */
