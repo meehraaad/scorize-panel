@@ -39,8 +39,6 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    */
   officeHours: true,
   /** `GET/POST/PUT /sales/v1/calls/teams/`: the office line's teams (lang `claude/phone-teams`). */
-  officeHours: true,
-  /** `GET/POST/PUT /sales/v1/calls/teams/`: the office line's teams (lang `claude/phone-teams`). */
   phoneTeams: true,
   /** `GET/PUT /sales/v1/calls/menus/`: what each phone menu key does (lang `claude/phone-menus`). */
   phoneMenus: true,
