@@ -8,6 +8,7 @@ import type {
   MoveSteps,
   NextStep,
   Offer,
+  OfferStatus,
   PendingReceipt,
   StageActivity,
   StageInput,
@@ -539,6 +540,10 @@ export interface SalesState {
   customers: MockCustomer[];
   consultations: MockConsultation[];
   offers: Map<number, Offer>;
+  /** Where each open offer is (Django's `SalesOffer.state`, S71), by customer. */
+  offerStates: Map<number, OfferStatus>;
+  /** The manager's comment on a returned offer, by customer. */
+  returnComments: Map<number, string>;
   stages: MockStage[];
 }
 
@@ -546,6 +551,8 @@ const salesState = (): SalesState => ({
   customers: customers(),
   consultations: consultations(),
   offers: new Map(),
+  offerStates: new Map(),
+  returnComments: new Map(),
   stages: defaultStages(),
 });
 

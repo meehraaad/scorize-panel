@@ -212,7 +212,8 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/CustomerSummaryPage'), [], {
             data: (args) => {
               const id = customerOf(args);
-              return [id !== null && historyQuery(id)];
+              // The contract card (S71): the open offer, or the approved contract.
+              return id === null ? [] : [historyQuery(id), offerQuery(id), handoffQuery(id)];
             },
           }),
         },

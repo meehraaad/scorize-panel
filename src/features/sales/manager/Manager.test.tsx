@@ -271,9 +271,10 @@ describe('sales manager section', () => {
   it('the manager reviews only the clauses the seller changed, and after a return only what changed since', async () => {
     const user = userEvent.setup();
     loginAs(NIMA);
-    renderApp('/sales/customers/105/offer');
-    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
-    const clauses = screen.getByRole('region', { name: '۴. بندهای قرارداد' });
+    // The text is the third step of building the contract (S71).
+    renderApp('/sales/customers/105/offer?step=3');
+    await screen.findByRole('heading', { level: 1, name: 'قرارداد استاندارد' });
+    const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
     // Named as the contract prints them (S69).
     await user.click(within(clauses).getByRole('button', { name: 'ویرایش ماده ۳: فسخ قرارداد' }));
     const text = within(clauses).getByLabelText('متن بند');
@@ -285,14 +286,12 @@ describe('sales manager section', () => {
     await user.click(within(clauses).getByRole('button', { name: 'حذف ماده ۲: تعهدات متقاضی' }));
     expect(within(clauses).getByText('۲ بند تغییر کرده · ۰ بند اضافه شده')).toBeInTheDocument();
     await user.click(within(clauses).getByRole('button', { name: '+ ماده‌ی تازه' }));
-    await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    );
     expect(screen.getByText('هر بند متن می‌خواهد و ماده‌ی تازه عنوان هم.')).toBeInTheDocument();
     await user.type(within(clauses).getByLabelText('عنوان ماده'), 'بورسیه');
     await user.type(within(clauses).getByLabelText('متن بند'), 'با بورسیه، قسط آخر ۱۰٪ کمتر.');
+    await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
     await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
 
@@ -313,14 +312,16 @@ describe('sales manager section', () => {
 
     cleanup();
     loginAs(NIMA);
-    renderApp('/sales/customers/105/offer');
-    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
+    renderApp('/sales/customers/105/offer?step=3');
+    await screen.findByRole('heading', { level: 1, name: 'قرارداد استاندارد' });
     await user.click(screen.getByRole('button', { name: /^حذف ماده .: بورسیه$/ }));
-    const applies = screen.getByLabelText('تعداد اپلای');
+    await user.click(screen.getByRole('button', { name: 'رفتن به «خدمات و جزئیات»' }));
+    const applies = await screen.findByLabelText('تعداد اپلای');
     await user.clear(applies);
     await user.type(applies, '4');
+    await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
     await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
 
@@ -708,8 +709,13 @@ describe('contract builder and agreement desk (S64)', () => {
     loginAs(NIMA);
     const user = userEvent.setup();
     renderApp('/sales/customers/105/offer');
-    const kind = await screen.findByRole('region', { name: 'نوع قرارداد' });
-    await user.click(within(kind).getByRole('radio', { name: /اپلای رایگان ترکیه/ }));
+    // The kind is changed with the same chooser as on the customer page (S71).
+    await user.click(await screen.findByRole('button', { name: 'عوض کردن قرارداد' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کدام قرارداد؟' });
+    await user.click(within(dialog).getByRole('radio', { name: /اپلای رایگان ترکیه/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'ادامه با «اپلای رایگان ترکیه»' }));
+    await screen.findByRole('heading', { level: 1, name: 'اپلای رایگان ترکیه' });
+    await user.click(screen.getByRole('button', { name: 'رفتن به «متن و متغیرها»' }));
     expect(
       await screen.findByText('تعهدنامه‌ی اپلای رایگان', { exact: false }),
     ).toBeInTheDocument();
@@ -763,8 +769,8 @@ describe('contract builder and agreement desk (S64)', () => {
           .then((body: unknown) => posts.push(body));
     };
     server.events.on('request:start', listen);
-    renderApp('/sales/customers/105/offer');
-    const clauses = await screen.findByRole('region', { name: '۴. بندهای قرارداد' });
+    renderApp('/sales/customers/105/offer?step=3');
+    const clauses = await screen.findByRole('region', { name: 'متن قرارداد' });
     const count = within(clauses).getByLabelText('تعداد سرچ');
     expect(count).toHaveValue('10');
     await user.clear(count);
@@ -777,6 +783,11 @@ describe('contract builder and agreement desk (S64)', () => {
     await user.type(within(clauses).getByLabelText('متن بند'), 'هزینه‌ی سفارت با متقاضی است.');
     // A note added after the article's note: تبصره ۲.
     expect(within(clauses).getByText('تبصره ۲')).toBeInTheDocument();
+    // The preview fills the value in the text.
+    await user.click(screen.getByRole('button', { name: 'بعدی: پیش‌نمایش و ارسال' }));
+    const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
+    expect(within(preview).getByText('15')).toBeInTheDocument();
+    expect(within(preview).getAllByText('عرفان ملکی').length).toBeGreaterThan(1); // the parties and the clause
     await user.click(
       screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
@@ -798,8 +809,8 @@ describe('contract builder and agreement desk (S64)', () => {
 
   it('a seller cannot change a fixed clause', async () => {
     loginAs(NIMA);
-    renderApp('/sales/customers/105/offer');
-    const clauses = await screen.findByRole('region', { name: '۴. بندهای قرارداد' });
+    renderApp('/sales/customers/105/offer?step=3');
+    const clauses = await screen.findByRole('region', { name: 'متن قرارداد' });
     expect(within(clauses).getAllByText('ثابت').length).toBeGreaterThan(0);
     expect(
       within(clauses).queryByRole('button', { name: 'ویرایش ماده ۱: موضوع قرارداد' }),

@@ -1308,6 +1308,22 @@ export const managerHandlers = [
     }
     // A returned offer comes back to this list when the seller sends it again.
     if (action !== 'return') data.manager.decided.add(item.lead.id);
+    // The customer page's contract card (S71): returned, or no open offer any more.
+    const status = data.sales.offerStates.get(item.id);
+    if (action === 'return') {
+      const at = new Date().toISOString();
+      data.sales.returnComments.set(item.id, comment);
+      if (status)
+        data.sales.offerStates.set(item.id, {
+          ...status,
+          state: 'returned',
+          reviewed_at: at,
+          reviewer: 'رضا امیری',
+        });
+    } else {
+      data.sales.offerStates.delete(item.id);
+      data.sales.returnComments.delete(item.id);
+    }
     item.lead.manager = false;
     item.lead.stage_since = new Date().toISOString();
     if (action === 'approve') {

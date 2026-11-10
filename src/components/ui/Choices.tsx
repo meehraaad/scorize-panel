@@ -37,6 +37,8 @@ export interface Choice<T extends string> {
   label: string;
   /** `tiles` and `cards` only: a line under the label. */
   hint?: string | undefined;
+  /** `cards` only: more under the hint (a kind of contract's services and price). */
+  extra?: ReactNode;
 }
 
 /**
@@ -103,6 +105,7 @@ export function ChoiceGroup<T extends string>({
                   {option.hint && (
                     <span className="text-[13px] leading-6 text-text-2">{option.hint}</span>
                   )}
+                  {option.extra}
                 </span>
               </>
             ) : (

@@ -171,14 +171,18 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
 
   it('offer: a big discount needs the manager; the draft goes to the manager', async () => {
     const user = userEvent.setup();
-    const router = renderApp(`${ERFAN}/offer`);
-    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
+    const router = renderApp(`${ERFAN}/offer?step=2`);
+    await screen.findByRole('heading', { level: 1, name: 'قرارداد استاندارد' });
     await user.selectOptions(screen.getByLabelText('تخفیف'), '15');
     expect(screen.getByText(/فقط با تأیید مدیر فروش ممکن است/)).toBeInTheDocument();
+
+    // Sending is the last step (S71), after the whole contract is read.
+    await user.click(screen.getByRole('button', { name: 'بعدی: متن و متغیرها' }));
+    await user.click(await screen.findByRole('button', { name: 'بعدی: پیش‌نمایش و ارسال' }));
+    expect(await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'فقط ارسال پیشنهاد به مشتری (پیامک و واتساپ)' }),
     ).toBeDisabled();
-
     await user.click(
       screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
@@ -188,9 +192,10 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
 
   it('offer: the instalments are what was agreed in the session and must add up', async () => {
     const user = userEvent.setup();
-    renderApp(`${ERFAN}/offer`);
-    await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
-    const submit = screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' });
+    renderApp(`${ERFAN}/offer?step=2`);
+    await screen.findByRole('heading', { level: 1, name: 'قرارداد استاندارد' });
+    const mismatch = 'برای ارسال، جمع اقساط باید با مبلغ قرارداد برابر باشد.';
+    const incomplete = 'هر قسط مبلغ می‌خواهد و قسطِ تاریخ‌دار، تاریخ.';
     expect(screen.getByText(/جمع اقساط ۷۰٬۰۰۰٬۰۰۰ تومان از ۷۰٬۰۰۰٬۰۰۰ تومان/)).toBeInTheDocument();
 
     // The customer pays a bigger prepayment, and the last instalment after the visa.
@@ -198,17 +203,72 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await user.clear(prepayment);
     await user.type(prepayment, '40000000');
     expect(screen.getByText(/۱۲٬۰۰۰٬۰۰۰ تومان بیشتر از مبلغ قرارداد/)).toBeInTheDocument();
-    expect(submit).toBeDisabled();
+    expect(screen.getByText(mismatch)).toBeInTheDocument();
     await user.selectOptions(screen.getAllByLabelText('زمان پرداخت')[2] as HTMLElement, 'visa');
     await user.click(screen.getByRole('button', { name: 'تقسیم باقی‌مانده بین قسط‌ها' }));
     expect(screen.getByText(/جمع اقساط ۷۰٬۰۰۰٬۰۰۰ تومان از/)).toBeInTheDocument();
-    expect(submit).toBeEnabled();
+    expect(screen.queryByText(mismatch)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'افزودن قسط' }));
     expect(screen.getByText('قسط ۴')).toBeInTheDocument();
-    expect(submit).toBeDisabled(); // the new dated row has no date yet
+    expect(screen.getByText(incomplete)).toBeInTheDocument(); // the new dated row has no date yet
     await user.click(screen.getByRole('button', { name: 'حذف قسط ۴' }));
-    expect(submit).toBeEnabled();
+    expect(screen.queryByText(incomplete)).not.toBeInTheDocument();
+
+    // On the last step the send button follows the same rule.
+    await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
+    expect(
+      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+    ).toBeEnabled();
+  });
+
+  it('new contract: the seller picks a kind on the customer page, then builds it step by step (S71)', async () => {
+    const user = userEvent.setup();
+    const router = renderApp(ERFAN);
+    await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
+    await user.click(await screen.findByText('فروش تازه'));
+    await user.click(screen.getByRole('button', { name: /^پیشنهاد قرارداد/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'کدام قرارداد؟' });
+    // Each kind with what it offers, from what price, how much text.
+    const turkey = within(dialog).getByRole('radio', { name: /اپلای رایگان ترکیه/ });
+    expect(within(dialog).getByText('رایگان')).toBeInTheDocument();
+    expect(within(dialog).getByText('۴ ماده · ۱ متغیر')).toBeInTheDocument();
+    await user.click(turkey);
+    await user.click(within(dialog).getByRole('button', { name: 'ادامه با «اپلای رایگان ترکیه»' }));
+    await screen.findByRole('heading', { level: 1, name: 'اپلای رایگان ترکیه' });
+    expect(router.state.location.pathname).toBe(`${ERFAN}/offer`);
+    expect(router.state.location.search).toBe('?template=1');
+    // Four steps; the first one is open.
+    const steps = screen.getByRole('list', { name: 'قدم‌های ساختن قرارداد' });
+    expect(within(steps).getByText('خدمات و جزئیات').closest('li')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    await user.click(screen.getByRole('button', { name: 'بعدی: مبلغ و اقساط' }));
+    await screen.findByRole('button', { name: 'بعدی: متن و متغیرها' });
+    expect(router.state.location.search).toBe('?template=1&step=2');
+  });
+
+  it('the summary shows the contract on its way, and the chooser offers to continue it (S71)', async () => {
+    const user = userEvent.setup();
+    renderApp(`${ERFAN}/offer?step=4`);
+    await user.click(
+      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+    );
+    const card = await screen.findByRole('region', { name: 'قرارداد · قرارداد استاندارد' });
+    expect(within(card).getByText('منتظر تأیید مدیر')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'پیش‌نمایش' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/offer?step=4'),
+    );
+    // The chooser offers to continue the open one.
+    await user.click(await screen.findByText('فروش تازه'));
+    await user.click(screen.getByRole('button', { name: /^پیشنهاد قرارداد/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'کدام قرارداد؟' });
+    expect(
+      within(dialog).getByText(/یک قرارداد باز دارد: «قرارداد استاندارد»/),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'ادامه‌ی همان' })).toBeInTheDocument();
   });
 });
 

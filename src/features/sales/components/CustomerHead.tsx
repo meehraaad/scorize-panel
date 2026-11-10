@@ -1,6 +1,5 @@
 import { lazy, Suspense, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { CustomerFace } from '@/components/customers/CustomerFace';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -13,7 +12,6 @@ import { MESSAGE_CHANNELS, SALES_API, type Channel } from '@/lib/sales/api';
 import { customerKey, useMoveBoardCard, type CustomerData, type MoveSteps } from '../api';
 import { boardMoveTargets, laneOf, lanesOf, type Lane } from '../boardLanes';
 import { useSalesFormat } from '../format';
-import { customerPath } from '../paths';
 import { CustomerTags } from './CustomerTags';
 import { ScoreChip, StageChip } from './LeadChips';
 
@@ -36,12 +34,15 @@ export function CustomerHead({
   customer,
   onLog,
   onSell,
+  onContract,
   side,
 }: {
   customer: CustomerData;
   onLog: (channel: Channel) => void;
   /** Opens the product sale. */
   onSell: () => void;
+  /** Opens the choice of a contract to start (S71). */
+  onContract: () => void;
   /** The shared column, shown in a sheet where it doesn't fit beside the page (null: it does). */
   side: ReactNode;
 }) {
@@ -98,7 +99,7 @@ export function CustomerHead({
               {t('customer.log')}
             </button>
             <MessageMenu onLog={onLog} />
-            <NewSaleMenu customer={customer.id} onSell={onSell} />
+            <NewSaleMenu onSell={onSell} onContract={onContract} />
             {side && (
               <SheetButton
                 icon="user"
@@ -336,7 +337,7 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
 }
 
 /** "Sale ▾": sell a product now, or prepare a contract offer. */
-function NewSaleMenu({ customer, onSell }: { customer: number; onSell: () => void }) {
+function NewSaleMenu({ onSell, onContract }: { onSell: () => void; onContract: () => void }) {
   const { t } = useTranslation('sales');
   const item = `${menuItem} flex-col items-start gap-0.5`;
   return (
@@ -348,12 +349,12 @@ function NewSaleMenu({ customer, onSell }: { customer: number; onSell: () => voi
             {t('customer.newSale.productHint')}
           </span>
         </button>
-        <Link to={`${customerPath(customer)}/offer`} className={item}>
+        <button type="button" className={item} onClick={onContract}>
           <span className="font-semibold">{t('customer.newSale.offer')}</span>
           <span className="text-xs leading-5 font-normal text-text-2">
             {t('customer.newSale.offerHint')}
           </span>
-        </Link>
+        </button>
       </>
     </Menu>
   );

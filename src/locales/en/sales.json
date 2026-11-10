@@ -1107,13 +1107,13 @@
   "offer": {
     "title": "Offer for {{name}}",
     "subtitle": "Build the offer. Send just the offer, or send the contract draft to the manager; once approved it opens in the customer's panel.",
-    "features": "1. Contract services",
+    "features": "The contract's services",
     "featureHint": {
       "admission": "Choosing universities, applying, professor email bot, following up results",
       "visa": "Embassy file, appointment, interview preparation",
       "writing": "Motivation letter, CV and recommendations for every application"
     },
-    "details": "2. Details",
+    "details": "Details",
     "degree": "Degree",
     "applies": "Number of applications",
     "start": "Start date",
@@ -1124,13 +1124,13 @@
     "countries": "Countries",
     "removeCountry": "Remove {{country}}",
     "addCountry": "Add a country",
-    "price": "3. Price and instalments",
+    "price": "Price and instalments",
     "base": "Base price (from the services)",
     "discount": "Discount",
     "noDiscount": "No discount",
     "discountManager": "{{n}} (manager approval)",
     "managerNeeded": "A discount above {{n}} needs the sales manager's approval. The offer also goes to the manager before the customer sees it.",
-    "note": "5. Note for the manager",
+    "note": "Note for the manager",
     "noteLabel": "Only the sales manager sees this",
     "preview": "What the customer sees in their panel",
     "contractOf": "{{features}} contract",
@@ -1224,7 +1224,23 @@
       "title": "Contract variables",
       "hint": "These values go into this customer's contract. The system fills the name, the amount and the rest of the customer's details itself.",
       "incomplete": "Fill in every contract variable."
-    }
+    },
+    "steps": {
+      "label": "Steps to build the contract",
+      "s1": "Services and details",
+      "s2": "Price and instalments",
+      "s3": "Text and variables",
+      "s4": "Preview and send",
+      "next": "Next: {{step}}",
+      "back": "Back: {{step}}",
+      "go": "Go to “{{step}}”"
+    },
+    "forCustomer": "New contract for {{name}}",
+    "change": "Change the contract",
+    "previewTitle": "Contract preview",
+    "previewHint": "The page that is printed and signed; variables are coloured and this customer's clauses framed.",
+    "fullScreen": "Full screen",
+    "textTitle": "Contract text"
   },
   "manager": {
     "nav": "Sales management sections",
@@ -2305,5 +2321,58 @@
     "agree": "I agree with version {{n}}",
     "youAgreed": "Your agreement is saved.",
     "stale": "The offer just changed. Read the new version."
+  },
+  "chooser": {
+    "title": "Which contract?",
+    "subtitle": "New contract for {{name}}",
+    "kinds": "Kind of contract",
+    "from": "from {{price}}",
+    "free": "Free",
+    "size": "{{articles}} articles · {{variables}} variables",
+    "go": "Continue with “{{name}}”",
+    "cancel": "Cancel",
+    "open": "An open contract: “{{name}}” · {{state}} · {{when}}",
+    "continue": "Continue it",
+    "hint": "Only the contracts the sales manager has turned on are here.",
+    "replaces": "Saving this contract replaces the open “{{name}}”."
+  },
+  "contractCard": {
+    "title": "Contract · {{name}}",
+    "state": {
+      "saved": "Draft",
+      "sent": "Sent to the customer",
+      "submitted": "Waiting for the manager",
+      "returned": "Returned",
+      "approved": "Approved"
+    },
+    "text": {
+      "saved": "Saved, not sent yet; until you send it, neither the customer nor the manager sees it.",
+      "sent": "Sent to the customer to read and agree; then send it for the manager's approval.",
+      "submitted": "Sent to the sales manager. Once approved it opens in the customer's panel and prints to sign.",
+      "returned": "The manager returned it. Fix it and send it again; the manager rereads only what you changed.",
+      "approved": "The contract is open in the customer's panel. Sign the printed copy and upload the scan so the case reaches a supervisor."
+    },
+    "act": {
+      "continue": "Continue building",
+      "edit": "Edit the contract",
+      "fix": "Fix the contract",
+      "print": "Print to sign",
+      "scan": "Upload the signed scan",
+      "preview": "Preview"
+    },
+    "comment": "{{name}}'s note:",
+    "commentNoName": "The manager's note:",
+    "steps": "The contract's way",
+    "made": "Contract built",
+    "customer": "Customer agrees",
+    "manager": "Sales manager approves",
+    "returned": "Returned by the manager",
+    "resend": "Send again",
+    "sign": "Print and sign",
+    "case": "Case starts",
+    "later": "Later",
+    "amount": "Amount",
+    "free": "Free",
+    "approvedTitle": "Approved contract"
   }
 }
