@@ -149,7 +149,7 @@ describe('sales panel, seller pages', () => {
     expect(router.state.location.pathname).toMatch(/^\/sales\/customers\/\d+$/);
   });
 
-  it('header: searches every customer, opens mine and a free one, names another seller', async () => {
+  it('header: searches every customer and opens any of them, naming another seller', async () => {
     server.use(
       http.get('/api/sales/v1/customers/search/', ({ request }) => {
         const q = new URL(request.url).searchParams.get('q');
@@ -200,8 +200,16 @@ describe('sales panel, seller pages', () => {
     expect(opens.map((link) => link.getAttribute('href'))).toEqual([
       `/sales/customers/${String(ERFAN)}`,
       '/sales/customers/777',
+      '/sales/customers/778',
     ]);
-    expect(within(results).getByText('مشتریِ سارا')).toBeInTheDocument();
+    // A free row and another seller's row both open; the other seller is named beside it.
+    for (const name of ['مینا آزاد', 'مینا دیگری']) {
+      const row = within(results).getByText(name).closest('li');
+      expect(row).not.toBeNull();
+      expect(within(row as HTMLElement).getByRole('link', { name: 'باز کردن صفحه' })).toBeVisible();
+    }
+    const other = within(results).getByText('مینا دیگری').closest('li') as HTMLElement;
+    expect(within(other).getByText('مشتریِ سارا')).toBeInTheDocument();
     // One nobody has opens too: a seller only opens customers, never takes them from search.
     expect(within(results).queryByRole('button', { name: 'برداشتن مشتری' })).toBeNull();
   });

@@ -18,7 +18,7 @@ const SEARCH_DELAY_MS = 300;
 
 /**
  * Finding anyone with an account by name, email or phone, the seller's or not, like the old CRM's
- * search (S63). The seller's own and one nobody has open their page; another seller's names them.
+ * search (S63). Every one opens their page, the seller's or not; another seller's also names them.
  * Nobody found: the typed person can be added as a new lead.
  */
 export function CustomerSearchDialog({
@@ -87,21 +87,19 @@ export function CustomerSearchDialog({
                       .filter(Boolean)
                       .flatMap((part, index) => (index ? [' · ', part] : [part]))}
                   </span>
+                  {row.access === 'other' && (
+                    <span className="text-xs font-medium [overflow-wrap:anywhere] text-text-2">
+                      {t('leads.find.other', { seller: row.seller ?? '' })}
+                    </span>
+                  )}
                 </span>
-                {row.access !== 'other' && (
-                  <Link
-                    to={customerPath(row.customer)}
-                    onClick={onClose}
-                    className={buttonClass('outline', 'inline-flex flex-none items-center')}
-                  >
-                    {t('leads.find.open')}
-                  </Link>
-                )}
-                {row.access === 'other' && (
-                  <span className="flex-none text-sm font-medium text-text-2">
-                    {t('leads.find.other', { seller: row.seller ?? '' })}
-                  </span>
-                )}
+                <Link
+                  to={customerPath(row.customer)}
+                  onClick={onClose}
+                  className={buttonClass('outline', 'inline-flex flex-none items-center')}
+                >
+                  {t('leads.find.open')}
+                </Link>
               </li>
             ))}
           </ul>

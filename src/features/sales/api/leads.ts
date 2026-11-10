@@ -139,7 +139,10 @@ export const leadSearchQuery = (typed: string) =>
     placeholderData: keepPreviousData,
   });
 
-/** Whether the seller may open a found customer, take them, or they are another seller's (S63). */
+/**
+ * Whose a found customer is (S63): the seller's, nobody's, or another seller's (named). A seller
+ * opens any of them; it only decides what the row says.
+ */
 export type CustomerAccess = 'mine' | 'free' | 'other';
 
 /** Anyone with an account, found by name, email or phone (S63), like the old CRM's search. */
