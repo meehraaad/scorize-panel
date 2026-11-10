@@ -14,7 +14,7 @@ import '@/test/server';
  */
 
 // The admission-chance quiz, Turkey, the founders assistant, the mail page, customer tags and the
-// office line's hours aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
+// office line's hours and teams aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
   return {
@@ -26,6 +26,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       customerTags: true,
       mailServers: true,
       officeHours: true,
+      phoneTeams: true,
     },
   };
 });
@@ -135,6 +136,7 @@ const PAGES: PageCase[] = [
     '/sales/manager/stages',
     '/sales/manager/tags',
     '/sales/manager/hours',
+    '/sales/manager/phone-teams',
   ].map((path) => ({ path, user: REZA })),
   // Supervisor panel.
   ...[

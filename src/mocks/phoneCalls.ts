@@ -1,5 +1,11 @@
 import { http, HttpResponse } from 'msw';
-import type { OfficeHoursInput, OfficeHoursState, PhoneSnapshot } from '@/lib/sales/phoneCalls';
+import type {
+  OfficeHoursInput,
+  OfficeHoursState,
+  PhoneSnapshot,
+  PhoneTeamInput,
+  PhoneTeams,
+} from '@/lib/sales/phoneCalls';
 import { forbidden, storage } from './session';
 
 let snapshots = new Map<number, PhoneSnapshot>();
@@ -18,6 +24,26 @@ const freshHours = (): OfficeHoursState => ({
 });
 let hours = freshHours();
 
+const freshTeams = (): PhoneTeams => ({
+  seen_at: '2026-11-10T14:00:00Z',
+  people: [
+    { id: 8, name: 'نیما رضایی', desk: '104', mobile: '302' },
+    { id: 9, name: 'رضا کامرانی', desk: null, mobile: '305' },
+  ],
+  teams: [
+    {
+      number: '1000',
+      name: 'moshavere-foroosh',
+      saved: false,
+      members: [8],
+      outside_numbers: ['09962833918'],
+      unknown: ['230'],
+      dynamic: ['103'],
+    },
+  ],
+});
+let teams = freshTeams();
+
 export function setPhoneSnapshot(owner: number, snapshot: PhoneSnapshot) {
   snapshots.set(owner, snapshot);
 }
@@ -25,6 +51,7 @@ export function setPhoneSnapshot(owner: number, snapshot: PhoneSnapshot) {
 export function resetPhoneMocks() {
   snapshots = new Map();
   hours = freshHours();
+  teams = freshTeams();
 }
 
 /** Django's checks in OfficeHoursSerializer, with its messages. */
@@ -38,7 +65,53 @@ function hoursErrors(body: OfficeHoursInput) {
   return errors;
 }
 
+const TEAM_NAME = /^[^\r\n;,|\\[\]"<>]{1,40}$/;
+
+function teamErrors(body: PhoneTeamInput) {
+  const errors: Record<string, string[]> = {};
+  if (!TEAM_NAME.test(body.name)) errors.name = ['Enter a valid value.'];
+  if (body.outside_numbers.some((phone) => !/^09\d{9}$/.test(phone)))
+    errors.outside_numbers = ['Enter a valid value.'];
+  return errors;
+}
+
 export const phoneCallHandlers = [
+  // Phone teams: sales managers only, like IsSalesManager.
+  http.get('/api/sales/v1/calls/teams/', () =>
+    storage.get() === 4 ? HttpResponse.json(teams) : forbidden(),
+  ),
+  http.post('/api/sales/v1/calls/teams/', async ({ request }) => {
+    if (storage.get() !== 4) return forbidden();
+    const body = (await request.json()) as PhoneTeamInput;
+    const errors = teamErrors(body);
+    if (Object.keys(errors).length > 0) return HttpResponse.json(errors, { status: 400 });
+    const used = new Set(teams.teams.map((team) => Number(team.number)));
+    let number = 1000;
+    while (used.has(number)) number += 1;
+    teams = {
+      ...teams,
+      teams: [
+        ...teams.teams,
+        { number: String(number), ...body, saved: true, unknown: [], dynamic: [] },
+      ],
+    };
+    return HttpResponse.json(teams, { status: 201 });
+  }),
+  http.put('/api/sales/v1/calls/teams/:number/', async ({ request, params }) => {
+    if (storage.get() !== 4) return forbidden();
+    const body = (await request.json()) as PhoneTeamInput;
+    if (!teams.teams.some((team) => team.number === params.number))
+      return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    const errors = teamErrors(body);
+    if (Object.keys(errors).length > 0) return HttpResponse.json(errors, { status: 400 });
+    teams = {
+      ...teams,
+      teams: teams.teams.map((team) =>
+        team.number === params.number ? { ...team, ...body, saved: true, unknown: [] } : team,
+      ),
+    };
+    return HttpResponse.json(teams);
+  }),
   // Office hours: sales managers only (Reza, user 4), like IsSalesManager.
   http.get('/api/sales/v1/calls/hours/', () =>
     storage.get() === 4 ? HttpResponse.json(hours) : forbidden(),
