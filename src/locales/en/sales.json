@@ -1242,7 +1242,8 @@
       "contract": "Contract",
       "hours": "Phone hours",
       "phoneTeams": "Phone teams",
-      "phoneMenus": "Phone menus"
+      "phoneMenus": "Phone menus",
+      "phoneVoices": "Voice messages"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -2002,6 +2003,22 @@
         "ivr-poshtibani-gharardadha": "Contract support",
         "ivr-hamkari": "Work with us"
       }
+    },
+    "voices": {
+      "title": "Voice messages",
+      "empty": "Once the PBX reports, its greetings show here.",
+      "plays": "Plays in: {{menus}}",
+      "unused": "Not played in any menu.",
+      "pending": "The new file is on its way to the PBX…",
+      "done": "On the PBX; {{name}}, {{time}}",
+      "failed": "The last file didn't reach the PBX: {{reason}}",
+      "choose": "Choose a sound file",
+      "chooseFor": "New sound file for {{name}}",
+      "drop": "or drop it here. MP3, WAV, M4A or OGG, up to 10 MB.",
+      "type": "Pick an MP3, WAV, M4A or OGG file.",
+      "tooLarge": "The file is larger than 10 MB.",
+      "sent": "Voice message sent",
+      "sentMeta": "The PBX plays it within a few seconds; the old file is kept."
     }
   },
   "handoff": {

@@ -20,6 +20,7 @@ import {
 } from '@/lib/sales/phoneCalls';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
+import { useMenuName } from './phoneNames';
 
 const KINDS = [
   'team',
@@ -30,17 +31,6 @@ const KINDS = [
   'hangup',
 ] as const satisfies readonly MenuKeyKind[];
 const KEY = /^(\d{1,4}|\*|#)$/;
-/** The PBX's menu names this office uses, with a label of their own. */
-const KNOWN = [
-  'ivr-main',
-  'ivr-outtime',
-  'Holidays',
-  'ivr-poshtibani',
-  'ivr-poshtibani-gharardadha',
-  'ivr-hamkari',
-] as const;
-const isKnown = (name: string): name is (typeof KNOWN)[number] =>
-  (KNOWN as readonly string[]).includes(name);
 const MESSAGES = ['feedbacks', 'peyghamgir'] as const;
 const isMessage = (name: string): name is (typeof MESSAGES)[number] =>
   (MESSAGES as readonly string[]).includes(name);
@@ -49,11 +39,6 @@ type Options = PhoneMenus['options'];
 interface Row extends MenuKey {
   /** Stable while editing (the key itself can change). */
   rowId: number;
-}
-
-function useMenuName() {
-  const { t } = useTranslation('sales');
-  return (name: string) => (isKnown(name) ? t(`manager.menus.known.${name}`) : name);
 }
 
 /**

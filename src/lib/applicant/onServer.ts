@@ -30,18 +30,21 @@ export type ServerFeature =
   | 'offerAgreement'
   | 'officeHours'
   | 'phoneTeams'
-  | 'phoneMenus';
+  | 'phoneMenus'
+  | 'phoneVoices';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /**
    * `GET/PUT /sales/v1/calls/hours/`: the office line's hours on the sales manager's page, applied
    * to the PBX by the office worker (lang `claude/office-hours`).
    */
-  officeHours: false,
+  officeHours: true,
   /** `GET/POST/PUT /sales/v1/calls/teams/`: the office line's teams (lang `claude/phone-teams`). */
-  phoneTeams: false,
+  phoneTeams: true,
   /** `GET/PUT /sales/v1/calls/menus/`: what each phone menu key does (lang `claude/phone-menus`). */
-  phoneMenus: false,
+  phoneMenus: true,
+  /** `GET /sales/v1/calls/voices/`, `POST voices/<id>/`: the menus' greetings (lang `claude/phone-voices`). */
+  phoneVoices: true,
   /**
    * S62 `GET /applicant/v1/offer/`: the contract offer waiting for the customer's agreement, on
    * the contract tab without a contract (lang `claude/project-thread-kr4w45`).
