@@ -315,7 +315,10 @@
       "addNew": "Add as a new lead",
       "noName": "No name",
       "open": "Open page",
-      "other": "{{seller}}'s customer"
+      "other": "{{seller}}'s customer",
+      "take": "Take customer",
+      "taken": "{{name}} is now your customer.",
+      "takenByOther": "This customer is an open lead of {{seller}}."
     }
   },
   "board": {
@@ -2521,5 +2524,15 @@
     "amount": "Amount",
     "free": "Free",
     "approvedTitle": "Approved contract"
+  },
+  "phoneBreak": {
+    "start": "Take a break",
+    "hint": "While on a break, no team call reaches you. Until midnight, or until you end it.",
+    "end": "End break",
+    "started": "Break started; team calls won't reach you",
+    "ended": "Team calls reach you again",
+    "on": "On a break since {{time}}: team calls don't reach you.",
+    "teams": "Teams: {{teams}}.",
+    "direct": "Calls to your own number still ring. The break ends by itself at midnight."
   }
 }
