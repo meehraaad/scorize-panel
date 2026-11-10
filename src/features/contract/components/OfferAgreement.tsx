@@ -11,6 +11,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { TextAreaField } from '@/components/ui/TextField';
 import { agreedBy, type Agreement } from '@/lib/agreement/api';
 import { ApiError } from '@/lib/api/client';
+import { keyOf, kindOf, useClauseNames } from '@/lib/contractText';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { offerAgreementQuery, useAgreeToOffer, useAskAboutOffer } from '../api';
@@ -110,6 +111,8 @@ function OfferClauses({ agreement }: { agreement: Agreement }) {
   const [clause, setClause] = useState('');
   const [text, setText] = useState('');
   const changed = agreement.clauses.filter((row) => row.change !== null);
+  // As the contract prints them (S69): "ماده ۲: تعهدات"، "۲-۱"، "تبصره ۱".
+  const nameOf = useClauseNames(agreement.clauses);
   const mine = agreedBy(agreement, 'customer');
 
   return (
@@ -140,11 +143,11 @@ function OfferClauses({ agreement }: { agreement: Agreement }) {
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {changed.map((row) => (
             <li
-              key={row.title}
+              key={keyOf(row)}
               className="flex flex-col gap-1.5 rounded-2xl bg-good-tint p-4 shadow-[inset_0_0_0_1.5px_var(--good)]"
             >
               <span className="flex flex-wrap items-center gap-2">
-                <span className="text-[15px] font-bold">{row.title}</span>
+                <span className="text-[15px] font-bold">{nameOf(row)}</span>
                 <Chip tone="good" small>
                   {t(`offer.change.${row.change ?? 'changed'}`)}
                 </Chip>
@@ -180,12 +183,21 @@ function OfferClauses({ agreement }: { agreement: Agreement }) {
         <ol className="m-0 flex list-none flex-col gap-3 p-0 pt-2">
           {agreement.clauses
             .filter((row) => row.change !== 'removed')
-            .map((row, index) => (
-              <li key={row.title} className="flex flex-col gap-1">
-                <span className="text-sm font-semibold">
-                  {f.number(index + 1)}. {row.title}
+            .map((row) => (
+              <li
+                key={keyOf(row)}
+                className={`flex flex-col gap-1 ${kindOf(row) === 'article' ? '' : 'ps-4'}`}
+              >
+                <span
+                  className={`text-sm ${kindOf(row) === 'article' ? 'font-bold' : 'font-semibold'}`}
+                >
+                  {nameOf(row)}
                 </span>
-                <p className="m-0 text-sm leading-7 whitespace-pre-line text-text-2">{row.text}</p>
+                {row.text && (
+                  <p className="m-0 text-sm leading-7 whitespace-pre-line text-text-2">
+                    {row.text}
+                  </p>
+                )}
               </li>
             ))}
         </ol>
@@ -196,7 +208,7 @@ function OfferClauses({ agreement }: { agreement: Agreement }) {
           {agreement.remarks.map((remark) => (
             <li key={remark.id} className="flex flex-col gap-2 rounded-2xl bg-canvas p-4">
               {remark.clause && (
-                <span className="text-xs font-semibold text-text-2">{remark.clause}</span>
+                <span className="text-xs font-semibold text-text-2">{nameOf(remark.clause)}</span>
               )}
               <p className="m-0 text-sm leading-7 whitespace-pre-line">{remark.text}</p>
               {remark.answer ? (
@@ -238,7 +250,7 @@ function OfferClauses({ agreement }: { agreement: Agreement }) {
               onChange={setClause}
               options={[
                 { value: '', label: t('offer.whole') },
-                ...changed.map((row) => ({ value: row.title, label: row.title })),
+                ...changed.map((row) => ({ value: keyOf(row), label: nameOf(row) })),
               ]}
             />
             <TextAreaField

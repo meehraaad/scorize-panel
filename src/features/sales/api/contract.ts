@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AgreementParty } from '@/lib/agreement/api';
 import { api } from '@/lib/api/client';
+import type { TextClause } from '@/lib/contractText';
 import { SALES_API, type Degree } from '@/lib/sales/api';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
 import { customerKey } from './customer';
@@ -89,8 +90,11 @@ export interface ContractDocument {
     due_date: string | null;
     condition: string | null;
   }[];
-  /** The contract's text as approved: the standard clauses with this customer's changes. */
-  clauses: { title: string; text: string }[];
+  /**
+   * The contract's text as approved: the standard clauses with this customer's changes, as
+   * articles, clauses and notes with their variables filled (S69).
+   */
+  clauses: TextClause[];
   /**
    * Who agreed online on the approved version (S62), and the clauses written for this customer
    * (titles); null for a contract made before the agreement desk.

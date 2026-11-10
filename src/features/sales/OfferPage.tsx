@@ -78,15 +78,25 @@ const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => 
     nextMonth(),
   ),
   clauses: [],
+  variables: defaultValues(options),
   manager_note: '',
 });
+
+/** The kind of contract's blanks at their defaults (S69). */
+const defaultValues = (options: OfferOptions) =>
+  Object.fromEntries(options.variables.map((row) => [row.name, row.default]));
+
+/** A value for each of this kind's blanks: the draft's, or the default (Django's `clean_values`). */
+const valuesFor = (values: Record<string, string> | undefined, options: OfferOptions) =>
+  Object.fromEntries(options.variables.map((row) => [row.name, values?.[row.name] ?? row.default]));
 
 /**
  * The draft moved to another kind of contract (S68): its services that this kind offers, none of
  * its clause edits (they were to the other kind's text), and instalments that follow the price.
  */
 const draftOn = (draft: Offer, options: OfferOptions): Offer => {
-  if (draft.template === options.template) return draft;
+  if (draft.template === options.template)
+    return { ...draft, variables: valuesFor(draft.variables, options) };
   const features = draft.features.filter((key) =>
     options.features.some((item) => item.key === key),
   );
@@ -95,6 +105,7 @@ const draftOn = (draft: Offer, options: OfferOptions): Offer => {
     template: options.template,
     features: features.length ? features : firstFeature(options),
     clauses: [],
+    variables: defaultValues(options),
   };
 };
 
@@ -178,12 +189,15 @@ function OfferForm({
   const rowsDone = (free || scheduleComplete(schedule)) && clausesComplete(offer.clauses);
   const kinds = options.templates.length > 1;
   const addsUp = scheduleTotal(schedule) === total;
+  // Every blank filled before it goes to the customer or the manager (S69).
+  const filled = options.variables.every((row) => (offer.variables[row.name] ?? '').trim() !== '');
   const valid =
     offer.features.length > 0 &&
     offer.countries.length > 0 &&
     offer.applies > 0 &&
     rowsDone &&
-    addsUp;
+    addsUp &&
+    filled;
   const names = f.list(offer.features.map((key) => t(`apply.feature.${key}`)));
 
   const act = (action: OfferAction) =>
@@ -374,10 +388,33 @@ function OfferForm({
               size="lg"
               title={t('offer.clauses.section')}
             >
+              {options.variables.length > 0 && (
+                <fieldset className="m-0 flex flex-col gap-3 rounded-2xl border-0 bg-canvas p-4">
+                  <legend className="float-start mb-1 p-0 text-sm font-bold">
+                    {t('offer.variables.title')}
+                  </legend>
+                  <p className="m-0 text-[13px] leading-6 text-text-2">
+                    {t('offer.variables.hint')}
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {options.variables.map((row) => (
+                      <TextField
+                        key={row.name}
+                        label={row.name}
+                        value={offer.variables[row.name] ?? ''}
+                        onChange={(event) =>
+                          set('variables', { ...offer.variables, [row.name]: event.target.value })
+                        }
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+              )}
               <ClauseEditor
                 standard={options.clauses}
                 edits={offer.clauses}
                 onChange={(edits) => set('clauses', edits)}
+                values={offer.variables}
               />
             </SectionCard>
 
@@ -470,11 +507,13 @@ function OfferForm({
                 <span className="text-xs text-text-2">
                   {!clausesComplete(offer.clauses)
                     ? t('offer.clauses.incomplete')
-                    : !rowsDone
-                      ? t('offer.schedule.incomplete')
-                      : !addsUp
-                        ? t('offer.schedule.mismatch')
-                        : t('offer.incomplete')}
+                    : !filled
+                      ? t('offer.variables.incomplete')
+                      : !rowsDone
+                        ? t('offer.schedule.incomplete')
+                        : !addsUp
+                          ? t('offer.schedule.mismatch')
+                          : t('offer.incomplete')}
                 </span>
               )}
             </div>

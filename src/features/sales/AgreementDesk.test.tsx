@@ -79,7 +79,8 @@ describe('contract agreement desk (S62)', () => {
     expect(within(card).getByText('منتظر مشاور جلسه')).toBeInTheDocument();
     const changes = within(card).getByRole('list', { name: 'تغییرها' });
     // Against version 1: the applies line and the one clause, not the unchanged one.
-    expect(within(changes).getByText('تعهدات اسکورایز')).toBeInTheDocument();
+    // Named as the contract prints it (S69).
+    expect(within(changes).getByText('ماده ۱: تعهدات اسکورایز')).toBeInTheDocument();
     expect(within(changes).queryByText('فسخ')).not.toBeInTheDocument();
     expect(within(changes).getByText('تعداد اپلای')).toBeInTheDocument();
 

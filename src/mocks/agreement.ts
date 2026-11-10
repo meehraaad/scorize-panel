@@ -1,5 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import type { ClauseEdit, Offer } from '@/features/sales/api';
+import type { Offer, StandardClause } from '@/features/sales/api';
+import { fillText } from '@/lib/contractText';
+import { mergedText, valuesOf } from './contractText';
 import type {
   Agreement,
   AgreementClause,
@@ -152,7 +154,7 @@ export function recordVersion(
   offer: Offer,
   amount: number,
   state: 'sent' | 'submitted',
-  standard: { id: number; title: string; text: string }[],
+  standard: StandardClause[],
 ) {
   const desk = all().get(customer.id) ?? {
     state,
@@ -163,37 +165,13 @@ export function recordVersion(
     remarks: [],
   };
   desk.state = state;
-  const edits = new Map<number | null, ClauseEdit>(
-    offer.clauses.map((edit) => [edit.clause, edit]),
-  );
-  const clauses = [
-    ...standard.map((clause) => {
-      const edit = edits.get(clause.id);
-      if (edit?.removed)
-        return {
-          title: clause.title,
-          text: clause.text,
-          change: 'removed' as const,
-          base_text: null,
-        };
-      if (edit)
-        return {
-          title: edit.title,
-          text: edit.text,
-          change: 'changed' as const,
-          base_text: clause.text,
-        };
-      return { title: clause.title, text: clause.text, change: null, base_text: null };
-    }),
-    ...offer.clauses
-      .filter((edit) => edit.clause === null)
-      .map((edit) => ({
-        title: edit.title,
-        text: edit.text,
-        change: 'added' as const,
-        base_text: null,
-      })),
-  ];
+  // Django's `clauses_of` (S69): keyed, in place, variables filled.
+  const values = valuesOf(customer.name, amount, offer.variables);
+  const clauses = mergedText(standard, offer.clauses).map((row) => ({
+    ...row,
+    text: fillText(row.text, values),
+    base_text: row.base_text === null ? null : fillText(row.base_text, values),
+  }));
   const lines = [
     { key: 'countries', value: offer.countries.join('، ') },
     { key: 'applies', value: String(offer.applies) },

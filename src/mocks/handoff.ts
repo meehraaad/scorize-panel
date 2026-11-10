@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import type { ContractDocument, HandoffContract, Instalment } from '@/features/sales/api';
 import type { HandoffCase, HandoffSupervisor } from '@/features/supervisor/api';
 import { ERFAN, failed, stateOrError } from './sales';
+import { finalText, valuesOf } from './contractText';
 import { STANDARD_CLAUSES } from './salesCustomer';
 import { forbidden, notFound, storage } from './session';
 import { SUPERVISOR } from './supervisor';
@@ -202,10 +203,10 @@ export const handoffHandlers = [
           condition: index === rest - 1 ? 'بعد از پذیرش' : null,
         })),
       ],
-      clauses: STANDARD_CLAUSES.map(({ title, text }) => ({ title, text })),
+      clauses: finalText(STANDARD_CLAUSES, [], valuesOf(row.name, 0, { 'تعداد سرچ': '10' })),
       agreement: {
         version: 2,
-        changed: STANDARD_CLAUSES.slice(0, 1).map(({ title }) => title),
+        changed: STANDARD_CLAUSES.slice(0, 1).map(({ id }) => `c${String(id)}`),
         parties: [
           { party: 'seller', name: 'نیما رستمی', agreed_at: '2026-11-08T10:00:00Z' },
           { party: 'customer', name: row.name, agreed_at: '2026-11-08T13:10:00Z' },

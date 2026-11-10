@@ -93,7 +93,8 @@ export interface ContractData {
   pledge_signed_at: string | null;
   installments: Installment[];
   /** The contract's text as approved for this case (S52); empty for older contracts. */
-  clauses: { title: string; text: string }[];
+  /** S69: articles, clauses and notes, numbered by their order (none: an article, before S69). */
+  clauses: TextClause[];
   profile: Record<ProfileField, string | null>;
   /** Fields the applicant may change (the rest are set by the team or the account). */
   editable: ProfileField[];
@@ -103,6 +104,7 @@ export interface ContractData {
 }
 
 import type { PaymentStatus } from '@/lib/applicant/publicInvoice';
+import type { TextClause } from '@/lib/contractText';
 
 export type { PaymentStatus };
 

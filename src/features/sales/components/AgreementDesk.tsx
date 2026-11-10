@@ -17,6 +17,7 @@ import {
   type AgreementRemark,
 } from '@/lib/agreement/api';
 import { ApiError } from '@/lib/api/client';
+import { keyOf, useClauseNames } from '@/lib/contractText';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { agreementQuery, useAddRemark, useAgree, useAnswerRemark } from '../api';
@@ -34,6 +35,7 @@ export function AgreementDesk({ customer }: { customer: number }) {
   const { t } = useTranslation('sales');
   const { data } = useSuspenseQuery(agreementQuery(customer));
   const [compare, setCompare] = useState<Compare>('previous');
+  const nameOf = useClauseNames(data?.clauses ?? []);
   if (!data) return null;
   const many = data.versions.length > 1;
   const against: Compare = many ? compare : 'standard';
@@ -42,7 +44,7 @@ export function AgreementDesk({ customer }: { customer: number }) {
   );
   const lines = against === 'previous' ? data.lines.filter((line) => line.previous !== null) : [];
   const general = data.remarks.filter(
-    (remark) => remark.clause === null || !data.clauses.some((c) => c.title === remark.clause),
+    (remark) => remark.clause === null || !data.clauses.some((c) => keyOf(c) === remark.clause),
   );
   const waiting = data.parties.find((row) => row.agreed_at === null);
 
@@ -106,7 +108,8 @@ export function AgreementDesk({ customer }: { customer: number }) {
           ))}
           {clauses.map((clause) => (
             <ClauseRow
-              key={clause.title}
+              key={keyOf(clause)}
+              name={nameOf(clause)}
               clause={clause}
               against={against}
               agreement={data}
@@ -143,11 +146,14 @@ function Diff({ before, after }: { before: string; after: string }) {
 
 function ClauseRow({
   clause,
+  name,
   against,
   agreement,
   customer,
 }: {
   clause: AgreementClause;
+  /** As the contract prints it (S69): "ماده ۲: تعهدات"، "۲-۱"… */
+  name: string;
   against: Compare;
   agreement: Agreement;
   customer: number;
@@ -162,11 +168,11 @@ function ClauseRow({
           ? clause.text
           : '';
   const after = clause.change === 'removed' ? '' : clause.text;
-  const remarks = agreement.remarks.filter((remark) => remark.clause === clause.title);
+  const remarks = agreement.remarks.filter((remark) => remark.clause === keyOf(clause));
   return (
     <li className="flex flex-col gap-2 rounded-2xl bg-canvas p-3.5 shadow-[inset_0_0_0_1.5px_var(--warn)]">
       <span className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold">{clause.title}</span>
+        <span className="text-sm font-bold">{name}</span>
         {clause.change && (
           <Chip
             tone={
@@ -284,6 +290,7 @@ function ConsultantActions({ agreement, customer }: { agreement: Agreement; cust
   const { t } = useTranslation('sales');
   const agree = useAgree(customer);
   const remark = useAddRemark(customer);
+  const nameOf = useClauseNames(agreement.clauses);
   const [asking, setAsking] = useState(false);
   const [clause, setClause] = useState('');
   const [text, setText] = useState('');
@@ -320,7 +327,7 @@ function ConsultantActions({ agreement, customer }: { agreement: Agreement; cust
             onChange={setClause}
             options={[
               { value: '', label: t('agreement.wholeOffer') },
-              ...agreement.clauses.map((row) => ({ value: row.title, label: row.title })),
+              ...agreement.clauses.map((row) => ({ value: keyOf(row), label: nameOf(row) })),
             ]}
           />
           <TextAreaField

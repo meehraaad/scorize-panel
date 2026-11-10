@@ -1,9 +1,12 @@
+import type { ClauseKind, TextClause } from '@/lib/contractText';
 import type { BuilderClause, ContractBuilder, ContractDocument } from '../api';
 import { suggestedSchedule } from '../plan';
 
 /** A clause the manager is writing or changing, before it is saved: `id` null for a new one. */
 export interface ClauseDraft {
   id: number | null;
+  /** S69: an article, a clause or a note. */
+  kind: ClauseKind;
   title: string;
   text: string;
 }
@@ -27,19 +30,34 @@ export function previewClauses(
   active: BuilderClause[],
   draft: ClauseDraft | null,
   newTitle: string,
-): { clauses: { title: string; text: string }[]; highlight: number | null } {
-  const clauses = active.map((clause) =>
+): { clauses: TextClause[]; highlight: number | null } {
+  const titleOf = (kind: ClauseKind, title: string) => (kind === 'article' ? title : '');
+  const clauses: TextClause[] = active.map((clause) =>
     draft && clause.id === draft.id
-      ? { title: draft.title.trim() || clause.title, text: draft.text }
-      : { title: clause.title, text: clause.text },
+      ? {
+          kind: draft.kind,
+          title: titleOf(draft.kind, draft.title.trim() || clause.title || newTitle),
+          text: draft.text,
+        }
+      : { kind: clause.kind, title: clause.title, text: clause.text },
   );
   if (draft?.id === null) {
-    clauses.push({ title: draft.title.trim() || newTitle, text: draft.text });
+    clauses.push({
+      kind: draft.kind,
+      title: titleOf(draft.kind, draft.title.trim() || newTitle),
+      text: draft.text,
+    });
     return { clauses, highlight: clauses.length - 1 };
   }
   const index = draft ? active.findIndex((clause) => clause.id === draft.id) : -1;
   return { clauses, highlight: index === -1 ? null : index };
 }
+
+/** What the preview fills the variables with: the system's samples, the manager's defaults (S69). */
+export const sampleValues = (builder: ContractBuilder): Record<string, string> => ({
+  ...Object.fromEntries(builder.builtins.map((row) => [row.name, row.sample])),
+  ...Object.fromEntries(builder.variables.map((row) => [row.name, row.default])),
+});
 
 /**
  * A sample customer's contract of this kind (S68), as the printed contract lays it out: the
@@ -49,7 +67,7 @@ export function previewClauses(
  */
 export function sampleDocument(
   builder: ContractBuilder,
-  clauses: { title: string; text: string }[],
+  clauses: TextClause[],
   customer: string,
   today: Date = new Date(),
 ): ContractDocument {

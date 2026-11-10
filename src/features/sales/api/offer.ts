@@ -1,5 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { ClauseKind } from '@/lib/contractText';
 import { SALES_API, SALES_KEY, type Degree } from '@/lib/sales/api';
 import { customerKey } from './customer';
 
@@ -33,6 +34,9 @@ export interface OfferOptions {
   instalments: number[];
   /** The standard contract, in order. */
   clauses: StandardClause[];
+  /** The blanks the seller fills (S69), and what the system fills itself. */
+  variables: ContractVariable[];
+  builtins: BuiltinVariable[];
 }
 
 /**
@@ -61,6 +65,9 @@ export interface Instalment {
 /** A clause of the standard contract (Django's `ContractClause`, S51). */
 export interface StandardClause {
   id: number;
+  /** S69: an article (with a title), a clause or a note. */
+  kind: ClauseKind;
+  /** Only an article's. */
   title: string;
   text: string;
   /** A fixed clause (S64): the seller can't change or remove it. */
@@ -73,9 +80,26 @@ export interface StandardClause {
  */
 export interface ClauseEdit {
   clause: number | null;
+  /** A standard clause keeps its own; a clause added picks one (S69). */
+  kind: ClauseKind;
+  /** Only an article's. */
   title: string;
   text: string;
   removed: boolean;
+  /** A clause added goes after this standard clause; null: at the end (S69). */
+  after: number | null;
+}
+
+/** A blank of the kind of contract the seller fills for each customer (S69), e.g. «تعداد سرچ». */
+export interface ContractVariable {
+  name: string;
+  default: string;
+}
+
+/** What the system fills in a clause itself (the customer's name, the amount…), with a sample. */
+export interface BuiltinVariable {
+  name: string;
+  sample: string;
 }
 
 /** At most this many instalments (Django's `MAX_INSTALMENTS`). */
@@ -100,6 +124,8 @@ export interface Offer {
   schedule: Instalment[];
   /** The clauses changed for this customer; the manager reviews only these. */
   clauses: ClauseEdit[];
+  /** The kind of contract's blanks by name (S69); a missing one takes its default. */
+  variables: Record<string, string>;
   manager_note: string;
   /** The kind of contract (S68); null: the standard one. */
   template: number | null;

@@ -47,7 +47,9 @@ describe('contract handoff', () => {
     expect(router.state.location.pathname).toBe('/sales/customers/112/contract');
     const parties = within(doc).getByRole('region', { name: 'طرفین قرارداد' });
     expect(within(parties).getByText('کیان مرادی')).toBeInTheDocument();
-    expect(within(doc).getByRole('heading', { name: 'فسخ قرارداد' })).toBeInTheDocument();
+    // Articles print with their number (S69), their clauses as ۴-۱، ۴-۲.
+    expect(within(doc).getByRole('heading', { name: 'ماده ۳: فسخ قرارداد' })).toBeInTheDocument();
+    expect(within(doc).getByText('۴-۱')).toBeInTheDocument();
     // The clause written for this customer is marked; who agreed online, on which version.
     expect(within(doc).getAllByText('توافقی').length).toBeGreaterThan(0);
     expect(

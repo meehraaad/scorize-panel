@@ -269,21 +269,22 @@ describe('sales manager section', () => {
     renderApp('/sales/customers/105/offer');
     await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
     const clauses = screen.getByRole('region', { name: '۴. بندهای قرارداد' });
-    await user.click(within(clauses).getByRole('button', { name: 'ویرایش فسخ قرارداد' }));
+    // Named as the contract prints them (S69).
+    await user.click(within(clauses).getByRole('button', { name: 'ویرایش ماده ۳: فسخ قرارداد' }));
     const text = within(clauses).getByLabelText('متن بند');
     await user.clear(text);
     await user.type(
       text,
       'تا ۱۴ روز پس از امضا، با فسخ قرارداد کل مبلغ پرداختی بازگردانده می‌شود.',
     );
-    await user.click(within(clauses).getByRole('button', { name: 'حذف تعهدات متقاضی' }));
+    await user.click(within(clauses).getByRole('button', { name: 'حذف ماده ۲: تعهدات متقاضی' }));
     expect(within(clauses).getByText('۲ بند تغییر کرده · ۰ بند اضافه شده')).toBeInTheDocument();
-    await user.click(within(clauses).getByRole('button', { name: 'افزودن بند' }));
+    await user.click(within(clauses).getByRole('button', { name: '+ ماده‌ی تازه' }));
     await user.click(
       screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
     );
-    expect(screen.getByText('هر بند متن می‌خواهد و بند تازه عنوان هم.')).toBeInTheDocument();
-    await user.type(within(clauses).getByLabelText('عنوان بند'), 'بورسیه');
+    expect(screen.getByText('هر بند متن می‌خواهد و ماده‌ی تازه عنوان هم.')).toBeInTheDocument();
+    await user.type(within(clauses).getByLabelText('عنوان ماده'), 'بورسیه');
     await user.type(within(clauses).getByLabelText('متن بند'), 'با بورسیه، قسط آخر ۱۰٪ کمتر.');
     await user.click(
       screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
@@ -309,7 +310,7 @@ describe('sales manager section', () => {
     loginAs(NIMA);
     renderApp('/sales/customers/105/offer');
     await screen.findByRole('heading', { name: 'پیشنهاد برای عرفان ملکی' });
-    await user.click(screen.getByRole('button', { name: 'حذف بورسیه' }));
+    await user.click(screen.getByRole('button', { name: /^حذف ماده .: بورسیه$/ }));
     const applies = screen.getByLabelText('تعداد اپلای');
     await user.clear(applies);
     await user.type(applies, '4');
@@ -568,23 +569,29 @@ describe('contract builder and agreement desk (S64)', () => {
     const user = userEvent.setup();
     renderApp('/sales/manager/contract');
     // The editor's list comes first; the preview's sheet has the same heading.
-    const [clauses] = await screen.findAllByRole('region', { name: 'بندهای قرارداد' });
-    if (!clauses) throw new Error('no clauses');
-    expect(within(clauses).getByText('۱. موضوع قرارداد')).toBeInTheDocument();
-    await user.click(within(clauses).getByRole('button', { name: '+ بند تازه' }));
-    await user.type(within(clauses).getByLabelText('عنوان بند'), 'بورسیه');
-    await user.type(within(clauses).getByLabelText('متن بند'), 'با بورسیه، قسط آخر کمتر.');
+    const clauses = await screen.findByRole('region', { name: 'متن قرارداد' });
+    expect(within(clauses).getByText('ماده ۱: موضوع قرارداد')).toBeInTheDocument();
+    await user.click(within(clauses).getByRole('button', { name: '+ ماده، بند یا تبصره' }));
+    await user.click(within(clauses).getByRole('radio', { name: 'ماده' }));
+    await user.type(within(clauses).getByLabelText('عنوان ماده'), 'بورسیه');
+    await user.type(
+      within(clauses).getByLabelText('متن ماده (اختیاری)'),
+      'با بورسیه، قسط آخر کمتر.',
+    );
     await user.click(within(clauses).getByRole('switch', { name: /بند ثابت/ }));
     await user.click(within(clauses).getByRole('button', { name: 'ذخیره' }));
-    expect(await within(clauses).findByText('۴. بورسیه')).toBeInTheDocument();
+    expect(await within(clauses).findByText('ماده ۵: بورسیه')).toBeInTheDocument();
 
-    await user.click(within(clauses).getByRole('button', { name: 'بالا بردن بورسیه' }));
-    expect(await within(clauses).findByText('۳. بورسیه')).toBeInTheDocument();
+    await user.click(within(clauses).getByRole('button', { name: 'بالا بردن ماده ۵: بورسیه' }));
+    // Above the last clauses and note of article ۴ it is still the fifth article…
+    expect(await within(clauses).findByText('ماده ۵: بورسیه')).toBeInTheDocument();
+    // …and the note after it now belongs to it.
+    expect(within(clauses).getByText('تبصره ۱')).toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: 'نسخه‌ها' }));
     const versions = await screen.findByRole('region', { name: 'نسخه‌های متن قرارداد' });
     expect(within(versions).getByText('ترتیب بندها عوض شد')).toBeInTheDocument();
-    expect(within(versions).getByText('بند «بورسیه» اضافه شد')).toBeInTheDocument();
+    expect(within(versions).getByText('ماده «بورسیه» اضافه شد')).toBeInTheDocument();
     expect(within(versions).getByText('متن پیش از اولین تغییر')).toBeInTheDocument();
   });
 
@@ -612,11 +619,11 @@ describe('contract builder and agreement desk (S64)', () => {
     renderApp('/sales/manager/contract');
     const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
     expect(within(preview).getByText(/موضوع قرارداد/)).toBeInTheDocument();
-    const [clauses] = screen.getAllByRole('region', { name: 'بندهای قرارداد' });
-    if (!clauses) throw new Error('no clauses');
-    await user.click(within(clauses).getByRole('button', { name: '+ بند تازه' }));
-    await user.type(within(clauses).getByLabelText('عنوان بند'), 'بورسیه');
-    await user.type(within(clauses).getByLabelText('متن بند'), 'متن در حال نوشتن');
+    const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
+    await user.click(within(clauses).getByRole('button', { name: '+ ماده، بند یا تبصره' }));
+    await user.click(within(clauses).getByRole('radio', { name: 'ماده' }));
+    await user.type(within(clauses).getByLabelText('عنوان ماده'), 'بورسیه');
+    await user.type(within(clauses).getByLabelText('متن ماده (اختیاری)'), 'متن در حال نوشتن');
     expect(within(preview).getByText(/بورسیه/)).toBeInTheDocument();
     expect(within(preview).getByText('متن در حال نوشتن')).toBeInTheDocument();
     // The whole sheet opens full screen too.
@@ -636,9 +643,8 @@ describe('contract builder and agreement desk (S64)', () => {
     // It opens on the new one, with the standard text copied.
     await screen.findByRole('radio', { name: /فقط ویزا/, checked: true });
     expect(router.state.location.search).toMatch(/template=\d+/);
-    const [clauses] = screen.getAllByRole('region', { name: 'بندهای قرارداد' });
-    if (!clauses) throw new Error('no clauses');
-    expect(within(clauses).getByText('۱. موضوع قرارداد')).toBeInTheDocument();
+    const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
+    expect(within(clauses).getByText('ماده ۱: موضوع قرارداد')).toBeInTheDocument();
     // Back to the standard contract.
     await user.click(screen.getByRole('radio', { name: /^قرارداد استاندارد/ }));
     expect(router.state.location.search).not.toMatch(/template=/);
@@ -665,14 +671,96 @@ describe('contract builder and agreement desk (S64)', () => {
     expect(screen.queryByText('موضوع قرارداد', { exact: false })).not.toBeInTheDocument();
   });
 
+  it('the sheet numbers clauses by their article and fills the variables (S69)', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/manager/contract');
+    const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
+    // Article ۴ has untitled clauses ۴-۱، ۴-۲ and a note.
+    expect(within(preview).getByText('ماده ۴: تعهدات مؤسسه')).toBeInTheDocument();
+    expect(within(preview).getByText('۴-۱')).toBeInTheDocument();
+    expect(within(preview).getByText('۴-۲')).toBeInTheDocument();
+    expect(within(preview).getByText(/تبصره ۱/)).toBeInTheDocument();
+    // The variables show with the samples: the default search count, a sample customer.
+    expect(within(preview).getByText('10')).toBeInTheDocument();
+    expect(within(preview).getByText('سارا محمدی')).toBeInTheDocument();
+
+    // The manager adds a variable and puts it in a new clause where the cursor is.
+    const variables = screen.getByRole('region', { name: 'متغیرها' });
+    await user.click(within(variables).getByRole('button', { name: '+ متغیر تازه' }));
+    const names = within(variables).getAllByLabelText('نام متغیر');
+    await user.type(names.at(-1) as HTMLElement, 'نام سفارت');
+    const defaults = within(variables).getAllByLabelText('مقدار پیش‌فرض');
+    await user.type(defaults.at(-1) as HTMLElement, 'آلمان');
+    await user.click(within(variables).getByRole('button', { name: 'ذخیره‌ی متغیرها' }));
+    expect(await screen.findByText('متغیرها ذخیره شد.')).toBeInTheDocument();
+
+    const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
+    await user.click(within(clauses).getByRole('button', { name: '+ ماده، بند یا تبصره' }));
+    await user.type(within(clauses).getByLabelText('متن'), 'نوبت ');
+    await user.click(within(clauses).getByRole('button', { name: 'افزودن نام سفارت به متن' }));
+    expect(within(clauses).getByLabelText('متن')).toHaveValue('نوبت {{نام سفارت}}');
+    // The preview fills it before it is saved.
+    expect(within(preview).getByText('آلمان')).toBeInTheDocument();
+    await user.click(within(clauses).getByRole('button', { name: 'ذخیره' }));
+    // At the end of the text: the third clause of article ۴, after its note.
+    expect(await within(clauses).findByText('۴-۳')).toBeInTheDocument();
+  });
+
+  it('the seller fills a variable and adds a clause into an article (S69)', async () => {
+    loginAs(NIMA);
+    const user = userEvent.setup();
+    const posts: unknown[] = [];
+    const listen = ({ request }: { request: Request }) => {
+      if (request.method === 'POST' && request.url.endsWith('/customers/105/offer/'))
+        void request
+          .clone()
+          .json()
+          .then((body: unknown) => posts.push(body));
+    };
+    server.events.on('request:start', listen);
+    renderApp('/sales/customers/105/offer');
+    const clauses = await screen.findByRole('region', { name: '۴. بندهای قرارداد' });
+    const count = within(clauses).getByLabelText('تعداد سرچ');
+    expect(count).toHaveValue('10');
+    await user.clear(count);
+    await user.type(count, '15');
+    // The text shows the value at once.
+    expect(within(clauses).getByText('15')).toBeInTheDocument();
+    const adds = within(clauses).getAllByRole('button', { name: '+ بند یا تبصره در این ماده' });
+    await user.click(adds.at(-1) as HTMLElement);
+    await user.click(within(clauses).getByRole('radio', { name: 'تبصره' }));
+    await user.type(within(clauses).getByLabelText('متن بند'), 'هزینه‌ی سفارت با متقاضی است.');
+    // A note added after the article's note: تبصره ۲.
+    expect(within(clauses).getByText('تبصره ۲')).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
+    );
+    await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
+    server.events.removeListener('request:start', listen);
+    const body = posts.at(-1) as { variables: Record<string, string>; clauses: unknown[] };
+    expect(body.variables).toEqual({ 'تعداد سرچ': '15' });
+    expect(body.clauses).toEqual([
+      {
+        clause: null,
+        kind: 'note',
+        title: '',
+        text: 'هزینه‌ی سفارت با متقاضی است.',
+        removed: false,
+        after: 7,
+      },
+    ]);
+  });
+
   it('a seller cannot change a fixed clause', async () => {
     loginAs(NIMA);
     renderApp('/sales/customers/105/offer');
     const clauses = await screen.findByRole('region', { name: '۴. بندهای قرارداد' });
-    expect(within(clauses).getByText('ثابت')).toBeInTheDocument();
+    expect(within(clauses).getAllByText('ثابت').length).toBeGreaterThan(0);
     expect(
-      within(clauses).queryByRole('button', { name: 'ویرایش موضوع قرارداد' }),
+      within(clauses).queryByRole('button', { name: 'ویرایش ماده ۱: موضوع قرارداد' }),
     ).not.toBeInTheDocument();
-    expect(within(clauses).getByRole('button', { name: 'ویرایش فسخ قرارداد' })).toBeInTheDocument();
+    expect(
+      within(clauses).getByRole('button', { name: 'ویرایش ماده ۳: فسخ قرارداد' }),
+    ).toBeInTheDocument();
   });
 });

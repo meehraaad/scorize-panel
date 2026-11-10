@@ -3,9 +3,11 @@ import { API_BASE, api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
 import type { AgreementParty } from '@/lib/agreement/api';
+import type { ClauseKind } from '@/lib/contractText';
 import type { Colleague } from '@/lib/tasks/api';
 import type { ActivityKind, StageActivity, StagePhase } from './board';
 import type { ContractDocument } from './contract';
+import type { BuiltinVariable, ContractVariable } from './offer';
 import type { MonthContract } from './month';
 
 /** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
@@ -128,11 +130,17 @@ export type DraftTerm =
   | 'period'
   | 'amount'
   | 'instalments'
-  | 'language';
+  | 'language'
+  | 'variables';
 
 /** A clause that differs from the standard contract (S51), with the standard text it changes. */
 export interface ClauseChange {
   kind: 'changed' | 'added' | 'removed';
+  /** S69: an article, a clause or a note (none: an article, offers before S69). */
+  clause_kind?: ClauseKind;
+  /** The title of the article it is in (S69). */
+  article?: string;
+  /** Only an article's. */
   title: string;
   text: string;
   /** Null when added. */
@@ -577,6 +585,9 @@ export function useDeleteCommissionRule() {
 /** A clause of the standard contract as the manager keeps it. `locked`: a seller can't change it. */
 export interface BuilderClause {
   id: number;
+  /** S69: an article (with a title), a clause or a note; numbered by their order. */
+  kind: ClauseKind;
+  /** Only an article's. */
   title: string;
   text: string;
   locked: boolean;
@@ -615,7 +626,13 @@ export interface TextVersion {
   note: string;
   author: string;
   clauses: number;
-  changes: { kind: TextChangeKind; title: string; text: string; before: string | null }[];
+  changes: {
+    kind: TextChangeKind;
+    clause_kind?: ClauseKind;
+    title: string;
+    text: string;
+    before: string | null;
+  }[];
 }
 
 /**
@@ -640,6 +657,9 @@ export interface ContractBuilder {
   prices: BuilderPrice[];
   rules: OfferRules;
   versions: TextVersion[];
+  /** The blanks the seller fills (S69), and what the system fills with the preview's samples. */
+  variables: ContractVariable[];
+  builtins: BuiltinVariable[];
 }
 
 const BUILDER_API = `${MANAGER_API}/contract`;
@@ -669,7 +689,15 @@ function useBuilderMutation<T, R = unknown>(send: (body: T) => Promise<R>) {
   });
 }
 
-export type ClauseInput = Partial<Pick<BuilderClause, 'title' | 'text' | 'locked' | 'is_active'>>;
+export type ClauseInput = Partial<
+  Pick<BuilderClause, 'kind' | 'title' | 'text' | 'locked' | 'is_active'>
+>;
+
+/** This kind of contract's blanks, all at once in their order (S69). */
+export const useSaveVariables = (template: number | null) =>
+  useBuilderMutation((variables: ContractVariable[]) =>
+    api(`${BUILDER_API}/variables/${kindQuery(template)}`, { method: 'PUT', body: { variables } }),
+  );
 
 /**
  * A new kind of contract (S68): empty, or (`copy`) a copy of `copy_from`'s clauses, prices and

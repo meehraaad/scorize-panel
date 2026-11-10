@@ -382,5 +382,15 @@
       "done": "بارگذاری شد",
       "batchDone": "همه‌ی فایل‌ها بارگذاری شدند"
     }
+  },
+  "clauseNumber": {
+    "article": "ماده {{n}}",
+    "clause": "{{article}}-{{n}}",
+    "note": "تبصره {{n}}",
+    "kinds": {
+      "article": "ماده",
+      "clause": "بند",
+      "note": "تبصره"
+    }
   }
 }

@@ -29,6 +29,7 @@ export function ClauseChanges({
   standard: number;
 }) {
   const { t } = useTranslation('sales');
+  const { t: tc } = useTranslation();
   const f = useFormat();
 
   return (
@@ -53,7 +54,17 @@ export function ClauseChanges({
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-bold">
-                  {change.kind === 'changed' && change.base_title !== null ? (
+                  {(change.clause_kind ?? 'article') !== 'article' ? (
+                    // S69: an untitled clause or note, named by its article.
+                    change.article ? (
+                      t('manager.approvals.clauses.inArticle', {
+                        kind: tc(`clauseNumber.kinds.${change.clause_kind ?? 'clause'}`),
+                        article: change.article,
+                      })
+                    ) : (
+                      tc(`clauseNumber.kinds.${change.clause_kind ?? 'clause'}`)
+                    )
+                  ) : change.kind === 'changed' && change.base_title !== null ? (
                     <Diff before={change.base_title} after={change.title} />
                   ) : (
                     change.title

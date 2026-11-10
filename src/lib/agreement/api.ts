@@ -4,6 +4,8 @@
  * at `/sales/v1/customers/<user>/agreement/`, the customer at `/applicant/v1/offer/` (only their
  * own remarks). A new version needs everyone's agreement again.
  */
+import type { ClauseKind } from '@/lib/contractText';
+
 export type AgreementParty = 'seller' | 'consultant' | 'manager' | 'customer';
 export const AGREEMENT_PARTIES: readonly AgreementParty[] = [
   'seller',
@@ -15,6 +17,11 @@ export const AGREEMENT_PARTIES: readonly AgreementParty[] = [
 export type ClauseChangeKind = 'changed' | 'added' | 'removed';
 
 export interface AgreementClause {
+  /** S69: tells clauses without titles apart; versions before have none. */
+  key?: string;
+  /** S69: an article, a clause or a note (none: an article). */
+  kind?: ClauseKind;
+  /** Only an article's. */
   title: string;
   text: string;
   /** What differs from the standard contract; null: as the standard. */

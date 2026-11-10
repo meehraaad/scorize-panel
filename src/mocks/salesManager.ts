@@ -4,12 +4,14 @@ import type {
   CommissionRule,
   CommissionRuleInput,
   AssignSettings,
+  BuilderClause,
   ClauseChange,
   ClauseEdit,
   ContractBuilder,
   ContractDocument,
   ContractDraft,
   ContractTemplate,
+  TextChangeKind,
   TextVersion,
   DraftTerm,
   FunnelData,
@@ -23,10 +25,18 @@ import type {
   TeamData,
   TeamRange,
 } from '@/features/sales/api';
+import type { ClauseKind } from '@/lib/contractText';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { failed, saveStages, stagesOf, stateOrError, type SalesState } from './sales';
 import { openHandoff } from './handoff';
-import { OFFER_TEMPLATES, STANDARD_CLAUSES, TURKEY_CLAUSES } from './salesCustomer';
+import { finalText, valuesOf } from './contractText';
+import {
+  BUILTIN_VARIABLES,
+  OFFER_TEMPLATES,
+  STANDARD_CLAUSES,
+  STANDARD_VARIABLES,
+  TURKEY_CLAUSES,
+} from './salesCustomer';
 
 /**
  * Fake sales-manager API (docs/backend-changes.md S34–S40, T12; the board's stages S48). Only Reza (user 4, with
@@ -189,6 +199,8 @@ const builderState = (): ContractBuilder => ({
     max_applies: 30,
   },
   versions: [],
+  variables: STANDARD_VARIABLES,
+  builtins: BUILTIN_VARIABLES,
 });
 
 /** Free apply to Turkey (S68): one fixed clause, admission at 0 toman, no instalments. */
@@ -211,6 +223,7 @@ const turkeyState = (): ContractBuilder => ({
     { feature: 'writing', price: null, is_active: false },
   ],
   rules: { ...builderState().rules, discounts: [0], durations: [6, 12], max_instalments: 1 },
+  variables: [],
 });
 
 /** One kind of contract's builder state (`?template=`), or null for one that doesn't exist. */
@@ -247,26 +260,35 @@ function textChanges(
   after: ContractBuilder['clauses'],
 ): TextVersion['changes'] {
   const rows: TextVersion['changes'] = [];
+  const row = (kind: TextChangeKind, clause: BuilderClause, was: string | null = null) => ({
+    kind,
+    clause_kind: clause.kind,
+    title: clause.title,
+    text: clause.text,
+    before: was,
+  });
   for (const clause of after) {
     const was = before.find((item) => item.id === clause.id);
-    if (!was) rows.push({ kind: 'added', title: clause.title, text: clause.text, before: null });
-    else if (was.title !== clause.title || was.text !== clause.text)
-      rows.push({ kind: 'changed', title: clause.title, text: clause.text, before: was.text });
+    if (!was) rows.push(row('added', clause));
+    else if (was.title !== clause.title || was.text !== clause.text || was.kind !== clause.kind)
+      rows.push(row('changed', clause, was.text));
     else if (was.locked !== clause.locked)
-      rows.push({
-        kind: clause.locked ? 'locked' : 'unlocked',
-        title: clause.title,
-        text: clause.text,
-        before: null,
-      });
+      rows.push(row(clause.locked ? 'locked' : 'unlocked', clause));
   }
   for (const clause of before)
-    if (!after.some((item) => item.id === clause.id))
-      rows.push({ kind: 'removed', title: clause.title, text: clause.text, before: null });
+    if (!after.some((item) => item.id === clause.id)) rows.push(row('removed', clause));
   return rows;
 }
 
+/** Django's `label_of` (S69): an article by its title, a clause or note by its start. */
+function labelOf(clause: { kind: ClauseKind; title: string; text: string }) {
+  if (clause.kind === 'article') return `ماده «${clause.title}»`;
+  const start = clause.text.split(/\s+/).slice(0, 6).join(' ');
+  return `${clause.kind === 'note' ? 'تبصره' : 'بند'} «${start}…»`;
+}
+
 /** Keeps the text after a change as a new version (the first change also keeps the text before). */
+
 function keepVersion(state: ContractBuilder, before: ContractBuilder['clauses'], note: string) {
   const active = state.clauses.filter((clause) => clause.is_active);
   const last = state.versions[0];
@@ -491,11 +513,31 @@ function termsWithPrevious(
 /** Django's `review_rows`: each edit with the standard text it changes. */
 function clauseChanges(edits: ClauseEdit[], reviewed: ClauseEdit[] | undefined): ClauseChange[] {
   const same = (a: ClauseEdit, b: ClauseEdit) =>
-    a.clause === b.clause && a.title === b.title && a.text === b.text && a.removed === b.removed;
+    a.clause === b.clause &&
+    a.title === b.title &&
+    a.text === b.text &&
+    a.removed === b.removed &&
+    (a.after ?? null) === (b.after ?? null);
+  // Each clause's article, in the contract's order (Django's `articles_of`).
+  let current = '';
+  const articles = new Map(
+    STANDARD_CLAUSES.map((clause) => {
+      if (clause.kind === 'article') current = clause.title;
+      return [clause.id, current];
+    }),
+  );
   return edits.map((edit) => {
     const base = STANDARD_CLAUSES.find((clause) => clause.id === edit.clause);
+    const anchor = edit.clause ?? edit.after;
     return {
       kind: edit.clause === null ? 'added' : edit.removed ? 'removed' : 'changed',
+      clause_kind: base?.kind ?? edit.kind,
+      article:
+        edit.kind === 'article' && edit.clause === null
+          ? edit.title
+          : anchor === null
+            ? current
+            : (articles.get(anchor) ?? ''),
       title: edit.title,
       text: edit.text,
       base_title: base?.title ?? null,
@@ -974,6 +1016,7 @@ export const managerHandlers = [
       ...(source ?? {
         ...fresh,
         prices: fresh.prices.map((row) => ({ ...row, price: null, is_active: false })),
+        variables: [],
       }),
       clauses: (source?.clauses ?? [])
         .filter((clause) => clause.is_active)
@@ -1005,24 +1048,37 @@ export const managerHandlers = [
     if (data instanceof Response) return data;
     const state = kindState(kindOf(request));
     if (!state) return notFound();
-    const body = (await request.json()) as { title: string; text: string; locked?: boolean };
-    if (!body.title.trim() || !body.text.trim())
-      return HttpResponse.json({ title: ['required'] }, { status: 400 });
+    const body = (await request.json()) as {
+      kind?: ClauseKind;
+      title?: string;
+      text?: string;
+      locked?: boolean;
+    };
+    // Django's `check_clause` (S69): an article needs a title, a clause or note a text.
+    const kind = body.kind ?? 'article';
+    const title = kind === 'article' ? (body.title ?? '').trim() : '';
+    const text = (body.text ?? '').trim();
+    if (kind === 'article' ? !title : !text)
+      return HttpResponse.json(
+        kind === 'article' ? { title: ['required'] } : { text: ['required'] },
+        { status: 400 },
+      );
     const before = state.clauses.filter((clause) => clause.is_active);
     const id = Math.max(0, ...state.clauses.map((clause) => clause.id)) + 1;
     state.clauses = [
       ...before,
       {
         id,
-        title: body.title.trim(),
-        text: body.text.trim(),
+        kind,
+        title,
+        text,
         locked: body.locked ?? false,
         is_active: true,
         updated_at: new Date().toISOString(),
       },
       ...state.clauses.filter((clause) => !clause.is_active),
     ];
-    keepVersion(state, before, `بند «${body.title.trim()}» اضافه شد`);
+    keepVersion(state, before, `${labelOf({ kind, title, text })} اضافه شد`);
     return HttpResponse.json({ id }, { status: 201 });
   }),
 
@@ -1054,6 +1110,14 @@ export const managerHandlers = [
     const clause = state?.clauses.find((item) => item.id === Number(params.id));
     if (!state || !clause) return notFound();
     const body = (await request.json()) as Partial<ContractBuilder['clauses'][number]>;
+    const kind = body.kind ?? clause.kind;
+    if (body.kind !== undefined || body.title !== undefined || body.text !== undefined) {
+      const title = (body.title ?? clause.title).trim();
+      const text = (body.text ?? clause.text).trim();
+      if (kind === 'article' ? !title : !text)
+        return HttpResponse.json({ title: ['required'] }, { status: 400 });
+      body.title = kind === 'article' ? title : '';
+    }
     const before = state.clauses.filter((item) => item.is_active).map((item) => ({ ...item }));
     Object.assign(clause, body, { updated_at: new Date().toISOString() });
     // Taken out: after the active ones; back: at the end of the contract.
@@ -1068,13 +1132,37 @@ export const managerHandlers = [
       active.splice(index, 0, clause);
       state.clauses = [...active, ...state.clauses.filter((item) => !item.is_active)];
     }
+    const name = labelOf(clause);
     const note =
       body.is_active === false
-        ? `بند «${clause.title}» برداشته شد`
+        ? `${name} برداشته شد`
         : body.is_active
-          ? `بند «${clause.title}» برگشت`
-          : `بند «${clause.title}» تغییر کرد`;
+          ? `${name} برگشت`
+          : `${name} تغییر کرد`;
     keepVersion(state, before, note);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Django's `VariablesView` (S69): the kind of contract's blanks, all at once.
+  http.put(`${BASE}/contract/variables/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = kindState(kindOf(request));
+    if (!state) return notFound();
+    const { variables } = (await request.json()) as { variables: ContractBuilder['variables'] };
+    const rows = variables.map((row) => ({
+      name: row.name.split(/\s+/).filter(Boolean).join(' '),
+      default: row.default.trim(),
+    }));
+    const names = rows.map((row) => row.name);
+    if (
+      names.some(
+        (name) => !name || /[{}]/.test(name) || BUILTIN_VARIABLES.some((row) => row.name === name),
+      ) ||
+      new Set(names).size !== names.length
+    )
+      return HttpResponse.json({ variables: ['invalid'] }, { status: 400 });
+    state.variables = rows;
     return new HttpResponse(null, { status: 204 });
   }),
 
@@ -1156,14 +1244,7 @@ export const managerHandlers = [
         due_date: row.when === 'date' ? row.date : null,
         condition: row.when === 'signing' || row.when === 'date' ? null : 'بعد از پذیرش',
       })),
-      clauses: [
-        ...standard.flatMap((clause) => {
-          const edit = edits.find((entry) => entry.clause === clause.id);
-          if (edit?.removed) return [];
-          return [edit ? { title: edit.title, text: edit.text } : clause];
-        }),
-        ...edits.filter((edit) => edit.clause === null),
-      ].map(({ title, text }) => ({ title, text })),
+      clauses: finalText(standard, edits, valuesOf(item.name, amount, offer?.variables)),
       agreement: null,
     };
     return HttpResponse.json(body);

@@ -1,6 +1,14 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Logo } from '@/components/ui/Logo';
+import {
+  keyOf,
+  numberClauses,
+  textParts,
+  useClauseLabel,
+  type ClauseNumber,
+  type TextClause,
+} from '@/lib/contractText';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { ContractDocument } from '../api';
 import { useSalesFormat } from '../format';
@@ -52,11 +60,85 @@ function Party({ label, name, lines }: { label: string; name: string; lines: str
  * contract to print, an offer's contract before the manager approves it (`draft`), and the
  * builder's live preview of a kind of contract (S68), where `highlight` is the clause being edited.
  */
+/** A clause's text; in the builder's preview its variables stand out, filled with samples (S69). */
+function ClauseText({
+  text,
+  values,
+}: {
+  text: string;
+  values?: Record<string, string> | undefined;
+}) {
+  if (!values) return <>{text}</>;
+  return (
+    <>
+      {textParts(text, values).map((part, index) =>
+        part.variable === undefined ? (
+          part.text
+        ) : (
+          <mark
+            key={index}
+            className={`rounded px-1 ${part.missing ? 'bg-warn-tint text-warn' : 'bg-tint text-primary-text'}`}
+          >
+            {part.text}
+          </mark>
+        ),
+      )}
+    </>
+  );
+}
+
+/** How a piece of the text prints: an article's heading, a clause's number, a note's label. */
+function ClauseBody({
+  clause,
+  number,
+  values,
+  badge,
+}: {
+  clause: TextClause;
+  number: ClauseNumber;
+  values?: Record<string, string> | undefined;
+  badge: ReactNode;
+}) {
+  const label = useClauseLabel();
+  if (number.kind === 'article') {
+    return (
+      <div className="flex min-w-0 flex-col gap-1">
+        <h3 className="m-0 text-[15.5px] font-extrabold">
+          {clause.title ? `${label(number)}: ${clause.title}` : label(number)}
+          {badge}
+        </h3>
+        {clause.text && (
+          <p className="m-0 text-sm leading-8 whitespace-pre-line">
+            <ClauseText text={clause.text} values={values} />
+          </p>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className="flex min-w-0 gap-2.5 ps-3">
+      <span
+        className={`flex-none tabular-nums ${number.kind === 'note' ? 'font-extrabold' : 'w-10 font-bold'}`}
+      >
+        {label(number)}
+        {number.kind === 'note' && ':'}
+      </span>
+      <p
+        className={`m-0 min-w-0 text-sm leading-8 whitespace-pre-line ${number.kind === 'note' ? 'font-semibold' : ''}`}
+      >
+        <ClauseText text={clause.text} values={values} />
+        {badge}
+      </p>
+    </div>
+  );
+}
+
 export function ContractSheet({
   doc,
   framed = true,
   highlight = null,
   emptyClauses,
+  values,
 }: {
   doc: ContractDocument;
   /** The page's own card (print page); false: a lighter sheet inside another card or dialog. */
@@ -65,6 +147,8 @@ export function ContractSheet({
   highlight?: number | null;
   /** What to say when the contract has no clauses yet. */
   emptyClauses?: string;
+  /** The builder's preview: the text still names its variables; fill them with these samples. */
+  values?: Record<string, string>;
 }) {
   const { t } = useTranslation('sales');
   const { t: tc } = useTranslation();
@@ -75,6 +159,7 @@ export function ContractSheet({
   const dash = t('print.none');
   const version = doc.agreement?.version ?? null;
   const changed = new Set(doc.agreement?.changed ?? []);
+  const numbers = numberClauses(doc.clauses);
 
   useEffect(() => {
     // `nearest`: the preview's own scroll moves when it can, not the whole page.
@@ -258,15 +343,16 @@ export function ContractSheet({
               </span>
             )}
           </div>
-          <ol className="m-0 flex list-none flex-col gap-4 p-0">
+          <ol className="m-0 flex list-none flex-col gap-2 p-0">
             {doc.clauses.map((clause, index) => {
-              const agreed = changed.has(clause.title);
+              const agreed = changed.has(keyOf(clause));
               const editing = index === highlight;
+              const number = numbers[index] ?? { kind: 'article' as const, article: 0, n: 0 };
               return (
                 <li
                   key={index}
                   ref={editing ? focusRef : undefined}
-                  className={`flex break-inside-avoid gap-3.5 ${
+                  className={`break-inside-avoid ${number.kind === 'article' && index > 0 ? 'mt-4' : ''} ${
                     editing
                       ? 'rounded-xl bg-tint px-3.5 py-3 shadow-[inset_0_0_0_1.5px_var(--primary)]'
                       : agreed
@@ -274,21 +360,20 @@ export function ContractSheet({
                         : ''
                   }`}
                 >
-                  <span className="w-7 flex-none font-extrabold tabular-nums">
-                    {f.number(index + 1)}.
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="m-0 text-[15px] font-bold">
-                      {clause.title}
-                      {agreed && !editing && <Mark />}
-                      {editing && (
+                  <ClauseBody
+                    clause={clause}
+                    number={number}
+                    values={values}
+                    badge={
+                      editing ? (
                         <span className="ms-2 text-[11.5px] font-bold text-primary-text">
                           {t('print.editing')}
                         </span>
-                      )}
-                    </h3>
-                    <p className="m-0 text-sm leading-8 whitespace-pre-line">{clause.text}</p>
-                  </div>
+                      ) : agreed ? (
+                        <Mark />
+                      ) : null
+                    }
+                  />
                 </li>
               );
             })}

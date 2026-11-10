@@ -87,7 +87,7 @@ describe('contract page', () => {
     const user = userEvent.setup();
     await openContract();
     const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
-    expect(within(clauses).getByText('۲ بند، همان‌طور که برای شما تأیید شد')).toBeInTheDocument();
+    expect(within(clauses).getByText('۲ ماده، همان‌طور که برای شما تأیید شد')).toBeInTheDocument();
     const text = within(clauses).getByText(/تا ۱۴ روز پس از امضا/);
     expect(text).not.toBeVisible();
     await user.click(within(clauses).getByText('فسخ قرارداد'));
@@ -167,7 +167,7 @@ describe('contract page', () => {
     expect(within(clauses).getByText('تغییر کرده')).toBeInTheDocument();
 
     await user.click(within(clauses).getByRole('button', { name: 'سؤال یا درخواست تغییر' }));
-    await user.click(within(clauses).getByRole('radio', { name: 'تعهدات اسکورایز' }));
+    await user.click(within(clauses).getByRole('radio', { name: 'ماده ۱: تعهدات اسکورایز' }));
     await user.type(within(clauses).getByLabelText('سؤال یا درخواست تغییر'), 'هلند هم می‌شود؟');
     await user.click(within(clauses).getByRole('button', { name: 'ارسال' }));
     expect(await toasts().findByText('برای کارشناس فروش رفت.')).toBeInTheDocument();

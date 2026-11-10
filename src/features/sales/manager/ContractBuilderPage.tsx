@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { Switch } from '@/components/ui/Switch';
 import { TextField } from '@/components/ui/TextField';
+import { namesIn, numberClauses, token, useClauseLabel, type ClauseKind } from '@/lib/contractText';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
@@ -23,6 +24,7 @@ import {
   useSaveClause,
   useSavePrices,
   useSaveRules,
+  useSaveVariables,
   useUpdateTemplate,
   type BuilderClause,
   type BuilderPrice,
@@ -32,7 +34,7 @@ import {
 } from '../api';
 import { ContractSheet } from '../components/ContractSheet';
 import { useSalesFormat } from '../format';
-import { previewClauses, sampleDocument, type ClauseDraft } from './contractPreview';
+import { previewClauses, sampleDocument, sampleValues, type ClauseDraft } from './contractPreview';
 
 const TABS = ['clauses', 'prices', 'versions'] as const;
 type Tab = (typeof TABS)[number];
@@ -334,10 +336,12 @@ function TemplateSettings({
 // region Clauses, beside the contract as it will print
 function Clauses({ data }: { data: ContractBuilder }) {
   const { t } = useTranslation('sales');
+  const label = useClauseLabel();
   const template = data.template.id;
   const order = useOrderClauses(template);
   const active = data.clauses.filter((clause) => clause.is_active);
   const out = data.clauses.filter((clause) => !clause.is_active);
+  const numbers = numberClauses(active);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<ClauseDraft | null>(null);
   const [big, setBig] = useState(false);
@@ -347,6 +351,7 @@ function Clauses({ data }: { data: ContractBuilder }) {
     t('manager.builder.preview.newClause'),
   );
   const doc = sampleDocument(data, clauses, t('manager.builder.preview.customer'));
+  const values = sampleValues(data);
   const empty = t('manager.builder.preview.empty');
 
   const move = (index: number, by: -1 | 1) => {
@@ -373,19 +378,19 @@ function Clauses({ data }: { data: ContractBuilder }) {
             )
           }
         >
-          {adding && (
-            <ClauseForm template={template} onDraft={setDraft} onDone={() => setAdding(false)} />
-          )}
-          {active.length === 0 ? (
+          {active.length === 0 && !adding ? (
             <EmptyState>{t('manager.builder.clauses.empty')}</EmptyState>
           ) : (
-            <ol className="m-0 flex list-none flex-col gap-3 p-0">
+            <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
               {active.map((clause, index) => (
                 <ClauseRow
                   key={clause.id}
-                  template={template}
+                  data={data}
                   clause={clause}
-                  index={index}
+                  name={nameOf(
+                    clause,
+                    label(numbers[index] ?? { kind: 'article', article: 0, n: 0 }),
+                  )}
                   first={index === 0}
                   last={index === active.length - 1}
                   moving={order.isPending}
@@ -395,7 +400,20 @@ function Clauses({ data }: { data: ContractBuilder }) {
               ))}
             </ol>
           )}
+          {adding && (
+            <ClauseForm
+              data={data}
+              // A first clause starts the contract's first article; then clauses fill it.
+              kind={active.length === 0 ? 'article' : 'clause'}
+              onDraft={setDraft}
+              onDone={() => setAdding(false)}
+            />
+          )}
         </SectionCard>
+        <Variables
+          key={`${String(template)}-${data.variables.map((row) => row.name).join('|')}`}
+          data={data}
+        />
         {out.length > 0 && (
           <SectionCard id="clauses-out" variant="panel" title={t('manager.builder.clauses.out')}>
             <ul className="m-0 flex list-none flex-col p-0">
@@ -424,7 +442,13 @@ function Clauses({ data }: { data: ContractBuilder }) {
         </div>
         {/* Beside the clauses on wide screens; on smaller ones the button opens it whole. */}
         <div className="hidden max-h-[calc(100dvh-10rem)] overflow-y-auto rounded-2xl bg-canvas p-3 xl:block">
-          <ContractSheet doc={doc} framed={false} highlight={highlight} emptyClauses={empty} />
+          <ContractSheet
+            doc={doc}
+            framed={false}
+            highlight={highlight}
+            emptyClauses={empty}
+            values={values}
+          />
         </div>
       </section>
 
@@ -436,25 +460,30 @@ function Clauses({ data }: { data: ContractBuilder }) {
         subtitle={data.template.name}
         closeLabel={t('close')}
       >
-        <ContractSheet doc={doc} framed={false} emptyClauses={empty} />
+        <ContractSheet doc={doc} framed={false} emptyClauses={empty} values={values} />
       </Dialog>
     </div>
   );
 }
 
+/** How a clause is named in the list and its buttons: "ماده ۲: تعهدات"، "۲-۱"، "تبصره ۱". */
+const nameOf = (clause: { kind: ClauseKind; title: string }, number: string) =>
+  clause.kind === 'article' && clause.title ? `${number}: ${clause.title}` : number;
+
 function ClauseRow({
-  template,
+  data,
   clause,
-  index,
+  name,
   first,
   last,
   moving,
   onMove,
   onDraft,
 }: {
-  template: number | null;
+  data: ContractBuilder;
   clause: BuilderClause;
-  index: number;
+  /** Its number as the contract prints it, and an article's title. */
+  name: string;
   first: boolean;
   last: boolean;
   moving: boolean;
@@ -462,15 +491,15 @@ function ClauseRow({
   onDraft: (draft: ClauseDraft | null) => void;
 }) {
   const { t } = useTranslation('sales');
-  const f = useFormat();
   const [editing, setEditing] = useState(false);
+  const article = clause.kind === 'article';
   return (
-    <li className="flex flex-col gap-2.5 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)]">
+    <li
+      className={`flex flex-col gap-2.5 rounded-2xl p-4 ${article ? 'bg-canvas' : 'ms-5 shadow-[inset_0_0_0_1px_var(--line-2)]'}`}
+    >
       <div className="flex items-center gap-2">
         <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <span className="text-[15px] font-bold">
-            {f.number(index + 1)}. {clause.title}
-          </span>
+          <span className={`text-[15px] ${article ? 'font-extrabold' : 'font-bold'}`}>{name}</span>
           {clause.locked && (
             <Chip tone="neutral" small>
               {t('manager.builder.clauses.locked')}
@@ -481,69 +510,100 @@ function ClauseRow({
           icon="chevronDown"
           tone="muted"
           className="rotate-180"
-          aria-label={t('manager.builder.clauses.up', { name: clause.title })}
+          aria-label={t('manager.builder.clauses.up', { name })}
           disabled={first || moving}
           onClick={() => onMove(-1)}
         />
         <IconButton
           icon="chevronDown"
           tone="muted"
-          aria-label={t('manager.builder.clauses.down', { name: clause.title })}
+          aria-label={t('manager.builder.clauses.down', { name })}
           disabled={last || moving}
           onClick={() => onMove(1)}
         />
         <IconButton
           icon="pen"
           tone="muted"
-          aria-label={t('manager.builder.clauses.edit', { name: clause.title })}
+          aria-label={t('manager.builder.clauses.edit', { name })}
           aria-expanded={editing}
           onClick={() => setEditing(!editing)}
         />
       </div>
       {editing ? (
         <ClauseForm
-          template={template}
+          data={data}
           clause={clause}
+          name={name}
           onDraft={onDraft}
           onDone={() => setEditing(false)}
         />
       ) : (
-        <p className="m-0 line-clamp-3 text-sm leading-7 whitespace-pre-line text-neutral">
-          {clause.text}
-        </p>
+        clause.text && (
+          <p className="m-0 line-clamp-3 text-sm leading-7 whitespace-pre-line text-neutral">
+            {clause.text}
+          </p>
+        )
       )}
     </li>
   );
 }
 
+const KINDS = ['article', 'clause', 'note'] as const satisfies readonly ClauseKind[];
+
 /**
- * A new clause (no `clause`) or one being changed: title, text, fixed or not; or take it out.
- * What is typed shows in the preview at once (`onDraft`), before it is saved.
+ * A new clause (no `clause`) or one being changed: an article (title, an optional paragraph), a
+ * clause or a note (a text); fixed or not; or take it out. The text may name the kind of
+ * contract's variables, put in where the cursor is. What is typed shows in the preview at once
+ * (`onDraft`), before it is saved.
  */
 function ClauseForm({
-  template,
+  data,
   clause,
+  name = '',
+  kind: startKind = 'clause',
   onDraft,
   onDone,
 }: {
-  template: number | null;
+  data: ContractBuilder;
   clause?: BuilderClause;
+  name?: string;
+  /** What a new one starts as. */
+  kind?: ClauseKind;
   onDraft: (draft: ClauseDraft | null) => void;
   onDone: () => void;
 }) {
   const { t } = useTranslation('sales');
-  const save = useSaveClause(template);
+  const { t: tc } = useTranslation();
+  const save = useSaveClause(data.template.id);
+  const [kind, setKind] = useState<ClauseKind>(clause?.kind ?? startKind);
   const [title, setTitle] = useState(clause?.title ?? '');
   const [text, setText] = useState(clause?.text ?? '');
   const [locked, setLocked] = useState(clause?.locked ?? false);
-  const ready = title.trim() !== '' && text.trim() !== '';
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const article = kind === 'article';
+  const ready = article ? title.trim() !== '' : text.trim() !== '';
   const id = clause?.id ?? null;
+  const known = new Set([...data.builtins, ...data.variables].map((row) => row.name));
+  const unknown = namesIn(text).filter((item) => !known.has(item));
 
   useEffect(() => {
-    onDraft({ id, title, text });
-  }, [id, title, text, onDraft]);
+    onDraft({ id, kind, title, text });
+  }, [id, kind, title, text, onDraft]);
   // Closed (saved or not): the preview shows the saved text again.
   useEffect(() => () => onDraft(null), [onDraft]);
+
+  /** Puts `{{name}}` where the cursor is (at the end when the text was never focused). */
+  const insert = (variable: string) => {
+    const field = textRef.current;
+    const start = field?.selectionStart ?? text.length;
+    const end = field?.selectionEnd ?? text.length;
+    const piece = token(variable);
+    setText(text.slice(0, start) + piece + text.slice(end));
+    requestAnimationFrame(() => {
+      field?.focus();
+      field?.setSelectionRange(start + piece.length, start + piece.length);
+    });
+  };
 
   const send = (body: Parameters<typeof save.mutate>[0], done: string) =>
     save.mutate(body, {
@@ -556,30 +616,72 @@ function ClauseForm({
 
   return (
     <form
-      className="flex flex-col gap-3 rounded-2xl bg-canvas p-4"
+      className="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-[inset_0_0_0_1px_var(--line-2)]"
       onSubmit={(event) => {
         event.preventDefault();
         if (ready)
           send(
-            { ...(clause && { id: clause.id }), title: title.trim(), text: text.trim(), locked },
+            {
+              ...(clause && { id: clause.id }),
+              kind,
+              title: article ? title.trim() : '',
+              text: text.trim(),
+              locked,
+            },
             t(clause ? 'manager.builder.clauses.saved' : 'manager.builder.clauses.added'),
           );
       }}
     >
-      <TextField
-        label={t('manager.builder.clauses.name')}
-        value={title}
-        maxLength={200}
-        onChange={(event) => setTitle(event.target.value)}
+      <ChoiceGroup
+        legend={t('manager.builder.clauses.kind')}
+        look="segmented"
+        options={KINDS.map((value) => ({ value, label: tc(`clauseNumber.kinds.${value}`) }))}
+        value={kind}
+        onChange={setKind}
+        hint={t(`manager.builder.clauses.kindHint.${kind}`)}
       />
+      {article && (
+        <TextField
+          label={t('manager.builder.clauses.name')}
+          value={title}
+          maxLength={200}
+          onChange={(event) => setTitle(event.target.value)}
+        />
+      )}
       <TextAreaField
-        label={t('manager.builder.clauses.text')}
+        ref={textRef}
+        label={
+          article ? t('manager.builder.clauses.articleText') : t('manager.builder.clauses.text')
+        }
         hint={t('manager.builder.clauses.textHint')}
-        rows={5}
+        rows={4}
         maxLength={5000}
         value={text}
         onChange={(event) => setText(event.target.value)}
       />
+      <div className="flex flex-col gap-2">
+        <span className="text-[13px] font-semibold text-text-2">
+          {t('manager.builder.variables.insert')}
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {[...data.variables, ...data.builtins].map((row) => (
+            <button
+              key={row.name}
+              type="button"
+              className="min-h-9 rounded-full bg-tint px-3 text-[13px] font-semibold text-primary-text"
+              aria-label={t('manager.builder.variables.insertOne', { name: row.name })}
+              onClick={() => insert(row.name)}
+            >
+              {row.name}
+            </button>
+          ))}
+        </div>
+        {unknown.length > 0 && (
+          <p className="m-0 text-[13px] text-warn">
+            {t('manager.builder.variables.unknown', { names: unknown.join('، ') })}
+          </p>
+        )}
+      </div>
       <Switch
         label={t('manager.builder.clauses.fix')}
         description={t('manager.builder.clauses.fixText')}
@@ -602,7 +704,7 @@ function ClauseForm({
               send({ id: clause.id, is_active: false }, t('manager.builder.clauses.removed'))
             }
           >
-            {t('manager.builder.clauses.remove', { name: clause.title })}
+            {t('manager.builder.clauses.remove', { name })}
           </Button>
         )}
       </div>
@@ -610,12 +712,104 @@ function ClauseForm({
   );
 }
 
+/**
+ * The kind of contract's blanks (S69): each a name the clauses use as `{{name}}` and the value a
+ * seller starts from; the seller fills them for each customer. What the system fills (the
+ * customer's name, the amount…) is listed beside them.
+ */
+function Variables({ data }: { data: ContractBuilder }) {
+  const { t } = useTranslation('sales');
+  const save = useSaveVariables(data.template.id);
+  const [rows, setRows] = useState(data.variables);
+  const builtin = new Set(data.builtins.map((row) => row.name));
+  const names = rows.map((row) => row.name.trim());
+  const problem = names.some((name) => !name || /[{}]/.test(name))
+    ? t('manager.builder.variables.nameNeeded')
+    : names.some((name) => builtin.has(name))
+      ? t('manager.builder.variables.builtin')
+      : new Set(names).size !== names.length
+        ? t('manager.builder.variables.twice')
+        : null;
+  const dirty = JSON.stringify(rows) !== JSON.stringify(data.variables);
+  const set = (index: number, row: Partial<(typeof rows)[number]>) =>
+    setRows(rows.map((item, at) => (at === index ? { ...item, ...row } : item)));
+
+  return (
+    <SectionCard
+      id="variables"
+      variant="panel"
+      title={t('manager.builder.variables.title')}
+      subtitle={t('manager.builder.variables.subtitle')}
+    >
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!problem)
+            save.mutate(
+              rows.map((row) => ({ name: row.name.trim(), default: row.default.trim() })),
+              {
+                onSuccess: () => toast.success(t('manager.builder.variables.saved')),
+                onError: () => toast.error(t('error')),
+              },
+            );
+        }}
+      >
+        {rows.length === 0 && (
+          <p className="m-0 text-sm text-text-2">{t('manager.builder.variables.empty')}</p>
+        )}
+        {rows.map((row, index) => (
+          <div key={index} className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_auto]">
+            <TextField
+              label={t('manager.builder.variables.name')}
+              value={row.name}
+              maxLength={50}
+              onChange={(event) => set(index, { name: event.target.value })}
+            />
+            <TextField
+              label={t('manager.builder.variables.default')}
+              value={row.default}
+              maxLength={200}
+              onChange={(event) => set(index, { default: event.target.value })}
+            />
+            <IconButton
+              icon="trash"
+              tone="muted"
+              aria-label={t('manager.builder.variables.remove', {
+                name: row.name || t('manager.builder.variables.name'),
+              })}
+              onClick={() => setRows(rows.filter((_, at) => at !== index))}
+            />
+          </div>
+        ))}
+        {problem && <p className="m-0 text-[13px] text-warn">{problem}</p>}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setRows([...rows, { name: '', default: '' }])}>
+            {t('manager.builder.variables.add')}
+          </Button>
+          {dirty && (
+            <Button type="submit" disabled={problem !== null || save.isPending}>
+              {t('manager.builder.variables.save')}
+            </Button>
+          )}
+        </div>
+        <p className="m-0 text-[13px] leading-6 text-text-2">
+          {t('manager.builder.variables.system', {
+            names: data.builtins.map((row) => row.name).join('، '),
+          })}
+        </p>
+      </form>
+    </SectionCard>
+  );
+}
+
 function OutRow({ template, clause }: { template: number | null; clause: BuilderClause }) {
   const { t } = useTranslation('sales');
   const save = useSaveClause(template);
+  const name = clause.title || clause.text.split(/\s+/).slice(0, 8).join(' ');
   return (
     <li className="flex items-center justify-between gap-3 py-2.5 shadow-[inset_0_1px_0_var(--hair)] first:shadow-none">
-      <span className="min-w-0 truncate text-sm text-text-2">{clause.title}</span>
+      <span className="min-w-0 truncate text-sm text-text-2">{name}</span>
       <Button
         variant="outline"
         className="h-10 px-4 text-[13px]"
@@ -630,7 +824,7 @@ function OutRow({ template, clause }: { template: number | null; clause: Builder
           )
         }
       >
-        {t('manager.builder.clauses.restore', { name: clause.title })}
+        {t('manager.builder.clauses.restore', { name })}
       </Button>
     </li>
   );
@@ -865,7 +1059,10 @@ function VersionRow({ version, current }: { version: TextVersion; current: boole
         {version.changes
           .filter((change) => change.kind === 'changed' && change.before !== null)
           .map((change) => (
-            <p key={change.title} className="m-0 rounded-xl bg-canvas p-3 text-sm leading-7">
+            <p
+              key={change.title + change.text}
+              className="m-0 rounded-xl bg-canvas p-3 text-sm leading-7"
+            >
               <DiffText
                 before={change.before ?? ''}
                 after={change.text}

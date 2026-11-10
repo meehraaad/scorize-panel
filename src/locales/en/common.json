@@ -382,5 +382,15 @@
       "done": "Uploaded",
       "batchDone": "All files uploaded"
     }
+  },
+  "clauseNumber": {
+    "article": "Article {{n}}",
+    "clause": "{{article}}.{{n}}",
+    "note": "Note {{n}}",
+    "kinds": {
+      "article": "Article",
+      "clause": "Clause",
+      "note": "Note"
+    }
   }
 }

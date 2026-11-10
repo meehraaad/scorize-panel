@@ -1203,15 +1203,18 @@
         "removed": "Removed",
         "added": "New clause"
       },
-      "title": "Clause title",
+      "title": "Article title",
       "text": "Clause text",
       "edit": "Edit {{name}}",
       "done": "Close editing",
       "restore": "Restore the standard text of {{name}}",
       "remove": "Remove {{name}}",
       "add": "Add a clause",
-      "incomplete": "Each clause needs a text, and a new one a title too.",
-      "locked": "Fixed"
+      "incomplete": "Every clause needs a text, and a new article a title too.",
+      "locked": "Fixed",
+      "kind": "Kind",
+      "addHere": "+ Clause or note in this article",
+      "addArticle": "+ New article"
     },
     "kind": {
       "title": "Kind of contract",
@@ -1219,7 +1222,12 @@
     },
     "freePrice": "Free",
     "free": "This contract is free: no instalments, no prepayment.",
-    "planFree": "Free, no instalments"
+    "planFree": "Free, no instalments",
+    "variables": {
+      "title": "Contract variables",
+      "hint": "These values go into this customer's contract. The system fills the name, the amount and the rest of the customer's details itself.",
+      "incomplete": "Fill in every contract variable."
+    }
   },
   "manager": {
     "nav": "Sales management sections",
@@ -1310,7 +1318,8 @@
         "instalments": "Instalments",
         "language": "Language score",
         "countries": "Countries",
-        "template": "Kind of contract"
+        "template": "Kind of contract",
+        "variables": "Variables"
       },
       "checks": "Automatic checks",
       "ok": "OK:",
@@ -1337,7 +1346,8 @@
         },
         "sinceReview": "Changed after the return",
         "addedText": "Added: ",
-        "removedText": "Removed: "
+        "removedText": "Removed: ",
+        "inArticle": "{{kind}} in “{{article}}”"
       },
       "parties": "Agreements",
       "agreed": "{{role}} agreed",
@@ -1744,26 +1754,33 @@
       "save": "Save",
       "cancel": "Cancel",
       "clauses": {
-        "title": "Contract clauses",
-        "subtitle": "Sellers can't change a fixed clause for a customer.",
-        "add": "+ New clause",
-        "empty": "No clauses yet.",
-        "out": "Clauses taken out",
+        "title": "Contract text",
+        "subtitle": "Articles have titles; the clauses and notes under them are numbered automatically (5.1, 5.2, Note 1). A seller can't change a fixed one.",
+        "add": "+ Article, clause or note",
+        "empty": "Nothing written yet. Start with an article.",
+        "out": "Taken out",
         "locked": "Fixed",
         "up": "Move {{name}} up",
         "down": "Move {{name}} down",
         "edit": "Edit {{name}}",
-        "name": "Clause title",
-        "text": "Clause text",
+        "name": "Article title",
+        "text": "Text",
         "textHint": "Offers already written keep the text their seller saw.",
         "fix": "Fixed clause",
         "fixText": "Sellers can't change or remove this clause.",
         "remove": "Take out {{name}}",
         "restore": "Bring back {{name}}",
-        "added": "Clause added.",
-        "saved": "Clause saved.",
-        "removed": "Clause taken out of the contract.",
-        "back": "Clause back in the contract."
+        "added": "Added.",
+        "saved": "Saved.",
+        "removed": "Taken out of the contract.",
+        "back": "Back in the contract.",
+        "articleText": "Article text (optional)",
+        "kind": "Kind",
+        "kindHint": {
+          "article": "A numbered heading; the clauses and notes after it go under it.",
+          "clause": "No title, numbered by its article (like 5.2).",
+          "note": "A \"Note\", numbered from 1 in each article."
+        }
       },
       "prices": {
         "title": "Service prices",
@@ -1836,6 +1853,24 @@
         "customer": "Customer name",
         "newClause": "New clause",
         "empty": "This contract has no clauses yet. Start with “+ New clause”."
+      },
+      "variables": {
+        "title": "Variables",
+        "subtitle": "Blanks a seller fills for each customer, like \"number of searches\". Put them in a clause with the variable buttons.",
+        "empty": "This contract has no variables.",
+        "name": "Variable name",
+        "default": "Default value",
+        "add": "+ New variable",
+        "save": "Save variables",
+        "saved": "Variables saved.",
+        "remove": "Remove {{name}}",
+        "nameNeeded": "Each variable needs a name without {}.",
+        "builtin": "The system fills this name itself; pick another.",
+        "twice": "Each name once.",
+        "system": "The system fills these itself: {{names}}",
+        "insert": "Add a variable to the text",
+        "insertOne": "Add {{name}} to the text",
+        "unknown": "These variables aren't defined and stay blank in the contract: {{names}}"
       }
     }
   },

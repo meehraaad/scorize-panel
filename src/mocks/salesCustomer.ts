@@ -9,6 +9,7 @@ import type {
   SaleQuote,
 } from '@/features/sales/api';
 import { recordVersion } from './agreement';
+export { finalText, valuesOf } from './contractText';
 import { notFound } from './session';
 import { ERFAN, failed, stateOrError, type SalesState } from './sales';
 import { addPayment, staffData } from './staff';
@@ -200,6 +201,7 @@ const ERFAN_FILE: ApplyFile = {
 export const STANDARD_CLAUSES: OfferData['options']['clauses'] = [
   {
     id: 1,
+    kind: 'article',
     title: 'موضوع قرارداد',
     text: 'اسکورایز در انتخاب دانشگاه، آماده‌سازی مدارک و ثبت درخواست پذیرش، مشاوره و همراهی می‌کند.',
     // A fixed clause (S64): the seller can't change it.
@@ -207,22 +209,60 @@ export const STANDARD_CLAUSES: OfferData['options']['clauses'] = [
   },
   {
     id: 2,
+    kind: 'article',
     title: 'تعهدات متقاضی',
     text: 'متقاضی مدارک خواسته‌شده را تا ۷ روز پس از درخواست کارشناس ارائه می‌کند.',
     locked: false,
   },
   {
     id: 3,
+    kind: 'article',
     title: 'فسخ قرارداد',
     text: 'تا ۷ روز پس از امضا، با فسخ قرارداد کل مبلغ پرداختی بازگردانده می‌شود.',
     locked: false,
   },
+  // S69: an article of untitled clauses (۴-۱، ۴-۲) and a note, one naming a variable.
+  { id: 4, kind: 'article', title: 'تعهدات مؤسسه', text: '', locked: false },
+  {
+    id: 5,
+    kind: 'clause',
+    title: '',
+    text: 'مؤسسه {{تعداد سرچ}} دانشگاه را برای {{نام مشتری}} سرچ می‌کند.',
+    locked: false,
+  },
+  {
+    id: 6,
+    kind: 'clause',
+    title: '',
+    text: 'مؤسسه رزومه و انگیزه‌نامه را با همکاری متقاضی تهیه می‌کند.',
+    locked: false,
+  },
+  { id: 7, kind: 'note', title: '', text: 'مسئولیت صحت مدارک با متقاضی است.', locked: true },
+];
+
+/** The standard contract's blanks (S69, Django's `ContractVariable`). */
+export const STANDARD_VARIABLES: OfferData['options']['variables'] = [
+  { name: 'تعداد سرچ', default: '10' },
+];
+
+/** Django's `BUILTINS`: what the system fills, with the builder preview's samples. */
+export const BUILTIN_VARIABLES: OfferData['options']['builtins'] = [
+  { name: 'نام مشتری', sample: 'سارا محمدی' },
+  { name: 'تلفن مشتری', sample: '09120000000' },
+  { name: 'ایمیل مشتری', sample: 'sara@example.com' },
+  { name: 'مبلغ قرارداد', sample: '120,000,000 تومان' },
+  { name: 'کشورها', sample: 'آلمان' },
+  { name: 'مقطع', sample: 'کارشناسی ارشد' },
+  { name: 'تعداد اپلای', sample: '6' },
+  { name: 'مدت قرارداد', sample: '12 ماه' },
+  { name: 'تاریخ شروع', sample: '1405/09/01' },
 ];
 
 /** A template's text (S68): free apply to Turkey, one fixed clause. */
 export const TURKEY_CLAUSES: OfferData['options']['clauses'] = [
   {
     id: 101,
+    kind: 'article',
     title: 'تعهدنامه‌ی اپلای رایگان',
     text: 'متقاضی پس از پذیرش، ثبت‌نام را از طریق اسکورایز انجام می‌دهد و مستقیم ثبت‌نام نمی‌کند.',
     locked: true,
@@ -235,26 +275,29 @@ function cleanClauses(
   standard: OfferData['options']['clauses'] = STANDARD_CLAUSES,
 ): ClauseEdit[] | null {
   const kept: ClauseEdit[] = [];
-  for (const row of rows) {
+  for (let row of rows) {
     if (row.clause === null) {
       if (row.removed) continue;
-      if (!row.title.trim() || !row.text.trim()) return null;
-      kept.push(row);
+      // S69: an article needs a title; every clause added a text.
+      if ((row.kind === 'article' && !row.title.trim()) || !row.text.trim()) return null;
+      if (row.after !== null && !standard.some((clause) => clause.id === row.after)) return null;
+      kept.push({ ...row, title: row.kind === 'article' ? row.title.trim() : '' });
       continue;
     }
     const base = standard.find((clause) => clause.id === row.clause);
     if (!base || kept.some((edit) => edit.clause === row.clause)) return null;
+    row = { ...row, kind: base.kind, after: null };
     const changed =
       row.removed ||
-      (row.title.trim() || base.title) !== base.title ||
+      (base.kind === 'article' ? row.title.trim() || base.title : '') !== base.title ||
       row.text.trim() !== base.text;
     if (base.locked && changed) return null;
     if (row.removed) {
       kept.push({ ...row, title: base.title, text: base.text });
       continue;
     }
-    if (!row.text.trim()) return null;
-    const title = row.title.trim() || base.title;
+    if (!row.text.trim() && base.text) return null;
+    const title = base.kind === 'article' ? row.title.trim() || base.title : '';
     if (title !== base.title || row.text.trim() !== base.text)
       kept.push({ ...row, title, text: row.text.trim() });
   }
@@ -284,6 +327,8 @@ const OFFER_OPTIONS: OfferData['options'] = {
   max_applies: 30,
   instalments: [1, 2, 3, 4],
   clauses: STANDARD_CLAUSES,
+  variables: STANDARD_VARIABLES,
+  builtins: BUILTIN_VARIABLES,
 };
 
 /** Django's options of the free Turkey template: admission at 0 toman, its own clause. */
@@ -294,6 +339,7 @@ const TURKEY_OPTIONS: OfferData['options'] = {
   durations: [6, 12],
   discounts: [0],
   clauses: TURKEY_CLAUSES,
+  variables: [],
 };
 
 const optionsOf = (template: number | null) => (template === 1 ? TURKEY_OPTIONS : OFFER_OPTIONS);
@@ -416,12 +462,22 @@ export const salesCustomerHandlers = [
       return HttpResponse.json({ schedule: ['total'] }, { status: 400 });
     const clauses = cleanClauses(offer.clauses, options.clauses);
     if (!clauses) return HttpResponse.json({ clauses: ['invalid'] }, { status: 400 });
-    data.offers.set(item.id, { ...offer, clauses });
+    // Django's `clean_values` (S69): known blanks only, a missing one takes its default, and what
+    // goes to someone leaves none empty.
+    const sent = (offer.variables as Record<string, string> | undefined) ?? {};
+    if (Object.keys(sent).some((name) => !options.variables.some((row) => row.name === name)))
+      return HttpResponse.json({ variables: ['unknown'] }, { status: 400 });
+    const variables = Object.fromEntries(
+      options.variables.map((row) => [row.name, (sent[row.name] ?? row.default).trim()]),
+    );
+    if (action !== 'save' && Object.values(variables).some((value) => !value))
+      return HttpResponse.json({ variables: ['required'] }, { status: 400 });
+    data.offers.set(item.id, { ...offer, clauses, variables });
     item.lead.amount = amount;
     if (action !== 'save') {
       recordVersion(
         { id: item.id, name: item.name },
-        { ...offer, clauses },
+        { ...offer, clauses, variables },
         amount,
         action === 'submit' ? 'submitted' : 'sent',
         options.clauses,
