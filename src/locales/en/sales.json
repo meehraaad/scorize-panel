@@ -1683,27 +1683,66 @@
         "sales": "Sales in the month"
       },
       "threshold": {
-        "contracts": "At least (contracts)",
-        "sales": "At least (million toman)"
+        "contracts": "From (contracts)",
+        "sales": "From ({{unit}})"
       },
+      "until": {
+        "contracts": "Up to, not including (contracts)",
+        "sales": "Up to, not including ({{unit}})"
+      },
+      "untilHint": "Leave empty for no limit. This number itself falls in the next range.",
+      "currency": "Currency",
+      "currencyHint": "The month's sales are converted to this currency at the system's daily rate.",
+      "currencyName": {
+        "IRT": "Toman",
+        "EUR": "Euro",
+        "USD": "US dollar",
+        "CAD": "Canadian dollar",
+        "GBP": "Pound"
+      },
+      "millionUnit": "million toman",
       "percent": "Commission percent",
       "hint": "Enter the step and the reward.",
       "rule": {
         "percent": {
-          "contracts": "{{n}} contracts or more in a month: {{percent}}% of the month's sales",
-          "sales": "{{n}} of sales or more in a month: {{percent}}% of the month's sales"
+          "contracts": {
+            "open": "{{n}} contracts or more in a month: {{percent}}% of the month's sales",
+            "range": "{{n}} to under {{to}} contracts in a month: {{percent}}% of the month's sales"
+          },
+          "sales": {
+            "open": "{{n}} of sales or more in a month: {{percent}}% of the month's sales",
+            "range": "Sales from {{n}} to under {{to}} in a month: {{percent}}% of the month's sales"
+          }
         },
         "tiered": {
-          "contracts": "From contract {{n}} on: {{percent}}% on each contract",
-          "sales": "From {{n}} of sales up: {{percent}}% of that part of the sales"
+          "contracts": {
+            "open": "From contract {{n}} on: {{percent}}% on each contract",
+            "range": "From contract {{n}} to before contract {{to}}: {{percent}}% on each contract"
+          },
+          "sales": {
+            "open": "From {{n}} of sales up: {{percent}}% of that part of the sales",
+            "range": "Sales from {{n}} to {{to}}: {{percent}}% of that part of the sales"
+          }
         },
         "bonus": {
-          "contracts": "{{n}} contracts or more in a month: {{amount}} bonus",
-          "sales": "{{n}} of sales or more in a month: {{amount}} bonus"
+          "contracts": {
+            "open": "{{n}} contracts or more in a month: {{amount}} bonus",
+            "range": "{{n}} to under {{to}} contracts in a month: {{amount}} bonus"
+          },
+          "sales": {
+            "open": "{{n}} of sales or more in a month: {{amount}} bonus",
+            "range": "Sales from {{n}} to under {{to}} in a month: {{amount}} bonus"
+          }
         },
         "per_contract": {
-          "contracts": "{{n}} contracts or more in a month: {{amount}} per contract",
-          "sales": "{{n}} of sales or more in a month: {{amount}} per contract"
+          "contracts": {
+            "open": "{{n}} contracts or more in a month: {{amount}} per contract",
+            "range": "{{n}} to under {{to}} contracts in a month: {{amount}} per contract"
+          },
+          "sales": {
+            "open": "{{n}} of sales or more in a month: {{amount}} per contract",
+            "range": "Sales from {{n}} to under {{to}} in a month: {{amount}} per contract"
+          }
         }
       },
       "since": "Since {{month}}",
@@ -1719,6 +1758,7 @@
       "deleteYes": "Remove",
       "deleted": "Rule removed",
       "thresholdError": "Enter a valid number (whole for contracts).",
+      "untilError": "\"Up to\" must be more than \"From\".",
       "percentError": "Enter a percent above zero, up to 100.",
       "reward": "Reward",
       "rewardName": {
@@ -1728,14 +1768,14 @@
         "per_contract": "Amount per contract"
       },
       "rewardHint": {
-        "percent": "The highest step reached counts, on all the month's sales.",
-        "tiered": "Like tax brackets. By sales: only the part of the sales above this step earns this percent, up to the next step. By contracts: each contract earns its own step's percent (say contracts 1–4 at 2%, from 5 on at 3%), on the month's average contract.",
-        "bonus": "Once a month on reaching the step. The highest bonus reached counts.",
-        "per_contract": "For every contract of the month once the step is reached. The highest amount reached counts."
+        "percent": "All the month's sales earn the percent of the range the seller is in. Say 0 to 4,000 euro at 4% and 4,000 euro up at 5%: with 6,000 euro of sales, 5% of all 6,000.",
+        "tiered": "Like tax brackets. By sales: only the part of the sales inside this range earns this percent. By contracts: each contract earns its own range's percent (say contracts 1–4 at 2%, from 5 on at 3%), on the month's average contract.",
+        "bonus": "Once a month, when the seller is in this range.",
+        "per_contract": "For every contract of the month, when the seller is in this range."
       },
       "amount": {
-        "bonus": "Bonus (million toman)",
-        "per_contract": "Per contract (million toman)"
+        "bonus": "Bonus ({{unit}})",
+        "per_contract": "Per contract ({{unit}})"
       },
       "amountError": "Enter an amount above zero."
     },

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useFormat } from '@/lib/i18n/useFormat';
+import { TOMAN, useFormat } from '@/lib/i18n/useFormat';
 import { scoreBand, type LeadStage } from '@/lib/sales/api';
 
 const MINUTE = 60_000;
@@ -44,6 +44,11 @@ export function useSalesFormat() {
     millions: (toman: number) =>
       t('millionToman', { n: f.number(Math.round((toman / 1_000_000) * 10) / 10) }),
     toman: (toman: number) => t('toman', { amount: f.number(toman) }),
+    /** An amount in its currency: the toman in millions ("110 million toman"), else "4,000 euros". */
+    inCurrency: (value: number, currency: string) =>
+      currency === TOMAN
+        ? t('millionToman', { n: f.number(Math.round((value / 1_000_000) * 10) / 10) })
+        : f.moneyName(value, currency),
     percent: (share: number) => t('percent', { n: f.number(Math.round(share * 100)) }),
     minutes: (n: number) => t('minutes', { n: f.number(n) }),
     /**

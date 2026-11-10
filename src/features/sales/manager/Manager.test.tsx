@@ -396,7 +396,7 @@ describe('commission rules (S60)', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('the manager adds a step for one seller, refuses a repeated one, changes and removes', async () => {
+  it('the manager adds a range for one seller, refuses an overlapping one, changes and removes', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
     renderApp('/sales/manager/commission');
@@ -404,20 +404,20 @@ describe('commission rules (S60)', () => {
     // Each change refetches the rules: find the groups again after it.
     const group = (name: string) => screen.getByRole('region', { name });
     expect(
-      within(group('همه‌ی فروشنده‌ها')).getByText('با ۴ قرارداد یا بیشتر در ماه: ۲٪ از فروش ماه'),
+      within(group('همه‌ی فروشنده‌ها')).getByText(
+        'با ۴ تا کمتر از ۸ قرارداد در ماه: ۲٪ از فروش ماه',
+      ),
     ).toBeInTheDocument();
 
     const form = screen.getByRole('form', { name: 'قانون تازه' });
-    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '۴');
+    await user.type(within(form).getByLabelText('از چند قرارداد'), '۴');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '۵');
     await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
-    expect(
-      await within(form).findByText('There is already a rule for this step.'),
-    ).toBeInTheDocument();
+    expect(await within(form).findByText('This range overlaps another rule.')).toBeInTheDocument();
 
     await user.selectOptions(within(form).getByLabelText('برای'), '31');
     await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
-    await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '900');
+    await user.type(within(form).getByLabelText('از فروش (میلیون تومان)'), '900');
     await user.clear(within(form).getByLabelText('درصد پورسانت'));
     await user.type(within(form).getByLabelText('درصد پورسانت'), '5');
     await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
@@ -430,7 +430,7 @@ describe('commission rules (S60)', () => {
 
     await user.click(
       within(group('همه‌ی فروشنده‌ها')).getByRole('button', {
-        name: 'ویرایش «با ۴ قرارداد یا بیشتر در ماه: ۲٪ از فروش ماه»',
+        name: 'ویرایش «با ۴ تا کمتر از ۸ قرارداد در ماه: ۲٪ از فروش ماه»',
       }),
     );
     const edit = within(group('همه‌ی فروشنده‌ها')).getByRole('form', { name: 'ویرایش قانون' });
@@ -441,7 +441,9 @@ describe('commission rules (S60)', () => {
     expect(await toasts().findByText('قانون از این ماه عوض شد')).toBeInTheDocument();
     await vi.waitFor(() => expect(edit).not.toBeInTheDocument());
     expect(
-      within(group('همه‌ی فروشنده‌ها')).getByText('با ۴ قرارداد یا بیشتر در ماه: ۲٫۵٪ از فروش ماه'),
+      within(group('همه‌ی فروشنده‌ها')).getByText(
+        'با ۴ تا کمتر از ۸ قرارداد در ماه: ۲٫۵٪ از فروش ماه',
+      ),
     ).toBeInTheDocument();
 
     await user.click(within(group('مهدی توکلی')).getByRole('button', { name: /^حذف/ }));
@@ -462,12 +464,12 @@ describe('commission rules (S60)', () => {
 
     const form = screen.getByRole('form', { name: 'قانون تازه' });
     await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'tiered');
-    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '5');
+    await user.type(within(form).getByLabelText('از چند قرارداد'), '5');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '3');
     expect(within(form).getByText('از قرارداد ۵ به بعد: هر قرارداد ۳٪')).toBeInTheDocument();
     await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
     await user.clear(within(form).getByLabelText('درصد پورسانت'));
-    await user.type(within(form).getByLabelText('حداقل فروش (میلیون تومان)'), '300');
+    await user.type(within(form).getByLabelText('از فروش (میلیون تومان)'), '300');
     await user.type(within(form).getByLabelText('درصد پورسانت'), '2');
     await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
     expect(await toasts().findByText('قانون اضافه شد')).toBeInTheDocument();
@@ -479,10 +481,48 @@ describe('commission rules (S60)', () => {
 
     await user.selectOptions(within(form).getByLabelText('نوع پاداش'), 'per_contract');
     await user.selectOptions(within(form).getByLabelText('بر اساس'), 'contracts');
-    await user.type(within(form).getByLabelText('حداقل تعداد قرارداد'), '6');
+    await user.type(within(form).getByLabelText('از چند قرارداد'), '6');
     await user.type(within(form).getByLabelText('مبلغ هر قرارداد (میلیون تومان)'), '1.5');
     expect(
       within(form).getByText('با ۶ قرارداد یا بیشتر در ماه: ۱٫۵ میلیون تومان برای هر قرارداد'),
+    ).toBeInTheDocument();
+  });
+
+  it('adds sales ranges in euro: 0 to 4,000 at 4%, from 4,000 up at 5%', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/commission');
+    const form = await screen.findByRole('form', { name: 'قانون تازه' });
+    // For one seller: the team's own "700 million or more" would overlap "4,000 euros or more".
+    await user.selectOptions(within(form).getByLabelText('برای'), '31');
+    await user.selectOptions(within(form).getByLabelText('بر اساس'), 'sales');
+    await user.selectOptions(within(form).getByLabelText('واحد پول'), 'EUR');
+    await user.type(within(form).getByLabelText('از فروش (یورو)'), '0');
+    await user.type(within(form).getByLabelText('تا کمتر از (یورو)'), '4000');
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '4');
+    expect(
+      within(form).getByText('با فروش ماه از ۰ یورو تا کمتر از ۴٬۰۰۰ یورو: ۴٪ از فروش ماه'),
+    ).toBeInTheDocument();
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    expect(await toasts().findByText('قانون اضافه شد')).toBeInTheDocument();
+
+    // "Up to" must be above "from".
+    await user.type(within(form).getByLabelText('از فروش (یورو)'), '4000');
+    await user.type(within(form).getByLabelText('تا کمتر از (یورو)'), '3000');
+    await user.type(within(form).getByLabelText('درصد پورسانت'), '5');
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    expect(within(form).getByText('«تا» باید از «از» بیشتر باشد.')).toBeInTheDocument();
+    await user.clear(within(form).getByLabelText('تا کمتر از (یورو)'));
+    expect(
+      within(form).getByText('با ۴٬۰۰۰ یورو فروش یا بیشتر در ماه: ۵٪ از فروش ماه'),
+    ).toBeInTheDocument();
+    await user.click(within(form).getByRole('button', { name: 'افزودن قانون' }));
+    const mahdi = await screen.findByRole('region', { name: 'مهدی توکلی' });
+    expect(
+      await within(mahdi).findByText('با ۴٬۰۰۰ یورو فروش یا بیشتر در ماه: ۵٪ از فروش ماه'),
+    ).toBeInTheDocument();
+    expect(
+      within(mahdi).getByText('با فروش ماه از ۰ یورو تا کمتر از ۴٬۰۰۰ یورو: ۴٪ از فروش ماه'),
     ).toBeInTheDocument();
   });
 

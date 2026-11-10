@@ -188,9 +188,12 @@ function Goal({ data }: { data: MonthData }) {
     return t('month.commissionStepNext', {
       step: reached,
       next: t(`month.commissionNext.${next.reward}.${next.basis}`, {
-        n: next.basis === 'contracts' ? f.number(next.remaining) : s.millions(next.remaining),
+        n:
+          next.basis === 'contracts'
+            ? f.number(next.remaining)
+            : s.inCurrency(next.remaining, next.currency),
         percent: f.number(next.percent ?? 0),
-        amount: s.millions(next.amount ?? 0),
+        amount: s.inCurrency(next.amount ?? 0, next.currency),
       }),
     });
   };

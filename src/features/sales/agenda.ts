@@ -1,12 +1,6 @@
 import { listRowsOf, type ListRow } from '@/lib/schedule';
 import type { MyTask, TaskRequest } from '@/lib/tasks/api';
-import type {
-  CallItem,
-  HotLead,
-  PendingReceipt,
-  SellerCalendar,
-  TodayConsultation,
-} from './api';
+import type { CallItem, HotLead, PendingReceipt, SellerCalendar, TodayConsultation } from './api';
 
 const MINUTE = 60_000;
 /** Consultation types without a length, and calls and tasks, take this long on the day. */

@@ -74,7 +74,9 @@ describe('mobile extension', () => {
   it('offers a Linphone QR next to the login details', async () => {
     server.use(http.get(ENDPOINT, () => HttpResponse.json(READY)));
     mount();
-    expect(await screen.findByRole('img', { name: 'QR code that sets up Linphone' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('img', { name: 'QR code that sets up Linphone' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Fetch remote configuration/)).toBeInTheDocument();
   });
 
@@ -82,7 +84,9 @@ describe('mobile extension', () => {
     server.use(http.get(ENDPOINT, () => HttpResponse.json({ ...READY, linphone: null })));
     mount();
     expect(await screen.findByText('302')).toBeInTheDocument();
-    expect(screen.queryByRole('img', { name: 'QR code that sets up Linphone' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('img', { name: 'QR code that sets up Linphone' }),
+    ).not.toBeInTheDocument();
   });
 
   it('asks before changing the password', async () => {
