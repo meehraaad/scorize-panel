@@ -71,6 +71,16 @@
   --forest-gold: rgb(212 166 92 / 0.18);
   --on-forest-2: #d6efe0;
 
+  /* Customer page hero (bg-aurora): soft wine and gold light on the surface, and the plum orb. */
+  --aurora-wine: rgb(149 23 104 / 0.11);
+  --aurora-plum: rgb(110 60 170 / 0.07);
+  --aurora-gold: rgb(212 166 92 / 0.16);
+  --aurora-rim: rgb(149 23 104 / 0.1);
+  --aurora-shadow: 0 1px 2px rgb(27 16 32 / 0.04), 0 24px 60px -28px rgb(149 23 104 / 0.28);
+  --orb-top: #c03a8f;
+  --orb-bottom: #5c0b3e;
+  --cta-glow: rgb(149 23 104 / 0.35);
+
   --danger: #b42318;
   --danger-tint: #fdecea;
   --warn: #8a5a00;
@@ -182,6 +192,15 @@
   --forest-glow: rgb(40 140 90 / 0.38);
   --forest-gold: rgb(212 166 92 / 0.14);
   --on-forest-2: #d6efe0;
+
+  --aurora-wine: rgb(176 34 120 / 0.3);
+  --aurora-plum: rgb(110 60 190 / 0.16);
+  --aurora-gold: rgb(212 166 92 / 0.12);
+  --aurora-rim: rgb(242 169 214 / 0.13);
+  --aurora-shadow: 0 30px 70px -30px rgb(0 0 0 / 0.6);
+  --orb-top: #c8449a;
+  --orb-bottom: #4d0934;
+  --cta-glow: rgb(176 34 120 / 0.55);
 
   --danger: #ff9b9b;
   --danger-tint: rgb(255 120 120 / 0.13);

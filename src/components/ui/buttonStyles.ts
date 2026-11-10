@@ -1,5 +1,7 @@
 const VARIANTS = {
   primary: 'bg-primary text-on-primary hover:bg-primary-hover font-semibold',
+  /** The one main action of a premium page (customer page): plum gradient with a soft glow. */
+  premium: 'bg-cta font-semibold hover:brightness-110 transition-[filter]',
   outline:
     'bg-surface text-text font-medium shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)]',
   /** A strong action next to a primary one (an offer card that isn't the featured one). */

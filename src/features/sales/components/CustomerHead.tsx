@@ -60,57 +60,59 @@ export function CustomerHead({
 
   return (
     <section aria-label={t('customer.summary')} className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <CustomerFace
-            name={customer.name}
-            face={customer.face ?? null}
-            url={`${SALES_API}/customers/${String(customer.id)}/face/`}
-            queryKey={customerKey(customer.id)}
-            className="size-12 rounded-2xl text-xl sm:size-[60px] sm:rounded-[20px] sm:text-2xl"
-            plain="bg-primary text-on-primary"
-          />
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="m-0 font-display text-[22px] font-extrabold lg:text-[26px]">
-                {customer.name}
-              </h1>
-              {lead && (
-                <StageChip stage={lead.stage} name={laneOf(lanesOf(customer, t), lead)?.name} />
-              )}
-              {lead && lead.score !== null && <ScoreChip score={lead.score} />}
+      <div className="flex animate-rise flex-col gap-5 rounded-card p-5 shadow-aurora bg-aurora lg:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <CustomerFace
+              name={customer.name}
+              face={customer.face ?? null}
+              url={`${SALES_API}/customers/${String(customer.id)}/face/`}
+              queryKey={customerKey(customer.id)}
+              className="size-12 rounded-2xl text-xl sm:size-[60px] sm:rounded-[20px] sm:text-2xl"
+              plain="bg-plum-orb"
+            />
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="m-0 font-display text-[22px] font-extrabold lg:text-[26px]">
+                  {customer.name}
+                </h1>
+                {lead && (
+                  <StageChip stage={lead.stage} name={laneOf(lanesOf(customer, t), lead)?.name} />
+                )}
+                {lead && lead.score !== null && <ScoreChip score={lead.score} />}
+              </div>
+              {line.length > 0 && <span className="text-sm text-text-2">{line.join(' · ')}</span>}
             </div>
-            {line.length > 0 && <span className="text-sm text-text-2">{line.join(' · ')}</span>}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 max-sm:grid max-sm:w-full max-sm:grid-cols-[1fr_1fr_auto]">
+            <button
+              type="button"
+              onClick={() => onLog('call')}
+              className={buttonClass('premium', 'h-13 max-sm:col-span-3', 'lg')}
+            >
+              <Icon name="phone" size={19} />
+              {t('customer.log')}
+            </button>
+            <MessageMenu onLog={onLog} />
+            <NewSaleMenu customer={customer.id} onSell={onSell} />
+            {side && (
+              <SheetButton
+                icon="user"
+                label={t('side.open')}
+                title={t('side.title')}
+                closeLabel={t('side.close')}
+              >
+                <div className="flex flex-col gap-4">{side}</div>
+              </SheetButton>
+            )}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 max-sm:grid max-sm:w-full max-sm:grid-cols-[1fr_1fr_auto]">
-          <button
-            type="button"
-            onClick={() => onLog('call')}
-            className={buttonClass('primary', 'h-13 max-sm:col-span-3', 'lg')}
-          >
-            <Icon name="phone" size={19} />
-            {t('customer.log')}
-          </button>
-          <MessageMenu onLog={onLog} />
-          <NewSaleMenu customer={customer.id} onSell={onSell} />
-          {side && (
-            <SheetButton
-              icon="user"
-              label={t('side.open')}
-              title={t('side.title')}
-              closeLabel={t('side.close')}
-            >
-              <div className="flex flex-col gap-4">{side}</div>
-            </SheetButton>
-          )}
-        </div>
+
+        {/* The team's sales tags (S49): sales work, so here rather than in the shared column. */}
+        {customer.supports.tags && <CustomerTags customer={customer} />}
+
+        {lead && <NextStep customer={customer} onCall={() => onLog('call')} />}
       </div>
-
-      {/* The team's sales tags (S49): sales work, so here rather than in the shared column. */}
-      {customer.supports.tags && <CustomerTags customer={customer} />}
-
-      {lead && <NextStep customer={customer} onCall={() => onLog('call')} />}
 
       {/* The board's lanes, the manager's columns included; a lost lead shows its chip instead. */}
       {lead && lead.stage !== 'lost' && <StageBar customer={customer} />}
@@ -280,11 +282,11 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
   const label = t(first ? 'next.first' : lost ? 'next.lost' : 'next.label');
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-[20px] bg-hero px-4 py-3.5 text-on-hero lg:px-5">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-[20px] px-4 py-3.5 text-on-hero shadow-luxe bg-luxe-soft lg:px-5">
       <span className="flex min-w-0 flex-[1_1_220px] items-center gap-3.5">
         <span
           aria-hidden="true"
-          className="flex size-10 flex-none items-center justify-center rounded-xl bg-hero-raised text-hero-current"
+          className="flex size-10 flex-none items-center justify-center rounded-xl bg-luxe-gold"
         >
           <Icon name="clock" size={19} />
         </span>
@@ -309,7 +311,7 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
           <button
             type="button"
             onClick={() => setMoving(true)}
-            className="inline-flex h-11 items-center rounded-full px-4 text-sm font-medium text-on-hero shadow-[inset_0_0_0_1px_var(--hero-line)] hover:bg-hero-raised"
+            className="inline-flex h-11 items-center rounded-full px-4 text-sm font-medium text-on-hero shadow-[inset_0_0_0_1px_var(--luxe-line)] hover:bg-hero-raised"
           >
             {t(lead.follow_up_at ? 'next.move' : 'next.set')}
           </button>
