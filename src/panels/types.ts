@@ -55,6 +55,14 @@ export interface PanelDefinition {
    * panel's customer search). Keep it small: it is part of the panel's first load.
    */
   headerAction?: ComponentType;
+  /**
+   * Panel-specific state in the account menu: `useStatus` colours a ring on the avatar (`call`
+   * green, `rest` orange) and `Menu` is a block inside the dropdown (the sales panel's phone break).
+   */
+  account?: {
+    useStatus: () => 'call' | 'rest' | null;
+    Menu: ComponentType;
+  };
 }
 
 const NONE_HIDDEN: ReadonlySet<string> = new Set();

@@ -690,32 +690,35 @@ describe('break from team calls', () => {
     loginAs(NIMA);
   });
 
-  it('starts and ends a break from the Today header', async () => {
+  it('starts and ends a break from the account menu, and rings the avatar orange', async () => {
     const user = userEvent.setup();
     renderApp('/sales');
+    await user.click(await screen.findByRole('button', { name: 'حساب کاربری' }));
     await user.click(await screen.findByRole('button', { name: 'استراحت' }));
     expect(
       await toasts().findByText('استراحت شروع شد؛ تماس تیمی به شما نمی‌رسد'),
     ).toBeInTheDocument();
-    expect(
-      await screen.findByText(/در استراحت هستید و تماس تیمی به شما نمی‌رسد/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/^از ساعت .* در استراحت هستید/)).toBeInTheDocument();
     expect(screen.getByText(/تیم‌ها: moshavere-foroosh/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'حساب کاربری: در استراحت' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'پایان استراحت' }));
     expect(await toasts().findByText('دوباره تماس تیمی به شما می‌رسد')).toBeInTheDocument();
     expect(screen.queryByText(/در استراحت هستید/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'استراحت' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'حساب کاربری' })).toBeInTheDocument();
   });
 
   it('shows no button to someone no team rings', async () => {
+    const user = userEvent.setup();
     server.use(
       http.get('/api/sales/v1/calls/break/', () =>
         HttpResponse.json({ can: false, on_break: false, since: null, teams: [] }),
       ),
     );
     renderApp('/sales');
-    await screen.findByRole('heading', { name: /^سلام نیما، / });
+    await user.click(await screen.findByRole('button', { name: 'حساب کاربری' }));
+    expect(await screen.findByRole('link', { name: 'تنظیمات' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'استراحت' })).not.toBeInTheDocument();
   });
 });

@@ -102,6 +102,8 @@
   },
   "account": {
     "menu": "Account",
+    "onCall": "On a call",
+    "onBreak": "On a break",
     "current": "Current panel",
     "profile": "Account",
     "settings": "Settings",

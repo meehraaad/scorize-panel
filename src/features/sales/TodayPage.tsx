@@ -16,7 +16,6 @@ import { taskListQuery } from '@/lib/tasks/api';
 import { agendaOf } from './agenda';
 import { activityQuery, insightsQuery, outreachQuery, receiptsQuery } from './api';
 import { NextUpCard, type NextUp } from './components/NextUpCard';
-import { PhoneBreakButton, PhoneBreakNotice } from './components/PhoneBreak';
 import { TodayAgenda } from './components/TodayAgenda';
 import { TodayAside } from './components/TodaySide';
 import { salesPath } from './paths';
@@ -96,7 +95,6 @@ export default function TodayPage() {
         }
         actions={
           <>
-            {ON_SERVER.phoneBreak && <PhoneBreakButton />}
             <Link to={salesPath('leads?new=1')} className={buttonClass('outline')}>
               <Icon name="plus" size={18} />
               {t('today.newLead')}
@@ -104,7 +102,6 @@ export default function TodayPage() {
           </>
         }
       />
-      {ON_SERVER.phoneBreak && <PhoneBreakNotice />}
       {needsExtension && (
         <Notice tone="info">
           {t('officeExtension.missing')}{' '}

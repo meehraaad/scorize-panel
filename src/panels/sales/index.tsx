@@ -34,6 +34,8 @@ import {
   funnelQuery,
 } from '@/features/sales/api';
 import HeaderCustomerSearch from '@/features/sales/components/HeaderCustomerSearch';
+import { PhoneBreakMenu } from '@/features/sales/components/PhoneBreak';
+import { usePhoneStatus } from '@/features/sales/components/usePhoneStatus';
 import { queryClient } from '@/lib/api/queryClient';
 import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
@@ -132,6 +134,10 @@ export const salesPanel: PanelDefinition = {
   ],
   // Search every customer from any page (S63), not only the leads page's button.
   ...(ON_SERVER.customerSearch && { headerAction: HeaderCustomerSearch }),
+  // The avatar ring reads the break state on every page.
+  ...(ON_SERVER.phoneBreak && { data: () => [phoneBreakQuery] }),
+  // Phone state on the avatar ring and the break button in the account menu.
+  ...(ON_SERVER.phoneBreak && { account: { useStatus: usePhoneStatus, Menu: PhoneBreakMenu } }),
   // Each route lists what its page shows first (docs/performance.md, "Page data").
   routes: [
     {
@@ -146,7 +152,6 @@ export const salesPanel: PanelDefinition = {
           // Today's calendar: the popup a consultation or follow-up card opens.
           sellerDayQuery(new Date(new Date().setHours(0, 0, 0, 0))),
           // The header's break from team calls.
-          ...(ON_SERVER.phoneBreak ? [phoneBreakQuery] : []),
         ],
         skeleton: 'dashboard',
       }),
