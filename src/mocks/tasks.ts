@@ -9,6 +9,7 @@ import type {
   TaskRequest,
   TasksOverview,
 } from '@/lib/tasks/api';
+import { dueAtOf } from '@/lib/tasks/api';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { reactionDetails, resetTaskReactionMocks, withReactions } from './taskReactions';
 import { newId } from './sales';
@@ -409,12 +410,13 @@ export const taskHandlers = [
     if (
       task.kind === 'mine' &&
       !task.user &&
-      new Date(task.due_at).toDateString() === new Date().toDateString()
+      new Date(dueAtOf(task)).toDateString() === new Date().toDateString()
     )
       overview.mine.push({
         id,
         text: task.text,
-        due_at: task.due_at,
+        due_at: dueAtOf(task),
+        timed: task.due_at !== undefined,
         person: null,
         source: 'me',
         snoozed: 0,
@@ -446,7 +448,7 @@ export const taskHandlers = [
         created_at: now,
         text: task.text,
         person: null,
-        due_at: task.due_at,
+        due_at: dueAtOf(task),
         status,
         comments: 0,
         reactions: [],

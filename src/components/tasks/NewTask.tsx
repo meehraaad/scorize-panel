@@ -21,7 +21,7 @@ import { fromLocalInput, quickWhen } from '@/lib/when';
 
 const TARGETS = ['me', 'people', 'team'] as const;
 type Target = (typeof TARGETS)[number];
-const WHENS = ['evening', 'tomorrow', 'week', 'other'] as const;
+const WHENS = ['evening', 'tomorrow', 'week', 'day', 'other'] as const;
 
 /** «کار تازه» in a page header: opens the composer. */
 export function NewTaskButton({ colleagues }: { colleagues: Colleague[] }) {
@@ -58,7 +58,7 @@ export function NewTaskDialog({
   open: boolean;
   colleagues: Colleague[];
   onClose: () => void;
-  /** Opened on a day of the calendar: a task for me, due then. */
+  /** Opened on a day of the calendar: a task for me that day (no hour; one can be set). */
   due?: Date | undefined;
   /** After it is saved (the opener refreshes what shows the new task). */
   onCreated?: (() => void) | undefined;
@@ -70,27 +70,30 @@ export function NewTaskDialog({
   const [target, setTarget] = useState<Target>(due ? 'me' : 'people');
   const [picked, setPicked] = useState<number[]>([]);
   const [team, setTeam] = useState<TaskTeam>(TASK_TEAMS[0]);
-  const [when, setWhen] = useState<(typeof WHENS)[number]>(due ? 'other' : 'tomorrow');
+  const [when, setWhen] = useState<(typeof WHENS)[number]>(due ? 'day' : 'tomorrow');
   const [date, setDate] = useState(due ? toValue(due, true) : '');
+  const [day, setDay] = useState(due ? toValue(due, false) : '');
   const [checked, setChecked] = useState(false);
 
   const chosen = colleagues.filter((colleague) => picked.includes(colleague.id));
   const toggle = (id: number) =>
     setPicked((ids) => (ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]));
   const n = chosen.length;
-  const dueAt = when === 'other' ? fromLocalInput(date) : quickWhen(when).toISOString();
+  const dueAt =
+    when === 'day' ? null : when === 'other' ? fromLocalInput(date) : quickWhen(when).toISOString();
   const sendLabel =
     target === 'people' && n > 1 ? t('new.send.many', { n: f.number(n) }) : t(`new.send.${target}`);
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setChecked(true);
-    if (!text.trim() || !dueAt || (target === 'people' && n === 0)) return;
+    if (!text.trim() || (when === 'day' ? !day : !dueAt) || (target === 'people' && n === 0))
+      return;
     const task: NewTask = {
       user: null,
       text: text.trim(),
       kind: target === 'me' ? 'mine' : target === 'team' ? 'team' : 'request',
-      due_at: dueAt,
+      ...(dueAt ? { due_at: dueAt } : { due_on: day }),
       ...(target === 'people' && { assignees: picked }),
       ...(target === 'team' && { team }),
     };
@@ -102,7 +105,7 @@ export function NewTaskDialog({
           target === 'people'
             ? t('new.sent.people', { n: f.number(n) })
             : target === 'me'
-              ? t('new.sent.me', { when: f.dateTime(dueAt) })
+              ? t('new.sent.me', { when: dueAt ? f.dateTime(dueAt) : f.date(`${day}T12:00`) })
               : t('new.sent.team'),
         );
         onClose();
@@ -198,7 +201,12 @@ export function NewTaskDialog({
           onChange={setWhen}
           options={WHENS.map((value) => ({
             value,
-            label: value === 'other' ? t('new.other') : t(`done.whenOption.${value}`),
+            label:
+              value === 'other'
+                ? t('new.other')
+                : value === 'day'
+                  ? t('new.dayOnly')
+                  : t(`done.whenOption.${value}`),
           }))}
         />
         {when === 'other' && (
@@ -209,6 +217,16 @@ export function NewTaskDialog({
             value={date}
             onChange={setDate}
             error={checked && !dueAt ? t('new.dateRequired') : undefined}
+          />
+        )}
+        {when === 'day' && (
+          <LazyDatePicker
+            only="future"
+            label={t('new.day')}
+            hint={t('new.dayHint')}
+            value={day}
+            onChange={setDay}
+            error={checked && !day ? t('new.dayRequired') : undefined}
           />
         )}
       </form>

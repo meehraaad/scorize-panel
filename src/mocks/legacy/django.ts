@@ -29,6 +29,7 @@ import type {
   TaskSummary,
   TaskTeam,
 } from '@/lib/tasks/api';
+import { dueAtOf } from '@/lib/tasks/api';
 
 /**
  * The sales panel's tasks on Django's existing StaffToDo API (todos/, todos/<id>/comments/) until
@@ -249,7 +250,7 @@ export async function createTask(task: NewTask) {
     user: task.user,
     support_staves: owners,
     description: task.text,
-    deadline: djangoDate(task.due_at),
+    deadline: djangoDate(dueAtOf(task)),
   };
   return api(`${TODOS}/`, { method: 'POST', body });
 }

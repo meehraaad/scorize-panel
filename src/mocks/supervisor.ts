@@ -30,7 +30,7 @@ import type {
 } from '@/features/supervisor/api';
 import type { Degree } from '@/lib/applicant/approval';
 import { APPLICATION_RESULTS, type ApplicationResult } from '@/lib/applications';
-import type { NewTask } from '@/lib/tasks/api';
+import { dueAtOf, type NewTask } from '@/lib/tasks/api';
 import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/api';
 import { faceOf, putFace } from './face';
 import { mockBotRules } from './mail';
@@ -883,7 +883,7 @@ export function addCaseTask(task: NewTask) {
   if (!cases) return;
   for (const item of cases.values())
     if (item.data.user === task.user) {
-      item.data.tasks.push({ id: newId(), text: task.text, due_at: task.due_at });
+      item.data.tasks.push({ id: newId(), text: task.text, due_at: dueAtOf(task) });
       record(item, `${SUPERVISOR_NAME} کار «${task.text}» را ساخت`);
     }
 }
