@@ -346,6 +346,7 @@ function AgendaRow({
               customer={lead.customer}
               name={lead.name}
               start={{ channel: 'call' }}
+              phone={lead.phone}
               aria-label={t('callName', { name: lead.name })}
               className={buttonClass('primary', small)}
             >
@@ -387,6 +388,7 @@ function AgendaRow({
               customer={call.customer}
               name={call.name}
               start={{ channel: 'call' }}
+              phone={call.phone}
               aria-label={t('callName', { name: call.name })}
               className={buttonClass(late ? 'primary' : 'outline', small)}
             >

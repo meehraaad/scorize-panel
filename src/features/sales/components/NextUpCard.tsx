@@ -5,6 +5,7 @@ import { IconLink } from '@/components/ui/IconButton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FIRST_CALL_TARGET_MINUTES, MESSAGE_CHANNELS, messageHref } from '@/lib/sales/api';
 import { openContactLog, type ContactValues } from '@/lib/sales/contactDrafts';
+import { dialWithLinphone } from '@/lib/sales/dial';
 import type { AgendaItem } from '../agenda';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
@@ -100,7 +101,10 @@ export function NextUpCard({
         <div className="flex flex-[0_1_300px] flex-col gap-2.5">
           <button
             type="button"
-            onClick={() => openContactLog(customer, name, { channel: 'call' })}
+            onClick={() => {
+              openContactLog(customer, name, { channel: 'call' });
+              dialWithLinphone(phone);
+            }}
             aria-label={t('callName', { name })}
             className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-hero-accent px-5 text-base font-bold text-hero hover:brightness-105"
           >

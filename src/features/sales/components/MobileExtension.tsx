@@ -140,14 +140,12 @@ export function MobileExtension() {
       {data.status === 'ready' && data.extension && data.password && (
         <>
           {data.linphone && <LinphoneQr link={data.linphone} />}
-          {data.domain && (
-            <Switch
-              label={t('mobileExtension.dial')}
-              description={t('mobileExtension.dialHint')}
-              checked={linphoneDial !== null}
-              onChange={(on) => setLinphoneDial(on ? data.domain : null)}
-            />
-          )}
+          <Switch
+            label={t('mobileExtension.dial')}
+            description={t('mobileExtension.dialHint')}
+            checked={linphoneDial}
+            onChange={setLinphoneDial}
+          />
           <p className="m-0 text-[15px] leading-7 text-text-2">{t('mobileExtension.setup')}</p>
           <dl className="m-0 grid gap-4 sm:grid-cols-2">
             <CopyRow label={t('mobileExtension.extension')} value={data.extension} />
