@@ -337,7 +337,10 @@ export function LogDialog({
         />
       )}
       {call && !liveCall && (
-        <a href={callHref(customer.phone, linphone)} className={buttonClass('outline', 'self-start')}>
+        <a
+          href={callHref(customer.phone, linphone)}
+          className={buttonClass('outline', 'self-start')}
+        >
           <Icon name="phone" size={18} />
           <span dir="ltr">{f.digits(customer.phone)}</span>
         </a>
