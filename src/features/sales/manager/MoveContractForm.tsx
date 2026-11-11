@@ -1,81 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField, TextAreaField } from '@/components/ui/Choices';
-import { Dialog } from '@/components/ui/Dialog';
-import { SkeletonRows } from '@/components/ui/Skeleton';
 import { toast } from '@/lib/toast';
-import { teamContractsQuery, useMoveContract, type TeamRange } from '../api';
+import { useMoveContract } from '../api';
 import type { MonthContract } from '../api/month';
-import { ContractList } from '../components/MonthLists';
 
-/**
- * A seller's contracts over the team page's range: what makes their number on the leaderboard.
- * The manager can move one to another seller, with a reason the customer's history keeps.
- */
-export function SellerContracts({
-  range,
-  seller,
-  sellers,
-  onClose,
-}: {
-  range: TeamRange;
-  seller: { id: number; name: string } | null;
-  sellers: { id: number; name: string }[];
-  onClose: () => void;
-}) {
-  const { t } = useTranslation('sales');
-  const { data } = useQuery({
-    ...teamContractsQuery(range, seller?.id ?? 0),
-    enabled: seller !== null,
-  });
-  const [moving, setMoving] = useState<MonthContract | null>(null);
-
-  return (
-    <Dialog
-      open={seller !== null}
-      onClose={() => {
-        setMoving(null);
-        onClose();
-      }}
-      title={t('manager.contracts.title', { name: seller?.name ?? '' })}
-      subtitle={t('manager.contracts.subtitle')}
-      closeLabel={t('manager.contracts.close')}
-      size="wide"
-    >
-      {!data ? (
-        <SkeletonRows rows={3} />
-      ) : (
-        <ContractList
-          rows={data}
-          empty={t('manager.contracts.empty')}
-          action={(row) =>
-            moving?.lead === row.lead ? null : (
-              <Button
-                variant="outline"
-                className="h-11 px-4 text-sm"
-                aria-label={t('manager.contracts.moveFor', { name: row.name })}
-                onClick={() => setMoving(row)}
-              >
-                {t('manager.contracts.move')}
-              </Button>
-            )
-          }
-        />
-      )}
-      {moving && seller && (
-        <MoveForm
-          contract={moving}
-          sellers={sellers.filter((item) => item.id !== seller.id)}
-          onDone={() => setMoving(null)}
-        />
-      )}
-    </Dialog>
-  );
-}
-
-function MoveForm({
+/** Moves one of a seller's contracts to another seller, with a reason the customer's history keeps. */
+export function MoveContractForm({
   contract,
   sellers,
   onDone,

@@ -25,8 +25,7 @@ import {
   type TeamRange,
 } from '../api';
 import { useSalesFormat } from '../format';
-import { salesPath } from '../paths';
-import { SellerContracts } from './SellerContracts';
+import { salesPath, sellerMonthPath } from '../paths';
 
 const RANGES = ['month', 'last', 'quarter'] as const satisfies readonly TeamRange[];
 const LEADERBOARD = [
@@ -50,8 +49,6 @@ export default function TeamPage() {
   const f = useFormat();
   const s = useSalesFormat();
   const [range, setRange] = useState<TeamRange>('month');
-  // The seller whose contracts are open (the leaderboard's names open them).
-  const [opened, setOpened] = useState<{ id: number; name: string } | null>(null);
   const { data } = useQuery(teamQuery(range));
 
   return (
@@ -138,13 +135,7 @@ export default function TeamPage() {
               },
             ]}
           />
-          <Leaderboard data={data} onOpen={setOpened} />
-          <SellerContracts
-            range={range}
-            seller={opened}
-            sellers={data.sellers}
-            onClose={() => setOpened(null)}
-          />
+          <Leaderboard data={data} range={range} />
           {data.alerts.length > 0 && <Alerts alerts={data.alerts} />}
           <Sources data={data} />
           {ON_SERVER.estimate && <QuizFunnel range={range} />}
@@ -156,13 +147,7 @@ export default function TeamPage() {
 
 const cell = 'px-3 py-3.5 first:ps-5 last:pe-5 lg:first:ps-8 lg:last:pe-8';
 
-function Leaderboard({
-  data,
-  onOpen,
-}: {
-  data: TeamData;
-  onOpen: (seller: { id: number; name: string }) => void;
-}) {
+function Leaderboard({ data, range }: { data: TeamData; range: TeamRange }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
@@ -193,15 +178,14 @@ function Leaderboard({
                   {f.number(ranks.get(seller.won) ?? 1)}
                 </td>
                 <th scope="row" className={`${cell} text-start font-semibold`}>
-                  <button
-                    type="button"
-                    onClick={() => onOpen({ id: seller.id, name: seller.name })}
-                    aria-label={t('manager.contracts.open', { name: seller.name })}
+                  {/* Their month page; last month's for the "last month" range. */}
+                  <Link
+                    to={sellerMonthPath(seller.id, range === 'last' ? data.from.slice(0, 10) : null)}
                     className="flex min-h-11 items-center gap-2.5 text-start font-semibold text-text hover:text-primary-text hover:underline"
                   >
                     <Avatar name={seller.name} size="sm" />
                     {seller.name}
-                  </button>
+                  </Link>
                 </th>
                 <td className={cell}>
                   <span className="flex flex-col gap-1.5">

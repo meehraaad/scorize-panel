@@ -8,7 +8,7 @@ import type { Colleague } from '@/lib/tasks/api';
 import type { ActivityKind, StageActivity, StagePhase } from './board';
 import type { ContractDocument } from './contract';
 import type { BuiltinVariable, ContractVariable } from './offer';
-import type { MonthContract } from './month';
+import type { MonthData } from './month';
 
 /** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
 export const MANAGER_PERMISSION = 'can_assign_to_seller';
@@ -306,15 +306,19 @@ export const funnelQuery = (range: TeamRange) =>
   });
 
 /** The same report as a spreadsheet (S38). */
-/** A seller's contracts over the team page's range (S59). */
-export const teamContractsQuery = (range: TeamRange, seller: number) =>
+/**
+ * One seller's month as their own month page shows it (S75), for the manager (no password: the
+ * team page already shows every commission). `month`: a day of one of `months`; default this one.
+ */
+export const teamSellerQuery = (seller: number, month: string | null) =>
   queryOptions({
-    queryKey: [...MANAGER_KEY, 'team', range, 'contracts', seller],
+    queryKey: [...MANAGER_KEY, 'team', 'seller', seller, month ?? 'current'],
     queryFn: ({ signal }) =>
-      api<MonthContract[]>(
-        `${MANAGER_API}/team/contracts/?range=${range}&seller=${String(seller)}`,
+      api<MonthData>(
+        `${MANAGER_API}/team/seller/?seller=${String(seller)}${month ? `&month=${month}` : ''}`,
         { signal },
       ),
+    placeholderData: keepPreviousData,
   });
 
 /** Moves a closed contract to another seller, with a reason the customer's history keeps (S59). */

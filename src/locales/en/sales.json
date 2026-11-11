@@ -1670,10 +1670,6 @@
       "done": "{{n}} leads added ({{customers}} new customers)."
     },
     "contracts": {
-      "open": "{{name}}'s contracts",
-      "title": "{{name}}'s contracts",
-      "subtitle": "The contracts counted for this seller in this range.",
-      "close": "Close",
       "move": "Move",
       "moveFor": "Move {{name}}'s contract",
       "moveTitle": "Move {{name}}'s contract to another seller",
@@ -1685,7 +1681,6 @@
       "confirm": "Move the contract",
       "cancel": "Cancel",
       "moved": "Contract moved.",
-      "empty": "No contract counts for this seller in this range.",
       "listTitle": "Contracts",
       "listSubtitle": "Each contract has its own price, restrictions and text. A seller picks one when making an offer.",
       "filter": "Show",
@@ -2235,6 +2230,19 @@
           "voices": "Go to messages"
         }
       }
+    },
+    "seller": {
+      "back": "Sales team",
+      "title": "{{name}}'s performance · {{month}}",
+      "pick": "Seller",
+      "missing": "This seller wasn't found.",
+      "subtitleDone": "Reached this month's goal.",
+      "marker": "Yellow line: where they should be today ({{percent}} of the month gone). {{days}} working days left.",
+      "funnel": "Sales funnel",
+      "sources": "Which leads became contracts?",
+      "contractsSubtitle": "Contracts credited to this seller this month. Use “Move” to give one to another seller, with a reason.",
+      "contractsEmpty": "No contracts were closed for this seller this month.",
+      "instalmentsSubtitle": "Instalments of this seller's contracts due this month, and unpaid ones already past due."
     }
   },
   "handoff": {

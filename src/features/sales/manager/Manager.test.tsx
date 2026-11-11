@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -359,25 +359,43 @@ describe('sales manager section', () => {
     expect(await within(oldest).findByText(/مسئول: امید رنجبر/)).toBeInTheDocument();
   });
 
-  it("team: a seller's contracts, and moving one with a reason", async () => {
+  it("team: a seller's own month page, switching seller, and moving a contract", async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/team');
-    await user.click(await screen.findByRole('button', { name: 'قراردادهای مهدی توکلی' }));
-    const dialog = await screen.findByRole('dialog', { name: 'قراردادهای مهدی توکلی' });
-    expect(await within(dialog).findByText('سارا حیدری')).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'انتقال قرارداد سارا حیدری' }));
+    const router = renderApp('/sales/manager/team');
+    const board = await screen.findByRole('region', { name: 'رتبه‌بندی فروشنده‌ها' });
+    await user.click(within(board).getByRole('link', { name: 'مهدی توکلی' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/sales/manager/team/31'));
+    // The same blocks as the seller's month, without a password, in the third person.
+    expect(await screen.findByRole('heading', { name: /^عملکرد مهدی توکلی/ })).toBeInTheDocument();
+    expect(screen.queryByLabelText('رمز عبور')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'قیف فروش' })).toBeInTheDocument();
+    const contracts = screen.getByRole('region', { name: 'قراردادهای این ماه' });
+    const first = within(contracts).getAllByRole('button', { name: /^انتقال قرارداد / })[0];
+    const name = (first?.getAttribute('aria-label') ?? '').replace('انتقال قرارداد ', '');
+    await user.click(first as HTMLElement);
     // The reason is required: it goes on the customer's history.
-    await user.click(within(dialog).getByRole('button', { name: 'انتقال قرارداد' }));
-    expect(within(dialog).getByText('دلیل انتقال را بنویسید.')).toBeInTheDocument();
-    const to = within(dialog).getByLabelText('به نام');
+    await user.click(within(contracts).getByRole('button', { name: 'انتقال قرارداد' }));
+    expect(within(contracts).getByText('دلیل انتقال را بنویسید.')).toBeInTheDocument();
+    const to = within(contracts).getByLabelText('به نام');
     await user.selectOptions(to, within(to).getAllByRole('option')[1] as HTMLOptionElement);
-    await user.type(within(dialog).getByLabelText('دلیل'), 'جلسه را او برگزار کرد');
-    await user.click(within(dialog).getByRole('button', { name: 'انتقال قرارداد' }));
+    await user.type(within(contracts).getByLabelText('دلیل'), 'جلسه را او برگزار کرد');
+    await user.click(within(contracts).getByRole('button', { name: 'انتقال قرارداد' }));
     expect(await toasts().findByText('قرارداد منتقل شد.')).toBeInTheDocument();
+    // The list is read again: the moved contract is no longer this seller's.
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('region', { name: 'قراردادهای این ماه' })).queryByRole('button', {
+          name: `انتقال قرارداد ${name}`,
+        }),
+      ).not.toBeInTheDocument(),
+    );
+
+    await user.selectOptions(screen.getByLabelText('فروشنده'), '32');
     expect(
-      await within(dialog).findByText('در این بازه قراردادی به نام این فروشنده نیست.'),
+      await screen.findByText('در این ماه قراردادی به نام این فروشنده بسته نشده.'),
     ).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe('/sales/manager/team/32'));
   });
 
   it('shows the quiz funnel with the step that loses the most people', async () => {
