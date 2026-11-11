@@ -321,7 +321,9 @@ function Figures({ draft }: { draft: ContractDraft }) {
           label: t('manager.approvals.figure.amount'),
           value: s.inCurrency(n.amount, n.currency ?? 'IRT'),
           ...(n.list_price !== n.amount && {
-            note: t('manager.approvals.figure.list', { amount: s.inCurrency(n.list_price, n.currency ?? 'IRT') }),
+            note: t('manager.approvals.figure.list', {
+              amount: s.inCurrency(n.list_price, n.currency ?? 'IRT'),
+            }),
           }),
         },
         {
