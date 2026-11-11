@@ -111,7 +111,7 @@ export function ContractCard({ customer }: { customer: number }) {
           <span className="text-sm text-text-2">
             {t('contractCard.amount')}:{' '}
             <b className="text-text tabular-nums">
-              {open.amount ? s.toman(open.amount) : t('contractCard.free')}
+              {open.amount ? s.exact(open.amount, open.currency ?? 'IRT') : t('contractCard.free')}
             </b>{' '}
             · {f.timeAgo(open.updated_at)}
           </span>

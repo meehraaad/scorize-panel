@@ -21,16 +21,20 @@ const LATER: Exclude<InstalmentWhen, 'signing'>[] = INSTALMENT_WHEN.filter(
 export function ScheduleEditor({
   schedule,
   total,
+  currency = 'IRT',
   onChange,
 }: {
   schedule: Instalment[];
-  /** The contract's price after the discount, toman. */
+  /** The contract's price after the discount, in `currency`. */
   total: number;
+  /** ISO code of the contract's money (S74). */
+  currency?: string;
   onChange: (schedule: Instalment[]) => void;
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
+  const money = (value: number) => s.exact(value, currency);
   const sum = scheduleTotal(schedule);
   const gap = total - sum;
 
@@ -94,7 +98,7 @@ export function ScheduleEditor({
                   step={1000}
                   label={t('offer.schedule.amount')}
                   value={row.amount ? String(row.amount) : ''}
-                  hint={row.amount ? s.toman(row.amount) : undefined}
+                  hint={row.amount ? money(row.amount) : undefined}
                   onChange={(event) =>
                     change(index, { amount: Math.max(0, Math.round(Number(event.target.value))) })
                   }
@@ -134,9 +138,9 @@ export function ScheduleEditor({
         aria-live="polite"
         className={`m-0 rounded-2xl px-4 py-3 text-sm ${gap === 0 ? 'bg-good-tint text-good' : 'bg-warn-tint text-warn'}`}
       >
-        {t('offer.schedule.total', { sum: s.toman(sum), total: s.toman(total) })}
+        {t('offer.schedule.total', { sum: money(sum), total: money(total) })}
         {gap !== 0 &&
-          ` · ${gap > 0 ? t('offer.schedule.left', { amount: s.toman(gap) }) : t('offer.schedule.over', { amount: s.toman(-gap) })}`}
+          ` · ${gap > 0 ? t('offer.schedule.left', { amount: money(gap) }) : t('offer.schedule.over', { amount: money(-gap) })}`}
       </p>
     </fieldset>
   );

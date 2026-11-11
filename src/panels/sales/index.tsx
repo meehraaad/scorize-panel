@@ -11,6 +11,7 @@ import {
   stagesQuery,
   managerTagsQuery,
   contractBuilderQuery,
+  contractOverviewQuery,
   templateParam,
   tagsQuery,
   sellerCalendarQuery,
@@ -325,12 +326,15 @@ export const salesPanel: PanelDefinition = {
         },
         {
           path: 'contract',
+          ...lazyPage(() => import('@/features/sales/manager/ContractListPage'), [], {
+            data: () => [contractOverviewQuery, contractBuilderQuery(null)],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'contract/:kind',
           ...lazyPage(() => import('@/features/sales/manager/ContractBuilderPage'), [], {
-            data: ({ request }) => [
-              contractBuilderQuery(
-                templateParam(new URL(request.url).searchParams.get('template')),
-              ),
-            ],
+            data: ({ params }) => [contractBuilderQuery(templateParam(params.kind ?? null))],
             skeleton: 'form',
           }),
         },

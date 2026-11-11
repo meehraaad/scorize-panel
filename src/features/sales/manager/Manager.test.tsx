@@ -614,7 +614,7 @@ describe('contract builder and agreement desk (S64)', () => {
 
   it('the manager adds a fixed clause, orders it and reads it in the versions', async () => {
     const user = userEvent.setup();
-    renderApp('/sales/manager/contract');
+    renderApp('/sales/manager/contract/standard?tab=text');
     // The editor's list comes first; the preview's sheet has the same heading.
     const clauses = await screen.findByRole('region', { name: 'متن قرارداد' });
     expect(within(clauses).getByText('ماده ۱: موضوع قرارداد')).toBeInTheDocument();
@@ -635,7 +635,7 @@ describe('contract builder and agreement desk (S64)', () => {
     // …and the note after it now belongs to it.
     expect(within(clauses).getByText('تبصره ۱')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('radio', { name: 'نسخه‌ها' }));
+    await user.click(screen.getByRole('radio', { name: 'تاریخچه‌ی تغییرها' }));
     const versions = await screen.findByRole('region', { name: 'نسخه‌های متن قرارداد' });
     expect(within(versions).getByText('ترتیب بندها عوض شد')).toBeInTheDocument();
     expect(within(versions).getByText('ماده «بورسیه» اضافه شد')).toBeInTheDocument();
@@ -644,13 +644,13 @@ describe('contract builder and agreement desk (S64)', () => {
 
   it('rules are saved, and the desk holds the offer to them', async () => {
     const user = userEvent.setup();
-    renderApp('/sales/manager/contract?tab=prices');
-    const rules = await screen.findByRole('region', { name: 'قانون‌های پیشنهاد' });
+    renderApp('/sales/manager/contract/standard');
+    const rules = await screen.findByRole('region', { name: '۳. اختیار فروشنده' });
     const prepayment = within(rules).getByLabelText('کمترین پیش‌پرداخت (٪)');
     await user.clear(prepayment);
     await user.type(prepayment, '50');
-    await user.click(within(rules).getByRole('button', { name: 'ذخیره' }));
-    expect(await screen.findByText('قانون‌ها ذخیره شد.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText('تنظیمات ذخیره شد.')).toBeInTheDocument();
 
     cleanup();
     renderApp('/sales/manager/approvals');
@@ -663,18 +663,18 @@ describe('contract builder and agreement desk (S64)', () => {
 
   it('a kind of contract is limited to countries and degrees (S73)', async () => {
     const user = userEvent.setup();
-    renderApp('/sales/manager/contract?tab=prices');
-    const rules = await screen.findByRole('region', { name: 'قانون‌های پیشنهاد' });
+    renderApp('/sales/manager/contract/standard');
+    const rules = await screen.findByRole('region', { name: '۲. این قرارداد برای چه کسانی است' });
     expect(within(rules).getByText(/همه‌ی کشورها/)).toBeInTheDocument();
     await user.click(within(rules).getByLabelText('ترکیه'));
     await user.click(within(rules).getByLabelText('دکترا'));
     expect(within(rules).getByText(/فقط ۱ کشور انتخاب‌شده/)).toBeInTheDocument();
-    await user.click(within(rules).getByRole('button', { name: 'ذخیره' }));
-    expect(await screen.findByText('قانون‌ها ذخیره شد.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText('تنظیمات ذخیره شد.')).toBeInTheDocument();
 
     cleanup();
-    renderApp('/sales/manager/contract?tab=prices');
-    const saved = await screen.findByRole('region', { name: 'قانون‌های پیشنهاد' });
+    renderApp('/sales/manager/contract/standard');
+    const saved = await screen.findByRole('region', { name: '۲. این قرارداد برای چه کسانی است' });
     expect(within(saved).getByLabelText('ترکیه')).toBeChecked();
     expect(within(saved).getByLabelText('آلمان')).not.toBeChecked();
     expect(within(saved).getByText(/فقط ۱ مقطع انتخاب‌شده/)).toBeInTheDocument();
@@ -682,7 +682,7 @@ describe('contract builder and agreement desk (S64)', () => {
 
   it('the preview shows a clause as it is typed, before it is saved (S68)', async () => {
     const user = userEvent.setup();
-    renderApp('/sales/manager/contract');
+    renderApp('/sales/manager/contract/standard?tab=text');
     const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
     expect(within(preview).getByText(/موضوع قرارداد/)).toBeInTheDocument();
     const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
@@ -697,23 +697,57 @@ describe('contract builder and agreement desk (S64)', () => {
     expect(await screen.findByRole('dialog', { name: 'پیش‌نمایش قرارداد' })).toBeInTheDocument();
   });
 
-  it('the manager makes a second kind of contract as a copy and switches between them (S68)', async () => {
+  it('the manager makes a second contract as a copy from the list and opens it (S74)', async () => {
     const user = userEvent.setup();
     const router = renderApp('/sales/manager/contract');
-    const kinds = await screen.findByRole('region', { name: 'نوع قرارداد' });
-    await user.click(within(kinds).getByRole('button', { name: '+ قرارداد تازه' }));
-    await user.type(within(kinds).getByLabelText('نام قرارداد'), 'فقط ویزا');
-    await user.click(within(kinds).getByRole('radio', { name: /کپی از «قرارداد استاندارد»/ }));
-    await user.click(within(kinds).getByRole('button', { name: 'ساختن قرارداد' }));
+    const list = await screen.findByRole('list');
+    expect(within(list).getByText('قرارداد استاندارد')).toBeInTheDocument();
+    expect(within(list).getByText('اپلای رایگان ترکیه')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '+ قرارداد تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'قرارداد تازه' });
+    await user.type(within(dialog).getByLabelText('نام قرارداد'), 'فقط ویزا');
+    await user.click(within(dialog).getByRole('button', { name: 'ساختن قرارداد' }));
     expect(await screen.findByText('«فقط ویزا» ساخته شد.')).toBeInTheDocument();
-    // It opens on the new one, with the standard text copied.
-    await screen.findByRole('radio', { name: /فقط ویزا/, checked: true });
-    expect(router.state.location.search).toMatch(/template=\d+/);
-    const clauses = screen.getByRole('region', { name: 'متن قرارداد' });
+    // It opens on the new one; its text is the standard one, copied.
+    await vi.waitFor(() => expect(router.state.location.pathname).toMatch(/contract\/\d+$/));
+    await user.click(await screen.findByRole('radio', { name: 'متن قرارداد' }));
+    const clauses = await screen.findByRole('region', { name: 'متن قرارداد' });
     expect(within(clauses).getByText('ماده ۱: موضوع قرارداد')).toBeInTheDocument();
-    // Back to the standard contract.
-    await user.click(screen.getByRole('radio', { name: /^قرارداد استاندارد/ }));
-    expect(router.state.location.search).not.toMatch(/template=/);
+  });
+
+  it('the manager sets a contract in euros with an amount range and fewest applications (S74)', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/manager/contract/1');
+    const prices = await screen.findByRole('region', { name: '۱. خدمات و قیمت' });
+    await user.selectOptions(within(prices).getByLabelText('واحد پول قرارداد'), 'یورو');
+    const price = within(prices).getByLabelText('قیمت پذیرش');
+    await user.clear(price);
+    await user.type(price, '900');
+    expect(within(prices).getByText('۹۰۰ یورو')).toBeInTheDocument();
+    const limits = screen.getByRole('region', { name: '۲. این قرارداد برای چه کسانی است' });
+    await user.type(within(limits).getByLabelText('کمترین مبلغ قرارداد'), '1000');
+    await user.type(within(limits).getByLabelText('بیشترین مبلغ قرارداد'), '500');
+    expect(within(limits).getByText('کمترین مبلغ از بیشترین بزرگ‌تر است.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ذخیره' })).toBeDisabled();
+    const most = within(limits).getByLabelText('بیشترین مبلغ قرارداد');
+    await user.clear(most);
+    await user.type(most, '5000');
+    await user.type(within(limits).getByLabelText('کمترین تعداد اپلای'), '3');
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText('تنظیمات ذخیره شد.')).toBeInTheDocument();
+
+    cleanup();
+    renderApp('/sales/manager/contract');
+    const list = await screen.findByRole('list');
+    expect(within(list).getByText('یورو')).toBeInTheDocument();
+    expect(within(list).getByText(/از ۱٬?۰۰۰ یورو/)).toBeInTheDocument();
+  });
+
+  it('the standard contract is in toman only (S74)', async () => {
+    renderApp('/sales/manager/contract/standard');
+    const prices = await screen.findByRole('region', { name: '۱. خدمات و قیمت' });
+    expect(within(prices).getByText('قرارداد استاندارد همیشه به تومان است.')).toBeInTheDocument();
+    expect(within(within(prices).getByLabelText('واحد پول قرارداد')).getAllByRole('option')).toHaveLength(1);
   });
 
   it('the manager reads the whole contract before approving (S68)', async () => {
@@ -744,7 +778,7 @@ describe('contract builder and agreement desk (S64)', () => {
 
   it('the sheet numbers clauses by their article and fills the variables (S69)', async () => {
     const user = userEvent.setup();
-    renderApp('/sales/manager/contract');
+    renderApp('/sales/manager/contract/standard?tab=text');
     const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
     // Article ۴ has untitled clauses ۴-۱، ۴-۲ and a note.
     expect(within(preview).getByText('ماده ۴: تعهدات مؤسسه')).toBeInTheDocument();

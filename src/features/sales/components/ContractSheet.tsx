@@ -280,7 +280,7 @@ export function ContractSheet({
         className="flex break-inside-avoid flex-col gap-2"
       >
         <h2 id={`${ids}-payments`} className="m-0 text-base font-extrabold">
-          {t('print.payments', { amount: s.toman(doc.amount) })}
+          {t('print.payments', { amount: s.exact(doc.amount, doc.currency ?? 'IRT') })}
         </h2>
         {doc.installments.length === 0 ? (
           <p className="m-0 text-sm">{t('print.free')}</p>
@@ -315,7 +315,7 @@ export function ContractSheet({
                         : (row.condition ?? dash)}
                   </td>
                   <td className="py-2.5 text-end font-semibold tabular-nums">
-                    {s.toman(row.amount)}
+                    {s.exact(row.amount, doc.currency ?? 'IRT')}
                   </td>
                 </tr>
               ))}
