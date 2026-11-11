@@ -7,7 +7,7 @@ import { THEME_MODES } from '@/lib/theme/theme';
 import { useTheme } from '@/lib/theme/ThemeProvider';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { logout } from '@/lib/auth/logout';
-import { getRoles } from '@/lib/auth/roles';
+import { getRoles, isActiveStaff } from '@/lib/auth/roles';
 import { useUser } from '@/lib/auth/session';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 
@@ -31,6 +31,8 @@ export default function SettingsPage() {
   const { mode, setMode } = useTheme();
   const user = useUser();
   const seller = ON_SERVER.livePhoneCalls && getRoles(user).includes('sales');
+  // Every active staff member can have a softphone extension; the desk phone and call popups are the seller's.
+  const softphone = ON_SERVER.mobileExtensions && isActiveStaff(user);
 
   return (
     <div className="flex flex-col gap-6">
@@ -84,7 +86,7 @@ export default function SettingsPage() {
         </Card>
       )}
 
-      {seller && ON_SERVER.mobileExtensions && (
+      {softphone && (
         <Card className="p-6 lg:p-8">
           <Suspense fallback={null}>
             <MobileExtension />

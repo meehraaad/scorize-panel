@@ -312,9 +312,8 @@ export const phoneCallHandlers = [
       },
     );
   }),
+  // Every active staff member may ask, not only sellers.
   http.get('/api/sales/v1/calls/mobile/', () => {
-    const owner = storage.get();
-    if (owner !== 3 && owner !== 4) return forbidden();
     return HttpResponse.json({
       available: false,
       status: 'none',

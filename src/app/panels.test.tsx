@@ -1,10 +1,11 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { mockWorkspace, setMockWorkspace } from '@/mocks/handlers';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 
 /** Logs in as one of the mock accounts in src/mocks/handlers.ts without going through the form. */
 const loginAs = (id: 1 | 2 | 3) => {
@@ -202,6 +203,31 @@ describe('panels', () => {
     expect(
       within(screen.getByRole('banner')).getByRole('navigation', { name: 'منوی پنل نگارش' }),
     ).toBeInTheDocument();
+  });
+
+  it('lets staff outside sales request a softphone extension, without the desk phone setting', async () => {
+    server.use(
+      http.get('/api/sales/v1/calls/mobile/', () =>
+        HttpResponse.json({
+          available: true,
+          status: 'none',
+          extension: null,
+          password: null,
+          domain: null,
+          server: null,
+          linphone: null,
+        }),
+      ),
+    );
+    loginAs(MARYAM);
+    renderApp('/settings');
+    expect(await screen.findByRole('button', { name: 'درخواست داخلی موبایل' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'تلفن دفتر' })).not.toBeInTheDocument();
+    cleanup();
+    loginAs(SARA);
+    renderApp('/settings');
+    expect(await screen.findByRole('heading', { name: 'تنظیمات' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'درخواست داخلی موبایل' })).not.toBeInTheDocument();
   });
 
   it('shows a not-found page inside the panel, keeping its menu', async () => {

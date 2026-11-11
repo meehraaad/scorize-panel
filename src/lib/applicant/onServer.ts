@@ -68,7 +68,7 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   customerSearch: true,
   /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
   livePhoneCalls: true,
-  /** The seller's PortSIP login at /sales/v1/calls/mobile/; on once the office worker runs. */
+  /** A staff member's softphone login at /sales/v1/calls/mobile/ (every team); on once the office worker runs. */
   mobileExtensions: true,
   /** H29 `POST call-request/`. */
   callRequest: true,
