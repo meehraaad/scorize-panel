@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -30,14 +30,24 @@ describe('sales: an in-person meeting at the office (S75)', () => {
     const dialog = await screen.findByRole('dialog', { name: /^جلسه حضوری با / });
     const calendar = await within(dialog).findByRole('region', { name: 'ساعت‌های جلسه حضوری' });
 
-    const full = await within(calendar).findByRole('button', { name: /۱۰:۰۰ تا ۱۱:۰۰، پر شد/ });
-    expect(full).toBeDisabled();
+    // Tomorrow 10:00: every room is taken, on the seller's own week.
+    const full = await within(calendar).findByRole('button', {
+      name: /۱۰:۰۰، در این ساعت همه‌ی اتاق‌ها پر است/,
+    });
+    await user.click(full);
+    expect(await toasts().findByText('در این ساعت همه‌ی اتاق‌ها پر است.')).toBeInTheDocument();
 
-    await user.click(within(calendar).getByRole('button', { name: /^چهارشنبه.*۱۱:۰۰ تا ۱۲:۰۰/ }));
+    // A free spot on Wednesday (the week's fifth day); the grid starts at 9, an hour is 44px: 14:00.
+    fireEvent.click(within(calendar).getAllByTestId('schedule-slot')[4] as HTMLElement, {
+      clientY: 220,
+    });
+    expect(
+      await within(calendar).findByRole('button', { name: /^چهارشنبه.*۱۴:۰۰/ }),
+    ).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText('یادداشت جلسه'), 'مدارک را بیاورد');
     await user.click(within(dialog).getByRole('button', { name: 'ثبت جلسه' }));
     expect(
-      await toasts().findByText(/^جلسه حضوری برای چهارشنبه.*ساعت ۱۱:۰۰ ثبت شد/),
+      await toasts().findByText(/^جلسه حضوری برای چهارشنبه.*ساعت ۱۴:۰۰ ثبت شد/),
     ).toBeInTheDocument();
 
     // Opened again: the meeting ahead, with cancel.

@@ -10,7 +10,8 @@ import { Notice } from '@/components/ui/Notice';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Switch } from '@/components/ui/Switch';
 import { TextAreaField } from '@/components/ui/TextField';
-import { WeekCalendar } from '@/components/ui/WeekCalendar';
+import { EventCalendar, type CalendarEvent } from '@/components/ui/EventCalendar';
+import { WeekNav } from '@/components/ui/WeekNav';
 import { ApiError } from '@/lib/api/client';
 import { addDays, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
@@ -24,8 +25,11 @@ import {
   visitSlotsQuery,
   type OfficeVisit,
 } from '../api/visits';
+import { useSellerBusy } from './useSellerBusy';
 
 const FORM = 'visit-form';
+const PICKED = 'picked';
+const MINUTE = 60_000;
 /** How far ahead a meeting can be set (Django: eight weeks). */
 const WEEKS_AHEAD = 8;
 
@@ -176,8 +180,55 @@ function VisitForm({ customer, onDone }: { customer: number; onDone: () => void 
   const [colleagueNote, setColleagueNote] = useState('');
   const [checked, setChecked] = useState(false);
   const hintId = useId();
+  const seller = useSellerBusy(week);
   const times = slots.data?.slots ?? [];
-  const free = times.some((slot) => slot.left > 0);
+  const minutes = slots.data?.minutes ?? 60;
+  const chosen = times.find((slot) => slot.at === at);
+
+  /** A tap on the seller's week: the office hour it falls in, if a room is free then. */
+  const pick = (start: Date) => {
+    const slot = times.find((row) => {
+      const begins = new Date(row.at).getTime();
+      return begins <= start.getTime() && start.getTime() < begins + minutes * MINUTE;
+    });
+    if (!slot) toast.error(t('visit.closed'));
+    else if (slot.left === 0) toast.error(t('visit.roomsFull'));
+    else setAt(slot.at);
+  };
+
+  // The seller's own week, the hours when every room is taken, and the picked hour.
+  const events: CalendarEvent[] = [
+    ...seller.busy,
+    ...times
+      .filter((slot) => slot.left === 0)
+      .map((slot) => {
+        const start = new Date(slot.at);
+        return {
+          id: `full-${slot.at}`,
+          start,
+          minutes,
+          color: 'var(--text-3)',
+          look: 'done' as const,
+          title: t('visit.roomsFullShort'),
+          meta: f.time(start),
+          aria: `${f.weekday(start)}، ${f.time(start)}، ${t('visit.roomsFull')}`,
+        };
+      }),
+    ...(chosen
+      ? [
+          {
+            id: PICKED,
+            start: new Date(chosen.at),
+            minutes,
+            color: 'var(--cal-7)',
+            look: 'live' as const,
+            title: t('visit.pickedShort'),
+            meta: t('visit.roomsLeft', { count: chosen.left, n: f.number(chosen.left) }),
+            aria: t('visit.picked', { day: f.weekday(chosen.at), time: f.time(chosen.at) }),
+          },
+        ]
+      : []),
+  ];
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -221,38 +272,31 @@ function VisitForm({ customer, onDone }: { customer: number; onDone: () => void 
 
   return (
     <form id={FORM} noValidate onSubmit={submit} className="flex flex-col gap-5">
-      <WeekCalendar
-        label={t('visit.calendar')}
-        week={week}
-        onWeekChange={setWeek}
-        firstWeek={thisWeek}
-        lastWeek={addDays(thisWeek, 7 * WEEKS_AHEAD)}
-        times={times}
-        minutes={slots.data?.minutes ?? 60}
-        color="var(--cal-0)"
-        value={at}
-        onChange={setAt}
-        loading={slots.isPending}
-        now={now}
-        details={
-          at && (
-            <p className="m-0 flex items-center gap-2 rounded-2xl bg-surface px-4 py-3 text-sm font-semibold shadow-toast">
-              <Icon name="check" size={16} className="text-good" />
-              {t('visit.picked', { day: f.weekday(at), time: f.time(at) })}
-            </p>
-          )
-        }
-        empty={
-          !slots.isPending && !free ? (
-            <div className="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-5 text-center shadow-[0_12px_32px_rgb(27_16_32/0.12)]">
-              <span className="text-sm font-semibold">{t('visit.weekFull')}</span>
-              <Button variant="outline" onClick={() => setWeek(addDays(week, 7))}>
-                {t('visit.nextWeek')}
-              </Button>
-            </div>
-          ) : undefined
-        }
-      />
+      <div className="flex flex-col gap-2">
+        <WeekNav
+          week={week}
+          onWeekChange={setWeek}
+          thisWeek={thisWeek}
+          min={thisWeek}
+          max={addDays(thisWeek, 7 * WEEKS_AHEAD)}
+          large={false}
+        />
+        <p className="m-0 text-xs leading-5 text-text-2">{t('visit.hint')}</p>
+        <EventCalendar
+          label={t('visit.calendar')}
+          week={week}
+          events={events}
+          value={at ? PICKED : null}
+          onChange={(id) => {
+            if (id?.startsWith('full-')) toast.error(t('visit.roomsFull'));
+          }}
+          loading={slots.isPending || seller.isPending}
+          now={now}
+          hourHeight={44}
+          narrowHourHeight={52}
+          onSlotPick={pick}
+        />
+      </div>
       {checked && !at && (
         <p role="alert" className="m-0 -mt-2 text-sm text-danger">
           {t('visit.pickTime')}

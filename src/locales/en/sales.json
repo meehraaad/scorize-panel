@@ -2709,13 +2709,11 @@
   },
   "visit": {
     "title": "In-person meeting with {{name}}",
-    "subtitle": "An hour at the office. A time when every room is taken can't be picked.",
+    "subtitle": "An hour at the office, on your own week. A time when every room is taken can't be picked.",
     "calendar": "In-person meeting times",
     "submit": "Book meeting",
     "picked": "{{day}} · {{time}}",
     "pickTime": "Pick a free time on the calendar.",
-    "weekFull": "No free meeting time this week.",
-    "nextWeek": "Next week",
     "note": "Meeting note",
     "noteHint": "For you and your colleague: the topic, documents to bring.",
     "sms": "Text the customer",
@@ -2744,6 +2742,13 @@
     "open": "In-person",
     "openAria": "In-person meeting with {{name}}",
     "fromCall": "Invite to an in-person meeting",
-    "onCalendar": "In-person meeting"
+    "onCalendar": "In-person meeting",
+    "hint": "Tap a free time. Grey means every room is taken; the other blocks are your own sessions and follow-ups.",
+    "roomsFull": "Every room is taken at this time.",
+    "roomsFullShort": "Rooms full",
+    "closed": "The office is closed at this time.",
+    "pickedShort": "In-person meeting",
+    "roomsLeft_one": "{{n}} room free",
+    "roomsLeft_other": "{{n}} rooms free"
   }
 }
