@@ -141,6 +141,8 @@
     "retry": "Try again",
     "notFoundTitle": "Page not found",
     "notFoundBody": "The address may be wrong, or the page has moved.",
+    "inactiveTitle": "This account is inactive",
+    "inactiveBody": "The account is no longer active, so its page can't be opened. Ask a manager if it should be active again.",
     "backHome": "Back to home"
   },
   "update": {

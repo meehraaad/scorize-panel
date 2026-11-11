@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, isRouteErrorResponse, useRouteError } from 'react-router';
+import { Link, useRouteError } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -8,10 +8,12 @@ import { PageSkeleton } from '@/components/ui/Skeleton';
 import { START_PATH } from '@/lib/auth/session';
 import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { reloadForNewBuild, shouldReloadFor } from '@/lib/router/staleBuild';
+import { missingOf } from './routeFailure';
 
 function useRouteFailure() {
   const error = useRouteError();
-  const notFound = isRouteErrorResponse(error) && error.status === 404;
+  const missing = missingOf(error);
+  const notFound = missing !== null;
   // Code from before a deploy: reload once into the new build (lib/router/staleBuild.ts).
   // Decided once, so the reload's own bookkeeping can't flip it to the error mid-way.
   const [reloading] = useState(() => shouldReloadFor(error));
@@ -19,7 +21,7 @@ function useRouteFailure() {
     if (reloading) reloadForNewBuild();
   }, [reloading]);
   if (!notFound && !reloading) console.error(error);
-  return { notFound, reloading };
+  return { notFound, missing, reloading };
 }
 
 /**
@@ -54,9 +56,9 @@ export function ErrorPage() {
 /** Boundary inside a panel: only the page area is replaced, the header and menus keep working. */
 export function SectionError() {
   const { t } = useTranslation();
-  const { notFound, reloading } = useRouteFailure();
+  const { missing, reloading } = useRouteFailure();
   const skeleton = usePageSkeleton();
-  if (notFound) return <NotFoundPage />;
+  if (missing) return <NotFoundPage inactive={missing === 'inactive'} />;
   if (reloading) return <PageSkeleton kind={skeleton} />;
 
   return (
@@ -70,11 +72,14 @@ export function SectionError() {
   );
 }
 
-export function NotFoundPage() {
+export function NotFoundPage({ inactive = false }: { inactive?: boolean }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={t('errors.notFoundTitle')} subtitle={t('errors.notFoundBody')} />
+      <PageHeader
+        title={t(inactive ? 'errors.inactiveTitle' : 'errors.notFoundTitle')}
+        subtitle={t(inactive ? 'errors.inactiveBody' : 'errors.notFoundBody')}
+      />
       <div>
         <Link to={START_PATH} className={buttonClass()}>
           {t('errors.backHome')}
