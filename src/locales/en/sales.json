@@ -481,7 +481,8 @@
         "hour": "In 1 hour",
         "evening": "This evening",
         "tomorrow": "Tomorrow 10:00",
-        "other": "Another date"
+        "other": "Another date",
+        "day": "Day only"
       },
       "date": "Date and time",
       "cta": {
@@ -495,7 +496,9 @@
         "team": "E.g. prepare a sample SOP"
       },
       "required": "Write what needs to be done.",
-      "created": "Task created."
+      "created": "Task created.",
+      "day": "Day",
+      "dayHint": "Due by the end of that day; not late before then."
     },
     "history": {
       "title": "History",
@@ -852,7 +855,9 @@
       "done": "{{n}} done",
       "ariaMine": "{{n}} open follow-ups",
       "aria": "Tasks on {{day}}: {{parts}}. Go to tasks"
-    }
+    },
+    "taskBlock": "task",
+    "taskLayer": "Tasks with a time"
   },
   "purchases": {
     "stats": "Purchases summary",

@@ -1014,6 +1014,29 @@ function calendarOf(data: SalesState, from: string, to: string) {
         seller: storage.get() !== NIMA && item.id === lastId ? null : NIMA_NAME,
       })),
     visits: visits.filter((visit) => inRange(visit.starts_at)),
+    // The seller's own tasks (S50 rows): tomorrow at 11 one with an hour, in two days one for the day only.
+    task_rows: [
+      {
+        id: 9101,
+        kind: 'mine',
+        text: 'تماس با بانک برای نامه‌ی تمکن',
+        due_at: new Date(startOfToday() + DAY + 11 * 3_600_000).toISOString(),
+        timed: true,
+        done: false,
+        customer: null,
+        name: '',
+      },
+      {
+        id: 9102,
+        kind: 'request',
+        text: 'آماده کردن فهرست قیمت',
+        due_at: new Date(startOfToday() + 2 * DAY + DAY - 60_000).toISOString(),
+        timed: false,
+        done: false,
+        customer: null,
+        name: '',
+      },
+    ].filter((row) => inRange(row.due_at)),
     calls: todayOf(data)
       .calls.filter((row) => inRange(row.follow_up_at))
       .map(({ lead, customer, name, phone, reason, follow_up_at }) => ({

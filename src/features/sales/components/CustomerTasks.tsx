@@ -35,7 +35,7 @@ const STATUS_TONE: Record<TaskStatus, ChipTone> = {
 };
 
 const KINDS = ['mine', 'request', 'team'] as const satisfies readonly TaskKind[];
-const WHENS = ['hour', 'evening', 'tomorrow', 'other'] as const;
+const WHENS = ['hour', 'evening', 'tomorrow', 'day', 'other'] as const;
 type When = (typeof WHENS)[number];
 
 /** Open tasks about this customer, and a form to add one (for me, a colleague or a team). */
@@ -94,7 +94,10 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
   // Read once: whether a task is late doesn't need to change while the page is open.
   const [now] = useState(() => Date.now());
   if (tasks.length === 0) return <EmptyState>{t('customer.tasks.empty')}</EmptyState>;
-  const when = (task: TaskSummary) => `${f.dateShort(task.due_at)} ${f.time(task.due_at)}`;
+  const when = (task: TaskSummary) =>
+    task.timed === false
+      ? f.dateShort(task.due_at)
+      : `${f.dateShort(task.due_at)} ${f.time(task.due_at)}`;
   return (
     <ul className="m-0 list-none p-0 pb-3">
       {tasks.map((task) => {
@@ -158,13 +161,15 @@ function NewTaskForm({
   const [team, setTeam] = useState<TaskTeam>('writing');
   const [when, setWhen] = useState<When>('evening');
   const [date, setDate] = useState('');
+  const [day, setDay] = useState('');
   const [missing, setMissing] = useState(false);
 
-  const dueAt = when === 'other' ? fromLocalInput(date) : quickWhen(when).toISOString();
+  const dueAt =
+    when === 'day' ? null : when === 'other' ? fromLocalInput(date) : quickWhen(when).toISOString();
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!text.trim() || !dueAt) {
+    if (!text.trim() || (when === 'day' ? !day : !dueAt)) {
       setMissing(true);
       return;
     }
@@ -173,7 +178,7 @@ function NewTaskForm({
         user: customer.id,
         text: text.trim(),
         kind,
-        due_at: dueAt,
+        ...(dueAt ? { due_at: dueAt } : { due_on: day }),
         ...(kind === 'request' && peer !== undefined ? { assignee: peer } : {}),
         ...(kind === 'team' ? { team } : {}),
       },
@@ -253,6 +258,16 @@ function NewTaskForm({
           value={date}
           onChange={setDate}
           error={missing && !dueAt ? t('customer.newTask.date') : undefined}
+        />
+      )}
+      {when === 'day' && (
+        <LazyDatePicker
+          only="future"
+          label={t('customer.newTask.day')}
+          hint={t('customer.newTask.dayHint')}
+          value={day}
+          onChange={setDay}
+          error={missing && !day ? t('customer.newTask.day') : undefined}
         />
       )}
       <Button type="submit" className="self-start" disabled={create.isPending}>

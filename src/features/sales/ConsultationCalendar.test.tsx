@@ -198,7 +198,19 @@ describe('sales: my consultations on a week calendar', () => {
       );
       const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
       expect(within(dialog).getByRole('radio', { name: 'خودم' })).toBeChecked();
-      expect(within(dialog).getByRole('button', { name: /تاریخ/ })).toHaveTextContent('۱۰:۰۰');
+      // That day, with no hour (one can still be set with «تاریخ و ساعت دیگر»).
+      expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
+      expect(within(dialog).getByRole('button', { name: /^روز/ })).toHaveTextContent('۶ آبان');
+    });
+
+    it('a task with an hour is drawn at it; one for the day only is not', async () => {
+      const calendar = await open();
+      expect(
+        within(calendar).getByRole('button', {
+          name: /^تماس با بانک برای نامه‌ی تمکن.*۱۱:۰۰، کار$/,
+        }),
+      ).toBeInTheDocument();
+      expect(within(calendar).queryByRole('button', { name: /آماده کردن فهرست قیمت/ })).toBeNull();
     });
 
     it('a passed spot is refused', async () => {

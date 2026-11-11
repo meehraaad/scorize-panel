@@ -30,6 +30,7 @@ import {
   type Status,
 } from '../consultationStatus';
 import { EventDetails, StartAction } from './EventDetails';
+import { TASK_COLOR, TASK_MINUTES } from './useSellerBusy';
 import { useSalesFormat } from '../format';
 import { FollowUpDialog } from './FollowUpDialog';
 import { TaskBrief } from './TaskBrief';
@@ -127,7 +128,14 @@ export function ConsultationCalendar() {
       !hidden.has(String(item.type)) &&
       (!onlyUnlogged || statusOf(item, nowTime) === 'need'),
   );
-  const calls = hidden.has('calls') || onlyUnlogged ? [] : (data?.calls ?? []);
+  // A follow-up for a day with no hour is on the day row (its count), not drawn at 23:59.
+  const calls =
+    hidden.has('calls') || onlyUnlogged
+      ? []
+      : (data?.calls ?? []).filter((item) => item.timed !== false);
+  // The seller's own tasks with an hour, at that hour; those without one stay on the day row.
+  const taskRows =
+    hidden.has('tasks') || onlyUnlogged ? [] : (data?.task_rows ?? []).filter((item) => item.timed);
   // In-person meetings at the office (S75): held in person, so "online only" hides them.
   const visits =
     hidden.has('visits') || onlyUnlogged || mode === 'online' ? [] : (data?.visits ?? []);
@@ -195,6 +203,21 @@ export function ConsultationCalendar() {
           </span>
         ),
         movable: true,
+      };
+    }),
+    ...taskRows.map((item) => {
+      const start = new Date(item.due_at);
+      const meta = [f.time(start), item.name].filter(Boolean).join(' · ');
+      return {
+        id: `t${String(item.id)}`,
+        start,
+        minutes: TASK_MINUTES,
+        color: TASK_COLOR,
+        look: item.done ? ('done' as const) : ('call' as const),
+        title: item.text,
+        meta,
+        aria: [item.text, meta, t('consultationCalendar.taskBlock')].join('، '),
+        lead: <Icon name="check" size={12} />,
       };
     }),
     ...visits.map((item) => {
@@ -320,7 +343,9 @@ export function ConsultationCalendar() {
                   ? (data?.calls.length ?? 0)
                   : id === 'visits'
                     ? (data?.visits?.length ?? 0)
-                    : all.filter((item) => String(item.type) === id).length
+                    : id === 'tasks'
+                      ? (data?.task_rows?.filter((item) => item.timed).length ?? 0)
+                      : all.filter((item) => String(item.type) === id).length
               }
               hidden={hidden}
               onToggle={(id) => {
@@ -456,6 +481,7 @@ function Layers({
     })),
     { id: 'calls', label: t('consultationCalendar.calls'), color: 'var(--text-2)' },
     { id: 'visits', label: t('visit.onCalendar'), color: VISIT_COLOR },
+    { id: 'tasks', label: t('consultationCalendar.taskLayer'), color: TASK_COLOR },
   ];
   return (
     <fieldset className="m-0 border-0 p-0">

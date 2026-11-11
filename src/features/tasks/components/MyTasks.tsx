@@ -191,7 +191,11 @@ function TaskRow({
     >
       <div className="flex w-20 flex-none flex-col">
         <span className={`text-base font-bold tabular-nums ${late ? 'text-urgent' : 'text-text'}`}>
-          {late && !lateToday ? t('mine.daysLate', { n: f.number(daysLate) }) : f.time(task.due_at)}
+          {late && !lateToday
+            ? t('mine.daysLate', { n: f.number(daysLate) })
+            : task.timed === false
+              ? t('mine.allDay')
+              : f.time(task.due_at)}
         </span>
         {late && <span className="text-xs text-urgent">{t('mine.late')}</span>}
       </div>

@@ -48,6 +48,22 @@ export interface CalendarCall {
   seller?: string | null;
   /** The emoji and color the team gave the customer (S66); null: none. */
   face?: Face | null;
+  /** False: a follow-up for that day with no hour (counted on the day row, not drawn at 23:59). */
+  timed?: boolean;
+}
+
+/** One of the seller's own tasks in the range (not a customer's follow-up: those are `calls`). */
+export interface CalendarTaskRow {
+  id: number;
+  kind: 'mine' | 'request';
+  text: string;
+  due_at: string;
+  /** False: due some time that day, no hour; it shows on the day row only. */
+  timed: boolean;
+  done: boolean;
+  customer: number | null;
+  /** The customer's name; '' for a task about no one. */
+  name: string;
 }
 
 /** How many of the seller's own tasks fall on a day (S50): only days with any. */
@@ -84,6 +100,8 @@ export interface SellerCalendar {
   /** Absent from a Django before S75. */
   visits?: CalendarVisit[];
   tasks: CalendarTaskDay[];
+  /** Absent from an older Django. */
+  task_rows?: CalendarTaskRow[];
 }
 
 export const CALENDAR_KEY = [...SALES_KEY, 'calendar'] as const;
