@@ -180,6 +180,11 @@ const PAGES: PageCase[] = [
     '/sales/manager/access/keys',
     '/sales/manager/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  // Attendance section (src/mocks/attendance.ts).
+  ...['/attendance', '/attendance/month', '/attendance/settings'].map((path) => ({
+    path,
+    user: AMIR,
+  })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },

@@ -35,9 +35,15 @@ export type ServerFeature =
   | 'phoneMenus'
   | 'phoneVoices'
   | 'phoneBreak'
-  | 'teamBreaks';
+  | 'teamBreaks'
+  | 'attendance';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * `GET /attendance/v1/daily|summary|enrollments|…`: the office terminal's reports and the mapping
+   * of its user numbers to staff, key `manage_attendance` (lang `attendance/`, branch `test`).
+   */
+  attendance: true,
   /**
    * `GET/PUT /sales/v1/calls/hours/`: the office line's hours on the sales manager's page, applied
    * to the PBX by the office worker (lang `claude/office-hours`).

@@ -40,6 +40,7 @@ export const NAMESPACES = [
   'mail',
   'messages',
   'access',
+  'attendance',
   'voice',
   'notes',
 ] as const;

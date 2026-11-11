@@ -1,0 +1,62 @@
+{
+  "status": {
+    "present": "Present",
+    "late": "Late",
+    "absent": "Absent",
+    "pending": "Not in yet"
+  },
+  "person": {
+    "number": "Device number {{n}}",
+    "unmapped": "No employee"
+  },
+  "export": {
+    "xlsx": "Excel export",
+    "csv": "CSV export"
+  },
+  "daily": {
+    "title": "Daily report",
+    "subtitle": "A day's first punch is the check-in and the last one the check-out. Arriving after {{start}} counts as late.",
+    "label": "One day's attendance",
+    "date": "Date",
+    "today": "Today",
+    "person": "Employee",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "hours": "Hours",
+    "status": "Status",
+    "noCheckOut": "No check-out",
+    "lateBy": "{{n}} min",
+    "empty": "Nothing recorded for this day."
+  },
+  "monthly": {
+    "title": "Monthly report",
+    "subtitle": "Days present, hours and lateness per person. Arriving after {{start}} counts as late.",
+    "label": "One month's attendance",
+    "previous": "Previous month",
+    "next": "Next month",
+    "present": "{{n}} days present",
+    "hours": "{{hours}} hours",
+    "late": "{{n}} days late",
+    "absent": "{{n}} days absent",
+    "days": "Days of the month",
+    "empty": "Nothing recorded for this month."
+  },
+  "settings": {
+    "title": "Attendance settings",
+    "subtitle": "Connect each device number to an employee so the hours are counted under their name.",
+    "devices": "Devices",
+    "label": "Device numbers",
+    "noDevice": "No device has connected yet.",
+    "lastSeen": "Last seen {{when}}",
+    "neverSeen": "Never connected",
+    "empty": "No device numbers yet.",
+    "unmapped": "{{n}} numbers are not connected to an employee. Their punches count for nobody.",
+    "number": "Device number {{n}}",
+    "nobody": "No employee",
+    "mapTo": "Employee for device number {{n}}",
+    "saved": "Saved",
+    "error": "That did not work. Try again.",
+    "readNames": "Read names from the device",
+    "readNamesAsked": "Requested. The names are read the next time the device connects."
+  }
+}

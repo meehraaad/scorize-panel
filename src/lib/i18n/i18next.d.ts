@@ -21,6 +21,7 @@ import type tickets from '@/locales/fa/tickets.json';
 import type turkey from '@/locales/fa/turkey.json';
 import type writer from '@/locales/fa/writer.json';
 import type assistant from '@/locales/fa/assistant.json';
+import type attendance from '@/locales/fa/attendance.json';
 import type mail from '@/locales/fa/mail.json';
 import type messages from '@/locales/fa/messages.json';
 import type access from '@/locales/fa/access.json';
@@ -57,6 +58,7 @@ declare module 'i18next' {
       supervisor: typeof supervisor;
       writer: typeof writer;
       assistant: typeof assistant;
+      attendance: typeof attendance;
       mail: typeof mail;
       messages: typeof messages;
       access: typeof access;

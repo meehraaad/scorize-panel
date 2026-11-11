@@ -7,6 +7,7 @@ import { applicantHandlers, resetApplicantMocks } from './applicant';
 import { assistantHandlers, resetAssistantMocks } from './assistant';
 import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { mailHandlers, resetMailMocks } from './mail';
+import { attendanceHandlers, resetAttendanceMocks } from './attendance';
 import { messagesHandlers, resetMessagesMocks } from './messages';
 import { accessHandlers, resetAccessMocks } from './access';
 import { resetSalesMocks, salesHandlers } from './sales';
@@ -40,7 +41,8 @@ import { resetStaffMocks, staffHandlers } from './staff';
  *   09120000004 / bahar.nouri@scorize.local    founder (group Founders): the founders panel's
  *                                               assistant (src/mocks/assistant.ts)
  *   09120000005 / amir.abedi@scorize.local     superuser: every panel; the messages section's
- *                                               keys and access page (src/mocks/messages.ts)
+ *                                               keys and access page (src/mocks/messages.ts); the attendance section
+ *                                               (src/mocks/attendance.ts)
  */
 
 export const MOCK_OTP = '123456';
@@ -367,6 +369,7 @@ export const handlers = [
   ...mailHandlers,
   ...messagesHandlers,
   ...accessHandlers,
+  ...attendanceHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -393,6 +396,7 @@ export function resetMockSession() {
   resetMailMocks();
   resetMessagesMocks();
   resetAccessMocks();
+  resetAttendanceMocks();
 }
 
 type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;

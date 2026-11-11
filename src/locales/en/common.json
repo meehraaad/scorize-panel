@@ -89,6 +89,21 @@
         "month": "Performance"
       },
       "description": "Leads, consultations, offers and contracts"
+    },
+    "attendance": {
+      "name": "Attendance",
+      "nav": {
+        "label": "Attendance menu",
+        "daily": "Daily report",
+        "monthly": "Monthly report",
+        "settings": "Settings"
+      },
+      "tabs": {
+        "daily": "Daily",
+        "monthly": "Monthly",
+        "settings": "Settings"
+      },
+      "description": "Staff check-in and check-out from the office fingerprint terminal"
     }
   },
   "tabs": {
