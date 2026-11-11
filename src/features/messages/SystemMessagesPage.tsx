@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { SelectField } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { SearchField } from '@/components/ui/Filters';
+import { FilterTabs, SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -21,9 +21,12 @@ import {
 } from './api';
 import { SystemMessageDialog } from './components/SystemMessageDialog';
 
+const STATES = ['all', 'on', 'off'] as const;
+type State = (typeof STATES)[number];
+
 /**
  * Every message the site sends on its own, by area: when it goes, to whom, through what, and
- * whether it is on or edited. A row opens the message (text, on/off, test, history).
+ * whether it is on or edited, filtered by on / off. A row opens the message (text, on/off, test, history).
  */
 export default function SystemMessagesPage() {
   const { t } = useTranslation('messages');
@@ -32,10 +35,11 @@ export default function SystemMessagesPage() {
   const [search, setSearch] = useState('');
   const [audience, setAudience] = useState<Audience | ''>('');
   const [channel, setChannel] = useState<Channel | ''>('');
+  const [state, setState] = useState<State>('all');
   const [open, setOpen] = useState<string | null>(null);
 
   const words = search.trim().toLowerCase();
-  const shown = data.results.filter(
+  const matching = data.results.filter(
     (message) =>
       (!audience || message.audience === audience) &&
       (!channel || message.channels.includes(channel)) &&
@@ -45,11 +49,26 @@ export default function SystemMessagesPage() {
           .toLowerCase()
           .includes(words)),
   );
+  const counts = { all: matching.length, on: 0, off: 0 };
+  for (const message of matching) counts[message.is_active ? 'on' : 'off'] += 1;
+  const shown = matching.filter(
+    (message) => state === 'all' || (state === 'on') === message.is_active,
+  );
   const opened = data.results.find((message) => message.key === open);
 
   return (
     <PageStack>
       <PageHeader title={t('system.title')} subtitle={t('system.subtitle')} />
+      <FilterTabs
+        label={t('system.state')}
+        value={state}
+        onChange={setState}
+        options={STATES.map((value) => ({
+          value,
+          label: t(`system.states.${value}`),
+          count: f.number(counts[value]),
+        }))}
+      />
       <Card aria-label={t('system.label')}>
         <div className="flex flex-wrap items-end gap-3 px-5 pt-5 lg:px-8">
           <SearchField
@@ -135,11 +154,9 @@ function MessageRow({ message, onOpen }: { message: SystemMessage; onOpen: () =>
             {t(`channel.${channel}`)}
           </Chip>
         ))}
-        {!message.is_active && (
-          <Chip tone="warn" small>
-            {t('system.off')}
-          </Chip>
-        )}
+        <Chip tone={message.is_active ? 'good' : 'warn'} dot small>
+          {t(message.is_active ? 'system.on' : 'system.off')}
+        </Chip>
         {message.edited && (
           <Chip tone="info" small>
             {t('system.edited')}

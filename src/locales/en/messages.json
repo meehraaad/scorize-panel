@@ -44,7 +44,14 @@
     "open": "Open the message {{title}}",
     "off": "Off",
     "edited": "Text changed",
-    "readOnly": "View only"
+    "readOnly": "View only",
+    "on": "On",
+    "state": "On or off",
+    "states": {
+      "all": "All",
+      "on": "On",
+      "off": "Off"
+    }
   },
   "detail": {
     "when": "When",

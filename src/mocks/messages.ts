@@ -56,7 +56,7 @@ const system = (): MockSystem[] => [
     default_title: 'یادآوری نهایی مشاوره حضوری',
     text: 'جلسه‌ی مشاوره‌ی حضوریت یه ساعت دیگه شروع میشه.',
     default_text: 'جلسه‌ی مشاوره‌ی حضوریت یه ساعت دیگه شروع میشه.',
-    is_active: true,
+    is_active: false,
     edited: false,
     updated_by: null,
     updated_at: null,

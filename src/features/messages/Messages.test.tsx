@@ -65,6 +65,23 @@ describe('messages section', () => {
     ).toBeInTheDocument();
   });
 
+  it('says which messages are on and filters the off ones', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/sales/manager/messages');
+    const list = await screen.findByRole('region', { name: 'فهرست پیام‌های خودکار' });
+    expect(
+      within(list).getByRole('button', { name: 'باز کردن پیام قرارداد شما آماده است' }),
+    ).toHaveTextContent('روشن');
+    await user.click(screen.getByRole('button', { name: /^خاموش/ }));
+    expect(
+      within(list).getByRole('button', { name: 'باز کردن پیام یادآوری نهایی مشاوره حضوری' }),
+    ).toHaveTextContent('خاموش');
+    expect(
+      within(list).queryByRole('button', { name: 'باز کردن پیام قرارداد شما آماده است' }),
+    ).toBeNull();
+  });
+
   it('shows an SMS-only message as Kavenegar text, not as an editable box', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
