@@ -119,6 +119,8 @@ export const draftQuery = (id: number) =>
   queryOptions({
     queryKey: ['assessment-management', 'draft', id],
     queryFn: ({ signal }) => api<Draft>(`${BASE}/drafts/${String(id)}/`, { signal }),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 export const saveDraft = (input: DraftInput, draft?: Summary) =>
   api<Draft>(draft ? `${BASE}/drafts/${String(draft.id)}/` : `${BASE}/drafts/`, {

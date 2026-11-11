@@ -1,4 +1,9 @@
-import { screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { StrictMode, Suspense } from 'react';
+import { createMemoryRouter, RouterProvider } from 'react-router';
+import { routes } from '@/app/router';
+import { queryClient } from '@/lib/api/queryClient';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -16,7 +21,7 @@ async function createDraft() {
   const user = userEvent.setup();
   renderApp('/dev/assessments');
   await user.click(await screen.findByRole('button', { name: 'New draft' }));
-  await user.type(screen.getByLabelText('Stable route key (Latin)'), 'test-route');
+  await user.type(screen.getByLabelText('Stable ruleset key (Latin)'), 'test-route');
   await user.type(screen.getByRole('textbox', { name: 'Draft title' }), 'Test assessment');
   await user.click(screen.getByRole('button', { name: 'Add source' }));
   await user.type(screen.getByLabelText('Source title'), 'Synthetic fixture');
@@ -29,6 +34,20 @@ async function createDraft() {
 }
 
 describe('assessment content sandbox', () => {
+  it('opens from a cold cache under the development StrictMode frame', async () => {
+    queryClient.clear();
+    const router = createMemoryRouter(routes, { initialEntries: ['/dev/assessments'] });
+    render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <Suspense>
+            <RouterProvider router={router} />
+          </Suspense>
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+    expect(await screen.findByRole('button', { name: 'New draft' })).toBeEnabled();
+  });
   it('saves, tests, reviews and freezes a version with an actual/expected comparison', async () => {
     const user = await createDraft();
     await user.click(screen.getByRole('button', { name: 'Run tests' }));

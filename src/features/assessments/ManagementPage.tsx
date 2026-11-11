@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -43,12 +43,22 @@ function serverMessage(error: unknown): string {
 export default function ManagementPage() {
   const { t } = useTranslation('assessments');
   const [page, setPage] = useState(1);
-  const { data: list } = useSuspenseQuery(draftsQuery(page));
-  const { data: options } = useSuspenseQuery(optionsQuery);
+  const listQuery = useQuery(draftsQuery(page));
+  const optionQuery = useQuery(optionsQuery);
+  const list = listQuery.data;
+  const options = optionQuery.data;
   const [selected, setSelected] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   // Detail is intentionally behind selecting a draft, not first-render data.
   const detail = useQuery({ ...draftQuery(selected ?? 0), enabled: selected !== null });
+  if (!list || !options)
+    return (
+      <main className="mx-auto max-w-6xl p-4 sm:p-8">
+        <PageHeader title={t('title')} />
+        <SkeletonRows rows={4} />
+        {(listQuery.error || optionQuery.error) && <Notice tone="error">{t('failed')}</Notice>}
+      </main>
+    );
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-5 p-4 text-text sm:p-8">
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
@@ -611,7 +621,7 @@ function DraftEditor({
           {draft.last_run.report.map((row) => (
             <div key={row.name} className="overflow-x-auto">
               <h3>{row.name}</h3>
-              <table className="w-full text-start">
+              <table className="w-full min-w-[640px] text-start">
                 <thead>
                   <tr>
                     {REPORT_COLUMNS.map((key) => (
