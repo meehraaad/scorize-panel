@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { SelectField } from '@/components/ui/Choices';
+import { SelectField, TogglePill } from '@/components/ui/Choices';
 import { Notice } from '@/components/ui/Notice';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
@@ -309,8 +309,39 @@ function DraftEditor({
                     onChange={(e) => setRoute(index, { ...r, pass_mark: Number(e.target.value) })}
                   />
                 )}
+                {!!r.scores?.length && (
+                  <TextField
+                    type="number"
+                    label={t('totalCap')}
+                    value={r.score_cap ?? ''}
+                    onChange={(e) => {
+                      const next = { ...r };
+                      if (e.target.value === '') delete next.score_cap;
+                      else next.score_cap = Number(e.target.value);
+                      setRoute(index, next);
+                    }}
+                  />
+                )}
                 {r.scores?.map((criterion, n) => (
                   <div key={criterion.id}>
+                    <TextField
+                      type="number"
+                      label={t('criterionCap')}
+                      value={criterion.cap ?? ''}
+                      onChange={(e) =>
+                        setRoute(index, {
+                          ...r,
+                          scores:
+                            r.scores?.map((v, i) => {
+                              if (i !== n) return v;
+                              const next = { ...v };
+                              if (e.target.value === '') delete next.cap;
+                              else next.cap = Number(e.target.value);
+                              return next;
+                            }) ?? [],
+                        })
+                      }
+                    />
                     <TextField
                       label={t('scoreLabel')}
                       value={criterion.label}
@@ -396,6 +427,31 @@ function DraftEditor({
                   }
                 />
               ))}
+              <fieldset className="flex flex-wrap gap-2 border-0 p-0 sm:col-span-2">
+                <legend>{t('sourceRoutes')}</legend>
+                {input.bundle.routes.map((route) => (
+                  <TogglePill
+                    key={route.id}
+                    label={route.name}
+                    checked={source.route_ids.includes(route.id)}
+                    onChange={(checked) =>
+                      update({
+                        ...input,
+                        sources: input.sources.map((v, i) =>
+                          i === index
+                            ? {
+                                ...v,
+                                route_ids: checked
+                                  ? [...v.route_ids, route.id]
+                                  : v.route_ids.filter((id) => id !== route.id),
+                              }
+                            : v,
+                        ),
+                      })
+                    }
+                  />
+                ))}
+              </fieldset>
               <Button
                 variant="outline"
                 onClick={() =>
@@ -418,7 +474,7 @@ function DraftEditor({
                     url: '',
                     reviewed_on: '',
                     review_due: '',
-                    route_ids: input.bundle.routes.map((r) => r.id),
+                    route_ids: [],
                   },
                 ],
               })

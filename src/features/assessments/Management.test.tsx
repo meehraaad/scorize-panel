@@ -28,6 +28,7 @@ async function createDraft() {
   await user.type(screen.getByLabelText('Source URL'), 'https://example.org/synthetic');
   await user.type(screen.getByLabelText('Reviewed on'), '2026-11-11');
   await user.type(screen.getByLabelText('Review due'), '2026-12-11');
+  for (const checkbox of screen.getAllByRole('checkbox')) await user.click(checkbox);
   await user.click(screen.getByRole('button', { name: 'Save draft' }));
   await screen.findByRole('heading', { name: 'Draft' });
   return user;

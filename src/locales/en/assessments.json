@@ -79,5 +79,8 @@
   "edited": "Content edited",
   "tested": "Scenarios tested",
   "back": "Back",
-  "draftTitle": "Draft title"
+  "draftTitle": "Draft title",
+  "totalCap": "Total score cap (blank for no additional cap)",
+  "criterionCap": "Criterion cap (blank for no additional cap)",
+  "sourceRoutes": "Routes covered by this source"
 }
