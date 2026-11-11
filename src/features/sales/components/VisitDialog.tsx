@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useId, useState, type SubmitEvent } from 'react';
+import { useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColleaguePicker } from '@/components/tasks/ColleaguePicker';
 import { Button } from '@/components/ui/Button';
@@ -25,6 +25,7 @@ import {
   visitSlotsQuery,
   type OfficeVisit,
 } from '../api/visits';
+import { FollowUpNow } from './FollowUpNow';
 import { useSellerBusy } from './useSellerBusy';
 
 const FORM = 'visit-form';
@@ -43,10 +44,17 @@ export function VisitDialog({
   customer,
   open,
   onClose,
+  followUp,
+  onLog,
 }: {
   customer: { id: number; name: string };
   open: boolean;
   onClose: () => void;
+  /** The customer's open follow-up, shown above the week. */
+  followUp?:
+    { at: string; text?: string | undefined; timed?: boolean | undefined } | null | undefined;
+  /** "Talked to them? Log it": the contact log, from the customer page. */
+  onLog?: (() => void) | undefined;
 }) {
   const { t } = useTranslation('sales');
   const visits = useQuery({ ...customerVisitsQuery(customer.id), enabled: open });
@@ -81,7 +89,14 @@ export function VisitDialog({
       ) : visits.data.rooms === 0 ? (
         <Notice tone="info">{t('visit.noRooms')}</Notice>
       ) : (
-        <VisitForm customer={customer.id} onDone={onClose} />
+        <VisitForm customer={customer.id} onDone={onClose}>
+          <FollowUpNow
+            at={followUp?.at ?? null}
+            text={followUp?.text}
+            timed={followUp?.timed}
+            onLog={onLog}
+          />
+        </VisitForm>
       )}
     </Dialog>
   );
@@ -161,7 +176,16 @@ function Upcoming({ customer, visit }: { customer: number; visit: OfficeVisit })
   );
 }
 
-function VisitForm({ customer, onDone }: { customer: number; onDone: () => void }) {
+function VisitForm({
+  customer,
+  onDone,
+  children,
+}: {
+  customer: number;
+  onDone: () => void;
+  /** Above the week: the customer's follow-up. */
+  children?: ReactNode;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const cal = useCalendar();
@@ -272,6 +296,7 @@ function VisitForm({ customer, onDone }: { customer: number; onDone: () => void 
 
   return (
     <form id={FORM} noValidate onSubmit={submit} className="flex flex-col gap-5">
+      {children}
       <div className="flex flex-col gap-2">
         <WeekNav
           week={week}

@@ -1237,9 +1237,13 @@ export const salesHandlers = [
     if (body.stage && !openStages.includes(body.stage)) {
       return HttpResponse.json({ stage: ['invalid_choice'] }, { status: 400 });
     }
-    for (const item of data.customers.filter(
+    const open = data.customers.filter(
       (entry) => body.ids.includes(entry.lead.id) && openStages.includes(entry.lead.stage),
-    )) {
+    );
+    if (body.follow_up_at && open.length === 0) {
+      return HttpResponse.json({ detail: 'no open lead', code: 'no_open_lead' }, { status: 409 });
+    }
+    for (const item of open) {
       if (body.stage) {
         item.lead.stage = body.stage;
         item.lead.stage_since = new Date().toISOString();

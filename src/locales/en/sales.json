@@ -2409,7 +2409,12 @@
     "change": "Change time",
     "when": "{{day}} at {{time}}",
     "saved": "Follow-up set for {{when}}.",
-    "moved": "Follow-up moved to {{when}}."
+    "moved": "Follow-up moved to {{when}}.",
+    "setTitle": "When to follow up with {{name}}?",
+    "saveAt": "Save follow-up · {{day}} {{time}}",
+    "now": "Current follow-up: {{when}}",
+    "log": "Talked to them? Log the contact",
+    "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step."
   },
   "followUpSlots": {
     "label": "My week, to pick the follow-up time",
@@ -2755,5 +2760,8 @@
     "pickedShort": "In-person meeting",
     "roomsLeft_one": "{{n}} room free",
     "roomsLeft_other": "{{n}} rooms free"
+  },
+  "followUpWhen": {
+    "exact": "Or an exact day and time"
   }
 }
