@@ -197,10 +197,21 @@ const builderState = (): ContractBuilder => ({
     max_instalments: 4,
     min_prepayment: 30,
     max_applies: 30,
+    min_applies: 1,
+    currency: 'IRT',
+    min_amount: null,
+    max_amount: null,
     countries: [],
     degrees: [],
   },
   limits: {
+    currencies: [
+      { id: 'IRT', name: 'تومان' },
+      { id: 'EUR', name: 'یورو' },
+      { id: 'USD', name: 'دلار' },
+      { id: 'CAD', name: 'دلار کانادا' },
+      { id: 'GBP', name: 'پوند' },
+    ],
     countries: [
       { id: 1, name: 'آلمان' },
       { id: 2, name: 'ترکیه' },
@@ -1248,6 +1259,42 @@ export const managerHandlers = [
       degrees: rules.degrees.length === state.limits.degrees.length ? [] : rules.degrees,
     };
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Django's `ContractOverviewView` (S74): every contract's card on the manager's list.
+  http.get(`${BASE}/contract/overview/`, () => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    kindState(null);
+    kindState(1);
+    const all = [builder, ...(others ?? new Map<number, ContractBuilder>()).values()].filter(
+      (item): item is ContractBuilder => item !== null,
+    );
+    return HttpResponse.json({
+      contracts: all.map((state) => ({
+        id: state.template.id,
+        name: state.template.name,
+        description: state.template.description,
+        is_active: state.template.is_active,
+        clauses: state.clauses.filter((clause) => clause.is_active).length,
+        currency: state.rules.currency,
+        features: state.prices.map((row) => ({
+          key: row.feature,
+          price: row.is_active ? row.price : null,
+        })),
+        countries: state.rules.countries
+          .map((id) => state.limits.countries.find((row) => row.id === id)?.name ?? '')
+          .filter(Boolean),
+        degrees: state.rules.degrees,
+        min_amount: state.rules.min_amount,
+        max_amount: state.rules.max_amount,
+        articles: state.clauses.filter((clause) => clause.is_active && clause.kind === 'article')
+          .length,
+        version: state.versions.length + 1,
+        updated_at: ago(2 * 24 * HOUR),
+        open_offers: 0,
+      })),
+    });
   }),
 
   http.get(`${BASE}/approvals/`, () => {

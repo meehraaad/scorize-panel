@@ -319,9 +319,9 @@ function Figures({ draft }: { draft: ContractDraft }) {
       stats={[
         {
           label: t('manager.approvals.figure.amount'),
-          value: s.millions(n.amount),
+          value: s.inCurrency(n.amount, n.currency ?? 'IRT'),
           ...(n.list_price !== n.amount && {
-            note: t('manager.approvals.figure.list', { amount: s.millions(n.list_price) }),
+            note: t('manager.approvals.figure.list', { amount: s.inCurrency(n.list_price, n.currency ?? 'IRT') }),
           }),
         },
         {
@@ -336,7 +336,7 @@ function Figures({ draft }: { draft: ContractDraft }) {
           tone: n.prepayment_percent < n.min_prepayment ? 'urgent' : 'default',
           note: n.min_prepayment
             ? t('manager.approvals.figure.prepaymentRule', { n: percent(n.min_prepayment) })
-            : s.millions(n.prepayment),
+            : s.inCurrency(n.prepayment, n.currency ?? 'IRT'),
         },
         {
           label: t('manager.approvals.figure.instalments'),

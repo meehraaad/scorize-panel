@@ -13,6 +13,8 @@ export interface OfferTemplate {
   description: string;
   /** Its services and their prices, toman (S71): what its card on the customer page shows. */
   features: { key: ContractFeature; price: number }[];
+  /** S74: ISO code of the money the amounts are in; absent: IRT (toman). */
+  currency?: string;
   /** How many articles its text has, and how many blanks the seller fills (S71). */
   articles: number;
   variables: number;
@@ -24,8 +26,10 @@ export interface OfferStatus {
   template: number | null;
   /** The kind of contract's name. */
   name: string;
-  /** Toman, after the discount. */
+  /** After the discount, in `currency`. */
   amount: number;
+  /** S74: ISO code of the money the amounts are in; absent: IRT (toman). */
+  currency?: string;
   updated_at: string;
   sent_at: string | null;
   submitted_at: string | null;
@@ -39,7 +43,7 @@ export interface OfferOptions {
   template: number | null;
   /** Every kind of contract on offer, the standard one first. */
   templates: OfferTemplate[];
-  /** Price of each service, toman; 0: free (a template's, S68). */
+  /** Price of each service, in `currency`; 0: free (a template's, S68). */
   features: { key: ContractFeature; price: number }[];
   degrees: Degree[];
   /** Months. */
@@ -51,6 +55,13 @@ export interface OfferOptions {
   /** Percent of the amount at signing; less needs the manager (S64). */
   min_prepayment: number;
   max_applies: number;
+  /** S74: the fewest applications; the offer starts at or above it. */
+  min_applies: number;
+  /** S74: ISO code of this contract's money (IRT: toman); prices, the amount and instalments are in it. */
+  currency: string;
+  /** S74: a contract amount outside this range goes to the manager first; null: no limit. */
+  min_amount: number | null;
+  max_amount: number | null;
   /** Instalment counts to start from; the seller can add or remove rows. */
   instalments: number[];
   /** The standard contract, in order. */

@@ -77,7 +77,7 @@ const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => 
     customer.headline.degree !== null && options.degrees.includes(customer.headline.degree)
       ? customer.headline.degree
       : (options.degrees[0] ?? 2),
-  applies: 6,
+  applies: Math.min(options.max_applies, Math.max(6, options.min_applies)),
   start: nextMonth(),
   months: options.durations.includes(12) ? 12 : (options.durations[0] ?? 12),
   language_score: '',
@@ -180,6 +180,7 @@ function offerDocument(
     file_id: null,
     approved_at: null,
     draft: true,
+    currency: options.currency,
     template: options.template === null ? '' : kind,
     customer: { name: customer.name, national_code: null, phone: null, email: '' },
     seller: '',
@@ -257,6 +258,7 @@ function OfferForm({
     set('schedule', rows);
   };
 
+  const money = (value: number) => s.exact(value, options.currency);
   const price = (key: ContractFeature) =>
     options.features.find((item) => item.key === key)?.price ?? 0;
   const base = offer.features.reduce((sum, key) => sum + price(key), 0);
@@ -268,7 +270,11 @@ function OfferForm({
     : custom
       ? offer.schedule
       : suggestedSchedule(total, offer.schedule.length, offer.start);
-  const needsManager = offer.discount > options.approval_above;
+  // A discount above the limit, or an amount outside the contract's range (S74), goes to the manager first.
+  const outsideRange =
+    (options.min_amount !== null && total < options.min_amount) ||
+    (options.max_amount !== null && total > options.max_amount);
+  const needsManager = offer.discount > options.approval_above || outsideRange;
   const rowsDone = (free || scheduleComplete(schedule)) && clausesComplete(offer.clauses);
   const kinds = options.templates.length > 1;
   const addsUp = scheduleTotal(schedule) === total;
@@ -277,7 +283,8 @@ function OfferForm({
   const valid =
     offer.features.length > 0 &&
     offer.countries.length > 0 &&
-    offer.applies > 0 &&
+    offer.applies >= options.min_applies &&
+    offer.applies <= options.max_applies &&
     rowsDone &&
     addsUp &&
     filled;
@@ -290,7 +297,7 @@ function OfferForm({
   const values: Record<string, string> = {
     ...Object.fromEntries(options.builtins.map((row) => [row.name, ''])),
     'نام مشتری': customer.name,
-    'مبلغ قرارداد': s.toman(total),
+    'مبلغ قرارداد': money(total),
     کشورها: f.list(offer.countries),
     مقطع: tc(`degree.${offer.degree}`),
     'تعداد اپلای': f.number(offer.applies),
@@ -417,7 +424,7 @@ function OfferForm({
                           {t(`offer.featureHint.${item.key}`)}
                         </span>
                         <span className="text-sm font-semibold">
-                          {item.price === 0 ? t('offer.freePrice') : s.toman(item.price)}
+                          {item.price === 0 ? t('offer.freePrice') : money(item.price)}
                         </span>
                       </label>
                     ))}
@@ -442,7 +449,8 @@ function OfferForm({
                     />
                     <TextField
                       type="number"
-                      min={1}
+                      min={options.min_applies}
+                      max={options.max_applies}
                       label={t('offer.applies')}
                       value={String(offer.applies)}
                       onChange={(event) => set('applies', Number(event.target.value))}
@@ -515,7 +523,7 @@ function OfferForm({
             {step === 2 && (
               <SectionCard id="offer-price" variant="panel" size="lg" title={t('offer.price')}>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <TextField label={t('offer.base')} value={s.toman(base)} readOnly />
+                  <TextField label={t('offer.base')} value={money(base)} readOnly />
                   <SelectField
                     label={t('offer.discount')}
                     value={String(offer.discount)}
@@ -531,15 +539,32 @@ function OfferForm({
                     }))}
                   />
                 </div>
-                {needsManager && (
+                {offer.discount > options.approval_above && (
                   <Notice tone="info">
                     {t('offer.managerNeeded', { n: s.percent(options.approval_above / 100) })}
+                  </Notice>
+                )}
+                {outsideRange && (
+                  <Notice tone="info">
+                    {t('offer.amountManager', {
+                      range: [
+                        options.min_amount !== null && money(options.min_amount),
+                        options.max_amount !== null && money(options.max_amount),
+                      ]
+                        .filter(Boolean)
+                        .join(' – '),
+                    })}
                   </Notice>
                 )}
                 {free ? (
                   <Notice tone="info">{t('offer.free')}</Notice>
                 ) : (
-                  <ScheduleEditor schedule={schedule} total={total} onChange={setSchedule} />
+                  <ScheduleEditor
+                    schedule={schedule}
+                    total={total}
+                    currency={options.currency}
+                    onChange={setSchedule}
+                  />
                 )}
               </SectionCard>
             )}
@@ -641,9 +666,9 @@ function OfferForm({
               </span>
               <div className="flex flex-col gap-1 rounded-2xl bg-hero-raised p-4">
                 {offer.discount > 0 && (
-                  <span className="text-sm text-on-hero-3 line-through">{s.toman(base)}</span>
+                  <span className="text-sm text-on-hero-3 line-through">{money(base)}</span>
                 )}
-                <span className="text-2xl font-bold tabular-nums">{s.toman(total)}</span>
+                <span className="text-2xl font-bold tabular-nums">{money(total)}</span>
                 <span className="text-xs text-on-hero-2">
                   {free
                     ? t('offer.planFree')
@@ -651,7 +676,7 @@ function OfferForm({
                       ? t('offer.planOnce')
                       : t('offer.planNote', {
                           n: f.number(schedule.length),
-                          first: s.toman(schedule[0]?.amount ?? 0),
+                          first: money(schedule[0]?.amount ?? 0),
                         })}
                 </span>
               </div>

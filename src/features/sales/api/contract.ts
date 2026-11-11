@@ -27,8 +27,10 @@ export interface ContractScan {
 
 export interface Prepayment {
   payment_id: number;
-  /** Toman. */
+  /** In `currency`. */
   amount: number;
+  /** S74: ISO code of the money the amounts are in; absent: IRT (toman). */
+  currency?: string;
   status: 'unpaid' | 'review' | 'declined' | 'paid';
 }
 
@@ -66,6 +68,8 @@ export interface ContractDocument {
   approved_at: string | null;
   /** Not approved yet: a preview (S68). */
   draft?: boolean;
+  /** S74: ISO code of the money the amounts are in; absent: IRT (toman). */
+  currency?: string;
   /** The kind of contract (S68), e.g. "اپلای رایگان ترکیه"; empty for the standard one. */
   template?: string;
   customer: { name: string; national_code: string | null; phone: string | null; email: string };

@@ -49,6 +49,9 @@ export function useSalesFormat() {
       currency === TOMAN
         ? t('millionToman', { n: f.number(Math.round((value / 1_000_000) * 10) / 10) })
         : f.moneyName(value, currency),
+    /** An exact amount in its currency: "70,000,000 toman", "4,000 euros" (S74). */
+    exact: (value: number, currency: string) =>
+      currency === TOMAN ? t('toman', { amount: f.number(value) }) : f.moneyName(value, currency),
     percent: (share: number) => t('percent', { n: f.number(Math.round(share * 100)) }),
     minutes: (n: number) => t('minutes', { n: f.number(n) }),
     /**

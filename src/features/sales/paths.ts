@@ -16,3 +16,7 @@ export function customerPath(id: number, log?: LogIntent, reservation?: number) 
   const query = params.toString();
   return `${SALES_ROOT}/customers/${String(id)}${query ? `?${query}` : ''}`;
 }
+
+/** A contract's page on the manager's side (S74): the standard one is "standard", the rest their id. */
+export const contractPath = (id: number | null) =>
+  salesPath(`manager/contract/${id === null ? 'standard' : String(id)}`);

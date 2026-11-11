@@ -129,7 +129,8 @@ const PAGES: PageCase[] = [
     '/sales/manager',
     '/sales/manager/approvals',
     '/sales/manager/contract',
-    '/sales/manager/contract?template=1',
+    '/sales/manager/contract/standard',
+    '/sales/manager/contract/1',
     // An offer's contract before approval, to print (S68): lead 11's draft (src/mocks/sales.ts).
     '/sales/manager/approvals/11/contract',
     '/sales/manager/team',

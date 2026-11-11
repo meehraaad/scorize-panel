@@ -1240,7 +1240,8 @@
     "previewTitle": "Contract preview",
     "previewHint": "The page that is printed and signed; variables are coloured and this customer's clauses framed.",
     "fullScreen": "Full screen",
-    "textTitle": "Contract text"
+    "textTitle": "Contract text",
+    "amountManager": "This amount is outside the contract's range ({{range}}). It goes to the manager only and does not reach the customer until approved."
   },
   "manager": {
     "nav": "Sales management sections",
@@ -1684,7 +1685,39 @@
       "confirm": "Move the contract",
       "cancel": "Cancel",
       "moved": "Contract moved.",
-      "empty": "No contract counts for this seller in this range."
+      "empty": "No contract counts for this seller in this range.",
+      "listTitle": "Contracts",
+      "listSubtitle": "Each contract has its own price, restrictions and text. A seller picks one when making an offer.",
+      "filter": "Show",
+      "filters": {
+        "all": "All",
+        "on": "Active",
+        "off": "Off"
+      },
+      "listEmpty": "No contracts in this list.",
+      "new": "New contract",
+      "newHint": "Give it a name and a starting point; the rest is set on the contract page.",
+      "added": "\"{{name}}\" created.",
+      "back": "All contracts",
+      "on": "Active",
+      "off": "Off",
+      "services": "Services and price",
+      "service": "{{name}}: {{price}}",
+      "currency": "Currency",
+      "feature": {
+        "admission": "Admission",
+        "visa": "Visa",
+        "writing": "Writing"
+      },
+      "countries": "Countries",
+      "degrees": "Degrees",
+      "all": "All",
+      "range": "Amount range",
+      "anyAmount": "No limit",
+      "from": "From {{amount}}",
+      "listTo": "up to {{amount}}",
+      "text": "Text",
+      "textFacts": "{{articles}} articles, {{clauses}} clauses · version {{version}}"
     },
     "commission": {
       "title": "Commission rules",
@@ -1801,9 +1834,9 @@
       "subtitle": "The standard contract, prices and offer rules sellers start from.",
       "tabs": "Contract sections",
       "tab": {
-        "clauses": "Clauses",
-        "prices": "Prices and rules",
-        "versions": "Versions"
+        "settings": "Settings and restrictions",
+        "text": "Contract text",
+        "history": "History of changes"
       },
       "save": "Save",
       "cancel": "Cancel",
@@ -1931,6 +1964,30 @@
         "insert": "Add a variable to the text",
         "insertOne": "Add {{name}} to the text",
         "unknown": "These variables aren't defined and stay blank in the contract: {{names}}"
+      },
+      "settings": {
+        "step1": "1. Services and price",
+        "step2": "2. Who this contract is for",
+        "step3": "3. What a seller may change",
+        "currency": "Contract currency",
+        "currencyHint": "Prices, the amount range and instalments are in this currency. Changing it does not convert the numbers; enter them again.",
+        "currencyStandard": "The standard contract is always in toman.",
+        "priceOf": "{{name}} price",
+        "min_amount": "Lowest contract amount",
+        "max_amount": "Highest contract amount",
+        "amountHint": "Empty: no limit.",
+        "min_applies": "Fewest applications",
+        "min_appliesHint": "A seller cannot write fewer.",
+        "max_applies": "Most applications",
+        "max_appliesHint": "A seller cannot write more.",
+        "rangeBad": "The lowest amount is above the highest.",
+        "appliesBad": "The fewest is above the most.",
+        "outsideRange": "An amount outside the range comes to you first; the seller cannot send it directly.",
+        "unsaved": "Changes not saved",
+        "clean": "Everything is saved",
+        "undo": "Undo",
+        "saved": "Settings saved.",
+        "step2Hint": "The countries, degrees, amount range and number of applications this contract covers."
       }
     },
     "hours": {

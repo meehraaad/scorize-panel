@@ -185,8 +185,11 @@ export interface ContractDraft {
 }
 
 export interface DraftFigures {
-  /** Toman. */
+  /** In `currency`. */
   list_price: number;
+  /** S74: ISO code of the money the amounts are in; absent: IRT (toman). */
+  currency?: string;
+
   amount: number;
   /** Percent, and the most a seller gives without the manager. */
   discount: number;
@@ -632,6 +635,13 @@ export interface OfferRules {
   /** Percent of the amount at signing; less goes to the manager first. */
   min_prepayment: number;
   max_applies: number;
+  /** S74: the fewest applications a contract of this kind covers. */
+  min_applies: number;
+  /** S74: ISO code of the contract's money (IRT for toman); the prices, range and instalments are in it. */
+  currency: string;
+  /** S74: an amount outside this range goes to the manager first; null: no limit. */
+  min_amount: number | null;
+  max_amount: number | null;
   /** The only countries (ids of `limits.countries`) this kind of contract is offered for (S73); empty: all. */
   countries: number[];
   /** The only degrees it is offered for (S73); empty: all. */
@@ -642,6 +652,30 @@ export interface OfferRules {
 export interface RuleLimits {
   countries: { id: number; name: string }[];
   degrees: { id: number; name: string }[];
+  /** S74: the money a contract can be made in. */
+  currencies: { id: string; name: string }[];
+}
+
+/** One contract on the manager's list (S74): what it offers and who it is for, at a glance. */
+export interface ContractOverviewRow {
+  /** Null: the standard contract. */
+  id: number | null;
+  name: string;
+  description: string;
+  is_active: boolean;
+  clauses: number;
+  currency: string;
+  features: { key: BuilderPrice['feature']; price: number | null }[];
+  /** Country names; empty: all. */
+  countries: string[];
+  /** Degree ids of `limits.degrees`; empty: all. */
+  degrees: number[];
+  min_amount: number | null;
+  max_amount: number | null;
+  articles: number;
+  version: number;
+  updated_at: string;
+  open_offers: number;
 }
 
 export type TextChangeKind = 'added' | 'changed' | 'removed' | 'locked' | 'unlocked' | 'moved';
@@ -709,6 +743,12 @@ export const contractBuilderQuery = (template: number | null) =>
     queryFn: ({ signal }) =>
       api<ContractBuilder>(`${BUILDER_API}/${kindQuery(template)}`, { signal }),
   });
+
+export const contractOverviewQuery = queryOptions({
+  queryKey: [...MANAGER_KEY, 'contract-overview'],
+  queryFn: ({ signal }) =>
+    api<{ contracts: ContractOverviewRow[] }>(`${BUILDER_API}/overview/`, { signal }),
+});
 
 function useBuilderMutation<T, R = unknown>(send: (body: T) => Promise<R>) {
   const client = useQueryClient();

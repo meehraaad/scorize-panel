@@ -59,7 +59,7 @@ export function ContractChooser({
   const price = (row: OfferTemplate) => {
     const paid = row.features.map((feature) => feature.price).filter((amount) => amount > 0);
     return paid.length
-      ? t('chooser.from', { price: s.toman(Math.min(...paid)) })
+      ? t('chooser.from', { price: s.exact(Math.min(...paid), row.currency ?? 'IRT') })
       : t('chooser.free');
   };
 

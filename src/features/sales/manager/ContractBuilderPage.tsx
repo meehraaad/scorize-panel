@@ -1,15 +1,16 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, TextAreaField, TogglePill } from '@/components/ui/Choices';
+import { BackLink } from '@/components/ui/BackLink';
+import { ChoiceGroup, SelectField, TextAreaField, TogglePill } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
 import { Dialog } from '@/components/ui/Dialog';
 import { DiffText } from '@/components/ui/DiffText';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { SaveBar } from '@/components/ui/SaveBar';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { Switch } from '@/components/ui/Switch';
 import { TextField } from '@/components/ui/TextField';
@@ -19,7 +20,6 @@ import { toast } from '@/lib/toast';
 import {
   contractBuilderQuery,
   templateParam,
-  useCreateTemplate,
   useOrderClauses,
   useSaveClause,
   useSavePrices,
@@ -30,72 +30,58 @@ import {
   type BuilderPrice,
   type ContractBuilder,
   type OfferRules,
-  type RuleLimits,
   type TextVersion,
 } from '../api';
 import { ContractSheet } from '../components/ContractSheet';
 import { useSalesFormat } from '../format';
+import { salesPath } from '../paths';
 import { previewClauses, sampleDocument, sampleValues, type ClauseDraft } from './contractPreview';
 
-const TABS = ['clauses', 'prices', 'versions'] as const;
+const TABS = ['settings', 'text', 'history'] as const;
 type Tab = (typeof TABS)[number];
 /** What the manager picks from for the offer's discounts and durations. */
 const DISCOUNT_STEPS = [5, 10, 15, 20, 25, 30];
 const DURATION_STEPS = [3, 6, 9, 12, 18, 24];
-/** The standard contract's value in the kinds-of-contract choice (its id is null). */
-const STANDARD = 'standard';
 
 /**
- * The sales manager's contract builder (S64): the kinds of contract (S68: the standard one and the
- * templates beside it, e.g. free apply to Turkey or visa only), and for the one picked its clauses
- * (write, order, fix so sellers can't change them, take out) beside the contract as it will print,
- * its price list and offer rules, and its text's versions. Canvas "صفحه‌ی مشتری", boards
- * "ساخت قرارداد".
+ * One contract's page (S74): its name and whether sellers can pick it on top, then three tabs:
+ * settings and restrictions (services and price in its currency, who it is for, what a seller may
+ * change), its text (clauses beside the printed contract), and the history of its text. The
+ * standard contract is `/manager/contract/standard`, the others their id.
  */
 export default function ContractBuilderPage() {
   const { t } = useTranslation('sales');
   const [params, setParams] = useSearchParams();
-  const tab: Tab = TABS.find((value) => value === params.get('tab')) ?? 'clauses';
-  const template = templateParam(params.get('template'));
+  const tab: Tab = TABS.find((value) => value === params.get('tab')) ?? 'settings';
+  const template = templateParam(useParams().kind ?? null);
   const { data } = useSuspenseQuery(contractBuilderQuery(template));
-  const pick = (id: number | null) =>
-    setParams((search) => {
-      if (id === null) search.delete('template');
-      else search.set('template', String(id));
-      return search;
-    });
-  // Each kind of contract keeps its own forms: switching starts them from its own data.
-  const kind = template ?? STANDARD;
+  // Each contract keeps its own forms: switching starts them from its own data.
+  const kind = template ?? 'standard';
 
   return (
     <>
-      <PageHeader
-        title={t('manager.builder.title')}
-        subtitle={t('manager.builder.subtitle')}
-        actions={
-          <ChoiceGroup
-            legend={t('manager.builder.tabs')}
-            hideLegend
-            look="segmented"
-            value={tab}
-            onChange={(next) =>
-              setParams(
-                (search) => {
-                  search.set('tab', next);
-                  return search;
-                },
-                { replace: true },
-              )
-            }
-            options={TABS.map((value) => ({ value, label: t(`manager.builder.tab.${value}`) }))}
-          />
+      <BackLink to={salesPath('manager/contract')}>{t('manager.contracts.back')}</BackLink>
+      <Header key={`header-${kind}`} template={data.template} />
+      <ChoiceGroup
+        legend={t('manager.builder.tabs')}
+        hideLegend
+        look="segmented"
+        value={tab}
+        onChange={(next) =>
+          setParams(
+            (search) => {
+              search.set('tab', next);
+              return search;
+            },
+            { replace: true },
+          )
         }
+        options={TABS.map((value) => ({ value, label: t(`manager.builder.tab.${value}`) }))}
       />
-      <Templates key={`templates-${kind}`} data={data} onPick={pick} />
-      {tab === 'clauses' ? (
+      {tab === 'settings' ? (
+        <Settings key={`settings-${kind}`} data={data} />
+      ) : tab === 'text' ? (
         <Clauses key={`clauses-${kind}`} data={data} />
-      ) : tab === 'prices' ? (
-        <PricesAndRules key={`prices-${kind}`} data={data} />
       ) : (
         <Versions data={data} />
       )}
@@ -103,144 +89,20 @@ export default function ContractBuilderPage() {
   );
 }
 
-// region Kinds of contract (S68)
-function Templates({
-  data,
-  onPick,
-}: {
-  data: ContractBuilder;
-  onPick: (id: number | null) => void;
-}) {
+/** The contract's name (pen to rename), what it is for, and whether sellers can pick it. */
+function Header({ template }: { template: ContractBuilder['template'] }) {
   const { t } = useTranslation('sales');
-  const f = useFormat();
-  const [adding, setAdding] = useState(false);
-  const current = data.template;
-  return (
-    <SectionCard
-      id="templates"
-      variant="panel"
-      title={t('manager.builder.templates.title')}
-      subtitle={t('manager.builder.templates.subtitle')}
-    >
-      <ChoiceGroup
-        legend={t('manager.builder.templates.title')}
-        hideLegend
-        value={current.id === null ? STANDARD : String(current.id)}
-        onChange={(value) => onPick(value === STANDARD ? null : Number(value))}
-        options={data.templates.map((row) => ({
-          value: row.id === null ? STANDARD : String(row.id),
-          label: row.is_active
-            ? t('manager.builder.templates.option', { name: row.name, n: f.number(row.clauses) })
-            : t('manager.builder.templates.optionOff', { name: row.name }),
-        }))}
-        extra={
-          !adding && (
-            <Button variant="outline" onClick={() => setAdding(true)}>
-              {t('manager.builder.templates.add')}
-            </Button>
-          )
-        }
-      />
-      {adding && (
-        <NewTemplate
-          from={current}
-          onDone={(id) => {
-            setAdding(false);
-            if (id !== undefined) onPick(id);
-          }}
-        />
-      )}
-      {current.id === null ? (
-        <p className="m-0 text-sm leading-7 text-text-2">
-          {t('manager.builder.templates.standardNote')}
-        </p>
-      ) : (
-        <TemplateSettings template={{ ...current, id: current.id }} />
-      )}
-    </SectionCard>
-  );
+  if (template.id === null)
+    return (
+      <section className="flex flex-col gap-1 rounded-card bg-hero p-5 text-on-hero">
+        <h1 className="m-0 text-xl font-bold">{template.name}</h1>
+        <p className="m-0 text-sm opacity-80">{t('manager.builder.templates.standardNote')}</p>
+      </section>
+    );
+  return <TemplateSettings template={{ ...template, id: template.id }} />;
 }
 
-/** A new kind of contract: empty, or a copy of the one shown (its clauses, prices and rules). */
-function NewTemplate({
-  from,
-  onDone,
-}: {
-  from: ContractBuilder['template'];
-  onDone: (id?: number) => void;
-}) {
-  const { t } = useTranslation('sales');
-  const create = useCreateTemplate();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [start, setStart] = useState<'copy' | 'empty'>('copy');
-  return (
-    <form
-      className="flex flex-col gap-3 rounded-2xl bg-canvas p-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (!name.trim()) return;
-        create.mutate(
-          {
-            name: name.trim(),
-            description: description.trim(),
-            copy: start === 'copy',
-            copy_from: from.id,
-          },
-          {
-            onSuccess: ({ id }) => {
-              toast.success(t('manager.builder.templates.added', { name: name.trim() }));
-              onDone(id);
-            },
-            onError: () => toast.error(t('error')),
-          },
-        );
-      }}
-    >
-      <TextField
-        label={t('manager.builder.templates.name')}
-        placeholder={t('manager.builder.templates.namePlaceholder')}
-        value={name}
-        maxLength={100}
-        onChange={(event) => setName(event.target.value)}
-      />
-      <TextField
-        label={t('manager.builder.templates.description')}
-        hint={t('manager.builder.templates.descriptionHint')}
-        value={description}
-        maxLength={300}
-        onChange={(event) => setDescription(event.target.value)}
-      />
-      <ChoiceGroup
-        legend={t('manager.builder.templates.start')}
-        look="cards"
-        value={start}
-        onChange={setStart}
-        options={[
-          {
-            value: 'copy',
-            label: t('manager.builder.templates.copy', { name: from.name }),
-            hint: t('manager.builder.templates.copyHint'),
-          },
-          {
-            value: 'empty',
-            label: t('manager.builder.templates.empty'),
-            hint: t('manager.builder.templates.emptyHint'),
-          },
-        ]}
-      />
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={!name.trim() || create.isPending}>
-          {t('manager.builder.templates.create')}
-        </Button>
-        <Button variant="outline" onClick={() => onDone()}>
-          {t('manager.builder.cancel')}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
+// region The contract's name
 /** A template's name, description, and whether sellers can start from it. */
 function TemplateSettings({
   template,
@@ -832,121 +694,90 @@ function OutRow({ template, clause }: { template: number | null; clause: Builder
 }
 // endregion
 
-// region Prices and rules
-function PricesAndRules({ data }: { data: ContractBuilder }) {
-  return (
-    <>
-      <Prices template={data.template.id} prices={data.prices} />
-      <Rules template={data.template.id} rules={data.rules} limits={data.limits} />
-    </>
-  );
-}
-
-function Prices({ template, prices }: { template: number | null; prices: BuilderPrice[] }) {
-  const { t } = useTranslation('sales');
-  const s = useSalesFormat();
-  const save = useSavePrices(template);
-  // A template may offer a service free (free apply to Turkey); the standard contract may not.
-  const free = template !== null;
-  const [rows, setRows] = useState(prices);
-  const change = (index: number, row: Partial<BuilderPrice>) =>
-    setRows(rows.map((item, at) => (at === index ? { ...item, ...row } : item)));
-  return (
-    <SectionCard
-      id="prices"
-      variant="panel"
-      title={t('manager.builder.prices.title')}
-      subtitle={t(free ? 'manager.builder.prices.subtitleFree' : 'manager.builder.prices.subtitle')}
-    >
-      <ul className="m-0 flex list-none flex-col gap-3 p-0">
-        {rows.map((row, index) => (
-          <li
-            key={row.feature}
-            className="grid grid-cols-1 items-start gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] sm:grid-cols-[1fr_auto]"
-          >
-            <TextField
-              type="number"
-              inputMode="numeric"
-              dir="ltr"
-              min={0}
-              step={1_000_000}
-              label={t(`manager.builder.prices.feature.${row.feature}`)}
-              value={row.price === null ? '' : String(row.price)}
-              hint={
-                row.price
-                  ? s.toman(row.price)
-                  : free && row.price === 0
-                    ? t('manager.builder.prices.free')
-                    : t('manager.builder.prices.none')
-              }
-              onChange={(event) =>
-                change(index, {
-                  price:
-                    event.target.value === ''
-                      ? null
-                      : Math.max(0, Math.round(Number(event.target.value))),
-                })
-              }
-            />
-            <Switch
-              label={t('manager.builder.prices.offered')}
-              checked={row.is_active && (free ? row.price !== null : !!row.price)}
-              disabled={free ? row.price === null : !row.price}
-              onChange={(is_active) => change(index, { is_active })}
-            />
-          </li>
-        ))}
-      </ul>
-      <div>
-        <Button
-          disabled={save.isPending}
-          onClick={() =>
-            save.mutate(
-              rows.map((row) => ({
-                feature: row.feature,
-                price: row.price ?? 0,
-                is_active: row.is_active,
-              })),
-              {
-                onSuccess: () => toast.success(t('manager.builder.prices.saved')),
-                onError: () => toast.error(t('error')),
-              },
-            )
-          }
-        >
-          {t('manager.builder.save')}
-        </Button>
-      </div>
-    </SectionCard>
-  );
-}
-
-function Rules({
-  template,
-  rules,
-  limits,
-}: {
-  template: number | null;
-  rules: OfferRules;
-  limits: RuleLimits;
-}) {
+// region Settings and restrictions (S74)
+/**
+ * The contract's settings in three steps on one page, saved together: the services and their
+ * price in the contract's currency; who it is for (countries, degrees, the amount and number of
+ * applications); and what a seller may change (discounts, prepayment, instalments, durations).
+ */
+function Settings({ data }: { data: ContractBuilder }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const save = useSaveRules(template);
-  const [form, setForm] = useState(rules);
+  const s = useSalesFormat();
+  const template = data.template.id;
+  const savePrices = useSavePrices(template);
+  const saveRules = useSaveRules(template);
+  const [rows, setRows] = useState(data.prices);
+  const [form, setForm] = useState(data.rules);
+  const { limits } = data;
+  // The standard contract is in toman; the others may be in any currency of the system.
+  const standard = template === null;
+  const free = !standard;
+  const money = (value: number) => s.exact(value, form.currency);
   const set = <K extends keyof OfferRules>(key: K, value: OfferRules[K]) =>
     setForm({ ...form, [key]: value });
+  const change = (index: number, row: Partial<BuilderPrice>) =>
+    setRows(rows.map((item, at) => (at === index ? { ...item, ...row } : item)));
   const toggle = (list: number[], value: number, on: boolean) =>
     (on ? [...list, value] : list.filter((item) => item !== value)).sort((a, b) => a - b);
-  const numberField = (
-    key: 'approval_above' | 'min_prepayment' | 'max_instalments' | 'max_applies',
-    max: number,
-  ) => (
+  const dirty =
+    JSON.stringify([rows, form]) !== JSON.stringify([data.prices, data.rules]);
+  const rangeBad =
+    form.min_amount !== null && form.max_amount !== null && form.min_amount > form.max_amount;
+  const appliesBad = form.min_applies > form.max_applies;
+  const valid = form.durations.length > 0 && !rangeBad && !appliesBad;
+  const saving = savePrices.isPending || saveRules.isPending;
+
+  const save = () =>
+    savePrices.mutate(
+      rows.map((row) => ({ feature: row.feature, price: row.price ?? 0, is_active: row.is_active })),
+      {
+        onSuccess: () =>
+          saveRules.mutate(form, {
+            onSuccess: () => toast.success(t('manager.builder.settings.saved')),
+            onError: () => toast.error(t('error')),
+          }),
+        onError: () => toast.error(t('error')),
+      },
+    );
+
+  const amountField = (key: 'min_amount' | 'max_amount', error?: string) => (
     <TextField
       type="number"
       inputMode="numeric"
       dir="ltr"
-      min={key === 'max_instalments' || key === 'max_applies' ? 1 : 0}
+      min={0}
+      label={t(`manager.builder.settings.${key}`)}
+      hint={t('manager.builder.settings.amountHint')}
+      error={error}
+      value={form[key] === null ? '' : String(form[key])}
+      onChange={(event) =>
+        set(key, event.target.value === '' ? null : Math.max(0, Math.round(Number(event.target.value))))
+      }
+    />
+  );
+  const countField = (key: 'min_applies' | 'max_applies', error?: string) => (
+    <TextField
+      type="number"
+      inputMode="numeric"
+      dir="ltr"
+      min={1}
+      max={60}
+      label={t(`manager.builder.settings.${key}`)}
+      hint={t(`manager.builder.settings.${key}Hint`)}
+      error={error}
+      value={String(form[key])}
+      onChange={(event) =>
+        set(key, Math.min(60, Math.max(1, Math.round(Number(event.target.value)))))
+      }
+    />
+  );
+  const numberField = (key: 'approval_above' | 'min_prepayment' | 'max_instalments', max: number) => (
+    <TextField
+      type="number"
+      inputMode="numeric"
+      dir="ltr"
+      min={key === 'max_instalments' ? 1 : 0}
       max={max}
       label={t(`manager.builder.rules.${key}`)}
       hint={t(`manager.builder.rules.${key}Hint`)}
@@ -977,7 +808,7 @@ function Rules({
       </div>
     </fieldset>
   );
-  // What this kind of contract is limited to (S73): none chosen means all of them.
+  // What this contract is limited to: none chosen means all of them.
   const limit = (key: 'countries' | 'degrees') => (
     <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
       <legend className="mb-1 text-[15px] font-medium">{t(`manager.builder.rules.${key}`)}</legend>
@@ -998,38 +829,125 @@ function Rules({
       </div>
     </fieldset>
   );
-  const valid = form.durations.length > 0;
+
   return (
-    <SectionCard
-      id="rules"
-      variant="panel"
-      title={t('manager.builder.rules.title')}
-      subtitle={t('manager.builder.rules.subtitle')}
-    >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {numberField('approval_above', 100)}
-        {numberField('min_prepayment', 100)}
-        {numberField('max_instalments', 12)}
-        {numberField('max_applies', 60)}
-      </div>
-      {steps('discounts', DISCOUNT_STEPS, 'manager.builder.rules.percent')}
-      {steps('durations', DURATION_STEPS, 'manager.builder.rules.months')}
-      {limit('countries')}
-      {limit('degrees')}
-      <div>
-        <Button
-          disabled={!valid || save.isPending}
-          onClick={() =>
-            save.mutate(form, {
-              onSuccess: () => toast.success(t('manager.builder.rules.saved')),
-              onError: () => toast.error(t('error')),
-            })
-          }
-        >
+    <div className="flex flex-col gap-5">
+      <SectionCard
+        id="prices"
+        variant="panel"
+        title={t('manager.builder.settings.step1')}
+        subtitle={t(free ? 'manager.builder.prices.subtitleFree' : 'manager.builder.prices.subtitle')}
+      >
+        <SelectField
+          label={t('manager.builder.settings.currency')}
+          hint={t(
+            standard
+              ? 'manager.builder.settings.currencyStandard'
+              : 'manager.builder.settings.currencyHint',
+          )}
+          value={standard ? 'IRT' : form.currency}
+          onChange={(currency) => set('currency', currency)}
+          options={(standard
+            ? limits.currencies.filter((item) => item.id === 'IRT')
+            : limits.currencies
+          ).map((item) => ({ value: item.id, label: item.name }))}
+        />
+        <ul className="m-0 flex list-none flex-col gap-3 p-0">
+          {rows.map((row, index) => (
+            <li
+              key={row.feature}
+              className="grid grid-cols-1 items-start gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] sm:grid-cols-[1fr_auto]"
+            >
+              <TextField
+                type="number"
+                inputMode="numeric"
+                dir="ltr"
+                min={0}
+                label={t('manager.builder.settings.priceOf', {
+                  name: t(`manager.contracts.feature.${row.feature}`),
+                })}
+                value={row.price === null ? '' : String(row.price)}
+                hint={
+                  row.price
+                    ? money(row.price)
+                    : free && row.price === 0
+                      ? t('manager.builder.prices.free')
+                      : t('manager.builder.prices.none')
+                }
+                onChange={(event) =>
+                  change(index, {
+                    price:
+                      event.target.value === ''
+                        ? null
+                        : Math.max(0, Math.round(Number(event.target.value))),
+                  })
+                }
+              />
+              <Switch
+                label={t('manager.builder.prices.offered')}
+                checked={row.is_active && (free ? row.price !== null : !!row.price)}
+                disabled={free ? row.price === null : !row.price}
+                onChange={(is_active) => change(index, { is_active })}
+              />
+            </li>
+          ))}
+        </ul>
+      </SectionCard>
+
+      <SectionCard
+        id="limits"
+        variant="panel"
+        title={t('manager.builder.settings.step2')}
+        subtitle={t('manager.builder.settings.step2Hint')}
+      >
+        {limit('countries')}
+        {limit('degrees')}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {amountField('min_amount')}
+          {amountField('max_amount', rangeBad ? t('manager.builder.settings.rangeBad') : undefined)}
+          {countField('min_applies')}
+          {countField('max_applies', appliesBad ? t('manager.builder.settings.appliesBad') : undefined)}
+        </div>
+        <p className="m-0 text-[13px] leading-6 text-text-2">
+          {t('manager.builder.settings.outsideRange')}
+        </p>
+      </SectionCard>
+
+      <SectionCard
+        id="rules"
+        variant="panel"
+        title={t('manager.builder.settings.step3')}
+        subtitle={t('manager.builder.rules.subtitle')}
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {numberField('approval_above', 100)}
+          {numberField('min_prepayment', 100)}
+          {numberField('max_instalments', 12)}
+        </div>
+        {steps('discounts', DISCOUNT_STEPS, 'manager.builder.rules.percent')}
+        {steps('durations', DURATION_STEPS, 'manager.builder.rules.months')}
+      </SectionCard>
+
+      <SaveBar
+        dirty={dirty}
+        message={t(dirty ? 'manager.builder.settings.unsaved' : 'manager.builder.settings.clean')}
+      >
+        {dirty && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setRows(data.prices);
+              setForm(data.rules);
+            }}
+          >
+            {t('manager.builder.settings.undo')}
+          </Button>
+        )}
+        <Button disabled={!dirty || !valid || saving} onClick={save}>
           {t('manager.builder.save')}
         </Button>
-      </div>
-    </SectionCard>
+      </SaveBar>
+    </div>
   );
 }
 // endregion
