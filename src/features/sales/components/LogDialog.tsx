@@ -17,6 +17,7 @@ import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
+import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
@@ -68,6 +69,7 @@ export function LogDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation(['sales', 'voice']);
+  const linphone = useLinphoneDial();
   const { t: tSales } = useTranslation('sales');
   const f = useFormat();
   const formId = useId();
@@ -335,7 +337,10 @@ export function LogDialog({
         />
       )}
       {call && !liveCall && (
-        <a href={`tel:${customer.phone}`} className={buttonClass('outline', 'self-start')}>
+        <a
+          href={callHref(customer.phone, linphone)}
+          className={buttonClass('outline', 'self-start')}
+        >
           <Icon name="phone" size={18} />
           <span dir="ltr">{f.digits(customer.phone)}</span>
         </a>
