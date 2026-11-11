@@ -1,16 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EventCalendar, type CalendarEvent } from '@/components/ui/EventCalendar';
+import { EventCalendar } from '@/components/ui/EventCalendar';
 import { WeekNav } from '@/components/ui/WeekNav';
-import { addDays, eventColor, parseValue, toValue, weekOf, weekStart } from '@/lib/calendar';
+import { addDays, parseValue, toValue, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { sellerCalendarQuery } from '../api';
+import { useSellerBusy } from './useSellerBusy';
 
 const CALL_MINUTES = 15;
-const DEFAULT_MINUTES = 30;
 const PICKED = 'picked';
 
 /**
@@ -34,39 +32,7 @@ export function FollowUpSlots({
   const thisWeek = weekOf(now, startDay);
   const picked = parseValue(value);
   const [week, setWeek] = useState(() => weekOf(picked ?? now, startDay));
-  const { data, isPending } = useQuery(sellerCalendarQuery(week));
-  const types = new Map((data?.types ?? []).map((type) => [type.id, type]));
-
-  const busy: CalendarEvent[] = [
-    ...(data?.consultations ?? [])
-      .filter((item) => item.mine)
-      .map((item) => {
-        const start = new Date(item.starts_at);
-        return {
-          id: `c${String(item.id)}`,
-          start,
-          minutes: item.minutes ?? DEFAULT_MINUTES,
-          color: eventColor(types.get(item.type)?.color),
-          look: 'upcoming' as const,
-          title: item.name,
-          meta: f.time(start),
-          aria: `${item.name}، ${f.time(start)}`,
-        };
-      }),
-    ...(data?.calls ?? []).map((item) => {
-      const start = new Date(item.follow_up_at);
-      return {
-        id: `l${String(item.lead)}`,
-        start,
-        minutes: CALL_MINUTES,
-        color: 'var(--text-2)',
-        look: 'call' as const,
-        title: item.name,
-        meta: f.time(start),
-        aria: `${item.name}، ${f.time(start)}، ${t('consultationCalendar.followUp')}`,
-      };
-    }),
-  ];
+  const { busy, isPending } = useSellerBusy(week);
   const events = picked
     ? [
         ...busy,
