@@ -30,6 +30,7 @@ export function ContactButtons({
         customer={customer}
         name={name}
         start={{ channel: 'call' }}
+        phone={phone}
         aria-label={t('callName', { name })}
         className={
           onHero

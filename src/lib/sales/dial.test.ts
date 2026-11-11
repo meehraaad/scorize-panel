@@ -17,10 +17,10 @@ describe('pbxNumber', () => {
 
 describe('callHref', () => {
   it('uses the phone app when Linphone is off', () => {
-    expect(callHref('09121234567', null)).toBe('tel:09121234567');
+    expect(callHref('09121234567', false)).toBe('tel:09121234567');
   });
 
-  it('opens Linphone with the office domain when on', () => {
-    expect(callHref('09121234567', 'pbx.example')).toBe('sip:989121234567@pbx.example');
+  it('opens Linphone when on', () => {
+    expect(callHref('09121234567', true)).toBe('linphone-sip:989121234567');
   });
 });

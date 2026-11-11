@@ -8,6 +8,7 @@ import { PageSkeleton } from '@/components/ui/Skeleton';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 import { useMediaQuery } from '@/lib/useMediaQuery';
 import { whenIdle } from '@/lib/whenIdle';
+import { dialWithLinphone } from '@/lib/sales/dial';
 import { openContactLog } from '@/lib/sales/contactDrafts';
 import type { Channel } from '@/lib/sales/api';
 import { customerQuery, type ProductCategory } from './api';
@@ -83,7 +84,10 @@ export default function CustomerLayout() {
       },
       { replace: true },
     );
-  const openLog = (channel: Channel) => openContactLog(id, data.name, { channel });
+  const openLog = (channel: Channel) => {
+    openContactLog(id, data.name, { channel });
+    if (channel === 'call') dialWithLinphone(data.phone);
+  };
   const wide = useMediaQuery(SIDE_QUERY);
   const side = <CustomerSide customer={data} />;
 
