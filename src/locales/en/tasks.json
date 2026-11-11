@@ -82,7 +82,8 @@
     },
     "tomorrow": "Tomorrow: {{n}} follow-ups",
     "doneToday": "Done today: {{n}}",
-    "emptyDay": "No follow-ups on {{day}}."
+    "emptyDay": "No follow-ups on {{day}}.",
+    "allDay": "Any time today"
   },
   "done": {
     "title": "Follow-up done",
@@ -229,7 +230,11 @@
       "me": "Added to your tasks. It shows in “My follow-ups” on {{when}}.",
       "team": "Put in the team queue.",
       "people": "Sent to {{n}} people."
-    }
+    },
+    "dayOnly": "Day only (no time)",
+    "day": "Day",
+    "dayHint": "Due by the end of that day; not late before then.",
+    "dayRequired": "Choose the day."
   },
   "reactions": {
     "label": "Reactions",

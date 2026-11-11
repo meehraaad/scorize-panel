@@ -130,7 +130,11 @@ export function RequestDialog({
                 </Link>
               </span>
             )}
-            <span>{t('requests.due', { when: f.dateTime(data.due_at) })}</span>
+            <span>
+              {t('requests.due', {
+                when: data.timed === false ? f.date(data.due_at) : f.dateTime(data.due_at),
+              })}
+            </span>
             {data.watchers.length > 0 && (
               <span>
                 {data.watchers.length > WATCHERS_SHOWN

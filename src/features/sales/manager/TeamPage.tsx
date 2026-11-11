@@ -180,7 +180,10 @@ function Leaderboard({ data, range }: { data: TeamData; range: TeamRange }) {
                 <th scope="row" className={`${cell} text-start font-semibold`}>
                   {/* Their month page; last month's for the "last month" range. */}
                   <Link
-                    to={sellerMonthPath(seller.id, range === 'last' ? data.from.slice(0, 10) : null)}
+                    to={sellerMonthPath(
+                      seller.id,
+                      range === 'last' ? data.from.slice(0, 10) : null,
+                    )}
                     className="flex min-h-11 items-center gap-2.5 text-start font-semibold text-text hover:text-primary-text hover:underline"
                   >
                     <Avatar name={seller.name} size="sm" />

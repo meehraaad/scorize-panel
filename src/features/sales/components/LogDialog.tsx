@@ -1,4 +1,4 @@
-import { Fragment, useId, useState, type ReactNode, type SubmitEvent } from 'react';
+import { Fragment, lazy, Suspense, useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -19,19 +19,23 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
-import { fromLocalInput, quickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
 import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
-import { Dialog } from '@/components/ui/Dialog';
 import { customerPath } from '../paths';
-import { FollowUpSlots } from './FollowUpSlots';
+import { followAtOf } from '../followUp';
+import { FollowUpWhen } from './FollowUpWhen';
 import { ProfileChips } from './ProfileChips';
 import { laneOf, lanesOf, movableLanes, pickedLane } from '../boardLanes';
 import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
 import { VoiceTextAreaField } from '@/components/voice/VoiceField';
+
+// Opens on a click: the meeting window (its week of rooms) is not part of the popup's load.
+const VisitDialog = lazy(() =>
+  import('./VisitDialog').then((module) => ({ default: module.VisitDialog })),
+);
 
 /** How a contact happened, picked by hand (a message is logged from the message buttons). */
 const CHANNELS = ['call', 'meeting'] as const satisfies readonly Channel[];
@@ -41,8 +45,6 @@ const OUTCOMES = [
   'call_later',
   'wrong_number',
 ] as const satisfies readonly CallOutcome[];
-/** Quick follow-up times; any other is a pick on the calendar (`other`). */
-const FOLLOWS = ['evening', 'tomorrow', 'three'] as const;
 
 const isMessage = (channel: Channel) =>
   channel === 'whatsapp' || channel === 'telegram' || channel === 'sms';
@@ -98,7 +100,7 @@ export function LogDialog({
       updateContactDraft(draft.key, { [key]: value });
   const [checked, setChecked] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [picking, setPicking] = useState(false);
+  const [visiting, setVisiting] = useState(false);
   /** A live (or just ended) office call: the channel is the phone and the strip names the call. */
   const liveCall = draft.call;
 
@@ -123,7 +125,7 @@ export function LogDialog({
         : 'keep';
   const lost = talked && stage === 'lost';
   const asksFollowUp = !noAnswer && !lost && !(call && outcome === 'wrong_number');
-  const followAt = follow === 'other' ? fromLocalInput(date) : quickWhen(follow).toISOString();
+  const followAt = followAtOf(follow, date);
   const chosen = customer.templates.find((item) => String(item.id) === template);
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -267,35 +269,12 @@ export function LogDialog({
         />
       )}
       {asksFollowUp && (
-        <ChoiceGroup
+        <FollowUpWhen
           legend={t('customer.logDialog.followUp')}
-          hideLegend
-          value={follow}
-          onChange={change('follow')}
-          options={FOLLOWS.map((value) => ({
-            value,
-            label: t(`customer.logDialog.followOption.${value}`),
-          }))}
-          extra={
-            <button
-              type="button"
-              onClick={() => setPicking(true)}
-              aria-pressed={follow === 'other'}
-              className={`inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                follow === 'other' && followAt
-                  ? 'bg-hero text-on-hero'
-                  : 'text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint'
-              }`}
-            >
-              <Icon name="calendar" size={16} />
-              {follow === 'other' && followAt
-                ? t('customer.logDialog.followWhen', {
-                    day: f.weekdayName(followAt),
-                    time: f.time(followAt),
-                  })
-                : t('customer.logDialog.fromCalendar')}
-            </button>
-          }
+          name={customer.name}
+          follow={follow}
+          date={date}
+          onChange={(next) => updateContactDraft(draft.key, next)}
         />
       )}
       {asksFollowUp && checked && !followAt && (
@@ -303,24 +282,25 @@ export function LogDialog({
           {t('customer.logDialog.followDate')}
         </p>
       )}
-      <Dialog
-        open={picking}
-        onClose={() => setPicking(false)}
-        size="wide"
-        title={t('customer.logDialog.calendarTitle', { name: customer.name })}
-        subtitle={t('customer.logDialog.calendarHint')}
-        closeLabel={t('close')}
-      >
-        {picking && (
-          <FollowUpSlots
-            value={date}
-            onChange={(value) => {
-              updateContactDraft(draft.key, { follow: 'other', date: value });
-              setPicking(false);
-            }}
+      {talked && !lost && (
+        <button
+          type="button"
+          onClick={() => setVisiting(true)}
+          className="-mt-1 inline-flex min-h-11 items-center gap-2 self-start rounded-full px-1 text-sm font-semibold text-primary-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          <Icon name="building" size={16} />
+          {t('visit.fromCall')}
+        </button>
+      )}
+      {visiting && (
+        <Suspense fallback={null}>
+          <VisitDialog
+            open
+            customer={{ id: customer.id, name: customer.name }}
+            onClose={() => setVisiting(false)}
           />
-        )}
-      </Dialog>
+        </Suspense>
+      )}
     </>
   );
   const contactFields = (

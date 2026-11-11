@@ -70,7 +70,11 @@ export function NewContract({
       />
       <SelectField
         label={t('manager.builder.templates.start')}
-        hint={t(start === EMPTY ? 'manager.builder.templates.emptyHint' : 'manager.builder.templates.copyHint')}
+        hint={t(
+          start === EMPTY
+            ? 'manager.builder.templates.emptyHint'
+            : 'manager.builder.templates.copyHint',
+        )}
         value={start}
         onChange={setStart}
         options={[

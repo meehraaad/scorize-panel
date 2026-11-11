@@ -76,7 +76,14 @@ export function Requests({
                       </Link>
                     </span>
                   )}
-                  <span>{t('requests.due', { when: f.dateTime(request.due_at) })}</span>
+                  <span>
+                    {t('requests.due', {
+                      when:
+                        request.timed === false
+                          ? f.date(request.due_at)
+                          : f.dateTime(request.due_at),
+                    })}
+                  </span>
                   {request.comments > 0 && (
                     <span>{t('requests.comments', { n: f.number(request.comments) })}</span>
                   )}

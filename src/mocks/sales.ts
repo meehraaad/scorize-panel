@@ -942,6 +942,48 @@ const CALENDAR_TYPES = [
 /** In-person arrivals marked in this run (reservation → when). */
 const arrivals = new Map<number, string>();
 
+/** In-person meetings at the office (S75) booked in this run. Two rooms; tomorrow 10:00 both taken. */
+interface MockVisit {
+  id: number;
+  customer: number;
+  name: string;
+  phone: string;
+  starts_at: string;
+  minutes: number;
+  room: string | null;
+  note: string;
+  seller: string | null;
+  mine: boolean;
+  colleague: string | null;
+}
+let visits: MockVisit[] = [];
+const VISIT_ROOMS = ['A', 'B'];
+const OFFICE_OPEN = 9;
+const OFFICE_CLOSE = 18;
+
+function visitSlotsOf(from: string, to: string) {
+  const first = new Date(`${from}T00:00:00`);
+  const last = new Date(`${to}T00:00:00`);
+  const tomorrowTen = new Date(startOfToday() + DAY + 10 * 3_600_000).getTime();
+  const slots = [];
+  for (let day = first; day <= last; day = new Date(day.getTime() + DAY)) {
+    for (let hour = OFFICE_OPEN; hour < OFFICE_CLOSE; hour += 1) {
+      const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour);
+      if (at.getTime() <= Date.now()) continue;
+      const taken =
+        at.getTime() === tomorrowTen
+          ? VISIT_ROOMS.length
+          : visits.filter((visit) => new Date(visit.starts_at).getTime() === at.getTime()).length;
+      slots.push({
+        at: at.toISOString(),
+        left: Math.max(0, VISIT_ROOMS.length - taken),
+        capacity: VISIT_ROOMS.length,
+      });
+    }
+  }
+  return slots;
+}
+
 /** The seller's consultations and timed follow-ups between two days (`YYYY-MM-DD`, both included). */
 function calendarOf(data: SalesState, from: string, to: string) {
   const lastId = Math.max(...data.consultations.map((item) => item.id));
@@ -971,6 +1013,30 @@ function calendarOf(data: SalesState, from: string, to: string) {
         mine: storage.get() === NIMA,
         seller: storage.get() !== NIMA && item.id === lastId ? null : NIMA_NAME,
       })),
+    visits: visits.filter((visit) => inRange(visit.starts_at)),
+    // The seller's own tasks (S50 rows): tomorrow at 11 one with an hour, in two days one for the day only.
+    task_rows: [
+      {
+        id: 9101,
+        kind: 'mine',
+        text: 'تماس با بانک برای نامه‌ی تمکن',
+        due_at: new Date(startOfToday() + DAY + 11 * 3_600_000).toISOString(),
+        timed: true,
+        done: false,
+        customer: null,
+        name: '',
+      },
+      {
+        id: 9102,
+        kind: 'request',
+        text: 'آماده کردن فهرست قیمت',
+        due_at: new Date(startOfToday() + 2 * DAY + DAY - 60_000).toISOString(),
+        timed: false,
+        done: false,
+        customer: null,
+        name: '',
+      },
+    ].filter((row) => inRange(row.due_at)),
     calls: todayOf(data)
       .calls.filter((row) => inRange(row.follow_up_at))
       .map(({ lead, customer, name, phone, reason, follow_up_at }) => ({
@@ -997,6 +1063,79 @@ function calendarOf(data: SalesState, from: string, to: string) {
 }
 
 export const salesHandlers = [
+  http.get(`${BASE}/visits/slots/`, ({ request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const query = new URL(request.url).searchParams;
+    return HttpResponse.json({
+      minutes: 60,
+      rooms: VISIT_ROOMS.length,
+      slots: visitSlotsOf(query.get('from') ?? '', query.get('to') ?? ''),
+    });
+  }),
+  http.get(`${BASE}/customers/:id/visits/`, ({ params }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const upcoming = visits.find(
+      (visit) =>
+        visit.customer === Number(params.id) && new Date(visit.starts_at).getTime() > Date.now(),
+    );
+    return HttpResponse.json({ upcoming: upcoming ?? null, rooms: VISIT_ROOMS.length });
+  }),
+  http.post(`${BASE}/customers/:id/visits/`, async ({ params, request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const sent = (await request.json()) as {
+      starts_at: string;
+      note?: string;
+      colleague?: number | null;
+    };
+    const id = Number(params.id);
+    if (
+      visits.some(
+        (visit) => visit.customer === id && new Date(visit.starts_at).getTime() > Date.now(),
+      )
+    )
+      return HttpResponse.json(
+        { detail: 'This customer already has a meeting at the office.', code: 'booked' },
+        { status: 409 },
+      );
+    const day = new Date(sent.starts_at);
+    const key = `${String(day.getFullYear())}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    const slot = visitSlotsOf(key, key).find((row) => new Date(row.at).getTime() === day.getTime());
+    if (!slot)
+      return HttpResponse.json(
+        { starts_at: ['The office is not open for a meeting then.'] },
+        { status: 400 },
+      );
+    if (slot.left === 0)
+      return HttpResponse.json(
+        { detail: 'Every room is taken at this time.', code: 'full' },
+        { status: 409 },
+      );
+    const customer = data.customers.find((item) => item.id === id);
+    const visit: MockVisit = {
+      id: visits.length + 1,
+      customer: id,
+      name: customer?.name ?? '',
+      phone: customer?.phone ?? '',
+      starts_at: slot.at,
+      minutes: 60,
+      room: VISIT_ROOMS[VISIT_ROOMS.length - slot.left] ?? null,
+      note: sent.note ?? '',
+      seller: NIMA_NAME,
+      mine: storage.get() === NIMA,
+      colleague: sent.colleague ? 'همکار' : null,
+    };
+    visits = [...visits, visit];
+    return HttpResponse.json(visit, { status: 201 });
+  }),
+  http.delete(`${BASE}/visits/:id/`, ({ params }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    visits = visits.filter((visit) => visit.id !== Number(params.id));
+    return new HttpResponse(null, { status: 204 });
+  }),
   http.get(`${BASE}/consultations/calendar/`, ({ request }) => {
     const data = stateOrError();
     if (failed(data)) return data;
@@ -1098,9 +1237,13 @@ export const salesHandlers = [
     if (body.stage && !openStages.includes(body.stage)) {
       return HttpResponse.json({ stage: ['invalid_choice'] }, { status: 400 });
     }
-    for (const item of data.customers.filter(
+    const open = data.customers.filter(
       (entry) => body.ids.includes(entry.lead.id) && openStages.includes(entry.lead.stage),
-    )) {
+    );
+    if (body.follow_up_at && open.length === 0) {
+      return HttpResponse.json({ detail: 'no open lead', code: 'no_open_lead' }, { status: 409 });
+    }
+    for (const item of open) {
       if (body.stage) {
         item.lead.stage = body.stage;
         item.lead.stage_since = new Date().toISOString();
@@ -1191,6 +1334,7 @@ export const salesHandlers = [
 export function resetSalesMocks() {
   state = null;
   arrivals.clear();
+  visits = [];
   resetNotebookMocks();
   resetFaces();
 }

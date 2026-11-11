@@ -31,6 +31,8 @@ export interface TaskSummary {
   status: TaskStatus;
   text: string;
   due_at: string;
+  /** False: due some time that day (`due_at` is its 23:59), no hour set. Absent from an older Django. */
+  timed?: boolean;
   /** Who does it; null while it waits in a team queue. */
   owner: string | null;
   /** Who asked (a colleague, a manager, or the system for automatic follow-ups). */
@@ -58,8 +60,15 @@ export interface NewTask {
   assignees?: number[];
   /** `team`: the queue. */
   team?: TaskTeam;
-  due_at: string;
+  /** When it is due; or `due_on` alone. */
+  due_at?: string;
+  /** `YYYY-MM-DD`: a day with no hour, due by its end. */
+  due_on?: string;
 }
+
+/** When a new task is due: its time, or the 23:59 of its day (as Django reads a day-only task). */
+export const dueAtOf = (task: Pick<NewTask, 'due_at' | 'due_on'>): string =>
+  task.due_at ?? new Date(`${task.due_on ?? ''}T23:59:00`).toISOString();
 
 // ── Reactions (T14) ──────────────────────────────────────────────────────────────────────────
 
@@ -85,6 +94,8 @@ export interface MyTask {
   id: number;
   text: string;
   due_at: string;
+  /** False: due some time that day (`due_at` is its 23:59), no hour set. Absent from an older Django. */
+  timed?: boolean;
   /** Null for an internal task about nobody. */
   person: { id: number; name: string; context: string; face?: Face | null } | null;
   source: TaskSource;
@@ -115,6 +126,8 @@ export interface TaskRequest {
   text: string;
   person: { id: number; name: string; face?: Face | null } | null;
   due_at: string;
+  /** False: due some time that day (`due_at` is its 23:59), no hour set. Absent from an older Django. */
+  timed?: boolean;
   status: TaskStatus;
   comments: number;
   reactions: Reaction[];

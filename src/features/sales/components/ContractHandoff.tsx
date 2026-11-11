@@ -89,7 +89,9 @@ function HandoffCard({ customer, contract }: { customer: number; contract: Hando
       {contract.prepayment && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-canvas px-4 py-3">
           <span className="text-sm">
-            {t('handoff.prepayment', { amount: s.exact(contract.prepayment.amount, contract.prepayment.currency ?? 'IRT') })}
+            {t('handoff.prepayment', {
+              amount: s.exact(contract.prepayment.amount, contract.prepayment.currency ?? 'IRT'),
+            })}
           </span>
           <Chip tone={PAYMENT_TONE[contract.prepayment.status]} small>
             {t(`handoff.payment.${contract.prepayment.status}`)}

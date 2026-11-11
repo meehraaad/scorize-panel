@@ -85,7 +85,11 @@ describe('the face beside the name in lists (S66)', () => {
     expect(await toasts().findByText('ایموجی و رنگ مشتری ذخیره شد')).toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: 'لیدهای من' }));
-    const row = (await screen.findAllByRole('link', { name: /عرفان ملکی/ }))[0];
-    expect(row).toHaveTextContent('🦉');
+    await waitFor(() => {
+      const row = screen
+        .queryAllByRole('link', { name: /عرفان ملکی/ })
+        .find((link) => link.getAttribute('href') === `/sales/customers/${String(ERFAN)}`);
+      expect(row).toHaveTextContent('🦉');
+    });
   });
 });

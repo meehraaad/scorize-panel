@@ -30,6 +30,7 @@ import {
   type Status,
 } from '../consultationStatus';
 import { EventDetails, StartAction } from './EventDetails';
+import { TASK_COLOR, TASK_MINUTES } from './useSellerBusy';
 import { useSalesFormat } from '../format';
 import { FollowUpDialog } from './FollowUpDialog';
 import { TaskBrief } from './TaskBrief';
@@ -37,6 +38,8 @@ import { TaskBrief } from './TaskBrief';
 const MINUTE = 60_000;
 /** A task added on a day without a time is due at this hour (or the next full hour, today). */
 const TASK_HOUR = 10;
+/** In-person meetings at the office (S75): their own colour on the calendar. */
+const VISIT_COLOR = 'var(--cal-7)';
 
 // Only when a day of the tasks row is clicked.
 const NewTaskDialog = lazy(() =>
@@ -125,7 +128,17 @@ export function ConsultationCalendar() {
       !hidden.has(String(item.type)) &&
       (!onlyUnlogged || statusOf(item, nowTime) === 'need'),
   );
-  const calls = hidden.has('calls') || onlyUnlogged ? [] : (data?.calls ?? []);
+  // A follow-up for a day with no hour is on the day row (its count), not drawn at 23:59.
+  const calls =
+    hidden.has('calls') || onlyUnlogged
+      ? []
+      : (data?.calls ?? []).filter((item) => item.timed !== false);
+  // The seller's own tasks with an hour, at that hour; those without one stay on the day row.
+  const taskRows =
+    hidden.has('tasks') || onlyUnlogged ? [] : (data?.task_rows ?? []).filter((item) => item.timed);
+  // In-person meetings at the office (S75): held in person, so "online only" hides them.
+  const visits =
+    hidden.has('visits') || onlyUnlogged || mode === 'online' ? [] : (data?.visits ?? []);
 
   const sellerOf = (item: CalendarConsultation) =>
     item.seller ?? t('consultationCalendar.noSeller');
@@ -190,6 +203,44 @@ export function ConsultationCalendar() {
           </span>
         ),
         movable: true,
+      };
+    }),
+    ...taskRows.map((item) => {
+      const start = new Date(item.due_at);
+      const meta = [f.time(start), item.name].filter(Boolean).join(' · ');
+      return {
+        id: `t${String(item.id)}`,
+        start,
+        minutes: TASK_MINUTES,
+        color: TASK_COLOR,
+        look: item.done ? ('done' as const) : ('call' as const),
+        title: item.text,
+        meta,
+        aria: [item.text, meta, t('consultationCalendar.taskBlock')].join('، '),
+        lead: <Icon name="check" size={12} />,
+      };
+    }),
+    ...visits.map((item) => {
+      const start = new Date(item.starts_at);
+      const look: EventLook =
+        start.getTime() + item.minutes * MINUTE < nowTime ? 'done' : 'upcoming';
+      const meta = [
+        f.time(start),
+        item.room ? t('visit.room', { room: item.room }) : '',
+        item.mine ? '' : (item.seller ?? ''),
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      return {
+        id: `v${String(item.id)}`,
+        start,
+        minutes: item.minutes,
+        color: VISIT_COLOR,
+        look,
+        title: item.name,
+        meta,
+        aria: `${item.name}، ${meta}، ${t('visit.onCalendar')}`,
+        lead: <Icon name="building" size={12} />,
       };
     }),
   ];
@@ -290,7 +341,11 @@ export function ConsultationCalendar() {
               counts={(id) =>
                 id === 'calls'
                   ? (data?.calls.length ?? 0)
-                  : all.filter((item) => String(item.type) === id).length
+                  : id === 'visits'
+                    ? (data?.visits?.length ?? 0)
+                    : id === 'tasks'
+                      ? (data?.task_rows?.filter((item) => item.timed).length ?? 0)
+                      : all.filter((item) => String(item.type) === id).length
               }
               hidden={hidden}
               onToggle={(id) => {
@@ -425,6 +480,8 @@ function Layers({
       color: eventColor(type.color),
     })),
     { id: 'calls', label: t('consultationCalendar.calls'), color: 'var(--text-2)' },
+    { id: 'visits', label: t('visit.onCalendar'), color: VISIT_COLOR },
+    { id: 'tasks', label: t('consultationCalendar.taskLayer'), color: TASK_COLOR },
   ];
   return (
     <fieldset className="m-0 border-0 p-0">

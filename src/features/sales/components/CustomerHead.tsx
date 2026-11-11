@@ -20,6 +20,11 @@ const EnterStageDialog = lazy(() =>
   import('./EnterStageDialog').then((module) => ({ default: module.EnterStageDialog })),
 );
 
+// Opens on a click: the meeting window (its week of rooms) is not part of the page's first load.
+const VisitDialog = lazy(() =>
+  import('./VisitDialog').then((module) => ({ default: module.VisitDialog })),
+);
+
 // Opens on a click: the date picker it uses is not part of the page's first load.
 const FollowUpDialog = lazy(() =>
   import('./FollowUpDialog').then((module) => ({ default: module.FollowUpDialog })),
@@ -93,11 +98,12 @@ export function CustomerHead({
             <button
               type="button"
               onClick={() => onLog('call')}
-              className={buttonClass('premium', 'h-13 max-sm:col-span-3', 'lg')}
+              className={buttonClass('premium', 'h-13 max-sm:col-span-2', 'lg')}
             >
               <Icon name="phone" size={19} />
               {t('customer.log')}
             </button>
+            <VisitButton customer={customer} onLog={() => onLog('call')} />
             <WhatsAppButton customer={customer} />
             <NewSaleMenu onSell={onSell} onContract={onContract} />
             {side && (
@@ -247,6 +253,56 @@ function Menu({
   );
 }
 
+/** The follow-up is a task of mine (StaffToDo): its text is what to do. */
+function followUpTask(customer: CustomerData) {
+  return customer.lead?.follow_up_at
+    ? customer.tasks
+        .filter((item) => item.kind === 'mine' && item.status !== 'done')
+        .sort((a, b) => a.due_at.localeCompare(b.due_at))[0]
+    : undefined;
+}
+
+/** "In-person": set a meeting at the office in a free room (S75). */
+function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () => void }) {
+  const { t } = useTranslation('sales');
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={t('visit.openAria', { name: customer.name })}
+        className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
+      >
+        <Icon name="building" size={17} />
+        <span className="max-sm:sr-only">{t('visit.open')}</span>
+      </button>
+      {open && (
+        <Suspense fallback={null}>
+          <VisitDialog
+            open
+            customer={customer}
+            onClose={() => setOpen(false)}
+            followUp={
+              customer.lead?.follow_up_at
+                ? {
+                    at: customer.lead.follow_up_at,
+                    text: followUpTask(customer)?.text,
+                    timed: followUpTask(customer)?.timed,
+                  }
+                : null
+            }
+            onLog={() => {
+              setOpen(false);
+              onLog();
+            }}
+          />
+        </Suspense>
+      )}
+    </>
+  );
+}
+
 /**
  * "Message": opens WhatsApp with the customer's chat and the first ready message (S7) typed in,
  * in one click. Telegram, SMS and logging a message stay in the contact log ("Log a contact").
@@ -283,12 +339,7 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
         ? due.text
         : t('customer.noFollowUp');
   const first = lead.stage === 'new' && !lead.follow_up_at;
-  // The follow-up is a task of mine (StaffToDo): its text is what to do.
-  const task = lead.follow_up_at
-    ? customer.tasks
-        .filter((item) => item.kind === 'mine' && item.status !== 'done')
-        .sort((a, b) => a.due_at.localeCompare(b.due_at))[0]
-    : undefined;
+  const task = followUpTask(customer);
   const label = t(first ? 'next.first' : lost ? 'next.lost' : 'next.label');
 
   return (
@@ -334,6 +385,12 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
             onClose={() => setMoving(false)}
             at={lead.follow_up_at ? new Date(lead.follow_up_at) : null}
             lead={{ id: lead.id, name: customer.name }}
+            current={task?.text}
+            timed={task?.timed}
+            onLog={() => {
+              setMoving(false);
+              onCall();
+            }}
           />
         </Suspense>
       )}
