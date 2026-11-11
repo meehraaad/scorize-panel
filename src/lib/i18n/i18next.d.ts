@@ -1,4 +1,5 @@
 import 'i18next';
+import type assessments from '@/locales/fa/assessments.json';
 import type voice from '@/locales/fa/voice.json';
 import type account from '@/locales/fa/account.json';
 import type activities from '@/locales/fa/activities.json';
@@ -32,6 +33,7 @@ declare module 'i18next' {
     defaultNS: 'common';
     resources: {
       common: typeof common;
+      assessments: typeof assessments;
       voice: typeof voice;
       notes: typeof notes;
       auth: typeof auth;

@@ -5,6 +5,7 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router';
+import { draftsQuery, optionsQuery } from '@/features/assessments/api';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
@@ -173,6 +174,22 @@ const pageRoutes: RouteObject[] = [
   // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
   ...(import.meta.env.DEV
     ? [
+        {
+          path: 'dev/assessments',
+          loader: async ({ request }: LoaderFunctionArgs) =>
+            (await currentUser()) ? null : toLogin(request),
+          ErrorBoundary: ErrorPage,
+          HydrateFallback: BootFallback,
+          children: [
+            {
+              index: true,
+              ...lazyPage(() => import('@/features/assessments/ManagementPage'), ['assessments'], {
+                data: () => [draftsQuery(), optionsQuery],
+                skeleton: 'form',
+              }),
+            },
+          ],
+        },
         {
           path: 'dev/components',
           ...lazyPage(() => import('./dev/ComponentsPage')),
