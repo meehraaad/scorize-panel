@@ -171,8 +171,15 @@ const PAGES: PageCase[] = [
   })),
   // Founders panel.
   ...['/founders', '/founders/conversations/900'].map((path) => ({ path, user: BAHAR })),
-  // Messages section.
-  ...['/messages', '/messages/ready', '/messages/access'].map((path) => ({ path, user: AMIR })),
+  // Management > messages and access.
+  ...[
+    '/sales/manager/messages',
+    '/sales/manager/messages/ready',
+    '/sales/manager/access',
+    '/sales/manager/access/groups',
+    '/sales/manager/access/keys',
+    '/sales/manager/access/history',
+  ].map((path) => ({ path, user: AMIR })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },

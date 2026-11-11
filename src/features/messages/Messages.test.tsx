@@ -6,8 +6,9 @@ import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 import { toasts } from '@/test/toasts';
 
-const AMIR = 6; // superuser: both keys and the access page (src/mocks/messages.ts)
+const AMIR = 6; // superuser: both keys (src/mocks/messages.ts)
 const NIMA = 3; // seller: no key
+const REZA = 4; // sales manager: no messages key
 
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
@@ -22,7 +23,7 @@ describe('messages section', () => {
   it('lists the automatic messages by area and edits one with the variable buttons', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/messages');
+    renderApp('/sales/manager/messages');
     expect(
       await screen.findByRole('heading', { name: 'پیام‌های خودکار', level: 1 }),
     ).toBeInTheDocument();
@@ -67,7 +68,7 @@ describe('messages section', () => {
   it('shows an SMS-only message as Kavenegar text, not as an editable box', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/messages');
+    renderApp('/sales/manager/messages');
     await user.click(
       await screen.findByRole('button', { name: 'باز کردن پیام یادآوری نهایی مشاوره حضوری' }),
     );
@@ -84,7 +85,7 @@ describe('messages section', () => {
   it('adds a ready ticket reply', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/messages/ready');
+    renderApp('/sales/manager/messages/ready');
     expect(
       await screen.findByRole('heading', { name: 'پیام‌های آماده', level: 1 }),
     ).toBeInTheDocument();
@@ -103,31 +104,36 @@ describe('messages section', () => {
     ).toBeInTheDocument();
   });
 
-  it('gives a key from the access page', async () => {
-    const user = userEvent.setup();
-    loginAs(AMIR);
-    renderApp('/messages/access');
-    expect(await screen.findByRole('heading', { name: 'دسترسی‌ها', level: 1 })).toBeInTheDocument();
-    await user.type(screen.getByLabelText('جست‌وجوی کارمند'), 'رضا');
-    const give = screen.getByRole('region', { name: 'دادن کلید به یک نفر' });
-    const toggle = await within(give).findByRole('switch', { name: /پیام‌های آماده/ });
-    await user.click(toggle);
-    expect(
-      await toasts().findByText('کلید «پیام‌های آماده» به رضا کامرانی داده شد.'),
-    ).toBeInTheDocument();
-    await waitFor(() => {
-      expect(
-        within(screen.getByRole('region', { name: 'کسانی که کلید دارند' })).getByText(
-          'رضا کامرانی',
-        ),
-      ).toBeInTheDocument();
-    });
-  });
-
   it('keeps people without a key out', async () => {
     loginAs(NIMA);
-    const router = renderApp('/messages');
+    const router = renderApp('/sales/manager/messages');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
+  });
+
+  it('lives in the management area, and its first address still works', async () => {
+    loginAs(AMIR);
+    const router = renderApp('/messages/ready');
+    expect(
+      await screen.findByRole('heading', { name: 'پیام‌های آماده', level: 1 }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/sales/manager/messages/ready');
+    const tabs = screen.getByRole('navigation', { name: 'بخش‌های مدیریت' });
+    expect(within(tabs).getByRole('link', { name: 'پیام‌ها' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(within(tabs).getByRole('link', { name: 'دسترسی‌ها' })).toBeInTheDocument();
+  });
+
+  it('shows a sales manager without its keys no messages tab', async () => {
+    loginAs(REZA);
+    const router = renderApp('/sales/manager/messages');
+    const tabs = await screen.findByRole('navigation', { name: 'بخش‌های مدیریت' });
+    expect(within(tabs).queryByRole('link', { name: 'پیام‌ها' })).toBeNull();
+    expect(within(tabs).queryByRole('link', { name: 'دسترسی‌ها' })).toBeNull();
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/sales/manager');
+    });
   });
 });

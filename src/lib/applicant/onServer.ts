@@ -24,6 +24,7 @@ export type ServerFeature =
   | 'customerTags'
   | 'mailServers'
   | 'messageCenter'
+  | 'accessPage'
   | 'livePhoneCalls'
   | 'mobileExtensions'
   | 'leadSearch'
@@ -144,9 +145,16 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   mailServers: true,
   /**
    * `api/messages/v1/`: the messages section (automatic messages, ready messages for sellers and
-   * tickets, its two keys) and the ticket composer's ready replies (scorize-revolution `user_profile`
+   * tickets) and the ticket composer's ready replies (scorize-revolution `user_profile`
    * NotificationText / MessageChange, needs `makemigrations user_profile` + `migrate`). Off: no
-   * messages panel and no ready replies in tickets. Deploy the panel with it only after the backend.
+   * messages tab in management and no ready replies in tickets. Deploy the panel with it only after
+   * the backend.
    */
   messageCenter: true,
+  /**
+   * `api/access/v1/`: management > access (superusers): every key, groups of keys, who holds what
+   * (`user_profile.AccessChange`, needs `makemigrations user_profile` + `migrate`). Off: no access
+   * tab; keys are given in Django admin.
+   */
+  accessPage: true,
 };

@@ -89,21 +89,6 @@
         "month": "Performance"
       },
       "description": "Leads, consultations, offers and contracts"
-    },
-    "messages": {
-      "name": "Messages",
-      "nav": {
-        "label": "Messages menu",
-        "system": "Automatic messages",
-        "ready": "Ready messages",
-        "access": "Access"
-      },
-      "tabs": {
-        "system": "Automatic",
-        "ready": "Ready",
-        "access": "Access"
-      },
-      "description": "The site's SMS and notifications, ready messages"
     }
   },
   "tabs": {

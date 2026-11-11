@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { tabClass } from '@/components/ui/buttonStyles';
+import { tabClass } from './buttonStyles';
 
 export interface Section {
   id: string;

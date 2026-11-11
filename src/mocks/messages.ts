@@ -1,7 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import type {
   Change,
-  Holder,
   ReadyMessage,
   SystemMessage,
   SystemMessageDetail,
@@ -11,8 +10,8 @@ import { forbidden, notFound, storage } from './session';
 
 /**
  * Fake messages section (scorize-revolution `api/messages/v1/`): a few automatic messages (one of
- * them outside the shared list), ready messages for sellers and tickets, and the section's keys.
- * Amir (6) is a superuser: both keys and the access page. Staff (2, 3, 4) read the ticket replies.
+ * them outside the shared list), ready messages for sellers and tickets.
+ * Amir (6) is a superuser: both keys. Staff (2, 3, 4) read the ticket replies.
  */
 
 const API = '/api/messages/v1';
@@ -133,32 +132,14 @@ const ready = (): ReadyMessage[] => [
   },
 ];
 
-const people = (): Holder[] => [
-  {
-    ...AMIR,
-    is_superuser: true,
-    keys: { system: true, ready: true },
-    fixed: { system: true, ready: true },
-  },
-  {
-    id: 4,
-    name: 'رضا کامرانی',
-    is_superuser: false,
-    keys: { system: false, ready: false },
-    fixed: { system: false, ready: false },
-  },
-];
-
 let messages = system();
 let readies = ready();
-let staff = people();
 const readyHistory = new Map<number, Change[]>();
 let nextId = 100;
 
 export function resetMessagesMocks() {
   messages = system();
   readies = ready();
-  staff = people();
   readyHistory.clear();
   nextId = 100;
 }
@@ -167,7 +148,6 @@ const allowed = () => storage.get() === SUPERUSER;
 const plain = ({ history: _history, ...message }: MockSystem): SystemMessage => message;
 const invalid = (field: string, text: string) =>
   HttpResponse.json({ [field]: [text] }, { status: 400 });
-const holds = (holder: Holder) => holder.keys.system || holder.keys.ready;
 
 function change(title: string, text: string, is_active: boolean): Change {
   return { id: nextId++, title, text, is_active, by: AMIR, at: now() };
@@ -263,24 +243,5 @@ export const messagesHandlers = [
         .filter((row) => row.kind === 'ticket' && row.is_active)
         .map(({ id, title, text }) => ({ id, title, text })),
     );
-  }),
-
-  http.get(`${API}/access/`, () =>
-    allowed() ? HttpResponse.json(staff.filter(holds)) : forbidden(),
-  ),
-
-  http.get(`${API}/access/people/`, ({ request }) => {
-    if (!allowed()) return forbidden();
-    const search = new URL(request.url).searchParams.get('search') ?? '';
-    return HttpResponse.json(staff.filter((person) => person.name.includes(search)));
-  }),
-
-  http.put(`${API}/access/:id/`, async ({ params, request }) => {
-    if (!allowed()) return forbidden();
-    const person = staff.find((item) => item.id === Number(params.id));
-    if (!person) return notFound();
-    const body = (await request.json()) as Partial<Holder['keys']>;
-    person.keys = { ...person.keys, ...body };
-    return HttpResponse.json(person);
   }),
 ];

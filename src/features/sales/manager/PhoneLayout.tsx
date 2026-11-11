@@ -3,7 +3,7 @@ import { Outlet } from 'react-router';
 import { PageStack } from '@/components/ui/PageColumns';
 import { salesPath } from '../paths';
 import { PHONE_SECTIONS } from './phoneSections';
-import { SectionNav } from './SectionNav';
+import { SectionNav } from '@/components/ui/SectionNav';
 
 /** The office line's settings: hours, teams, menu keys and greetings, each a sub-tab. */
 export default function PhoneLayout() {

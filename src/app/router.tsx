@@ -169,6 +169,10 @@ const pageRoutes: RouteObject[] = [
       },
     ],
   },
+  // The messages section's first addresses (its own panel): now tabs of the management area.
+  { path: 'messages', loader: () => redirect('/sales/manager/messages') },
+  { path: 'messages/ready', loader: () => redirect('/sales/manager/messages/ready') },
+  { path: 'messages/access', loader: () => redirect('/sales/manager/access') },
   ...PANELS.map(panelRoutes),
   // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
   ...(import.meta.env.DEV

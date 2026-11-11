@@ -2,16 +2,20 @@ import { queryOptions, useMutation, useQueryClient, type QueryKey } from '@tanst
 import { api } from '@/lib/api/client';
 
 /**
- * The messages section: every message the site sends on its own (when, to whom, through what, its
- * text), the ready messages sellers and ticket answerers pick from, and who holds the section's
- * keys. Django: scorize-revolution `api/messages/v1/` (user_profile/message_catalog.py).
+ * Management > messages: every message the site sends on its own (when, to whom, through what, its
+ * text), and the ready messages sellers and ticket answerers pick from. Django: `api/messages/v1/`
+ * (user_profile/message_catalog.py).
  *
  * Two keys: `manage_system_messages` (the automatic messages) and `manage_ready_messages` (the
- * ready ones). Superusers hold both and give them out on the access page.
+ * ready ones), given on management > access.
  */
-export const SYSTEM_PERMISSION = 'manage_system_messages';
-export const READY_PERMISSION = 'manage_ready_messages';
+export {
+  SYSTEM_MESSAGES_PERMISSION as SYSTEM_PERMISSION,
+  READY_MESSAGES_PERMISSION as READY_PERMISSION,
+} from '@/lib/auth/roles';
 const MESSAGES_API = '/messages/v1';
+/** Where the pages live: the sales panel's management area. */
+export const MESSAGES_PATH = '/sales/manager/messages';
 export const MESSAGES_KEY = ['messages'] as const;
 
 export const AUDIENCES = [
@@ -188,36 +192,3 @@ export const useSaveReadyMessage = (id: number) =>
 
 export const useDeleteReadyMessage = (id: number) =>
   useMessagesMutation(() => api(`${MESSAGES_API}/ready/${String(id)}/`, { method: 'DELETE' }));
-
-// Access
-
-export const ACCESS_KEYS = ['system', 'ready'] as const;
-export type AccessKey = (typeof ACCESS_KEYS)[number];
-
-export interface Holder extends Person {
-  is_superuser: boolean;
-  keys: Record<AccessKey, boolean>;
-  /** Held through a group (or as a superuser): can't be taken back here. */
-  fixed: Record<AccessKey, boolean>;
-}
-
-export const accessQuery = queryOptions({
-  queryKey: [...MESSAGES_KEY, 'access'],
-  queryFn: ({ signal }) => api<Holder[]>(`${MESSAGES_API}/access/`, { signal }),
-});
-
-export const peopleQuery = (search: string) =>
-  queryOptions({
-    queryKey: [...MESSAGES_KEY, 'people', search],
-    queryFn: ({ signal }) =>
-      api<Holder[]>(
-        `${MESSAGES_API}/access/people/?${new URLSearchParams({ search }).toString()}`,
-        { signal },
-      ),
-    enabled: search.length >= 2,
-  });
-
-export const useSetAccess = () =>
-  useMessagesMutation(({ id, ...keys }: { id: number } & Partial<Record<AccessKey, boolean>>) =>
-    api<Holder>(`${MESSAGES_API}/access/${String(id)}/`, { method: 'PUT', body: keys }),
-  );

@@ -18,10 +18,10 @@ export interface NavItem {
   tab?: ParseKeys;
   icon: IconName;
   /**
-   * Shown only to users with this Django permission (superusers have all), e.g. the sales
-   * manager's section. The section's routes check it too.
+   * Shown only to users with this Django permission, or one of these (superusers have all), e.g.
+   * the management area. The section's routes check it too.
    */
-  permission?: string;
+  permission?: string | readonly string[];
 }
 
 /** Colour of a panel's icon tile in the switcher and the chooser. */

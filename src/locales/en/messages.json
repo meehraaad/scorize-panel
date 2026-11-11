@@ -122,22 +122,9 @@
       "seller": "Nima Rostami"
     }
   },
-  "access": {
-    "title": "Access",
-    "subtitle": "Give this section's two keys to whoever needs them, or take them back.",
-    "holders": "People with a key",
-    "give": "Give someone a key",
-    "search": "Search staff",
-    "searchPlaceholder": "Name, email or number",
-    "typeName": "Type at least two letters of a name.",
-    "nobody": "No staff member with this name.",
-    "key": {
-      "system": "Automatic messages",
-      "ready": "Ready messages"
-    },
-    "given": "{{name}} now has the “{{key}}” key.",
-    "taken": "The “{{key}}” key was taken back from {{name}}.",
-    "superuser": "Superuser",
-    "fixed": "Through a group or as a superuser; can't be changed here."
+  "nav": "Messages sections",
+  "section": {
+    "system": "Automatic messages",
+    "ready": "Ready messages"
   }
 }

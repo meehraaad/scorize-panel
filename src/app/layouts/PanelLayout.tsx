@@ -7,7 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { PageSkeleton } from '@/components/ui/Skeleton';
 import { unreadQuery } from '@/lib/account/api';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { hasPermission } from '@/lib/auth/roles';
+import { hasAnyPermission } from '@/lib/auth/roles';
 import { loginHref, useSession } from '@/lib/auth/session';
 import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { useIdlePreload, useIntentPreload } from '@/lib/router/preload';
@@ -61,7 +61,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const visible = {
     ...panel,
     navigation: panel.navigation.filter(
-      (item) => !hidden.has(item.id) && (!item.permission || hasPermission(user, item.permission)),
+      (item) => !hidden.has(item.id) && (!item.permission || hasAnyPermission(user, item.permission)),
     ),
   };
   const panels = panelsFor(user);
