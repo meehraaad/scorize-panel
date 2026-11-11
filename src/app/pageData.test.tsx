@@ -134,6 +134,8 @@ const PAGES: PageCase[] = [
     // An offer's contract before approval, to print (S68): lead 11's draft (src/mocks/sales.ts).
     '/sales/manager/approvals/11/contract',
     '/sales/manager/team',
+    // A seller's month from the leaderboard (S75): Mahdi (src/mocks/salesManager.ts).
+    '/sales/manager/team/31',
     '/sales/manager/commission',
     '/sales/manager/follow-ups',
     '/sales/manager/stages',

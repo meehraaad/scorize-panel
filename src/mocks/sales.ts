@@ -880,7 +880,7 @@ function contractsOf(data: SalesState): Pick<MonthData, 'contracts' | 'instalmen
   };
 }
 
-function monthOf(data: SalesState, month?: string): MonthData {
+export function monthOf(data: SalesState, month?: string): MonthData {
   const won = data.customers.filter((item) => item.lead.stage === 'won').length + 6;
   const months = monthsBack();
   const current = !month || month.slice(0, 7) === months[0]?.slice(0, 7);

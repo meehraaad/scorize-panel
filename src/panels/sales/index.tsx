@@ -32,6 +32,7 @@ import {
   receiptsQuery,
   sellerDayQuery,
   teamQuery,
+  teamSellerQuery,
   funnelQuery,
 } from '@/features/sales/api';
 import HeaderCustomerSearch from '@/features/sales/components/HeaderCustomerSearch';
@@ -342,6 +343,18 @@ export const salesPanel: PanelDefinition = {
           path: 'team',
           ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
             data: () => [teamQuery('month'), ON_SERVER.estimate && funnelQuery('month')],
+            skeleton: 'dashboard',
+          }),
+        },
+        {
+          // One seller's month, from the team page's leaderboard (S75).
+          path: 'team/:seller',
+          ...lazyPage(() => import('@/features/sales/manager/SellerMonthPage'), [], {
+            data: ({ params, request }) => {
+              const seller = idParam(params.seller);
+              const month = new URL(request.url).searchParams.get('month');
+              return [teamQuery('month'), seller !== null && teamSellerQuery(seller, month)];
+            },
             skeleton: 'dashboard',
           }),
         },

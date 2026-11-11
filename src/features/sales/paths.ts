@@ -6,6 +6,10 @@ export const SALES_ROOT = '/sales';
 
 export const salesPath = (to = '') => (to ? `${SALES_ROOT}/${to}` : SALES_ROOT);
 
+/** A seller's month for the manager (the team page's leaderboard): `?month=` for a past one. */
+export const sellerMonthPath = (seller: number, month?: string | null) =>
+  salesPath(`manager/team/${String(seller)}${month ? `?month=${month}` : ''}`);
+
 /** What the customer page opens with: the call log, a message, or a consultation session to log. */
 export type LogIntent = 'call' | 'message' | 'meeting';
 

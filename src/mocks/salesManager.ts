@@ -27,7 +27,7 @@ import type {
 } from '@/features/sales/api';
 import type { ClauseKind } from '@/lib/contractText';
 import { forbidden, notFound, pageOf, storage } from './session';
-import { failed, saveStages, stagesOf, stateOrError, type SalesState } from './sales';
+import { failed, monthOf, saveStages, stagesOf, stateOrError, type SalesState } from './sales';
 import { openHandoff } from './handoff';
 import { finalText, valuesOf } from './contractText';
 import {
@@ -1464,6 +1464,23 @@ export const managerHandlers = [
     if (!commissionRules.some((rule) => rule.id === Number(params.id))) return notFound();
     commissionRules = commissionRules.filter((rule) => rule.id !== Number(params.id));
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // S75: one seller's month as their own month page shows it, without the password.
+  http.get(`${BASE}/team/seller/`, ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const params = new URL(request.url).searchParams;
+    const seller = Number(params.get('seller'));
+    if (!teamOf('month').sellers.some((row) => row.id === seller))
+      return HttpResponse.json({ seller: ['Choose an active seller.'] }, { status: 400 });
+    const month = monthOf(data.sales, params.get('month') ?? undefined);
+    // The other sellers' months: the same shape, fewer wins.
+    return HttpResponse.json(
+      seller === teamOf('month').sellers[0]?.id
+        ? { ...month, contracts: month.contracts.filter((row) => !movedLeads.has(row.lead)) }
+        : { ...month, won: 1, contracts: [] },
+    );
   }),
 
   // S59: a seller's contracts in the range, and moving one (with a reason) to another seller.
