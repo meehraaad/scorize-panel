@@ -22,6 +22,7 @@ import type turkey from '@/locales/fa/turkey.json';
 import type writer from '@/locales/fa/writer.json';
 import type assistant from '@/locales/fa/assistant.json';
 import type mail from '@/locales/fa/mail.json';
+import type messages from '@/locales/fa/messages.json';
 import type notes from '@/locales/fa/notes.json';
 import type writing from '@/locales/fa/writing.json';
 
@@ -56,6 +57,7 @@ declare module 'i18next' {
       writer: typeof writer;
       assistant: typeof assistant;
       mail: typeof mail;
+      messages: typeof messages;
     };
   }
 }

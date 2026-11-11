@@ -7,6 +7,7 @@ import { applicantHandlers, resetApplicantMocks } from './applicant';
 import { assistantHandlers, resetAssistantMocks } from './assistant';
 import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { mailHandlers, resetMailMocks } from './mail';
+import { messagesHandlers, resetMessagesMocks } from './messages';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { agreementHandlers, resetAgreementMocks } from './agreement';
 import { salesCustomerHandlers } from './salesCustomer';
@@ -37,6 +38,8 @@ import { resetStaffMocks, staffHandlers } from './staff';
  *   09120000003 / reza.kamrani@scorize.local   staff: sales manager (sales panel + manager section)
  *   09120000004 / bahar.nouri@scorize.local    founder (group Founders): the founders panel's
  *                                               assistant (src/mocks/assistant.ts)
+ *   09120000005 / amir.abedi@scorize.local     superuser: every panel; the messages section's
+ *                                               keys and access page (src/mocks/messages.ts)
  */
 
 export const MOCK_OTP = '123456';
@@ -145,6 +148,22 @@ const users: MockUser[] = [
     group_permissions: [
       { name: 'Founders', permissions: [{ codename: 'use_founders_assistant' }] },
     ],
+  },
+  {
+    // A superuser: every panel, and the messages section with its access page.
+    id: 6,
+    first_name: 'امیر',
+    last_name: 'عابدی',
+    email: 'amir.abedi@scorize.local',
+    phone_number: '09120000005',
+    password: MOCK_PASSWORD,
+    staff: { id: 10, full_name: 'امیر عابدی', team: 3, is_active: true },
+    applicant: null,
+    is_country_supervisor: false,
+    ...workspace(),
+    is_superuser: true,
+    permissions: [],
+    group_permissions: [],
   },
 ];
 
@@ -345,6 +364,7 @@ export const handlers = [
   ...writerHandlers,
   ...assistantHandlers,
   ...mailHandlers,
+  ...messagesHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -369,6 +389,7 @@ export function resetMockSession() {
   resetStaffMocks();
   resetAssistantMocks();
   resetMailMocks();
+  resetMessagesMocks();
 }
 
 type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;

@@ -38,6 +38,7 @@ const MARYAM = 2; // supervisor and writer (src/mocks/supervisor.ts, writer.ts)
 const NIMA = 3; // seller
 const REZA = 4; // sales manager
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
+const AMIR = 6; // a superuser: the messages section (src/mocks/messages.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -170,6 +171,8 @@ const PAGES: PageCase[] = [
   })),
   // Founders panel.
   ...['/founders', '/founders/conversations/900'].map((path) => ({ path, user: BAHAR })),
+  // Messages section.
+  ...['/messages', '/messages/ready', '/messages/access'].map((path) => ({ path, user: AMIR })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },

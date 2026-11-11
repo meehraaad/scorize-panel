@@ -41,10 +41,11 @@ const TRAY_MS = 60_000;
 const ICON_BUTTON =
   'inline-flex size-11 flex-none items-center justify-center rounded-full text-text-2 hover:bg-canvas';
 
-const staffConfig = (id: number): TicketsConfig => ({
+const staffConfig = (id: number, customer?: string): TicketsConfig => ({
   ...caseTickets(id),
   path: casePath(id),
   viewer: 'staff',
+  customer,
 });
 
 const unreadOf = (threads: readonly TicketThread[] | undefined) =>
@@ -119,7 +120,7 @@ function TrayChip({ chat }: { chat: CaseChat }) {
 function ChatWindow({ chat }: { chat: CaseChat }) {
   const { t } = useTranslation('supervisor');
   const { t: tt } = useTranslation('tickets');
-  const config = useMemo(() => staffConfig(chat.case), [chat.case]);
+  const config = useMemo(() => staffConfig(chat.case, chat.name), [chat.case, chat.name]);
   const overview = useQuery({ ...ticketsQuery(config), refetchInterval: LIVE_MS });
   const threads = overview.data?.threads ?? [];
   // An old address may name a department ('writing') instead of a thread.

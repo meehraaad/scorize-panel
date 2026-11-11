@@ -21,6 +21,7 @@ export default function OrderTicketsPage() {
     ...orderTickets(id),
     path: orderPath(id, 'tickets'),
     viewer: 'staff',
+    customer: data.applicant.name,
   };
   return (
     <PageStack>

@@ -23,6 +23,7 @@ export type ServerFeature =
   | 'assistantOrganize'
   | 'customerTags'
   | 'mailServers'
+  | 'messageCenter'
   | 'livePhoneCalls'
   | 'mobileExtensions'
   | 'leadSearch'
@@ -141,4 +142,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * it only after the backend.
    */
   mailServers: true,
+  /**
+   * `api/messages/v1/`: the messages section (automatic messages, ready messages for sellers and
+   * tickets, its two keys) and the ticket composer's ready replies (scorize-revolution `user_profile`
+   * NotificationText / MessageChange, needs `makemigrations user_profile` + `migrate`). Off: no
+   * messages panel and no ready replies in tickets. Deploy the panel with it only after the backend.
+   */
+  messageCenter: true,
 };

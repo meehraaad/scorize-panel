@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Composer } from '@/components/tickets/Composer';
+import { ReadyReplies } from '@/components/tickets/ReadyReplies';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { checkFile, extensionOf, type FileRule } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
@@ -83,55 +85,63 @@ export function TicketComposer({
   };
 
   return (
-    <Composer
-      id={`ticket-${thread.replace('/', '-')}`}
-      label={t('composer.label')}
-      placeholder={t('composer.placeholder')}
-      value={text}
-      onChange={setText}
-      priority={
-        applicant
-          ? {
-              label: t('composer.priority'),
-              options: PRIORITIES.map((value) => ({
-                value,
-                label: t(`priority.${value}`),
-                tone: value === URGENT ? 'warn' : undefined,
-              })),
-              value: priority,
-              onChange: (value) =>
-                setPriority(PRIORITIES.find((item) => item === value) ?? DEFAULT_PRIORITY),
-            }
-          : undefined
-      }
-      confirm={
-        urgent
-          ? {
-              text: <Trans t={t} i18nKey="composer.urgentRules" components={{ b: <b /> }} />,
-              label: t('composer.accept'),
-              checked: accepted,
-              onChange: setAccepted,
-            }
-          : null
-      }
-      attach={{
-        label: t('composer.attach'),
-        accept: ATTACHMENT_TYPES,
-        file: file && {
-          ext: extensionOf(file.name),
-          name: file.name,
-          meta: t('composer.ready', { size: f.fileSize(file.size) }),
-        },
-        removeLabel: t('composer.remove'),
-        error: fileError,
-        onFile: pick,
-        onRemove: () => setFile(null),
-      }}
-      compact={compact}
-      sendLabel={t('composer.send')}
-      sending={send.isPending}
-      canSend={canSend}
-      onSubmit={submit}
-    />
+    <>
+      {!applicant && ON_SERVER.messageCenter && (
+        <ReadyReplies
+          customer={config.customer}
+          onPick={(picked) => setText(text.trim() ? `${text.trimEnd()}\n${picked}` : picked)}
+        />
+      )}
+      <Composer
+        id={`ticket-${thread.replace('/', '-')}`}
+        label={t('composer.label')}
+        placeholder={t('composer.placeholder')}
+        value={text}
+        onChange={setText}
+        priority={
+          applicant
+            ? {
+                label: t('composer.priority'),
+                options: PRIORITIES.map((value) => ({
+                  value,
+                  label: t(`priority.${value}`),
+                  tone: value === URGENT ? 'warn' : undefined,
+                })),
+                value: priority,
+                onChange: (value) =>
+                  setPriority(PRIORITIES.find((item) => item === value) ?? DEFAULT_PRIORITY),
+              }
+            : undefined
+        }
+        confirm={
+          urgent
+            ? {
+                text: <Trans t={t} i18nKey="composer.urgentRules" components={{ b: <b /> }} />,
+                label: t('composer.accept'),
+                checked: accepted,
+                onChange: setAccepted,
+              }
+            : null
+        }
+        attach={{
+          label: t('composer.attach'),
+          accept: ATTACHMENT_TYPES,
+          file: file && {
+            ext: extensionOf(file.name),
+            name: file.name,
+            meta: t('composer.ready', { size: f.fileSize(file.size) }),
+          },
+          removeLabel: t('composer.remove'),
+          error: fileError,
+          onFile: pick,
+          onRemove: () => setFile(null),
+        }}
+        compact={compact}
+        sendLabel={t('composer.send')}
+        sending={send.isPending}
+        canSend={canSend}
+        onSubmit={submit}
+      />
+    </>
   );
 }

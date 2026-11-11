@@ -42,6 +42,8 @@ export interface TicketsConfig extends TicketsEndpoint {
    * `staff`: neither; sees the applicant's ratings.
    */
   viewer: 'applicant' | 'staff';
+  /** Staff: the applicant's name, filled into a ready reply's `{customer}`. */
+  customer?: string | undefined;
 }
 
 /** Ticket.Priority. */

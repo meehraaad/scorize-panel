@@ -93,5 +93,12 @@
   "ratedByApplicant": "Applicant’s rating: {{n}} of {{max}}",
   "noThreads": "No conversation has been opened for this case yet.",
   "staffEmptyTitle": "No messages yet",
-  "staffEmpty": "Write the first message to the applicant; they get an SMS about it."
+  "staffEmpty": "Write the first message to the applicant; they get an SMS about it.",
+  "ready": {
+    "button": "Ready message",
+    "label": "Ready messages",
+    "loading": "Loading…",
+    "none": "No ready ticket replies yet.",
+    "error": "Ready messages didn't load. Open them again."
+  }
 }

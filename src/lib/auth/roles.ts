@@ -21,10 +21,13 @@ export const Team = {
   LANGUAGE: 8,
 } as const;
 
-export type Role = 'applicant' | 'supervisor' | 'writer' | 'sales' | 'founders';
+export type Role = 'applicant' | 'supervisor' | 'writer' | 'sales' | 'founders' | 'messages';
 
 /** ai.use_founders_assistant: the four partners (Django group `Founders`), and superusers. */
 export const FOUNDERS_PERMISSION = 'use_founders_assistant';
+
+/** The messages section's two keys (src/features/messages/api.ts). */
+const MESSAGES_PERMISSIONS = ['manage_system_messages', 'manage_ready_messages'];
 
 const WRITER_PERMISSIONS = [
   'can_write_sop',
@@ -78,6 +81,12 @@ export function getRoles(user: SessionUser): Role[] {
   }
   if (ON_SERVER.foundersAssistant && hasPermission(user, FOUNDERS_PERMISSION))
     roles.push('founders');
+  // The messages section: either of its two keys (user_profile.manage_system_messages / _ready_).
+  if (
+    ON_SERVER.messageCenter &&
+    MESSAGES_PERMISSIONS.some((codename) => hasPermission(user, codename))
+  )
+    roles.push('messages');
   // The applicant panel: everyone without a work panel (no contract = the guest state, V7 design),
   // and staff who also have an applicant file of their own (`whoami.applicant`, R1).
   if (roles.length === 0 || user.applicant) roles.push('applicant');

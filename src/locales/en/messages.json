@@ -1,0 +1,143 @@
+{
+  "close": "Close",
+  "cancel": "Cancel",
+  "dash": "—",
+  "saveError": "Not saved. Please try again.",
+  "audience": {
+    "customer": "Customer",
+    "applicant": "Applicant",
+    "supervisor": "Case supervisor",
+    "writer": "Writer",
+    "writing_manager": "Writing manager",
+    "staff": "Staff member",
+    "manager": "Manager",
+    "seller": "Seller"
+  },
+  "channel": {
+    "sms": "SMS",
+    "telegram": "Telegram",
+    "bell": "Panel notification",
+    "email": "Email"
+  },
+  "group": {
+    "consultation": "Consultations and webinars",
+    "sales": "Sales",
+    "account": "Account and login",
+    "case": "Applicant's case",
+    "writing": "Writing",
+    "ticket": "Tickets",
+    "team": "Staff",
+    "other": "Old and other"
+  },
+  "system": {
+    "title": "Automatic messages",
+    "subtitle": "Every message the site sends on its own: when, to whom, how and with what text.",
+    "label": "Automatic messages",
+    "search": "Search messages",
+    "searchPlaceholder": "Name, text or SMS template",
+    "audience": "Recipient",
+    "allAudiences": "All recipients",
+    "channel": "Channel",
+    "allChannels": "All channels",
+    "count": "{{n}} messages",
+    "empty": "No message matches this search.",
+    "open": "Open the message {{title}}",
+    "off": "Off",
+    "edited": "Text changed",
+    "readOnly": "View only"
+  },
+  "detail": {
+    "when": "When",
+    "audience": "Recipient",
+    "channels": "Channels",
+    "smsTemplate": "The SMS text lives in Kavenegar (template “{{template}}”). To change it, add a new template there and have it approved.",
+    "stats": "{{sent}} SMS sent so far, {{cost}} toman. Last: {{when}}",
+    "notEditable": "This message is written in the code and can't be changed here.",
+    "active": "Send this message",
+    "activeOn": "On: sent when its time comes.",
+    "activeOff": "Off: not sent through any channel.",
+    "title": "Title (panel notification)",
+    "text": "Message text",
+    "textHint": "Shown in the panel notification and on Telegram. The SMS has its own text in Kavenegar.",
+    "addVariable": "Add a variable",
+    "preview": "Preview with a sample",
+    "smsCopy": "SMS text (a copy of the Kavenegar template)",
+    "save": "Save",
+    "saved": "Saved.",
+    "reset": "Back to the original text",
+    "resetDone": "The original text is back.",
+    "test": "Send a test to me",
+    "testSent": "A test message is on its way to you.",
+    "testError": "The test wasn't sent. Try again in a few minutes.",
+    "testAfterSave": "Save your changes first to send a test.",
+    "testConfirm": "The test SMS goes to your own number and costs money. Send it?",
+    "testButton": "Send",
+    "openBrace": "A { or } is left open. Add variables with the buttons above the box.",
+    "unknown": "This message has no variable {{names}}. Only the buttons above the box work."
+  },
+  "history": {
+    "title": "History",
+    "none": "No changes yet.",
+    "by": "{{who}}, {{when}}",
+    "off": "Off",
+    "restore": "Bring this version back"
+  },
+  "ready": {
+    "title": "Ready messages",
+    "subtitle": "Messages sellers and supervisors send in one click. The customer's name and their own are filled in.",
+    "add": "New message",
+    "kinds": "Kind of ready message",
+    "kind": {
+      "sales": "Seller WhatsApp",
+      "ticket": "Ticket reply"
+    },
+    "where": {
+      "sales": "Shown on the customer page beside WhatsApp and Telegram, and in the sales board's stages.",
+      "ticket": "Shown in the ticket reply box, under “Ready message”, for supervisors and writers."
+    },
+    "empty": "No ready messages yet.",
+    "open": "Open the ready message {{title}}",
+    "off": "Off",
+    "new": "New ready message",
+    "addButton": "Create message",
+    "name": "Message name",
+    "nameHint": "Only shown when picking from the list, e.g. “After the first call”.",
+    "active": "Shown in the list",
+    "activeHint": {
+      "sales": "Off: sellers no longer see it.",
+      "ticket": "Off: no longer offered in ticket replies."
+    },
+    "delete": "Delete message",
+    "deleteButton": "Delete",
+    "deleteConfirm": "Delete “{{title}}”? If it's only unneeded for now, turn it off instead.",
+    "deleted": "“{{title}}” was deleted.",
+    "saved": "Message saved.",
+    "added": "Ready message created.",
+    "variable": {
+      "customer": "Customer's name",
+      "seller": "Sender's own name"
+    },
+    "sample": {
+      "customer": "Sara Rezaei",
+      "seller": "Nima Rostami"
+    }
+  },
+  "access": {
+    "title": "Access",
+    "subtitle": "Give this section's two keys to whoever needs them, or take them back.",
+    "holders": "People with a key",
+    "give": "Give someone a key",
+    "search": "Search staff",
+    "searchPlaceholder": "Name, email or number",
+    "typeName": "Type at least two letters of a name.",
+    "nobody": "No staff member with this name.",
+    "key": {
+      "system": "Automatic messages",
+      "ready": "Ready messages"
+    },
+    "given": "{{name}} now has the “{{key}}” key.",
+    "taken": "The “{{key}}” key was taken back from {{name}}.",
+    "superuser": "Superuser",
+    "fixed": "Through a group or as a superuser; can't be changed here."
+  }
+}
