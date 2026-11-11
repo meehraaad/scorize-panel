@@ -91,16 +91,19 @@
   },
   "ready": {
     "title": "Ready messages",
-    "subtitle": "Messages sellers and supervisors send in one click. The customer's name and their own are filled in.",
+    "subtitle": "Make ready messages: write the text and add variables (customer's name, sender's name, session time, session summary…) in one click. They are filled in for each customer.",
     "add": "New message",
     "kinds": "Kind of ready message",
     "kind": {
-      "sales": "Seller WhatsApp",
-      "ticket": "Ticket reply"
+      "sales": "Seller WhatsApp and SMS",
+      "ticket": "Ticket reply",
+      "both": "Both"
     },
     "where": {
       "sales": "Shown on the customer page beside WhatsApp and Telegram, and in the sales board's stages.",
-      "ticket": "Shown in the ticket reply box, under “Ready message”, for supervisors and writers."
+      "ticket": "Shown in the ticket reply box, under “Ready message”, for supervisors and writers.",
+      "label": "Where it shows",
+      "both": "For sellers (WhatsApp, Telegram, SMS) and in ticket replies."
     },
     "empty": "No ready messages yet.",
     "open": "Open the ready message {{title}}",
@@ -112,7 +115,8 @@
     "active": "Shown in the list",
     "activeHint": {
       "sales": "Off: sellers no longer see it.",
-      "ticket": "Off: no longer offered in ticket replies."
+      "ticket": "Off: no longer offered in ticket replies.",
+      "both": "Off: neither sellers nor ticket replies see it."
     },
     "delete": "Delete message",
     "deleteButton": "Delete",
@@ -120,14 +124,11 @@
     "deleted": "“{{title}}” was deleted.",
     "saved": "Message saved.",
     "added": "Ready message created.",
-    "variable": {
-      "customer": "Customer's name",
-      "seller": "Sender's own name"
+    "alsoIn": {
+      "sales": "Also in tickets",
+      "ticket": "Also for sellers"
     },
-    "sample": {
-      "customer": "Sara Rezaei",
-      "seller": "Nima Rostami"
-    }
+    "on": "On"
   },
   "nav": "Messages sections",
   "section": {

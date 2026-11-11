@@ -56,6 +56,7 @@ import {
   READY_PERMISSION,
   SYSTEM_PERMISSION,
   readyMessagesQuery,
+  readyVariablesQuery,
   systemMessagesQuery,
 } from '@/features/messages/api';
 import { sessionQuery, type SessionUser } from '@/lib/auth/session';
@@ -388,7 +389,7 @@ export const salesPanel: PanelDefinition = {
                     path: 'ready',
                     ...lazyPage(() => import('@/features/messages/ReadyMessagesPage'), [], {
                       guard: messagesKey(READY_PERMISSION),
-                      data: () => [readyMessagesQuery(FIRST_READY_KIND)],
+                      data: () => [readyMessagesQuery(FIRST_READY_KIND), readyVariablesQuery],
                       skeleton: 'list',
                     }),
                   },

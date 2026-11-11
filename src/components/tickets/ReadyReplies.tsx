@@ -12,16 +12,19 @@ import { fillReady, ticketRepliesQuery } from '@/lib/tickets/readyReplies';
  */
 export function ReadyReplies({
   customer,
+  caseId,
   onPick,
 }: {
   /** The applicant's name, for `{customer}`; left as it is when unknown. */
   customer: string | undefined;
+  /** A case's chat: its replies come filled in for its applicant. */
+  caseId?: number | undefined;
   onPick: (text: string) => void;
 }) {
   const { t } = useTranslation('tickets');
   const user = useUser();
   const [open, setOpen] = useState(false);
-  const { data, isError } = useQuery({ ...ticketRepliesQuery, enabled: open });
+  const { data, isError } = useQuery({ ...ticketRepliesQuery(caseId), enabled: open });
   const seller = user.staff?.full_name ?? `${user.first_name} ${user.last_name}`.trim();
 
   return (

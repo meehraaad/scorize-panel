@@ -20,6 +20,18 @@ const STAFF = [2, 3, 4, SUPERUSER];
 const now = () => new Date().toISOString();
 const AMIR = { id: SUPERUSER, name: 'امیر عابدی' };
 
+/** Django's user_profile/ready_variables.py */
+const READY_VARIABLES = [
+  { name: 'customer', label: 'نام مشتری', sample: 'سارا رضایی' },
+  { name: 'first_name', label: 'نام کوچک مشتری', sample: 'سارا' },
+  { name: 'seller', label: 'نام فرستنده', sample: 'نیما رستمی' },
+  { name: 'meeting_date', label: 'تاریخ جلسه', sample: '۱۴۰۵/۰۸/۲۵' },
+  { name: 'meeting_time', label: 'ساعت جلسه', sample: '۱۷:۰۰' },
+  { name: 'meeting_type', label: 'نوع جلسه', sample: 'مشاوره تحصیلی حضوری' },
+  { name: 'summary', label: 'خلاصه‌ی آخرین تماس یا جلسه', sample: 'مدارک زبان را آماده کنید.' },
+  { name: 'panel', label: 'لینک پنل', sample: 'https://scorize.com/panel/' },
+];
+
 interface MockSystem extends SystemMessage {
   history: Change[];
 }
@@ -200,8 +212,14 @@ export const messagesHandlers = [
   http.get(`${API}/ready/`, ({ request }) => {
     if (!allowed()) return forbidden();
     const kind = new URL(request.url).searchParams.get('kind') ?? 'sales';
-    return HttpResponse.json(readies.filter((row) => row.kind === kind));
+    return HttpResponse.json(
+      readies.filter((row) => row.kind === kind || (kind !== 'both' && row.kind === 'both')),
+    );
   }),
+
+  http.get(`${API}/ready/variables/`, () =>
+    allowed() ? HttpResponse.json(READY_VARIABLES) : forbidden(),
+  ),
 
   http.post(`${API}/ready/`, async ({ request }) => {
     if (!allowed()) return forbidden();
@@ -236,12 +254,18 @@ export const messagesHandlers = [
     return HttpResponse.json(readyHistory.get(key) ?? []);
   }),
 
-  http.get(`${API}/ticket-replies/`, () => {
+  // `?case=`: Django fills every variable for the case's applicant (here: a session at 17:00).
+  http.get(`${API}/ticket-replies/`, ({ request }) => {
     if (!STAFF.includes(storage.get() ?? 0)) return forbidden();
+    const filled = new URL(request.url).searchParams.has('case');
     return HttpResponse.json(
       readies
-        .filter((row) => row.kind === 'ticket' && row.is_active)
-        .map(({ id, title, text }) => ({ id, title, text })),
+        .filter((row) => (row.kind === 'ticket' || row.kind === 'both') && row.is_active)
+        .map(({ id, title, text }) => ({
+          id,
+          title,
+          text: filled ? text.replaceAll('{meeting_time}', '۱۷:۰۰') : text,
+        })),
     );
   }),
 ];

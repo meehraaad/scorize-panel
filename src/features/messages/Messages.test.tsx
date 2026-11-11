@@ -65,6 +65,35 @@ describe('messages section', () => {
     ).toBeInTheDocument();
   });
 
+  it('makes a ready message for both places with the session variables', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/sales/manager/messages/ready');
+    await user.click(await screen.findByRole('button', { name: 'پیام تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'پیام آماده‌ی تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: 'هر دو' }));
+    await user.type(within(dialog).getByLabelText('نام پیام'), 'یادآوری جلسه');
+    const variables = within(dialog).getByRole('group', { name: 'افزودن متغیر' });
+    await user.click(await within(variables).findByRole('button', { name: 'نام کوچک مشتری' }));
+    await user.click(within(variables).getByRole('button', { name: 'ساعت جلسه' }));
+    await user.click(within(variables).getByRole('button', { name: 'خلاصه‌ی آخرین تماس یا جلسه' }));
+    expect(within(dialog).getByLabelText('متن پیام')).toHaveValue(
+      '{first_name}{meeting_time}{summary}',
+    );
+    expect(within(dialog).getByRole('region', { name: 'پیش‌نمایش با یک نمونه' })).toHaveTextContent(
+      'سارا۱۷:۰۰',
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'ساختن پیام' }));
+    expect(await toasts().findByText('پیام آماده ساخته شد.')).toBeInTheDocument();
+    // Listed with the sellers' ones and the ticket replies.
+    const row = await screen.findByRole('button', { name: 'باز کردن پیام آماده‌ی یادآوری جلسه' });
+    expect(row).toHaveTextContent('در تیکت هم');
+    await user.click(screen.getByRole('button', { name: 'جواب تیکت' }));
+    expect(
+      await screen.findByRole('button', { name: 'باز کردن پیام آماده‌ی یادآوری جلسه' }),
+    ).toHaveTextContent('برای فروشنده‌ها هم');
+  });
+
   it('says which messages are on and filters the off ones', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);

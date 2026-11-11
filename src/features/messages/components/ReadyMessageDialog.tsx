@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ChoiceGroup } from '@/components/ui/Choices';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -10,28 +11,35 @@ import { VariableField, VariablePreview } from '@/components/ui/VariableField';
 import { unknownVariables } from '@/lib/messageVariables';
 import { toast } from '@/lib/toast';
 import {
+  READY_KINDS,
   readyHistoryQuery,
+  readyVariablesQuery,
   useAddReadyMessage,
   useDeleteReadyMessage,
   useSaveReadyMessage,
   type ReadyKind,
   type ReadyMessage,
+  type ReadyTab,
 } from '../api';
-import { fieldError, useReadyVariables } from '../format';
+import { fieldError } from '../format';
 import { History } from './History';
 
-/** A new ready message, or one to change, turn off or delete (with its history). */
+/**
+ * A new ready message (where it shows, its name, its text with variable buttons and a preview),
+ * or one to change, turn off or delete (with its history). `tab`: the list it was opened from.
+ */
 export function ReadyMessageDialog({
-  kind,
+  tab,
   message,
   onClose,
 }: {
-  kind: ReadyKind;
+  tab: ReadyTab;
   message: ReadyMessage | null;
   onClose: () => void;
 }) {
   const { t } = useTranslation('messages');
-  const variables = useReadyVariables();
+  const variables = useQuery(readyVariablesQuery).data ?? [];
+  const [kind, setKind] = useState<ReadyKind>(message?.kind ?? tab);
   const add = useAddReadyMessage();
   const saveExisting = useSaveReadyMessage(message?.id ?? 0);
   const remove = useDeleteReadyMessage(message?.id ?? 0);
@@ -52,9 +60,11 @@ export function ReadyMessageDialog({
   const changed =
     !message ||
     title.trim() !== message.title ||
+    kind !== message.kind ||
     text !== message.text ||
     active !== message.is_active;
-  const ready = title.trim() !== '' && text.trim() !== '' && textError === undefined;
+  const ready =
+    title.trim() !== '' && text.trim() !== '' && textError === undefined && variables.length > 0;
 
   const submit = () =>
     save.mutate(
@@ -82,6 +92,13 @@ export function ReadyMessageDialog({
       }
     >
       <div className="flex flex-col gap-5">
+        <ChoiceGroup<ReadyKind>
+          legend={t('ready.where.label')}
+          value={kind}
+          onChange={setKind}
+          options={READY_KINDS.map((value) => ({ value, label: t(`ready.kind.${value}`) }))}
+          hint={t(`ready.where.${kind}`)}
+        />
         <TextField
           label={t('ready.name')}
           hint={t('ready.nameHint')}

@@ -147,13 +147,24 @@ export const useTestSystemMessage = (key: string) =>
 
 // Ready messages
 
-export const READY_KINDS = ['sales', 'ticket'] as const;
+/** Where a ready message shows: the sellers' chats (WhatsApp, Telegram, SMS), tickets, or both. */
+export const READY_KINDS = ['sales', 'ticket', 'both'] as const;
 export type ReadyKind = (typeof READY_KINDS)[number];
+/** The ready page's tabs: each lists its own and those for both. */
+export const READY_TABS = ['sales', 'ticket'] as const;
+export type ReadyTab = (typeof READY_TABS)[number];
 /** The tab the ready page opens on. */
-export const FIRST_READY_KIND: ReadyKind = 'sales';
+export const FIRST_READY_KIND: ReadyTab = 'sales';
 
-/** The variables every ready message may use; the panel fills them in when one is picked. */
-export const READY_VARIABLES = ['customer', 'seller'] as const;
+/**
+ * The variables a ready message may use (Django `user_profile/ready_variables.py`): the customer's
+ * and the sender's names, the customer's session, the last summary… Filled in for the customer.
+ */
+export const readyVariablesQuery = queryOptions({
+  queryKey: [...MESSAGES_KEY, 'ready', 'variables'],
+  queryFn: ({ signal }) => api<Variable[]>(`${MESSAGES_API}/ready/variables/`, { signal }),
+  staleTime: Infinity,
+});
 
 export interface ReadyMessage {
   id: number;
@@ -165,7 +176,7 @@ export interface ReadyMessage {
   updated_at: string | null;
 }
 
-export const readyMessagesQuery = (kind: ReadyKind) =>
+export const readyMessagesQuery = (kind: ReadyTab) =>
   queryOptions({
     queryKey: [...MESSAGES_KEY, 'ready', kind],
     queryFn: ({ signal }) => api<ReadyMessage[]>(`${MESSAGES_API}/ready/?kind=${kind}`, { signal }),

@@ -12,20 +12,21 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import {
   FIRST_READY_KIND,
-  READY_KINDS,
+  READY_TABS,
   readyMessagesQuery,
-  type ReadyKind,
+  type ReadyTab,
   type ReadyMessage,
 } from './api';
 import { ReadyMessageDialog } from './components/ReadyMessageDialog';
 
 /**
- * The ready messages: the sellers' (WhatsApp and the other chats, from a customer's page) and the
- * ticket replies (the tickets' composer). Each fills in the customer's and the staff member's name.
+ * Making ready messages: the sellers' (WhatsApp, Telegram and SMS from a customer's page), the
+ * ticket replies (the tickets' composer), or one for both. Each fills in its variables (the
+ * customer's and the sender's names, the customer's session, the last summary…) for the customer.
  */
 export default function ReadyMessagesPage() {
   const { t } = useTranslation('messages');
-  const [kind, setKind] = useState<ReadyKind>(FIRST_READY_KIND);
+  const [kind, setKind] = useState<ReadyTab>(FIRST_READY_KIND);
   const [open, setOpen] = useState<ReadyMessage | 'new' | null>(null);
   const { data } = useQuery(readyMessagesQuery(kind));
 
@@ -45,7 +46,7 @@ export default function ReadyMessagesPage() {
         label={t('ready.kinds')}
         value={kind}
         onChange={setKind}
-        options={READY_KINDS.map((value) => ({ value, label: t(`ready.kind.${value}`) }))}
+        options={READY_TABS.map((value) => ({ value, label: t(`ready.kind.${value}`) }))}
       />
       <Card aria-label={t(`ready.kind.${kind}`)} aria-busy={!data}>
         <p className="m-0 px-5 pt-5 text-sm leading-7 text-text-2 lg:px-8">
@@ -69,11 +70,14 @@ export default function ReadyMessagesPage() {
                     <span className="text-[15px] font-semibold">{message.title}</span>
                     <span className="truncate text-[13px] text-text-2">{message.text}</span>
                   </span>
-                  {!message.is_active && (
-                    <Chip tone="warn" small>
-                      {t('ready.off')}
+                  {message.kind === 'both' && (
+                    <Chip tone="info" small>
+                      {t(`ready.alsoIn.${kind}`)}
                     </Chip>
                   )}
+                  <Chip tone={message.is_active ? 'good' : 'warn'} dot small>
+                    {t(message.is_active ? 'ready.on' : 'ready.off')}
+                  </Chip>
                   <Icon name="chevronEnd" size={18} className="text-text-3" />
                 </button>
               </li>
@@ -84,7 +88,7 @@ export default function ReadyMessagesPage() {
       </Card>
       {open && (
         <ReadyMessageDialog
-          kind={kind}
+          tab={kind}
           message={open === 'new' ? null : open}
           onClose={() => setOpen(null)}
         />

@@ -8,15 +8,24 @@ import { api } from '@/lib/api/client';
 export interface ReadyReply {
   id: number;
   title: string;
-  /** With `{customer}` and `{seller}` (the staff member) still in it. */
+  /** Without `case`: with `{customer}` and `{seller}` (the staff member) still in it. */
   text: string;
 }
 
-export const ticketRepliesQuery = queryOptions({
-  queryKey: ['messages', 'ticket-replies'],
-  queryFn: ({ signal }) => api<ReadyReply[]>('/messages/v1/ticket-replies/', { signal }),
-  staleTime: 5 * 60_000,
-});
+/**
+ * `caseId`: a case's chat. Django fills in every variable for its applicant (their session, the
+ * last summary…); elsewhere only `{customer}` and `{seller}` are filled, by the panel.
+ */
+export const ticketRepliesQuery = (caseId?: number) =>
+  queryOptions({
+    queryKey: ['messages', 'ticket-replies', caseId ?? null],
+    queryFn: ({ signal }) =>
+      api<ReadyReply[]>(
+        `/messages/v1/ticket-replies/${caseId === undefined ? '' : `?case=${String(caseId)}`}`,
+        { signal },
+      ),
+    staleTime: 5 * 60_000,
+  });
 
 /** Fills a ready message's `{customer}` and `{seller}`, as Django does for sellers. */
 export const fillReady = (text: string, values: { customer: string; seller: string }) =>

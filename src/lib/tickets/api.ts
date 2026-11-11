@@ -44,6 +44,8 @@ export interface TicketsConfig extends TicketsEndpoint {
   viewer: 'applicant' | 'staff';
   /** Staff: the applicant's name, filled into a ready reply's `{customer}`. */
   customer?: string | undefined;
+  /** Staff on a case's chat: the case (Applicant id), so a ready reply comes filled in for it. */
+  caseId?: number | undefined;
 }
 
 /** Ticket.Priority. */

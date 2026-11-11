@@ -89,6 +89,7 @@ export function TicketComposer({
       {!applicant && ON_SERVER.messageCenter && (
         <ReadyReplies
           customer={config.customer}
+          caseId={config.caseId}
           onPick={(picked) => setText(text.trim() ? `${text.trimEnd()}\n${picked}` : picked)}
         />
       )}

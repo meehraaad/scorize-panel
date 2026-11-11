@@ -46,6 +46,7 @@ const staffConfig = (id: number, customer?: string): TicketsConfig => ({
   path: casePath(id),
   viewer: 'staff',
   customer,
+  caseId: id,
 });
 
 const unreadOf = (threads: readonly TicketThread[] | undefined) =>
