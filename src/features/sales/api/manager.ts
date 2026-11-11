@@ -632,6 +632,16 @@ export interface OfferRules {
   /** Percent of the amount at signing; less goes to the manager first. */
   min_prepayment: number;
   max_applies: number;
+  /** The only countries (ids of `limits.countries`) this kind of contract is offered for (S73); empty: all. */
+  countries: number[];
+  /** The only degrees it is offered for (S73); empty: all. */
+  degrees: number[];
+}
+
+/** What a kind of contract can be limited to (S73): the countries sellers offer, and the degrees. */
+export interface RuleLimits {
+  countries: { id: number; name: string }[];
+  degrees: { id: number; name: string }[];
 }
 
 export type TextChangeKind = 'added' | 'changed' | 'removed' | 'locked' | 'unlocked' | 'moved';
@@ -674,6 +684,7 @@ export interface ContractBuilder {
   clauses: BuilderClause[];
   prices: BuilderPrice[];
   rules: OfferRules;
+  limits: RuleLimits;
   versions: TextVersion[];
   /** The blanks the seller fills (S69), and what the system fills with the preview's samples. */
   variables: ContractVariable[];

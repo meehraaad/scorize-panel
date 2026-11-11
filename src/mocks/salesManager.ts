@@ -197,6 +197,20 @@ const builderState = (): ContractBuilder => ({
     max_instalments: 4,
     min_prepayment: 30,
     max_applies: 30,
+    countries: [],
+    degrees: [],
+  },
+  limits: {
+    countries: [
+      { id: 1, name: 'آلمان' },
+      { id: 2, name: 'ترکیه' },
+      { id: 3, name: 'هلند' },
+    ],
+    degrees: [
+      { id: 1, name: 'کارشناسی' },
+      { id: 2, name: 'کارشناسی ارشد' },
+      { id: 3, name: 'دکترا' },
+    ],
   },
   versions: [],
   variables: STANDARD_VARIABLES,
@@ -1230,6 +1244,8 @@ export const managerHandlers = [
       ...rules,
       discounts: [...new Set([0, ...rules.discounts])].sort((a, b) => a - b),
       durations: [...new Set(rules.durations)].sort((a, b) => a - b),
+      // Every degree is no limit (S73).
+      degrees: rules.degrees.length === state.limits.degrees.length ? [] : rules.degrees,
     };
     return new HttpResponse(null, { status: 204 });
   }),

@@ -661,6 +661,25 @@ describe('contract builder and agreement desk (S64)', () => {
     expect(within(parties).getByText('منتظر شما')).toBeInTheDocument();
   });
 
+  it('a kind of contract is limited to countries and degrees (S73)', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/manager/contract?tab=prices');
+    const rules = await screen.findByRole('region', { name: 'قانون‌های پیشنهاد' });
+    expect(within(rules).getByText(/همه‌ی کشورها/)).toBeInTheDocument();
+    await user.click(within(rules).getByLabelText('ترکیه'));
+    await user.click(within(rules).getByLabelText('دکترا'));
+    expect(within(rules).getByText(/فقط ۱ کشور انتخاب‌شده/)).toBeInTheDocument();
+    await user.click(within(rules).getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText('قانون‌ها ذخیره شد.')).toBeInTheDocument();
+
+    cleanup();
+    renderApp('/sales/manager/contract?tab=prices');
+    const saved = await screen.findByRole('region', { name: 'قانون‌های پیشنهاد' });
+    expect(within(saved).getByLabelText('ترکیه')).toBeChecked();
+    expect(within(saved).getByLabelText('آلمان')).not.toBeChecked();
+    expect(within(saved).getByText(/فقط ۱ مقطع انتخاب‌شده/)).toBeInTheDocument();
+  });
+
   it('the preview shows a clause as it is typed, before it is saved (S68)', async () => {
     const user = userEvent.setup();
     renderApp('/sales/manager/contract');

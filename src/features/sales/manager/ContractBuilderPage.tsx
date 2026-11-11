@@ -30,6 +30,7 @@ import {
   type BuilderPrice,
   type ContractBuilder,
   type OfferRules,
+  type RuleLimits,
   type TextVersion,
 } from '../api';
 import { ContractSheet } from '../components/ContractSheet';
@@ -836,7 +837,7 @@ function PricesAndRules({ data }: { data: ContractBuilder }) {
   return (
     <>
       <Prices template={data.template.id} prices={data.prices} />
-      <Rules template={data.template.id} rules={data.rules} />
+      <Rules template={data.template.id} rules={data.rules} limits={data.limits} />
     </>
   );
 }
@@ -920,7 +921,15 @@ function Prices({ template, prices }: { template: number | null; prices: Builder
   );
 }
 
-function Rules({ template, rules }: { template: number | null; rules: OfferRules }) {
+function Rules({
+  template,
+  rules,
+  limits,
+}: {
+  template: number | null;
+  rules: OfferRules;
+  limits: RuleLimits;
+}) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const save = useSaveRules(template);
@@ -968,6 +977,27 @@ function Rules({ template, rules }: { template: number | null; rules: OfferRules
       </div>
     </fieldset>
   );
+  // What this kind of contract is limited to (S73): none chosen means all of them.
+  const limit = (key: 'countries' | 'degrees') => (
+    <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
+      <legend className="mb-1 text-[15px] font-medium">{t(`manager.builder.rules.${key}`)}</legend>
+      <p className="m-0 text-[13px] text-text-2">
+        {form[key].length
+          ? t(`manager.builder.rules.${key}Only`, { n: f.number(form[key].length) })
+          : t(`manager.builder.rules.${key}All`)}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {limits[key].map((option) => (
+          <TogglePill
+            key={option.id}
+            label={option.name}
+            checked={form[key].includes(option.id)}
+            onChange={(on) => set(key, toggle(form[key], option.id, on))}
+          />
+        ))}
+      </div>
+    </fieldset>
+  );
   const valid = form.durations.length > 0;
   return (
     <SectionCard
@@ -984,6 +1014,8 @@ function Rules({ template, rules }: { template: number | null; rules: OfferRules
       </div>
       {steps('discounts', DISCOUNT_STEPS, 'manager.builder.rules.percent')}
       {steps('durations', DURATION_STEPS, 'manager.builder.rules.months')}
+      {limit('countries')}
+      {limit('degrees')}
       <div>
         <Button
           disabled={!valid || save.isPending}
