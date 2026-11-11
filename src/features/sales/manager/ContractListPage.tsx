@@ -9,7 +9,12 @@ import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { contractBuilderQuery, contractOverviewQuery, type ContractOverviewRow, type RuleLimits } from '../api';
+import {
+  contractBuilderQuery,
+  contractOverviewQuery,
+  type ContractOverviewRow,
+  type RuleLimits,
+} from '../api';
 import { useSalesFormat } from '../format';
 import { contractPath } from '../paths';
 import { NewContract } from './NewContract';
@@ -36,7 +41,9 @@ export default function ContractListPage() {
       <PageHeader
         title={t('manager.contracts.listTitle')}
         subtitle={t('manager.contracts.listSubtitle')}
-        actions={<Button onClick={() => setAdding(true)}>{t('manager.builder.templates.add')}</Button>}
+        actions={
+          <Button onClick={() => setAdding(true)}>{t('manager.builder.templates.add')}</Button>
+        }
       />
       <ChoiceGroup
         legend={t('manager.contracts.filter')}
@@ -121,7 +128,9 @@ function ContractCard({ row, limits }: { row: ContractOverviewRow; limits: RuleL
                 .map((item) =>
                   t('manager.contracts.service', {
                     name: t(`manager.contracts.feature.${item.key}`),
-                    price: item.price ? s.inCurrency(item.price, row.currency) : t('manager.builder.prices.free'),
+                    price: item.price
+                      ? s.inCurrency(item.price, row.currency)
+                      : t('manager.builder.prices.free'),
                   }),
                 )
                 .join(' · ')

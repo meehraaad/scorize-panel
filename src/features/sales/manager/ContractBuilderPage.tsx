@@ -720,8 +720,7 @@ function Settings({ data }: { data: ContractBuilder }) {
     setRows(rows.map((item, at) => (at === index ? { ...item, ...row } : item)));
   const toggle = (list: number[], value: number, on: boolean) =>
     (on ? [...list, value] : list.filter((item) => item !== value)).sort((a, b) => a - b);
-  const dirty =
-    JSON.stringify([rows, form]) !== JSON.stringify([data.prices, data.rules]);
+  const dirty = JSON.stringify([rows, form]) !== JSON.stringify([data.prices, data.rules]);
   const rangeBad =
     form.min_amount !== null && form.max_amount !== null && form.min_amount > form.max_amount;
   const appliesBad = form.min_applies > form.max_applies;
@@ -730,7 +729,11 @@ function Settings({ data }: { data: ContractBuilder }) {
 
   const save = () =>
     savePrices.mutate(
-      rows.map((row) => ({ feature: row.feature, price: row.price ?? 0, is_active: row.is_active })),
+      rows.map((row) => ({
+        feature: row.feature,
+        price: row.price ?? 0,
+        is_active: row.is_active,
+      })),
       {
         onSuccess: () =>
           saveRules.mutate(form, {
@@ -752,7 +755,10 @@ function Settings({ data }: { data: ContractBuilder }) {
       error={error}
       value={form[key] === null ? '' : String(form[key])}
       onChange={(event) =>
-        set(key, event.target.value === '' ? null : Math.max(0, Math.round(Number(event.target.value))))
+        set(
+          key,
+          event.target.value === '' ? null : Math.max(0, Math.round(Number(event.target.value))),
+        )
       }
     />
   );
@@ -772,7 +778,10 @@ function Settings({ data }: { data: ContractBuilder }) {
       }
     />
   );
-  const numberField = (key: 'approval_above' | 'min_prepayment' | 'max_instalments', max: number) => (
+  const numberField = (
+    key: 'approval_above' | 'min_prepayment' | 'max_instalments',
+    max: number,
+  ) => (
     <TextField
       type="number"
       inputMode="numeric"
@@ -836,7 +845,9 @@ function Settings({ data }: { data: ContractBuilder }) {
         id="prices"
         variant="panel"
         title={t('manager.builder.settings.step1')}
-        subtitle={t(free ? 'manager.builder.prices.subtitleFree' : 'manager.builder.prices.subtitle')}
+        subtitle={t(
+          free ? 'manager.builder.prices.subtitleFree' : 'manager.builder.prices.subtitle',
+        )}
       >
         <SelectField
           label={t('manager.builder.settings.currency')}
@@ -906,7 +917,10 @@ function Settings({ data }: { data: ContractBuilder }) {
           {amountField('min_amount')}
           {amountField('max_amount', rangeBad ? t('manager.builder.settings.rangeBad') : undefined)}
           {countField('min_applies')}
-          {countField('max_applies', appliesBad ? t('manager.builder.settings.appliesBad') : undefined)}
+          {countField(
+            'max_applies',
+            appliesBad ? t('manager.builder.settings.appliesBad') : undefined,
+          )}
         </div>
         <p className="m-0 text-[13px] leading-6 text-text-2">
           {t('manager.builder.settings.outsideRange')}

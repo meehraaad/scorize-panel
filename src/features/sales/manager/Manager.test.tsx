@@ -765,7 +765,9 @@ describe('contract builder and agreement desk (S64)', () => {
     renderApp('/sales/manager/contract/standard');
     const prices = await screen.findByRole('region', { name: '۱. خدمات و قیمت' });
     expect(within(prices).getByText('قرارداد استاندارد همیشه به تومان است.')).toBeInTheDocument();
-    expect(within(within(prices).getByLabelText('واحد پول قرارداد')).getAllByRole('option')).toHaveLength(1);
+    expect(
+      within(within(prices).getByLabelText('واحد پول قرارداد')).getAllByRole('option'),
+    ).toHaveLength(1);
   });
 
   it('the manager reads the whole contract before approving (S68)', async () => {

@@ -62,10 +62,27 @@ export interface CalendarTaskDay {
   done: number;
 }
 
+/** An in-person meeting at the office (S75): the seller's own, one they were asked to join, or (a manager) all. */
+export interface CalendarVisit {
+  id: number;
+  customer: number;
+  name: string;
+  phone: string;
+  starts_at: string;
+  minutes: number;
+  room: string | null;
+  note: string;
+  seller: string | null;
+  mine: boolean;
+  colleague: string | null;
+}
+
 export interface SellerCalendar {
   types: CalendarType[];
   consultations: CalendarConsultation[];
   calls: CalendarCall[];
+  /** Absent from a Django before S75. */
+  visits?: CalendarVisit[];
   tasks: CalendarTaskDay[];
 }
 

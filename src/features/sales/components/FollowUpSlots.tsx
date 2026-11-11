@@ -53,6 +53,21 @@ export function FollowUpSlots({
           aria: `${item.name}، ${f.time(start)}`,
         };
       }),
+    ...(data?.visits ?? [])
+      .filter((item) => item.mine)
+      .map((item) => {
+        const start = new Date(item.starts_at);
+        return {
+          id: `v${String(item.id)}`,
+          start,
+          minutes: item.minutes,
+          color: 'var(--cal-7)',
+          look: 'upcoming' as const,
+          title: item.name,
+          meta: f.time(start),
+          aria: `${item.name}، ${f.time(start)}، ${t('visit.onCalendar')}`,
+        };
+      }),
     ...(data?.calls ?? []).map((item) => {
       const start = new Date(item.follow_up_at);
       return {
