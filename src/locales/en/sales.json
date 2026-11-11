@@ -2284,6 +2284,8 @@
     "qrAndroid": "On Android, allow notifications and let Linphone ignore battery optimisation, so calls ring even when the app is closed.",
     "qrExpiry": "This code changes every few minutes, so a photo of it soon stops working.",
     "qrLabel": "QR code that sets up Linphone",
+    "dial": "Call numbers with Linphone",
+    "dialHint": "On this phone only: the call button opens Linphone and dials through the office line. Other devices keep using the normal phone app.",
     "copy": "Copy {{label}}",
     "show": "Show password",
     "hide": "Hide password",

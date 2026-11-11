@@ -14,6 +14,7 @@ import {
   attachUnknownCall,
   dismissUnknownCall,
 } from '@/lib/sales/contactDrafts';
+import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import type { ObservedCall } from '@/lib/sales/phoneCalls';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
@@ -49,6 +50,7 @@ export function UnknownCallPanel({ call }: { call: ObservedCall }) {
 
 function MissedCall({ call, onAdd }: { call: ObservedCall; onAdd: () => void }) {
   const { t } = useTranslation('sales');
+  const linphone = useLinphoneDial();
   const f = useFormat();
   return (
     <FloatingPanel
@@ -64,7 +66,7 @@ function MissedCall({ call, onAdd }: { call: ObservedCall; onAdd: () => void }) 
       onClose={() => activateUnknownCall(null)}
       footer={
         <>
-          <a href={`tel:${call.phone}`} className={buttonClass('primary', 'flex-1')}>
+          <a href={callHref(call.phone, linphone)} className={buttonClass('primary', 'flex-1')}>
             <Icon name="phone" size={18} />
             {t('callStrip.callBack')}
           </a>

@@ -8,6 +8,7 @@ import { IconButton } from '@/components/ui/IconButton';
 import { eventColor } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { messageHref } from '@/lib/sales/api';
+import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
 import {
@@ -48,13 +49,14 @@ export function StartAction({
 }) {
   const { t } = useTranslation('sales');
   const arrived = useMarkArrived();
+  const linphone = useLinphoneDial();
   const primary = onHero
     ? 'inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-surface px-4 text-sm font-bold text-primary-text'
     : buttonClass('primary', 'h-11 gap-2 px-4 text-sm');
   if (status !== 'live' && status !== 'soon') return null;
   if (item.mode === 'online')
     return (
-      <a href={`tel:${item.phone}`} className={primary}>
+      <a href={callHref(item.phone, linphone)} className={primary}>
         <Icon name="phone" size={16} />
         {t('consultationCalendar.call')}
       </a>
@@ -105,6 +107,7 @@ export function EventDetails({
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
+  const linphone = useLinphoneDial();
   const outline = buttonClass('outline', 'h-11 px-4 text-sm');
   const primary = buttonClass('primary', 'h-11 px-4 text-sm');
   const item = chosen.item;
@@ -146,7 +149,7 @@ export function EventDetails({
         >
           {t('consultationCalendar.logCall')}
         </ContactLogButton>
-        <a href={`tel:${item.phone}`} className={primary}>
+        <a href={callHref(item.phone, linphone)} className={primary}>
           {t('consultationCalendar.callNow')}
         </a>
       </>
