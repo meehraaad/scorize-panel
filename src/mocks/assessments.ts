@@ -8,6 +8,21 @@ export const resetAssessmentMocks = () => {
   drafts = [];
 };
 export const assessmentHandlers = [
+  http.get(`${BASE}/health/`, () =>
+    HttpResponse.json({
+      counts: {
+        active_routes: drafts
+          .filter((d) => d.is_active)
+          .reduce((n, d) => n + d.bundle.routes.length, 0),
+        overdue: 0,
+        blocked: drafts.filter((d) => !d.last_run?.passed).length,
+        in_review: drafts.filter((d) => d.state === 'review').length,
+        ready: drafts.filter((d) => d.state === 'approved' && !d.is_active).length,
+      },
+      issues: [],
+      issues_limit: 50,
+    }),
+  ),
   http.get(`${BASE}/options/`, () => HttpResponse.json(fixture)),
   http.get(`${BASE}/drafts/`, () =>
     HttpResponse.json({
@@ -55,7 +70,7 @@ export const assessmentHandlers = [
   http.post(`${BASE}/drafts/:id/:action/`, async ({ request, params }) => {
     const draft = drafts.find((d) => String(d.id) === params.id);
     if (!draft) return new HttpResponse(null, { status: 404 });
-    const body = (await request.json()) as { revision: number };
+    const body = (await request.json()) as { revision: number; note?: string; publish_at?: string };
     if (draft.revision !== body.revision) return new HttpResponse(null, { status: 409 });
     if (params.action === 'test')
       draft.last_run = {
@@ -91,6 +106,20 @@ export const assessmentHandlers = [
       draft.state = 'approved';
       draft.ruleset_id = 1;
     }
+    if (params.action === 'reject') {
+      if (draft.state !== 'review' || !body.note?.trim())
+        return new HttpResponse(null, { status: 409 });
+      draft.state = 'draft';
+      draft.last_run = null;
+      draft.events.push({
+        id: draft.events.length + 1,
+        actor_id: 4,
+        action: 'reject',
+        revision: draft.revision + 1,
+        created_at: new Date().toISOString(),
+        detail: { note: body.note },
+      });
+    }
     if (params.action === 'publish') {
       draft.is_active = true;
       draft.revoked = false;
@@ -99,6 +128,8 @@ export const assessmentHandlers = [
       draft.is_active = false;
       draft.revoked = true;
     }
+    if (params.action === 'schedule') draft.scheduled_at = body.publish_at ?? null;
+    if (params.action === 'cancel_schedule') draft.scheduled_at = null;
     draft.revision += 1;
     return HttpResponse.json(draft);
   }),

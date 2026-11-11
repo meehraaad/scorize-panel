@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode, Suspense } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -84,5 +84,60 @@ describe('assessment content sandbox', () => {
     localStorage.removeItem('scorize.mock.session');
     const router = renderApp('/dev/assessments');
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
+  });
+
+  it('creates a new question and route and persists independent scenario expectations', async () => {
+    const user = await createDraft();
+    await user.type(screen.getByLabelText('Definition ID (Latin)'), 'income');
+    await user.type(screen.getByLabelText('Definition name'), 'Available income');
+    const answerType = screen.getAllByLabelText('Answer type')[0];
+    if (!answerType) throw new Error('Missing answer type');
+    await user.selectOptions(answerType, 'number');
+    await user.click(screen.getByRole('button', { name: 'Add question' }));
+    await user.click(screen.getByText('Available income', { selector: 'summary' }));
+    const question = screen
+      .getByText('Available income', { selector: 'summary' })
+      .closest('details');
+    if (!question) throw new Error('Missing question editor');
+    expect(within(question).getByLabelText('Minimum')).toHaveValue(0);
+    expect(within(question).getByLabelText('Maximum')).toHaveValue(120);
+    await user.selectOptions(screen.getByLabelText('Definition type'), 'route');
+    await user.type(screen.getByLabelText('Definition ID (Latin)'), 'new-study');
+    await user.type(screen.getByLabelText('Definition name'), 'New study route');
+    await user.click(screen.getByRole('button', { name: 'Add route' }));
+    await user.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run tests' })).toBeEnabled());
+    expect(screen.getByText('New study route', { selector: 'summary' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add reference scenario' }));
+    expect(screen.getByText('New scenario 2', { selector: 'summary' })).toBeInTheDocument();
+  });
+
+  it('blocks deleting referenced questions and exposes their route dependency', async () => {
+    await createDraft();
+    const question = screen
+      .getByText('سن شما چقدر است؟', { selector: 'summary' })
+      .closest('details');
+    if (!question) throw new Error('Missing question editor');
+    expect(
+      within(question).getByRole('button', { name: 'Remove question', hidden: true }),
+    ).toBeDisabled();
+    expect(within(question).getByText(/Remove references from conditions/)).toBeInTheDocument();
+  });
+
+  it('returns reviewed content with an explanation and requires testing it again', async () => {
+    const user = await createDraft();
+    await user.click(screen.getByRole('button', { name: 'Run tests' }));
+    await screen.findByText('All scenarios passed');
+    await user.click(screen.getByRole('button', { name: 'Submit for review' }));
+    await screen.findByRole('heading', { name: 'In review' });
+    expect(screen.getByRole('button', { name: 'Return for changes' })).toBeDisabled();
+    await user.type(
+      screen.getByLabelText('Required changes for the editor'),
+      'Check the age boundary',
+    );
+    await user.click(screen.getByRole('button', { name: 'Return for changes' }));
+    await screen.findByRole('heading', { name: 'Draft' });
+    expect(screen.getByText('Check the age boundary')).toBeInTheDocument();
+    expect(screen.queryByText('All scenarios passed')).not.toBeInTheDocument();
   });
 });

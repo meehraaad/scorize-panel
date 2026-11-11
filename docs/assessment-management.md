@@ -24,9 +24,11 @@ skeletons. A revision conflict retains unsaved form values. No raw JSON editor
 is required for the supported rule types. Persian/English text uses the
 `assessments` namespace.
 
-This is the first management workspace, not the entire stage-three product.
-Arbitrary question/route creation, detailed question analytics, scheduled
-publication, reviewer comments/rejection and production routing remain pending.
+The next authoring milestone adds form-based question/route creation and safe
+deletion, requirements/criteria/bands/scenarios, dependency inspection, a content
+health dashboard, content comparison, independent rejection notes and scheduled
+local activation. See [assessment-authoring.md](assessment-authoring.md).
+Real question analytics and production routing remain pending.
 Editable budget ranges and financial policies remain phase six of the updated
 plan; existing budget choices and historical sales records are untouched.
 
