@@ -14,6 +14,9 @@ export interface Question {
   maximum?: number;
   choices?: string[];
   show_if?: Condition;
+  cost?: number;
+  help?: string;
+  translations?: Partial<Record<'fa' | 'en', string>>;
 }
 export interface Route {
   id: string;
@@ -80,6 +83,7 @@ export interface Evaluation {
   })[];
 }
 export interface Draft extends DraftInput, Summary {
+  scheduled_at?: string | null;
   is_active: boolean;
   revoked: boolean;
   last_run: {
@@ -91,17 +95,44 @@ export interface Draft extends DraftInput, Summary {
       expected: Expected[];
       actual: Evaluation;
       before: Evaluation | null;
+      before_incompatible_answers?: string[];
     }[];
   } | null;
-  events: { id: number; action: string; actor_id: number; revision: number; created_at: string }[];
+  comparison?: {
+    version: number | null;
+    changes: { path: string[]; before: unknown; after: unknown }[];
+  };
+  events: {
+    id: number;
+    action: string;
+    actor_id: number;
+    revision: number;
+    created_at: string;
+    detail?: { note?: string };
+  }[];
 }
 export interface Options {
   bundle: Bundle;
   scenarios: Scenario[];
   permissions: Record<'create' | 'edit' | 'review' | 'publish', boolean>;
 }
-export type Action = 'test' | 'submit' | 'approve' | 'publish' | 'revoke';
+export type Action =
+  'test' | 'submit' | 'approve' | 'reject' | 'publish' | 'revoke' | 'schedule' | 'cancel_schedule';
 const BASE = '/staff/v1/assessments';
+export interface Health {
+  counts: Record<'active_routes' | 'overdue' | 'blocked' | 'in_review' | 'ready', number>;
+  issues: {
+    id: number;
+    title: string;
+    state: Summary['state'];
+    reasons: ('invalid_content' | 'source_review_required' | 'tests_required' | 'revoked')[];
+  }[];
+  issues_limit: number;
+}
+export const healthQuery = queryOptions({
+  queryKey: ['assessment-management', 'health'],
+  queryFn: ({ signal }) => api<Health>(`${BASE}/health/`, { signal }),
+});
 export const optionsQuery = queryOptions({
   queryKey: ['assessment-management', 'options'],
   queryFn: ({ signal }) => api<Options>(`${BASE}/options/`, { signal }),
@@ -127,8 +158,12 @@ export const saveDraft = (input: DraftInput, draft?: Summary) =>
     method: draft ? 'PUT' : 'POST',
     body: { ...input, ...(draft ? { revision: draft.revision } : {}) },
   });
-export const draftAction = (draft: Summary, action: Action) =>
+export const draftAction = (draft: Summary, action: Action, note = '', publishAt?: string) =>
   api<Draft>(`${BASE}/drafts/${String(draft.id)}/${action}/`, {
     method: 'POST',
-    body: { revision: draft.revision },
+    body: {
+      revision: draft.revision,
+      ...(action === 'reject' ? { note } : {}),
+      ...(action === 'schedule' ? { publish_at: publishAt } : {}),
+    },
   });

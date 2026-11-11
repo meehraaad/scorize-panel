@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { TextField } from '@/components/ui/TextField';
+import { TextAreaField, TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
@@ -24,7 +24,18 @@ import {
   type Options,
 } from './api';
 import { RuleEditor, ValueField } from './RuleEditor';
-import { valueOf } from './rules';
+import {
+  blankExpected,
+  conditionOf,
+  nextId,
+  questionReferenced,
+  questionUsage,
+  removeQuestion,
+  removeRoute,
+  valueOf,
+} from './rules';
+import { DefinitionTools } from './DefinitionTools';
+import { ContentComparison, ContentHealth } from './ContentStatus';
 
 const SOURCE_FIELDS = ['title', 'url', 'reviewed_on', 'review_due'] as const;
 const REPORT_COLUMNS = ['route', 'expected', 'actual', 'before'] as const;
@@ -63,6 +74,12 @@ export default function ManagementPage() {
     <main className="mx-auto flex max-w-6xl flex-col gap-5 p-4 text-text sm:p-8">
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
       <Notice tone="warn">{t('sandbox')}</Notice>
+      <ContentHealth
+        onSelect={(id) => {
+          setCreating(false);
+          setSelected(id);
+        }}
+      />
       <SectionCard id="assessment-list" title={t('drafts')} variant="panel">
         {list.results.map((item) => (
           <Button
@@ -134,6 +151,8 @@ function DraftEditor({
   );
   const [dirty, setDirty] = useState(!draft);
   const [failure, setFailure] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
+  const [publishAt, setPublishAt] = useState('');
   const update = (next: DraftInput) => {
     setInput(next);
     setDirty(true);
@@ -143,11 +162,17 @@ function DraftEditor({
       action === 'save'
         ? saveDraft(input, draft)
         : draft
-          ? draftAction(draft, action)
+          ? draftAction(
+              draft,
+              action,
+              reviewNote,
+              action === 'schedule' && publishAt ? new Date(publishAt).toISOString() : undefined,
+            )
           : Promise.reject(new Error()),
     onSuccess: (saved) => {
       client.setQueryData(draftQuery(saved.id).queryKey, saved);
       void client.invalidateQueries({ queryKey: ['assessment-management', 'drafts'] });
+      void client.invalidateQueries({ queryKey: ['assessment-management', 'health'] });
       onSaved(saved.id);
       toast.success(t('saved'));
     },
@@ -162,6 +187,15 @@ function DraftEditor({
   const setQuestion = (index: number, value: DraftInput['bundle']['questions'][number]) =>
     update({
       ...input,
+      scenarios:
+        input.bundle.questions[index]?.kind !== value.kind
+          ? input.scenarios.map((scenario) => ({
+              ...scenario,
+              answers: Object.fromEntries(
+                Object.entries(scenario.answers).filter(([key]) => key !== value.id),
+              ),
+            }))
+          : input.scenarios,
       bundle: {
         ...input.bundle,
         questions: input.bundle.questions.map((q, i) => (i === index ? value : q)),
@@ -179,13 +213,22 @@ function DraftEditor({
     ...(options.permissions.edit && draft?.state !== 'approved'
       ? (['test', 'submit'] as const)
       : []),
-    ...(options.permissions.review && draft?.state === 'review' ? (['approve'] as const) : []),
+    ...(options.permissions.review && draft?.state === 'review'
+      ? (['approve', 'reject'] as const)
+      : []),
     ...(options.permissions.publish && draft?.state === 'approved' && !draft.is_active
       ? (['publish'] as const)
       : []),
     ...(options.permissions.publish && draft?.state === 'approved' && !draft.revoked
       ? (['revoke'] as const)
       : []),
+    ...(options.permissions.publish &&
+    draft?.state === 'approved' &&
+    !draft.is_active &&
+    !draft.revoked
+      ? (['schedule'] as const)
+      : []),
+    ...(options.permissions.publish && draft?.scheduled_at ? (['cancel_schedule'] as const) : []),
   ];
   return (
     <>
@@ -210,16 +253,78 @@ function DraftEditor({
             value={input.title}
             onChange={(e) => update({ ...input, title: e.target.value })}
           />
+          <DefinitionTools input={input} onChange={update} />
           <h2>{t('questions')}</h2>
           {input.bundle.questions.map((q, index) => (
             <details key={q.id} className="rounded-2xl border border-hair p-4">
               <summary className="min-h-11 cursor-pointer">{q.text}</summary>
               <div className="flex flex-col gap-3">
+                <p>{t('stableIdentity', { id: q.id })}</p>
                 <TextField
                   label={t('question')}
                   value={q.text}
                   onChange={(e) => setQuestion(index, { ...q, text: e.target.value })}
                 />
+                <TextField
+                  label={t('questionHelp')}
+                  value={q.help ?? ''}
+                  onChange={(e) => setQuestion(index, { ...q, help: e.target.value })}
+                />
+                <TextField
+                  label={t('questionEnglish')}
+                  value={q.translations?.en ?? ''}
+                  maxLength={512}
+                  onChange={(e) =>
+                    setQuestion(index, {
+                      ...q,
+                      translations: { ...q.translations, en: e.target.value },
+                    })
+                  }
+                />
+                <TextField
+                  label={t('responseCost')}
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={q.cost ?? 1}
+                  onChange={(e) => setQuestion(index, { ...q, cost: Number(e.target.value) })}
+                />
+                <fieldset
+                  disabled={questionReferenced(input.bundle, q.id)}
+                  className="m-0 border-0 p-0"
+                >
+                  <SelectField
+                    label={t('answerType')}
+                    value={q.kind}
+                    options={(['number', 'boolean', 'choice'] as const).map((value) => ({
+                      value,
+                      label: t(value),
+                    }))}
+                    onChange={(kind) => {
+                      const next = { ...q, kind };
+                      delete next.minimum;
+                      delete next.maximum;
+                      delete next.choices;
+                      if (kind === 'number') {
+                        next.minimum = 0;
+                        next.maximum = 120;
+                      }
+                      if (kind === 'choice') next.choices = [t('newChoice')];
+                      setQuestion(index, next);
+                    }}
+                  />
+                </fieldset>
+                <p className="text-sm text-text-2">{t('usageHelp')}</p>
+                {questionUsage(input.bundle, q.id).map((usage, i) => (
+                  <p key={i}>
+                    {usage.route}
+                    {t('separator')}
+                    {usage.label}
+                    {t('separator')}
+                    {t(usage.reason)}
+                  </p>
+                ))}
+                {!questionUsage(input.bundle, q.id).length && <p>{t('unusedQuestion')}</p>}
                 {q.kind === 'number' && (
                   <div className="grid gap-3 sm:grid-cols-2">
                     <TextField
@@ -241,24 +346,76 @@ function DraftEditor({
                   </div>
                 )}
                 {q.choices?.map((choice, i) => (
-                  <TextField
-                    key={i}
-                    label={t('choice')}
-                    value={choice}
-                    onChange={(e) =>
+                  <div key={i} className="flex items-end gap-2">
+                    <TextField
+                      label={t('choice')}
+                      value={choice}
+                      onChange={(e) =>
+                        setQuestion(index, {
+                          ...q,
+                          choices: q.choices?.map((v, n) => (n === i ? e.target.value : v)) ?? [],
+                        })
+                      }
+                    />
+                    <Button
+                      variant="outline"
+                      disabled={(q.choices?.length ?? 0) <= 1}
+                      onClick={() =>
+                        setQuestion(index, {
+                          ...q,
+                          choices: q.choices?.filter((_, n) => n !== i) ?? [],
+                        })
+                      }
+                    >
+                      {t('removeChoice')}
+                    </Button>
+                  </div>
+                ))}
+                {q.kind === 'choice' && (
+                  <Button
+                    variant="outline"
+                    onClick={() =>
                       setQuestion(index, {
                         ...q,
-                        choices: q.choices?.map((v, n) => (n === i ? e.target.value : v)) ?? [],
+                        choices: [
+                          ...(q.choices ?? []),
+                          `${t('newChoice')} ${String((q.choices?.length ?? 0) + 1)}`,
+                        ],
                       })
                     }
-                  />
-                ))}
+                  >
+                    {t('addChoice')}
+                  </Button>
+                )}
+                <TogglePill
+                  label={t('conditionalQuestion')}
+                  checked={!!q.show_if}
+                  onChange={(checked) => {
+                    const next = { ...q };
+                    const parent = input.bundle.questions.find((v) => v.id !== q.id);
+                    if (checked && parent) next.show_if = conditionOf(parent);
+                    else delete next.show_if;
+                    setQuestion(index, next);
+                  }}
+                />
                 {q.show_if && (
                   <RuleEditor
                     questions={input.bundle.questions.filter((other) => other.id !== q.id)}
                     condition={q.show_if}
                     onChange={(show_if) => setQuestion(index, { ...q, show_if })}
                   />
+                )}
+                <Button
+                  variant="outline"
+                  disabled={
+                    input.bundle.questions.length <= 1 || questionReferenced(input.bundle, q.id)
+                  }
+                  onClick={() => update(removeQuestion(input, q.id))}
+                >
+                  {t('removeQuestion')}
+                </Button>
+                {questionReferenced(input.bundle, q.id) && (
+                  <p className="text-sm text-text-2">{t('removeReferencesFirst')}</p>
                 )}
               </div>
             </details>
@@ -268,6 +425,7 @@ function DraftEditor({
             <details key={r.id} className="rounded-2xl border border-hair p-4">
               <summary className="min-h-11 cursor-pointer">{r.name}</summary>
               <div className="flex flex-col gap-3">
+                <p>{t('stableIdentity', { id: r.id })}</p>
                 <TextField
                   label={t('name')}
                   value={r.name}
@@ -299,8 +457,40 @@ function DraftEditor({
                         })
                       }
                     />
+                    <Button
+                      variant="outline"
+                      disabled={r.requirements.length <= 1}
+                      onClick={() =>
+                        setRoute(index, {
+                          ...r,
+                          requirements: r.requirements.filter((_, i) => i !== n),
+                        })
+                      }
+                    >
+                      {t('removeRequirement')}
+                    </Button>
                   </div>
                 ))}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const first = input.bundle.questions[0];
+                    if (first)
+                      setRoute(index, {
+                        ...r,
+                        requirements: [
+                          ...r.requirements,
+                          {
+                            id: nextId('requirement', r.requirements),
+                            label: t('newRequirement'),
+                            condition: conditionOf(first),
+                          },
+                        ],
+                      });
+                  }}
+                >
+                  {t('addRequirement')}
+                </Button>
                 {r.pass_mark !== undefined && (
                   <TextField
                     type="number"
@@ -318,6 +508,18 @@ function DraftEditor({
                       const next = { ...r };
                       if (e.target.value === '') delete next.score_cap;
                       else next.score_cap = Number(e.target.value);
+                      setRoute(index, next);
+                    }}
+                  />
+                )}
+                {!!r.scores?.length && (
+                  <TogglePill
+                    label={t('usePassMark')}
+                    checked={r.pass_mark !== undefined}
+                    onChange={(checked) => {
+                      const next = { ...r };
+                      if (checked) next.pass_mark = 0;
+                      else delete next.pass_mark;
                       setRoute(index, next);
                     }}
                   />
@@ -398,10 +600,93 @@ function DraftEditor({
                             })
                           }
                         />
+                        <Button
+                          variant="outline"
+                          disabled={criterion.bands.length <= 1}
+                          onClick={() =>
+                            setRoute(index, {
+                              ...r,
+                              scores:
+                                r.scores?.map((v, i) =>
+                                  i === n ? { ...v, bands: v.bands.filter((_, j) => j !== k) } : v,
+                                ) ?? [],
+                            })
+                          }
+                        >
+                          {t('removeBand')}
+                        </Button>
                       </div>
                     ))}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const first = input.bundle.questions[0];
+                        if (first)
+                          setRoute(index, {
+                            ...r,
+                            scores:
+                              r.scores?.map((v, i) =>
+                                i === n
+                                  ? {
+                                      ...v,
+                                      bands: [
+                                        ...v.bands,
+                                        {
+                                          id: nextId('band', v.bands),
+                                          points: 0,
+                                          condition: conditionOf(first),
+                                        },
+                                      ],
+                                    }
+                                  : v,
+                              ) ?? [],
+                          });
+                      }}
+                    >
+                      {t('addBand')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const next = { ...r, scores: r.scores?.filter((_, i) => i !== n) ?? [] };
+                        if (!next.scores.length) {
+                          delete next.pass_mark;
+                          delete next.score_cap;
+                        }
+                        setRoute(index, next);
+                      }}
+                    >
+                      {t('removeScore')}
+                    </Button>
                   </div>
                 ))}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const first = input.bundle.questions[0];
+                    if (first)
+                      setRoute(index, {
+                        ...r,
+                        scores: [
+                          ...(r.scores ?? []),
+                          {
+                            id: nextId('score', r.scores ?? []),
+                            label: t('newScore'),
+                            bands: [{ id: 'band-1', points: 0, condition: conditionOf(first) }],
+                          },
+                        ],
+                      });
+                  }}
+                >
+                  {t('addScore')}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={input.bundle.routes.length <= 1}
+                  onClick={() => update(removeRoute(input, r.id))}
+                >
+                  {t('removeRoute')}
+                </Button>
               </div>
             </details>
           ))}
@@ -624,9 +909,39 @@ function DraftEditor({
                     </div>
                   );
                 })}
+                <Button
+                  variant="outline"
+                  disabled={input.scenarios.length <= 1}
+                  onClick={() =>
+                    update({ ...input, scenarios: input.scenarios.filter((_, i) => i !== index) })
+                  }
+                >
+                  {t('removeScenario')}
+                </Button>
               </div>
             </details>
           ))}
+          <Button
+            variant="outline"
+            onClick={() =>
+              update({
+                ...input,
+                scenarios: [
+                  ...input.scenarios,
+                  {
+                    name: `${t('newScenario')} ${String(input.scenarios.length + 1)}`,
+                    assessment_date: input.scenarios[0]?.assessment_date ?? '',
+                    answers: {},
+                    expected: input.bundle.routes.map((r) =>
+                      blankExpected(r.id, !!r.scores?.length),
+                    ),
+                  },
+                ],
+              })
+            }
+          >
+            {t('addScenario')}
+          </Button>
           {!locked && (
             <Button
               disabled={mutation.isPending || !input.key || !input.title}
@@ -637,12 +952,38 @@ function DraftEditor({
           )}
         </fieldset>
         {dirty && <Notice tone="info">{t('unsaved')}</Notice>}
+        {draft?.scheduled_at && (
+          <Notice tone="info">{t('scheduledFor', { time: f.dateTime(draft.scheduled_at) })}</Notice>
+        )}
+        {draft?.state === 'approved' && !draft.is_active && options.permissions.publish && (
+          <TextField
+            type="datetime-local"
+            label={t('publishAt')}
+            hint={t('deviceTimezone')}
+            value={publishAt}
+            onChange={(e) => setPublishAt(e.target.value)}
+          />
+        )}
+        {draft?.state === 'review' && options.permissions.review && (
+          <TextAreaField
+            label={t('reviewNote')}
+            value={reviewNote}
+            maxLength={2000}
+            onChange={(e) => setReviewNote(e.target.value)}
+          />
+        )}
         <div className="flex flex-wrap gap-3">
           {permitted.map((action) => (
             <Button
               key={action}
               variant="outline"
-              disabled={dirty || mutation.isPending}
+              disabled={
+                dirty ||
+                mutation.isPending ||
+                (action === 'reject' && !reviewNote.trim()) ||
+                (action === 'schedule' &&
+                  (!publishAt || !Number.isFinite(new Date(publishAt).getTime())))
+              }
               onClick={() => mutation.mutate(action)}
             >
               {t(action)}
@@ -677,6 +1018,13 @@ function DraftEditor({
           {draft.last_run.report.map((row) => (
             <div key={row.name} className="overflow-x-auto">
               <h3>{row.name}</h3>
+              {!!row.before_incompatible_answers?.length && (
+                <Notice tone="warn">
+                  {t('incompatibleBaseline', {
+                    questions: row.before_incompatible_answers.join(t('separator')),
+                  })}
+                </Notice>
+              )}
               <table className="w-full min-w-[640px] text-start">
                 <thead>
                   <tr>
@@ -722,6 +1070,7 @@ function DraftEditor({
           ))}
         </SectionCard>
       )}
+      {draft && <ContentComparison comparison={draft.comparison} />}
       {draft && (
         <SectionCard id="assessment-audit" title={t('history')} variant="panel">
           {draft.events.map((event) => (
@@ -731,6 +1080,9 @@ function DraftEditor({
                 actor: f.number(event.actor_id),
                 revision: f.number(event.revision),
               })}
+              {event.detail?.note && (
+                <span className="block whitespace-pre-wrap">{event.detail.note}</span>
+              )}
             </p>
           ))}
         </SectionCard>

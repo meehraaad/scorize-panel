@@ -5,7 +5,7 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router';
-import { draftsQuery, optionsQuery } from '@/features/assessments/api';
+import { draftsQuery, healthQuery, optionsQuery } from '@/features/assessments/api';
 import { ApiError, api } from '@/lib/api/client';
 import type { SessionUser } from '@/lib/auth/session';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
@@ -203,7 +203,7 @@ const pageRoutes: RouteObject[] = [
             {
               index: true,
               ...lazyPage(() => import('@/features/assessments/ManagementPage'), ['assessments'], {
-                data: () => [draftsQuery(), optionsQuery],
+                data: () => [draftsQuery(), optionsQuery, healthQuery],
                 skeleton: 'form',
               }),
             },
