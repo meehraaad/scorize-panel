@@ -20,6 +20,11 @@ const EnterStageDialog = lazy(() =>
   import('./EnterStageDialog').then((module) => ({ default: module.EnterStageDialog })),
 );
 
+// Opens on a click: the meeting window (its week of rooms) is not part of the page's first load.
+const VisitDialog = lazy(() =>
+  import('./VisitDialog').then((module) => ({ default: module.VisitDialog })),
+);
+
 // Opens on a click: the date picker it uses is not part of the page's first load.
 const FollowUpDialog = lazy(() =>
   import('./FollowUpDialog').then((module) => ({ default: module.FollowUpDialog })),
@@ -93,11 +98,12 @@ export function CustomerHead({
             <button
               type="button"
               onClick={() => onLog('call')}
-              className={buttonClass('premium', 'h-13 max-sm:col-span-3', 'lg')}
+              className={buttonClass('premium', 'h-13 max-sm:col-span-2', 'lg')}
             >
               <Icon name="phone" size={19} />
               {t('customer.log')}
             </button>
+            <VisitButton customer={customer} />
             <WhatsAppButton customer={customer} />
             <NewSaleMenu onSell={onSell} onContract={onContract} />
             {side && (
@@ -244,6 +250,30 @@ function Menu({
         {children}
       </div>
     </details>
+  );
+}
+
+/** "In-person": set a meeting at the office in a free room (S75). */
+function VisitButton({ customer }: { customer: CustomerData }) {
+  const { t } = useTranslation('sales');
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={t('visit.openAria', { name: customer.name })}
+        className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
+      >
+        <Icon name="building" size={17} />
+        <span className="max-sm:sr-only">{t('visit.open')}</span>
+      </button>
+      {open && (
+        <Suspense fallback={null}>
+          <VisitDialog open customer={customer} onClose={() => setOpen(false)} />
+        </Suspense>
+      )}
+    </>
   );
 }
 

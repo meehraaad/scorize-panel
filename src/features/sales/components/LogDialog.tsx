@@ -1,4 +1,4 @@
-import { Fragment, useId, useState, type ReactNode, type SubmitEvent } from 'react';
+import { Fragment, lazy, Suspense, useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -32,6 +32,11 @@ import { StageStrip } from './StageStrip';
 import { transcribeVoice, voiceCapabilityQuery } from '@/lib/sales/voice';
 import { useVoiceOwner } from '@/lib/voice/lease';
 import { VoiceTextAreaField } from '@/components/voice/VoiceField';
+
+// Opens on a click: the meeting window (its week of rooms) is not part of the popup's load.
+const VisitDialog = lazy(() =>
+  import('./VisitDialog').then((module) => ({ default: module.VisitDialog })),
+);
 
 /** How a contact happened, picked by hand (a message is logged from the message buttons). */
 const CHANNELS = ['call', 'meeting'] as const satisfies readonly Channel[];
@@ -99,6 +104,7 @@ export function LogDialog({
   const [checked, setChecked] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [visiting, setVisiting] = useState(false);
   /** A live (or just ended) office call: the channel is the phone and the strip names the call. */
   const liveCall = draft.call;
 
@@ -302,6 +308,25 @@ export function LogDialog({
         <p role="alert" className="m-0 -mt-2 text-sm text-danger">
           {t('customer.logDialog.followDate')}
         </p>
+      )}
+      {talked && !lost && (
+        <button
+          type="button"
+          onClick={() => setVisiting(true)}
+          className="-mt-1 inline-flex min-h-11 items-center gap-2 self-start rounded-full px-1 text-sm font-semibold text-primary-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          <Icon name="building" size={16} />
+          {t('visit.fromCall')}
+        </button>
+      )}
+      {visiting && (
+        <Suspense fallback={null}>
+          <VisitDialog
+            open
+            customer={{ id: customer.id, name: customer.name }}
+            onClose={() => setVisiting(false)}
+          />
+        </Suspense>
       )}
       <Dialog
         open={picking}
