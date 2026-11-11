@@ -2753,7 +2753,7 @@
     "openAria": "In-person meeting with {{name}}",
     "fromCall": "Invite to an in-person meeting",
     "onCalendar": "In-person meeting",
-    "hint": "Tap a free time. Grey means every room is taken; the other blocks are your own sessions and follow-ups.",
+    "hint": "Tap an hour. Each office hour shows in its corner how many rooms are free; grey means every room is taken. The other blocks are your own sessions and follow-ups.",
     "roomsFull": "Every room is taken at this time.",
     "roomsFullShort": "Rooms full",
     "closed": "The office is closed at this time.",

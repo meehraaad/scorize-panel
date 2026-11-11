@@ -30,6 +30,9 @@ describe('sales: an in-person meeting at the office (S75)', () => {
     const dialog = await screen.findByRole('dialog', { name: /^جلسه حضوری با / });
     const calendar = await within(dialog).findByRole('region', { name: 'ساعت‌های جلسه حضوری' });
 
+    // Every free office hour says how many rooms are free (two in the mock office).
+    expect((await within(calendar).findAllByText('۲ اتاق خالی')).length).toBeGreaterThan(5);
+
     // Tomorrow 10:00: every room is taken, on the seller's own week.
     const full = await within(calendar).findByRole('button', {
       name: /۱۰:۰۰، در این ساعت همه‌ی اتاق‌ها پر است/,

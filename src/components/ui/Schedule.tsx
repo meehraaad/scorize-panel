@@ -51,6 +51,16 @@ export interface ScheduleItem {
   movable?: boolean | undefined;
 }
 
+/**
+ * A quiet note behind a stretch of a day ("2 rooms free"): drawn under the blocks, never picked,
+ * not read out (say the same in the schedule's hint or the blocks' labels).
+ */
+export interface ScheduleMark {
+  start: Date;
+  minutes: number;
+  label: string;
+}
+
 /** A row above the hours with a brief of each day (its tasks), like a calendar app's all-day row. */
 export interface DayRow {
   /** Beside the row, and read out for it ("Tasks"). */
@@ -167,6 +177,8 @@ export interface ScheduleProps {
   onMove?: ((id: string, start: Date) => void) | undefined;
   /** Minutes the picked and dropped times snap to. */
   snap?: number;
+  /** Quiet notes behind the blocks (each free hour's rooms); this week's are drawn. */
+  marks?: readonly ScheduleMark[] | undefined;
 }
 
 const DEFAULT_FROM = 9;
@@ -269,6 +281,7 @@ export function Schedule({
   onSlotPick,
   onMove,
   snap = 15,
+  marks = [],
 }: ScheduleProps) {
   const [now] = useState(() => givenNow ?? new Date());
   const root = useRef<HTMLElement>(null);
@@ -294,6 +307,7 @@ export function Schedule({
     daySummary,
     onSlotPick,
     snap,
+    marks,
     onDrop: onMove
       ? (item: ScheduleItem, column: number, minutes: number) => {
           const day = days[column]?.date;
@@ -339,6 +353,7 @@ interface ViewProps {
   daySummary: (day: ScheduleDay) => string;
   onSlotPick: ((start: Date) => void) | undefined;
   snap: number;
+  marks: readonly ScheduleMark[];
   /** A movable block let go over a column (its index in `days`) at that many minutes into the day. */
   onDrop: ((item: ScheduleItem, column: number, minutes: number) => void) | undefined;
 }
@@ -400,6 +415,42 @@ function SlotPicker({
       )}
     </button>
   );
+}
+
+/** A day's marks, under its blocks. */
+function Marks({
+  marks,
+  day,
+  from,
+  to,
+  hour,
+}: {
+  marks: readonly ScheduleMark[];
+  day: Date;
+  from: number;
+  to: number;
+  hour: number;
+}) {
+  return marks
+    .filter(
+      (mark) =>
+        sameDay(mark.start, day) &&
+        minutesOf(mark.start) >= from * 60 &&
+        minutesOf(mark.start) < to * 60,
+    )
+    .map((mark) => (
+      <span
+        key={mark.start.getTime()}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0.5 flex items-start justify-end overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--cal-7)_7%,transparent)] px-1.5 pt-0.5 text-[10px] leading-4 font-semibold text-text-3 tabular-nums"
+        style={{
+          top: ((minutesOf(mark.start) - from * 60) / 60) * hour + 1,
+          height: Math.max((mark.minutes / 60) * hour - 2, MIN_BLOCK),
+        }}
+      >
+        {mark.label}
+      </span>
+    ));
 }
 
 function Block({
@@ -529,6 +580,7 @@ function Week({
   emptyColumn,
   onSlotPick,
   snap,
+  marks,
   onDrop,
 }: ViewProps & { hour: number; emptyColumn: (date: Date, today: Date) => string }) {
   const f = useFormat();
@@ -647,6 +699,7 @@ function Week({
                   onPick={onSlotPick}
                 />
               )}
+              {!loading && <Marks marks={marks} day={day.date} from={from} to={to} hour={hour} />}
               {narrow && (
                 <span className="pointer-events-none absolute inset-x-1 top-3 text-center text-[11px] leading-5 font-semibold text-text-3">
                   {emptyColumn(day.date, today)}
@@ -722,6 +775,7 @@ function Day({
   emptyDay,
   onSlotPick,
   snap,
+  marks,
   onDrop,
 }: ViewProps & {
   hour: number;
@@ -866,6 +920,7 @@ function Day({
                 onPick={onSlotPick}
               />
             )}
+            <Marks marks={marks} day={current.date} from={from} to={to} hour={hour} />
             {layOut(current.items).map(({ item, lane, lanes }) => (
               <Block
                 key={item.id}

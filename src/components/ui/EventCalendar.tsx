@@ -2,9 +2,15 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { Schedule, type BlockShape, type DayRow, type ScheduleItem } from './Schedule';
+import {
+  Schedule,
+  type BlockShape,
+  type DayRow,
+  type ScheduleItem,
+  type ScheduleMark,
+} from './Schedule';
 
-export type { DayRow } from './Schedule';
+export type { DayRow, ScheduleMark } from './Schedule';
 
 /** How an event looks: its state, as a calendar app shows it. */
 export type EventLook = 'done' | 'need' | 'live' | 'soon' | 'upcoming' | 'call';
@@ -58,6 +64,8 @@ interface EventCalendarProps {
   /** One hour's height, px, wide and narrow (smaller inside a dialog). */
   hourHeight?: number;
   narrowHourHeight?: number;
+  /** Quiet notes behind the events (each free hour's rooms, see `Schedule`). */
+  marks?: readonly ScheduleMark[] | undefined;
 }
 
 const LOOK: Record<EventLook, string> = {
@@ -131,6 +139,7 @@ export function EventCalendar({
   onMove,
   hourHeight,
   narrowHourHeight,
+  marks,
 }: EventCalendarProps) {
   const { t } = useTranslation();
   const f = useFormat();
@@ -158,6 +167,7 @@ export function EventCalendar({
       )}
       onSlotPick={onSlotPick}
       onMove={onMove}
+      marks={marks}
       {...(now ? { now } : {})}
       {...(hourHeight ? { hourHeight } : {})}
       {...(narrowHourHeight ? { narrowHourHeight } : {})}

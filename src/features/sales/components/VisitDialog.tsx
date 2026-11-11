@@ -320,6 +320,13 @@ function VisitForm({
           hourHeight={44}
           narrowHourHeight={52}
           onSlotPick={pick}
+          marks={times
+            .filter((slot) => slot.left > 0 && slot.at !== at)
+            .map((slot) => ({
+              start: new Date(slot.at),
+              minutes,
+              label: t('visit.roomsLeft', { count: slot.left, n: f.number(slot.left) }),
+            }))}
         />
       </div>
       {checked && !at && (
