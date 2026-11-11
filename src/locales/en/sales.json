@@ -1863,6 +1863,12 @@
         "max_appliesHint": "Sellers can't write more.",
         "discounts": "Discounts a seller picks from",
         "durations": "Contract length",
+        "countries": "Countries of this contract",
+        "countriesAll": "Every country. Choose countries to limit it.",
+        "countriesOnly": "Only the {{n}} chosen; a seller can't write another country.",
+        "degrees": "Degrees of this contract",
+        "degreesAll": "Every degree. Choose degrees to limit it.",
+        "degreesOnly": "Only the {{n}} chosen; a seller can't write another degree.",
         "percent": "{{n}}%",
         "months": "{{n}} months",
         "saved": "Rules saved."

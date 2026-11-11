@@ -72,7 +72,11 @@ const firstFeature = (options: OfferOptions): ContractFeature[] =>
 const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => ({
   template: options.template,
   features: firstFeature(options),
-  degree: customer.headline.degree ?? options.degrees[0] ?? 2,
+  // The customer's wanted degree, unless this kind of contract isn't offered for it (S73).
+  degree:
+    customer.headline.degree !== null && options.degrees.includes(customer.headline.degree)
+      ? customer.headline.degree
+      : (options.degrees[0] ?? 2),
   applies: 6,
   start: nextMonth(),
   months: options.durations.includes(12) ? 12 : (options.durations[0] ?? 12),
