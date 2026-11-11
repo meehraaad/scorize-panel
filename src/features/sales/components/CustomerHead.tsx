@@ -8,7 +8,7 @@ import { SheetButton } from '@/components/ui/Sheet';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { MESSAGE_CHANNELS, SALES_API, type Channel } from '@/lib/sales/api';
+import { messageHref, SALES_API, type Channel } from '@/lib/sales/api';
 import { customerKey, useMoveBoardCard, type CustomerData, type MoveSteps } from '../api';
 import { boardMoveTargets, laneOf, lanesOf, type Lane } from '../boardLanes';
 import { useSalesFormat } from '../format';
@@ -98,7 +98,7 @@ export function CustomerHead({
               <Icon name="phone" size={19} />
               {t('customer.log')}
             </button>
-            <MessageMenu onLog={onLog} />
+            <WhatsAppButton customer={customer} />
             <NewSaleMenu onSell={onSell} onContract={onContract} />
             {side && (
               <SheetButton
@@ -247,18 +247,23 @@ function Menu({
   );
 }
 
-/** "Message ▾": WhatsApp, Telegram or SMS, each opening the contact log on that channel. */
-function MessageMenu({ onLog }: { onLog: (channel: Channel) => void }) {
+/**
+ * "Message": opens WhatsApp with the customer's chat and the first ready message (S7) typed in,
+ * in one click. Telegram, SMS and logging a message stay in the contact log ("Log a contact").
+ */
+function WhatsAppButton({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
   return (
-    <Menu label={t('customer.message')} icon="chat">
-      {MESSAGE_CHANNELS.map((channel) => (
-        <button key={channel} type="button" className={menuItem} onClick={() => onLog(channel)}>
-          <Icon name={channel === 'sms' ? 'chat' : 'send'} size={17} />
-          {t(`channel.${channel}`)}
-        </button>
-      ))}
-    </Menu>
+    <a
+      href={messageHref('whatsapp', customer.phone, customer.templates[0]?.text)}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={t('messageTo', { channel: t('channel.whatsapp'), name: customer.name })}
+      className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
+    >
+      <Icon name="send" size={17} />
+      {t('channel.whatsapp')}
+    </a>
   );
 }
 
