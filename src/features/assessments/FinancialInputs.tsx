@@ -88,7 +88,7 @@ export function FinancialInputs({
                 type="number"
                 min={field === 'dependants' ? 0 : 1}
                 max={field === 'dependants' ? 30 : 31}
-                value={value[field]?.value ?? ''}
+                value={value[field].value ?? ''}
                 onChange={(e) =>
                   onChange({
                     ...value,
