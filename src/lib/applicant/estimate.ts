@@ -80,6 +80,12 @@ export interface EstimateAnswers {
   referral?: Referral;
 }
 
+/** Work-only intent needs no academic facts and grants no contact permission by default. */
+export interface WorkInquiry extends Pick<EstimateAnswers, 'contact' | 'referral'> {
+  goal: 'work';
+  gpa?: never;
+}
+
 /** How a band reads as a status pill. */
 /** How long a country's bar is when the server sends a level, not a percentage. */
 export const BAND_BAR: Record<Band, number> = { high: 85, medium: 55, low: 25 };
@@ -142,6 +148,7 @@ export interface CountryEstimate {
 }
 
 export interface EstimateResult {
+  assessment_scope?: 'academic_admission' | 'work_not_supported';
   id: number;
   created_at: string;
   /** Best chance first. */
@@ -177,7 +184,7 @@ export const ANSWERED_CONTACT_KEY = [...KEY, 'answeredContact'] as const;
 export function useSubmitEstimate() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (answers: EstimateAnswers) =>
+    mutationFn: (answers: EstimateAnswers | WorkInquiry) =>
       api<EstimateResult>(`${BASE}/`, { method: 'POST', body: answers }),
     onSuccess: (result, answers) => {
       client.setQueryData(latestEstimateQuery.queryKey, result);

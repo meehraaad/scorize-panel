@@ -5,7 +5,8 @@ import i18n from '@/lib/i18n';
 import { accountOf } from '@/mocks/account';
 import { estimateAnswers, estimateStarts } from '@/mocks/estimate';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
+import { http, HttpResponse } from 'msw';
 import { onDesktop } from '@/test/viewport';
 
 // The quiz isn't on the server yet (src/lib/applicant/onServer.ts): switch everything on.
@@ -243,7 +244,7 @@ describe('admission-chance quiz', () => {
     loginAs(MARYAM);
     renderApp('/estimate');
     await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
-    await user.click(screen.getByRole('radio', { name: /کار یا زندگی/ }));
+    await user.click(screen.getByRole('radio', { name: /هر دو/ }));
     await user.click(next());
 
     await user.click(next());
@@ -261,7 +262,7 @@ describe('admission-chance quiz', () => {
 
     // Each answered step, beside the questions.
     const summary = screen.getByRole('region', { name: 'پاسخ‌های تا اینجا' });
-    expect(within(summary).getByText('کار یا زندگی')).toBeInTheDocument();
+    expect(within(summary).getByText('هر دو')).toBeInTheDocument();
     expect(within(summary).getByText('مهندسی')).toBeInTheDocument();
     expect(within(summary).getByText('۱۸ از ۲۰')).toBeInTheDocument();
 
@@ -363,4 +364,42 @@ describe('admission-chance quiz', () => {
     await user.click(next());
     expect(screen.getByRole('checkbox', { name: 'ایتالیا' })).toBeChecked();
   });
+});
+
+it('does not present academic admission chances for a work-only goal', async () => {
+  onDesktop();
+  const user = userEvent.setup();
+  localStorage.clear();
+  loginAs(MARYAM);
+  await i18n.changeLanguage('fa');
+  renderApp('/estimate');
+  await screen.findByRole('heading', { name: 'برای چه می‌خواهید بروید؟' });
+  await user.click(screen.getByRole('radio', { name: /کار یا زندگی/ }));
+  expect(screen.getByText(/این پرسش‌نامه فقط پذیرش تحصیلی را تخمین می‌زند/)).toBeInTheDocument();
+  expect(
+    screen.queryByRole('group', { name: 'مقطعی که می‌خواهید بخوانید' }),
+  ).not.toBeInTheDocument();
+  await user.click(next());
+  await screen.findByText('برای هدف کاری، شانس پذیرش محاسبه نشد');
+  expect(screen.queryByText('هنوز داده‌ی کافی نداریم')).not.toBeInTheDocument();
+  expect(estimateAnswers.at(-1)).toEqual({ goal: 'work', contact: { channel: 'none' } });
+});
+
+it('keeps the explicit unsupported-work scope when a phone resumes the result', async () => {
+  localStorage.clear();
+  loginAs(MARYAM);
+  await i18n.changeLanguage('fa');
+  server.use(
+    http.get('/api/applicant/v1/estimate/latest/', () =>
+      HttpResponse.json({
+        id: 88,
+        created_at: '2026-11-12T09:00:00Z',
+        countries: [],
+        assessment_scope: 'work_not_supported',
+      }),
+    ),
+  );
+  renderApp('/');
+  await screen.findByRole('heading', { name: 'برای هدف کاری، شانس پذیرش محاسبه نشد' });
+  expect(screen.queryByText('هنوز داده‌ی کافی نداریم')).not.toBeInTheDocument();
 });

@@ -61,14 +61,22 @@ export function Result({
             <EmptyState
               variant="card"
               icon="info"
-              title={t('result.emptyTitle')}
+              title={t(
+                result.assessment_scope === 'work_not_supported'
+                  ? 'result.workTitle'
+                  : 'result.emptyTitle',
+              )}
               action={
                 <a href={SITE.consultation} className={buttonClass('primary')}>
                   {t('result.consult')}
                 </a>
               }
             >
-              {t('result.empty')}
+              {t(
+                result.assessment_scope === 'work_not_supported'
+                  ? 'result.workText'
+                  : 'result.empty',
+              )}
             </EmptyState>
           )}
           {best &&
