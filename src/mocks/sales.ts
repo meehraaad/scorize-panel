@@ -16,6 +16,7 @@ import type {
   TodayData,
 } from '@/features/sales/api';
 import type { MonthData } from '@/features/sales/api/month';
+import type { CustomerInstalment } from '@/features/sales/api/payments';
 import { type Degree, type LeadSource, type LeadStage, type LostReason } from '@/lib/sales/api';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { staffData } from './staff';
@@ -545,6 +546,8 @@ export interface SalesState {
   /** The manager's comment on a returned offer, by customer. */
   returnComments: Map<number, string>;
   stages: MockStage[];
+  /** Receipts sellers recorded on instalments (sales/v1/tabs.py InstalmentReceiptView), by instalment. */
+  instalmentReceipts: Map<number, 'review' | 'paid'>;
 }
 
 const salesState = (): SalesState => ({
@@ -554,6 +557,7 @@ const salesState = (): SalesState => ({
   offerStates: new Map(),
   returnComments: new Map(),
   stages: defaultStages(),
+  instalmentReceipts: new Map(),
 });
 
 let state: SalesState | null = null;
@@ -920,6 +924,73 @@ export function monthOf(data: SalesState, month?: string): MonthData {
       { source: 'chance_estimate', leads: 7, won: 0 },
     ],
   };
+}
+
+/**
+ * A customer's contract instalments on the payments tab (`customer_instalments`): the prepayment, paid, then the
+ * month's two. Erfan and the won customers have a case.
+ */
+export function customerInstalments(data: SalesState, customer: number): CustomerInstalment[] {
+  const item = data.customers.find((row) => row.id === customer);
+  if (!item || (item.id !== ERFAN && item.lead.stage !== 'won')) return [];
+  const today = new Date();
+  const rows: Omit<CustomerInstalment, 'review'>[] = [
+    {
+      id: customer * 10 + 1,
+      customer,
+      name: item.name,
+      title: 'پیش‌پرداخت',
+      amount: 50_000_000,
+      amount_text: null,
+      due: toDay(new Date(today.getTime() - 30 * DAY)),
+      condition: null,
+      state: 'paid',
+    },
+    {
+      id: customer * 10 + 2,
+      customer,
+      name: item.name,
+      title: 'قسط دوم',
+      amount: 40_000_000,
+      amount_text: null,
+      due: toDay(new Date(today.getTime() - 2 * DAY)),
+      condition: null,
+      state: 'overdue',
+    },
+    {
+      id: customer * 10 + 3,
+      customer,
+      name: item.name,
+      title: 'بعد از پذیرش',
+      amount: 30_000_000,
+      amount_text: null,
+      due: null,
+      condition: 'بعد از پذیرش',
+      state: 'waiting',
+    },
+  ];
+  return rows.map((row) => {
+    const receipt = data.instalmentReceipts.get(row.id);
+    return {
+      ...row,
+      state: receipt === 'paid' ? 'paid' : row.state,
+      review: receipt === 'review',
+    };
+  });
+}
+
+/** A seller's receipt on an instalment: 404 for none, 409 when paid or one is in review. */
+export function recordInstalmentReceipt(
+  data: SalesState,
+  id: number,
+  confirms: boolean,
+): { status: 'paid' | 'review'; payment: number } | 404 | 409 {
+  const row = customerInstalments(data, Math.floor(id / 10)).find((item) => item.id === id);
+  if (!row) return 404;
+  if (row.state === 'paid' || row.review) return 409;
+  const status = confirms ? 'paid' : 'review';
+  data.instalmentReceipts.set(id, status);
+  return { status, payment: 9000 + id };
 }
 
 /** Today's instalments: the unpaid ones with a date, as `today/insights/` sends them. */

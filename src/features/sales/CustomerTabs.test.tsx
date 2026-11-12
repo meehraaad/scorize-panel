@@ -52,6 +52,30 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(await toasts().findByText('رسید رد شد و برای مشتری پیامک رفت.')).toBeInTheDocument();
   });
 
+  it('payments: records a receipt the customer sent on an instalment, for review', async () => {
+    const user = userEvent.setup();
+    renderApp(`${ERFAN}/money`);
+    const card = await screen.findByRole('region', { name: 'قسط‌های قرارداد' });
+    // The paid prepayment has nothing to record.
+    expect(
+      within(card).queryByRole('button', { name: 'ثبت رسید پیش‌پرداخت' }),
+    ).not.toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'ثبت رسید قسط دوم' }));
+    const form = within(card).getByRole('form', { name: 'رسید قسط دوم' });
+    await user.click(within(form).getByRole('button', { name: 'ثبت رسید' }));
+    expect(within(form).getByText('اول فایل رسید را انتخاب کنید.')).toBeInTheDocument();
+    await user.upload(
+      within(form).getByLabelText('فایل رسید'),
+      new File(['%PDF-1.4'], 'receipt.pdf', { type: 'application/pdf' }),
+    );
+    await user.click(within(form).getByRole('button', { name: 'ثبت رسید' }));
+    expect(await toasts().findByText('رسید ثبت شد و منتظر تأیید مالی است.')).toBeInTheDocument();
+    expect(await within(card).findByText('رسید منتظر بررسی')).toBeInTheDocument();
+    expect(
+      within(card).queryByRole('button', { name: 'ثبت رسید قسط دوم' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('sells a product with a discount code and opens its invoice', async () => {
     const user = userEvent.setup();
     const router = renderApp(ERFAN);

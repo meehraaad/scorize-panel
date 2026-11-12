@@ -948,6 +948,32 @@
       "method": "Payment method changed.",
       "wallet": "Destination account changed.",
       "factor": "Invoice sent by SMS."
+    },
+    "instalments": {
+      "title": "Contract instalments",
+      "subtitleReview": "Record a receipt the customer sent you on its instalment; it goes to finance for review.",
+      "subtitlePaid": "Record a receipt the customer sent you on its instalment; recording it marks the instalment paid.",
+      "due": "Due {{date}}",
+      "review": "Receipt in review",
+      "record": "Record receipt",
+      "recordFor": "Record receipt for {{title}}",
+      "formLabel": "Receipt for {{title}}",
+      "wallet": "Which account was it paid into?",
+      "walletDefault": "Default account",
+      "file": "Receipt file",
+      "hint": "A photo or PDF of the receipt, up to {{size}}",
+      "choose": "Choose file",
+      "dropHint": "or drop the file here",
+      "dropHintTouch": "A photo or PDF from your phone",
+      "remove": "Remove file",
+      "tooBig": "This file is {{size}}; the limit is {{max}}.",
+      "badType": "Only images (JPG, PNG) or PDF.",
+      "pickFirst": "Choose the receipt file first.",
+      "submit": "Record receipt",
+      "sending": "Recording…",
+      "donePaid": "Receipt recorded and the instalment is paid.",
+      "doneReview": "Receipt recorded; waiting for finance to confirm.",
+      "failed": "Receipt not recorded"
     }
   },
   "info": {

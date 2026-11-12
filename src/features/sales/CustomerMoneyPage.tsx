@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { agreementQuery, paymentsQuery, purchasesQuery } from './api';
 import { AgreementDesk } from './components/AgreementDesk';
+import { CustomerInstalments } from './components/CustomerInstalments';
 import CustomerPaymentsPage from './CustomerPaymentsPage';
 import CustomerPurchasesPage from './CustomerPurchasesPage';
 import { useCustomerId } from './useCustomerId';
 
 /**
  * The "contract and money" tab: what the customer bought (consultations, writing, packages), then
- * their invoices and receipts, under the contract agreement desk while an offer is being agreed.
+ * their invoices and receipts, under the contract agreement desk while an offer is being agreed, and the
+ * contract's instalments, where a seller records a receipt the customer sent them.
  * One tab instead of two (canvas boards Money, EmptyMoney and AgreeSales).
  */
 export default function CustomerMoneyPage() {
@@ -22,7 +24,12 @@ export default function CustomerMoneyPage() {
   const { data: agreement } = useSuspenseQuery(agreementQuery(id));
   const [, setParams] = useSearchParams();
 
-  if (purchases.items.length === 0 && payments.results.length === 0 && !agreement)
+  if (
+    purchases.items.length === 0 &&
+    payments.results.length === 0 &&
+    payments.instalments.length === 0 &&
+    !agreement
+  )
     return (
       <EmptyState
         variant="card"
@@ -67,6 +74,7 @@ export default function CustomerMoneyPage() {
   return (
     <>
       <AgreementDesk customer={id} />
+      <CustomerInstalments data={payments} />
       <CustomerPurchasesPage />
       <CustomerPaymentsPage />
     </>

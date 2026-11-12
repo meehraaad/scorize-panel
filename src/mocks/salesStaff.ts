@@ -27,9 +27,9 @@ import { createCustomer, fetchLeads } from './legacy/leads';
 import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
 import { faceOf, putFace } from './face';
-import { failed, stateOrError } from './sales';
+import { customerInstalments, failed, recordInstalmentReceipt, stateOrError } from './sales';
 import { tagsOfCustomer } from './salesTags';
-import { pageOf, storage } from './session';
+import { notFound, pageOf, storage } from './session';
 import { overviewOf, taskListOf } from './tasks';
 
 /**
@@ -292,9 +292,35 @@ export const salesStaffHandlers = [
   http.get(`${BASE}/customers/:id/purchases/`, ({ params }) =>
     answer<PurchasesData>(() => fetchPurchases(id(params))),
   ),
-  http.get(`${BASE}/customers/:id/payments/`, ({ params }) =>
-    answer<PaymentsData>(() => fetchPayments(id(params))),
-  ),
+  http.get(`${BASE}/customers/:id/payments/`, ({ params }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    return answer<PaymentsData>(async () => ({
+      ...(await fetchPayments(id(params))),
+      instalments: customerInstalments(data, id(params)),
+      // Nima is a plain seller: a receipt he records waits for review.
+      confirms_receipts: false,
+    }));
+  }),
+  http.post(`${BASE}/instalments/:id/receipt/`, async ({ params, request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const receipt = (await request.formData()).get('receipt');
+    if (
+      !(receipt instanceof File) ||
+      receipt.size > 10 * 1024 * 1024 ||
+      !['application/pdf', 'image/jpeg', 'image/png'].includes(receipt.type)
+    )
+      return HttpResponse.json({ receipt: ['invalid'] }, { status: 400 });
+    const result = recordInstalmentReceipt(data, id(params), false);
+    if (result === 404) return notFound();
+    if (result === 409)
+      return HttpResponse.json(
+        { detail: 'A receipt of this instalment is waiting for review.', code: 'in_review' },
+        { status: 409 },
+      );
+    return HttpResponse.json(result, { status: 201 });
+  }),
   http.get(`${BASE}/customers/:id/info/`, ({ params }) =>
     answer<CustomerInfo>(() => fetchInfo(id(params))),
   ),
