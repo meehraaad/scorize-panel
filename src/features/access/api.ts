@@ -9,8 +9,8 @@ import type { Page } from '@/lib/api/page';
  * (user_profile/access_catalog.py names the keys).
  */
 const ACCESS_API = '/access/v1';
-/** Where the pages live: the sales panel's management area. */
-export const ACCESS_PATH = '/sales/manager/access';
+/** Where the pages live: the management panel (founders). */
+export const ACCESS_PATH = '/founders/access';
 export const ACCESS_KEY = ['access'] as const;
 
 export interface KeyArea {

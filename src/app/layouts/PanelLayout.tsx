@@ -61,7 +61,8 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const visible = {
     ...panel,
     navigation: panel.navigation.filter(
-      (item) => !hidden.has(item.id) && (!item.permission || hasAnyPermission(user, item.permission)),
+      (item) =>
+        !hidden.has(item.id) && (!item.permission || hasAnyPermission(user, item.permission)),
     ),
   };
   const panels = panelsFor(user);

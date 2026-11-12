@@ -1249,7 +1249,7 @@
     "amountManager": "This amount is outside the contract's range ({{range}}). It goes to the manager only and does not reach the customer until approved."
   },
   "manager": {
-    "nav": "Management sections",
+    "nav": "Sales management sections",
     "section": {
       "assign": "Lead assignment",
       "approvals": "Agreement desk",
@@ -1259,9 +1259,7 @@
       "tags": "Customer tags",
       "commission": "Commission",
       "contract": "Contract",
-      "phone": "Phone",
-      "messages": "Messages",
-      "access": "Access"
+      "phone": "Phone"
     },
     "assign": {
       "title": "{{n}} leads have no owner",

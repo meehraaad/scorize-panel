@@ -22,7 +22,7 @@ describe('management > access', () => {
   it('lists who has what and gives someone a key', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/access');
+    renderApp('/founders/access');
     expect(
       await screen.findByRole('heading', { name: 'چه کسی چه دسترسی دارد', level: 1 }),
     ).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('management > access', () => {
   it("shows a group's keys as held, not as a separate key", async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/access');
+    renderApp('/founders/access');
     await user.click(await screen.findByRole('button', { name: 'باز کردن دسترسی‌های بهار نوری' }));
     const dialog = await screen.findByRole('dialog', { name: 'بهار نوری' });
     const key = await within(dialog).findByRole('checkbox', { name: /دستیار بنیان‌گذاران/ });
@@ -53,7 +53,7 @@ describe('management > access', () => {
   it('makes a group and adds someone to it', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/access/groups');
+    renderApp('/founders/access/groups');
     await user.click(await screen.findByRole('button', { name: 'گروه تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'گروه تازه' });
     await user.type(within(dialog).getByLabelText('نام گروه'), 'ناظر تماس');
@@ -80,7 +80,7 @@ describe('management > access', () => {
   it("keeps the system group's keys fixed", async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/access/groups');
+    renderApp('/founders/access/groups');
     await user.click(await screen.findByRole('button', { name: 'باز کردن گروه Founders' }));
     const dialog = await screen.findByRole('dialog', { name: 'Founders' });
     expect(within(dialog).getByText(/خود سیستم نگه می‌دارد/)).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('management > access', () => {
   it('lists every key and links to its holders', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    const router = renderApp('/sales/manager/access/keys');
+    const router = renderApp('/founders/access/keys');
     const sales = await screen.findByRole('region', { name: 'فروش' });
     await user.click(within(sales).getByRole('link', { name: '۱ نفر دارد' }));
     await waitFor(() => {
@@ -104,9 +104,9 @@ describe('management > access', () => {
 
   it('is for superusers only', async () => {
     loginAs(REZA);
-    const router = renderApp('/sales/manager/access');
+    const router = renderApp('/founders/access');
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/sales/manager');
+      expect(router.state.location.pathname).toBe('/sales');
     });
   });
 });

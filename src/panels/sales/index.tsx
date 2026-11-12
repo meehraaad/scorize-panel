@@ -42,24 +42,8 @@ import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { MESSAGES_PERMISSIONS, hasPermission } from '@/lib/auth/roles';
-import {
-  groupsQuery,
-  historyQuery as accessHistoryQuery,
-  keysQuery,
-  peopleFilterOf,
-  peopleQuery,
-} from '@/features/access/api';
-import {
-  FIRST_READY_KIND,
-  MESSAGES_PATH,
-  READY_PERMISSION,
-  SYSTEM_PERMISSION,
-  readyMessagesQuery,
-  readyVariablesQuery,
-  systemMessagesQuery,
-} from '@/features/messages/api';
-import { sessionQuery, type SessionUser } from '@/lib/auth/session';
+import { hasPermission } from '@/lib/auth/roles';
+import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { notebookQuery } from '@/lib/notes/api';
 import { SALES_API } from '@/lib/sales/api';
@@ -83,53 +67,10 @@ const customerOf = ({ params }: LoaderFunctionArgs) => idParam(params.id);
 const toMoney = ({ params, request }: LoaderFunctionArgs) =>
   redirect(`/sales/customers/${params.id ?? ''}/money${new URL(request.url).search}`);
 
-const sessionUser = () => queryClient.query({ ...sessionQuery, staleTime: 'static' });
-
 /** Sellers without the manager's permission are sent back to the panel's home. */
 async function managerOnly() {
-  const user = await sessionUser();
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
   return user && hasPermission(user, MANAGER_PERMISSION) ? null : redirect('/sales');
-}
-
-/**
- * The management area's keys: the sales manager's, the messages ones, and superusers (access).
- * The nav item shows to holders of any; each tab checks its own.
- */
-const MESSAGES_KEYS = ON_SERVER.messageCenter ? MESSAGES_PERMISSIONS : [];
-const MANAGEMENT_PERMISSIONS = [MANAGER_PERMISSION, ...MESSAGES_KEYS];
-
-/** The first management tab someone may open (people with only a messages key land there). */
-function managementHome(user: SessionUser) {
-  if (hasPermission(user, MANAGER_PERMISSION)) return '/sales/manager';
-  if (ON_SERVER.messageCenter && hasPermission(user, SYSTEM_PERMISSION)) return MESSAGES_PATH;
-  if (ON_SERVER.messageCenter && hasPermission(user, READY_PERMISSION))
-    return `${MESSAGES_PATH}/ready`;
-  return null;
-}
-
-async function managementOnly() {
-  const user = await sessionUser();
-  return user && managementHome(user) ? null : redirect('/sales');
-}
-
-/** The sales manager's own tabs; holders of only a messages key go to the messages. */
-async function salesManagerOnly() {
-  const user = await sessionUser();
-  if (user && hasPermission(user, MANAGER_PERMISSION)) return null;
-  return redirect((user && managementHome(user)) ?? '/sales');
-}
-
-/** Each messages tab needs its key; holders of only the other key go to theirs. */
-const messagesKey = (permission: string) => async () => {
-  const user = await sessionUser();
-  if (user && hasPermission(user, permission)) return null;
-  return redirect((user && managementHome(user)) ?? '/sales');
-};
-
-/** Keys and groups are given out by superusers. */
-async function superusersOnly() {
-  const user = await sessionUser();
-  return user?.is_superuser ? null : redirect((user && managementHome(user)) ?? '/sales');
 }
 
 /** Sales and support teams (User.is_seller). Design: canvas "Scorize Seller Panel". */
@@ -189,7 +130,7 @@ export const salesPanel: PanelDefinition = {
       to: 'manager',
       label: 'panels.sales.nav.manager',
       icon: 'settings',
-      permission: MANAGEMENT_PERMISSIONS,
+      permission: MANAGER_PERMISSION,
     },
   ],
   // Search every customer from any page (S63), not only the leads page's button.
@@ -364,268 +305,179 @@ export const salesPanel: PanelDefinition = {
         skeleton: 'detail',
       }),
     },
-    // The management area: the sales manager's tabs (can_assign_to_seller), the messages (their
-    // two keys) and access (superusers). The nav item shows to holders of any of them.
+    // The sales manager's section (nav item and routes need can_assign_to_seller).
     {
       path: 'manager',
-      loader: managementOnly,
+      loader: managerOnly,
       ...lazyPage(() => import('@/features/sales/manager/ManagerLayout'), ['sales']),
       children: [
-        ...(ON_SERVER.messageCenter
+        {
+          index: true,
+          ...lazyPage(() => import('@/features/sales/manager/AssignPage'), [], {
+            data: () => [assignQuery(1)],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'approvals',
+          ...lazyPage(() => import('@/features/sales/manager/ApprovalsPage'), [], {
+            data: () => [approvalsQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'contract',
+          ...lazyPage(() => import('@/features/sales/manager/ContractListPage'), [], {
+            data: () => [contractOverviewQuery, contractBuilderQuery(null)],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'contract/:kind',
+          ...lazyPage(() => import('@/features/sales/manager/ContractBuilderPage'), [], {
+            data: ({ params }) => [contractBuilderQuery(templateParam(params.kind ?? null))],
+            skeleton: 'form',
+          }),
+        },
+        {
+          path: 'team',
+          ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
+            data: () => [teamQuery('month'), ON_SERVER.estimate && funnelQuery('month')],
+            skeleton: 'dashboard',
+          }),
+        },
+        {
+          // One seller's month, from the team page's leaderboard (S75).
+          path: 'team/:seller',
+          ...lazyPage(() => import('@/features/sales/manager/SellerMonthPage'), [], {
+            data: ({ params, request }) => {
+              const seller = idParam(params.seller);
+              const month = new URL(request.url).searchParams.get('month');
+              return [teamQuery('month'), seller !== null && teamSellerQuery(seller, month)];
+            },
+            skeleton: 'dashboard',
+          }),
+        },
+        {
+          path: 'commission',
+          ...lazyPage(() => import('@/features/sales/manager/CommissionPage'), [], {
+            data: () => [commissionQuery],
+            skeleton: 'form',
+          }),
+        },
+        {
+          path: 'follow-ups',
+          ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage'), [], {
+            data: () => [healthQuery('all')],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'stages',
+          ...lazyPage(() => import('@/features/sales/manager/StagesPage'), [], {
+            data: () => [stagesQuery],
+            skeleton: 'form',
+          }),
+        },
+        {
+          path: 'tags',
+          ...lazyPage(() => import('@/features/sales/manager/TagsPage'), [], {
+            data: () => [managerTagsQuery],
+            skeleton: 'list',
+          }),
+        },
+        // The office line: one tab, a sub-tab per setting (PhoneLayout).
+        ...(PHONE_SECTIONS.length
           ? [
               {
-                path: 'messages',
-                ...lazyPage(() => import('@/features/messages/MessagesLayout'), ['messages']),
+                path: 'phone',
+                ...lazyPage(() => import('@/features/sales/manager/PhoneLayout'), []),
                 children: [
                   {
                     index: true,
-                    ...lazyPage(() => import('@/features/messages/SystemMessagesPage'), [], {
-                      guard: messagesKey(SYSTEM_PERMISSION),
-                      data: () => [systemMessagesQuery],
-                      skeleton: 'list',
-                    }),
+                    loader: () => redirect(`/sales/manager/phone/${PHONE_SECTIONS[0]?.path ?? ''}`),
                   },
                   {
-                    path: 'ready',
-                    ...lazyPage(() => import('@/features/messages/ReadyMessagesPage'), [], {
-                      guard: messagesKey(READY_PERMISSION),
-                      data: () => [readyMessagesQuery(FIRST_READY_KIND), readyVariablesQuery],
-                      skeleton: 'list',
-                    }),
-                  },
-                ],
-              },
-            ]
-          : []),
-        ...(ON_SERVER.accessPage
-          ? [
-              {
-                path: 'access',
-                loader: superusersOnly,
-                ...lazyPage(() => import('@/features/access/AccessLayout'), ['access']),
-                children: [
-                  {
-                    index: true,
-                    ...lazyPage(() => import('@/features/access/PeoplePage'), [], {
-                      data: ({ request }) => [
-                        peopleQuery(peopleFilterOf(new URL(request.url).searchParams)),
-                        groupsQuery,
-                        keysQuery(),
+                    path: 'overview',
+                    ...lazyPage(() => import('@/features/sales/manager/PhoneOverviewPage'), [], {
+                      data: () => [
+                        ...(ON_SERVER.officeHours ? [officeHoursQuery] : []),
+                        ...(ON_SERVER.phoneTeams ? [phoneTeamsQuery] : []),
+                        ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
+                        ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
+                        ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
                       ],
                       skeleton: 'list',
                     }),
                   },
-                  {
-                    path: 'groups',
-                    ...lazyPage(() => import('@/features/access/GroupsPage'), [], {
-                      data: () => [groupsQuery, keysQuery()],
-                      skeleton: 'list',
-                    }),
-                  },
-                  {
-                    path: 'keys',
-                    ...lazyPage(() => import('@/features/access/KeysPage'), [], {
-                      data: () => [keysQuery(), groupsQuery],
-                      skeleton: 'list',
-                    }),
-                  },
-                  {
-                    path: 'history',
-                    ...lazyPage(() => import('@/features/access/HistoryPage'), [], {
-                      data: () => [accessHistoryQuery(1), keysQuery()],
-                      skeleton: 'list',
-                    }),
-                  },
+                  ...(ON_SERVER.officeHours
+                    ? [
+                        {
+                          path: 'hours',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/OfficeHoursPage'),
+                            [],
+                            {
+                              data: () => [officeHoursQuery],
+                              skeleton: 'form',
+                            },
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneTeams
+                    ? [
+                        {
+                          path: 'teams',
+                          ...lazyPage(() => import('@/features/sales/manager/PhoneTeamsPage'), [], {
+                            data: () => [
+                              phoneTeamsQuery,
+                              ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
+                              ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
+                            ],
+                            skeleton: 'form',
+                          }),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneMenus
+                    ? [
+                        {
+                          path: 'menus',
+                          ...lazyPage(() => import('@/features/sales/manager/PhoneMenusPage'), [], {
+                            data: () => [
+                              phoneMenusQuery,
+                              ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
+                            ],
+                            skeleton: 'form',
+                          }),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneVoices
+                    ? [
+                        {
+                          path: 'voices',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/PhoneVoicesPage'),
+                            [],
+                            {
+                              data: () => [phoneVoicesQuery],
+                              skeleton: 'list',
+                            },
+                          ),
+                        },
+                      ]
+                    : []),
                 ],
               },
             ]
           : []),
-        // The sales manager's own tabs.
-        {
-          loader: salesManagerOnly,
-          children: [
-            {
-              index: true,
-              ...lazyPage(() => import('@/features/sales/manager/AssignPage'), [], {
-                data: () => [assignQuery(1)],
-                skeleton: 'list',
-              }),
-            },
-            {
-              path: 'approvals',
-              ...lazyPage(() => import('@/features/sales/manager/ApprovalsPage'), [], {
-                data: () => [approvalsQuery],
-                skeleton: 'list',
-              }),
-            },
-            {
-              path: 'contract',
-              ...lazyPage(() => import('@/features/sales/manager/ContractListPage'), [], {
-                data: () => [contractOverviewQuery, contractBuilderQuery(null)],
-                skeleton: 'list',
-              }),
-            },
-            {
-              path: 'contract/:kind',
-              ...lazyPage(() => import('@/features/sales/manager/ContractBuilderPage'), [], {
-                data: ({ params }) => [contractBuilderQuery(templateParam(params.kind ?? null))],
-                skeleton: 'form',
-              }),
-            },
-            {
-              path: 'team',
-              ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
-                data: () => [teamQuery('month'), ON_SERVER.estimate && funnelQuery('month')],
-                skeleton: 'dashboard',
-              }),
-            },
-            {
-              // One seller's month, from the team page's leaderboard (S75).
-              path: 'team/:seller',
-              ...lazyPage(() => import('@/features/sales/manager/SellerMonthPage'), [], {
-                data: ({ params, request }) => {
-                  const seller = idParam(params.seller);
-                  const month = new URL(request.url).searchParams.get('month');
-                  return [teamQuery('month'), seller !== null && teamSellerQuery(seller, month)];
-                },
-                skeleton: 'dashboard',
-              }),
-            },
-            {
-              path: 'commission',
-              ...lazyPage(() => import('@/features/sales/manager/CommissionPage'), [], {
-                data: () => [commissionQuery],
-                skeleton: 'form',
-              }),
-            },
-            {
-              path: 'follow-ups',
-              ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage'), [], {
-                data: () => [healthQuery('all')],
-                skeleton: 'list',
-              }),
-            },
-            {
-              path: 'stages',
-              ...lazyPage(() => import('@/features/sales/manager/StagesPage'), [], {
-                data: () => [stagesQuery],
-                skeleton: 'form',
-              }),
-            },
-            {
-              path: 'tags',
-              ...lazyPage(() => import('@/features/sales/manager/TagsPage'), [], {
-                data: () => [managerTagsQuery],
-                skeleton: 'list',
-              }),
-            },
-            // The office line: one tab, a sub-tab per setting (PhoneLayout).
-            ...(PHONE_SECTIONS.length
-              ? [
-                  {
-                    path: 'phone',
-                    ...lazyPage(() => import('@/features/sales/manager/PhoneLayout'), []),
-                    children: [
-                      {
-                        index: true,
-                        loader: () =>
-                          redirect(`/sales/manager/phone/${PHONE_SECTIONS[0]?.path ?? ''}`),
-                      },
-                      {
-                        path: 'overview',
-                        ...lazyPage(
-                          () => import('@/features/sales/manager/PhoneOverviewPage'),
-                          [],
-                          {
-                            data: () => [
-                              ...(ON_SERVER.officeHours ? [officeHoursQuery] : []),
-                              ...(ON_SERVER.phoneTeams ? [phoneTeamsQuery] : []),
-                              ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
-                              ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
-                              ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
-                            ],
-                            skeleton: 'list',
-                          },
-                        ),
-                      },
-                      ...(ON_SERVER.officeHours
-                        ? [
-                            {
-                              path: 'hours',
-                              ...lazyPage(
-                                () => import('@/features/sales/manager/OfficeHoursPage'),
-                                [],
-                                {
-                                  data: () => [officeHoursQuery],
-                                  skeleton: 'form',
-                                },
-                              ),
-                            },
-                          ]
-                        : []),
-                      ...(ON_SERVER.phoneTeams
-                        ? [
-                            {
-                              path: 'teams',
-                              ...lazyPage(
-                                () => import('@/features/sales/manager/PhoneTeamsPage'),
-                                [],
-                                {
-                                  data: () => [
-                                    phoneTeamsQuery,
-                                    ...(ON_SERVER.phoneMenus ? [phoneMenusQuery] : []),
-                                    ...(ON_SERVER.teamBreaks ? [teamBreaksQuery] : []),
-                                  ],
-                                  skeleton: 'form',
-                                },
-                              ),
-                            },
-                          ]
-                        : []),
-                      ...(ON_SERVER.phoneMenus
-                        ? [
-                            {
-                              path: 'menus',
-                              ...lazyPage(
-                                () => import('@/features/sales/manager/PhoneMenusPage'),
-                                [],
-                                {
-                                  data: () => [
-                                    phoneMenusQuery,
-                                    ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
-                                  ],
-                                  skeleton: 'form',
-                                },
-                              ),
-                            },
-                          ]
-                        : []),
-                      ...(ON_SERVER.phoneVoices
-                        ? [
-                            {
-                              path: 'voices',
-                              ...lazyPage(
-                                () => import('@/features/sales/manager/PhoneVoicesPage'),
-                                [],
-                                {
-                                  data: () => [phoneVoicesQuery],
-                                  skeleton: 'list',
-                                },
-                              ),
-                            },
-                          ]
-                        : []),
-                    ],
-                  },
-                ]
-              : []),
-            // Old addresses (bookmarks) of the phone pages.
-            { path: 'hours', loader: () => redirect('/sales/manager/phone/hours') },
-            { path: 'phone-teams', loader: () => redirect('/sales/manager/phone/teams') },
-            { path: 'phone-menus', loader: () => redirect('/sales/manager/phone/menus') },
-            { path: 'phone-voices', loader: () => redirect('/sales/manager/phone/voices') },
-          ],
-        },
+        // Old addresses (bookmarks) of the phone pages.
+        { path: 'hours', loader: () => redirect('/sales/manager/phone/hours') },
+        { path: 'phone-teams', loader: () => redirect('/sales/manager/phone/teams') },
+        { path: 'phone-menus', loader: () => redirect('/sales/manager/phone/menus') },
+        { path: 'phone-voices', loader: () => redirect('/sales/manager/phone/voices') },
       ],
     },
     {

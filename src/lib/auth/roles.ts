@@ -97,7 +97,13 @@ export function getRoles(user: SessionUser): Role[] {
   ) {
     roles.push('sales');
   }
-  if (ON_SERVER.foundersAssistant && hasPermission(user, FOUNDERS_PERMISSION))
+  // The management panel: the founders' assistant, the messages (either key) and access
+  // (superusers). Each section checks its own key.
+  if (
+    (ON_SERVER.foundersAssistant && hasPermission(user, FOUNDERS_PERMISSION)) ||
+    (ON_SERVER.messageCenter && hasAnyPermission(user, MESSAGES_PERMISSIONS)) ||
+    (ON_SERVER.accessPage && user.is_superuser)
+  )
     roles.push('founders');
   // Attendance: the key for the office terminal's reports (superusers hold it).
   if (ON_SERVER.attendance && hasPermission(user, ATTENDANCE_PERMISSION)) roles.push('attendance');

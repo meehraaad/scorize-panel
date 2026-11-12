@@ -48,12 +48,16 @@
       "name": "Management panel",
       "nav": {
         "label": "Management panel menu",
-        "assistant": "Analysis assistant"
+        "assistant": "Analysis assistant",
+        "messages": "Messages",
+        "access": "Access"
       },
       "tabs": {
-        "assistant": "Assistant"
+        "assistant": "Assistant",
+        "messages": "Messages",
+        "access": "Access"
       },
-      "description": "Questions to the business data, for the partners"
+      "description": "Analysis assistant, messages and access"
     },
     "writer": {
       "name": "Writing panel",

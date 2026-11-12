@@ -169,10 +169,16 @@ const pageRoutes: RouteObject[] = [
       },
     ],
   },
-  // The messages section's first addresses (its own panel): now tabs of the management area.
-  { path: 'messages', loader: () => redirect('/sales/manager/messages') },
-  { path: 'messages/ready', loader: () => redirect('/sales/manager/messages/ready') },
-  { path: 'messages/access', loader: () => redirect('/sales/manager/access') },
+  // The messages section's earlier addresses (its own panel, then the sales management area):
+  // now sections of the management panel.
+  ...[
+    ['messages', '/founders/messages'],
+    ['messages/ready', '/founders/messages/ready'],
+    ['messages/access', '/founders/access'],
+    ['sales/manager/messages', '/founders/messages'],
+    ['sales/manager/messages/ready', '/founders/messages/ready'],
+    ['sales/manager/access/*', '/founders/access'],
+  ].map(([path = '', to = '']) => ({ path, loader: () => redirect(to) })),
   ...PANELS.map(panelRoutes),
   // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
   ...(import.meta.env.DEV

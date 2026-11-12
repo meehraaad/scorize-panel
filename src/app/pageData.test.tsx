@@ -173,12 +173,12 @@ const PAGES: PageCase[] = [
   ...['/founders', '/founders/conversations/900'].map((path) => ({ path, user: BAHAR })),
   // Management > messages and access.
   ...[
-    '/sales/manager/messages',
-    '/sales/manager/messages/ready',
-    '/sales/manager/access',
-    '/sales/manager/access/groups',
-    '/sales/manager/access/keys',
-    '/sales/manager/access/history',
+    '/founders/messages',
+    '/founders/messages/ready',
+    '/founders/access',
+    '/founders/access/groups',
+    '/founders/access/keys',
+    '/founders/access/history',
   ].map((path) => ({ path, user: AMIR })),
   // Attendance section (src/mocks/attendance.ts).
   ...['/attendance', '/attendance/month', '/attendance/settings'].map((path) => ({

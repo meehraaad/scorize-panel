@@ -23,7 +23,7 @@ describe('messages section', () => {
   it('lists the automatic messages by area and edits one with the variable buttons', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/messages');
+    renderApp('/founders/messages');
     expect(
       await screen.findByRole('heading', { name: 'پیام‌های خودکار', level: 1 }),
     ).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('messages section', () => {
   it('makes a ready message for both places with the session variables', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/messages/ready');
+    renderApp('/founders/messages/ready');
     await user.click(await screen.findByRole('button', { name: 'پیام تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'پیام آماده‌ی تازه' });
     await user.click(within(dialog).getByRole('radio', { name: 'هر دو' }));
@@ -97,7 +97,7 @@ describe('messages section', () => {
   it('says which messages are on and filters the off ones', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/messages');
+    renderApp('/founders/messages');
     const list = await screen.findByRole('region', { name: 'فهرست پیام‌های خودکار' });
     expect(
       within(list).getByRole('button', { name: 'باز کردن پیام قرارداد شما آماده است' }),
@@ -114,7 +114,7 @@ describe('messages section', () => {
   it('shows an SMS-only message as Kavenegar text, not as an editable box', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/messages');
+    renderApp('/founders/messages');
     await user.click(
       await screen.findByRole('button', { name: 'باز کردن پیام یادآوری نهایی مشاوره حضوری' }),
     );
@@ -131,7 +131,7 @@ describe('messages section', () => {
   it('adds a ready ticket reply', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/sales/manager/messages/ready');
+    renderApp('/founders/messages/ready');
     expect(
       await screen.findByRole('heading', { name: 'پیام‌های آماده', level: 1 }),
     ).toBeInTheDocument();
@@ -152,34 +152,36 @@ describe('messages section', () => {
 
   it('keeps people without a key out', async () => {
     loginAs(NIMA);
-    const router = renderApp('/sales/manager/messages');
+    const router = renderApp('/founders/messages');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
   });
 
-  it('lives in the management area, and its first address still works', async () => {
+  it('lives in the management panel, and its earlier addresses still work', async () => {
     loginAs(AMIR);
-    const router = renderApp('/messages/ready');
+    const router = renderApp('/sales/manager/messages/ready');
     expect(
       await screen.findByRole('heading', { name: 'پیام‌های آماده', level: 1 }),
     ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/sales/manager/messages/ready');
-    const tabs = screen.getByRole('navigation', { name: 'بخش‌های مدیریت' });
-    expect(within(tabs).getByRole('link', { name: 'پیام‌ها' })).toHaveAttribute(
+    expect(router.state.location.pathname).toBe('/founders/messages/ready');
+    const nav = screen.getAllByRole('navigation', { name: 'منوی پنل مدیریت' })[0];
+    expect(nav).toBeDefined();
+    expect(within(nav as HTMLElement).getByRole('link', { name: 'پیام‌ها' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    expect(within(tabs).getByRole('link', { name: 'دسترسی‌ها' })).toBeInTheDocument();
+    expect(within(nav as HTMLElement).getByRole('link', { name: 'دسترسی‌ها' })).toBeInTheDocument();
   });
 
-  it('shows a sales manager without its keys no messages tab', async () => {
+  it('leaves the sales manager area to sales', async () => {
     loginAs(REZA);
-    const router = renderApp('/sales/manager/messages');
-    const tabs = await screen.findByRole('navigation', { name: 'بخش‌های مدیریت' });
+    const router = renderApp('/sales/manager');
+    const tabs = await screen.findByRole('navigation', { name: 'بخش‌های مدیریت فروش' });
     expect(within(tabs).queryByRole('link', { name: 'پیام‌ها' })).toBeNull();
-    expect(within(tabs).queryByRole('link', { name: 'دسترسی‌ها' })).toBeNull();
+    // No messages key: no management panel either.
+    await router.navigate('/founders/messages');
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/sales/manager');
+      expect(router.state.location.pathname).toBe('/sales');
     });
   });
 });

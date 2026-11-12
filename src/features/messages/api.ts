@@ -14,8 +14,8 @@ export {
   READY_MESSAGES_PERMISSION as READY_PERMISSION,
 } from '@/lib/auth/roles';
 const MESSAGES_API = '/messages/v1';
-/** Where the pages live: the sales panel's management area. */
-export const MESSAGES_PATH = '/sales/manager/messages';
+/** Where the pages live: the management panel (founders). */
+export const MESSAGES_PATH = '/founders/messages';
 export const MESSAGES_KEY = ['messages'] as const;
 
 export const AUDIENCES = [
