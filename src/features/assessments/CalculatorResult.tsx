@@ -23,6 +23,12 @@ export function CalculationResult({ snapshot }: { snapshot: Snapshot }) {
           {choicesText[result.express_entry.status] ?? t('calculator.unknown')}
         </p>
       )}
+      {result.covered_requirements_status && (
+        <p>
+          {t('calculator.coveredStatus')}:{' '}
+          {choicesText[result.covered_requirements_status] ?? t('calculator.unknown')}
+        </p>
+      )}
       {result.fsw && (
         <p>
           {t('calculator.fsw')}: {result.fsw.score ?? t('calculator.partial')}

@@ -7,10 +7,16 @@ const SESSION = '11111111-1111-4111-8111-111111111111';
 let revision = 0;
 let answers: Record<string, Answer> = {};
 let snapshots: Snapshot[] = [];
+let guideState = 'not_started';
+let guideCountry = 'canada';
+let guideMode = 'assessment';
 export function resetCalculatorMocks() {
   revision = 0;
   answers = {};
   snapshots = [];
+  guideState = 'not_started';
+  guideCountry = 'canada';
+  guideMode = 'assessment';
 }
 const interview = () => ({
   revision,
@@ -19,7 +25,58 @@ const interview = () => ({
   ruleset_sha256: 'a'.repeat(64),
   sources: { canada: { sha256: 'b'.repeat(64) }, australia: { sha256: 'c'.repeat(64) } },
 });
+const guidance = () => {
+  const first = answers['calculator:canada:first_language'];
+  const field =
+    guideCountry === 'australia'
+      ? !answers['calculator:australia:subclass']
+        ? 'subclass'
+        : 'facts.birth_date'
+      : !first
+        ? 'first_language'
+        : first.status === 'unknown'
+          ? 'outside_quebec'
+          : 'english_absent';
+  const question = {
+    field,
+    reason: 'missing_evidence',
+    tier: 2,
+    effects: ['fsw.first_language_clb7'],
+    missing_paths: [],
+    answer_cost: 1,
+    shared_identity_count: 1,
+    decision_sha256: 'e'.repeat(64),
+  };
+  return {
+    revision,
+    status: guideState,
+    country: guideState === 'not_started' ? null : guideCountry,
+    mode: guideMode,
+    policy: { version: 'calculator-guidance-1', sha256: 'f'.repeat(64) },
+    next_question: guideState === 'question' ? question : null,
+    deferred: first?.status === 'unknown' ? ['first_language'] : [],
+    candidates: guideState === 'question' ? [question] : [],
+  };
+};
 export const calculatorHandlers = [
+  http.get('/api/applicant/v1/assessments/:id/calculators/guidance/', () =>
+    HttpResponse.json(guidance()),
+  ),
+  http.post('/api/applicant/v1/assessments/:id/calculators/guidance/', async ({ request }) => {
+    const body = (await request.json()) as {
+      revision: number;
+      action: string;
+      country: string;
+      mode: string;
+    };
+    if (body.revision !== revision)
+      return HttpResponse.json({ detail: 'Stale revision' }, { status: 409 });
+    guideState = body.action === 'start' ? 'question' : 'user_requested_result';
+    guideCountry = body.country;
+    guideMode = body.mode;
+    revision += 1;
+    return HttpResponse.json({ ...interview(), guidance: guidance() });
+  }),
   http.get('/api/applicant/v1/assessments/:id/calculators/profile-evidence/', () =>
     HttpResponse.json({ revision, candidates: [], context: [] }),
   ),
@@ -50,7 +107,8 @@ export const calculatorHandlers = [
     if (body.revision !== revision)
       return HttpResponse.json({ detail: 'Stale revision' }, { status: 409 });
     answers[
-      body.country === 'canada' && body.field === 'birth_date'
+      (body.country === 'canada' && body.field === 'birth_date') ||
+      (body.country === 'australia' && body.field === 'facts.birth_date')
         ? 'calculator:shared:birth_date'
         : `calculator:${body.country}:${body.field}`
     ] = {
