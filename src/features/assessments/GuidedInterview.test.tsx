@@ -277,7 +277,7 @@ it('restores the guided country on session resume without starting a new round',
         revision: 0,
         status: 'user_requested_result',
         country: 'australia',
-        mode: 'assessment',
+        mode: 'scenario',
         policy: { version: 'calculator-guidance-1', sha256: 'f'.repeat(64) },
         next_question: null,
       }),
@@ -289,5 +289,6 @@ it('restores the guided country on session resume without starting a new round',
   );
   await open();
   await waitFor(() => expect(screen.getByLabelText('Country route')).toHaveValue('australia'));
+  expect(screen.getByLabelText('Purpose of the next interview round')).toHaveValue('scenario');
   expect(writes).toBe(0);
 });
