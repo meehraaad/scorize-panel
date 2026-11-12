@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -22,20 +22,24 @@ export function GuidedInterview({
   revision,
   disabled,
   canReview,
+  australiaRouteReady,
   onSelect,
   onSkip,
   onBusy,
   onChanged,
+  onRestore,
 }: {
   id: string;
   country: Country;
   revision: number;
   disabled: boolean;
   canReview: boolean;
+  australiaRouteReady: boolean;
   onSelect: (country: Country, question: GuidanceQuestion) => void;
   onSkip: (country: Country, question: GuidanceQuestion) => void;
   onBusy: (busy: boolean) => void;
   onChanged: () => void;
+  onRestore: (country: Country) => void;
 }) {
   const { t } = useTranslation('assessments');
   const labels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
@@ -71,6 +75,13 @@ export function GuidedInterview({
     return () => onBusy(false);
   }, [mutation.isPending, refreshing, onBusy]);
   const data = query.data;
+  const restored = useRef(false);
+  useEffect(() => {
+    if (data && !restored.current) {
+      restored.current = true;
+      if (data.country) onRestore(data.country);
+    }
+  }, [data, onRestore]);
   const question = data?.next_question;
   const chosenMode = mode ?? data?.mode ?? 'assessment';
   const execute = (action: 'start' | 'stop') => {
@@ -93,7 +104,13 @@ export function GuidedInterview({
         {!data && <SkeletonRows rows={2} />}
         {data && (
           <>
-            <p>{statuses[data.status] ?? t('calculator.unknown')}</p>
+            <p>
+              {data.country === 'australia' &&
+              !australiaRouteReady &&
+              data.status === 'user_requested_result'
+                ? t('calculator.guided.routeRequiredPaused')
+                : (statuses[data.status] ?? t('calculator.unknown'))}
+            </p>
             {data.country && (
               <p>
                 {t('calculator.guided.scope', { country: t(`calculator.choices.${data.country}`) })}

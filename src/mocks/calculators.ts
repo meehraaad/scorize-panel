@@ -27,9 +27,11 @@ const interview = () => ({
 });
 const guidance = () => {
   const first = answers['calculator:canada:first_language'];
+  const route = answers['calculator:australia:subclass'];
+  const routeDeferred = guideCountry === 'australia' && route?.status === 'unknown';
   const field =
     guideCountry === 'australia'
-      ? !answers['calculator:australia:subclass']
+      ? route?.status !== 'known'
         ? 'subclass'
         : 'facts.birth_date'
       : !first
@@ -49,13 +51,13 @@ const guidance = () => {
   };
   return {
     revision,
-    status: guideState,
+    status: guideState === 'question' && routeDeferred ? 'incomplete_needs_review' : guideState,
     country: guideState === 'not_started' ? null : guideCountry,
     mode: guideMode,
     policy: { version: 'calculator-guidance-1', sha256: 'f'.repeat(64) },
-    next_question: guideState === 'question' ? question : null,
-    deferred: first?.status === 'unknown' ? ['first_language'] : [],
-    candidates: guideState === 'question' ? [question] : [],
+    next_question: guideState === 'question' && !routeDeferred ? question : null,
+    deferred: routeDeferred ? ['subclass'] : first?.status === 'unknown' ? ['first_language'] : [],
+    candidates: guideState === 'question' && !routeDeferred ? [question] : [],
   };
 };
 export const calculatorHandlers = [
@@ -115,6 +117,7 @@ export const calculatorHandlers = [
       status: body.status,
       value: body.value,
       source: 'user',
+      question_version: 'calculator-interview-1',
       document_verified: false,
     };
     revision += 1;

@@ -116,10 +116,16 @@ it('refreshes both interview revision and guidance after an external revision co
 it('opens the Australian route setup instead of a Canadian-only field', async () => {
   const { user, guide } = await open();
   await user.selectOptions(screen.getByLabelText('Country route'), 'australia');
+  expect(screen.getByRole('button', { name: 'Record draft result' })).toBeDisabled();
   await user.click(await guide.findByRole('button', { name: 'Start or resume guided questions' }));
   await user.click(await guide.findByRole('button', { name: 'Answer the suggested question' }));
   expect(screen.getByLabelText('Evidence group')).toHaveValue('subclass');
   expect(screen.getByLabelText('Answer status')).toHaveValue('unknown');
+  await user.click(guide.getByRole('button', { name: 'I do not know; defer this question' }));
+  await guide.findByText(/No further question can currently resolve the gaps/);
+  await user.click(guide.getByRole('button', { name: 'Pause questions for the current result' }));
+  await guide.findByText(/Questions are paused. Choose an Australian subclass/);
+  expect(screen.getByRole('button', { name: 'Record draft result' })).toBeDisabled();
 });
 
 it('shows policy effort and ranking to a permitted reviewer', async () => {
@@ -157,6 +163,23 @@ it('shows policy effort and ranking to a permitted reviewer', async () => {
 
 it('keeps Australian points separate from an unmet entry condition', async () => {
   server.use(
+    http.get('/api/applicant/v1/assessments/:id/calculators/interview/', () =>
+      HttpResponse.json({
+        revision: 0,
+        adapter_version: 'calculator-interview-1',
+        answers: {
+          'calculator:australia:subclass': {
+            status: 'known',
+            value: '189',
+            source: 'user',
+            document_verified: false,
+            question_version: 'calculator-interview-1',
+          },
+        },
+        ruleset_sha256: 'a'.repeat(64),
+        sources: { canada: { sha256: 'b'.repeat(64) }, australia: { sha256: 'c'.repeat(64) } },
+      }),
+    ),
     http.post('/api/applicant/v1/assessments/:id/calculators/snapshots/', () =>
       HttpResponse.json(
         {
@@ -244,4 +267,27 @@ it('requires explicit reconfirmation when the source changes but the applicant r
   expect(writes).toBe(0);
   await user.click(screen.getByRole('button', { name: 'Save answer' }));
   await waitFor(() => expect(writes).toBe(1));
+});
+
+it('restores the guided country on session resume without starting a new round', async () => {
+  let writes = 0;
+  server.use(
+    http.get('/api/applicant/v1/assessments/:id/calculators/guidance/', () =>
+      HttpResponse.json({
+        revision: 0,
+        status: 'user_requested_result',
+        country: 'australia',
+        mode: 'assessment',
+        policy: { version: 'calculator-guidance-1', sha256: 'f'.repeat(64) },
+        next_question: null,
+      }),
+    ),
+    http.post('/api/applicant/v1/assessments/:id/calculators/guidance/', () => {
+      writes++;
+      return HttpResponse.error();
+    }),
+  );
+  await open();
+  await waitFor(() => expect(screen.getByLabelText('Country route')).toHaveValue('australia'));
+  expect(writes).toBe(0);
 });

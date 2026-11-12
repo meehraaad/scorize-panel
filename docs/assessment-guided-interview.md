@@ -24,7 +24,7 @@ are an explicit reason to recheck an answer. Unknown, unsupported and uncertain
 facts stay partial; known failed checks stop only the covered routes. Scenario
 mode does not pretend failed conditions were fulfilled.
 
-Nine targeted UI regressions cover advancement after unknown, persisted stop,
+Ten targeted UI regressions cover advancement after unknown, persisted stop,
 exact retry, dirty-form protection, cross-tab revision refresh, Australia route
 setup, permitted policy inspection and separate Australian points/requirements and explicit source reconfirmation. Backend tests compare complete and guided
 Canada/Australia cases. Final static/full-suite and actual Django/PostgreSQL
@@ -44,3 +44,9 @@ or page errors.
 A changed source can be explicitly reconfirmed with the existing value. Preparing
 that answer pauses autosave; only an explicit save reasserts it as the applicant's
 answer. New writes cannot bypass an unavailable pin via manual editing.
+
+Australian calculation/recording stays disabled until a supported, current-version
+subclass answer is explicit. Deferring the route preserves the answers and gives
+a clear reason instead of assuming a subclass. Resuming restores the pinned
+country without replacing an existing navigation choice or dirty/queued input.
+History labels its country and supplied Australian subclass.

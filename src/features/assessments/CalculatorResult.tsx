@@ -13,6 +13,14 @@ export function CalculationResult({ snapshot }: { snapshot: Snapshot }) {
   const scenario = result.crs?.nomination_scenario;
   return (
     <SectionCard id={sectionId} title={t('calculator.result')} variant="panel">
+      <p>
+        {t('calculator.country')}: {t(`calculator.choices.${snapshot.payload.country}`)}
+      </p>
+      {result.route_id && ['au-189', 'au-190', 'au-491'].includes(result.route_id) && (
+        <p>
+          {t('calculator.fields.subclass')}: {result.route_id.slice(3)}
+        </p>
+      )}
       {snapshot.stale_reasons.length > 0 && <Notice tone="warn">{t('calculator.stale')}</Notice>}
       <p>
         {t('calculator.currentScore')}: {score ?? t('calculator.partial')}

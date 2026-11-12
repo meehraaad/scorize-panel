@@ -470,7 +470,9 @@
         "alternative_stream_met": "An alternative support stream already meets this check",
         "language_report_supplied": "A language report is already supplied",
         "language_absent": "The applicant explicitly has no report"
-      }
+      },
+      "routeRequired": "Choose an Australian subclass before calculation or recording. Your answers remain saved; no route is assumed.",
+      "routeRequiredPaused": "Questions are paused. Choose an Australian subclass before calculation or recording; your answers remain saved."
     },
     "coveredStatus": "Covered requirements"
   }

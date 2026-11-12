@@ -37,6 +37,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const choicesText = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
   const sectionId = useId();
   const editorRef = useRef<HTMLFieldSetElement>(null);
+  const hasNavigated = useRef(false);
   const focusEditor = () =>
     requestAnimationFrame(() => {
       editorRef.current?.scrollIntoView({ block: 'start' });
@@ -59,6 +60,12 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const [guidanceDecision, setGuidanceDecision] = useState<string | null>(null);
   const [guidanceBusy, setGuidanceBusy] = useState(false);
   const data = query.data;
+  const australianRoute = data?.answers[options.identities.australia.subclass ?? ''];
+  const australiaRouteReady =
+    australianRoute?.status === 'known' &&
+    australianRoute.question_version === data?.adapter_version &&
+    typeof australianRoute.value === 'string' &&
+    ['189', '190', '491'].includes(australianRoute.value);
   const save = useMutation({
     mutationFn: (body: unknown) => saveCalculatorAnswer(id, body),
     onSuccess: (next) => {
@@ -153,6 +160,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
     );
   const fields = options.schemas[country];
   const choose = (nextCountry: Country, nextField: string) => {
+    hasNavigated.current = true;
     const answer = data.answers[options.identities[nextCountry][nextField] ?? ''];
     setCountry(nextCountry);
     setField(nextField);
@@ -176,6 +184,19 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         revision={data.revision}
         disabled={dirty || saving || record.isPending}
         canReview={Boolean(options.can_review)}
+        australiaRouteReady={australiaRouteReady}
+        onRestore={(nextCountry) => {
+          if (
+            !hasNavigated.current &&
+            !dirty &&
+            !saving &&
+            !record.isPending &&
+            !pending &&
+            !snapshotRequest &&
+            !shown
+          )
+            choose(nextCountry, Object.keys(options.schemas[nextCountry])[0] ?? '');
+        }}
         onBusy={setGuidanceBusy}
         onChanged={() => {
           setShown(null);
@@ -357,11 +378,19 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           )}
           <Button
             variant="outline"
-            disabled={dirty || saving || record.isPending}
+            disabled={
+              dirty ||
+              saving ||
+              record.isPending ||
+              (country === 'australia' && !australiaRouteReady)
+            }
             onClick={() => record.mutate()}
           >
             {t('calculator.record')}
           </Button>
+          {country === 'australia' && !australiaRouteReady && (
+            <Notice tone="warn">{t('calculator.guided.routeRequired')}</Notice>
+          )}
           {record.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
         </fieldset>
       </SectionCard>

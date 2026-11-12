@@ -16,6 +16,7 @@ export interface Answer {
   source: string;
   document_verified: boolean;
   recorded_at?: string;
+  question_version?: string;
   profile_origin?: ProfileCandidate;
 }
 export interface ProfileCandidate {
@@ -96,6 +97,7 @@ export interface Snapshot {
       fsw?: { score: number | null };
       express_entry?: { status: string };
       covered_requirements_status?: string;
+      route_id?: string;
       score?: number | null;
     };
     mapping: { unresolved: string[]; provenance?: Record<string, Answer> };
