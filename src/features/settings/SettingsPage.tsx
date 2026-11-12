@@ -23,6 +23,12 @@ const MobileExtension = lazy(() =>
   })),
 );
 
+const MyReadyMessages = lazy(() =>
+  import('@/features/sales/components/MyReadyMessages').then((m) => ({
+    default: m.MyReadyMessages,
+  })),
+);
+
 const optionClass =
   'flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-[15px] font-medium text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:text-primary-text has-checked:shadow-none has-focus-visible:outline-2 has-focus-visible:outline-focus';
 
@@ -32,6 +38,8 @@ export default function SettingsPage() {
   const user = useUser();
   const seller = ON_SERVER.livePhoneCalls && getRoles(user).includes('sales');
   // Every active staff member can have a softphone extension; the desk phone and call popups are the seller's.
+  // A seller's own ready messages for WhatsApp, Telegram and SMS from a customer's page.
+  const readyMessages = ON_SERVER.sellerReadyMessages && getRoles(user).includes('sales');
   const softphone = ON_SERVER.mobileExtensions && isActiveStaff(user);
 
   return (
@@ -77,6 +85,14 @@ export default function SettingsPage() {
           </div>
         </fieldset>
       </Card>
+
+      {readyMessages && (
+        <Card className="p-6 lg:p-8">
+          <Suspense fallback={null}>
+            <MyReadyMessages />
+          </Suspense>
+        </Card>
+      )}
 
       {seller && (
         <Card className="p-6 lg:p-8">

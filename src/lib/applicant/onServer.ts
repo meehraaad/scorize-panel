@@ -25,6 +25,7 @@ export type ServerFeature =
   | 'mailServers'
   | 'messageCenter'
   | 'accessPage'
+  | 'sellerReadyMessages'
   | 'livePhoneCalls'
   | 'mobileExtensions'
   | 'leadSearch'
@@ -163,4 +164,10 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * tab; keys are given in Django admin.
    */
   accessPage: true,
+  /**
+   * `sales/v1/ready-messages/`: a seller's own ready messages, made in settings and offered on
+   * their customer pages (WhatsApp's picker, the contact log) before management's
+   * (`MessageTemplate.owner`, needs `makemigrations user_profile` + `migrate`). Off: no settings card.
+   */
+  sellerReadyMessages: true,
 };

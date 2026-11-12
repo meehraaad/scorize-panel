@@ -95,8 +95,11 @@ export interface CustomerData {
   credit: number;
   counts: { purchases: number; payments: number };
   tasks: TaskSummary[];
-  /** Ready messages with the customer's and seller's names filled in (S7). */
-  templates: { id: number; title: string; text: string }[];
+  /**
+   * Ready messages with their variables filled in for this customer (S7): the seller's own
+   * (`own`, made in settings) first, then management's.
+   */
+  templates: { id: number; title: string; text: string; own?: boolean }[];
   /** For "ask a colleague". */
   colleagues: Colleague[];
   /** Files sent from the panel for a free review (H59), newest first; `kind` is a label. */

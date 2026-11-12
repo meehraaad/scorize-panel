@@ -2789,5 +2789,43 @@
   },
   "followUpWhen": {
     "exact": "Or an exact day and time"
+  },
+  "myReady": {
+    "title": "My ready messages",
+    "intro": "Write the messages you send often here once. On a customer's page, the WhatsApp button and the contact log let you pick one, with the customer's name and the other variables filled in. Only you see these.",
+    "add": "New message",
+    "new": "New ready message",
+    "subtitle": "Only for you",
+    "empty": "You haven't made a ready message yet.",
+    "open": "Open message {{title}}",
+    "full": "You can keep up to {{count}} ready messages. Delete one to add another.",
+    "fullError": "You've reached the limit of ready messages. Delete one first.",
+    "shared": "Management's ready messages ({{count}})",
+    "sharedHint": "Management made these for every seller. You can use them; management changes them.",
+    "name": "Name",
+    "nameHint": "Only for you, to find it in the list, e.g. \"Session reminder\".",
+    "text": "Message",
+    "addVariable": "Add a variable",
+    "preview": "Preview with a sample customer",
+    "openBrace": "A { or } is left open. Use the variable buttons above to add one.",
+    "unknown": "This message has no variable {{names}}.",
+    "save": "Save",
+    "addButton": "Add message",
+    "saved": "Message saved.",
+    "added": "Ready message added.",
+    "error": "Not saved. Check your connection and try again.",
+    "delete": "Delete this message",
+    "deleteConfirm": "Delete \"{{title}}\"?",
+    "deleteButton": "Delete",
+    "deleted": "\"{{title}}\" deleted.",
+    "cancel": "Cancel",
+    "close": "Close"
+  },
+  "whatsAppPicker": {
+    "title": "Which message should WhatsApp start with?",
+    "own": "Mine",
+    "blank": "No ready message",
+    "make": "Make a ready message in settings",
+    "close": "Close"
   }
 }

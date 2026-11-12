@@ -5,6 +5,7 @@ import type {
   SystemMessage,
   SystemMessageDetail,
 } from '@/features/messages/api';
+import type { OwnReadyMessage } from '@/features/sales/api/readyMessages';
 import { unknownVariables } from '@/lib/messageVariables';
 import { forbidden, notFound, storage } from './session';
 
@@ -146,6 +147,9 @@ const ready = (): ReadyMessage[] => [
 
 let messages = system();
 let readies = ready();
+/** Each seller's own ready messages (`api/sales/v1/ready-messages/`), by user id. */
+const own = new Map<number, OwnReadyMessage[]>();
+const OWN_MAX = 30;
 const readyHistory = new Map<number, Change[]>();
 let nextId = 100;
 
@@ -153,7 +157,29 @@ export function resetMessagesMocks() {
   messages = system();
   readies = ready();
   readyHistory.clear();
+  own.clear();
   nextId = 100;
+}
+
+const sharedForSellers = () =>
+  readies.filter((row) => (row.kind === 'sales' || row.kind === 'both') && row.is_active);
+
+/**
+ * A customer page's ready messages (Django `MessageTemplate.for_seller`): the signed-in seller's
+ * own first, then management's, with the customer's name filled in.
+ */
+export function customerTemplates(customer: string) {
+  const mine = own.get(storage.get() ?? 0) ?? [];
+  const fill = (text: string) => text.replaceAll('{customer}', customer);
+  return [
+    ...mine.map(({ id, title, text }) => ({ id, title, text: fill(text), own: true })),
+    ...sharedForSellers().map(({ id, title, text }) => ({
+      id,
+      title,
+      text: fill(text),
+      own: false,
+    })),
+  ];
 }
 
 const allowed = () => storage.get() === SUPERUSER;
@@ -267,5 +293,55 @@ export const messagesHandlers = [
           text: filled ? text.replaceAll('{meeting_time}', '۱۷:۰۰') : text,
         })),
     );
+  }),
+
+  // A seller's own ready messages (Django api/sales/v1/ready.py).
+  http.get('/api/sales/v1/ready-messages/', () => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    return HttpResponse.json({
+      own: own.get(user) ?? [],
+      shared: sharedForSellers().map(({ id, title, text }) => ({ id, title, text })),
+      variables: READY_VARIABLES,
+      max: OWN_MAX,
+    });
+  }),
+
+  http.post('/api/sales/v1/ready-messages/', async ({ request }) => {
+    const user = storage.get();
+    if (!user) return forbidden();
+    const body = (await request.json()) as { title: string; text: string };
+    const unknown = unknownVariables(body.text, READY_VARIABLES);
+    if (unknown === null || unknown.length > 0)
+      return invalid('text', 'This message has no such variable.');
+    const rows = own.get(user) ?? [];
+    if (rows.length >= OWN_MAX)
+      return HttpResponse.json({ detail: 'Limit reached.' }, { status: 409 });
+    const row: OwnReadyMessage = {
+      id: nextId++,
+      title: body.title,
+      text: body.text,
+      updated_at: now(),
+    };
+    own.set(user, [...rows, row]);
+    return HttpResponse.json(row, { status: 201 });
+  }),
+
+  http.patch('/api/sales/v1/ready-messages/:id/', async ({ params, request }) => {
+    const row = (own.get(storage.get() ?? 0) ?? []).find((item) => item.id === Number(params.id));
+    if (!row) return notFound();
+    Object.assign(row, (await request.json()) as Partial<OwnReadyMessage>, { updated_at: now() });
+    return HttpResponse.json(row);
+  }),
+
+  http.delete('/api/sales/v1/ready-messages/:id/', ({ params }) => {
+    const user = storage.get() ?? 0;
+    const rows = own.get(user) ?? [];
+    if (!rows.some((item) => item.id === Number(params.id))) return notFound();
+    own.set(
+      user,
+      rows.filter((item) => item.id !== Number(params.id)),
+    );
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

@@ -28,6 +28,7 @@ import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
 import { faceOf, putFace } from './face';
 import { customerInstalments, failed, recordInstalmentReceipt, stateOrError } from './sales';
+import { customerTemplates } from './messages';
 import { tagsOfCustomer } from './salesTags';
 import { notFound, pageOf, storage } from './session';
 import { overviewOf, taskListOf } from './tasks';
@@ -234,6 +235,7 @@ export const salesStaffHandlers = [
         ...data,
         tags: tagsOfCustomer(data.id),
         face: faceOf(data.id),
+        templates: customerTemplates(data.name),
         // The board's team columns (S48), as the board mock keeps them.
         columns: columnsOf(),
         supports: {

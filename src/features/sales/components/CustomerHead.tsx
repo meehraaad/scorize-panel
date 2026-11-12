@@ -26,6 +26,11 @@ const VisitDialog = lazy(() =>
   import('./VisitDialog').then((module) => ({ default: module.VisitDialog })),
 );
 
+// Opens on a click: which ready message to send on WhatsApp.
+const WhatsAppPicker = lazy(() =>
+  import('./WhatsAppPicker').then((module) => ({ default: module.WhatsAppPicker })),
+);
+
 // Opens on a click: the date picker it uses is not part of the page's first load.
 const FollowUpDialog = lazy(() =>
   import('./FollowUpDialog').then((module) => ({ default: module.FollowUpDialog })),
@@ -308,23 +313,51 @@ function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () =>
 }
 
 /**
- * "Message": opens WhatsApp with the customer's chat and the first ready message (S7) typed in,
- * in one click. Telegram, SMS and logging a message stay in the contact log ("Log a contact").
+ * "Message": WhatsApp with the customer's chat. With ready messages it first asks which one to
+ * type in (the seller's own first, or none); without any it opens WhatsApp in one click.
+ * Telegram, SMS and logging a message stay in the contact log ("Log a contact").
  */
 function WhatsAppButton({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
-  return (
-    <a
-      href={messageHref('whatsapp', customer.phone, customer.templates[0]?.text)}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={t('messageTo', { channel: t('channel.whatsapp'), name: named(customer.name) })}
-      className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
-    >
+  const [picking, setPicking] = useState(false);
+  const label = t('messageTo', { channel: t('channel.whatsapp'), name: named(customer.name) });
+  const className = buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg');
+  const content = (
+    <>
       <Icon name="send" size={17} />
       {t('channel.whatsapp')}
-    </a>
+    </>
+  );
+  if (customer.templates.length === 0)
+    return (
+      <a
+        href={messageHref('whatsapp', customer.phone)}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={label}
+        className={className}
+      >
+        {content}
+      </a>
+    );
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="dialog"
+        className={className}
+        onClick={() => setPicking(true)}
+      >
+        {content}
+      </button>
+      {picking && (
+        <Suspense fallback={null}>
+          <WhatsAppPicker customer={customer} onClose={() => setPicking(false)} />
+        </Suspense>
+      )}
+    </>
   );
 }
 
