@@ -185,6 +185,13 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         onSelect={(nextCountry, question) => {
           choose(nextCountry, question.field);
           setGuidanceDecision(question.decision_sha256);
+          const saved = data.answers[options.identities[nextCountry][question.field] ?? ''];
+          if (question.reason === 'source_changed' && saved?.status === 'known') {
+            setStatus('known');
+            setValue(saved.value);
+            setDirty(true);
+            setAutoPaused(true);
+          }
           focusEditor();
         }}
         onSkip={(nextCountry, question) => {

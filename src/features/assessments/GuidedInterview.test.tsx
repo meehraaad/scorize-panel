@@ -184,3 +184,64 @@ it('keeps Australian points separate from an unmet entry condition', async () =>
   expect(within(first).getByText('Current score: 75')).toBeInTheDocument();
   expect(within(first).getByText('Covered requirements: Not met')).toBeInTheDocument();
 });
+
+it('requires explicit reconfirmation when the source changes but the applicant retains the old value', async () => {
+  let writes = 0;
+  server.use(
+    http.get('/api/applicant/v1/assessments/:id/calculators/interview/', () =>
+      HttpResponse.json({
+        revision: 0,
+        adapter_version: 'calculator-interview-1',
+        answers: {
+          'calculator:shared:birth_date': {
+            status: 'known',
+            value: '1996-11-12',
+            source: 'profile_confirmed_by_user',
+            document_verified: false,
+          },
+        },
+        ruleset_sha256: 'a'.repeat(64),
+        sources: { canada: { sha256: 'b'.repeat(64) }, australia: { sha256: 'c'.repeat(64) } },
+      }),
+    ),
+    http.get('/api/applicant/v1/assessments/:id/calculators/guidance/', () =>
+      HttpResponse.json({
+        revision: 0,
+        status: 'question',
+        country: 'canada',
+        policy: { version: 'calculator-guidance-1', sha256: 'f'.repeat(64) },
+        next_question: {
+          field: 'birth_date',
+          reason: 'source_changed',
+          tier: 0,
+          effects: ['source_changed'],
+          missing_paths: [],
+          answer_cost: 1,
+          shared_identity_count: 2,
+          decision_sha256: 'e'.repeat(64),
+        },
+      }),
+    ),
+    http.post('/api/applicant/v1/assessments/:id/calculators/interview/', () => {
+      writes++;
+      return HttpResponse.json({
+        revision: 1,
+        answers: {
+          'calculator:shared:birth_date': {
+            status: 'known',
+            value: '1996-11-12',
+            source: 'user',
+            document_verified: false,
+          },
+        },
+      });
+    }),
+  );
+  const { user, guide } = await open();
+  await user.click(await guide.findByRole('button', { name: 'Answer the suggested question' }));
+  expect(screen.getByLabelText('Birth date')).toHaveValue('1996-11-12');
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  expect(writes).toBe(0);
+  await user.click(screen.getByRole('button', { name: 'Save answer' }));
+  await waitFor(() => expect(writes).toBe(1));
+});

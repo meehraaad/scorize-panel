@@ -24,9 +24,9 @@ are an explicit reason to recheck an answer. Unknown, unsupported and uncertain
 facts stay partial; known failed checks stop only the covered routes. Scenario
 mode does not pretend failed conditions were fulfilled.
 
-Eight targeted UI regressions cover advancement after unknown, persisted stop,
+Nine targeted UI regressions cover advancement after unknown, persisted stop,
 exact retry, dirty-form protection, cross-tab revision refresh, Australia route
-setup, permitted policy inspection and separate Australian points/requirements. Backend tests compare complete and guided
+setup, permitted policy inspection and separate Australian points/requirements and explicit source reconfirmation. Backend tests compare complete and guided
 Canada/Australia cases. Final static/full-suite and actual Django/PostgreSQL
 browser results are recorded in the PR.
 
@@ -40,3 +40,7 @@ route setup, known-condition stop, explicit scenario with the failed age check
 unchanged, separate points/requirements, snapshot replay and readable history
 when an old pin is unavailable. Mobile width 390 and Persian RTL had no overflow
 or page errors.
+
+A changed source can be explicitly reconfirmed with the existing value. Preparing
+that answer pauses autosave; only an explicit save reasserts it as the applicant's
+answer. New writes cannot bypass an unavailable pin via manual editing.
