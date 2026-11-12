@@ -66,3 +66,10 @@ and the application's issued token. Runtime availability was restored before
 rerunning browser checks. These were not counted as passing product checks until
 the actual flows succeeded. A local synthetic session cookie exposed in a debug
 log was revoked and replaced; raw request logs are no longer printed.
+
+After the final backend-only fix, Canada/Australia browser flows passed again.
+The first changed-source check timed out waiting for an interview POST; diagnostic
+capture without application changes passed, followed by a successful independent
+fresh-session repeat. The initial failed log is retained, its cause is not
+established, and no timeout was increased. All three final flows pass; this does
+not establish the cause of the first timeout.
