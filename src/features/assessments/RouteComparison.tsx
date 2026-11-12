@@ -16,7 +16,6 @@ import {
   recordComparison,
   type Country,
   type Interview,
-  type Comparison,
   type ComparisonSnapshot,
 } from './calculatorApi';
 
