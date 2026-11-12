@@ -27,3 +27,12 @@ pathway comparison and action planning remain separate unfinished plan items.
 Validation is recorded in the PR: PostgreSQL API regressions and actual Chromium
 against Django/PostgreSQL cover explicit confirmation, no automatic import write,
 conflicts, immutable provenance, source freshness, resume, Persian RTL and mobile.
+
+Final verification on frozen source e388f56: 649 tests in 88 files passed, plus
+8 focused calculator/profile tests. Full lint, typecheck, locale parity, build
+and size checks passed (JS 178.9KB/179KB; CSS 20.5KB/20.5KB). Real-browser flows
+passed again after the backend's final independent-job/conflict correction.
+The earlier run overlapped edits/heavy checks and had 647 passes with two failed
+waits (profile-conflict text and existing preload-cache test). The complete frozen
+run passed without deleting assertions/tests or increasing timeouts; the exact
+cause of the earlier timing failures is not established by this rerun alone.
