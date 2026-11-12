@@ -40,6 +40,9 @@ describe('mail page', () => {
     ).toBeInTheDocument();
     const persia = screen.getByRole('region', { name: 'PersiaMail' });
     expect(within(persia).getByText('۲۰۸')).toBeInTheDocument();
+    const gmail = await screen.findByRole('region', { name: 'جیمیل' });
+    expect(within(gmail).getByText('ارسال فعال')).toBeInTheDocument();
+    expect(within(gmail).getByText('۱۲')).toBeInTheDocument();
 
     const list = screen.getByRole('region', { name: 'صندوق‌ها' });
     expect(await within(list).findByText('sara.ahmadi@persian-mail.com')).toBeInTheDocument();

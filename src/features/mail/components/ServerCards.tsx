@@ -10,6 +10,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { botRulesQuery, serversQuery, useRefreshServer, type MailServer } from '../api';
 import { useFailure } from '../format';
+import { GmailStatusCard } from './GmailStatusCard';
 
 /** Days before the certificate's end when the card warns. */
 const CERTIFICATE_WARN_DAYS = 21;
@@ -20,12 +21,14 @@ export function ServerCards() {
   const { data } = useSuspenseQuery(serversQuery);
   // A server with this many "poor reputation" rejects today pauses its bots.
   const { data: rules } = useSuspenseQuery(botRulesQuery);
-  if (data.length === 0) return <EmptyState variant="card">{t('servers.empty')}</EmptyState>;
+
   return (
-    <section aria-label={t('servers.label')} className="grid gap-4 lg:grid-cols-2">
+    <section aria-label={t('servers.label')} className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      {data.length === 0 && <EmptyState variant="card">{t('servers.empty')}</EmptyState>}
       {data.map((server) => (
         <ServerCard key={server.id} server={server} pauseAt={rules.reputation_pause_rejects} />
       ))}
+      <GmailStatusCard />
     </section>
   );
 }

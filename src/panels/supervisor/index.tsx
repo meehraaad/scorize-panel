@@ -23,6 +23,7 @@ import {
   MAIL_PERMISSION,
   mailboxesQuery,
   FIRST_MAILBOXES,
+  gmailStatusQuery,
   serversQuery,
 } from '@/features/mail/api';
 import { ON_SERVER } from '@/lib/applicant/onServer';
@@ -220,7 +221,12 @@ export const supervisorPanel: PanelDefinition = {
       path: 'mail',
       ...lazyPage(() => import('@/features/mail/MailPage'), ['mail'], {
         guard: mailManagersOnly,
-        data: () => [serversQuery, botRulesQuery, mailboxesQuery(FIRST_MAILBOXES)],
+        data: () => [
+          serversQuery,
+          gmailStatusQuery,
+          botRulesQuery,
+          mailboxesQuery(FIRST_MAILBOXES),
+        ],
         skeleton: 'list',
       }),
     },
