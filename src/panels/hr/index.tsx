@@ -19,9 +19,17 @@ import {
   calendarQuery,
   fileQuery,
   movesQuery,
+  optionsQuery,
   staffQuery,
   todayQuery,
 } from '@/features/hr/api';
+import {
+  kpisQuery,
+  payMonth,
+  paySettingsQuery,
+  payrollQuery,
+  resultsQuery,
+} from '@/features/hr/pay/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery, START_PATH } from '@/lib/auth/session';
@@ -92,6 +100,7 @@ export const hrPanel: PanelDefinition = {
       icon: 'clock',
       permission: ATTENDANCE_PERMISSION,
     },
+    { id: 'pay', to: 'pay', label: 'panels.hr.nav.pay', icon: 'chart' },
     {
       id: 'access',
       to: 'access',
@@ -173,6 +182,41 @@ export const hrPanel: PanelDefinition = {
         data: () => [summaryQuery(monthRange(calendarKind(i18n.language)))],
         skeleton: 'list',
       }),
+    },
+    // Pay and KPIs: the month's pay, the month's KPI results, each position's KPIs, the settings.
+    {
+      path: 'pay',
+      ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: hrOnly }),
+      children: [
+        {
+          index: true,
+          ...lazyPage(() => import('@/features/hr/pay/PayrollPage'), [], {
+            data: () => [payrollQuery(payMonth())],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'results',
+          ...lazyPage(() => import('@/features/hr/pay/ResultsPage'), [], {
+            data: () => [resultsQuery(payMonth())],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'kpis',
+          ...lazyPage(() => import('@/features/hr/pay/KpisPage'), [], {
+            data: () => [kpisQuery, optionsQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'settings',
+          ...lazyPage(() => import('@/features/hr/pay/SettingsPage'), [], {
+            data: () => [paySettingsQuery],
+            skeleton: 'detail',
+          }),
+        },
+      ],
     },
     // Access (management > access's pages): HR gives staff keys and groups within limits; the API
     // keeps superusers, one's own access and protected keys out of reach.

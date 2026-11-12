@@ -9,6 +9,7 @@ import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { mailHandlers, resetMailMocks } from './mail';
 import { attendanceHandlers, resetAttendanceMocks } from './attendance';
 import { hrHandlers, resetHrMocks } from './hr';
+import { hrPayHandlers, resetHrPayMocks } from './hrPay';
 import { messagesHandlers, resetMessagesMocks } from './messages';
 import { accessHandlers, resetAccessMocks } from './access';
 import { resetSalesMocks, salesHandlers } from './sales';
@@ -372,6 +373,7 @@ export const handlers = [
   ...accessHandlers,
   ...attendanceHandlers,
   ...hrHandlers,
+  ...hrPayHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
@@ -400,6 +402,7 @@ export function resetMockSession() {
   resetAccessMocks();
   resetAttendanceMocks();
   resetHrMocks();
+  resetHrPayMocks();
 }
 
 type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;

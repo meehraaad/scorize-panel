@@ -184,6 +184,21 @@ export function resetHrMocks() {
 
 const allowed = () => storage.get() === HR_USER;
 
+/** Who works here now, for the pay mocks (src/mocks/hrPay.ts). */
+export const payStaff = () =>
+  staff
+    .filter((row) => row.is_active)
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      face: row.face,
+      position: row.position,
+      personnel_code: row.personnel_code,
+      salary: row.pay.salary ?? 0,
+      insured: row.pay.has_insurance,
+    }));
+export const hrAllowed = allowed;
+
 function counted(move: Move & { steps: MoveStep[] }) {
   move.done = move.steps.filter((step) => step.done).length;
   move.total = move.steps.length;
