@@ -71,3 +71,15 @@ subclass189→190 and explicit unchanged-value invitation confirmation without
 autosave; other scoped claims remained unknown. An initial relative locator
 included the enclosing region within an action-list filter and matched nothing;
 targeting the actual select control's ancestor fixed only the test fixture.
+
+Final frozen full suite completed: **667 tests in90 files passed**, on application
+commit `10a2588`; subsequent commits change documentation only. All static/build/
+size checks passed. Vitest's nonfatal jsdom navigation notice remains in the log;
+its final exit code was0 with no failed test. Backend final validation is308 tests
+and126 subtests on actual PostgreSQL. No test was excluded to obtain these counts.
+The deliberately separate SQLite preview wrapper is not PostgreSQL evidence.
+
+Technical readiness: draft local review within the declared route/date coverage.
+Release readiness: not enabled publicly; legal/date review, public intake, financial/
+time content, simultaneous independent route evidence and pilot acceptance remain.
+No merge or deployment occurred. Original checkouts were not modified.
