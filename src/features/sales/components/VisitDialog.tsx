@@ -16,6 +16,7 @@ import { ApiError } from '@/lib/api/client';
 import { addDays, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { tasksQuery } from '@/lib/tasks/api';
 import { toast } from '@/lib/toast';
 import {
@@ -57,6 +58,7 @@ export function VisitDialog({
   onLog?: (() => void) | undefined;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const visits = useQuery({ ...customerVisitsQuery(customer.id), enabled: open });
   const upcoming = visits.data?.upcoming ?? null;
   const ready = visits.data !== undefined;
@@ -67,7 +69,7 @@ export function VisitDialog({
       open={open}
       onClose={onClose}
       size="wide"
-      title={t('visit.title', { name: customer.name })}
+      title={t('visit.title', { name: named(customer.name) })}
       subtitle={t('visit.subtitle')}
       closeLabel={t('close')}
       footer={

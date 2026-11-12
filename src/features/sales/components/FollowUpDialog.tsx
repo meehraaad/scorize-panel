@@ -12,6 +12,7 @@ import { followAtOf, type Follow } from '../followUp';
 import { FollowUpNow } from './FollowUpNow';
 import { FollowUpWhen } from './FollowUpWhen';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 
 /**
  * Set a customer's next follow-up without logging a contact: a new one at a picked time (the
@@ -42,6 +43,7 @@ export function FollowUpDialog({
   onLog?: (() => void) | undefined;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const save = useSetFollowUp();
   const [picked, setPicked] = useState<LeadMatch | null>(null);
@@ -90,7 +92,9 @@ export function FollowUpDialog({
       onClose={onClose}
       title={
         lead
-          ? t(moving ? 'followUpDialog.moveTitle' : 'followUpDialog.setTitle', { name: lead.name })
+          ? t(moving ? 'followUpDialog.moveTitle' : 'followUpDialog.setTitle', {
+              name: named(lead.name),
+            })
           : t('followUpDialog.title')
       }
       subtitle={t('followUpDialog.subtitle')}

@@ -15,6 +15,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { TagList } from '@/components/ui/Tags';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
   customerQuery,
   offerQuery,
@@ -238,6 +239,7 @@ function OfferForm({
   onTemplate: (template: number | null) => void;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const { t: tc } = useTranslation();
   const f = useFormat();
   const s = useSalesFormat();
@@ -337,10 +339,10 @@ function OfferForm({
 
   return (
     <PageStack>
-      <BackLink to={customerPath(id)}>{customer.name}</BackLink>
+      <BackLink to={customerPath(id)}>{named(customer.name)}</BackLink>
       <PageHeader
         title={kind}
-        subtitle={t('offer.forCustomer', { name: customer.name })}
+        subtitle={t('offer.forCustomer', { name: named(customer.name) })}
         actions={
           kinds ? (
             <Button variant="outline" onClick={() => setChoosing(true)}>
@@ -352,7 +354,7 @@ function OfferForm({
       {choosing && (
         <ContractChooser
           customer={id}
-          name={customer.name}
+          name={named(customer.name)}
           onClose={() => setChoosing(false)}
           onPick={onTemplate}
         />

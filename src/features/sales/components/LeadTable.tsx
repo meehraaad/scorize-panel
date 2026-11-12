@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { FaceDot } from '@/components/customers/FaceDot';
 import { TagList } from '@/components/ui/Tags';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { DESKTOP_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
 import { maskPhone } from '@/lib/sales/api';
 import { tagsOf, type CustomerTag, type LeadRow } from '../api';
@@ -36,6 +37,7 @@ export function LeadTable({
   tags?: readonly CustomerTag[] | undefined;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const { t: tc } = useTranslation();
   const f = useFormat();
   const s = useSalesFormat();
@@ -76,7 +78,7 @@ export function LeadTable({
               {selectable && (
                 <input
                   type="checkbox"
-                  aria-label={t('leads.select', { name: row.name })}
+                  aria-label={t('leads.select', { name: named(row.name) })}
                   checked={selected.has(row.id)}
                   onChange={(event) => toggle(row.id, event.target.checked)}
                   className="mt-1 size-[18px] flex-none accent-primary"
@@ -90,7 +92,7 @@ export function LeadTable({
                       className="inline-flex items-center gap-2 text-base font-semibold break-words text-text hover:underline"
                     >
                       <FaceDot name={row.name} face={row.face} />
-                      {row.name}
+                      {named(row.name)}
                     </Link>
                     <span className="text-[13px] break-words text-text-2">{meta.join(' · ')}</span>
                   </span>
@@ -102,7 +104,7 @@ export function LeadTable({
                 <OwnerTag seller={row.seller} />
                 {rowTags.length > 0 && (
                   <TagList
-                    label={t('tags.of', { name: row.name })}
+                    label={t('tags.of', { name: named(row.name) })}
                     tags={rowTags.map((tag) => tag.name)}
                     toneOf={(name) => toneOf.get(name) ?? 'neutral'}
                     size="sm"
@@ -140,7 +142,7 @@ export function LeadTable({
                   </span>
                   <ContactButtons
                     customer={row.customer}
-                    name={row.name}
+                    name={named(row.name)}
                     phone={row.phone}
                     messages={false}
                   />
@@ -203,7 +205,7 @@ export function LeadTable({
                   <td className={cell}>
                     <input
                       type="checkbox"
-                      aria-label={t('leads.select', { name: row.name })}
+                      aria-label={t('leads.select', { name: named(row.name) })}
                       checked={selected.has(row.id)}
                       onChange={(event) => toggle(row.id, event.target.checked)}
                       className="size-[18px] accent-primary"
@@ -217,13 +219,13 @@ export function LeadTable({
                       className="inline-flex items-center gap-2 text-base font-semibold text-text hover:underline"
                     >
                       <FaceDot name={row.name} face={row.face} />
-                      {row.name}
+                      {named(row.name)}
                     </Link>
                     <span className="text-[13px] text-text-2">{meta.join(' · ')}</span>
                     <OwnerTag seller={row.seller} />
                     {rowTags.length > 0 && (
                       <TagList
-                        label={t('tags.of', { name: row.name })}
+                        label={t('tags.of', { name: named(row.name) })}
                         tags={rowTags.map((tag) => tag.name)}
                         toneOf={(name) => toneOf.get(name) ?? 'neutral'}
                         size="sm"
@@ -274,7 +276,7 @@ export function LeadTable({
                 <td className={`${cell} text-end`}>
                   <ContactButtons
                     customer={row.customer}
-                    name={row.name}
+                    name={named(row.name)}
                     phone={row.phone}
                     messages={false}
                   />

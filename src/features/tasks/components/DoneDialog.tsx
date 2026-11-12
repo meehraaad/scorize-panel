@@ -1,5 +1,6 @@
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
@@ -33,6 +34,7 @@ export function DoneDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
+  const named = useDisplayName();
   const change = useTaskChange();
   const [outcome, setOutcome] = useState<TaskOutcome>('talked');
   const [note, setNote] = useState(task?.note ?? '');
@@ -66,7 +68,9 @@ export function DoneDialog({
       open={task !== null}
       onClose={onClose}
       title={t('done.title')}
-      subtitle={task && [task.text, task.person?.name].filter(Boolean).join(' · ')}
+      subtitle={
+        task && [task.text, task.person && named(task.person.name)].filter(Boolean).join(' · ')
+      }
       closeLabel={t('close')}
       footer={
         <>

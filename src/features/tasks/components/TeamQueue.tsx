@@ -8,6 +8,7 @@ import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type QueueItem } from '@/lib/tasks/api';
 import { useTaskChange } from '@/lib/tasks/changes';
 import type { TasksConfig } from '../config';
@@ -25,6 +26,7 @@ export function TeamQueue({
   config: TasksConfig;
 }) {
   const { t } = useTranslation('tasks');
+  const named = useDisplayName();
   const f = useFormat();
   const change = useTaskChange();
   const [open, setOpen] = useState<number | null>(null);
@@ -70,7 +72,7 @@ export function TeamQueue({
                         className="inline-flex items-center gap-1.5 align-middle text-primary-text"
                       >
                         <FaceDot name={item.person.name} face={item.person.face} size="sm" />
-                        {item.person.name}
+                        {named(item.person.name)}
                       </Link>
                       {' · '}
                     </>

@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { FaceDot } from '@/components/customers/FaceDot';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { STALE_DAYS, type BoardCard } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
@@ -21,6 +22,7 @@ export function DealCard({
   staleDays?: number;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const s = useSalesFormat();
   const [now] = useState(() => Date.now());
@@ -44,7 +46,9 @@ export function DealCard({
       <span className="flex flex-col gap-1">
         <span className="flex items-start gap-2">
           <FaceDot name={card.name} face={card.face} />
-          <span className="line-clamp-2 text-[15px] leading-6 font-semibold">{card.name}</span>
+          <span className="line-clamp-2 text-[15px] leading-6 font-semibold">
+            {named(card.name)}
+          </span>
         </span>
         <span className="line-clamp-2 text-[13px] leading-6 text-text-2">{card.summary}</span>
       </span>

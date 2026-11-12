@@ -16,6 +16,7 @@ import { Icon } from '@/components/ui/Icon';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { useLogContact, type CallOutcome, type CustomerData } from '../api';
@@ -71,6 +72,7 @@ export function LogDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation(['sales', 'voice']);
+  const named = useDisplayName();
   const linphone = useLinphoneDial();
   const { t: tSales } = useTranslation('sales');
   const f = useFormat();
@@ -271,7 +273,7 @@ export function LogDialog({
       {asksFollowUp && (
         <FollowUpWhen
           legend={t('customer.logDialog.followUp')}
-          name={customer.name}
+          name={named(customer.name)}
           follow={follow}
           date={date}
           onChange={(next) => updateContactDraft(draft.key, next)}
@@ -296,7 +298,7 @@ export function LogDialog({
         <Suspense fallback={null}>
           <VisitDialog
             open
-            customer={{ id: customer.id, name: customer.name }}
+            customer={{ id: customer.id, name: named(customer.name) }}
             onClose={() => setVisiting(false)}
           />
         </Suspense>
@@ -409,7 +411,7 @@ export function LogDialog({
               <CallStrip
                 call={liveCall}
                 titleId={titleId}
-                name={customer.name}
+                name={named(customer.name)}
                 face={customer.face}
                 href={customerPath(customer.id)}
                 chips={chips}
@@ -426,9 +428,9 @@ export function LogDialog({
                 <CallStrip
                   phone={customer.phone}
                   label={t('customer.logDialog.stripLabel')}
-                  titleLabel={t('customer.logDialog.title', { name: customer.name })}
+                  titleLabel={t('customer.logDialog.title', { name: named(customer.name) })}
                   titleId={titleId}
-                  name={customer.name}
+                  name={named(customer.name)}
                   face={customer.face}
                   href={customerPath(customer.id)}
                   chips={chips}
@@ -441,7 +443,7 @@ export function LogDialog({
       }
       icon={session ? 'calendar' : undefined}
       title={t(session ? 'customer.logDialog.meetingTitle' : 'customer.logDialog.title', {
-        name: customer.name,
+        name: named(customer.name),
       })}
       subtitle={
         lead &&

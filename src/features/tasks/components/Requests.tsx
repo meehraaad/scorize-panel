@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type TaskRequest } from '@/lib/tasks/api';
 import { useTaskChange } from '@/lib/tasks/changes';
 import type { TasksConfig } from '../config';
@@ -29,6 +30,7 @@ export function Requests({
   config: TasksConfig;
 }) {
   const { t } = useTranslation('tasks');
+  const named = useDisplayName();
   const f = useFormat();
   const change = useTaskChange();
   const [open, setOpen] = useState<number | null>(null);
@@ -72,7 +74,7 @@ export function Requests({
                         className="inline-flex items-center gap-1.5 align-middle font-medium text-primary-text"
                       >
                         <FaceDot name={request.person.name} face={request.person.face} size="sm" />
-                        {request.person.name}
+                        {named(request.person.name)}
                       </Link>
                     </span>
                   )}

@@ -12,6 +12,7 @@ import { WeekNav } from '@/components/ui/WeekNav';
 import { addDays, eventColor, sameDay, toValue, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { tasksQuery } from '@/lib/tasks/api';
 import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/Button';
@@ -72,6 +73,7 @@ const MODES: readonly ModeFilter[] = ['all', 'online', 'in_person'];
 
 export function ConsultationCalendar() {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const s = useSalesFormat();
   const cal = useCalendar();
@@ -195,7 +197,7 @@ export function ConsultationCalendar() {
         look: 'call' as const,
         title: item.name,
         meta,
-        aria: `${item.name}، ${meta}`,
+        aria: `${named(item.name)}، ${meta}`,
         lead: (
           <span className="inline-flex items-center gap-1">
             <FaceDot name={item.name} face={item.face} size="sm" />
@@ -239,7 +241,7 @@ export function ConsultationCalendar() {
         look,
         title: item.name,
         meta,
-        aria: `${item.name}، ${meta}، ${t('visit.onCalendar')}`,
+        aria: `${named(item.name)}، ${meta}، ${t('visit.onCalendar')}`,
         lead: <Icon name="building" size={12} />,
       };
     }),
@@ -423,7 +425,7 @@ export function ConsultationCalendar() {
                   onMoveCall={(call) =>
                     setSetting({
                       at: new Date(call.follow_up_at),
-                      lead: { id: call.lead, name: call.name },
+                      lead: { id: call.lead, name: named(call.name) },
                     })
                   }
                 />
@@ -534,6 +536,7 @@ function NextSession({
   onOpen: () => void;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const start = new Date(item.starts_at);
   const end = new Date(start.getTime() + (item.minutes ?? DEFAULT_MINUTES) * MINUTE);
@@ -558,7 +561,7 @@ function NextSession({
       <button type="button" onClick={onOpen} className="flex flex-col gap-1 text-start">
         <span className="inline-flex items-center gap-2 text-lg font-bold">
           <FaceDot name={item.name} face={item.face} />
-          {item.name}
+          {named(item.name)}
         </span>
         <span className="inline-flex items-center gap-1.5 text-[13px] text-on-hero-2">
           <Icon name={item.mode === 'online' ? 'phone' : 'building'} size={14} />

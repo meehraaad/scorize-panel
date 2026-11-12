@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { eventColor } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { messageHref } from '@/lib/sales/api';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { formatPhone } from '@/lib/site';
@@ -48,6 +49,7 @@ export function StartAction({
   onHero?: boolean;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const arrived = useMarkArrived();
   const linphone = useLinphoneDial();
   const primary = onHero
@@ -77,7 +79,7 @@ export function StartAction({
       onClick={() =>
         arrived.mutate(item.id, {
           onSuccess: () =>
-            toast.success(t('consultationCalendar.arrivedToast', { name: item.name })),
+            toast.success(t('consultationCalendar.arrivedToast', { name: named(item.name) })),
           onError: () => toast.error(t('consultationCalendar.error')),
         })
       }
@@ -105,6 +107,7 @@ export function EventDetails({
   onMoveCall: (call: CalendarCall) => void;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const s = useSalesFormat();
   const linphone = useLinphoneDial();
@@ -116,7 +119,7 @@ export function EventDetails({
   const end = new Date(start.getTime() + minutes * MINUTE);
   const status = chosen.kind === 'consultation' ? statusOf(chosen.item, now) : null;
   const action = (label: string) =>
-    t('consultations.actionsFor', { action: label, name: item.name });
+    t('consultations.actionsFor', { action: label, name: named(item.name) });
   const customerLink = (
     <Link
       to={customerPath(item.customer)}
@@ -143,7 +146,7 @@ export function EventDetails({
         </button>
         <ContactLogButton
           customer={item.customer}
-          name={item.name}
+          name={named(item.name)}
           start={{ channel: 'call' }}
           className={outline}
         >
@@ -159,7 +162,7 @@ export function EventDetails({
     const log = (look: string) => (
       <ContactLogButton
         customer={consultation.customer}
-        name={consultation.name}
+        name={named(consultation.name)}
         start={{
           channel: 'meeting',
           reservation: consultation.id,
@@ -264,7 +267,7 @@ export function EventDetails({
   return (
     <section
       role="dialog"
-      aria-label={item.name}
+      aria-label={named(item.name)}
       className="flex flex-col gap-3.5 rounded-card-sm bg-surface p-4 shadow-toast"
     >
       <div className="flex items-start gap-3">
@@ -283,7 +286,7 @@ export function EventDetails({
             onClick={onClose}
             className="-my-2.5 inline-flex min-h-11 items-center self-start text-base font-bold text-text underline-offset-4 hover:text-primary-text hover:underline focus-visible:underline"
           >
-            {item.name}
+            {named(item.name)}
           </Link>
           <span className="text-[13px]">
             {t('consultationCalendar.when', {

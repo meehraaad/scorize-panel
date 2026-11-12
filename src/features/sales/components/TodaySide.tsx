@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ProgressBar } from '@/components/ui/Progress';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { percentOf } from '@/lib/progress';
 import type { MonthSummary, TodayData, TodayInstalments, Upsell } from '../api';
 import type { Instalment } from '../api/month';
@@ -108,6 +109,7 @@ function mergeAdmissions(items: Upsell[]): Item[] {
 /** Customers ready for their next purchase: a line each, linking to the step that sells it. */
 function UpsellList({ items }: { items: Upsell[] }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const merged = mergeAdmissions(items);
   const content = (item: Item) => {
@@ -115,14 +117,17 @@ function UpsellList({ items }: { items: Upsell[] }) {
       case 'admitted':
         return {
           title: t('today.upsell.admitted.title', {
-            name: item.name,
+            name: named(item.name),
             university: f.list(item.universities),
           }),
           to: `${customerPath(item.customer)}/offer`,
         };
       case 'ending':
         return {
-          title: t('today.upsell.ending.title', { name: item.name, days: f.number(item.days) }),
+          title: t('today.upsell.ending.title', {
+            name: named(item.name),
+            days: f.number(item.days),
+          }),
           to: `${customerPath(item.customer)}/offer`,
         };
       case 'no_contract':
@@ -162,6 +167,7 @@ function UpsellList({ items }: { items: Upsell[] }) {
 /** Instalments of my contracts due this week or already late: a line each, to the customer's payments. */
 function InstalmentList({ instalments }: { instalments: TodayInstalments }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const s = useSalesFormat();
   const when = (row: Instalment) =>
@@ -190,7 +196,7 @@ function InstalmentList({ instalments }: { instalments: TodayInstalments }) {
             >
               <span className="text-[13px] leading-6 font-semibold">
                 {t('today.instalments.row', {
-                  name: row.name,
+                  name: named(row.name),
                   amount: row.amount === null ? (row.amount_text ?? '') : s.millions(row.amount),
                 })}
               </span>

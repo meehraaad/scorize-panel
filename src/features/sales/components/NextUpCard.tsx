@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { IconLink } from '@/components/ui/IconButton';
@@ -42,10 +43,12 @@ export function NextUpCard({
   onSkip: (() => void) | null;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const s = useSalesFormat();
   const person = item.kind === 'lead' ? item.lead : item.call;
-  const { customer, name, phone, score, reason } = person;
+  const { customer, phone, score, reason } = person;
+  const name = named(person.name);
 
   const why =
     item.kind === 'lead'

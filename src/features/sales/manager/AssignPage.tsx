@@ -13,6 +13,7 @@ import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard, SectionHeading } from '@/components/ui/SectionCard';
 import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
   assignQuery,
   useAssignLeads,
@@ -439,6 +440,7 @@ function QueueRow({
   onAssign: (seller: number) => void;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const { t: tc } = useTranslation();
   const f = useFormat();
   const s = useSalesFormat();
@@ -453,7 +455,7 @@ function QueueRow({
   return (
     <li className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
       <span className="flex min-w-0 flex-[1_1_220px] flex-col gap-1">
-        <span className="text-[15px] font-semibold">{lead.name}</span>
+        <span className="text-[15px] font-semibold">{named(lead.name)}</span>
         <span className="text-[13px] text-text-2">{meta.join(' · ')}</span>
       </span>
       <span className="flex-[1_1_200px] text-sm text-neutral">{lead.cause}</span>
@@ -465,7 +467,7 @@ function QueueRow({
         <SelectField
           inline
           hideLabel
-          label={t('manager.assign.sellerFor', { name: lead.name })}
+          label={t('manager.assign.sellerFor', { name: named(lead.name) })}
           value={seller}
           onChange={setSeller}
           options={[

@@ -3,6 +3,7 @@ import { useId, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { formatPhone } from '@/lib/site';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { firstLeadQuery, leadSearchQuery, leadsQuery, type LeadMatch } from '../api';
@@ -29,6 +30,7 @@ export function CustomerPicker({
   error?: string | undefined;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const id = useId();
   const [search, setSearch] = useState('');
@@ -51,7 +53,7 @@ export function CustomerPicker({
           .map((row) => ({
             id: row.id,
             customer: row.customer,
-            name: row.name,
+            name: named(row.name),
             phone: row.phone,
             stage: row.stage,
             follow_up_at: row.follow_up_at,
@@ -167,7 +169,7 @@ export function CustomerPicker({
     return (
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="flex flex-wrap items-center gap-x-2">
-          <span className="text-[15px] font-semibold">{row.name}</span>
+          <span className="text-[15px] font-semibold">{named(row.name)}</span>
           <OwnerTag seller={row.seller} />
         </span>
         <span className="text-xs text-text-2">

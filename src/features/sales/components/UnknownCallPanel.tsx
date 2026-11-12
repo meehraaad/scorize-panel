@@ -9,6 +9,7 @@ import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
   activateUnknownCall,
   attachUnknownCall,
@@ -86,6 +87,7 @@ function MissedCall({ call, onAdd }: { call: ObservedCall; onAdd: () => void }) 
 
 function UnknownCallForm({ call }: { call: ObservedCall }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const create = useCreateLead();
   const secondPhone = useSetSecondPhone();
@@ -126,7 +128,7 @@ function UnknownCallForm({ call }: { call: ObservedCall }) {
           { customer: picked.customer, phone: callPhone },
           {
             onSuccess: () => {
-              toast.success(t('unknownCall.phoneKept', { name: picked.name }));
+              toast.success(t('unknownCall.phoneKept', { name: named(picked.name) }));
               continueWith(picked.customer, picked.name, 'picked');
             },
             onError: (error) => {
@@ -195,7 +197,7 @@ function UnknownCallForm({ call }: { call: ObservedCall }) {
           >
             <span className="truncate">
               {mode === 'existing' && picked
-                ? t('unknownCall.continueWith', { name: picked.name })
+                ? t('unknownCall.continueWith', { name: named(picked.name) })
                 : t('unknownCall.continue')}
             </span>
             <Icon name="chevronEnd" size={18} />
@@ -289,7 +291,7 @@ function UnknownCallForm({ call }: { call: ObservedCall }) {
             />
             {picked && callPhone && callPhone !== normalizePhone(picked.phone) && (
               <ChoiceGroup
-                legend={t('unknownCall.keepLegend', { name: picked.name })}
+                legend={t('unknownCall.keepLegend', { name: named(picked.name) })}
                 value={keep}
                 onChange={setKeep}
                 hint={keep === 'second' ? t('unknownCall.keepHint') : undefined}

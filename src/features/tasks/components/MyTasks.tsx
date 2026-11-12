@@ -10,6 +10,7 @@ import { SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { parseValue, sameDay } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type MyTask, type TaskSource } from '@/lib/tasks/api';
 import { useTaskChange } from '@/lib/tasks/changes';
 import { quickWhen, type QuickWhen } from '@/lib/when';
@@ -171,6 +172,7 @@ function TaskRow({
   onOpen: () => void;
 }) {
   const { t } = useTranslation('tasks');
+  const named = useDisplayName();
   const f = useFormat();
   const change = useTaskChange();
   const [snoozing, setSnoozing] = useState(false);
@@ -215,7 +217,7 @@ function TaskRow({
               className="inline-flex items-center gap-1.5 align-middle font-medium text-primary-text"
             >
               <FaceDot name={task.person.name} face={task.person.face} size="sm" />
-              {task.person.name}
+              {named(task.person.name)}
             </Link>
             {task.person.context && ` · ${task.person.context}`}
           </span>

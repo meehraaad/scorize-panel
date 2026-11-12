@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +16,7 @@ import { customerPath } from './paths';
  */
 export default function ContractPrintPage() {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const id = Number(useParams().id);
   const { data: customer } = useSuspenseQuery(customerQuery(id));
   const { data: doc } = useSuspenseQuery(contractDocumentQuery(id));
@@ -22,7 +24,7 @@ export default function ContractPrintPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <BackLink to={`${customerPath(id)}/apply`}>{customer.name}</BackLink>
+        <BackLink to={`${customerPath(id)}/apply`}>{named(customer.name)}</BackLink>
         <Button onClick={() => window.print()}>{t('print.print')}</Button>
       </div>
       {doc.clauses.length === 0 && (

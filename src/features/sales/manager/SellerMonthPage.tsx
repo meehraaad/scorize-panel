@@ -8,6 +8,7 @@ import { SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { idParam } from '@/lib/router/lazyPage';
 import { teamQuery, teamSellerQuery } from '../api';
 import type { MonthContract } from '../api/month';
@@ -21,6 +22,7 @@ import { MoveContractForm } from './MoveContractForm';
  */
 export default function SellerMonthPage() {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const navigate = useNavigate();
   const seller = idParam(useParams().seller);
@@ -74,7 +76,7 @@ export default function SellerMonthPage() {
             <Button
               variant="outline"
               className="h-11 px-4 text-sm"
-              aria-label={t('manager.contracts.moveFor', { name: row.name })}
+              aria-label={t('manager.contracts.moveFor', { name: named(row.name) })}
               onClick={() => setMoving(row)}
             >
               {t('manager.contracts.move')}

@@ -4,6 +4,7 @@ import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import type { DayReport } from '../api';
 import { customerPath } from '../paths';
 
@@ -13,6 +14,7 @@ import { customerPath } from '../paths';
  */
 export function DaySummary({ report }: { report: DayReport }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const sessions = report.sessions.reduce((sum, row) => sum + row.count, 0);
   return (
@@ -64,7 +66,7 @@ export function DaySummary({ report }: { report: DayReport }) {
                     to={customerPath(contact.customer)}
                     className="font-semibold text-text hover:underline"
                   >
-                    {contact.name}
+                    {named(contact.name)}
                   </Link>
                   {' · '}
                   {t(`consultations.dayReport.kind.${contact.kind}`)}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { CalendarEvent } from '@/components/ui/EventCalendar';
 import { eventColor } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { sellerCalendarQuery } from '../api';
 
 const CALL_MINUTES = 15;
@@ -17,6 +18,7 @@ export const TASK_COLOR = 'var(--cal-5)';
  */
 export function useSellerBusy(week: Date): { busy: CalendarEvent[]; isPending: boolean } {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const { data, isPending } = useQuery(sellerCalendarQuery(week));
   const types = new Map((data?.types ?? []).map((type) => [type.id, type]));
@@ -34,7 +36,7 @@ export function useSellerBusy(week: Date): { busy: CalendarEvent[]; isPending: b
           look: 'upcoming' as const,
           title: item.name,
           meta: f.time(start),
-          aria: `${item.name}، ${f.time(start)}`,
+          aria: `${named(item.name)}، ${f.time(start)}`,
         };
       }),
     ...(data?.visits ?? [])
@@ -49,7 +51,7 @@ export function useSellerBusy(week: Date): { busy: CalendarEvent[]; isPending: b
           look: 'upcoming' as const,
           title: item.name,
           meta: f.time(start),
-          aria: `${item.name}، ${f.time(start)}، ${t('visit.onCalendar')}`,
+          aria: `${named(item.name)}، ${f.time(start)}، ${t('visit.onCalendar')}`,
         };
       }),
     ...(data?.task_rows ?? [])
@@ -81,7 +83,7 @@ export function useSellerBusy(week: Date): { busy: CalendarEvent[]; isPending: b
           look: 'call' as const,
           title: item.name,
           meta: f.time(start),
-          aria: `${item.name}، ${f.time(start)}، ${t('consultationCalendar.followUp')}`,
+          aria: `${named(item.name)}، ${f.time(start)}، ${t('consultationCalendar.followUp')}`,
         };
       }),
   ];

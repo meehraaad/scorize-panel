@@ -17,6 +17,7 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { pagesOf, useClampPage } from '@/lib/api/page';
 import { toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { messageHref } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
 import { consultationsQuery, type Consultation, type ConsultationRange } from './api';
@@ -225,9 +226,10 @@ function ConsultationsList({ switcher }: { switcher: ReactNode }) {
 
 function ConsultationRow({ item, status }: { item: Consultation; status: Status }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const action = (label: string) =>
-    t('consultations.actionsFor', { action: label, name: item.name });
+    t('consultations.actionsFor', { action: label, name: named(item.name) });
   const reminder = t('consultations.remindText', {
     name: item.name,
     type: item.type.name,
@@ -247,7 +249,7 @@ function ConsultationRow({ item, status }: { item: Consultation; status: Status 
           to={customerPath(item.customer)}
           className="text-base font-semibold text-text hover:underline"
         >
-          {item.name}
+          {named(item.name)}
         </Link>
         <span className="text-sm text-text-2">
           {item.minutes === null
@@ -266,7 +268,7 @@ function ConsultationRow({ item, status }: { item: Consultation; status: Status 
         {(status === 'need' || status === 'soon') && (
           <ContactLogButton
             customer={item.customer}
-            name={item.name}
+            name={named(item.name)}
             start={{
               channel: 'meeting',
               reservation: item.id,

@@ -12,6 +12,7 @@ import { DayPlan } from '@/components/ui/DayPlan';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { addDays, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { useConfirmReceipt } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
@@ -85,6 +86,7 @@ export function TodayAgenda({
   now: number;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   // Days from today: 0 is today's whole plan; another day shows its calendar (timed follow-ups and
   // consultations) and how many tasks fall on it. The day's calendar also fills the popup a
@@ -265,7 +267,7 @@ export function TodayAgenda({
               setChosenKey(null);
               setMoving({
                 at: new Date(call.follow_up_at),
-                lead: { id: call.lead, name: call.name },
+                lead: { id: call.lead, name: named(call.name) },
               });
             }}
           />
@@ -324,6 +326,7 @@ function AgendaRow({
   onOpen?: (() => void) | undefined;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const s = useSalesFormat();
   const time = (at: number) => f.time(new Date(at));
@@ -335,7 +338,7 @@ function AgendaRow({
         <Row
           tone="danger"
           icon="phone"
-          title={lead.name}
+          title={named(lead.name)}
           tag={t('today.agenda.tag.lead')}
           to={customerPath(lead.customer)}
           meta={lead.reason}
@@ -344,10 +347,10 @@ function AgendaRow({
           action={
             <ContactLogButton
               customer={lead.customer}
-              name={lead.name}
+              name={named(lead.name)}
               start={{ channel: 'call' }}
               phone={lead.phone}
-              aria-label={t('callName', { name: lead.name })}
+              aria-label={t('callName', { name: named(lead.name) })}
               className={buttonClass('primary', small)}
             >
               <Icon name="phone" size={16} />
@@ -364,7 +367,7 @@ function AgendaRow({
         <Row
           tone={late ? 'warn' : 'neutral'}
           icon="phone"
-          title={call.name}
+          title={named(call.name)}
           tag={
             at === null
               ? t('today.agenda.tag.overdue')
@@ -386,10 +389,10 @@ function AgendaRow({
           action={
             <ContactLogButton
               customer={call.customer}
-              name={call.name}
+              name={named(call.name)}
               start={{ channel: 'call' }}
               phone={call.phone}
-              aria-label={t('callName', { name: call.name })}
+              aria-label={t('callName', { name: named(call.name) })}
               className={buttonClass(late ? 'primary' : 'outline', small)}
             >
               <Icon name="phone" size={16} />
@@ -407,7 +410,7 @@ function AgendaRow({
         <Row
           tone={status === 'need' ? 'warn' : status === 'done' ? 'good' : 'primary'}
           icon="calendar"
-          title={consultation.name}
+          title={named(consultation.name)}
           tag={t('today.agenda.tag.consultation')}
           to={customerPath(consultation.customer)}
           meta={t('today.agenda.consultationMeta', {
@@ -446,9 +449,9 @@ function AgendaRow({
             task.action === 'call' && (
               <ContactLogButton
                 customer={person.id}
-                name={person.name}
+                name={named(person.name)}
                 start={{ channel: 'call' }}
-                aria-label={t('callName', { name: person.name })}
+                aria-label={t('callName', { name: named(person.name) })}
                 className={buttonClass(due ? 'primary' : 'outline', small)}
               >
                 <Icon name="phone" size={16} />
@@ -486,6 +489,7 @@ function AgendaRow({
 
 function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const s = useSalesFormat();
   const confirm = useConfirmReceipt();
@@ -494,7 +498,7 @@ function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }
     <Row
       tone="info"
       icon="card"
-      title={receipt.name}
+      title={named(receipt.name)}
       tag={t('today.agenda.tag.receipt')}
       to={customerPath(receipt.customer)}
       meta={
@@ -507,7 +511,7 @@ function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }
             href={safeHref(receipt.receipt_url)}
             target="_blank"
             rel="noreferrer"
-            aria-label={t('today.receipts.viewName', { name: receipt.name })}
+            aria-label={t('today.receipts.viewName', { name: named(receipt.name) })}
             className="relative z-10 font-medium text-primary-text underline-offset-4 hover:underline"
           >
             {t('today.receipts.view')}
@@ -519,14 +523,14 @@ function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }
         <Button
           variant="outline"
           className={small}
-          aria-label={t('today.receipts.confirmName', { name: receipt.name })}
+          aria-label={t('today.receipts.confirmName', { name: named(receipt.name) })}
           disabled={confirm.isPending}
           onClick={() =>
             confirm.mutate(
               { customer: receipt.customer, payment: receipt.payment },
               {
                 onSuccess: () =>
-                  toast.success(t('today.receipts.confirmed', { name: receipt.name })),
+                  toast.success(t('today.receipts.confirmed', { name: named(receipt.name) })),
                 onError: () => toast.error(t('today.receipts.error')),
               },
             )

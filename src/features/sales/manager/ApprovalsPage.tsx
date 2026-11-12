@@ -16,6 +16,7 @@ import { QuerySection } from '@/components/ui/QuerySection';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
   approvalDocumentQuery,
   approvalsQuery,
@@ -37,6 +38,7 @@ import { toast } from '@/lib/toast';
  */
 export default function ApprovalsPage() {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const { data } = useSuspenseQuery(approvalsQuery);
   const [params, setParams] = useSearchParams();
@@ -83,7 +85,7 @@ export default function ApprovalsPage() {
                       className="flex w-full flex-col gap-1.5 px-5 py-4 text-start hover:bg-canvas aria-pressed:bg-row-highlight"
                     >
                       <span className="flex justify-between gap-2">
-                        <span className="text-[15px] font-semibold">{draft.name}</span>
+                        <span className="text-[15px] font-semibold">{named(draft.name)}</span>
                         <span className="text-xs text-text-2">{f.timeAgo(draft.created_at)}</span>
                       </span>
                       <span className="text-[13px] text-text-2">{draft.summary}</span>
@@ -116,6 +118,7 @@ export default function ApprovalsPage() {
 
 function DraftDetail({ draft }: { draft: ContractDraft }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const decide = useDecideDraft();
   const [comment, setComment] = useState('');
   const [tried, setTried] = useState(false);
@@ -144,7 +147,7 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h2 id="draft-title" className="m-0 font-display text-xl font-bold">
-            {draft.name}
+            {named(draft.name)}
           </h2>
           <span className="text-sm text-text-2">{draft.meta}</span>
         </div>
@@ -265,14 +268,14 @@ function DraftDetail({ draft }: { draft: ContractDraft }) {
           disabled={decide.isPending}
           onClick={() => act('reject')}
         >
-          {t('manager.approvals.reject', { name: draft.name })}
+          {t('manager.approvals.reject', { name: named(draft.name) })}
         </Button>
       </div>
       <Dialog
         open={reading}
         onClose={() => setReading(false)}
         size="wide"
-        title={t('manager.approvals.preview.title', { name: draft.name })}
+        title={t('manager.approvals.preview.title', { name: named(draft.name) })}
         subtitle={t('manager.approvals.preview.subtitle')}
         closeLabel={t('close')}
         footer={

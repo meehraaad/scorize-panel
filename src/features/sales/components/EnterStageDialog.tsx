@@ -9,6 +9,7 @@ import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { Switch } from '@/components/ui/Switch';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { toast } from '@/lib/toast';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import type { BoardCard, BoardColumn, MoveSteps, StageActivity } from '../api';
@@ -58,6 +59,7 @@ export function EnterStageDialog({
   onConfirm: (steps: MoveSteps) => void;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const name = to.name ?? t(`stage.${to.stage}`);
   const [timed, setTimed] = useState<Record<string, Timed>>(() =>
@@ -70,7 +72,7 @@ export function EnterStageDialog({
             text:
               activity.settings.text ||
               (activity.kind === 'follow_up'
-                ? t('board.enter.followUpText', { name: card.name })
+                ? t('board.enter.followUpText', { name: named(card.name) })
                 : ''),
             when: 'default',
             date: '',
@@ -112,7 +114,7 @@ export function EnterStageDialog({
     <Dialog
       open
       onClose={onClose}
-      title={t('board.enter.title', { name: card.name, stage: name })}
+      title={t('board.enter.title', { name: named(card.name), stage: name })}
       closeLabel={t('close')}
       subtitle={
         <span className="flex flex-col gap-2">

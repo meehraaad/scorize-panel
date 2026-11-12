@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { FaceDot } from '@/components/customers/FaceDot';
 import { Button } from '@/components/ui/Button';
 import { FloatingPanel } from '@/components/ui/FloatingPanel';
@@ -22,6 +23,7 @@ import { UnknownCallPanel } from './components/UnknownCallPanel';
 
 export default function ContactWorkspace() {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const { drafts, active, unknownCalls, activeUnknown } = useContactDrafts();
   const current = drafts.find((draft) => draft.key === active);
   const unknown = unknownCalls.find((call) => call.id === activeUnknown);
@@ -46,7 +48,7 @@ export default function ContactWorkspace() {
                 key={draft.key}
                 variant={live ? 'dark' : 'outline'}
                 onClick={() => activateContactDraft(draft.key)}
-                aria-label={t('contactDraft.resume', { name: draft.name })}
+                aria-label={t('contactDraft.resume', { name: named(draft.name) })}
                 className={`max-w-full shadow-panel ${live ? '' : 'bg-warn-tint'}`}
               >
                 <span
@@ -56,7 +58,9 @@ export default function ContactWorkspace() {
                 <Icon name={draft.start.channel === 'meeting' ? 'calendar' : 'phone'} size={18} />
                 <DraftFace draft={draft} />
                 <span className="truncate">
-                  {live ? draft.name : t('contactDraft.unsaved', { name: draft.name })}
+                  {live
+                    ? named(draft.name)
+                    : t('contactDraft.unsaved', { name: named(draft.name) })}
                 </span>
                 {draft.call && <CallStatus call={draft.call} compact />}
               </Button>
@@ -102,6 +106,7 @@ function DraftFace({ draft }: { draft: ContactDraft }) {
 
 function ContactForm({ draft, active }: { draft: ContactDraft; active: boolean }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const customer = useQuery(customerQuery(draft.customer));
   const [discarding, setDiscarding] = useState(false);
   useEffect(() => {
@@ -123,7 +128,7 @@ function ContactForm({ draft, active }: { draft: ContactDraft; active: boolean }
   return (
     <FloatingPanel
       active={active}
-      title={t('customer.logDialog.title', { name: draft.name })}
+      title={t('customer.logDialog.title', { name: named(draft.name) })}
       closeLabel={t('contactDraft.minimize')}
       onClose={minimize}
     >

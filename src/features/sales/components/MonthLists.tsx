@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import type { Instalment, InstalmentState, MonthContract } from '../api/month';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
@@ -42,6 +43,7 @@ export function ContractList({
   empty?: string;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const amount = useAmount();
   if (rows.length === 0) return <EmptyState>{empty ?? t('month.contracts.empty')}</EmptyState>;
@@ -54,7 +56,7 @@ export function ContractList({
               to={customerPath(item.customer)}
               className="text-base font-semibold text-text hover:underline"
             >
-              {item.name}
+              {named(item.name)}
             </Link>
             <span className="text-sm text-text-2">
               {[
@@ -82,6 +84,7 @@ export function ContractList({
 /** Instalments to collect: who pays, which instalment, when it is due and whether it is paid. */
 export function InstalmentList({ rows }: { rows: Instalment[] }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const amount = useAmount();
   if (rows.length === 0) return <EmptyState>{t('month.instalments.empty')}</EmptyState>;
@@ -97,7 +100,7 @@ export function InstalmentList({ rows }: { rows: Instalment[] }) {
               to={`${customerPath(item.customer)}/money`}
               className="text-base font-semibold text-text hover:underline"
             >
-              {item.name}
+              {named(item.name)}
             </Link>
             <span className="text-sm text-text-2">
               {[

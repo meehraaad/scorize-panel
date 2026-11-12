@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { Outlet, useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { PageStack } from '@/components/ui/PageColumns';
@@ -40,6 +41,7 @@ const ContractChooser = lazy(() =>
  */
 export default function CustomerLayout() {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const id = useCustomerId();
   const { data } = useSuspenseQuery(customerQuery(id));
   const [params, setParams] = useSearchParams();
@@ -130,7 +132,7 @@ export default function CustomerLayout() {
         {choosing && (
           <ContractChooser
             customer={data.id}
-            name={data.name}
+            name={named(data.name)}
             onClose={() => update((current) => current.delete('contract'))}
           />
         )}

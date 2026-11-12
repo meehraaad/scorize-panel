@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { Link } from 'react-router';
 import { Notebook } from '@/components/notes/Notebook';
 import { ProgressBar } from '@/components/ui/Progress';
@@ -24,6 +25,7 @@ const ALL = GROUPS.flatMap((group) => group.keys).length;
  */
 export function CustomerSide({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const { t: tc } = useTranslation();
   const f = useFormat();
   const value = (item: ProfileItem) =>
@@ -51,7 +53,7 @@ export function CustomerSide({ customer }: { customer: CustomerData }) {
       <SectionCard
         id="customer-side"
         variant="panel"
-        title={t('side.about', { name: customer.name.split(' ')[0] ?? customer.name })}
+        title={t('side.about', { name: named(customer.name.split(' ')[0]) })}
         subtitle={t('side.same')}
         end={
           <Link
@@ -135,7 +137,7 @@ export function CustomerSide({ customer }: { customer: CustomerData }) {
       </SectionCard>
       <Notebook
         url={`${SALES_API}/customers/${String(customer.id)}/notes/`}
-        name={customer.name.split(' ')[0] ?? customer.name}
+        name={named(customer.name.split(' ')[0])}
       />
     </>
   );

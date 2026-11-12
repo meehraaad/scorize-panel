@@ -14,6 +14,7 @@ import { WeekCalendar } from '@/components/ui/WeekCalendar';
 import { addDays, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
   productsQuery,
   useQuote,
@@ -49,6 +50,7 @@ export function SellDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const s = useSalesFormat();
   const navigate = useNavigate();
   const { data } = useQuery({ ...productsQuery, enabled: category !== null });
@@ -109,7 +111,7 @@ export function SellDialog({
     <Dialog
       open={category !== null}
       onClose={onClose}
-      title={t('sell.title', { name: customer.name })}
+      title={t('sell.title', { name: named(customer.name) })}
       subtitle={t('sell.subtitle')}
       closeLabel={t('close')}
       footer={

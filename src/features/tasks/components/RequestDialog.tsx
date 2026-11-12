@@ -8,6 +8,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { ProgressBar, StepBar } from '@/components/ui/Progress';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type RequestDetail } from '@/lib/tasks/api';
 import { requestQuery, useTaskChange } from '@/lib/tasks/changes';
 import type { TasksConfig } from '../config';
@@ -40,6 +41,7 @@ export function RequestDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
+  const named = useDisplayName();
   const f = useFormat();
   const { data } = useQuery({ ...requestQuery(config.panel, id ?? 0), enabled: id !== null });
   const change = useTaskChange();
@@ -126,7 +128,7 @@ export function RequestDialog({
               <span>
                 {t('requests.about')}{' '}
                 <Link to={config.personPath(data.person.id)} className="text-primary-text">
-                  {data.person.name}
+                  {named(data.person.name)}
                 </Link>
               </span>
             )}

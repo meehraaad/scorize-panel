@@ -7,6 +7,7 @@ import { StepBar } from '@/components/ui/Progress';
 import { SheetButton } from '@/components/ui/Sheet';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { toast } from '@/lib/toast';
 import { messageHref, SALES_API, type Channel } from '@/lib/sales/api';
 import { customerKey, useMoveBoardCard, type CustomerData, type MoveSteps } from '../api';
@@ -52,6 +53,7 @@ export function CustomerHead({
   side: ReactNode;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const { t: tc } = useTranslation();
   const f = useFormat();
   const { lead, headline } = customer;
@@ -84,7 +86,7 @@ export function CustomerHead({
             <div className="flex min-w-0 flex-col gap-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="m-0 font-display text-[22px] font-extrabold lg:text-[26px]">
-                  {customer.name}
+                  {named(customer.name)}
                 </h1>
                 {lead && (
                   <StageChip stage={lead.stage} name={laneOf(lanesOf(customer, t), lead)?.name} />
@@ -138,6 +140,7 @@ export function CustomerHead({
  */
 function StageBar({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const user = useUser();
   const move = useMoveBoardCard();
   const [entering, setEntering] = useState<Lane | null>(null);
@@ -146,7 +149,7 @@ function StageBar({ customer }: { customer: CustomerData }) {
   const current = lead ? laneOf(lanes, lead) : null;
   // Moving needs the columns' ids, which Django sends with `supports.columns`.
   const targets = customer.supports.columns ? boardMoveTargets(lanes, current) : [];
-  const card = { name: customer.name, customer: customer.id };
+  const card = { name: named(customer.name), customer: customer.id };
 
   function commit(to: Lane, steps?: MoveSteps) {
     if (!lead || !current) return;
@@ -155,8 +158,8 @@ function StageBar({ customer }: { customer: CustomerData }) {
       { lead: lead.id, from: current.key, to: to.key, ...(steps && { steps }) },
       {
         onSuccess: () =>
-          toast.success(t('board.move.saved', { name: customer.name, stage: to.name })),
-        onError: () => toast.error(t('board.move.failed', { name: customer.name })),
+          toast.success(t('board.move.saved', { name: named(customer.name), stage: to.name })),
+        onError: () => toast.error(t('board.move.failed', { name: named(customer.name) })),
       },
     );
   }
@@ -265,13 +268,14 @@ function followUpTask(customer: CustomerData) {
 /** "In-person": set a meeting at the office in a free room (S75). */
 function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () => void }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={t('visit.openAria', { name: customer.name })}
+        aria-label={t('visit.openAria', { name: named(customer.name) })}
         className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
       >
         <Icon name="building" size={17} />
@@ -309,12 +313,13 @@ function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () =>
  */
 function WhatsAppButton({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   return (
     <a
       href={messageHref('whatsapp', customer.phone, customer.templates[0]?.text)}
       target="_blank"
       rel="noreferrer"
-      aria-label={t('messageTo', { channel: t('channel.whatsapp'), name: customer.name })}
+      aria-label={t('messageTo', { channel: t('channel.whatsapp'), name: named(customer.name) })}
       className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
     >
       <Icon name="send" size={17} />
@@ -326,6 +331,7 @@ function WhatsAppButton({ customer }: { customer: CustomerData }) {
 /** The dark strip: the one thing to do next (the follow-up), with "log it" and "another time". */
 function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => void }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const s = useSalesFormat();
   const [moving, setMoving] = useState(false);
   const lead = customer.lead;
@@ -384,7 +390,7 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
             open
             onClose={() => setMoving(false)}
             at={lead.follow_up_at ? new Date(lead.follow_up_at) : null}
-            lead={{ id: lead.id, name: customer.name }}
+            lead={{ id: lead.id, name: named(customer.name) }}
             current={task?.text}
             timed={task?.timed}
             onLog={() => {

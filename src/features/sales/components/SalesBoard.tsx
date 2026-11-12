@@ -24,6 +24,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { toast } from '@/lib/toast';
 import {
   STALE_DAYS,
@@ -65,6 +66,7 @@ export function SalesBoard({
   const order = useBoardOrder(ownerId, serverData);
   const data = order.data;
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const f = useFormat();
   const mutation = useMoveBoardCard();
   const busy = useRef(false);
@@ -134,8 +136,8 @@ export function SalesBoard({
       },
       {
         onSuccess: () =>
-          toast.success(t('board.move.saved', { name: item.card.name, stage: labelOf(to) })),
-        onError: () => toast.error(t('board.move.failed', { name: item.card.name })),
+          toast.success(t('board.move.saved', { name: named(item.card.name), stage: labelOf(to) })),
+        onError: () => toast.error(t('board.move.failed', { name: named(item.card.name) })),
         onSettled: () => {
           busy.current = false;
           restoreLead.current = item.card.lead;
@@ -160,7 +162,9 @@ export function SalesBoard({
       toast.error(t('board.order.failed'));
       return;
     }
-    toast.success(t('board.order.saved', { name: item.card.name, position: f.number(to + 1) }));
+    toast.success(
+      t('board.order.saved', { name: named(item.card.name), position: f.number(to + 1) }),
+    );
   }
   const pickedCards = columnOf(picked?.column)?.cards ?? [];
   const pickedIndex = pickedCards.findIndex((card) => card.lead === picked?.card.lead);
@@ -210,7 +214,10 @@ export function SalesBoard({
               const target = over && targetOf(over.id);
               if (!item || !target) return t('board.move.cancelled');
               if (item.column !== target.column)
-                return t('board.move.dropped', { name: item.card.name, stage: stageOf(over.id) });
+                return t('board.move.dropped', {
+                  name: named(item.card.name),
+                  stage: stageOf(over.id),
+                });
               const from = columnOf(item.column)?.cards.findIndex(
                 (card) => card.lead === item.card.lead,
               );
@@ -276,7 +283,7 @@ export function SalesBoard({
             {active && (
               <div aria-hidden="true" className="pointer-events-none cursor-grabbing">
                 <div className="flex h-full flex-col gap-3 rounded-xl border border-primary bg-surface p-4 text-text shadow-board-card ring-2 ring-primary">
-                  <span className="text-[15px] font-semibold">{active.card.name}</span>
+                  <span className="text-[15px] font-semibold">{named(active.card.name)}</span>
                   <span className="text-[13px] leading-6 text-text-2">{active.card.summary}</span>
                   <span className="text-xs text-text-2">{labelOf(columnOf(active.column))}</span>
                 </div>
@@ -478,6 +485,7 @@ function DraggableDeal({
   onPick: () => void;
 }) {
   const { t } = useTranslation('sales');
+  const named = useDisplayName();
   const {
     setNodeRef,
     setActivatorNodeRef,
@@ -510,7 +518,7 @@ function DraggableDeal({
         {...attributes}
         {...listeners}
         icon="grip"
-        aria-label={t('board.move.title', { name: card.name })}
+        aria-label={t('board.move.title', { name: named(card.name) })}
         data-move-lead={card.lead}
         disabled={disabled}
         onClick={onPick}
