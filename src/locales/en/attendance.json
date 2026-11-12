@@ -15,7 +15,7 @@
   },
   "daily": {
     "title": "Daily report",
-    "subtitle": "A day's first punch is the check-in and the last one the check-out. Arriving after {{start}} counts as late.",
+    "subtitle": "A day's first punch is the check-in and the last one the check-out. Arriving after the phone line opens (office phone hours, usually {{start}}) counts as late.",
     "label": "One day's attendance",
     "date": "Date",
     "today": "Today",
@@ -30,7 +30,7 @@
   },
   "monthly": {
     "title": "Monthly report",
-    "subtitle": "Days present, hours and lateness per person. Arriving after {{start}} counts as late.",
+    "subtitle": "Days present, hours and lateness per person. Arriving after the phone line opens (office phone hours, usually {{start}}) counts as late; its closed days are not absences.",
     "label": "One month's attendance",
     "previous": "Previous month",
     "next": "Next month",

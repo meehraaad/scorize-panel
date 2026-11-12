@@ -45,8 +45,8 @@ export interface PersonTotals {
 }
 
 export interface Report<T> {
-  /** The workday start the late count uses (`HH:MM`). */
-  start: string;
+  /** The usual workday start (`HH:MM`): when the phone line opens on most days (office phone hours). */
+  start: string | null;
   /** Python weekdays with no work (Friday, Saturday). */
   weekend: number[];
   results: T[];

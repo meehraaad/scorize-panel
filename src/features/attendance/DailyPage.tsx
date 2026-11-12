@@ -30,7 +30,7 @@ export default function DailyPage() {
     <PageStack>
       <PageHeader
         title={t('daily.title')}
-        subtitle={t('daily.subtitle', { start: f.digits(data.start) })}
+        subtitle={t('daily.subtitle', { start: f.digits(data.start ?? '–') })}
         actions={<ExportLinks range={range} />}
       />
       <Card aria-label={t('daily.label')}>

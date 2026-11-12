@@ -35,7 +35,7 @@ export default function MonthlyPage() {
     <PageStack>
       <PageHeader
         title={t('monthly.title')}
-        subtitle={t('monthly.subtitle', { start: f.digits(data.start) })}
+        subtitle={t('monthly.subtitle', { start: f.digits(data.start ?? '–') })}
         actions={<ExportLinks range={range} />}
       />
       <Card aria-label={t('monthly.label')}>
