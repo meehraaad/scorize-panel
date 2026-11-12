@@ -2,16 +2,24 @@
 import { http, HttpResponse } from 'msw';
 import schemas from './calculator-schemas.json';
 import identities from './calculator-identities.json';
-import type { Answer, Snapshot } from '@/features/assessments/calculatorApi';
+import comparisonFixture from './calculator-comparison.json';
+import type { Comparison, Answer, Snapshot } from '@/features/assessments/calculatorApi';
 const SESSION = '11111111-1111-4111-8111-111111111111';
 let revision = 0;
 let answers: Record<string, Answer> = {};
 let snapshots: Snapshot[] = [];
+let comparison = structuredClone(comparisonFixture) as Comparison;
+let comparisonRequests = new Map<
+  string,
+  ReturnType<typeof interview> & { comparison: Comparison; active: boolean }
+>();
 let guideState = 'not_started';
 let guideCountry = 'canada';
 let guideMode = 'assessment';
 export function resetCalculatorMocks() {
   revision = 0;
+  comparison = structuredClone(comparisonFixture) as Comparison;
+  comparisonRequests = new Map();
   answers = {};
   snapshots = [];
   guideState = 'not_started';
@@ -60,7 +68,58 @@ const guidance = () => {
     candidates: guideState === 'question' && !routeDeferred ? [question] : [],
   };
 };
+const comparisonView = () => ({
+  ...comparison,
+  context: { ...comparison.context, session_revision: revision },
+  decision_sha256: String(revision).padStart(64, '0'),
+});
 export const calculatorHandlers = [
+  http.get('/api/applicant/v1/assessments/:id/calculators/comparison/', () =>
+    HttpResponse.json(comparisonView()),
+  ),
+  http.post('/api/applicant/v1/assessments/:id/calculators/comparison/', async ({ request }) => {
+    const body = (await request.json()) as {
+      revision: number;
+      request_key: string;
+      action: string;
+      routes?: string[];
+      task_id?: string;
+      status?: 'todo' | 'in_progress' | 'done';
+    };
+    if (comparisonRequests.has(body.request_key))
+      return HttpResponse.json(comparisonRequests.get(body.request_key));
+    if (body.revision !== revision)
+      return HttpResponse.json({ detail: 'Revision changed' }, { status: 409 });
+    if (body.action === 'select_routes' && body.routes) {
+      comparison.selected_routes = body.routes;
+      comparison.routes = body.routes.flatMap((id) =>
+        comparisonFixture.routes.filter((r) => r.route_id === id),
+      ) as Comparison['routes'];
+      comparison.actions = comparison.actions.filter((a) =>
+        a.applies_to.some((id) => body.routes?.includes(id)),
+      );
+    } else {
+      comparison.actions = comparison.actions.map((a) =>
+        a.id === body.task_id
+          ? { ...a, status: body.status ?? 'todo', requires_reassessment: body.status === 'done' }
+          : a,
+      );
+    }
+    revision += 1;
+    const response = { ...interview(), comparison: comparisonView(), active: false };
+    comparisonRequests.set(body.request_key, response);
+    return HttpResponse.json(response);
+  }),
+  http.post('/api/applicant/v1/assessments/:id/calculators/comparison/snapshots/', () => {
+    const row: Snapshot = {
+      id: snapshots.length + 1,
+      payload: comparisonView(),
+      stale_reasons: [],
+      reviews: [],
+    };
+    snapshots = [row, ...snapshots];
+    return HttpResponse.json(row, { status: 201 });
+  }),
   http.get('/api/applicant/v1/assessments/:id/calculators/guidance/', () =>
     HttpResponse.json(guidance()),
   ),

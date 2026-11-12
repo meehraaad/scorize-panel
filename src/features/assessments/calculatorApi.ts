@@ -12,9 +12,9 @@ export interface FormSchema {
 }
 export interface Answer {
   status: AnswerStatus;
-  value: unknown;
+  value?: unknown;
   source: string;
-  document_verified: boolean;
+  document_verified?: boolean;
   recorded_at?: string;
   question_version?: string;
   profile_origin?: ProfileCandidate;
@@ -86,7 +86,7 @@ export interface Ranking {
     delta: number | null;
   };
 }
-export interface Snapshot {
+export interface SingleSnapshot {
   id: number;
   stale_reasons: string[];
   payload: {
@@ -172,3 +172,78 @@ export function readyForAutosave(schema: FormSchema | undefined, value: unknown)
   }
   return true;
 }
+
+export interface RouteCard {
+  route_id: string;
+  country: Country;
+  eligibility_status: string;
+  requirements: Record<string, string>;
+  score: null | {
+    system: string;
+    score: number | null;
+    score_status: string;
+    breakdown: Record<string, number | null>;
+  };
+  selection_score: null | { score: number | null; system: string };
+  conditional_points: {
+    kind: string;
+    hypothetical: true;
+    score: number | null;
+    delta: number | null;
+  }[];
+  limitations: string[];
+  cost: { status: string; reason: string };
+  time: { status: string; reason: string };
+  historical_evidence: { status: string; reason: string };
+}
+export interface PlanAction {
+  id: string;
+  kind: string;
+  country: Country;
+  field?: string;
+  requirement?: string;
+  answer_status?: string;
+  missing_paths?: string[];
+  applies_to: string[];
+  depends_on: string[];
+  status: 'todo' | 'in_progress' | 'done';
+  requires_reassessment: boolean;
+}
+export interface Comparison {
+  country: 'comparison';
+  active: false;
+  version: string;
+  context: { session_revision: number; assessment_date: string };
+  selected_routes: string[];
+  ordering: string;
+  routes: RouteCard[];
+  actions: PlanAction[];
+  decision_sha256: string;
+  writable: boolean;
+  sources: Record<
+    Country,
+    { sha256: string; manifest: { sources: Record<string, { url: string; checked_on?: string }> } }
+  >;
+  evaluations: Partial<Record<Country, { mapping: { provenance: Record<string, Answer> } }>>;
+}
+export interface ComparisonSnapshot {
+  id: number;
+  stale_reasons: string[];
+  payload: Omit<Comparison, 'decision_sha256' | 'writable'>;
+  reviews: SingleSnapshot['reviews'];
+}
+export type Snapshot = SingleSnapshot | ComparisonSnapshot;
+export const isComparisonSnapshot = (s: Snapshot): s is ComparisonSnapshot =>
+  s.payload.country === 'comparison';
+export const comparisonQuery = (id: string) =>
+  queryOptions({
+    queryKey: ['calculator-comparison', id],
+    queryFn: () => api<Comparison>(prefix(id) + 'comparison/'),
+  });
+export const updateComparison = (id: string, body: unknown) =>
+  api<Pick<Interview, 'revision' | 'answers'> & { comparison: Comparison }>(
+    prefix(id) + 'comparison/',
+    { method: 'POST', body },
+  );
+export const recordComparison = (id: string, body: unknown) =>
+  api<ComparisonSnapshot>(prefix(id) + 'comparison/snapshots/', { method: 'POST', body });

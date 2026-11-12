@@ -8,7 +8,13 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { TextAreaField } from '@/components/ui/TextField';
 import { toast } from '@/lib/toast';
-import { reviewCalculation, reviewQueueQuery, type Options, type Snapshot } from './calculatorApi';
+import {
+  reviewCalculation,
+  reviewQueueQuery,
+  isComparisonSnapshot,
+  type Options,
+  type Snapshot,
+} from './calculatorApi';
 import { CalculationResult } from './CalculatorResult';
 import { CalculatorForm } from './CalculatorForm';
 
@@ -28,22 +34,34 @@ function ReviewRecord({ snapshot, options }: { snapshot: Snapshot; options: Opti
       toast.success(t('calculator.reviewSaved'));
     },
   });
-  const fields = options.schemas[snapshot.payload.country];
+  const evidence = isComparisonSnapshot(snapshot)
+    ? Object.entries(snapshot.payload.evaluations).flatMap(([country, evaluation]) =>
+        Object.entries(evaluation.mapping.provenance).map(([field, answer]) => ({
+          country: country as keyof Options['schemas'],
+          field,
+          answer,
+        })),
+      )
+    : Object.entries(snapshot.payload.mapping.provenance ?? {}).map(([field, answer]) => ({
+        country: snapshot.payload.country,
+        field,
+        answer,
+      }));
   return (
     <SectionCard id={id} title={t('calculator.reviewRecord', { id: snapshot.id })} variant="panel">
       {snapshot.stale_reasons.length > 0 && <Notice tone="warn">{t('calculator.stale')}</Notice>}
       <p>{t('calculator.factsReviewOnly')}</p>
       <CalculationResult snapshot={snapshot} />
-      {Object.entries(snapshot.payload.mapping.provenance ?? {}).map(([field, answer]) => (
-        <details key={field}>
+      {evidence.map(({ country, field, answer }) => (
+        <details key={country + field}>
           <summary className="min-h-11 cursor-pointer py-2">
             {labels[field.replaceAll('.', '_')] ?? t('calculator.unknown')}
           </summary>
           <p>{t(`calculator.choices.${answer.status}`)}</p>
-          {fields[field] && answer.status === 'known' && (
+          {options.schemas[country][field] && answer.status === 'known' && (
             <fieldset disabled>
               <CalculatorForm
-                schema={fields[field]}
+                schema={options.schemas[country][field]}
                 field={field}
                 value={answer.value}
                 onChange={() => undefined}

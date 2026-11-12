@@ -2,9 +2,18 @@ import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
-import type { Snapshot } from './calculatorApi';
+import { isComparisonSnapshot, type Snapshot, type SingleSnapshot } from './calculatorApi';
+import { ComparisonResult } from './RouteComparison';
 
 export function CalculationResult({ snapshot }: { snapshot: Snapshot }) {
+  return isComparisonSnapshot(snapshot) ? (
+    <ComparisonResult snapshot={snapshot} />
+  ) : (
+    <SingleResult snapshot={snapshot} />
+  );
+}
+
+function SingleResult({ snapshot }: { snapshot: SingleSnapshot }) {
   const { t } = useTranslation('assessments');
   const choicesText = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
   const sectionId = useId();
