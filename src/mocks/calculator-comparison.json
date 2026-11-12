@@ -7,14 +7,7 @@
   "policy": {
     "bundle": {
       "version": "calculator-comparison-1",
-      "routes": [
-        "ca-fsw",
-        "ca-cec",
-        "ca-fst",
-        "au-189",
-        "au-190",
-        "au-491"
-      ],
+      "routes": ["ca-fsw", "ca-cec", "ca-fst", "au-189", "au-190", "au-491"],
       "order": "user_selected_order",
       "cross_system_score_ranking": false,
       "actions": "unresolved_evidence_then_requirements_then_independent_review",
@@ -908,10 +901,7 @@
         "id": "language",
         "kind": "choice",
         "text": "سطح فرضی زبان شما چیست؟",
-        "choices": [
-          "basic",
-          "advanced"
-        ]
+        "choices": ["basic", "advanced"]
       },
       {
         "id": "sponsor",
@@ -932,14 +922,7 @@
     "synthetic": true,
     "schema_version": 1
   },
-  "selected_routes": [
-    "ca-fsw",
-    "ca-cec",
-    "ca-fst",
-    "au-189",
-    "au-190",
-    "au-491"
-  ],
+  "selected_routes": ["ca-fsw", "ca-cec", "ca-fst", "au-189", "au-190", "au-491"],
   "ordering": "user_selected_order",
   "routes": [
     {
@@ -1034,7 +1017,75 @@
         "status": "unavailable",
         "reason": "validated_historical_dataset_not_available"
       },
-      "eligibility_status": "met_covered_requirements"
+      "eligibility_status": "met_covered_requirements",
+      "financial": {
+        "status": "sufficient",
+        "assessment_date": "2026-11-12",
+        "engine_version": "financial-fit-1",
+        "unknowns": [],
+        "components": [
+          {
+            "id": "fee",
+            "kind": "application",
+            "amount": 100,
+            "currency": "TOMAN",
+            "basis": "household",
+            "status": "verified",
+            "source_title": "Synthetic test only",
+            "source_url": "https://example.org/synthetic",
+            "version": "fixture-1",
+            "effective_on": "2026-11-01",
+            "valid_until": "2026-11-30",
+            "checked_on": "2026-11-01",
+            "received_at": "2026-11-01T00:00:00+00:00",
+            "toman": 100,
+            "quantity": 1,
+            "rate": null,
+            "unknown_reason": null
+          }
+        ],
+        "inputs": {
+          "budget": {
+            "status": "known",
+            "value": {
+              "exact_toman": 100
+            }
+          },
+          "dependants": {
+            "status": "known",
+            "value": 0
+          },
+          "resources": {
+            "status": "known",
+            "value": [
+              {
+                "id": "cash",
+                "kind": "cash",
+                "amount_toman": 1000,
+                "allocations": {
+                  "spending": 1000
+                }
+              }
+            ]
+          }
+        },
+        "assumptions": [],
+        "ask_exact": false,
+        "semantics": "financial_fit_not_legal_eligibility_or_visa_probability",
+        "spending_required_toman": 100,
+        "budget_fit": {
+          "status": "sufficient",
+          "ask_exact": false
+        },
+        "resource_checks": [
+          {
+            "id": "spending",
+            "required_toman": 100,
+            "allocated_toman": 1000,
+            "status": "sufficient"
+          }
+        ]
+      }
     },
     {
       "route_id": "ca-cec",
@@ -1102,7 +1153,42 @@
         "status": "unavailable",
         "reason": "validated_historical_dataset_not_available"
       },
-      "eligibility_status": "unmet"
+      "eligibility_status": "unmet",
+      "financial": {
+        "status": "unknown",
+        "assessment_date": "2026-11-12",
+        "engine_version": "financial-fit-1",
+        "unknowns": ["route_costs_unavailable"],
+        "components": [],
+        "inputs": {
+          "budget": {
+            "status": "known",
+            "value": {
+              "exact_toman": 100
+            }
+          },
+          "dependants": {
+            "status": "known",
+            "value": 0
+          },
+          "resources": {
+            "status": "known",
+            "value": [
+              {
+                "id": "cash",
+                "kind": "cash",
+                "amount_toman": 1000,
+                "allocations": {
+                  "spending": 1000
+                }
+              }
+            ]
+          }
+        },
+        "assumptions": [],
+        "ask_exact": false,
+        "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+      }
     },
     {
       "route_id": "ca-fst",
@@ -1128,7 +1214,42 @@
         "status": "unavailable",
         "reason": "validated_historical_dataset_not_available"
       },
-      "eligibility_status": "unsupported"
+      "eligibility_status": "unsupported",
+      "financial": {
+        "status": "unknown",
+        "assessment_date": "2026-11-12",
+        "engine_version": "financial-fit-1",
+        "unknowns": ["route_costs_unavailable"],
+        "components": [],
+        "inputs": {
+          "budget": {
+            "status": "known",
+            "value": {
+              "exact_toman": 100
+            }
+          },
+          "dependants": {
+            "status": "known",
+            "value": 0
+          },
+          "resources": {
+            "status": "known",
+            "value": [
+              {
+                "id": "cash",
+                "kind": "cash",
+                "amount_toman": 1000,
+                "allocations": {
+                  "spending": 1000
+                }
+              }
+            ]
+          }
+        },
+        "assumptions": [],
+        "ask_exact": false,
+        "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+      }
     },
     {
       "route_id": "au-189",
@@ -1191,7 +1312,42 @@
         "work_period_convention": "[start,end)",
         "work_status": "complete_from_supplied_evidence"
       },
-      "eligibility_status": "met"
+      "eligibility_status": "met",
+      "financial": {
+        "status": "unknown",
+        "assessment_date": "2026-11-12",
+        "engine_version": "financial-fit-1",
+        "unknowns": ["route_costs_unavailable"],
+        "components": [],
+        "inputs": {
+          "budget": {
+            "status": "known",
+            "value": {
+              "exact_toman": 100
+            }
+          },
+          "dependants": {
+            "status": "known",
+            "value": 0
+          },
+          "resources": {
+            "status": "known",
+            "value": [
+              {
+                "id": "cash",
+                "kind": "cash",
+                "amount_toman": 1000,
+                "allocations": {
+                  "spending": 1000
+                }
+              }
+            ]
+          }
+        },
+        "assumptions": [],
+        "ask_exact": false,
+        "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+      }
     },
     {
       "route_id": "au-190",
@@ -1217,7 +1373,42 @@
         "status": "unavailable",
         "reason": "validated_historical_dataset_not_available"
       },
-      "eligibility_status": "requires_route_evidence"
+      "eligibility_status": "requires_route_evidence",
+      "financial": {
+        "status": "unknown",
+        "assessment_date": "2026-11-12",
+        "engine_version": "financial-fit-1",
+        "unknowns": ["route_costs_unavailable"],
+        "components": [],
+        "inputs": {
+          "budget": {
+            "status": "known",
+            "value": {
+              "exact_toman": 100
+            }
+          },
+          "dependants": {
+            "status": "known",
+            "value": 0
+          },
+          "resources": {
+            "status": "known",
+            "value": [
+              {
+                "id": "cash",
+                "kind": "cash",
+                "amount_toman": 1000,
+                "allocations": {
+                  "spending": 1000
+                }
+              }
+            ]
+          }
+        },
+        "assumptions": [],
+        "ask_exact": false,
+        "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+      }
     },
     {
       "route_id": "au-491",
@@ -1243,16 +1434,49 @@
         "status": "unavailable",
         "reason": "validated_historical_dataset_not_available"
       },
-      "eligibility_status": "requires_route_evidence"
+      "eligibility_status": "requires_route_evidence",
+      "financial": {
+        "status": "unknown",
+        "assessment_date": "2026-11-12",
+        "engine_version": "financial-fit-1",
+        "unknowns": ["route_costs_unavailable"],
+        "components": [],
+        "inputs": {
+          "budget": {
+            "status": "known",
+            "value": {
+              "exact_toman": 100
+            }
+          },
+          "dependants": {
+            "status": "known",
+            "value": 0
+          },
+          "resources": {
+            "status": "known",
+            "value": [
+              {
+                "id": "cash",
+                "kind": "cash",
+                "amount_toman": 1000,
+                "allocations": {
+                  "spending": 1000
+                }
+              }
+            ]
+          }
+        },
+        "assumptions": [],
+        "ask_exact": false,
+        "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+      }
     }
   ],
   "actions": [
     {
       "id": "ca-fsw:review",
       "kind": "independent_evidence_review",
-      "applies_to": [
-        "ca-fsw"
-      ],
+      "applies_to": ["ca-fsw"],
       "depends_on": [],
       "country": "canada",
       "status": "todo",
@@ -1261,9 +1485,7 @@
     {
       "id": "ca-cec:requirement:canadian_year_last_three",
       "kind": "review_unmet_requirement",
-      "applies_to": [
-        "ca-cec"
-      ],
+      "applies_to": ["ca-cec"],
       "depends_on": [],
       "country": "canada",
       "requirement": "canadian_year_last_three",
@@ -1273,9 +1495,7 @@
     {
       "id": "ca-cec:requirement:language_qualified_canadian_year",
       "kind": "review_unmet_requirement",
-      "applies_to": [
-        "ca-cec"
-      ],
+      "applies_to": ["ca-cec"],
       "depends_on": [],
       "country": "canada",
       "requirement": "language_qualified_canadian_year",
@@ -1285,9 +1505,7 @@
     {
       "id": "ca-cec:review",
       "kind": "independent_evidence_review",
-      "applies_to": [
-        "ca-cec"
-      ],
+      "applies_to": ["ca-cec"],
       "depends_on": [],
       "country": "canada",
       "status": "todo",
@@ -1296,9 +1514,7 @@
     {
       "id": "ca-fst:coverage",
       "kind": "unsupported_route_review",
-      "applies_to": [
-        "ca-fst"
-      ],
+      "applies_to": ["ca-fst"],
       "depends_on": [],
       "country": "canada",
       "status": "todo",
@@ -1307,9 +1523,7 @@
     {
       "id": "au-189:review",
       "kind": "independent_evidence_review",
-      "applies_to": [
-        "au-189"
-      ],
+      "applies_to": ["au-189"],
       "depends_on": [],
       "country": "australia",
       "status": "todo",
@@ -1318,9 +1532,7 @@
     {
       "id": "au-190:route",
       "kind": "select_route_evidence",
-      "applies_to": [
-        "au-190"
-      ],
+      "applies_to": ["au-190"],
       "depends_on": [],
       "country": "australia",
       "field": "subclass",
@@ -1330,9 +1542,7 @@
     {
       "id": "au-491:route",
       "kind": "select_route_evidence",
-      "applies_to": [
-        "au-491"
-      ],
+      "applies_to": ["au-491"],
       "depends_on": [],
       "country": "australia",
       "field": "subclass",
@@ -1737,5 +1947,145 @@
     }
   },
   "decision_sha256": "35921ffb6e3dc25dc7921e2931c6077411b119488e7e9db0569559b225787d34",
-  "writable": true
+  "writable": true,
+  "financial_context": {
+    "policy": {
+      "id": 9,
+      "version": 1,
+      "sha256": "1f09a06b76ca9b326f992a14e6ec8b94ff918ca2c87abdb17825e1f913623f95",
+      "bundle": {
+        "schema_version": 1,
+        "ranges": [
+          {
+            "id": "bounded",
+            "title": "Synthetic range",
+            "min_toman": 90,
+            "max_toman": 110,
+            "order": 1,
+            "enabled": true
+          },
+          {
+            "id": "open",
+            "title": "Synthetic open range",
+            "min_toman": 90,
+            "max_toman": null,
+            "order": 2,
+            "enabled": true
+          }
+        ],
+        "open_ended": "ask_exact",
+        "sufficient_bps": 10000,
+        "tight_bps": 9000,
+        "max_fx_age_days": 7,
+        "round_to_toman": 1,
+        "rates": [],
+        "routes": [
+          {
+            "id": "ca-fsw",
+            "complete": true,
+            "assumptions": [],
+            "components": [
+              {
+                "id": "fee",
+                "kind": "application",
+                "amount": 100,
+                "currency": "TOMAN",
+                "basis": "household",
+                "status": "verified",
+                "source_title": "Synthetic test only",
+                "source_url": "https://example.org/synthetic",
+                "version": "fixture-1",
+                "effective_on": "2026-11-01",
+                "valid_until": "2026-11-30",
+                "checked_on": "2026-11-01",
+                "received_at": "2026-11-01T00:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "active_policy": {
+      "id": 9,
+      "version": 1,
+      "sha256": "1f09a06b76ca9b326f992a14e6ec8b94ff918ca2c87abdb17825e1f913623f95",
+      "bundle": {
+        "schema_version": 1,
+        "ranges": [
+          {
+            "id": "bounded",
+            "title": "Synthetic range",
+            "min_toman": 90,
+            "max_toman": 110,
+            "order": 1,
+            "enabled": true
+          },
+          {
+            "id": "open",
+            "title": "Synthetic open range",
+            "min_toman": 90,
+            "max_toman": null,
+            "order": 2,
+            "enabled": true
+          }
+        ],
+        "open_ended": "ask_exact",
+        "sufficient_bps": 10000,
+        "tight_bps": 9000,
+        "max_fx_age_days": 7,
+        "round_to_toman": 1,
+        "rates": [],
+        "routes": [
+          {
+            "id": "ca-fsw",
+            "complete": true,
+            "assumptions": [],
+            "components": [
+              {
+                "id": "fee",
+                "kind": "application",
+                "amount": 100,
+                "currency": "TOMAN",
+                "basis": "household",
+                "status": "verified",
+                "source_title": "Synthetic test only",
+                "source_url": "https://example.org/synthetic",
+                "version": "fixture-1",
+                "effective_on": "2026-11-01",
+                "valid_until": "2026-11-30",
+                "checked_on": "2026-11-01",
+                "received_at": "2026-11-01T00:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "policy_changed": false,
+    "inputs": {
+      "budget": {
+        "status": "known",
+        "value": {
+          "exact_toman": 100
+        }
+      },
+      "dependants": {
+        "status": "known",
+        "value": 0
+      },
+      "resources": {
+        "status": "known",
+        "value": [
+          {
+            "id": "cash",
+            "kind": "cash",
+            "amount_toman": 1000,
+            "allocations": {
+              "spending": 1000
+            }
+          }
+        ]
+      }
+    }
+  }
 }

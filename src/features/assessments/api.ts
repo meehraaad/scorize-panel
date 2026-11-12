@@ -1,3 +1,9 @@
+import type {
+  FinancialPolicy,
+  FinancialScenario,
+  FinancialResult,
+  FinancialStatus,
+} from './financialTypes';
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 
@@ -32,6 +38,7 @@ export interface Route {
   pass_mark?: number;
 }
 export interface Bundle {
+  financial_policy?: FinancialPolicy;
   schema_version: number;
   synthetic: boolean;
   questions: Question[];
@@ -49,6 +56,7 @@ export interface Expected {
   pass_mark_met: boolean | null;
 }
 export interface Scenario {
+  financial?: FinancialScenario[];
   name: string;
   assessment_date: string;
   answers: Record<string, Fact>;
@@ -92,6 +100,13 @@ export interface Draft extends DraftInput, Summary {
     report: {
       name: string;
       passed: boolean;
+      financial?: {
+        route_id: string;
+        expected: { status: FinancialStatus; ask_exact: boolean };
+        actual: FinancialResult;
+        before: FinancialResult;
+        passed: boolean;
+      }[];
       expected: Expected[];
       actual: Evaluation;
       before: Evaluation | null;
@@ -112,6 +127,7 @@ export interface Draft extends DraftInput, Summary {
   }[];
 }
 export interface Options {
+  financial_policy?: FinancialPolicy;
   bundle: Bundle;
   scenarios: Scenario[];
   permissions: Record<'create' | 'edit' | 'review' | 'publish', boolean>;
@@ -153,16 +169,27 @@ export const draftQuery = (id: number) =>
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
-export const saveDraft = (input: DraftInput, draft?: Summary) =>
+export const saveDraft = (
+  input: DraftInput,
+  draft?: Summary,
+  requestKey: string = crypto.randomUUID(),
+) =>
   api<Draft>(draft ? `${BASE}/drafts/${String(draft.id)}/` : `${BASE}/drafts/`, {
     method: draft ? 'PUT' : 'POST',
-    body: { ...input, ...(draft ? { revision: draft.revision } : {}) },
+    body: { ...input, request_key: requestKey, ...(draft ? { revision: draft.revision } : {}) },
   });
-export const draftAction = (draft: Summary, action: Action, note = '', publishAt?: string) =>
+export const draftAction = (
+  draft: Summary,
+  action: Action,
+  note = '',
+  publishAt?: string,
+  requestKey: string = crypto.randomUUID(),
+) =>
   api<Draft>(`${BASE}/drafts/${String(draft.id)}/${action}/`, {
     method: 'POST',
     body: {
       revision: draft.revision,
+      request_key: requestKey,
       ...(action === 'reject' ? { note } : {}),
       ...(action === 'schedule' ? { publish_at: publishAt } : {}),
     },

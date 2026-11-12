@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import type { Draft, DraftInput, Options } from '@/features/assessments/api';
 import fixture from './assessment-options.json';
+import financialFixture from './calculator-financial.json';
 
 const BASE = '/api/staff/v1/assessments';
 let drafts: Draft[] = [];
@@ -23,7 +24,9 @@ export const assessmentHandlers = [
       issues_limit: 50,
     }),
   ),
-  http.get(`${BASE}/options/`, () => HttpResponse.json(fixture)),
+  http.get(`${BASE}/options/`, () =>
+    HttpResponse.json({ ...fixture, financial_policy: financialFixture.policy.bundle }),
+  ),
   http.get(`${BASE}/drafts/`, () =>
     HttpResponse.json({
       count: drafts.length,

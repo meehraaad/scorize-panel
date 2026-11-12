@@ -1,3 +1,4 @@
+import { FinancialPanel } from './FinancialPanel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -61,6 +62,8 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const [guidanceDecision, setGuidanceDecision] = useState<string | null>(null);
   const [guidanceBusy, setGuidanceBusy] = useState(false);
   const [comparisonBusy, setComparisonBusy] = useState(false);
+  const [financialBusy, setFinancialBusy] = useState(false);
+  const [financialOpen, setFinancialOpen] = useState(false);
   const data = query.data;
   const australianRoute = data?.answers[options.identities.australia.subclass ?? ''];
   const australiaRouteReady =
@@ -185,7 +188,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         id={id}
         country={country}
         revision={data.revision}
-        disabled={dirty || saving || record.isPending || comparisonBusy}
+        disabled={dirty || saving || record.isPending || comparisonBusy || financialBusy}
         canReview={Boolean(options.can_review)}
         australiaRouteReady={australiaRouteReady}
         onRestore={(nextCountry) => {
@@ -241,7 +244,9 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
       <ProfileEvidence
         id={id}
         country={country}
-        disabled={dirty || saving || record.isPending || guidanceBusy || comparisonBusy}
+        disabled={
+          dirty || saving || record.isPending || guidanceBusy || comparisonBusy || financialBusy
+        }
         onPrepare={(candidate) => {
           choose(country, candidate.field);
           setProfileCandidate(candidate);
@@ -257,7 +262,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           ref={editorRef}
           tabIndex={-1}
           aria-label={t('calculator.interview')}
-          disabled={saving || guidanceBusy || comparisonBusy}
+          disabled={saving || guidanceBusy || comparisonBusy || financialBusy}
           className="m-0 flex flex-col gap-4 border-0 p-0"
         >
           <SelectField
@@ -397,11 +402,20 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           {record.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
         </fieldset>
       </SectionCard>
+      <FinancialPanel
+        open={financialOpen}
+        onOpen={() => setFinancialOpen(true)}
+        id={id}
+        revision={data.revision}
+        disabled={dirty || saving || record.isPending || guidanceBusy || comparisonBusy}
+        onBusy={setFinancialBusy}
+      />
       <RouteComparison
         id={id}
         revision={data.revision}
-        disabled={dirty || saving || record.isPending || guidanceBusy}
+        disabled={dirty || saving || record.isPending || guidanceBusy || financialBusy}
         onBusy={setComparisonBusy}
+        onFinancialSelect={() => setFinancialOpen(true)}
         onSelect={(nextCountry, nextField) => {
           choose(nextCountry, nextField);
           const existing = data.answers[options.identities[nextCountry][nextField] ?? ''];

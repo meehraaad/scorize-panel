@@ -1,5 +1,7 @@
+import { FinancialPolicyEditor, FinancialScenarioEditor } from './FinancialPolicyEditor';
+import { FinancialResult } from './FinancialResult';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField, TogglePill } from '@/components/ui/Choices';
@@ -137,6 +139,8 @@ function DraftEditor({
 }) {
   const { t } = useTranslation('assessments');
   const f = useFormat();
+  const financialLabels = t('financial', { returnObjects: true });
+  const routeLabels = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
   const client = useQueryClient();
   const [input, setInput] = useState<DraftInput>(() =>
     structuredClone(
@@ -157,19 +161,33 @@ function DraftEditor({
     setInput(next);
     setDirty(true);
   };
+  const requestRef = useRef<{ signature: string; key: string } | null>(null);
   const mutation = useMutation({
-    mutationFn: (action: 'save' | Action) =>
-      action === 'save'
-        ? saveDraft(input, draft)
+    mutationFn: (action: 'save' | Action) => {
+      const signature = JSON.stringify({
+        action,
+        input,
+        revision: draft?.revision,
+        reviewNote,
+        publishAt,
+      });
+      if (requestRef.current?.signature !== signature)
+        requestRef.current = { signature, key: crypto.randomUUID() };
+      const requestKey = requestRef.current.key;
+      return action === 'save'
+        ? saveDraft(input, draft, requestKey)
         : draft
           ? draftAction(
               draft,
               action,
               reviewNote,
               action === 'schedule' && publishAt ? new Date(publishAt).toISOString() : undefined,
+              requestKey,
             )
-          : Promise.reject(new Error()),
+          : Promise.reject(new Error());
+    },
     onSuccess: (saved) => {
+      requestRef.current = null;
       client.setQueryData(draftQuery(saved.id).queryKey, saved);
       void client.invalidateQueries({ queryKey: ['assessment-management', 'drafts'] });
       void client.invalidateQueries({ queryKey: ['assessment-management', 'health'] });
@@ -253,6 +271,53 @@ function DraftEditor({
             value={input.title}
             onChange={(e) => update({ ...input, title: e.target.value })}
           />
+          {options.financial_policy && !input.bundle.financial_policy && (
+            <Button
+              variant="outline"
+              onClick={() =>
+                update({
+                  ...input,
+                  key: 'assessment-finance',
+                  bundle: {
+                    ...input.bundle,
+                    financial_policy: structuredClone(
+                      options.financial_policy ?? {
+                        schema_version: 1,
+                        ranges: [],
+                        open_ended: 'ask_exact',
+                        sufficient_bps: 10000,
+                        tight_bps: 9999,
+                        max_fx_age_days: 0,
+                        round_to_toman: 1,
+                        rates: [],
+                        routes: [],
+                      },
+                    ),
+                  },
+                  scenarios: input.scenarios.map((s) => ({
+                    ...s,
+                    financial: [
+                      {
+                        route_id: 'ca-fsw',
+                        inputs: {},
+                        expected: { status: 'unknown', ask_exact: false },
+                      },
+                    ],
+                  })),
+                })
+              }
+            >
+              {t('financial.addPolicy')}
+            </Button>
+          )}
+          {input.bundle.financial_policy && (
+            <FinancialPolicyEditor
+              value={input.bundle.financial_policy}
+              onChange={(financial_policy) =>
+                update({ ...input, bundle: { ...input.bundle, financial_policy } })
+              }
+            />
+          )}
           <DefinitionTools input={input} onChange={update} />
           <h2>{t('questions')}</h2>
           {input.bundle.questions.map((q, index) => (
@@ -832,6 +897,20 @@ function DraftEditor({
                     </div>
                   );
                 })}
+                {input.bundle.financial_policy && (
+                  <FinancialScenarioEditor
+                    policy={input.bundle.financial_policy}
+                    cases={scenario.financial ?? []}
+                    onChange={(financial) =>
+                      update({
+                        ...input,
+                        scenarios: input.scenarios.map((s, i) =>
+                          i === index ? { ...s, financial } : s,
+                        ),
+                      })
+                    }
+                  />
+                )}
                 <p>{t('independent')}</p>
                 {scenario.expected.map((expected, n) => {
                   const setExpected = (value: Partial<typeof expected>) =>
@@ -1018,6 +1097,18 @@ function DraftEditor({
           {draft.last_run.report.map((row) => (
             <div key={row.name} className="overflow-x-auto">
               <h3>{row.name}</h3>
+              {row.financial?.map((test, i) => (
+                <div key={i} className="border-line my-3 rounded-xl border p-3">
+                  <p>{routeLabels[test.route_id]}</p>
+                  <p>
+                    {t('expected')}: {financialLabels[test.expected.status]}
+                  </p>
+                  <p>
+                    {t('before')}: {t(`financial.${test.before.status}`)}
+                  </p>
+                  <FinancialResult result={test.actual} />
+                </div>
+              ))}
               {!!row.before_incompatible_answers?.length && (
                 <Notice tone="warn">
                   {t('incompatibleBaseline', {

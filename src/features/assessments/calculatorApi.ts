@@ -1,3 +1,4 @@
+import type { FinancialResult, FinancialContext } from './financialTypes';
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 
@@ -192,6 +193,7 @@ export interface RouteCard {
     delta: number | null;
   }[];
   limitations: string[];
+  financial?: FinancialResult;
   cost: { status: string; reason: string };
   time: { status: string; reason: string };
   historical_evidence: { status: string; reason: string };
@@ -202,6 +204,7 @@ export interface PlanAction {
   country: Country;
   field?: string;
   requirement?: string;
+  financial?: boolean;
   answer_status?: string;
   missing_paths?: string[];
   applies_to: string[];
@@ -210,6 +213,7 @@ export interface PlanAction {
   requires_reassessment: boolean;
 }
 export interface Comparison {
+  financial_context?: FinancialContext;
   country: 'comparison';
   active: false;
   version: string;
