@@ -185,6 +185,17 @@ const PAGES: PageCase[] = [
     path,
     user: AMIR,
   })),
+  // HR panel (src/mocks/hr.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
+  ...[
+    '/hr',
+    '/hr/tasks',
+    '/hr/calendar',
+    '/hr/staff',
+    '/hr/staff/3',
+    '/hr/moves',
+    '/hr/attendance',
+    '/hr/attendance/month',
+  ].map((path) => ({ path, user: AMIR })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },
@@ -239,7 +250,8 @@ describe('page data loads with the page, not after it', () => {
     // The page itself opened (no redirect to login or elsewhere).
     expect(location).toBe(path);
     // The global seller call listener starts after the page; it is background polling, not page data.
-    const phoneCalls = [NIMA, REZA].includes(user)
+    // (Amir is a superuser, so a seller too.)
+    const phoneCalls = [NIMA, REZA, AMIR].includes(user)
       ? JSON.stringify(['sales', 'phone-calls', user])
       : null;
     const waterfalls = fetches

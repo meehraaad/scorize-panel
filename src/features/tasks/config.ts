@@ -5,12 +5,12 @@
  */
 export interface TasksConfig {
   /** Sent to the API (`?panel=`): which people and queues the page is about. */
-  panel: 'sales' | 'supervisor';
+  panel: 'sales' | 'supervisor' | 'hr';
   /** The panel's home ("Today"), for the back link. */
   homePath: string;
   /** The page of the person a task is about; `action` opens it with a call or message ready. */
   onContact?: (id: number, name: string, action: 'call' | 'message') => void;
   personPath: (id: number, action?: 'call' | 'message') => string;
-  /** Who tasks are about, for the wording: customers (sales) or applicants (supervisor). */
-  person: 'customer' | 'applicant';
+  /** Who tasks are about, for the wording: customers (sales), applicants (supervisor) or staff (HR). */
+  person: 'customer' | 'applicant' | 'employee';
 }

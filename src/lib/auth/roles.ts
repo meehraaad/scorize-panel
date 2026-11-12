@@ -21,7 +21,8 @@ export const Team = {
   LANGUAGE: 8,
 } as const;
 
-export type Role = 'applicant' | 'supervisor' | 'writer' | 'sales' | 'founders' | 'attendance';
+export type Role =
+  'applicant' | 'supervisor' | 'writer' | 'sales' | 'founders' | 'attendance' | 'hr';
 
 /** ai.use_founders_assistant: the four partners (Django group `Founders`), and superusers. */
 export const FOUNDERS_PERMISSION = 'use_founders_assistant';
@@ -39,6 +40,9 @@ export const MESSAGES_PERMISSIONS = [
 
 /** attendance.manage_attendance: the attendance section (src/features/attendance/api.ts). */
 const ATTENDANCE_PERMISSION = 'manage_attendance';
+
+/** apply.can_manage_support_staff: the HR panel (src/features/hr/api.ts). */
+const HR_PERMISSION = 'can_manage_support_staff';
 
 const WRITER_PERMISSIONS = [
   'can_write_sop',
@@ -107,6 +111,8 @@ export function getRoles(user: SessionUser): Role[] {
     roles.push('founders');
   // Attendance: the key for the office terminal's reports (superusers hold it).
   if (ON_SERVER.attendance && hasPermission(user, ATTENDANCE_PERMISSION)) roles.push('attendance');
+  // Human resources: staff files, joining and leaving, HR's tasks and calendar.
+  if (ON_SERVER.hr && hasPermission(user, HR_PERMISSION)) roles.push('hr');
   // The applicant panel: everyone without a work panel (no contract = the guest state, V7 design),
   // and staff who also have an applicant file of their own (`whoami.applicant`, R1).
   if (roles.length === 0 || user.applicant) roles.push('applicant');

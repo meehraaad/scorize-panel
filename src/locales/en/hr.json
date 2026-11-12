@@ -1,0 +1,256 @@
+{
+  "back": "Back",
+  "cancel": "Cancel",
+  "close": "Close",
+  "error": "That didn't work. Please try again.",
+  "saved": "Saved",
+  "loading": "Loading…",
+  "yes": "Yes",
+  "no": "No",
+  "toman": "{{amount}} tomans",
+  "state": {
+    "active": "Working",
+    "trial": "On trial",
+    "joining": "Joining",
+    "leaving": "Leaving",
+    "inactive": "Left"
+  },
+  "contract": {
+    "trial": "Trial",
+    "fixed": "Fixed-term",
+    "permanent": "Permanent",
+    "project": "Project"
+  },
+  "team": {
+    "sales": "Sales",
+    "executive": "Executive",
+    "marketing": "Marketing",
+    "management": "Management",
+    "support": "Support",
+    "technical": "Technical",
+    "writing": "Writing",
+    "search": "Search",
+    "language": "Language"
+  },
+  "marital": {
+    "single": "Single",
+    "married": "Married"
+  },
+  "attendance": {
+    "present": "Present",
+    "late": "Late",
+    "absent": "Absent",
+    "pending": "Not in yet"
+  },
+  "today": {
+    "title": "Today",
+    "subtitle": "Staff, joinings and leavings, and what comes up this month",
+    "counts": "Staff numbers",
+    "total": "Staff",
+    "aside": "Today's attendance and birthdays",
+    "attendance": "Today's attendance",
+    "noDevice": "{{n}} not on the attendance terminal",
+    "moves": "Open joinings and leavings",
+    "allMoves": "All",
+    "noMoves": "No joining or leaving under way.",
+    "ending": "Contracts ending",
+    "endingHint": "Within 30 days, trials too",
+    "noEnding": "No contract ends within a month.",
+    "inDays": "in {{n}} days",
+    "birthdays": "Birthdays this week",
+    "noBirthdays": "No birthdays this week.",
+    "birthdayToday": "Today"
+  },
+  "staff": {
+    "title": "Staff",
+    "subtitle": "{{n}} working",
+    "new": "New staff member",
+    "label": "Staff list",
+    "list": "Staff",
+    "filter": "Show",
+    "all": "All",
+    "search": "Search staff",
+    "searchHint": "Name, position, personnel code",
+    "empty": "Nobody matches.",
+    "manager": "Manager: {{name}}",
+    "contractUntil": "{{kind}} until {{day}}",
+    "moveProgress": "{{kind}} · {{done}} of {{total}}",
+    "noDevice": "Not on the terminal"
+  },
+  "form": {
+    "firstName": "First name",
+    "lastName": "Last name",
+    "mobile": "Mobile",
+    "idNumber": "ID number",
+    "email": "Work email",
+    "emailHint": "Optional; they can also sign in with it",
+    "position": "Position",
+    "team": "Team",
+    "none": "None",
+    "entryDate": "First day of work",
+    "contract": "Contract",
+    "contractEnd": "Contract end",
+    "salary": "Monthly base salary (tomans)",
+    "salaryHint": "In tomans, no decimals",
+    "required": "Fill this in",
+    "phone": "This mobile number isn't right"
+  },
+  "newStaff": {
+    "title": "New staff member",
+    "subtitle": "Their panel account and file are made and their joining checklist opens.",
+    "save": "Create file",
+    "saved": "{{name}}'s file is ready"
+  },
+  "move": {
+    "entry": "Joining",
+    "exit": "Leaving",
+    "firstDay": "First day: {{day}}",
+    "lastDay": "Last day: {{day}}",
+    "today": "Today",
+    "inDays": "in {{n}} days",
+    "daysAgo": "{{n}} days ago",
+    "progress": "{{done}} of {{total}} done",
+    "steps": "Steps",
+    "due": "by {{day}}",
+    "status": {
+      "open": "Open",
+      "done": "Finished",
+      "cancelled": "Cancelled"
+    },
+    "finish": "End employment",
+    "finishLater": "From the last day of work on",
+    "finishConfirm": "End their employment? They lose access to the panels.",
+    "finished": "Employment ended",
+    "cancel": "Cancel",
+    "cancelConfirm": "Cancel this checklist? Its open tasks are closed.",
+    "cancelled": "Cancelled"
+  },
+  "moves": {
+    "title": "Joining and leaving",
+    "subtitle": "Each step is a task for whoever does it; tick it to close it",
+    "filter": "Show",
+    "all": "All",
+    "empty": "No joining or leaving under way."
+  },
+  "person": {
+    "back": "Staff",
+    "missing": "This file wasn't found.",
+    "edit": "Edit details",
+    "exit": "Start leaving",
+    "tabs": "File sections",
+    "tab": {
+      "info": "Details",
+      "work": "Contract and pay",
+      "documents": "Documents",
+      "moves": "Joining and leaving",
+      "history": "History"
+    },
+    "personal": "Personal details",
+    "workContact": "Work and contact",
+    "personnelCode": "Personnel code",
+    "entryDate": "Started",
+    "devices": "Attendance terminal number",
+    "contracts": "Contracts",
+    "addContract": "New contract",
+    "noContracts": "No contract yet.",
+    "inForce": "Current",
+    "range": "{{from}} to {{to}}",
+    "from": "From {{from}}",
+    "open": "Open",
+    "pay": "Pay and benefits",
+    "payHint": "Pay from KPIs comes in the next step",
+    "changeSalary": "Change salary",
+    "salary": "Base salary",
+    "insurance": "Insurance",
+    "commission": "Commission",
+    "salaryHistory": "Salary history",
+    "effective": "from {{day}}",
+    "documents": "Documents",
+    "addDocument": "Add document",
+    "noDocuments": "No documents yet.",
+    "noMoves": "No joining or leaving checklist."
+  },
+  "info": {
+    "full_name": "Full name",
+    "fathers_name": "Father's name",
+    "national_code": "National code",
+    "id_number": "ID number",
+    "birth_date": "Date of birth",
+    "birth_place": "Place of birth",
+    "marital_status": "Marital status",
+    "number_of_children": "Children",
+    "address": "Address",
+    "phone_number": "Mobile",
+    "work_email": "Work email",
+    "internal_email": "Internal email",
+    "office_extension": "Office extension",
+    "mobile_extension": "Mobile extension"
+  },
+  "history": {
+    "joined": "Started",
+    "contract": "{{kind}} contract",
+    "salary": "Base salary: {{amount}}",
+    "entry": "Joining checklist ({{status}})",
+    "exit": "Leaving checklist ({{status}})",
+    "left": "Left"
+  },
+  "infoDialog": {
+    "title": "Edit details",
+    "save": "Save"
+  },
+  "contractDialog": {
+    "title": "New contract",
+    "start": "Contract start",
+    "note": "Note",
+    "save": "Save contract",
+    "saved": "Contract saved"
+  },
+  "salaryDialog": {
+    "title": "Change salary",
+    "now": "Now: {{amount}}",
+    "effective": "From",
+    "effectiveHint": "A later day: it takes effect that day",
+    "note": "Reason or note",
+    "save": "Save salary",
+    "saved": "Salary saved"
+  },
+  "exitDialog": {
+    "title": "Start leaving",
+    "text": "The leaving checklist opens and each step becomes a task for its owner. After the last day, end the employment to remove their access.",
+    "day": "Last day of work",
+    "reason": "Reason",
+    "save": "Start leaving",
+    "saved": "Leaving checklist opened"
+  },
+  "documentDialog": {
+    "title": "Add document",
+    "type": "Document type",
+    "choose": "Choose a file",
+    "hint": "PDF, JPG or PNG, up to 10 MB",
+    "remove": "Remove file",
+    "save": "Upload",
+    "saved": "Document uploaded"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "My tasks and the staff's key days; click a day to add a task",
+    "dayRow": "Staff days and tasks",
+    "add": "New task on {{day}}",
+    "task": "Task",
+    "tasks": "{{n}} tasks",
+    "kind": {
+      "entry": "First day of work",
+      "exit": "Last day of work",
+      "trial_end": "Trial ends",
+      "contract_end": "Contract ends",
+      "birthday": "Birthday"
+    },
+    "short": {
+      "entry": "{{name}} joins",
+      "exit": "{{name}} leaves",
+      "trial_end": "{{name}}'s trial",
+      "contract_end": "{{name}}'s contract",
+      "birthday": "{{name}}'s birthday"
+    }
+  }
+}

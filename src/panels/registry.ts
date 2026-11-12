@@ -5,6 +5,7 @@ import { sessionQuery, type SessionUser } from '@/lib/auth/session';
 import { applicantPanel } from './applicant';
 import { attendancePanel } from './attendance';
 import { foundersPanel } from './founders';
+import { hrPanel } from './hr';
 import { salesPanel } from './sales';
 import { supervisorPanel } from './supervisor';
 import type { PanelDefinition } from './types';
@@ -19,6 +20,7 @@ export const PANELS: readonly PanelDefinition[] = [
   writerPanel,
   salesPanel,
   foundersPanel,
+  hrPanel,
   attendancePanel,
   applicantPanel,
 ];

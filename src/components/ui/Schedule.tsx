@@ -73,6 +73,11 @@ export interface DayRow {
    */
   onAdd?: ((day: Date) => void) | undefined;
   addLabel?: ((day: Date) => string) | undefined;
+  /**
+   * A day with no items whose brief has things to read (HR's first days, birthdays) keeps its
+   * full width on the wide week instead of shrinking.
+   */
+  keepsWide?: ((day: Date) => boolean) | undefined;
 }
 
 /** A day row's cell: its brief, over a button that adds on that day when the row has `onAdd`. */
@@ -594,7 +599,8 @@ function Week({
   const onKey = (event: KeyboardEvent) => {
     if (event.key === 'Escape' && value) onChange(null);
   };
-  const narrowOf = (day: ScheduleDay) => !loading && day.items.length === 0;
+  const narrowOf = (day: ScheduleDay) =>
+    !loading && day.items.length === 0 && !dayRow?.keepsWide?.(day.date);
 
   return (
     <div className="overflow-hidden rounded-2xl shadow-[inset_0_0_0_1px_var(--hair)]">

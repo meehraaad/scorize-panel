@@ -3,7 +3,8 @@
   "title": "Today's tasks",
   "subtitle": {
     "customer": "Create new tasks on the customer's own page. This page is for seeing and doing them.",
-    "applicant": "Create new tasks on the applicant's own file. This page is for seeing and doing them."
+    "applicant": "Create new tasks on the applicant's own file. This page is for seeing and doing them.",
+    "employee": "Staff joining and leaving, contracts and colleagues' requests. Add a task here or from the calendar."
   },
   "aside": "New task and my requests",
   "close": "Close",
@@ -34,11 +35,13 @@
   "orphans": {
     "title": {
       "customer": "{{n}} active customers have no next step",
-      "applicant": "{{n}} active files have no next step"
+      "applicant": "{{n}} active files have no next step",
+      "employee": "{{n}} staff members have no next step"
     },
     "text": {
       "customer": "No follow-up was set after the last call. These are the customers who get lost.",
-      "applicant": "No open task for them; they may be forgotten."
+      "applicant": "No open task for them; they may be forgotten.",
+      "employee": "No open task is about them."
     },
     "action": "Set a next step"
   },
@@ -59,7 +62,8 @@
     "snoozed": "Pushed back {{n}} times",
     "step": {
       "customer": "Step {{n}} with this customer",
-      "applicant": "Step {{n}} of this file"
+      "applicant": "Step {{n}} of this file",
+      "employee": "Step {{n}} of this task"
     },
     "action": {
       "call": "Call",
@@ -100,12 +104,19 @@
         "no_answer": "The applicant didn't answer",
         "messaged": "Waiting for the applicant",
         "later": "Needs another colleague"
+      },
+      "employee": {
+        "talked": "Done",
+        "no_answer": "The employee did not answer",
+        "messaged": "Waiting for the employee",
+        "later": "Needs another colleague"
       }
     },
     "note": "Note",
     "noteHint": {
       "customer": "Recorded in the customer's history",
-      "applicant": "Recorded in the file's history"
+      "applicant": "Recorded in the file's history",
+      "employee": "Saved in the task's history"
     },
     "next": "Next step",
     "suggested": "Suggested by the system; you can change it",
@@ -119,12 +130,14 @@
     },
     "noNext": {
       "customer": "This customer needs no further follow-up",
-      "applicant": "This applicant needs no follow-up for now"
+      "applicant": "This applicant needs no follow-up for now",
+      "employee": "This task needs no further follow-up"
     },
     "needNext": "No, a next step is needed",
     "why": {
       "customer": "Why is no follow-up needed?",
-      "applicant": "Why is no follow-up needed?"
+      "applicant": "Why is no follow-up needed?",
+      "employee": "Why is no further follow-up needed?"
     },
     "end": {
       "won": "Signed a contract",

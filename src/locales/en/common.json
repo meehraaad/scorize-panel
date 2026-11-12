@@ -108,6 +108,25 @@
         "settings": "Settings"
       },
       "description": "Staff check-in and check-out from the office fingerprint terminal"
+    },
+    "hr": {
+      "name": "Human resources",
+      "description": "Staff files, contracts and pay, joining and leaving",
+      "nav": {
+        "label": "HR menu",
+        "today": "Today",
+        "tasks": "Tasks",
+        "calendar": "Calendar",
+        "staff": "Staff",
+        "moves": "Joining and leaving",
+        "attendance": "Attendance"
+      },
+      "tabs": {
+        "today": "Today",
+        "tasks": "Tasks",
+        "calendar": "Calendar",
+        "staff": "Staff"
+      }
     }
   },
   "tabs": {

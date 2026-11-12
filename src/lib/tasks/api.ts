@@ -17,7 +17,7 @@ import type { TaskEmoji } from './reactions';
 export const TASKS_KEY = ['tasks'] as const;
 export const TASKS_API = '/staff/v1/tasks';
 
-export type TasksPanel = 'sales' | 'supervisor';
+export type TasksPanel = 'sales' | 'supervisor' | 'hr';
 
 export type TaskKind = 'mine' | 'request' | 'team';
 export type TaskStatus = 'open' | 'sent' | 'seen' | 'in_progress' | 'done' | 'rejected' | 'queued';

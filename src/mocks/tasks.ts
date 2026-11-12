@@ -209,6 +209,47 @@ function supervisorTasksState(): TasksState {
   };
 }
 
+/** Amir's tasks in the HR panel (`?panel=hr`, src/mocks/hr.ts): the joining checklist's steps. */
+function hrTasksState(): TasksState {
+  const step = (id: number, text: string, due: string): MyTask => ({
+    id,
+    text,
+    due_at: due,
+    timed: false,
+    person: null,
+    source: 'system',
+    snoozed: 0,
+    step: null,
+    action: 'open',
+    note: '',
+    suggested_next: '',
+    follow_up: false,
+    receipt: null,
+  });
+  return {
+    overview: {
+      on_time: null,
+      orphans: [],
+      mine: [
+        step(611, 'ساخت حساب پنل و نقش‌ها · بهار نیکو', todayAt(23)),
+        step(612, 'ایمیل شرکتی · بهار نیکو', todayAt(23)),
+      ],
+      tomorrow: 1,
+      done_today: 0,
+      requests: [],
+      team: [],
+      sent: [],
+      colleagues: [
+        { id: 7, name: 'مریم کاظمی', role: 'سوپروایزر' },
+        { id: 9, name: 'رضا کامرانی', role: 'مدیر فروش' },
+      ],
+    },
+    details: new Map(),
+  };
+}
+
+const HR_USER = 6;
+let hrTasks: TasksState | null = null;
 let supervisorTasks: TasksState | null = null;
 
 interface TasksContext {
@@ -220,6 +261,10 @@ interface TasksContext {
 }
 
 function tasksOrError(): TasksContext | Response {
+  if (storage.get() === HR_USER) {
+    hrTasks ??= hrTasksState();
+    return { tasks: hrTasks, me: 'امیر عابدی', onPerson: () => undefined };
+  }
   if (storage.get() !== SUPERVISOR) return forbidden();
   supervisorTasks ??= supervisorTasksState();
   return { tasks: supervisorTasks, me: SUPERVISOR_NAME, onPerson: addCaseTask };
@@ -465,5 +510,6 @@ export const taskHandlers = [
 
 export function resetTaskMocks() {
   supervisorTasks = null;
+  hrTasks = null;
   resetTaskReactionMocks();
 }

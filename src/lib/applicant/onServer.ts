@@ -37,9 +37,16 @@ export type ServerFeature =
   | 'phoneVoices'
   | 'phoneBreak'
   | 'teamBreaks'
-  | 'attendance';
+  | 'attendance'
+  | 'hr';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * `GET /hr/v1/today|staff|moves|calendar|options/`: the HR panel's staff files, contracts, salary
+   * history and joining and leaving checklists, key `can_manage_support_staff` (lang
+   * `claude/project-thread-79hhr6`). Tasks: `?panel=hr`.
+   */
+  hr: true,
   /**
    * `GET /attendance/v1/daily|summary|enrollments|…`: the office terminal's reports and the mapping
    * of its user numbers to staff, key `manage_attendance` (lang `attendance/`, branch `test`).
