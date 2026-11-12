@@ -170,3 +170,10 @@ HTTPS and the deployed `microphone=(self)` permissions policy. Minimized forms s
 cancel requests; inserted text stays in that customer's draft. Recording also stops after ten
 seconds of silence, before the two-minute limit, or when the browser tab becomes hidden.
 See [Reusable voice fields](voice-input.md) for adding dictation to another controlled input.
+
+The local financial assessment flow consumes backend shamrad/lang#321 on #320:
+owned `calculators/financial/` and `financial/scenario/`, additive financial context
+in comparison/snapshots, and financial policy/scenario content in the existing
+staff draft lifecycle. Backend before panel #106 on #105. Existing development
+and sandbox gates remain; real financial references are not seeded. See
+[financial contract and behavior](assessment-financial-fit.md).
