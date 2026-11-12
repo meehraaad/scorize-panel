@@ -577,3 +577,9 @@ with owned revision/hash-checked selection/progress, immutable comparison snapsh
 replay and independent fact review. Panel draft #105 builds on #104 and consumes
 this contract only on the existing development route. No production enablement;
 see [scope and validation](assessment-route-comparison.md).
+
+Local financial policies and fit: backend shamrad/lang#321 on #320; companion
+panel #106 on #105. Reuses existing draft/review/release/session/snapshot models,
+with no new model or production migration. It does not change profile/sales budget
+enums, create contacts/leads or enable public assessment. Backend must precede
+panel. [Scope, compatibility and release limits](assessment-financial-fit.md).

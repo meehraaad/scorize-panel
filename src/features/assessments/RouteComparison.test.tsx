@@ -36,9 +36,7 @@ it('shows different score systems, unsupported routes, conditions and honest una
     area.getAllByText('Evidence for this specific subclass required', { exact: false }),
   ).toHaveLength(2);
   expect(area.getByText(/not ranked together/)).toBeInTheDocument();
-  expect(
-    area.getAllByText(/financial fit and success probability remain undetermined/),
-  ).toHaveLength(6);
+  expect(area.getAllByText(/Time and historical evidence remain unavailable/)).toHaveLength(6);
   expect(area.getByRole('button', { name: 'Record comparison and action plan' })).toBeEnabled();
 });
 it('persists reported action completion without changing the unmet condition', async () => {

@@ -1,3 +1,4 @@
+import { FinancialResult } from './FinancialResult';
 import { useEffect, useId, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,14 @@ function ComparisonCards({ data }: { data: ComparisonSnapshot['payload'] }) {
           revision: data.context.session_revision,
         })}
       </p>
+      {data.financial_context && (
+        <p>
+          {t('financial.basisDate', {
+            date: data.context.assessment_date,
+            version: data.financial_context.policy?.version ?? t('financial.unknown'),
+          })}
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         {data.routes.map((route) => (
           <article key={route.route_id} className="border-line min-w-0 rounded-2xl border p-4">
@@ -87,6 +96,7 @@ function ComparisonCards({ data }: { data: ComparisonSnapshot['payload'] }) {
                 </p>
               </Notice>
             ))}
+            {route.financial && <FinancialResult result={route.financial} />}
             <p className="mt-3 text-sm text-text-2">{t('comparison.unavailable')}</p>
             <details>
               <summary className="min-h-11 cursor-pointer py-2">
@@ -154,6 +164,7 @@ export function RouteComparison(props: {
   disabled: boolean;
   onBusy: (busy: boolean) => void;
   onSelect: (country: Country, field: string) => void;
+  onFinancialSelect: () => void;
 }) {
   const { t } = useTranslation('assessments');
   const sectionId = useId();
@@ -177,12 +188,14 @@ function ComparisonEditor({
   disabled,
   onBusy,
   onSelect,
+  onFinancialSelect,
 }: {
   id: string;
   revision: number;
   disabled: boolean;
   onBusy: (busy: boolean) => void;
   onSelect: (country: Country, field: string) => void;
+  onFinancialSelect: () => void;
 }) {
   const { t } = useTranslation('assessments');
   const words = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
@@ -364,6 +377,15 @@ function ComparisonEditor({
                   disabled={locked || Boolean(routes)}
                   onChange={(status) => send('progress', { task_id: task.id, status })}
                 />
+                {task.financial && (
+                  <Button
+                    variant="outline"
+                    disabled={locked || Boolean(routes)}
+                    onClick={onFinancialSelect}
+                  >
+                    {t('financial.open')}
+                  </Button>
+                )}
                 {task.field && (
                   <Button
                     variant="outline"

@@ -1,3 +1,5 @@
+import financialFixture from './calculator-financial.json';
+import type { FinancialDescription, FinancialInputs } from '@/features/assessments/financialTypes';
 /** Test-only contract fixtures. The application always uses the Django API. */
 import { http, HttpResponse } from 'msw';
 import schemas from './calculator-schemas.json';
@@ -13,11 +15,21 @@ let comparisonRequests = new Map<
   string,
   ReturnType<typeof interview> & { comparison: Comparison; active: boolean }
 >();
+let financial = structuredClone(financialFixture) as FinancialDescription;
+let financialRequests = new Map<
+  string,
+  {
+    request: string;
+    response: ReturnType<typeof interview> & { financial: FinancialDescription; active: boolean };
+  }
+>();
 let guideState = 'not_started';
 let guideCountry = 'canada';
 let guideMode = 'assessment';
 export function resetCalculatorMocks() {
   revision = 0;
+  financial = structuredClone(financialFixture) as FinancialDescription;
+  financialRequests = new Map();
   comparison = structuredClone(comparisonFixture) as Comparison;
   comparisonRequests = new Map();
   answers = {};
@@ -74,6 +86,43 @@ const comparisonView = () => ({
   decision_sha256: String(revision).padStart(64, '0'),
 });
 export const calculatorHandlers = [
+  http.get('/api/applicant/v1/assessments/:id/calculators/financial/', () =>
+    HttpResponse.json({ ...financial, revision }),
+  ),
+  http.post('/api/applicant/v1/assessments/:id/calculators/financial/', async ({ request }) => {
+    const body = (await request.json()) as {
+      revision: number;
+      request_key: string;
+      action: string;
+      field?: keyof FinancialInputs;
+      status: string;
+      value: unknown;
+    };
+    const previous = financialRequests.get(body.request_key);
+    if (previous)
+      return previous.request === JSON.stringify(body)
+        ? HttpResponse.json(previous.response)
+        : HttpResponse.json({ detail: 'Key conflict' }, { status: 409 });
+    if (body.revision !== revision)
+      return HttpResponse.json({ detail: 'Revision changed' }, { status: 409 });
+    if (body.field)
+      financial.inputs = {
+        ...financial.inputs,
+        [body.field]: { status: body.status, value: body.value },
+      };
+    revision += 1;
+    const response = { ...interview(), financial: { ...financial, revision }, active: false };
+    financialRequests.set(body.request_key, { request: JSON.stringify(body), response });
+    return HttpResponse.json(response);
+  }),
+  http.post('/api/applicant/v1/assessments/:id/calculators/financial/scenario/', () =>
+    HttpResponse.json({
+      hypothetical: true,
+      writes: false,
+      before: financial.routes['ca-fsw'],
+      after: { ...financial.routes['ca-fsw'], status: 'insufficient' },
+    }),
+  ),
   http.get('/api/applicant/v1/assessments/:id/calculators/comparison/', () =>
     HttpResponse.json(comparisonView()),
   ),
