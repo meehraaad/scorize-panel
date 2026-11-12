@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { matchesSearch } from '@/lib/text';
 import { staffQuery, type StaffRow, type StaffState } from './api';
+import { OrgChart } from './components/OrgChart';
 import { PersonLink } from './components/PersonLink';
 import { CONTRACT_TONE, STATE_TONE, dayOf } from './format';
 
@@ -19,6 +20,8 @@ const NewStaffDialog = lazy(() => import('./components/NewStaffDialog'));
 
 type Filter = 'all' | Exclude<StaffState, 'active'>;
 const FILTERS: readonly Filter[] = ['all', 'trial', 'joining', 'leaving', 'inactive'];
+type View = 'list' | 'chart';
+const VIEWS: readonly View[] = ['list', 'chart'];
 
 /**
  * Everyone who works here (canvas "کارکنان"): position, team, direct manager, the contract in
@@ -28,6 +31,7 @@ const FILTERS: readonly Filter[] = ['all', 'trial', 'joining', 'leaving', 'inact
 export default function StaffPage() {
   const { t } = useTranslation('hr');
   const f = useFormat();
+  const [view, setView] = useState<View>('list');
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
@@ -65,41 +69,53 @@ export default function StaffPage() {
           </Button>
         }
       />
-      <Card aria-label={t('staff.label')}>
-        <div className="flex flex-wrap items-center gap-3 px-5 pt-5 lg:px-8">
-          <FilterTabs
-            label={t('staff.filter')}
-            value={filter}
-            onChange={setFilter}
-            options={FILTERS.map((value) => {
-              const n = count(value);
-              return {
-                value,
-                label: t(value === 'all' ? 'staff.all' : `state.${value}`),
-                ...(n !== undefined && { count: f.number(n) }),
-              };
-            })}
-          />
-          <SearchField
-            className="min-w-56 flex-1"
-            label={t('staff.search')}
-            placeholder={t('staff.searchHint')}
-            value={search}
-            onChange={setSearch}
-          />
-        </div>
-        {filter === 'inactive' && everyone.isPending ? (
-          <EmptyState variant="padded">{t('loading')}</EmptyState>
-        ) : rows.length === 0 ? (
-          <EmptyState variant="padded">{t('staff.empty')}</EmptyState>
-        ) : (
-          <ul aria-label={t('staff.list')} className="m-0 list-none p-0 pt-3 pb-3">
-            {rows.map((row) => (
-              <StaffItem key={row.id} row={row} />
-            ))}
-          </ul>
-        )}
-      </Card>
+      <FilterTabs
+        label={t('staff.view')}
+        value={view}
+        onChange={setView}
+        options={VIEWS.map((value) => ({ value, label: t(`staff.views.${value}`) }))}
+      />
+      {view === 'chart' ? (
+        <Card aria-label={t('chart.label')}>
+          <OrgChart staff={data.results} />
+        </Card>
+      ) : (
+        <Card aria-label={t('staff.label')}>
+          <div className="flex flex-wrap items-center gap-3 px-5 pt-5 lg:px-8">
+            <FilterTabs
+              label={t('staff.filter')}
+              value={filter}
+              onChange={setFilter}
+              options={FILTERS.map((value) => {
+                const n = count(value);
+                return {
+                  value,
+                  label: t(value === 'all' ? 'staff.all' : `state.${value}`),
+                  ...(n !== undefined && { count: f.number(n) }),
+                };
+              })}
+            />
+            <SearchField
+              className="min-w-56 flex-1"
+              label={t('staff.search')}
+              placeholder={t('staff.searchHint')}
+              value={search}
+              onChange={setSearch}
+            />
+          </div>
+          {filter === 'inactive' && everyone.isPending ? (
+            <EmptyState variant="padded">{t('loading')}</EmptyState>
+          ) : rows.length === 0 ? (
+            <EmptyState variant="padded">{t('staff.empty')}</EmptyState>
+          ) : (
+            <ul aria-label={t('staff.list')} className="m-0 list-none p-0 pt-3 pb-3">
+              {rows.map((row) => (
+                <StaffItem key={row.id} row={row} />
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
       {adding && (
         <Suspense fallback={null}>
           <NewStaffDialog open onClose={() => setAdding(false)} />

@@ -14,7 +14,7 @@ export function PersonLink({
   id: number;
   name: string;
   face?: Face | null;
-  sub?: string;
+  sub?: string | undefined;
 }) {
   return (
     <Link

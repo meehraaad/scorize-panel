@@ -75,7 +75,19 @@
     "manager": "مدیر: {{name}}",
     "contractUntil": "{{kind}} تا {{day}}",
     "moveProgress": "{{kind}} · {{done}} از {{total}}",
-    "noDevice": "روی دستگاه نیست"
+    "noDevice": "روی دستگاه نیست",
+    "view": "نمای کارکنان",
+    "views": {
+      "list": "فهرست",
+      "chart": "چارت سازمانی"
+    }
+  },
+  "chart": {
+    "label": "چارت سازمانی",
+    "empty": "هنوز سمتی برای کارکنان ثبت نشده. سمت هر نفر را در پرونده‌اش انتخاب کنید.",
+    "people": "{{n}} نفر",
+    "vacant": "خالی",
+    "unplaced": "بدون سمت ({{n}})"
   },
   "form": {
     "firstName": "نام",

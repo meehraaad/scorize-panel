@@ -117,4 +117,17 @@ describe('HR panel', () => {
     expect(await screen.findByRole('heading', { name: 'تقویم', level: 1 })).toBeInTheDocument();
     expect(await screen.findAllByRole('link', { name: /ورود بهار نیکو/ })).not.toHaveLength(0);
   });
+
+  it('shows the org chart: each position under the one it reports to', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/staff');
+    await user.click(await screen.findByRole('button', { name: 'چارت سازمانی' }));
+    const manager = await screen.findByRole('region', { name: 'مدیر فروش' });
+    expect(within(manager).getByText('خالی')).toBeInTheDocument();
+    const sellers = screen.getByRole('region', { name: 'کارشناس فروش' });
+    expect(within(sellers).getByRole('link', { name: /علی رضایی/ })).toBeInTheDocument();
+    expect(within(sellers).getByRole('link', { name: /مریم کریمی/ })).toBeInTheDocument();
+    expect(screen.getByText('بدون سمت (۱)')).toBeInTheDocument();
+  });
 });

@@ -75,7 +75,19 @@
     "manager": "Manager: {{name}}",
     "contractUntil": "{{kind}} until {{day}}",
     "moveProgress": "{{kind}} · {{done}} of {{total}}",
-    "noDevice": "Not on the terminal"
+    "noDevice": "Not on the terminal",
+    "view": "Staff view",
+    "views": {
+      "list": "List",
+      "chart": "Org chart"
+    }
+  },
+  "chart": {
+    "label": "Org chart",
+    "empty": "No staff member has a position yet. Pick each person's position in their file.",
+    "people": "{{n}} people",
+    "vacant": "Vacant",
+    "unplaced": "No position ({{n}})"
   },
   "form": {
     "firstName": "First name",
