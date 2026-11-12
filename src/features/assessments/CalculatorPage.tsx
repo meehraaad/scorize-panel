@@ -13,6 +13,7 @@ import { toast } from '@/lib/toast';
 import { CalculationResult } from './CalculatorResult';
 import { CalculatorReview } from './CalculatorReview';
 import { CalculatorForm } from './CalculatorForm';
+import { ProfileEvidence } from './ProfileEvidence';
 import {
   calculatorOptionsQuery,
   interviewQuery,
@@ -26,6 +27,7 @@ import {
   type Options,
   type Interview,
   type Snapshot,
+  type ProfileCandidate,
 } from './calculatorApi';
 
 function InterviewEditor({ id, options }: { id: string; options: Options }) {
@@ -46,6 +48,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const [autoPaused, setAutoPaused] = useState(false);
   const [snapshotRequest, setSnapshotRequest] = useState<unknown>(null);
   const [shown, setShown] = useState<Snapshot | null>(null);
+  const [profileCandidate, setProfileCandidate] = useState<ProfileCandidate | null>(null);
   const data = query.data;
   const save = useMutation({
     mutationFn: (body: unknown) => saveCalculatorAnswer(id, body),
@@ -55,11 +58,13 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         ...next,
       }));
       void cache.invalidateQueries({ queryKey: ['calculator-snapshots', id] });
+      void cache.invalidateQueries({ queryKey: ['calculator-profile-evidence', id] });
       setDirty(false);
       setAutoPaused(false);
       setPending(null);
       setShown(null);
       setSnapshotRequest(null);
+      setProfileCandidate(null);
       toast.success(t('calculator.saved'));
     },
     onError: () => setAutoPaused(true),
@@ -144,11 +149,26 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
     setPending(null);
     setShown(null);
     setSnapshotRequest(null);
+    setProfileCandidate(null);
+    setAutoPaused(false);
     save.reset();
   };
   const conflict = saveError instanceof ApiError && saveError.status === 409;
   return (
     <>
+      <ProfileEvidence
+        id={id}
+        country={country}
+        disabled={dirty || saving || record.isPending}
+        onPrepare={(candidate) => {
+          choose(country, candidate.field);
+          setProfileCandidate(candidate);
+          setStatus('known');
+          setValue(candidate.value);
+          setDirty(true);
+          setAutoPaused(true);
+        }}
+      />
       <SectionCard id={sectionId} title={t('calculator.interview')} variant="panel">
         <fieldset disabled={saving} className="m-0 flex flex-col gap-4 border-0 p-0">
           <SelectField
@@ -180,6 +200,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
             )}
             onChange={(next) => {
               setStatus(next);
+              if (next !== 'known') setProfileCandidate(null);
               setValue(answerValue);
               setDirty(true);
               setPending(null);
@@ -207,14 +228,31 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
             </p>
           )}
           {dirty && <Notice tone="warn">{t('calculator.unsaved')}</Notice>}
+          {profileCandidate && <Notice tone="warn">{t('calculator.profile.confirmation')}</Notice>}
+          {profileCandidate && (
+            <Button variant="outline" onClick={() => choose(country, field)}>
+              {t('calculator.profile.discard')}
+            </Button>
+          )}
           {save.isPaused && <Notice tone="warn">{t('calculator.offline')}</Notice>}
           {saveError && (
             <Notice tone="error">
-              {t(conflict ? 'calculator.conflict' : 'calculator.failed')}
+              {t(
+                conflict
+                  ? profileCandidate
+                    ? 'calculator.profile.reloadConflict'
+                    : 'calculator.conflict'
+                  : 'calculator.failed',
+              )}
             </Notice>
           )}
           <Button
-            disabled={!dirty || saving || conflict}
+            disabled={
+              !dirty ||
+              saving ||
+              conflict ||
+              (answerStatus === 'known' && !readyForAutosave(fields[field], answerValue))
+            }
             onClick={() => {
               const body = pending ?? {
                 country,
@@ -224,12 +262,20 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
                 request_key: crypto.randomUUID(),
                 status: answerStatus,
                 value: answerStatus === 'known' ? (answerValue ?? null) : null,
+                ...(profileCandidate && answerStatus === 'known'
+                  ? {
+                      profile_candidate: {
+                        id: profileCandidate.id,
+                        sha256: profileCandidate.sha256,
+                      },
+                    }
+                  : {}),
               };
               setPending(body);
               saveAnswer(body);
             }}
           >
-            {t('calculator.save')}
+            {t(profileCandidate ? 'calculator.profile.confirmSave' : 'calculator.save')}
           </Button>
           {conflict && (
             <Button

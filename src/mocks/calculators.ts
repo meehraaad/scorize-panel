@@ -20,6 +20,9 @@ const interview = () => ({
   sources: { canada: { sha256: 'b'.repeat(64) }, australia: { sha256: 'c'.repeat(64) } },
 });
 export const calculatorHandlers = [
+  http.get('/api/applicant/v1/assessments/:id/calculators/profile-evidence/', () =>
+    HttpResponse.json({ revision, candidates: [], context: [] }),
+  ),
   http.get('/api/applicant/v1/assessments/calculators/options/', () =>
     HttpResponse.json({
       adapter_version: 'calculator-interview-1',

@@ -16,6 +16,22 @@ export interface Answer {
   source: string;
   document_verified: boolean;
   recorded_at?: string;
+  profile_origin?: ProfileCandidate;
+}
+export interface ProfileCandidate {
+  id: string;
+  sha256: string;
+  field: string;
+  source: string;
+  value: unknown;
+  original: Record<string, unknown>;
+  complete: boolean;
+  conflict?: boolean;
+}
+export interface ProfileEvidence {
+  revision: number;
+  candidates: ProfileCandidate[];
+  context: { source: string; reason: string; original: Record<string, unknown> }[];
 }
 export interface Options {
   adapter_version: string;
@@ -65,6 +81,11 @@ export const calculatorOptionsQuery = queryOptions({
   queryFn: () => api<Options>('/applicant/v1/assessments/calculators/options/'),
 });
 const prefix = (id: string) => `/applicant/v1/assessments/${id}/calculators/`;
+export const profileEvidenceQuery = (id: string, country: Country) =>
+  queryOptions({
+    queryKey: ['calculator-profile-evidence', id, country],
+    queryFn: () => api<ProfileEvidence>(prefix(id) + `profile-evidence/?country=${country}`),
+  });
 export const interviewQuery = (id: string) =>
   queryOptions({
     queryKey: ['calculator-interview', id],
