@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { TogglePill } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { Switch } from '@/components/ui/Switch';
 import { useUser } from '@/lib/auth/session';
 import { toast } from '@/lib/toast';
 import { groupsQuery, keysQuery, useSavePerson, type AccessPerson } from '../api';
@@ -15,9 +14,9 @@ const same = (a: ReadonlySet<unknown>, b: readonly unknown[]) =>
   a.size === b.length && b.every((item) => a.has(item));
 
 /**
- * One person's access: superuser or not (never one's own: another superuser changes it), their
- * groups (each brings its keys) and the keys given to them directly. A superuser holds every key,
- * so their groups and keys are kept but not shown.
+ * One person's access: their groups (each brings its keys) and the keys given to them directly. A
+ * superuser holds every key, so their groups and keys are kept but not shown; who is a superuser is
+ * only changed in Django admin.
  */
 export function PersonDialog({ person, onClose }: { person: AccessPerson; onClose: () => void }) {
   const { t } = useTranslation('access');
@@ -25,12 +24,11 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
   const groups = useQuery(groupsQuery);
   const save = useSavePerson(person.id);
   const me = useUser();
-  const self = me.id === person.id;
-  // HR (not a superuser): no superuser switch, no protected keys or groups, read-only for
+  // HR (not a superuser): no protected keys or groups, read-only for
   // superusers and themselves (the API refuses the same).
   const limited = !me.is_superuser;
   const editable = person.editable !== false;
-  const [superuser, setSuperuser] = useState(person.is_superuser);
+  const superuser = person.is_superuser;
   const [chosenGroups, setChosenGroups] = useState(() => new Set(person.groups));
   const [direct, setDirect] = useState(() => new Set(person.keys));
 
@@ -51,14 +49,11 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
       .map((key) => [key.id, t(editable ? 'person.superusersOnly' : 'person.notYours')]),
   );
   const changed =
-    superuser !== person.is_superuser ||
-    (!superuser && (!same(chosenGroups, person.groups) || !same(direct, person.keys)));
+    !superuser && (!same(chosenGroups, person.groups) || !same(direct, person.keys));
 
   const submit = () =>
     save.mutate(
-      superuser
-        ? { is_superuser: true }
-        : { is_superuser: false, groups: [...chosenGroups], keys: [...direct] },
+      { groups: [...chosenGroups], keys: [...direct] },
       {
         onSuccess: () => {
           toast.success(t('person.saved', { name: person.name }));
@@ -76,31 +71,18 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
       subtitle={[person.team, person.email].filter(Boolean).join(' · ') || undefined}
       closeLabel={t('close')}
       footer={
-        editable ? (
+        editable && !superuser ? (
           <Button disabled={!changed || save.isPending} onClick={submit}>
             {t('save')}
           </Button>
         ) : undefined
       }
     >
-      {!limited && (
-        <Switch
-          label={t('person.superuserSwitch')}
-          description={self ? t('person.superuserSelf') : t('person.superuserAbout')}
-          checked={superuser}
-          disabled={self}
-          onChange={setSuperuser}
-        />
-      )}
       {!editable && !person.is_superuser && (
         <p className="m-0 text-[15px] leading-7">{t('person.lockedForYou')}</p>
       )}
       {superuser ? (
-        <p className="m-0 text-[15px] leading-7">
-          {person.is_superuser
-            ? t('person.superuser')
-            : t('person.superuserOnWarning', { name: person.name })}
-        </p>
+        <p className="m-0 text-[15px] leading-7">{t('person.superuser')}</p>
       ) : !keys.data || !groups.data ? (
         <SkeletonRows rows={4} />
       ) : (

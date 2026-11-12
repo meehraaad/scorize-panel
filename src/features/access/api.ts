@@ -63,7 +63,7 @@ export interface AccessGroup {
   protected?: boolean;
 }
 
-/** A superuser changes another person's `is_superuser` here, never their own. */
+/** One person's access. `is_superuser` is only shown: it is changed in Django admin. */
 export interface AccessPerson {
   id: number;
   name: string;
@@ -172,7 +172,7 @@ function useAccessMutation<TInput, TResult>(mutationFn: (input: TInput) => Promi
 }
 
 export const useSavePerson = (id: number) =>
-  useAccessMutation((change: Partial<Pick<AccessPerson, 'groups' | 'keys' | 'is_superuser'>>) =>
+  useAccessMutation((change: Partial<Pick<AccessPerson, 'groups' | 'keys'>>) =>
     api<AccessPerson>(`${ACCESS_API}/people/${String(id)}/`, { method: 'PATCH', body: change }),
   );
 

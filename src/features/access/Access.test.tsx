@@ -38,21 +38,19 @@ describe('management > access', () => {
     expect(await toasts().findByText('دسترسی‌های نیما رستمی ذخیره شد.')).toBeInTheDocument();
   });
 
-  it('turns superuser on for someone else, never for oneself', async () => {
+  it('leaves superusers to Django admin', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
     renderApp('/founders/access');
     await user.click(await screen.findByRole('button', { name: 'باز کردن دسترسی‌های امیر عابدی' }));
     const own = await screen.findByRole('dialog', { name: 'امیر عابدی' });
-    expect(within(own).getByRole('switch', { name: /مدیر کل/ })).toBeDisabled();
+    expect(within(own).getByText(/فقط در ادمین جنگو/)).toBeInTheDocument();
+    expect(within(own).queryByRole('button', { name: 'ذخیره' })).not.toBeInTheDocument();
     await user.click(within(own).getByRole('button', { name: 'بستن' }));
 
     await user.click(await screen.findByRole('button', { name: 'باز کردن دسترسی‌های مریم کاظمی' }));
     const dialog = await screen.findByRole('dialog', { name: 'مریم کاظمی' });
-    await user.click(within(dialog).getByRole('switch', { name: /مدیر کل/ }));
-    expect(within(dialog).getByText(/مریم کاظمی مدیر کل می‌شود/)).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
-    expect(await toasts().findByText('دسترسی‌های مریم کاظمی ذخیره شد.')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('switch', { name: /مدیر کل/ })).not.toBeInTheDocument();
   });
 
   it("shows a group's keys as held, not as a separate key", async () => {

@@ -38,12 +38,8 @@
     "noGroups": "No groups yet.",
     "keys": "Keys of their own",
     "viaGroup": "From the group {{group}}",
-    "superuser": "This person is a superuser and holds every key. To give them groups and keys of their own, turn superuser off first.",
+    "superuser": "This person is a superuser and holds every key. Superusers are only turned on or off in Django admin.",
     "saved": "{{name}}'s access was saved.",
-    "superuserSwitch": "Superuser",
-    "superuserAbout": "A superuser holds every key and can change everyone's access, Django admin included.",
-    "superuserSelf": "You can't change your own superuser status; another superuser has to.",
-    "superuserOnWarning": "Once saved, {{name}} becomes a superuser with full access everywhere, Django admin included.",
     "superusersOnly": "Only a superuser gives or takes it",
     "notYours": "Can't be changed",
     "lockedForYou": "Only a superuser changes a superuser's access, or your own."

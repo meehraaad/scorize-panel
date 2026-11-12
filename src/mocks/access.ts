@@ -233,16 +233,9 @@ export const accessHandlers = [
     const body = (await request.json()) as Partial<
       Pick<AccessPerson, 'groups' | 'keys' | 'is_superuser'>
     >;
-    if (body.is_superuser !== undefined && body.is_superuser !== row.is_superuser) {
-      // Django: never one's own
-      if (row.id === storage.get()) return forbidden();
-      log({
-        action: body.is_superuser ? 'superuser_on' : 'superuser_off',
-        key: '',
-        user: short(row),
-        group: null,
-      });
-    }
+    // Django: superusers are only changed in Django admin
+    if (body.is_superuser !== undefined && body.is_superuser !== row.is_superuser)
+      return forbidden();
     for (const id of body.keys ?? []) {
       if (!row.keys.includes(id)) log({ action: 'give', key: id, user: short(row), group: null });
     }
