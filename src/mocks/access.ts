@@ -144,7 +144,7 @@ export const accessHandlers = [
     return HttpResponse.json({
       areas: admin ? [...AREAS, ADMIN_AREA] : AREAS,
       keys,
-      superusers: 1,
+      superusers: staff.filter((row) => row.is_superuser).length,
     });
   }),
 
@@ -230,7 +230,19 @@ export const accessHandlers = [
     if (!allowed()) return forbidden();
     const row = staff.find((item) => item.id === Number(params.id));
     if (!row) return notFound();
-    const body = (await request.json()) as Partial<Pick<AccessPerson, 'groups' | 'keys'>>;
+    const body = (await request.json()) as Partial<
+      Pick<AccessPerson, 'groups' | 'keys' | 'is_superuser'>
+    >;
+    if (body.is_superuser !== undefined && body.is_superuser !== row.is_superuser) {
+      // Django: never one's own
+      if (row.id === storage.get()) return forbidden();
+      log({
+        action: body.is_superuser ? 'superuser_on' : 'superuser_off',
+        key: '',
+        user: short(row),
+        group: null,
+      });
+    }
     for (const id of body.keys ?? []) {
       if (!row.keys.includes(id)) log({ action: 'give', key: id, user: short(row), group: null });
     }

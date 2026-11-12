@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { TogglePill } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { SkeletonRows } from '@/components/ui/Skeleton';
+import { Switch } from '@/components/ui/Switch';
+import { useUser } from '@/lib/auth/session';
 import { toast } from '@/lib/toast';
 import { groupsQuery, keysQuery, useSavePerson, type AccessPerson } from '../api';
 import { KeyPicker } from './KeyPicker';
@@ -13,14 +15,17 @@ const same = (a: ReadonlySet<unknown>, b: readonly unknown[]) =>
   a.size === b.length && b.every((item) => a.has(item));
 
 /**
- * One person's access: their groups (each brings its keys) and the keys given to them directly.
- * A superuser holds every key: that is changed only in Django admin.
+ * One person's access: superuser or not (never one's own: another superuser changes it), their
+ * groups (each brings its keys) and the keys given to them directly. A superuser holds every key,
+ * so their groups and keys are kept but not shown.
  */
 export function PersonDialog({ person, onClose }: { person: AccessPerson; onClose: () => void }) {
   const { t } = useTranslation('access');
   const keys = useQuery(keysQuery());
   const groups = useQuery(groupsQuery);
   const save = useSavePerson(person.id);
+  const self = useUser().id === person.id;
+  const [superuser, setSuperuser] = useState(person.is_superuser);
   const [chosenGroups, setChosenGroups] = useState(() => new Set(person.groups));
   const [direct, setDirect] = useState(() => new Set(person.keys));
 
@@ -35,11 +40,15 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
       t('person.viaGroup', { group: names.join(t('separator')) }),
     ]),
   );
-  const changed = !same(chosenGroups, person.groups) || !same(direct, person.keys);
+  const changed =
+    superuser !== person.is_superuser ||
+    (!superuser && (!same(chosenGroups, person.groups) || !same(direct, person.keys)));
 
   const submit = () =>
     save.mutate(
-      { groups: [...chosenGroups], keys: [...direct] },
+      superuser
+        ? { is_superuser: true }
+        : { is_superuser: false, groups: [...chosenGroups], keys: [...direct] },
       {
         onSuccess: () => {
           toast.success(t('person.saved', { name: person.name }));
@@ -57,15 +66,24 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
       subtitle={[person.team, person.email].filter(Boolean).join(' · ') || undefined}
       closeLabel={t('close')}
       footer={
-        person.is_superuser ? undefined : (
-          <Button disabled={!changed || save.isPending} onClick={submit}>
-            {t('save')}
-          </Button>
-        )
+        <Button disabled={!changed || save.isPending} onClick={submit}>
+          {t('save')}
+        </Button>
       }
     >
-      {person.is_superuser ? (
-        <p className="m-0 text-[15px] leading-7">{t('person.superuser')}</p>
+      <Switch
+        label={t('person.superuserSwitch')}
+        description={self ? t('person.superuserSelf') : t('person.superuserAbout')}
+        checked={superuser}
+        disabled={self}
+        onChange={setSuperuser}
+      />
+      {superuser ? (
+        <p className="m-0 text-[15px] leading-7">
+          {person.is_superuser
+            ? t('person.superuser')
+            : t('person.superuserOnWarning', { name: person.name })}
+        </p>
       ) : !keys.data || !groups.data ? (
         <SkeletonRows rows={4} />
       ) : (

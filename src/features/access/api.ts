@@ -49,6 +49,7 @@ export interface AccessGroup {
   system: boolean;
 }
 
+/** A superuser changes another person's `is_superuser` here, never their own. */
 export interface AccessPerson {
   id: number;
   name: string;
@@ -71,6 +72,8 @@ export const CHANGE_ACTIONS = [
   'group_remove',
   'group_rename',
   'group_delete',
+  'superuser_on',
+  'superuser_off',
 ] as const;
 export type ChangeAction = (typeof CHANGE_ACTIONS)[number];
 
@@ -153,7 +156,7 @@ function useAccessMutation<TInput, TResult>(mutationFn: (input: TInput) => Promi
 }
 
 export const useSavePerson = (id: number) =>
-  useAccessMutation((change: Partial<Pick<AccessPerson, 'groups' | 'keys'>>) =>
+  useAccessMutation((change: Partial<Pick<AccessPerson, 'groups' | 'keys' | 'is_superuser'>>) =>
     api<AccessPerson>(`${ACCESS_API}/people/${String(id)}/`, { method: 'PATCH', body: change }),
   );
 
