@@ -571,3 +571,9 @@ Implemented alongside this panel in `shamrad/lang`: opt-in `GET/POST /api/sales/
 CPU worker transcribes Persian; recordings stay off public storage. Deploy the backend speech
 override and panel headers together to enable contact/call note dictation. See backend
 `docs/seller-voice.md` and panel `docs/backend-integration.md`.
+
+Local assessment comparison/action plans: paired backend draft shamrad/lang#320,
+with owned revision/hash-checked selection/progress, immutable comparison snapshots,
+replay and independent fact review. Panel draft #105 builds on #104 and consumes
+this contract only on the existing development route. No production enablement;
+see [scope and validation](assessment-route-comparison.md).

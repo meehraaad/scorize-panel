@@ -1,0 +1,1741 @@
+{
+  "version": "calculator-comparison-1",
+  "country": "comparison",
+  "record_kind": "draft_route_comparison",
+  "active": false,
+  "specialist_approved": false,
+  "policy": {
+    "bundle": {
+      "version": "calculator-comparison-1",
+      "routes": [
+        "ca-fsw",
+        "ca-cec",
+        "ca-fst",
+        "au-189",
+        "au-190",
+        "au-491"
+      ],
+      "order": "user_selected_order",
+      "cross_system_score_ranking": false,
+      "actions": "unresolved_evidence_then_requirements_then_independent_review",
+      "action_completion": "self_reported_progress_never_evidence",
+      "australian_route_scope": "explicit_subclass_only",
+      "legal_status": "draft"
+    },
+    "sha256": "790dc37e81712dc06c1b9ea60307100dd6e7f830345e2c40ac89cd7965f3a64f"
+  },
+  "context": {
+    "session_id": "63f4d9c2-fd5f-46aa-9ee9-7d17ed1c1b88",
+    "session_revision": 0,
+    "assessment_date": "2026-11-12",
+    "ruleset_sha256": "266618085ce1114b0fd59c44924daf1de43ea159ef7a84640fddee1a3457fedd",
+    "ruleset_id": 1,
+    "ruleset_version": 1,
+    "assessment_engine_version": "sandbox-2"
+  },
+  "sources": {
+    "canada": {
+      "sha256": "f169714f4b5427fe9f7ba596e88b8f51f784141b9934c16f0708c27bc9930792",
+      "manifest": {
+        "version": "ircc-2026-11-03-draft-3",
+        "active": false,
+        "assessment_date_coverage": {
+          "from": "2026-11-03",
+          "through": "2026-11-12"
+        },
+        "sources": {
+          "fsw": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-workers.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "de4fe5b18a287c273db0e3afc483ea1e110a2ab023c5f37673594e5a1ab3f286",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "crs": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "bc211d448783cfcbd5eb3955811554d21031362dcb00bf5eb6ab59898a5ab153",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "education": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/education-assessment.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "60c8f7d30b6b0b7d692d26df01d1dcf93aab115a650ede90d3e85242b08c59fa",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "language": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "9b9748d4a48aac4086967c1750b7181af2ec551e7c95455d98827b26924cefcc",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "cec": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/canadian-experience-class.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "93983599ce79cec9041f879b170841ac9f74b63477bbeb6a06662ff58513723d",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "high-wage": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/high-wage.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "51adafa20f67c37dc133b19789788acb1c7ebeb576152c3ad71358f460b140c7",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "fst": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-trades.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "fada96220753b1bcb9b99989d94ef4259e17083e0c85cfd07a56d80f330a77d9",
+            "review_status": "draft_specialist_review_pending"
+          }
+        },
+        "rules": {
+          "fsw.age": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.language": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.experience": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.arranged_employment": {
+            "source": "fsw",
+            "effective_from": "2026-11-03",
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.adaptability": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.minimum_primary_work": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.selection_threshold": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.funds_claim": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "canada.admissibility_claim": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "canada.settlement_claim": {
+            "source": "fsw",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.age": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.education": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.first_language": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.second_language": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.canadian_work_length": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.high_wage_work": {
+            "source": "crs",
+            "effective_from": "2026-11-03",
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.high_wage_offer": {
+            "source": "crs",
+            "effective_from": "2026-11-03",
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.spouse": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.education_transfer": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.foreign_work_transfer": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.certificate_transfer": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.additional": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.group_caps": {
+            "source": "crs",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "fsw.education": {
+            "source": "education",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "canada.eca_validity": {
+            "source": "education",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "canada.language_validity": {
+            "source": "language",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "canada.english_conversion": {
+            "source": "language",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "canada.french_conversion": {
+            "source": "language",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "cec.language_thresholds": {
+            "source": "language",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "cec.work_window": {
+            "source": "cec",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "cec.work_exclusions": {
+            "source": "cec",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "cec.employer_and_status": {
+            "source": "cec",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "crs.high_wage_noc_tier_claim": {
+            "source": "high-wage",
+            "effective_from": "2026-11-03",
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          },
+          "unsupported.fst": {
+            "source": "fst",
+            "effective_from": null,
+            "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+          }
+        },
+        "revalidation_evidence": "docs/assessment/source-revalidation-2026-11-12.json"
+      }
+    },
+    "australia": {
+      "sha256": "20cf586a52d67db5c1170e78c782b3ec60cd70956ecdd4731df4dc05b8f1efc8",
+      "manifest": {
+        "version": "au-evidence-2026-11-12-draft-2",
+        "active": false,
+        "assessment_date_coverage": {
+          "from": "2026-11-01",
+          "through": "2026-11-12"
+        },
+        "sources": {
+          "au-law": {
+            "url": "https://www.legislation.gov.au/F1996B03551/2026-11-01/2026-11-01/text/original/epub/OEBPS/document_3/document_3.html",
+            "checked_on": "2026-11-12",
+            "http_status": 200,
+            "retrieved_sha256": "a8583fd306e87608331c6fbadc4891937b4edd77dd4ee7f786b5a669fcec1f94",
+            "effective_from": null,
+            "compilation_date": "2026-11-01",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "au-definitions": {
+            "url": "https://www.legislation.gov.au/F1996B03551/2026-11-01/2026-11-01/text/original/epub/OEBPS/document_1/document_1.html",
+            "checked_on": "2026-11-12",
+            "http_status": 200,
+            "retrieved_sha256": "f45721f6f69d78f0dc6dc488107b61829f98cd9cb96f27248d7c4f434b0a8672",
+            "effective_from": null,
+            "compilation_date": "2026-11-01",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "au-competent": {
+            "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/competent-english",
+            "checked_on": "2026-11-12",
+            "http_status": 200,
+            "retrieved_sha256": "5b5fc51c3713a4235332b580c2c4c8b049740ce8fade02f67aa129159e38b779",
+            "effective_from": null,
+            "compilation_date": null,
+            "review_status": "draft_specialist_review_pending"
+          },
+          "au-proficient": {
+            "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/proficient-english",
+            "checked_on": "2026-11-12",
+            "http_status": 200,
+            "retrieved_sha256": "09cb804326b9bf7f272540332b7ba3b389b30f52649bbe1589c642b2613343d4",
+            "effective_from": null,
+            "compilation_date": null,
+            "review_status": "draft_specialist_review_pending"
+          },
+          "au-superior": {
+            "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/superior-english",
+            "checked_on": "2026-11-12",
+            "http_status": 200,
+            "retrieved_sha256": "e58978d3b9282e9488d32e85d75df9f1a7a955740aabac17ea7c0b5ba5aec63e",
+            "effective_from": null,
+            "compilation_date": null,
+            "review_status": "draft_specialist_review_pending"
+          }
+        },
+        "rules": {
+          "age": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "english_points": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "overseas_work": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Schedule 6D uses periods totalling months. Half-open input intervals are unioned. Residual days across gaps remain unresolved; no 365-day legal conversion is assumed."
+          },
+          "australian_work": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Schedule 6D uses periods totalling months. Half-open input intervals are unioned. Residual days across gaps remain unresolved; no 365-day legal conversion is assumed."
+          },
+          "employment_cap": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "professional_year": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "education": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "specialist_education": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "australian_study": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "community_language": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "regional_study": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "partner": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "190_nomination": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "491_support": {
+            "source": "au-law",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "english_validity": {
+            "source": "au-definitions",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "employment_20_hours": {
+            "source": "au-definitions",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "australian_study_definition": {
+            "source": "au-definitions",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "ielts_competent": {
+            "source": "au-competent",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "passport_claim": {
+            "source": "au-competent",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "unsupported_online_osr_variants": {
+            "source": "au-competent",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "ielts_proficient": {
+            "source": "au-proficient",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          },
+          "ielts_superior": {
+            "source": "au-superior",
+            "effective_from": null,
+            "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+          }
+        },
+        "language_table_period": {
+          "test_date_from": "2025-08-07",
+          "effective_date": "2025-08-07",
+          "coverage": "In-centre IELTS Academic and General Training without OSR only; other accepted exams are unsupported, not invalid."
+        },
+        "limitations": [
+          "legal_effective_dates_of_individual_items_unconfirmed",
+          "source_instruments_require_specialist_review",
+          "health_character_state_criteria_not_covered",
+          "gapped_residual_service_requires_specialist"
+        ],
+        "revalidation_evidence": "docs/assessment/source-revalidation-2026-11-12.json"
+      }
+    }
+  },
+  "implementation_sha256": "723416dc1a39d2e68b94d29315556abfc1c32dd43e02ccfc2929c4437fd90f6a",
+  "python_version": "3.14.8",
+  "answers": {
+    "calculator:shared:birth_date": {
+      "status": "known",
+      "value": "1996-11-12",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:canada:education": {
+      "status": "known",
+      "value": {
+        "level": "bachelor",
+        "canadian": true,
+        "eca_date": null,
+        "immigration_eca": null
+      },
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:first_language": {
+      "status": "known",
+      "value": "english",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:english": {
+      "status": "known",
+      "value": {
+        "test": "celpip_general",
+        "scores": {
+          "speaking": 9,
+          "listening": 9,
+          "reading": 9,
+          "writing": 9
+        },
+        "result_date": "2025-01-01"
+      },
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:french_absent": {
+      "status": "known",
+      "value": true,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:work": {
+      "status": "known",
+      "value": [
+        {
+          "start": "2023-11-12",
+          "end": "2026-11-12",
+          "hours_per_week": 30,
+          "noc": "21231",
+          "teer": 1,
+          "paid": true,
+          "duties_match": true,
+          "in_canada": false,
+          "authorized": true,
+          "canadian_employer": true,
+          "temporary_resident": true,
+          "full_time_student": false,
+          "self_employed": false
+        }
+      ],
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:primary_noc": {
+      "status": "known",
+      "value": "21231",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:spouse_status": {
+      "status": "known",
+      "value": "single",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:spouse_education": {
+      "status": "known",
+      "value": {
+        "level": null,
+        "canadian": null,
+        "eca_date": null,
+        "immigration_eca": null
+      },
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:arranged_employment": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:adaptability": {
+      "status": "known",
+      "value": {
+        "canadian_study": false,
+        "canadian_work": false,
+        "relative_in_canada": false
+      },
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:funds_requirement_met": {
+      "status": "known",
+      "value": true,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:admissible": {
+      "status": "known",
+      "value": true,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:outside_quebec": {
+      "status": "known",
+      "value": true,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:certificate_of_qualification": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:sibling_in_canada": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:canadian_study": {
+      "status": "known",
+      "value": "none",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:nomination": {
+      "status": "known",
+      "value": "none",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:high_wage_work": {
+      "status": "known",
+      "value": "none",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:canada:high_wage_offer": {
+      "status": "known",
+      "value": "none",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false
+    },
+    "calculator:australia:subclass": {
+      "status": "known",
+      "value": "189",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:facts.education": {
+      "status": "known",
+      "value": "bachelor_or_higher",
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:facts.professional_year": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:facts.specialist_education": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:facts.australian_study": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:facts.community_language": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:facts.regional_study_conditions": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:route.invited": {
+      "status": "known",
+      "value": true,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:route.invitation_points": {
+      "status": "known",
+      "value": 65,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:route.suitable_skills_assessment": {
+      "status": "known",
+      "value": true,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:route.listed_occupation": {
+      "status": "known",
+      "value": true,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:route.nomination_in_effect": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:route.family_sponsorship_accepted": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:route.family_stream_listed_occupation": {
+      "status": "known",
+      "value": false,
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:english": {
+      "status": "known",
+      "value": {
+        "test": "ielts_general_training",
+        "scores": {
+          "speaking": 7,
+          "listening": 7,
+          "reading": 7,
+          "writing": 7
+        },
+        "test_date": "2025-11-01",
+        "in_test_centre": true,
+        "one_skill_retake": false,
+        "qualifying_passport": false
+      },
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:work": {
+      "status": "known",
+      "value": [
+        {
+          "start": "2021-11-12",
+          "end": "2026-11-12",
+          "hours_per_week": 20,
+          "in_australia": false,
+          "paid": true,
+          "nominated_or_related": true,
+          "authorized": true
+        }
+      ],
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    },
+    "calculator:australia:partner": {
+      "status": "known",
+      "value": {
+        "status": "single"
+      },
+      "source": "user",
+      "question_version": "calculator-interview-1",
+      "document_verified": false,
+      "route_scope": "189"
+    }
+  },
+  "answers_sha256": "745f98625f956ec87f9938051fbe74a64456d8e1582f34a3b4e6341b277872d4",
+  "ruleset_bundle": {
+    "routes": [
+      {
+        "id": "sandbox-study",
+        "name": "مسیر تحصیلی آزمایشی؛ فاقد اعتبار مهاجرتی",
+        "scores": [
+          {
+            "id": "language_points",
+            "bands": [
+              {
+                "id": "advanced",
+                "points": 10,
+                "condition": {
+                  "op": "eq",
+                  "fact": "language",
+                  "value": "advanced"
+                }
+              }
+            ],
+            "label": "امتیاز آزمایشی زبان"
+          }
+        ],
+        "pass_mark": 10,
+        "requirements": [
+          {
+            "id": "adult",
+            "label": "حداقل سن آزمایشی",
+            "condition": {
+              "op": "gte",
+              "fact": "age",
+              "value": 18
+            }
+          },
+          {
+            "id": "language_or_sponsor",
+            "label": "زبان یا حمایت آزمایشی",
+            "condition": {
+              "any": [
+                {
+                  "op": "eq",
+                  "fact": "language",
+                  "value": "advanced"
+                },
+                {
+                  "all": [
+                    {
+                      "op": "eq",
+                      "fact": "sponsor",
+                      "value": true
+                    },
+                    {
+                      "op": "eq",
+                      "fact": "sponsor_confirmed",
+                      "value": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "sandbox-work",
+        "name": "مسیر کاری آزمایشی؛ فاقد اعتبار مهاجرتی",
+        "requirements": [
+          {
+            "id": "adult",
+            "label": "حداقل سن آزمایشی",
+            "condition": {
+              "op": "gte",
+              "fact": "age",
+              "value": 21
+            }
+          }
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "id": "age",
+        "kind": "number",
+        "text": "سن شما چقدر است؟",
+        "maximum": 120,
+        "minimum": 0
+      },
+      {
+        "id": "language",
+        "kind": "choice",
+        "text": "سطح فرضی زبان شما چیست؟",
+        "choices": [
+          "basic",
+          "advanced"
+        ]
+      },
+      {
+        "id": "sponsor",
+        "kind": "boolean",
+        "text": "آیا حمایت فرضی دارید؟"
+      },
+      {
+        "id": "sponsor_confirmed",
+        "kind": "boolean",
+        "text": "آیا حمایت فرضی تأیید شده است؟",
+        "show_if": {
+          "op": "eq",
+          "fact": "sponsor",
+          "value": true
+        }
+      }
+    ],
+    "synthetic": true,
+    "schema_version": 1
+  },
+  "selected_routes": [
+    "ca-fsw",
+    "ca-cec",
+    "ca-fst",
+    "au-189",
+    "au-190",
+    "au-491"
+  ],
+  "ordering": "user_selected_order",
+  "routes": [
+    {
+      "route_id": "ca-fsw",
+      "country": "canada",
+      "requirements": {
+        "admissible": "met",
+        "outside_quebec": "met",
+        "primary_continuous_year": "met",
+        "first_language_clb7": "met",
+        "education": "met",
+        "selection_67": "met",
+        "funds_or_exemption": "met"
+      },
+      "score": {
+        "system": "crs",
+        "calculator_version": "ircc-2026-11-03-draft-3",
+        "review_status": "draft",
+        "active": false,
+        "assessment_date": "2026-11-12",
+        "specialist_approved": false,
+        "source_manifest": "pathways/calculators/canada_sources.json",
+        "calculator": "crs_ranking",
+        "score": 424,
+        "score_status": "complete_from_supplied_evidence",
+        "breakdown": {
+          "age": 105,
+          "education": 120,
+          "first_language": 124,
+          "second_language": 0,
+          "labour_market_integration": 0,
+          "spouse": 0,
+          "transferability": 75,
+          "additional": 0
+        },
+        "unresolved": [],
+        "transferability_breakdown": {
+          "education": 25,
+          "foreign_work": 50,
+          "certificate": 0
+        },
+        "additional_breakdown": {
+          "nomination": 0,
+          "sibling": 0,
+          "canadian_study": 0,
+          "french": 0
+        },
+        "integration_alternatives": {
+          "canadian_work": 0,
+          "job_offer": 0
+        }
+      },
+      "conditional_points": [],
+      "selection_score": {
+        "system": "fsw_selection",
+        "calculator_version": "ircc-2026-11-03-draft-3",
+        "review_status": "draft",
+        "active": false,
+        "assessment_date": "2026-11-12",
+        "specialist_approved": false,
+        "source_manifest": "pathways/calculators/canada_sources.json",
+        "calculator": "fsw_selection",
+        "maximum": 100,
+        "pass_mark": 67,
+        "score": 68,
+        "score_status": "complete_from_supplied_evidence",
+        "breakdown": {
+          "age": 12,
+          "education": 21,
+          "first_language": 24,
+          "second_language": 0,
+          "experience": 11,
+          "arranged_employment": 0,
+          "adaptability": 0
+        },
+        "unresolved": []
+      },
+      "limitations": [
+        "self_reported_not_document_verified",
+        "draft_legal_content",
+        "fsw_covered_requirements_only"
+      ],
+      "cost": {
+        "status": "unavailable",
+        "reason": "versioned_cost_policy_not_available"
+      },
+      "time": {
+        "status": "unavailable",
+        "reason": "route_time_reference_not_available"
+      },
+      "historical_evidence": {
+        "status": "unavailable",
+        "reason": "validated_historical_dataset_not_available"
+      },
+      "eligibility_status": "met_covered_requirements"
+    },
+    {
+      "route_id": "ca-cec",
+      "country": "canada",
+      "requirements": {
+        "admissible": "met",
+        "outside_quebec": "met",
+        "canadian_year_last_three": "unmet",
+        "language_qualified_canadian_year": "unmet"
+      },
+      "score": {
+        "system": "crs",
+        "calculator_version": "ircc-2026-11-03-draft-3",
+        "review_status": "draft",
+        "active": false,
+        "assessment_date": "2026-11-12",
+        "specialist_approved": false,
+        "source_manifest": "pathways/calculators/canada_sources.json",
+        "calculator": "crs_ranking",
+        "score": 424,
+        "score_status": "complete_from_supplied_evidence",
+        "breakdown": {
+          "age": 105,
+          "education": 120,
+          "first_language": 124,
+          "second_language": 0,
+          "labour_market_integration": 0,
+          "spouse": 0,
+          "transferability": 75,
+          "additional": 0
+        },
+        "unresolved": [],
+        "transferability_breakdown": {
+          "education": 25,
+          "foreign_work": 50,
+          "certificate": 0
+        },
+        "additional_breakdown": {
+          "nomination": 0,
+          "sibling": 0,
+          "canadian_study": 0,
+          "french": 0
+        },
+        "integration_alternatives": {
+          "canadian_work": 0,
+          "job_offer": 0
+        }
+      },
+      "conditional_points": [],
+      "selection_score": null,
+      "limitations": [
+        "self_reported_not_document_verified",
+        "draft_legal_content",
+        "ordinary_cec_only"
+      ],
+      "cost": {
+        "status": "unavailable",
+        "reason": "versioned_cost_policy_not_available"
+      },
+      "time": {
+        "status": "unavailable",
+        "reason": "route_time_reference_not_available"
+      },
+      "historical_evidence": {
+        "status": "unavailable",
+        "reason": "validated_historical_dataset_not_available"
+      },
+      "eligibility_status": "unmet"
+    },
+    {
+      "route_id": "ca-fst",
+      "country": "canada",
+      "requirements": {},
+      "score": null,
+      "conditional_points": [],
+      "selection_score": null,
+      "limitations": [
+        "self_reported_not_document_verified",
+        "draft_legal_content",
+        "fst_not_implemented"
+      ],
+      "cost": {
+        "status": "unavailable",
+        "reason": "versioned_cost_policy_not_available"
+      },
+      "time": {
+        "status": "unavailable",
+        "reason": "route_time_reference_not_available"
+      },
+      "historical_evidence": {
+        "status": "unavailable",
+        "reason": "validated_historical_dataset_not_available"
+      },
+      "eligibility_status": "unsupported"
+    },
+    {
+      "route_id": "au-189",
+      "country": "australia",
+      "requirements": {
+        "age_under_45": "met",
+        "competent_english": "met",
+        "suitable_skills_assessment": "met",
+        "invited": "met",
+        "minimum_points": "met",
+        "listed_occupation": "met",
+        "invitation_points": "met"
+      },
+      "score": {
+        "system": "australia_points",
+        "score": 75,
+        "score_status": "complete_from_supplied_facts",
+        "breakdown": {
+          "age": 30,
+          "english": 10,
+          "education": 15,
+          "employment": 10,
+          "professional_year": 0,
+          "specialist_education": 0,
+          "australian_study": 0,
+          "community_language": 0,
+          "regional_study": 0,
+          "partner": 10,
+          "nomination_or_sponsorship": 0
+        }
+      },
+      "conditional_points": [],
+      "selection_score": null,
+      "limitations": [
+        "self_reported_not_document_verified",
+        "draft_legal_content",
+        "draft_not_legal_approval",
+        "qualified_claims_not_document_verification",
+        "gapped_residual_service_requires_specialist",
+        "other_tests_and_osr_not_supported",
+        "health_character_state_nomination_criteria_not_evaluated"
+      ],
+      "cost": {
+        "status": "unavailable",
+        "reason": "versioned_cost_policy_not_available"
+      },
+      "time": {
+        "status": "unavailable",
+        "reason": "route_time_reference_not_available"
+      },
+      "historical_evidence": {
+        "status": "unavailable",
+        "reason": "validated_historical_dataset_not_available"
+      },
+      "normalization": {
+        "english_status": "complete_from_supplied_evidence",
+        "australian_months": 0,
+        "overseas_months": 60,
+        "partner_category": "single_or_australian",
+        "work_period_convention": "[start,end)",
+        "work_status": "complete_from_supplied_evidence"
+      },
+      "eligibility_status": "met"
+    },
+    {
+      "route_id": "au-190",
+      "country": "australia",
+      "requirements": {},
+      "score": null,
+      "conditional_points": [],
+      "selection_score": null,
+      "limitations": [
+        "self_reported_not_document_verified",
+        "draft_legal_content",
+        "subclass_specific_evidence_required"
+      ],
+      "cost": {
+        "status": "unavailable",
+        "reason": "versioned_cost_policy_not_available"
+      },
+      "time": {
+        "status": "unavailable",
+        "reason": "route_time_reference_not_available"
+      },
+      "historical_evidence": {
+        "status": "unavailable",
+        "reason": "validated_historical_dataset_not_available"
+      },
+      "eligibility_status": "requires_route_evidence"
+    },
+    {
+      "route_id": "au-491",
+      "country": "australia",
+      "requirements": {},
+      "score": null,
+      "conditional_points": [],
+      "selection_score": null,
+      "limitations": [
+        "self_reported_not_document_verified",
+        "draft_legal_content",
+        "subclass_specific_evidence_required"
+      ],
+      "cost": {
+        "status": "unavailable",
+        "reason": "versioned_cost_policy_not_available"
+      },
+      "time": {
+        "status": "unavailable",
+        "reason": "route_time_reference_not_available"
+      },
+      "historical_evidence": {
+        "status": "unavailable",
+        "reason": "validated_historical_dataset_not_available"
+      },
+      "eligibility_status": "requires_route_evidence"
+    }
+  ],
+  "actions": [
+    {
+      "id": "ca-fsw:review",
+      "kind": "independent_evidence_review",
+      "applies_to": [
+        "ca-fsw"
+      ],
+      "depends_on": [],
+      "country": "canada",
+      "status": "todo",
+      "requires_reassessment": false
+    },
+    {
+      "id": "ca-cec:requirement:canadian_year_last_three",
+      "kind": "review_unmet_requirement",
+      "applies_to": [
+        "ca-cec"
+      ],
+      "depends_on": [],
+      "country": "canada",
+      "requirement": "canadian_year_last_three",
+      "status": "todo",
+      "requires_reassessment": false
+    },
+    {
+      "id": "ca-cec:requirement:language_qualified_canadian_year",
+      "kind": "review_unmet_requirement",
+      "applies_to": [
+        "ca-cec"
+      ],
+      "depends_on": [],
+      "country": "canada",
+      "requirement": "language_qualified_canadian_year",
+      "status": "todo",
+      "requires_reassessment": false
+    },
+    {
+      "id": "ca-cec:review",
+      "kind": "independent_evidence_review",
+      "applies_to": [
+        "ca-cec"
+      ],
+      "depends_on": [],
+      "country": "canada",
+      "status": "todo",
+      "requires_reassessment": false
+    },
+    {
+      "id": "ca-fst:coverage",
+      "kind": "unsupported_route_review",
+      "applies_to": [
+        "ca-fst"
+      ],
+      "depends_on": [],
+      "country": "canada",
+      "status": "todo",
+      "requires_reassessment": false
+    },
+    {
+      "id": "au-189:review",
+      "kind": "independent_evidence_review",
+      "applies_to": [
+        "au-189"
+      ],
+      "depends_on": [],
+      "country": "australia",
+      "status": "todo",
+      "requires_reassessment": false
+    },
+    {
+      "id": "au-190:route",
+      "kind": "select_route_evidence",
+      "applies_to": [
+        "au-190"
+      ],
+      "depends_on": [],
+      "country": "australia",
+      "field": "subclass",
+      "status": "todo",
+      "requires_reassessment": false
+    },
+    {
+      "id": "au-491:route",
+      "kind": "select_route_evidence",
+      "applies_to": [
+        "au-491"
+      ],
+      "depends_on": [],
+      "country": "australia",
+      "field": "subclass",
+      "status": "todo",
+      "requires_reassessment": false
+    }
+  ],
+  "evaluations": {
+    "canada": {
+      "mapping": {
+        "adapter_version": "calculator-interview-1",
+        "provenance": {
+          "birth_date": {
+            "status": "known",
+            "value": "1996-11-12",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "education": {
+            "status": "known",
+            "value": {
+              "level": "bachelor",
+              "canadian": true,
+              "eca_date": null,
+              "immigration_eca": null
+            },
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "first_language": {
+            "status": "known",
+            "value": "english",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "english": {
+            "status": "known",
+            "value": {
+              "test": "celpip_general",
+              "scores": {
+                "speaking": 9,
+                "listening": 9,
+                "reading": 9,
+                "writing": 9
+              },
+              "result_date": "2025-01-01"
+            },
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "french": {
+            "status": "unknown",
+            "source": "not_answered"
+          },
+          "english_absent": {
+            "status": "unknown",
+            "source": "not_answered"
+          },
+          "french_absent": {
+            "status": "known",
+            "value": true,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "work": {
+            "status": "known",
+            "value": [
+              {
+                "start": "2023-11-12",
+                "end": "2026-11-12",
+                "hours_per_week": 30,
+                "noc": "21231",
+                "teer": 1,
+                "paid": true,
+                "duties_match": true,
+                "in_canada": false,
+                "authorized": true,
+                "canadian_employer": true,
+                "temporary_resident": true,
+                "full_time_student": false,
+                "self_employed": false
+              }
+            ],
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "primary_noc": {
+            "status": "known",
+            "value": "21231",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "spouse_status": {
+            "status": "known",
+            "value": "single",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "spouse_education": {
+            "status": "known",
+            "value": {
+              "level": null,
+              "canadian": null,
+              "eca_date": null,
+              "immigration_eca": null
+            },
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "spouse_language": {
+            "status": "unknown",
+            "source": "not_answered"
+          },
+          "spouse_language_kind": {
+            "status": "unknown",
+            "source": "not_answered"
+          },
+          "spouse_work": {
+            "status": "unknown",
+            "source": "not_answered"
+          },
+          "arranged_employment": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "adaptability": {
+            "status": "known",
+            "value": {
+              "canadian_study": false,
+              "canadian_work": false,
+              "relative_in_canada": false
+            },
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "funds_requirement_met": {
+            "status": "known",
+            "value": true,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "admissible": {
+            "status": "known",
+            "value": true,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "outside_quebec": {
+            "status": "known",
+            "value": true,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "certificate_of_qualification": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "sibling_in_canada": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "canadian_study": {
+            "status": "known",
+            "value": "none",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "nomination": {
+            "status": "known",
+            "value": "none",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "high_wage_work": {
+            "status": "known",
+            "value": "none",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          },
+          "high_wage_offer": {
+            "status": "known",
+            "value": "none",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false
+          }
+        },
+        "unresolved": [
+          "french",
+          "english_absent",
+          "spouse_language",
+          "spouse_language_kind",
+          "spouse_work"
+        ],
+        "blocked_by": [],
+        "assumptions": []
+      }
+    },
+    "australia": {
+      "mapping": {
+        "adapter_version": "calculator-interview-1",
+        "provenance": {
+          "facts.birth_date": {
+            "status": "known",
+            "value": "1996-11-12",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "facts.education": {
+            "status": "known",
+            "value": "bachelor_or_higher",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "facts.professional_year": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "facts.specialist_education": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "facts.australian_study": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "facts.community_language": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "facts.regional_study_conditions": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "route.invited": {
+            "status": "known",
+            "value": true,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "route.invitation_points": {
+            "status": "known",
+            "value": 65,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "route.suitable_skills_assessment": {
+            "status": "known",
+            "value": true,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "route.listed_occupation": {
+            "status": "known",
+            "value": true,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "route.nomination_in_effect": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "route.family_sponsorship_accepted": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "route.family_stream_listed_occupation": {
+            "status": "known",
+            "value": false,
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "english": {
+            "status": "known",
+            "value": {
+              "test": "ielts_general_training",
+              "scores": {
+                "speaking": 7,
+                "listening": 7,
+                "reading": 7,
+                "writing": 7
+              },
+              "test_date": "2025-11-01",
+              "in_test_centre": true,
+              "one_skill_retake": false,
+              "qualifying_passport": false
+            },
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "work": {
+            "status": "known",
+            "value": [
+              {
+                "start": "2021-11-12",
+                "end": "2026-11-12",
+                "hours_per_week": 20,
+                "in_australia": false,
+                "paid": true,
+                "nominated_or_related": true,
+                "authorized": true
+              }
+            ],
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "partner": {
+            "status": "known",
+            "value": {
+              "status": "single"
+            },
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          },
+          "subclass": {
+            "status": "known",
+            "value": "189",
+            "source": "user",
+            "question_version": "calculator-interview-1",
+            "document_verified": false,
+            "route_scope": "189"
+          }
+        },
+        "unresolved": [],
+        "blocked_by": [],
+        "assumptions": []
+      }
+    }
+  },
+  "decision_sha256": "35921ffb6e3dc25dc7921e2931c6077411b119488e7e9db0569559b225787d34",
+  "writable": true
+}

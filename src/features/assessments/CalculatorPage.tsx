@@ -14,6 +14,7 @@ import { CalculationResult } from './CalculatorResult';
 import { CalculatorReview } from './CalculatorReview';
 import { CalculatorForm } from './CalculatorForm';
 import { ProfileEvidence } from './ProfileEvidence';
+import { RouteComparison } from './RouteComparison';
 import { GuidedInterview } from './GuidedInterview';
 import {
   calculatorOptionsQuery,
@@ -59,6 +60,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const [profileCandidate, setProfileCandidate] = useState<ProfileCandidate | null>(null);
   const [guidanceDecision, setGuidanceDecision] = useState<string | null>(null);
   const [guidanceBusy, setGuidanceBusy] = useState(false);
+  const [comparisonBusy, setComparisonBusy] = useState(false);
   const data = query.data;
   const australianRoute = data?.answers[options.identities.australia.subclass ?? ''];
   const australiaRouteReady =
@@ -76,6 +78,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
       void cache.invalidateQueries({ queryKey: ['calculator-snapshots', id] });
       void cache.invalidateQueries({ queryKey: ['calculator-profile-evidence', id] });
       void cache.invalidateQueries({ queryKey: ['calculator-guidance', id] });
+      void cache.invalidateQueries({ queryKey: ['calculator-comparison', id] });
       setDirty(false);
       setAutoPaused(false);
       setPending(null);
@@ -182,7 +185,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         id={id}
         country={country}
         revision={data.revision}
-        disabled={dirty || saving || record.isPending}
+        disabled={dirty || saving || record.isPending || comparisonBusy}
         canReview={Boolean(options.can_review)}
         australiaRouteReady={australiaRouteReady}
         onRestore={(nextCountry) => {
@@ -238,7 +241,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
       <ProfileEvidence
         id={id}
         country={country}
-        disabled={dirty || saving || record.isPending || guidanceBusy}
+        disabled={dirty || saving || record.isPending || guidanceBusy || comparisonBusy}
         onPrepare={(candidate) => {
           choose(country, candidate.field);
           setProfileCandidate(candidate);
@@ -254,7 +257,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           ref={editorRef}
           tabIndex={-1}
           aria-label={t('calculator.interview')}
-          disabled={saving || guidanceBusy}
+          disabled={saving || guidanceBusy || comparisonBusy}
           className="m-0 flex flex-col gap-4 border-0 p-0"
         >
           <SelectField
@@ -394,6 +397,23 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           {record.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
         </fieldset>
       </SectionCard>
+      <RouteComparison
+        id={id}
+        revision={data.revision}
+        disabled={dirty || saving || record.isPending || guidanceBusy}
+        onBusy={setComparisonBusy}
+        onSelect={(nextCountry, nextField) => {
+          choose(nextCountry, nextField);
+          const existing = data.answers[options.identities[nextCountry][nextField] ?? ''];
+          if (existing?.status === 'known') {
+            setStatus('known');
+            setValue(existing.value);
+            setDirty(true);
+            setAutoPaused(true);
+          }
+          focusEditor();
+        }}
+      />
       {shown && <CalculationResult snapshot={shown} />}
       <SectionCard id={sectionId + '-history'} title={t('calculator.history')} variant="panel">
         {history.data?.results.map((snapshot) => (
