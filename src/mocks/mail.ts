@@ -246,6 +246,16 @@ const serverFailure = (address: string) =>
   );
 
 export const mailHandlers = [
+  http.get(`${API}/gmail-status/`, () => {
+    if (!allowed()) return forbidden();
+    return HttpResponse.json({
+      is_active: true,
+      first_emails_today: 12,
+      bot_mailboxes: 21,
+      login_failed: 6,
+    });
+  }),
+
   http.get(`${API}/servers/`, () => {
     if (!allowed()) return forbidden();
     return HttpResponse.json(
