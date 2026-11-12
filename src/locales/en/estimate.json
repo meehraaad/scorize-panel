@@ -180,7 +180,9 @@
     },
     "others": "Other countries",
     "ring": "Admission chance in {{country}}: {{level}}",
-    "bestTitle": "Your best chance: <em>{{country}}</em>"
+    "bestTitle": "Your best chance: <em>{{country}}</em>",
+    "workTitle": "No admission estimate for a work-only goal",
+    "workText": "This quiz estimates academic admission. Work routes need separate evidence and calculators; this result does not mean you are ineligible for work migration."
   },
   "band": {
     "high": "High",
