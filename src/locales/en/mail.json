@@ -14,6 +14,13 @@
     "rules": "Bot rules",
     "suppressed": "Blocked addresses"
   },
+  "gmail": {
+    "name": "Gmail",
+    "enabled": "Sending enabled",
+    "firstEmailsToday": "First emails today",
+    "botMailboxes": "Bot mailboxes",
+    "loginFailed": "Login failures"
+  },
   "servers": {
     "label": "Mail servers",
     "empty": "No server yet. Add one in the Django admin (MailServer).",

@@ -96,6 +96,19 @@ export interface MailboxFilters {
 
 export const FIRST_MAILBOXES: MailboxFilters = { server: '', search: '', problem: '', page: 1 };
 
+export interface GmailStatus {
+  is_active: boolean;
+  first_emails_today: number;
+  bot_mailboxes: number;
+  login_failed: number;
+}
+
+export const gmailStatusQuery = queryOptions({
+  queryKey: [...MAIL_KEY, 'gmail-status'],
+  queryFn: ({ signal }) => api<GmailStatus | null>(`${MAIL_API}/gmail-status/`, { signal }),
+  refetchInterval: 60_000,
+});
+
 export const serversQuery = queryOptions({
   queryKey: [...MAIL_KEY, 'servers'],
   queryFn: ({ signal }) => api<MailServer[]>(`${MAIL_API}/servers/`, { signal }),
