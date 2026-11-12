@@ -1,3 +1,4 @@
+import { calculatorHandlers, resetCalculatorMocks } from './calculators';
 import { http, HttpResponse } from 'msw';
 import { assessmentHandlers, resetAssessmentMocks } from './assessments';
 import { voiceHandlers, resetVoiceMocks } from './voice';
@@ -166,6 +167,7 @@ const login = (user: MockUser) => {
 const AUTH = '/profile/authentication';
 export const handlers = [
   ...assessmentHandlers,
+  ...calculatorHandlers,
   ...phoneCallHandlers,
   ...sessionSummaryHandlers,
   ...activityHandlers,
@@ -352,6 +354,7 @@ export const handlers = [
 /** Test helper: forget the mock login session and server-side flow. */
 export function resetMockSession() {
   resetAssessmentMocks();
+  resetCalculatorMocks();
   resetPhoneMocks();
   resetSessionSummaries();
   resetActivityMocks();

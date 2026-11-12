@@ -1,0 +1,48 @@
+import { useId } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Notice } from '@/components/ui/Notice';
+import { SectionCard } from '@/components/ui/SectionCard';
+import type { Snapshot } from './calculatorApi';
+
+export function CalculationResult({ snapshot }: { snapshot: Snapshot }) {
+  const { t } = useTranslation('assessments');
+  const choicesText = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
+  const sectionId = useId();
+  const result = snapshot.payload.results;
+  const score = result.crs?.score ?? result.score ?? null;
+  const scenario = result.crs?.nomination_scenario;
+  return (
+    <SectionCard id={sectionId} title={t('calculator.result')} variant="panel">
+      {snapshot.stale_reasons.length > 0 && <Notice tone="warn">{t('calculator.stale')}</Notice>}
+      <p>
+        {t('calculator.currentScore')}: {score ?? t('calculator.partial')}
+      </p>
+      {result.express_entry && (
+        <p>
+          {t('calculator.entryStatus')}:{' '}
+          {choicesText[result.express_entry.status] ?? t('calculator.unknown')}
+        </p>
+      )}
+      {result.fsw && (
+        <p>
+          {t('calculator.fsw')}: {result.fsw.score ?? t('calculator.partial')}
+        </p>
+      )}
+      {scenario && (
+        <Notice tone="warn">
+          <p>{t('calculator.nominationCondition')}</p>
+          <p>
+            {t('calculator.hypotheticalScore')}: {scenario.score ?? t('calculator.partial')}
+          </p>
+          <p>
+            {t('calculator.delta')}: {scenario.delta ?? t('calculator.partial')}
+          </p>
+        </Notice>
+      )}
+      <p className="text-sm text-text-2">{t('calculator.selfReported')}</p>
+      <p className="text-sm text-text-2">
+        {t('calculator.recordRevision', { revision: snapshot.payload.context.session_revision })}
+      </p>
+    </SectionCard>
+  );
+}

@@ -5,6 +5,7 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router';
+import { calculatorOptionsQuery } from '@/features/assessments/calculatorApi';
 import { draftsQuery, healthQuery, optionsQuery } from '@/features/assessments/api';
 import { ApiError, api } from '@/lib/api/client';
 import type { SessionUser } from '@/lib/auth/session';
@@ -208,6 +209,14 @@ const pageRoutes: RouteObject[] = [
               }),
             },
           ],
+        },
+        {
+          path: 'dev/assessment-calculators',
+          ...lazyPage(() => import('@/features/assessments/CalculatorPage'), ['assessments'], {
+            data: () => [calculatorOptionsQuery],
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
         },
         {
           path: 'dev/components',

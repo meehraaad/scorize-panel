@@ -1,0 +1,596 @@
+{
+  "canada": {
+    "birth_date": {
+      "type": "date"
+    },
+    "education": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "choice",
+          "choices": [
+            "none",
+            "secondary",
+            "one_year",
+            "two_year",
+            "bachelor",
+            "two_or_more",
+            "masters",
+            "doctorate"
+          ]
+        },
+        "canadian": {
+          "type": "boolean"
+        },
+        "eca_date": {
+          "type": "date"
+        },
+        "immigration_eca": {
+          "type": "boolean"
+        }
+      },
+      "required": []
+    },
+    "first_language": {
+      "type": "choice",
+      "choices": [
+        "english",
+        "french"
+      ]
+    },
+    "english": {
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "choice",
+          "choices": [
+            "celpip_general",
+            "ielts_general_training",
+            "pte_core",
+            "tcf_canada",
+            "tef_canada",
+            "ielts_academic"
+          ]
+        },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "speaking": {
+              "type": "number"
+            },
+            "listening": {
+              "type": "number"
+            },
+            "reading": {
+              "type": "number"
+            },
+            "writing": {
+              "type": "number"
+            }
+          }
+        },
+        "result_date": {
+          "type": "date"
+        }
+      },
+      "required": []
+    },
+    "french": {
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "choice",
+          "choices": [
+            "celpip_general",
+            "ielts_general_training",
+            "pte_core",
+            "tcf_canada",
+            "tef_canada",
+            "ielts_academic"
+          ]
+        },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "speaking": {
+              "type": "number"
+            },
+            "listening": {
+              "type": "number"
+            },
+            "reading": {
+              "type": "number"
+            },
+            "writing": {
+              "type": "number"
+            }
+          }
+        },
+        "result_date": {
+          "type": "date"
+        }
+      },
+      "required": []
+    },
+    "english_absent": {
+      "type": "boolean"
+    },
+    "french_absent": {
+      "type": "boolean"
+    },
+    "work": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "date"
+          },
+          "end": {
+            "type": "date"
+          },
+          "hours_per_week": {
+            "type": "number"
+          },
+          "noc": {
+            "type": "string"
+          },
+          "teer": {
+            "type": "integer"
+          },
+          "paid": {
+            "type": "boolean"
+          },
+          "duties_match": {
+            "type": "boolean"
+          },
+          "in_canada": {
+            "type": "boolean"
+          },
+          "authorized": {
+            "type": "boolean"
+          },
+          "canadian_employer": {
+            "type": "boolean"
+          },
+          "temporary_resident": {
+            "type": "boolean"
+          },
+          "full_time_student": {
+            "type": "boolean"
+          },
+          "self_employed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "hours_per_week",
+          "noc",
+          "teer"
+        ]
+      }
+    },
+    "primary_noc": {
+      "type": "string"
+    },
+    "spouse_status": {
+      "type": "choice",
+      "choices": [
+        "single",
+        "accompanying",
+        "non_accompanying",
+        "citizen_or_pr"
+      ]
+    },
+    "spouse_education": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "choice",
+          "choices": [
+            "none",
+            "secondary",
+            "one_year",
+            "two_year",
+            "bachelor",
+            "two_or_more",
+            "masters",
+            "doctorate"
+          ]
+        },
+        "canadian": {
+          "type": "boolean"
+        },
+        "eca_date": {
+          "type": "date"
+        },
+        "immigration_eca": {
+          "type": "boolean"
+        }
+      },
+      "required": []
+    },
+    "spouse_language": {
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "choice",
+          "choices": [
+            "celpip_general",
+            "ielts_general_training",
+            "pte_core",
+            "tcf_canada",
+            "tef_canada",
+            "ielts_academic"
+          ]
+        },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "speaking": {
+              "type": "number"
+            },
+            "listening": {
+              "type": "number"
+            },
+            "reading": {
+              "type": "number"
+            },
+            "writing": {
+              "type": "number"
+            }
+          }
+        },
+        "result_date": {
+          "type": "date"
+        }
+      },
+      "required": []
+    },
+    "spouse_language_kind": {
+      "type": "choice",
+      "choices": [
+        "english",
+        "french"
+      ]
+    },
+    "spouse_work": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "date"
+          },
+          "end": {
+            "type": "date"
+          },
+          "hours_per_week": {
+            "type": "number"
+          },
+          "noc": {
+            "type": "string"
+          },
+          "teer": {
+            "type": "integer"
+          },
+          "paid": {
+            "type": "boolean"
+          },
+          "duties_match": {
+            "type": "boolean"
+          },
+          "in_canada": {
+            "type": "boolean"
+          },
+          "authorized": {
+            "type": "boolean"
+          },
+          "canadian_employer": {
+            "type": "boolean"
+          },
+          "temporary_resident": {
+            "type": "boolean"
+          },
+          "full_time_student": {
+            "type": "boolean"
+          },
+          "self_employed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "hours_per_week",
+          "noc",
+          "teer"
+        ]
+      }
+    },
+    "arranged_employment": {
+      "type": "boolean"
+    },
+    "adaptability": {
+      "type": "object",
+      "properties": {
+        "canadian_study": {
+          "type": "boolean"
+        },
+        "partner_canadian_study": {
+          "type": "boolean"
+        },
+        "canadian_work": {
+          "type": "boolean"
+        },
+        "partner_canadian_work": {
+          "type": "boolean"
+        },
+        "relative_in_canada": {
+          "type": "boolean"
+        }
+      }
+    },
+    "funds_requirement_met": {
+      "type": "boolean"
+    },
+    "admissible": {
+      "type": "boolean"
+    },
+    "outside_quebec": {
+      "type": "boolean"
+    },
+    "certificate_of_qualification": {
+      "type": "boolean"
+    },
+    "sibling_in_canada": {
+      "type": "boolean"
+    },
+    "canadian_study": {
+      "type": "choice",
+      "choices": [
+        "none",
+        "one_or_two_years",
+        "three_plus"
+      ]
+    },
+    "nomination": {
+      "type": "choice",
+      "choices": [
+        "none",
+        "confirmed",
+        "hypothetical"
+      ]
+    },
+    "high_wage_work": {
+      "type": "choice",
+      "choices": [
+        "none",
+        "tier_1_3",
+        "tier_1_5",
+        "tier_2"
+      ]
+    },
+    "high_wage_offer": {
+      "type": "choice",
+      "choices": [
+        "none",
+        "tier_1_3",
+        "tier_1_5",
+        "tier_2"
+      ]
+    }
+  },
+  "australia": {
+    "facts.birth_date": {
+      "type": "date"
+    },
+    "facts.education": {
+      "type": "choice",
+      "choices": [
+        "none",
+        "diploma_trade_or_recognised_award",
+        "bachelor_or_higher",
+        "doctorate"
+      ]
+    },
+    "facts.professional_year": {
+      "type": "boolean"
+    },
+    "facts.specialist_education": {
+      "type": "boolean"
+    },
+    "facts.australian_study": {
+      "type": "boolean"
+    },
+    "facts.community_language": {
+      "type": "boolean"
+    },
+    "facts.regional_study_conditions": {
+      "type": "boolean"
+    },
+    "route.invited": {
+      "type": "boolean"
+    },
+    "route.invitation_points": {
+      "type": "integer"
+    },
+    "route.suitable_skills_assessment": {
+      "type": "boolean"
+    },
+    "route.listed_occupation": {
+      "type": "boolean"
+    },
+    "route.nomination_in_effect": {
+      "type": "boolean"
+    },
+    "route.family_sponsorship_accepted": {
+      "type": "boolean"
+    },
+    "route.family_stream_listed_occupation": {
+      "type": "boolean"
+    },
+    "english": {
+      "type": "object",
+      "properties": {
+        "test": {
+          "type": "choice",
+          "choices": [
+            "celpip_general",
+            "ielts_general_training",
+            "pte_core",
+            "tcf_canada",
+            "tef_canada",
+            "ielts_academic"
+          ]
+        },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "speaking": {
+              "type": "number"
+            },
+            "listening": {
+              "type": "number"
+            },
+            "reading": {
+              "type": "number"
+            },
+            "writing": {
+              "type": "number"
+            }
+          }
+        },
+        "test_date": {
+          "type": "date"
+        },
+        "in_test_centre": {
+          "type": "boolean"
+        },
+        "one_skill_retake": {
+          "type": "boolean"
+        },
+        "qualifying_passport": {
+          "type": "boolean"
+        }
+      },
+      "required": []
+    },
+    "work": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "date"
+          },
+          "end": {
+            "type": "date"
+          },
+          "hours_per_week": {
+            "type": "number"
+          },
+          "in_australia": {
+            "type": "boolean"
+          },
+          "paid": {
+            "type": "boolean"
+          },
+          "nominated_or_related": {
+            "type": "boolean"
+          },
+          "authorized": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "hours_per_week"
+        ]
+      }
+    },
+    "partner": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "choice",
+          "choices": [
+            "single",
+            "australian_citizen_or_pr",
+            "other"
+          ]
+        },
+        "same_subclass_applicant": {
+          "type": "boolean"
+        },
+        "birth_date": {
+          "type": "date"
+        },
+        "listed_occupation": {
+          "type": "boolean"
+        },
+        "suitable_non_485_assessment": {
+          "type": "boolean"
+        },
+        "english": {
+          "type": "object",
+          "properties": {
+            "test": {
+              "type": "choice",
+              "choices": [
+                "celpip_general",
+                "ielts_general_training",
+                "pte_core",
+                "tcf_canada",
+                "tef_canada",
+                "ielts_academic"
+              ]
+            },
+            "scores": {
+              "type": "object",
+              "properties": {
+                "speaking": {
+                  "type": "number"
+                },
+                "listening": {
+                  "type": "number"
+                },
+                "reading": {
+                  "type": "number"
+                },
+                "writing": {
+                  "type": "number"
+                }
+              }
+            },
+            "test_date": {
+              "type": "date"
+            },
+            "in_test_centre": {
+              "type": "boolean"
+            },
+            "one_skill_retake": {
+              "type": "boolean"
+            },
+            "qualifying_passport": {
+              "type": "boolean"
+            }
+          },
+          "required": []
+        }
+      },
+      "required": []
+    },
+    "subclass": {
+      "type": "choice",
+      "choices": [
+        "189",
+        "190",
+        "491"
+      ]
+    }
+  }
+}
