@@ -179,6 +179,8 @@ it('keeps Australian points separate from an unmet entry condition', async () =>
   await user.selectOptions(screen.getByLabelText('Country route'), 'australia');
   await user.click(screen.getByRole('button', { name: 'Record draft result' }));
   const results = await screen.findAllByRole('region', { name: 'Recorded result' });
-  expect(within(results[0]!).getByText('Current score: 75')).toBeInTheDocument();
-  expect(within(results[0]!).getByText('Covered requirements: Not met')).toBeInTheDocument();
+  const first = results[0];
+  if (!first) throw new Error('Recorded result missing');
+  expect(within(first).getByText('Current score: 75')).toBeInTheDocument();
+  expect(within(first).getByText('Covered requirements: Not met')).toBeInTheDocument();
 });

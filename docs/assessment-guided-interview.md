@@ -1,7 +1,7 @@
 # Guided calculator interview
 
-Depends on backend `codex/assessment-guided-interview` (based on shamrad/lang#318)
-and panel #103. The existing development-only route and production flags stay as
+Delivery [panel #104](https://github.com/meehraaad/scorize-panel/pull/104) depends
+on [backend #319](https://github.com/shamrad/lang/pull/319) (based on #318) and panel #103. The existing development-only route and production flags stay as
 before. No merge, deployment or legal release is included.
 
 Applicants explicitly start/resume guidance for the country chosen in the form.
@@ -33,3 +33,10 @@ browser results are recorded in the PR.
 This remains a local flow over draft legal content. Full public intake, multi-path
 preferences/comparison/action plans, financial policy signals, no-code selection
 policy editing and legal/operational pilot acceptance remain unfinished.
+
+Actual Chromium against Django/PostgreSQL passed the Canadian explicit-start,
+unknown, persisted-pause/resume and partial-result flow. Australia also passed
+route setup, known-condition stop, explicit scenario with the failed age check
+unchanged, separate points/requirements, snapshot replay and readable history
+when an old pin is unavailable. Mobile width 390 and Persian RTL had no overflow
+or page errors.
