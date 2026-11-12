@@ -354,7 +354,8 @@
       "two_year": "Two year",
       "undetermined": "Undetermined",
       "unknown": "Unknown",
-      "user": "User"
+      "user": "User",
+      "profile_confirmed_by_user": "Account information confirmed by you"
     },
     "sessionLabel": "Session {{index}}, answer revision {{revision}}",
     "bundleLabel": "Sandbox package version {{version}}",
@@ -368,6 +369,54 @@
     "reviewQueue": "Show or hide review queue",
     "unverified": "This is self-reported evidence. The reviewer must independently check its source and documents.",
     "offline": "You are offline. Your answer is preserved and the same request will resume when connected.",
-    "noEmployment": "I have no employment history to declare"
+    "noEmployment": "I have no employment history to declare",
+    "profile": {
+      "title": "Information already in your account",
+      "explanation": "These records are suggestions. Review and confirm them before calculation. Your profile is not changed. Upload approval does not verify migration facts.",
+      "reload": "Refresh account information",
+      "empty": "No supported structured records found.",
+      "item": "Record {{index}} · {{source}}",
+      "conflict": "This differs from another record or your saved answer. Choose the correct information explicitly.",
+      "incomplete": "These work dates need confirmation, including the end-date boundary. Add hours, country and qualifying facts before saving.",
+      "prepare": "Review and use these details",
+      "confirmation": "Check every value below, complete missing facts and confirm. This replaces the current answer group; it does not verify the document.",
+      "confirmSave": "Confirm details and save",
+      "sources": {
+        "profile": "Personal profile",
+        "applicant": "Application profile",
+        "cv": "Structured CV",
+        "cv_work": "CV employment",
+        "profile_education": "Education history",
+        "cv_education": "CV education",
+        "profile_language": "Recorded test score",
+        "cv_language": "CV test score",
+        "document": "Uploaded document"
+      },
+      "reasons": {
+        "education_equivalence_required": "An earned qualification is recorded. Country, recognition and Canadian equivalence must be supplied separately; the title is not awarded points automatically.",
+        "four_skills_and_test_variant_required": "An overall score cannot replace four skill scores. Enter the exact test variant, date and each skill in the language form.",
+        "structured_facts_required": "The file has no structured calculator facts. Review its contents and enter the relevant facts manually.",
+        "invalid_stored_numeric_evidence": "The stored score is invalid. Correct and confirm it before use."
+      },
+      "details": {
+        "birth_date": "Birth date",
+        "start_date": "Start date",
+        "end_date": "End date",
+        "position": "Position",
+        "city": "City",
+        "degree": "Qualification",
+        "year_of_graduation": "Graduation year",
+        "level": "Qualification",
+        "exam__name": "Test name",
+        "score": "Overall score",
+        "date_of_receipt": "Result date",
+        "is_verified": "Score marked verified in profile",
+        "title": "Test title",
+        "document_type__name": "Document type",
+        "review_state": "Upload review status"
+      },
+      "discard": "Discard this draft",
+      "reloadConflict": "Account information or the session changed. Your draft is kept. Discard it and refresh account information to choose again."
+    }
   }
 }
