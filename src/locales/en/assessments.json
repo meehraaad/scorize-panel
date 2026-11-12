@@ -355,7 +355,9 @@
       "undetermined": "Undetermined",
       "unknown": "Unknown",
       "user": "User",
-      "profile_confirmed_by_user": "Account information confirmed by you"
+      "profile_confirmed_by_user": "Account information confirmed by you",
+      "met": "Met",
+      "unmet": "Not met"
     },
     "sessionLabel": "Session {{index}}, answer revision {{revision}}",
     "bundleLabel": "Sandbox package version {{version}}",
@@ -417,6 +419,61 @@
       },
       "discard": "Discard this draft",
       "reloadConflict": "Account information or the session changed. Your draft is kept. Discard it and refresh account information to choose again."
-    }
+    },
+    "guided": {
+      "title": "Guided interview",
+      "intro": "Choose the country in the form, then start. Questions follow missing evidence in the draft assessment; unknown answers are kept without repeated prompts. You can also edit groups manually.",
+      "scope": "Current guided country: {{country}}",
+      "mode": "Purpose of the next interview round",
+      "assessment": "Initial eligibility and score assessment",
+      "scenario": "Continue exploring a scenario despite unmet conditions",
+      "start": "Start or resume guided questions",
+      "stop": "Pause questions for the current result",
+      "answer": "Answer the suggested question",
+      "incomplete": "This answer is still missing facts that affect the result. Complete them or explicitly choose unknown.",
+      "sourceChanged": "The source for this answer changed. Review it before continuing.",
+      "missing": "Still needed: {{fields}}",
+      "deferred": "{{count}} answer(s) remain unresolved. They will not be asked again automatically.",
+      "policy": "Inspect the question-selection policy",
+      "policyRow": "{{field}} · priority {{tier}}, answer cost {{cost}}, unresolved effects {{effects}}, shared uses {{shared}}",
+      "updated": "Interview preference saved",
+      "failed": "The interview context or pinned version is unavailable. Answers are kept. Refresh; if the old version remains unavailable, start a new session and keep this history.",
+      "retry": "Retry the same interview request",
+      "reload": "Refresh interview guidance",
+      "tiers": {
+        "0": "Source information must be checked again.",
+        "1": "This choice determines which assessment can be used.",
+        "2": "This answer affects a covered entry requirement.",
+        "3": "This answer may resolve a points threshold.",
+        "4": "This answer affects an unresolved score component."
+      },
+      "statuses": {
+        "not_started": "Guided questions have not started.",
+        "question": "A relevant question is available.",
+        "user_requested_result": "Questions are paused at your request. You can record the current draft result below.",
+        "covered_routes_blocked": "A known condition blocks the covered route(s). This does not reject unsupported routes. Choose scenario mode to explore remaining facts.",
+        "incomplete_needs_review": "No further question can currently resolve the gaps. Some facts are unknown, blocked or need specialist review; the result remains partial.",
+        "initial_result_available": "The supplied facts resolve this initial draft assessment. You can record the result below. This is not legal approval.",
+        "session_complete": "This session is complete. Its recorded history remains available."
+      },
+      "skip": "I do not know; defer this question",
+      "definitionChanged": "The definition of this group changed. Review your earlier answer using the new definition.",
+      "ranking": "Order: requirement priority, number of unresolved effects, shared uses, answer cost, then fixed field order. Costs are relative effort units, not points or time estimates.",
+      "defaultCost": "Default answer cost: {{cost}}",
+      "cost": "{{field}} · answer cost {{cost}}",
+      "blocked": "{{field}} · waiting for {{dependency}}",
+      "excluded": "{{field}} · excluded: {{reason}}",
+      "exclusionReasons": {
+        "no_unresolved_effect": "No currently unresolved effect",
+        "covered_routes_blocked": "Known condition blocks covered routes",
+        "route_not_selected": "Route has not been selected",
+        "alternative_stream_met": "An alternative support stream already meets this check",
+        "language_report_supplied": "A language report is already supplied",
+        "language_absent": "The applicant explicitly has no report"
+      },
+      "routeRequired": "Choose an Australian subclass before calculation or recording. Your answers remain saved; no route is assumed.",
+      "routeRequiredPaused": "Questions are paused. Choose an Australian subclass before calculation or recording; your answers remain saved."
+    },
+    "coveredStatus": "Covered requirements"
   }
 }

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
@@ -14,6 +14,7 @@ import { CalculationResult } from './CalculatorResult';
 import { CalculatorReview } from './CalculatorReview';
 import { CalculatorForm } from './CalculatorForm';
 import { ProfileEvidence } from './ProfileEvidence';
+import { GuidedInterview } from './GuidedInterview';
 import {
   calculatorOptionsQuery,
   interviewQuery,
@@ -35,6 +36,13 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const labels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
   const choicesText = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
   const sectionId = useId();
+  const editorRef = useRef<HTMLFieldSetElement>(null);
+  const hasNavigated = useRef(false);
+  const focusEditor = () =>
+    requestAnimationFrame(() => {
+      editorRef.current?.scrollIntoView({ block: 'start' });
+      editorRef.current?.focus({ preventScroll: true });
+    });
   const cache = useQueryClient();
   const query = useQuery(interviewQuery(id));
   const [historyPage, setHistoryPage] = useState(1);
@@ -49,7 +57,15 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const [snapshotRequest, setSnapshotRequest] = useState<unknown>(null);
   const [shown, setShown] = useState<Snapshot | null>(null);
   const [profileCandidate, setProfileCandidate] = useState<ProfileCandidate | null>(null);
+  const [guidanceDecision, setGuidanceDecision] = useState<string | null>(null);
+  const [guidanceBusy, setGuidanceBusy] = useState(false);
   const data = query.data;
+  const australianRoute = data?.answers[options.identities.australia.subclass ?? ''];
+  const australiaRouteReady =
+    australianRoute?.status === 'known' &&
+    australianRoute.question_version === data?.adapter_version &&
+    typeof australianRoute.value === 'string' &&
+    ['189', '190', '491'].includes(australianRoute.value);
   const save = useMutation({
     mutationFn: (body: unknown) => saveCalculatorAnswer(id, body),
     onSuccess: (next) => {
@@ -59,12 +75,14 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
       }));
       void cache.invalidateQueries({ queryKey: ['calculator-snapshots', id] });
       void cache.invalidateQueries({ queryKey: ['calculator-profile-evidence', id] });
+      void cache.invalidateQueries({ queryKey: ['calculator-guidance', id] });
       setDirty(false);
       setAutoPaused(false);
       setPending(null);
       setShown(null);
       setSnapshotRequest(null);
       setProfileCandidate(null);
+      setGuidanceDecision(null);
       toast.success(t('calculator.saved'));
     },
     onError: () => setAutoPaused(true),
@@ -112,6 +130,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         request_key: crypto.randomUUID(),
         status: answerStatus,
         value: answerStatus === 'known' ? answerValue : null,
+        ...(guidanceDecision ? { guidance_sha256: guidanceDecision } : {}),
       };
       setPending(body);
       saveAnswer(body);
@@ -130,6 +149,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
     answerStatus,
     answerValue,
     options.schemas,
+    guidanceDecision,
   ]);
   if (!data)
     return (
@@ -140,6 +160,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
     );
   const fields = options.schemas[country];
   const choose = (nextCountry: Country, nextField: string) => {
+    hasNavigated.current = true;
     const answer = data.answers[options.identities[nextCountry][nextField] ?? ''];
     setCountry(nextCountry);
     setField(nextField);
@@ -150,16 +171,74 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
     setShown(null);
     setSnapshotRequest(null);
     setProfileCandidate(null);
+    setGuidanceDecision(null);
     setAutoPaused(false);
     save.reset();
   };
   const conflict = saveError instanceof ApiError && saveError.status === 409;
   return (
     <>
+      <GuidedInterview
+        id={id}
+        country={country}
+        revision={data.revision}
+        disabled={dirty || saving || record.isPending}
+        canReview={Boolean(options.can_review)}
+        australiaRouteReady={australiaRouteReady}
+        onRestore={(nextCountry) => {
+          if (
+            !hasNavigated.current &&
+            !dirty &&
+            !saving &&
+            !record.isPending &&
+            !pending &&
+            !snapshotRequest &&
+            !shown
+          )
+            choose(nextCountry, Object.keys(options.schemas[nextCountry])[0] ?? '');
+        }}
+        onBusy={setGuidanceBusy}
+        onChanged={() => {
+          setShown(null);
+          setSnapshotRequest(null);
+          setGuidanceDecision(null);
+        }}
+        onSelect={(nextCountry, question) => {
+          choose(nextCountry, question.field);
+          setGuidanceDecision(question.decision_sha256);
+          const saved = data.answers[options.identities[nextCountry][question.field] ?? ''];
+          if (question.reason === 'source_changed' && saved?.status === 'known') {
+            setStatus('known');
+            setValue(saved.value);
+            setDirty(true);
+            setAutoPaused(true);
+          }
+          focusEditor();
+        }}
+        onSkip={(nextCountry, question) => {
+          choose(nextCountry, question.field);
+          setStatus('unknown');
+          setValue(undefined);
+          setDirty(true);
+          setAutoPaused(true);
+          const body = {
+            country: nextCountry,
+            field: question.field,
+            adapter_version: data.adapter_version,
+            revision: data.revision,
+            request_key: crypto.randomUUID(),
+            status: 'unknown',
+            value: null,
+            guidance_sha256: question.decision_sha256,
+          };
+          setPending(body);
+          saveAnswer(body);
+        }}
+      />
       <ProfileEvidence
         id={id}
         country={country}
-        disabled={dirty || saving || record.isPending}
+        disabled={dirty || saving || record.isPending || guidanceBusy}
         onPrepare={(candidate) => {
           choose(country, candidate.field);
           setProfileCandidate(candidate);
@@ -167,10 +246,17 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           setValue(candidate.value);
           setDirty(true);
           setAutoPaused(true);
+          focusEditor();
         }}
       />
       <SectionCard id={sectionId} title={t('calculator.interview')} variant="panel">
-        <fieldset disabled={saving} className="m-0 flex flex-col gap-4 border-0 p-0">
+        <fieldset
+          ref={editorRef}
+          tabIndex={-1}
+          aria-label={t('calculator.interview')}
+          disabled={saving || guidanceBusy}
+          className="m-0 flex flex-col gap-4 border-0 p-0"
+        >
           <SelectField
             label={t('calculator.country')}
             value={country}
@@ -262,6 +348,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
                 request_key: crypto.randomUUID(),
                 status: answerStatus,
                 value: answerStatus === 'known' ? (answerValue ?? null) : null,
+                ...(guidanceDecision ? { guidance_sha256: guidanceDecision } : {}),
                 ...(profileCandidate && answerStatus === 'known'
                   ? {
                       profile_candidate: {
@@ -291,11 +378,19 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           )}
           <Button
             variant="outline"
-            disabled={dirty || saving || record.isPending}
+            disabled={
+              dirty ||
+              saving ||
+              record.isPending ||
+              (country === 'australia' && !australiaRouteReady)
+            }
             onClick={() => record.mutate()}
           >
             {t('calculator.record')}
           </Button>
+          {country === 'australia' && !australiaRouteReady && (
+            <Notice tone="warn">{t('calculator.guided.routeRequired')}</Notice>
+          )}
           {record.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
         </fieldset>
       </SectionCard>

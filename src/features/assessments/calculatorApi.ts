@@ -16,6 +16,7 @@ export interface Answer {
   source: string;
   document_verified: boolean;
   recorded_at?: string;
+  question_version?: string;
   profile_origin?: ProfileCandidate;
 }
 export interface ProfileCandidate {
@@ -48,6 +49,32 @@ export interface Interview {
   ruleset_sha256: string;
   sources: Record<Country, { sha256: string }>;
 }
+export interface GuidanceQuestion {
+  field: string;
+  reason: string;
+  tier: number;
+  effects: string[];
+  missing_paths: string[];
+  answer_cost: number;
+  shared_identity_count: number;
+  decision_sha256: string;
+}
+export interface Guidance {
+  revision: number;
+  status: string;
+  country: Country | null;
+  mode?: 'assessment' | 'scenario';
+  policy: {
+    version: string;
+    sha256: string;
+    policy?: { costs?: Record<string, number>; default_cost?: number };
+  };
+  next_question: GuidanceQuestion | null;
+  deferred?: string[];
+  candidates?: GuidanceQuestion[];
+  blocked?: { field: string; dependency: string }[];
+  excluded?: { field: string; reason: string }[];
+}
 export interface Ranking {
   score: number | null;
   score_status: string;
@@ -69,6 +96,8 @@ export interface Snapshot {
       crs?: Ranking;
       fsw?: { score: number | null };
       express_entry?: { status: string };
+      covered_requirements_status?: string;
+      route_id?: string;
       score?: number | null;
     };
     mapping: { unresolved: string[]; provenance?: Record<string, Answer> };
@@ -81,6 +110,16 @@ export const calculatorOptionsQuery = queryOptions({
   queryFn: () => api<Options>('/applicant/v1/assessments/calculators/options/'),
 });
 const prefix = (id: string) => `/applicant/v1/assessments/${id}/calculators/`;
+export const guidanceQuery = (id: string) =>
+  queryOptions({
+    queryKey: ['calculator-guidance', id],
+    queryFn: () => api<Guidance>(prefix(id) + 'guidance/'),
+  });
+export const configureGuidance = (id: string, body: unknown) =>
+  api<Pick<Interview, 'revision' | 'answers'> & { guidance: Guidance }>(prefix(id) + 'guidance/', {
+    method: 'POST',
+    body,
+  });
 export const profileEvidenceQuery = (id: string, country: Country) =>
   queryOptions({
     queryKey: ['calculator-profile-evidence', id, country],
