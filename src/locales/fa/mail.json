@@ -19,7 +19,44 @@
     "enabled": "ارسال فعال",
     "firstEmailsToday": "ایمیل‌های اولیه امروز",
     "botMailboxes": "صندوق‌های ربات",
-    "loginFailed": "ورود ناموفق"
+    "loginFailed": "ورود ناموفق",
+    "queued": "ایمیل‌های در صف",
+    "openMetric": "{{label}}، {{count}}. نمایش جزئیات",
+    "details": "جزئیات ارسال جیمیل",
+    "filter": {
+      "all": "همهٔ حساب‌ها",
+      "login_failed": "ورودهای ناموفق",
+      "queued": "حساب‌های دارای صف"
+    },
+    "noAccounts": "حسابی در این بخش نیست.",
+    "reason": {
+      "login_failed": "خطای ورود",
+      "provider_inactive": "ارسال جیمیل غیرفعال",
+      "connection_unavailable": "اتصال تنظیم نشده",
+      "paused_bounces": "توقف به دلیل برگشت ایمیل",
+      "paused_staff": "متوقف‌شده توسط تیم",
+      "missing_resume": "رزومه موجود نیست",
+      "missing_templates": "متن ایمیل کافی نیست",
+      "source_restricted": "منبع گیرنده در تنظیمات مجاز نیست"
+    },
+    "loginReason": {
+      "credentials_rejected": "اطلاعات ورود رد شد",
+      "smtp_rejected": "ورود به سرور ارسال رد شد"
+    },
+    "lastLoginError": "آخرین خطای ورود ثبت‌شده برای پرونده: {{reason}} · {{when}}",
+    "noLoginLog": "برای این پرونده جزئیات خطای ورود ثبت نشده است.",
+    "templateCount": "{{count}} متن ایمیل موجود است؛ حداقل {{required}} متن لازم است.",
+    "accountActivity": "{{sent}} ایمیل اولیه امروز · {{queued}} در صف",
+    "eligibleSource": "منبع {{count}} گیرنده از {{queued}} گیرنده مجاز است.",
+    "nextRound": "زمان برنامه‌ریزی‌شدهٔ دور بعد: {{when}}",
+    "openQueue": "مشاهدهٔ گیرنده‌های صف",
+    "backToAccounts": "بازگشت به حساب‌ها",
+    "queueCount": "{{count}} گیرنده در صف ایمیل اولیه",
+    "emptyQueue": "صف این حساب خالی است.",
+    "source": {
+      "csv": "فایل CSV",
+      "database": "پایگاه داده"
+    }
   },
   "servers": {
     "label": "سرورهای ایمیل",

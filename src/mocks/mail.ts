@@ -8,6 +8,7 @@ import type {
   NewMailbox,
   SuppressedAddress,
 } from '@/features/mail/api';
+import type { GmailAccount } from '@/features/mail/gmailApi';
 import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
@@ -245,6 +246,35 @@ const serverFailure = (address: string) =>
     { status: 502 },
   );
 
+const gmailAccounts = (): GmailAccount[] => [
+  {
+    id: 31,
+    address: 'sara.test@gmail.com',
+    applicant: { id: 1227, name: 'سارا احمدی', file_number: 1227 },
+    queued: 1,
+    source_eligible: 1,
+    first_emails_today: 0,
+    next_round_at: null,
+    template_count: 2,
+    required_templates: 2,
+    reasons: ['login_failed'],
+    last_login_error: { at: ago(1), reason: 'credentials_rejected' },
+  },
+  {
+    id: 32,
+    address: 'negar.test@gmail.com',
+    applicant: { id: 1240, name: 'نگار شریفی', file_number: 1240 },
+    queued: 0,
+    source_eligible: 0,
+    first_emails_today: 12,
+    next_round_at: null,
+    template_count: 2,
+    required_templates: 2,
+    reasons: [],
+    last_login_error: null,
+  },
+];
+
 export const mailHandlers = [
   http.get(`${API}/gmail-status/`, () => {
     if (!allowed()) return forbidden();
@@ -252,8 +282,40 @@ export const mailHandlers = [
       is_active: true,
       first_emails_today: 12,
       bot_mailboxes: 21,
-      login_failed: 6,
+      login_failed: 1,
+      queued: 1,
     });
+  }),
+
+  http.get(`${API}/gmail-accounts/`, ({ request }) => {
+    if (!allowed()) return forbidden();
+    const view = new URL(request.url).searchParams.get('view');
+    const all = gmailAccounts();
+    const rows = all.filter(
+      (row) =>
+        (view !== 'login_failed' || row.reasons.includes('login_failed')) &&
+        (view !== 'queued' || row.queued > 0),
+    );
+    return HttpResponse.json(pageOf(request, rows, PAGE));
+  }),
+
+  http.get(`${API}/gmail-accounts/:id/queue/`, ({ params, request }) => {
+    if (!allowed()) return forbidden();
+    if (!gmailAccounts().some((account) => account.id === Number(params['id']))) return notFound();
+    const rows =
+      Number(params['id']) === 31
+        ? [
+            {
+              id: 41,
+              name: 'Professor Noor',
+              address: 'noor@example.org',
+              university: 'Example University',
+              source: 'database',
+              source_allowed: true,
+            },
+          ]
+        : [];
+    return HttpResponse.json(pageOf(request, rows, PAGE));
   }),
 
   http.get(`${API}/servers/`, () => {

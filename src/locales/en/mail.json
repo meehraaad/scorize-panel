@@ -19,7 +19,44 @@
     "enabled": "Sending enabled",
     "firstEmailsToday": "First emails today",
     "botMailboxes": "Bot mailboxes",
-    "loginFailed": "Login failures"
+    "loginFailed": "Login failures",
+    "queued": "Emails in queue",
+    "openMetric": "{{label}}, {{count}}. View details",
+    "details": "Gmail sending details",
+    "filter": {
+      "all": "All accounts",
+      "login_failed": "Failed logins",
+      "queued": "Accounts with queued emails"
+    },
+    "noAccounts": "No accounts in this view.",
+    "reason": {
+      "login_failed": "Login failed",
+      "provider_inactive": "Gmail sending is disabled",
+      "connection_unavailable": "Connection is missing",
+      "paused_bounces": "Paused due to bounces",
+      "paused_staff": "Paused by staff",
+      "missing_resume": "Résumé is missing",
+      "missing_templates": "More email templates required",
+      "source_restricted": "Recipient source is excluded by the account settings"
+    },
+    "loginReason": {
+      "credentials_rejected": "Credentials were rejected",
+      "smtp_rejected": "The outgoing mail server rejected the login"
+    },
+    "lastLoginError": "Last recorded login error for this case: {{reason}} · {{when}}",
+    "noLoginLog": "No login error details are recorded for this case.",
+    "templateCount": "{{count}} email templates available. At least {{required}} required.",
+    "accountActivity": "{{sent}} first emails today · {{queued}} queued",
+    "eligibleSource": "{{count}} of {{queued}} recipients match the allowed source.",
+    "nextRound": "Scheduled next round: {{when}}",
+    "openQueue": "View queued recipients",
+    "backToAccounts": "Back to accounts",
+    "queueCount": "{{count}} recipients queued for a first email",
+    "emptyQueue": "This account has no queued recipients.",
+    "source": {
+      "csv": "CSV file",
+      "database": "Database"
+    }
   },
   "servers": {
     "label": "Mail servers",

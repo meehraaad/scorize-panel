@@ -58,6 +58,25 @@ describe('mail page', () => {
     ).toBeInTheDocument();
   });
 
+  it('opens the Gmail login failures and their queued recipients', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    renderApp('/supervisor/mail');
+    const card = await screen.findByRole('region', { name: 'جیمیل' });
+    await user.click(within(card).getByRole('button', { name: /ورود ناموفق/ }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'جزئیات ارسال جیمیل' });
+    expect(await within(dialog).findByText('sara.test@gmail.com')).toBeInTheDocument();
+    expect(within(dialog).getByText(/اطلاعات ورود رد شد/)).toBeInTheDocument();
+    expect(within(dialog).queryByText('negar.test@gmail.com')).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'مشاهدهٔ گیرنده‌های صف' }));
+    expect(await within(dialog).findByText('noor@example.org')).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: 'بازگشت به حساب‌ها' }));
+    await user.click(within(dialog).getByRole('button', { name: 'همهٔ حساب‌ها' }));
+    expect(await within(dialog).findByText('negar.test@gmail.com')).toBeInTheDocument();
+  });
+
   it('creates a mailbox for an applicant and shows its password once', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);

@@ -101,6 +101,7 @@ export interface GmailStatus {
   first_emails_today: number;
   bot_mailboxes: number;
   login_failed: number;
+  queued: number;
 }
 
 export const gmailStatusQuery = queryOptions({
