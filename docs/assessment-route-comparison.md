@@ -62,3 +62,12 @@ Remaining: public intake/preferences and suitability policy, independent route
 histories, complete document catalogue, versioned financial/time references,
 historical evidence, broader language/budget scenarios and legal/pilot acceptance.
 The backend's 21-section plan audit remains the acceptance checklist.
+
+Frozen application commit `10a2588`: full lint, typecheck, translation parity,
+production build and size checks passed (JS178.8KB/179KB; CSS20.5KB/20.5KB).
+The final backend passed308 tests and126 subtests on actual PostgreSQL.
+After its last scope correction, both real-browser flows passed again, including
+subclass189→190 and explicit unchanged-value invitation confirmation without
+autosave; other scoped claims remained unknown. An initial relative locator
+included the enclosing region within an action-list filter and matched nothing;
+targeting the actual select control's ancestor fixed only the test fixture.
