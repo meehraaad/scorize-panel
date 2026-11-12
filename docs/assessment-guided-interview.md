@@ -50,3 +50,19 @@ subclass answer is explicit. Deferring the route preserves the answers and gives
 a clear reason instead of assuming a subclass. Resuming restores the pinned
 country without replacing an existing navigation choice or dirty/queued input.
 History labels its country and supplied Australian subclass.
+
+Final frozen application verification (`0756561`): **659 tests in 89 files**
+passed, including the ten new guided regressions and 18 focused calculator/profile/
+guidance tests. Full lint, typecheck, translation parity, production build and size
+checks passed (JS178.8KB/179KB, CSS20.5KB/20.5KB). Backend final regression passed
+290 tests and 126 subtests on actual PostgreSQL; the SQLite preview wrapper is
+excluded. Original failing pin-write, publication/replay and language-gap cases
+were fixed with regressions; no tests were deleted or timeouts increased.
+
+A browser fixture initially used an unstarted session when testing an unavailable
+pin, and an API assertion requested CSRF before the first successful app mutation.
+Both fixtures were corrected to exercise a genuine older pin with saved history
+and the application's issued token. Runtime availability was restored before
+rerunning browser checks. These were not counted as passing product checks until
+the actual flows succeeded. A local synthetic session cookie exposed in a debug
+log was revoked and replaced; raw request logs are no longer printed.
