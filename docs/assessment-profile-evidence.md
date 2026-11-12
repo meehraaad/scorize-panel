@@ -1,6 +1,6 @@
 # Account evidence in the calculator interview
 
-Depends on panel #102 and the backend `codex/assessment-profile-evidence` PR,
+Depends on panel #102 and [backend #318](https://github.com/shamrad/lang/pull/318),
 which is based on shamrad/lang#316. Backend before panel. Existing development
 routes/local gates and production flags are unchanged.
 
