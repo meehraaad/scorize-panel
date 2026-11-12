@@ -9,7 +9,7 @@ import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { ACCESS_PATH, groupsQuery, keysQuery } from './api';
+import { useAccessPath, groupsQuery, keysQuery } from './api';
 
 /**
  * Every key in the system, by area: what it opens, which groups give it, and how many people hold
@@ -17,6 +17,7 @@ import { ACCESS_PATH, groupsQuery, keysQuery } from './api';
  */
 export default function KeysPage() {
   const { t } = useTranslation('access');
+  const root = useAccessPath();
   const f = useFormat();
   const [admin, setAdmin] = useState(false);
   const [search, setSearch] = useState('');
@@ -87,7 +88,7 @@ export default function KeysPage() {
                       )}
                     </span>
                     <Link
-                      to={`${ACCESS_PATH}?key=${encodeURIComponent(key.id)}`}
+                      to={`${root}?key=${encodeURIComponent(key.id)}`}
                       className="inline-flex min-h-11 items-center text-sm font-medium text-primary-text"
                     >
                       {key.holders === 0

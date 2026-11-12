@@ -24,7 +24,12 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
   const keys = useQuery(keysQuery());
   const groups = useQuery(groupsQuery);
   const save = useSavePerson(person.id);
-  const self = useUser().id === person.id;
+  const me = useUser();
+  const self = me.id === person.id;
+  // HR (not a superuser): no superuser switch, no protected keys or groups, read-only for
+  // superusers and themselves (the API refuses the same).
+  const limited = !me.is_superuser;
+  const editable = person.editable !== false;
   const [superuser, setSuperuser] = useState(person.is_superuser);
   const [chosenGroups, setChosenGroups] = useState(() => new Set(person.groups));
   const [direct, setDirect] = useState(() => new Set(person.keys));
@@ -39,6 +44,11 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
       key,
       t('person.viaGroup', { group: names.join(t('separator')) }),
     ]),
+  );
+  const fixedKeys = new Map(
+    (keys.data?.keys ?? [])
+      .filter((key) => !editable || (limited && key.protected))
+      .map((key) => [key.id, t(editable ? 'person.superusersOnly' : 'person.notYours')]),
   );
   const changed =
     superuser !== person.is_superuser ||
@@ -66,18 +76,25 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
       subtitle={[person.team, person.email].filter(Boolean).join(' · ') || undefined}
       closeLabel={t('close')}
       footer={
-        <Button disabled={!changed || save.isPending} onClick={submit}>
-          {t('save')}
-        </Button>
+        editable ? (
+          <Button disabled={!changed || save.isPending} onClick={submit}>
+            {t('save')}
+          </Button>
+        ) : undefined
       }
     >
-      <Switch
-        label={t('person.superuserSwitch')}
-        description={self ? t('person.superuserSelf') : t('person.superuserAbout')}
-        checked={superuser}
-        disabled={self}
-        onChange={setSuperuser}
-      />
+      {!limited && (
+        <Switch
+          label={t('person.superuserSwitch')}
+          description={self ? t('person.superuserSelf') : t('person.superuserAbout')}
+          checked={superuser}
+          disabled={self}
+          onChange={setSuperuser}
+        />
+      )}
+      {!editable && !person.is_superuser && (
+        <p className="m-0 text-[15px] leading-7">{t('person.lockedForYou')}</p>
+      )}
       {superuser ? (
         <p className="m-0 text-[15px] leading-7">
           {person.is_superuser
@@ -98,6 +115,7 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
                   <TogglePill
                     key={group.id}
                     label={group.name}
+                    disabled={!editable || (limited && group.protected === true)}
                     checked={chosenGroups.has(group.id)}
                     onChange={(on) => {
                       const next = new Set(chosenGroups);
@@ -117,6 +135,7 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
             selected={direct}
             onChange={setDirect}
             locked={viaGroups}
+            fixed={fixedKeys}
           />
         </>
       )}

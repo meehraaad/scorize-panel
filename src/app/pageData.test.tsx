@@ -195,6 +195,10 @@ const PAGES: PageCase[] = [
     '/hr/moves',
     '/hr/attendance',
     '/hr/attendance/month',
+    '/hr/access',
+    '/hr/access/groups',
+    '/hr/access/keys',
+    '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
   // Shared pages.
   { path: '/account', user: SARA },

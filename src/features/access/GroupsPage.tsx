@@ -10,13 +10,16 @@ import { Icon } from '@/components/ui/Icon';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
+import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { ACCESS_PATH, groupsQuery, keysQuery, type AccessGroup } from './api';
+import { useAccessPath, groupsQuery, keysQuery, type AccessGroup } from './api';
 import { GroupDialog } from './components/GroupDialog';
 
 /** The groups of keys: each one's keys and people; make a new one ("ناظر تماس": two keys). */
 export default function GroupsPage() {
   const { t } = useTranslation('access');
+  const root = useAccessPath();
+  const superuser = useUser().is_superuser;
   const f = useFormat();
   const { data } = useQuery(groupsQuery);
   const keys = useQuery(keysQuery());
@@ -29,10 +32,13 @@ export default function GroupsPage() {
         title={t('groups.title')}
         subtitle={t('groups.pageSubtitle')}
         actions={
-          <Button onClick={() => setOpen('new')}>
-            <Icon name="plus" size={18} />
-            {t('groups.new')}
-          </Button>
+          // Making groups and changing their keys stays with superusers (HR puts people in them).
+          superuser && (
+            <Button onClick={() => setOpen('new')}>
+              <Icon name="plus" size={18} />
+              {t('groups.new')}
+            </Button>
+          )
         }
       />
       <Card aria-label={t('groups.list')} aria-busy={!data}>
@@ -70,7 +76,7 @@ export default function GroupsPage() {
                   </span>
                 </button>
                 <Link
-                  to={`${ACCESS_PATH}?group=${String(group.id)}`}
+                  to={`${root}?group=${String(group.id)}`}
                   className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary-text"
                 >
                   {t('groups.membersCount', { count: group.members, n: f.number(group.members) })}

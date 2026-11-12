@@ -30,7 +30,8 @@
     "superuser": "Superuser (every key)",
     "noKeys": "No keys",
     "keys_one": "{{n}} key",
-    "keys_other": "{{n}} keys"
+    "keys_other": "{{n}} keys",
+    "locked": "Superusers only"
   },
   "person": {
     "groups": "Groups",
@@ -42,7 +43,10 @@
     "superuserSwitch": "Superuser",
     "superuserAbout": "A superuser holds every key and can change everyone's access, Django admin included.",
     "superuserSelf": "You can't change your own superuser status; another superuser has to.",
-    "superuserOnWarning": "Once saved, {{name}} becomes a superuser with full access everywhere, Django admin included."
+    "superuserOnWarning": "Once saved, {{name}} becomes a superuser with full access everywhere, Django admin included.",
+    "superusersOnly": "Only a superuser gives or takes it",
+    "notYours": "Can't be changed",
+    "lockedForYou": "Only a superuser changes a superuser's access, or your own."
   },
   "groups": {
     "title": "Groups",
@@ -79,7 +83,9 @@
     "deleteButton": "Delete",
     "deleteConfirm_one": "Delete “{{name}}”? Its {{count}} member loses this group's keys.",
     "deleteConfirm_other": "Delete “{{name}}”? Its {{count}} members lose this group's keys.",
-    "deleted": "The group “{{name}}” was deleted."
+    "deleted": "The group “{{name}}” was deleted.",
+    "superusersKeys": "Only a superuser changes a group's keys; you put people in it or take them out.",
+    "protectedMembers": "This group holds protected keys: only a superuser changes its members."
   },
   "keys": {
     "title": "All keys",

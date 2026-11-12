@@ -1,16 +1,26 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'react-router';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 
 /**
- * Management > access (superusers only): every key in the system, groups of keys, and who holds
+ * Management > access (superusers; and HR within limits, key `manage_staff_access`, in the HR
+ * panel): every key in the system, groups of keys, and who holds
  * what. A key is a Django permission (`app_label.codename`), a group an auth group: the same things
  * the API, the old site and Django admin check. Django: `api/access/v1/`
  * (user_profile/access_catalog.py names the keys).
  */
 const ACCESS_API = '/access/v1';
-/** Where the pages live: the management panel (founders). */
+/** The HR key: give staff keys and groups, not superusers', not one's own, not protected ones. */
+export const STAFF_ACCESS_PERMISSION = 'manage_staff_access';
+/** Where the pages live: the management panel (founders), and HR's access section. */
 export const ACCESS_PATH = '/founders/access';
+export const HR_ACCESS_PATH = '/hr/access';
+
+/** The access pages' root for the panel they are open in. */
+export function useAccessPath() {
+  return useLocation().pathname.startsWith(HR_ACCESS_PATH) ? HR_ACCESS_PATH : ACCESS_PATH;
+}
 export const ACCESS_KEY = ['access'] as const;
 
 export interface KeyArea {
@@ -32,6 +42,8 @@ export interface AccessKey {
   holders: number;
   /** Groups that give it. */
   groups: number[];
+  /** Only superusers give or take it (the access key, Django admin's own…). */
+  protected?: boolean;
 }
 
 export interface KeyList {
@@ -47,6 +59,8 @@ export interface AccessGroup {
   members: number;
   /** Kept by the system (Founders): only its members change. */
   system: boolean;
+  /** Kept by the system or holding a protected key: only superusers change who is in it. */
+  protected?: boolean;
 }
 
 /** A superuser changes another person's `is_superuser` here, never their own. */
@@ -60,6 +74,8 @@ export interface AccessPerson {
   groups: number[];
   /** Held directly; each group adds its own. */
   keys: string[];
+  /** The person asking may change their access (HR: not a superuser, not themselves). */
+  editable?: boolean;
 }
 
 export const CHANGE_ACTIONS = [

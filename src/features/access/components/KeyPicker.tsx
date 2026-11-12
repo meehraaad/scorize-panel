@@ -16,6 +16,7 @@ export function KeyPicker({
   selected,
   onChange,
   locked,
+  fixed,
 }: {
   label: string;
   areas: readonly KeyArea[];
@@ -24,6 +25,8 @@ export function KeyPicker({
   onChange: (selected: Set<string>) => void;
   /** key → why it's held already ("گروه مدیر فروش"). */
   locked?: ReadonlyMap<string, string>;
+  /** key → why it can't be changed here, ticked or not as it is ("only a superuser"). */
+  fixed?: ReadonlyMap<string, string>;
 }) {
   const { t } = useTranslation('access');
   const [search, setSearch] = useState('');
@@ -75,7 +78,9 @@ export function KeyPicker({
                 key={key.id}
                 accessKey={key}
                 checked={selected.has(key.id) || Boolean(locked?.has(key.id))}
-                lockedBy={selected.has(key.id) ? undefined : locked?.get(key.id)}
+                lockedBy={
+                  fixed?.get(key.id) ?? (selected.has(key.id) ? undefined : locked?.get(key.id))
+                }
                 onChange={(on) => toggle(key.id, on)}
               />
             ))}

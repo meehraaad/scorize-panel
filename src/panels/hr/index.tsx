@@ -1,5 +1,13 @@
 import { redirect } from 'react-router';
 import {
+  STAFF_ACCESS_PERMISSION,
+  groupsQuery,
+  historyQuery as accessHistoryQuery,
+  keysQuery,
+  peopleFilterOf,
+  peopleQuery,
+} from '@/features/access/api';
+import {
   ATTENDANCE_PERMISSION,
   dailyQuery,
   monthRange,
@@ -31,6 +39,7 @@ const holders = (permission: string) => async () => {
 };
 const hrOnly = holders(HR_PERMISSION);
 const attendanceOnly = holders(ATTENDANCE_PERMISSION);
+const accessOnly = holders(STAFF_ACCESS_PERMISSION);
 
 /**
  * Human resources, for holders of `can_manage_support_staff` (design: "HR panel" canvas v2): HR's
@@ -82,6 +91,13 @@ export const hrPanel: PanelDefinition = {
       label: 'panels.hr.nav.attendance',
       icon: 'clock',
       permission: ATTENDANCE_PERMISSION,
+    },
+    {
+      id: 'access',
+      to: 'access',
+      label: 'panels.hr.nav.access',
+      icon: 'lock',
+      permission: STAFF_ACCESS_PERMISSION,
     },
   ],
   // Each route lists what its page shows first (docs/performance.md, "Page data").
@@ -157,6 +173,48 @@ export const hrPanel: PanelDefinition = {
         data: () => [summaryQuery(monthRange(calendarKind(i18n.language)))],
         skeleton: 'list',
       }),
+    },
+    // Access (management > access's pages): HR gives staff keys and groups within limits; the API
+    // keeps superusers, one's own access and protected keys out of reach.
+    {
+      path: 'access',
+      ...lazyPage(() => import('@/features/access/AccessLayout'), ['access'], {
+        guard: accessOnly,
+      }),
+      children: [
+        {
+          index: true,
+          ...lazyPage(() => import('@/features/access/PeoplePage'), [], {
+            data: ({ request }) => [
+              peopleQuery(peopleFilterOf(new URL(request.url).searchParams)),
+              groupsQuery,
+              keysQuery(),
+            ],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'groups',
+          ...lazyPage(() => import('@/features/access/GroupsPage'), [], {
+            data: () => [groupsQuery, keysQuery()],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'keys',
+          ...lazyPage(() => import('@/features/access/KeysPage'), [], {
+            data: () => [keysQuery(), groupsQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'history',
+          ...lazyPage(() => import('@/features/access/HistoryPage'), [], {
+            data: () => [accessHistoryQuery(1), keysQuery()],
+            skeleton: 'list',
+          }),
+        },
+      ],
     },
   ],
 };

@@ -9,6 +9,7 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useUser } from '@/lib/auth/session';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import {
@@ -51,7 +52,9 @@ export function GroupDialog({
   const [name, setName] = useState(group?.name ?? '');
   const [chosen, setChosen] = useState(() => new Set(group?.keys ?? []));
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const fixed = group?.system ?? false;
+  const superuser = useUser().is_superuser;
+  // Kept by the system, or opened by HR: only its members can change here.
+  const fixed = (group?.system ?? false) || !superuser;
 
   const changed =
     !group ||
@@ -89,7 +92,9 @@ export function GroupDialog({
       }
     >
       {fixed ? (
-        <p className="m-0 text-[15px] leading-7">{t('groups.system')}</p>
+        <p className="m-0 text-[15px] leading-7">
+          {t(group?.system ? 'groups.system' : 'groups.superusersKeys')}
+        </p>
       ) : (
         <TextField
           label={t('groups.name')}
@@ -152,6 +157,8 @@ export function GroupDialog({
 /** The group's people (each can be taken out) and a search to add someone. */
 function Members({ group }: { group: AccessGroup }) {
   const { t } = useTranslation('access');
+  // HR changes neither a protected group's people nor a superuser's or their own membership.
+  const open = useUser().is_superuser || !group.protected;
   const f = useFormat();
   const members = useQuery(peopleQuery({ group: group.id }));
   const [search, setSearch] = useState('');
@@ -196,27 +203,33 @@ function Members({ group }: { group: AccessGroup }) {
                 <span className="text-[15px] font-medium">{person.name}</span>
                 {person.team && <span className="text-[13px] text-text-2">{person.team}</span>}
               </span>
-              <Button
-                variant="outline"
-                className="h-11 px-4 text-sm"
-                disabled={removeMember.isPending}
-                onClick={() => removePerson(person)}
-                aria-label={t('groups.removeMember', { name: person.name })}
-              >
-                {t('groups.remove')}
-              </Button>
+              {open && person.editable !== false && (
+                <Button
+                  variant="outline"
+                  className="h-11 px-4 text-sm"
+                  disabled={removeMember.isPending}
+                  onClick={() => removePerson(person)}
+                  aria-label={t('groups.removeMember', { name: person.name })}
+                >
+                  {t('groups.remove')}
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       )}
-      <SearchField
-        label={t('groups.addMember')}
-        placeholder={t('groups.addMemberPlaceholder')}
-        value={search}
-        onChange={setSearch}
-        className="flex-none"
-      />
-      {searched.length >= 2 &&
+      {!open && <p className="m-0 text-sm text-text-2">{t('groups.protectedMembers')}</p>}
+      {open && (
+        <SearchField
+          label={t('groups.addMember')}
+          placeholder={t('groups.addMemberPlaceholder')}
+          value={search}
+          onChange={setSearch}
+          className="flex-none"
+        />
+      )}
+      {open &&
+        searched.length >= 2 &&
         (!found.data ? (
           <SkeletonRows rows={2} />
         ) : found.data.results.length === 0 ? (
@@ -231,6 +244,8 @@ function Members({ group }: { group: AccessGroup }) {
                 </span>
                 {inGroup.has(person.id) ? (
                   <span className="text-[13px] text-text-2">{t('groups.alreadyIn')}</span>
+                ) : person.editable === false ? (
+                  <span className="text-[13px] text-text-2">{t('people.locked')}</span>
                 ) : (
                   <Button
                     variant="outline"

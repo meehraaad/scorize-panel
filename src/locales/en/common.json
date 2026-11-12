@@ -119,7 +119,8 @@
         "calendar": "Calendar",
         "staff": "Staff",
         "moves": "Joining and leaving",
-        "attendance": "Attendance"
+        "attendance": "Attendance",
+        "access": "Access"
       },
       "tabs": {
         "today": "Today",
