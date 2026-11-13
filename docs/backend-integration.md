@@ -177,3 +177,8 @@ in comparison/snapshots, and financial policy/scenario content in the existing
 staff draft lifecycle. Backend before panel #106 on #105. Existing development
 and sandbox gates remain; real financial references are not seeded. See
 [financial contract and behavior](assessment-financial-fit.md).
+
+
+## Destination discovery dependency
+
+Development-only destination intake and structured catalog management in panel #107 require backend shamrad/lang#322 on #321, and panel #106. See [contract and limits](assessment-destination-discovery.md). No new production migrations or activation are included.
