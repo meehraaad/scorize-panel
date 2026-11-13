@@ -129,6 +129,27 @@ it('opens an Australian route without writes, prepares its subclass only after a
     'href',
     `/dev/assessment-destinations?session=${ID}`,
   );
+  const recordBodies: unknown[] = [];
+  server.use(
+    http.post('/api/applicant/v1/assessments/:id/calculators/snapshots/', async ({ request }) => {
+      recordBodies.push(await request.json());
+      return HttpResponse.json({ detail: 'temporary record failure' }, { status: 503 });
+    }),
+  );
+  await user.click(screen.getByRole('button', { name: 'Record draft result' }));
+  await waitFor(() => expect(recordBodies).toHaveLength(1));
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Record draft result' })).toBeEnabled(),
+  );
+  expect(
+    screen.queryByRole('link', { name: 'Return to my destination plan' }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Prepare subclass questions for Australia — subclass 190' }),
+  ).toBeDisabled();
+  await user.click(screen.getByRole('button', { name: 'Record draft result' }));
+  await waitFor(() => expect(recordBodies).toHaveLength(2));
+  expect(recordBodies[0]).toEqual(recordBodies[1]);
 });
 
 it('never offers a detailed handoff for an unsupported program even with a reviewed directory', async () => {

@@ -205,14 +205,21 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           <Notice tone="info">
             {t('destinationPlan.handoff', { route: routeLabels[requestedRoute] })}
           </Notice>
-          {!dirty && !saving && !pending && !financialBusy && !comparisonBusy && !guidanceBusy && (
-            <Link
-              className="underline"
-              to={`/dev/assessment-destinations?session=${encodeURIComponent(id)}`}
-            >
-              {t('destinationPlan.return')}
-            </Link>
-          )}
+          {!dirty &&
+            !saving &&
+            !pending &&
+            !snapshotRequest &&
+            !record.isPending &&
+            !financialBusy &&
+            !comparisonBusy &&
+            !guidanceBusy && (
+              <Link
+                className="underline"
+                to={`/dev/assessment-destinations?session=${encodeURIComponent(id)}`}
+              >
+                {t('destinationPlan.return')}
+              </Link>
+            )}
           {routeCountry === 'australia' && (
             <>
               <p>{t('destinationPlan.prepareMeaning')}</p>
@@ -225,6 +232,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
                   comparisonBusy ||
                   financialBusy ||
                   guidanceBusy ||
+                  Boolean(snapshotRequest) ||
                   Boolean(pending)
                 }
                 onClick={() => {
