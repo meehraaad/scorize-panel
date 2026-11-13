@@ -187,3 +187,8 @@ Development-only destination intake and structured catalog management in panel #
 ## Destination follow-up dependency
 
 Panel #108 requires backend shamrad/lang#323 on #322 and panel #107. The existing destination POST adds select_routes/action_progress; the result adds an optional historical plan. See [contract](assessment-destination-follow-up.md). Backend first; no production migration/activation is included.
+
+
+## Country-independent program builder
+
+Panel #109 requires backend shamrad/lang#324 (on #323) and panel #108. Existing destination POST adds program_answer/program_adopt; optional program_result supplies typed questions and separate condition/point results. See [contract](assessment-program-builder.md). No new model, production migration or public activation.
