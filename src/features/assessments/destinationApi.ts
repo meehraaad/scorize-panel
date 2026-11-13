@@ -1,3 +1,4 @@
+import type { ProgramDefinition, ProgramCase, ProgramResult } from './programTypes';
 import { sameAnswerContent } from './answerEquality';
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
@@ -30,6 +31,7 @@ export interface DestinationSource {
   status: 'draft' | 'reviewed_directory';
 }
 export interface DestinationEntry {
+  program?: ProgramDefinition | null;
   id: string;
   country: string;
   goal: (typeof GOALS)[number];
@@ -45,6 +47,7 @@ export interface DestinationPolicy {
   entries: DestinationEntry[];
 }
 export interface DestinationCase {
+  programs?: Record<string, ProgramCase[]>;
   inputs: IntakeInputs;
   expected: Record<string, string>;
 }
@@ -57,6 +60,7 @@ export interface DestinationEvaluation {
   ordering: string;
 }
 export interface DestinationCard extends DestinationEntry {
+  program_result?: ProgramResult;
   directory_status: string;
   relevance: string;
   next_actions: string[];

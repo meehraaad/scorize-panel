@@ -1,3 +1,4 @@
+import { ProgramEditor, ProgramCases } from './ProgramEditor';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { TogglePill, SelectField } from '@/components/ui/Choices';
@@ -83,7 +84,26 @@ export function DestinationPolicyEditor({
               <TextField
                 label={t('destinations.entryId')}
                 value={entry.id}
-                onChange={(e) => set(index, { ...entry, id: e.target.value })}
+                onChange={(e) =>
+                  set(index, {
+                    ...entry,
+                    id: e.target.value,
+                    ...(entry.program
+                      ? {
+                          program: {
+                            ...entry.program,
+                            bundle: {
+                              ...entry.program.bundle,
+                              routes: entry.program.bundle.routes.map((route) => ({
+                                ...route,
+                                id: e.target.value,
+                              })),
+                            },
+                          },
+                        }
+                      : {}),
+                  })
+                }
               />
               <TextField
                 label={t('destinations.titleFa')}
@@ -126,7 +146,11 @@ export function DestinationPolicyEditor({
                 value={entry.order}
                 onChange={(e) => set(index, { ...entry, order: Number(e.target.value) })}
               />
-              {entry.goal === 'work' && (
+              <ProgramEditor
+                entry={entry}
+                onChange={(program) => set(index, { ...entry, program })}
+              />
+              {entry.goal === 'work' && !entry.program && (
                 <SelectField
                   label={t('destinations.calculatorBinding')}
                   value={entry.calculator_route ?? ''}
@@ -253,6 +277,18 @@ export function DestinationCaseEditor({
                     label: words[v] ?? t('calculator.unknown'),
                   }))}
                   onChange={(v) => set({ ...test, expected: { ...test.expected, [entry.id]: v } })}
+                />
+              ))}
+            {policy.entries
+              .filter((e) => e.enabled && e.program)
+              .map((entry) => (
+                <ProgramCases
+                  key={entry.id}
+                  entry={entry}
+                  value={test.programs?.[entry.id] ?? []}
+                  onChange={(cases) =>
+                    set({ ...test, programs: { ...test.programs, [entry.id]: cases } })
+                  }
                 />
               ))}
             <Button variant="outline" onClick={() => onChange(value.filter((_, i) => i !== index))}>
