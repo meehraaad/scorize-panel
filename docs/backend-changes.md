@@ -584,17 +584,18 @@ with no new model or production migration. It does not change profile/sales budg
 enums, create contacts/leads or enable public assessment. Backend must precede
 panel. [Scope, compatibility and release limits](assessment-financial-fit.md).
 
-
 ## Destination discovery dependency
 
 Development-only destination intake and structured catalog management in panel #107 require backend shamrad/lang#322 on #321, and panel #106. See [contract and limits](assessment-destination-discovery.md). No new production migrations or activation are included.
-
 
 ## Destination follow-up dependency
 
 Panel #108 requires backend shamrad/lang#323 on #322 and panel #107. The existing destination POST adds select_routes/action_progress; the result adds an optional historical plan. See [contract](assessment-destination-follow-up.md). Backend first; no production migration/activation is included.
 
-
 ## Country-independent program builder
 
 Panel #109 requires backend shamrad/lang#324 (on #323) and panel #108. Existing destination POST adds program_answer/program_adopt; optional program_result supplies typed questions and separate condition/point results. See [contract](assessment-program-builder.md). No new model, production migration or public activation.
+
+### Generic financial targets — draft #110 / backend #325
+
+Staff assessment options add optional `currency_catalog` and `financial_targets`. Financial policy schema 2 captures country/goal/title, selected currency minor-unit metadata and registry SHA; each component declares main/minor units. Destination entries add optional `financial_route_id` with runtime country/goal matching. Financial descriptions add `targets` and dynamic route keys; scenario IDs must belong to the recorded policy. Schema 1 remains supported. See [contract and validation](assessment-generic-finance.md). No new route/page, first-render query, model/migration or production activation.
