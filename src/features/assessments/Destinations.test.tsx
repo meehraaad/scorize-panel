@@ -270,3 +270,10 @@ it('finishes saving when PostgreSQL reorders JSON object keys and provenance', a
   expect(area.getByRole('button', { name: 'Save Migration goals' })).toBeDisabled();
   expect(area.getByRole('button', { name: 'Save Current residence' })).toBeDisabled();
 });
+
+it('opens financial questions independently while current legal rules need review', async () => {
+  const { user, area } = await open();
+  await user.click(area.getByRole('button', { name: 'Open financial questions' }));
+  expect(await area.findByLabelText('Exact spending budget (Tomans)')).toBeInTheDocument();
+  expect(area.getAllByText(/Legal reference review is needed for this date/)).toHaveLength(2);
+});

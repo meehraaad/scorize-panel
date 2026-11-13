@@ -90,6 +90,7 @@ function Editor({
         old ? { ...old, revision: next.revision, answers: next.answers } : old,
       );
       void cache.invalidateQueries({ queryKey: ['calculator-comparison', id] });
+      void cache.invalidateQueries({ queryKey: ['assessment-destinations', id] });
       void cache.invalidateQueries({ queryKey: ['calculator-guidance', id] });
       void cache.invalidateQueries({ queryKey: ['calculator-snapshots', id] });
       // Saving one fact preserves all other unsaved fields.

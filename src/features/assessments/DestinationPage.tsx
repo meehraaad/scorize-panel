@@ -1,3 +1,4 @@
+import { FinancialPanel } from './FinancialPanel';
 import { useEffect, useId, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -158,6 +159,8 @@ function IntakeEditor({
     body: Record<string, unknown>;
   } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [financialOpen, setFinancialOpen] = useState(false);
+  const [financialBusy, setFinancialBusy] = useState(false);
   const mutation = useMutation({
     mutationFn: async (request: NonNullable<typeof pending>) => {
       if (request.kind === 'record') {
@@ -188,11 +191,12 @@ function IntakeEditor({
     INTAKE_FIELDS.some((field) => !sameIntakeFact(input[field], data.intake.inputs[field])),
   );
   useEffect(() => {
-    onBusy(dirty || Boolean(pending) || mutation.isPending || refreshing);
+    onBusy(dirty || Boolean(pending) || mutation.isPending || refreshing || financialBusy);
     return () => onBusy(false);
-  }, [dirty, pending, mutation.isPending, refreshing, onBusy]);
+  }, [dirty, pending, mutation.isPending, refreshing, financialBusy, onBusy]);
   const conflict = mutation.error instanceof ApiError && mutation.error.status === 409;
   const locked =
+    financialBusy ||
     Boolean(query.error) ||
     query.isFetching ||
     mutation.isPending ||
@@ -299,6 +303,16 @@ function IntakeEditor({
                   </Button>
                 </>
               )}
+              <FinancialPanel
+                id={id}
+                revision={data.context.session_revision}
+                open={financialOpen}
+                onOpen={() => setFinancialOpen(true)}
+                disabled={
+                  dirty || Boolean(pending) || mutation.isPending || refreshing || query.isFetching
+                }
+                onBusy={setFinancialBusy}
+              />
               <DestinationReport data={data} />
               <Button
                 disabled={locked || dirty || data.intake.catalog_changed}
