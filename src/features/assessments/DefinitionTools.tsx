@@ -10,9 +10,13 @@ import { blankExpected, conditionOf } from './rules';
 export function DefinitionTools({
   input,
   onChange,
+  allowRoutes = true,
+  maxQuestions = 100,
 }: {
   input: DraftInput;
   onChange: (next: DraftInput) => void;
+  allowRoutes?: boolean;
+  maxQuestions?: number;
 }) {
   const { t } = useTranslation('assessments');
   const [kind, setKind] = useState<Question['kind']>('boolean');
@@ -25,12 +29,14 @@ export function DefinitionTools({
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-hair p-4">
       <h2>{t('definitions')}</h2>
-      <SelectField
-        label={t('definitionType')}
-        value={target}
-        onChange={setTarget}
-        options={(['question', 'route'] as const).map((value) => ({ value, label: t(value) }))}
-      />
+      {allowRoutes && (
+        <SelectField
+          label={t('definitionType')}
+          value={target}
+          onChange={setTarget}
+          options={(['question', 'route'] as const).map((value) => ({ value, label: t(value) }))}
+        />
+      )}
       <TextField
         label={t('definitionId')}
         value={id}
@@ -54,7 +60,7 @@ export function DefinitionTools({
         />
       )}
       <Button
-        disabled={!valid || rows.length >= (target === 'question' ? 100 : 30)}
+        disabled={!valid || rows.length >= (target === 'question' ? maxQuestions : 30)}
         onClick={() => {
           if (target === 'question') {
             const question: Question = {

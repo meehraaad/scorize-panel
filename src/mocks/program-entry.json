@@ -1,0 +1,294 @@
+{
+  "id": "de-study",
+  "country": "DE",
+  "goal": "study",
+  "title": {
+    "fa": "آلمان — گزینهٔ مصنوعی",
+    "en": "Germany — synthetic route"
+  },
+  "order": 2,
+  "enabled": true,
+  "calculator_route": null,
+  "source": {
+    "title": "Synthetic directory only",
+    "url": "https://example.org/synthetic",
+    "checked_on": "2026-11-01",
+    "review_due": "2026-12-30",
+    "received_at": "2026-11-01T00:00:00+00:00",
+    "effective_on": null,
+    "status": "reviewed_directory"
+  },
+  "directory_status": "reviewed_directory",
+  "relevance": "needs_preferences",
+  "preference_alignment": {
+    "earned": 0,
+    "possible": 3,
+    "complete": false,
+    "checks": [
+      {
+        "criterion": "goal",
+        "weight": 2,
+        "matched": null
+      },
+      {
+        "criterion": "destination",
+        "weight": 1,
+        "matched": null
+      }
+    ]
+  },
+  "eligibility": {
+    "status": "not_evaluated",
+    "reason": "calculator_not_implemented"
+  },
+  "financial": {
+    "status": "unknown",
+    "unknowns": [
+      "policy_unavailable"
+    ],
+    "components": [],
+    "ask_exact": false
+  },
+  "next_actions": [
+    "goals",
+    "destinations",
+    "citizenships",
+    "residence",
+    "timeline",
+    "review_route_eligibility",
+    "clarify_financial_information"
+  ],
+  "program": {
+    "schema_version": 1,
+    "bundle": {
+      "schema_version": 1,
+      "synthetic": true,
+      "questions": [
+        {
+          "id": "age",
+          "text": "Synthetic age",
+          "kind": "number",
+          "minimum": 0,
+          "maximum": 120
+        },
+        {
+          "id": "language",
+          "text": "Synthetic level",
+          "kind": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        {
+          "id": "offer",
+          "text": "Synthetic offer",
+          "kind": "boolean"
+        },
+        {
+          "id": "offer_type",
+          "text": "Synthetic offer category",
+          "kind": "choice",
+          "choices": [
+            "a",
+            "b"
+          ],
+          "show_if": {
+            "fact": "offer",
+            "op": "eq",
+            "value": true
+          }
+        }
+      ],
+      "routes": [
+        {
+          "id": "de-study",
+          "name": "Synthetic configured program",
+          "requirements": [
+            {
+              "id": "adult",
+              "label": "Synthetic minimum",
+              "condition": {
+                "fact": "age",
+                "op": "gte",
+                "value": 18
+              }
+            },
+            {
+              "id": "alternative",
+              "label": "Synthetic alternatives",
+              "condition": {
+                "any": [
+                  {
+                    "fact": "language",
+                    "op": "gte",
+                    "value": 3
+                  },
+                  {
+                    "fact": "offer",
+                    "op": "eq",
+                    "value": true
+                  }
+                ]
+              }
+            }
+          ],
+          "scores": [
+            {
+              "id": "support",
+              "label": "Synthetic points",
+              "cap": 8,
+              "bands": [
+                {
+                  "id": "supported",
+                  "points": 10,
+                  "condition": {
+                    "all": [
+                      {
+                        "fact": "offer",
+                        "op": "eq",
+                        "value": true
+                      },
+                      {
+                        "fact": "age",
+                        "op": "gte",
+                        "value": 25
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "score_cap": 8,
+          "pass_mark": 8
+        }
+      ]
+    },
+    "source": {
+      "title": "Synthetic program rules, not law",
+      "url": "https://example.org/synthetic-program",
+      "checked_on": "2026-11-01",
+      "review_due": "2026-12-30",
+      "received_at": "2026-11-01T00:00:00Z",
+      "effective_on": "2026-11-01",
+      "status": "reviewed_program"
+    },
+    "coverage": {
+      "from": "2026-11-01",
+      "through": "2026-12-30"
+    }
+  },
+  "program_result": {
+    "version": "configured-program-1",
+    "program_sha256": "ed54d334e9981fcd740929e145a89f2d40cb8dc342820fa8f3538177906d92ab",
+    "definition_changed": false,
+    "status": "calculated_configured_draft",
+    "reason": null,
+    "inputs": {},
+    "questions": [
+      {
+        "id": "age",
+        "text": "Synthetic age",
+        "kind": "number",
+        "minimum": 0,
+        "maximum": 120,
+        "visibility": "visible"
+      },
+      {
+        "id": "language",
+        "text": "Synthetic level",
+        "kind": "number",
+        "minimum": 0,
+        "maximum": 10,
+        "visibility": "visible"
+      },
+      {
+        "id": "offer",
+        "text": "Synthetic offer",
+        "kind": "boolean",
+        "visibility": "visible"
+      },
+      {
+        "id": "offer_type",
+        "text": "Synthetic offer category",
+        "kind": "choice",
+        "choices": [
+          "a",
+          "b"
+        ],
+        "show_if": {
+          "fact": "offer",
+          "op": "eq",
+          "value": true
+        },
+        "visibility": "blocked"
+      }
+    ],
+    "result": {
+      "route_id": "de-study",
+      "name": "Synthetic configured program",
+      "ruleset_version": 1,
+      "assessment_date": "2026-11-13",
+      "eligibility_status": "insufficient_information",
+      "score_status": "partial",
+      "score": null,
+      "score_range": null,
+      "score_breakdown": [
+        {
+          "id": "support",
+          "label": "Synthetic points",
+          "points": null
+        }
+      ],
+      "pass_mark_met": null,
+      "met_requirements": [],
+      "unmet_requirements": [],
+      "unknown_requirements": [
+        "adult",
+        "alternative"
+      ],
+      "requirement_details": [
+        {
+          "id": "adult",
+          "label": "Synthetic minimum",
+          "status": "unknown"
+        },
+        {
+          "id": "alternative",
+          "label": "Synthetic alternatives",
+          "status": "unknown"
+        }
+      ],
+      "coverage_limitations": [
+        "synthetic_rules_only",
+        "documents_not_verified"
+      ]
+    },
+    "next_question": {
+      "id": "age",
+      "text": "Synthetic age",
+      "kind": "number",
+      "minimum": 0,
+      "maximum": 120,
+      "route_ids": [
+        "de-study"
+      ],
+      "reason": "eligibility"
+    },
+    "source": {
+      "title": "Synthetic program rules, not law",
+      "url": "https://example.org/synthetic-program",
+      "checked_on": "2026-11-01",
+      "review_due": "2026-12-30",
+      "received_at": "2026-11-01T00:00:00Z",
+      "effective_on": "2026-11-01",
+      "status": "reviewed_program"
+    },
+    "coverage": {
+      "from": "2026-11-01",
+      "through": "2026-12-30"
+    },
+    "assessment_date": "2026-11-13",
+    "document_verified": false,
+    "establishes_visa_eligibility": false
+  }
+}

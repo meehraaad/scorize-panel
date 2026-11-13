@@ -1,3 +1,5 @@
+import type { Fact } from './api';
+import { sameAnswerContent } from './answerEquality';
 import { useSearchParams } from 'react-router';
 import { DestinationPlan } from './DestinationPlan';
 import { FinancialPanel } from './FinancialPanel';
@@ -164,6 +166,7 @@ function IntakeEditor({
   const [refreshing, setRefreshing] = useState(false);
   const [financialOpen, setFinancialOpen] = useState(false);
   const [financialBusy, setFinancialBusy] = useState(false);
+  const [programDrafts, setProgramDrafts] = useState<Record<string, Record<string, Fact>>>({});
   const mutation = useMutation({
     mutationFn: async (request: NonNullable<typeof pending>) => {
       if (request.kind === 'record') {
@@ -172,6 +175,16 @@ function IntakeEditor({
       } else {
         const next = await saveDestinationAnswer(id, request.body);
         cache.setQueryData(destinationQuery(id).queryKey, next.destinations);
+        if (request.body.action === 'program_answer') {
+          const entry = String(request.body.entry_id);
+          const question = String(request.body.question_id);
+          setProgramDrafts((old) => {
+            const next = Object.fromEntries(
+              Object.entries(old[entry] ?? {}).filter(([key]) => key !== question),
+            );
+            return { ...old, [entry]: next };
+          });
+        }
         const field = request.body.field as keyof IntakeInputs | undefined;
         if (field)
           setInput((old) =>
@@ -188,17 +201,30 @@ function IntakeEditor({
     },
   });
   const data = query.data;
-  const dirty = Boolean(
+  const intakeDirty = Boolean(
     input &&
     data &&
     INTAKE_FIELDS.some((field) => !sameIntakeFact(input[field], data.intake.inputs[field])),
   );
+  const programDirty = Boolean(
+    data &&
+    Object.entries(programDrafts).some(([id, facts]) =>
+      Object.entries(facts).some(
+        ([key, fact]) =>
+          !sameAnswerContent(
+            fact,
+            data.entries.find((e) => e.id === id)?.program_result?.inputs[key],
+          ),
+      ),
+    ),
+  );
+  const dirty = intakeDirty || programDirty;
   useEffect(() => {
     onBusy(dirty || Boolean(pending) || mutation.isPending || refreshing || financialBusy);
     return () => onBusy(false);
   }, [dirty, pending, mutation.isPending, refreshing, financialBusy, onBusy]);
   const conflict = mutation.error instanceof ApiError && mutation.error.status === 409;
-  const locked =
+  const baseLocked =
     financialBusy ||
     Boolean(query.error) ||
     query.isFetching ||
@@ -207,8 +233,16 @@ function IntakeEditor({
     conflict ||
     refreshing ||
     !data?.writable;
+  const locked = baseLocked || programDirty;
   const send = (
-    action: 'answer' | 'adopt' | 'record' | 'select_routes' | 'action_progress',
+    action:
+      | 'answer'
+      | 'adopt'
+      | 'record'
+      | 'select_routes'
+      | 'action_progress'
+      | 'program_adopt'
+      | 'program_answer',
     field?: keyof IntakeInputs,
     extra: Record<string, unknown> = {},
   ) => {
@@ -299,7 +333,16 @@ function IntakeEditor({
                   </Button>
                 ))}
               </fieldset>
-              {dirty && (
+              {programDirty && (
+                <Button
+                  variant="outline"
+                  disabled={baseLocked}
+                  onClick={() => setProgramDrafts({})}
+                >
+                  {t('programs.discardAll')}
+                </Button>
+              )}
+              {intakeDirty && (
                 <>
                   <Notice tone="warn">{t('calculator.unsaved')}</Notice>
                   <Button
@@ -324,6 +367,24 @@ function IntakeEditor({
               <DestinationReport
                 data={data}
                 interactionDisabled={locked || dirty || data.intake.catalog_changed}
+                programInteraction={{
+                  drafts: programDrafts,
+                  disabled: baseLocked || intakeDirty || data.intake.catalog_changed,
+                  onChange: (entry, facts) =>
+                    setProgramDrafts((old) => ({
+                      ...old,
+                      [entry]: Object.fromEntries(
+                        Object.entries(facts).filter(
+                          ([key, fact]) =>
+                            !sameAnswerContent(
+                              fact,
+                              data.entries.find((e) => e.id === entry)?.program_result?.inputs[key],
+                            ),
+                        ),
+                      ),
+                    })),
+                  onSend: (action, body) => send(action, undefined, body),
+                }}
                 onSelect={(routes) => send('select_routes', undefined, { route_ids: routes })}
               />
               <DestinationPlan

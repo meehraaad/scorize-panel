@@ -1,3 +1,4 @@
+import type { ProgramCase } from './programTypes';
 import type { DestinationPolicy, DestinationCase, DestinationEvaluation } from './destinationApi';
 import type {
   FinancialPolicy,
@@ -104,6 +105,13 @@ export interface Draft extends DraftInput, Summary {
       name: string;
       passed: boolean;
       destinations?: {
+        programs?: {
+          entry_id: string;
+          expected: ProgramCase['expected'];
+          actual: Evaluation['results'][number];
+          before: Evaluation['results'][number] | null;
+          passed: boolean;
+        }[];
         expected: Record<string, string>;
         actual: DestinationEvaluation;
         before: DestinationEvaluation;

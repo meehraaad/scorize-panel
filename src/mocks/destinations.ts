@@ -1,3 +1,4 @@
+import { programEntryFixture, answerProgramFixture, updateProgramFixture } from './programs';
 /** Backend-shaped fixtures for tests only; never imported by product code. */
 import { http, HttpResponse } from 'msw';
 import fixture from './destination-result.json';
@@ -54,6 +55,30 @@ export function resetDestinationMocks() {
   progress = {};
   requests = new Map();
 }
+
+export function enableProgramFixture(reason?: string) {
+  const entry = programEntryFixture();
+  if (entry.program_result && reason) {
+    entry.program_result.reason = reason;
+    entry.program_result.result = null;
+    entry.program_result.status = 'not_evaluated';
+  }
+  result.entries = result.entries.map((e) => (e.id === entry.id ? entry : e));
+}
+export function changeProgramDefinitionFixture() {
+  const checked = result.entries.find((e) => e.program_result)?.program_result;
+  if (!checked) return;
+  checked.program_sha256 = 'b'.repeat(64);
+  checked.definition_changed = true;
+  checked.reason = 'program_definition_changed';
+  checked.result = null;
+  checked.inputs = Object.fromEntries(
+    Object.entries(checked.inputs).map(([key, fact]) => [
+      key,
+      { status: 'needs_confirmation', value: null, previous_answer: structuredClone(fact) },
+    ]),
+  );
+}
 const options = () => ({
   catalog: result.intake.active_catalog,
   today: '2026-11-13',
@@ -89,13 +114,16 @@ export const destinationHandlers = [
       request_key: string;
       revision: number;
       action: string;
+      entry_id?: string;
+      program_sha256?: string;
+      question_id?: string;
       field?: keyof IntakeInputs;
       route_ids?: string[];
       action_id?: string;
       progress_status?: 'todo' | 'in_progress' | 'done';
       basis_sha256?: string;
       status: 'known' | 'unknown' | 'needs_confirmation' | 'not_applicable';
-      value: string | string[] | null;
+      value: string | number | boolean | string[] | null;
     };
     const previous = requests.get(body.request_key);
     if (previous)
@@ -104,6 +132,27 @@ export const destinationHandlers = [
         : HttpResponse.json({ detail: 'Key conflict' }, { status: 409 });
     if (body.revision !== result.context.session_revision)
       return HttpResponse.json({ detail: 'Revision changed' }, { status: 409 });
+    if (body.action === 'program_answer' || body.action === 'program_adopt') {
+      const entry = result.entries.find((e) => e.id === body.entry_id);
+      const checked = entry?.program_result;
+      if (!entry || !checked || checked.program_sha256 !== body.program_sha256)
+        return HttpResponse.json({ detail: 'Program conflict' }, { status: 409 });
+      if (body.action === 'program_adopt') {
+        checked.definition_changed = false;
+        checked.reason = null;
+        updateProgramFixture(entry);
+      } else {
+        if (checked.definition_changed || checked.reason)
+          return HttpResponse.json({ detail: 'Program unavailable' }, { status: 409 });
+        if (
+          !answerProgramFixture(entry, body.question_id ?? '', {
+            status: body.status,
+            value: body.value as string | number | boolean | null,
+          })
+        )
+          return HttpResponse.json({ value: ['Invalid program value'] }, { status: 400 });
+      }
+    }
     if (body.action === 'select_routes' && result.plan && body.route_ids) {
       const ids = body.route_ids;
       result.plan.selected_routes = ids;
@@ -122,7 +171,7 @@ export const destinationHandlers = [
     if (body.field)
       result.intake.inputs[body.field] = {
         status: body.status,
-        value: body.value,
+        value: body.value as string | string[] | null,
         source: 'user',
         document_verified: false,
       };

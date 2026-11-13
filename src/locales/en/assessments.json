@@ -886,7 +886,9 @@
       "refresh_legal_sources": "Obtain current legal rules before assessing eligibility",
       "identify_program_requirements": "Identify the exact program and its verified requirements with a specialist",
       "review_financial_basis": "Review costs, allocated resources and proof of funds separately",
-      "independent_route_review": "Request independent review of the route and evidence"
+      "independent_route_review": "Request independent review of the route and evidence",
+      "complete_configured_program": "Complete this configured program’s questions",
+      "review_configured_program_basis": "Review the configured program definition and source"
     },
     "statuses": {
       "todo": "To do",
@@ -894,5 +896,82 @@
       "done": "Done (self-reported)",
       "needs_recheck": "Needs recheck"
     }
+  },
+  "programs": {
+    "checkTitle": "Configured check — {{title}}",
+    "checkHeading": "Program conditions configured by the manager",
+    "meaning": "These are configured draft conditions and program-specific points. Meeting them does not establish visa eligibility, verify documents or predict approval.",
+    "conditions": "Configured conditions",
+    "conditionsStatus": {
+      "met": "Configured conditions met",
+      "unmet": "A configured condition is not met",
+      "insufficient_information": "More information is needed"
+    },
+    "requirementStatus": {
+      "met": "Met by supplied answers",
+      "unmet": "Not met by supplied answers",
+      "unknown": "Unknown"
+    },
+    "points": "Configured points: {{score}} · {{status}}",
+    "noScore": "No point system configured",
+    "partialScore": "Incomplete points",
+    "completeScore": "Complete from supplied answers",
+    "passMark": "Configured point threshold reached",
+    "next": "Next useful question: {{question}}",
+    "discard": "Discard changes for this program",
+    "discardAll": "Discard all unsaved program answers",
+    "adopt": "Confirm the current program definition",
+    "answerStatus": "Answer status — {{question}}",
+    "parentRequired": "Answer the parent condition before this question becomes available.",
+    "previous": "Previous unconfirmed answer: {{value}}",
+    "saveAnswer": "Save program answer — {{question}}",
+    "sourceDates": "Rules checked {{checked}}; review due {{due}}; received {{received}}; effective {{effective}}; assessment coverage {{from}} to {{through}}.",
+    "reasons": {
+      "catalog_changed": "Confirm the current catalog before using these program rules.",
+      "program_definition_changed": "This program definition changed. Confirm it and review the previous answers.",
+      "program_source_unreviewed": "This program source has not been reviewed.",
+      "program_source_out_of_date": "The program source needs a current review.",
+      "program_source_received_after_assessment": "This program source was received after the selected assessment date.",
+      "program_date_out_of_coverage": "The selected date is outside this program’s declared coverage."
+    },
+    "syntheticQuestion": "Synthetic example — replace with a sourced question",
+    "addDefinition": "Add configurable program rules",
+    "definition": "Configure program questions, conditions and points",
+    "editorMeaning": "Define questions, conditions and capped point bands without code. This sandbox definition needs explicit source dates, independent reference cases and separate review before local activation. A specialized calculator cannot be combined with configured rules on one option.",
+    "source": "Program rule source",
+    "sourceFields": {
+      "title": "Program source title",
+      "url": "Program source HTTPS URL",
+      "checked_on": "Program source checked on",
+      "review_due": "Program source review due",
+      "received_at": "Program source receipt (with timezone)",
+      "effective_on": "Program rules effective on"
+    },
+    "reviewStatus": "Program source review status",
+    "review": {
+      "draft": "Draft program source",
+      "reviewed_program": "Program source reviewed"
+    },
+    "coverage": {
+      "from": "Program assessment coverage from",
+      "through": "Program assessment coverage through"
+    },
+    "removeDefinition": "Remove configurable program rules",
+    "referenceTitle": "Independent program cases — {{title}}",
+    "referenceCase": "Program reference case {{index}}",
+    "referenceAnswer": "Reference answer — {{question}}",
+    "notSupplied": "Not supplied in this case",
+    "expectedConditions": "Expected configured conditions",
+    "expectedScoreStatus": "Expected configured point status",
+    "expectedScore": "Expected configured points (blank = unknown)",
+    "expectedPass": "Expected configured point threshold",
+    "scoreStatuses": {
+      "partial": "Partial",
+      "complete_self_reported": "Complete from supplied answers",
+      "not_applicable": "No score configured"
+    },
+    "addReference": "Add independent program case",
+    "impact": "Configured program comparison — {{id}}",
+    "impactValues": "Conditions: expected {{expected}}; actual {{actual}}; before {{before}}. Points: expected {{expectedScore}}; actual {{score}}; before {{beforeScore}}."
   }
 }

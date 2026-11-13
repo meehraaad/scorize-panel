@@ -1,3 +1,5 @@
+import { ProgramPanel } from './ProgramPanel';
+import type { ProgramInteraction } from './programTypes';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { TogglePill } from '@/components/ui/Choices';
@@ -17,11 +19,13 @@ export function DestinationReport({
   readOnly = false,
   interactionDisabled = false,
   onSelect,
+  programInteraction,
 }: {
   data: DestinationResult | DestinationSnapshot['payload'];
   readOnly?: boolean;
   interactionDisabled?: boolean;
   onSelect?: (routes: string[]) => void;
+  programInteraction?: ProgramInteraction;
 }) {
   const { t, i18n } = useTranslation('assessments');
   const selected = data.plan?.selected_routes ?? [];
@@ -151,42 +155,51 @@ export function DestinationReport({
                 </li>
               ))}
             </ul>
-            <p className="mt-3 font-semibold">
-              {t('destinations.legal')}: {label(entry.eligibility.status)}
-            </p>
-            {entry.eligibility.reason && <p>{label(entry.eligibility.reason)}</p>}
-            {entry.eligibility.coverage && (
-              <p>
-                {t('destinations.coverage', {
-                  from: entry.eligibility.coverage.from,
-                  through: entry.eligibility.coverage.through,
-                })}
-              </p>
-            )}
-            {entry.eligibility.score && (
-              <p>
-                {t('destinations.score', {
-                  system: entry.eligibility.score.system,
-                  score: entry.eligibility.score.score ?? t('calculator.partial'),
-                })}
-              </p>
-            )}
-            {entry.eligibility.requirements && (
-              <details>
-                <summary className="min-h-11 cursor-pointer py-2">
-                  {t('destinations.requirements')}
-                </summary>
-                <ul>
-                  {Object.entries(entry.eligibility.requirements).map(([key, v]) => (
-                    <li key={key}>
-                      {(t('comparison.labels', { returnObjects: true }) as Record<string, string>)[
-                        key
-                      ] ?? key}
-                      : {requirementLabel(v)}
-                    </li>
-                  ))}
-                </ul>
-              </details>
+            {entry.program_result ? (
+              <ProgramPanel entry={entry} interaction={readOnly ? undefined : programInteraction} />
+            ) : (
+              <>
+                <p className="mt-3 font-semibold">
+                  {t('destinations.legal')}: {label(entry.eligibility.status)}
+                </p>
+                {entry.eligibility.reason && <p>{label(entry.eligibility.reason)}</p>}
+                {entry.eligibility.coverage && (
+                  <p>
+                    {t('destinations.coverage', {
+                      from: entry.eligibility.coverage.from,
+                      through: entry.eligibility.coverage.through,
+                    })}
+                  </p>
+                )}
+                {entry.eligibility.score && (
+                  <p>
+                    {t('destinations.score', {
+                      system: entry.eligibility.score.system,
+                      score: entry.eligibility.score.score ?? t('calculator.partial'),
+                    })}
+                  </p>
+                )}
+                {entry.eligibility.requirements && (
+                  <details>
+                    <summary className="min-h-11 cursor-pointer py-2">
+                      {t('destinations.requirements')}
+                    </summary>
+                    <ul>
+                      {Object.entries(entry.eligibility.requirements).map(([key, v]) => (
+                        <li key={key}>
+                          {(
+                            t('comparison.labels', { returnObjects: true }) as Record<
+                              string,
+                              string
+                            >
+                          )[key] ?? key}
+                          : {requirementLabel(v)}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </>
             )}
             <FinancialResult result={entry.financial} />
             <p className="mt-3">{label(entry.directory_status)}</p>
