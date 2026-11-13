@@ -130,3 +130,19 @@ it('opens an Australian route without writes, prepares its subclass only after a
     `/dev/assessment-destinations?session=${ID}`,
   );
 });
+
+it('never offers a detailed handoff for an unsupported program even with a reviewed directory', async () => {
+  const { default: fixture } = await import('@/mocks/destination-result.json');
+  const data = structuredClone(fixture);
+  const entry = data.entries[0];
+  if (!entry) throw new Error('Missing program fixture');
+  entry.id = 'ca-fst';
+  entry.calculator_route = 'ca-fst';
+  entry.eligibility = { status: 'unsupported', reason: 'fst_not_implemented' };
+  data.entries = [entry];
+  server.use(
+    http.get('/api/applicant/v1/assessments/:id/destinations/', () => HttpResponse.json(data)),
+  );
+  await open();
+  expect(screen.queryByRole('link', { name: 'Open detailed assessment' })).not.toBeInTheDocument();
+});

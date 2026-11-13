@@ -214,6 +214,8 @@ export function DestinationReport({
             {!readOnly &&
               !interactionDisabled &&
               entry.calculator_route &&
+              entry.calculator_route !== 'ca-fst' &&
+              entry.eligibility.status !== 'unsupported' &&
               entry.eligibility.reason !== 'legal_date_out_of_coverage' &&
               entry.directory_status === 'reviewed_directory' && (
                 <Link
