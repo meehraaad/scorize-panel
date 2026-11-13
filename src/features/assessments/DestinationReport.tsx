@@ -9,16 +9,22 @@ import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { safeHref } from '@/lib/url';
 import { buttonClass } from '@/components/ui/buttonStyles';
+import { DestinationPlan } from './DestinationPlan';
 import { FinancialResult } from './FinancialResult';
 import { INTAKE_FIELDS, type DestinationResult, type DestinationSnapshot } from './destinationApi';
 export function DestinationReport({
   data,
   readOnly = false,
+  interactionDisabled = false,
+  onSelect,
 }: {
   data: DestinationResult | DestinationSnapshot['payload'];
   readOnly?: boolean;
+  interactionDisabled?: boolean;
+  onSelect?: (routes: string[]) => void;
 }) {
   const { t, i18n } = useTranslation('assessments');
+  const selected = data.plan?.selected_routes ?? [];
   const [showOutside, setShowOutside] = useState(readOnly);
   const entries = showOutside
     ? data.entries
@@ -94,6 +100,30 @@ export function DestinationReport({
             className="border-line min-w-0 rounded-2xl border p-4 break-words"
           >
             <h3 className="font-bold">{entry.title[language]}</h3>
+            {!readOnly && onSelect && data.plan && (
+              <Button
+                variant="outline"
+                disabled={
+                  interactionDisabled ||
+                  (!data.plan.selected_routes.includes(entry.id) &&
+                    data.plan.selected_routes.length >= data.plan.max_routes)
+                }
+                onClick={() =>
+                  onSelect(
+                    selected.includes(entry.id)
+                      ? selected.filter((id) => id !== entry.id)
+                      : [...selected, entry.id],
+                  )
+                }
+              >
+                {t(
+                  data.plan.selected_routes.includes(entry.id)
+                    ? 'destinationPlan.unselectOption'
+                    : 'destinationPlan.selectOption',
+                  { title: entry.title[language] },
+                )}
+              </Button>
+            )}
             <p>
               {t('destinations.preference')}: {label(entry.relevance)}
             </p>
@@ -182,12 +212,13 @@ export function DestinationReport({
               </ul>
             </details>
             {!readOnly &&
+              !interactionDisabled &&
               entry.calculator_route &&
               entry.eligibility.reason !== 'legal_date_out_of_coverage' &&
               entry.directory_status === 'reviewed_directory' && (
                 <Link
                   className={buttonClass('outline', 'mt-3')}
-                  to={`/dev/assessment-calculators?session=${encodeURIComponent(data.context.session_id)}&country=${entry.country === 'CA' ? 'canada' : 'australia'}`}
+                  to={`/dev/assessment-calculators?session=${encodeURIComponent(data.context.session_id)}&country=${entry.country === 'CA' ? 'canada' : 'australia'}&route=${encodeURIComponent(entry.calculator_route)}`}
                 >
                   {t('destinations.openInterview')}
                 </Link>
@@ -195,6 +226,7 @@ export function DestinationReport({
           </article>
         ))}
       </div>
+      {readOnly && <DestinationPlan data={data} disabled />}
     </div>
   );
 }

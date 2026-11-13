@@ -1,3 +1,5 @@
+import { useSearchParams } from 'react-router';
+import { DestinationPlan } from './DestinationPlan';
 import { FinancialPanel } from './FinancialPanel';
 import { useEffect, useId, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -33,7 +35,8 @@ export default function DestinationPage() {
   const section = useId();
   const cache = useQueryClient();
   const options = useQuery(destinationOptionsQuery);
-  const [session, setSession] = useState('');
+  const [search] = useSearchParams();
+  const [session, setSession] = useState(search.get('session') ?? '');
   const [date, setDate] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<Record<string, unknown> | null>(null);
@@ -204,7 +207,11 @@ function IntakeEditor({
     conflict ||
     refreshing ||
     !data?.writable;
-  const send = (action: 'answer' | 'adopt' | 'record', field?: keyof IntakeInputs) => {
+  const send = (
+    action: 'answer' | 'adopt' | 'record' | 'select_routes' | 'action_progress',
+    field?: keyof IntakeInputs,
+    extra: Record<string, unknown> = {},
+  ) => {
     if (!data) return;
     const fact = field ? (input ?? data.intake.inputs)[field] : undefined;
     const request = {
@@ -213,6 +220,7 @@ function IntakeEditor({
         revision: data.context.session_revision,
         decision_sha256: data.decision_sha256,
         request_key: crypto.randomUUID(),
+        ...extra,
         ...(action === 'record' ? {} : { action }),
         ...(field ? { field, status: fact?.status ?? 'unknown', value: fact?.value ?? null } : {}),
       },
@@ -313,7 +321,23 @@ function IntakeEditor({
                 }
                 onBusy={setFinancialBusy}
               />
-              <DestinationReport data={data} />
+              <DestinationReport
+                data={data}
+                interactionDisabled={locked || dirty || data.intake.catalog_changed}
+                onSelect={(routes) => send('select_routes', undefined, { route_ids: routes })}
+              />
+              <DestinationPlan
+                data={data}
+                disabled={locked || dirty || data.intake.catalog_changed}
+                onSelect={(routes) => send('select_routes', undefined, { route_ids: routes })}
+                onProgress={(action, status) =>
+                  send('action_progress', undefined, {
+                    action_id: action.id,
+                    basis_sha256: action.basis_sha256,
+                    progress_status: status,
+                  })
+                }
+              />
               <Button
                 disabled={locked || dirty || data.intake.catalog_changed}
                 onClick={() => send('record')}

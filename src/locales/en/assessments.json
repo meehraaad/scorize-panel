@@ -860,5 +860,39 @@
     "replayUnavailable": "This recorded implementation cannot currently be replayed. The historical result remains readable.",
     "coverageGaps": "The current catalog does not cover these destinations for your stated goals: {{countries}}. This is a coverage gap, not a finding that you are ineligible.",
     "impactLine": "{{title}} — expected {{expected}}; actual {{actual}} ({{earned}} / {{total}} preference weight); before {{before}}"
+  },
+  "destinationPlan": {
+    "title": "Your destination follow-up plan",
+    "meaning": "This is a research plan, not a complete legal document checklist. Progress is self-reported; marking an action done never establishes eligibility or verifies evidence.",
+    "empty": "Select up to {{max}} options to investigate. Their order is yours, not a suitability ranking.",
+    "selectOption": "Add {{title}} to my plan",
+    "unselectOption": "Remove {{title}} from my plan",
+    "remove": "Remove option",
+    "earlier": "Move earlier in my plan",
+    "removed": "Unavailable option ({{id}})",
+    "unavailable": "This option is no longer in the adopted catalog. Its previous history remains available; remove it or select a current option.",
+    "progress": "Progress — {{action}}",
+    "recheck": "The basis changed. Previous self-report: {{previous}}. Review this action again before reconfirming progress.",
+    "recorded": "Self-reported on {{date}}",
+    "dependencies": "Review the preceding actions before independent review; reporting completion does not verify them.",
+    "openInterview": "Continue this option’s detailed assessment",
+    "handoff": "Investigating {{route}}. Opening this page changes no answers. Shared scores do not establish this program’s eligibility.",
+    "return": "Return to my destination plan",
+    "prepare": "Prepare subclass questions for {{route}}",
+    "prepareMeaning": "This fills the selected subclass in the form only. Save explicitly; existing subclass evidence may need confirmation.",
+    "actions": {
+      "review_directory": "Check the official directory and its review dates",
+      "complete_route_interview": "Complete evidence for this specific route",
+      "refresh_legal_sources": "Obtain current legal rules before assessing eligibility",
+      "identify_program_requirements": "Identify the exact program and its verified requirements with a specialist",
+      "review_financial_basis": "Review costs, allocated resources and proof of funds separately",
+      "independent_route_review": "Request independent review of the route and evidence"
+    },
+    "statuses": {
+      "todo": "To do",
+      "in_progress": "In progress",
+      "done": "Done (self-reported)",
+      "needs_recheck": "Needs recheck"
+    }
   }
 }

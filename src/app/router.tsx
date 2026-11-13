@@ -1,4 +1,4 @@
-import { destinationOptionsQuery } from '@/features/assessments/destinationApi';
+import { destinationOptionsQuery, destinationQuery } from '@/features/assessments/destinationApi';
 import {
   createBrowserRouter,
   redirect,
@@ -221,7 +221,12 @@ const pageRoutes: RouteObject[] = [
           loader: async ({ request }: LoaderFunctionArgs) =>
             (await currentUser()) ? null : toLogin(request),
           ...lazyPage(() => import('@/features/assessments/DestinationPage'), ['assessments'], {
-            data: () => [destinationOptionsQuery],
+            data: ({ request }) => {
+              const session = new URL(request.url).searchParams.get('session');
+              return session
+                ? [destinationOptionsQuery, destinationQuery(session), snapshotsQuery(session, 1)]
+                : [destinationOptionsQuery];
+            },
             skeleton: 'form',
           }),
           HydrateFallback: BootFallback,

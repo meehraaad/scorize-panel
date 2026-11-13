@@ -81,7 +81,30 @@ export interface Catalog {
   sha256: string;
   bundle: DestinationPolicy;
 }
+export interface PlanAction {
+  id: string;
+  kind: string;
+  basis_sha256: string;
+  status: 'todo' | 'in_progress' | 'done' | 'needs_recheck';
+  reported_status: 'todo' | 'in_progress' | 'done';
+  basis_changed: boolean;
+  recorded_at: string | null;
+  depends_on: string[];
+}
+export interface DestinationFollowUpPlan {
+  version: string;
+  selected_routes: string[];
+  max_routes: number;
+  routes: {
+    id: string;
+    available: boolean;
+    title?: { fa: string; en: string };
+    actions: PlanAction[];
+    interview: { country: 'canada' | 'australia'; route_id: string } | null;
+  }[];
+}
 export interface DestinationResult extends DestinationEvaluation {
+  plan?: DestinationFollowUpPlan;
   country: 'destinations';
   record_kind: 'draft_destination_shortlist';
   active: false;
