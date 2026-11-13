@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { FinancialPanel } from './FinancialPanel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -36,11 +36,21 @@ import {
 
 function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const { t } = useTranslation('assessments');
+  const [search] = useSearchParams();
+  const routeParam = search.get('route') ?? '';
+  const routeCountry = search.get('country') === 'australia' ? 'australia' : 'canada';
+  const requestedRoute = (routeCountry === 'australia'
+    ? ['au-189', 'au-190', 'au-491']
+    : ['ca-fsw', 'ca-cec']
+  ).includes(routeParam)
+    ? routeParam
+    : null;
+  const routeLabels = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
   const labels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
   const choicesText = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
   const sectionId = useId();
   const editorRef = useRef<HTMLFieldSetElement>(null);
-  const hasNavigated = useRef(false);
+  const hasNavigated = useRef(Boolean(requestedRoute));
   const focusEditor = () =>
     requestAnimationFrame(() => {
       editorRef.current?.scrollIntoView({ block: 'start' });
@@ -50,11 +60,12 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const query = useQuery(interviewQuery(id));
   const [historyPage, setHistoryPage] = useState(1);
   const history = useQuery(snapshotsQuery(id, historyPage));
-  const [search] = useSearchParams();
   const [country, setCountry] = useState<Country>(
     search.get('country') === 'australia' ? 'australia' : 'canada',
   );
-  const [field, setField] = useState(country === 'australia' ? 'facts.birth_date' : 'birth_date');
+  const [field, setField] = useState(
+    country === 'australia' ? (requestedRoute ? 'subclass' : 'facts.birth_date') : 'birth_date',
+  );
   const [status, setStatus] = useState<AnswerStatus | null>(null);
   const [value, setValue] = useState<unknown>(undefined);
   const [dirty, setDirty] = useState(false);
@@ -74,7 +85,8 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
     australianRoute?.status === 'known' &&
     australianRoute.question_version === data?.adapter_version &&
     typeof australianRoute.value === 'string' &&
-    ['189', '190', '491'].includes(australianRoute.value);
+    ['189', '190', '491'].includes(australianRoute.value) &&
+    (!requestedRoute?.startsWith('au-') || australianRoute.value === requestedRoute.slice(3));
   const save = useMutation({
     mutationFn: (body: unknown) => saveCalculatorAnswer(id, body),
     onSuccess: (next) => {
@@ -188,6 +200,56 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const conflict = saveError instanceof ApiError && saveError.status === 409;
   return (
     <>
+      {requestedRoute && (
+        <div className="flex flex-col gap-3">
+          <Notice tone="info">
+            {t('destinationPlan.handoff', { route: routeLabels[requestedRoute] })}
+          </Notice>
+          {!dirty &&
+            !saving &&
+            !pending &&
+            !snapshotRequest &&
+            !record.isPending &&
+            !financialBusy &&
+            !comparisonBusy &&
+            !guidanceBusy && (
+              <Link
+                className="underline"
+                to={`/dev/assessment-destinations?session=${encodeURIComponent(id)}`}
+              >
+                {t('destinationPlan.return')}
+              </Link>
+            )}
+          {routeCountry === 'australia' && (
+            <>
+              <p>{t('destinationPlan.prepareMeaning')}</p>
+              <Button
+                variant="outline"
+                disabled={
+                  dirty ||
+                  saving ||
+                  record.isPending ||
+                  comparisonBusy ||
+                  financialBusy ||
+                  guidanceBusy ||
+                  Boolean(snapshotRequest) ||
+                  Boolean(pending)
+                }
+                onClick={() => {
+                  choose('australia', 'subclass');
+                  setStatus('known');
+                  setValue(requestedRoute.slice(3));
+                  setDirty(true);
+                  setAutoPaused(true);
+                  focusEditor();
+                }}
+              >
+                {t('destinationPlan.prepare', { route: routeLabels[requestedRoute] })}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
       <GuidedInterview
         id={id}
         country={country}

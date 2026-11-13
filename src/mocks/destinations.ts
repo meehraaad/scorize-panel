@@ -5,14 +5,53 @@ import type {
   DestinationResult,
   DestinationSnapshot,
   IntakeInputs,
+  PlanAction,
 } from '@/features/assessments/destinationApi';
 const ID = '22222222-2222-4222-8222-222222222222';
 let result = structuredClone(fixture) as DestinationResult;
 let snapshots: DestinationSnapshot[] = [];
+let basisVersion = 0;
+let progress: Record<string, { status: 'todo' | 'in_progress' | 'done'; basis: string }> = {};
+function refreshPlan() {
+  const plan = result.plan;
+  if (!plan) return;
+  const basis = String(basisVersion).padStart(64, '0');
+  plan.routes = plan.selected_routes.map((id) => {
+    const entry = result.entries.find((e) => e.id === id);
+    if (!entry) return { id, available: false, actions: [], interview: null };
+    const kinds = [
+      'review_directory',
+      entry.eligibility.reason === 'legal_date_out_of_coverage'
+        ? 'refresh_legal_sources'
+        : 'identify_program_requirements',
+      'review_financial_basis',
+      'independent_route_review',
+    ];
+    const actions: PlanAction[] = kinds.map((kind) => {
+      const key = id + ':' + kind;
+      const old = progress[key];
+      const changed = Boolean(old && old.basis !== basis);
+      return {
+        id: key,
+        kind,
+        basis_sha256: basis,
+        status: changed ? 'needs_recheck' : (old?.status ?? 'todo'),
+        reported_status: old?.status ?? 'todo',
+        basis_changed: changed,
+        recorded_at: old ? '2026-11-13T01:00:00Z' : null,
+        depends_on:
+          kind === 'independent_route_review' ? kinds.slice(0, -1).map((k) => id + ':' + k) : [],
+      };
+    });
+    return { id, title: entry.title, available: true, actions, interview: null };
+  });
+}
 let requests = new Map<string, { signature: string; response: Record<string, unknown> }>();
 export function resetDestinationMocks() {
   result = structuredClone(fixture) as DestinationResult;
   snapshots = [];
+  basisVersion = 0;
+  progress = {};
   requests = new Map();
 }
 const options = () => ({
@@ -51,6 +90,10 @@ export const destinationHandlers = [
       revision: number;
       action: string;
       field?: keyof IntakeInputs;
+      route_ids?: string[];
+      action_id?: string;
+      progress_status?: 'todo' | 'in_progress' | 'done';
+      basis_sha256?: string;
       status: 'known' | 'unknown' | 'needs_confirmation' | 'not_applicable';
       value: string | string[] | null;
     };
@@ -61,6 +104,21 @@ export const destinationHandlers = [
         : HttpResponse.json({ detail: 'Key conflict' }, { status: 409 });
     if (body.revision !== result.context.session_revision)
       return HttpResponse.json({ detail: 'Revision changed' }, { status: 409 });
+    if (body.action === 'select_routes' && result.plan && body.route_ids) {
+      const ids = body.route_ids;
+      result.plan.selected_routes = ids;
+      progress = Object.fromEntries(
+        Object.entries(progress).filter(([key]) => ids.some((id) => key.startsWith(id + ':'))),
+      );
+    }
+    if (
+      body.action === 'action_progress' &&
+      body.action_id &&
+      body.progress_status &&
+      body.basis_sha256
+    )
+      progress[body.action_id] = { status: body.progress_status, basis: body.basis_sha256 };
+    if (body.field) basisVersion++;
     if (body.field)
       result.intake.inputs[body.field] = {
         status: body.status,
@@ -86,6 +144,7 @@ export const destinationHandlers = [
               ? 'matches_preferences'
               : 'alternative_destination',
     }));
+    refreshPlan();
     result.decision_sha256 = String(result.context.session_revision).padStart(64, '0');
     const response = {
       revision: result.context.session_revision,

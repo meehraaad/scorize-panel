@@ -51,7 +51,9 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": ["policy_unavailable"],
+        "unknowns": [
+          "policy_unavailable"
+        ],
         "components": [],
         "ask_exact": false
       },
@@ -114,7 +116,9 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": ["policy_unavailable"],
+        "unknowns": [
+          "policy_unavailable"
+        ],
         "components": [],
         "ask_exact": false
       },
@@ -173,7 +177,9 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": ["policy_unavailable"],
+        "unknowns": [
+          "policy_unavailable"
+        ],
         "components": [],
         "ask_exact": false
       },
@@ -232,7 +238,9 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": ["policy_unavailable"],
+        "unknowns": [
+          "policy_unavailable"
+        ],
         "components": [],
         "ask_exact": false
       },
@@ -291,7 +299,9 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": ["policy_unavailable"],
+        "unknowns": [
+          "policy_unavailable"
+        ],
         "components": [],
         "ask_exact": false
       },
@@ -306,7 +316,13 @@
       ]
     }
   ],
-  "unknowns": ["goals", "destinations", "citizenships", "residence", "timeline"],
+  "unknowns": [
+    "goals",
+    "destinations",
+    "citizenships",
+    "residence",
+    "timeline"
+  ],
   "ordering": "catalog_display_order",
   "ranking_is_visa_probability": false,
   "personal_legal_entitlement_inferred": false,
@@ -1041,7 +1057,10 @@
         "id": "language",
         "text": "سطح فرضی زبان شما چیست؟",
         "kind": "choice",
-        "choices": ["basic", "advanced"]
+        "choices": [
+          "basic",
+          "advanced"
+        ]
       },
       {
         "id": "sponsor",
@@ -1254,5 +1273,14 @@
   "implementation_sha256": "12a71ba7839a8f77f3acd60ee807a86d226082aa0b15fd35fa58dd4c95db30e2",
   "python_version": "3.14.8",
   "writable": true,
-  "decision_sha256": "c1520f7c705ab49b35828350df620572b387b6524c4ed14ceea11603d1b6b70c"
+  "decision_sha256": "c1520f7c705ab49b35828350df620572b387b6524c4ed14ceea11603d1b6b70c",
+  "plan": {
+    "version": "destination-plan-1",
+    "selected_routes": [],
+    "routes": [],
+    "ordering": "user_selected_order",
+    "max_routes": 6,
+    "completion_is_eligibility": false,
+    "is_exhaustive_document_checklist": false
+  }
 }
