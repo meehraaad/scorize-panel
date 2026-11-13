@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import type { Draft, DraftInput, Options } from '@/features/assessments/api';
 import fixture from './assessment-options.json';
 import financialFixture from './calculator-financial.json';
+import destinationFixture from './destination-result.json';
 
 const BASE = '/api/staff/v1/assessments';
 let drafts: Draft[] = [];
@@ -25,7 +26,18 @@ export const assessmentHandlers = [
     }),
   ),
   http.get(`${BASE}/options/`, () =>
-    HttpResponse.json({ ...fixture, financial_policy: financialFixture.policy.bundle }),
+    HttpResponse.json({
+      ...fixture,
+      financial_policy: financialFixture.policy.bundle,
+      destination_policy: destinationFixture.intake.catalog.bundle,
+      countries: [
+        { code: 'CA', name: 'Canada' },
+        { code: 'AU', name: 'Australia' },
+        { code: 'DE', name: 'Germany' },
+        { code: 'GB', name: 'United Kingdom' },
+        { code: 'US', name: 'United States' },
+      ],
+    }),
   ),
   http.get(`${BASE}/drafts/`, () =>
     HttpResponse.json({

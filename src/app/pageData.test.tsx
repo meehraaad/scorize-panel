@@ -50,6 +50,7 @@ interface PageCase {
 const PAGES: PageCase[] = [
   { path: '/dev/assessments', user: REZA },
   { path: '/dev/assessment-calculators', user: SARA },
+  { path: '/dev/assessment-destinations', user: SARA },
   // Applicant panel.
   ...[
     '/',

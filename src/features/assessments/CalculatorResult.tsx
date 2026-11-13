@@ -1,12 +1,20 @@
+import { DestinationSaved } from './DestinationReport';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
-import { isComparisonSnapshot, type Snapshot, type SingleSnapshot } from './calculatorApi';
+import {
+  isDestinationSnapshot,
+  isComparisonSnapshot,
+  type Snapshot,
+  type SingleSnapshot,
+} from './calculatorApi';
 import { ComparisonResult } from './RouteComparison';
 
 export function CalculationResult({ snapshot }: { snapshot: Snapshot }) {
-  return isComparisonSnapshot(snapshot) ? (
+  return isDestinationSnapshot(snapshot) ? (
+    <DestinationSaved snapshot={snapshot} />
+  ) : isComparisonSnapshot(snapshot) ? (
     <ComparisonResult snapshot={snapshot} />
   ) : (
     <SingleResult snapshot={snapshot} />

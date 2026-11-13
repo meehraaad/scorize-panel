@@ -1,3 +1,4 @@
+import type { DestinationPolicy, DestinationCase, DestinationEvaluation } from './destinationApi';
 import type {
   FinancialPolicy,
   FinancialScenario,
@@ -38,6 +39,7 @@ export interface Route {
   pass_mark?: number;
 }
 export interface Bundle {
+  destination_policy?: DestinationPolicy;
   financial_policy?: FinancialPolicy;
   schema_version: number;
   synthetic: boolean;
@@ -56,6 +58,7 @@ export interface Expected {
   pass_mark_met: boolean | null;
 }
 export interface Scenario {
+  destinations?: DestinationCase[];
   financial?: FinancialScenario[];
   name: string;
   assessment_date: string;
@@ -100,6 +103,12 @@ export interface Draft extends DraftInput, Summary {
     report: {
       name: string;
       passed: boolean;
+      destinations?: {
+        expected: Record<string, string>;
+        actual: DestinationEvaluation;
+        before: DestinationEvaluation;
+        passed: boolean;
+      }[];
       financial?: {
         route_id: string;
         expected: { status: FinancialStatus; ask_exact: boolean };
@@ -127,6 +136,8 @@ export interface Draft extends DraftInput, Summary {
   }[];
 }
 export interface Options {
+  destination_policy?: DestinationPolicy;
+  countries?: { code: string; name: string }[];
   financial_policy?: FinancialPolicy;
   bundle: Bundle;
   scenarios: Scenario[];

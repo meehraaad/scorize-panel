@@ -12,6 +12,7 @@ import {
   reviewCalculation,
   reviewQueueQuery,
   isComparisonSnapshot,
+  isDestinationSnapshot,
   type Options,
   type Snapshot,
 } from './calculatorApi';
@@ -34,19 +35,21 @@ function ReviewRecord({ snapshot, options }: { snapshot: Snapshot; options: Opti
       toast.success(t('calculator.reviewSaved'));
     },
   });
-  const evidence = isComparisonSnapshot(snapshot)
-    ? Object.entries(snapshot.payload.evaluations).flatMap(([country, evaluation]) =>
-        Object.entries(evaluation.mapping.provenance).map(([field, answer]) => ({
-          country: country as keyof Options['schemas'],
+  const evidence = isDestinationSnapshot(snapshot)
+    ? []
+    : isComparisonSnapshot(snapshot)
+      ? Object.entries(snapshot.payload.evaluations).flatMap(([country, evaluation]) =>
+          Object.entries(evaluation.mapping.provenance).map(([field, answer]) => ({
+            country: country as keyof Options['schemas'],
+            field,
+            answer,
+          })),
+        )
+      : Object.entries(snapshot.payload.mapping.provenance ?? {}).map(([field, answer]) => ({
+          country: snapshot.payload.country,
           field,
           answer,
-        })),
-      )
-    : Object.entries(snapshot.payload.mapping.provenance ?? {}).map(([field, answer]) => ({
-        country: snapshot.payload.country,
-        field,
-        answer,
-      }));
+        }));
   return (
     <SectionCard id={id} title={t('calculator.reviewRecord', { id: snapshot.id })} variant="panel">
       {snapshot.stale_reasons.length > 0 && <Notice tone="warn">{t('calculator.stale')}</Notice>}

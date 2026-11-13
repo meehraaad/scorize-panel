@@ -299,3 +299,36 @@ it('records proof family size separately without altering accompanying dependant
   expect(area.getByLabelText('Number of family members for this proof requirement')).toHaveValue(3);
   expect(area.getByLabelText('Number of accompanying dependants')).toHaveValue(0);
 });
+
+it('records after JSONB reorders financial facts and server provenance', async () => {
+  let revision = 0;
+  const inputs = structuredClone(fixture.inputs) as Record<string, unknown>;
+  server.use(
+    http.post('/api/applicant/v1/assessments/:id/calculators/financial/', async ({ request }) => {
+      const body = (await request.json()) as { field: string; status: string; value: unknown };
+      revision++;
+      inputs[body.field] = {
+        value: body.value,
+        status: body.status,
+        source: 'user',
+        document_verified: false,
+      };
+      return HttpResponse.json({
+        revision,
+        answers: {},
+        financial: {
+          ...fixture,
+          revision,
+          inputs: Object.fromEntries(Object.entries(inputs).reverse()),
+        },
+      });
+    }),
+  );
+  const { user, area } = await open();
+  const amount = area.getByLabelText('Exact spending budget (Tomans)');
+  await user.clear(amount);
+  await user.type(amount, '200');
+  await user.click(area.getByRole('button', { name: 'Save Willingness to spend' }));
+  await waitFor(() => expect(screen.getByLabelText('Evidence group')).toBeEnabled());
+  expect(area.getByRole('button', { name: 'Save Willingness to spend' })).toBeDisabled();
+});

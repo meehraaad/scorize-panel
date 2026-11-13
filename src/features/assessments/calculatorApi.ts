@@ -1,3 +1,4 @@
+import type { DestinationSnapshot } from './destinationApi';
 import type { FinancialResult, FinancialContext } from './financialTypes';
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
@@ -236,7 +237,9 @@ export interface ComparisonSnapshot {
   payload: Omit<Comparison, 'decision_sha256' | 'writable'>;
   reviews: SingleSnapshot['reviews'];
 }
-export type Snapshot = SingleSnapshot | ComparisonSnapshot;
+export type Snapshot = SingleSnapshot | ComparisonSnapshot | DestinationSnapshot;
+export const isDestinationSnapshot = (s: Snapshot): s is DestinationSnapshot =>
+  s.payload.country === 'destinations';
 export const isComparisonSnapshot = (s: Snapshot): s is ComparisonSnapshot =>
   s.payload.country === 'comparison';
 export const comparisonQuery = (id: string) =>

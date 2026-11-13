@@ -1,3 +1,4 @@
+import { DestinationPolicyEditor, DestinationCaseEditor } from './DestinationPolicyEditor';
 import { FinancialPolicyEditor, FinancialScenarioEditor } from './FinancialPolicyEditor';
 import { FinancialResult } from './FinancialResult';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -140,6 +141,10 @@ function DraftEditor({
   const { t } = useTranslation('assessments');
   const f = useFormat();
   const financialLabels = t('financial', { returnObjects: true });
+  const destinationWord = (key: string | undefined) =>
+    (t('destinations.words', { returnObjects: true }) as Record<string, string>)[
+      key ?? 'unknown'
+    ] ?? t('calculator.unknown');
   const routeLabels = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
   const client = useQueryClient();
   const [input, setInput] = useState<DraftInput>(() =>
@@ -271,44 +276,116 @@ function DraftEditor({
             value={input.title}
             onChange={(e) => update({ ...input, title: e.target.value })}
           />
-          {options.financial_policy && !input.bundle.financial_policy && (
-            <Button
-              variant="outline"
-              onClick={() =>
+          {options.financial_policy &&
+            !input.bundle.financial_policy &&
+            !input.bundle.destination_policy && (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  update({
+                    ...input,
+                    key: 'assessment-finance',
+                    bundle: {
+                      ...input.bundle,
+                      financial_policy: structuredClone(
+                        options.financial_policy ?? {
+                          schema_version: 1,
+                          ranges: [],
+                          open_ended: 'ask_exact',
+                          sufficient_bps: 10000,
+                          tight_bps: 9999,
+                          max_fx_age_days: 0,
+                          round_to_toman: 1,
+                          rates: [],
+                          routes: [],
+                        },
+                      ),
+                    },
+                    scenarios: input.scenarios.map((s) => ({
+                      ...s,
+                      financial: [
+                        {
+                          route_id: 'ca-fsw',
+                          inputs: {},
+                          expected: { status: 'unknown', ask_exact: false },
+                        },
+                      ],
+                    })),
+                  })
+                }
+              >
+                {t('financial.addPolicy')}
+              </Button>
+            )}
+          {options.destination_policy &&
+            !input.bundle.destination_policy &&
+            !input.bundle.financial_policy && (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  update({
+                    ...input,
+                    key: 'assessment-destinations',
+                    bundle: {
+                      ...input.bundle,
+                      destination_policy: structuredClone(
+                        options.destination_policy ?? {
+                          schema_version: 1,
+                          weights: { goal: 2, destination: 1 },
+                          entries: [],
+                        },
+                      ),
+                    },
+                    scenarios: input.scenarios.map((s) => ({
+                      ...s,
+                      destinations: [
+                        {
+                          inputs: {},
+                          expected: Object.fromEntries(
+                            (options.destination_policy?.entries ?? [])
+                              .filter((e) => e.enabled)
+                              .map((e) => [e.id, 'needs_preferences']),
+                          ),
+                        },
+                      ],
+                    })),
+                  })
+                }
+              >
+                {t('destinations.addPolicy')}
+              </Button>
+            )}
+          {input.bundle.destination_policy && (
+            <DestinationPolicyEditor
+              value={input.bundle.destination_policy}
+              countries={options.countries ?? []}
+              onChange={(destination_policy) =>
                 update({
                   ...input,
-                  key: 'assessment-finance',
-                  bundle: {
-                    ...input.bundle,
-                    financial_policy: structuredClone(
-                      options.financial_policy ?? {
-                        schema_version: 1,
-                        ranges: [],
-                        open_ended: 'ask_exact',
-                        sufficient_bps: 10000,
-                        tight_bps: 9999,
-                        max_fx_age_days: 0,
-                        round_to_toman: 1,
-                        rates: [],
-                        routes: [],
-                      },
-                    ),
-                  },
+                  bundle: { ...input.bundle, destination_policy },
                   scenarios: input.scenarios.map((s) => ({
                     ...s,
-                    financial: [
+                    destinations: s.destinations?.map((c) => ({
+                      ...c,
+                      expected: Object.fromEntries(
+                        destination_policy.entries
+                          .filter((e) => e.enabled)
+                          .map((e) => [e.id, c.expected[e.id] ?? 'needs_preferences']),
+                      ),
+                    })) ?? [
                       {
-                        route_id: 'ca-fsw',
                         inputs: {},
-                        expected: { status: 'unknown', ask_exact: false },
+                        expected: Object.fromEntries(
+                          destination_policy.entries
+                            .filter((e) => e.enabled)
+                            .map((e) => [e.id, 'needs_preferences']),
+                        ),
                       },
                     ],
                   })),
                 })
               }
-            >
-              {t('financial.addPolicy')}
-            </Button>
+            />
           )}
           {input.bundle.financial_policy && (
             <FinancialPolicyEditor
@@ -911,6 +988,21 @@ function DraftEditor({
                     }
                   />
                 )}
+                {input.bundle.destination_policy && (
+                  <DestinationCaseEditor
+                    policy={input.bundle.destination_policy}
+                    value={scenario.destinations ?? []}
+                    countries={options.countries ?? []}
+                    onChange={(destinations) =>
+                      update({
+                        ...input,
+                        scenarios: input.scenarios.map((s, i) =>
+                          i === index ? { ...s, destinations } : s,
+                        ),
+                      })
+                    }
+                  />
+                )}
                 <p>{t('independent')}</p>
                 {scenario.expected.map((expected, n) => {
                   const setExpected = (value: Partial<typeof expected>) =>
@@ -1097,6 +1189,25 @@ function DraftEditor({
           {draft.last_run.report.map((row) => (
             <div key={row.name} className="overflow-x-auto">
               <h3>{row.name}</h3>
+              {row.destinations?.map((test, i) => (
+                <div key={i} className="border-line my-3 min-w-0 rounded-xl border p-3">
+                  <h4>{t('destinations.referenceCases')}</h4>
+                  {test.actual.entries.map((entry) => (
+                    <p key={entry.id}>
+                      {t('destinations.impactLine', {
+                        title: entry.title.fa,
+                        expected: destinationWord(test.expected[entry.id]),
+                        actual: destinationWord(entry.relevance),
+                        earned: entry.preference_alignment.earned,
+                        total: entry.preference_alignment.possible,
+                        before:
+                          test.before.entries.find((e) => e.id === entry.id)?.preference_alignment
+                            .earned ?? t('calculator.unknown'),
+                      })}
+                    </p>
+                  ))}
+                </div>
+              ))}
               {row.financial?.map((test, i) => (
                 <div key={i} className="border-line my-3 rounded-xl border p-3">
                   <p>{routeLabels[test.route_id]}</p>

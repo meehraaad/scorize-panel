@@ -1,3 +1,4 @@
+import { sameAnswerContent } from './answerEquality';
 import { useEffect, useId, useState } from 'react';
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -114,7 +115,9 @@ function Editor({
       ),
     onSuccess: setScenario,
   });
-  const dirty = Boolean(input && data && JSON.stringify(input) !== JSON.stringify(data.inputs));
+  const dirty = Boolean(
+    input && data && FIELDS.some((field) => !sameAnswerContent(input[field], data.inputs[field])),
+  );
   useEffect(() => {
     onBusy(dirty || Boolean(pending) || mutation.isPending || preview.isPending || refreshing);
     return () => onBusy(false);
@@ -226,9 +229,7 @@ function Editor({
               {FIELDS.map((field) => (
                 <Button
                   key={field}
-                  disabled={
-                    !input || JSON.stringify(input[field]) === JSON.stringify(data.inputs[field])
-                  }
+                  disabled={!input || sameAnswerContent(input[field], data.inputs[field])}
                   onClick={() => send('answer', field)}
                 >
                   {t('financial.saveField', {

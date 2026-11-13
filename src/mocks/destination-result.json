@@ -1,0 +1,1258 @@
+{
+  "version": "destination-intake-1",
+  "assessment_date": "2026-11-13",
+  "entries": [
+    {
+      "id": "ca-fsw",
+      "country": "CA",
+      "goal": "work",
+      "title": {
+        "fa": "کانادا — گزینهٔ مصنوعی",
+        "en": "Canada — synthetic route"
+      },
+      "order": 0,
+      "enabled": true,
+      "calculator_route": "ca-fsw",
+      "source": {
+        "title": "Synthetic directory only",
+        "url": "https://example.org/synthetic",
+        "checked_on": "2026-11-01",
+        "review_due": "2026-12-30",
+        "received_at": "2026-11-01T00:00:00+00:00",
+        "effective_on": null,
+        "status": "reviewed_directory"
+      },
+      "directory_status": "reviewed_directory",
+      "relevance": "needs_preferences",
+      "preference_alignment": {
+        "earned": 0,
+        "possible": 3,
+        "complete": false,
+        "checks": [
+          {
+            "criterion": "goal",
+            "weight": 2,
+            "matched": null
+          },
+          {
+            "criterion": "destination",
+            "weight": 1,
+            "matched": null
+          }
+        ]
+      },
+      "eligibility": {
+        "status": "not_evaluated",
+        "reason": "legal_date_out_of_coverage",
+        "coverage": {
+          "from": "2026-11-03",
+          "through": "2026-11-12"
+        }
+      },
+      "financial": {
+        "status": "unknown",
+        "unknowns": ["policy_unavailable"],
+        "components": [],
+        "ask_exact": false
+      },
+      "next_actions": [
+        "goals",
+        "destinations",
+        "citizenships",
+        "residence",
+        "timeline",
+        "review_route_eligibility",
+        "clarify_financial_information"
+      ]
+    },
+    {
+      "id": "au-189",
+      "country": "AU",
+      "goal": "work",
+      "title": {
+        "fa": "استرالیا — گزینهٔ مصنوعی",
+        "en": "Australia — synthetic route"
+      },
+      "order": 1,
+      "enabled": true,
+      "calculator_route": "au-189",
+      "source": {
+        "title": "Synthetic directory only",
+        "url": "https://example.org/synthetic",
+        "checked_on": "2026-11-01",
+        "review_due": "2026-12-30",
+        "received_at": "2026-11-01T00:00:00+00:00",
+        "effective_on": null,
+        "status": "reviewed_directory"
+      },
+      "directory_status": "reviewed_directory",
+      "relevance": "needs_preferences",
+      "preference_alignment": {
+        "earned": 0,
+        "possible": 3,
+        "complete": false,
+        "checks": [
+          {
+            "criterion": "goal",
+            "weight": 2,
+            "matched": null
+          },
+          {
+            "criterion": "destination",
+            "weight": 1,
+            "matched": null
+          }
+        ]
+      },
+      "eligibility": {
+        "status": "not_evaluated",
+        "reason": "legal_date_out_of_coverage",
+        "coverage": {
+          "from": "2026-11-01",
+          "through": "2026-11-12"
+        }
+      },
+      "financial": {
+        "status": "unknown",
+        "unknowns": ["policy_unavailable"],
+        "components": [],
+        "ask_exact": false
+      },
+      "next_actions": [
+        "goals",
+        "destinations",
+        "citizenships",
+        "residence",
+        "timeline",
+        "review_route_eligibility",
+        "clarify_financial_information"
+      ]
+    },
+    {
+      "id": "de-study",
+      "country": "DE",
+      "goal": "study",
+      "title": {
+        "fa": "آلمان — گزینهٔ مصنوعی",
+        "en": "Germany — synthetic route"
+      },
+      "order": 2,
+      "enabled": true,
+      "calculator_route": null,
+      "source": {
+        "title": "Synthetic directory only",
+        "url": "https://example.org/synthetic",
+        "checked_on": "2026-11-01",
+        "review_due": "2026-12-30",
+        "received_at": "2026-11-01T00:00:00+00:00",
+        "effective_on": null,
+        "status": "reviewed_directory"
+      },
+      "directory_status": "reviewed_directory",
+      "relevance": "needs_preferences",
+      "preference_alignment": {
+        "earned": 0,
+        "possible": 3,
+        "complete": false,
+        "checks": [
+          {
+            "criterion": "goal",
+            "weight": 2,
+            "matched": null
+          },
+          {
+            "criterion": "destination",
+            "weight": 1,
+            "matched": null
+          }
+        ]
+      },
+      "eligibility": {
+        "status": "not_evaluated",
+        "reason": "calculator_not_implemented"
+      },
+      "financial": {
+        "status": "unknown",
+        "unknowns": ["policy_unavailable"],
+        "components": [],
+        "ask_exact": false
+      },
+      "next_actions": [
+        "goals",
+        "destinations",
+        "citizenships",
+        "residence",
+        "timeline",
+        "review_route_eligibility",
+        "clarify_financial_information"
+      ]
+    },
+    {
+      "id": "gb-study",
+      "country": "GB",
+      "goal": "study",
+      "title": {
+        "fa": "بریتانیا — گزینهٔ مصنوعی",
+        "en": "United Kingdom — synthetic route"
+      },
+      "order": 3,
+      "enabled": true,
+      "calculator_route": null,
+      "source": {
+        "title": "Synthetic directory only",
+        "url": "https://example.org/synthetic",
+        "checked_on": "2026-11-01",
+        "review_due": "2026-12-30",
+        "received_at": "2026-11-01T00:00:00+00:00",
+        "effective_on": null,
+        "status": "reviewed_directory"
+      },
+      "directory_status": "reviewed_directory",
+      "relevance": "needs_preferences",
+      "preference_alignment": {
+        "earned": 0,
+        "possible": 3,
+        "complete": false,
+        "checks": [
+          {
+            "criterion": "goal",
+            "weight": 2,
+            "matched": null
+          },
+          {
+            "criterion": "destination",
+            "weight": 1,
+            "matched": null
+          }
+        ]
+      },
+      "eligibility": {
+        "status": "not_evaluated",
+        "reason": "calculator_not_implemented"
+      },
+      "financial": {
+        "status": "unknown",
+        "unknowns": ["policy_unavailable"],
+        "components": [],
+        "ask_exact": false
+      },
+      "next_actions": [
+        "goals",
+        "destinations",
+        "citizenships",
+        "residence",
+        "timeline",
+        "review_route_eligibility",
+        "clarify_financial_information"
+      ]
+    },
+    {
+      "id": "us-work",
+      "country": "US",
+      "goal": "work",
+      "title": {
+        "fa": "آمریکا — گزینهٔ مصنوعی",
+        "en": "United States — synthetic route"
+      },
+      "order": 4,
+      "enabled": true,
+      "calculator_route": null,
+      "source": {
+        "title": "Synthetic directory only",
+        "url": "https://example.org/synthetic",
+        "checked_on": "2026-11-01",
+        "review_due": "2026-12-30",
+        "received_at": "2026-11-01T00:00:00+00:00",
+        "effective_on": null,
+        "status": "reviewed_directory"
+      },
+      "directory_status": "reviewed_directory",
+      "relevance": "needs_preferences",
+      "preference_alignment": {
+        "earned": 0,
+        "possible": 3,
+        "complete": false,
+        "checks": [
+          {
+            "criterion": "goal",
+            "weight": 2,
+            "matched": null
+          },
+          {
+            "criterion": "destination",
+            "weight": 1,
+            "matched": null
+          }
+        ]
+      },
+      "eligibility": {
+        "status": "not_evaluated",
+        "reason": "calculator_not_implemented"
+      },
+      "financial": {
+        "status": "unknown",
+        "unknowns": ["policy_unavailable"],
+        "components": [],
+        "ask_exact": false
+      },
+      "next_actions": [
+        "goals",
+        "destinations",
+        "citizenships",
+        "residence",
+        "timeline",
+        "review_route_eligibility",
+        "clarify_financial_information"
+      ]
+    }
+  ],
+  "unknowns": ["goals", "destinations", "citizenships", "residence", "timeline"],
+  "ordering": "catalog_display_order",
+  "ranking_is_visa_probability": false,
+  "personal_legal_entitlement_inferred": false,
+  "country": "destinations",
+  "record_kind": "draft_destination_shortlist",
+  "active": false,
+  "specialist_approved": false,
+  "context": {
+    "session_id": "22222222-2222-4222-8222-222222222222",
+    "session_revision": 0,
+    "assessment_date": "2026-11-13",
+    "ruleset_id": 20,
+    "ruleset_version": 1,
+    "ruleset_sha256": "799df8c43bbca26fdc754f0544d1598b5870616f625f96e1af12bd9dbb57e165",
+    "assessment_engine_version": "sandbox-2"
+  },
+  "profile_evidence_stale": false,
+  "intake": {
+    "catalog": {
+      "id": 20,
+      "version": 1,
+      "sha256": "c282528d557ccbe02ed6f501e129b30f2d010f97a1d2cfef3df908e9323404da",
+      "bundle": {
+        "schema_version": 1,
+        "weights": {
+          "goal": 2,
+          "destination": 1
+        },
+        "entries": [
+          {
+            "id": "ca-fsw",
+            "country": "CA",
+            "goal": "work",
+            "title": {
+              "fa": "کانادا — گزینهٔ مصنوعی",
+              "en": "Canada — synthetic route"
+            },
+            "order": 0,
+            "enabled": true,
+            "calculator_route": "ca-fsw",
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "au-189",
+            "country": "AU",
+            "goal": "work",
+            "title": {
+              "fa": "استرالیا — گزینهٔ مصنوعی",
+              "en": "Australia — synthetic route"
+            },
+            "order": 1,
+            "enabled": true,
+            "calculator_route": "au-189",
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "de-study",
+            "country": "DE",
+            "goal": "study",
+            "title": {
+              "fa": "آلمان — گزینهٔ مصنوعی",
+              "en": "Germany — synthetic route"
+            },
+            "order": 2,
+            "enabled": true,
+            "calculator_route": null,
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "gb-study",
+            "country": "GB",
+            "goal": "study",
+            "title": {
+              "fa": "بریتانیا — گزینهٔ مصنوعی",
+              "en": "United Kingdom — synthetic route"
+            },
+            "order": 3,
+            "enabled": true,
+            "calculator_route": null,
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "us-work",
+            "country": "US",
+            "goal": "work",
+            "title": {
+              "fa": "آمریکا — گزینهٔ مصنوعی",
+              "en": "United States — synthetic route"
+            },
+            "order": 4,
+            "enabled": true,
+            "calculator_route": null,
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          }
+        ]
+      }
+    },
+    "active_catalog": {
+      "id": 20,
+      "version": 1,
+      "sha256": "c282528d557ccbe02ed6f501e129b30f2d010f97a1d2cfef3df908e9323404da",
+      "bundle": {
+        "schema_version": 1,
+        "weights": {
+          "goal": 2,
+          "destination": 1
+        },
+        "entries": [
+          {
+            "id": "ca-fsw",
+            "country": "CA",
+            "goal": "work",
+            "title": {
+              "fa": "کانادا — گزینهٔ مصنوعی",
+              "en": "Canada — synthetic route"
+            },
+            "order": 0,
+            "enabled": true,
+            "calculator_route": "ca-fsw",
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "au-189",
+            "country": "AU",
+            "goal": "work",
+            "title": {
+              "fa": "استرالیا — گزینهٔ مصنوعی",
+              "en": "Australia — synthetic route"
+            },
+            "order": 1,
+            "enabled": true,
+            "calculator_route": "au-189",
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "de-study",
+            "country": "DE",
+            "goal": "study",
+            "title": {
+              "fa": "آلمان — گزینهٔ مصنوعی",
+              "en": "Germany — synthetic route"
+            },
+            "order": 2,
+            "enabled": true,
+            "calculator_route": null,
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "gb-study",
+            "country": "GB",
+            "goal": "study",
+            "title": {
+              "fa": "بریتانیا — گزینهٔ مصنوعی",
+              "en": "United Kingdom — synthetic route"
+            },
+            "order": 3,
+            "enabled": true,
+            "calculator_route": null,
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          },
+          {
+            "id": "us-work",
+            "country": "US",
+            "goal": "work",
+            "title": {
+              "fa": "آمریکا — گزینهٔ مصنوعی",
+              "en": "United States — synthetic route"
+            },
+            "order": 4,
+            "enabled": true,
+            "calculator_route": null,
+            "source": {
+              "title": "Synthetic directory only",
+              "url": "https://example.org/synthetic",
+              "checked_on": "2026-11-01",
+              "review_due": "2026-12-30",
+              "received_at": "2026-11-01T00:00:00+00:00",
+              "effective_on": null,
+              "status": "reviewed_directory"
+            }
+          }
+        ]
+      }
+    },
+    "catalog_changed": false,
+    "inputs": {}
+  },
+  "financial_context": {
+    "policy": null,
+    "active_policy": null,
+    "policy_changed": false,
+    "inputs": {}
+  },
+  "evaluations": {
+    "canada": {
+      "status": "not_evaluated",
+      "reason": "legal_date_out_of_coverage",
+      "coverage": {
+        "from": "2026-11-03",
+        "through": "2026-11-12"
+      }
+    },
+    "australia": {
+      "status": "not_evaluated",
+      "reason": "legal_date_out_of_coverage",
+      "coverage": {
+        "from": "2026-11-01",
+        "through": "2026-11-12"
+      }
+    }
+  },
+  "sources": {
+    "canada": {
+      "version": "ircc-2026-11-03-draft-3",
+      "active": false,
+      "assessment_date_coverage": {
+        "from": "2026-11-03",
+        "through": "2026-11-12"
+      },
+      "sources": {
+        "fsw": {
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-workers.html",
+          "checked_on": "2026-11-12",
+          "page_updated_on": "2026-11-03",
+          "effective_from": "2026-11-03",
+          "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+          "http_status": 200,
+          "retrieved_sha256": "de4fe5b18a287c273db0e3afc483ea1e110a2ab023c5f37673594e5a1ab3f286",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "crs": {
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html",
+          "checked_on": "2026-11-12",
+          "page_updated_on": "2026-11-03",
+          "effective_from": "2026-11-03",
+          "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+          "http_status": 200,
+          "retrieved_sha256": "bc211d448783cfcbd5eb3955811554d21031362dcb00bf5eb6ab59898a5ab153",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "education": {
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/education-assessment.html",
+          "checked_on": "2026-11-12",
+          "page_updated_on": null,
+          "effective_from": null,
+          "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+          "http_status": 200,
+          "retrieved_sha256": "60c8f7d30b6b0b7d692d26df01d1dcf93aab115a650ede90d3e85242b08c59fa",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "language": {
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html",
+          "checked_on": "2026-11-12",
+          "page_updated_on": null,
+          "effective_from": null,
+          "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+          "http_status": 200,
+          "retrieved_sha256": "9b9748d4a48aac4086967c1750b7181af2ec551e7c95455d98827b26924cefcc",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "cec": {
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/canadian-experience-class.html",
+          "checked_on": "2026-11-12",
+          "page_updated_on": "2026-10-16",
+          "effective_from": null,
+          "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+          "http_status": 200,
+          "retrieved_sha256": "93983599ce79cec9041f879b170841ac9f74b63477bbeb6a06662ff58513723d",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "high-wage": {
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/high-wage.html",
+          "checked_on": "2026-11-12",
+          "page_updated_on": null,
+          "effective_from": "2026-11-03",
+          "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+          "http_status": 200,
+          "retrieved_sha256": "51adafa20f67c37dc133b19789788acb1c7ebeb576152c3ad71358f460b140c7",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "fst": {
+          "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-trades.html",
+          "checked_on": "2026-11-12",
+          "page_updated_on": "2026-10-16",
+          "effective_from": null,
+          "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+          "http_status": 200,
+          "retrieved_sha256": "fada96220753b1bcb9b99989d94ef4259e17083e0c85cfd07a56d80f330a77d9",
+          "review_status": "draft_specialist_review_pending"
+        }
+      },
+      "rules": {
+        "fsw.age": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.language": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.experience": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.arranged_employment": {
+          "source": "fsw",
+          "effective_from": "2026-11-03",
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.adaptability": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.minimum_primary_work": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.selection_threshold": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.funds_claim": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "canada.admissibility_claim": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "canada.settlement_claim": {
+          "source": "fsw",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.age": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.education": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.first_language": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.second_language": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.canadian_work_length": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.high_wage_work": {
+          "source": "crs",
+          "effective_from": "2026-11-03",
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.high_wage_offer": {
+          "source": "crs",
+          "effective_from": "2026-11-03",
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.spouse": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.education_transfer": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.foreign_work_transfer": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.certificate_transfer": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.additional": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.group_caps": {
+          "source": "crs",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "fsw.education": {
+          "source": "education",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "canada.eca_validity": {
+          "source": "education",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "canada.language_validity": {
+          "source": "language",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "canada.english_conversion": {
+          "source": "language",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "canada.french_conversion": {
+          "source": "language",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "cec.language_thresholds": {
+          "source": "language",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "cec.work_window": {
+          "source": "cec",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "cec.work_exclusions": {
+          "source": "cec",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "cec.employer_and_status": {
+          "source": "cec",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "crs.high_wage_noc_tier_claim": {
+          "source": "high-wage",
+          "effective_from": "2026-11-03",
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        },
+        "unsupported.fst": {
+          "source": "fst",
+          "effective_from": null,
+          "coverage": "Qualified evidence only; see docs/assessment-calculators.md; no automatic document verification."
+        }
+      },
+      "revalidation_evidence": "docs/assessment/source-revalidation-2026-11-12.json"
+    },
+    "australia": {
+      "version": "au-evidence-2026-11-12-draft-2",
+      "active": false,
+      "assessment_date_coverage": {
+        "from": "2026-11-01",
+        "through": "2026-11-12"
+      },
+      "sources": {
+        "au-law": {
+          "url": "https://www.legislation.gov.au/F1996B03551/2026-11-01/2026-11-01/text/original/epub/OEBPS/document_3/document_3.html",
+          "checked_on": "2026-11-12",
+          "http_status": 200,
+          "retrieved_sha256": "a8583fd306e87608331c6fbadc4891937b4edd77dd4ee7f786b5a669fcec1f94",
+          "effective_from": null,
+          "compilation_date": "2026-11-01",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "au-definitions": {
+          "url": "https://www.legislation.gov.au/F1996B03551/2026-11-01/2026-11-01/text/original/epub/OEBPS/document_1/document_1.html",
+          "checked_on": "2026-11-12",
+          "http_status": 200,
+          "retrieved_sha256": "f45721f6f69d78f0dc6dc488107b61829f98cd9cb96f27248d7c4f434b0a8672",
+          "effective_from": null,
+          "compilation_date": "2026-11-01",
+          "review_status": "draft_specialist_review_pending"
+        },
+        "au-competent": {
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/competent-english",
+          "checked_on": "2026-11-12",
+          "http_status": 200,
+          "retrieved_sha256": "5b5fc51c3713a4235332b580c2c4c8b049740ce8fade02f67aa129159e38b779",
+          "effective_from": null,
+          "compilation_date": null,
+          "review_status": "draft_specialist_review_pending"
+        },
+        "au-proficient": {
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/proficient-english",
+          "checked_on": "2026-11-12",
+          "http_status": 200,
+          "retrieved_sha256": "09cb804326b9bf7f272540332b7ba3b389b30f52649bbe1589c642b2613343d4",
+          "effective_from": null,
+          "compilation_date": null,
+          "review_status": "draft_specialist_review_pending"
+        },
+        "au-superior": {
+          "url": "https://immi.homeaffairs.gov.au/help-support/meeting-our-requirements/english-language/superior-english",
+          "checked_on": "2026-11-12",
+          "http_status": 200,
+          "retrieved_sha256": "e58978d3b9282e9488d32e85d75df9f1a7a955740aabac17ea7c0b5ba5aec63e",
+          "effective_from": null,
+          "compilation_date": null,
+          "review_status": "draft_specialist_review_pending"
+        }
+      },
+      "rules": {
+        "age": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "english_points": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "overseas_work": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Schedule 6D uses periods totalling months. Half-open input intervals are unioned. Residual days across gaps remain unresolved; no 365-day legal conversion is assumed."
+        },
+        "australian_work": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Schedule 6D uses periods totalling months. Half-open input intervals are unioned. Residual days across gaps remain unresolved; no 365-day legal conversion is assumed."
+        },
+        "employment_cap": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "professional_year": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "education": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "specialist_education": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "australian_study": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "community_language": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "regional_study": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "partner": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "190_nomination": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "491_support": {
+          "source": "au-law",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "english_validity": {
+          "source": "au-definitions",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "employment_20_hours": {
+          "source": "au-definitions",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "australian_study_definition": {
+          "source": "au-definitions",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "ielts_competent": {
+          "source": "au-competent",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "passport_claim": {
+          "source": "au-competent",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "unsupported_online_osr_variants": {
+          "source": "au-competent",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "ielts_proficient": {
+          "source": "au-proficient",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        },
+        "ielts_superior": {
+          "source": "au-superior",
+          "effective_from": null,
+          "coverage": "Draft qualified evidence only. Compilation date does not establish commencement of each rule."
+        }
+      },
+      "language_table_period": {
+        "test_date_from": "2025-08-07",
+        "effective_date": "2025-08-07",
+        "coverage": "In-centre IELTS Academic and General Training without OSR only; other accepted exams are unsupported, not invalid."
+      },
+      "limitations": [
+        "legal_effective_dates_of_individual_items_unconfirmed",
+        "source_instruments_require_specialist_review",
+        "health_character_state_criteria_not_covered",
+        "gapped_residual_service_requires_specialist"
+      ],
+      "revalidation_evidence": "docs/assessment/source-revalidation-2026-11-12.json"
+    }
+  },
+  "answers": {},
+  "answers_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "ruleset_bundle": {
+    "schema_version": 1,
+    "synthetic": true,
+    "questions": [
+      {
+        "id": "age",
+        "text": "سن شما چقدر است؟",
+        "kind": "number",
+        "minimum": 0,
+        "maximum": 120
+      },
+      {
+        "id": "language",
+        "text": "سطح فرضی زبان شما چیست؟",
+        "kind": "choice",
+        "choices": ["basic", "advanced"]
+      },
+      {
+        "id": "sponsor",
+        "text": "آیا حمایت فرضی دارید؟",
+        "kind": "boolean"
+      },
+      {
+        "id": "sponsor_confirmed",
+        "text": "آیا حمایت فرضی تأیید شده است؟",
+        "kind": "boolean",
+        "show_if": {
+          "fact": "sponsor",
+          "op": "eq",
+          "value": true
+        }
+      }
+    ],
+    "routes": [
+      {
+        "id": "sandbox-study",
+        "name": "مسیر تحصیلی آزمایشی؛ فاقد اعتبار مهاجرتی",
+        "requirements": [
+          {
+            "id": "adult",
+            "label": "حداقل سن آزمایشی",
+            "condition": {
+              "fact": "age",
+              "op": "gte",
+              "value": 18
+            }
+          },
+          {
+            "id": "language_or_sponsor",
+            "label": "زبان یا حمایت آزمایشی",
+            "condition": {
+              "any": [
+                {
+                  "fact": "language",
+                  "op": "eq",
+                  "value": "advanced"
+                },
+                {
+                  "all": [
+                    {
+                      "fact": "sponsor",
+                      "op": "eq",
+                      "value": true
+                    },
+                    {
+                      "fact": "sponsor_confirmed",
+                      "op": "eq",
+                      "value": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "scores": [
+          {
+            "id": "language_points",
+            "label": "امتیاز آزمایشی زبان",
+            "bands": [
+              {
+                "id": "advanced",
+                "condition": {
+                  "fact": "language",
+                  "op": "eq",
+                  "value": "advanced"
+                },
+                "points": 10
+              }
+            ]
+          }
+        ],
+        "pass_mark": 10
+      },
+      {
+        "id": "sandbox-work",
+        "name": "مسیر کاری آزمایشی؛ فاقد اعتبار مهاجرتی",
+        "requirements": [
+          {
+            "id": "adult",
+            "label": "حداقل سن آزمایشی",
+            "condition": {
+              "fact": "age",
+              "op": "gte",
+              "value": 21
+            }
+          }
+        ]
+      }
+    ],
+    "destination_policy": {
+      "schema_version": 1,
+      "weights": {
+        "goal": 2,
+        "destination": 1
+      },
+      "entries": [
+        {
+          "id": "ca-fsw",
+          "country": "CA",
+          "goal": "work",
+          "title": {
+            "fa": "کانادا — گزینهٔ مصنوعی",
+            "en": "Canada — synthetic route"
+          },
+          "order": 0,
+          "enabled": true,
+          "calculator_route": "ca-fsw",
+          "source": {
+            "title": "Synthetic directory only",
+            "url": "https://example.org/synthetic",
+            "checked_on": "2026-11-01",
+            "review_due": "2026-12-30",
+            "received_at": "2026-11-01T00:00:00+00:00",
+            "effective_on": null,
+            "status": "reviewed_directory"
+          }
+        },
+        {
+          "id": "au-189",
+          "country": "AU",
+          "goal": "work",
+          "title": {
+            "fa": "استرالیا — گزینهٔ مصنوعی",
+            "en": "Australia — synthetic route"
+          },
+          "order": 1,
+          "enabled": true,
+          "calculator_route": "au-189",
+          "source": {
+            "title": "Synthetic directory only",
+            "url": "https://example.org/synthetic",
+            "checked_on": "2026-11-01",
+            "review_due": "2026-12-30",
+            "received_at": "2026-11-01T00:00:00+00:00",
+            "effective_on": null,
+            "status": "reviewed_directory"
+          }
+        },
+        {
+          "id": "de-study",
+          "country": "DE",
+          "goal": "study",
+          "title": {
+            "fa": "آلمان — گزینهٔ مصنوعی",
+            "en": "Germany — synthetic route"
+          },
+          "order": 2,
+          "enabled": true,
+          "calculator_route": null,
+          "source": {
+            "title": "Synthetic directory only",
+            "url": "https://example.org/synthetic",
+            "checked_on": "2026-11-01",
+            "review_due": "2026-12-30",
+            "received_at": "2026-11-01T00:00:00+00:00",
+            "effective_on": null,
+            "status": "reviewed_directory"
+          }
+        },
+        {
+          "id": "gb-study",
+          "country": "GB",
+          "goal": "study",
+          "title": {
+            "fa": "بریتانیا — گزینهٔ مصنوعی",
+            "en": "United Kingdom — synthetic route"
+          },
+          "order": 3,
+          "enabled": true,
+          "calculator_route": null,
+          "source": {
+            "title": "Synthetic directory only",
+            "url": "https://example.org/synthetic",
+            "checked_on": "2026-11-01",
+            "review_due": "2026-12-30",
+            "received_at": "2026-11-01T00:00:00+00:00",
+            "effective_on": null,
+            "status": "reviewed_directory"
+          }
+        },
+        {
+          "id": "us-work",
+          "country": "US",
+          "goal": "work",
+          "title": {
+            "fa": "آمریکا — گزینهٔ مصنوعی",
+            "en": "United States — synthetic route"
+          },
+          "order": 4,
+          "enabled": true,
+          "calculator_route": null,
+          "source": {
+            "title": "Synthetic directory only",
+            "url": "https://example.org/synthetic",
+            "checked_on": "2026-11-01",
+            "review_due": "2026-12-30",
+            "received_at": "2026-11-01T00:00:00+00:00",
+            "effective_on": null,
+            "status": "reviewed_directory"
+          }
+        }
+      ]
+    }
+  },
+  "implementation_sha256": "12a71ba7839a8f77f3acd60ee807a86d226082aa0b15fd35fa58dd4c95db30e2",
+  "python_version": "3.14.8",
+  "writable": true,
+  "decision_sha256": "c1520f7c705ab49b35828350df620572b387b6524c4ed14ceea11603d1b6b70c"
+}
