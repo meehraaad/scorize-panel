@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -123,9 +123,16 @@ describe('sales: my consultations on a week calendar', () => {
     const calendar = await open();
     expect(within(calendar).getAllByRole('button', { name: /نیما رستمی/ })).toHaveLength(5);
     await user.click(within(calendar).getByRole('button', { name: /بدون مسئول/ }));
-    expect(within(calendar).getByRole('dialog')).toHaveTextContent('بدون مسئول');
-    await user.click(within(calendar).getByRole('button', { name: /تا ۳۰ دقیقه‌ی دیگر/ }));
-    expect(within(calendar).getByRole('dialog')).toHaveTextContent('مسئول: نیما رستمی');
+    // The manager gives it to a seller from its card.
+    const menu = within(within(calendar).getByRole('dialog')).getByRole('combobox', {
+      name: 'مشاور',
+    });
+    expect(menu).toHaveValue('none');
+    await user.selectOptions(menu, 'نیما رستمی');
+    expect(await toasts().findByText(/به نیما رستمی سپرده شد\.$/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(calendar).getAllByRole('button', { name: /نیما رستمی/ })).toHaveLength(6),
+    );
   });
 
   it("briefs each day's tasks and opens the tasks page", async () => {

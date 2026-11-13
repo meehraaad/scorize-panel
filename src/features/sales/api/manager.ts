@@ -244,7 +244,8 @@ export type TeamRange = 'month' | 'last' | 'quarter';
 export type TeamAlert =
   | { kind: 'unattended'; seller: string; count: number }
   | { kind: 'draft'; customer: string; discount: number }
-  | { kind: 'no_offer'; count: number };
+  | { kind: 'no_offer'; count: number }
+  | { kind: 'unassigned_consultations'; count: number };
 
 export interface TeamData {
   /** First day of the range. */

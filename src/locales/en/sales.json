@@ -799,7 +799,8 @@
         "message": "Message",
         "meeting": "Session log"
       }
-    }
+    },
+    "noSeller": "No consultant"
   },
   "consultationCalendar": {
     "aside": "My calendar",
@@ -857,7 +858,13 @@
       "aria": "Tasks on {{day}}: {{parts}}. Go to tasks"
     },
     "taskBlock": "task",
-    "taskLayer": "Tasks with a time"
+    "taskLayer": "Tasks with a time",
+    "assign": {
+      "label": "Consultant",
+      "done": "{{name}}'s consultation is now {{seller}}'s.",
+      "cleared": "{{name}}'s consultation has no consultant now.",
+      "failed": "Couldn't assign it. Try again."
+    }
   },
   "purchases": {
     "stats": "Purchases summary",
@@ -1460,12 +1467,14 @@
       "alert": {
         "unattended": "{{seller}} is unavailable and {{n}} of their hot leads have waited over an hour.",
         "draft": "{{customer}}'s contract draft with a {{n}}% discount is waiting for you.",
-        "no_offer": "{{n}} people bought a consultation this week and have no offer yet."
+        "no_offer": "{{n}} people bought a consultation this week and have no offer yet.",
+        "unassigned_consultations": "{{n}} upcoming consultations have no consultant yet."
       },
       "alertAction": {
         "unattended": "Move to others",
         "draft": "Review the draft",
-        "no_offer": "See the list"
+        "no_offer": "See the list",
+        "unassigned_consultations": "Assign on the calendar"
       },
       "sources": "Which lead sources sell?",
       "sourcesHint": "For marketing: move campaign budget to the high-converting sources",

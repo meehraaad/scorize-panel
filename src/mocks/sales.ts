@@ -1055,6 +1055,15 @@ function visitSlotsOf(from: string, to: string) {
   return slots;
 }
 
+/** Who a manager gave each consultation to on the calendar (`consultations/:id/assign/`). */
+const assigned = new Map<number, number | null>();
+
+/** Who holds a consultation: as a manager assigned it, else Nima (or nobody, `nobody`). */
+function holderOf(id: number, nobody: boolean) {
+  const staff = assigned.has(id) ? (assigned.get(id) ?? null) : nobody ? null : 8;
+  return { seller: staff === null ? null : NIMA_NAME, seller_id: staff };
+}
+
 /** The seller's consultations and timed follow-ups between two days (`YYYY-MM-DD`, both included). */
 function calendarOf(data: SalesState, from: string, to: string) {
   const lastId = Math.max(...data.consultations.map((item) => item.id));
@@ -1082,8 +1091,10 @@ function calendarOf(data: SalesState, from: string, to: string) {
         arrived_at: arrivals.get(item.id) ?? null,
         // All Nima's; Reza (manager) sees them as someone else's, the last as nobody's yet.
         mine: storage.get() === NIMA,
-        seller: storage.get() !== NIMA && item.id === lastId ? null : NIMA_NAME,
+        ...holderOf(item.id, storage.get() !== NIMA && item.id === lastId),
       })),
+    // Reza (manager) can give a consultation to someone.
+    sellers: storage.get() === NIMA ? [] : [{ id: 8, name: NIMA_NAME }],
     visits: visits.filter((visit) => inRange(visit.starts_at)),
     // The seller's own tasks (S50 rows): tomorrow at 11 one with an hour, in two days one for the day only.
     task_rows: [
@@ -1212,6 +1223,16 @@ export const salesHandlers = [
     if (failed(data)) return data;
     const query = new URL(request.url).searchParams;
     return HttpResponse.json(calendarOf(data, query.get('from') ?? '', query.get('to') ?? ''));
+  }),
+  http.post(`${BASE}/consultations/:id/assign/`, async ({ params, request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    if (storage.get() === NIMA) return HttpResponse.json({ detail: 'Forbidden.' }, { status: 403 });
+    const found = data.consultations.find((item) => item.id === Number(params.id));
+    if (!found) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    const { staff } = (await request.json()) as { staff: number | null };
+    assigned.set(found.id, staff);
+    return HttpResponse.json(holderOf(found.id, false));
   }),
   http.post(`${BASE}/consultations/:id/arrived/`, ({ params }) => {
     const data = stateOrError();
@@ -1405,6 +1426,7 @@ export const salesHandlers = [
 export function resetSalesMocks() {
   state = null;
   arrivals.clear();
+  assigned.clear();
   visits = [];
   resetNotebookMocks();
   resetFaces();

@@ -89,7 +89,7 @@ function ConsultationsList({ switcher }: { switcher: ReactNode }) {
   const [seller, setSeller] = useState('all');
   const filters = {
     ...(range === 'day' && day ? { date: day } : {}),
-    ...(seller === 'all' ? {} : { seller: Number(seller) }),
+    ...(seller === 'all' ? {} : { seller: seller === 'none' ? ('none' as const) : Number(seller) }),
   };
   const { data, isPlaceholderData } = useQuery(
     consultationsQuery(range, type === 'all' ? null : Number(type), unlogged, page, filters),
@@ -145,6 +145,7 @@ function ConsultationsList({ switcher }: { switcher: ReactNode }) {
             }}
             options={[
               { value: 'all', label: t('consultations.allSellers') },
+              { value: 'none', label: t('consultations.noSeller') },
               ...data.sellers.map((item) => ({ value: String(item.id), label: item.name })),
             ]}
           />
@@ -208,7 +209,12 @@ function ConsultationsList({ switcher }: { switcher: ReactNode }) {
               </div>
               <ul className="m-0 list-none p-0">
                 {items.map((item) => (
-                  <ConsultationRow key={item.id} item={item} status={statusOf(item, now)} />
+                  <ConsultationRow
+                    key={item.id}
+                    item={item}
+                    status={statusOf(item, now)}
+                    manager={Boolean(data.sellers?.length)}
+                  />
                 ))}
               </ul>
             </Card>
@@ -224,7 +230,16 @@ function ConsultationsList({ switcher }: { switcher: ReactNode }) {
   );
 }
 
-function ConsultationRow({ item, status }: { item: Consultation; status: Status }) {
+function ConsultationRow({
+  item,
+  status,
+  manager,
+}: {
+  item: Consultation;
+  status: Status;
+  /** A manager's list: whose each one is, and those nobody holds stand out. */
+  manager: boolean;
+}) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
   const f = useFormat();
@@ -260,6 +275,13 @@ function ConsultationRow({ item, status }: { item: Consultation; status: Status 
                 minutes: f.number(item.minutes),
               })}
         </span>
+        {manager && item.seller !== undefined && (
+          <span className={`text-sm ${item.seller ? 'text-text-2' : 'font-semibold text-warn'}`}>
+            {item.seller
+              ? t('consultationCalendar.seller', { name: item.seller })
+              : t('consultationCalendar.noSeller')}
+          </span>
+        )}
       </span>
       <Chip tone={STATUS_TONE[status]} small>
         {t(`consultations.status.${status}`)}

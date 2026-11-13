@@ -32,6 +32,8 @@ export interface CalendarConsultation {
   mine: boolean;
   /** Who it is assigned to; null while nobody is. */
   seller: string | null;
+  /** Their staff id, for a manager's assign menu; absent from an older Django. */
+  seller_id?: number | null;
   /** The emoji and color the team gave the customer (S66); null: none. */
   face?: Face | null;
 }
@@ -102,6 +104,8 @@ export interface SellerCalendar {
   tasks: CalendarTaskDay[];
   /** Absent from an older Django. */
   task_rows?: CalendarTaskRow[];
+  /** A sales manager's calendar: who a consultation can be given to; empty for a seller. */
+  sellers?: { id: number; name: string }[];
 }
 
 export const CALENDAR_KEY = [...SALES_KEY, 'calendar'] as const;
@@ -144,6 +148,22 @@ export function useMarkArrived() {
         method: 'POST',
       }),
     onSettled: () => client.invalidateQueries({ queryKey: CALENDAR_KEY }),
+  });
+}
+
+/**
+ * A sales manager gives a paid consultation to a seller, or to nobody (`staff: null`). The
+ * calendars, the consultations list and Today reload after.
+ */
+export function useAssignConsultation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, staff }: { id: number; staff: number | null }) =>
+      api<{ seller_id: number | null; seller: string | null }>(
+        `${SALES_API}/consultations/${String(id)}/assign/`,
+        { method: 'POST', body: { staff } },
+      ),
+    onSettled: () => client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 

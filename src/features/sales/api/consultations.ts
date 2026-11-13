@@ -19,6 +19,8 @@ export interface Consultation {
   starts_at: string;
   logged: boolean;
   meeting_url: string | null;
+  /** Who holds it; null while nobody does. Absent from an older Django. */
+  seller?: string | null;
 }
 
 /** A page of the range (past: newest first, else soonest first), with the counts per range. */
@@ -57,7 +59,8 @@ export interface DayReport {
 /** The list's filters besides the range: the chosen day (`YYYY-MM-DD`) and a manager's seller. */
 export interface ConsultationFilters {
   date?: string;
-  seller?: number;
+  /** A manager's seller, or `none`: those nobody holds yet. */
+  seller?: number | 'none';
 }
 
 /** The seller's paid consultations (managers: everyone's), with counts per range (S19). */

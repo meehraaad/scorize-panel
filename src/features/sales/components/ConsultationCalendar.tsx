@@ -422,6 +422,7 @@ export function ConsultationCalendar() {
                   type={chosen.kind === 'consultation' ? types.get(chosen.item.type) : undefined}
                   now={nowTime}
                   onClose={() => setChosenId(null)}
+                  sellers={data?.sellers}
                   onMoveCall={(call) =>
                     setSetting({
                       at: new Date(call.follow_up_at),

@@ -261,6 +261,11 @@ function Alerts({ alerts }: { alerts: TeamAlert[] }) {
           text: t('manager.team.alert.no_offer', { n: f.number(alert.count) }),
           to: salesPath('leads?stage=consulted'),
         };
+      case 'unassigned_consultations':
+        return {
+          text: t('manager.team.alert.unassigned_consultations', { n: f.number(alert.count) }),
+          to: salesPath('consultations'),
+        };
     }
   };
   return (
