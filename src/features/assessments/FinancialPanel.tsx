@@ -13,7 +13,6 @@ import { FinancialInputs } from './FinancialInputs';
 import { FinancialResult } from './FinancialResult';
 import { interviewQuery, type Interview } from './calculatorApi';
 import {
-  FINANCIAL_ROUTES,
   type FinancialDescription,
   type FinancialInputs as Inputs,
   type FinancialResult as Result,
@@ -68,7 +67,7 @@ function Editor({
   disabled: boolean;
   onBusy: (busy: boolean) => void;
 }) {
-  const { t } = useTranslation('assessments');
+  const { t, i18n } = useTranslation('assessments');
   const routeLabels = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
   const cache = useQueryClient();
   const query = useQuery(financialQuery(id));
@@ -76,7 +75,10 @@ function Editor({
   const [input, setInput] = useState<Inputs | null>(null);
   const [pending, setPending] = useState<Record<string, unknown> | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [route, setRoute] = useState('ca-fsw');
+  const [selectedRoute, setRoute] = useState('ca-fsw');
+  const route = data?.routes[selectedRoute]
+    ? selectedRoute
+    : (Object.keys(data?.routes ?? {})[0] ?? '');
   const [scenario, setScenario] = useState<{ before: Result; after: Result } | null>(null);
   const mutation = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
@@ -97,6 +99,8 @@ function Editor({
       const field = pending?.field as keyof Inputs | undefined;
       if (field)
         setInput((old) => (old ? { ...old, [field]: next.financial.inputs[field] } : null));
+      else setInput(null);
+      setScenario(null);
       setPending(null);
       toast.success(t('financial.saved'));
     },
@@ -245,9 +249,14 @@ function Editor({
               <SelectField
                 label={t('route')}
                 value={route}
-                options={FINANCIAL_ROUTES.map((r) => ({
+                options={Object.keys(data.routes).map((r) => ({
                   value: r,
-                  label: routeLabels[r] ?? t('financial.unknown'),
+                  label:
+                    data.targets?.find((target) => target.id === r)?.title?.[
+                      i18n.language.startsWith('fa') ? 'fa' : 'en'
+                    ] ??
+                    routeLabels[r] ??
+                    r,
                 }))}
                 onChange={(next) => {
                   setRoute(next);

@@ -1,3 +1,4 @@
+import type { FinancialTarget } from './financialTypes';
 import { ProgramEditor, ProgramCases } from './ProgramEditor';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -29,7 +30,9 @@ export function DestinationPolicyEditor({
   value,
   onChange,
   countries,
+  financialTargets = [],
 }: {
+  financialTargets?: FinancialTarget[];
   value: DestinationPolicy;
   onChange: (value: DestinationPolicy) => void;
   countries: { code: string; name: string }[];
@@ -123,7 +126,14 @@ export function DestinationPolicyEditor({
                 label={t('destinations.country')}
                 value={entry.country}
                 options={countryOptions}
-                onChange={(country) => set(index, { ...entry, country, calculator_route: null })}
+                onChange={(country) =>
+                  set(index, {
+                    ...entry,
+                    country,
+                    calculator_route: null,
+                    financial_route_id: null,
+                  })
+                }
               />
               <SelectField
                 label={t('destinations.goal')}
@@ -132,7 +142,9 @@ export function DestinationPolicyEditor({
                   value: goal,
                   label: t(`destinations.goals.${goal}`),
                 }))}
-                onChange={(goal) => set(index, { ...entry, goal, calculator_route: null })}
+                onChange={(goal) =>
+                  set(index, { ...entry, goal, calculator_route: null, financial_route_id: null })
+                }
               />
               <TogglePill
                 label={t('financial.enabled')}
@@ -160,6 +172,47 @@ export function DestinationPolicyEditor({
                   }
                 />
               )}
+              <SelectField
+                label={t('financialUnits.binding')}
+                value={entry.financial_route_id ?? ''}
+                options={[
+                  {
+                    value: '',
+                    label: t(
+                      entry.calculator_route
+                        ? 'financialUnits.legacyBinding'
+                        : 'financialUnits.noBinding',
+                    ),
+                  },
+                  ...financialTargets
+                    .filter(
+                      (target) => target.country === entry.country && target.goal === entry.goal,
+                    )
+                    .map((target) => ({
+                      value: target.id,
+                      label:
+                        target.title?.[i18n.language.startsWith('fa') ? 'fa' : 'en'] ?? target.id,
+                    })),
+                  ...(entry.financial_route_id &&
+                  !financialTargets.some(
+                    (target) =>
+                      target.id === entry.financial_route_id &&
+                      target.country === entry.country &&
+                      target.goal === entry.goal,
+                  )
+                    ? [
+                        {
+                          value: entry.financial_route_id,
+                          label: t('financialUnits.unavailableBinding'),
+                        },
+                      ]
+                    : []),
+                ]}
+                onChange={(financial_route_id) =>
+                  set(index, { ...entry, financial_route_id: financial_route_id || null })
+                }
+              />
+              <p>{t('financialUnits.bindingMeaning')}</p>
               {SOURCE_FIELDS.map((key) => (
                 <TextField
                   key={key}

@@ -326,6 +326,7 @@ function DraftEditor({
             <DestinationPolicyEditor
               value={input.bundle.destination_policy}
               countries={options.countries ?? []}
+              financialTargets={options.financial_targets ?? []}
               onChange={(destination_policy) =>
                 update({
                   ...input,
@@ -358,6 +359,8 @@ function DraftEditor({
           {input.bundle.financial_policy && (
             <FinancialPolicyEditor
               value={input.bundle.financial_policy}
+              catalog={options.currency_catalog}
+              countries={options.countries ?? []}
               onChange={(financial_policy) =>
                 update({ ...input, bundle: { ...input.bundle, financial_policy } })
               }

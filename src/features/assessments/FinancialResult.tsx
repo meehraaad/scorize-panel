@@ -1,9 +1,10 @@
+import { currencyName } from './financialCatalog';
 import { useTranslation } from 'react-i18next';
 import { Notice } from '@/components/ui/Notice';
 import { safeHref } from '@/lib/url';
 import type { FinancialResult as Result } from './financialTypes';
 export function FinancialResult({ result }: { result: Result }) {
-  const { t } = useTranslation('assessments');
+  const { t, i18n } = useTranslation('assessments');
   const reasons = t('financial.reasons', { returnObjects: true }) as Record<string, string>;
   return (
     <div className="min-w-0 break-words">
@@ -46,7 +47,13 @@ export function FinancialResult({ result }: { result: Result }) {
               <li key={part.id}>
                 <p>
                   {t(`financial.${part.kind}`)} — {part.id}: {part.amount}{' '}
-                  {t(`financial.${part.currency}`)} — {t(`financial.${part.basis}`)}
+                  {part.currency === 'TOMAN'
+                    ? t('financial.TOMAN')
+                    : part.currency === 'IRR'
+                      ? t('financial.IRR')
+                      : currencyName(part.currency, i18n.language)}{' '}
+                  {part.amount_unit && t(`financialUnits.${part.amount_unit}`)} —{' '}
+                  {t(`financial.${part.basis}`)}
                 </p>
                 <p>
                   {t('financial.converted', {
@@ -77,7 +84,7 @@ export function FinancialResult({ result }: { result: Result }) {
                         numerator: part.rate.numerator,
                         denominator: part.rate.denominator,
                         unit: t(`financial.${part.rate.quote_unit}`),
-                        currency: t(`financial.${part.rate.currency}`),
+                        currency: currencyName(part.rate.currency, i18n.language),
                       })}
                     </p>
                     <p>
