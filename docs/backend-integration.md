@@ -182,3 +182,8 @@ and sandbox gates remain; real financial references are not seeded. See
 ## Destination discovery dependency
 
 Development-only destination intake and structured catalog management in panel #107 require backend shamrad/lang#322 on #321, and panel #106. See [contract and limits](assessment-destination-discovery.md). No new production migrations or activation are included.
+
+
+## Destination follow-up dependency
+
+Panel #108 requires backend shamrad/lang#323 on #322 and panel #107. The existing destination POST adds select_routes/action_progress; the result adds an optional historical plan. See [contract](assessment-destination-follow-up.md). Backend first; no production migration/activation is included.
