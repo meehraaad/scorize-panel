@@ -1,6 +1,8 @@
 import type { ProgramCase } from './programTypes';
 import type { DestinationPolicy, DestinationCase, DestinationEvaluation } from './destinationApi';
 import type {
+  CurrencyCatalog,
+  FinancialTarget,
   FinancialPolicy,
   FinancialScenario,
   FinancialResult,
@@ -145,6 +147,8 @@ export interface Draft extends DraftInput, Summary {
 }
 export interface Options {
   destination_policy?: DestinationPolicy;
+  currency_catalog?: CurrencyCatalog;
+  financial_targets?: FinancialTarget[];
   countries?: { code: string; name: string }[];
   financial_policy?: FinancialPolicy;
   bundle: Bundle;

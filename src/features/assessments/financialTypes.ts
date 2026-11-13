@@ -21,19 +21,22 @@ export interface FinancialComponent extends FinancialReference {
   id: string;
   kind: 'application' | 'tuition' | 'living' | 'proof';
   amount: number;
-  currency: 'TOMAN' | 'IRR' | 'CAD' | 'AUD' | 'USD' | 'EUR';
+  currency: string;
+  amount_unit?: 'major' | 'minor';
   basis: 'household' | 'person' | 'dependant' | 'proof_person';
   accepted_resource_kinds?: string[];
 }
 export interface FinancialRate extends FinancialReference {
   id: string;
-  currency: 'CAD' | 'AUD' | 'USD' | 'EUR';
+  currency: string;
   quote_unit: 'TOMAN' | 'IRR';
   numerator: number;
   denominator: number;
 }
 export interface FinancialPolicy {
-  schema_version: 1;
+  schema_version: 1 | 2;
+  currency_catalog_sha256?: string;
+  currencies?: { id: string; minor_units: number }[];
   ranges: BudgetRange[];
   open_ended: 'minimum' | 'ask_exact';
   sufficient_bps: number;
@@ -43,6 +46,9 @@ export interface FinancialPolicy {
   rates: FinancialRate[];
   routes: {
     id: string;
+    country?: string;
+    goal?: 'study' | 'work' | 'family' | 'business';
+    title?: { fa: string; en: string };
     complete: boolean;
     assumptions: string[];
     components: FinancialComponent[];
@@ -100,6 +106,7 @@ export interface FinancialDescription extends FinancialContext {
   revision: number;
   assessment_date: string;
   routes: Record<string, FinancialResult>;
+  targets?: FinancialTarget[];
   decision_sha256: string;
   writable: boolean;
   active: false;
@@ -112,3 +119,17 @@ export const FINANCIAL_ROUTES = [
   'au-190',
   'au-491',
 ] as const;
+
+export interface FinancialTarget {
+  id: string;
+  country: string;
+  goal: string;
+  title?: { fa: string; en: string } | null;
+}
+export interface CurrencyCatalog {
+  source_url: string;
+  published_on: string;
+  received_at: string;
+  sha256: string;
+  currencies: { id: string; minor_units: number; name: string }[];
+}

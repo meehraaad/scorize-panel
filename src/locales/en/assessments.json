@@ -709,7 +709,10 @@
       "minimum_only": "Conditional result based on range minimum",
       "financial_policy_changed": "Financial policy changed; reconfirmation required",
       "monetary_domain_exceeded": "Converted amount exceeds the supported domain",
-      "proof_family_unknown": "Proof family size is unknown; it is not inferred from accompanying family"
+      "proof_family_unknown": "Proof family size is unknown; it is not inferred from accompanying family",
+      "financial_mapping_required": "No financial table is linked to this destination.",
+      "financial_target_unavailable": "The linked financial table is unavailable.",
+      "financial_scope_mismatch": "The financial table belongs to a different country or migration goal."
     },
     "proof_family_size": "Family size required for proof (including applicant and any non-accompanying members required by the rule)",
     "proof_person": "Per member of the explicit proof family",
@@ -973,5 +976,19 @@
     "addReference": "Add independent program case",
     "impact": "Configured program comparison — {{id}}",
     "impactValues": "Conditions: expected {{expected}}; actual {{actual}}; before {{before}}. Points: expected {{expectedScore}}; actual {{score}}; before {{beforeScore}}."
+  },
+  "financialUnits": {
+    "upgrade": "Enable country-independent financial targets",
+    "confirmCatalog": "Confirm current monetary units",
+    "catalogMeaning": "Monetary-unit reference published {{date}}. This does not verify costs, exchange rates or immigration rules.",
+    "amountUnit": "Amount unit",
+    "major": "Main currency unit",
+    "minor": "Minor currency unit",
+    "binding": "Financial target",
+    "legacyBinding": "Use specialist route table",
+    "noBinding": "No financial table linked",
+    "unavailableBinding": "Saved table is unavailable for this country and goal",
+    "bindingMeaning": "Choose a reviewed financial table for this country and migration goal. Missing information remains unknown.",
+    "rateMeaning": "Exchange rates always quote one main currency unit. Costs may use explicitly recorded minor units; all amounts are integers."
   }
 }

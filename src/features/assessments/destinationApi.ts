@@ -39,6 +39,7 @@ export interface DestinationEntry {
   enabled: boolean;
   order: number;
   calculator_route: string | null;
+  financial_route_id?: string | null;
   source: DestinationSource;
 }
 export interface DestinationPolicy {

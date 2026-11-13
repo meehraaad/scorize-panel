@@ -1,3 +1,5 @@
+import { currencyName, upgradeFinancialPolicy } from './financialCatalog';
+import { GOALS } from './destinationApi';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField, TogglePill } from '@/components/ui/Choices';
@@ -5,11 +7,13 @@ import { TextField, TextAreaField } from '@/components/ui/TextField';
 import { FinancialInputs } from './FinancialInputs';
 import {
   FINANCIAL_ROUTES,
+  type CurrencyCatalog,
   type FinancialPolicy,
   type FinancialReference,
   type FinancialScenario,
 } from './financialTypes';
 
+const TITLE_LANGUAGES = ['fa', 'en'] as const;
 const POLICY_NUMBERS = [
   'sufficient_bps',
   'tight_bps',
@@ -73,12 +77,39 @@ function ReferenceEditor({
 export function FinancialPolicyEditor({
   value,
   onChange,
+  catalog,
+  countries = [],
 }: {
+  catalog?: CurrencyCatalog | undefined;
+  countries?: { code: string; name: string }[];
   value: FinancialPolicy;
   onChange: (value: FinancialPolicy) => void;
 }) {
-  const { t } = useTranslation('assessments');
+  const { t, i18n } = useTranslation('assessments');
   const routeLabels = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
+  const generic = value.schema_version === 2;
+  const codes = generic
+    ? (catalog?.currencies.filter((c) => c.id !== 'IRR').map((c) => c.id) ??
+      value.currencies?.map((c) => c.id) ??
+      [])
+    : ['CAD', 'AUD', 'USD', 'EUR'];
+  const label = (code: string) =>
+    code === 'TOMAN'
+      ? t('financial.TOMAN')
+      : code === 'IRR'
+        ? t('financial.IRR')
+        : currencyName(code, i18n.language);
+  const withUnit = (next: FinancialPolicy, code: string): FinancialPolicy => {
+    if (!generic || ['TOMAN', 'IRR'].includes(code) || next.currencies?.some((c) => c.id === code))
+      return next;
+    const unit = catalog?.currencies.find((c) => c.id === code);
+    return unit
+      ? {
+          ...next,
+          currencies: [...(next.currencies ?? []), { id: unit.id, minor_units: unit.minor_units }],
+        }
+      : next;
+  };
   const num = (key: 'sufficient_bps' | 'tight_bps' | 'max_fx_age_days' | 'round_to_toman') => (
     <TextField
       key={key}
@@ -93,6 +124,34 @@ export function FinancialPolicyEditor({
     <details open className="border-line min-w-0 rounded-2xl border p-3">
       <summary className="min-h-11 cursor-pointer py-2">{t('financial.policy')}</summary>
       <p>{t('financial.policyMeaning')}</p>
+      {catalog && (
+        <>
+          <p>{t('financialUnits.catalogMeaning', { date: catalog.published_on })}</p>
+          {(!generic || value.currency_catalog_sha256 !== catalog.sha256) && (
+            <Button
+              variant="outline"
+              onClick={() =>
+                onChange(
+                  generic
+                    ? {
+                        ...value,
+                        currency_catalog_sha256: catalog.sha256,
+                        currencies: (value.currencies ?? []).map((unit) => ({
+                          ...unit,
+                          minor_units:
+                            catalog.currencies.find((c) => c.id === unit.id)?.minor_units ??
+                            unit.minor_units,
+                        })),
+                      }
+                    : upgradeFinancialPolicy(value, catalog, routeLabels),
+                )
+              }
+            >
+              {t(generic ? 'financialUnits.confirmCatalog' : 'financialUnits.upgrade')}
+            </Button>
+          )}
+        </>
+      )}
       <div className="flex flex-col gap-4">
         {POLICY_NUMBERS.map(num)}
         <SelectField
@@ -169,6 +228,7 @@ export function FinancialPolicyEditor({
           {t('financial.addRange')}
         </Button>
         <h3>{t('financial.rates')}</h3>
+        {generic && <p>{t('financialUnits.rateMeaning')}</p>}
         {value.rates.map((rate, index) => {
           const set = (next: typeof rate) =>
             onChange({ ...value, rates: value.rates.map((r, i) => (i === index ? next : r)) });
@@ -183,11 +243,21 @@ export function FinancialPolicyEditor({
               <SelectField
                 label={t('financial.currency')}
                 value={rate.currency}
-                options={(['CAD', 'AUD', 'USD', 'EUR'] as const).map((v) => ({
+                options={codes.map((v) => ({
                   value: v,
-                  label: t(`financial.${v}`),
+                  label: label(v),
                 }))}
-                onChange={(currency) => set({ ...rate, currency })}
+                onChange={(currency) =>
+                  onChange(
+                    withUnit(
+                      {
+                        ...value,
+                        rates: value.rates.map((r, i) => (i === index ? { ...rate, currency } : r)),
+                      },
+                      currency,
+                    ),
+                  )
+                }
               />
               <SelectField
                 label={t('financial.quote_unit')}
@@ -225,12 +295,24 @@ export function FinancialPolicyEditor({
           onClick={() =>
             onChange({
               ...value,
+              ...(generic
+                ? {
+                    currencies: [
+                      ...(value.currencies ?? []),
+                      ...(!value.currencies?.some((c) => c.id === (codes[0] ?? 'CAD'))
+                        ? (catalog?.currencies
+                            .filter((c) => c.id === codes[0])
+                            .map(({ id, minor_units }) => ({ id, minor_units })) ?? [])
+                        : []),
+                    ],
+                  }
+                : {}),
               rates: [
                 ...value.rates,
                 {
                   ...emptyReference(),
                   id: '',
-                  currency: 'CAD',
+                  currency: codes[0] ?? 'CAD',
                   quote_unit: 'TOMAN',
                   numerator: 1,
                   denominator: 1,
@@ -251,15 +333,65 @@ export function FinancialPolicyEditor({
               className="border-line flex min-w-0 flex-col gap-4 rounded-xl border p-3"
             >
               <legend>{t('financial.routeCosts')}</legend>
-              <SelectField
-                label={t('route')}
-                value={route.id}
-                options={FINANCIAL_ROUTES.map((r) => ({
-                  value: r,
-                  label: routeLabels[r] ?? t('financial.unknown'),
-                }))}
-                onChange={(id) => set({ ...route, id })}
-              />
+              {generic ? (
+                <>
+                  <TextField
+                    label={t('financial.id')}
+                    value={route.id}
+                    onChange={(e) => set({ ...route, id: e.target.value })}
+                  />
+                  {TITLE_LANGUAGES.map((lang) => (
+                    <TextField
+                      key={lang}
+                      label={t(lang === 'fa' ? 'destinations.titleFa' : 'destinations.titleEn')}
+                      value={route.title?.[lang] ?? ''}
+                      onChange={(e) =>
+                        set({
+                          ...route,
+                          title: {
+                            fa: route.title?.fa ?? '',
+                            en: route.title?.en ?? '',
+                            [lang]: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  ))}
+                  <SelectField
+                    label={t('destinations.country')}
+                    value={route.country ?? ''}
+                    options={[
+                      { value: '', label: t('calculator.choose') },
+                      ...countries.map((c) => ({
+                        value: c.code,
+                        label:
+                          new Intl.DisplayNames([i18n.language], { type: 'region' }).of(c.code) ??
+                          c.name,
+                      })),
+                    ]}
+                    onChange={(country) => set({ ...route, country })}
+                  />
+                  <SelectField
+                    label={t('destinations.goal')}
+                    value={route.goal ?? 'study'}
+                    options={GOALS.map((goal) => ({
+                      value: goal,
+                      label: t(`destinations.goals.${goal}`),
+                    }))}
+                    onChange={(goal) => set({ ...route, goal })}
+                  />
+                </>
+              ) : (
+                <SelectField
+                  label={t('route')}
+                  value={route.id}
+                  options={FINANCIAL_ROUTES.map((r) => ({
+                    value: r,
+                    label: routeLabels[r] ?? t('financial.unknown'),
+                  }))}
+                  onChange={(id) => set({ ...route, id })}
+                />
+              )}
               <TogglePill
                 label={t('financial.complete')}
                 checked={route.complete}
@@ -313,11 +445,42 @@ export function FinancialPolicyEditor({
                       <SelectField
                         label={t('financial.currency')}
                         value={part.currency}
-                        options={(['TOMAN', 'IRR', 'CAD', 'AUD', 'USD', 'EUR'] as const).map(
-                          (v) => ({ value: v, label: t(`financial.${v}`) }),
-                        )}
-                        onChange={(currency) => component({ ...part, currency })}
+                        options={['TOMAN', 'IRR', ...codes].map((v) => ({
+                          value: v,
+                          label: label(v),
+                        }))}
+                        onChange={(currency) =>
+                          onChange(
+                            withUnit(
+                              {
+                                ...value,
+                                routes: value.routes.map((r, i) =>
+                                  i === index
+                                    ? {
+                                        ...route,
+                                        components: route.components.map((p, j) =>
+                                          j === n ? { ...part, currency, amount_unit: 'major' } : p,
+                                        ),
+                                      }
+                                    : r,
+                                ),
+                              },
+                              currency,
+                            ),
+                          )
+                        }
                       />
+                      {generic && (
+                        <SelectField
+                          label={t('financialUnits.amountUnit')}
+                          value={part.amount_unit ?? 'major'}
+                          options={(part.currency === 'TOMAN' || part.currency === 'IRR'
+                            ? (['major'] as const)
+                            : (['major', 'minor'] as const)
+                          ).map((unit) => ({ value: unit, label: t(`financialUnits.${unit}`) }))}
+                          onChange={(amount_unit) => component({ ...part, amount_unit })}
+                        />
+                      )}
                       <SelectField
                         label={t('financial.basis')}
                         value={part.basis}
@@ -374,6 +537,7 @@ export function FinancialPolicyEditor({
                         kind: 'application',
                         amount: 0,
                         currency: 'TOMAN',
+                        ...(generic ? { amount_unit: 'major' as const } : {}),
                         basis: 'household',
                       },
                     ],
@@ -401,9 +565,13 @@ export function FinancialPolicyEditor({
               routes: [
                 ...value.routes,
                 {
-                  id:
-                    FINANCIAL_ROUTES.find((id) => !value.routes.some((r) => r.id === id)) ??
-                    'ca-fsw',
+                  ...(generic
+                    ? { country: '', goal: 'study' as const, title: { fa: '', en: '' } }
+                    : {}),
+                  id: generic
+                    ? ''
+                    : (FINANCIAL_ROUTES.find((id) => !value.routes.some((r) => r.id === id)) ??
+                      'ca-fsw'),
                   complete: false,
                   assumptions: [],
                   components: [],
@@ -427,7 +595,7 @@ export function FinancialScenarioEditor({
   cases: FinancialScenario[];
   onChange: (cases: FinancialScenario[]) => void;
 }) {
-  const { t } = useTranslation('assessments');
+  const { t, i18n } = useTranslation('assessments');
   const routeLabels = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
   return (
     <div className="flex flex-col gap-4">
@@ -444,10 +612,14 @@ export function FinancialScenarioEditor({
             <SelectField
               label={t('route')}
               value={test.route_id}
-              options={FINANCIAL_ROUTES.map((r) => ({
-                value: r,
-                label: routeLabels[r] ?? t('financial.unknown'),
-              }))}
+              options={
+                policy.schema_version === 2
+                  ? policy.routes.map((r) => ({
+                      value: r.id,
+                      label: r.title?.[i18n.language.startsWith('fa') ? 'fa' : 'en'] ?? r.id,
+                    }))
+                  : FINANCIAL_ROUTES.map((r) => ({ value: r, label: routeLabels[r] ?? r }))
+              }
               onChange={(route_id) => set({ ...test, route_id })}
             />
             <FinancialInputs
@@ -480,7 +652,11 @@ export function FinancialScenarioEditor({
         onClick={() =>
           onChange([
             ...cases,
-            { route_id: 'ca-fsw', inputs: {}, expected: { status: 'unknown', ask_exact: false } },
+            {
+              route_id: policy.routes[0]?.id ?? 'ca-fsw',
+              inputs: {},
+              expected: { status: 'unknown', ask_exact: false },
+            },
           ])
         }
       >
