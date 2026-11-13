@@ -42,8 +42,8 @@ export interface AccountData {
   email: string | null;
   email_verified: boolean;
   channels: Record<Channel, boolean>;
-  /** The Telegram bot: linked or not, and the deep link that links it. */
-  telegram: { connected: boolean; connect_url: string };
+  /** The Telegram bot: linked or not, and (until linked) the API link that opens the bot to link it. */
+  telegram: { connected: boolean; connect_url: string | null };
   /** "How did you hear about us", once answered. */
   referral: Referral | null;
 }

@@ -48,7 +48,7 @@ export function ChannelsCard({ account }: { account: AccountData }) {
           />
         ))}
       </div>
-      {!account.telegram.connected && (
+      {!account.telegram.connected && account.telegram.connect_url && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] bg-canvas p-4">
           <span className="flex flex-col gap-0.5">
             <span className="text-sm font-semibold">{t('channels.botTitle')}</span>

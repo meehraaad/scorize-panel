@@ -77,7 +77,7 @@ export function accountOf(user: number): MockAccount {
       email,
       email_verified: user !== 1,
       channels: { sms: true, telegram: false, email: true },
-      telegram: { connected: false, connect_url: 'https://t.me/' },
+      telegram: { connected: false, connect_url: '/api/profile/v1/account/telegram/' },
       referral: null,
     },
     notifications: items.map(([title, text, hours, url], index) => ({
