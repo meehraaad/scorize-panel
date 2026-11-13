@@ -24,10 +24,17 @@ const catalog: CurrencyCatalog = {
     { id: 'GBP', minor_units: 2, name: 'Pound Sterling' },
   ],
 };
+function required<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error('Missing test fixture');
+  return value;
+}
+function component(policy: FinancialPolicy | undefined) {
+  return required(required(required(policy).routes[0]).components[0]);
+}
 function generic(): FinancialPolicy {
   const p = upgradeFinancialPolicy(fixture.policy.bundle as FinancialPolicy, catalog, {});
-  p.routes[0]! = {
-    ...p.routes[0]!,
+  p.routes[0] = {
+    ...required(p.routes[0]),
     id: 'jp-study',
     country: 'JP',
     goal: 'study',
@@ -55,17 +62,16 @@ it('upgrades explicitly, preserves whole-unit amounts, and creates country targe
   }
   render(<Harness />);
   const user = userEvent.setup();
+  const upgrade = await screen.findByRole('button', {
+    name: 'Enable country-independent financial targets',
+  });
   expect(screen.queryByLabelText('Destination country')).not.toBeInTheDocument();
-  await user.click(
-    await screen.findByRole('button', { name: 'Enable country-independent financial targets' }),
-  );
+  await user.click(upgrade);
   expect(saved?.schema_version).toBe(2);
-  expect(saved?.routes[0]!.components[0]!.amount_unit).toBe('major');
-  expect(saved?.routes[0]!.components[0]!.amount).toBe(
-    fixture.policy.bundle.routes[0]!.components[0]!.amount,
-  );
+  expect(component(saved).amount_unit).toBe('major');
+  expect(component(saved).amount).toBe(component(fixture.policy.bundle as FinancialPolicy).amount);
   await user.click(screen.getByRole('button', { name: 'Add route cost table' }));
-  const country = screen.getAllByLabelText('Destination country').at(-1)!;
+  const country = required(screen.getAllByLabelText('Destination country').at(-1));
   await user.selectOptions(country, 'JP');
   expect(saved?.routes.at(-1)?.country).toBe('JP');
   expect(saved?.routes.at(-1)?.goal).toBe('study');
@@ -80,17 +86,17 @@ it('captures selected currency precision and requires an explicit major/minor ch
   render(<Harness />);
   const user = userEvent.setup();
   await user.click(
-    screen.getByText(fixture.policy.bundle.routes[0]!.components[0]!.id, { exact: true }),
+    screen.getByText(component(fixture.policy.bundle as FinancialPolicy).id, { exact: true }),
   );
   await user.selectOptions(screen.getByLabelText('Currency'), 'GBP');
   await user.selectOptions(screen.getByLabelText('Amount unit'), 'minor');
   expect(saved?.currencies).toContainEqual({ id: 'GBP', minor_units: 2 });
-  expect(saved?.routes[0]!.components[0]!.amount_unit).toBe('minor');
+  expect(component(saved).amount_unit).toBe('minor');
   await user.selectOptions(screen.getByLabelText('Currency'), 'IRR');
   expect(screen.getByLabelText('Amount unit')).toHaveValue('major');
   expect(screen.queryByRole('option', { name: 'Minor currency unit' })).not.toBeInTheDocument();
 });
-it('uses generic targets in independently supplied reference cases', async () => {
+it('uses generic targets in independently supplied reference cases', () => {
   let saved: FinancialScenario[] = [];
   const policy = generic();
   function Harness() {
@@ -103,12 +109,14 @@ it('uses generic targets in independently supplied reference cases', async () =>
   render(<Harness />);
   expect(screen.getByLabelText('Route')).toHaveValue('jp-study');
   expect(screen.getByRole('option', { name: 'Synthetic Japan' })).toBeInTheDocument();
-  expect(saved[0]!.expected.status).toBe('unknown');
+  expect(required(saved[0]).expected.status).toBe('unknown');
 });
 it('filters financial bindings by country and goal and clears a binding on a scope change', async () => {
   let saved: DestinationPolicy | undefined;
-  const policy = structuredClone(destinations.intake.catalog!.bundle) as DestinationPolicy;
-  policy.entries = [{ ...policy.entries[2]!, country: 'JP', financial_route_id: 'jp-study' }];
+  const policy = structuredClone(destinations.intake.catalog.bundle) as DestinationPolicy;
+  policy.entries = [
+    { ...required(policy.entries[2]), country: 'JP', financial_route_id: 'jp-study' },
+  ];
   function Harness() {
     const [p, set] = useState(policy);
     saved = p;
@@ -134,11 +142,11 @@ it('filters financial bindings by country and goal and clears a binding on a sco
   }
   render(<Harness />);
   const user = userEvent.setup();
-  await user.click(screen.getByText(policy.entries[0]!.title.fa, { exact: true }));
+  await user.click(screen.getByText(required(policy.entries[0]).title.fa, { exact: true }));
   expect(screen.getByLabelText('Financial target')).toHaveValue('jp-study');
   expect(screen.queryByRole('option', { name: 'Wrong country' })).not.toBeInTheDocument();
   await user.selectOptions(screen.getByLabelText('Destination country'), 'GB');
-  expect(saved?.entries[0]!.financial_route_id).toBeNull();
+  expect(required(required(saved).entries[0]).financial_route_id).toBeNull();
   expect(screen.getByRole('option', { name: 'Wrong country' })).toBeInTheDocument();
 });
 it('selects the first recorded generic target and sends its ID in a read-only scenario', async () => {
