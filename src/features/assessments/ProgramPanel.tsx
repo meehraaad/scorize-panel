@@ -199,6 +199,7 @@ export function ProgramPanel({
                       </p>
                     )}
                   <Button
+                    aria-label={t('programs.saveAnswer', { question: label })}
                     disabled={
                       !draft[question.id] ||
                       sameAnswerContent(draft[question.id], checked.inputs[question.id])
@@ -220,7 +221,7 @@ export function ProgramPanel({
                       })
                     }
                   >
-                    {t('programs.saveAnswer', { question: label })}
+                    {t('calculator.save')}
                   </Button>
                 </fieldset>
               )}
