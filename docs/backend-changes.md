@@ -583,3 +583,8 @@ panel #106 on #105. Reuses existing draft/review/release/session/snapshot models
 with no new model or production migration. It does not change profile/sales budget
 enums, create contacts/leads or enable public assessment. Backend must precede
 panel. [Scope, compatibility and release limits](assessment-financial-fit.md).
+
+
+## Destination discovery dependency
+
+Development-only destination intake and structured catalog management in panel #107 require backend shamrad/lang#322 on #321, and panel #106. See [contract and limits](assessment-destination-discovery.md). No new production migrations or activation are included.

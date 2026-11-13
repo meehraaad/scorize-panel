@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router';
 import { FinancialPanel } from './FinancialPanel';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState } from 'react';
@@ -49,8 +50,11 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const query = useQuery(interviewQuery(id));
   const [historyPage, setHistoryPage] = useState(1);
   const history = useQuery(snapshotsQuery(id, historyPage));
-  const [country, setCountry] = useState<Country>('canada');
-  const [field, setField] = useState('birth_date');
+  const [search] = useSearchParams();
+  const [country, setCountry] = useState<Country>(
+    search.get('country') === 'australia' ? 'australia' : 'canada',
+  );
+  const [field, setField] = useState(country === 'australia' ? 'facts.birth_date' : 'birth_date');
   const [status, setStatus] = useState<AnswerStatus | null>(null);
   const [value, setValue] = useState<unknown>(undefined);
   const [dirty, setDirty] = useState(false);
@@ -451,7 +455,11 @@ export default function CalculatorPage() {
   const sectionId = useId();
   const options = useQuery(calculatorOptionsQuery);
   const cache = useQueryClient();
-  const [session, setSession] = useState('');
+  const [search] = useSearchParams();
+  const [session, setSession] = useState(() => {
+    const id = search.get('session') ?? '';
+    return /^[a-f0-9-]{36}$/i.test(id) ? id : '';
+  });
   const [reviewing, setReviewing] = useState(false);
   const [ruleset, setRuleset] = useState('');
   const [startKey, setStartKey] = useState(() => crypto.randomUUID());
