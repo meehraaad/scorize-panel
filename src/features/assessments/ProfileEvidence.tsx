@@ -19,6 +19,8 @@ export function ProfileEvidence({
   onPrepare: (candidate: ProfileCandidate) => void;
 }) {
   const { t } = useTranslation('assessments');
+  const fieldLabels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
+  const choiceLabels = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
   const sourceLabels = t('calculator.profile.sources', { returnObjects: true }) as Record<
     string,
     string
@@ -41,13 +43,30 @@ export function ProfileEvidence({
           <div key={key} className="flex flex-wrap gap-x-2">
             <dt className="text-text-2">{detailLabels[key] ?? t('calculator.unknown')}</dt>
             <dd className="m-0 break-words">
-              {value === null
-                ? t('calculator.unknown')
-                : typeof value === 'boolean'
-                  ? t(value ? 'yes' : 'no')
-                  : typeof value === 'string' || typeof value === 'number'
-                    ? value
-                    : t('calculator.unknown')}
+              {key === 'scores' && value && typeof value === 'object' && !Array.isArray(value) ? (
+                <dl>
+                  {Object.entries(value).map(([skill, score]) => (
+                    <div key={skill} className="flex gap-2">
+                      <dt>{fieldLabels[skill] ?? t('calculator.unknown')}</dt>
+                      <dd className="m-0">
+                        {typeof score === 'number' ? score : t('calculator.unknown')}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : value === null ? (
+                t('calculator.unknown')
+              ) : typeof value === 'boolean' ? (
+                t(value ? 'yes' : 'no')
+              ) : typeof value === 'string' || typeof value === 'number' ? (
+                key === 'test' && typeof value === 'string' ? (
+                  (choiceLabels[value] ?? value)
+                ) : (
+                  value
+                )
+              ) : (
+                t('calculator.unknown')
+              )}
             </dd>
           </div>
         ))}
@@ -82,7 +101,15 @@ export function ProfileEvidence({
             </h3>
             {details(candidate.original)}
             {candidate.conflict && <Notice tone="warn">{t('calculator.profile.conflict')}</Notice>}
-            {!candidate.complete && <p>{t('calculator.profile.incomplete')}</p>}
+            {!candidate.complete && (
+              <p>
+                {t(
+                  candidate.source === 'session_shared'
+                    ? 'calculator.profile.sharedIncomplete'
+                    : 'calculator.profile.incomplete',
+                )}
+              </p>
+            )}
             <Button variant="outline" disabled={disabled} onClick={() => onPrepare(candidate)}>
               {t('calculator.profile.prepare')}
             </Button>

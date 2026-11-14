@@ -204,7 +204,7 @@ it('keeps Australian points separate from an unmet entry condition', async () =>
   const results = await screen.findAllByRole('region', { name: 'Recorded result' });
   const first = results[0];
   if (!first) throw new Error('Recorded result missing');
-  expect(within(first).getByText('Current score: 75')).toBeInTheDocument();
+  expect(within(first).getByText('Score at assessment date: 75')).toBeInTheDocument();
   expect(within(first).getByText('Covered requirements: Not met')).toBeInTheDocument();
 });
 

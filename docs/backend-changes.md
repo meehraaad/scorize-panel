@@ -6,6 +6,8 @@ around each gap (column "Until then").
 
 Status: ☐ open · ☑ done
 
+Draft shared IELTS evidence and pinned assessment-date labels require backend shamrad/lang#331 and its dependency stack. Only raw report details are reused after explicit confirmation; country-specific conditions remain separate. No production flag is enabled.
+
 Draft continuation of older assessment sessions requires shamrad/lang#330 and its dependency stack. Copied answers require individual confirmation; the prior session and snapshots remain unchanged. Legal calculations stay unavailable outside source coverage, while facts and financial information can still be saved. No production flag is enabled.
 
 Draft assessment document links require backend shamrad/lang#328 and its dependency stack before this development-only interface can be used. The endpoint links owned existing documents to session facts and returns explicit stale/review states; it does not upload files or verify eligibility. No production flag is enabled.

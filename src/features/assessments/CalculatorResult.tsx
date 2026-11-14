@@ -31,6 +31,11 @@ function SingleResult({ snapshot }: { snapshot: SingleSnapshot }) {
   return (
     <SectionCard id={sectionId} title={t('calculator.result')} variant="panel">
       <p>
+        {t('calculator.dateLabel')}{' '}
+        <bdi>{snapshot.payload.context.assessment_date ?? t('calculator.unknown')}</bdi>
+      </p>
+      <p>{t('calculator.dateMeaning')}</p>
+      <p>
         {t('calculator.country')}: {t(`calculator.choices.${snapshot.payload.country}`)}
       </p>
       {result.route_id && ['au-189', 'au-190', 'au-491'].includes(result.route_id) && (

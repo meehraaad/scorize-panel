@@ -41,6 +41,7 @@ export function resetCalculatorMocks() {
 const interview = () => ({
   revision,
   adapter_version: 'calculator-interview-1',
+  assessment_date: '2026-11-12',
   engine_available: true,
   coverage_available: { canada: true, australia: true },
   answers,
@@ -254,7 +255,7 @@ export const calculatorHandlers = [
       payload: {
         country: 'canada',
         active: false,
-        context: { session_revision: revision },
+        context: { session_revision: revision, assessment_date: '2026-11-12' },
         mapping: { unresolved: [] },
         results: {
           crs: {
