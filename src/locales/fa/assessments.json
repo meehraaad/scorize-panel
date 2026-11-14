@@ -719,6 +719,7 @@
     "rangeTitle": "عنوان",
     "reasons": {
       "policy_unavailable": "سیاست مالی در دسترس نیست",
+      "financial_inputs_unavailable": "اطلاعات مالی ذخیره‌شده نیاز به بررسی دارد",
       "route_costs_unavailable": "منبع هزینهٔ این مسیر موجود نیست",
       "cost_table_incomplete": "جدول هزینه ناقص است",
       "assumptions_require_confirmation": "فرض‌های خانواده یا هزینه نیازمند تأییدند",

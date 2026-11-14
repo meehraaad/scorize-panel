@@ -199,6 +199,25 @@ it('keeps absent financial policy explicitly unknown', async () => {
     area.queryByRole('button', { name: 'Confirm current financial policy' }),
   ).not.toBeInTheDocument();
 });
+it('explains when saved financial information needs review', async () => {
+  server.use(
+    http.get('/api/applicant/v1/assessments/:id/calculators/financial/', () =>
+      HttpResponse.json({
+        ...fixture,
+        routes: {
+          'ca-fsw': {
+            status: 'unknown',
+            unknowns: ['financial_inputs_unavailable'],
+            ask_exact: false,
+            components: [],
+          },
+        },
+      }),
+    ),
+  );
+  const { area } = await open();
+  expect(area.getByText('Saved financial information needs to be reviewed')).toBeInTheDocument();
+});
 it('edits stable ranges, open maxima, thresholds and draft reference data without JSON', async () => {
   function Harness() {
     const [p, set] = useState(fixture.policy.bundle as FinancialPolicy);

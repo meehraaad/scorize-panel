@@ -719,6 +719,7 @@
     "rangeTitle": "Title",
     "reasons": {
       "policy_unavailable": "Financial policy unavailable",
+      "financial_inputs_unavailable": "Saved financial information needs to be reviewed",
       "route_costs_unavailable": "No cost reference for this route",
       "cost_table_incomplete": "Cost table is incomplete",
       "assumptions_require_confirmation": "Household or cost assumptions need confirmation",
