@@ -6,6 +6,14 @@ around each gap (column "Until then").
 
 Status: ☐ open · ☑ done
 
+Ticket voice messages and Telegram conversations: the paired `shamrad/lang` change adds opt-in audio
+validation to applicant/supervisor/writer ticket attachment APIs and permits attachment-only messages.
+It also adds a linked-account customer inbox to the bot and after-commit staff-reply delivery. Deploy
+that backend and its Telegram bridge table first, then enable `ON_SERVER.ticketVoice`. The panel change
+records up to two minutes using the shared microphone capture/lease, previews before Send, and plays
+audio attachments with native controls. Microphone access needs HTTPS/localhost; CSP permits same-origin
+audio and local blob previews. Staff continue to answer from the panel. Existing ticket JSON stays compatible.
+
 Live seller call popups/timers: paired backend implementation is prepared on
 `shamrad/lang:codex/seller-live-calls`, with signed bridge ingestion and seller-scoped snapshots.
 The office bridge and backend are deployed; `ON_SERVER.livePhoneCalls` is enabled. Staff extension

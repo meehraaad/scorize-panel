@@ -1042,7 +1042,10 @@ function ticket(
 const MARYAM = { name: 'مریم کاظمی', role: 'supervisor' as const };
 const HOSSEIN = { name: 'حسین رحیمی', role: 'supervisor' as const };
 const ELHAM = { name: 'الهام رضوی', role: 'writer' as const };
-const file = (name: string) => ({ name, url: '#' });
+const file = (name: string) => ({
+  name,
+  url: `/new-media/ticket_attachment/${encodeURIComponent(name)}`,
+});
 
 function saraThreads(): MockThread[] {
   return [
@@ -1233,7 +1236,7 @@ const ticketHandlers = [
       const text = form.get('message');
       const priority = Number(form.get('priority') ?? 1);
       const attachment = form.get('attachment');
-      if (typeof text !== 'string' || !text.trim())
+      if (typeof text !== 'string' || (!text.trim() && !(attachment instanceof File)))
         return HttpResponse.json({ message: ['required'] }, { status: 400 });
       if (!isPriority(priority))
         return HttpResponse.json({ priority: ['invalid'] }, { status: 400 });

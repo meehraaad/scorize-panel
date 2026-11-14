@@ -139,6 +139,7 @@ function Message({
       text={message.text}
       outlined={auto}
       attachment={message.attachment}
+      audioLabel={t('voice.play')}
       status={mine ? (message.seen ? t('seen') : t('sent')) : undefined}
       footer={
         // Under staff replies: the applicant rates them; staff see the score given.
