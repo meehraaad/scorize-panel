@@ -5,6 +5,9 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router';
+import { draftsQuery, optionsQuery } from '@/features/assessments/api';
+import { ApiError, api } from '@/lib/api/client';
+import type { SessionUser } from '@/lib/auth/session';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
@@ -183,6 +186,39 @@ const pageRoutes: RouteObject[] = [
   // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
   ...(import.meta.env.DEV
     ? [
+        {
+          path: 'dev/assessments',
+          loader: async ({ request }: LoaderFunctionArgs) => {
+            // This standalone development route has no panel session boundary.
+            // Keep its guard independent of StrictMode's disabled frame observer.
+            const user = await queryClient.query({
+              queryKey: ['assessment-management', 'viewer'],
+              queryFn: async () => {
+                try {
+                  return await api<SessionUser>('/profile/auth/v1/whoami/');
+                } catch (error) {
+                  if (error instanceof ApiError && (error.status === 401 || error.status === 403))
+                    return null;
+                  throw error;
+                }
+              },
+              staleTime: 0,
+            });
+            if (user) queryClient.setQueryData(sessionQuery.queryKey, user);
+            return user ? null : toLogin(request);
+          },
+          ErrorBoundary: ErrorPage,
+          HydrateFallback: BootFallback,
+          children: [
+            {
+              index: true,
+              ...lazyPage(() => import('@/features/assessments/ManagementPage'), ['assessments'], {
+                data: () => [draftsQuery(), optionsQuery],
+                skeleton: 'form',
+              }),
+            },
+          ],
+        },
         {
           path: 'dev/components',
           ...lazyPage(() => import('./dev/ComponentsPage')),

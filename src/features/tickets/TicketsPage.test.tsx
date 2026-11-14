@@ -112,10 +112,14 @@ describe('tickets page', () => {
     expect(within(sent).getByRole('link', { name: 'invite.pdf' })).toBeInTheDocument();
     expect(within(sent).getByText('ارسال شد')).toBeInTheDocument();
 
-    expect(card.getByLabelText('متن پیام')).toHaveValue('');
-    expect(card.getByRole('radio', { name: 'متوسط' })).toBeChecked();
-    expect(card.queryByRole('button', { name: 'برداشتن فایل پیوست' })).toBeNull();
-    expect(card.queryByRole('checkbox', { name: 'قبول دارم' })).toBeNull();
+    // The message cache updates before the mutation's success callback resets
+    // the composer. Observe that asynchronous reset instead of racing it.
+    await waitFor(() => {
+      expect(card.getByLabelText('متن پیام')).toHaveValue('');
+      expect(card.getByRole('radio', { name: 'متوسط' })).toBeChecked();
+      expect(card.queryByRole('button', { name: 'برداشتن فایل پیوست' })).toBeNull();
+      expect(card.queryByRole('checkbox', { name: 'قبول دارم' })).toBeNull();
+    });
   });
 
   it('opens the writing departments the contract has, each its own conversation', async () => {
