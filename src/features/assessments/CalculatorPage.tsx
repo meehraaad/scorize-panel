@@ -17,6 +17,7 @@ import { CalculatorReview } from './CalculatorReview';
 import { CalculatorForm } from './CalculatorForm';
 import { ProfileEvidence } from './ProfileEvidence';
 import { DocumentLinks } from './DocumentLinks';
+import { SessionTransfer } from './SessionTransfer';
 import { RouteComparison } from './RouteComparison';
 import { GuidedInterview } from './GuidedInterview';
 import {
@@ -35,7 +36,19 @@ import {
   type ProfileCandidate,
 } from './calculatorApi';
 
-function InterviewEditor({ id, options }: { id: string; options: Options }) {
+function InterviewEditor({
+  id,
+  options,
+  ruleset,
+  onTransferred,
+  onTransferBusy,
+}: {
+  id: string;
+  options: Options;
+  ruleset: string;
+  onTransferred: (id: string) => void;
+  onTransferBusy: (busy: boolean) => void;
+}) {
   const { t } = useTranslation('assessments');
   const [search] = useSearchParams();
   const routeParam = search.get('route') ?? '';
@@ -138,6 +151,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   useEffect(() => {
     if (
       autoPaused ||
+      current?.source === 'previous_session' ||
       !dirty ||
       !data ||
       saving ||
@@ -162,6 +176,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
     return () => clearTimeout(timer);
   }, [
     autoPaused,
+    current?.source,
     dirty,
     data,
     saving,
@@ -180,6 +195,28 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
       <>
         <SkeletonRows rows={4} />
         {query.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+      </>
+    );
+  if (data.engine_available === false || data.transfer_required === true)
+    return (
+      <>
+        <SessionTransfer
+          id={id}
+          revision={data.revision}
+          ruleset={ruleset}
+          onTransferred={onTransferred}
+          onBusy={onTransferBusy}
+        />
+        <SectionCard
+          id={sectionId + '-old-history'}
+          title={t('calculator.history')}
+          variant="panel"
+        >
+          {history.data?.results.map((snapshot) => (
+            <CalculationResult key={snapshot.id} snapshot={snapshot} />
+          ))}
+          {history.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+        </SectionCard>
       </>
     );
   const fields = options.schemas[country];
@@ -404,6 +441,26 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
               }}
             />
           )}
+          {current?.source === 'previous_session' && current.previous_answer && (
+            <>
+              <Notice tone="warn">{t('transfer.reviewAnswer')}</Notice>
+              <Button
+                variant="outline"
+                disabled={dirty || saving}
+                onClick={() => {
+                  const prior = current.previous_answer;
+                  if (!prior) return;
+                  setStatus(prior.status);
+                  setValue(prior.value);
+                  setDirty(true);
+                  setAutoPaused(true);
+                  setPending(null);
+                }}
+              >
+                {t('transfer.prepare')}
+              </Button>
+            </>
+          )}
           {current && (
             <p>
               {t('calculator.provenance', {
@@ -460,7 +517,13 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
               saveAnswer(body);
             }}
           >
-            {t(profileCandidate ? 'calculator.profile.confirmSave' : 'calculator.save')}
+            {t(
+              profileCandidate
+                ? 'calculator.profile.confirmSave'
+                : current?.source === 'previous_session'
+                  ? 'transfer.confirm'
+                  : 'calculator.save',
+            )}
           </Button>
           {conflict && (
             <Button
@@ -480,6 +543,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
               dirty ||
               saving ||
               record.isPending ||
+              data.coverage_available?.[country] === false ||
               (country === 'australia' && !australiaRouteReady)
             }
             onClick={() => record.mutate()}
@@ -488,6 +552,9 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           </Button>
           {country === 'australia' && !australiaRouteReady && (
             <Notice tone="warn">{t('calculator.guided.routeRequired')}</Notice>
+          )}
+          {data.coverage_available?.[country] === false && (
+            <Notice tone="warn">{t('transfer.sourceUnavailable')}</Notice>
           )}
           {record.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
         </fieldset>
@@ -552,6 +619,7 @@ export default function CalculatorPage() {
   });
   const [reviewing, setReviewing] = useState(false);
   const [ruleset, setRuleset] = useState('');
+  const [transferBusy, setTransferBusy] = useState(false);
   const [startKey, setStartKey] = useState(() => crypto.randomUUID());
   const start = useMutation({
     mutationFn: () => startCalculatorSession(Number(ruleset), startKey),
@@ -576,6 +644,7 @@ export default function CalculatorPage() {
             <div className="flex flex-col gap-4">
               <SelectField
                 label={t('calculator.resume')}
+                disabled={transferBusy}
                 value={session}
                 options={[
                   { value: '', label: t('calculator.choose') },
@@ -588,6 +657,7 @@ export default function CalculatorPage() {
               />
               <SelectField
                 label={t('calculator.ruleset')}
+                disabled={transferBusy}
                 value={ruleset}
                 options={[
                   { value: '', label: t('calculator.choose') },
@@ -598,13 +668,25 @@ export default function CalculatorPage() {
                 ]}
                 onChange={setRuleset}
               />
-              <Button disabled={!ruleset || start.isPending} onClick={() => start.mutate()}>
+              <Button
+                disabled={!ruleset || start.isPending || transferBusy}
+                onClick={() => start.mutate()}
+              >
                 {t('calculator.start')}
               </Button>
               {start.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
             </div>
           </SectionCard>
-          {session && <InterviewEditor key={session} id={session} options={options.data} />}
+          {session && (
+            <InterviewEditor
+              key={session}
+              id={session}
+              options={options.data}
+              ruleset={ruleset}
+              onTransferred={setSession}
+              onTransferBusy={setTransferBusy}
+            />
+          )}
           {options.data.can_review && (
             <Button variant="outline" onClick={() => setReviewing(!reviewing)}>
               {t('calculator.reviewQueue')}

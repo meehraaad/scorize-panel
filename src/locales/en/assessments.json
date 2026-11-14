@@ -454,7 +454,8 @@
         "covered_routes_blocked": "A known condition blocks the covered route(s). This does not reject unsupported routes. Choose scenario mode to explore remaining facts.",
         "incomplete_needs_review": "No further question can currently resolve the gaps. Some facts are unknown, blocked or need specialist review; the result remains partial.",
         "initial_result_available": "The supplied facts resolve this initial draft assessment. You can record the result below. This is not legal approval.",
-        "session_complete": "This session is complete. Its recorded history remains available."
+        "session_complete": "This session is complete. Its recorded history remains available.",
+        "source_date_unavailable": "The available legal sources do not cover this assessment date. Guided legal questions are unavailable."
       },
       "skip": "I do not know; defer this question",
       "definitionChanged": "The definition of this group changed. Review your earlier answer using the new definition.",
@@ -580,7 +581,10 @@
       "partner": "Partner",
       "nomination_or_sponsorship": "Nomination or sponsorship",
       "clarify_financial_information": "Clarify financial information",
-      "review_financial_gap": "Review financial gap"
+      "review_financial_gap": "Review financial gap",
+      "not_evaluated": "Not evaluated",
+      "legal_date_out_of_coverage": "Legal source dates do not cover this assessment date",
+      "refresh_legal_sources": "Review and update legal sources"
     },
     "listSeparator": ", "
   },
@@ -1034,5 +1038,19 @@
     "unlinkFor": "Remove link to {{document}}",
     "reviewChanged": "The document review status has changed since it was linked.",
     "reload": "Reload documents"
+  },
+  "transfer": {
+    "title": "Continue an older assessment",
+    "explanation": "This session uses an older calculation version. Its saved results remain available below. Copy the answers into a new session to review each one; nothing is automatically confirmed or written to your profile. Documents and previous route choices must be linked or selected again. The new session uses today’s date.",
+    "selectRules": "Choose a current assessment bundle above, then copy answers for review.",
+    "start": "Copy answers for review",
+    "retry": "Retry copying answers",
+    "failure": "Could not copy the session. Retry the same request, or discard it and refresh if the session changed.",
+    "discard": "Discard request",
+    "reviewAnswer": "This answer came from your older session and is not yet confirmed. Review it before using it.",
+    "prepare": "Review the previous answer",
+    "sourceUnavailable": "The available legal sources do not cover this assessment date. You can save facts and see financial information, but no legal score or eligibility result is available.",
+    "confirm": "Confirm this answer",
+    "scoreUnavailable": "Unavailable for this assessment date"
   }
 }
