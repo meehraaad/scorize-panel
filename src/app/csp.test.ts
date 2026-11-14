@@ -9,6 +9,9 @@ async function sha256Base64(text: string) {
 }
 
 describe('Content-Security-Policy (security-headers.conf)', () => {
+  it('allows local voice previews and same-origin ticket audio', () => {
+    expect(securityHeaders).toContain("media-src 'self' blob:");
+  });
   it('allows the inline boot script of index.html by its current hash', async () => {
     const inline = /<script>([\s\S]*?)<\/script>/.exec(indexHtml)?.[1];
     expect(inline).toBeDefined();

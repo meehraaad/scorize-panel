@@ -4,6 +4,7 @@
  * true when its endpoint is live.
  */
 export type ServerFeature =
+  | 'ticketVoice'
   | 'callRequest'
   | 'turkey'
   | 'professorEmails'
@@ -41,6 +42,8 @@ export type ServerFeature =
   | 'hr';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /** Enable after the paired ticket-audio backend release is deployed. */
+  ticketVoice: false,
   /**
    * `GET /hr/v1/today|staff|moves|calendar|options/`: the HR panel's staff files, contracts, salary
    * history and joining and leaving checklists, key `can_manage_support_staff` (lang

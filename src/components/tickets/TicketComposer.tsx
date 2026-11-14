@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Composer } from '@/components/tickets/Composer';
 import { ReadyReplies } from '@/components/tickets/ReadyReplies';
+import { AudioPreview, VoiceMessage } from '@/components/tickets/VoiceMessage';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { checkFile, extensionOf, type FileRule } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   ATTACHMENT_TYPES,
+  AUDIO_ATTACHMENT_TYPES,
   DEFAULT_PRIORITY,
   MAX_ATTACHMENT_BYTES,
   PRIORITIES,
@@ -16,8 +18,6 @@ import {
 } from '@/lib/tickets/api';
 import { toast } from '@/lib/toast';
 import type { TicketsConfig } from '@/lib/tickets/api';
-
-const RULE: FileRule = { types: ATTACHMENT_TYPES, maxBytes: MAX_ATTACHMENT_BYTES };
 
 /**
  * New message in the open thread. "Very urgent" needs its rules accepted first (as on the old site).
@@ -49,15 +49,28 @@ export function TicketComposer({
   const [accepted, setAccepted] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
+  const attachmentTypes = ON_SERVER.ticketVoice
+    ? [...ATTACHMENT_TYPES, ...AUDIO_ATTACHMENT_TYPES]
+    : ATTACHMENT_TYPES;
+  const rule: FileRule = { types: attachmentTypes, maxBytes: MAX_ATTACHMENT_BYTES };
 
   const applicant = config.viewer === 'applicant';
   const urgent = applicant && priority === URGENT;
-  const canSend = text.trim().length > 0 && (!urgent || accepted);
+  const canSend =
+    (text.trim().length > 0 || (ON_SERVER.ticketVoice && file !== null)) &&
+    !recording &&
+    (!urgent || accepted);
 
   const pick = (picked: File | undefined) => {
     if (!picked) return;
-    const problem = checkFile(picked, RULE);
-    if (problem === 'badType') setFileError(t('composer.badType'));
+    // MediaRecorder includes a codec parameter; the server validates the actual container again.
+    const problem = checkFile(
+      new File([picked], picked.name, { type: picked.type.split(';')[0] ?? '' }),
+      rule,
+    );
+    if (problem === 'badType')
+      setFileError(t(ON_SERVER.ticketVoice ? 'voice.badType' : 'composer.badType'));
     else if (problem === 'tooBig')
       setFileError(
         t('composer.tooBig', {
@@ -99,6 +112,20 @@ export function TicketComposer({
         placeholder={t('composer.placeholder')}
         value={text}
         onChange={setText}
+        accessory={
+          ON_SERVER.ticketVoice && (
+            <>
+              <VoiceMessage
+                disabled={send.isPending || file !== null}
+                onFile={pick}
+                onActive={setRecording}
+              />
+              {file?.type.startsWith('audio/') && (
+                <AudioPreview file={file} label={t('voice.preview')} />
+              )}
+            </>
+          )
+        }
         priority={
           applicant
             ? {
@@ -125,8 +152,9 @@ export function TicketComposer({
             : null
         }
         attach={{
+          disabled: recording,
           label: t('composer.attach'),
-          accept: ATTACHMENT_TYPES,
+          accept: attachmentTypes,
           file: file && {
             ext: extensionOf(file.name),
             name: file.name,

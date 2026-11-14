@@ -118,6 +118,7 @@ interface MessageBubbleProps {
   /** An automatic reply: outlined bubble instead of a filled one. */
   outlined?: boolean;
   attachment?: { name: string; url: string } | null | undefined;
+  audioLabel?: string | undefined;
   /** Under own messages: "Seen", "Sent". */
   status?: ReactNode;
   /** Under the bubble: a rating. */
@@ -146,6 +147,7 @@ export function MessageBubble({
   body,
   outlined = false,
   attachment,
+  audioLabel,
   status,
   footer,
   compact = false,
@@ -211,17 +213,26 @@ export function MessageBubble({
             {text}
           </p>
         )}
-        {attachment && (
-          <a
-            href={safeHref(attachment.url)}
-            target="_blank"
-            rel="noopener"
-            className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full px-3.5 text-[13px] text-text shadow-[inset_0_0_0_1px_var(--line-2)]"
-          >
-            <Icon name="paperclip" size={16} className="flex-none" />
-            <bdi className="truncate">{attachment.name}</bdi>
-          </a>
-        )}
+        {attachment &&
+          (/\.(ogg|webm|m4a|mp4|mp3|wav)$/i.test(attachment.name) ? (
+            <audio
+              controls
+              preload="none"
+              src={safeHref(attachment.url)}
+              aria-label={audioLabel ?? attachment.name}
+              className="h-11 w-full max-w-full"
+            />
+          ) : (
+            <a
+              href={safeHref(attachment.url)}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-full px-3.5 text-[13px] text-text shadow-[inset_0_0_0_1px_var(--line-2)]"
+            >
+              <Icon name="paperclip" size={16} className="flex-none" />
+              <bdi className="truncate">{attachment.name}</bdi>
+            </a>
+          ))}
         {status && <span className="text-xs text-text-2">{status}</span>}
         {footer}
       </div>

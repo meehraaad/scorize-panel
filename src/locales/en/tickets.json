@@ -100,5 +100,18 @@
     "loading": "Loading…",
     "none": "No ready ticket replies yet.",
     "error": "Ready messages didn't load. Open them again."
+  },
+  "voice": {
+    "record": "Record voice message",
+    "stop": "Stop recording",
+    "cancel": "Cancel recording",
+    "opening": "Opening microphone…",
+    "recording": "Recording · {{seconds}} seconds",
+    "hint": "Record up to 2 minutes, then listen before sending.",
+    "error": "Microphone unavailable. Allow access or attach an audio file.",
+    "unsupported": "You can attach an audio file on this browser.",
+    "preview": "Preview voice message",
+    "play": "Play voice message",
+    "badType": "Choose a PDF, image, Word document or an OGG, WebM, M4A, MP3 or WAV audio file."
   }
 }

@@ -118,6 +118,14 @@ export const ATTACHMENT_TYPES = [
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ] as const;
+export const AUDIO_ATTACHMENT_TYPES = [
+  'audio/ogg',
+  'audio/webm',
+  'audio/mp4',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/x-wav',
+] as const;
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 const threadKey = (endpoint: TicketsEndpoint, thread: string) => [
@@ -194,7 +202,7 @@ export function useSendMessage(endpoint: TicketsEndpoint, thread: string) {
           ? { ...data, pages: [{ ...newest, messages: [...newest.messages, message] }, ...older] }
           : data;
       });
-      return refresh();
+      void refresh();
     },
   });
 }
