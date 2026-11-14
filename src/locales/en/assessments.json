@@ -609,6 +609,18 @@
     },
     "listSeparator": ", "
   },
+  "scenario": {
+    "title": "Explore a what-if change",
+    "explanation": "This preview is hypothetical. It does not save an answer or confirm evidence. Changing shared evidence may leave another country's result unknown until confirmed.",
+    "country": "Country for this change",
+    "field": "Information to change",
+    "select": "Choose information",
+    "preview": "Preview change",
+    "failed": "Could not preview this change. Check the information or refresh the comparison and try again.",
+    "result": "Hypothetical comparison for the assessment date; no answers were saved.",
+    "before": "Before",
+    "after": "After"
+  },
   "financial": {
     "title": "Financial fit",
     "open": "Open financial questions",

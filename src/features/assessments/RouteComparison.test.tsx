@@ -39,6 +39,44 @@ it('shows different score systems, unsupported routes, conditions and honest una
   expect(area.getAllByText(/Time and historical evidence remain unavailable/)).toHaveLength(6);
   expect(area.getByRole('button', { name: 'Record comparison and action plan' })).toBeEnabled();
 });
+it('previews a hypothetical answer without saving the interview', async () => {
+  const requests: unknown[] = [];
+  let answerWrites = 0;
+  server.use(
+    http.post(
+      '/api/applicant/v1/assessments/:id/calculators/comparison/scenario/',
+      async ({ request }) => {
+        requests.push(await request.json());
+        return HttpResponse.json({
+          hypothetical: true,
+          writes: false,
+          before: fixture.routes,
+          after: fixture.routes,
+        });
+      },
+    ),
+    http.post('/api/applicant/v1/assessments/:id/calculators/interview/', () => {
+      answerWrites++;
+      return new HttpResponse(null, { status: 500 });
+    }),
+  );
+  const { user, area } = await open();
+  await user.selectOptions(area.getByLabelText('Information to change'), 'nomination');
+  await user.selectOptions(area.getByLabelText('Nomination'), 'confirmed');
+  await user.click(area.getByRole('button', { name: 'Preview change' }));
+  expect(
+    await area.findByText(/Hypothetical comparison for the assessment date/),
+  ).toBeInTheDocument();
+  expect(requests).toHaveLength(1);
+  expect(requests[0]).toMatchObject({
+    changes: [{ country: 'canada', field: 'nomination', status: 'known', value: 'confirmed' }],
+  });
+  expect(answerWrites).toBe(0);
+  await user.selectOptions(area.getByLabelText('Nomination'), 'none');
+  expect(
+    area.queryByText(/Hypothetical comparison for the assessment date/),
+  ).not.toBeInTheDocument();
+});
 it('persists reported action completion without changing the unmet condition', async () => {
   const { user, area } = await open();
   const progress = area.getAllByLabelText(/Progress: Review unmet condition/)[0];
