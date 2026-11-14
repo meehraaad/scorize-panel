@@ -16,6 +16,7 @@ import { CalculationResult } from './CalculatorResult';
 import { CalculatorReview } from './CalculatorReview';
 import { CalculatorForm } from './CalculatorForm';
 import { ProfileEvidence } from './ProfileEvidence';
+import { DocumentLinks } from './DocumentLinks';
 import { RouteComparison } from './RouteComparison';
 import { GuidedInterview } from './GuidedInterview';
 import {
@@ -78,6 +79,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
   const [guidanceBusy, setGuidanceBusy] = useState(false);
   const [comparisonBusy, setComparisonBusy] = useState(false);
   const [financialBusy, setFinancialBusy] = useState(false);
+  const [documentBusy, setDocumentBusy] = useState(false);
   const [financialOpen, setFinancialOpen] = useState(false);
   const data = query.data;
   const australianRoute = data?.answers[options.identities.australia.subclass ?? ''];
@@ -211,6 +213,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
             !snapshotRequest &&
             !record.isPending &&
             !financialBusy &&
+            !documentBusy &&
             !comparisonBusy &&
             !guidanceBusy && (
               <Link
@@ -231,6 +234,7 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
                   record.isPending ||
                   comparisonBusy ||
                   financialBusy ||
+                  documentBusy ||
                   guidanceBusy ||
                   Boolean(snapshotRequest) ||
                   Boolean(pending)
@@ -254,7 +258,9 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         id={id}
         country={country}
         revision={data.revision}
-        disabled={dirty || saving || record.isPending || comparisonBusy || financialBusy}
+        disabled={
+          dirty || saving || record.isPending || comparisonBusy || financialBusy || documentBusy
+        }
         canReview={Boolean(options.can_review)}
         australiaRouteReady={australiaRouteReady}
         onRestore={(nextCountry) => {
@@ -311,7 +317,13 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         id={id}
         country={country}
         disabled={
-          dirty || saving || record.isPending || guidanceBusy || comparisonBusy || financialBusy
+          dirty ||
+          saving ||
+          record.isPending ||
+          guidanceBusy ||
+          comparisonBusy ||
+          financialBusy ||
+          documentBusy
         }
         onPrepare={(candidate) => {
           choose(country, candidate.field);
@@ -323,12 +335,24 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
           focusEditor();
         }}
       />
+      <DocumentLinks
+        id={id}
+        country={country}
+        field={field}
+        factId={options.identities[country][field] ?? ''}
+        revision={data.revision}
+        known={current?.status === 'known'}
+        disabled={
+          dirty || saving || record.isPending || guidanceBusy || comparisonBusy || financialBusy
+        }
+        onBusy={setDocumentBusy}
+      />
       <SectionCard id={sectionId} title={t('calculator.interview')} variant="panel">
         <fieldset
           ref={editorRef}
           tabIndex={-1}
           aria-label={t('calculator.interview')}
-          disabled={saving || guidanceBusy || comparisonBusy || financialBusy}
+          disabled={saving || guidanceBusy || comparisonBusy || financialBusy || documentBusy}
           className="m-0 flex flex-col gap-4 border-0 p-0"
         >
           <SelectField
@@ -473,13 +497,17 @@ function InterviewEditor({ id, options }: { id: string; options: Options }) {
         onOpen={() => setFinancialOpen(true)}
         id={id}
         revision={data.revision}
-        disabled={dirty || saving || record.isPending || guidanceBusy || comparisonBusy}
+        disabled={
+          dirty || saving || record.isPending || guidanceBusy || comparisonBusy || documentBusy
+        }
         onBusy={setFinancialBusy}
       />
       <RouteComparison
         id={id}
         revision={data.revision}
-        disabled={dirty || saving || record.isPending || guidanceBusy || financialBusy}
+        disabled={
+          dirty || saving || record.isPending || guidanceBusy || financialBusy || documentBusy
+        }
         onBusy={setComparisonBusy}
         onFinancialSelect={() => setFinancialOpen(true)}
         onSelect={(nextCountry, nextField) => {

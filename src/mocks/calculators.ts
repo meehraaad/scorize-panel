@@ -187,6 +187,16 @@ export const calculatorHandlers = [
     revision += 1;
     return HttpResponse.json({ ...interview(), guidance: guidance() });
   }),
+  http.get('/api/applicant/v1/assessments/:id/calculators/document-links/', () =>
+    HttpResponse.json({
+      revision,
+      documents: [],
+      links: [],
+      version: 'document-links-1',
+      active: false,
+      document_verified: false,
+    }),
+  ),
   http.get('/api/applicant/v1/assessments/:id/calculators/profile-evidence/', () =>
     HttpResponse.json({ revision, candidates: [], context: [] }),
   ),

@@ -254,3 +254,31 @@ export const updateComparison = (id: string, body: unknown) =>
   );
 export const recordComparison = (id: string, body: unknown) =>
   api<ComparisonSnapshot>(prefix(id) + 'comparison/snapshots/', { method: 'POST', body });
+
+export interface DocumentLinks {
+  revision: number;
+  documents: {
+    source: 'review' | 'case';
+    id: number;
+    label: string;
+    review_status: string;
+    document_sha256: string;
+  }[];
+  links: {
+    id: string;
+    fact_id: string;
+    document_label: string;
+    document_state: string;
+    fact_state: string;
+    review_status: string;
+    date_state: string;
+    review_changed: boolean;
+  }[];
+}
+export const documentLinksQuery = (id: string) =>
+  queryOptions({
+    queryKey: ['calculator-document-links', id],
+    queryFn: () => api<DocumentLinks>(prefix(id) + 'document-links/'),
+  });
+export const saveDocumentLink = (id: string, body: unknown) =>
+  api<DocumentLinks>(prefix(id) + 'document-links/', { method: 'POST', body });

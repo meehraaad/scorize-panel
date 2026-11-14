@@ -11,6 +11,8 @@ import {
   interviewQuery,
   snapshotsQuery,
   guidanceQuery,
+  profileEvidenceQuery,
+  documentLinksQuery,
 } from '@/features/assessments/calculatorApi';
 import { draftsQuery, healthQuery, optionsQuery } from '@/features/assessments/api';
 import { ApiError, api } from '@/lib/api/client';
@@ -235,10 +237,14 @@ const pageRoutes: RouteObject[] = [
           path: 'dev/assessment-calculators',
           ...lazyPage(() => import('@/features/assessments/CalculatorPage'), ['assessments'], {
             data: ({ request }) => {
-              const id = new URL(request.url).searchParams.get('session') ?? '';
+              const params = new URL(request.url).searchParams;
+              const id = params.get('session') ?? '';
+              const country = params.get('country') === 'australia' ? 'australia' : 'canada';
               return /^[a-f0-9-]{36}$/i.test(id)
                 ? [
                     calculatorOptionsQuery,
+                    profileEvidenceQuery(id, country),
+                    documentLinksQuery(id),
                     interviewQuery(id),
                     snapshotsQuery(id),
                     guidanceQuery(id),
