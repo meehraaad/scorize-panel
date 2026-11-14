@@ -14,6 +14,13 @@ Draft continuation of older assessment sessions requires shamrad/lang#330 and it
 
 Draft assessment document links require backend shamrad/lang#328 and its dependency stack before this development-only interface can be used. The endpoint links owned existing documents to session facts and returns explicit stale/review states; it does not upload files or verify eligibility. No production flag is enabled.
 
+Ticket voice messages: the paired `shamrad/lang` change adds opt-in audio validation to the
+applicant/supervisor/writer ticket attachment APIs and permits attachment-only messages. Deploy that
+backend first, then enable `ON_SERVER.ticketVoice`. The panel records up to two minutes using the shared
+microphone capture/lease, previews before Send, and plays audio attachments with native controls.
+Microphone access needs HTTPS/localhost; CSP permits same-origin audio and local blob previews. Existing
+ticket JSON stays compatible.
+
 Live seller call popups/timers: paired backend implementation is prepared on
 `shamrad/lang:codex/seller-live-calls`, with signed bridge ingestion and seller-scoped snapshots.
 The office bridge and backend are deployed; `ON_SERVER.livePhoneCalls` is enabled. Staff extension
