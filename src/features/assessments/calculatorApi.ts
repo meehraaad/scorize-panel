@@ -262,6 +262,12 @@ export const updateComparison = (id: string, body: unknown) =>
 export const recordComparison = (id: string, body: unknown) =>
   api<ComparisonSnapshot>(prefix(id) + 'comparison/snapshots/', { method: 'POST', body });
 
+export const previewComparison = (id: string, body: unknown) =>
+  api<{ hypothetical: true; writes: false; before: RouteCard[]; after: RouteCard[] }>(
+    prefix(id) + 'comparison/scenario/',
+    { method: 'POST', body },
+  );
+
 export interface DocumentLinks {
   revision: number;
   documents: {

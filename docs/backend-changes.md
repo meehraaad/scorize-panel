@@ -607,3 +607,7 @@ Panel #109 requires backend shamrad/lang#324 (on #323) and panel #108. Existing 
 ### Generic financial targets — draft #110 / backend #325
 
 Staff assessment options add optional `currency_catalog` and `financial_targets`. Financial policy schema 2 captures country/goal/title, selected currency minor-unit metadata and registry SHA; each component declares main/minor units. Destination entries add optional `financial_route_id` with runtime country/goal matching. Financial descriptions add `targets` and dynamic route keys; scenario IDs must belong to the recorded policy. Schema 1 remains supported. See [contract and validation](assessment-generic-finance.md). No new route/page, first-render query, model/migration or production activation.
+
+### Read-only comparison scenarios
+
+The hypothetical comparison editor requires backend shamrad/lang#336 after its backend dependencies and panel #116 after its panel dependencies. It posts one explicit interview-group change with the current revision and decision digest to the local-gated `calculators/comparison/scenario/` endpoint. The backend validates the change and returns before/after route results without saving it. Legal dates and shared-evidence confirmation limits still apply; financial scenarios remain separate. No production activation or migration is included.

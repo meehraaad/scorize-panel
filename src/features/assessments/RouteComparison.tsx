@@ -1,4 +1,5 @@
 import { FinancialResult } from './FinancialResult';
+import { ComparisonScenario } from './ComparisonScenario';
 import { useEffect, useId, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -333,6 +334,12 @@ function ComparisonEditor({
             {t('comparison.saveRoutes')}
           </Button>
           <ComparisonCards data={data} />
+          <ComparisonScenario
+            key={data.decision_sha256}
+            id={id}
+            comparison={data}
+            disabled={locked || Boolean(routes)}
+          />
           <h3 className="font-bold">{t('comparison.actions')}</h3>
           <Notice tone="warn">{t('comparison.progressMeaning')}</Notice>
           <ol className="flex list-inside list-decimal flex-col gap-4">
