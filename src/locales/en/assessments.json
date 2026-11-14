@@ -212,7 +212,7 @@
     "record": "Record draft result",
     "history": "Result history",
     "result": "Recorded result",
-    "currentScore": "Current score",
+    "currentScore": "Score at assessment date",
     "partial": "Insufficient information",
     "hypotheticalScore": "Hypothetical score",
     "delta": "Score change",
@@ -357,7 +357,8 @@
       "user": "User",
       "profile_confirmed_by_user": "Account information confirmed by you",
       "met": "Met",
-      "unmet": "Not met"
+      "unmet": "Not met",
+      "session_confirmed_by_user": "Test details confirmed from your other interview"
     },
     "sessionLabel": "Session {{index}}, answer revision {{revision}}",
     "bundleLabel": "Sandbox package version {{version}}",
@@ -392,7 +393,8 @@
         "cv_education": "CV education",
         "profile_language": "Recorded test score",
         "cv_language": "CV test score",
-        "document": "Uploaded document"
+        "document": "Uploaded document",
+        "session_shared": "The other country’s interview"
       },
       "reasons": {
         "education_equivalence_required": "An earned qualification is recorded. Country, recognition and Canadian equivalence must be supplied separately; the title is not awarded points automatically.",
@@ -415,10 +417,17 @@
         "is_verified": "Score marked verified in profile",
         "title": "Test title",
         "document_type__name": "Document type",
-        "review_state": "Upload review status"
+        "review_state": "Upload review status",
+        "test": "Test",
+        "date": "Test date",
+        "scores": "Skill scores",
+        "in_test_centre": "Taken in a test centre",
+        "one_skill_retake": "One-skill retake"
       },
       "discard": "Discard this draft",
-      "reloadConflict": "Account information or the session changed. Your draft is kept. Discard it and refresh account information to choose again."
+      "reloadConflict": "Account information or the session changed. Your draft is kept. Discard it and refresh account information to choose again.",
+      "sharedIncomplete": "Review the shared test details and add any country-specific information. This does not verify the report or transfer eligibility. To change the shared test, scores or date, edit the original answer first.",
+      "sharedChanged": "The original test details changed. Review and confirm this answer again."
     },
     "guided": {
       "title": "Guided interview",
@@ -475,7 +484,9 @@
       "routeRequired": "Choose an Australian subclass before calculation or recording. Your answers remain saved; no route is assumed.",
       "routeRequiredPaused": "Questions are paused. Choose an Australian subclass before calculation or recording; your answers remain saved."
     },
-    "coveredStatus": "Covered requirements"
+    "coveredStatus": "Covered requirements",
+    "dateLabel": "Assessment date",
+    "dateMeaning": "Any result is tied to the assessment date. Rules may have changed since this date."
   },
   "comparison": {
     "title": "Compare routes and next actions",
@@ -483,7 +494,7 @@
     "scope": "Draft comparison. Canadian and Australian scores use different scales and are not ranked together. Covered initial conditions do not establish visa or document approval.",
     "basis": "Assessment date: {{date}}; version: {{version}}; answer revision: {{revision}}",
     "condition": "Covered initial conditions",
-    "score": "Current self-reported score",
+    "score": "Self-reported score at assessment date",
     "breakdown": "Score components",
     "hypothetical": "Hypothetical score only if the condition above is fulfilled: {{score}}",
     "unavailable": "Time and historical evidence remain unavailable. Financial references, when present, are shown separately.",

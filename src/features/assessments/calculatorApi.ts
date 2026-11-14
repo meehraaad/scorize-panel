@@ -21,6 +21,7 @@ export interface Answer {
   question_version?: string;
   profile_origin?: ProfileCandidate;
   previous_answer?: Answer;
+  scope_reason?: string;
 }
 export interface ProfileCandidate {
   id: string;
@@ -51,6 +52,7 @@ export interface Interview {
   engine_available?: boolean;
   transfer_required?: boolean;
   coverage_available?: Record<Country, boolean>;
+  assessment_date?: string;
   answers: Record<string, Answer>;
   ruleset_sha256: string;
   sources: Record<Country, { sha256: string }>;
@@ -107,7 +109,7 @@ export interface SingleSnapshot {
       score?: number | null;
     };
     mapping: { unresolved: string[]; provenance?: Record<string, Answer> };
-    context: { session_revision: number };
+    context: { session_revision: number; assessment_date?: string };
   };
   reviews: { id: number; decision: string; note: string }[];
 }

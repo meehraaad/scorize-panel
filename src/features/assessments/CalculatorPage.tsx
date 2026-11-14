@@ -197,9 +197,18 @@ function InterviewEditor({
         {query.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
       </>
     );
+  const dateNotice = (
+    <Notice tone="info">
+      <p>
+        {t('calculator.dateLabel')} <bdi>{data.assessment_date ?? t('calculator.unknown')}</bdi>
+      </p>
+      <p>{t('calculator.dateMeaning')}</p>
+    </Notice>
+  );
   if (data.engine_available === false || data.transfer_required === true)
     return (
       <>
+        {dateNotice}
         <SessionTransfer
           id={id}
           revision={data.revision}
@@ -239,6 +248,7 @@ function InterviewEditor({
   const conflict = saveError instanceof ApiError && saveError.status === 409;
   return (
     <>
+      {dateNotice}
       {requestedRoute && (
         <div className="flex flex-col gap-3">
           <Notice tone="info">
@@ -440,6 +450,9 @@ function InterviewEditor({
                 save.reset();
               }}
             />
+          )}
+          {current?.scope_reason === 'shared_evidence_changed' && (
+            <Notice tone="warn">{t('calculator.profile.sharedChanged')}</Notice>
           )}
           {current?.source === 'previous_session' && current.previous_answer && (
             <>

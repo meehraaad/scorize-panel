@@ -32,7 +32,9 @@ it('records an answer through the actual route contract and separates nomination
   const results = await screen.findAllByRole('region', { name: 'Recorded result' });
   const first = results.at(0);
   if (!first) throw new Error('Recorded result missing');
-  expect(within(first).getByText('Current score: 424')).toBeInTheDocument();
+  expect(within(first).getByText('Score at assessment date: 424')).toBeInTheDocument();
+  expect(within(first).getByText('2026-11-12')).toBeInTheDocument();
+  expect(within(first).getByText(/Rules may have changed since this date/)).toBeInTheDocument();
   expect(within(first).getByText('Hypothetical score: 1024')).toBeInTheDocument();
   expect(within(first).getByText(/conditional on confirmed provincial/)).toBeInTheDocument();
 });
