@@ -12,9 +12,8 @@ versions V6/V7 for the applicant panel.
 - `docs/architecture.md`: folder layout, every tech decision, theming, i18n, performance budget
 - `docs/backend-integration.md`: how the panel talks to Django today (auth flow, endpoints)
 - `docs/performance.md`: page data, loading skeletons, preload, cache and size budget
-- `docs/backend-changes.md`: every change the redesign needs in Django. **Do not edit or connect anything
-  in the scorize repo** until the migration: the old site must keep working as it is. Add needed backend
-  changes to this list instead
+- `docs/backend-changes.md`: every change the redesign needs in Django. Backend changes are made in the
+  scorize repo and listed here with their state; the old site's pages must keep working through them
 
 ## Hard rules
 
