@@ -990,5 +990,49 @@
     "unavailableBinding": "Saved table is unavailable for this country and goal",
     "bindingMeaning": "Choose a reviewed financial table for this country and migration goal. Missing information remains unknown.",
     "rateMeaning": "Exchange rates always quote one main currency unit. Costs may use explicitly recorded minor units; all amounts are integers."
+  },
+  "documents": {
+    "title": "Documents supporting this answer",
+    "explanation": "Link a document you have already uploaded to the selected answer. Linking it does not verify the answer or establish eligibility. Dates are your statements.",
+    "saved": "Document link saved.",
+    "loadFailed": "Could not load documents.",
+    "empty": "No documents are available. Upload a document in your documents area, then return here.",
+    "choose": "Document",
+    "choosePlaceholder": "Choose a document",
+    "validFrom": "Valid from (optional)",
+    "validUntil": "Valid until (optional)",
+    "saveFactFirst": "Save a known answer first.",
+    "link": "Link document",
+    "unlink": "Remove link",
+    "factChanged": "The answer has changed; review this link.",
+    "saveFailed": "Could not save. Retry the same request, or refresh and discard it.",
+    "retry": "Retry",
+    "discard": "Refresh and discard",
+    "state": {
+      "current": "Document is available.",
+      "missing": "The document is no longer available.",
+      "replaced": "The document was replaced; review this link.",
+      "unresolved": "Document status is unresolved."
+    },
+    "review": {
+      "unreviewed": "Document has not been reviewed.",
+      "review": "Document is awaiting review.",
+      "approved": "Document was approved in the document area; the answer is not verified.",
+      "returned": "Document was returned.",
+      "unresolved": "Document review status is unresolved."
+    },
+    "dates": {
+      "unknown": "Document validity dates are incomplete or unknown.",
+      "expired": "Your stated end date is before this assessment date.",
+      "not_yet_valid": "Your stated start date is after this assessment date.",
+      "within_stated_dates": "The assessment date is within your stated dates; this does not verify the document."
+    },
+    "source": {
+      "review": "Free review",
+      "case": "Case document"
+    },
+    "unlinkFor": "Remove link to {{document}}",
+    "reviewChanged": "The document review status has changed since it was linked.",
+    "reload": "Reload documents"
   }
 }
