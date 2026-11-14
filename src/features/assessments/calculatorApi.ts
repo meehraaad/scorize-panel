@@ -22,6 +22,7 @@ export interface Answer {
   profile_origin?: ProfileCandidate;
   previous_answer?: Answer;
   scope_reason?: string;
+  shared_origin?: ProfileCandidate;
 }
 export interface ProfileCandidate {
   id: string;

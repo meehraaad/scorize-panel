@@ -358,7 +358,7 @@
       "profile_confirmed_by_user": "Account information confirmed by you",
       "met": "Met",
       "unmet": "Not met",
-      "session_confirmed_by_user": "Test details confirmed from your other interview"
+      "session_confirmed_by_user": "Details confirmed from your other interview"
     },
     "sessionLabel": "Session {{index}}, answer revision {{revision}}",
     "bundleLabel": "Sandbox package version {{version}}",
@@ -422,12 +422,22 @@
         "date": "Test date",
         "scores": "Skill scores",
         "in_test_centre": "Taken in a test centre",
-        "one_skill_retake": "One-skill retake"
+        "one_skill_retake": "One-skill retake",
+        "periods": "Work periods",
+        "start": "Start",
+        "end": "End",
+        "hours_per_week": "Hours per week"
       },
       "discard": "Discard this draft",
       "reloadConflict": "Account information or the session changed. Your draft is kept. Discard it and refresh account information to choose again.",
       "sharedIncomplete": "Review the shared test details and add any country-specific information. This does not verify the report or transfer eligibility. To change the shared test, scores or date, edit the original answer first.",
-      "sharedChanged": "The original test details changed. Review and confirm this answer again."
+      "sharedChanged": "The original test details changed. Review and confirm this answer again.",
+      "sharedWorkIncomplete": "Review the shared work dates and hours. Add this country’s occupation and other requirements; no legal claim is inferred. Edit the original answer first to change shared periods.",
+      "sharedWorkChanged": "The original work periods changed. Review and confirm this answer again.",
+      "sharedLinked": "This answer is linked to details in your other interview. Save changes to country-specific information explicitly. To change shared details here, first choose an independent answer.",
+      "detach": "Use an independent answer",
+      "detaching": "Saving will detach this answer from the other interview. Future changes there will not update it.",
+      "discardDetach": "Cancel independent answer"
     },
     "guided": {
       "title": "Guided interview",

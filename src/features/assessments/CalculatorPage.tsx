@@ -88,6 +88,7 @@ function InterviewEditor({
   const [snapshotRequest, setSnapshotRequest] = useState<unknown>(null);
   const [shown, setShown] = useState<Snapshot | null>(null);
   const [profileCandidate, setProfileCandidate] = useState<ProfileCandidate | null>(null);
+  const [detachShared, setDetachShared] = useState(false);
   const [guidanceDecision, setGuidanceDecision] = useState<string | null>(null);
   const [guidanceBusy, setGuidanceBusy] = useState(false);
   const [comparisonBusy, setComparisonBusy] = useState(false);
@@ -119,6 +120,7 @@ function InterviewEditor({
       setShown(null);
       setSnapshotRequest(null);
       setProfileCandidate(null);
+      setDetachShared(false);
       setGuidanceDecision(null);
       toast.success(t('calculator.saved'));
     },
@@ -152,6 +154,7 @@ function InterviewEditor({
     if (
       autoPaused ||
       current?.source === 'previous_session' ||
+      Boolean(current?.shared_origin) ||
       !dirty ||
       !data ||
       saving ||
@@ -177,6 +180,7 @@ function InterviewEditor({
   }, [
     autoPaused,
     current?.source,
+    current?.shared_origin,
     dirty,
     data,
     saving,
@@ -241,6 +245,7 @@ function InterviewEditor({
     setShown(null);
     setSnapshotRequest(null);
     setProfileCandidate(null);
+    setDetachShared(false);
     setGuidanceDecision(null);
     setAutoPaused(false);
     save.reset();
@@ -452,7 +457,42 @@ function InterviewEditor({
             />
           )}
           {current?.scope_reason === 'shared_evidence_changed' && (
-            <Notice tone="warn">{t('calculator.profile.sharedChanged')}</Notice>
+            <Notice tone="warn">
+              {t(
+                field === 'work'
+                  ? 'calculator.profile.sharedWorkChanged'
+                  : 'calculator.profile.sharedChanged',
+              )}
+            </Notice>
+          )}
+          {current?.shared_origin && !detachShared && (
+            <>
+              <Notice tone="info">{t('calculator.profile.sharedLinked')}</Notice>
+              <Button
+                variant="outline"
+                disabled={saving}
+                onClick={() => {
+                  setDetachShared(true);
+                  setProfileCandidate(null);
+                  setStatus(answerStatus);
+                  setValue(answerValue);
+                  setDirty(true);
+                  setAutoPaused(true);
+                  setPending(null);
+                  save.reset();
+                }}
+              >
+                {t('calculator.profile.detach')}
+              </Button>
+            </>
+          )}
+          {detachShared && (
+            <>
+              <Notice tone="warn">{t('calculator.profile.detaching')}</Notice>
+              <Button variant="outline" onClick={() => choose(country, field)}>
+                {t('calculator.profile.discardDetach')}
+              </Button>
+            </>
           )}
           {current?.source === 'previous_session' && current.previous_answer && (
             <>
@@ -517,6 +557,7 @@ function InterviewEditor({
                 status: answerStatus,
                 value: answerStatus === 'known' ? (answerValue ?? null) : null,
                 ...(guidanceDecision ? { guidance_sha256: guidanceDecision } : {}),
+                ...(detachShared ? { detach_shared: true } : {}),
                 ...(profileCandidate && answerStatus === 'known'
                   ? {
                       profile_candidate: {
