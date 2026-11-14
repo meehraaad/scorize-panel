@@ -57,7 +57,9 @@ function ComparisonCards({ data }: { data: ComparisonSnapshot['payload'] }) {
               {t('comparison.score')}:{' '}
               {route.score
                 ? `${label(route.score.system)}: ${route.score.score ?? t('calculator.partial')}`
-                : t('calculator.partial')}
+                : route.eligibility_status === 'not_evaluated'
+                  ? t('transfer.scoreUnavailable')
+                  : t('calculator.partial')}
             </p>
             {route.selection_score && (
               <p>

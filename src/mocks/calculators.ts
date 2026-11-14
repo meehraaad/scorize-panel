@@ -41,6 +41,8 @@ export function resetCalculatorMocks() {
 const interview = () => ({
   revision,
   adapter_version: 'calculator-interview-1',
+  engine_available: true,
+  coverage_available: { canada: true, australia: true },
   answers,
   ruleset_sha256: 'a'.repeat(64),
   sources: { canada: { sha256: 'b'.repeat(64) }, australia: { sha256: 'c'.repeat(64) } },

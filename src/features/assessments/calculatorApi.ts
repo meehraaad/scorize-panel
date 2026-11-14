@@ -20,6 +20,7 @@ export interface Answer {
   recorded_at?: string;
   question_version?: string;
   profile_origin?: ProfileCandidate;
+  previous_answer?: Answer;
 }
 export interface ProfileCandidate {
   id: string;
@@ -47,6 +48,9 @@ export interface Options {
 export interface Interview {
   revision: number;
   adapter_version: string;
+  engine_available?: boolean;
+  transfer_required?: boolean;
+  coverage_available?: Record<Country, boolean>;
   answers: Record<string, Answer>;
   ruleset_sha256: string;
   sources: Record<Country, { sha256: string }>;
@@ -282,3 +286,6 @@ export const documentLinksQuery = (id: string) =>
   });
 export const saveDocumentLink = (id: string, body: unknown) =>
   api<DocumentLinks>(prefix(id) + 'document-links/', { method: 'POST', body });
+
+export const transferSession = (id: string, body: unknown) =>
+  api<{ id: string }>(prefix(id) + 'transfer/', { method: 'POST', body });
