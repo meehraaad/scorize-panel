@@ -6,6 +6,8 @@ around each gap (column "Until then").
 
 Status: ☐ open · ☑ done
 
+Draft cross-country employment-period reuse and explicit shared-evidence detachment require `shamrad/lang:codex/assessment-shared-work` and its dependency stack. Only reported period dates and hours are reused; country-specific occupation and legal claims remain separate. Install the backend stack before the development-only panel interface.
+
 Draft shared IELTS evidence and pinned assessment-date labels require backend shamrad/lang#331 and its dependency stack. Only raw report details are reused after explicit confirmation; country-specific conditions remain separate. No production flag is enabled.
 
 Draft continuation of older assessment sessions requires shamrad/lang#330 and its dependency stack. Copied answers require individual confirmation; the prior session and snapshots remain unchanged. Legal calculations stay unavailable outside source coverage, while facts and financial information can still be saved. No production flag is enabled.

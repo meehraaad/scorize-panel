@@ -168,3 +168,74 @@ it('shows raw shared test details and requires review before saving them', async
   await user.click(screen.getByRole('button', { name: 'Confirm details and save' }));
   expect(submitted?.profile_candidate).toEqual({ id: candidate.id, sha256: candidate.sha256 });
 });
+
+it('prepares shared work periods without inventing occupation or legal claims', async () => {
+  const candidate = {
+    id: 'session_shared:calculator:australia:work',
+    sha256: 'f'.repeat(64),
+    field: 'work',
+    source: 'session_shared',
+    complete: false,
+    conflict: false,
+    original: { periods: [{ start: '2021-01-01', end: '2022-01-01', hours_per_week: 20 }] },
+    value: [{ start: '2021-01-01', end: '2022-01-01', hours_per_week: 20 }],
+  };
+  server.use(
+    http.get('/api/applicant/v1/assessments/:id/calculators/profile-evidence/', () =>
+      HttpResponse.json({ revision: 0, candidates: [candidate], context: [] }),
+    ),
+  );
+  const user = await open();
+  expect(await screen.findByText(/Review the shared work dates and hours/)).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Review and use these details' }));
+  expect(screen.getByLabelText('Start')).toHaveValue('2021-01-01');
+  expect(screen.getByLabelText('Hours per week')).toHaveValue(20);
+  expect(screen.getByRole('button', { name: 'Confirm details and save' })).toBeDisabled();
+});
+
+it('requires an explicit independent-answer choice before detaching shared evidence', async () => {
+  let submitted: Record<string, unknown> | undefined;
+  const value = {
+    test: 'ielts_general_training',
+    result_date: '2026-01-01',
+    scores: { reading: 7, writing: 7, listening: 7, speaking: 7 },
+  };
+  server.use(
+    http.get('/api/applicant/v1/assessments/:id/calculators/interview/', () =>
+      HttpResponse.json({
+        revision: 0,
+        adapter_version: 'calculator-interview-1',
+        engine_available: true,
+        answers: {
+          'calculator:canada:english': {
+            status: 'known',
+            value,
+            source: 'session_confirmed_by_user',
+            shared_origin: { id: 'source' },
+          },
+        },
+        ruleset_sha256: 'a'.repeat(64),
+        sources: { canada: { sha256: 'b'.repeat(64) }, australia: { sha256: 'c'.repeat(64) } },
+      }),
+    ),
+    http.post('/api/applicant/v1/assessments/:id/calculators/interview/', async ({ request }) => {
+      submitted = (await request.json()) as Record<string, unknown>;
+      return HttpResponse.json({
+        revision: 1,
+        answers: {
+          'calculator:canada:english': { status: 'known', value: submitted.value, source: 'user' },
+        },
+      });
+    }),
+  );
+  const user = await open();
+  await user.selectOptions(screen.getByLabelText('Evidence group'), 'english');
+  await user.click(screen.getByRole('button', { name: 'Use an independent answer' }));
+  expect(screen.getByText(/Saving will detach this answer/)).toBeInTheDocument();
+  await user.clear(screen.getByLabelText('Reading'));
+  await user.type(screen.getByLabelText('Reading'), '7.5');
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  expect(submitted).toBeUndefined();
+  await user.click(screen.getByRole('button', { name: 'Save answer' }));
+  expect(submitted).toMatchObject({ country: 'canada', field: 'english', detach_shared: true });
+});

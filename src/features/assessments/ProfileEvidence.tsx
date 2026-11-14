@@ -43,7 +43,30 @@ export function ProfileEvidence({
           <div key={key} className="flex flex-wrap gap-x-2">
             <dt className="text-text-2">{detailLabels[key] ?? t('calculator.unknown')}</dt>
             <dd className="m-0 break-words">
-              {key === 'scores' && value && typeof value === 'object' && !Array.isArray(value) ? (
+              {key === 'periods' && Array.isArray(value) ? (
+                <ol className="list-inside list-decimal">
+                  {(value as unknown[]).map((period, index) => (
+                    <li key={index}>
+                      {period !== null &&
+                        typeof period === 'object' &&
+                        !Array.isArray(period) &&
+                        Object.entries(period).map(([field, item]) => (
+                          <div key={field} className="flex gap-2">
+                            <span>{detailLabels[field] ?? t('calculator.unknown')}</span>
+                            <bdi>
+                              {typeof item === 'number' || typeof item === 'string'
+                                ? item
+                                : t('calculator.unknown')}
+                            </bdi>
+                          </div>
+                        ))}
+                    </li>
+                  ))}
+                </ol>
+              ) : key === 'scores' &&
+                value &&
+                typeof value === 'object' &&
+                !Array.isArray(value) ? (
                 <dl>
                   {Object.entries(value).map(([skill, score]) => (
                     <div key={skill} className="flex gap-2">
@@ -105,7 +128,9 @@ export function ProfileEvidence({
               <p>
                 {t(
                   candidate.source === 'session_shared'
-                    ? 'calculator.profile.sharedIncomplete'
+                    ? candidate.field === 'work'
+                      ? 'calculator.profile.sharedWorkIncomplete'
+                      : 'calculator.profile.sharedIncomplete'
                     : 'calculator.profile.incomplete',
                 )}
               </p>
