@@ -130,7 +130,7 @@ export function LogDialog({
         : 'keep';
   const lost = talked && stage === 'lost';
   // A meeting at the office ahead is the follow-up (S79): the log keeps it as the next step.
-  const meeting = ON_SERVER.visitFollowUp ? (booked ?? meetingAhead(customer.tasks)) : null;
+  const meeting = ON_SERVER.visitFollowUp ? (booked ?? meetingAhead(customer)) : null;
   const asksFollowUp = !meeting && !noAnswer && !lost && !(call && outcome === 'wrong_number');
   const followAt = followAtOf(follow, date);
   const chosen = customer.templates.find((item) => String(item.id) === template);

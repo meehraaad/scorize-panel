@@ -66,6 +66,8 @@ export interface CustomerData {
     seller: string | null;
     /** The team column it shows in on the board (S48); null for new, draft, won and lost. */
     column?: number | null;
+    /** S79: the meeting at the office ahead that is the follow-up, whoever's task it is. */
+    visit_at?: string | null;
   } | null;
   /** The board's team columns in the manager's order (S48, `supports.columns`). */
   columns?: CustomerColumn[];

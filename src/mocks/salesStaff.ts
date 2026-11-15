@@ -62,7 +62,7 @@ function withMeeting<
     id: number;
     name: string;
     tasks: TaskSummary[];
-    lead: { follow_up_at: string | null } | null;
+    lead: { follow_up_at: string | null; visit_at?: string | null } | null;
   },
 >(data: T): T {
   const visit = upcomingVisitOf(data.id);
@@ -88,7 +88,9 @@ function withMeeting<
   return {
     ...data,
     tasks,
-    lead: data.lead ? { ...data.lead, follow_up_at: visit.starts_at } : data.lead,
+    lead: data.lead
+      ? { ...data.lead, follow_up_at: visit.starts_at, visit_at: visit.starts_at }
+      : data.lead,
   };
 }
 
