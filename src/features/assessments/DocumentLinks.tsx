@@ -35,7 +35,7 @@ export function DocumentLinks({
   const query = useQuery(documentLinksQuery(id));
   const documentRevision = query.data?.revision;
   useEffect(() => {
-    if (documentRevision !== undefined && documentRevision !== revision) {
+    if (documentRevision !== undefined && documentRevision < revision) {
       void cache.invalidateQueries({ queryKey: documentLinksQuery(id).queryKey });
     }
   }, [cache, id, revision, documentRevision]);
