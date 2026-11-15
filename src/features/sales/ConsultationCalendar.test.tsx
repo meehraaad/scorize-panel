@@ -1,10 +1,11 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import { toasts } from '@/test/toasts';
-import '@/test/server';
+import { server } from '@/test/server';
 
 const NIMA = 3; // seller (mock user in src/mocks/handlers.ts)
 const REZA = 4; // sales manager
@@ -191,6 +192,59 @@ describe('sales: my consultations on a week calendar', () => {
       expect(
         await toasts().findByText(/^پیگیری برای چهارشنبه .* ساعت ۱۴:۰۰ ثبت شد\.$/),
       ).toBeInTheDocument();
+    });
+
+    it("a customer with no open lead gets a follow-up task, not a lead; another seller's is refused", async () => {
+      const posted: unknown[] = [];
+      server.use(
+        http.get('/api/sales/v1/leads/search/', () => HttpResponse.json({ results: [] })),
+        http.get('/api/sales/v1/customers/search/', () =>
+          HttpResponse.json({
+            results: [
+              {
+                customer: 901,
+                name: 'سارا بدون لید',
+                phone: '09120000001',
+                email: '',
+                access: 'free',
+                seller: null,
+                stage: null,
+              },
+              {
+                customer: 902,
+                name: 'سارا دیگری',
+                phone: '09120000002',
+                email: '',
+                access: 'other',
+                seller: 'مریم',
+                stage: 'contacted',
+              },
+            ],
+          }),
+        ),
+        http.post('/api/staff/v1/tasks/', async ({ request }) => {
+          posted.push(await request.json());
+          return HttpResponse.json({ id: 1 }, { status: 201 });
+        }),
+        http.post('/api/sales/v1/customers/:id/take/', () => {
+          throw new Error('the follow-up must not take the customer');
+        }),
+      );
+      const user = userEvent.setup();
+      await open();
+      fireEvent.click(screen.getAllByTestId('schedule-slot')[4] as HTMLElement, { clientY: 330 });
+      const dialog = await screen.findByRole('dialog', { name: 'پیگیری تازه' });
+      await user.type(within(dialog).getByRole('combobox', { name: 'مشتری' }), 'سارا');
+      const options = await within(dialog).findAllByRole('option');
+      expect(options).toHaveLength(2);
+      expect(options[0]).toHaveTextContent('بدون لید باز');
+      // Another seller's lead would take this follow-up's time: shown, not pickable.
+      expect(options[1]).toHaveTextContent('لید مریم');
+      expect(options[1]).toHaveAttribute('aria-disabled', 'true');
+      await user.click(options[0] as HTMLElement);
+      await user.click(within(dialog).getByRole('button', { name: /^ثبت پیگیری · / }));
+      await waitFor(() => expect(posted).toHaveLength(1));
+      expect(posted[0]).toMatchObject({ user: 901, kind: 'mine', text: 'پیگیری سارا بدون لید' });
     });
 
     it('a mouse over an empty spot shows the time a click would add at', async () => {

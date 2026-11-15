@@ -8,7 +8,10 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
+import { SearchField } from '@/components/ui/Filters';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { historyQuery, type HistoryEvent, type HistoryKind } from '../api';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
@@ -32,12 +35,22 @@ const FILTERS = {
 } as const satisfies Record<string, readonly HistoryKind[] | null>;
 type Filter = keyof typeof FILTERS;
 
-/** Calls, messages, sessions, purchases and payments in one timeline, newest first. */
+/** Fewer letters than this match too much (the server ignores them). */
+const MIN_LETTERS = 2;
+
+/**
+ * Calls, messages, sessions, purchases and payments in one timeline, newest first. With
+ * `historySearch`, a search box finds words in the notes, summaries and descriptions (S78).
+ */
 export function HistoryCard({ customer }: { customer: number }) {
   const { t } = useTranslation('sales');
   const [filter, setFilter] = useState<Filter>('all');
+  const [search, setSearch] = useState('');
+  const settled = useDebouncedValue(search.trim(), 300);
+  const q =
+    ON_SERVER.historySearch && settled.replace(/\s/g, '').length >= MIN_LETTERS ? settled : '';
   const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteQuery(
-    historyQuery(customer),
+    historyQuery(customer, q),
   );
   const kinds: readonly HistoryKind[] | null = FILTERS[filter];
   const events = (data?.pages.flatMap((page) => page.results) ?? []).filter(
@@ -49,24 +62,42 @@ export function HistoryCard({ customer }: { customer: number }) {
       id="customer-history"
       title={t('customer.history.title')}
       end={
-        <ChoiceGroup
-          legend={t('customer.history.filter')}
-          hideLegend
-          look="segmented"
-          value={filter}
-          onChange={setFilter}
-          options={(Object.keys(FILTERS) as Filter[]).map((value) => ({
-            value,
-            label: t(`customer.history.filters.${value}`),
-          }))}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          {ON_SERVER.historySearch && (
+            <SearchField
+              label={t('customer.history.search')}
+              placeholder={t('customer.history.searchPlaceholder')}
+              value={search}
+              onChange={setSearch}
+              maxLength={100}
+              className="flex-[1_1_100%] sm:flex-[0_1_240px]"
+            />
+          )}
+          <ChoiceGroup
+            legend={t('customer.history.filter')}
+            hideLegend
+            look="segmented"
+            value={filter}
+            onChange={setFilter}
+            options={(Object.keys(FILTERS) as Filter[]).map((value) => ({
+              value,
+              label: t(`customer.history.filters.${value}`),
+            }))}
+          />
+        </div>
       }
     >
       {isPending ? (
         <SkeletonRows rows={4} />
       ) : events.length === 0 ? (
         <EmptyState>
-          {t(filter === 'all' ? 'customer.history.empty' : 'customer.history.emptyFilter')}
+          {t(
+            q
+              ? 'customer.history.emptySearch'
+              : filter === 'all'
+                ? 'customer.history.empty'
+                : 'customer.history.emptyFilter',
+          )}
         </EmptyState>
       ) : (
         <ol className="m-0 list-none p-0">

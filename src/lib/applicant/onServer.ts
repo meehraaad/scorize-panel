@@ -30,6 +30,7 @@ export type ServerFeature =
   | 'mobileExtensions'
   | 'leadSearch'
   | 'customerSearch'
+  | 'historySearch'
   | 'offerAgreement'
   | 'officeHours'
   | 'phoneTeams'
@@ -82,6 +83,12 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * search in every customer, like the old CRM's (lang `claude/pensive-dirac-ekeuff`).
    */
   customerSearch: true,
+  /**
+   * S78 `GET /sales/v1/customers/<id>/history/?q=`: search inside one customer's history (contact
+   * notes and summaries, lead descriptions, sessions, visits, payments). Off until Django has it:
+   * the search box isn't shown, since an old server would answer the whole history.
+   */
+  historySearch: false,
   /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
   livePhoneCalls: true,
   /** A staff member's softphone login at /sales/v1/calls/mobile/ (every team); on once the office worker runs. */

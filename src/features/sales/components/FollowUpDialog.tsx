@@ -6,7 +6,9 @@ import { Dialog } from '@/components/ui/Dialog';
 import { ApiError } from '@/lib/api/client';
 import { toValue } from '@/lib/calendar';
 import { toast } from '@/lib/toast';
-import { useSetFollowUp, type LeadMatch } from '../api';
+import { useCreateTask } from '@/lib/tasks/changes';
+import { SALES_KEY } from '@/lib/sales/api';
+import { useSetFollowUp, type CustomerMatch, type LeadMatch } from '../api';
 import { CustomerPicker } from './CustomerPicker';
 import { followAtOf, type Follow } from '../followUp';
 import { FollowUpNow } from './FollowUpNow';
@@ -20,6 +22,9 @@ import { useDisplayName } from '@/lib/i18n/useDisplayName';
  * keyboard and phone way to move a call, besides dragging it). The time is picked the same way as
  * in the contact log (FollowUpWhen). A seller who did talk to the customer logs it instead
  * (`onLog`), so the follow-up is closed with what happened.
+ *
+ * A customer with no open lead (found when the search has none) gets a follow-up task about them
+ * and no lead: a lead made here would be a second "manual" one in the sources and the conversion.
  */
 export function FollowUpDialog({
   open,
@@ -46,15 +51,17 @@ export function FollowUpDialog({
   const named = useDisplayName();
   const f = useFormat();
   const save = useSetFollowUp();
+  const createTask = useCreateTask(SALES_KEY);
   const [picked, setPicked] = useState<LeadMatch | null>(null);
+  const [noLead, setNoLead] = useState<CustomerMatch | null>(null);
   const start = timed ? at : null;
   const [follow, setFollow] = useState<Follow>(start ? 'other' : 'tomorrow');
   const [date, setDate] = useState(() => (start ? toValue(start, true) : ''));
   const [text, setText] = useState(current ?? '');
   const [checked, setChecked] = useState(false);
   const [openedAt] = useState(() => Date.now());
-  const target = lead?.id ?? picked?.id ?? null;
-  const name = lead?.name ?? picked?.name ?? '';
+  const target = lead?.id ?? picked?.id ?? noLead?.customer ?? null;
+  const name = lead?.name ?? picked?.name ?? noLead?.name ?? '';
   const when = followAtOf(follow, date);
   const past = when !== null && new Date(when).getTime() < openedAt;
   /** Moving the customer's follow-up: the time it has now. */
@@ -64,6 +71,28 @@ export function FollowUpDialog({
     event.preventDefault();
     setChecked(true);
     if (target === null || !when || past) return;
+    if (noLead) {
+      createTask.mutate(
+        {
+          user: noLead.customer,
+          kind: 'mine',
+          due_at: when,
+          text: text.trim() || t('followUpDialog.taskText', { name: named(noLead.name) }),
+        },
+        {
+          onSuccess: () => {
+            toast.success(
+              t('followUpDialog.saved', {
+                when: t('followUpDialog.when', { day: f.weekday(when), time: f.time(when) }),
+              }),
+            );
+            onClose();
+          },
+          onError: () => toast.error(t('error')),
+        },
+      );
+      return;
+    }
     // An unchanged text keeps the follow-up's own (Django keeps it when none is sent).
     const changed = text.trim() !== (current ?? '').trim();
     save.mutate(
@@ -101,7 +130,7 @@ export function FollowUpDialog({
       closeLabel={t('close')}
       footer={
         <>
-          <Button type="submit" form="follow-up" disabled={save.isPending}>
+          <Button type="submit" form="follow-up" disabled={save.isPending || createTask.isPending}>
             {when && !past
               ? t('followUpDialog.saveAt', { day: f.weekdayName(when), time: f.time(when) })
               : t(moving ? 'followUpDialog.move' : 'followUpDialog.save')}
@@ -118,6 +147,8 @@ export function FollowUpDialog({
           <CustomerPicker
             value={picked}
             onChange={setPicked}
+            noLead={noLead}
+            onNoLead={setNoLead}
             error={checked && target === null ? t('followUpDialog.customerRequired') : undefined}
           />
         )}

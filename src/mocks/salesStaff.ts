@@ -267,15 +267,26 @@ export const salesStaffHandlers = [
       : HttpResponse.json({ phone: ['invalid'] }, { status: 400 });
   }),
   http.get(`${BASE}/customers/:id/history/`, ({ params, request }) => {
-    const page = Number(new URL(request.url).searchParams.get('page') ?? 1);
+    const query = new URL(request.url).searchParams;
+    const page = Number(query.get('page') ?? 1);
+    // S78: every typed word in the event's own text.
+    const words = (query.get('q') ?? '').trim().toLowerCase().split(/\s+/).filter(Boolean);
     return answer<HistoryPage>(async () => {
       const history = await fetchHistory(id(params), page);
+      const results = history.results.map((event) => ({
+        ...event,
+        customer_summary: summaryForContact(id(params), event.id) ?? '',
+      }));
+      if (words.length === 0) return { ...history, results };
       return {
         ...history,
-        results: history.results.map((event) => ({
-          ...event,
-          customer_summary: summaryForContact(id(params), event.id) ?? '',
-        })),
+        results: results.filter((event) =>
+          words.every((word) =>
+            [event.text, event.customer_summary, event.title ?? ''].some((text) =>
+              text.toLowerCase().includes(word),
+            ),
+          ),
+        ),
       };
     });
   }),

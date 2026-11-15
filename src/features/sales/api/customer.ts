@@ -176,14 +176,18 @@ export interface HistoryPage {
   next: number | null;
 }
 
-const historyKey = (id: number) => [...customerKey(id), 'history'] as const;
+const historyKey = (id: number, q = '') => [...customerKey(id), 'history', q] as const;
 
 /** Contacts, leads, sessions, payments and notes, newest first (S17). */
-export const historyQuery = (id: number) =>
+export const historyQuery = (id: number, q = '') =>
   infiniteQueryOptions({
-    queryKey: historyKey(id),
-    queryFn: ({ signal, pageParam }) =>
-      api<HistoryPage>(`${customerApi(id)}/history/?page=${String(pageParam)}`, { signal }),
+    queryKey: historyKey(id, q),
+    queryFn: ({ signal, pageParam }) => {
+      const params = new URLSearchParams({ page: String(pageParam) });
+      // `q`: only the events whose text has every typed word (S78).
+      if (q) params.set('q', q);
+      return api<HistoryPage>(`${customerApi(id)}/history/?${params.toString()}`, { signal });
+    },
     initialPageParam: 1,
     getNextPageParam: (page) => page.next,
     // A refetch reloads every page the seller has opened, one after another.

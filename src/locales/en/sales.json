@@ -527,6 +527,9 @@
         "money": "Money",
         "team": "Team"
       },
+      "search": "Search this customer's history",
+      "searchPlaceholder": "Search notes and summaries",
+      "emptySearch": "No entry has these words.",
       "emptyFilter": "Nothing of this kind."
     },
     "score": {
@@ -2449,6 +2452,10 @@
     "saveAt": "Save follow-up · {{day}} {{time}}",
     "now": "Current follow-up: {{when}}",
     "log": "Talked to them? Log the contact",
+    "noOpenLeadFound": "No open lead. Customers with an account:",
+    "noLead": "No open lead",
+    "belongsTo": "{{seller}}'s lead: open their page instead",
+    "taskText": "Follow up with {{name}}",
     "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step."
   },
   "followUpSlots": {
