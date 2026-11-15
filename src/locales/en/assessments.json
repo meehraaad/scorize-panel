@@ -190,6 +190,34 @@
   "deviceTimezone": "Time uses your device timezone. The local scheduler must be running.",
   "questionEnglish": "English question text (optional)",
   "incompatibleBaseline": "These answers are incompatible with the previous definitions and are unknown in the baseline comparison: {{questions}}",
+  "sharedFacts": {
+    "programExplanation": "You may select a confirmed report and its specific skill for this question. Check that this is the evidence the question requests.",
+    "programReport": "Confirmed language report",
+    "programSkill": "Report skill",
+    "programUse": "Use this skill for the question",
+    "validFrom": "Document valid from for shared evidence (optional)",
+    "validUntil": "Document valid until for shared evidence (optional)",
+    "title": "Shared facts and evidence",
+    "description": "Save raw facts once, confirm them, then select the same record in each assessment. Confirmation does not verify a document or establish eligibility.",
+    "kind": "Evidence type",
+    "kinds": {
+      "birth_date": "Birth date",
+      "language": "Language report",
+      "employment": "Employment period"
+    },
+    "retry": "Retry save",
+    "saveEdit": "Save changes",
+    "create": "Save evidence",
+    "discardRetry": "Discard failed request",
+    "unknown": "Unknown",
+    "confirmed": "Confirmed by you",
+    "unconfirmed": "Needs your confirmation",
+    "edit": "Edit",
+    "confirm": "Confirm this evidence",
+    "select": "Use in this assessment",
+    "selectJob": "Select this period",
+    "useJobs": "Use selected periods"
+  },
   "calculator": {
     "title": "Assessment interview and history",
     "draft": "Local draft. Rules have no legal approval. This development flow is not the released product.",
@@ -227,6 +255,8 @@
     "addPeriod": "Add employment period",
     "removePeriod": "Remove period",
     "fields": {
+      "shared_birth_date": "Birth date for shared evidence",
+      "date": "Report date",
       "adaptability": "Adaptability",
       "admissible": "Admissible",
       "arranged_employment": "Arranged employment",

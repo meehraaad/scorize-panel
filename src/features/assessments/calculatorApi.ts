@@ -23,6 +23,7 @@ export interface Answer {
   previous_answer?: Answer;
   scope_reason?: string;
   shared_origin?: ProfileCandidate;
+  shared_fact_refs?: { id: string; revision: number }[];
 }
 export interface ProfileCandidate {
   id: string;
@@ -39,6 +40,10 @@ export interface ProfileEvidence {
   candidates: ProfileCandidate[];
   context: { source: string; reason: string; original: Record<string, unknown> }[];
 }
+export const sharedFactsQuery = queryOptions({
+  queryKey: ['shared-assessment-evidence'],
+  queryFn: () => api<{ evidence: unknown[] }>('/applicant/v1/assessments/shared-evidence/'),
+});
 export interface Options {
   adapter_version: string;
   can_review?: boolean;

@@ -26,6 +26,25 @@ let financialRequests = new Map<
 let guideState = 'not_started';
 let guideCountry = 'canada';
 let guideMode = 'assessment';
+type SharedFactMock = {
+  id: string;
+  revision: number;
+  kind: string;
+  status: string;
+  value: unknown;
+  confirmed_at: string | null;
+  documents: {
+    id: string;
+    document_id: number;
+    document_source: string;
+    document_state: string;
+    review_status: string;
+    valid_from: string | null;
+    valid_until: string | null;
+  }[];
+};
+let sharedFacts: SharedFactMock[] = [];
+let sharedRequests = new Map<string, { request: string; response: string }>();
 export function resetCalculatorMocks() {
   revision = 0;
   financial = structuredClone(financialFixture) as FinancialDescription;
@@ -37,6 +56,8 @@ export function resetCalculatorMocks() {
   guideState = 'not_started';
   guideCountry = 'canada';
   guideMode = 'assessment';
+  sharedFacts = [];
+  sharedRequests = new Map();
 }
 const interview = () => ({
   revision,
@@ -202,6 +223,119 @@ export const calculatorHandlers = [
   ),
   http.get('/api/applicant/v1/assessments/:id/calculators/profile-evidence/', () =>
     HttpResponse.json({ revision, candidates: [], context: [] }),
+  ),
+  http.get('/api/applicant/v1/assessments/shared-evidence/', () =>
+    HttpResponse.json({ version: 'shared-facts-1', evidence: sharedFacts, active: false }),
+  ),
+  http.post('/api/applicant/v1/assessments/shared-evidence/', async ({ request }) => {
+    const body = (await request.json()) as {
+      action: string;
+      id?: string;
+      revision: number;
+      request_key: string;
+      kind: string;
+      status: string;
+      value: unknown;
+    };
+    const prior = sharedRequests.get(body.request_key);
+    if (prior)
+      return prior.request === JSON.stringify(body)
+        ? new HttpResponse(prior.response, { headers: { 'Content-Type': 'application/json' } })
+        : HttpResponse.json({}, { status: 409 });
+    let item = sharedFacts.find((row) => row.id === body.id);
+    if (body.action === 'create') {
+      item = {
+        id: crypto.randomUUID(),
+        revision: 1,
+        kind: body.kind,
+        status: body.status,
+        value: body.value,
+        confirmed_at: null,
+        documents: [],
+      };
+      sharedFacts.push(item);
+    } else if (!item || item.revision !== body.revision)
+      return HttpResponse.json({}, { status: 409 });
+    else {
+      item = {
+        ...item,
+        revision: item.revision + 1,
+        ...(body.action === 'confirm'
+          ? { confirmed_at: '2026-11-12T00:00:00Z' }
+          : { status: body.status, value: body.value, confirmed_at: null }),
+      };
+      sharedFacts = sharedFacts.map((row) => (row.id === item?.id ? item : row));
+    }
+    sharedRequests.set(body.request_key, {
+      request: JSON.stringify(body),
+      response: JSON.stringify(item),
+    });
+    return HttpResponse.json(item);
+  }),
+  http.post('/api/applicant/v1/assessments/shared-evidence/documents/', async ({ request }) => {
+    const body = (await request.json()) as {
+      id: string;
+      revision: number;
+      request_key: string;
+      document_id: number;
+      document_source: string;
+      valid_from: string | null;
+      valid_until: string | null;
+    };
+    const prior = sharedRequests.get(body.request_key);
+    if (prior)
+      return prior.request === JSON.stringify(body)
+        ? new HttpResponse(prior.response, { headers: { 'Content-Type': 'application/json' } })
+        : HttpResponse.json({}, { status: 409 });
+    const item = sharedFacts.find((row) => row.id === body.id);
+    if (!item || item.revision !== body.revision) return HttpResponse.json({}, { status: 409 });
+    const link = {
+      id: crypto.randomUUID(),
+      document_id: body.document_id,
+      document_source: body.document_source,
+      document_state: 'current',
+      review_status: 'unreviewed',
+      valid_from: body.valid_from,
+      valid_until: body.valid_until,
+    };
+    item.documents.push(link);
+    const response = {
+      ...link,
+      evidence_id: item.id,
+      evidence_revision: item.revision,
+      document_verified: false,
+    };
+    sharedRequests.set(body.request_key, {
+      request: JSON.stringify(body),
+      response: JSON.stringify(response),
+    });
+    return HttpResponse.json(response);
+  }),
+  http.post(
+    '/api/applicant/v1/assessments/shared-evidence/documents/remove/',
+    async ({ request }) => {
+      const body = (await request.json()) as {
+        id: string;
+        revision: number;
+        link_id: string;
+        request_key: string;
+      };
+      const prior = sharedRequests.get(body.request_key);
+      if (prior)
+        return prior.request === JSON.stringify(body)
+          ? new HttpResponse(prior.response, { headers: { 'Content-Type': 'application/json' } })
+          : HttpResponse.json({}, { status: 409 });
+      const item = sharedFacts.find((row) => row.id === body.id);
+      if (!item || item.revision !== body.revision) return HttpResponse.json({}, { status: 409 });
+      item.documents = item.documents.filter((link) => link.id !== body.link_id);
+      item.revision += 1;
+      const response = structuredClone(item);
+      sharedRequests.set(body.request_key, {
+        request: JSON.stringify(body),
+        response: JSON.stringify(response),
+      });
+      return HttpResponse.json(response);
+    },
   ),
   http.get('/api/applicant/v1/assessments/calculators/options/', () =>
     HttpResponse.json({
