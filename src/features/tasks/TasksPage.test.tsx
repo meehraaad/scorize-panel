@@ -1,11 +1,12 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { api } from '@/lib/api/client';
 import { toValue } from '@/lib/calendar';
 import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
-import type { TasksOverview } from '@/lib/tasks/api';
+import type { MyTask, TasksOverview } from '@/lib/tasks/api';
 import { http, HttpResponse } from 'msw';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
@@ -318,5 +319,85 @@ describe('tasks page, server refuses', () => {
     await user.click(screen.getByRole('button', { name: 'ثبت و ساختن قدم بعدی' }));
     await waitFor(() => expect(queryClient.isMutating()).toBe(0));
     expect(await screen.findByText(text)).toBeInTheDocument();
+  });
+
+  describe('S79: a meeting at the office is the follow-up', () => {
+    const flags = ON_SERVER as { visitFollowUp: boolean };
+    beforeEach(() => {
+      flags.visitFollowUp = true;
+    });
+    afterEach(() => {
+      flags.visitFollowUp = false;
+    });
+
+    /** One follow-up of mine: a meeting at the office, started (`minutes` ago) or ahead. */
+    function meetingTask(minutes: number) {
+      const at = new Date(Date.now() - minutes * 60_000).toISOString();
+      const task: MyTask = {
+        id: 9001,
+        text: 'جلسه حضوری با عرفان ملکی',
+        due_at: at,
+        timed: true,
+        person: { id: 105, name: 'عرفان ملکی', context: '' },
+        source: 'me',
+        snoozed: 0,
+        step: null,
+        action: 'call',
+        note: '',
+        suggested_next: '',
+        follow_up: true,
+        receipt: null,
+        visit: { id: 7, starts_at: at },
+      };
+      const sent: unknown[] = [];
+      server.use(
+        http.get('/api/staff/v1/tasks/lists/mine/', () =>
+          HttpResponse.json({
+            count: 1,
+            page_size: 20,
+            next: null,
+            previous: null,
+            results: [task],
+          }),
+        ),
+        http.post('/api/staff/v1/tasks/9001/done/', async ({ request }) => {
+          sent.push(await request.json());
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      return sent;
+    }
+
+    it('a held meeting is done with met or no-show; a no-show suggests booking again', async () => {
+      const sent = meetingTask(30);
+      const user = userEvent.setup();
+      await openTasks();
+      await user.click(
+        await screen.findByRole('button', { name: 'انجام شد: جلسه حضوری با عرفان ملکی' }),
+      );
+      // Once it started, it can still be pushed back like any follow-up.
+      expect(screen.getByRole('button', { name: 'عقب بینداز' })).toBeInTheDocument();
+      const dialog = await screen.findByRole('dialog', { name: 'پیگیری انجام شد' });
+      expect(within(dialog).getByRole('radio', { name: 'جلسه برگزار شد' })).toBeChecked();
+      expect(within(dialog).queryByRole('radio', { name: 'صحبت کردیم' })).toBeNull();
+      await user.click(within(dialog).getByRole('radio', { name: 'به جلسه نیامد' }));
+      expect(within(dialog).getByLabelText('قدم بعدی')).toHaveValue('تماس برای گذاشتن جلسه‌ی تازه');
+      await user.click(screen.getByRole('button', { name: 'ثبت و ساختن قدم بعدی' }));
+      await waitFor(() => expect(sent).toHaveLength(1));
+      expect(sent[0]).toMatchObject({
+        outcome: 'no_show',
+        next: { text: 'تماس برای گذاشتن جلسه‌ی تازه' },
+      });
+      await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    });
+
+    it('a meeting still ahead has no snooze: it moves with the meeting', async () => {
+      meetingTask(-30);
+      await openTasks();
+      expect(
+        await screen.findByRole('button', { name: 'انجام شد: جلسه حضوری با عرفان ملکی' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'عقب بینداز' })).toBeNull();
+    });
   });
 });

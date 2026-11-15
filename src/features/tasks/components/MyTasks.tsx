@@ -18,6 +18,7 @@ import type { TasksConfig } from '../config';
 import { DoneDialog } from './DoneDialog';
 import { RequestDialog } from './RequestDialog';
 import { TickButton } from './StatusMark';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 
 const GROUPS = ['late', 'now', 'today'] as const;
 type Group = (typeof GROUPS)[number];
@@ -179,6 +180,8 @@ function TaskRow({
   const [reason, setReason] = useState<(typeof REASONS)[number]>('customer_later');
   const daysLate = Math.max(1, Math.floor((now - new Date(task.due_at).getTime()) / DAY));
   const lateToday = late && now - new Date(task.due_at).getTime() < DAY;
+  const meetingAhead =
+    ON_SERVER.visitFollowUp && !!task.visit && new Date(task.visit.starts_at).getTime() > now;
 
   const snooze = (choice: (typeof SNOOZES)[number]) => {
     change.mutate({
@@ -287,14 +290,17 @@ function TaskRow({
             </Link>
           ))}
         <TickButton label={t('mine.doneFor', { text: task.text })} onClick={onDone} />
-        <Button
-          variant="outline"
-          className="h-11 px-4 text-sm"
-          aria-expanded={snoozing}
-          onClick={() => setSnoozing(!snoozing)}
-        >
-          {t('mine.snooze')}
-        </Button>
+        {/* A meeting at the office ahead (S79) moves with the meeting, not by snoozing. */}
+        {!meetingAhead && (
+          <Button
+            variant="outline"
+            className="h-11 px-4 text-sm"
+            aria-expanded={snoozing}
+            onClick={() => setSnoozing(!snoozing)}
+          >
+            {t('mine.snooze')}
+          </Button>
+        )}
       </div>
     </li>
   );

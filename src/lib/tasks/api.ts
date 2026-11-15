@@ -118,6 +118,8 @@ export interface MyTask {
   follow_up: boolean;
   /** A receipt to review: its payment (Django `finance/receipt_tasks.py`). Today shows the receipt once. */
   receipt: number | null;
+  /** S79: the meeting at the office this follow-up is; done once it starts, with `met` / `no_show`. */
+  visit?: { id: number; starts_at: string } | null;
 }
 
 /** A colleague's request to me. */
@@ -245,7 +247,8 @@ export interface RequestDetail extends TaskRequest {
   thread: { id: number; author: string; mine: boolean; at: string; text: string }[];
 }
 
-export type TaskOutcome = 'talked' | 'no_answer' | 'messaged' | 'later';
+/** `met` / `no_show`: how a meeting at the office went (S79), only on its follow-up. */
+export type TaskOutcome = 'talked' | 'no_answer' | 'messaged' | 'later' | 'met' | 'no_show';
 
 export type TaskChange =
   | {

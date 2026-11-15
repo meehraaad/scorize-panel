@@ -145,7 +145,13 @@
       "finished": "Finished, waiting for nothing"
     },
     "saveNext": "Save and set the next step",
-    "saveClose": "Save and close the follow-up"
+    "saveClose": "Save and close the follow-up",
+    "meetingOutcome": {
+      "met": "The meeting was held",
+      "no_show": "They didn't come"
+    },
+    "noShowNext": "Call to book another meeting",
+    "visitAhead": "This follow-up is an in-person meeting. Until it starts, only the meeting changes it."
   },
   "status": {
     "open": "Open",
