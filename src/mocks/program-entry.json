@@ -43,9 +43,7 @@
   },
   "financial": {
     "status": "unknown",
-    "unknowns": [
-      "policy_unavailable"
-    ],
+    "unknowns": ["policy_unavailable"],
     "components": [],
     "ask_exact": false
   },
@@ -87,10 +85,7 @@
           "id": "offer_type",
           "text": "Synthetic offer category",
           "kind": "choice",
-          "choices": [
-            "a",
-            "b"
-          ],
+          "choices": ["a", "b"],
           "show_if": {
             "fact": "offer",
             "op": "eq",
@@ -211,10 +206,7 @@
         "id": "offer_type",
         "text": "Synthetic offer category",
         "kind": "choice",
-        "choices": [
-          "a",
-          "b"
-        ],
+        "choices": ["a", "b"],
         "show_if": {
           "fact": "offer",
           "op": "eq",
@@ -242,10 +234,7 @@
       "pass_mark_met": null,
       "met_requirements": [],
       "unmet_requirements": [],
-      "unknown_requirements": [
-        "adult",
-        "alternative"
-      ],
+      "unknown_requirements": ["adult", "alternative"],
       "requirement_details": [
         {
           "id": "adult",
@@ -258,10 +247,7 @@
           "status": "unknown"
         }
       ],
-      "coverage_limitations": [
-        "synthetic_rules_only",
-        "documents_not_verified"
-      ]
+      "coverage_limitations": ["synthetic_rules_only", "documents_not_verified"]
     },
     "next_question": {
       "id": "age",
@@ -269,9 +255,7 @@
       "kind": "number",
       "minimum": 0,
       "maximum": 120,
-      "route_ids": [
-        "de-study"
-      ],
+      "route_ids": ["de-study"],
       "reason": "eligibility"
     },
     "source": {

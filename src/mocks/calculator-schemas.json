@@ -33,10 +33,7 @@
     },
     "first_language": {
       "type": "choice",
-      "choices": [
-        "english",
-        "french"
-      ]
+      "choices": ["english", "french"]
     },
     "english": {
       "type": "object",
@@ -163,13 +160,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "start",
-          "end",
-          "hours_per_week",
-          "noc",
-          "teer"
-        ]
+        "required": ["start", "end", "hours_per_week", "noc", "teer"]
       }
     },
     "primary_noc": {
@@ -177,12 +168,7 @@
     },
     "spouse_status": {
       "type": "choice",
-      "choices": [
-        "single",
-        "accompanying",
-        "non_accompanying",
-        "citizen_or_pr"
-      ]
+      "choices": ["single", "accompanying", "non_accompanying", "citizen_or_pr"]
     },
     "spouse_education": {
       "type": "object",
@@ -251,10 +237,7 @@
     },
     "spouse_language_kind": {
       "type": "choice",
-      "choices": [
-        "english",
-        "french"
-      ]
+      "choices": ["english", "french"]
     },
     "spouse_work": {
       "type": "array",
@@ -301,13 +284,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "start",
-          "end",
-          "hours_per_week",
-          "noc",
-          "teer"
-        ]
+        "required": ["start", "end", "hours_per_week", "noc", "teer"]
       }
     },
     "arranged_employment": {
@@ -350,37 +327,19 @@
     },
     "canadian_study": {
       "type": "choice",
-      "choices": [
-        "none",
-        "one_or_two_years",
-        "three_plus"
-      ]
+      "choices": ["none", "one_or_two_years", "three_plus"]
     },
     "nomination": {
       "type": "choice",
-      "choices": [
-        "none",
-        "confirmed",
-        "hypothetical"
-      ]
+      "choices": ["none", "confirmed", "hypothetical"]
     },
     "high_wage_work": {
       "type": "choice",
-      "choices": [
-        "none",
-        "tier_1_3",
-        "tier_1_5",
-        "tier_2"
-      ]
+      "choices": ["none", "tier_1_3", "tier_1_5", "tier_2"]
     },
     "high_wage_offer": {
       "type": "choice",
-      "choices": [
-        "none",
-        "tier_1_3",
-        "tier_1_5",
-        "tier_2"
-      ]
+      "choices": ["none", "tier_1_3", "tier_1_5", "tier_2"]
     }
   },
   "australia": {
@@ -389,12 +348,7 @@
     },
     "facts.education": {
       "type": "choice",
-      "choices": [
-        "none",
-        "diploma_trade_or_recognised_award",
-        "bachelor_or_higher",
-        "doctorate"
-      ]
+      "choices": ["none", "diploma_trade_or_recognised_award", "bachelor_or_higher", "doctorate"]
     },
     "facts.professional_year": {
       "type": "boolean"
@@ -505,11 +459,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "start",
-          "end",
-          "hours_per_week"
-        ]
+        "required": ["start", "end", "hours_per_week"]
       }
     },
     "partner": {
@@ -517,11 +467,7 @@
       "properties": {
         "status": {
           "type": "choice",
-          "choices": [
-            "single",
-            "australian_citizen_or_pr",
-            "other"
-          ]
+          "choices": ["single", "australian_citizen_or_pr", "other"]
         },
         "same_subclass_applicant": {
           "type": "boolean"
@@ -586,11 +532,7 @@
     },
     "subclass": {
       "type": "choice",
-      "choices": [
-        "189",
-        "190",
-        "491"
-      ]
+      "choices": ["189", "190", "491"]
     }
   }
 }

@@ -51,9 +51,7 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": [
-          "policy_unavailable"
-        ],
+        "unknowns": ["policy_unavailable"],
         "components": [],
         "ask_exact": false
       },
@@ -116,9 +114,7 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": [
-          "policy_unavailable"
-        ],
+        "unknowns": ["policy_unavailable"],
         "components": [],
         "ask_exact": false
       },
@@ -177,9 +173,7 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": [
-          "policy_unavailable"
-        ],
+        "unknowns": ["policy_unavailable"],
         "components": [],
         "ask_exact": false
       },
@@ -238,9 +232,7 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": [
-          "policy_unavailable"
-        ],
+        "unknowns": ["policy_unavailable"],
         "components": [],
         "ask_exact": false
       },
@@ -299,9 +291,7 @@
       },
       "financial": {
         "status": "unknown",
-        "unknowns": [
-          "policy_unavailable"
-        ],
+        "unknowns": ["policy_unavailable"],
         "components": [],
         "ask_exact": false
       },
@@ -316,13 +306,7 @@
       ]
     }
   ],
-  "unknowns": [
-    "goals",
-    "destinations",
-    "citizenships",
-    "residence",
-    "timeline"
-  ],
+  "unknowns": ["goals", "destinations", "citizenships", "residence", "timeline"],
   "ordering": "catalog_display_order",
   "ranking_is_visa_probability": false,
   "personal_legal_entitlement_inferred": false,
@@ -1057,10 +1041,7 @@
         "id": "language",
         "text": "سطح فرضی زبان شما چیست؟",
         "kind": "choice",
-        "choices": [
-          "basic",
-          "advanced"
-        ]
+        "choices": ["basic", "advanced"]
       },
       {
         "id": "sponsor",
