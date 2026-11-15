@@ -40,6 +40,8 @@ export interface TaskSummary {
   team: TaskTeam | null;
   /** Created by the system (new lead, unanswered call, instalment due…). */
   automatic: boolean;
+  /** S79: the meeting at the office this follow-up is (the customer page's tasks only). */
+  visit?: { id: number; starts_at: string } | null;
 }
 
 export interface Colleague {

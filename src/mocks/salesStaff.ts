@@ -17,7 +17,7 @@ import type {
   PaymentsData,
   PurchasesData,
 } from '@/features/sales/api';
-import type { NewTask, TaskChange } from '@/lib/tasks/api';
+import type { NewTask, TaskChange, TaskSummary } from '@/lib/tasks/api';
 import { fetchConsultations } from './legacy/consultations';
 import { fetchCustomer, fetchHistory, logContact } from './legacy/customer';
 import { changeTask, createTask, taskRequest, tasksOverview } from './legacy/django';
@@ -27,7 +27,13 @@ import { createCustomer, fetchLeads } from './legacy/leads';
 import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
 import { faceOf, putFace } from './face';
-import { customerInstalments, failed, recordInstalmentReceipt, stateOrError } from './sales';
+import {
+  customerInstalments,
+  failed,
+  recordInstalmentReceipt,
+  stateOrError,
+  upcomingVisitOf,
+} from './sales';
 import { customerTemplates } from './messages';
 import { tagsOfCustomer } from './salesTags';
 import { notFound, pageOf, storage } from './session';
@@ -46,6 +52,45 @@ const SELLERS = [3, 4];
 /** Django's `CONSULTATIONS_PAGE` (api/sales/v1/seller.py). */
 const CONSULTATIONS_PAGE = 20;
 const isSeller = () => SELLERS.includes(storage.get() ?? 0);
+
+/**
+ * S79: a meeting at the office ahead is the customer's follow-up. Django moves the follow-up task
+ * to the meeting's time and names the meeting on it; the fake old site keeps neither.
+ */
+function withMeeting<
+  T extends {
+    id: number;
+    name: string;
+    tasks: TaskSummary[];
+    lead: { follow_up_at: string | null } | null;
+  },
+>(data: T): T {
+  const visit = upcomingVisitOf(data.id);
+  if (!visit) return data;
+  const index = data.tasks.findIndex((task) => task.kind === 'mine' && task.status !== 'done');
+  const meeting = {
+    id: index >= 0 ? (data.tasks[index]?.id ?? -visit.id) : -visit.id,
+    kind: 'mine' as const,
+    status: 'open' as const,
+    text: `جلسه حضوری با ${data.name}`,
+    due_at: visit.starts_at,
+    timed: true,
+    owner: null,
+    creator: null,
+    team: null,
+    automatic: false,
+    visit,
+  };
+  const tasks =
+    index >= 0
+      ? data.tasks.map((task, at) => (at === index ? { ...task, ...meeting } : task))
+      : [meeting, ...data.tasks];
+  return {
+    ...data,
+    tasks,
+    lead: data.lead ? { ...data.lead, follow_up_at: visit.starts_at } : data.lead,
+  };
+}
 
 /** The staff API's own error (403, 404, 400) answers as is. */
 async function answer<T>(work: () => Promise<T>, status = 200) {
@@ -232,7 +277,7 @@ export const salesStaffHandlers = [
   http.get(`${BASE}/customers/:id/`, ({ params }) =>
     answer<CustomerData>(() =>
       fetchCustomer(id(params)).then((data) => ({
-        ...data,
+        ...withMeeting(data),
         tags: tagsOfCustomer(data.id),
         face: faceOf(data.id),
         templates: customerTemplates(data.name),
@@ -292,6 +337,12 @@ export const salesStaffHandlers = [
   }),
   http.post(`${BASE}/customers/:id/contacts/`, async ({ params, request }) => {
     const log = (await request.json()) as ContactLog;
+    // S79: a meeting at the office ahead stays the next step; a lost lead must cancel it first.
+    if (log.stage === 'lost' && upcomingVisitOf(id(params)))
+      return HttpResponse.json(
+        { detail: 'This customer has a meeting at the office ahead.', code: 'visit' },
+        { status: 409 },
+      );
     if (
       log.customer_summary.trim().length > 5000 ||
       (log.email_summary && !log.customer_summary.trim())

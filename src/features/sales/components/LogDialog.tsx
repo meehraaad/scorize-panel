@@ -24,7 +24,8 @@ import { toast } from '@/lib/toast';
 import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
 import { customerPath } from '../paths';
-import { followAtOf } from '../followUp';
+import { ON_SERVER } from '@/lib/applicant/onServer';
+import { followAtOf, isVisitConflict, meetingAhead } from '../followUp';
 import { FollowUpWhen } from './FollowUpWhen';
 import { ProfileChips } from './ProfileChips';
 import { laneOf, lanesOf, movableLanes, pickedLane } from '../boardLanes';
@@ -103,6 +104,8 @@ export function LogDialog({
   const [checked, setChecked] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [visiting, setVisiting] = useState(false);
+  /** A meeting at the office set from this log (S79): the customer page reloads after it. */
+  const [booked, setBooked] = useState<string | null>(null);
   /** A live (or just ended) office call: the channel is the phone and the strip names the call. */
   const liveCall = draft.call;
 
@@ -126,7 +129,9 @@ export function LogDialog({
         ? (target.key as StageChoice)
         : 'keep';
   const lost = talked && stage === 'lost';
-  const asksFollowUp = !noAnswer && !lost && !(call && outcome === 'wrong_number');
+  // A meeting at the office ahead is the follow-up (S79): the log keeps it as the next step.
+  const meeting = ON_SERVER.visitFollowUp ? (booked ?? meetingAhead(customer.tasks)) : null;
+  const asksFollowUp = !meeting && !noAnswer && !lost && !(call && outcome === 'wrong_number');
   const followAt = followAtOf(follow, date);
   const chosen = customer.templates.find((item) => String(item.id) === template);
 
@@ -161,7 +166,7 @@ export function LogDialog({
           : notes.trim() || t('customer.logDialog.followTask'),
       },
       {
-        onError: () => toast.error(t('error')),
+        onError: (error) => toast.error(t(isVisitConflict(error) ? 'visit.lostFirst' : 'error')),
         onSuccess: () => {
           toast.success(t('contactDraft.saved'));
           onSaved();
@@ -284,7 +289,15 @@ export function LogDialog({
           {t('customer.logDialog.followDate')}
         </p>
       )}
-      {talked && !lost && (
+      {meeting && !lost && (
+        <Notice tone="info">
+          <strong className="block">
+            {t('visit.nextStep', { day: f.weekday(meeting), time: f.time(meeting) })}
+          </strong>
+          {t('visit.nextStepHint')}
+        </Notice>
+      )}
+      {talked && !lost && !meeting && (
         <button
           type="button"
           onClick={() => setVisiting(true)}
@@ -300,6 +313,7 @@ export function LogDialog({
             open
             customer={{ id: customer.id, name: named(customer.name) }}
             onClose={() => setVisiting(false)}
+            onBooked={setBooked}
           />
         </Suspense>
       )}
@@ -385,7 +399,7 @@ export function LogDialog({
               },
             ]),
       ];
-  if (asksStage || lost || asksFollowUp)
+  if (asksStage || lost || asksFollowUp || meeting)
     steps.push({ key: 'next', title: t('customer.logDialog.step.next'), body: nextFields });
 
   /** What we know about the customer, on the strip: the brief, then the profile chips. */

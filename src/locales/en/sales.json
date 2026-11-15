@@ -2801,7 +2801,15 @@
     "closed": "The office is closed at this time.",
     "pickedShort": "In-person meeting",
     "roomsLeft_one": "{{n}} room free",
-    "roomsLeft_other": "{{n}} rooms free"
+    "roomsLeft_other": "{{n}} rooms free",
+    "nextStep": "Next step: in-person meeting on {{day}} at {{time}}",
+    "nextStepHint": "Until then the meeting is the follow-up. For another time, cancel the meeting and book again.",
+    "isFollowUp": "This customer's follow-up is their in-person meeting. For another time, cancel the meeting and book again.",
+    "lostFirst": "This customer has an in-person meeting ahead. Cancel it first.",
+    "cancelledToCall": "Meeting cancelled. The follow-up stays at that time, as a call.",
+    "kind": "Follow up by",
+    "kindCall": "Call",
+    "kindMeeting": "Meeting at the office"
   },
   "followUpWhen": {
     "exact": "Or an exact day and time"

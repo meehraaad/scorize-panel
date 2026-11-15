@@ -31,6 +31,7 @@ export type ServerFeature =
   | 'leadSearch'
   | 'customerSearch'
   | 'historySearch'
+  | 'visitFollowUp'
   | 'offerAgreement'
   | 'officeHours'
   | 'phoneTeams'
@@ -78,6 +79,13 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * `claude/project-thread-45w72o`). Off: the picker searches with the leads list as before.
    */
   leadSearch: true,
+  /**
+   * S79: a meeting at the office is the customer's follow-up there (lang
+   * `claude/sharp-wozniak-kn8ht5`). The customer's tasks name their meeting (`visit`), and a
+   * follow-up with a meeting ahead is moved only by the meeting (409 `visit`). On: the contact log
+   * shows the meeting as the next step, and the follow-up window offers a call or a meeting.
+   */
+  visitFollowUp: false,
   /**
    * S63 `GET /sales/v1/customers/search/?q=` and `POST customers/<id>/take/`: the leads page's
    * search in every customer, like the old CRM's (lang `claude/pensive-dirac-ekeuff`).
