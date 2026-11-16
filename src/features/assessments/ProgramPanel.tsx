@@ -134,7 +134,9 @@ export function ProgramPanel({
               ) : (
                 <fieldset
                   disabled={
-                    disabled || Boolean(checked.reason) || question.visibility !== 'visible'
+                    disabled ||
+                    (Boolean(checked.reason) && checked.reason !== 'shared_documents_changed') ||
+                    question.visibility !== 'visible'
                   }
                   className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0"
                 >

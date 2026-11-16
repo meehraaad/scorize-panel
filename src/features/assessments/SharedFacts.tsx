@@ -319,6 +319,11 @@ export function SharedFacts({
                       );
                     else {
                       const report = item.value as Record<string, unknown>;
+                      const scores = Object.fromEntries(
+                        Object.entries((report.scores ?? {}) as Record<string, unknown>).filter(
+                          ([, score]) => score !== null,
+                        ),
+                      );
                       const field =
                         country === 'canada' &&
                         ['tcf_canada', 'tef_canada'].includes(String(report.test))
@@ -326,10 +331,10 @@ export function SharedFacts({
                           : 'english';
                       const projected =
                         country === 'canada'
-                          ? { test: report.test, scores: report.scores, result_date: report.date }
+                          ? { test: report.test, scores, result_date: report.date }
                           : {
                               test: report.test,
-                              scores: report.scores,
+                              scores,
                               test_date: report.date,
                               in_test_centre: report.in_test_centre,
                               one_skill_retake: report.one_skill_retake,
