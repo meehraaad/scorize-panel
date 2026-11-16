@@ -95,6 +95,15 @@ it('requires an explicit report and skill for a configured program', async () =>
             value: { test: 'ielts_general_training', date: '2026-01-01', scores: { reading: 7 } },
             documents: [],
           },
+          {
+            id: 'wrong-test',
+            revision: 2,
+            kind: 'language',
+            status: 'known',
+            confirmed_at: '2026-01-01',
+            value: { test: 'pte_core', date: '2026-01-01', scores: { reading: 7 } },
+            documents: [],
+          },
         ],
       }),
     ),
@@ -103,13 +112,26 @@ it('requires an explicit report and skill for a configured program', async () =>
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <ProgramEvidence disabled={false} onSelect={selected} />
+      <ProgramEvidence
+        disabled={false}
+        onSelect={selected}
+        binding={{
+          version: 'phase3-ielts-band-1',
+          fact: 'language_report.skill_score',
+          kind: 'language',
+          test: 'ielts_general_training',
+          skill: 'reading',
+          units: 'ielts_band',
+          interpretation: 'identity',
+        }}
+      />
     </QueryClientProvider>,
   );
   const user = userEvent.setup();
   const reportSelect = await screen.findByLabelText('Confirmed language report');
   await waitFor(() => expect(reportSelect.querySelectorAll('option')).toHaveLength(2));
   await user.selectOptions(reportSelect, 'report-id');
+  expect(screen.getByLabelText('Report skill').querySelectorAll('option')).toHaveLength(2);
   await user.selectOptions(screen.getByLabelText('Report skill'), 'reading');
   expect(selected).not.toHaveBeenCalled();
   await user.click(screen.getByRole('button', { name: 'Use this skill for the question' }));

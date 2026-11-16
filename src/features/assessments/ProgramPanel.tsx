@@ -199,8 +199,9 @@ export function ProgramPanel({
                         })}
                       </p>
                     )}
-                  {question.kind === 'number' && (
+                  {question.shared_binding && (
                     <ProgramEvidence
+                      binding={question.shared_binding}
                       disabled={disabled || dirty}
                       onSelect={(reference, selector, value) =>
                         interaction.onSend('program_answer', {

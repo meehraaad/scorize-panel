@@ -6,6 +6,7 @@ import schemas from './calculator-schemas.json';
 import identities from './calculator-identities.json';
 import comparisonFixture from './calculator-comparison.json';
 import type { Comparison, Answer, Snapshot } from '@/features/assessments/calculatorApi';
+import type { Question } from '@/features/assessments/api';
 const SESSION = '11111111-1111-4111-8111-111111111111';
 let revision = 0;
 let answers: Record<string, Answer> = {};
@@ -44,7 +45,49 @@ type SharedFactMock = {
   }[];
 };
 let sharedFacts: SharedFactMock[] = [];
+export function resolveProgramEvidenceMock(
+  binding: Question['shared_binding'],
+  reference: { id: string; revision: number },
+  selector: string,
+  value: unknown,
+) {
+  const item = sharedFacts.find(
+    (row) => row.id === reference.id && row.revision === reference.revision && row.confirmed_at,
+  );
+  const raw = item?.value as { test?: string; scores?: Record<string, unknown> } | undefined;
+  if (
+    !binding ||
+    item?.kind !== binding.kind ||
+    raw?.test !== binding.test ||
+    selector !== binding.skill ||
+    raw.scores?.[selector] !== value
+  )
+    return null;
+  return {
+    ...reference,
+    kind: item.kind,
+    binding,
+    value: structuredClone(item.value),
+    documents: structuredClone(item.documents),
+  };
+}
 let sharedRequests = new Map<string, { request: string; response: string }>();
+let interviewRequests = new Map<string, { request: string; response: string }>();
+function invalidateShared(id: string) {
+  let changed = false;
+  for (const [key, answer] of Object.entries(answers)) {
+    if (answer.status === 'known' && answer.shared_fact_refs?.some((ref) => ref.id === id)) {
+      answers[key] = {
+        ...answer,
+        status: 'needs_confirmation',
+        value: null,
+        previous_answer: structuredClone(answer),
+      };
+      changed = true;
+    }
+  }
+  if (changed) revision += 1;
+}
 export function resetCalculatorMocks() {
   revision = 0;
   financial = structuredClone(financialFixture) as FinancialDescription;
@@ -58,6 +101,7 @@ export function resetCalculatorMocks() {
   guideMode = 'assessment';
   sharedFacts = [];
   sharedRequests = new Map();
+  interviewRequests = new Map();
 }
 const interview = () => ({
   revision,
@@ -257,14 +301,24 @@ export const calculatorHandlers = [
     } else if (!item || item.revision !== body.revision)
       return HttpResponse.json({}, { status: 409 });
     else {
+      const unchanged =
+        body.action === 'edit' &&
+        item.status === body.status &&
+        JSON.stringify(item.value) === JSON.stringify(body.value);
+      const confirmed = body.action === 'confirm' && Boolean(item.confirmed_at);
+      if (body.action === 'confirm' && item.status !== 'known')
+        return HttpResponse.json({}, { status: 400 });
       item = {
         ...item,
-        revision: item.revision + 1,
+        revision: item.revision + (unchanged || confirmed ? 0 : 1),
         ...(body.action === 'confirm'
           ? { confirmed_at: '2026-11-12T00:00:00Z' }
           : { status: body.status, value: body.value, confirmed_at: null }),
       };
+      if (unchanged)
+        item.confirmed_at = sharedFacts.find((row) => row.id === item?.id)?.confirmed_at ?? null;
       sharedFacts = sharedFacts.map((row) => (row.id === item?.id ? item : row));
+      if (body.action === 'edit' && !unchanged) invalidateShared(item.id);
     }
     sharedRequests.set(body.request_key, {
       request: JSON.stringify(body),
@@ -289,6 +343,8 @@ export const calculatorHandlers = [
         : HttpResponse.json({}, { status: 409 });
     const item = sharedFacts.find((row) => row.id === body.id);
     if (!item || item.revision !== body.revision) return HttpResponse.json({}, { status: 409 });
+    if (!item.confirmed_at || item.status !== 'known')
+      return HttpResponse.json({}, { status: 409 });
     const link = {
       id: crypto.randomUUID(),
       document_id: body.document_id,
@@ -298,7 +354,9 @@ export const calculatorHandlers = [
       valid_from: body.valid_from,
       valid_until: body.valid_until,
     };
-    item.documents.push(link);
+    item.documents = [...item.documents.map((old) => ({ ...old, id: crypto.randomUUID() })), link];
+    item.revision += 1;
+    invalidateShared(item.id);
     const response = {
       ...link,
       evidence_id: item.id,
@@ -327,8 +385,13 @@ export const calculatorHandlers = [
           : HttpResponse.json({}, { status: 409 });
       const item = sharedFacts.find((row) => row.id === body.id);
       if (!item || item.revision !== body.revision) return HttpResponse.json({}, { status: 409 });
-      item.documents = item.documents.filter((link) => link.id !== body.link_id);
+      if (!item.documents.some((link) => link.id === body.link_id))
+        return HttpResponse.json({}, { status: 400 });
+      item.documents = item.documents
+        .filter((link) => link.id !== body.link_id)
+        .map((link) => ({ ...link, id: crypto.randomUUID() }));
       item.revision += 1;
+      invalidateShared(item.id);
       const response = structuredClone(item);
       sharedRequests.set(body.request_key, {
         request: JSON.stringify(body),
@@ -360,22 +423,107 @@ export const calculatorHandlers = [
       field: string;
       value: unknown;
       status: Answer['status'];
+      request_key?: string;
+      shared_references?: { id: string; revision: number }[];
+      detach_shared?: boolean;
     };
+    const requestKey = body.request_key;
+    const previousRequest = requestKey && interviewRequests.get(requestKey);
+    if (previousRequest)
+      return previousRequest.request === JSON.stringify(body)
+        ? new HttpResponse(previousRequest.response, {
+            headers: { 'Content-Type': 'application/json' },
+          })
+        : HttpResponse.json({}, { status: 409 });
     if (body.revision !== revision)
       return HttpResponse.json({ detail: 'Stale revision' }, { status: 409 });
-    answers[
+    const identity =
       (body.country === 'canada' && body.field === 'birth_date') ||
       (body.country === 'australia' && body.field === 'facts.birth_date')
         ? 'calculator:shared:birth_date'
-        : `calculator:${body.country}:${body.field}`
-    ] = {
+        : `calculator:${body.country}:${body.field}`;
+    const old = answers[identity];
+    if (old?.shared_fact_refs && !body.shared_references && !body.detach_shared)
+      return HttpResponse.json({}, { status: 400 });
+    const refs = [];
+    for (const ref of body.shared_references ?? []) {
+      const item = sharedFacts.find(
+        (row) =>
+          row.id === ref.id &&
+          row.revision === ref.revision &&
+          row.confirmed_at &&
+          row.status === 'known',
+      );
+      if (!item) return HttpResponse.json({}, { status: 409 });
+      refs.push({
+        ...ref,
+        kind: item.kind,
+        value: structuredClone(item.value),
+        documents: structuredClone(item.documents),
+      });
+    }
+    if (refs.length && (body.status !== 'known' || body.detach_shared))
+      return HttpResponse.json({}, { status: 400 });
+    if (refs.length) {
+      if (new Set(refs.map((ref) => ref.id)).size !== refs.length)
+        return HttpResponse.json({}, { status: 400 });
+      const fieldKind =
+        body.field === 'work'
+          ? 'employment'
+          : ['english', 'french'].includes(body.field)
+            ? 'language'
+            : ['birth_date', 'facts.birth_date'].includes(body.field)
+              ? 'birth_date'
+              : null;
+      if (
+        !fieldKind ||
+        refs.some((ref) => ref.kind !== fieldKind) ||
+        (fieldKind !== 'employment' && refs.length !== 1)
+      )
+        return HttpResponse.json({}, { status: 400 });
+      if (fieldKind === 'birth_date' && body.value !== refs[0]?.value)
+        return HttpResponse.json({}, { status: 400 });
+      if (fieldKind === 'language') {
+        const value = body.value as Record<string, unknown>;
+        const raw = refs[0]?.value as Record<string, unknown>;
+        if (
+          value.test !== raw.test ||
+          JSON.stringify(value.scores) !== JSON.stringify(raw.scores) ||
+          value[body.country === 'canada' ? 'result_date' : 'test_date'] !== raw.date ||
+          (body.country === 'australia' &&
+            (value.in_test_centre !== raw.in_test_centre ||
+              value.one_skill_retake !== raw.one_skill_retake))
+        )
+          return HttpResponse.json({}, { status: 400 });
+      }
+      if (fieldKind === 'employment') {
+        const periods = body.value as Record<string, unknown>[];
+        if (
+          !Array.isArray(periods) ||
+          periods.length !== refs.length ||
+          refs.some((ref, index) =>
+            ['start', 'end', 'hours_per_week'].some(
+              (key) => periods[index]?.[key] !== (ref.value as Record<string, unknown>)[key],
+            ),
+          )
+        )
+          return HttpResponse.json({}, { status: 400 });
+      }
+    }
+    answers[identity] = {
       status: body.status,
       value: body.value,
-      source: 'user',
+      source: refs.length ? 'shared_fact_confirmed_by_user' : 'user',
       question_version: 'calculator-interview-1',
       document_verified: false,
+      ...(refs.length ? { shared_fact_refs: refs } : {}),
     };
     revision += 1;
+    if (requestKey)
+      interviewRequests.set(requestKey, {
+        request: JSON.stringify(body),
+        response: JSON.stringify(interview()),
+      });
     return HttpResponse.json(interview());
   }),
   http.get('/api/applicant/v1/assessments/:id/calculators/snapshots/', () =>

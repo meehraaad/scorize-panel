@@ -54,12 +54,17 @@ function ComparisonCards({ data }: { data: ComparisonSnapshot['payload'] }) {
             <p>
               {t('comparison.condition')}: {label(route.eligibility_status)}
             </p>
+            {route.limitations.includes('shared_documents_changed') && (
+              <Notice tone="warn">{t('comparison.labels.shared_documents_changed')}</Notice>
+            )}
             <p>
               {t('comparison.score')}:{' '}
               {route.score
                 ? `${label(route.score.system)}: ${route.score.score ?? t('calculator.partial')}`
                 : route.eligibility_status === 'not_evaluated'
-                  ? t('transfer.scoreUnavailable')
+                  ? route.limitations.includes('shared_documents_changed')
+                    ? t('sharedFacts.scoreUnavailable')
+                    : t('transfer.scoreUnavailable')
                   : t('calculator.partial')}
             </p>
             {route.selection_score && (

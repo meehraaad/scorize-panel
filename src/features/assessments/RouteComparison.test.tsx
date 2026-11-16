@@ -205,3 +205,23 @@ it('rejects unsafe source links returned in a saved manifest', async () => {
   await user.click(area.getByText('Sources and review dates', { selector: 'summary' }));
   expect(area.getByText('fsw', { selector: 'a' })).not.toHaveAttribute('href');
 });
+
+it('shows document review on the affected result while preserving unrelated scores', async () => {
+  const changed = structuredClone(fixture) as Comparison;
+  const route = changed.routes.find((card) => card.route_id === 'au-189');
+  if (!route) throw new Error('Missing fixture route');
+  route.eligibility_status = 'not_evaluated';
+  route.score = null;
+  route.limitations.push('shared_documents_changed');
+  server.use(
+    http.get('/api/applicant/v1/assessments/:id/calculators/comparison/', () =>
+      HttpResponse.json(changed),
+    ),
+  );
+  const { area } = await open();
+  expect(area.getAllByText(/A linked document changed or is unavailable/).length).toBeGreaterThan(
+    0,
+  );
+  expect(area.getByText(/Unavailable until linked documents are reviewed/)).toBeInTheDocument();
+  expect(area.getAllByText('CRS score: 424', { exact: false })).toHaveLength(2);
+});

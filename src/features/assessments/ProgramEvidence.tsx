@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
 import { api } from '@/lib/api/client';
+import type { Question } from './api';
 
 type Report = {
   id: string;
@@ -13,9 +14,11 @@ type Report = {
   value: { test?: string; date?: string; scores?: Record<string, number | null> } | null;
 };
 export function ProgramEvidence({
+  binding,
   disabled,
   onSelect,
 }: {
+  binding: NonNullable<Question['shared_binding']>;
   disabled: boolean;
   onSelect: (reference: { id: string; revision: number }, selector: string, value: number) => void;
 }) {
@@ -29,7 +32,7 @@ export function ProgramEvidence({
   const labels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
   const choices = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
   const reports = (query.data?.evidence ?? []).filter(
-    (item) => item.kind === 'language' && item.confirmed_at && item.value,
+    (item) => item.kind === binding.kind && item.confirmed_at && item.value?.test === binding.test,
   );
   const report = reports.find((item) => item.id === reportId);
   const score = report?.value?.scores?.[skill];
@@ -58,7 +61,7 @@ export function ProgramEvidence({
         disabled={disabled || !report}
         options={[
           { value: '', label: t('calculator.choose') },
-          ...['reading', 'writing', 'listening', 'speaking'].map((value) => ({
+          ...[binding.skill].map((value) => ({
             value,
             label: labels[value] ?? t('calculator.unknown'),
           })),
@@ -67,7 +70,16 @@ export function ProgramEvidence({
       />
       <Button
         variant="outline"
-        disabled={disabled || !report || typeof score !== 'number'}
+        disabled={
+          disabled ||
+          !report ||
+          skill !== binding.skill ||
+          typeof score !== 'number' ||
+          !Number.isFinite(score) ||
+          score < 0 ||
+          score > 9 ||
+          (score * 2) % 1 !== 0
+        }
         onClick={() => {
           if (report && typeof score === 'number')
             onSelect({ id: report.id, revision: report.revision }, skill, score);
