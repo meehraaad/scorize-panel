@@ -1028,6 +1028,20 @@ interface MockVisit {
   colleague: string | null;
 }
 let visits: MockVisit[] = [];
+
+/** S79: the customer's meeting at the office still to come, which is their follow-up. */
+export function upcomingVisitOf(customer: number): { id: number; starts_at: string } | null {
+  const visit = visits.find(
+    (item) => item.customer === customer && new Date(item.starts_at).getTime() > Date.now(),
+  );
+  return visit ? { id: visit.id, starts_at: visit.starts_at } : null;
+}
+
+const visitConflict = () =>
+  HttpResponse.json(
+    { detail: 'This customer has a meeting at the office ahead.', code: 'visit' },
+    { status: 409 },
+  );
 const VISIT_ROOMS = ['A', 'B'];
 const OFFICE_OPEN = 9;
 const OFFICE_CLOSE = 18;
@@ -1335,7 +1349,11 @@ export const salesHandlers = [
     if (body.follow_up_at && open.length === 0) {
       return HttpResponse.json({ detail: 'no open lead', code: 'no_open_lead' }, { status: 409 });
     }
+    // S79: a meeting at the office ahead is the follow-up; one lead says so, a batch skips it.
+    if (body.follow_up_at && open.length === 1 && open[0] && upcomingVisitOf(open[0].id))
+      return visitConflict();
     for (const item of open) {
+      if (body.follow_up_at && upcomingVisitOf(item.id)) continue;
       if (body.stage) {
         item.lead.stage = body.stage;
         item.lead.stage_since = new Date().toISOString();

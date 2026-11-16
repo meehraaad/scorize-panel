@@ -17,6 +17,7 @@ import { addDays, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { tasksQuery } from '@/lib/tasks/api';
 import { toast } from '@/lib/toast';
 import {
@@ -29,7 +30,7 @@ import {
 import { FollowUpNow } from './FollowUpNow';
 import { useSellerBusy } from './useSellerBusy';
 
-const FORM = 'visit-form';
+export const VISIT_FORM = 'visit-form';
 const PICKED = 'picked';
 const MINUTE = 60_000;
 /** How far ahead a meeting can be set (Django: eight weeks). */
@@ -40,6 +41,8 @@ const WEEKS_AHEAD = 8;
  * popup: the office's hours on a week, a time when every room is taken can't be picked. The
  * customer gets an SMS with the time and address; a colleague can be asked to join (a request
  * task). A customer with a meeting ahead sees it here, with "cancel" to pick another time.
+ * The meeting becomes the customer's follow-up (S79): `onBooked` lets the contact log show it as
+ * the next step.
  */
 export function VisitDialog({
   customer,
@@ -47,6 +50,7 @@ export function VisitDialog({
   onClose,
   followUp,
   onLog,
+  onBooked,
 }: {
   customer: { id: number; name: string };
   open: boolean;
@@ -56,6 +60,8 @@ export function VisitDialog({
     { at: string; text?: string | undefined; timed?: boolean | undefined } | null | undefined;
   /** "Talked to them? Log it": the contact log, from the customer page. */
   onLog?: (() => void) | undefined;
+  /** The meeting was set: its time. */
+  onBooked?: ((startsAt: string) => void) | undefined;
 }) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
@@ -91,7 +97,7 @@ export function VisitDialog({
       ) : visits.data.rooms === 0 ? (
         <Notice tone="info">{t('visit.noRooms')}</Notice>
       ) : (
-        <VisitForm customer={customer.id} onDone={onClose}>
+        <VisitForm customer={customer.id} onDone={onClose} onBooked={onBooked}>
           <FollowUpNow
             at={followUp?.at ?? null}
             text={followUp?.text}
@@ -104,11 +110,11 @@ export function VisitDialog({
   );
 }
 
-function VisitFooter({ onClose }: { onClose: () => void }) {
+export function VisitFooter({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation('sales');
   return (
     <>
-      <Button type="submit" form={FORM}>
+      <Button type="submit" form={VISIT_FORM}>
         <Icon name="building" size={17} />
         {t('visit.submit')}
       </Button>
@@ -158,7 +164,10 @@ function Upcoming({ customer, visit }: { customer: number; visit: OfficeVisit })
           onCancel={() => setConfirming(false)}
           onConfirm={() =>
             cancel.mutate(visit.id, {
-              onSuccess: () => toast.success(t('visit.cancelled')),
+              onSuccess: () =>
+                toast.success(
+                  t(ON_SERVER.visitFollowUp ? 'visit.cancelledToCall' : 'visit.cancelled'),
+                ),
               onError: () => toast.error(t('error')),
               onSettled: () => setConfirming(false),
             })
@@ -178,13 +187,16 @@ function Upcoming({ customer, visit }: { customer: number; visit: OfficeVisit })
   );
 }
 
-function VisitForm({
+/** The office's week, a free hour, the note, SMS and colleague; also the follow-up window's "meeting". */
+export function VisitForm({
   customer,
   onDone,
+  onBooked,
   children,
 }: {
   customer: number;
   onDone: () => void;
+  onBooked?: ((startsAt: string) => void) | undefined;
   /** Above the week: the customer's follow-up. */
   children?: ReactNode;
 }) {
@@ -275,6 +287,7 @@ function VisitForm({
           toast.success(
             t('visit.saved', { day: f.weekday(visit.starts_at), time: f.time(visit.starts_at) }),
           );
+          onBooked?.(visit.starts_at);
           onDone();
         },
         onError: (error) => {
@@ -297,7 +310,7 @@ function VisitForm({
   };
 
   return (
-    <form id={FORM} noValidate onSubmit={submit} className="flex flex-col gap-5">
+    <form id={VISIT_FORM} noValidate onSubmit={submit} className="flex flex-col gap-5">
       {children}
       <div className="flex flex-col gap-2">
         <WeekNav

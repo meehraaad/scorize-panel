@@ -423,7 +423,7 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
             open
             onClose={() => setMoving(false)}
             at={lead.follow_up_at ? new Date(lead.follow_up_at) : null}
-            lead={{ id: lead.id, name: named(customer.name) }}
+            lead={{ id: lead.id, name: named(customer.name), customer: customer.id }}
             current={task?.text}
             timed={task?.timed}
             onLog={() => {
