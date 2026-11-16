@@ -13,6 +13,7 @@ import {
   guidanceQuery,
   profileEvidenceQuery,
   documentLinksQuery,
+  sharedFactsQuery,
 } from '@/features/assessments/calculatorApi';
 import { draftsQuery, healthQuery, optionsQuery } from '@/features/assessments/api';
 import { ApiError, api } from '@/lib/api/client';
@@ -226,7 +227,12 @@ const pageRoutes: RouteObject[] = [
             data: ({ request }) => {
               const session = new URL(request.url).searchParams.get('session');
               return session
-                ? [destinationOptionsQuery, destinationQuery(session), snapshotsQuery(session, 1)]
+                ? [
+                    destinationOptionsQuery,
+                    destinationQuery(session),
+                    snapshotsQuery(session, 1),
+                    sharedFactsQuery,
+                  ]
                 : [destinationOptionsQuery];
             },
             skeleton: 'form',
@@ -244,6 +250,7 @@ const pageRoutes: RouteObject[] = [
                 ? [
                     calculatorOptionsQuery,
                     profileEvidenceQuery(id, country),
+                    sharedFactsQuery,
                     documentLinksQuery(id),
                     interviewQuery(id),
                     snapshotsQuery(id),

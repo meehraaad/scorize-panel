@@ -1,6 +1,7 @@
 import { programEntryFixture, answerProgramFixture, updateProgramFixture } from './programs';
 /** Backend-shaped fixtures for tests only; never imported by product code. */
 import { http, HttpResponse } from 'msw';
+import { resolveProgramEvidenceMock } from './calculators';
 import fixture from './destination-result.json';
 import type {
   DestinationResult,
@@ -124,6 +125,9 @@ export const destinationHandlers = [
       basis_sha256?: string;
       status: 'known' | 'unknown' | 'needs_confirmation' | 'not_applicable';
       value: string | number | boolean | string[] | null;
+      shared_reference?: { id: string; revision: number };
+      shared_selector?: string;
+      detach_shared?: boolean;
     };
     const previous = requests.get(body.request_key);
     if (previous)
@@ -144,6 +148,20 @@ export const destinationHandlers = [
       } else {
         if (checked.definition_changed || checked.reason)
           return HttpResponse.json({ detail: 'Program unavailable' }, { status: 409 });
+        const question = checked.questions.find((q) => q.id === body.question_id);
+        const previous = checked.inputs[body.question_id ?? ''];
+        if (previous?.shared_fact_refs && !body.shared_reference && !body.detach_shared)
+          return HttpResponse.json({}, { status: 400 });
+        const reference = body.shared_reference
+          ? resolveProgramEvidenceMock(
+              question?.shared_binding,
+              body.shared_reference,
+              body.shared_selector ?? '',
+              body.value,
+            )
+          : null;
+        if (body.shared_reference && (!reference || body.status !== 'known' || body.detach_shared))
+          return HttpResponse.json({}, { status: 400 });
         if (
           !answerProgramFixture(entry, body.question_id ?? '', {
             status: body.status,
@@ -151,6 +169,13 @@ export const destinationHandlers = [
           })
         )
           return HttpResponse.json({ value: ['Invalid program value'] }, { status: 400 });
+        const fact = checked.inputs[body.question_id ?? ''];
+        if (reference && fact)
+          Object.assign(fact, {
+            source: 'shared_fact_confirmed_by_user',
+            shared_fact_refs: [reference],
+            document_verified: false,
+          });
       }
     }
     if (body.action === 'select_routes' && result.plan && body.route_ids) {

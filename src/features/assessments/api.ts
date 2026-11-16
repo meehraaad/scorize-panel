@@ -17,6 +17,15 @@ export type Condition =
   | { all: Condition[] }
   | { any: Condition[] };
 export interface Question {
+  shared_binding?: {
+    version: 'phase3-ielts-band-1';
+    fact: 'language_report.skill_score';
+    kind: 'language';
+    test: 'ielts_general_training';
+    skill: 'reading' | 'writing' | 'listening' | 'speaking';
+    units: 'ielts_band';
+    interpretation: 'identity';
+  };
   id: string;
   text: string;
   kind: 'number' | 'boolean' | 'choice';

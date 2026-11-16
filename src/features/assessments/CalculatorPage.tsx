@@ -16,6 +16,7 @@ import { CalculationResult } from './CalculatorResult';
 import { CalculatorReview } from './CalculatorReview';
 import { CalculatorForm } from './CalculatorForm';
 import { ProfileEvidence } from './ProfileEvidence';
+import { SharedFacts, type FactRef } from './SharedFacts';
 import { DocumentLinks } from './DocumentLinks';
 import { SessionTransfer } from './SessionTransfer';
 import { RouteComparison } from './RouteComparison';
@@ -88,6 +89,7 @@ function InterviewEditor({
   const [snapshotRequest, setSnapshotRequest] = useState<unknown>(null);
   const [shown, setShown] = useState<Snapshot | null>(null);
   const [profileCandidate, setProfileCandidate] = useState<ProfileCandidate | null>(null);
+  const [sharedRefs, setSharedRefs] = useState<FactRef[] | null>(null);
   const [detachShared, setDetachShared] = useState(false);
   const [guidanceDecision, setGuidanceDecision] = useState<string | null>(null);
   const [guidanceBusy, setGuidanceBusy] = useState(false);
@@ -120,6 +122,7 @@ function InterviewEditor({
       setShown(null);
       setSnapshotRequest(null);
       setProfileCandidate(null);
+      setSharedRefs(null);
       setDetachShared(false);
       setGuidanceDecision(null);
       toast.success(t('calculator.saved'));
@@ -155,6 +158,8 @@ function InterviewEditor({
       autoPaused ||
       current?.source === 'previous_session' ||
       Boolean(current?.shared_origin) ||
+      Boolean(current?.shared_fact_refs) ||
+      Boolean(sharedRefs) ||
       !dirty ||
       !data ||
       saving ||
@@ -181,6 +186,8 @@ function InterviewEditor({
     autoPaused,
     current?.source,
     current?.shared_origin,
+    current?.shared_fact_refs,
+    sharedRefs,
     dirty,
     data,
     saving,
@@ -245,6 +252,7 @@ function InterviewEditor({
     setShown(null);
     setSnapshotRequest(null);
     setProfileCandidate(null);
+    setSharedRefs(null);
     setDetachShared(false);
     setGuidanceDecision(null);
     setAutoPaused(false);
@@ -365,6 +373,29 @@ function InterviewEditor({
           saveAnswer(body);
         }}
       />
+      <SharedFacts
+        id={id}
+        country={country}
+        assessmentDate={data.assessment_date}
+        disabled={
+          dirty ||
+          saving ||
+          record.isPending ||
+          guidanceBusy ||
+          comparisonBusy ||
+          financialBusy ||
+          documentBusy
+        }
+        onPrepare={(nextField, nextValue, refs) => {
+          choose(country, nextField);
+          setSharedRefs(refs.map(({ id: factId, revision }) => ({ id: factId, revision })));
+          setStatus('known');
+          setValue(nextValue);
+          setDirty(true);
+          setAutoPaused(true);
+          focusEditor();
+        }}
+      />
       <ProfileEvidence
         id={id}
         country={country}
@@ -465,7 +496,7 @@ function InterviewEditor({
               )}
             </Notice>
           )}
-          {current?.shared_origin && !detachShared && (
+          {(current?.shared_origin || current?.shared_fact_refs) && !detachShared && (
             <>
               <Notice tone="info">{t('calculator.profile.sharedLinked')}</Notice>
               <Button
@@ -474,6 +505,7 @@ function InterviewEditor({
                 onClick={() => {
                   setDetachShared(true);
                   setProfileCandidate(null);
+                  setSharedRefs(null);
                   setStatus(answerStatus);
                   setValue(answerValue);
                   setDirty(true);
@@ -558,6 +590,15 @@ function InterviewEditor({
                 value: answerStatus === 'known' ? (answerValue ?? null) : null,
                 ...(guidanceDecision ? { guidance_sha256: guidanceDecision } : {}),
                 ...(detachShared ? { detach_shared: true } : {}),
+                ...(!detachShared &&
+                answerStatus === 'known' &&
+                (sharedRefs || current?.shared_fact_refs)
+                  ? {
+                      shared_references: (sharedRefs ?? current?.shared_fact_refs ?? []).map(
+                        ({ id: factId, revision }) => ({ id: factId, revision }),
+                      ),
+                    }
+                  : {}),
                 ...(profileCandidate && answerStatus === 'known'
                   ? {
                       profile_candidate: {

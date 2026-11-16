@@ -40,6 +40,7 @@ it('generates typed questions and conditional visibility without assuming a bool
   expect(area.getByLabelText('Answer status — Synthetic offer')).toHaveValue('unknown');
   expect(area.getByLabelText('Answer status — Synthetic offer category')).toBeDisabled();
   expect(area.getByText(/More information is needed/)).toBeInTheDocument();
+  expect(area.queryByLabelText('Confirmed language report')).not.toBeInTheDocument();
 });
 it('evaluates the configured alternative and capped points after explicit answers', async () => {
   const { user, area } = await open();

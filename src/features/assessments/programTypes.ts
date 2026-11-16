@@ -23,7 +23,10 @@ export interface ProgramResult {
   definition_changed: boolean;
   status: string;
   reason: string | null;
-  inputs: Record<string, Fact & { previous_answer?: Fact }>;
+  inputs: Record<
+    string,
+    Fact & { previous_answer?: Fact; shared_fact_refs?: { id: string; revision: number }[] }
+  >;
   questions: (Question & { visibility: 'visible' | 'hidden' | 'blocked' })[];
   result: Evaluation['results'][number] | null;
   next_question: Question | null;

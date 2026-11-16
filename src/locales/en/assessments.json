@@ -190,6 +190,35 @@
   "deviceTimezone": "Time uses your device timezone. The local scheduler must be running.",
   "questionEnglish": "English question text (optional)",
   "incompatibleBaseline": "These answers are incompatible with the previous definitions and are unknown in the baseline comparison: {{questions}}",
+  "sharedFacts": {
+    "programExplanation": "This question accepts the declared IELTS General Training skill in IELTS bands. Choose a confirmed report; other tests and skills cannot be used here.",
+    "programReport": "Confirmed language report",
+    "programSkill": "Report skill",
+    "programUse": "Use this skill for the question",
+    "validFrom": "Document valid from for shared evidence (optional)",
+    "validUntil": "Document valid until for shared evidence (optional)",
+    "title": "Shared facts and evidence",
+    "description": "Save raw facts once, confirm them, then select the same record in each assessment. Confirmation does not verify a document or establish eligibility.",
+    "kind": "Evidence type",
+    "kinds": {
+      "birth_date": "Birth date",
+      "language": "Language report",
+      "employment": "Employment period"
+    },
+    "retry": "Retry save",
+    "saveEdit": "Save changes",
+    "create": "Save evidence",
+    "discardRetry": "Discard failed request",
+    "unknown": "Unknown",
+    "confirmed": "Confirmed by you",
+    "unconfirmed": "Needs your confirmation",
+    "edit": "Edit",
+    "confirm": "Confirm this evidence",
+    "select": "Use in this assessment",
+    "selectJob": "Select this period",
+    "useJobs": "Use selected periods",
+    "scoreUnavailable": "Unavailable until linked documents are reviewed"
+  },
   "calculator": {
     "title": "Assessment interview and history",
     "draft": "Local draft. Rules have no legal approval. This development flow is not the released product.",
@@ -227,6 +256,8 @@
     "addPeriod": "Add employment period",
     "removePeriod": "Remove period",
     "fields": {
+      "shared_birth_date": "Birth date for shared evidence",
+      "date": "Report date",
       "adaptability": "Adaptability",
       "admissible": "Admissible",
       "arranged_employment": "Arranged employment",
@@ -605,7 +636,9 @@
       "review_financial_gap": "Review financial gap",
       "not_evaluated": "Not evaluated",
       "legal_date_out_of_coverage": "Legal source dates do not cover this assessment date",
-      "refresh_legal_sources": "Review and update legal sources"
+      "refresh_legal_sources": "Review and update legal sources",
+      "shared_documents_changed": "A linked document changed or is unavailable. Review the shared evidence before evaluating this result.",
+      "review_shared_documents": "Review linked shared documents"
     },
     "listSeparator": ", "
   },
@@ -860,7 +893,8 @@
       "directory_unreviewed": "Directory reference needs review",
       "directory_review_out_of_date": "Directory review does not cover the assessment date",
       "directory_received_after_assessment": "Directory reference was received after the assessment date",
-      "trade_qualification_and_noc_evidence_not_implemented": "Trade qualification evidence is not covered by this calculator"
+      "trade_qualification_and_noc_evidence_not_implemented": "Trade qualification evidence is not covered by this calculator",
+      "shared_documents_changed": "A linked document changed or is unavailable. Review the shared evidence before evaluating this result."
     },
     "actions": {
       "goals": "Migration goals",
@@ -973,7 +1007,8 @@
       "program_source_unreviewed": "This program source has not been reviewed.",
       "program_source_out_of_date": "The program source needs a current review.",
       "program_source_received_after_assessment": "This program source was received after the selected assessment date.",
-      "program_date_out_of_coverage": "The selected date is outside this program’s declared coverage."
+      "program_date_out_of_coverage": "The selected date is outside this program’s declared coverage.",
+      "shared_documents_changed": "A linked document changed or is unavailable. Review the shared evidence before evaluating this result."
     },
     "syntheticQuestion": "Synthetic example — replace with a sourced question",
     "addDefinition": "Add configurable program rules",

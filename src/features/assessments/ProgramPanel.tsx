@@ -5,6 +5,7 @@ import { TextField } from '@/components/ui/TextField';
 import { Notice } from '@/components/ui/Notice';
 import { safeHref } from '@/lib/url';
 import { sameAnswerContent } from './answerEquality';
+import { ProgramEvidence } from './ProgramEvidence';
 import type { DestinationCard } from './destinationApi';
 import type { ProgramInteraction } from './programTypes';
 import type { Fact } from './api';
@@ -198,6 +199,41 @@ export function ProgramPanel({
                         })}
                       </p>
                     )}
+                  {question.shared_binding && (
+                    <ProgramEvidence
+                      binding={question.shared_binding}
+                      disabled={disabled || dirty}
+                      onSelect={(reference, selector, value) =>
+                        interaction.onSend('program_answer', {
+                          entry_id: entry.id,
+                          program_sha256: checked.program_sha256,
+                          question_id: question.id,
+                          status: 'known',
+                          value,
+                          shared_reference: reference,
+                          shared_selector: selector,
+                        })
+                      }
+                    />
+                  )}
+                  {checked.inputs[question.id]?.shared_fact_refs && (
+                    <Button
+                      variant="outline"
+                      disabled={disabled || dirty}
+                      onClick={() =>
+                        interaction.onSend('program_answer', {
+                          entry_id: entry.id,
+                          program_sha256: checked.program_sha256,
+                          question_id: question.id,
+                          status: fact.status,
+                          value: fact.value,
+                          detach_shared: true,
+                        })
+                      }
+                    >
+                      {t('calculator.profile.detach')}
+                    </Button>
+                  )}
                   <Button
                     aria-label={t('programs.saveAnswer', { question: label })}
                     disabled={
