@@ -35,7 +35,16 @@ import {
   type Interview,
   type Snapshot,
   type ProfileCandidate,
+  type Answer,
 } from './calculatorApi';
+
+function capturedReferences(answer: Answer | undefined): FactRef[] | undefined {
+  return (
+    answer?.shared_fact_refs ??
+    answer?.shared_origin?.shared_fact_refs ??
+    (answer?.source === 'previous_session' ? capturedReferences(answer.previous_answer) : undefined)
+  );
+}
 
 function InterviewEditor({
   id,
@@ -151,6 +160,7 @@ function InterviewEditor({
     },
   });
   const current = data?.answers[options.identities[country][field] ?? ''];
+  const currentRefs = capturedReferences(current);
   const answerStatus = status ?? current?.status ?? 'unknown';
   const answerValue = dirty ? value : current?.value;
   useEffect(() => {
@@ -158,7 +168,7 @@ function InterviewEditor({
       autoPaused ||
       current?.source === 'previous_session' ||
       Boolean(current?.shared_origin) ||
-      Boolean(current?.shared_fact_refs) ||
+      Boolean(currentRefs) ||
       Boolean(sharedRefs) ||
       !dirty ||
       !data ||
@@ -186,7 +196,7 @@ function InterviewEditor({
     autoPaused,
     current?.source,
     current?.shared_origin,
-    current?.shared_fact_refs,
+    currentRefs,
     sharedRefs,
     dirty,
     data,
@@ -499,7 +509,7 @@ function InterviewEditor({
               )}
             </Notice>
           )}
-          {(current?.shared_origin || current?.shared_fact_refs) && !detachShared && (
+          {(current?.shared_origin || currentRefs) && !detachShared && (
             <>
               <Notice tone="info">{t('calculator.profile.sharedLinked')}</Notice>
               <Button
@@ -594,10 +604,11 @@ function InterviewEditor({
                 ...(guidanceDecision ? { guidance_sha256: guidanceDecision } : {}),
                 ...(detachShared ? { detach_shared: true } : {}),
                 ...(!detachShared &&
+                !profileCandidate &&
                 answerStatus === 'known' &&
-                (sharedRefs || current?.shared_fact_refs)
+                (sharedRefs || currentRefs)
                   ? {
-                      shared_references: (sharedRefs ?? current?.shared_fact_refs ?? []).map(
+                      shared_references: (sharedRefs ?? currentRefs ?? []).map(
                         ({ id: factId, revision }) => ({ id: factId, revision }),
                       ),
                     }

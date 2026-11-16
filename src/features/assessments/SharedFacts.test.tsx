@@ -60,6 +60,43 @@ it('requires selection of a confirmed fact before preparing an interview answer'
   ]);
 });
 
+it('keeps an unknown skill unresolved when preparing a confirmed report', async () => {
+  server.use(
+    http.get('/api/applicant/v1/assessments/shared-evidence/', () =>
+      HttpResponse.json({
+        evidence: [
+          {
+            id: 'partial-report',
+            revision: 2,
+            kind: 'language',
+            status: 'known',
+            value: {
+              test: 'ielts_general_training',
+              scores: { reading: null, writing: 7 },
+              date: '2026-01-01',
+            },
+            confirmed_at: '2026-01-01',
+            documents: [],
+          },
+        ],
+      }),
+    ),
+  );
+  const prepare = mount();
+  await userEvent
+    .setup()
+    .click(await screen.findByRole('button', { name: 'Use in this assessment' }));
+  expect(prepare).toHaveBeenCalledWith(
+    'english',
+    {
+      test: 'ielts_general_training',
+      scores: { writing: 7 },
+      result_date: '2026-01-01',
+    },
+    [expect.objectContaining({ id: 'partial-report', revision: 2 })],
+  );
+});
+
 it('retains the exact request for a failed save and leaves confirmation separate', async () => {
   const received: Record<string, unknown>[] = [];
   server.use(
