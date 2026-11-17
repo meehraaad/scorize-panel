@@ -23,7 +23,7 @@ describe('HR panel', () => {
     loginAs(AMIR);
     renderApp('/hr');
     expect(await screen.findByRole('heading', { name: 'امروز', level: 1 })).toBeInTheDocument();
-    const moves = await screen.findByRole('region', { name: 'ورود و خروج‌های باز' });
+    const moves = await screen.findByRole('region', { name: 'استخدام و جدایی‌های باز' });
     expect(within(moves).getByRole('link', { name: /بهار نیکو/ })).toBeInTheDocument();
     const ending = screen.getByRole('region', { name: 'قراردادهایی که تمام می‌شوند' });
     expect(within(ending).getByRole('link', { name: /مریم کریمی/ })).toBeInTheDocument();
@@ -87,11 +87,11 @@ describe('HR panel', () => {
     const user = userEvent.setup();
     loginAs(AMIR);
     renderApp('/hr/staff/1');
-    await user.click(await screen.findByRole('button', { name: 'شروع خروج' }));
-    const dialog = await screen.findByRole('dialog', { name: 'شروع خروج' });
-    await user.click(within(dialog).getByRole('button', { name: 'شروع خروج' }));
-    expect(await toasts().findByText('چک‌لیست خروج باز شد')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'ورود و خروج' }));
+    await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'شروع جدایی' });
+    await user.click(within(dialog).getByRole('button', { name: 'شروع جدایی' }));
+    expect(await toasts().findByText('چک‌لیست جدایی باز شد')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'استخدام و جدایی' }));
     expect(
       await screen.findByRole('progressbar', { name: '۰ از ۷ انجام شده' }),
     ).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('HR panel', () => {
     loginAs(AMIR);
     renderApp('/hr/calendar');
     expect(await screen.findByRole('heading', { name: 'تقویم', level: 1 })).toBeInTheDocument();
-    expect(await screen.findAllByRole('link', { name: /ورود بهار نیکو/ })).not.toHaveLength(0);
+    expect(await screen.findAllByRole('link', { name: /استخدام بهار نیکو/ })).not.toHaveLength(0);
   });
 
   it('shows the org chart: each position under the one it reports to', async () => {
