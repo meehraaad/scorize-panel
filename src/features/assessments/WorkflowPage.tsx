@@ -15,6 +15,7 @@ import { toast } from '@/lib/toast';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { CalculatorForm } from './CalculatorForm';
 import { WorkflowResults } from './WorkflowResults';
+import { WorkflowComparison } from './WorkflowComparison';
 import { WorkflowEvidence } from './WorkflowEvidence';
 import {
   calculatorOptionsQuery,
@@ -588,6 +589,7 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
           </div>
         )}
       </SectionCard>
+      <WorkflowComparison results={data.results} />
       <WorkflowResults results={data.results} prefix="current" />
       <WorkflowEvidence
         id={id}

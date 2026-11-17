@@ -8,7 +8,7 @@ import fixture from './workflow-fixture.json';
 
 const BASE = '/api/applicant/v1/assessments/:id/workflow/';
 const initial = (): Workflow => ({
-  version: 'unified-workflow-3',
+  version: 'unified-workflow-4',
   session_id: '11111111-1111-4111-8111-111111111111',
   revision: 0,
   assessment_date: '2026-11-12',

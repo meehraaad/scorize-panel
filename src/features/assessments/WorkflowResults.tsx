@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { safeHref } from '@/lib/url';
+import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import type { WorkflowResults as Results } from './workflowApi';
 
@@ -31,6 +32,9 @@ export function WorkflowResults({ results, prefix }: { results: Results; prefix:
           variant="panel"
           title={path.title?.[locale] ?? label(path.id)}
         >
+          {[...path.conditions, ...path.scores].some((id) =>
+            results.evaluations[id]?.limitations.includes('synthetic_not_law'),
+          ) && <Notice tone="warn">{t('workflow.synthetic')}</Notice>}
           <p>
             {t('workflow.eligibility')}: <strong>{state(path.status)}</strong>
           </p>

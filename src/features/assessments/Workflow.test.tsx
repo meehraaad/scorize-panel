@@ -287,3 +287,103 @@ it('keeps the bound source by default and requires explicit canonical edit inten
     value: '1995-11-12',
   });
 });
+
+it('explains pathways side by side and shows a configured third country from server data only', async () => {
+  const fixture = structuredClone((await import('@/mocks/workflow-fixture.json')).default);
+  const results = fixture.results as unknown as Workflow['results'];
+  const template = results.evaluations['ca.cec.eligibility'];
+  if (!template) throw new Error('Expected fixture evaluation');
+  const id3 = 'configured.nz-synthetic-skilled';
+  const limitations = ['configured_coverage_only', 'synthetic_not_law'];
+  results.evaluations[`${id3}.eligibility`] = {
+    ...template,
+    id: `${id3}.eligibility`,
+    conditions: {
+      status: 'insufficient_information',
+      checks: { adult: 'met', language: 'unknown' },
+    },
+    limitations,
+  };
+  results.evaluations[`${id3}.points`] = {
+    ...template,
+    id: `${id3}.points`,
+    kind: 'score',
+    conditions: { status: 'not_applicable', checks: {} },
+    score: {
+      status: 'partial',
+      system: 'configured:nz-synthetic-skilled',
+      value: null,
+      breakdown: {},
+    },
+    limitations,
+  };
+  results.pathways[id3] = {
+    id: id3,
+    title: { en: 'Synthetic skilled program (test data, not law)', fa: 'برنامه آزمایشی' },
+    status: 'insufficient_information',
+    conditions: [`${id3}.eligibility`],
+    scores: [`${id3}.points`],
+    financial_fit: { status: 'unknown', unknowns: ['financial_mapping_required'] },
+    preferences: {
+      status: 'alternative_destination',
+      reasons: {
+        checks: [
+          { criterion: 'goal', weight: 2, matched: true },
+          { criterion: 'destination', weight: 1, matched: false },
+        ],
+      },
+    },
+  };
+  const question = {
+    ...(fixture.question as Workflow['questions'][number]),
+    id: `${id3}:age`,
+    field: 'age',
+    label: 'Synthetic age',
+    schema: { type: 'number' },
+    shared_kind: null,
+    targets: [{ adapter: 'configured', entry: 'nz-synthetic-skilled', field: 'age' }],
+    effects: [`${id3}.eligibility`],
+  } as Workflow['questions'][number];
+  server.use(
+    http.get(endpoint, () =>
+      HttpResponse.json({
+        version: 'unified-workflow-4',
+        session_id: id,
+        revision: 3,
+        assessment_date: '2026-11-12',
+        active: false,
+        writable: true,
+        status: 'question',
+        mode: 'explore',
+        selected_pathways: ['ca-cec', id3],
+        unavailable_pathways: [],
+        options: fixture.options,
+        questions: [question],
+        review_questions: [question],
+        next_question: question,
+        deferred: [],
+        blocked: [],
+        results,
+        decision_sha256: '3'.repeat(64),
+      }),
+    ),
+  );
+  renderApp(`/dev/assessment-workflow?session=${id}`);
+  const comparison = await screen.findByRole('region', { name: 'Compare pathways' });
+  expect(
+    within(comparison).getByRole('heading', {
+      name: 'Synthetic skilled program (test data, not law)',
+    }),
+  ).toBeInTheDocument();
+  expect(within(comparison).getByText(/never ranked or added across programs/)).toBeInTheDocument();
+  expect(within(comparison).getByText(/Synthetic test content, not law/)).toBeInTheDocument();
+  expect(within(comparison).getAllByText(/Comprehensive Ranking System \(CRS\):/)).toHaveLength(2);
+  expect(within(comparison).getByText('Your goal: matches')).toBeInTheDocument();
+  expect(within(comparison).getByText('Your destination: does not match')).toBeInTheDocument();
+  expect(
+    within(comparison).getByText('No financial rules are linked to this pathway yet'),
+  ).toBeInTheDocument();
+  expect(within(comparison).getAllByText(/: Unknown$/).length).toBeGreaterThan(0);
+  // The third country's question comes from its configured program: no page edits.
+  expect(screen.getByRole('heading', { name: 'Synthetic age' })).toBeInTheDocument();
+});

@@ -55,7 +55,15 @@ export interface WorkflowResults {
       conditions: string[];
       scores: string[];
       financial_fit: { status: string; unknowns?: string[] };
-      preferences?: { status: string; reasons: Record<string, unknown> };
+      preferences?: {
+        status: string;
+        reasons: {
+          earned?: number;
+          possible?: number;
+          complete?: boolean;
+          checks?: { criterion: string; weight: number; matched: boolean | null }[];
+        };
+      };
     }
   >;
 }
