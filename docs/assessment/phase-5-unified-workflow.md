@@ -27,7 +27,7 @@ Workflow history has its own endpoint/payload format. Legacy calculator/reviewer
 
 ## Verification and limits
 
-Final commands/results and exact commits are recorded at delivery. Tests use MSW only in the test environment; the application has no mock mode. `workflow-fixture.json` is a synthetic, typed projection of actual backend question/reference-result responses, including independently expected FSW 68 / CRS 424. It contains no real applicant data.
+Panel implementation commit: `92601fa5a5685817740e2be4e178636fd0d02645`, [draft #123](https://github.com/meehraaad/scorize-panel/pull/123). A later handoff-only commit finalizes these validation results. Tests use MSW only in the test environment; the application has no mock mode. `workflow-fixture.json` is a synthetic, typed projection of actual backend question/reference-result responses, including independently expected FSW 68 / CRS 424. It contains no real applicant data.
 
 The new route integration cases cover failed save/retry identity, input retention after a conflict reload, explicit unknown review, separate scores, recorded history, hypothetical non-persistence, pause/resume and Persian labeled controls. Existing assessment tests and the route initial-data suite run with them. Lint, TypeScript, dictionary parity, production build and the existing first-load size check are included.
 
@@ -39,7 +39,7 @@ Keep the route opt-in until independent G5 review and the existing legal/privacy
 
 - `pnpm test src/features/assessments src/app/pageData.test.tsx`: **186 passed, 17 files**.
 - Final affected-suite rerun (`Workflow.test.tsx`, `SharedFacts.test.tsx`, `Calculator.test.tsx`): **14 passed**. Counts overlap.
-- `pnpm typecheck`, `pnpm lint`, `pnpm i18n:check`, production build and size checks are required delivery checks; their raw local outputs are retained in `/workspace/phase5-evidence`.
+- `pnpm typecheck`, `pnpm lint`, `pnpm i18n:check`, production build and size checks **passed**; their raw local outputs are retained in `/workspace/phase5-evidence`.
 - First-load bundle check: **JS 178.9 KB gzip / 179 KB budget; CSS 20.5 KB gzip / 20.5 KB budget**, passing without a budget change. A new width utility initially exceeded the CSS budget by seven bytes; reusing the existing page width utility corrected it.
 - Ready-server browser run: **no application JS errors, no HTTP errors, no 390 px horizontal overflow**, keyboard focus and network-failure/retry plus recorded history after reload. Earlier startup-race HTTP 502 and selector mismatch are retained as failed attempts.
 - Backend final: **539 tests / 73 subtests passed**. Full schema diagnostics retain the parent's **19 unrelated errors / 28 warnings**, with no new diagnostics. The build's existing Tailwind sourcemap warning is retained.
