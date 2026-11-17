@@ -53,6 +53,8 @@ const PAGES: PageCase[] = [
   { path: '/dev/assessment-calculators?session=11111111-1111-4111-8111-111111111111', user: SARA },
   { path: '/dev/assessment-destinations', user: SARA },
   { path: '/dev/assessment-destinations?session=22222222-2222-4222-8222-222222222222', user: SARA },
+  { path: '/dev/assessment-workflow', user: SARA },
+  { path: '/dev/assessment-workflow?session=11111111-1111-4111-8111-111111111111', user: SARA },
   // Applicant panel.
   ...[
     '/',

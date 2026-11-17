@@ -1,0 +1,970 @@
+{
+  "question": {
+    "id": "fact:birth_date",
+    "field": "shared_birth_date",
+    "schema": {
+      "type": "date"
+    },
+    "status": null,
+    "value": null,
+    "shared_kind": "birth_date",
+    "targets": [
+      {
+        "adapter": "canada",
+        "field": "birth_date"
+      }
+    ],
+    "effects": ["ca.fsw.points", "ca.fsw.eligibility", "ca.crs"],
+    "tier": 2,
+    "missing_paths": [],
+    "answer_cost": 1,
+    "allowed_statuses": ["known", "unknown", "not_applicable"],
+    "current_reference": null,
+    "can_detach": false
+  },
+  "results": {
+    "assessment_date": "2026-11-12",
+    "evaluations": {
+      "ca.fsw.points": {
+        "id": "ca.fsw.points",
+        "kind": "score",
+        "coverage": {
+          "status": "supported",
+          "reason": null
+        },
+        "applicability": {
+          "status": "applicable",
+          "reason": null
+        },
+        "conditions": {
+          "status": "not_applicable",
+          "checks": {}
+        },
+        "score": {
+          "system": "fsw_selection",
+          "status": "complete",
+          "value": 68,
+          "breakdown": {
+            "age": 12,
+            "education": 21,
+            "first_language": 24,
+            "second_language": 0,
+            "experience": 11,
+            "arranged_employment": 0,
+            "adaptability": 0
+          },
+          "pass_mark": 67,
+          "pass_mark_met": true,
+          "maximum": 100
+        },
+        "missing_facts": [],
+        "evidence_states": {
+          "birth_date": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "education": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "first_language": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "english": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "french": {
+            "status": "not_applicable",
+            "reason": "declared_absent",
+            "missing_paths": [],
+            "usable": true
+          },
+          "english_absent": {
+            "status": "not_applicable",
+            "reason": "report_supplied",
+            "missing_paths": [],
+            "usable": true
+          },
+          "french_absent": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "work": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "arranged_employment": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "adaptability": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_status": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_language_kind": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_language": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          }
+        },
+        "limitations": [
+          "draft_not_legal_approval",
+          "self_reported_not_document_verified",
+          "score_is_not_eligibility",
+          "score_is_not_an_invitation_guarantee"
+        ],
+        "sources": {
+          "fsw": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-workers.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "de4fe5b18a287c273db0e3afc483ea1e110a2ab023c5f37673594e5a1ab3f286",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "crs": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "bc211d448783cfcbd5eb3955811554d21031362dcb00bf5eb6ab59898a5ab153",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "education": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/education-assessment.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "60c8f7d30b6b0b7d692d26df01d1dcf93aab115a650ede90d3e85242b08c59fa",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "language": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "9b9748d4a48aac4086967c1750b7181af2ec551e7c95455d98827b26924cefcc",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "cec": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/canadian-experience-class.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "93983599ce79cec9041f879b170841ac9f74b63477bbeb6a06662ff58513723d",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "high-wage": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/high-wage.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "51adafa20f67c37dc133b19789788acb1c7ebeb576152c3ad71358f460b140c7",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "fst": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-trades.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "fada96220753b1bcb9b99989d94ef4259e17083e0c85cfd07a56d80f330a77d9",
+            "review_status": "draft_specialist_review_pending"
+          }
+        },
+        "reference_versions": {
+          "english": "ircc-english-clb-draft-1",
+          "french": "ircc-french-nclc-draft-1"
+        },
+        "definition_sha256": "3e17b551e9f2b90e563dd303672881a93bdcfa1abc49f476b4be343e3b93e0ba",
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+      },
+      "ca.fsw.eligibility": {
+        "id": "ca.fsw.eligibility",
+        "kind": "conditions",
+        "coverage": {
+          "status": "supported",
+          "reason": null
+        },
+        "applicability": {
+          "status": "applicable",
+          "reason": null
+        },
+        "conditions": {
+          "status": "met",
+          "checks": {
+            "admissible": "met",
+            "outside_quebec": "met",
+            "primary_continuous_year": "met",
+            "first_language_clb7": "met",
+            "education": "met",
+            "selection_67": "met",
+            "funds_or_exemption": "met"
+          }
+        },
+        "score": {
+          "status": "not_applicable",
+          "system": null,
+          "value": null,
+          "breakdown": {}
+        },
+        "missing_facts": [],
+        "evidence_states": {
+          "admissible": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "outside_quebec": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "work": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "primary_noc": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "first_language": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "english": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "french": {
+            "status": "not_applicable",
+            "reason": "declared_absent",
+            "missing_paths": [],
+            "usable": true
+          },
+          "english_absent": {
+            "status": "not_applicable",
+            "reason": "report_supplied",
+            "missing_paths": [],
+            "usable": true
+          },
+          "french_absent": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "education": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "birth_date": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "arranged_employment": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "adaptability": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_status": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_language_kind": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_language": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          },
+          "funds_requirement_met": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          }
+        },
+        "limitations": [
+          "draft_not_legal_approval",
+          "self_reported_not_document_verified",
+          "covered_requirements_only",
+          "specialist_review_required"
+        ],
+        "sources": {
+          "fsw": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-workers.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "de4fe5b18a287c273db0e3afc483ea1e110a2ab023c5f37673594e5a1ab3f286",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "crs": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "bc211d448783cfcbd5eb3955811554d21031362dcb00bf5eb6ab59898a5ab153",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "education": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/education-assessment.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "60c8f7d30b6b0b7d692d26df01d1dcf93aab115a650ede90d3e85242b08c59fa",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "language": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "9b9748d4a48aac4086967c1750b7181af2ec551e7c95455d98827b26924cefcc",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "cec": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/canadian-experience-class.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "93983599ce79cec9041f879b170841ac9f74b63477bbeb6a06662ff58513723d",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "high-wage": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/high-wage.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "51adafa20f67c37dc133b19789788acb1c7ebeb576152c3ad71358f460b140c7",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "fst": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-trades.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "fada96220753b1bcb9b99989d94ef4259e17083e0c85cfd07a56d80f330a77d9",
+            "review_status": "draft_specialist_review_pending"
+          }
+        },
+        "reference_versions": {
+          "english": "ircc-english-clb-draft-1",
+          "french": "ircc-french-nclc-draft-1"
+        },
+        "definition_sha256": "ec21f6a72b7d9b469c72d5d42e0b89042bec6ab1640c0b20d4a2eff4a5febe47",
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+      },
+      "ca.crs": {
+        "id": "ca.crs",
+        "kind": "score",
+        "coverage": {
+          "status": "supported",
+          "reason": null
+        },
+        "applicability": {
+          "status": "applicable",
+          "reason": null
+        },
+        "conditions": {
+          "status": "not_applicable",
+          "checks": {}
+        },
+        "score": {
+          "system": "crs",
+          "status": "complete",
+          "value": 424,
+          "breakdown": {
+            "age": 105,
+            "education": 120,
+            "first_language": 124,
+            "second_language": 0,
+            "labour_market_integration": 0,
+            "spouse": 0,
+            "transferability": 75,
+            "additional": 0
+          }
+        },
+        "missing_facts": [],
+        "evidence_states": {
+          "birth_date": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_status": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "education": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "first_language": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "english": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "french": {
+            "status": "not_applicable",
+            "reason": "declared_absent",
+            "missing_paths": [],
+            "usable": true
+          },
+          "english_absent": {
+            "status": "not_applicable",
+            "reason": "report_supplied",
+            "missing_paths": [],
+            "usable": true
+          },
+          "french_absent": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "work": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "high_wage_work": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "high_wage_offer": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_education": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_language_kind": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_language": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          },
+          "spouse_work": {
+            "status": "not_applicable",
+            "reason": "spouse_not_accompanying",
+            "missing_paths": [],
+            "usable": true
+          },
+          "certificate_of_qualification": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "nomination": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "sibling_in_canada": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "canadian_study": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          }
+        },
+        "limitations": [
+          "draft_not_legal_approval",
+          "self_reported_not_document_verified",
+          "score_is_not_eligibility",
+          "score_is_not_an_invitation_guarantee"
+        ],
+        "sources": {
+          "fsw": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-workers.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "de4fe5b18a287c273db0e3afc483ea1e110a2ab023c5f37673594e5a1ab3f286",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "crs": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "bc211d448783cfcbd5eb3955811554d21031362dcb00bf5eb6ab59898a5ab153",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "education": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/education-assessment.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "60c8f7d30b6b0b7d692d26df01d1dcf93aab115a650ede90d3e85242b08c59fa",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "language": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "9b9748d4a48aac4086967c1750b7181af2ec551e7c95455d98827b26924cefcc",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "cec": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/canadian-experience-class.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "93983599ce79cec9041f879b170841ac9f74b63477bbeb6a06662ff58513723d",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "high-wage": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/high-wage.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "51adafa20f67c37dc133b19789788acb1c7ebeb576152c3ad71358f460b140c7",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "fst": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-trades.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "fada96220753b1bcb9b99989d94ef4259e17083e0c85cfd07a56d80f330a77d9",
+            "review_status": "draft_specialist_review_pending"
+          }
+        },
+        "reference_versions": {
+          "english": "ircc-english-clb-draft-1",
+          "french": "ircc-french-nclc-draft-1"
+        },
+        "definition_sha256": "f6f8dba0c045fc43f85f48d929338ebec829ef3e0c94316b8b67bd8134331bab",
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+      },
+      "ca.cec.eligibility": {
+        "id": "ca.cec.eligibility",
+        "kind": "conditions",
+        "coverage": {
+          "status": "supported",
+          "reason": null
+        },
+        "applicability": {
+          "status": "applicable",
+          "reason": null
+        },
+        "conditions": {
+          "status": "unmet",
+          "checks": {
+            "admissible": "met",
+            "outside_quebec": "met",
+            "canadian_year_last_three": "unmet",
+            "language_qualified_canadian_year": "unmet"
+          }
+        },
+        "score": {
+          "status": "not_applicable",
+          "system": null,
+          "value": null,
+          "breakdown": {}
+        },
+        "missing_facts": [],
+        "evidence_states": {
+          "admissible": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "outside_quebec": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "work": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "first_language": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "english": {
+            "status": "supported",
+            "reason": null,
+            "missing_paths": [],
+            "usable": true
+          },
+          "english_absent": {
+            "status": "not_applicable",
+            "reason": "report_supplied",
+            "missing_paths": [],
+            "usable": true
+          }
+        },
+        "limitations": [
+          "draft_not_legal_approval",
+          "self_reported_not_document_verified",
+          "covered_requirements_only",
+          "ordinary_cec_only"
+        ],
+        "sources": {
+          "fsw": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-workers.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "de4fe5b18a287c273db0e3afc483ea1e110a2ab023c5f37673594e5a1ab3f286",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "crs": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-11-03",
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "bc211d448783cfcbd5eb3955811554d21031362dcb00bf5eb6ab59898a5ab153",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "education": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/education-assessment.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "60c8f7d30b6b0b7d692d26df01d1dcf93aab115a650ede90d3e85242b08c59fa",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "language": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "9b9748d4a48aac4086967c1750b7181af2ec551e7c95455d98827b26924cefcc",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "cec": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/canadian-experience-class.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "93983599ce79cec9041f879b170841ac9f74b63477bbeb6a06662ff58513723d",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "high-wage": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/high-wage.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": null,
+            "effective_from": "2026-11-03",
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "51adafa20f67c37dc133b19789788acb1c7ebeb576152c3ad71358f460b140c7",
+            "review_status": "draft_specialist_review_pending"
+          },
+          "fst": {
+            "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/who-can-apply/federal-skilled-trades.html",
+            "checked_on": "2026-11-12",
+            "page_updated_on": "2026-10-16",
+            "effective_from": null,
+            "effective_date_limit": "Change date only where explicitly published; original commencement of unchanged rules is not established.",
+            "http_status": 200,
+            "retrieved_sha256": "fada96220753b1bcb9b99989d94ef4259e17083e0c85cfd07a56d80f330a77d9",
+            "review_status": "draft_specialist_review_pending"
+          }
+        },
+        "reference_versions": {
+          "english": "ircc-english-clb-draft-1",
+          "french": "ircc-french-nclc-draft-1"
+        },
+        "definition_sha256": "75a09252ead7398be3402a1fd181d76701328f16334c70551ede253a175b6b2b",
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+      }
+    },
+    "pathways": {
+      "ca-fsw": {
+        "id": "ca-fsw",
+        "conditions": ["ca.fsw.eligibility"],
+        "scores": ["ca.fsw.points", "ca.crs"],
+        "composition": "all_conditions",
+        "cross_system_score_aggregation": false,
+        "status": "met",
+        "score_results": {
+          "ca.fsw.points": {
+            "system": "fsw_selection",
+            "status": "complete",
+            "value": 68,
+            "breakdown": {
+              "age": 12,
+              "education": 21,
+              "first_language": 24,
+              "second_language": 0,
+              "experience": 11,
+              "arranged_employment": 0,
+              "adaptability": 0
+            },
+            "pass_mark": 67,
+            "pass_mark_met": true,
+            "maximum": 100
+          },
+          "ca.crs": {
+            "system": "crs",
+            "status": "complete",
+            "value": 424,
+            "breakdown": {
+              "age": 105,
+              "education": 120,
+              "first_language": 124,
+              "second_language": 0,
+              "labour_market_integration": 0,
+              "spouse": 0,
+              "transferability": 75,
+              "additional": 0
+            }
+          }
+        },
+        "financial_fit": {
+          "status": "unknown",
+          "unknowns": ["policy_unavailable"],
+          "components": [],
+          "ask_exact": false
+        },
+        "establishes_visa_eligibility": false,
+        "preferences": {
+          "status": "needs_preferences",
+          "reasons": {}
+        }
+      },
+      "ca-cec": {
+        "id": "ca-cec",
+        "conditions": ["ca.cec.eligibility"],
+        "scores": ["ca.crs"],
+        "composition": "all_conditions",
+        "cross_system_score_aggregation": false,
+        "status": "unmet",
+        "score_results": {
+          "ca.crs": {
+            "system": "crs",
+            "status": "complete",
+            "value": 424,
+            "breakdown": {
+              "age": 105,
+              "education": 120,
+              "first_language": 124,
+              "second_language": 0,
+              "labour_market_integration": 0,
+              "spouse": 0,
+              "transferability": 75,
+              "additional": 0
+            }
+          }
+        },
+        "financial_fit": {
+          "status": "unknown",
+          "unknowns": ["policy_unavailable"],
+          "components": [],
+          "ask_exact": false
+        },
+        "establishes_visa_eligibility": false,
+        "preferences": {
+          "status": "needs_preferences",
+          "reasons": {}
+        }
+      }
+    }
+  },
+  "options": [
+    {
+      "id": "ca-fsw",
+      "conditions": ["ca.fsw.eligibility"],
+      "scores": ["ca.fsw.points", "ca.crs"],
+      "composition": "all_conditions",
+      "cross_system_score_aggregation": false,
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
+    },
+    {
+      "id": "ca-cec",
+      "conditions": ["ca.cec.eligibility"],
+      "scores": ["ca.crs"],
+      "composition": "all_conditions",
+      "cross_system_score_aggregation": false,
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
+    },
+    {
+      "id": "ca-fst",
+      "conditions": ["ca.fst.eligibility"],
+      "scores": [],
+      "composition": "all_conditions",
+      "cross_system_score_aggregation": false,
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
+    },
+    {
+      "id": "au-189",
+      "conditions": ["au.189.eligibility"],
+      "scores": ["au.189.points"],
+      "composition": "all_conditions",
+      "cross_system_score_aggregation": false,
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
+    },
+    {
+      "id": "au-190",
+      "conditions": ["au.190.eligibility"],
+      "scores": ["au.190.points"],
+      "composition": "all_conditions",
+      "cross_system_score_aggregation": false,
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
+    },
+    {
+      "id": "au-491",
+      "conditions": ["au.491.eligibility"],
+      "scores": ["au.491.points"],
+      "composition": "all_conditions",
+      "cross_system_score_aggregation": false,
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
+    }
+  ]
+}

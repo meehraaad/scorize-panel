@@ -146,7 +146,10 @@ export const destinationHandlers = [
         checked.reason = null;
         updateProgramFixture(entry);
       } else {
-        if (checked.definition_changed || checked.reason)
+        if (
+          checked.definition_changed ||
+          (checked.reason && checked.reason !== 'shared_documents_changed')
+        )
           return HttpResponse.json({ detail: 'Program unavailable' }, { status: 409 });
         const question = checked.questions.find((q) => q.id === body.question_id);
         const previous = checked.inputs[body.question_id ?? ''];

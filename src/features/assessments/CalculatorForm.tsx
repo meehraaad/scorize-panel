@@ -10,16 +10,20 @@ export function CalculatorForm({
   field,
   value,
   onChange,
+  label: providedLabel,
+  choiceLabels,
 }: {
   schema: FormSchema;
   field: string;
   value: unknown;
   onChange: (value: unknown) => void;
+  label?: string | undefined;
+  choiceLabels?: Record<string, string> | undefined;
 }) {
   const { t } = useTranslation('assessments');
   const labels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
   const choicesText = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
-  const label = labels[field.replaceAll('.', '_')] ?? t('calculator.unknown');
+  const label = providedLabel ?? labels[field.replaceAll('.', '_')] ?? t('calculator.unknown');
   if (schema.type === 'object') {
     const object = (value ?? {}) as Record<string, unknown>;
     return (
@@ -92,7 +96,7 @@ export function CalculatorForm({
           { value: '', label: t('calculator.unknown') },
           ...choices.map((key) => ({
             value: key,
-            label: choicesText[key] ?? t('calculator.unknown'),
+            label: choiceLabels?.[key] ?? choicesText[key] ?? t('calculator.unknown'),
           })),
         ]}
         onChange={(next) =>

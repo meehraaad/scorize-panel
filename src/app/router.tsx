@@ -1,3 +1,4 @@
+import { workflowQuery, workflowHistoryQuery } from '@/features/assessments/workflowApi';
 import { destinationOptionsQuery, destinationQuery } from '@/features/assessments/destinationApi';
 import {
   createBrowserRouter,
@@ -234,6 +235,27 @@ const pageRoutes: RouteObject[] = [
                     sharedFactsQuery,
                   ]
                 : [destinationOptionsQuery];
+            },
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
+        },
+        {
+          path: 'dev/assessment-workflow',
+          loader: async ({ request }: LoaderFunctionArgs) =>
+            (await currentUser()) ? null : toLogin(request),
+          ...lazyPage(() => import('@/features/assessments/WorkflowPage'), ['assessments'], {
+            data: ({ request }) => {
+              const id = new URL(request.url).searchParams.get('session') ?? '';
+              return /^[a-f0-9-]{36}$/i.test(id)
+                ? [
+                    calculatorOptionsQuery,
+                    workflowQuery(id),
+                    workflowHistoryQuery(id),
+                    sharedFactsQuery,
+                    documentLinksQuery(id),
+                  ]
+                : [calculatorOptionsQuery];
             },
             skeleton: 'form',
           }),

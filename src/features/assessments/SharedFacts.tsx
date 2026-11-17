@@ -10,9 +10,13 @@ import { TextField } from '@/components/ui/TextField';
 import { api } from '@/lib/api/client';
 import { toast } from '@/lib/toast';
 import { CalculatorForm } from './CalculatorForm';
-import { documentLinksQuery, type Country, type FormSchema } from './calculatorApi';
+import { documentLinksQuery, type Country } from './calculatorApi';
 
-type Kind = 'birth_date' | 'language' | 'employment';
+import {
+  sharedEvidenceSchemas as schema,
+  normalizeSharedEvidence as normalized,
+  type Kind,
+} from './sharedEvidenceForms';
 export type FactRef = { id: string; revision: number };
 type Fact = FactRef & {
   kind: Kind;
@@ -30,57 +34,6 @@ type Fact = FactRef & {
   }[];
 };
 const url = '/applicant/v1/assessments/shared-evidence/';
-const language: FormSchema = {
-  type: 'object',
-  properties: {
-    test: {
-      type: 'choice',
-      choices: [
-        'ielts_general_training',
-        'ielts_academic',
-        'celpip_general',
-        'pte_core',
-        'tcf_canada',
-        'tef_canada',
-      ],
-    },
-    scores: {
-      type: 'object',
-      properties: Object.fromEntries(
-        ['reading', 'writing', 'listening', 'speaking'].map((s) => [s, { type: 'number' }]),
-      ),
-    },
-    date: { type: 'date' },
-    in_test_centre: { type: 'boolean' },
-    one_skill_retake: { type: 'boolean' },
-  },
-};
-const employment: FormSchema = {
-  type: 'object',
-  properties: {
-    start: { type: 'date' },
-    end: { type: 'date' },
-    hours_per_week: { type: 'number' },
-  },
-};
-const schema: Record<Kind, FormSchema> = { birth_date: { type: 'date' }, language, employment };
-function normalized(kind: Kind, value: unknown) {
-  if (kind === 'birth_date') return value ?? null;
-  const obj = (value ?? {}) as Record<string, unknown>;
-  if (kind === 'employment')
-    return {
-      start: obj.start ?? null,
-      end: obj.end ?? null,
-      hours_per_week: obj.hours_per_week ?? null,
-    };
-  return {
-    test: obj.test ?? null,
-    scores: obj.scores ?? {},
-    date: obj.date ?? null,
-    in_test_centre: obj.in_test_centre ?? null,
-    one_skill_retake: obj.one_skill_retake ?? null,
-  };
-}
 
 export function SharedFacts({
   id,
@@ -319,6 +272,11 @@ export function SharedFacts({
                       );
                     else {
                       const report = item.value as Record<string, unknown>;
+                      const scores = Object.fromEntries(
+                        Object.entries((report.scores ?? {}) as Record<string, unknown>).filter(
+                          ([, score]) => score !== null,
+                        ),
+                      );
                       const field =
                         country === 'canada' &&
                         ['tcf_canada', 'tef_canada'].includes(String(report.test))
@@ -326,10 +284,10 @@ export function SharedFacts({
                           : 'english';
                       const projected =
                         country === 'canada'
-                          ? { test: report.test, scores: report.scores, result_date: report.date }
+                          ? { test: report.test, scores, result_date: report.date }
                           : {
                               test: report.test,
-                              scores: report.scores,
+                              scores,
                               test_date: report.date,
                               in_test_centre: report.in_test_centre,
                               one_skill_retake: report.one_skill_retake,

@@ -197,3 +197,13 @@ Staff assessment options add optional `currency_catalog` and `financial_targets`
 ### Shared assessment evidence (Phase 3 draft)
 
 The development calculator can create, edit and explicitly confirm account-owned birth-date, language and employment statements, select versions for country answers, and link existing owned documents. A configured numeric program question can bind a specifically selected confirmed report skill. These flows require the Phase 3 backend on top of shamrad/lang#337; the panel also depends on #117. Shared evidence and document links are preloaded on resumed calculator pages; shared evidence is also preloaded on resumed destination pages for configured questions. The API remains local-gated. The backend's `docs/assessment/phase-3-shared-facts.md` contains the ownership, migration-history, privacy, legal and replay limits. Existing media URLs are not made private by this interface. No legal content is activated.
+
+### Unified assessment workflow (development only)
+
+The Phase 5 page uses `GET/POST /api/applicant/v1/assessments/<uuid>/workflow/`,
+`POST .../workflow/scenario/`, and owned immutable `GET .../workflow/history/`
+(and `history/<id>/`). It depends on the Phase 5 backend atop the evaluator-registry
+branch. Both local-mode and assessment flags still guard the backend. See
+[Phase 5 workflow handoff](assessment/phase-5-unified-workflow.md) for revisions,
+exact retry, recorded-history and capability contracts. Existing Phase 3 shared
+evidence/document APIs remain the source for canonical statements and owned files.

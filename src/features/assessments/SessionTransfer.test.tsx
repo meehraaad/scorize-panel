@@ -91,6 +91,42 @@ it('offers transfer for a changed implementation even when the engine version is
   expect(await screen.findByRole('button', { name: 'Copy answers for review' })).toBeDisabled();
 });
 
+it.each([false, true])(
+  'reconfirms canonical transfer references (older candidate: %s)',
+  async (older) => {
+    const refs = [{ id: 'canonical-birth', revision: 3 }];
+    let confirmed: Record<string, unknown> | undefined;
+    server.use(
+      http.get('/api/applicant/v1/assessments/:id/calculators/interview/', () =>
+        HttpResponse.json({
+          ...response,
+          engine_available: true,
+          answers: {
+            'calculator:shared:birth_date': {
+              ...answer,
+              ...(older ? {} : { shared_fact_refs: refs }),
+              previous_answer: { ...answer.previous_answer, shared_fact_refs: refs },
+            },
+          },
+        }),
+      ),
+      http.post('/api/applicant/v1/assessments/:id/calculators/interview/', async ({ request }) => {
+        confirmed = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ revision: 1, answers: {} });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp(`/dev/assessment-calculators?session=${newId}`);
+    await user.click(await screen.findByRole('button', { name: 'Review the previous answer' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm this answer' }));
+    expect(confirmed).toMatchObject({
+      status: 'known',
+      value: '1996-11-12',
+      shared_references: refs,
+    });
+  },
+);
+
 it('keeps the same copy request after a save failure', async () => {
   const requests: unknown[] = [];
   server.use(

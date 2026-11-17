@@ -118,56 +118,79 @@ it('prefills work dates while blocking incomplete confirmation and explains lang
   );
 });
 
-it('shows raw shared test details and requires review before saving them', async () => {
-  let submitted: Record<string, unknown> | undefined;
-  const candidate = {
-    id: 'session_shared:calculator:australia:english',
-    sha256: 'e'.repeat(64),
-    field: 'english',
-    source: 'session_shared',
-    complete: false,
-    conflict: false,
-    original: {
-      test: 'ielts_general_training',
-      date: '2026-01-01',
-      scores: { reading: 7, writing: 7, listening: 7, speaking: 7 },
-      in_test_centre: true,
-      one_skill_retake: false,
-    },
-    value: {
-      test: 'ielts_general_training',
-      result_date: '2026-01-01',
-      scores: { reading: 7, writing: 7, listening: 7, speaking: 7 },
-    },
-  };
-  server.use(
-    http.get('/api/applicant/v1/assessments/:id/calculators/profile-evidence/', () =>
-      HttpResponse.json({ revision: 0, candidates: [candidate], context: [] }),
-    ),
-    http.post('/api/applicant/v1/assessments/:id/calculators/interview/', async ({ request }) => {
-      submitted = (await request.json()) as Record<string, unknown>;
-      return HttpResponse.json({
-        revision: 1,
-        answers: {
-          'calculator:canada:english': {
-            status: 'known',
-            value: submitted.value,
-            source: 'session_confirmed_by_user',
+it.each([false, true])(
+  'reviews shared test details without mixed bindings (already bound: %s)',
+  async (bound) => {
+    let submitted: Record<string, unknown> | undefined;
+    const candidate = {
+      id: 'session_shared:calculator:australia:english',
+      sha256: 'e'.repeat(64),
+      field: 'english',
+      source: 'session_shared',
+      complete: false,
+      conflict: false,
+      original: {
+        test: 'ielts_general_training',
+        date: '2026-01-01',
+        scores: { reading: 7, writing: 7, listening: 7, speaking: 7 },
+        in_test_centre: true,
+        one_skill_retake: false,
+      },
+      value: {
+        test: 'ielts_general_training',
+        result_date: '2026-01-01',
+        scores: { reading: 7, writing: 7, listening: 7, speaking: 7 },
+      },
+    };
+    if (bound)
+      server.use(
+        http.get('/api/applicant/v1/assessments/:id/calculators/interview/', () =>
+          HttpResponse.json({
+            revision: 0,
+            adapter_version: 'calculator-interview-1',
+            answers: {
+              'calculator:canada:english': {
+                status: 'known',
+                value: candidate.value,
+                source: 'shared_fact_confirmed_by_user',
+                shared_fact_refs: [{ id: 'report-id', revision: 3 }],
+              },
+            },
+            ruleset_sha256: 'a'.repeat(64),
+            sources: { canada: { sha256: 'b'.repeat(64) }, australia: { sha256: 'c'.repeat(64) } },
+          }),
+        ),
+      );
+    server.use(
+      http.get('/api/applicant/v1/assessments/:id/calculators/profile-evidence/', () =>
+        HttpResponse.json({ revision: 0, candidates: [candidate], context: [] }),
+      ),
+      http.post('/api/applicant/v1/assessments/:id/calculators/interview/', async ({ request }) => {
+        submitted = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          revision: 1,
+          answers: {
+            'calculator:canada:english': {
+              status: 'known',
+              value: submitted.value,
+              source: 'session_confirmed_by_user',
+            },
           },
-        },
-      });
-    }),
-  );
-  const user = await open();
-  expect(await screen.findByText(/Review the shared test details/)).toBeInTheDocument();
-  expect(screen.getByText('The other country’s interview', { exact: false })).toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Review and use these details' }));
-  expect(screen.getByLabelText('Reading')).toHaveValue(7);
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  expect(submitted).toBeUndefined();
-  await user.click(screen.getByRole('button', { name: 'Confirm details and save' }));
-  expect(submitted?.profile_candidate).toEqual({ id: candidate.id, sha256: candidate.sha256 });
-});
+        });
+      }),
+    );
+    const user = await open();
+    expect(await screen.findByText(/Review the shared test details/)).toBeInTheDocument();
+    expect(screen.getByText('The other country’s interview', { exact: false })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Review and use these details' }));
+    expect(screen.getByLabelText('Reading')).toHaveValue(7);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    expect(submitted).toBeUndefined();
+    await user.click(screen.getByRole('button', { name: 'Confirm details and save' }));
+    expect(submitted?.profile_candidate).toEqual({ id: candidate.id, sha256: candidate.sha256 });
+    expect(submitted?.shared_references).toBeUndefined();
+  },
+);
 
 it('prepares shared work periods without inventing occupation or legal claims', async () => {
   const candidate = {

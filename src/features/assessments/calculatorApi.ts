@@ -34,6 +34,7 @@ export interface ProfileCandidate {
   original: Record<string, unknown>;
   complete: boolean;
   conflict?: boolean;
+  shared_fact_refs?: { id: string; revision: number }[];
 }
 export interface ProfileEvidence {
   revision: number;
