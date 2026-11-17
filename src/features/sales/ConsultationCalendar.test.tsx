@@ -312,6 +312,22 @@ describe('sales: my consultations on a week calendar', () => {
       expect(within(dialog).queryByRole('textbox', { name: /مشتری/ })).toBeNull();
     });
 
+    it('an office meeting opens its card, with its start and end to change', async () => {
+      const user = userEvent.setup();
+      const booked = await fetch('/api/sales/v1/customers/1/visits/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ starts_at: new Date(2026, 9, 28, 11).toISOString(), sms: false }),
+      });
+      expect(booked.status).toBe(201);
+      const calendar = await open();
+      await user.click(within(calendar).getByRole('button', { name: /جلسه حضوری/ }));
+      const card = within(calendar).getByRole('dialog');
+      await user.click(within(card).getByRole('button', { name: /^تغییر ساعت شروع و پایان/ }));
+      const dialog = await screen.findByRole('dialog', { name: /^ساعت شروع و پایان/ });
+      expect(within(dialog).getByRole('combobox', { name: 'پایان' })).toHaveValue('60');
+    });
+
     it("changes a call's end from its card: 15 minutes unless set", async () => {
       const user = userEvent.setup();
       let sent: unknown = null;
