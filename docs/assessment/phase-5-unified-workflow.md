@@ -2,7 +2,6 @@
 
 **Independent audit:** G5 was not accepted at the original head. See [audit corrections](phase-5-audit-corrections.md) for F01–F09 fixes and re-audit status. Original validation below is historical evidence, not independent acceptance.
 
-
 17 November 2026, Asia/Tehran. Backend dependency: `shamrad/lang`, Phase 5 branch `codex/phase5-unified-workflow`, based on Phase 4 `1a78299a0`; delivered backend `c74d1987990692cc6bcb45611f9a88a4d4417dee`, [draft PR #341](https://github.com/shamrad/lang/pull/341). Panel parent: `c2c80dd`, `codex/phase3-shared-evidence` (#122 → #117 and its earlier stack). Deploy the corresponding backend before making this page available. This is a development-only flow; the backend requires both local mode and its assessment feature flag.
 
 The new `/dev/assessment-workflow?session=<uuid>` route resumes an owned existing session or starts one through the existing start endpoint. The existing calculator page links to it. One shared page renders registry-discovered pathway capabilities, questions and result components without country branches. It supports explicit shared report/birth-date answers, canonical evidence selection, pause/resume, answer review, hypothetical previews, owned document links and immutable recorded results.
