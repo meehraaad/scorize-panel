@@ -9,6 +9,10 @@ export interface WorkflowQuestion {
   schema: FormSchema;
   status: string | null;
   value: unknown;
+  allowed_statuses: ('known' | 'unknown' | 'not_applicable')[];
+  current_reference: { id: string; revision: number } | null;
+  can_detach: boolean;
+  scoped?: boolean;
   shared_kind: 'birth_date' | 'language' | null;
   targets: { adapter: string; field: string; entry?: string }[];
   effects: string[];
@@ -65,7 +69,13 @@ export interface Workflow {
   status: string;
   mode: 'assessment' | 'explore';
   selected_pathways: string[];
-  options: { id: string; conditions: string[]; scores: string[]; capabilities: string[]; title?: { fa: string; en: string } | null }[];
+  options: {
+    id: string;
+    conditions: string[];
+    scores: string[];
+    capabilities: string[];
+    title?: { fa: string; en: string } | null;
+  }[];
   questions: WorkflowQuestion[];
   review_questions: WorkflowQuestion[];
   next_question: WorkflowQuestion | null;
@@ -77,7 +87,7 @@ export interface Workflow {
 }
 export interface WorkflowHistory {
   count: number;
-  pages: number;
+  page_size: number;
   results: {
     id: number;
     created_at: string;

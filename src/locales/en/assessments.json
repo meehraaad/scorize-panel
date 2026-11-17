@@ -1279,6 +1279,19 @@
     "details": "Reasons, score breakdown and missing evidence",
     "sources": "Sources used for this assessment",
     "discard": "Discard unsaved changes",
-    "editEvidenceMeaning": "Editing this statement asks you to confirm it again and review affected answers. Recorded history stays unchanged."
+    "editEvidenceMeaning": "Editing this statement asks you to confirm it again and review affected answers. Recorded history stays unchanged.",
+    "currentEvidence": "Current bound statement",
+    "evidenceAction": "How should this source change?",
+    "evidenceActions": {
+      "preserve": "Keep the current source",
+      "edit": "Edit and confirm the shared statement",
+      "replace": "Create a separate statement",
+      "detach": "Detach this answer from its source"
+    },
+    "chooseEvidenceIntent": "Choose whether to edit the shared statement, replace it, or explicitly detach this answer. Keeping the source requires unchanged raw details.",
+    "reviewConflict": "Your draft is preserved. Compare it with the current saved answer, then explicitly save again or discard your draft.",
+    "serverAnswer": "Current saved answer:",
+    "currentUnavailable": "Current evaluation is unavailable. Recorded results below remain historical results, not current advice.",
+    "scopedQuestion": "{{question}} — {{evaluations}}"
   }
 }

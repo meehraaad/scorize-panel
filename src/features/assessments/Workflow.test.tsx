@@ -1,3 +1,4 @@
+import type { Workflow } from './workflowApi';
 import { screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -111,4 +112,122 @@ it('renders the Persian shared interview with labeled keyboard controls', async 
   input.focus();
   expect(input).toHaveFocus();
   expect(document.documentElement.dir).toBe('rtl');
+});
+
+it('keeps a conflicted draft when reload advances the automatic question (F06)', async () => {
+  const user = await open();
+  const { queryClient } = await import('@/lib/api/queryClient');
+  const current = (await (await fetch(endpoint)).json()) as Workflow;
+  const birth = current.next_question;
+  if (!birth) throw new Error('Expected automatic question');
+  const language = {
+    ...birth,
+    id: 'calculator:canada:first_language',
+    field: 'first_language',
+    shared_kind: null,
+    schema: { type: 'choice' as const, choices: ['english', 'french'] },
+    value: null,
+  };
+  const changed = {
+    ...current,
+    revision: current.revision + 1,
+    next_question: language,
+    questions: [language],
+    review_questions: [{ ...birth, value: '1992-01-01' }, language],
+  };
+  server.use(
+    http.post(endpoint, () => new HttpResponse(null, { status: 409 })),
+    http.get(endpoint, () => HttpResponse.json(changed)),
+  );
+  await user.type(screen.getByLabelText('Birth date for shared evidence'), '1990-01-01');
+  await user.click(screen.getByRole('button', { name: 'Save answer' }));
+  await user.click(await screen.findByRole('button', { name: 'Reload and keep my input' }));
+  await waitFor(() =>
+    expect(queryClient.getQueryData(['assessment-workflow', id])).toMatchObject({
+      revision: changed.revision,
+    }),
+  );
+  expect(screen.getByLabelText('Birth date for shared evidence')).toHaveValue('1990-01-01');
+});
+
+it('renders recorded history when the current ruleset is unavailable (F08)', async () => {
+  const fixture = (await import('@/mocks/workflow-fixture.json')).default;
+  server.use(
+    http.get(endpoint, () => new HttpResponse(null, { status: 409 })),
+    http.get(endpoint + 'history/', () =>
+      HttpResponse.json({
+        count: 1,
+        page_size: 20,
+        results: [
+          {
+            id: 1,
+            created_at: '2026-11-17T09:00:00Z',
+            payload: { workflow: { results: fixture.results } },
+          },
+        ],
+      }),
+    ),
+  );
+  renderApp(`/dev/assessment-workflow?session=${id}`);
+  const history = await screen.findByRole('region', { name: 'Recorded pathway results' });
+  expect(await within(history).findByText('2026-11-17T09:00:00Z')).toBeInTheDocument();
+});
+
+it('uses count and page_size to reach the 21st recorded result (F07)', async () => {
+  const pages: string[] = [];
+  server.use(
+    http.get(endpoint + 'history/', ({ request }) => {
+      const page = new URL(request.url).searchParams.get('page') ?? '1';
+      pages.push(page);
+      return HttpResponse.json({ count: 21, page_size: 20, results: [] });
+    }),
+  );
+  const user = userEvent.setup();
+  renderApp(`/dev/assessment-workflow?session=${id}`);
+  const next = await screen.findByRole('button', { name: 'Next' });
+  await user.click(next);
+  await waitFor(() => expect(pages).toContain('2'));
+});
+
+it('keeps the bound source by default and requires explicit canonical edit intent (F03/F04)', async () => {
+  const user = await open();
+  const { queryClient } = await import('@/lib/api/queryClient');
+  const current = (await (await fetch(endpoint)).json()) as Workflow;
+  const original = current.next_question;
+  if (!original) throw new Error('Expected shared question');
+  const question = {
+    ...original,
+    status: 'known',
+    value: '1996-11-12',
+    can_detach: true,
+    current_reference: { id: '33333333-3333-4333-8333-333333333333', revision: 4 },
+  };
+  queryClient.setQueryData(['assessment-workflow', id], {
+    ...current,
+    next_question: question,
+    questions: [question],
+    review_questions: [question],
+  });
+  await waitFor(() =>
+    expect(screen.getByLabelText('Birth date for shared evidence')).toHaveValue('1996-11-12'),
+  );
+  expect(screen.getByLabelText('Reuse a confirmed statement')).toHaveValue('current');
+  await user.clear(screen.getByLabelText('Birth date for shared evidence'));
+  await user.type(screen.getByLabelText('Birth date for shared evidence'), '1995-11-12');
+  expect(screen.getByRole('button', { name: 'Save answer' })).toBeDisabled();
+  await user.selectOptions(screen.getByLabelText('How should this source change?'), 'edit');
+  const submitted: Record<string, unknown>[] = [];
+  server.use(
+    http.post(endpoint, async ({ request }) => {
+      submitted.push((await request.json()) as Record<string, unknown>);
+      return new HttpResponse(null, { status: 409 });
+    }),
+  );
+  await user.click(screen.getByRole('button', { name: 'Save answer' }));
+  await waitFor(() => expect(submitted).toHaveLength(1));
+  expect(submitted[0]).toMatchObject({
+    evidence_action: 'edit',
+    shared_reference: question.current_reference,
+    value: '1995-11-12',
+  });
 });

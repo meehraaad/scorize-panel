@@ -8,7 +8,7 @@ import fixture from './workflow-fixture.json';
 
 const BASE = '/api/applicant/v1/assessments/:id/workflow/';
 const initial = (): Workflow => ({
-  version: 'unified-workflow-1',
+  version: 'unified-workflow-2',
   session_id: '11111111-1111-4111-8111-111111111111',
   revision: 0,
   assessment_date: '2026-11-12',
@@ -108,8 +108,13 @@ export const workflowHandlers = [
     if (crs) crs.score.value = 404;
     return HttpResponse.json(response);
   }),
-  http.get(`${BASE}history/`, ({ params }) => {
+  http.get(`${BASE}history/`, ({ params, request }) => {
     const rows = histories.get(String(params.id)) ?? [];
-    return HttpResponse.json({ count: rows.length, page: 1, pages: 1, results: rows });
+    const page = Math.max(1, Number(new URL(request.url).searchParams.get('page')) || 1);
+    return HttpResponse.json({
+      count: rows.length,
+      page_size: 20,
+      results: rows.slice((page - 1) * 20, page * 20),
+    });
   }),
 ];

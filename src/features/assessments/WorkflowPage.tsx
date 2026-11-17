@@ -1,3 +1,4 @@
+import { sameAnswerContent } from './answerEquality';
 import { useId, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -30,24 +31,52 @@ import {
   type WorkflowScenario,
 } from './workflowApi';
 
+type EvidenceAction = 'preserve' | 'edit' | 'replace' | 'detach';
+interface AnswerDraft {
+  question: WorkflowQuestion;
+  value: unknown;
+  status: string;
+  reference: string;
+  evidenceAction: EvidenceAction;
+  pending: Record<string, unknown> | null;
+  dirty: boolean;
+  reloaded: boolean;
+}
+const newDraft = (question: WorkflowQuestion): AnswerDraft => ({
+  question,
+  value: question.value ?? undefined,
+  status: 'known',
+  reference: question.current_reference ? 'current' : '',
+  evidenceAction: 'preserve',
+  pending: null,
+  dirty: false,
+  reloaded: false,
+});
+
 function QuestionEditor({
   id,
   data,
   question,
   onBusy,
+  draft,
+  onDraft,
 }: {
   id: string;
   data: Workflow;
   question: WorkflowQuestion;
   onBusy: (busy: boolean) => void;
+  draft: AnswerDraft | undefined;
+  onDraft: (patch: Partial<AnswerDraft> | null) => void;
 }) {
   const { t } = useTranslation('assessments');
   const cache = useQueryClient();
-  const [value, setValue] = useState<unknown>(question.value ?? undefined);
-  const [status, setStatus] = useState('known');
-  const [reference, setReference] = useState('');
-  const [dirty, setDirty] = useState(false);
-  const [pending, setPending] = useState<Record<string, unknown> | null>(null);
+  const local = draft ?? newDraft(question);
+  const { value, status, reference, evidenceAction, dirty, pending } = local;
+  const setValue = (value: unknown) => onDraft({ value });
+  const setStatus = (status: string) => onDraft({ status });
+  const setReference = (reference: string) => onDraft({ reference });
+  const setDirty = (dirty: boolean) => onDraft({ dirty });
+  const setPending = (pending: Record<string, unknown> | null) => onDraft({ pending });
   const [scenario, setScenario] = useState<WorkflowScenario | null>(null);
   const facts = useQuery(sharedFactsQuery);
   const evidence = (facts.data?.evidence ?? []) as {
@@ -66,7 +95,7 @@ function QuestionEditor({
     mutationFn: (body: Record<string, unknown>) => saveWorkflow(id, body),
     onSuccess: async (next) => {
       cache.setQueryData(workflowQuery(id).queryKey, next);
-      setPending(null);
+      onDraft(null);
       onBusy(false);
       setScenario(null);
       await Promise.all([
@@ -98,22 +127,69 @@ function QuestionEditor({
     }
     return value ?? null;
   };
+  const selectedReference =
+    reference === 'current'
+      ? question.current_reference
+      : reusable.find((item) => item.id === reference);
   const body = () => ({
     question_id: question.id,
     decision_sha256: data.decision_sha256,
     status,
     value: normalizedValue(),
-    ...(reference
-      ? {
-          shared_reference: reusable.find((item) => item.id === reference) && {
-            id: reference,
-            revision: reusable.find((item) => item.id === reference)?.revision,
-          },
-        }
+    evidence_action: evidenceAction,
+    ...(selectedReference && evidenceAction !== 'replace' && evidenceAction !== 'detach'
+      ? { shared_reference: { id: selectedReference.id, revision: selectedReference.revision } }
       : {}),
   });
   const conflict = mutation.error instanceof ApiError && mutation.error.status === 409;
-  const ready = status !== 'known' || readyForAutosave(question.schema, value);
+  const sameCanonical = sameAnswerContent(
+    { status: 'known', value },
+    {
+      status: 'known',
+      value:
+        reference === 'current'
+          ? question.value
+          : reusable.find((row) => row.id === reference)?.value,
+    },
+  );
+  const sourceChoiceNeeded = Boolean(
+    question.shared_kind &&
+    selectedReference &&
+    evidenceAction === 'preserve' &&
+    status === 'known' &&
+    !sameCanonical,
+  );
+  const unresolvedChoiceNeeded =
+    question.can_detach && status !== 'known' && evidenceAction !== 'detach';
+  const ready =
+    !sourceChoiceNeeded &&
+    !unresolvedChoiceNeeded &&
+    (status !== 'known' || readyForAutosave(question.schema, value));
+  const choices = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
+  const labelsForValues = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
+  const renderValue = (value: unknown): React.ReactNode => {
+    if (value == null) return t('calculator.unknown');
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+      return choices[String(value)] ?? String(value);
+    if (typeof value !== 'object') return t('calculator.unknown');
+    return (
+      <dl>
+        {Object.entries(value).map(([key, child]) => (
+          <div key={key} className="flex flex-wrap gap-2">
+            <dt>{labelsForValues[key] ?? t('workflow.evidence')}</dt>
+            <dd>{renderValue(child)}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  };
+  const latest = data.review_questions.find((q) => q.id === question.id);
+  const actions: EvidenceAction[] =
+    question.shared_kind && (question.current_reference || selectedReference)
+      ? ['preserve', 'edit', 'replace', ...(question.can_detach ? ['detach' as const] : [])]
+      : question.can_detach
+        ? ['preserve', 'detach']
+        : ['preserve'];
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <h3 className="font-semibold">
@@ -140,7 +216,7 @@ function QuestionEditor({
             setScenario(null);
             onBusy(true);
           }}
-          options={(['known', 'unknown', 'not_applicable'] as const).map((key) => ({
+          options={question.allowed_statuses.map((key) => ({
             value: key,
             label: t(`calculator.choices.${key}`),
           }))}
@@ -150,6 +226,9 @@ function QuestionEditor({
             label={t('workflow.existingEvidence')}
             value={reference}
             options={[
+              ...(question.current_reference
+                ? [{ value: 'current', label: t('workflow.currentEvidence') }]
+                : []),
               { value: '', label: t('workflow.newEvidence') },
               ...reusable.map((item, index) => ({
                 value: item.id,
@@ -158,12 +237,35 @@ function QuestionEditor({
             ]}
             onChange={(next) => {
               setReference(next);
+              onDraft({
+                evidenceAction: next === '' && question.current_reference ? 'replace' : 'preserve',
+              });
               const item = reusable.find((row) => row.id === next);
               if (item) setValue(item.value);
               setDirty(true);
               onBusy(true);
             }}
           />
+        )}
+        {actions.length > 1 && (
+          <SelectField
+            label={t('workflow.evidenceAction')}
+            value={evidenceAction}
+            options={actions.map((key) => ({
+              value: key,
+              label: t(`workflow.evidenceActions.${key}`),
+            }))}
+            onChange={(value) => {
+              onDraft({ evidenceAction: value, dirty: true });
+              onBusy(true);
+            }}
+          />
+        )}
+        {evidenceAction === 'edit' && (
+          <Notice tone="warn">{t('workflow.editEvidenceMeaning')}</Notice>
+        )}
+        {(sourceChoiceNeeded || unresolvedChoiceNeeded) && (
+          <Notice tone="warn">{t('workflow.chooseEvidenceIntent')}</Notice>
         )}
         {status === 'known' && (
           <CalculatorForm
@@ -179,7 +281,6 @@ function QuestionEditor({
             onChange={(next) => {
               setValue(next);
               setDirty(true);
-              setReference('');
               setScenario(null);
               onBusy(true);
             }}
@@ -190,16 +291,20 @@ function QuestionEditor({
         <Button
           variant="outline"
           onClick={() => {
-            setValue(question.value ?? undefined);
-            setStatus('known');
-            setReference('');
-            setDirty(false);
+            onDraft(null);
             setScenario(null);
             onBusy(false);
           }}
         >
           {t('workflow.discard')}
         </Button>
+      )}
+      {local.reloaded && (
+        <Notice tone="warn">
+          <p>{t('workflow.reviewConflict')}</p>
+          <p>{t('workflow.serverAnswer')}</p>
+          <div>{renderValue(latest?.value)}</div>
+        </Notice>
       )}
       {mutation.error && (
         <Notice tone="error">{t(conflict ? 'workflow.conflict' : 'workflow.failed')}</Notice>
@@ -233,9 +338,9 @@ function QuestionEditor({
             variant="outline"
             onClick={() => {
               void cache.invalidateQueries({ queryKey: workflowQuery(id).queryKey }).then(() => {
-                setPending(null);
+                onDraft({ pending: null, dirty: true, reloaded: true });
                 mutation.reset();
-                onBusy(false);
+                onBusy(true);
               });
             }}
           >
@@ -257,16 +362,46 @@ function QuestionEditor({
   );
 }
 
+function WorkflowHistoryPanel({ id }: { id: string }) {
+  const { t } = useTranslation('assessments');
+  const section = useId();
+  const [page, setPage] = useState(1);
+  const history = useQuery(workflowHistoryQuery(id, page));
+  return (
+    <SectionCard id={section + '-history'} title={t('workflow.history')} variant="panel">
+      <p>{t('workflow.historyMeaning')}</p>
+      {history.isPending && <SkeletonRows rows={2} />}
+      {history.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+      {history.data?.results.map((row) => (
+        <details key={row.id}>
+          <summary className="min-h-11 cursor-pointer py-3">
+            <bdi>{row.created_at}</bdi>
+          </summary>
+          <WorkflowResults results={row.payload.workflow.results} prefix={`history-${row.id}`} />
+        </details>
+      ))}
+      {history.data && (
+        <Pager
+          page={page}
+          pages={Math.max(1, Math.ceil(history.data.count / history.data.page_size))}
+          onPage={setPage}
+          pending={history.isFetching}
+          inset
+        />
+      )}
+    </SectionCard>
+  );
+}
+
 function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) => void }) {
   const { t, i18n } = useTranslation('assessments');
   const section = useId();
   const cache = useQueryClient();
   const query = useQuery(workflowQuery(id));
-  const [page, setPage] = useState(1);
-  const history = useQuery(workflowHistoryQuery(id, page));
   const [paths, setPaths] = useState<string[] | null>(null);
   const [mode, setMode] = useState<'assessment' | 'explore' | null>(null);
   const [questionId, setQuestionId] = useState('');
+  const [drafts, setDrafts] = useState<Record<string, AnswerDraft>>({});
   const [busy, setBusyState] = useState(false);
   const setBusy = (value: boolean) => {
     setBusyState(value);
@@ -293,7 +428,8 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
     return (
       <>
         {query.isPending && <SkeletonRows rows={4} />}
-        {query.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+        {query.error && <Notice tone="error">{t('workflow.currentUnavailable')}</Notice>}
+        <WorkflowHistoryPanel id={id} />
       </>
     );
   const selected = paths ?? data.selected_pathways;
@@ -309,7 +445,9 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
   };
   const disabled = busy || mutation.isPending || Boolean(pending);
   const questions = data.review_questions;
-  const question = questions.find((q) => q.id === questionId) ?? data.next_question;
+  const kept = Object.values(drafts).find((draft) => draft.dirty || draft.pending);
+  const question =
+    kept?.question ?? questions.find((q) => q.id === questionId) ?? data.next_question;
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <Notice tone="warn">
@@ -365,7 +503,15 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
             { value: '', label: t('workflow.next') },
             ...questions.map((q) => ({
               value: q.id,
-              label: q.label ?? fields[q.field.replaceAll('.', '_')] ?? t('workflow.question'),
+              label: q.scoped
+                ? t('workflow.scopedQuestion', {
+                    question:
+                      q.label ?? fields[q.field.replaceAll('.', '_')] ?? t('workflow.question'),
+                    evaluations: q.effects
+                      .map((key) => labels[key] ?? t('workflow.configured'))
+                      .join('، '),
+                  })
+                : (q.label ?? fields[q.field.replaceAll('.', '_')] ?? t('workflow.question')),
             })),
           ]}
           onChange={setQuestionId}
@@ -376,6 +522,18 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
             id={id}
             data={data}
             question={question}
+            draft={drafts[question.id]}
+            onDraft={(patch) =>
+              setDrafts((old) => {
+                const next = { ...old };
+                if (patch === null)
+                  return Object.fromEntries(
+                    Object.entries(old).filter(([key]) => key !== question.id),
+                  );
+                else next[question.id] = { ...(old[question.id] ?? newDraft(question)), ...patch };
+                return next;
+              })
+            }
             onBusy={setBusy}
           />
         )}
@@ -437,28 +595,7 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
       >
         {t('workflow.destinations')}
       </Link>
-      <SectionCard id={section + '-history'} title={t('workflow.history')} variant="panel">
-        <p>{t('workflow.historyMeaning')}</p>
-        {history.isPending && <SkeletonRows rows={2} />}
-        {history.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
-        {history.data?.results.map((row) => (
-          <details key={row.id}>
-            <summary className="min-h-11 cursor-pointer py-3">
-              <bdi>{row.created_at}</bdi>
-            </summary>
-            <WorkflowResults results={row.payload.workflow.results} prefix={`history-${row.id}`} />
-          </details>
-        ))}
-        {history.data && (
-          <Pager
-            page={page}
-            pages={history.data.pages}
-            onPage={setPage}
-            pending={history.isFetching}
-            inset
-          />
-        )}
-      </SectionCard>
+      <WorkflowHistoryPanel id={id} />
     </div>
   );
 }

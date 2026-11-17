@@ -1,0 +1,35 @@
+# Phase 5 panel audit corrections
+
+17 November 2026, Asia/Tehran. The supplied independent audit did not accept G5. The user authorized fixing F01–F09 in the existing PRs. Panel parent: `2f0cc6c298434b6bea1d96bbf5ee94b03d497f7f`; backend parent: `95cb965c9b6cd1f45714d6cae3894254cce33cad`. Update [panel #123](https://github.com/meehraaad/scorize-panel/pull/123) together with [backend #341](https://github.com/shamrad/lang/pull/341). No merge, deployment or Phase 6 work.
+
+The complete finding/correction map and preserved supplied report are in the backend's `docs/assessment/phase-5-audit-corrections.md` and `docs/assessment/reviews/phase-5-audit-2026-11-17.md`. This handoff records the panel changes; it is not independent G5 acceptance.
+
+## Changes
+
+- F02: the server declares common compatible report choices plus target-specific alternatives. Scoped review labels name the consuming evaluations so an applicant can use different reports without changing selected pathways. No new country switch is introduced in the shared page.
+- F03–F05: initialize an existing binding as “current bound statement,” retain its captured revision, and use declared allowed statuses. Source actions are explicit: keep, edit-and-confirm, create a separate statement, or detach. Editing selected raw details while keeping a source cannot silently rebind it; the applicant chooses intent. Unknown/not-applicable bound answers explicitly detach rather than mutating canonical evidence. No-op saves preserve current identity/document provenance. Choosing a current canonical revision for reuse remains explicit after source changes.
+- F06: drafts/pending requests live at session level, above automatic/manual question selection. A dirty/conflicted question stays pinned during reload, its input survives, and the current saved value is shown for comparison. A fresh save or discard requires an explicit action; reload never resubmits automatically. Drafts remain in component memory, not durable browser storage; no new full-browser-reload durability claim is made.
+- F07: history consumes the real `{count, page_size, results}` contract. The pager derives the page count; MSW mirrors the same shape and slices `?page=` results.
+- F08: history rendering/querying is independent of current evaluation. A live 409 no longer hides captured results; copy distinguishes historical results from current advice.
+- F01/F09: the paired backend performs the same pure report/band checks before scenario/save projection, and calculates preferences independently of financial-context failure. The panel does not infer either meaning locally.
+
+Existing snapshots of either contract version remain readable through recorded results. Current question descriptors require the paired backend's new metadata (`allowed_statuses`, `current_reference`, `can_detach`, optional `scoped`). Existing canonical, source/document and permission guards are not weakened. No production audience/content flag changes.
+
+## Verification and failed runs
+
+The initial three new panel probes failed on the audited parent (six original controls passed). The new cases reproduce a reload that changes the automatic question, a real pagination-shaped response over 20 records, and an independently unavailable current evaluation. A fourth case verifies default source preservation and explicit edit intent in submitted requests. Test fixtures/mocks now include the real metadata and pagination contract.
+
+A broad regression run completed 189 passes and one unchanged management-test timeout while compiler/lint/test jobs competed for the local machine. The management suite passed in isolation without changing timeouts. The first isolated history assertion raced its independent loading query; it now waits for the actual row, preserving the history requirement. Raw passing/failing evidence is retained under `/workspace/phase5-fixes-evidence`.
+
+Real Chromium uses actual Vite → Django → PostgreSQL, session cookies and CSRF, with a separate synthetic preview database. At 390 px, a local bachelor/Canadian draft survives 409 and reload after a second writer saves masters/Canadian. The saved masters answer remains intact and visible for comparison, despite the automatic next question becoming null. No horizontal overflow or application JS errors were observed. Persian history reaches the 21st result on page 2; withdrawn current rules still expose readable recorded history. Screenshots were inspected. This is not a production-device/accessibility or legal-content certification.
+
+Final check results and exact correction commits are recorded in the delivery and PR history. Keep the feature local-only; independent re-audit, external legal/retention/privacy/migration requirements and Phase 6 proof remain separate. Rollback disables new writes first and retains all canonical evidence versions, protected documents and historical payloads.
+
+## Final checks
+
+- Broad assessment/page-data run: **189 passed, 1 unchanged management-test timeout**. All seven management cases then passed isolated without increasing the timeout. Workflow cases passed again after the loading assertion fix (**10 cases**), and the final post-lint-refinement workflow rerun also passed (**10**). These runs overlap and are not summed.
+- Final `pnpm lint`, `pnpm typecheck`, locale parity, production build and size checks: **passed**. First-load JS **178.9 KB gzip / 179 KB**; CSS **20.5 KB / 20.5 KB**. No budget change. The inherited Tailwind sourcemap warning remains.
+- Backend: **552 regressions / 73 subtests passed**, followed by **57 final affected cases** including all **14 new audit/control cases**. The broad run preceded only the last independent-scalar band-domain guard. Schema diagnostics remain exactly the inherited **19 errors / 28 warnings**; the runtime pagination contract separately validates in a 21-record test.
+- Browser F06/F07/F08 checks passed against actual HTTP/CSRF, including Persian history and 390 px layout. The browser run preceded only that last configured-band guard, covered by the final API cases.
+
+Backend implementation correction: `7cacfb1a0` on #341. Panel correction commit is recorded in #123's Git history and the delivery message. G5 remains pending independent re-acceptance.

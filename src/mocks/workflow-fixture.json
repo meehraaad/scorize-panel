@@ -14,14 +14,13 @@
         "field": "birth_date"
       }
     ],
-    "effects": [
-      "ca.fsw.points",
-      "ca.fsw.eligibility",
-      "ca.crs"
-    ],
+    "effects": ["ca.fsw.points", "ca.fsw.eligibility", "ca.crs"],
     "tier": 2,
     "missing_paths": [],
-    "answer_cost": 1
+    "answer_cost": 1,
+    "allowed_statuses": ["known", "unknown", "not_applicable"],
+    "current_reference": null,
+    "can_detach": false
   },
   "results": {
     "assessment_date": "2026-11-12",
@@ -829,13 +828,8 @@
     "pathways": {
       "ca-fsw": {
         "id": "ca-fsw",
-        "conditions": [
-          "ca.fsw.eligibility"
-        ],
-        "scores": [
-          "ca.fsw.points",
-          "ca.crs"
-        ],
+        "conditions": ["ca.fsw.eligibility"],
+        "scores": ["ca.fsw.points", "ca.crs"],
         "composition": "all_conditions",
         "cross_system_score_aggregation": false,
         "status": "met",
@@ -875,9 +869,7 @@
         },
         "financial_fit": {
           "status": "unknown",
-          "unknowns": [
-            "policy_unavailable"
-          ],
+          "unknowns": ["policy_unavailable"],
           "components": [],
           "ask_exact": false
         },
@@ -889,12 +881,8 @@
       },
       "ca-cec": {
         "id": "ca-cec",
-        "conditions": [
-          "ca.cec.eligibility"
-        ],
-        "scores": [
-          "ca.crs"
-        ],
+        "conditions": ["ca.cec.eligibility"],
+        "scores": ["ca.crs"],
         "composition": "all_conditions",
         "cross_system_score_aggregation": false,
         "status": "unmet",
@@ -917,9 +905,7 @@
         },
         "financial_fit": {
           "status": "unknown",
-          "unknowns": [
-            "policy_unavailable"
-          ],
+          "unknowns": ["policy_unavailable"],
           "components": [],
           "ask_exact": false
         },
@@ -934,110 +920,51 @@
   "options": [
     {
       "id": "ca-fsw",
-      "conditions": [
-        "ca.fsw.eligibility"
-      ],
-      "scores": [
-        "ca.fsw.points",
-        "ca.crs"
-      ],
+      "conditions": ["ca.fsw.eligibility"],
+      "scores": ["ca.fsw.points", "ca.crs"],
       "composition": "all_conditions",
       "cross_system_score_aggregation": false,
-      "capabilities": [
-        "documents",
-        "history",
-        "interview",
-        "results",
-        "scenarios"
-      ]
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
     },
     {
       "id": "ca-cec",
-      "conditions": [
-        "ca.cec.eligibility"
-      ],
-      "scores": [
-        "ca.crs"
-      ],
+      "conditions": ["ca.cec.eligibility"],
+      "scores": ["ca.crs"],
       "composition": "all_conditions",
       "cross_system_score_aggregation": false,
-      "capabilities": [
-        "documents",
-        "history",
-        "interview",
-        "results",
-        "scenarios"
-      ]
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
     },
     {
       "id": "ca-fst",
-      "conditions": [
-        "ca.fst.eligibility"
-      ],
+      "conditions": ["ca.fst.eligibility"],
       "scores": [],
       "composition": "all_conditions",
       "cross_system_score_aggregation": false,
-      "capabilities": [
-        "documents",
-        "history",
-        "interview",
-        "results",
-        "scenarios"
-      ]
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
     },
     {
       "id": "au-189",
-      "conditions": [
-        "au.189.eligibility"
-      ],
-      "scores": [
-        "au.189.points"
-      ],
+      "conditions": ["au.189.eligibility"],
+      "scores": ["au.189.points"],
       "composition": "all_conditions",
       "cross_system_score_aggregation": false,
-      "capabilities": [
-        "documents",
-        "history",
-        "interview",
-        "results",
-        "scenarios"
-      ]
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
     },
     {
       "id": "au-190",
-      "conditions": [
-        "au.190.eligibility"
-      ],
-      "scores": [
-        "au.190.points"
-      ],
+      "conditions": ["au.190.eligibility"],
+      "scores": ["au.190.points"],
       "composition": "all_conditions",
       "cross_system_score_aggregation": false,
-      "capabilities": [
-        "documents",
-        "history",
-        "interview",
-        "results",
-        "scenarios"
-      ]
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
     },
     {
       "id": "au-491",
-      "conditions": [
-        "au.491.eligibility"
-      ],
-      "scores": [
-        "au.491.points"
-      ],
+      "conditions": ["au.491.eligibility"],
+      "scores": ["au.491.points"],
       "composition": "all_conditions",
       "cross_system_score_aggregation": false,
-      "capabilities": [
-        "documents",
-        "history",
-        "interview",
-        "results",
-        "scenarios"
-      ]
+      "capabilities": ["documents", "history", "interview", "results", "scenarios"]
     }
   ]
 }
