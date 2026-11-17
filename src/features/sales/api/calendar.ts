@@ -52,6 +52,8 @@ export interface CalendarCall {
   face?: Face | null;
   /** False: a follow-up for that day with no hour (counted on the day row, not drawn at 23:59). */
   timed?: boolean;
+  /** How long the call is on the calendar (15 unless its end was changed); absent before Django sends it. */
+  minutes?: number;
 }
 
 /** One of the seller's own tasks in the range (not a customer's follow-up: those are `calls`). */
@@ -173,6 +175,8 @@ export interface FollowUpChange {
   at: string;
   /** What to do then; empty keeps a moved follow-up's text. */
   text?: string;
+  /** How long the call is (its end); not sent, a moved follow-up keeps its own. */
+  minutes?: number;
 }
 
 /**
@@ -182,12 +186,17 @@ export interface FollowUpChange {
 export function useSetFollowUp() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ lead, at, text }: FollowUpChange) =>
+    mutationFn: ({ lead, at, text, minutes }: FollowUpChange) =>
       api(`${SALES_API}/leads/bulk/`, {
         method: 'POST',
-        body: { ids: [lead], follow_up_at: at, ...(text ? { follow_up_text: text } : {}) },
+        body: {
+          ids: [lead],
+          follow_up_at: at,
+          ...(text ? { follow_up_text: text } : {}),
+          ...(minutes ? { follow_up_minutes: minutes } : {}),
+        },
       }),
-    onMutate: async ({ lead, at }) => {
+    onMutate: async ({ lead, at, minutes }) => {
       await client.cancelQueries({ queryKey: CALENDAR_KEY });
       const before = client.getQueriesData<SellerCalendar>({ queryKey: CALENDAR_KEY });
       client.setQueriesData<SellerCalendar>(
@@ -196,7 +205,9 @@ export function useSetFollowUp() {
           data && {
             ...data,
             calls: data.calls.map((call) =>
-              call.lead === lead ? { ...call, follow_up_at: at } : call,
+              call.lead === lead
+                ? { ...call, follow_up_at: at, ...(minutes ? { minutes } : {}) }
+                : call,
             ),
           },
       );

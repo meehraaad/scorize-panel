@@ -32,6 +32,7 @@ export type ServerFeature =
   | 'customerSearch'
   | 'historySearch'
   | 'visitFollowUp'
+  | 'eventTimes'
   | 'offerAgreement'
   | 'officeHours'
   | 'phoneTeams'
@@ -86,6 +87,13 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * shows the meeting as the next step, and the follow-up window offers a call or a meeting.
    */
   visitFollowUp: true,
+  /**
+   * S80 `PATCH /sales/v1/visits/<id>/ {starts_at, minutes}`, `follow_up_minutes` on `leads/bulk/`
+   * and `minutes` on the calendar's calls (lang `claude/admiring-fermat-gqxstn`): the calendar
+   * changes a follow-up call's or an office meeting's start and end. Off: calls stay 15 minutes and
+   * meetings an hour, moved only by dragging or the follow-up window.
+   */
+  eventTimes: true,
   /**
    * S63 `GET /sales/v1/customers/search/?q=` and `POST customers/<id>/take/`: the leads page's
    * search in every customer, like the old CRM's (lang `claude/pensive-dirac-ekeuff`).

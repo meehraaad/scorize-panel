@@ -1,4 +1,4 @@
-import type { CalendarCall, CalendarConsultation } from './api';
+import type { CalendarCall, CalendarConsultation, CalendarVisit } from './api';
 
 /** A consultation's state on the calendar and Today: logged, waiting for its log, on, soon, ahead. */
 
@@ -19,4 +19,9 @@ export const statusOf = (item: CalendarConsultation, now: number): Status => {
 };
 
 export type Chosen =
-  { kind: 'consultation'; item: CalendarConsultation } | { kind: 'call'; item: CalendarCall };
+  | { kind: 'consultation'; item: CalendarConsultation }
+  | { kind: 'call'; item: CalendarCall }
+  | { kind: 'visit'; item: CalendarVisit };
+
+/** How long a follow-up call is drawn: its own length once Django sends one (S80), else 15. */
+export const callMinutes = (call: Pick<CalendarCall, 'minutes'>) => call.minutes ?? CALL_MINUTES;

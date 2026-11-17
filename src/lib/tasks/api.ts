@@ -41,7 +41,7 @@ export interface TaskSummary {
   /** Created by the system (new lead, unanswered call, instalment due…). */
   automatic: boolean;
   /** S79: the meeting at the office this follow-up is (the customer page's tasks only). */
-  visit?: { id: number; starts_at: string } | null;
+  visit?: { id: number; starts_at: string; minutes?: number } | null;
 }
 
 export interface Colleague {
@@ -119,7 +119,7 @@ export interface MyTask {
   /** A receipt to review: its payment (Django `finance/receipt_tasks.py`). Today shows the receipt once. */
   receipt: number | null;
   /** S79: the meeting at the office this follow-up is; done once it starts, with `met` / `no_show`. */
-  visit?: { id: number; starts_at: string } | null;
+  visit?: { id: number; starts_at: string; minutes?: number } | null;
 }
 
 /** A colleague's request to me. */

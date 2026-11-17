@@ -2458,6 +2458,19 @@
     "taskText": "Follow up with {{name}}",
     "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step."
   },
+  "eventTimes": {
+    "open": "Change start and end",
+    "title": "Start and end · {{name}}",
+    "callHint": "A follow-up call is usually 15 minutes; move its end later if it takes longer.",
+    "visitHint": "An office meeting is usually an hour. It must fall within the office's hours with a room free; the customer's follow-up moves with it.",
+    "start": "Start",
+    "end": "End",
+    "endOption": "{{time}} ({{n}} minutes)",
+    "save": "Save time",
+    "saved": "Moved to {{day}}, {{from}} to {{to}}.",
+    "closed": "The office isn't open then. Set the start and end within office hours.",
+    "smsHint": "The customer gets the meeting's new time by SMS."
+  },
   "followUpSlots": {
     "label": "My week, to pick the follow-up time",
     "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",

@@ -311,5 +311,28 @@ describe('sales: my consultations on a week calendar', () => {
       const dialog = await screen.findByRole('dialog', { name: /^زمان تازه برای پیگیری / });
       expect(within(dialog).queryByRole('textbox', { name: /مشتری/ })).toBeNull();
     });
+
+    it("changes a call's end from its card: 15 minutes unless set", async () => {
+      const user = userEvent.setup();
+      let sent: unknown = null;
+      server.use(
+        http.post('/api/sales/v1/leads/bulk/', async ({ request }) => {
+          sent = await request.json();
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+      const calendar = await open();
+      // A call still ahead (14:30 today); a past one can't be changed.
+      await user.click(within(calendar).getByRole('button', { name: /۱۴:۳۰ · پیگیری$/ }));
+      const card = within(calendar).getByRole('dialog');
+      await user.click(within(card).getByRole('button', { name: /^تغییر ساعت شروع و پایان/ }));
+      const dialog = await screen.findByRole('dialog', { name: /^ساعت شروع و پایان/ });
+      const end = within(dialog).getByRole('combobox', { name: 'پایان' });
+      expect(end).toHaveValue('15');
+      await user.selectOptions(end, '45');
+      await user.click(within(dialog).getByRole('button', { name: 'ذخیره زمان' }));
+      expect(await toasts().findByText(/^زمان به .* تغییر کرد\.$/)).toBeInTheDocument();
+      expect(sent).toMatchObject({ follow_up_minutes: 45 });
+    });
   });
 });

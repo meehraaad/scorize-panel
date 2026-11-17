@@ -6,6 +6,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import { SelectField } from '@/components/ui/Choices';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { eventColor } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
@@ -21,9 +22,9 @@ import {
   type CalendarType,
 } from '../api';
 import {
-  CALL_MINUTES,
   DEFAULT_MINUTES,
   MINUTE,
+  callMinutes,
   statusOf,
   type Chosen,
   type Status,
@@ -100,6 +101,7 @@ export function EventDetails({
   now,
   onClose,
   onMoveCall,
+  onTimes,
   sellers,
 }: {
   chosen: Chosen;
@@ -108,6 +110,8 @@ export function EventDetails({
   onClose: () => void;
   /** Another time for a follow-up call (dragging's keyboard and phone twin). */
   onMoveCall: (call: CalendarCall) => void;
+  /** Change a call's or a meeting's start and end (`eventTimes`); absent: not offered. */
+  onTimes?: ((chosen: Chosen) => void) | undefined;
   /** A sales manager's calendar: who a consultation can be given to. */
   sellers?: { id: number; name: string }[] | undefined;
 }) {
@@ -120,7 +124,8 @@ export function EventDetails({
   const primary = buttonClass('primary', 'h-11 px-4 text-sm');
   const item = chosen.item;
   const start = new Date(chosen.kind === 'call' ? chosen.item.follow_up_at : chosen.item.starts_at);
-  const minutes = chosen.kind === 'call' ? CALL_MINUTES : (chosen.item.minutes ?? DEFAULT_MINUTES);
+  const minutes =
+    chosen.kind === 'call' ? callMinutes(chosen.item) : (chosen.item.minutes ?? DEFAULT_MINUTES);
   const end = new Date(start.getTime() + minutes * MINUTE);
   const status = chosen.kind === 'consultation' ? statusOf(chosen.item, now) : null;
   const action = (label: string) =>
@@ -133,6 +138,17 @@ export function EventDetails({
     >
       {t('consultations.customer')}
     </Link>
+  );
+
+  const timesButton = onTimes && ON_SERVER.eventTimes && start.getTime() > now && (
+    <button
+      type="button"
+      onClick={() => onTimes(chosen)}
+      aria-label={action(t('eventTimes.open'))}
+      className={outline}
+    >
+      {t('eventTimes.open')}
+    </button>
   );
 
   let actions: ReactNode;
@@ -149,6 +165,7 @@ export function EventDetails({
         >
           {t('followUpDialog.change')}
         </button>
+        {timesButton}
         <ContactLogButton
           customer={item.customer}
           name={named(item.name)}
@@ -158,6 +175,17 @@ export function EventDetails({
           {t('consultationCalendar.logCall')}
         </ContactLogButton>
         <a href={callHref(item.phone, linphone)} className={primary}>
+          {t('consultationCalendar.callNow')}
+        </a>
+      </>
+    );
+  } else if (chosen.kind === 'visit') {
+    const visit = chosen.item;
+    actions = (
+      <>
+        {(visit.mine || (sellers?.length ?? 0) > 0) && timesButton}
+        {customerLink}
+        <a href={callHref(visit.phone, linphone)} className={primary}>
           {t('consultationCalendar.callNow')}
         </a>
       </>
@@ -282,7 +310,9 @@ export function EventDetails({
           style={
             chosen.kind === 'call'
               ? { boxShadow: 'inset 0 0 0 1.5px var(--text-2)' }
-              : { background: eventColor(type?.color) }
+              : chosen.kind === 'visit'
+                ? { background: 'var(--cal-7)' }
+                : { background: eventColor(type?.color) }
           }
         />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -312,7 +342,7 @@ export function EventDetails({
             name={
               chosen.kind === 'call'
                 ? 'followUp'
-                : chosen.item.mode === 'online'
+                : chosen.kind === 'consultation' && chosen.item.mode === 'online'
                   ? 'phone'
                   : 'building'
             }
@@ -320,14 +350,22 @@ export function EventDetails({
           />
           {chosen.kind === 'call'
             ? t('consultationCalendar.followUp')
-            : [
-                type?.name,
-                t(`mode.${chosen.item.mode}`),
-                chosen.item.minutes !== null &&
+            : chosen.kind === 'visit'
+              ? [
+                  t('visit.onCalendar'),
+                  chosen.item.room && t('visit.room', { room: chosen.item.room }),
                   t('consultationCalendar.minutes', { n: f.number(chosen.item.minutes) }),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              : [
+                  type?.name,
+                  t(`mode.${chosen.item.mode}`),
+                  chosen.item.minutes !== null &&
+                    t('consultationCalendar.minutes', { n: f.number(chosen.item.minutes) }),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
         </li>
         <li className="flex items-center gap-2.5">
           <Icon name="phone" size={16} />
