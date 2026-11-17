@@ -69,6 +69,8 @@ export interface Workflow {
   status: string;
   mode: 'assessment' | 'explore';
   selected_pathways: string[];
+  /** Selected earlier but missing from the adopted catalog: choose again. */
+  unavailable_pathways: string[];
   options: {
     id: string;
     conditions: string[];

@@ -34,7 +34,11 @@ it('uses shared questions, preserves separate scores and records immutable histo
   await user.click(screen.getByRole('button', { name: 'Save a result to history' }));
   const history = screen.getByRole('region', { name: 'Recorded pathway results' });
   await waitFor(() =>
-    expect(within(history).getByText('2026-11-17T09:00:00Z')).toBeInTheDocument(),
+    expect(
+      within(history).getByText(
+        (_, node) => node?.getAttribute('datetime') === '2026-11-17T09:00:00Z',
+      ),
+    ).toBeInTheDocument(),
   );
 });
 
@@ -170,7 +174,59 @@ it('renders recorded history when the current ruleset is unavailable (F08)', asy
   );
   renderApp(`/dev/assessment-workflow?session=${id}`);
   const history = await screen.findByRole('region', { name: 'Recorded pathway results' });
-  expect(await within(history).findByText('2026-11-17T09:00:00Z')).toBeInTheDocument();
+  expect(
+    await within(history).findByText(
+      (_, node) => node?.getAttribute('datetime') === '2026-11-17T09:00:00Z',
+    ),
+  ).toBeInTheDocument();
+});
+
+it('asks for a new selection when the catalog no longer offers a selected pathway', async () => {
+  const fixture = (await import('@/mocks/workflow-fixture.json')).default;
+  const gone = 'configured.retired-program';
+  const submitted: Record<string, unknown>[] = [];
+  server.use(
+    http.get(endpoint, () =>
+      HttpResponse.json({
+        version: 'unified-workflow-3',
+        session_id: id,
+        revision: 4,
+        assessment_date: '2026-11-12',
+        active: false,
+        writable: true,
+        status: 'pathway_unavailable',
+        mode: 'explore',
+        selected_pathways: ['ca-fsw', gone],
+        unavailable_pathways: [gone],
+        options: fixture.options,
+        questions: [],
+        review_questions: [],
+        next_question: null,
+        deferred: [],
+        blocked: [],
+        results: { assessment_date: '2026-11-12', evaluations: {}, pathways: {} },
+        decision_sha256: '4'.repeat(64),
+      }),
+    ),
+    http.post(endpoint, async ({ request }) => {
+      submitted.push((await request.json()) as Record<string, unknown>);
+      return new HttpResponse(null, { status: 409 });
+    }),
+  );
+  const user = userEvent.setup();
+  renderApp(`/dev/assessment-workflow?session=${id}`);
+  expect(
+    await screen.findByText(
+      'One of your selected pathways is no longer offered. Choose your pathways again.',
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/A pathway you selected is not in the current program list/),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('checkbox', { name: 'Canada — Federal Skilled Worker' })).toBeChecked();
+  await user.click(screen.getByRole('button', { name: 'Start or update interview' }));
+  await waitFor(() => expect(submitted).toHaveLength(1));
+  expect(submitted[0]).toMatchObject({ action: 'select', pathways: ['ca-fsw'] });
 });
 
 it('uses count and page_size to reach the 21st recorded result (F07)', async () => {

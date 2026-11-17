@@ -12,6 +12,7 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Pager } from '@/components/ui/Pager';
 import { api, ApiError } from '@/lib/api/client';
 import { toast } from '@/lib/toast';
+import { useFormat } from '@/lib/i18n/useFormat';
 import { CalculatorForm } from './CalculatorForm';
 import { WorkflowResults } from './WorkflowResults';
 import { WorkflowEvidence } from './WorkflowEvidence';
@@ -365,6 +366,7 @@ function QuestionEditor({
 function WorkflowHistoryPanel({ id }: { id: string }) {
   const { t } = useTranslation('assessments');
   const section = useId();
+  const f = useFormat();
   const [page, setPage] = useState(1);
   const history = useQuery(workflowHistoryQuery(id, page));
   return (
@@ -375,7 +377,7 @@ function WorkflowHistoryPanel({ id }: { id: string }) {
       {history.data?.results.map((row) => (
         <details key={row.id}>
           <summary className="min-h-11 cursor-pointer py-3">
-            <bdi>{row.created_at}</bdi>
+            <time dateTime={row.created_at}>{f.dateTime(row.created_at)}</time>
           </summary>
           <WorkflowResults results={row.payload.workflow.results} prefix={`history-${row.id}`} />
         </details>
@@ -432,7 +434,9 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
         <WorkflowHistoryPanel id={id} />
       </>
     );
-  const selected = paths ?? data.selected_pathways;
+  // A pathway the adopted catalog no longer offers can't be selected again.
+  const offered = new Set(data.options.map((option) => option.id));
+  const selected = (paths ?? data.selected_pathways).filter((key) => offered.has(key));
   const send = (action: string) => {
     const request = pending ?? {
       action,
@@ -454,6 +458,9 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
         {t('workflow.draft')} <bdi>{data.assessment_date}</bdi>
       </Notice>
       {!data.writable && <Notice tone="warn">{t('workflow.unavailable')}</Notice>}
+      {data.unavailable_pathways.length > 0 && (
+        <Notice tone="warn">{t('workflow.pathwayUnavailable')}</Notice>
+      )}
       <SectionCard id={section + '-paths'} title={t('workflow.pathways')} variant="panel">
         <fieldset disabled={disabled || !data.writable} className="flex flex-col gap-2">
           {data.options

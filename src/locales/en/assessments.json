@@ -1182,7 +1182,8 @@
       "needs_review": "No further automatic question is available. Review unknown answers and unavailable evidence.",
       "initial_result_available": "Initial results are available for the supported coverage.",
       "implementation_changed": "The pinned interview version is unavailable.",
-      "session_complete": "This assessment is complete; recorded results remain available."
+      "session_complete": "This assessment is complete; recorded results remain available.",
+      "pathway_unavailable": "One of your selected pathways is no longer offered. Choose your pathways again."
     },
     "labels": {
       "ca-fsw": "Canada — Federal Skilled Worker",
@@ -1292,6 +1293,7 @@
     "reviewConflict": "Your draft is preserved. Compare it with the current saved answer, then explicitly save again or discard your draft.",
     "serverAnswer": "Current saved answer:",
     "currentUnavailable": "Current evaluation is unavailable. Recorded results below remain historical results, not current advice.",
-    "scopedQuestion": "{{question}} — {{evaluations}}"
+    "scopedQuestion": "{{question}} — {{evaluations}}",
+    "pathwayUnavailable": "A pathway you selected is not in the current program list. Choose from the available pathways again to continue the interview. Recorded history is kept."
   }
 }

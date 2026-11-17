@@ -33,3 +33,17 @@ Final check results and exact correction commits are recorded in the delivery an
 - Browser F06/F07/F08 checks passed against actual HTTP/CSRF, including Persian history and 390 px layout. The browser run preceded only that last configured-band guard, covered by the final API cases.
 
 Backend implementation correction: `7cacfb1a0` on #341. Panel correction commit is recorded in #123's Git history and the delivery message. G5 remains pending independent re-acceptance.
+
+## Follow-up review corrections (17 November 2026)
+
+A later review of this branch found three more issues; each is fixed here, with a test that failed before the fix.
+
+| Finding | Correction |
+| --- | --- |
+| R1: adopting a newer catalog that drops a selected pathway made every workflow read and write fail (HTTP 500), with no way to choose again | The workflow evaluates only the selected pathways that are still offered and lists the others in `unavailable_pathways`, with status `pathway_unavailable`. Until the user selects again, answers, scenarios, pause/resume and recording return 409; selection stays possible and recorded history stays readable. The panel shows a notice and leaves the removed pathway out of the new selection. |
+| R3: an unsupported coverage window without a stated reason was reported as `not_applicable` | It is reported as `coverage_unavailable`; `not_applicable` now means only that the pathway's applicability rule does not apply. |
+| R4: the panel showed recorded history times as raw ISO timestamps | They use the panel's locale formatting (Jalali calendar in Persian) inside a `<time>` element. |
+
+The contract version is now `unified-workflow-3` (new `unavailable_pathways` field and status). Changing the workflow module also changes its implementation identity, so existing local workflow sessions become read-only and need the existing transfer path, as before. Still open for a decision: the workflow identity hashes whole files, so even a comment-only edit has this effect (compare the master plan's section 2 finding about `records.py`).
+
+Checks: backend `pytest --nomigrations pathways/calculators/tests api/tests/test_assessment*.py api/tests/test_calculator*.py api/tests/test_phase*.py api/tests/test_comparison_scenarios.py`: 555 passed, 73 subtests (PostgreSQL 16, Python 3.14.6). Panel: lint, typecheck and i18n check pass; assessment and page-data tests 197 passed. Not rerun: real-browser RTL/mobile/keyboard checks.
