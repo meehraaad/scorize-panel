@@ -92,7 +92,6 @@
       "late": "Follow-up today at {{time}} · past due",
       "position": "{{n}} of {{total}} urgent items",
       "source": "Source: {{source}}",
-      "customer": "Customer page",
       "customerName": "{{name}}'s page",
       "after": "After the call, log the result in one click:",
       "outcome": {
@@ -314,7 +313,6 @@
       "none": "Nobody matches that.",
       "addNew": "Add as a new lead",
       "noName": "No name",
-      "open": "Open page",
       "other": "{{seller}}'s customer"
     }
   },
@@ -782,7 +780,6 @@
     "remind": "Reminder message",
     "remindText": "Hi {{name}}, a reminder that your {{type}} is on {{when}}. Scorize",
     "link": "Session link",
-    "customer": "Customer page",
     "actionsFor": "{{action}}: {{name}}",
     "empty": "No consultations in this range.",
     "metaShort": "{{type}} · {{mode}}",
@@ -820,7 +817,6 @@
     "modeFilter": "Format",
     "modeAll": "All",
     "layers": "Show on the calendar",
-    "unlogged": "{{n}} sessions not logged",
     "form": {
       "done": "Filled in the tablet form",
       "missing": "Hasn't filled in the tablet form",

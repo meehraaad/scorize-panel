@@ -131,16 +131,6 @@ export function EventDetails({
   const status = chosen.kind === 'consultation' ? statusOf(chosen.item, now) : null;
   const action = (label: string) =>
     t('consultations.actionsFor', { action: label, name: named(item.name) });
-  const customerLink = (
-    <Link
-      to={customerPath(item.customer)}
-      aria-label={action(t('consultations.customer'))}
-      className={outline}
-    >
-      {t('consultations.customer')}
-    </Link>
-  );
-
   // A call, or a meeting that is the seller's (any for a sales manager), still ahead.
   const timed: TimedEvent | null =
     !editTimes || !ON_SERVER.eventTimes || start.getTime() <= now
@@ -181,12 +171,9 @@ export function EventDetails({
   } else if (chosen.kind === 'visit') {
     const visit = chosen.item;
     actions = (
-      <>
-        {customerLink}
-        <a href={callHref(visit.phone, linphone)} className={primary}>
-          {t('consultationCalendar.callNow')}
-        </a>
-      </>
+      <a href={callHref(visit.phone, linphone)} className={primary}>
+        {t('consultationCalendar.callNow')}
+      </a>
     );
   } else {
     const consultation = chosen.item;
@@ -265,13 +252,8 @@ export function EventDetails({
       </span>
     );
     actions = {
-      done: customerLink,
-      need: (
-        <>
-          {customerLink}
-          {log(primary)}
-        </>
-      ),
+      done: null,
+      need: log(primary),
       live: (
         <>
           {log(outline)}
@@ -281,7 +263,6 @@ export function EventDetails({
       soon: (
         <>
           {formLink}
-          {customerLink}
           <StartAction item={consultation} status="soon" />
         </>
       ),
@@ -289,7 +270,6 @@ export function EventDetails({
         <>
           {formLink}
           {reminder}
-          {customerLink}
         </>
       ),
     }[status ?? 'upcoming'];
@@ -418,7 +398,7 @@ export function EventDetails({
         )}
       </ul>
       {statusLine}
-      <div className="flex flex-wrap justify-end gap-2">{actions}</div>
+      {actions && <div className="flex flex-wrap justify-end gap-2">{actions}</div>}
     </section>
   );
 }

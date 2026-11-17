@@ -89,9 +89,13 @@ export function NextUpCard({
       <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
         <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-2">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-display text-2xl font-bold lg:text-[30px] lg:leading-tight">
+            <Link
+              to={customerPath(customer)}
+              aria-label={t('today.next.customerName', { name })}
+              className="font-display text-2xl font-bold text-on-hero underline-offset-4 hover:underline focus-visible:underline lg:text-[30px] lg:leading-tight"
+            >
               {name}
-            </span>
+            </Link>
             <ScoreChip score={score} />
           </div>
           {reason && <p className="m-0 text-[15px] leading-8 text-on-hero-2">{reason}</p>}
@@ -114,14 +118,7 @@ export function NextUpCard({
             <Icon name="phone" size={20} />
             {t('callName', { name })}
           </button>
-          <div className="flex items-center gap-1">
-            <Link
-              to={customerPath(customer)}
-              aria-label={t('today.next.customerName', { name })}
-              className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 text-sm font-semibold text-on-hero shadow-[inset_0_0_0_1px_var(--hero-line)] hover:bg-hero-raised"
-            >
-              {t('today.next.customer')}
-            </Link>
+          <div className="flex items-center justify-end gap-1">
             {MESSAGE_CHANNELS.map((channel) => (
               <IconLink
                 key={channel}

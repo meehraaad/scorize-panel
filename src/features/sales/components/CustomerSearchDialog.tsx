@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
-import { buttonClass } from '@/components/ui/buttonStyles';
 import { Dialog } from '@/components/ui/Dialog';
 import { SearchField } from '@/components/ui/Filters';
 import { SkeletonRows } from '@/components/ui/Skeleton';
@@ -18,7 +17,7 @@ const SEARCH_DELAY_MS = 300;
 
 /**
  * Finding anyone with an account by name, email or phone, the seller's or not, like the old CRM's
- * search (S63). Every one opens their page, the seller's or not; another seller's also names them.
+ * search (S63). Each name opens their page, the seller's or not; another seller's also names them.
  * Nobody found: the typed person can be added as a new lead.
  */
 export function CustomerSearchDialog({
@@ -75,9 +74,13 @@ export function CustomerSearchDialog({
             {rows.map((row) => (
               <li key={row.customer} className="flex flex-wrap items-center gap-3 py-3">
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold [overflow-wrap:anywhere]">
-                    {row.name || t('leads.find.noName')}
-                  </span>
+                  <Link
+                    to={customerPath(row.customer)}
+                    onClick={onClose}
+                    className="-my-2.5 inline-flex min-h-11 items-center self-start text-[15px] font-semibold [overflow-wrap:anywhere] text-text underline-offset-4 hover:text-primary-text hover:underline focus-visible:underline"
+                  >
+                    {row.name.trim() || t('leads.find.noName')}
+                  </Link>
                   <span className="text-xs [overflow-wrap:anywhere] text-text-2">
                     {[
                       row.phone && <bdi key="phone">{formatPhone(row.phone)}</bdi>,
@@ -93,13 +96,6 @@ export function CustomerSearchDialog({
                     </span>
                   )}
                 </span>
-                <Link
-                  to={customerPath(row.customer)}
-                  onClick={onClose}
-                  className={buttonClass('outline', 'inline-flex flex-none items-center')}
-                >
-                  {t('leads.find.open')}
-                </Link>
               </li>
             ))}
           </ul>

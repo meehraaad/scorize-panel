@@ -92,10 +92,10 @@ describe('sales: my consultations on a week calendar', () => {
   it('only the unlogged, and a type hidden', async () => {
     const user = userEvent.setup();
     const calendar = await open();
-    await user.click(screen.getByRole('button', { name: '۲ جلسه‌ی ثبت‌نشده' }));
-    expect(screen.getByRole('checkbox', { name: 'فقط بدون ثبت جلسه' })).toBeChecked();
+    await user.click(screen.getByRole('checkbox', { name: 'فقط بدون ثبت جلسه ۲' }));
+    expect(screen.getByRole('checkbox', { name: 'فقط بدون ثبت جلسه ۲' })).toBeChecked();
     expect(within(calendar).getAllByRole('button', { pressed: false })).toHaveLength(2);
-    await user.click(screen.getByRole('checkbox', { name: 'فقط بدون ثبت جلسه' }));
+    await user.click(screen.getByRole('checkbox', { name: 'فقط بدون ثبت جلسه ۲' }));
     await user.click(screen.getByRole('checkbox', { name: /مشاوره‌ی ویزای تحصیلی/ }));
     expect(within(calendar).queryAllByRole('button', { name: /ویزای تحصیلی/ })).toHaveLength(0);
   });

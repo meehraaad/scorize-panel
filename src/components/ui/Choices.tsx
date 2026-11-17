@@ -131,11 +131,14 @@ export function TogglePill({
   checked,
   onChange,
   disabled = false,
+  badge,
 }: {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  /** A small count after the label (how many it would show), read with it. */
+  badge?: string | undefined;
 }) {
   return (
     <label
@@ -150,6 +153,13 @@ export function TogglePill({
       />
       {checked && <Icon name="check" size={16} />}
       {label}
+      {/* A space so the label and count read as two words (flex drops it on screen). */}
+      {badge && ' '}
+      {badge && (
+        <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-warn-tint px-1.5 text-xs font-bold text-warn tabular-nums">
+          {badge}
+        </span>
+      )}
     </label>
   );
 }
