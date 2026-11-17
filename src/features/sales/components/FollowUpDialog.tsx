@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { ApiError } from '@/lib/api/client';
-import { toValue } from '@/lib/calendar';
+import { ON_SERVER } from '@/lib/applicant/onServer';
+import { parseValue, toValue } from '@/lib/calendar';
 import { toast } from '@/lib/toast';
 import { useSetFollowUp, type LeadMatch } from '../api';
 import { CustomerPicker } from './CustomerPicker';
-import { followAtOf, type Follow } from '../followUp';
+import { followAtOf, followOnOf, type Follow } from '../followUp';
 import { FollowUpNow } from './FollowUpNow';
 import { FollowUpWhen } from './FollowUpWhen';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -37,7 +38,7 @@ export function FollowUpDialog({
   lead?: { id: number; name: string } | undefined;
   /** The open follow-up's text: shown on top and the text field's start. */
   current?: string | undefined;
-  /** False: the follow-up has a day but no hour (`at` is its 23:59): no time is picked for it. */
+  /** False: the follow-up has a day but no hour (`at` is its 23:59): it starts on that day only. */
   timed?: boolean | undefined;
   /** "I talked to them": opens the contact log instead. */
   onLog?: (() => void) | undefined;
@@ -47,32 +48,42 @@ export function FollowUpDialog({
   const f = useFormat();
   const save = useSetFollowUp();
   const [picked, setPicked] = useState<LeadMatch | null>(null);
-  const start = timed ? at : null;
+  // A day with no hour starts on that day (`dayFollowUps`), else on a quick time as before.
+  const start = timed || ON_SERVER.dayFollowUps ? at : null;
   const [follow, setFollow] = useState<Follow>(start ? 'other' : 'tomorrow');
-  const [date, setDate] = useState(() => (start ? toValue(start, true) : ''));
+  const [date, setDate] = useState(() => (start ? toValue(start, timed) : ''));
   const [text, setText] = useState(current ?? '');
   const [checked, setChecked] = useState(false);
   const [openedAt] = useState(() => Date.now());
   const target = lead?.id ?? picked?.id ?? null;
   const name = lead?.name ?? picked?.name ?? '';
   const when = followAtOf(follow, date);
-  const past = when !== null && new Date(when).getTime() < openedAt;
+  const on = followOnOf(follow, date);
+  const day = on ? parseValue(on) : null;
+  const past =
+    when !== null
+      ? new Date(when).getTime() < openedAt
+      : on !== null && on < toValue(new Date(openedAt), false);
   /** Moving the customer's follow-up: the time it has now. */
   const moving = lead ? at : null;
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setChecked(true);
-    if (target === null || !when || past) return;
+    if (target === null || (!when && !on) || past) return;
     // An unchanged text keeps the follow-up's own (Django keeps it when none is sent).
     const changed = text.trim() !== (current ?? '').trim();
     save.mutate(
-      { lead: target, at: when, text: changed ? text.trim() : '' },
+      { lead: target, at: when, on, text: changed ? text.trim() : '' },
       {
         onSuccess: () => {
           toast.success(
             t(moving ? 'followUpDialog.moved' : 'followUpDialog.saved', {
-              when: t('followUpDialog.when', { day: f.weekday(when), time: f.time(when) }),
+              when: when
+                ? t('followUpDialog.when', { day: f.weekday(when), time: f.time(when) })
+                : day
+                  ? f.weekday(day)
+                  : '',
             }),
           );
           onClose();
@@ -104,7 +115,9 @@ export function FollowUpDialog({
           <Button type="submit" form="follow-up" disabled={save.isPending}>
             {when && !past
               ? t('followUpDialog.saveAt', { day: f.weekdayName(when), time: f.time(when) })
-              : t(moving ? 'followUpDialog.move' : 'followUpDialog.save')}
+              : day && !past
+                ? t('followUpDialog.saveOn', { day: f.weekday(day) })
+                : t(moving ? 'followUpDialog.move' : 'followUpDialog.save')}
           </Button>
           <Button variant="outline" onClick={onClose}>
             {t('cancel')}
@@ -133,7 +146,7 @@ export function FollowUpDialog({
               if (next.date !== undefined) setDate(next.date);
             }}
           />
-          {checked && (!when || past) && (
+          {checked && ((!when && !on) || past) && (
             <p role="alert" className="m-0 text-sm text-danger">
               {t(past ? 'followUpDialog.past' : 'followUpDialog.dateRequired')}
             </p>

@@ -5,13 +5,16 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { FOLLOWS, followAtOf, type Follow } from '../followUp';
+import { ON_SERVER } from '@/lib/applicant/onServer';
+import { parseValue } from '@/lib/calendar';
+import { FOLLOWS, followAtOf, followOnOf, isDayOnly, type Follow } from '../followUp';
 import { FollowUpSlots } from './FollowUpSlots';
 
 /**
  * When to follow up, the same everywhere a seller sets one (the contact log, the follow-up window):
  * a few quick times, or «از تقویم», the seller's own week where a tap on a free spot picks the
- * time. The week also has an exact time field, the keyboard way to pick one.
+ * time. The week also has an exact time field, the keyboard way to pick one. «فقط روز» picks a day
+ * with no hour instead (due by its end), for a seller who doesn't want to fix a time yet.
  */
 export function FollowUpWhen({
   follow,
@@ -22,7 +25,7 @@ export function FollowUpWhen({
   hideLegend = true,
 }: {
   follow: Follow;
-  /** `YYYY-MM-DDTHH:mm`, read when `follow` is `other`. */
+  /** `YYYY-MM-DDTHH:mm`, or `YYYY-MM-DD` for a day with no hour; read when `follow` is `other`. */
   date: string;
   onChange: (change: { follow: Follow; date?: string }) => void;
   /** The customer, named in the week's title. */
@@ -33,11 +36,17 @@ export function FollowUpWhen({
   const { t } = useTranslation('sales');
   const f = useFormat();
   const [picking, setPicking] = useState(false);
+  const [mode, setMode] = useState<'time' | 'day'>(() =>
+    follow === 'other' && isDayOnly(date) ? 'day' : 'time',
+  );
   const followAt = followAtOf(follow, date);
+  const followOn = followOnOf(follow, date);
+  const followDay = followOn ? parseValue(followOn) : null;
   const pick = (value: string) => {
     onChange({ follow: 'other', date: value });
     setPicking(false);
   };
+  const picked = follow === 'other' && (followAt || followDay);
 
   return (
     <>
@@ -53,10 +62,13 @@ export function FollowUpWhen({
         extra={
           <button
             type="button"
-            onClick={() => setPicking(true)}
+            onClick={() => {
+              setMode(followOn ? 'day' : 'time');
+              setPicking(true);
+            }}
             aria-pressed={follow === 'other'}
             className={`inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-              follow === 'other' && followAt
+              picked
                 ? 'bg-hero text-on-hero'
                 : 'text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint'
             }`}
@@ -67,7 +79,9 @@ export function FollowUpWhen({
                   day: f.weekdayName(followAt),
                   time: f.time(followAt),
                 })
-              : t('customer.logDialog.fromCalendar')}
+              : followDay
+                ? t('customer.logDialog.followDay', { day: f.weekday(followDay) })
+                : t('customer.logDialog.fromCalendar')}
           </button>
         }
       />
@@ -81,15 +95,39 @@ export function FollowUpWhen({
       >
         {picking && (
           <div className="flex flex-col gap-4">
-            <FollowUpSlots value={follow === 'other' ? date : ''} onChange={pick} />
-            <DatePicker
-              time
-              only="future"
-              minuteStep={15}
-              label={t('followUpWhen.exact')}
-              value={follow === 'other' ? date : ''}
-              onChange={pick}
-            />
+            {ON_SERVER.dayFollowUps && (
+              <ChoiceGroup
+                legend={t('followUpWhen.mode')}
+                look="segmented"
+                value={mode}
+                onChange={setMode}
+                options={[
+                  { value: 'time', label: t('followUpWhen.withTime') },
+                  { value: 'day', label: t('followUpWhen.dayOnly') },
+                ]}
+              />
+            )}
+            {mode === 'time' ? (
+              <>
+                <FollowUpSlots value={followAt && follow === 'other' ? date : ''} onChange={pick} />
+                <DatePicker
+                  time
+                  only="future"
+                  minuteStep={15}
+                  label={t('followUpWhen.exact')}
+                  value={followAt && follow === 'other' ? date : ''}
+                  onChange={pick}
+                />
+              </>
+            ) : (
+              <DatePicker
+                only="future"
+                label={t('followUpWhen.day')}
+                hint={t('followUpWhen.dayHint')}
+                value={followOn ?? ''}
+                onChange={pick}
+              />
+            )}
           </div>
         )}
       </Dialog>

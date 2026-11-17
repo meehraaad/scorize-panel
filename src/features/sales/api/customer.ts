@@ -202,8 +202,10 @@ export interface ContactLog {
   lost_reason?: LostReason;
   notes: string;
   customer_summary: string;
-  /** Creates "my follow-up" at this time; null: none (a lost lead). */
+  /** Creates "my follow-up" at this time; null: none (a lost lead), or `follow_up_on`. */
   follow_up_at: string | null;
+  /** Instead of a time: a day with no hour (`YYYY-MM-DD`, due by its end). */
+  follow_up_on?: string;
   email_summary: boolean;
   /** Text the customer that a note waits in their panel (`supports.summary_sms`). */
   sms_summary?: boolean;

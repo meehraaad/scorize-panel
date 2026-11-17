@@ -1311,6 +1311,7 @@ export const salesHandlers = [
       ids: number[];
       stage?: LeadStage;
       follow_up_at?: string;
+      follow_up_on?: string;
       add_tag?: number;
       remove_tag?: number;
     };
@@ -1332,7 +1333,11 @@ export const salesHandlers = [
     const open = data.customers.filter(
       (entry) => body.ids.includes(entry.lead.id) && openStages.includes(entry.lead.stage),
     );
-    if (body.follow_up_at && open.length === 0) {
+    // A day with no hour is due by its end (Django's 23:59).
+    const followUp = body.follow_up_on
+      ? new Date(`${body.follow_up_on}T23:59`).toISOString()
+      : body.follow_up_at;
+    if (followUp && open.length === 0) {
       return HttpResponse.json({ detail: 'no open lead', code: 'no_open_lead' }, { status: 409 });
     }
     for (const item of open) {
@@ -1340,7 +1345,7 @@ export const salesHandlers = [
         item.lead.stage = body.stage;
         item.lead.stage_since = new Date().toISOString();
       }
-      if (body.follow_up_at) item.lead.follow_up_at = body.follow_up_at;
+      if (followUp) item.lead.follow_up_at = followUp;
     }
     return new HttpResponse(null, { status: 204 });
   }),
