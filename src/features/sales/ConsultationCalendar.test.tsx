@@ -70,7 +70,7 @@ describe('sales: my consultations on a week calendar', () => {
   it('online, later today: a reminder; not logged: the session log', async () => {
     const user = userEvent.setup();
     const calendar = await open();
-    await user.click(within(calendar).getByRole('button', { name: /آنلاین، پیش رو/ }));
+    await user.click(within(calendar).getByRole('button', { name: /تلفنی، پیش رو/ }));
     let card = within(calendar).getByRole('dialog');
     expect(within(card).getByRole('link', { name: 'یادآوری در واتساپ' })).toBeInTheDocument();
     expect(within(card).queryByRole('link', { name: 'فرستادن لینک فرم' })).toBeNull();
@@ -106,13 +106,13 @@ describe('sales: my consultations on a week calendar', () => {
     const blocks = () =>
       within(calendar)
         .queryAllByRole('button', { pressed: false })
-        .filter((block) => /، (آنلاین|حضوری)، /.test(block.getAttribute('aria-label') ?? ''));
+        .filter((block) => /، (تلفنی|حضوری)، /.test(block.getAttribute('aria-label') ?? ''));
     await user.click(screen.getByRole('button', { name: /^حضوری/ }));
     expect(blocks().every((block) => /حضوری/.test(block.getAttribute('aria-label') ?? ''))).toBe(
       true,
     );
     expect(blocks()).toHaveLength(3);
-    await user.click(screen.getByRole('button', { name: /^آنلاین/ }));
+    await user.click(screen.getByRole('button', { name: /^تلفنی/ }));
     expect(blocks().some((block) => /حضوری/.test(block.getAttribute('aria-label') ?? ''))).toBe(
       false,
     );

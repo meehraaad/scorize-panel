@@ -575,3 +575,10 @@ Implemented alongside this panel in `shamrad/lang`: opt-in `GET/POST /api/sales/
 CPU worker transcribes Persian; recordings stay off public storage. Deploy the backend speech
 override and panel headers together to enable contact/call note dictation. See backend
 `docs/seller-voice.md` and panel `docs/backend-integration.md`.
+
+## Quick call on phone consultations (2026-11-17)
+
+`GET /api/sales/v1/today/`: each of `consultations` also sends `phone` (the customer's
+`phone_number`, `''` when none), like the consultations list already does
+(`api/sales/v1/seller.py`, `TodayConsultationSerializer`). Until then the dashboard's quick-call
+button on a phone (`online`) consultation stays hidden; the consultations page already has it.

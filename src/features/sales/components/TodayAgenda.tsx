@@ -14,6 +14,7 @@ import { addDays, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { useConfirmReceipt } from '@/lib/sales/api';
+import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
@@ -66,7 +67,8 @@ const TILE: Record<ChipTone, string> = {
   neutral: 'bg-canvas text-text',
 };
 
-const small = 'h-11 w-full px-4 text-sm sm:w-32';
+/** A call button with only its icon (its name says whom it calls). */
+const callIcon = 'size-11 p-0';
 /** A card's title: its link or button stretches over the whole card. */
 const cardTitle =
   'cursor-pointer text-start text-[15px] font-semibold outline-none after:absolute after:inset-0 after:rounded-2xl';
@@ -330,6 +332,7 @@ function AgendaRow({
   const f = useFormat();
   const s = useSalesFormat();
   const time = (at: number) => f.time(new Date(at));
+  const linphone = useLinphoneDial();
 
   switch (item.kind) {
     case 'lead': {
@@ -351,10 +354,9 @@ function AgendaRow({
               start={{ channel: 'call' }}
               phone={lead.phone}
               aria-label={t('callName', { name: named(lead.name) })}
-              className={buttonClass('primary', small)}
+              className={buttonClass('primary', callIcon)}
             >
-              <Icon name="phone" size={16} />
-              {t('call')}
+              <Icon name="phone" size={18} />
             </ContactLogButton>
           }
         />
@@ -393,10 +395,9 @@ function AgendaRow({
               start={{ channel: 'call' }}
               phone={call.phone}
               aria-label={t('callName', { name: named(call.name) })}
-              className={buttonClass(late ? 'primary' : 'outline', small)}
+              className={buttonClass(late ? 'primary' : 'outline', callIcon)}
             >
-              <Icon name="phone" size={16} />
-              {t('call')}
+              <Icon name="phone" size={18} />
             </ContactLogButton>
           }
         />
@@ -423,6 +424,22 @@ function AgendaRow({
           done={status === 'done'}
           highlight={status === 'live' || status === 'upcoming'}
           onOpen={onOpen}
+          action={
+            consultation.mode === 'online' &&
+            consultation.phone &&
+            status !== 'done' && (
+              <a
+                href={callHref(consultation.phone, linphone)}
+                aria-label={t('callName', { name: named(consultation.name) })}
+                className={buttonClass(
+                  status === 'live' || status === 'need' ? 'primary' : 'outline',
+                  callIcon,
+                )}
+              >
+                <Icon name="phone" size={18} />
+              </a>
+            )
+          }
         />
       );
     }
@@ -452,10 +469,9 @@ function AgendaRow({
                 name={named(person.name)}
                 start={{ channel: 'call' }}
                 aria-label={t('callName', { name: named(person.name) })}
-                className={buttonClass(due ? 'primary' : 'outline', small)}
+                className={buttonClass(due ? 'primary' : 'outline', callIcon)}
               >
-                <Icon name="phone" size={16} />
-                {t('call')}
+                <Icon name="phone" size={18} />
               </ContactLogButton>
             )
           }
@@ -522,7 +538,7 @@ function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }
       action={
         <Button
           variant="outline"
-          className={small}
+          className="h-11 px-4 text-sm"
           aria-label={t('today.receipts.confirmName', { name: named(receipt.name) })}
           disabled={confirm.isPending}
           onClick={() =>
@@ -623,7 +639,7 @@ function Row({
         {status && <span className="text-xs font-semibold text-text-2">{status}</span>}
       </span>
       {when && <span className="text-[13px] font-semibold whitespace-nowrap">{when}</span>}
-      {action && <span className="relative z-10 w-full flex-none sm:w-auto">{action}</span>}
+      {action && <span className="relative z-10 flex-none max-sm:ms-auto">{action}</span>}
     </li>
   );
 }

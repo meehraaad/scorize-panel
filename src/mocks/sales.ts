@@ -635,6 +635,7 @@ function todayOf(data: SalesState): TodayData {
       follow_up_at: item.lead.follow_up_at,
     }));
   const nameOf = (id: number) => data.customers.find((item) => item.id === id)?.name ?? '';
+  const phoneOf = (id: number) => data.customers.find((item) => item.id === id)?.phone ?? '';
   return {
     instalments: instalmentsToday(data),
     hot: fresh
@@ -663,6 +664,7 @@ function todayOf(data: SalesState): TodayData {
         name: nameOf(item.customer),
         type: item.type.name,
         mode: item.mode,
+        phone: phoneOf(item.customer),
         starts_at: item.starts_at,
         minutes: item.minutes,
         logged: item.logged,

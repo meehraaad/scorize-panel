@@ -50,7 +50,7 @@
   "callName": "Call {{name}}",
   "messageTo": "{{channel}} to {{name}}",
   "mode": {
-    "online": "Online",
+    "online": "Phone",
     "in_person": "In person"
   },
   "millionToman": "{{n}} million toman",

@@ -50,7 +50,7 @@
   "callName": "تماس با {{name}}",
   "messageTo": "{{channel}} به {{name}}",
   "mode": {
-    "online": "آنلاین",
+    "online": "تلفنی",
     "in_person": "حضوری"
   },
   "millionToman": "{{n}} میلیون تومان",
