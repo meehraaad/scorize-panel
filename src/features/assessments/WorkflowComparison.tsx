@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { SectionCard } from '@/components/ui/SectionCard';
 import type { WorkflowResults as Results } from './workflowApi';
+import { useWorkflowNames } from './workflowNames';
 
 const TONES: Record<string, ChipTone> = {
   met: 'good',
@@ -25,8 +26,7 @@ export function WorkflowComparison({ results }: { results: Results }) {
   const section = useId();
   const labels = t('workflow.labels', { returnObjects: true }) as Record<string, string>;
   const states = t('workflow.states', { returnObjects: true }) as Record<string, string>;
-  const checks = t('workflow.checks', { returnObjects: true }) as Record<string, string>;
-  const fields = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
+  const names = useWorkflowNames();
   const locale = i18n.language === 'fa' ? 'fa' : 'en';
   const state = (id: string) => states[id] ?? t('workflow.review');
   const preferenceState = (value?: string) => state(value ?? 'needs_preferences');
@@ -37,20 +37,17 @@ export function WorkflowComparison({ results }: { results: Results }) {
       <p>{t('workflow.comparison.meaning')}</p>
       <ul className="flex min-w-0 flex-col gap-4">
         {paths.map((path) => {
-          const conditions = path.conditions.map((id) => results.evaluations[id]).filter(Boolean);
+          const conditions = path.conditions.flatMap((id) => results.evaluations[id] ?? []);
           const scores = path.scores
             .map((id) => results.evaluations[id])
             .filter((row) => row && row.score.status !== 'not_applicable');
           const open = conditions.flatMap((row) => [
-            ...(row?.coverage.status !== 'supported' && row?.coverage.reason
+            ...(row.coverage.status !== 'supported' && row.coverage.reason
               ? [state(row.coverage.reason)]
               : []),
-            ...Object.entries(row?.conditions.checks ?? {})
+            ...Object.entries(row.conditions.checks)
               .filter(([, value]) => OPEN.has(value))
-              .map(
-                ([key, value]) =>
-                  `${checks[key] ?? fields[key] ?? t('workflow.condition')}: ${state(value)}`,
-              ),
+              .map(([key, value]) => `${names.part(row, key)}: ${state(value)}`),
           ]);
           const unknowns = path.financial_fit.unknowns ?? [];
           const criteria = path.preferences?.reasons.checks ?? [];
@@ -90,9 +87,10 @@ export function WorkflowComparison({ results }: { results: Results }) {
                           (row) =>
                             row && (
                               <li key={row.id}>
-                                {labels[row.id] ?? t('workflow.configured')}:{' '}
+                                {names.evaluator(row.id, row)}:{' '}
                                 <bdi>{row.score.value ?? t('calculator.unknown')}</bdi> ·{' '}
                                 {state(row.score.status)}
+                                {names.passMark(row) && <> · {names.passMark(row)}</>}
                               </li>
                             ),
                         )}

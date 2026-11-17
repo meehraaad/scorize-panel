@@ -3,6 +3,7 @@ import { safeHref } from '@/lib/url';
 import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import type { WorkflowResults as Results } from './workflowApi';
+import { useWorkflowNames } from './workflowNames';
 
 function sourceLinks(value: unknown): { title: string; url: string }[] {
   if (!value || typeof value !== 'object') return [];
@@ -18,7 +19,7 @@ export function WorkflowResults({ results, prefix }: { results: Results; prefix:
   const labels = t('workflow.labels', { returnObjects: true }) as Record<string, string>;
   const states = t('workflow.states', { returnObjects: true }) as Record<string, string>;
   const fields = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
-  const checks = t('workflow.checks', { returnObjects: true }) as Record<string, string>;
+  const names = useWorkflowNames();
   const locale = i18n.language === 'fa' ? 'fa' : 'en';
   const preferenceState = (value?: string) => state(value ?? 'needs_preferences');
   const label = (id: string) => labels[id] ?? t('workflow.configured');
@@ -43,7 +44,7 @@ export function WorkflowResults({ results, prefix }: { results: Results; prefix:
             if (!row) return null;
             return (
               <article key={id} className="border-line flex min-w-0 flex-col gap-2 border-t pt-3">
-                <h3 className="font-semibold">{label(id)}</h3>
+                <h3 className="font-semibold">{names.evaluator(id, row, true)}</h3>
                 <p>
                   {t('workflow.coverage')}: {state(row.coverage.status)}
                 </p>
@@ -52,6 +53,7 @@ export function WorkflowResults({ results, prefix }: { results: Results; prefix:
                   <p>
                     {t('workflow.score')}: <bdi>{row.score.value ?? t('calculator.unknown')}</bdi> ·{' '}
                     {state(row.score.status)}
+                    {names.passMark(row) && <> · {names.passMark(row)}</>}
                   </p>
                 )}
                 {row.missing_facts.length > 0 && (
@@ -67,15 +69,7 @@ export function WorkflowResults({ results, prefix }: { results: Results; prefix:
                         row.kind === 'score' ? row.score.breakdown : row.conditions.checks,
                       ).map(([key, value]) => (
                         <div key={key} className="flex flex-wrap justify-between gap-2">
-                          <dt>
-                            {checks[key] ??
-                              fields[key] ??
-                              t(
-                                row.kind === 'score'
-                                  ? 'workflow.scoreComponent'
-                                  : 'workflow.condition',
-                              )}
-                          </dt>
+                          <dt>{names.part(row, key)}</dt>
                           <dd>
                             {row.kind === 'score' ? (
                               <bdi>{value ?? t('calculator.unknown')}</bdi>

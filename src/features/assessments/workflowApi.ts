@@ -31,6 +31,14 @@ export interface EvaluatorResult {
     system: string | null;
     value: number | null;
     breakdown: Record<string, number | null>;
+    /** Configured programs only: null when no pass mark is declared or it is unknown. */
+    pass_mark_met?: boolean | null;
+  };
+  /** Content labels of configured programs; empty for specialists (named by the panel). */
+  labels?: {
+    title?: { fa: string; en: string } | null;
+    checks?: Record<string, string>;
+    components?: Record<string, string>;
   };
   missing_facts: string[];
   evidence_states: Record<

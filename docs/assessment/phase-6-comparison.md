@@ -11,11 +11,12 @@
   - which declared preferences (goal, destination) match, do not match, or are not declared yet.
     It appears when two or more pathways are selected.
 - Results whose evaluations carry the backend's `synthetic_not_law` limitation show a notice in the comparison and on their card: synthetic test content, not law.
+- Configured programs and extensions are named only by their reviewed content: the backend's `labels` (program title, requirement and score component labels). The panel's own Canadian and Australian labels are used only for specialist evaluators, so a configured check that shares an id (for example `experience`) never borrows another program's name; one without a label shows the generic "Condition". `useWorkflowNames` (`workflowNames.ts`) does this for both the comparison and the cards. Configured scores also show whether the pass mark was reached.
 - New state labels for financial and extension reasons (`financial_mapping_required`, `extension_program_mismatch`, …) in Persian and English.
 - `WorkflowPage` itself needed no change for a third country: a configured program's pathway title, questions (with their server labels) and results render from server data.
 
 ## Tests
 
-`Workflow.test.tsx` adds a case with Canada and a synthetic configured third-country program: the comparison names each pathway, keeps the CRS in its own system, shows the financial unknown and the preference criteria, marks the synthetic content, and the third country's question renders from its configured label. Full panel suite: 752 passed; lint, typecheck and the translation check pass.
+`Workflow.test.tsx` adds a case with Canada and a synthetic configured third-country program: the comparison names each pathway, names configured conditions and scores from their content labels without borrowing Canadian ones, shows the pass mark, keeps the CRS in its own system, shows the financial unknown and the preference criteria, marks the synthetic content, and the third country's question renders from its configured label. Full panel suite: 752 passed; lint, typecheck and the translation check pass.
 
 Not run: a real-browser check of the comparison at 390 px, in RTL and with the keyboard. The layout is a stacked list (no table), so it should not overflow, but that is unverified.

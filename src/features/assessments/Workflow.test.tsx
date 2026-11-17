@@ -295,12 +295,18 @@ it('explains pathways side by side and shows a configured third country from ser
   if (!template) throw new Error('Expected fixture evaluation');
   const id3 = 'configured.nz-synthetic-skilled';
   const limitations = ['configured_coverage_only', 'synthetic_not_law'];
+  const title = { en: 'Synthetic skilled program (test data, not law)', fa: 'برنامه آزمایشی' };
   results.evaluations[`${id3}.eligibility`] = {
     ...template,
     id: `${id3}.eligibility`,
     conditions: {
       status: 'insufficient_information',
-      checks: { adult: 'met', language: 'unknown' },
+      // `experience` is also a Canadian check id: the program's own (missing) label must not borrow it.
+      checks: { adult: 'met', language: 'unknown', experience: 'unknown' },
+    },
+    labels: {
+      title,
+      checks: { adult: 'Synthetic minimum age', language: 'Synthetic language minimum' },
     },
     limitations,
   };
@@ -310,16 +316,18 @@ it('explains pathways side by side and shows a configured third country from ser
     kind: 'score',
     conditions: { status: 'not_applicable', checks: {} },
     score: {
-      status: 'partial',
+      status: 'complete',
       system: 'configured:nz-synthetic-skilled',
-      value: null,
-      breakdown: {},
+      value: 30,
+      breakdown: { experience: 20, language: 10 },
+      pass_mark_met: true,
     },
+    labels: { title, components: { experience: 'Synthetic experience points' } },
     limitations,
   };
   results.pathways[id3] = {
     id: id3,
-    title: { en: 'Synthetic skilled program (test data, not law)', fa: 'برنامه آزمایشی' },
+    title,
     status: 'insufficient_information',
     conditions: [`${id3}.eligibility`],
     scores: [`${id3}.points`],
@@ -383,7 +391,21 @@ it('explains pathways side by side and shows a configured third country from ser
   expect(
     within(comparison).getByText('No financial rules are linked to this pathway yet'),
   ).toBeInTheDocument();
-  expect(within(comparison).getAllByText(/: Unknown$/).length).toBeGreaterThan(0);
+  // Configured parts are named only by their reviewed content, never by another program's label.
+  expect(within(comparison).getByText('Synthetic language minimum: Unknown')).toBeInTheDocument();
+  expect(within(comparison).getByText('Condition: Unknown')).toBeInTheDocument();
+  expect(within(comparison).queryByText(/Work experience/)).not.toBeInTheDocument();
+  const score = within(comparison)
+    .getAllByRole('listitem')
+    .find((item) =>
+      item.textContent.startsWith('Synthetic skilled program (test data, not law): 30'),
+    );
+  expect(score).toHaveTextContent('Pass mark reached');
+  expect(
+    screen.getByRole('heading', {
+      name: 'Synthetic skilled program (test data, not law) · Official score system',
+    }),
+  ).toBeInTheDocument();
   // The third country's question comes from its configured program: no page edits.
   expect(screen.getByRole('heading', { name: 'Synthetic age' })).toBeInTheDocument();
 });

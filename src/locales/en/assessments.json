@@ -1302,6 +1302,9 @@
     "scopedQuestion": "{{question}} — {{evaluations}}",
     "pathwayUnavailable": "A pathway you selected is not in the current program list. Choose from the available pathways again to continue the interview. Recorded history is kept.",
     "synthetic": "Synthetic test content, not law. It shows how the system works and says nothing about any real program.",
+    "passMarkMet": "Pass mark reached",
+    "passMarkNotMet": "Pass mark not reached",
+    "namedEvaluator": "{{name}} · {{part}}",
     "comparison": {
       "title": "Compare pathways",
       "meaning": "Each part is shown on its own. Scores use each program’s own system, so they are never ranked or added across programs, and an unknown is not a rejection.",
