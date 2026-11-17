@@ -41,9 +41,16 @@ export type ServerFeature =
   | 'phoneBreak'
   | 'teamBreaks'
   | 'attendance'
-  | 'hr';
+  | 'hr'
+  | 'dayFollowUps';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * `follow_up_on` (a day with no hour) on `POST /sales/v1/customers/<id>/contacts/` and
+   * `leads/bulk/` (lang `claude/inspiring-dirac-6lpa16`). Off: the follow-up picker asks a time.
+   * An older Django ignores the field and drops the follow-up, so deploy Django first.
+   */
+  dayFollowUps: true,
   /**
    * `GET /hr/v1/today|staff|moves|calendar|options/`: the HR panel's staff files, contracts, salary
    * history and joining and leaving checklists, key `can_manage_support_staff` (lang

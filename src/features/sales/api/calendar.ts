@@ -171,8 +171,10 @@ export function useAssignConsultation() {
 
 export interface FollowUpChange {
   lead: number;
-  /** ISO time. */
-  at: string;
+  /** ISO time; null with `on`. */
+  at: string | null;
+  /** A day with no hour (`YYYY-MM-DD`), instead of `at`. */
+  on?: string | null | undefined;
   /** What to do then; empty keeps a moved follow-up's text. */
   text?: string;
   /** How long the call is (its end); not sent, a moved follow-up keeps its own. */
@@ -186,17 +188,19 @@ export interface FollowUpChange {
 export function useSetFollowUp() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ lead, at, text, minutes }: FollowUpChange) =>
+    mutationFn: ({ lead, at, on, text, minutes }: FollowUpChange) =>
       api(`${SALES_API}/leads/bulk/`, {
         method: 'POST',
         body: {
           ids: [lead],
-          follow_up_at: at,
+          ...(on ? { follow_up_on: on } : { follow_up_at: at }),
           ...(text ? { follow_up_text: text } : {}),
           ...(minutes ? { follow_up_minutes: minutes } : {}),
         },
       }),
-    onMutate: async ({ lead, at, minutes }) => {
+    onMutate: async ({ lead, at, on, minutes }) => {
+      // A day with no hour is due by its end (Django's 23:59), on the day row.
+      const due = on ? new Date(`${on}T23:59`).toISOString() : at;
       await client.cancelQueries({ queryKey: CALENDAR_KEY });
       const before = client.getQueriesData<SellerCalendar>({ queryKey: CALENDAR_KEY });
       client.setQueriesData<SellerCalendar>(
@@ -205,8 +209,8 @@ export function useSetFollowUp() {
           data && {
             ...data,
             calls: data.calls.map((call) =>
-              call.lead === lead
-                ? { ...call, follow_up_at: at, ...(minutes ? { minutes } : {}) }
+              call.lead === lead && due
+                ? { ...call, follow_up_at: due, timed: !on, ...(minutes ? { minutes } : {}) }
                 : call,
             ),
           },

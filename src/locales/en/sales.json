@@ -598,6 +598,7 @@
       "saveLost": "Save and close the lead",
       "choose": "Choose",
       "followWhen": "{{day}}, {{time}}",
+      "followDay": "{{day}}, no set time",
       "noAnswerToday": "A follow-up for tomorrow is made. The “unanswered call” SMS isn’t sent from the panel yet; send it yourself if needed.",
       "retryTask": "Call again; the last call wasn’t answered",
       "followTask": "Follow up after the last contact",
@@ -2452,7 +2453,8 @@
     "noLead": "No open lead",
     "belongsTo": "{{seller}}'s lead: open their page instead",
     "taskText": "Follow up with {{name}}",
-    "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step."
+    "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step.",
+    "saveOn": "Save the follow-up · {{day}}"
   },
   "eventTimes": {
     "start": "Start",
@@ -2818,7 +2820,12 @@
     "kindMeeting": "Meeting at the office"
   },
   "followUpWhen": {
-    "exact": "Or an exact day and time"
+    "exact": "Or an exact day and time",
+    "withTime": "With a time",
+    "dayOnly": "Day only",
+    "day": "Follow-up day",
+    "dayHint": "No hour; it stays on that day's list until the day ends.",
+    "mode": "Follow-up time"
   },
   "myReady": {
     "title": "My ready messages",

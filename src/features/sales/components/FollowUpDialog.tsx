@@ -6,13 +6,13 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Dialog } from '@/components/ui/Dialog';
 import { ApiError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { toValue } from '@/lib/calendar';
+import { parseValue, toValue } from '@/lib/calendar';
 import { toast } from '@/lib/toast';
 import { useCreateTask } from '@/lib/tasks/changes';
 import { SALES_KEY } from '@/lib/sales/api';
 import { useSetFollowUp, type CustomerMatch, type LeadMatch } from '../api';
 import { CustomerPicker } from './CustomerPicker';
-import { followAtOf, isVisitConflict, type Follow } from '../followUp';
+import { followAtOf, followOnOf, isVisitConflict, type Follow } from '../followUp';
 import { FollowUpNow } from './FollowUpNow';
 import { FollowUpWhen } from './FollowUpWhen';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -59,7 +59,7 @@ export function FollowUpDialog({
   lead?: { id: number; name: string; customer?: number | undefined } | undefined;
   /** The open follow-up's text: shown on top and the text field's start. */
   current?: string | undefined;
-  /** False: the follow-up has a day but no hour (`at` is its 23:59): no time is picked for it. */
+  /** False: the follow-up has a day but no hour (`at` is its 23:59): it starts on that day only. */
   timed?: boolean | undefined;
   /** "I talked to them": opens the contact log instead. */
   onLog?: (() => void) | undefined;
@@ -71,16 +71,22 @@ export function FollowUpDialog({
   const createTask = useCreateTask(SALES_KEY);
   const [picked, setPicked] = useState<LeadMatch | null>(null);
   const [noLead, setNoLead] = useState<CustomerMatch | null>(null);
-  const start = timed ? at : null;
+  // A day with no hour starts on that day (`dayFollowUps`), else on a quick time as before.
+  const start = timed || ON_SERVER.dayFollowUps ? at : null;
   const [follow, setFollow] = useState<Follow>(start ? 'other' : 'tomorrow');
-  const [date, setDate] = useState(() => (start ? toValue(start, true) : ''));
+  const [date, setDate] = useState(() => (start ? toValue(start, timed) : ''));
   const [text, setText] = useState(current ?? '');
   const [checked, setChecked] = useState(false);
   const [openedAt] = useState(() => Date.now());
   const target = lead?.id ?? picked?.id ?? noLead?.customer ?? null;
   const name = lead?.name ?? picked?.name ?? noLead?.name ?? '';
   const when = followAtOf(follow, date);
-  const past = when !== null && new Date(when).getTime() < openedAt;
+  const on = followOnOf(follow, date);
+  const day = on ? parseValue(on) : null;
+  const past =
+    when !== null
+      ? new Date(when).getTime() < openedAt
+      : on !== null && on < toValue(new Date(openedAt), false);
   /** Moving the customer's follow-up: the time it has now. */
   const moving = lead ? at : null;
   const customer = lead?.customer ?? picked?.customer ?? noLead?.customer ?? null;
@@ -92,22 +98,23 @@ export function FollowUpDialog({
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setChecked(true);
-    if (target === null || !when || past) return;
+    if (target === null || (!when && !on) || past) return;
+    const saved = when
+      ? t('followUpDialog.when', { day: f.weekday(when), time: f.time(when) })
+      : day
+        ? f.weekday(day)
+        : '';
     if (noLead) {
       createTask.mutate(
         {
           user: noLead.customer,
           kind: 'mine',
-          due_at: when,
+          ...(when ? { due_at: when } : { due_on: on ?? '' }),
           text: text.trim() || t('followUpDialog.taskText', { name: named(noLead.name) }),
         },
         {
           onSuccess: () => {
-            toast.success(
-              t('followUpDialog.saved', {
-                when: t('followUpDialog.when', { day: f.weekday(when), time: f.time(when) }),
-              }),
-            );
+            toast.success(t('followUpDialog.saved', { when: saved }));
             onClose();
           },
           onError: () => toast.error(t('error')),
@@ -118,13 +125,11 @@ export function FollowUpDialog({
     // An unchanged text keeps the follow-up's own (Django keeps it when none is sent).
     const changed = text.trim() !== (current ?? '').trim();
     save.mutate(
-      { lead: target, at: when, text: changed ? text.trim() : '' },
+      { lead: target, at: when, on, text: changed ? text.trim() : '' },
       {
         onSuccess: () => {
           toast.success(
-            t(moving ? 'followUpDialog.moved' : 'followUpDialog.saved', {
-              when: t('followUpDialog.when', { day: f.weekday(when), time: f.time(when) }),
-            }),
+            t(moving ? 'followUpDialog.moved' : 'followUpDialog.saved', { when: saved }),
           );
           onClose();
         },
@@ -173,7 +178,9 @@ export function FollowUpDialog({
             >
               {when && !past
                 ? t('followUpDialog.saveAt', { day: f.weekdayName(when), time: f.time(when) })
-                : t(moving ? 'followUpDialog.move' : 'followUpDialog.save')}
+                : day && !past
+                  ? t('followUpDialog.saveOn', { day: f.weekday(day) })
+                  : t(moving ? 'followUpDialog.move' : 'followUpDialog.save')}
             </Button>
             <Button variant="outline" onClick={onClose}>
               {t('cancel')}
@@ -225,7 +232,7 @@ export function FollowUpDialog({
                   if (next.date !== undefined) setDate(next.date);
                 }}
               />
-              {checked && (!when || past) && (
+              {checked && ((!when && !on) || past) && (
                 <p role="alert" className="m-0 text-sm text-danger">
                   {t(past ? 'followUpDialog.past' : 'followUpDialog.dateRequired')}
                 </p>

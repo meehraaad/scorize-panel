@@ -25,7 +25,7 @@ import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
 import { customerPath } from '../paths';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { followAtOf, isVisitConflict, meetingAhead } from '../followUp';
+import { followAtOf, followOnOf, isVisitConflict, meetingAhead } from '../followUp';
 import { FollowUpWhen } from './FollowUpWhen';
 import { ProfileChips } from './ProfileChips';
 import { laneOf, lanesOf, movableLanes, pickedLane } from '../boardLanes';
@@ -133,13 +133,14 @@ export function LogDialog({
   const meeting = ON_SERVER.visitFollowUp ? (booked ?? meetingAhead(customer)) : null;
   const asksFollowUp = !meeting && !noAnswer && !lost && !(call && outcome === 'wrong_number');
   const followAt = followAtOf(follow, date);
+  const followOn = followOnOf(follow, date);
   const chosen = customer.templates.find((item) => String(item.id) === template);
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (log.isPending || voiceBusy) return;
     setChecked(true);
-    if ((lost && !lostReason) || (asksFollowUp && !followAt)) return;
+    if ((lost && !lostReason) || (asksFollowUp && !followAt && !followOn)) return;
     // Open the app first: a window opened after the request would be blocked as a popup.
     if (isMessage(channel))
       window.open(messageHref(channel, customer.phone, chosen?.text), '_blank', 'noreferrer');
@@ -154,6 +155,7 @@ export function LogDialog({
         ...(lost && lostReason ? { lost_reason: lostReason } : {}),
         notes: notes.trim() || (message ? (chosen?.title ?? '') : ''),
         follow_up_at: asksFollowUp ? followAt : null,
+        ...(asksFollowUp && followOn ? { follow_up_on: followOn } : {}),
         customer_summary: noAnswer ? '' : customerSummary.trim(),
         email_summary: !noAnswer && email && !!customerSummary.trim(),
         ...(customer.supports.summary_sms
@@ -284,7 +286,7 @@ export function LogDialog({
           onChange={(next) => updateContactDraft(draft.key, next)}
         />
       )}
-      {asksFollowUp && checked && !followAt && (
+      {asksFollowUp && checked && !followAt && !followOn && (
         <p role="alert" className="m-0 -mt-2 text-sm text-danger">
           {t('customer.logDialog.followDate')}
         </p>
