@@ -62,7 +62,7 @@ describe('sales: an in-person meeting at the office (S75)', () => {
     await user.click(
       within(within(again).getByRole('group')).getByRole('button', { name: 'لغو جلسه' }),
     );
-    expect(await toasts().findByText('جلسه لغو شد.')).toBeInTheDocument();
+    expect(await toasts().findByText('جلسه لغو شد. پیگیری در همان ساعت، تماس شد.')).toBeInTheDocument();
   });
 
   it('asks for a time first, and for a colleague when asking one', async () => {

@@ -85,7 +85,7 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * follow-up with a meeting ahead is moved only by the meeting (409 `visit`). On: the contact log
    * shows the meeting as the next step, and the follow-up window offers a call or a meeting.
    */
-  visitFollowUp: false,
+  visitFollowUp: true,
   /**
    * S63 `GET /sales/v1/customers/search/?q=` and `POST customers/<id>/take/`: the leads page's
    * search in every customer, like the old CRM's (lang `claude/pensive-dirac-ekeuff`).
@@ -96,7 +96,7 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * notes and summaries, lead descriptions, sessions, visits, payments). Off until Django has it:
    * the search box isn't shown, since an old server would answer the whole history.
    */
-  historySearch: false,
+  historySearch: true,
   /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
   livePhoneCalls: true,
   /** A staff member's softphone login at /sales/v1/calls/mobile/ (every team); on once the office worker runs. */
