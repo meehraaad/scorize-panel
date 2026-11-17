@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Icon } from '@/components/ui/Icon';
+import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
   CHOICES,
@@ -11,24 +13,45 @@ import {
   type InfoSection,
 } from '../api';
 
-/** What the popup asks for when it is missing, most useful first; at most four are offered. */
-const ASKS = ['wanted_degree', 'countries', 'education', 'language', 'budget'] as const;
+/** What the popup asks for when it is missing, most useful first. */
+const ASKS = ['wanted_degree', 'countries', 'education', 'gpa', 'language', 'budget'] as const;
 type Ask = (typeof ASKS)[number];
+/** On the call strip, at most this many are offered; the session log's block offers them all. */
+const STRIP_ASKS = 4;
 /** One tap each; anything else is typed on the customer's info page. */
 const COUNTRY_OPTIONS = ['canada', 'germany', 'usa', 'italy'] as const;
 
 /**
- * What we know about the customer, as chips on the call strip, and up to four dashed "+ ..." chips
- * for what is missing. A dashed chip opens one short question: a few answers to tap (countries: any
- * number of them), or a one-line row for a degree or a language certificate. It saves to the
- * customer's shared info (the info page's own sections), for the whole team.
+ * What we know about the customer as chips, and what is missing as dashed "+ ..." chips. A dashed
+ * chip opens one short question: a few answers to tap (countries: any number of them), or a
+ * one-line row for a degree, a GPA or a language certificate. It saves to the customer's shared info
+ * (the info page's own sections), for the whole team.
+ *
+ * `mode`: `strip` (the call strip) both together, up to four questions; `known` only what is known,
+ * with "n missing" (`onMissing`: the session log scrolls to its block); `gaps` the session log's
+ * block of every missing answer, with what was filled in meanwhile.
  */
-export function ProfileChips({ customer, dark = true }: { customer: number; dark?: boolean }) {
+export function ProfileChips({
+  customer,
+  dark = true,
+  mode = 'strip',
+  onMissing,
+  ref,
+}: {
+  customer: number;
+  dark?: boolean;
+  mode?: 'strip' | 'known' | 'gaps';
+  onMissing?: () => void;
+  ref?: Ref<HTMLDivElement>;
+}) {
   const { t } = useTranslation('sales');
   const { t: tc } = useTranslation('common');
+  const f = useFormat();
   const { data: info } = useQuery(infoQuery(customer));
   const save = useSaveInfo(customer);
   const [asking, setAsking] = useState<Ask | null>(null);
+  /** Answered here while the window is open (the gaps block lists them as done). */
+  const [answered, setAnswered] = useState<Ask[]>([]);
   if (!info) return null;
   const goal = info.goal;
   const degree = (code: string) => tc(`degree.${Number(code) as (typeof CHOICES.degree)[number]}`);
@@ -54,15 +77,20 @@ export function ProfileChips({ customer, dark = true }: { customer: number; dark
     wanted_degree: !goal.wanted_degree,
     countries: !goal.countries,
     education: !info.education.length,
+    // A degree saved without its GPA: asked on its own (the degree row asks for it too).
+    gpa: !!study && !study.gpa,
     language: !info.exams.length && !goal.language,
     budget: !goal.budget,
   };
-  const asks = ASKS.filter((key) => missing[key]).slice(0, 4);
+  const open = ASKS.filter((key) => missing[key]);
+  const asks = mode === 'strip' ? open.slice(0, STRIP_ASKS) : open;
 
-  const store = (section: InfoSection) =>
+  const store = (key: Ask, section: InfoSection) =>
     save.mutate(section, {
       onSuccess: () => {
-        setAsking(null);
+        setAnswered((done) => [...done, key]);
+        // The gaps block goes on to the next question.
+        setAsking(mode === 'gaps' ? (open.find((other) => other !== key) ?? null) : null);
         toast.success(t('callProfile.saved'));
       },
       onError: (error) =>
@@ -72,10 +100,9 @@ export function ProfileChips({ customer, dark = true }: { customer: number; dark
             : t('error'),
         ),
     });
-  const setGoal = (key: keyof CustomerInfo['goal'], value: string) =>
-    store({ goal: { ...goal, [key]: value } });
+  const setGoal = (key: Ask & keyof CustomerInfo['goal'], value: string) =>
+    store(key, { goal: { ...goal, [key]: value } });
 
-  if (!known.length && !asks.length) return null;
   const tone = dark ? 'bg-hero-raised text-on-hero' : 'bg-surface text-text';
   const dashed = dark
     ? 'text-hero-accent shadow-[inset_0_0_0_1px_var(--hero-line)] hover:bg-hero-raised'
@@ -83,68 +110,134 @@ export function ProfileChips({ customer, dark = true }: { customer: number; dark
   const option = dark ? 'bg-hero text-on-hero hover:bg-hero-line' : 'bg-canvas hover:bg-tint';
   const picked = dark ? 'bg-hero-accent text-hero' : 'bg-hero text-on-hero';
   const props = { option, picked, pending: save.isPending };
+
+  const knownList = known.length > 0 && (
+    <ul aria-label={t('callProfile.title')} className="m-0 contents list-none p-0">
+      {known.map((item) => (
+        <li key={item} className={`max-w-full truncate rounded-full px-2.5 py-1.5 ${tone}`}>
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+  const askChips = asks.map((key) => (
+    <button
+      key={key}
+      type="button"
+      aria-expanded={asking === key}
+      onClick={() => setAsking(asking === key ? null : key)}
+      className={`min-h-8 rounded-full px-2.5 font-semibold ${asking === key ? picked : dashed} ${mode === 'gaps' ? 'min-h-11 px-3.5 text-sm' : ''}`}
+    >
+      {t('callProfile.ask', { what: t(`callProfile.field.${key}`) })}
+    </button>
+  ));
+  const question = asking && missing[asking] && (
+    <div className={`rounded-xl p-2 ${dark ? 'bg-hero-raised' : 'bg-surface'}`}>
+      {asking === 'countries' ? (
+        <CountriesAsk {...props} onSave={(names) => setGoal('countries', names.join('، '))} />
+      ) : asking === 'education' ? (
+        <EducationAsk
+          {...props}
+          dark={dark}
+          onSave={(entry) =>
+            store('education', { education: [...info.education, { university: '', ...entry }] })
+          }
+        />
+      ) : asking === 'gpa' ? (
+        <GpaAsk
+          {...props}
+          dark={dark}
+          onSave={(gpa) =>
+            store('gpa', {
+              education: info.education.map((row, index) =>
+                index === info.education.length - 1 ? { ...row, gpa } : row,
+              ),
+            })
+          }
+        />
+      ) : asking === 'language' ? (
+        <LanguageAsk
+          {...props}
+          dark={dark}
+          exams={info.exams_list}
+          onNone={() => setGoal('language', t('callProfile.noCertificate'))}
+          onSave={(entry) => store('language', { exams: [...info.exams, { date: '', ...entry }] })}
+        />
+      ) : (
+        <Taps
+          {...props}
+          legend={t(`callProfile.question.${asking}`)}
+          options={(asking === 'wanted_degree' ? CHOICES.degree : CHOICES.budget).map((code) => ({
+            value: String(code),
+            label:
+              asking === 'wanted_degree'
+                ? degree(String(code))
+                : t(`callProfile.budget.${code as (typeof CHOICES.budget)[number]}`),
+          }))}
+          onPick={(value) => setGoal(asking, value)}
+        />
+      )}
+    </div>
+  );
+
+  if (mode === 'gaps') {
+    const done = answered.filter((key) => !missing[key]);
+    if (!open.length && !done.length) return null;
+    return (
+      <div
+        ref={ref}
+        className="flex flex-col gap-3 rounded-card-sm bg-row-highlight p-4 shadow-[inset_0_0_0_1px_var(--hair)]"
+      >
+        <div className="flex items-start gap-2.5">
+          <Icon name="user" size={18} className="mt-0.5 flex-none text-primary-text" />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-sm font-bold">
+              {t(open.length ? 'callProfile.gaps.title' : 'callProfile.gaps.done')}
+            </span>
+            {open.length > 0 && (
+              <span className="text-xs leading-5 text-text-2">{t('callProfile.gaps.hint')}</span>
+            )}
+          </div>
+        </div>
+        {done.length > 0 && (
+          <ul
+            aria-label={t('callProfile.gaps.answered')}
+            className="m-0 flex list-none flex-wrap gap-1.5 p-0"
+          >
+            {done.map((key) => (
+              <li
+                key={key}
+                className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-good-tint px-3 text-[13px] font-semibold text-good"
+              >
+                <Icon name="check" size={14} />
+                {t(`callProfile.field.${key}`)}
+              </li>
+            ))}
+          </ul>
+        )}
+        {open.length > 0 && <div className="flex flex-wrap gap-2">{askChips}</div>}
+        {question}
+      </div>
+    );
+  }
+
+  if (!known.length && !(mode === 'known' ? open.length && onMissing : asks.length)) return null;
   return (
     <div className="flex flex-col gap-2">
-      <ul
-        aria-label={t('callProfile.title')}
-        className="m-0 flex list-none flex-wrap gap-1.5 p-0 text-xs"
-      >
-        {known.map((item) => (
-          <li key={item} className={`max-w-full truncate rounded-full px-2.5 py-1.5 ${tone}`}>
-            {item}
-          </li>
-        ))}
-        {asks.map((key) => (
-          <li key={key}>
-            <button
-              type="button"
-              aria-expanded={asking === key}
-              onClick={() => setAsking(asking === key ? null : key)}
-              className={`min-h-8 rounded-full px-2.5 font-semibold ${asking === key ? picked : dashed}`}
-            >
-              {t('callProfile.ask', { what: t(`callProfile.field.${key}`) })}
-            </button>
-          </li>
-        ))}
-      </ul>
-      {asking && (
-        <div className={`rounded-xl p-2 ${dark ? 'bg-hero-raised' : 'bg-surface'}`}>
-          {asking === 'countries' ? (
-            <CountriesAsk {...props} onSave={(names) => setGoal('countries', names.join('، '))} />
-          ) : asking === 'education' ? (
-            <EducationAsk
-              {...props}
-              dark={dark}
-              onSave={(entry) =>
-                store({ education: [...info.education, { university: '', ...entry }] })
-              }
-            />
-          ) : asking === 'language' ? (
-            <LanguageAsk
-              {...props}
-              dark={dark}
-              exams={info.exams_list}
-              onNone={() => setGoal('language', t('callProfile.noCertificate'))}
-              onSave={(entry) => store({ exams: [...info.exams, { date: '', ...entry }] })}
-            />
-          ) : (
-            <Taps
-              {...props}
-              legend={t(`callProfile.question.${asking}`)}
-              options={(asking === 'wanted_degree' ? CHOICES.degree : CHOICES.budget).map(
-                (code) => ({
-                  value: String(code),
-                  label:
-                    asking === 'wanted_degree'
-                      ? degree(String(code))
-                      : t(`callProfile.budget.${code as (typeof CHOICES.budget)[number]}`),
-                }),
-              )}
-              onPick={(value) => setGoal(asking, value)}
-            />
-          )}
-        </div>
-      )}
+      <div className="flex flex-wrap gap-1.5 text-xs">
+        {knownList}
+        {mode === 'strip' && askChips}
+        {mode === 'known' && open.length > 0 && onMissing && (
+          <button
+            type="button"
+            onClick={onMissing}
+            className={`min-h-8 rounded-full px-2.5 font-semibold ${dashed}`}
+          >
+            {t('callProfile.missing', { count: open.length, n: f.number(open.length) })}
+          </button>
+        )}
+      </div>
+      {mode === 'strip' && question}
     </div>
   );
 }
@@ -300,6 +393,29 @@ function EducationAsk({
         />
       </div>
     </div>
+  );
+}
+
+/** The GPA of the last degree, when the degree was saved without one. */
+function GpaAsk({
+  pending,
+  dark,
+  onSave,
+}: AskProps & { dark: boolean; onSave: (gpa: string) => void }) {
+  const { t } = useTranslation('sales');
+  const [gpa, setGpa] = useState('');
+  return (
+    <Row legend={t('callProfile.question.gpa')}>
+      <input
+        aria-label={t('callProfile.gpaLabel')}
+        placeholder={t('callProfile.gpaLabel')}
+        inputMode="decimal"
+        value={gpa}
+        onChange={(event) => setGpa(event.target.value)}
+        className={`${field(dark)} w-24`}
+      />
+      <SaveButton disabled={pending || !gpa.trim()} onClick={() => onSave(gpa.trim())} />
+    </Row>
   );
 }
 

@@ -38,6 +38,8 @@ export interface ContactValues {
   customerSummaryVoiceTranscript?: string;
   follow: 'evening' | 'tomorrow' | 'three' | 'week' | 'other';
   date: string;
+  /** A follow-up for a day with no hour (due by its 23:59). */
+  dateOnly?: boolean;
   email: boolean;
   /** Also text the customer that the note waits in their panel. */
   sms?: boolean;

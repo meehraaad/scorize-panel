@@ -33,7 +33,7 @@ import {
 import { EventDetails, StartAction } from './EventDetails';
 import { TASK_COLOR, TASK_MINUTES } from './useSellerBusy';
 import { useSalesFormat } from '../format';
-import { FollowUpDialog } from './FollowUpDialog';
+import { FollowUpDialog, type NextStepWho } from './NextStepDialog';
 import { TaskBrief } from './TaskBrief';
 
 const MINUTE = 60_000;
@@ -59,7 +59,7 @@ const dueOn = (day: Date, now: Date) => {
 /** The follow-up dialog: a new one at a time, or a customer's moved (`lead`). */
 interface Setting {
   at: Date | null;
-  lead?: { id: number; name: string };
+  who?: NextStepWho;
 }
 
 /**
@@ -426,7 +426,7 @@ export function ConsultationCalendar() {
                   onMoveCall={(call) =>
                     setSetting({
                       at: new Date(call.follow_up_at),
-                      lead: { id: call.lead, name: named(call.name) },
+                      who: { lead: call.lead, customer: call.customer, name: named(call.name) },
                     })
                   }
                 />
@@ -436,7 +436,7 @@ export function ConsultationCalendar() {
         </Card>
       </div>
       {setting && (
-        <FollowUpDialog open onClose={() => setSetting(null)} at={setting.at} lead={setting.lead} />
+        <FollowUpDialog open onClose={() => setSetting(null)} at={setting.at} who={setting.who} />
       )}
       {newTaskOn && (
         <Suspense fallback={null}>

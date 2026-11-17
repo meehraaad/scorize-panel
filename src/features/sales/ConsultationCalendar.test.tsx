@@ -170,9 +170,11 @@ describe('sales: my consultations on a week calendar', () => {
       // Wednesday's column (Saturday first); the grid starts at 9, an hour is 66px: 14:00.
       fireEvent.click(screen.getAllByTestId('schedule-slot')[4] as HTMLElement, { clientY: 330 });
       const dialog = await screen.findByRole('dialog', { name: 'پیگیری تازه' });
-      // The same time picker as the contact log: quick times, and the picked spot on «از تقویم».
+      // The same time picker as the contact log: quick times, and the picked spot on the week,
+      // open in this window: the picked day and its hour.
       expect(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' })).not.toBeChecked();
-      expect(within(dialog).getByRole('button', { pressed: true })).toHaveTextContent('۱۴:۰۰');
+      const hours = within(dialog).getByRole('group', { name: 'ساعت' });
+      expect(within(hours).getByRole('button', { pressed: true })).toHaveTextContent('۱۴:۰۰');
       expect(
         within(dialog).getByRole('textbox', { name: 'چه کاری (اختیاری)' }),
       ).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { toValue } from '@/lib/calendar';
 import { SALES_API } from '@/lib/sales/api';
@@ -91,4 +91,13 @@ export function useCancelVisit(customer: number) {
     mutationFn: (id: number) => api(`${SALES_API}/visits/${String(id)}/`, { method: 'DELETE' }),
     onSettled: refresh,
   });
+}
+
+/** Whether the customer's office meeting can be set now: no meeting ahead and a room exists. */
+export function useVisitBookable(customer: number | null, enabled: boolean) {
+  const visits = useQuery({
+    ...customerVisitsQuery(customer ?? 0),
+    enabled: enabled && customer !== null,
+  });
+  return !!visits.data && !visits.data.upcoming && visits.data.rooms > 0;
 }

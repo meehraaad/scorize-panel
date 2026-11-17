@@ -3,7 +3,6 @@ import { useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColleaguePicker } from '@/components/tasks/ColleaguePicker';
 import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
@@ -16,7 +15,6 @@ import { ApiError } from '@/lib/api/client';
 import { addDays, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { tasksQuery } from '@/lib/tasks/api';
 import { toast } from '@/lib/toast';
 import {
@@ -26,85 +24,57 @@ import {
   visitSlotsQuery,
   type OfficeVisit,
 } from '../api/visits';
-import { FollowUpNow } from './FollowUpNow';
 import { useSellerBusy } from './useSellerBusy';
 
 const FORM = 'visit-form';
+
 const PICKED = 'picked';
 const MINUTE = 60_000;
 /** How far ahead a meeting can be set (Django: eight weeks). */
 const WEEKS_AHEAD = 8;
 
+/** The seller's own session or office meeting during an hour (their calls and tasks don't count). */
+function ownAt(busy: CalendarEvent[], start: Date, minutes: number) {
+  const end = start.getTime() + minutes * MINUTE;
+  return busy.find((event) => {
+    if (!event.id.startsWith('c') && !event.id.startsWith('v')) return false;
+    const begins = event.start.getTime();
+    return begins < end && begins + event.minutes * MINUTE > start.getTime();
+  });
+}
+
 /**
- * Set an in-person meeting at the office with a customer (S75), from the customer page or the call
- * popup: the office's hours on a week, a time when every room is taken can't be picked. The
- * customer gets an SMS with the time and address; a colleague can be asked to join (a request
- * task). A customer with a meeting ahead sees it here, with "cancel" to pick another time.
+ * The in-person meeting at the office (S75), inside the next-step window (NextStepDialog): the
+ * office's hours on the seller's week, where a time when every room is taken, or when the seller
+ * has their own session or meeting, can't be picked. The customer gets an SMS with the time and
+ * address; a colleague can be asked to join (a request task). A customer with a meeting ahead sees
+ * it here, with "cancel" to pick another time.
  */
-export function VisitDialog({
+export function VisitBody({
   customer,
-  open,
-  onClose,
-  followUp,
-  onLog,
+  onDone,
+  children,
 }: {
-  customer: { id: number; name: string };
-  open: boolean;
-  onClose: () => void;
-  /** The customer's open follow-up, shown above the week. */
-  followUp?:
-    { at: string; text?: string | undefined; timed?: boolean | undefined } | null | undefined;
-  /** "Talked to them? Log it": the contact log, from the customer page. */
-  onLog?: (() => void) | undefined;
+  customer: number;
+  onDone: () => void;
+  /** Above the week: the customer's follow-up. */
+  children?: ReactNode;
 }) {
   const { t } = useTranslation('sales');
-  const named = useDisplayName();
-  const visits = useQuery({ ...customerVisitsQuery(customer.id), enabled: open });
+  const visits = useQuery(customerVisitsQuery(customer));
   const upcoming = visits.data?.upcoming ?? null;
-  const ready = visits.data !== undefined;
-  const canBook = ready && !upcoming && visits.data.rooms > 0;
-
+  if (visits.isError) return <Notice tone="error">{t('error')}</Notice>;
+  if (!visits.data) return <SkeletonRows rows={4} />;
+  if (upcoming) return <Upcoming customer={customer} visit={upcoming} />;
+  if (visits.data.rooms === 0) return <Notice tone="info">{t('visit.noRooms')}</Notice>;
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      size="wide"
-      title={t('visit.title', { name: named(customer.name) })}
-      subtitle={t('visit.subtitle')}
-      closeLabel={t('close')}
-      footer={
-        canBook ? (
-          <VisitFooter onClose={onClose} />
-        ) : (
-          <Button variant="outline" onClick={onClose}>
-            {t('close')}
-          </Button>
-        )
-      }
-    >
-      {visits.isError ? (
-        <Notice tone="error">{t('error')}</Notice>
-      ) : !ready ? (
-        <SkeletonRows rows={4} />
-      ) : upcoming ? (
-        <Upcoming customer={customer.id} visit={upcoming} />
-      ) : visits.data.rooms === 0 ? (
-        <Notice tone="info">{t('visit.noRooms')}</Notice>
-      ) : (
-        <VisitForm customer={customer.id} onDone={onClose}>
-          <FollowUpNow
-            at={followUp?.at ?? null}
-            text={followUp?.text}
-            timed={followUp?.timed}
-            onLog={onLog}
-          />
-        </VisitForm>
-      )}
-    </Dialog>
+    <VisitForm customer={customer} onDone={onDone}>
+      {children}
+    </VisitForm>
   );
 }
 
-function VisitFooter({ onClose }: { onClose: () => void }) {
+export function VisitFooter({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation('sales');
   return (
     <>
@@ -217,8 +187,10 @@ function VisitForm({
       const begins = new Date(row.at).getTime();
       return begins <= start.getTime() && start.getTime() < begins + minutes * MINUTE;
     });
+    const mine = slot && ownAt(seller.busy, new Date(slot.at), minutes);
     if (!slot) toast.error(t('visit.closed'));
     else if (slot.left === 0) toast.error(t('visit.roomsFull'));
+    else if (mine) toast.error(t('visit.youAreBusy', { what: mine.title }));
     else setAt(slot.at);
   };
 

@@ -30,7 +30,7 @@ import { sellerDayQuery, type SellerCalendar } from '../api';
 import type { Chosen } from '../consultationStatus';
 import { EventDetails } from './EventDetails';
 import { OwnerTag } from './OwnerTag';
-import { FollowUpDialog } from './FollowUpDialog';
+import { FollowUpDialog, type NextStepWho } from './NextStepDialog';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';
 
@@ -93,9 +93,7 @@ export function TodayAgenda({
   // consultation or follow-up opens (the consultations calendar's card).
   const [offset, setOffset] = useState(0);
   const [chosenKey, setChosenKey] = useState<string | null>(null);
-  const [moving, setMoving] = useState<{ at: Date; lead: { id: number; name: string } } | null>(
-    null,
-  );
+  const [moving, setMoving] = useState<{ at: Date; who: NextStepWho } | null>(null);
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
   const day = addDays(today, offset);
@@ -267,14 +265,14 @@ export function TodayAgenda({
               setChosenKey(null);
               setMoving({
                 at: new Date(call.follow_up_at),
-                lead: { id: call.lead, name: named(call.name) },
+                who: { lead: call.lead, customer: call.customer, name: named(call.name) },
               });
             }}
           />
         </DetailsPopup>
       )}
       {moving && (
-        <FollowUpDialog open onClose={() => setMoving(null)} at={moving.at} lead={moving.lead} />
+        <FollowUpDialog open onClose={() => setMoving(null)} at={moving.at} who={moving.who} />
       )}
     </>
   );

@@ -13,6 +13,7 @@ import { messageHref, SALES_API, type Channel } from '@/lib/sales/api';
 import { customerKey, useMoveBoardCard, type CustomerData, type MoveSteps } from '../api';
 import { boardMoveTargets, laneOf, lanesOf, type Lane } from '../boardLanes';
 import { useSalesFormat } from '../format';
+import { openLead } from '../followUp';
 import { CustomerTags } from './CustomerTags';
 import { ScoreChip, StageChip } from './LeadChips';
 
@@ -23,7 +24,7 @@ const EnterStageDialog = lazy(() =>
 
 // Opens on a click: the meeting window (its week of rooms) is not part of the page's first load.
 const VisitDialog = lazy(() =>
-  import('./VisitDialog').then((module) => ({ default: module.VisitDialog })),
+  import('./NextStepDialog').then((module) => ({ default: module.VisitDialog })),
 );
 
 // Opens on a click: which ready message to send on WhatsApp.
@@ -33,7 +34,7 @@ const WhatsAppPicker = lazy(() =>
 
 // Opens on a click: the date picker it uses is not part of the page's first load.
 const FollowUpDialog = lazy(() =>
-  import('./FollowUpDialog').then((module) => ({ default: module.FollowUpDialog })),
+  import('./NextStepDialog').then((module) => ({ default: module.FollowUpDialog })),
 );
 
 /**
@@ -290,7 +291,7 @@ function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () =>
         <Suspense fallback={null}>
           <VisitDialog
             open
-            customer={customer}
+            customer={{ id: customer.id, name: customer.name, lead: openLead(customer) }}
             onClose={() => setOpen(false)}
             followUp={
               customer.lead?.follow_up_at
@@ -423,7 +424,7 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
             open
             onClose={() => setMoving(false)}
             at={lead.follow_up_at ? new Date(lead.follow_up_at) : null}
-            lead={{ id: lead.id, name: named(customer.name) }}
+            who={{ lead: lead.id, customer: customer.id, name: named(customer.name) }}
             current={task?.text}
             timed={task?.timed}
             onLog={() => {
