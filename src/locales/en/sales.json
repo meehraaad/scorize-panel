@@ -2821,11 +2821,9 @@
   },
   "followUpWhen": {
     "exact": "Or an exact day and time",
-    "withTime": "With a time",
-    "dayOnly": "Day only",
     "day": "Follow-up day",
     "dayHint": "No hour; it stays on that day's list until the day ends.",
-    "mode": "Follow-up time"
+    "dayChip": "Day only, no time"
   },
   "myReady": {
     "title": "My ready messages",
