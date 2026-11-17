@@ -153,6 +153,7 @@
         "request": "درخواست همکار",
         "receipt": "رسید"
       },
+      "tasksHour": "{{n}} کار در این ساعت",
       "range": "{{from}} تا {{to}}",
       "consultationMeta": "{{range}} · {{type}} · {{mode}}",
       "status": {

@@ -198,6 +198,11 @@ export function TodayAgenda({
       renderItem={(item, due) => (
         <AgendaRow key={item.key} item={item} now={now} due={due} onOpen={opens(item)} />
       )}
+      // Today's tasks of one hour share a line.
+      groupOf={(item) =>
+        offset === 0 && item.kind === 'task' ? `task-${String(new Date(item.at).getHours())}` : null
+      }
+      renderGroup={(items) => <TaskHourRow items={items} />}
       filters={{
         label: t('today.agenda.filter'),
         of: filterOf,
@@ -501,6 +506,38 @@ function AgendaRow({
     case 'receipt':
       return <ReceiptRow item={item} />;
   }
+}
+
+/** Several of today's tasks due in one hour, on one line: each opens its person or the list. */
+function TaskHourRow({ items }: { items: readonly AgendaItem[] }) {
+  const { t } = useTranslation('sales');
+  const named = useDisplayName();
+  const f = useFormat();
+  const tasks = items.flatMap((item) => (item.kind === 'task' ? [item.task] : []));
+  return (
+    <Row
+      tone="good"
+      icon="check"
+      title={t('today.agenda.tasksHour', { n: f.number(tasks.length) })}
+      tag={t('today.agenda.tag.task')}
+      to={salesPath('tasks')}
+      meta={tasks.map((task, index) => (
+        <span key={task.id}>
+          {index > 0 && ' · '}
+          <Link
+            to={
+              task.person
+                ? customerPath(task.person.id, task.action === 'message' ? 'message' : undefined)
+                : salesPath('tasks')
+            }
+            className="relative z-10 font-medium text-text underline-offset-4 hover:text-primary-text hover:underline"
+          >
+            {task.person ? `${task.text} (${named(task.person.name)})` : task.text}
+          </Link>
+        </span>
+      ))}
+    />
+  );
 }
 
 function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }) {
