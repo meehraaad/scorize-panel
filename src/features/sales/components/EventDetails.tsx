@@ -125,16 +125,6 @@ export function EventDetails({
   const status = chosen.kind === 'consultation' ? statusOf(chosen.item, now) : null;
   const action = (label: string) =>
     t('consultations.actionsFor', { action: label, name: named(item.name) });
-  const customerLink = (
-    <Link
-      to={customerPath(item.customer)}
-      aria-label={action(t('consultations.customer'))}
-      className={outline}
-    >
-      {t('consultations.customer')}
-    </Link>
-  );
-
   let actions: ReactNode;
   let statusLine: ReactNode = null;
   if (chosen.kind === 'call') {
@@ -239,13 +229,8 @@ export function EventDetails({
       </span>
     );
     actions = {
-      done: customerLink,
-      need: (
-        <>
-          {customerLink}
-          {log(primary)}
-        </>
-      ),
+      done: null,
+      need: log(primary),
       live: (
         <>
           {log(outline)}
@@ -255,7 +240,6 @@ export function EventDetails({
       soon: (
         <>
           {formLink}
-          {customerLink}
           <StartAction item={consultation} status="soon" />
         </>
       ),
@@ -263,7 +247,6 @@ export function EventDetails({
         <>
           {formLink}
           {reminder}
-          {customerLink}
         </>
       ),
     }[status ?? 'upcoming'];
@@ -373,7 +356,7 @@ export function EventDetails({
         )}
       </ul>
       {statusLine}
-      <div className="flex flex-wrap justify-end gap-2">{actions}</div>
+      {actions && <div className="flex flex-wrap justify-end gap-2">{actions}</div>}
     </section>
   );
 }

@@ -329,13 +329,6 @@ function ConsultationRow({
             {t('consultations.link')}
           </a>
         )}
-        <Link
-          to={customerPath(item.customer)}
-          aria-label={action(t('consultations.customer'))}
-          className={buttonClass('outline', 'h-11 px-4 text-sm')}
-        >
-          {t('consultations.customer')}
-        </Link>
       </span>
     </li>
   );

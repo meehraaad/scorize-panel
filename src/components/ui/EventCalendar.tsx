@@ -66,6 +66,8 @@ interface EventCalendarProps {
   narrowHourHeight?: number;
   /** Quiet notes behind the events (each free hour's rooms, see `Schedule`). */
   marks?: readonly ScheduleMark[] | undefined;
+  /** Wide: clicking a day's heading makes that day bigger; clicking it again puts it back. */
+  zoomDays?: boolean;
 }
 
 const LOOK: Record<EventLook, string> = {
@@ -140,6 +142,7 @@ export function EventCalendar({
   hourHeight,
   narrowHourHeight,
   marks,
+  zoomDays = false,
 }: EventCalendarProps) {
   const { t } = useTranslation();
   const f = useFormat();
@@ -168,6 +171,7 @@ export function EventCalendar({
       onSlotPick={onSlotPick}
       onMove={onMove}
       marks={marks}
+      zoomDays={zoomDays}
       {...(now ? { now } : {})}
       {...(hourHeight ? { hourHeight } : {})}
       {...(narrowHourHeight ? { narrowHourHeight } : {})}

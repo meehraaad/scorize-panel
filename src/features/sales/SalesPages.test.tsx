@@ -196,7 +196,7 @@ describe('sales panel, seller pages', () => {
     await user.clear(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }));
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'مینا');
     const results = await within(dialog).findByRole('list', { name: 'مشتری‌های پیدا شده' });
-    const opens = within(results).getAllByRole('link', { name: 'باز کردن صفحه' });
+    const opens = within(results).getAllByRole('link');
     expect(opens.map((link) => link.getAttribute('href'))).toEqual([
       `/sales/customers/${String(ERFAN)}`,
       '/sales/customers/777',
@@ -206,7 +206,7 @@ describe('sales panel, seller pages', () => {
     for (const name of ['مینا آزاد', 'مینا دیگری']) {
       const row = within(results).getByText(name).closest('li');
       expect(row).not.toBeNull();
-      expect(within(row as HTMLElement).getByRole('link', { name: 'باز کردن صفحه' })).toBeVisible();
+      expect(within(row as HTMLElement).getByRole('link', { name })).toBeVisible();
     }
     const other = within(results).getByText('مینا دیگری').closest('li') as HTMLElement;
     expect(within(other).getByText('مشتریِ سارا')).toBeInTheDocument();

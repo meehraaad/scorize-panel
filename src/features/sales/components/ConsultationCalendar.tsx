@@ -280,19 +280,10 @@ export function ConsultationCalendar() {
           <Icon name="plus" size={16} />
           {t('followUpDialog.new')}
         </Button>
-        {unlogged > 0 && !onlyUnlogged && (
-          <button
-            type="button"
-            onClick={() => setOnlyUnlogged(true)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-warn-tint px-4 text-sm font-semibold text-warn"
-          >
-            <span aria-hidden="true" className="size-2 rounded-full bg-[var(--cal-few)]" />
-            {t('consultationCalendar.unlogged', { n: f.number(unlogged) })}
-          </button>
-        )}
         <TogglePill
           label={t('consultations.unloggedOnly')}
           checked={onlyUnlogged}
+          badge={unlogged > 0 ? f.number(unlogged) : undefined}
           onChange={setOnlyUnlogged}
         />
       </div>
@@ -399,6 +390,7 @@ export function ConsultationCalendar() {
             now={now}
             onSlotPick={pickSlot}
             onMove={moveCall}
+            zoomDays
             dayRow={{
               label: t('consultationCalendar.tasks.row'),
               cell: (day, compact) => (
