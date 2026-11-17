@@ -262,6 +262,9 @@ function InterviewEditor({
   return (
     <>
       {dateNotice}
+      <Link className="underline" to={`/dev/assessment-workflow?session=${encodeURIComponent(id)}`}>
+        {t('workflow.open')}
+      </Link>
       {requestedRoute && (
         <div className="flex flex-col gap-3">
           <Notice tone="info">
