@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { Button } from '@/components/ui/Button';
-import { buttonClass } from '@/components/ui/buttonStyles';
+import { iconButtonClass } from '@/components/ui/buttonStyles';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
@@ -67,8 +67,6 @@ const TILE: Record<ChipTone, string> = {
   neutral: 'bg-canvas text-text',
 };
 
-/** A call button with only its icon (its name says whom it calls). */
-const callIcon = 'size-11 p-0';
 /** A card's title: its link or button stretches over the whole card. */
 const cardTitle =
   'cursor-pointer text-start text-[15px] font-semibold outline-none after:absolute after:inset-0 after:rounded-2xl';
@@ -198,11 +196,17 @@ export function TodayAgenda({
       renderItem={(item, due) => (
         <AgendaRow key={item.key} item={item} now={now} due={due} onOpen={opens(item)} />
       )}
-      // Today's tasks of one hour share a line.
-      groupOf={(item) =>
-        offset === 0 && item.kind === 'task' ? `task-${String(new Date(item.at).getHours())}` : null
-      }
-      renderGroup={(items) => <TaskHourRow items={items} />}
+      // Everything at one hour shares a line, side by side.
+      groupOf={(item) => (item.at === null ? null : String(new Date(item.at).getHours()))}
+      renderGroup={(items) => (
+        <li key={items[0]?.key}>
+          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-2 p-0">
+            {items.map((item) => (
+              <AgendaRow key={item.key} item={item} now={now} onOpen={opens(item)} />
+            ))}
+          </ul>
+        </li>
+      )}
       filters={{
         label: t('today.agenda.filter'),
         of: filterOf,
@@ -359,9 +363,9 @@ function AgendaRow({
               start={{ channel: 'call' }}
               phone={lead.phone}
               aria-label={t('callName', { name: named(lead.name) })}
-              className={buttonClass('primary', callIcon)}
+              className={iconButtonClass('primary')}
             >
-              <Icon name="phone" size={18} />
+              <Icon name="phone" size={20} />
             </ContactLogButton>
           }
         />
@@ -400,9 +404,9 @@ function AgendaRow({
               start={{ channel: 'call' }}
               phone={call.phone}
               aria-label={t('callName', { name: named(call.name) })}
-              className={buttonClass(late ? 'primary' : 'outline', callIcon)}
+              className={iconButtonClass(late ? 'primary' : 'outline')}
             >
-              <Icon name="phone" size={18} />
+              <Icon name="phone" size={20} />
             </ContactLogButton>
           }
         />
@@ -436,12 +440,11 @@ function AgendaRow({
               <a
                 href={callHref(consultation.phone, linphone)}
                 aria-label={t('callName', { name: named(consultation.name) })}
-                className={buttonClass(
+                className={iconButtonClass(
                   status === 'live' || status === 'need' ? 'primary' : 'outline',
-                  callIcon,
                 )}
               >
-                <Icon name="phone" size={18} />
+                <Icon name="phone" size={20} />
               </a>
             )
           }
@@ -474,9 +477,9 @@ function AgendaRow({
                 name={named(person.name)}
                 start={{ channel: 'call' }}
                 aria-label={t('callName', { name: named(person.name) })}
-                className={buttonClass(due ? 'primary' : 'outline', callIcon)}
+                className={iconButtonClass(due ? 'primary' : 'outline')}
               >
-                <Icon name="phone" size={18} />
+                <Icon name="phone" size={20} />
               </ContactLogButton>
             )
           }
@@ -506,38 +509,6 @@ function AgendaRow({
     case 'receipt':
       return <ReceiptRow item={item} />;
   }
-}
-
-/** Several of today's tasks due in one hour, on one line: each opens its person or the list. */
-function TaskHourRow({ items }: { items: readonly AgendaItem[] }) {
-  const { t } = useTranslation('sales');
-  const named = useDisplayName();
-  const f = useFormat();
-  const tasks = items.flatMap((item) => (item.kind === 'task' ? [item.task] : []));
-  return (
-    <Row
-      tone="good"
-      icon="check"
-      title={t('today.agenda.tasksHour', { n: f.number(tasks.length) })}
-      tag={t('today.agenda.tag.task')}
-      to={salesPath('tasks')}
-      meta={tasks.map((task, index) => (
-        <span key={task.id}>
-          {index > 0 && ' · '}
-          <Link
-            to={
-              task.person
-                ? customerPath(task.person.id, task.action === 'message' ? 'message' : undefined)
-                : salesPath('tasks')
-            }
-            className="relative z-10 font-medium text-text underline-offset-4 hover:text-primary-text hover:underline"
-          >
-            {task.person ? `${task.text} (${named(task.person.name)})` : task.text}
-          </Link>
-        </span>
-      ))}
-    />
-  );
 }
 
 function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }) {
@@ -633,7 +604,7 @@ function Row({
     <li
       className={`relative flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl p-3 transition-colors has-[[data-card]:focus-visible]:outline-2 has-[[data-card]:focus-visible]:outline-primary ${
         highlight
-          ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]'
+          ? 'bg-tint'
           : done
             ? 'bg-canvas opacity-80 hover:opacity-100'
             : 'bg-surface shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-canvas'

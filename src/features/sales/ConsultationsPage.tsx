@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { buttonClass } from '@/components/ui/buttonStyles';
+import { buttonClass, iconButtonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { SelectField, TogglePill } from '@/components/ui/Choices';
@@ -294,9 +294,9 @@ function ConsultationRow({
           <a
             href={callHref}
             aria-label={t('callName', { name: named(item.name) })}
-            className={buttonClass('outline', 'size-11 p-0')}
+            className={iconButtonClass('outline')}
           >
-            <Icon name="phone" size={18} />
+            <Icon name="phone" size={20} />
           </a>
         )}
         {(status === 'need' || status === 'soon') && (

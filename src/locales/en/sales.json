@@ -153,7 +153,6 @@
         "request": "Colleague request",
         "receipt": "Receipt"
       },
-      "tasksHour": "{{n}} tasks this hour",
       "range": "{{from}}–{{to}}",
       "consultationMeta": "{{range}} · {{type}} · {{mode}}",
       "status": {
