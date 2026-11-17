@@ -126,4 +126,54 @@ describe('sales: the follow-up window on the customer page', () => {
       expect(await toasts().findByText(/^پیگیری این مشتری جلسه حضوری اوست\./)).toBeInTheDocument();
     });
   });
+
+  describe('the follow-up window and the meeting window switch to each other', () => {
+    const flags = ON_SERVER as { visitFollowUp: boolean };
+    let before = true;
+    beforeEach(() => {
+      before = flags.visitFollowUp;
+      flags.visitFollowUp = true;
+    });
+    afterEach(() => {
+      flags.visitFollowUp = before;
+    });
+
+    it('the in-person meeting window switches to a follow-up call and back', async () => {
+      const user = userEvent.setup();
+      renderApp('/sales/customers/105');
+      await user.click(await screen.findByRole('button', { name: /^جلسه حضوری با / }));
+      const visit = await screen.findByRole('dialog', { name: 'جلسه حضوری با عرفان ملکی' });
+      await user.click(within(visit).getByRole('radio', { name: 'تماس' }));
+      const call = await screen.findByRole('dialog', { name: 'زمان تازه برای پیگیری عرفان ملکی' });
+      await user.click(within(call).getByRole('radio', { name: 'جلسه حضوری در دفتر' }));
+      expect(
+        await screen.findByRole('dialog', { name: 'جلسه حضوری با عرفان ملکی' }),
+      ).toBeInTheDocument();
+    });
+
+    it('a new follow-up offers the meeting before a customer is picked', async () => {
+      const user = userEvent.setup();
+      renderApp('/sales/calendar');
+      await user.click(await screen.findByRole('button', { name: 'پیگیری تازه' }));
+      const dialog = await screen.findByRole('dialog', { name: 'پیگیری تازه' });
+      await user.click(within(dialog).getByRole('radio', { name: 'جلسه حضوری در دفتر' }));
+      expect(await screen.findByRole('dialog', { name: 'جلسه حضوری تازه' })).toBeInTheDocument();
+      expect(
+        within(dialog).getByText('اول مشتری را انتخاب کنید تا ساعت‌های دفتر بیاید.'),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('moves the follow-up to a day with no hour', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105');
+    await user.click(await screen.findByRole('button', { name: 'زمان دیگر' }));
+    const dialog = await screen.findByRole('dialog', { name: 'زمان تازه برای پیگیری عرفان ملکی' });
+    await user.click(within(dialog).getByRole('switch', { name: /فقط روز، بدون ساعت/ }));
+    // No hours now: the quick choices are days, and the week only picks a day.
+    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
+    await user.click(within(dialog).getByRole('radio', { name: 'فردا' }));
+    await user.click(within(dialog).getByRole('button', { name: /^ثبت پیگیری · چهارشنبه/ }));
+    expect(await toasts().findByText(/^پیگیری به چهارشنبه .* رفت\.$/)).toBeInTheDocument();
+  });
 });

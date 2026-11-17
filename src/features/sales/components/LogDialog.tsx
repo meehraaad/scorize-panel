@@ -1,4 +1,13 @@
-import { Fragment, lazy, Suspense, useId, useState, type ReactNode, type SubmitEvent } from 'react';
+import {
+  Fragment,
+  lazy,
+  Suspense,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type SubmitEvent,
+} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -24,6 +33,7 @@ import { toast } from '@/lib/toast';
 import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
 import { customerPath } from '../paths';
+import { useNow } from '../useNow';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { followAtOf, followOnOf, isVisitConflict, meetingAhead } from '../followUp';
 import { FollowUpWhen } from './FollowUpWhen';
@@ -104,6 +114,7 @@ export function LogDialog({
   const [checked, setChecked] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [visiting, setVisiting] = useState(false);
+  const gapsRef = useRef<HTMLDivElement>(null);
   /** A meeting at the office set from this log (S79): the customer page reloads after it. */
   const [booked, setBooked] = useState<string | null>(null);
   /** A live (or just ended) office call: the channel is the phone and the strip names the call. */
@@ -280,7 +291,6 @@ export function LogDialog({
       {asksFollowUp && (
         <FollowUpWhen
           legend={t('customer.logDialog.followUp')}
-          name={named(customer.name)}
           follow={follow}
           date={date}
           onChange={(next) => updateContactDraft(draft.key, next)}
@@ -381,7 +391,16 @@ export function LogDialog({
   );
   const steps: { key: string; title: string; body: ReactNode }[] = session
     ? [
-        { key: 'meeting', title: t('customer.logDialog.step.meeting'), body: notesField },
+        {
+          key: 'meeting',
+          title: t('customer.logDialog.step.meeting'),
+          body: (
+            <>
+              {notesField}
+              <ProfileChips ref={gapsRef} customer={customer.id} dark={false} mode="gaps" />
+            </>
+          ),
+        },
         { key: 'customer', title: t('customer.logDialog.step.customer'), body: customerFields },
       ]
     : [
@@ -468,7 +487,23 @@ export function LogDialog({
           stage: stageName,
         })
       }
-      summary={session && start.session && <SessionSummary session={start.session} />}
+      summary={
+        session &&
+        start.session && (
+          <div className="flex flex-col gap-3">
+            <SessionSummary session={start.session} />
+            <ProfileChips
+              customer={customer.id}
+              dark={false}
+              mode="known"
+              onMissing={() => {
+                gapsRef.current?.scrollIntoView({ block: 'center' });
+                gapsRef.current?.querySelector('button')?.focus();
+              }}
+            />
+          </div>
+        )
+      }
       closeLabel={t('contactDraft.minimize')}
       footer={
         confirmDiscard ? (
@@ -578,6 +613,8 @@ function SessionSummary({ session }: { session: LogSession }) {
       : []),
     ...(session.mode ? [t(`mode.${session.mode}`)] : []),
   ];
+  const now = useNow(60_000);
+  const ends = new Date(session.starts_at).getTime() + (session.minutes ?? 0) * 60_000;
   return (
     <div className="flex items-start gap-3 rounded-xl bg-surface px-4 py-3 shadow-[inset_0_0_0_1px_var(--hair)]">
       <Icon
@@ -589,6 +626,11 @@ function SessionSummary({ session }: { session: LogSession }) {
         {session.title && <span className="text-[15px] font-semibold">{session.title}</span>}
         <span className="text-sm leading-6 text-text-2">{facts.join(' · ')}</span>
       </div>
+      {ends <= now && (
+        <span className="ms-auto flex-none rounded-full bg-good-tint px-2.5 py-1 text-xs font-semibold text-good">
+          {t('customer.logDialog.sessionEnded', { ago: f.timeAgo(new Date(ends)) })}
+        </span>
+      )}
     </div>
   );
 }

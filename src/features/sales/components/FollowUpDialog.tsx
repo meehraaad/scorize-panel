@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
+import { Notice } from '@/components/ui/Notice';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Dialog } from '@/components/ui/Dialog';
 import { ApiError } from '@/lib/api/client';
@@ -26,7 +27,7 @@ const VisitFooter = lazy(() =>
   import('./VisitDialog').then((module) => ({ default: module.VisitFooter })),
 );
 
-type How = 'call' | 'meeting';
+export type How = 'call' | 'meeting';
 const HOWS = ['call', 'meeting'] as const satisfies readonly How[];
 
 /**
@@ -50,6 +51,7 @@ export function FollowUpDialog({
   current,
   timed = true,
   onLog,
+  how: firstHow = 'call',
 }: {
   open: boolean;
   onClose: () => void;
@@ -63,6 +65,8 @@ export function FollowUpDialog({
   timed?: boolean | undefined;
   /** "I talked to them": opens the contact log instead. */
   onLog?: (() => void) | undefined;
+  /** Which side it opens on: a call, or the meeting at the office (the customer page's button). */
+  how?: How | undefined;
 }) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
@@ -90,10 +94,12 @@ export function FollowUpDialog({
   /** Moving the customer's follow-up: the time it has now. */
   const moving = lead ? at : null;
   const customer = lead?.customer ?? picked?.customer ?? noLead?.customer ?? null;
-  const [how, setHow] = useState<How>('call');
-  const offersMeeting = ON_SERVER.visitFollowUp && customer !== null;
-  /** "Meeting" picked: the customer it is set with. */
-  const meeting = offersMeeting && how === 'meeting' ? customer : null;
+  const [how, setHow] = useState<How>(firstHow);
+  // Offered before a customer is picked too: the seller can decide on a meeting first.
+  const offersMeeting = ON_SERVER.visitFollowUp && (customer !== null || !lead);
+  /** "Meeting" picked: the customer it is set with (none yet: the picker comes first). */
+  const meetingPicked = offersMeeting && how === 'meeting';
+  const meeting = meetingPicked ? customer : null;
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -155,13 +161,17 @@ export function FollowUpDialog({
       open={open}
       onClose={onClose}
       title={
-        lead
-          ? t(moving ? 'followUpDialog.moveTitle' : 'followUpDialog.setTitle', {
-              name: named(lead.name),
-            })
-          : t('followUpDialog.title')
+        meetingPicked
+          ? name
+            ? t('visit.title', { name: named(name) })
+            : t('visit.titleNew')
+          : lead
+            ? t(moving ? 'followUpDialog.moveTitle' : 'followUpDialog.setTitle', {
+                name: named(lead.name),
+              })
+            : t('followUpDialog.title')
       }
-      subtitle={t(meeting !== null ? 'visit.subtitle' : 'followUpDialog.subtitle')}
+      subtitle={t(meetingPicked ? 'visit.subtitle' : 'followUpDialog.subtitle')}
       closeLabel={t('close')}
       {...(meeting !== null ? { size: 'wide' as const } : {})}
       footer={
@@ -169,6 +179,10 @@ export function FollowUpDialog({
           <Suspense fallback={null}>
             <VisitFooter onClose={onClose} />
           </Suspense>
+        ) : meetingPicked ? (
+          <Button variant="outline" onClick={onClose}>
+            {t('cancel')}
+          </Button>
         ) : (
           <>
             <Button
@@ -211,7 +225,9 @@ export function FollowUpDialog({
             }))}
           />
         )}
-        {meeting !== null ? (
+        {meetingPicked && meeting === null ? (
+          <Notice tone="info">{t('nextStep.pickCustomer')}</Notice>
+        ) : meeting !== null ? (
           <Suspense fallback={<SkeletonRows rows={4} />}>
             <VisitForm customer={meeting} onDone={onClose}>
               <FollowUpNow at={moving} text={current} timed={timed} onLog={onLog} />
@@ -224,7 +240,7 @@ export function FollowUpDialog({
               <span className="text-sm font-semibold text-text-2">{t('followUpDialog.date')}</span>
               <FollowUpWhen
                 legend={t('followUpDialog.date')}
-                name={name}
+                calendar="open"
                 follow={follow}
                 date={date}
                 onChange={(next) => {

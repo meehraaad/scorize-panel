@@ -3,6 +3,7 @@ import { useId, useState, type ReactNode, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColleaguePicker } from '@/components/tasks/ColleaguePicker';
 import { Button } from '@/components/ui/Button';
+import { ChoiceGroup } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
@@ -36,6 +37,16 @@ const MINUTE = 60_000;
 /** How far ahead a meeting can be set (Django: eight weeks). */
 const WEEKS_AHEAD = 8;
 
+/** The seller's own session or office meeting during an hour (their calls and tasks don't count). */
+function ownAt(busy: CalendarEvent[], start: Date, minutes: number) {
+  const end = start.getTime() + minutes * MINUTE;
+  return busy.find((event) => {
+    if (!event.id.startsWith('c') && !event.id.startsWith('v')) return false;
+    const begins = event.start.getTime();
+    return begins < end && begins + event.minutes * MINUTE > start.getTime();
+  });
+}
+
 /**
  * Set an in-person meeting at the office with a customer (S75), from the customer page or the call
  * popup: the office's hours on a week, a time when every room is taken can't be picked. The
@@ -51,6 +62,7 @@ export function VisitDialog({
   followUp,
   onLog,
   onBooked,
+  onCall,
 }: {
   customer: { id: number; name: string };
   open: boolean;
@@ -62,6 +74,8 @@ export function VisitDialog({
   onLog?: (() => void) | undefined;
   /** The meeting was set: its time. */
   onBooked?: ((startsAt: string) => void) | undefined;
+  /** Back to a follow-up call instead (the customer page): the follow-up window. */
+  onCall?: (() => void) | undefined;
 }) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
@@ -88,6 +102,18 @@ export function VisitDialog({
         )
       }
     >
+      {onCall && (
+        <ChoiceGroup
+          legend={t('visit.kind')}
+          look="segmented"
+          value="meeting"
+          onChange={(value) => value === 'call' && onCall()}
+          options={(['call', 'meeting'] as const).map((value) => ({
+            value,
+            label: t(value === 'call' ? 'visit.kindCall' : 'visit.kindMeeting'),
+          }))}
+        />
+      )}
       {visits.isError ? (
         <Notice tone="error">{t('error')}</Notice>
       ) : !ready ? (
@@ -229,8 +255,10 @@ export function VisitForm({
       const begins = new Date(row.at).getTime();
       return begins <= start.getTime() && start.getTime() < begins + minutes * MINUTE;
     });
+    const mine = slot && ownAt(seller.busy, new Date(slot.at), minutes);
     if (!slot) toast.error(t('visit.closed'));
     else if (slot.left === 0) toast.error(t('visit.roomsFull'));
+    else if (mine) toast.error(t('visit.youAreBusy', { what: mine.title }));
     else setAt(slot.at);
   };
 

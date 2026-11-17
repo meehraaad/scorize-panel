@@ -4,8 +4,8 @@ import type { TaskSummary } from '@/lib/tasks/api';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 
 /** Quick follow-up times; any other is a pick on the seller's week (`other`). */
-export const FOLLOWS = ['evening', 'tomorrow', 'three'] as const;
-export type Follow = (typeof FOLLOWS)[number] | 'week' | 'other';
+export const FOLLOWS = ['evening', 'tomorrow', 'three', 'week'] as const;
+export type Follow = (typeof FOLLOWS)[number] | 'other';
 
 /** A picked day with no hour (`YYYY-MM-DD`); a picked time is `YYYY-MM-DDTHH:mm`. */
 export function isDayOnly(date: string): boolean {

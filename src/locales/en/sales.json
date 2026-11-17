@@ -619,14 +619,20 @@
         "next": "Next step"
       },
       "fromCalendar": "From the calendar",
-      "calendarTitle": "When to follow up with {{name}}?",
-      "calendarHint": "Tap a free spot; that time becomes the follow-up.",
       "smsSummary": "Text it too",
       "saveWithFollow": "Save · follow up {{day}} {{time}}",
       "channelOption": {
         "call": "By phone",
         "meeting": "In person"
-      }
+      },
+      "followDayOption": {
+        "evening": "Today",
+        "tomorrow": "Tomorrow",
+        "three": "In 3 days",
+        "week": "Next week"
+      },
+      "closeCalendar": "Close calendar",
+      "sessionEnded": "Ended · {{ago}}"
     },
     "tabs": {
       "label": "Customer page sections",
@@ -2466,12 +2472,6 @@
     "minutes": "{{n}} min",
     "hours": "{{n}} h"
   },
-  "followUpSlots": {
-    "label": "My week, to pick the follow-up time",
-    "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
-    "picked": "New follow-up",
-    "pickedAria": "Picked time: {{day}} at {{time}}"
-  },
   "instalment": {
     "state": {
       "paid": "Paid",
@@ -2526,14 +2526,16 @@
       "countries": "Country",
       "budget": "Budget",
       "language": "Language certificate",
-      "education": "Degree"
+      "education": "Degree",
+      "gpa": "GPA"
     },
     "question": {
       "wanted_degree": "Which degree?",
       "countries": "Which countries?",
       "budget": "Budget?",
       "language": "Language certificate?",
-      "education": "Last degree?"
+      "education": "Last degree?",
+      "gpa": "GPA of the last degree?"
     },
     "budget": {
       "1": "Under 500M",
@@ -2551,7 +2553,15 @@
     "studyField": "Field",
     "gpaLabel": "GPA",
     "score": "Score",
-    "noCertificate": "No language certificate"
+    "noCertificate": "No language certificate",
+    "missing_one": "{{n}} missing",
+    "missing_other": "{{n}} missing",
+    "gaps": {
+      "title": "We don’t have these yet",
+      "hint": "Optional; it doesn’t block saving. Each answer is saved to the customer’s info for the whole team right away.",
+      "done": "The customer’s profile is complete",
+      "answered": "Saved in this session"
+    }
   },
   "callStrip": {
     "unknownNumber": "Unknown number",
@@ -2817,13 +2827,12 @@
     "cancelledToCall": "Meeting cancelled. The follow-up stays at that time, as a call.",
     "kind": "Follow up by",
     "kindCall": "Call",
-    "kindMeeting": "Meeting at the office"
+    "kindMeeting": "Meeting at the office",
+    "titleNew": "New office meeting",
+    "youAreBusy": "You have “{{what}}” at this hour. Pick another time."
   },
   "followUpWhen": {
-    "exact": "Or an exact day and time",
-    "day": "Follow-up day",
-    "dayHint": "No hour; it stays on that day's list until the day ends.",
-    "dayChip": "Day only, no time"
+    "exact": "Or an exact day and time"
   },
   "myReady": {
     "title": "My ready messages",
@@ -2862,5 +2871,22 @@
     "blank": "No ready message",
     "make": "Make a ready message in settings",
     "close": "Close"
+  },
+  "whenPicker": {
+    "dateOnly": "Day only, no time",
+    "dateOnlyHint": "It shows in “Today” on that day, to do whenever there is time.",
+    "days": "Day",
+    "hours": "Time",
+    "hint": "Your own items are under each hour. An hour with your consultation or office meeting can’t be picked.",
+    "dayHint": "Tap a day; the follow-up shows in “Today” that day, with no time.",
+    "kind": {
+      "session": "Consultation",
+      "visit": "In person",
+      "task": "Task",
+      "call": "Follow-up"
+    }
+  },
+  "nextStep": {
+    "pickCustomer": "Pick the customer first to see the office hours."
   }
 }

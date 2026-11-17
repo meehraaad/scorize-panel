@@ -60,7 +60,9 @@ describe('sales: an in-person meeting at the office (S75)', () => {
     expect(within(again).getByText(/اتاق A/)).toBeInTheDocument();
     await user.click(within(again).getByRole('button', { name: 'لغو جلسه' }));
     await user.click(
-      within(within(again).getByRole('group')).getByRole('button', { name: 'لغو جلسه' }),
+      within(within(again).getByRole('group', { name: /^جلسه لغو/ })).getByRole('button', {
+        name: 'لغو جلسه',
+      }),
     );
     expect(
       await toasts().findByText('جلسه لغو شد. پیگیری در همان ساعت، تماس شد.'),
