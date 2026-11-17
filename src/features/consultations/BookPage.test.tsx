@@ -15,6 +15,7 @@ const loginAs = (id: number) => {
 describe('booking a consultation', () => {
   beforeEach(async () => {
     // Monday 4 Aban 1405 (26 Oct 2026); the mock's times start tomorrow, 10:00 Tehran = 06:30 UTC.
+    // The panel shows Tehran time on any computer (src/lib/tehranTime.ts).
     vi.useFakeTimers({ now: new Date('2026-10-26T09:00:00Z'), toFake: ['Date'] });
     localStorage.clear();
     await i18n.changeLanguage('fa');
@@ -40,13 +41,13 @@ describe('booking a consultation', () => {
     expect(within(calendar).getByText('27 Oct')).toBeInTheDocument();
     const tuesday = within(calendar).getByRole('group', { name: 'سه‌شنبه ۵ آبان' });
     // Free, one seat left, full.
-    expect(within(tuesday).getByRole('button', { name: /۰۶:۳۰ تا ۰۶:۵۰$/ })).toBeEnabled();
-    expect(within(tuesday).getByRole('button', { name: /۰۶:۵۰ تا ۰۷:۱۰، ۱ جا$/ })).toBeEnabled();
-    expect(within(tuesday).getByRole('button', { name: /۰۷:۱۰ تا ۰۷:۳۰، پر شد$/ })).toBeDisabled();
+    expect(within(tuesday).getByRole('button', { name: /۱۰:۰۰ تا ۱۰:۲۰$/ })).toBeEnabled();
+    expect(within(tuesday).getByRole('button', { name: /۱۰:۲۰ تا ۱۰:۴۰، ۱ جا$/ })).toBeEnabled();
+    expect(within(tuesday).getByRole('button', { name: /۱۰:۴۰ تا ۱۱:۰۰، پر شد$/ })).toBeDisabled();
 
-    await user.click(within(tuesday).getByRole('button', { name: /۰۶:۵۰ تا ۰۷:۱۰/ }));
+    await user.click(within(tuesday).getByRole('button', { name: /۱۰:۲۰ تا ۱۰:۴۰/ }));
     const card = screen.getByRole('dialog', { name: 'زمان انتخابی برای مشاوره‌ی اپلای' });
-    expect(within(card).getByText('سه‌شنبه ۵ آبان · ۰۶:۵۰ تا ۰۷:۱۰')).toBeInTheDocument();
+    expect(within(card).getByText('سه‌شنبه ۵ آبان · ۱۰:۲۰ تا ۱۰:۴۰')).toBeInTheDocument();
     expect(within(card).getByText(/27 Oct 2026/)).toBeInTheDocument();
     expect(within(card).getByText('۵۰۰٬۰۰۰ تومان')).toBeInTheDocument();
     expect(within(card).getByText('فقط یک جای خالی مانده')).toBeInTheDocument();
@@ -68,7 +69,7 @@ describe('booking a consultation', () => {
 
     const calendar = screen.getByRole('region', { name: 'زمان‌های اپلای حضوری' });
     await user.click(
-      within(calendar).getAllByRole('button', { name: /۰۶:۳۰ تا ۰۷:۳۰$/ })[0] as HTMLElement,
+      within(calendar).getAllByRole('button', { name: /۱۰:۰۰ تا ۱۱:۰۰$/ })[0] as HTMLElement,
     );
     const card = screen.getByRole('dialog', { name: 'زمان انتخابی برای اپلای حضوری' });
     expect(within(card).getByText('حضوری در دفتر اسکورایز · ۶۰ دقیقه')).toBeInTheDocument();
