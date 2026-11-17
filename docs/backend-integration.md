@@ -207,3 +207,7 @@ branch. Both local-mode and assessment flags still guard the backend. See
 [Phase 5 workflow handoff](assessment/phase-5-unified-workflow.md) for revisions,
 exact retry, recorded-history and capability contracts. Existing Phase 3 shared
 evidence/document APIs remain the source for canonical statements and owned files.
+The contract is now `unified-workflow-4`: responses list `unavailable_pathways`
+(selected but no longer in the adopted catalog; status `pathway_unavailable`, choose
+again), and results from synthetic programs carry the `synthetic_not_law` limitation.
+See [Phase 6 comparison](assessment/phase-6-comparison.md).

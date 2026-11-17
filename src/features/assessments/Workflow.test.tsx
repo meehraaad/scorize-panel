@@ -188,7 +188,7 @@ it('asks for a new selection when the catalog no longer offers a selected pathwa
   server.use(
     http.get(endpoint, () =>
       HttpResponse.json({
-        version: 'unified-workflow-3',
+        version: 'unified-workflow-4',
         session_id: id,
         revision: 4,
         assessment_date: '2026-11-12',
