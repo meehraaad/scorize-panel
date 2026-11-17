@@ -13,7 +13,7 @@ type Filter = 'all' | MoveKind;
 const FILTERS: readonly Filter[] = ['all', 'entry', 'exit'];
 
 /**
- * «ورود و خروج»: every joining and leaving under way, soonest first, each with its checklist. A
+ * «استخدام و جدایی»: every joining and leaving under way, soonest first, each with its checklist. A
  * joining starts with a new staff member (staff page); a leaving from the person's file.
  */
 export default function MovesPage() {
