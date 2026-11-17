@@ -34,7 +34,6 @@ import { EventDetails, StartAction } from './EventDetails';
 import { TASK_COLOR, TASK_MINUTES } from './useSellerBusy';
 import { useSalesFormat } from '../format';
 import { FollowUpDialog } from './FollowUpDialog';
-import type { TimedEvent } from './EventTimeDialog';
 import { TaskBrief } from './TaskBrief';
 
 const MINUTE = 60_000;
@@ -42,11 +41,6 @@ const MINUTE = 60_000;
 const TASK_HOUR = 10;
 /** In-person meetings at the office (S75): their own colour on the calendar. */
 const VISIT_COLOR = 'var(--cal-7)';
-
-// Only when a call's or a meeting's start and end are changed.
-const EventTimeDialog = lazy(() =>
-  import('./EventTimeDialog').then((module) => ({ default: module.EventTimeDialog })),
-);
 
 // Only when a day of the tasks row is clicked.
 const NewTaskDialog = lazy(() =>
@@ -95,8 +89,6 @@ export function ConsultationCalendar() {
   const { data, isPending } = useQuery(sellerCalendarQuery(week));
   const setFollowUp = useSetFollowUp();
   const [setting, setSetting] = useState<Setting | null>(null);
-  /** A call or meeting whose start and end are being changed. */
-  const [timing, setTiming] = useState<TimedEvent | null>(null);
   /** A day of the tasks row was clicked: a new task due then. */
   const [newTaskOn, setNewTaskOn] = useState<Date | null>(null);
   const colleagues = useQuery({ ...tasksQuery('sales'), enabled: newTaskOn !== null });
@@ -442,24 +434,7 @@ export function ConsultationCalendar() {
                       lead: { id: call.lead, name: named(call.name) },
                     })
                   }
-                  onTimes={(picked) => {
-                    if (picked.kind === 'call')
-                      setTiming({
-                        kind: 'call',
-                        lead: picked.item.lead,
-                        name: picked.item.name,
-                        starts_at: picked.item.follow_up_at,
-                        minutes: callMinutes(picked.item),
-                      });
-                    else if (picked.kind === 'visit')
-                      setTiming({
-                        kind: 'visit',
-                        id: picked.item.id,
-                        name: picked.item.name,
-                        starts_at: picked.item.starts_at,
-                        minutes: picked.item.minutes,
-                      });
-                  }}
+                  editTimes
                 />
               )
             }
@@ -468,11 +443,6 @@ export function ConsultationCalendar() {
       </div>
       {setting && (
         <FollowUpDialog open onClose={() => setSetting(null)} at={setting.at} lead={setting.lead} />
-      )}
-      {timing && (
-        <Suspense fallback={null}>
-          <EventTimeDialog event={timing} onClose={() => setTiming(null)} />
-        </Suspense>
       )}
       {newTaskOn && (
         <Suspense fallback={null}>

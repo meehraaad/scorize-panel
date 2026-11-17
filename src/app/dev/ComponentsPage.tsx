@@ -39,6 +39,7 @@ import { StarRating, StarScore } from '@/components/ui/StarRating';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
 import { TagList } from '@/components/ui/Tags';
+import { TimeSelect } from '@/components/ui/TimeSelect';
 import { TextField } from '@/components/ui/TextField';
 import { Toast } from '@/components/ui/Toast';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -72,6 +73,7 @@ export default function ComponentsPage() {
   const [dialog, setDialog] = useState(false);
   const [day, setDay] = useState('');
   const [moment, setMoment] = useState('');
+  const [clock, setClock] = useState('09:30');
   const [thisWeek] = useState(() => weekOf(new Date(), i18n.language === 'fa' ? 6 : 1));
   const [week, setWeek] = useState(thisWeek);
   const [booked, setBooked] = useState<string | null>(null);
@@ -532,6 +534,16 @@ export default function ComponentsPage() {
                 onChange={setMoment}
                 time
                 only="future"
+              />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <TimeSelect
+                label="TimeSelect"
+                value={clock}
+                onChange={setClock}
+                options={['09:00', '09:15', '09:30', '09:45', '10:00', '10:15', '10:30'].map(
+                  (time, index) => ({ value: time, label: time, hint: `${String(index * 15)}′` }),
+                )}
               />
             </div>
             <Button variant="outline" className="self-start" onClick={() => setDialog(true)}>

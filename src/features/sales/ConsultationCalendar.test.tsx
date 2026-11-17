@@ -312,7 +312,7 @@ describe('sales: my consultations on a week calendar', () => {
       expect(within(dialog).queryByRole('textbox', { name: /مشتری/ })).toBeNull();
     });
 
-    it('an office meeting opens its card, with its start and end to change', async () => {
+    it('an office meeting: its end picked in the card, an hour unless changed', async () => {
       const user = userEvent.setup();
       const booked = await fetch('/api/sales/v1/customers/1/visits/', {
         method: 'POST',
@@ -323,12 +323,19 @@ describe('sales: my consultations on a week calendar', () => {
       const calendar = await open();
       await user.click(within(calendar).getByRole('button', { name: /جلسه حضوری/ }));
       const card = within(calendar).getByRole('dialog');
-      await user.click(within(card).getByRole('button', { name: /^تغییر ساعت شروع و پایان/ }));
-      const dialog = await screen.findByRole('dialog', { name: /^ساعت شروع و پایان/ });
-      expect(within(dialog).getByRole('combobox', { name: 'پایان' })).toHaveValue('60');
+      expect(within(card).getByRole('button', { name: 'شروع: ۱۱:۰۰' })).toBeInTheDocument();
+      await user.click(within(card).getByRole('button', { name: 'پایان: ۱۲:۰۰' }));
+      const ends = screen.getByRole('listbox', { name: 'پایان' });
+      expect(within(ends).getByRole('option', { selected: true })).toHaveTextContent('۱ ساعت');
+      await user.click(within(ends).getByRole('option', { name: /۱۲:۳۰/ }));
+      expect(screen.queryByRole('listbox')).toBeNull();
+      await user.click(within(card).getByRole('button', { name: 'ذخیره زمان' }));
+      expect(
+        await toasts().findByText('زمان به چهارشنبه ۶ آبان از ۱۱:۰۰ تا ۱۲:۳۰ تغییر کرد.'),
+      ).toBeInTheDocument();
     });
 
-    it("changes a call's end from its card: 15 minutes unless set", async () => {
+    it("a call's start moves its end with it; Escape closes the list", async () => {
       const user = userEvent.setup();
       let sent: unknown = null;
       server.use(
@@ -338,17 +345,21 @@ describe('sales: my consultations on a week calendar', () => {
         }),
       );
       const calendar = await open();
-      // A call still ahead (14:30 today); a past one can't be changed.
+      // A call still ahead (14:30 today); a past one has no times to change.
       await user.click(within(calendar).getByRole('button', { name: /۱۴:۳۰ · پیگیری$/ }));
       const card = within(calendar).getByRole('dialog');
-      await user.click(within(card).getByRole('button', { name: /^تغییر ساعت شروع و پایان/ }));
-      const dialog = await screen.findByRole('dialog', { name: /^ساعت شروع و پایان/ });
-      const end = within(dialog).getByRole('combobox', { name: 'پایان' });
-      expect(end).toHaveValue('15');
-      await user.selectOptions(end, '45');
-      await user.click(within(dialog).getByRole('button', { name: 'ذخیره زمان' }));
+      const start = within(card).getByRole('button', { name: 'شروع: ۱۴:۳۰' });
+      await user.click(start);
+      expect(screen.getByRole('listbox', { name: 'شروع' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('listbox')).toBeNull();
+      expect(start).toHaveFocus();
+      await user.click(start);
+      await user.click(screen.getByRole('option', { name: '۱۶:۰۰' }));
+      expect(within(card).getByRole('button', { name: 'پایان: ۱۶:۱۵' })).toBeInTheDocument();
+      await user.click(within(card).getByRole('button', { name: 'ذخیره زمان' }));
       expect(await toasts().findByText(/^زمان به .* تغییر کرد\.$/)).toBeInTheDocument();
-      expect(sent).toMatchObject({ follow_up_minutes: 45 });
+      expect(sent).toMatchObject({ follow_up_minutes: 15 });
     });
   });
 });

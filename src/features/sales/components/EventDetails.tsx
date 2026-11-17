@@ -30,6 +30,7 @@ import {
   type Status,
 } from '../consultationStatus';
 import { useSalesFormat } from '../format';
+import { EventTimes, type TimedEvent } from './EventTimes';
 import { customerPath } from '../paths';
 
 /*
@@ -101,7 +102,7 @@ export function EventDetails({
   now,
   onClose,
   onMoveCall,
-  onTimes,
+  editTimes = false,
   sellers,
 }: {
   chosen: Chosen;
@@ -110,8 +111,8 @@ export function EventDetails({
   onClose: () => void;
   /** Another time for a follow-up call (dragging's keyboard and phone twin). */
   onMoveCall: (call: CalendarCall) => void;
-  /** Change a call's or a meeting's start and end (`eventTimes`); absent: not offered. */
-  onTimes?: ((chosen: Chosen) => void) | undefined;
+  /** The start and end can be changed in place (the calendar, `eventTimes`). */
+  editTimes?: boolean;
   /** A sales manager's calendar: who a consultation can be given to. */
   sellers?: { id: number; name: string }[] | undefined;
 }) {
@@ -140,16 +141,15 @@ export function EventDetails({
     </Link>
   );
 
-  const timesButton = onTimes && ON_SERVER.eventTimes && start.getTime() > now && (
-    <button
-      type="button"
-      onClick={() => onTimes(chosen)}
-      aria-label={action(t('eventTimes.open'))}
-      className={outline}
-    >
-      {t('eventTimes.open')}
-    </button>
-  );
+  // A call, or a meeting that is the seller's (any for a sales manager), still ahead.
+  const timed: TimedEvent | null =
+    !editTimes || !ON_SERVER.eventTimes || start.getTime() <= now
+      ? null
+      : chosen.kind === 'call'
+        ? { kind: 'call', lead: chosen.item.lead, starts_at: chosen.item.follow_up_at, minutes }
+        : chosen.kind === 'visit' && (chosen.item.mine || (sellers?.length ?? 0) > 0)
+          ? { kind: 'visit', id: chosen.item.id, starts_at: chosen.item.starts_at, minutes }
+          : null;
 
   let actions: ReactNode;
   let statusLine: ReactNode = null;
@@ -165,7 +165,6 @@ export function EventDetails({
         >
           {t('followUpDialog.change')}
         </button>
-        {timesButton}
         <ContactLogButton
           customer={item.customer}
           name={named(item.name)}
@@ -183,7 +182,6 @@ export function EventDetails({
     const visit = chosen.item;
     actions = (
       <>
-        {(visit.mine || (sellers?.length ?? 0) > 0) && timesButton}
         {customerLink}
         <a href={callHref(visit.phone, linphone)} className={primary}>
           {t('consultationCalendar.callNow')}
@@ -323,19 +321,28 @@ export function EventDetails({
           >
             {named(item.name)}
           </Link>
-          <span className="text-[13px]">
-            {t('consultationCalendar.when', {
-              day: f.weekday(start),
-              from: f.time(start),
-              to: f.time(end),
-            })}
-          </span>
+          {!timed && (
+            <span className="text-[13px]">
+              {t('consultationCalendar.when', {
+                day: f.weekday(start),
+                from: f.time(start),
+                to: f.time(end),
+              })}
+            </span>
+          )}
           {f.gregorian(start) && (
             <span className="text-xs text-text-2">{`⁦${f.gregorian(start) ?? ''}⁩`}</span>
           )}
         </span>
         <IconButton icon="close" aria-label={t('consultationCalendar.close')} onClick={onClose} />
       </div>
+      {timed && (
+        <EventTimes
+          key={timed.kind === 'call' ? `l${String(timed.lead)}` : `v${String(timed.id)}`}
+          event={timed}
+          now={now}
+        />
+      )}
       <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] text-text-2">
         <li className="flex items-center gap-2.5">
           <Icon
