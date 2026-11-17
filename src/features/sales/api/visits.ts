@@ -5,7 +5,7 @@ import { SALES_API } from '@/lib/sales/api';
 import { CALENDAR_KEY, type CalendarVisit } from './calendar';
 import { customerKey } from './customer';
 
-/** An in-person meeting at the office (S75): an hour in one of the office's rooms. */
+/** An in-person meeting at the office (S75): an hour in one of the office's rooms, unless its end was changed. */
 export type OfficeVisit = CalendarVisit;
 
 export interface VisitSlot {
@@ -82,6 +82,29 @@ export function useBookVisit(customer: number) {
         body,
       }),
     onSettled: refresh,
+  });
+}
+
+/** A meeting's new start and length, from the calendar (`eventTimes`). */
+export interface VisitChange {
+  id: number;
+  starts_at: string;
+  minutes: number;
+  /** Text the customer the new time when the start changed (default on). */
+  sms?: boolean;
+}
+
+/** Changes a meeting's start and end: its follow-up moves with it (400 closed office, 409 `full`). */
+export function useChangeVisit() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: VisitChange) =>
+      api<OfficeVisit>(`${SALES_API}/visits/${String(id)}/`, { method: 'PATCH', body }),
+    onSettled: (visit) =>
+      void Promise.all([
+        client.invalidateQueries({ queryKey: CALENDAR_KEY }),
+        ...(visit ? [client.invalidateQueries({ queryKey: customerKey(visit.customer) })] : []),
+      ]),
   });
 }
 

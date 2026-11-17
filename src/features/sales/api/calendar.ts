@@ -52,6 +52,8 @@ export interface CalendarCall {
   face?: Face | null;
   /** False: a follow-up for that day with no hour (counted on the day row, not drawn at 23:59). */
   timed?: boolean;
+  /** How long the call is on the calendar (15 unless its end was changed); absent before Django sends it. */
+  minutes?: number;
 }
 
 /** One of the seller's own tasks in the range (not a customer's follow-up: those are `calls`). */
@@ -175,6 +177,8 @@ export interface FollowUpChange {
   on?: string | null | undefined;
   /** What to do then; empty keeps a moved follow-up's text. */
   text?: string;
+  /** How long the call is (its end); not sent, a moved follow-up keeps its own. */
+  minutes?: number;
 }
 
 /**
@@ -184,16 +188,17 @@ export interface FollowUpChange {
 export function useSetFollowUp() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ lead, at, on, text }: FollowUpChange) =>
+    mutationFn: ({ lead, at, on, text, minutes }: FollowUpChange) =>
       api(`${SALES_API}/leads/bulk/`, {
         method: 'POST',
         body: {
           ids: [lead],
           ...(on ? { follow_up_on: on } : { follow_up_at: at }),
           ...(text ? { follow_up_text: text } : {}),
+          ...(minutes ? { follow_up_minutes: minutes } : {}),
         },
       }),
-    onMutate: async ({ lead, at, on }) => {
+    onMutate: async ({ lead, at, on, minutes }) => {
       // A day with no hour is due by its end (Django's 23:59), on the day row.
       const due = on ? new Date(`${on}T23:59`).toISOString() : at;
       await client.cancelQueries({ queryKey: CALENDAR_KEY });
@@ -204,7 +209,9 @@ export function useSetFollowUp() {
           data && {
             ...data,
             calls: data.calls.map((call) =>
-              call.lead === lead && due ? { ...call, follow_up_at: due, timed: !on } : call,
+              call.lead === lead && due
+                ? { ...call, follow_up_at: due, timed: !on, ...(minutes ? { minutes } : {}) }
+                : call,
             ),
           },
       );

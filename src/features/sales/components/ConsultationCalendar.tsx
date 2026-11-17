@@ -24,8 +24,8 @@ import {
   type CalendarType,
 } from '../api';
 import {
-  CALL_MINUTES,
   DEFAULT_MINUTES,
+  callMinutes,
   statusOf,
   type Chosen,
   type Status,
@@ -192,7 +192,7 @@ export function ConsultationCalendar() {
       return {
         id: `l${String(item.lead)}`,
         start,
-        minutes: CALL_MINUTES,
+        minutes: callMinutes(item),
         color: 'var(--text-2)',
         look: 'call' as const,
         title: item.name,
@@ -252,10 +252,15 @@ export function ConsultationCalendar() {
         const item = consultations.find((row) => `c${String(row.id)}` === chosenId);
         return item && { kind: 'consultation' as const, item };
       })()
-    : (() => {
-        const item = calls.find((row) => `l${String(row.lead)}` === chosenId);
-        return item && { kind: 'call' as const, item };
-      })();
+    : chosenId?.startsWith('v')
+      ? (() => {
+          const item = visits.find((row) => `v${String(row.id)}` === chosenId);
+          return item && { kind: 'visit' as const, item };
+        })()
+      : (() => {
+          const item = calls.find((row) => `l${String(row.lead)}` === chosenId);
+          return item && { kind: 'call' as const, item };
+        })();
 
   const all = data?.consultations ?? [];
   const unlogged = all.filter((item) => statusOf(item, nowTime) === 'need').length;
@@ -429,6 +434,7 @@ export function ConsultationCalendar() {
                       lead: { id: call.lead, name: named(call.name) },
                     })
                   }
+                  editTimes
                 />
               )
             }

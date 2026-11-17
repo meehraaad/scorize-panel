@@ -5,8 +5,8 @@ import { eventColor } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { sellerCalendarQuery } from '../api';
+import { callMinutes } from '../consultationStatus';
 
-const CALL_MINUTES = 15;
 const DEFAULT_MINUTES = 30;
 /** A task with an hour is drawn this long, in its own colour. */
 export const TASK_MINUTES = 30;
@@ -78,7 +78,7 @@ export function useSellerBusy(week: Date): { busy: CalendarEvent[]; isPending: b
         return {
           id: `l${String(item.lead)}`,
           start,
-          minutes: CALL_MINUTES,
+          minutes: callMinutes(item),
           color: 'var(--text-2)',
           look: 'call' as const,
           title: item.name,

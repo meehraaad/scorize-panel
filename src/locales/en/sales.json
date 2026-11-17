@@ -527,6 +527,9 @@
         "money": "Money",
         "team": "Team"
       },
+      "search": "Search this customer's history",
+      "searchPlaceholder": "Search notes and summaries",
+      "emptySearch": "No entry has these words.",
       "emptyFilter": "Nothing of this kind."
     },
     "score": {
@@ -2450,8 +2453,22 @@
     "saveAt": "Save follow-up · {{day}} {{time}}",
     "now": "Current follow-up: {{when}}",
     "log": "Talked to them? Log the contact",
+    "noOpenLeadFound": "No open lead. Customers with an account:",
+    "noLead": "No open lead",
+    "belongsTo": "{{seller}}'s lead: open their page instead",
+    "taskText": "Follow up with {{name}}",
     "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step.",
     "saveOn": "Save the follow-up · {{day}}"
+  },
+  "eventTimes": {
+    "start": "Start",
+    "end": "End",
+    "save": "Save time",
+    "saved": "Moved to {{day}}, {{from}} to {{to}}.",
+    "closed": "The office isn't open then. Set the start and end within office hours.",
+    "smsHint": "The customer gets the meeting's new time by SMS.",
+    "minutes": "{{n}} min",
+    "hours": "{{n}} h"
   },
   "followUpSlots": {
     "label": "My week, to pick the follow-up time",
@@ -2796,7 +2813,15 @@
     "closed": "The office is closed at this time.",
     "pickedShort": "In-person meeting",
     "roomsLeft_one": "{{n}} room free",
-    "roomsLeft_other": "{{n}} rooms free"
+    "roomsLeft_other": "{{n}} rooms free",
+    "nextStep": "Next step: in-person meeting on {{day}} at {{time}}",
+    "nextStepHint": "Until then the meeting is the follow-up. For another time, cancel the meeting and book again.",
+    "isFollowUp": "This customer's follow-up is their in-person meeting. For another time, cancel the meeting and book again.",
+    "lostFirst": "This customer has an in-person meeting ahead. Cancel it first.",
+    "cancelledToCall": "Meeting cancelled. The follow-up stays at that time, as a call.",
+    "kind": "Follow up by",
+    "kindCall": "Call",
+    "kindMeeting": "Meeting at the office"
   },
   "followUpWhen": {
     "exact": "Or an exact day and time",

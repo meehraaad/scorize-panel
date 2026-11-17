@@ -6,7 +6,14 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { formatPhone } from '@/lib/site';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { firstLeadQuery, leadSearchQuery, leadsQuery, type LeadMatch } from '../api';
+import {
+  customerSearchQuery,
+  firstLeadQuery,
+  leadSearchQuery,
+  leadsQuery,
+  type CustomerMatch,
+  type LeadMatch,
+} from '../api';
 import { OwnerTag } from './OwnerTag';
 
 /** Leads a follow-up can be set on (the server skips the rest). */
@@ -19,14 +26,23 @@ const MIN_LETTERS = 2;
 /**
  * Finding one of the seller's open leads by name or phone, as a combobox: the matches come once
  * typing pauses, best first, each with its stage and its follow-up; arrows move, Enter picks.
+ *
+ * With `onNoLead`, a search that finds no open lead goes on to anyone with an account: a customer
+ * nobody has an open lead on can be picked too (`noLead`), and one with another seller's open lead
+ * is shown with their name and can't be (a follow-up would land on that seller's lead).
  */
 export function CustomerPicker({
   value,
   onChange,
+  noLead = null,
+  onNoLead,
   error,
 }: {
   value: LeadMatch | null;
   onChange: (lead: LeadMatch | null) => void;
+  /** The customer picked without an open lead (with `onNoLead`). */
+  noLead?: CustomerMatch | null;
+  onNoLead?: ((customer: CustomerMatch | null) => void) | undefined;
   error?: string | undefined;
 }) {
   const { t } = useTranslation('sales');
@@ -61,34 +77,54 @@ export function CustomerPicker({
           }))
   ).slice(0, SHOWN);
   const typing = typed.replace(/\s/g, '').length >= MIN_LETTERS;
-  const searching = typing && (settled !== typed || found.isFetching);
-  const open = typing && value === null;
+  const noOpenLead = ready && found.isSuccess && !found.isFetching && rows.length === 0;
+  // No open lead found: the customers with an account, the ones a follow-up task can be about.
+  const anyone = useQuery({
+    ...customerSearchQuery(settled),
+    enabled: onNoLead !== undefined && ON_SERVER.customerSearch && noOpenLead,
+  });
+  const others: CustomerMatch[] =
+    onNoLead !== undefined && rows.length === 0 ? (anyone.data?.results ?? []).slice(0, SHOWN) : [];
+  const searching =
+    typing && (settled !== typed || found.isFetching || (noOpenLead && anyone.isFetching));
+  const open = typing && value === null && noLead === null;
+  const choices: (LeadMatch | CustomerMatch)[] =
+    rows.length > 0 ? rows : others.filter((row) => row.access !== 'other');
+  const count = choices.length;
   const listId = `${id}-list`;
   const optionId = (index: number) => `${id}-option-${String(index)}`;
-  const current = Math.min(active, rows.length - 1);
+  const current = Math.min(active, choices.length - 1);
+
+  const pick = (row: LeadMatch | CustomerMatch | undefined) => {
+    if (!row) return;
+    if ('id' in row) onChange(row);
+    else onNoLead?.(row);
+  };
 
   const onKey = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (!open || rows.length === 0) return;
+    if (!open || count === 0) return;
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       const step = event.key === 'ArrowDown' ? 1 : -1;
-      setActive((index) => (Math.min(index, rows.length - 1) + step + rows.length) % rows.length);
+      setActive((index) => (Math.min(index, count - 1) + step + count) % count);
     } else if (event.key === 'Enter') {
       event.preventDefault();
-      const row = rows[current];
-      if (row) onChange(row);
+      pick(choices[current]);
     }
   };
 
-  if (value)
+  if (value || noLead)
     return (
       <div className="flex flex-col gap-2">
         <span className="text-[15px] font-medium text-text">{t('followUpDialog.customer')}</span>
         <div className="flex items-center justify-between gap-3 rounded-2xl bg-tint px-4 py-3">
-          <Match row={value} />
+          {value ? <Match row={value} /> : noLead && <NoLeadMatch row={noLead} />}
           <button
             type="button"
-            onClick={() => onChange(null)}
+            onClick={() => {
+              onChange(null);
+              onNoLead?.(null);
+            }}
             className="min-h-11 flex-none rounded-full px-3 text-sm font-semibold text-primary-text hover:bg-surface"
           >
             {t('followUpDialog.otherCustomer')}
@@ -108,7 +144,7 @@ export function CustomerPicker({
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
-        aria-activedescendant={open && rows.length > 0 ? optionId(current) : undefined}
+        aria-activedescendant={open && count > 0 ? optionId(current) : undefined}
         aria-describedby={`${id}-message`}
         aria-invalid={error ? true : undefined}
         autoComplete="off"
@@ -150,12 +186,38 @@ export function CustomerPicker({
               <Match row={row} />
             </li>
           ))}
+          {!searching && others.length > 0 && (
+            <li role="presentation" className="px-3 py-2 text-xs text-text-2">
+              {t('followUpDialog.noOpenLeadFound')}
+            </li>
+          )}
+          {others.map((row) => {
+            const index = choices.indexOf(row);
+            const taken = row.access === 'other';
+            return (
+              <li
+                key={row.customer}
+                id={taken ? undefined : optionId(index)}
+                role="option"
+                aria-selected={!taken && index === current}
+                aria-disabled={taken || undefined}
+                onMouseEnter={() => !taken && setActive(index)}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => !taken && pick(row)}
+                className={`flex min-h-12 items-center rounded-xl px-3 py-2 ${
+                  taken ? 'opacity-70' : 'cursor-pointer'
+                } ${!taken && index === current ? 'bg-tint' : ''}`}
+              >
+                <NoLeadMatch row={row} />
+              </li>
+            );
+          })}
           {searching && (
             <li role="presentation" className="px-3 py-2.5 text-sm text-text-2">
               {t('followUpDialog.searching')}
             </li>
           )}
-          {!searching && rows.length === 0 && (
+          {!searching && rows.length === 0 && others.length === 0 && (
             <li role="presentation" className="px-3 py-2.5 text-sm text-text-2">
               {t('followUpDialog.noMatch')}
             </li>
@@ -164,6 +226,24 @@ export function CustomerPicker({
       )}
     </div>
   );
+
+  function NoLeadMatch({ row }: { row: CustomerMatch }) {
+    return (
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[15px] font-semibold">{named(row.name)}</span>
+        <span className="text-xs text-text-2">
+          {[
+            row.phone && <bdi key="phone">{formatPhone(row.phone)}</bdi>,
+            row.access === 'other'
+              ? t('followUpDialog.belongsTo', { seller: row.seller ?? '' })
+              : t('followUpDialog.noLead'),
+          ]
+            .filter(Boolean)
+            .flatMap((part, index) => (index ? [' · ', part] : [part]))}
+        </span>
+      </span>
+    );
+  }
 
   function Match({ row }: { row: LeadMatch }) {
     return (
