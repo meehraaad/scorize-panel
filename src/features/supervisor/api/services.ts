@@ -28,6 +28,58 @@ export interface CaseService {
   status: 'open' | 'paused' | 'closed';
   /** null: waiting for a manager to choose. */
   owner: ServiceOwner | null;
+  /** Where it stands (SVC4); null for a kind without stages yet. Missing from an older Django. */
+  stage?: ServiceStage | null;
+}
+
+/** One of a kind's stages, as staff named them in Django's admin. */
+export interface ServiceStage {
+  key: string;
+  name: string;
+  /** An outcome (visa granted or refused). */
+  final: boolean;
+}
+
+/** A visa result recorded for the service's case and country (on the old site, as today). */
+export interface ServiceVisaResult {
+  id: number;
+  title: string;
+  status:
+    | 'getting_appointment'
+    | 'pending_appointment'
+    | 'pending_result'
+    | 'granted'
+    | 'refused'
+    | 'missed_appointment'
+    | 'canceled_appointment';
+  /** Localized. */
+  embassy: string;
+  appointment_at: string | null;
+  resolved_at: string | null;
+  note: string | null;
+}
+
+export interface ServiceDetail {
+  service: CaseService;
+  stages: ServiceStage[];
+  /** The viewer may set the stage: the owner, or a manager (not on a closed service). */
+  editable: boolean;
+  /** Visa services: the country's results; null for other kinds. */
+  visa: ServiceVisaResult[] | null;
+}
+
+export interface MyService extends CaseService {
+  case: number;
+  case_name: string;
+  /** The customer's messages in this service's conversation nobody has seen. */
+  unread: number;
+  last_message_at: string | null;
+}
+
+export interface MyServices {
+  count: number;
+  /** Unread first, then the latest conversation; at most 200. */
+  results: MyService[];
 }
 
 export interface ServiceCandidate {
@@ -71,6 +123,29 @@ export const serviceOwnersQuery = (caseId: number, service: number) =>
     queryKey: [...SUPERVISOR_KEY, 'case', caseId, 'service-owners', service],
     queryFn: ({ signal }) => api<ServiceOwners>(ownerUrl(caseId, service), { signal }),
   });
+
+export const serviceQuery = (caseId: number, service: number) =>
+  queryOptions({
+    queryKey: [...SUPERVISOR_KEY, 'case', caseId, 'service', service],
+    queryFn: ({ signal }) =>
+      api<ServiceDetail>(`${SUPERVISOR_API}/cases/${String(caseId)}/services/${String(service)}/`, {
+        signal,
+      }),
+  });
+
+export const myServicesQuery = queryOptions({
+  queryKey: [...SUPERVISOR_KEY, 'my-services'],
+  queryFn: ({ signal }) => api<MyServices>(`${SUPERVISOR_API}/services/mine/`, { signal }),
+});
+
+export function useSetServiceStage(caseId: number) {
+  return useSupervisorMutation(({ service, stage }: { service: number; stage: string }) =>
+    api(`${SUPERVISOR_API}/cases/${String(caseId)}/services/${String(service)}/stage/`, {
+      method: 'POST',
+      body: { stage },
+    }),
+  );
+}
 
 export function useSetServiceOwner(caseId: number) {
   return useSupervisorMutation(({ service, owner }: { service: number; owner: number }) =>

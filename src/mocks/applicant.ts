@@ -1043,6 +1043,15 @@ const MARYAM = { name: 'مریم کاظمی', role: 'supervisor' as const };
 const HOSSEIN = { name: 'حسین رحیمی', role: 'supervisor' as const };
 const ELHAM = { name: 'الهام رضوی', role: 'writer' as const };
 const NEGAR = { name: 'نگار صادقی', role: 'supervisor' as const };
+/** Django's built-in visa stages (client_services/stages.py). */
+export const VISA_STAGES = [
+  { key: 'documents', name: 'مدارک ویزا', final: false },
+  { key: 'appointment', name: 'گرفتن نوبت سفارت', final: false },
+  { key: 'interview', name: 'جلسه‌ی سفارت', final: false },
+  { key: 'decision', name: 'در انتظار نتیجه', final: false },
+  { key: 'granted', name: 'ویزا صادر شد', final: true },
+  { key: 'refused', name: 'ویزا رد شد', final: true },
+];
 const file = (name: string) => ({ name, url: '#' });
 
 function saraThreads(): MockThread[] {
@@ -1377,6 +1386,29 @@ function overviewOf(state: SaraState): ApplicantOverview {
       ...(state.documents.writing ?? [])
         .filter((item) => item.step === 'form')
         .map((item) => ({ kind: 'form' as const, id: `form-${item.type}`, writing: item.type })),
+    ],
+    // SVC4: her admission in Canada and Germany, and the visa for Canada at its embassy appointment.
+    services: [
+      ...['کانادا', 'آلمان'].map((country, index) => ({
+        id: 30 - index,
+        kind: 'admission',
+        name: 'پذیرش',
+        country,
+        status: 'open' as const,
+        owner: MARYAM.name,
+        stage: null,
+        stages: [],
+      })),
+      {
+        id: 31,
+        kind: 'visa',
+        name: 'ویزا',
+        country: 'کانادا',
+        status: 'open' as const,
+        owner: NEGAR.name,
+        stage: 'appointment',
+        stages: VISA_STAGES,
+      },
     ],
     ticket: (() => {
       const supervisor = state.threads.find((thread) => thread.id === 'supervisor');

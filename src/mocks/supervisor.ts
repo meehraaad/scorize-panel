@@ -38,6 +38,7 @@ import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/
 import { faceOf, putFace } from './face';
 import { mockBotRules } from './mail';
 import { addToNotebook, changeInNotebook, importOldNotes, notebookOf } from './notebook';
+import { VISA_STAGES } from './applicant';
 import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
@@ -775,6 +776,7 @@ function servicesOf(seed: CaseSeed): CaseService[] {
       country,
       status: 'open' as const,
       owner: kind === 'visa' ? null : owner,
+      stage: kind === 'visa' ? (VISA_STAGES[0] ?? null) : null,
     })),
   );
 }
@@ -1257,6 +1259,65 @@ export const supervisorHandlers = [
     service.owner = { id: person.id, name: person.name };
     record(item, `مسئول خدمت ${service.name} · ${service.country ?? ''}: ${person.name}`);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // SVC4: one service with its stages (and a visa's results); its stage; the viewer's services.
+  http.get(`${API}/cases/:id/services/:service/`, ({ params }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    const visa = service.kind === 'visa';
+    return HttpResponse.json({
+      service,
+      stages: visa ? VISA_STAGES : [],
+      editable: service.status !== 'closed',
+      visa: visa
+        ? [
+            {
+              id: 1,
+              title: 'ویزای تحصیلی',
+              status: 'getting_appointment',
+              embassy: 'امارات',
+              appointment_at: null,
+              resolved_at: null,
+              note: null,
+            },
+          ]
+        : null,
+    });
+  }),
+
+  http.post(`${API}/cases/:id/services/:service/stage/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    const { stage } = (await request.json()) as { stage: string };
+    const found = (service.kind === 'visa' ? VISA_STAGES : []).find((entry) => entry.key === stage);
+    if (!found) return HttpResponse.json({ stage: ['invalid'] }, { status: 400 });
+    service.stage = found;
+    record(item, `مرحله‌ی ${service.name}: ${found.name}`);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${API}/services/mine/`, () => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    // The mock supervisor is SupportStaff 7 (src/mocks/handlers.ts).
+    const results = [...all.values()].flatMap((item) =>
+      item.services
+        .filter((service) => service.owner?.id === 7 && service.status !== 'closed')
+        .map((service) => ({
+          ...service,
+          case: item.data.id,
+          case_name: item.data.name,
+          unread: item.data.id === 1240 ? 1 : 0,
+          last_message_at: item.last_activity,
+        })),
+    );
+    results.sort((a, b) => b.unread - a.unread);
+    return HttpResponse.json({ count: results.length, results });
   }),
 
   http.put(`${API}/cases/:id/face/`, ({ params, request }) => {

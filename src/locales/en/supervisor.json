@@ -623,6 +623,37 @@
       "title": "Services without an owner",
       "count": "{{n}} services",
       "empty": "Every open service has an owner."
+    },
+    "stage": {
+      "open": "Stage of {{service}}",
+      "title": "Stage of {{service}}",
+      "now": "Now: {{stage}}",
+      "label": "Stage",
+      "save": "Save the stage of {{service}}",
+      "done": "{{service}}: {{stage}}",
+      "loadError": "The service didn't load. Open the page again."
+    },
+    "visa": {
+      "title": "Visa results",
+      "empty": "No visa result recorded for this country yet.",
+      "embassy": "Embassy: {{embassy}}",
+      "appointment": "Appointment: {{when}}",
+      "oldSite": "Visa results are recorded on the old site for now; the service's stage follows them.",
+      "status": {
+        "getting_appointment": "Getting an appointment",
+        "pending_appointment": "Waiting for the embassy session",
+        "pending_result": "Waiting for the answer",
+        "granted": "Visa granted",
+        "refused": "Visa refused",
+        "missed_appointment": "Missed the appointment",
+        "canceled_appointment": "Appointment cancelled"
+      }
     }
+  },
+  "myServices": {
+    "title": "My services",
+    "subtitle": "{{n}} services, {{waiting}} conversations waiting",
+    "list": "The services you own",
+    "empty": "You don't own any service yet."
   }
 }

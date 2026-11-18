@@ -259,5 +259,15 @@
       "online": "Online",
       "in_person": "In person"
     }
+  },
+  "services": {
+    "title": "Your services",
+    "owner": "Owner: {{name}}",
+    "noOwner": "An owner will be assigned soon",
+    "paused": "Paused",
+    "stages": "Stages of {{service}}",
+    "done": "Done",
+    "waiting": "Waiting",
+    "result": "Result"
   }
 }

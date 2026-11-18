@@ -42,9 +42,17 @@ export type ServerFeature =
   | 'teamBreaks'
   | 'attendance'
   | 'hr'
-  | 'dayFollowUps';
+  | 'dayFollowUps'
+  | 'clientServices';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * `GET /supervisor/v1/services/mine/`: the services a supervisor or visa expert owns (lang
+   * `claude/ecstatic-edison-jzr50i`, docs/client-services.md phase 4), behind Django's
+   * `SCORIZE_CLIENT_SERVICES`. Off: no «خدمت‌های من» page. The case page's services card and the
+   * service conversations need no switch here: they show when Django sends them.
+   */
+  clientServices: false,
   /**
    * `follow_up_on` (a day with no hour) on `POST /sales/v1/customers/<id>/contacts/` and
    * `leads/bulk/` (lang `claude/inspiring-dirac-6lpa16`). Off: the follow-up picker asks a time.
