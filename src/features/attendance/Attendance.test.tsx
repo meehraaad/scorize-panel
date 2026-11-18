@@ -23,9 +23,11 @@ describe('attendance section', () => {
   it('shows today: who came when, the hours, late people and the unmapped number', async () => {
     loginAs(AMIR);
     renderApp('/attendance');
+    // The old address opens the HR panel's attendance section.
     expect(
-      await screen.findByRole('heading', { name: 'گزارش روزانه', level: 1 }),
+      await screen.findByRole('heading', { name: 'حضور و غیاب', level: 1 }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'روزانه' })).toHaveAttribute('aria-current', 'page');
     const table = await screen.findByRole('table');
     const maryam = within(table).getByRole('row', { name: /مریم کریمی/ });
     expect(within(maryam).getByText('تأخیر')).toBeInTheDocument();
@@ -41,7 +43,7 @@ describe('attendance section', () => {
   it('totals a month per person and opens a person’s days', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/attendance/month');
+    renderApp('/hr/attendance/month');
     const list = await screen.findByRole('region', { name: 'حضور و غیاب یک ماه' });
     const row = await within(list).findByRole('button', { name: /مریم کریمی/ });
     expect(row).toHaveTextContent('۶ روز تأخیر');
@@ -56,7 +58,10 @@ describe('attendance section', () => {
   it('highlights numbers nobody is mapped to and maps one', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
-    renderApp('/attendance/settings');
+    renderApp('/hr/attendance/settings');
+    const week = await screen.findByRole('list', { name: 'هفته‌ی کاری' });
+    expect(within(week).getByText('یکشنبه')).toBeInTheDocument();
+    expect(within(week).getAllByText('تعطیل')).toHaveLength(2);
     expect(
       await screen.findByText('۱ شماره هنوز به کارمندی وصل نیست', { exact: false }),
     ).toBeInTheDocument();
@@ -74,9 +79,9 @@ describe('attendance section', () => {
 
   it('is only for key holders: no menu entry, no page', async () => {
     loginAs(NIMA);
-    renderApp('/attendance');
+    renderApp('/hr/attendance');
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: 'گزارش روزانه', level: 1 })).toBeNull();
+      expect(screen.queryByRole('heading', { name: 'حضور و غیاب', level: 1 })).toBeNull();
     });
     expect(screen.queryByRole('link', { name: 'حضور و غیاب' })).toBeNull();
   });

@@ -6,8 +6,6 @@ import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
-import { PageStack } from '@/components/ui/PageColumns';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { parseValue } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
@@ -32,50 +30,49 @@ export default function MonthlyPage() {
   const first = parseValue(range.from);
 
   return (
-    <PageStack>
-      <PageHeader
-        title={t('monthly.title')}
-        subtitle={t('monthly.subtitle', { start: f.digits(data.start ?? '–') })}
-        actions={<ExportLinks range={range} />}
-      />
-      <Card aria-label={t('monthly.label')}>
-        <div className="flex items-center gap-2 px-3 pt-4 lg:px-6">
-          <IconButton
-            icon="chevronEnd"
-            aria-label={t('monthly.previous')}
-            onClick={() => setShift(shift - 1)}
-          />
-          <h2 className="m-0 min-w-40 text-center text-[17px] font-bold" aria-live="polite">
-            {first ? f.monthYear(first) : ''}
-          </h2>
-          <IconButton
-            icon="chevronStart"
-            aria-label={t('monthly.next')}
-            disabled={shift >= 0}
-            onClick={() => setShift(shift + 1)}
-          />
+    <Card aria-label={t('monthly.label')}>
+      <div className="flex flex-wrap items-center gap-2 px-3 pt-4 lg:px-6">
+        <IconButton
+          icon="chevronEnd"
+          aria-label={t('monthly.previous')}
+          onClick={() => setShift(shift - 1)}
+        />
+        <h2 className="m-0 min-w-40 text-center text-[17px] font-bold" aria-live="polite">
+          {first ? f.monthYear(first) : ''}
+        </h2>
+        <IconButton
+          icon="chevronStart"
+          aria-label={t('monthly.next')}
+          disabled={shift >= 0}
+          onClick={() => setShift(shift + 1)}
+        />
+        <div className="ms-auto">
+          <ExportLinks range={range} />
         </div>
-        {data.results.length === 0 ? (
-          <EmptyState variant="padded">{t('monthly.empty')}</EmptyState>
-        ) : (
-          <ul className="m-0 mt-3 list-none p-0">
-            {data.results.map((row) => {
-              const key = `${String(row.employee_id)}-${String(row.enroll_id)}`;
-              return (
-                <li key={key}>
-                  <TotalsRow
-                    row={row}
-                    expanded={open === key}
-                    onToggle={() => setOpen(open === key ? null : key)}
-                    range={range}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Card>
-    </PageStack>
+      </div>
+      <p className="m-0 px-5 pt-3 text-[13px] text-text-2 lg:px-8">
+        {t('monthly.subtitle', { start: f.digits(data.start ?? '–') })}
+      </p>
+      {data.results.length === 0 ? (
+        <EmptyState variant="padded">{t('monthly.empty')}</EmptyState>
+      ) : (
+        <ul className="m-0 mt-3 list-none p-0">
+          {data.results.map((row) => {
+            const key = `${String(row.employee_id)}-${String(row.enroll_id)}`;
+            return (
+              <li key={key}>
+                <TotalsRow
+                  row={row}
+                  expanded={open === key}
+                  onToggle={() => setOpen(open === key ? null : key)}
+                  range={range}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
   );
 }
 
