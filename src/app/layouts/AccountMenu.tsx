@@ -116,6 +116,12 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
               <Icon name="user" />
               {t('account.profile')}
             </Link>
+            {user.staff?.is_active && (
+              <Link to="/me" className={itemClass}>
+                <Icon name="chart" />
+                {t('account.myPay')}
+              </Link>
+            )}
             <Link to="/settings" className={itemClass}>
               <Icon name="settings" />
               {t('account.settings')}

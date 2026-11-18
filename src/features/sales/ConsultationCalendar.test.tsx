@@ -100,6 +100,30 @@ describe('sales: my consultations on a week calendar', () => {
     expect(within(calendar).queryAllByRole('button', { name: /ویزای تحصیلی/ })).toHaveLength(0);
   });
 
+  it('types: clear all, then one ticked; kinds: consultations and tasks hidden', async () => {
+    const user = userEvent.setup();
+    const calendar = await open();
+    const sessions = () =>
+      within(calendar)
+        .queryAllByRole('button', { pressed: false })
+        .filter((block) => /، (تلفنی|حضوری)، /.test(block.getAttribute('aria-label') ?? ''));
+    expect(sessions().length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('button', { name: 'برداشتن همه' }));
+    expect(sessions()).toHaveLength(0);
+    await user.click(screen.getByRole('checkbox', { name: /مشاوره‌ی ویزای تحصیلی/ }));
+    expect(sessions().length).toBeGreaterThan(0);
+    expect(
+      sessions().every((block) => /ویزای تحصیلی/.test(block.getAttribute('aria-label') ?? '')),
+    ).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'انتخاب همه' }));
+    await user.click(screen.getByRole('checkbox', { name: /^مشاوره[\s۰-۹]*$/ }));
+    expect(sessions()).toHaveLength(0);
+    expect(screen.getByRole('checkbox', { name: /مشاوره‌ی ویزای تحصیلی/ })).toBeDisabled();
+    expect(within(calendar).getAllByRole('link', { name: /^کارهای / }).length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('checkbox', { name: /^کار[\s۰-۹]*$/ }));
+    expect(within(calendar).queryAllByRole('link', { name: /^کارهای / })).toHaveLength(0);
+  });
+
   it('only in person, or only online', async () => {
     const user = userEvent.setup();
     const calendar = await open();

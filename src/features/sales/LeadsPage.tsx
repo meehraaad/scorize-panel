@@ -18,10 +18,12 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES } from '@/lib/sales/api';
 import { pagesOf } from '@/lib/api/page';
 import {
+  CONSULTATION_FILTERS,
   LEAD_FILTERS,
   leadFilterOf,
   leadsQuery,
   tagsQuery,
+  type ConsultationFilter,
   type LeadFilter,
   type LeadQuery,
   type LeadsData,
@@ -46,6 +48,8 @@ export default function LeadsPage() {
   const [overdue, setOverdue] = useState(false);
   const [tag, setTag] = useState<number | null>(null);
   const [seller, setSeller] = useState<number | 'none' | null>(null);
+  const [consultation, setConsultation] = useState<ConsultationFilter>('all');
+  const [consultationType, setConsultationType] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
@@ -59,6 +63,8 @@ export default function LeadsPage() {
     page,
     // Absent unless chosen: the first page stays the one the route prefetched.
     ...(seller === null ? {} : { seller }),
+    ...(consultation === 'all' ? {} : { consultation }),
+    ...(consultationType === null ? {} : { consultationType }),
   };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
   const tagsOn = data?.supports.tags === true;
@@ -94,6 +100,19 @@ export default function LeadsPage() {
     );
 
   const pages = pagesOf(data);
+  // The second layer: the types of the chosen mode, once a bought consultation is chosen.
+  const bought =
+    consultation === 'any' || consultation === 'in_person' || consultation === 'online';
+  const typeOptions = (data?.consultation_types ?? []).filter(
+    (item) => consultation === 'any' || item.mode === consultation,
+  );
+  const chooseConsultation = refilter((value: ConsultationFilter) => {
+    setConsultation(value);
+    // A type of another mode would find nobody.
+    const kept = data?.consultation_types?.find((item) => item.id === consultationType);
+    if (!kept || value === 'all' || value === 'none' || (value !== 'any' && kept.mode !== value))
+      setConsultationType(null);
+  });
 
   return (
     <PageStack>
@@ -178,6 +197,38 @@ export default function LeadsPage() {
                 { value: 'all', label: t('owner.all') },
                 { value: 'none', label: t('owner.unassigned') },
                 ...data.sellers.map((item) => ({ value: String(item.id), label: item.name })),
+              ]}
+            />
+          )}
+          {data?.supports.consultations && (
+            <SelectField
+              inline
+              label={t('leads.consultation')}
+              value={consultation}
+              onChange={chooseConsultation}
+              options={CONSULTATION_FILTERS.map((value) => ({
+                value,
+                label:
+                  value === 'all'
+                    ? t('leads.allConsultations')
+                    : t(`leads.consultationOption.${value}`),
+              }))}
+            />
+          )}
+          {data?.supports.consultations && bought && typeOptions.length > 0 && (
+            <SelectField
+              inline
+              label={t('leads.consultationType')}
+              value={consultationType === null ? 'all' : String(consultationType)}
+              onChange={refilter((value: string) =>
+                setConsultationType(value === 'all' ? null : Number(value)),
+              )}
+              options={[
+                { value: 'all', label: t('leads.allConsultationTypes') },
+                ...typeOptions.map((item) => ({
+                  value: String(item.id),
+                  label: item.active ? item.name : t('leads.oldType', { name: item.name }),
+                })),
               ]}
             />
           )}

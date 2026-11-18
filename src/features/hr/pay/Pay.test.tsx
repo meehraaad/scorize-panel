@@ -135,4 +135,41 @@ describe('HR pay and KPIs', () => {
     expect(within(slip).getByText('پاداش امتیاز (100)')).toBeInTheDocument();
     expect(within(slip).getByText('۱٬۰۰۰٬۰۰۰ تومان')).toBeInTheDocument();
   });
+
+  it('closes the month, takes an objection on «من» and blocks the final pay until answered', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    const router = renderApp('/hr/pay/results');
+    const ali = await rowOf('علی رضایی');
+    await user.type(ali.getByLabelText('تماس موفق'), '150');
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('نتیجه‌ها ذخیره شد.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'بستن ماه برای بررسی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'بستن ماه برای بررسی' });
+    await user.click(within(dialog).getByRole('button', { name: 'بستن ماه برای بررسی' }));
+    expect(
+      await toasts().findByText('ماه بسته شد و همه می‌توانند عددهایشان را ببینند.'),
+    ).toBeInTheDocument();
+
+    // The person (the mocks show «من» as Ali) objects to a value.
+    await user.click(screen.getByRole('button', { name: 'حساب کاربری' }));
+    await user.click(await screen.findByRole('link', { name: 'امتیاز و پرداخت من' }));
+    const calls = await screen.findByText('تماس موفق');
+    const kpi = within(calls.closest('li') as HTMLElement);
+    await user.click(kpi.getByRole('button', { name: 'به این عدد اعتراض دارم' }));
+    await user.type(kpi.getByLabelText('چرا این عدد درست نیست؟'), 'دو روز مرخصی بودم');
+    await user.click(kpi.getByRole('button', { name: 'فرستادن اعتراض' }));
+    expect(await toasts().findByText('اعتراض شما فرستاده شد.')).toBeInTheDocument();
+    expect(await kpi.findByText('منتظر جواب')).toBeInTheDocument();
+
+    // HR answers it with a new value.
+    await router.navigate('/hr/pay/results');
+    const objections = await screen.findByRole('region', { name: /اعتراض‌ها/ });
+    await user.type(within(objections).getByLabelText('جواب شما'), 'درست است');
+    await user.type(within(objections).getByLabelText('عدد درست (اختیاری)'), '180');
+    await user.click(within(objections).getByRole('button', { name: 'پذیرفتن' }));
+    expect(await toasts().findByText('اعتراض پذیرفته شد.')).toBeInTheDocument();
+    expect(await within(objections).findByText('پذیرفته شد')).toBeInTheDocument();
+  });
 });
+

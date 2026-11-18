@@ -1,5 +1,7 @@
 import { http, HttpResponse } from 'msw';
+import type { MyMonth } from '@/features/hr/me/api';
 import type {
+  Dispute,
   Kpi,
   KpiCatalog,
   KpiResults,
@@ -14,14 +16,16 @@ import type {
   Totals,
 } from '@/features/hr/pay/api';
 import { hrAllowed, payStaff } from './hr';
-import { forbidden, notFound } from './session';
+import { forbidden, notFound, storage } from './session';
 
 /**
  * Fake «حقوق و KPI» (lang `api/hr/v1/pay.py`, `kpi.py`, `human_resource/pay.py`): the sales rep
  * position (2) has two manual KPIs, «تماس موفق» (target 300, weight 3) and «قرارداد» (target 8,
  * weight 1); no values, no rules and no month of pay yet. Works scores, reward and penalty lines
  * and pay out the way Django does. An automatic KPI measures `MEASURED` for everyone (evidence
- * "8/10") when the month is measured again.
+ * "8/10") when the month is measured again. A month can be closed for review; then each staff user
+ * (2, 3, 4, 6 in src/mocks/handlers.ts) sees «من» as «علی رضایی» (staff 1, a sales rep) and can
+ * object until its last day.
  */
 const API = '/api/hr/v1';
 
@@ -120,6 +124,11 @@ let rules: PayRule[] = [];
 let results = new Map<string, MockResult>();
 let settings: PaySettings = DEFAULT_SETTINGS;
 let months: MockMonth[] = [];
+let reviews = new Map<string, { closed_at: string; disputes_until: string }>();
+let disputes: (Omit<Dispute, 'staff' | 'kpi'> & PayMonth & { staff: number; kpi: number })[] = [];
+
+const STAFF_USERS = new Set([2, 3, 4, 6]);
+const monthKey = (month: PayMonth) => `${String(month.year)}:${String(month.month)}`;
 
 export function resetHrPayMocks() {
   kpis = [manualKpi(1, 'تماس موفق', 300, 3, 'تماس'), manualKpi(2, 'قرارداد', 8, 1, 'قرارداد')];
@@ -127,6 +136,8 @@ export function resetHrPayMocks() {
   results = new Map();
   settings = structuredClone(DEFAULT_SETTINGS);
   months = [];
+  reviews = new Map();
+  disputes = [];
 }
 resetHrPayMocks();
 
@@ -324,9 +335,36 @@ const isFinal = (month: PayMonth) =>
     (row) => row.year === month.year && row.month === month.month && row.status === 'final',
   );
 
+const isClosed = (month: PayMonth) => reviews.has(monthKey(month));
+
+function reviewOf(month: PayMonth) {
+  const review = reviews.get(monthKey(month));
+  return {
+    closed: review !== undefined,
+    closed_at: review?.closed_at ?? null,
+    closed_by: review ? 'امیر عابدی' : null,
+    disputes_until: review?.disputes_until ?? null,
+  };
+}
+
+const disputesOf = (month: PayMonth) =>
+  disputes.filter((row) => row.year === month.year && row.month === month.month);
+
+function disputeRow(row: (typeof disputes)[number]): Dispute {
+  const person = payStaff().find((item) => item.id === row.staff);
+  const kpi = kpis.find((item) => item.id === row.kpi);
+  return {
+    ...row,
+    staff: { id: row.staff, name: person?.name ?? '', face: person?.face ?? null },
+    kpi: { id: row.kpi, name: kpi?.name ?? '', unit: kpi?.unit ?? '' },
+  };
+}
+
 function resultsOf(month: PayMonth): KpiResults {
   return {
     ...month,
+    ...reviewOf(month),
+    disputes: disputesOf(month).map(disputeRow),
     final: isFinal(month),
     kpis,
     rows: payStaff().map((person) => {
@@ -370,7 +408,103 @@ function measure(month: PayMonth) {
   }
 }
 
+function myMonth(month: PayMonth): MyMonth {
+  const me = payStaff()[0];
+  const final = isFinal(month);
+  const review = reviewOf(month);
+  const until = review.disputes_until;
+  const base = { ...month, final, closed: review.closed, disputes_until: until };
+  if (!me)
+    return { ...base, worked: false, can_object: false, kpis: [], score: null, lines: [], slip: null, disputes: [] };
+  const { own, values, details } = mine(month, me);
+  const score = scoreOf(own, values);
+  const payroll = months.find((item) => item.year === month.year && item.month === month.month);
+  const saved = payroll?.slips.find((slip) => slip.staff === me.id);
+  const slip = final && payroll && saved ? slipOf(payroll, saved) : null;
+  return {
+    ...base,
+    worked: true,
+    can_object: !final && until !== null && until >= new Date().toISOString().slice(0, 10),
+    kpis: own.map((kpi) => ({ ...kpi, detail: details[String(kpi.id)] ?? null })),
+    score,
+    lines: linesOf(month, me, score),
+    slip,
+    disputes: disputesOf(month)
+      .filter((row) => row.staff === me.id)
+      .map(({ staff: _staff, year: _year, month: _month, resolved_by: _by, ...row }) => row),
+  };
+}
+
+const staffAllowed = () => STAFF_USERS.has(storage.get() ?? 0);
+
 export const hrPayHandlers = [
+  http.get(`${API}/me/kpis/`, ({ request }) =>
+    staffAllowed() ? HttpResponse.json(myMonth(monthOf(request.url))) : forbidden(),
+  ),
+  http.post(`${API}/me/disputes/`, async ({ request }) => {
+    if (!staffAllowed()) return forbidden();
+    const body = (await request.json()) as PayMonth & { kpi: number; text: string };
+    const state = myMonth(body);
+    const me = payStaff()[0];
+    if (!me || !state.can_object)
+      return HttpResponse.json({ detail: 'Objections to this month are not open.' }, { status: 409 });
+    if (state.disputes.some((row) => row.kpi === body.kpi && row.status === 'open'))
+      return HttpResponse.json({ detail: 'You already have an open objection.' }, { status: 409 });
+    disputes.push({
+      id: ++nextId,
+      year: body.year,
+      month: body.month,
+      staff: me.id,
+      kpi: body.kpi,
+      text: body.text,
+      value: state.kpis.find((kpi) => kpi.id === body.kpi)?.detail?.value ?? null,
+      status: 'open',
+      answer: '',
+      new_value: null,
+      created_at: new Date().toISOString(),
+      resolved_at: null,
+      resolved_by: null,
+    });
+    return HttpResponse.json(myMonth(body), { status: 201 });
+  }),
+  http.post(`${API}/kpi-months/close/`, async ({ request }) => {
+    if (!hrAllowed()) return forbidden();
+    const body = (await request.json()) as PayMonth & { days: number };
+    if (isFinal(body)) return finalConflict();
+    const until = new Date(Date.now() + body.days * 86_400_000).toISOString().slice(0, 10);
+    reviews.set(monthKey(body), { closed_at: new Date().toISOString(), disputes_until: until });
+    return HttpResponse.json(resultsOf(body));
+  }),
+  http.delete(`${API}/kpi-months/close/`, ({ request }) => {
+    if (!hrAllowed()) return forbidden();
+    const month = monthOf(request.url);
+    if (isFinal(month)) return finalConflict();
+    reviews.delete(monthKey(month));
+    return HttpResponse.json(resultsOf(month));
+  }),
+  http.post(`${API}/kpi-disputes/:id/answer/`, async ({ params, request }) => {
+    if (!hrAllowed()) return forbidden();
+    const row = disputes.find((item) => item.id === Number(params.id) && item.status === 'open');
+    if (!row) return notFound();
+    if (isFinal(row)) return finalConflict();
+    const body = (await request.json()) as { accept: boolean; answer: string; value: number | null };
+    row.status = body.accept ? 'accepted' : 'rejected';
+    row.answer = body.answer;
+    row.resolved_at = new Date().toISOString();
+    row.resolved_by = 'امیر عابدی';
+    if (body.accept && body.value !== null) {
+      row.new_value = body.value;
+      const key = resultKey(row, row.staff, row.kpi);
+      const manual = kpis.find((kpi) => kpi.id === row.kpi)?.metric === 'manual';
+      results.set(key, {
+        value: body.value,
+        measured: results.get(key)?.measured ?? null,
+        source: manual ? 'manual' : 'override',
+        note: body.answer.slice(0, 256),
+      });
+    }
+    return HttpResponse.json(resultsOf(row));
+  }),
   http.get(`${API}/kpi-catalog/`, () => (hrAllowed() ? HttpResponse.json(CATALOG) : forbidden())),
   http.get(`${API}/kpis/`, () => (hrAllowed() ? HttpResponse.json({ kpis }) : forbidden())),
   http.post(`${API}/kpis/`, async ({ request }) => {
@@ -429,7 +563,7 @@ export const hrPayHandlers = [
     if (!hrAllowed()) return forbidden();
     const month = (await request.json()) as PayMonth;
     if (isFinal(month)) return finalConflict();
-    measure(month);
+    if (!isClosed(month)) measure(month);
     return HttpResponse.json(resultsOf(month));
   }),
   http.get(`${API}/pay-rules/`, () => (hrAllowed() ? HttpResponse.json({ rules }) : forbidden())),
@@ -488,6 +622,11 @@ export const hrPayHandlers = [
     const row = months.find((item) => item.id === Number(params.id));
     if (!row) return notFound();
     if (row.status === 'final') return finalConflict();
+    if (disputesOf(row).some((item) => item.status === 'open'))
+      return HttpResponse.json(
+        { detail: 'Answer the open objections to KPI values first.', code: 'open_disputes' },
+        { status: 409 },
+      );
     row.status = 'final';
     row.finalized_at = new Date().toISOString();
     return HttpResponse.json(payrollOf(row));

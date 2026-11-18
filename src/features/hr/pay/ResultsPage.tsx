@@ -25,7 +25,9 @@ import {
   type ResultInput,
   type ResultRow,
 } from './api';
+import { Disputes } from './components/Disputes';
 import { MonthBar } from './components/MonthBar';
+import { MonthReview } from './components/MonthReview';
 
 /** `staff:kpi` → what is typed (the value, and why a measured one changes). */
 type Drafts = Record<string, { value?: string; note?: string; back?: boolean }>;
@@ -101,7 +103,8 @@ export default function ResultsPage() {
             {t('pay.results.final')}
           </Chip>
         )}
-        {data && !data.final && measured && (
+        {data && <MonthReview month={month} data={data} />}
+        {data && !data.final && !data.closed && measured && (
           <Button
             variant="outline"
             disabled={refresh.isPending}
@@ -117,6 +120,7 @@ export default function ResultsPage() {
           </Button>
         )}
       </MonthBar>
+      {data && <Disputes disputes={data.disputes} readOnly={data.final} />}
       {!data ? (
         <Card className="p-5">
           <SkeletonRows rows={5} />

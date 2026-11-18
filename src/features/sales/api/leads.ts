@@ -40,6 +40,26 @@ export interface LeadRow {
 
 export type LeadFilter = LeadStage | 'all';
 
+/** Customers who bought (paid) a consultation: any, only in-person or not, or none ever. */
+export type ConsultationFilter = 'all' | 'any' | 'in_person' | 'online' | 'none';
+
+export const CONSULTATION_FILTERS: readonly ConsultationFilter[] = [
+  'all',
+  'any',
+  'in_person',
+  'online',
+  'none',
+];
+
+/** A consultation type for the list's filter; `online` is every type that is not in person. */
+export interface ConsultationTypeOption {
+  id: number;
+  name: string;
+  mode: 'in_person' | 'online';
+  /** Still sold; an old one only finds those who bought it. */
+  active: boolean;
+}
+
 export const LEAD_FILTERS: readonly LeadFilter[] = ['all', ...STAGES];
 
 /** The stage tab in the URL (`?stage=`); anything else is "all". */
@@ -68,6 +88,10 @@ export interface LeadQuery {
   page: number;
   /** A sales manager's seller filter: a SupportStaff id, or the leads nobody has yet. */
   seller?: number | 'none' | null;
+  /** Bought consultations; absent: no filter, so the first page stays the prefetched one. */
+  consultation?: ConsultationFilter;
+  /** A ConsultationType id the customer bought. */
+  consultationType?: number | null;
 }
 
 export interface LeadsData {
@@ -81,6 +105,8 @@ export interface LeadsData {
     bulk: boolean;
     /** Customer tags: the filter, the row chips and bulk tagging (S49). */
     tags?: boolean;
+    /** The bought-consultation filters (mode and type). */
+    consultations?: boolean;
   };
   stats: {
     new_waiting: number;
@@ -98,6 +124,8 @@ export interface LeadsData {
   results: LeadRow[];
   /** A sales manager's seller filter (SupportStaff ids); empty or absent for a seller. */
   sellers?: { id: number; name: string }[];
+  /** For the consultation type filter, active ones first. */
+  consultation_types?: ConsultationTypeOption[];
 }
 
 /** The seller's leads (managers: everyone's), with per-stage counts and the stats line (S11). */
@@ -111,6 +139,10 @@ function fetchLeads(query: LeadQuery, signal?: AbortSignal) {
   if (query.search.trim()) params.set('search', query.search.trim());
   if (query.seller !== undefined && query.seller !== null)
     params.set('seller', String(query.seller));
+  if (query.consultation && query.consultation !== 'all')
+    params.set('consultation', query.consultation);
+  if (query.consultationType !== undefined && query.consultationType !== null)
+    params.set('consultation_type', String(query.consultationType));
   return api<LeadsData>(`${SALES_API}/leads/?${params.toString()}`, { signal });
 }
 

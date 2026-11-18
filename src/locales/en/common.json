@@ -149,7 +149,8 @@
     "settings": "Settings",
     "logout": "Log out",
     "asCustomer": "Customer view",
-    "logoutFailed": "Couldn't log out. Check your internet connection and try again."
+    "logoutFailed": "Couldn't log out. Check your internet connection and try again.",
+    "myPay": "My score and pay"
   },
   "more": {
     "title": "More",
