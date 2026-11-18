@@ -81,7 +81,6 @@
         "calendar": "My calendar",
         "leads": "Customers",
         "tasks": "My tasks",
-        "month": "My performance",
         "manager": "Sales management"
       },
       "tabs": {
@@ -89,8 +88,7 @@
         "board": "Board",
         "calendar": "Calendar",
         "leads": "Customers",
-        "tasks": "Tasks",
-        "month": "Performance"
+        "tasks": "Tasks"
       },
       "description": "Leads, consultations, offers and contracts"
     },
@@ -129,6 +127,26 @@
         "calendar": "Calendar",
         "staff": "Staff"
       }
+    },
+    "marketing": {
+      "name": "Marketing",
+      "description": "The marketing team's tasks, calendar, campaigns and performance",
+      "nav": {
+        "label": "Marketing menu",
+        "today": "Today",
+        "tasks": "My tasks",
+        "calendar": "Calendar",
+        "performance": "My performance",
+        "board": "Board",
+        "manage": "Marketing management"
+      },
+      "tabs": {
+        "today": "Today",
+        "tasks": "Tasks",
+        "calendar": "Calendar",
+        "performance": "Performance",
+        "board": "Board"
+      }
     }
   },
   "tabs": {
@@ -149,7 +167,8 @@
     "settings": "Settings",
     "logout": "Log out",
     "asCustomer": "Customer view",
-    "logoutFailed": "Couldn't log out. Check your internet connection and try again."
+    "logoutFailed": "Couldn't log out. Check your internet connection and try again.",
+    "myPay": "My score and pay"
   },
   "more": {
     "title": "More",
@@ -439,5 +458,18 @@
       "note": "Note"
     }
   },
-  "noName": "No name"
+  "noName": "No name",
+  "me": {
+    "nav": "My sections",
+    "pay": "Score and pay",
+    "sales": "Sales performance"
+  },
+  "passwordGate": {
+    "card": "Enter your password",
+    "password": "Password",
+    "required": "Enter your password.",
+    "wrong": "The password is wrong.",
+    "tooMany": "Too many wrong tries. Try again in 15 minutes.",
+    "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens."
+  }
 }

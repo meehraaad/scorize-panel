@@ -2,6 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { PageStack } from '@/components/ui/PageColumns';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { hasPermission } from '@/lib/auth/roles';
+import { useUser } from '@/lib/auth/session';
+import { MANAGER_PERMISSION } from '../api/manager';
 import { salesPath } from '../paths';
 import { PHONE_SECTIONS } from './phoneSections';
 import { SectionNav } from '@/components/ui/SectionNav';
@@ -12,6 +15,7 @@ const SECTIONS = [
   { id: 'contract', to: 'manager/contract' },
   { id: 'team', to: 'manager/team' },
   { id: 'commission', to: 'manager/commission' },
+  { id: 'consultations', to: 'manager/consultations', end: false },
   { id: 'followUps', to: 'manager/follow-ups' },
   { id: 'stages', to: 'manager/stages' },
   { id: 'tags', to: 'manager/tags' },
@@ -26,15 +30,20 @@ const OFF = new Set<string>([
 
 /**
  * The sales manager's section: lead assignment, the agreement desk, the contract builder, team
- * report, commission rules, follow-ups, board stages, customer tags and the office phone line.
+ * report, commission rules, consultation types, follow-ups, board stages, customer tags and the office phone line.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');
+  const user = useUser();
+  // The phone key alone opens only the phone tab (the route's loader sends other addresses there).
+  const whole = hasPermission(user, MANAGER_PERMISSION);
   return (
     <PageStack>
       <SectionNav
         label={t('manager.nav')}
-        sections={SECTIONS.filter((section) => !OFF.has(section.id)).map((section) => ({
+        sections={SECTIONS.filter(
+          (section) => !OFF.has(section.id) && (whole || section.id === 'phone'),
+        ).map((section) => ({
           id: section.id,
           to: salesPath(section.to),
           label: t(`manager.section.${section.id}`),

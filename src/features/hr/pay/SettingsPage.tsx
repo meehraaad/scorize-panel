@@ -29,6 +29,7 @@ const toForm = (settings: PaySettings) => ({
   bonus: String(settings.kpi_bonus_percent),
   affects: settings.kpi_affects_pay,
   insurance: String(settings.insurance_percent),
+  cap: settings.penalty_cap_percent === null ? '' : String(settings.penalty_cap_percent),
   brackets: settings.tax_brackets.map((row) => ({
     upto: row.upto === null ? '' : String(row.upto),
     rate: String(row.rate),
@@ -37,7 +38,7 @@ const toForm = (settings: PaySettings) => ({
 
 /**
  * How a month's pay is worked out: the KPI bonus (a share of the base at a 100% score, or KPIs
- * shown only), the employee's insurance share, and the monthly income tax brackets. Draft months
+ * shown only), the most penalties can take in a month, the employee's insurance share, and the monthly income tax brackets. Draft months
  * are worked out again on save.
  */
 export default function SettingsPage() {
@@ -51,6 +52,8 @@ export default function SettingsPage() {
 
   const bonus = percent(form.bonus);
   const insurance = percent(form.insurance);
+  const cap = form.cap.trim() ? percent(form.cap) : null;
+  const capOk = !form.cap.trim() || cap !== null;
   const brackets = form.brackets.map((row, index) => ({
     upto: index === form.brackets.length - 1 ? null : parseAmount(row.upto),
     rate: percent(row.rate),
@@ -62,7 +65,7 @@ export default function SettingsPage() {
     limits.every(
       (upto, index) => upto !== null && (index === 0 || upto > (limits[index - 1] ?? 0)),
     );
-  const valid = bonus !== null && insurance !== null && bracketsOk;
+  const valid = bonus !== null && insurance !== null && bracketsOk && capOk;
 
   const setBracket = (index: number, change: Partial<Bracket>) =>
     setForm({
@@ -77,6 +80,7 @@ export default function SettingsPage() {
         kpi_bonus_percent: Math.round(bonus),
         kpi_affects_pay: form.affects,
         insurance_percent: insurance,
+        penalty_cap_percent: cap === null ? null : Math.round(cap),
         tax_brackets: brackets.map((row) => ({ upto: row.upto, rate: row.rate ?? 0 })),
       },
       {
@@ -107,6 +111,15 @@ export default function SettingsPage() {
           value={form.bonus}
           error={bonus === null ? t('pay.settings.percentRange') : undefined}
           onChange={(event) => setForm({ ...form, bonus: event.target.value })}
+        />
+        <TextField
+          label={t('pay.settings.penaltyCap')}
+          hint={t('pay.settings.penaltyCapHint')}
+          inputMode="numeric"
+          dir="ltr"
+          value={form.cap}
+          error={capOk ? undefined : t('pay.settings.percentRange')}
+          onChange={(event) => setForm({ ...form, cap: event.target.value })}
         />
       </Card>
       <Card className="flex flex-col gap-4 p-5 lg:px-8">

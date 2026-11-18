@@ -20,3 +20,4 @@ export * from './manager';
 export * from './contract';
 export * from './tags';
 export * from './agreement';
+export * from './consultationTypes';

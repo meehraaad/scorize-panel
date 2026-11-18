@@ -208,6 +208,74 @@ export function useSavePhoneTeam() {
   });
 }
 
+/** A staff member's mobile extension: `pending` while the office worker makes it. */
+export interface StaffMobile {
+  number: string | null;
+  status: 'pending' | 'ready' | 'failed' | 'removing';
+}
+
+/** One active staff member on the «داخلی‌ها» page. */
+export interface StaffPhone {
+  id: number;
+  name: string;
+  seller: boolean;
+  /** The office desk phone (`SupportStaff.office_extension`), what a seller sets in settings. */
+  desk: string | null;
+  mobile: StaffMobile | null;
+  /** The teams this person rings in. */
+  teams: { number: string; name: string }[];
+  /** The last change made on this page. */
+  changed: { by: string | null; at: string } | null;
+}
+
+export interface PhoneExtensions {
+  /** People with a phone first. */
+  people: StaffPhone[];
+  /** Extensions in a PBX team that are no one's. */
+  unlinked: { extension: string; teams: { number: string; name: string }[] }[];
+  /** Mobile extensions can be made (SCORIZE_MOBILE_EXTENSIONS). */
+  mobile_available: boolean;
+  seen_at: string | null;
+}
+
+export const phoneExtensionsQuery = queryOptions({
+  queryKey: [...SALES_KEY, 'phone-extensions'],
+  queryFn: ({ signal }) => api<PhoneExtensions>(`${SALES_API}/calls/extensions/`, { signal }),
+});
+
+/** Links a desk phone to someone (null unlinks); 409 `extension_taken` when another person has it. */
+export function useSetStaffDesk() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, desk }: { id: number; desk: string | null }) =>
+      api<PhoneExtensions>(`${SALES_API}/calls/extensions/${id}/desk/`, {
+        method: 'PUT',
+        body: { desk },
+      }),
+    onSuccess: (data) => {
+      client.setQueryData(phoneExtensionsQuery.queryKey, data);
+      // Teams show people by their phones.
+      void client.invalidateQueries({ queryKey: phoneTeamsQuery.queryKey });
+    },
+  });
+}
+
+/** Makes or removes someone's mobile extension (409 `removing` while the old one is going). */
+export function useSetStaffMobile() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action }: { id: number; action: 'create' | 'remove' }) =>
+      api<PhoneExtensions>(`${SALES_API}/calls/extensions/${id}/mobile/`, {
+        method: 'POST',
+        body: { action },
+      }),
+    onSuccess: (data) => {
+      client.setQueryData(phoneExtensionsQuery.queryKey, data);
+      void client.invalidateQueries({ queryKey: phoneTeamsQuery.queryKey });
+    },
+  });
+}
+
 /**
  * Where a menu key goes: a team (`target` its queue), another menu (its id), a message box, an
  * extension (any time), an extension only in the direct-number hours, hang up, or `other`: a
