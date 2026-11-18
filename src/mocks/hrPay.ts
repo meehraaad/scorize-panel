@@ -416,7 +416,16 @@ function myMonth(month: PayMonth): MyMonth {
   const until = review.disputes_until;
   const base = { ...month, final, closed: review.closed, disputes_until: until };
   if (!me)
-    return { ...base, worked: false, can_object: false, kpis: [], score: null, lines: [], slip: null, disputes: [] };
+    return {
+      ...base,
+      worked: false,
+      can_object: false,
+      kpis: [],
+      score: null,
+      lines: [],
+      slip: null,
+      disputes: [],
+    };
   const { own, values, details } = mine(month, me);
   const score = scoreOf(own, values);
   const payroll = months.find((item) => item.year === month.year && item.month === month.month);
@@ -450,16 +459,25 @@ export const hrPayHandlers = [
     const body = (await request.json()) as Partial<PayMonth> & { password?: string };
     if (body.password !== ME_PASSWORD) return wrongPassword();
     const now = payMonth();
-    return HttpResponse.json(myMonth({ year: body.year ?? now.year, month: body.month ?? now.month }));
+    return HttpResponse.json(
+      myMonth({ year: body.year ?? now.year, month: body.month ?? now.month }),
+    );
   }),
   http.post(`${API}/me/disputes/`, async ({ request }) => {
     if (!staffAllowed()) return forbidden();
-    const body = (await request.json()) as PayMonth & { kpi: number; text: string; password?: string };
+    const body = (await request.json()) as PayMonth & {
+      kpi: number;
+      text: string;
+      password?: string;
+    };
     if (body.password !== ME_PASSWORD) return wrongPassword();
     const state = myMonth(body);
     const me = payStaff()[0];
     if (!me || !state.can_object)
-      return HttpResponse.json({ detail: 'Objections to this month are not open.' }, { status: 409 });
+      return HttpResponse.json(
+        { detail: 'Objections to this month are not open.' },
+        { status: 409 },
+      );
     if (state.disputes.some((row) => row.kpi === body.kpi && row.status === 'open'))
       return HttpResponse.json({ detail: 'You already have an open objection.' }, { status: 409 });
     disputes.push({
@@ -499,7 +517,11 @@ export const hrPayHandlers = [
     const row = disputes.find((item) => item.id === Number(params.id) && item.status === 'open');
     if (!row) return notFound();
     if (isFinal(row)) return finalConflict();
-    const body = (await request.json()) as { accept: boolean; answer: string; value: number | null };
+    const body = (await request.json()) as {
+      accept: boolean;
+      answer: string;
+      value: number | null;
+    };
     row.status = body.accept ? 'accepted' : 'rejected';
     row.answer = body.answer;
     row.resolved_at = new Date().toISOString();

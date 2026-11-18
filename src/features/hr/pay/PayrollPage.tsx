@@ -151,9 +151,7 @@ function Month({
                     setConfirming(false);
                   },
                   onError: (error) =>
-                    toast.error(
-                      t(openDisputes(error) ? 'pay.payroll.openDisputes' : 'error'),
-                    ),
+                    toast.error(t(openDisputes(error) ? 'pay.payroll.openDisputes' : 'error')),
                 })
               }
             />

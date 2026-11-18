@@ -203,4 +203,3 @@ describe('HR pay and KPIs', () => {
     expect(await screen.findByText('تماس موفق')).toBeInTheDocument();
   });
 });
-

@@ -104,9 +104,31 @@ function useCurrencyName() {
  * of sales, 4%", for the whole team or one seller. Each seller earns the best step they reach,
  * as a share of the month's sales. A change applies from this month; past months keep theirs.
  */
+/**
+ * A backend from before ranges and currencies (S60) sends no `currencies`, `until` or `currency`:
+ * read those as no list, no upper limit and the toman, so the page still renders.
+ */
+type Lagging = Omit<CommissionRules, 'currencies' | 'rules'> & {
+  currencies?: CommissionRules['currencies'];
+  rules: (Omit<CommissionRule, 'until' | 'currency'> &
+    Partial<Pick<CommissionRule, 'until' | 'currency'>>)[];
+};
+
+function withDefaults(data: Lagging): CommissionRules {
+  return {
+    ...data,
+    currencies: data.currencies ?? [],
+    rules: data.rules.map((rule) => ({
+      ...rule,
+      until: rule.until ?? null,
+      currency: rule.currency ?? TOMAN,
+    })),
+  };
+}
+
 export default function CommissionPage() {
   const { t } = useTranslation('sales');
-  const { data } = useSuspenseQuery(commissionQuery);
+  const data = withDefaults(useSuspenseQuery(commissionQuery).data);
   const groups = [{ id: null, name: t('manager.commission.everyone') }, ...data.sellers].flatMap(
     (group) => {
       const rules = data.rules
