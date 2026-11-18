@@ -15,7 +15,9 @@ import { toast } from '@/lib/toast';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { CalculatorForm } from './CalculatorForm';
 import { WorkflowResults } from './WorkflowResults';
+import { WorkflowComparison } from './WorkflowComparison';
 import { WorkflowEvidence } from './WorkflowEvidence';
+import { useWorkflowNames } from './workflowNames';
 import {
   calculatorOptionsQuery,
   startCalculatorSession,
@@ -90,7 +92,7 @@ function QuestionEditor({
   const reusable = evidence.filter(
     (item) => item.kind === question.shared_kind && item.confirmed_at,
   );
-  const labels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
+  const names = useWorkflowNames();
   const evaluatorLabels = t('workflow.labels', { returnObjects: true }) as Record<string, string>;
   const mutation = useMutation({
     mutationFn: (body: Record<string, unknown>) => saveWorkflow(id, body),
@@ -193,9 +195,7 @@ function QuestionEditor({
         : ['preserve'];
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <h3 className="font-semibold">
-        {question.label ?? labels[question.field.replaceAll('.', '_')] ?? t('workflow.question')}
-      </h3>
+      <h3 className="font-semibold">{names.question(question)}</h3>
       <p>
         {t('workflow.why', {
           evaluations: question.effects
@@ -273,7 +273,7 @@ function QuestionEditor({
             schema={question.schema}
             field={question.field}
             value={value}
-            label={question.label ?? undefined}
+            label={question.label ? names.question(question) : undefined}
             choiceLabels={
               question.label
                 ? Object.fromEntries((question.schema.choices ?? []).map((key) => [key, key]))
@@ -425,7 +425,7 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
   const data = query.data;
   const labels = t('workflow.labels', { returnObjects: true }) as Record<string, string>;
   const locale = i18n.language === 'fa' ? 'fa' : 'en';
-  const fields = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
+  const names = useWorkflowNames();
   if (!data)
     return (
       <>
@@ -512,13 +512,12 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
               value: q.id,
               label: q.scoped
                 ? t('workflow.scopedQuestion', {
-                    question:
-                      q.label ?? fields[q.field.replaceAll('.', '_')] ?? t('workflow.question'),
+                    question: names.question(q),
                     evaluations: q.effects
                       .map((key) => labels[key] ?? t('workflow.configured'))
                       .join('، '),
                   })
-                : (q.label ?? fields[q.field.replaceAll('.', '_')] ?? t('workflow.question')),
+                : names.question(q),
             })),
           ]}
           onChange={setQuestionId}
@@ -588,6 +587,7 @@ function WorkflowSession({ id, onBusy }: { id: string; onBusy: (busy: boolean) =
           </div>
         )}
       </SectionCard>
+      <WorkflowComparison results={data.results} />
       <WorkflowResults results={data.results} prefix="current" />
       <WorkflowEvidence
         id={id}

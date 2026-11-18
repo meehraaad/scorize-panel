@@ -1237,7 +1237,23 @@
       "catalog_unavailable": "The captured catalog is unavailable",
       "evaluator_not_implemented": "This evaluation is not implemented",
       "input_not_supplied": "Required input is missing",
-      "dependency_unavailable": "A required evaluation is unavailable"
+      "dependency_unavailable": "A required evaluation is unavailable",
+      "financial_mapping_required": "No financial rules are linked to this pathway yet",
+      "financial_implementation_unavailable": "Financial fit is unavailable right now",
+      "policy_unavailable": "No current financial policy",
+      "route_costs_unavailable": "Costs for this pathway are not available",
+      "extension_program_mismatch": "The program changed; its specialist calculation is unavailable until reviewed",
+      "coverage_unavailable": "Outside the supported coverage",
+      "catalog_changed": "The program list changed; confirm the current programs",
+      "definition_changed": "This evaluation changed; confirm your answers again",
+      "implementation_changed": "The calculation changed; start a new assessment to continue",
+      "program_definition_changed": "The program's questions changed; confirm your answers again",
+      "subclass_specific_evidence_required": "Choose a subclass to check this evidence",
+      "program_date_out_of_coverage": "The assessment date is outside the dates this program covers",
+      "program_source_out_of_date": "The program's source is out of date and needs review",
+      "program_source_received_after_assessment": "The program's source was received after the assessment date",
+      "program_source_unreviewed": "The program's source has not been reviewed",
+      "workflow_adapter_unavailable": "This evaluation has no interview yet"
     },
     "checks": {
       "admissible": "Admissibility",
@@ -1294,6 +1310,27 @@
     "serverAnswer": "Current saved answer:",
     "currentUnavailable": "Current evaluation is unavailable. Recorded results below remain historical results, not current advice.",
     "scopedQuestion": "{{question}} — {{evaluations}}",
-    "pathwayUnavailable": "A pathway you selected is not in the current program list. Choose from the available pathways again to continue the interview. Recorded history is kept."
+    "pathwayUnavailable": "A pathway you selected is not in the current program list. Choose from the available pathways again to continue the interview. Recorded history is kept.",
+    "synthetic": "Synthetic test content, not law. It shows how the system works and says nothing about any real program.",
+    "passMarkMet": "Pass mark reached",
+    "passMarkNotMet": "Pass mark not reached",
+    "namedEvaluator": "{{name}} · {{part}}",
+    "comparison": {
+      "title": "Compare pathways",
+      "meaning": "Each part is shown on its own. Scores use each program’s own system, so they are never ranked or added across programs, and an unknown is not a rejection.",
+      "ownScores": "Scores in their own systems",
+      "noScore": "This pathway has no score system.",
+      "unknownReason": "Information needed",
+      "criterion": "Preference",
+      "criteria": {
+        "goal": "Your goal",
+        "destination": "Your destination"
+      },
+      "match": {
+        "true": "matches",
+        "false": "does not match",
+        "unknown": "not declared yet"
+      }
+    }
   }
 }

@@ -221,7 +221,8 @@
           "french": "ircc-french-nclc-draft-1"
         },
         "definition_sha256": "3e17b551e9f2b90e563dd303672881a93bdcfa1abc49f476b4be343e3b93e0ba",
-        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652",
+        "labels": {}
       },
       "ca.fsw.eligibility": {
         "id": "ca.fsw.eligibility",
@@ -440,7 +441,8 @@
           "french": "ircc-french-nclc-draft-1"
         },
         "definition_sha256": "ec21f6a72b7d9b469c72d5d42e0b89042bec6ab1640c0b20d4a2eff4a5febe47",
-        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652",
+        "labels": {}
       },
       "ca.crs": {
         "id": "ca.crs",
@@ -672,7 +674,8 @@
           "french": "ircc-french-nclc-draft-1"
         },
         "definition_sha256": "f6f8dba0c045fc43f85f48d929338ebec829ef3e0c94316b8b67bd8134331bab",
-        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652",
+        "labels": {}
       },
       "ca.cec.eligibility": {
         "id": "ca.cec.eligibility",
@@ -822,7 +825,8 @@
           "french": "ircc-french-nclc-draft-1"
         },
         "definition_sha256": "75a09252ead7398be3402a1fd181d76701328f16334c70551ede253a175b6b2b",
-        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652"
+        "implementation_sha256": "c941b20b825b87e1f57027285f53dceed003d3e65f1476b74f290f2c95a93652",
+        "labels": {}
       }
     },
     "pathways": {
