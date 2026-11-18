@@ -12,6 +12,7 @@ const SECTIONS = [
   { id: 'contract', to: 'manager/contract' },
   { id: 'team', to: 'manager/team' },
   { id: 'commission', to: 'manager/commission' },
+  { id: 'consultations', to: 'manager/consultations', end: false },
   { id: 'followUps', to: 'manager/follow-ups' },
   { id: 'stages', to: 'manager/stages' },
   { id: 'tags', to: 'manager/tags' },
@@ -26,7 +27,7 @@ const OFF = new Set<string>([
 
 /**
  * The sales manager's section: lead assignment, the agreement desk, the contract builder, team
- * report, commission rules, follow-ups, board stages, customer tags and the office phone line.
+ * report, commission rules, consultation types, follow-ups, board stages, customer tags and the office phone line.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');
