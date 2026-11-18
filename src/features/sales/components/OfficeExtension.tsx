@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
-import { officeExtensionQuery, useSetOfficeExtension } from '@/lib/sales/phoneCalls';
+import { officeExtensionQuery } from '@/lib/sales/phoneCalls';
+import { useSetOfficeExtension } from '@/lib/sales/phoneCallsMutations';
 import { toLatinDigits } from '@/lib/text';
 import { toast } from '@/lib/toast';
 

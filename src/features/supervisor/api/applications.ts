@@ -2,7 +2,7 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
 import type { ApplicationResult, Approval, FeePayment } from '@/lib/applications';
-import { type BotProblem, caseKey, useSupervisorMutation } from './case';
+import { type BotProblem, caseKey } from './case';
 import { SUPERVISOR_API, type Money } from './common';
 
 export interface BotStatus {
@@ -73,35 +73,6 @@ export const applicationsQuery = (id: number) =>
       api<CaseApplications>(`${SUPERVISOR_API}/cases/${String(id)}/applications/`, { signal }),
   });
 
-export function useSaveApplication(id: number) {
-  return useSupervisorMutation(
-    ({ application, values }: { application: number | null; values: ApplicationInput }) =>
-      application === null
-        ? api(`${SUPERVISOR_API}/cases/${String(id)}/applications/`, {
-            method: 'POST',
-            body: values,
-          })
-        : api(`${SUPERVISOR_API}/cases/${String(id)}/applications/${String(application)}/`, {
-            method: 'PATCH',
-            body: values,
-          }),
-  );
-}
-
-export function useDeleteApplication(id: number) {
-  return useSupervisorMutation((application: number) =>
-    api(`${SUPERVISOR_API}/cases/${String(id)}/applications/${String(application)}/`, {
-      method: 'DELETE',
-    }),
-  );
-}
-
-export function useSetBot(id: number) {
-  return useSupervisorMutation((active: boolean) =>
-    api(`${SUPERVISOR_API}/cases/${String(id)}/bot/`, { method: 'POST', body: { active } }),
-  );
-}
-
 export type ProfessorEmailStatus = 'queued' | 'sent' | 'reminded' | 'replied' | 'bounced';
 
 export interface ProfessorEmailRow {
@@ -165,12 +136,3 @@ export const botSettingsQuery = (id: number) =>
     queryFn: ({ signal }) =>
       api<BotSettings>(`${SUPERVISOR_API}/cases/${String(id)}/bot/settings/`, { signal }),
   });
-
-export function useSaveBotSettings(id: number) {
-  return useSupervisorMutation((change: BotSettingsChange) =>
-    api<BotSettings>(`${SUPERVISOR_API}/cases/${String(id)}/bot/settings/`, {
-      method: 'PATCH',
-      body: change,
-    }),
-  );
-}

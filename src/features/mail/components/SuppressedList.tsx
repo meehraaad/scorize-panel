@@ -12,7 +12,8 @@ import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { suppressedQuery, useUnsuppress, type SuppressedAddress } from '../api';
+import { suppressedQuery, type SuppressedAddress } from '../api';
+import { useUnsuppress } from '../mutations';
 
 /** The addresses that bounced for good: no bot writes to them again until a manager removes one. */
 export function SuppressedList() {

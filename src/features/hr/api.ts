@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { toValue } from '@/lib/calendar';
 import type { Face } from '@/lib/face/api';
@@ -227,69 +227,6 @@ export const calendarQuery = (week: Date) => {
   });
 };
 
-const staffPath = (id: number, rest = '') => `${HR_API}/staff/${String(id)}/${rest}`;
-
-/** Every HR write answers the file (or the open moves): the panel's lists and day follow. */
-function useHrMutation<V, T>(send: (value: V) => Promise<T>, onDone?: (data: T) => void) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: send,
-    onSuccess: (data) => {
-      onDone?.(data);
-      return client.invalidateQueries({ queryKey: HR_KEY });
-    },
-  });
-}
-
-/** Writes that answer the file put it in the cache at once. */
-function useFileMutation<V>(send: (value: V) => Promise<StaffFile>) {
-  const client = useQueryClient();
-  return useHrMutation(send, (data) => client.setQueryData(fileQuery(data.id).queryKey, data));
-}
-
-export const useNewStaff = () =>
-  useFileMutation((body: NewStaff) => api<StaffFile>(`${HR_API}/staff/`, { method: 'POST', body }));
-
-export const useEditStaff = (id: number) =>
-  useFileMutation(
-    (
-      body: Partial<Omit<StaffInfo, 'mobile_extension'>> & {
-        team?: Team | null;
-        position?: number | null;
-      },
-    ) => api<StaffFile>(staffPath(id), { method: 'PATCH', body }),
-  );
-
-export const useNewContract = (id: number) =>
-  useFileMutation(
-    (body: { kind: ContractKind; start: string; end?: string | null; note?: string }) =>
-      api<StaffFile>(staffPath(id, 'contracts/'), { method: 'POST', body }),
-  );
-
-export const useNewSalary = (id: number) =>
-  useFileMutation((body: { amount: number; effective: string; note?: string }) =>
-    api<StaffFile>(staffPath(id, 'salary/'), { method: 'POST', body }),
-  );
-
-export const useStartExit = (id: number) =>
-  useFileMutation((body: { day: string; reason?: string }) =>
-    api<StaffFile>(staffPath(id, 'exit/'), { method: 'POST', body }),
-  );
-
-/** Someone who left comes back: active again, with a joining checklist from their first day back. */
-export const useReturn = (id: number) =>
-  useFileMutation((body: { day: string; reason: string }) =>
-    api<StaffFile>(staffPath(id, 'return/'), { method: 'POST', body }),
-  );
+export const staffPath = (id: number, rest = '') => `${HR_API}/staff/${String(id)}/${rest}`;
 
 export const documentPath = (id: number) => staffPath(id, 'documents/');
-
-export const useMoveAction = () =>
-  useHrMutation(({ id, action }: { id: number; action: 'finish' | 'cancel' }) =>
-    api<{ results: OpenMove[] }>(`${HR_API}/moves/${String(id)}/${action}/`, { method: 'POST' }),
-  );
-
-export const useSetStep = () =>
-  useHrMutation(({ id, done }: { id: number; done: boolean }) =>
-    api<MoveStep>(`${HR_API}/steps/${String(id)}/`, { method: 'PATCH', body: { done } }),
-  );

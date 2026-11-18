@@ -3,13 +3,8 @@ import { useRef, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { toast } from '@/lib/toast';
-import {
-  missingFromError,
-  paymentFromError,
-  receiptInReview,
-  useSubmitWriting,
-  writingKey,
-} from './api';
+import { missingFromError, paymentFromError, receiptInReview, writingKey } from './api';
+import { useSubmitWriting } from './mutations';
 import { missingInForm, type FormSpec } from './formSpec';
 import type { useDraft } from './useDraft';
 

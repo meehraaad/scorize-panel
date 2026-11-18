@@ -16,15 +16,13 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
   assignQuery,
-  useAssignLeads,
-  useAssignSettings,
-  useHiddenSellers,
   type AssignMode,
   type AssignSettings,
   type Escalation,
   type SellerLoad,
   type UnassignedLead,
 } from '../api';
+import { useAssignLeads, useAssignSettings, useHiddenSellers } from '../api/managerMutations';
 import { ScoreChip } from '../components/LeadChips';
 import { useSalesFormat } from '../format';
 import { LeadImportDialog } from './LeadImportDialog';

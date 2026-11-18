@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useBulkLeads, type BulkChange, type CustomerTag } from '../api';
+import { type BulkChange, type CustomerTag } from '../api';
+import { useBulkLeads } from '../api/leadsMutations';
 import { quickWhen, type QuickWhen } from '@/lib/when';
 import { toast } from '@/lib/toast';
 

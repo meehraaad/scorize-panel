@@ -19,7 +19,9 @@ import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import type { ObservedCall } from '@/lib/sales/phoneCalls';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
-import { useCreateLead, useSetSecondPhone, type LeadMatch } from '../api';
+import { type LeadMatch } from '../api';
+import { useSetSecondPhone } from '../api/customerMutations';
+import { useCreateLead } from '../api/leadsMutations';
 import { CallSteps, CallStrip } from './CallStrip';
 import { CustomerPicker } from './CustomerPicker';
 

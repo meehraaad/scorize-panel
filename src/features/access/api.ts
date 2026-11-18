@@ -1,5 +1,5 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'react-router';
+import { queryOptions } from '@tanstack/react-query';
+
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 
@@ -10,17 +10,12 @@ import type { Page } from '@/lib/api/page';
  * the API, the old site and Django admin check. Django: `api/access/v1/`
  * (user_profile/access_catalog.py names the keys).
  */
-const ACCESS_API = '/access/v1';
+export const ACCESS_API = '/access/v1';
 /** The HR key: give staff keys and groups, not superusers', not one's own, not protected ones. */
 export const STAFF_ACCESS_PERMISSION = 'manage_staff_access';
 /** Where the pages live: the management panel (founders), and HR's access section. */
 export const ACCESS_PATH = '/founders/access';
 export const HR_ACCESS_PATH = '/hr/access';
-
-/** The access pages' root for the panel they are open in. */
-export function useAccessPath() {
-  return useLocation().pathname.startsWith(HR_ACCESS_PATH) ? HR_ACCESS_PATH : ACCESS_PATH;
-}
 export const ACCESS_KEY = ['access'] as const;
 
 export interface KeyArea {
@@ -162,47 +157,7 @@ export const historyQuery = (page = 1) =>
       }),
   });
 
-/** Every change reaches every list here (counts, members, the history). */
-function useAccessMutation<TInput, TResult>(mutationFn: (input: TInput) => Promise<TResult>) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn,
-    onSuccess: () => client.invalidateQueries({ queryKey: ACCESS_KEY }),
-  });
-}
-
-export const useSavePerson = (id: number) =>
-  useAccessMutation((change: Partial<Pick<AccessPerson, 'groups' | 'keys'>>) =>
-    api<AccessPerson>(`${ACCESS_API}/people/${String(id)}/`, { method: 'PATCH', body: change }),
-  );
-
 export type GroupInput = Pick<AccessGroup, 'name' | 'keys'>;
-
-export const useAddGroup = () =>
-  useAccessMutation((group: GroupInput) =>
-    api<AccessGroup>(`${ACCESS_API}/groups/`, { method: 'POST', body: group }),
-  );
-
-export const useSaveGroup = (id: number) =>
-  useAccessMutation((change: Partial<GroupInput>) =>
-    api<AccessGroup>(`${ACCESS_API}/groups/${String(id)}/`, { method: 'PATCH', body: change }),
-  );
-
-export const useDeleteGroup = (id: number) =>
-  useAccessMutation(() => api(`${ACCESS_API}/groups/${String(id)}/`, { method: 'DELETE' }));
-
-export const useAddMember = (group: number) =>
-  useAccessMutation((user: number) =>
-    api<AccessPerson>(`${ACCESS_API}/groups/${String(group)}/members/`, {
-      method: 'POST',
-      body: { user },
-    }),
-  );
-
-export const useRemoveMember = (group: number) =>
-  useAccessMutation((user: number) =>
-    api(`${ACCESS_API}/groups/${String(group)}/members/${String(user)}/`, { method: 'DELETE' }),
-  );
 
 /** Every key someone holds: their own and their groups' (superusers: every key). */
 export function heldKeys(person: AccessPerson, groups: readonly AccessGroup[]) {

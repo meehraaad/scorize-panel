@@ -15,16 +15,8 @@ import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { optionsQuery, type HrOptions } from '../api';
-import {
-  catalogQuery,
-  kpisQuery,
-  MANUAL,
-  useRemoveKpi,
-  useSaveKpi,
-  type Direction,
-  type Kpi,
-  type Metric,
-} from './api';
+import { catalogQuery, kpisQuery, MANUAL, type Direction, type Kpi, type Metric } from './api';
+import { useRemoveKpi, useSaveKpi } from './mutations';
 import { ScopeFields } from './components/ScopeFields';
 import { scopeBody, scopeDraft, SCOPES, useScopeName, type ScopeDraft } from './scope';
 import { useMetricNames, useMetricUnit } from './metricNames';

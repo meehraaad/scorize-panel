@@ -95,7 +95,7 @@ export default function ComponentsPage() {
 
   return (
     <div className="min-h-dvh bg-canvas px-4 py-6 text-text lg:px-10 lg:py-10">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
+      <div className="mx-auto flex max-w-[1120px] flex-col gap-8">
         <PageHeader
           title="اجزای مشترک پنل"
           subtitle="src/components/ui · هر تغییری این‌جا، در همه‌ی صفحه‌ها دیده می‌شود."
@@ -667,7 +667,7 @@ export default function ComponentsPage() {
               />
             </div>
           </div>
-          <div className="max-w-sm rounded-card bg-surface p-4 shadow-panel">
+          <div className="max-w-[360px] rounded-card bg-surface p-4 shadow-panel">
             <WeekCalendar
               label="WeekCalendar narrow"
               week={week}
@@ -764,7 +764,7 @@ export default function ComponentsPage() {
                     label="پیام‌ها"
                     firstKey="a"
                     lastKey="d"
-                    className="max-h-80 px-3.5 py-[18px] lg:px-7 lg:py-6"
+                    className="max-h-[320px] px-3.5 py-[18px] lg:px-7 lg:py-6"
                     earlier={{
                       label: 'نمایش پیام‌های قبلی',
                       pending: false,
@@ -872,7 +872,7 @@ export default function ComponentsPage() {
                     label="گفتگو با دستیار (chat)"
                     firstKey="q"
                     lastKey="a"
-                    className="max-h-72 px-4 py-6"
+                    className="max-h-64 px-4 py-6"
                   >
                     <MessageBubble
                       chat
@@ -1059,7 +1059,7 @@ function sampleEvents(): CalendarEvent[] {
     meta: `${start.getHours()}:${String(start.getMinutes()).padStart(2, '0')}`,
     aria: title,
     lead: <Icon name={look === 'call' ? 'followUp' : 'phone'} size={12} />,
-    trail: <Icon name="formDone" size={13} className="text-good opacity-75" />,
+    trail: <Icon name="formDone" size={13} className="text-good opacity-70" />,
     ...(look === 'need' ? { tag: 'ثبت نشده' } : {}),
   });
   return [

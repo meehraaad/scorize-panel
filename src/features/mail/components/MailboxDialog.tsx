@@ -9,14 +9,8 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Switch } from '@/components/ui/Switch';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import {
-  mailboxQuery,
-  useChangeMailbox,
-  useDeleteMailbox,
-  useNewPassword,
-  type MailboxChange,
-  type MailboxDetail,
-} from '../api';
+import { mailboxQuery, type MailboxChange, type MailboxDetail } from '../api';
+import { useChangeMailbox, useDeleteMailbox, useNewPassword } from '../mutations';
 import { quotaOf, useFailure } from '../format';
 import { ApplicantPicker, PasswordReveal, QuotaField } from './fields';
 

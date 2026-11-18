@@ -16,11 +16,11 @@ import { TextField } from '@/components/ui/TextField';
 import {
   BACKGROUND_DEGREES,
   backgroundQuery,
-  useSaveBackground,
   type Background,
   type BackgroundDegree,
   type BackgroundWrite,
 } from '@/lib/applicant/journey';
+import { useSaveBackground } from '@/lib/applicant/journeyMutations';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 

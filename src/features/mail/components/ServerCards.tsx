@@ -8,7 +8,8 @@ import { IconButton } from '@/components/ui/IconButton';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { botRulesQuery, serversQuery, useRefreshServer, type MailServer } from '../api';
+import { botRulesQuery, serversQuery, type MailServer } from '../api';
+import { useRefreshServer } from '../mutations';
 import { useFailure } from '../format';
 import { GmailStatusCard } from './GmailStatusCard';
 

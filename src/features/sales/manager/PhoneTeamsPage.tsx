@@ -18,11 +18,11 @@ import {
   phoneMenusQuery,
   phoneTeamsQuery,
   teamBreaksQuery,
-  useSavePhoneTeam,
   type PhoneTeam,
   type TeamBreakPerson,
   type TeamPerson,
 } from '@/lib/sales/phoneCalls';
+import { useSavePhoneTeam } from '@/lib/sales/phoneCallsMutations';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { teamEntrances, type KeyPlace } from './phoneMap';

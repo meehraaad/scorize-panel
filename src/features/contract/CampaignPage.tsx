@@ -12,7 +12,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { campaignQuery, useRegisterCampaign, type CampaignData } from './api';
+import { campaignQuery, type CampaignData } from './api';
+import { useRegisterCampaign } from './mutations';
 import { useMoney } from './payment/money';
 
 /**

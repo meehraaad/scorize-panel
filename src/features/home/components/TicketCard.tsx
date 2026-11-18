@@ -8,7 +8,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Badge, SectionCard } from '@/components/ui/SectionCard';
 import { APPLICANT_TICKETS, SUPERVISOR_THREAD } from '@/lib/applicant/tickets';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { DEFAULT_PRIORITY, useRateMessage, useSendMessage } from '@/lib/tickets/api';
+import { DEFAULT_PRIORITY } from '@/lib/tickets/api';
+import { useRateMessage, useSendMessage } from '@/lib/tickets/mutations';
 import type { ApplicantOverview, TicketMessage } from '../api';
 import { toast } from '@/lib/toast';
 

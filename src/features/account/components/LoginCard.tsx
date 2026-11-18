@@ -4,12 +4,8 @@ import { Button } from '@/components/ui/Button';
 import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
-import {
-  useChangePassword,
-  useResendEmail,
-  useUpdateAccount,
-  type AccountData,
-} from '@/lib/account/api';
+import { type AccountData } from '@/lib/account/api';
+import { useChangePassword, useResendEmail, useUpdateAccount } from '@/lib/account/mutations';
 import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
 

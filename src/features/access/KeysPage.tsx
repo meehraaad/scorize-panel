@@ -9,7 +9,8 @@ import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useAccessPath, groupsQuery, keysQuery } from './api';
+import { groupsQuery, keysQuery } from './api';
+import { useAccessPath } from './mutations';
 
 /**
  * Every key in the system, by area: what it opens, which groups give it, and how many people hold

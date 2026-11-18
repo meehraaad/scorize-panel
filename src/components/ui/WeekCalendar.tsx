@@ -228,7 +228,7 @@ function Seats({ dots, chosen }: { dots: boolean[]; chosen: boolean }) {
                 : 'bg-on-primary/35'
               : open
                 ? 'bg-[var(--event)]'
-                : 'opacity-55 shadow-[inset_0_0_0_1.3px_var(--event)]'
+                : 'opacity-50 shadow-[inset_0_0_0_1.3px_var(--event)]'
           }`}
         />
       ))}

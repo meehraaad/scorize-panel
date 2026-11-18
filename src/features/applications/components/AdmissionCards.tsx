@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { isolate, useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { useShowcaseAnswer, type Application } from '../api';
+import { type Application } from '../api';
+import { useShowcaseAnswer } from '../mutations';
 
 /**
  * New admissions, on top of the page: congratulate, show the supervisor's note, and ask once

@@ -12,7 +12,8 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinDigits } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { parseAmount } from '../format';
-import { paySettingsQuery, useSavePaySettings, type PaySettings } from './api';
+import { paySettingsQuery, type PaySettings } from './api';
+import { useSavePaySettings } from './mutations';
 
 interface Bracket {
   upto: string;

@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/ui/Icon';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { phoneBreakQuery, useSetPhoneBreak } from '@/lib/sales/phoneCalls';
+import { phoneBreakQuery } from '@/lib/sales/phoneCalls';
+import { useSetPhoneBreak } from '@/lib/sales/phoneCallsMutations';
 import { toast } from '@/lib/toast';
 
 function useBreak() {

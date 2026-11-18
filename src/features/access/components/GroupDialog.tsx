@@ -12,17 +12,14 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useUser } from '@/lib/auth/session';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { keysQuery, peopleQuery, type AccessGroup, type AccessPerson } from '../api';
 import {
-  keysQuery,
-  peopleQuery,
   useAddGroup,
   useAddMember,
   useDeleteGroup,
   useRemoveMember,
   useSaveGroup,
-  type AccessGroup,
-  type AccessPerson,
-} from '../api';
+} from '../mutations';
 import { KeyPicker } from './KeyPicker';
 
 /** Django's own words for an invalid field (`{"name": ["…"]}`), if it sent any. */

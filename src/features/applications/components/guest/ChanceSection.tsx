@@ -23,10 +23,10 @@ import {
   estimateOptionsQuery,
   isThrottled,
   latestEstimateQuery,
-  useSubmitEstimate,
   type CountryEstimate,
   type EstimateOptions,
 } from '@/lib/applicant/estimate';
+import { useSubmitEstimate } from '@/lib/applicant/estimateMutations';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 

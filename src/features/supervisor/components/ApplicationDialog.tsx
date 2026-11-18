@@ -15,12 +15,8 @@ import {
 } from '@/lib/applications';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
-import {
-  useDeleteApplication,
-  useSaveApplication,
-  type ApplicationInput,
-  type CaseApplication,
-} from '../api';
+import { type ApplicationInput, type CaseApplication } from '../api';
+import { useDeleteApplication, useSaveApplication } from '../api/applicationsMutations';
 
 /** Degrees an application is for (apply.models.Degree). */
 const DEGREES: readonly Degree[] = [1, 2, 3, 4];

@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 
 /**
@@ -13,7 +13,7 @@ export {
   SYSTEM_MESSAGES_PERMISSION as SYSTEM_PERMISSION,
   READY_MESSAGES_PERMISSION as READY_PERMISSION,
 } from '@/lib/auth/roles';
-const MESSAGES_API = '/messages/v1';
+export const MESSAGES_API = '/messages/v1';
 /** Where the pages live: the management panel (founders). */
 export const MESSAGES_PATH = '/founders/messages';
 export const MESSAGES_KEY = ['messages'] as const;
@@ -113,37 +113,7 @@ export const systemMessageQuery = (key: string) =>
       api<SystemMessageDetail>(`${MESSAGES_API}/system/${encodeURIComponent(key)}/`, { signal }),
   });
 
-function useMessagesMutation<TInput, TResult>(
-  mutationFn: (input: TInput) => Promise<TResult>,
-  key: QueryKey = MESSAGES_KEY,
-) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn,
-    onSuccess: () => client.invalidateQueries({ queryKey: key }),
-  });
-}
-
 export type SystemChange = Partial<Pick<SystemMessage, 'title' | 'text' | 'is_active'>>;
-
-export const useSaveSystemMessage = (key: string) =>
-  useMessagesMutation(
-    (change: SystemChange) =>
-      api<SystemMessageDetail>(`${MESSAGES_API}/system/${encodeURIComponent(key)}/`, {
-        method: 'PATCH',
-        body: change,
-      }),
-    [...MESSAGES_KEY, 'system'],
-  );
-
-/** Sends it to the person asking, with the sample values (an SMS costs). */
-export const useTestSystemMessage = (key: string) =>
-  useMutation({
-    mutationFn: () =>
-      api<{ sent: boolean }>(`${MESSAGES_API}/system/${encodeURIComponent(key)}/test/`, {
-        method: 'POST',
-      }),
-  });
 
 // Ready messages
 
@@ -190,16 +160,3 @@ export const readyHistoryQuery = (id: number) =>
   });
 
 export type ReadyInput = Pick<ReadyMessage, 'kind' | 'title' | 'text' | 'is_active'>;
-
-export const useAddReadyMessage = () =>
-  useMessagesMutation((values: ReadyInput) =>
-    api<ReadyMessage>(`${MESSAGES_API}/ready/`, { method: 'POST', body: values }),
-  );
-
-export const useSaveReadyMessage = (id: number) =>
-  useMessagesMutation((change: Partial<ReadyInput>) =>
-    api<ReadyMessage>(`${MESSAGES_API}/ready/${String(id)}/`, { method: 'PATCH', body: change }),
-  );
-
-export const useDeleteReadyMessage = (id: number) =>
-  useMessagesMutation(() => api(`${MESSAGES_API}/ready/${String(id)}/`, { method: 'DELETE' }));
