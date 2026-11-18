@@ -1,4 +1,12 @@
 {
+  "title": "Attendance",
+  "subtitle": "Staff check-ins and check-outs from the office fingerprint terminal",
+  "nav": "Attendance sections",
+  "section": {
+    "daily": "Daily",
+    "monthly": "Monthly report",
+    "settings": "Settings"
+  },
   "status": {
     "present": "Present",
     "late": "Late",
@@ -14,7 +22,6 @@
     "csv": "CSV export"
   },
   "daily": {
-    "title": "Daily report",
     "subtitle": "A day's first punch is the check-in and the last one the check-out. Arriving more than 30 minutes after the phone line opens (office phone hours, usually {{start}}) counts as late.",
     "label": "One day's attendance",
     "date": "Date",
@@ -29,7 +36,6 @@
     "empty": "Nothing recorded for this day."
   },
   "monthly": {
-    "title": "Monthly report",
     "subtitle": "Days present, hours and lateness per person. Arriving more than 30 minutes after the phone line opens (office phone hours, usually {{start}}) counts as late; its closed days are not absences.",
     "label": "One month's attendance",
     "previous": "Previous month",
@@ -42,7 +48,6 @@
     "empty": "Nothing recorded for this month."
   },
   "settings": {
-    "title": "Attendance settings",
     "subtitle": "Connect each device number to an employee so the hours are counted under their name.",
     "devices": "Devices",
     "label": "Device numbers",
@@ -58,5 +63,25 @@
     "error": "That did not work. Try again.",
     "readNames": "Read names from the device",
     "readNamesAsked": "Requested. The names are read the next time the device connects."
+  },
+  "schedule": {
+    "title": "Working hours",
+    "subtitle": "Each day's start is read from the office phone hours. Coming in up to {{n}} minutes after the start is on time.",
+    "edit": "Change in phone hours",
+    "notSaved": "The office phone hours were never saved, so the phone system's default hours count.",
+    "week": "Working week",
+    "off": "Day off",
+    "closed": "Coming closed days:",
+    "closedToday": "Closed today",
+    "noClosed": "None",
+    "day": {
+      "sat": "Saturday",
+      "sun": "Sunday",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday"
+    }
   }
 }

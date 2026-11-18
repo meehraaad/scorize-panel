@@ -185,12 +185,7 @@ const PAGES: PageCase[] = [
     '/founders/access/keys',
     '/founders/access/history',
   ].map((path) => ({ path, user: AMIR })),
-  // Attendance section (src/mocks/attendance.ts).
-  ...['/attendance', '/attendance/month', '/attendance/settings'].map((path) => ({
-    path,
-    user: AMIR,
-  })),
-  // HR panel (src/mocks/hr.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
+  // HR panel (src/mocks/hr.ts, attendance: src/mocks/attendance.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
   ...[
     '/hr',
     '/hr/tasks',
@@ -200,6 +195,7 @@ const PAGES: PageCase[] = [
     '/hr/moves',
     '/hr/attendance',
     '/hr/attendance/month',
+    '/hr/attendance/settings',
     '/hr/pay',
     '/hr/pay/results',
     '/hr/pay/kpis',

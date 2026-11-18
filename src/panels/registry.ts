@@ -3,7 +3,6 @@ import { queryClient } from '@/lib/api/queryClient';
 import { getRoles, type Role } from '@/lib/auth/roles';
 import { sessionQuery, type SessionUser } from '@/lib/auth/session';
 import { applicantPanel } from './applicant';
-import { attendancePanel } from './attendance';
 import { foundersPanel } from './founders';
 import { hrPanel } from './hr';
 import { marketingPanel } from './marketing';
@@ -23,7 +22,6 @@ export const PANELS: readonly PanelDefinition[] = [
   marketingPanel,
   foundersPanel,
   hrPanel,
-  attendancePanel,
   applicantPanel,
 ];
 
