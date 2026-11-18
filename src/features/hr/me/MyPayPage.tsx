@@ -328,7 +328,13 @@ function KpiRow({
                 disabled={!text.trim() || send.isPending}
                 onClick={() =>
                   send.mutate(
-                    { year: data.year, month: data.month, password, kpi: kpi.id, text: text.trim() },
+                    {
+                      year: data.year,
+                      month: data.month,
+                      password,
+                      kpi: kpi.id,
+                      text: text.trim(),
+                    },
                     {
                       onSuccess: (next) => {
                         onChange(next);
