@@ -22,7 +22,6 @@ import {
   leadFilterOf,
   leadsQuery,
   tagsQuery,
-  type ConsultationFilter,
   type LeadFilter,
   type LeadQuery,
   type LeadsData,
@@ -32,16 +31,8 @@ import { useSalesFormat } from './format';
 import { LeadTable } from './components/LeadTable';
 import { NewLeadDialog } from './components/NewLeadDialog';
 
-type BoughtFilter = 'all' | 'bought' | 'none';
 type ModeFilter = 'all' | 'in_person' | 'online';
-const BOUGHT_FILTERS: readonly BoughtFilter[] = ['all', 'bought', 'none'];
 const MODE_FILTERS: readonly ModeFilter[] = ['all', 'in_person', 'online'];
-
-/** The server's one `consultation` value for the two choices. */
-const consultationOf = (
-  bought: Exclude<BoughtFilter, 'all'>,
-  mode: ModeFilter,
-): ConsultationFilter => (bought === 'none' ? 'none' : mode === 'all' ? 'any' : mode);
 
 /**
  * Every lead of the seller, by stage, with its score and next follow-up; a sales manager's are
@@ -58,8 +49,7 @@ export default function LeadsPage() {
   const [overdue, setOverdue] = useState(false);
   const [tag, setTag] = useState<number | null>(null);
   const [seller, setSeller] = useState<number | 'none' | null>(null);
-  // Bought consultations: the main choice, then (once bought) in person or not and the type.
-  const [bought, setBought] = useState<BoughtFilter>('all');
+  // With the source on bought consultations: in person or not, and the type.
   const [mode, setMode] = useState<ModeFilter>('all');
   const [consultationType, setConsultationType] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -75,7 +65,7 @@ export default function LeadsPage() {
     page,
     // Absent unless chosen: the first page stays the one the route prefetched.
     ...(seller === null ? {} : { seller }),
-    ...(bought === 'all' ? {} : { consultation: consultationOf(bought, mode) }),
+    ...(mode === 'all' ? {} : { consultation: mode }),
     ...(consultationType === null ? {} : { consultationType }),
   };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
@@ -115,9 +105,10 @@ export default function LeadsPage() {
   const typeOptions = (data?.consultation_types ?? []).filter(
     (item) => mode === 'all' || item.mode === mode,
   );
-  const chooseBought = refilter((value: BoughtFilter) => {
-    setBought(value);
-    if (value !== 'bought') {
+  const consulted = source === 'consultation' && data?.supports.consultations === true;
+  const chooseSource = refilter((value: LeadQuery['source']) => {
+    setSource(value);
+    if (value !== 'consultation') {
       setMode('all');
       setConsultationType(null);
     }
@@ -167,7 +158,7 @@ export default function LeadsPage() {
             inline
             label={t('leads.source')}
             value={source}
-            onChange={refilter(setSource)}
+            onChange={chooseSource}
             options={[
               { value: 'all', label: t('leads.allSources') },
               ...SOURCES.map((value) => ({ value, label: t(`source.${value}`) })),
@@ -215,19 +206,7 @@ export default function LeadsPage() {
               ]}
             />
           )}
-          {data?.supports.consultations && (
-            <SelectField
-              inline
-              label={t('leads.consultation')}
-              value={bought}
-              onChange={chooseBought}
-              options={BOUGHT_FILTERS.map((value) => ({
-                value,
-                label: t(`leads.boughtOption.${value}`),
-              }))}
-            />
-          )}
-          {data?.supports.consultations && bought === 'bought' && (
+          {consulted && (
             <SelectField
               inline
               label={t('leads.consultationMode')}
@@ -239,7 +218,7 @@ export default function LeadsPage() {
               }))}
             />
           )}
-          {data?.supports.consultations && bought === 'bought' && typeOptions.length > 0 && (
+          {consulted && typeOptions.length > 0 && (
             <SelectField
               inline
               label={t('leads.consultationType')}

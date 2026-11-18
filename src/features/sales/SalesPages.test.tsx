@@ -128,19 +128,19 @@ describe('sales panel, seller pages', () => {
     );
   });
 
-  it('leads: bought consultations open in person or not, then the type', async () => {
+  it('leads: the source "bought consultation" opens in person or not and the type', async () => {
     const user = userEvent.setup();
     renderApp('/sales/leads');
-    const main = await screen.findByRole('combobox', { name: 'مشاوره' });
+    const source = await screen.findByRole('combobox', { name: 'منبع' });
     const options = (name: string) =>
       within(screen.getByRole('combobox', { name }))
         .getAllByRole('option')
         .map((option) => option.textContent);
-    // The deeper layer shows only once the main filter is on bought consultations.
     expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
 
-    await user.selectOptions(main, 'bought');
+    await user.selectOptions(source, 'consultation');
+    expect(await screen.findByRole('combobox', { name: 'نوع مشاوره' })).toBeInTheDocument();
     expect(options('نوع مشاوره')).toHaveLength(5); // all + four types
     await user.selectOptions(
       screen.getByRole('combobox', { name: 'حضوری یا غیرحضوری' }),
@@ -152,7 +152,7 @@ describe('sales panel, seller pages', () => {
       'مشاوره‌ی حضوری قدیمی (قدیمی)',
     ]);
 
-    await user.selectOptions(main, 'none');
+    await user.selectOptions(source, 'all');
     expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
   });

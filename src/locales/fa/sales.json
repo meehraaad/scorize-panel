@@ -259,12 +259,6 @@
       "cold": "سرد (زیر ۴۵)"
     },
     "overdueOnly": "فقط عقب‌افتاده‌ها",
-    "consultation": "مشاوره",
-    "boughtOption": {
-      "all": "همه",
-      "bought": "مشاوره‌های خریداری‌شده",
-      "none": "مشاوره نخریده"
-    },
     "consultationMode": "حضوری یا غیرحضوری",
     "modeOption": {
       "all": "حضوری و غیرحضوری",
