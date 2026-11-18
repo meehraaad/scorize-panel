@@ -815,10 +815,19 @@
     },
     "tagNeed": "Not logged",
     "followUp": "Follow-up",
-    "calls": "Timed follow-ups",
     "modeFilter": "Format",
     "modeAll": "All",
-    "layers": "Show on the calendar",
+    "kinds": "Show on the calendar",
+    "kind": {
+      "consultations": "Consultations",
+      "tasks": "Tasks",
+      "visits": "In-person meetings",
+      "calls": "Follow-ups"
+    },
+    "types": "Consultation types",
+    "typesShown": "{{shown}} of {{total}}",
+    "selectAll": "Select all",
+    "clearAll": "Clear all",
     "form": {
       "done": "Filled in the tablet form",
       "missing": "Hasn't filled in the tablet form",
@@ -859,7 +868,6 @@
       "aria": "Tasks on {{day}}: {{parts}}. Go to tasks"
     },
     "taskBlock": "task",
-    "taskLayer": "Tasks with a time",
     "assign": {
       "label": "Consultant",
       "done": "{{name}}'s consultation is now {{seller}}'s.",
