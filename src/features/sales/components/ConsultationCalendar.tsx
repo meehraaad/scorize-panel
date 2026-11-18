@@ -502,6 +502,7 @@ function LayerRow({
   on,
   count,
   onToggle,
+  onOnly,
   disabled = false,
 }: {
   label: string;
@@ -509,12 +510,15 @@ function LayerRow({
   on: boolean;
   count: number;
   onToggle: () => void;
+  /** "Only this": every other row off, this one on, in one click. */
+  onOnly?: (() => void) | undefined;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation('sales');
   const f = useFormat();
-  return (
+  const row = (
     <label
-      className={`flex min-h-11 items-center gap-2.5 rounded-xl px-2 has-focus-visible:outline-2 has-focus-visible:outline-focus ${
+      className={`flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 has-focus-visible:outline-2 has-focus-visible:outline-focus ${
         disabled ? 'cursor-not-allowed opacity-45' : 'cursor-pointer hover:bg-canvas'
       }`}
     >
@@ -535,6 +539,22 @@ function LayerRow({
       <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{label}</span>
       <span className="text-xs text-text-2 tabular-nums">{f.number(count)}</span>
     </label>
+  );
+  if (!onOnly) return row;
+  // Wide screens: shown on hover or focus, like a calendar app; phones: always there.
+  return (
+    <div className="group flex items-center">
+      {row}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onOnly}
+        aria-label={t('consultationCalendar.onlyThisAria', { name: label })}
+        className="min-h-11 flex-none rounded-lg px-2 text-xs font-semibold text-primary-text hover:bg-tint focus-visible:opacity-100 disabled:hidden lg:opacity-0 lg:group-hover:opacity-100"
+      >
+        {t('consultationCalendar.onlyThis')}
+      </button>
+    </div>
   );
 }
 
@@ -641,6 +661,7 @@ function Layers({
                 on={typeShown(typePick, String(type.id))}
                 count={typeCount(String(type.id))}
                 onToggle={() => toggleType(String(type.id))}
+                onOnly={() => onTypes({ only: true, picked: new Set([String(type.id)]) })}
                 disabled={!consultationsOn}
               />
             ))}

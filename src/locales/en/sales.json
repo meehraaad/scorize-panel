@@ -839,6 +839,8 @@
     "typesShown": "{{shown}} of {{total}}",
     "selectAll": "Select all",
     "clearAll": "Clear all",
+    "onlyThis": "Only",
+    "onlyThisAria": "Only {{name}}",
     "form": {
       "done": "Filled in the tablet form",
       "missing": "Hasn't filled in the tablet form",

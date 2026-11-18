@@ -839,6 +839,8 @@
     "typesShown": "{{shown}} از {{total}}",
     "selectAll": "انتخاب همه",
     "clearAll": "برداشتن همه",
+    "onlyThis": "فقط همین",
+    "onlyThisAria": "فقط {{name}}",
     "form": {
       "done": "فرم تبلت را پر کرده",
       "missing": "فرم تبلت را هنوز پر نکرده",
