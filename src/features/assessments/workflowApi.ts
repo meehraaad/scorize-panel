@@ -2,10 +2,20 @@ import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { FormSchema } from './calculatorApi';
 
+export interface Translations {
+  fa?: string;
+  en?: string;
+}
+/** A content-authored name: its default text plus the content's own translations. */
+export interface ContentName extends Translations {
+  text: string;
+}
 export interface WorkflowQuestion {
   id: string;
   field: string;
   label?: string | null;
+  /** Configured programs only: the content's Persian and English question text. */
+  translations?: Translations;
   schema: FormSchema;
   status: string | null;
   value: unknown;
@@ -37,8 +47,8 @@ export interface EvaluatorResult {
   /** Content labels of configured programs; empty for specialists (named by the panel). */
   labels?: {
     title?: { fa: string; en: string } | null;
-    checks?: Record<string, string>;
-    components?: Record<string, string>;
+    checks?: Record<string, ContentName>;
+    components?: Record<string, ContentName>;
   };
   missing_facts: string[];
   evidence_states: Record<

@@ -306,7 +306,15 @@ it('explains pathways side by side and shows a configured third country from ser
     },
     labels: {
       title,
-      checks: { adult: 'Synthetic minimum age', language: 'Synthetic language minimum' },
+      // The content's translation for the current language wins over its default text.
+      checks: {
+        adult: { text: 'Default age text', en: 'Synthetic minimum age', fa: 'حداقل سن' },
+        language: {
+          text: 'Default language text',
+          en: 'Synthetic language minimum',
+          fa: 'حداقل زبان',
+        },
+      },
     },
     limitations,
   };
@@ -322,7 +330,10 @@ it('explains pathways side by side and shows a configured third country from ser
       breakdown: { experience: 20, language: 10 },
       pass_mark_met: true,
     },
-    labels: { title, components: { experience: 'Synthetic experience points' } },
+    labels: {
+      title,
+      components: { experience: { text: 'Synthetic experience points' } },
+    },
     limitations,
   };
   results.pathways[id3] = {
@@ -346,7 +357,8 @@ it('explains pathways side by side and shows a configured third country from ser
     ...(fixture.question as Workflow['questions'][number]),
     id: `${id3}:age`,
     field: 'age',
-    label: 'Synthetic age',
+    label: 'Default age question text',
+    translations: { en: 'Synthetic age', fa: 'سن' },
     schema: { type: 'number' },
     shared_kind: null,
     targets: [{ adapter: 'configured', entry: 'nz-synthetic-skilled', field: 'age' }],
@@ -408,4 +420,5 @@ it('explains pathways side by side and shows a configured third country from ser
   ).toBeInTheDocument();
   // The third country's question comes from its configured program: no page edits.
   expect(screen.getByRole('heading', { name: 'Synthetic age' })).toBeInTheDocument();
+  expect(screen.queryByText(/Default (age|language)/)).not.toBeInTheDocument();
 });

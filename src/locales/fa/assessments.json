@@ -1243,7 +1243,17 @@
       "policy_unavailable": "سیاست مالی معتبری در دسترس نیست",
       "route_costs_unavailable": "هزینه‌های این مسیر در دسترس نیست",
       "extension_program_mismatch": "برنامه تغییر کرده؛ محاسبه تخصصی آن تا بازبینی در دسترس نیست",
-      "coverage_unavailable": "خارج از پوشش پشتیبانی‌شده"
+      "coverage_unavailable": "خارج از پوشش پشتیبانی‌شده",
+      "catalog_changed": "فهرست برنامه‌ها تغییر کرده؛ برنامه‌های فعلی را تأیید کنید",
+      "definition_changed": "این ارزیابی تغییر کرده؛ پاسخ‌هایتان را دوباره تأیید کنید",
+      "implementation_changed": "شیوه محاسبه تغییر کرده؛ برای ادامه، ارزیابی تازه‌ای شروع کنید",
+      "program_definition_changed": "پرسش‌های این برنامه تغییر کرده؛ پاسخ‌هایتان را دوباره تأیید کنید",
+      "subclass_specific_evidence_required": "برای بررسی این مدرک، زیرکلاس را انتخاب کنید",
+      "program_date_out_of_coverage": "تاریخ ارزیابی خارج از بازه‌ای است که این برنامه پوشش می‌دهد",
+      "program_source_out_of_date": "منبع این برنامه قدیمی است و باید بازبینی شود",
+      "program_source_received_after_assessment": "منبع این برنامه بعد از تاریخ ارزیابی دریافت شده است",
+      "program_source_unreviewed": "منبع این برنامه هنوز بازبینی نشده است",
+      "workflow_adapter_unavailable": "این ارزیابی هنوز مصاحبه ندارد"
     },
     "checks": {
       "admissible": "پذیرش‌پذیری",

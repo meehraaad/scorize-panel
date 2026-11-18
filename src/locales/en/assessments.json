@@ -1243,7 +1243,17 @@
       "policy_unavailable": "No current financial policy",
       "route_costs_unavailable": "Costs for this pathway are not available",
       "extension_program_mismatch": "The program changed; its specialist calculation is unavailable until reviewed",
-      "coverage_unavailable": "Outside the supported coverage"
+      "coverage_unavailable": "Outside the supported coverage",
+      "catalog_changed": "The program list changed; confirm the current programs",
+      "definition_changed": "This evaluation changed; confirm your answers again",
+      "implementation_changed": "The calculation changed; start a new assessment to continue",
+      "program_definition_changed": "The program's questions changed; confirm your answers again",
+      "subclass_specific_evidence_required": "Choose a subclass to check this evidence",
+      "program_date_out_of_coverage": "The assessment date is outside the dates this program covers",
+      "program_source_out_of_date": "The program's source is out of date and needs review",
+      "program_source_received_after_assessment": "The program's source was received after the assessment date",
+      "program_source_unreviewed": "The program's source has not been reviewed",
+      "workflow_adapter_unavailable": "This evaluation has no interview yet"
     },
     "checks": {
       "admissible": "Admissibility",
