@@ -247,9 +247,6 @@
     "title": "Calendar",
     "subtitle": "My tasks and the staff's key days; click a day to add a task",
     "dayRow": "Staff days and tasks",
-    "add": "New task on {{day}}",
-    "task": "Task",
-    "tasks": "{{n}} tasks",
     "kind": {
       "entry": "First day of work",
       "exit": "Last day of work",

@@ -1,7 +1,9 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { fromCalendar, monthLength, toCalendar, toValue, type CalendarKind } from '@/lib/calendar';
+import { toValue } from '@/lib/calendar';
+import type { DayStatus } from '@/lib/attendance';
 import type { Face } from '@/lib/face/api';
+import type { TaskCalendarData } from '@/lib/tasks/calendar';
 
 /**
  * The marketing panel, phase 1: the team's day, the calendar and my own attendance. Django:
@@ -14,8 +16,7 @@ export const MARKETING_KEY = ['marketing'] as const;
 /** apply.can_market: a marketer outside the marketing team. */
 export const MARKETING_PERMISSION = 'can_market';
 
-/** A day at the office terminal; `pending`: today, not in yet. */
-export type DayStatus = 'present' | 'late' | 'absent' | 'pending';
+export type { DayStatus };
 
 export interface AttendanceDay {
   /** `YYYY-MM-DD`. */
@@ -54,26 +55,7 @@ export interface MarketingToday {
   campaigns: RunningCampaign[];
 }
 
-/** My task on the calendar (the sales calendar's shape, lang `api/sales/v1/calendar.py` seller_tasks). */
-export interface CalendarTaskRow {
-  id: number;
-  kind: 'mine' | 'request';
-  text: string;
-  due_at: string;
-  /** False: due some time that day, no hour; it shows on the day row only. */
-  timed: boolean;
-  done: boolean;
-  customer: number | null;
-  name: string;
-}
-
-/** How many of my tasks fall on a day: only days with any. */
-export interface CalendarTaskDay {
-  day: string;
-  mine: number;
-  requests: number;
-  done: number;
-}
+export type { CalendarTaskDay, CalendarTaskRow } from '@/lib/tasks/calendar';
 
 export type MarketingEventKind = 'campaign_start' | 'campaign_end';
 
@@ -87,9 +69,7 @@ export interface MarketingEvent {
   campaign: number;
 }
 
-export interface MarketingCalendar {
-  tasks: CalendarTaskDay[];
-  task_rows: CalendarTaskRow[];
+export interface MarketingCalendar extends TaskCalendarData {
   events: MarketingEvent[];
 }
 
@@ -137,12 +117,5 @@ export const attendanceQuery = ({ from, to }: Range) =>
       api<MyAttendance>(`${MARKETING_API}/attendance/?from=${from}&to=${to}`, { signal }),
   });
 
-/** The first and last day of the calendar month `shift` months from today's (Jalali in Persian). */
-export function monthRange(kind: CalendarKind, shift = 0): Range & { year: number; month: number } {
-  const today = toCalendar(new Date(), kind);
-  const index = today.year * 12 + (today.month - 1) + shift;
-  const year = Math.floor(index / 12);
-  const month = (index % 12) + 1;
-  const day = (n: number) => toValue(fromCalendar({ year, month, day: n }, kind), false);
-  return { year, month, from: day(1), to: day(monthLength(year, month, kind)) };
-}
+/** The month `shift` months from today's, for `attendanceQuery` (`lib/calendar`). */
+export { monthRange } from '@/lib/calendar';

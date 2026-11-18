@@ -40,10 +40,7 @@
   "calendar": {
     "title": "Calendar",
     "subtitle": "My tasks at their hour on the week, and campaigns starting and ending above each day",
-    "task": "My task",
     "dayRow": "The day's campaigns and tasks",
-    "add": "New task for {{day}}",
-    "tasks": "{{n}} tasks",
     "kind": {
       "campaign_start": "Campaign starts",
       "campaign_end": "Campaign ends"
@@ -71,8 +68,6 @@
     "noCheckOut": "No check-out",
     "hours": "{{time}} h",
     "noDevice": "You have no number on the attendance terminal, so your attendance isn't known. Ask HR to connect it.",
-    "month": "Days of {{month}}",
-    "dayLabel": "{{day}}: {{status}}",
-    "dayLabelIn": "{{day}}: {{status}}, in at {{time}}"
+    "month": "Days of {{month}}"
   }
 }

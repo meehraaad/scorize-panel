@@ -128,63 +128,55 @@ function Month({
           { label: t('performance.noCheckOut'), value: f.number(totals.missing_check_out_days) },
         ]}
       />
-      <div
-        role="grid"
-        aria-label={t('performance.month', { month: name })}
-        className="flex flex-col gap-1.5"
-      >
-        <div role="row" className="grid grid-cols-7 gap-1.5">
-          {(weeks[0] ?? []).map((date) => (
-            <span
-              key={date.toISOString()}
-              role="columnheader"
-              className="text-center text-xs text-text-2"
-            >
-              {cal.weekday.format(date)}
-            </span>
-          ))}
-        </div>
-        {weeks.map((week) => (
-          <div key={week[0]?.toISOString()} role="row" className="grid grid-cols-7 gap-1.5">
-            {week.map((date) => {
-              if (!inMonth(date))
-                return <span key={date.toISOString()} role="gridcell" aria-hidden="true" />;
-              const row = byDay.get(toValue(date, false));
-              const label = f.dateShort(date);
-              return (
-                <span
-                  key={date.toISOString()}
-                  role="gridcell"
-                  aria-label={
-                    row
-                      ? row.check_in
-                        ? t('performance.dayLabelIn', {
-                            day: label,
-                            status: t(`status.${row.status}`),
-                            time: f.time(row.check_in),
-                          })
-                        : t('performance.dayLabel', {
-                            day: label,
-                            status: t(`status.${row.status}`),
-                          })
-                      : label
-                  }
-                  className={`flex min-h-12 flex-col items-center justify-center rounded-xl text-sm font-semibold ${
-                    row ? CELL_TONE[row.status] : 'bg-canvas text-text-2'
-                  }`}
-                >
-                  <span aria-hidden="true">{f.number(toCalendar(date, cal.kind).day)}</span>
-                  {row?.check_in && (
-                    <span aria-hidden="true" className="text-[11px] font-medium">
-                      {f.time(row.check_in)}
-                    </span>
-                  )}
-                </span>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      <table className="w-full table-fixed border-separate border-spacing-1.5">
+        <caption className="sr-only">{t('performance.month', { month: name })}</caption>
+        <thead>
+          <tr>
+            {(weeks[0] ?? []).map((date) => (
+              <th
+                key={date.toISOString()}
+                scope="col"
+                abbr={cal.weekdayLong.format(date)}
+                className="text-xs font-normal text-text-2"
+              >
+                {cal.weekday.format(date)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {weeks
+            .filter((week) => week.some(inMonth))
+            .map((week) => (
+              <tr key={week[0]?.toISOString()}>
+                {week.map((date) => {
+                  if (!inMonth(date)) return <td key={date.toISOString()} />;
+                  const row = byDay.get(toValue(date, false));
+                  // Colour is never the only sign: present days show the time in, the others say what they were.
+                  const line = row
+                    ? row.status === 'present' && row.check_in
+                      ? f.time(row.check_in)
+                      : t(`status.${row.status}`)
+                    : '';
+                  return (
+                    <td
+                      key={date.toISOString()}
+                      className={`h-14 rounded-xl p-0 text-center align-middle ${
+                        row ? CELL_TONE[row.status] : 'bg-canvas text-text-2'
+                      }`}
+                    >
+                      <span className="sr-only">{f.dateShort(date)}</span>
+                      <span aria-hidden="true" className="block text-sm font-semibold">
+                        {f.number(toCalendar(date, cal.kind).day)}
+                      </span>
+                      {line && <span className="block truncate px-0.5 text-[11px]">{line}</span>}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+        </tbody>
+      </table>
     </div>
   );
 }

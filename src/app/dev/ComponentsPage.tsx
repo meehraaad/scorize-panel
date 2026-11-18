@@ -36,6 +36,7 @@ import { WeekCalendar, type CalendarTime } from '@/components/ui/WeekCalendar';
 import { addDays, weekOf } from '@/lib/calendar';
 import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
+import { Row, RowList } from '@/components/ui/RowList';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
 import { TagList } from '@/components/ui/Tags';
@@ -363,6 +364,27 @@ export default function ComponentsPage() {
             <DateTile value={new Date().toISOString()} highlight={false} />
             <DateTile value={new Date().toISOString()} highlight />
           </div>
+        </Group>
+
+        <Group name="RowList">
+          <SectionCard id="demo-rows" title="کارهای امروز">
+            <RowList>
+              <Row>
+                <span className="min-w-0 flex-1 text-[15px] font-semibold">کپشن ریلز آلمان</span>
+                <Chip tone="neutral" small>
+                  ۱۰:۳۰
+                </Chip>
+              </Row>
+              <Row>
+                <span className="min-w-0 flex-1 text-[15px] font-semibold">
+                  پیامک یادآوری وبینار
+                </span>
+                <Chip tone="danger" small>
+                  عقب‌افتاده
+                </Chip>
+              </Row>
+            </RowList>
+          </SectionCard>
         </Group>
 
         <Group name="StatGrid · Filters · Pager">

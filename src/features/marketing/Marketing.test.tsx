@@ -55,7 +55,7 @@ describe('marketing panel', () => {
     expect(within(kpi).getByText('به‌زودی')).toBeInTheDocument();
     const totals = await screen.findByRole('region', { name: 'جمع ماه' });
     expect(within(totals).getByText('روز حاضر')).toBeInTheDocument();
-    expect(screen.getByRole('grid', { name: /^روزهای / })).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: /^روزهای / })).toBeInTheDocument();
   });
 
   it('lists my tasks on the shared tasks page', async () => {
