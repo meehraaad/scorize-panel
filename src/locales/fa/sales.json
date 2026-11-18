@@ -259,6 +259,17 @@
       "cold": "سرد (زیر ۴۵)"
     },
     "overdueOnly": "فقط عقب‌افتاده‌ها",
+    "consultation": "مشاوره‌ی خریداری‌شده",
+    "allConsultations": "همه",
+    "consultationOption": {
+      "any": "خریده (هر نوع)",
+      "in_person": "حضوری",
+      "online": "غیرحضوری",
+      "none": "مشاوره نخریده"
+    },
+    "consultationType": "نوع مشاوره",
+    "allConsultationTypes": "همه‌ی انواع",
+    "oldType": "{{name}} (قدیمی)",
     "list": "فهرست لیدها",
     "column": {
       "customer": "مشتری",

@@ -259,6 +259,17 @@
       "cold": "Cold (under 45)"
     },
     "overdueOnly": "Overdue only",
+    "consultation": "Bought consultation",
+    "allConsultations": "All",
+    "consultationOption": {
+      "any": "Bought (any kind)",
+      "in_person": "In person",
+      "online": "Not in person",
+      "none": "Never bought one"
+    },
+    "consultationType": "Consultation type",
+    "allConsultationTypes": "All types",
+    "oldType": "{{name}} (old)",
     "list": "Leads list",
     "column": {
       "customer": "Customer",

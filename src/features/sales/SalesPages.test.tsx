@@ -128,6 +128,31 @@ describe('sales panel, seller pages', () => {
     );
   });
 
+  it('leads: filters bought consultations by in person or not, then by type', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/leads');
+    const mode = await screen.findByRole('combobox', { name: 'مشاوره‌ی خریداری‌شده' });
+    // The type layer opens only once a bought consultation is chosen.
+    expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
+
+    await user.selectOptions(mode, 'in_person');
+    const type = await screen.findByRole('combobox', { name: 'نوع مشاوره' });
+    const names = within(type)
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+    expect(names).toEqual(['همه‌ی انواع', 'مشاوره‌ی ویزای تحصیلی', 'مشاوره‌ی حضوری قدیمی (قدیمی)']);
+
+    await user.selectOptions(mode, 'online');
+    expect(
+      within(screen.getByRole('combobox', { name: 'نوع مشاوره' }))
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual(['همه‌ی انواع', 'مشاوره‌ی اپلای ارشد', 'مشاوره‌ی اپلای دکتری']);
+
+    await user.selectOptions(mode, 'none');
+    expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
+  });
+
   it("leads: a sales manager's rows name their seller, with a seller filter", async () => {
     loginAs(4);
     onDesktop();
