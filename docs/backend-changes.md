@@ -582,3 +582,18 @@ override and panel headers together to enable contact/call note dictation. See b
 `phone_number`, `''` when none), like the consultations list already does
 (`api/sales/v1/seller.py`, `TodayConsultationSerializer`). Until then the dashboard's quick-call
 button on a phone (`online`) consultation stays hidden; the consultations page already has it.
+
+## Client services: one owner and one conversation per service (2026-11-18)
+
+Plan: «معماری خدمت‌ها، مسئول‌ها و تیکت‌ها». Backend reference: `docs/client-services.md` in `shamrad/lang`. A
+customer's admission and visa are separate services (`ClientService`), each with one owner, a stage and, from SVC3,
+its own conversation. The old site keeps working unchanged: tables are only added, each phase has a switch.
+
+| #    | Change                                                                                                                                       | Status |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| SVC1 | Phase 1: `client_services` app (`ServiceType`, `ServiceStage`, `ClientService`), `TeamType.VISA`; services follow the contract out of sight | ☑ (off: `SCORIZE_CLIENT_SERVICES`) |
+| SVC2 | Phase 2: set/change a service's owner from the panel (manager), with history; the new owner also joins `Applicant.supervisors`              | ☐      |
+| SVC3 | Phase 3: `SupervisorTicket.service`; notifications, answered/seen, follow-ups per service; the customer's list of services and writing     | ☐      |
+| SVC4 | Phase 4: visa stages and `VisaResult` on the visa service                                                                                    | ☐      |
+| SVC5 | Phase 5: teams and supervisors by scope, in `my_cases_filter`                                                                                | ☐      |
+| SVC6 | Phase 6: stage per service; reports by owner and team                                                                                        | ☐      |
