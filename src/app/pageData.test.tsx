@@ -39,6 +39,7 @@ const NIMA = 3; // seller
 const REZA = 4; // sales manager
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
 const AMIR = 6; // a superuser: the messages section (src/mocks/messages.ts)
+const ELHAM = 7; // the marketing team (src/mocks/marketing.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -204,6 +205,10 @@ const PAGES: PageCase[] = [
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  // Marketing panel (src/mocks/marketing.ts): Elham is on the marketing team.
+  ...['/marketing', '/marketing/tasks', '/marketing/calendar', '/marketing/performance'].map(
+    (path) => ({ path, user: ELHAM }),
+  ),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },

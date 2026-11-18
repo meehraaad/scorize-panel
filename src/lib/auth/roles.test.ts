@@ -35,6 +35,14 @@ describe('roles', () => {
     expect(getRoles(staff(Team.EXECUTIVE))).toEqual(['supervisor']);
   });
 
+  it('gives marketers the marketing panel, like User.is_marketer with a staff record', () => {
+    expect(getRoles(staff(Team.MARKETING))).toEqual(['marketing']);
+    const key = { permissions: [{ codename: 'can_market' }] };
+    expect(getRoles(staff(Team.SALES, key))).toEqual(['sales', 'marketing']);
+    // The API wants an active staff record too.
+    expect(getRoles({ ...base, ...key })).toEqual(['applicant']);
+  });
+
   it('needs an email to be a seller, like User.is_seller', () => {
     expect(getRoles(staff(Team.SALES, { email: null }))).toEqual(['applicant']);
   });

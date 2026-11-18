@@ -1,0 +1,78 @@
+{
+  "status": {
+    "present": "Present",
+    "late": "Late",
+    "absent": "Absent",
+    "pending": "Not in yet"
+  },
+  "noDevice": "No terminal number",
+  "percent": "{{n}}%",
+  "today": {
+    "title": "Today",
+    "subtitle": "Your tasks for today, the marketing team's attendance and the running campaigns",
+    "counts": "My tasks",
+    "mine": "Today's tasks",
+    "requests": "Colleagues' requests",
+    "doneToday": "Done today",
+    "onTime": "On time this week",
+    "tasks": "My tasks today",
+    "allTasks": "All tasks",
+    "noTasks": "Nothing left for today.",
+    "moreTasks": "and {{n}} more",
+    "overdue": "Overdue",
+    "allDay": "Today",
+    "campaigns": "Running campaigns",
+    "noCampaigns": "No campaign is running now.",
+    "campaignEnds": "until {{day}}",
+    "campaignOpen": "No end date",
+    "aside": "Attendance",
+    "me": "My attendance today",
+    "checkIn": "In",
+    "checkOut": "Out",
+    "notYet": "Not recorded",
+    "meNoDevice": "You have no number on the attendance terminal; ask HR to connect it.",
+    "team": "The team today",
+    "noTeam": "Nobody is on the marketing team.",
+    "you": "you",
+    "lateBy": "Late {{time}}",
+    "inAt": "In at {{time}}"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "My tasks at their hour on the week, and campaigns starting and ending above each day",
+    "task": "My task",
+    "dayRow": "The day's campaigns and tasks",
+    "add": "New task for {{day}}",
+    "tasks": "{{n}} tasks",
+    "kind": {
+      "campaign_start": "Campaign starts",
+      "campaign_end": "Campaign ends"
+    },
+    "short": {
+      "campaign_start": "Starts: {{title}}",
+      "campaign_end": "Ends: {{title}}"
+    }
+  },
+  "performance": {
+    "title": "My performance",
+    "subtitle": "The month's attendance from the office terminal, and KPIs",
+    "kpi": "KPIs",
+    "kpiSoon": "Coming soon",
+    "kpiEmpty": "KPIs will show here with the company-wide KPI system.",
+    "attendance": "Attendance",
+    "previous": "Previous month",
+    "next": "Next month",
+    "totals": "Month totals",
+    "present": "Days present",
+    "worked": "Worked",
+    "late": "Late",
+    "lateDays": "{{n}} days",
+    "absent": "Absent",
+    "noCheckOut": "No check-out",
+    "hours": "{{time}} h",
+    "noDevice": "You have no number on the attendance terminal, so your attendance isn't known. Ask HR to connect it.",
+    "month": "Days of {{month}}",
+    "dayLabel": "{{day}}: {{status}}",
+    "dayLabelIn": "{{day}}: {{status}}, in at {{time}}"
+  }
+}

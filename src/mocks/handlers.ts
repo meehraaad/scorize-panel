@@ -9,6 +9,7 @@ import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { mailHandlers, resetMailMocks } from './mail';
 import { attendanceHandlers, resetAttendanceMocks } from './attendance';
 import { hrHandlers, resetHrMocks } from './hr';
+import { marketingHandlers } from './marketing';
 import { hrPayHandlers, resetHrPayMocks } from './hrPay';
 import { messagesHandlers, resetMessagesMocks } from './messages';
 import { accessHandlers, resetAccessMocks } from './access';
@@ -45,6 +46,7 @@ import { resetStaffMocks, staffHandlers } from './staff';
  *   09120000005 / amir.abedi@scorize.local     superuser: every panel; the messages section's
  *                                               keys and access page (src/mocks/messages.ts); the attendance section
  *                                               (src/mocks/attendance.ts); the HR panel (src/mocks/hr.ts)
+ *   09120000006 / elham.nouri@scorize.local    marketing team: the marketing panel (src/mocks/marketing.ts)
  */
 
 export const MOCK_OTP = '123456';
@@ -167,6 +169,22 @@ const users: MockUser[] = [
     is_country_supervisor: false,
     ...workspace(),
     is_superuser: true,
+    permissions: [],
+    group_permissions: [],
+  },
+  {
+    // The marketing team: the marketing panel only (src/mocks/marketing.ts).
+    id: 7,
+    first_name: 'الهام',
+    last_name: 'نوری',
+    email: 'elham.nouri@scorize.local',
+    phone_number: '09120000006',
+    password: MOCK_PASSWORD,
+    staff: { id: 11, full_name: 'الهام نوری', team: 2, is_active: true },
+    applicant: null,
+    is_country_supervisor: false,
+    ...workspace(),
+    is_superuser: false,
     permissions: [],
     group_permissions: [],
   },
@@ -373,6 +391,7 @@ export const handlers = [
   ...accessHandlers,
   ...attendanceHandlers,
   ...hrHandlers,
+  ...marketingHandlers,
   ...hrPayHandlers,
 ];
 
