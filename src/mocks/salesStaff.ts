@@ -3,7 +3,9 @@ import { http, HttpResponse } from 'msw';
 import { ApiError, api } from '@/lib/api/client';
 import type {
   CallBrief,
+  Consultation,
   ConsultationRange,
+  ConsultationSummary,
   ConsultationTypeOption,
   ConsultationsData,
   ContactLog,
@@ -29,8 +31,10 @@ import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
 import { faceOf, putFace } from './face';
 import {
+  arrivalOf,
   customerInstalments,
   failed,
+  listHolderOf,
   recordInstalmentReceipt,
   stateOrError,
   upcomingVisitOf,
@@ -117,6 +121,66 @@ const MANAGER_TEAM = [
   { id: 8, name: SELLER_NAME },
   { id: 9, name: 'رضا کاظمی' },
 ];
+
+const DAY_MS = 86_400_000;
+const localDay = (value: string | Date) => {
+  const day = new Date(value);
+  day.setHours(0, 0, 0, 0);
+  return day.getTime();
+};
+
+/** Django's manager filters of `consultations/` (api/sales/v1/seller.py): span, mode, seller, status, q. */
+function filterConsultations(rows: Consultation[], query: URLSearchParams) {
+  const now = Date.now();
+  const from = query.get('from');
+  const to = query.get('to');
+  const seller = query.get('seller');
+  const typed = (query.get('q') ?? '').trim().toLowerCase();
+  return rows.filter((item) => {
+    const starts = new Date(item.starts_at).getTime();
+    if (query.get('range') === 'span') {
+      if (from && starts < localDay(`${from}T00:00:00`)) return false;
+      if (to && starts >= localDay(`${to}T00:00:00`) + DAY_MS) return false;
+    }
+    const mode = query.get('mode');
+    if (mode && item.mode !== mode) return false;
+    if (seller === 'none' && item.seller_id !== null) return false;
+    if (seller && seller !== 'none' && item.seller_id !== Number(seller)) return false;
+    switch (query.get('status')) {
+      case 'upcoming':
+        if (starts < now) return false;
+        break;
+      case 'done':
+        if (starts >= now || !item.logged) return false;
+        break;
+      case 'unlogged':
+        if (starts >= now || item.logged) return false;
+        break;
+      case 'arrived':
+        if (!item.arrived_at) return false;
+        break;
+    }
+    return !typed || item.name.toLowerCase().includes(typed) || item.phone.includes(typed);
+  });
+}
+
+/** The manager's cards: today, tomorrow, the next 7 days, upcoming with nobody, past without a log. */
+function summaryOf(rows: Consultation[]): ConsultationSummary {
+  const now = Date.now();
+  const today = localDay(new Date());
+  const within = (item: Consultation, days: number, skip = 0) => {
+    const day = localDay(item.starts_at);
+    return day >= today + skip * DAY_MS && day < today + days * DAY_MS;
+  };
+  const upcoming = (item: Consultation) => new Date(item.starts_at).getTime() >= now;
+  return {
+    today: rows.filter((item) => within(item, 1)).length,
+    tomorrow: rows.filter((item) => within(item, 2, 1)).length,
+    week: rows.filter((item) => within(item, 7)).length,
+    unassigned: rows.filter((item) => upcoming(item) && item.seller_id === null).length,
+    unlogged: rows.filter((item) => !upcoming(item) && !item.logged).length,
+  };
+}
 
 /** The leads list's consultation types: the calendar mock's three (src/mocks/sales.ts) and an old one. */
 const CONSULTATION_TYPES: ConsultationTypeOption[] = [
@@ -273,29 +337,42 @@ export const salesStaffHandlers = [
   http.get(`${BASE}/consultations/`, ({ request }) => {
     const query = new URL(request.url).searchParams;
     const type = query.get('type');
-    const range = (query.get('range') ?? 'today') as ConsultationRange;
+    const range = (query.get('range') ?? 'today') as ConsultationRange | 'span';
     const date = query.get('date');
+    const manager = storage.get() === MANAGER;
     return answer<ConsultationsData>(() =>
       fetchConsultations(
-        range === 'day' ? 'all' : range,
+        range === 'day' || range === 'span' ? 'all' : range,
         type ? Number(type) : null,
         query.get('unlogged') === '1',
       ).then((data) => {
+        // Who holds each one and when an in-person customer came, as the calendar mock keeps them.
+        const rows: Consultation[] = data.results.map((item) => ({
+          ...item,
+          ...listHolderOf(item.id),
+          arrived_at: arrivalOf(item.id),
+        }));
+        const shared = {
+          types: data.types,
+          unlogged: data.unlogged,
+          sellers: manager ? MANAGER_TEAM : [],
+          ...(manager ? { summary: summaryOf(rows) } : {}),
+        };
         if (range !== 'day' || !date) {
-          const { counts, ...rest } = data;
+          const results = filterConsultations(rows, query);
           return {
-            ...rest,
-            counts: date ? { ...counts, day: 0 } : counts,
-            ...pageOf(request, data.results, CONSULTATIONS_PAGE),
+            ...shared,
+            counts: date ? { ...data.counts, day: 0 } : data.counts,
+            ...pageOf(request, results, CONSULTATIONS_PAGE),
           };
         }
         // One chosen day (S59): its sessions, counted by type; the mock logs no contacts.
-        const results = data.results.filter((item) => item.starts_at.slice(0, 10) === date);
+        const results = rows.filter((item) => item.starts_at.slice(0, 10) === date);
         const byType = new Map<string, number>();
         for (const item of results)
           byType.set(item.type.name, (byType.get(item.type.name) ?? 0) + 1);
         return {
-          ...data,
+          ...shared,
           counts: { ...data.counts, day: results.length },
           day: {
             sessions: [...byType].map(([name, count]) => ({ type: name, count })),

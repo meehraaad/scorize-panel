@@ -130,7 +130,7 @@ export default function ConsultationTypePage() {
   if (id !== 'new' && !item)
     return (
       <>
-        <BackLink to={salesPath('manager/consultations')}>
+        <BackLink to={salesPath('manager/consultations/types')}>
           {t('manager.consultations.back')}
         </BackLink>
         <EmptyState>{t('manager.consultations.missing')}</EmptyState>
@@ -171,7 +171,9 @@ function TypeForm({ item }: { item: ConsultationTypeRow | null }) {
         toast.success(t(item ? 'manager.consultations.saved' : 'manager.consultations.created'));
         setTried(false);
         if (!item) {
-          void navigate(salesPath(`manager/consultations/${String(row.id)}`), { replace: true });
+          void navigate(salesPath(`manager/consultations/types/${String(row.id)}`), {
+            replace: true,
+          });
           return;
         }
         const fresh = draftOf(row);
@@ -200,7 +202,9 @@ function TypeForm({ item }: { item: ConsultationTypeRow | null }) {
         submit();
       }}
     >
-      <BackLink to={salesPath('manager/consultations')}>{t('manager.consultations.back')}</BackLink>
+      <BackLink to={salesPath('manager/consultations/types')}>
+        {t('manager.consultations.back')}
+      </BackLink>
       <PageHeader
         title={item ? item.title : t('manager.consultations.new')}
         subtitle={item ? t('manager.consultations.editHint') : t('manager.consultations.newHint')}
