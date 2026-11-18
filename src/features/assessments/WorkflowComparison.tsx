@@ -38,9 +38,15 @@ export function WorkflowComparison({ results }: { results: Results }) {
       <ul className="flex min-w-0 flex-col gap-4">
         {paths.map((path) => {
           const conditions = path.conditions.flatMap((id) => results.evaluations[id] ?? []);
+          // An unavailable score (expired source, changed implementation) is still this
+          // pathway's score: show it with its reason, never as "no score system".
           const scores = path.scores
             .map((id) => results.evaluations[id])
-            .filter((row) => row && row.score.status !== 'not_applicable');
+            .filter(
+              (row) =>
+                row &&
+                (row.coverage.status !== 'supported' || row.score.status !== 'not_applicable'),
+            );
           const open = conditions.flatMap((row) => [
             ...(row.coverage.status !== 'supported' && row.coverage.reason
               ? [state(row.coverage.reason)]
@@ -79,20 +85,32 @@ export function WorkflowComparison({ results }: { results: Results }) {
                 <div className="flex min-w-0 flex-col gap-1">
                   <dt className="text-text-2">{t('workflow.comparison.ownScores')}</dt>
                   <dd>
-                    {scores.length === 0 ? (
+                    {path.scores.length === 0 ? (
                       t('workflow.comparison.noScore')
+                    ) : scores.length === 0 ? (
+                      t('workflow.comparison.scoreNotApplicable')
                     ) : (
                       <ul className="flex flex-col gap-1">
                         {scores.map(
                           (row) =>
-                            row && (
+                            row &&
+                            (row.coverage.status !== 'supported' ? (
                               <li key={row.id}>
                                 {names.evaluator(row.id, row)}:{' '}
-                                <bdi>{row.score.value ?? t('calculator.unknown')}</bdi> ·{' '}
-                                {state(row.score.status)}
+                                {row.coverage.reason
+                                  ? state(row.coverage.reason)
+                                  : t('workflow.review')}
+                              </li>
+                            ) : (
+                              <li key={row.id}>
+                                {names.evaluator(row.id, row)}:{' '}
+                                <bdi>
+                                  {row.score.value ?? t('workflow.comparison.notCalculated')}
+                                </bdi>{' '}
+                                · {state(row.score.status)}
                                 {names.passMark(row) && <> · {names.passMark(row)}</>}
                               </li>
-                            ),
+                            )),
                         )}
                       </ul>
                     )}

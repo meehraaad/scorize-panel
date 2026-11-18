@@ -1330,7 +1330,9 @@
         "true": "matches",
         "false": "does not match",
         "unknown": "not declared yet"
-      }
+      },
+      "scoreNotApplicable": "This pathway's score does not apply to your situation.",
+      "notCalculated": "not calculated yet"
     }
   }
 }

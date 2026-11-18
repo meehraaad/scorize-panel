@@ -422,3 +422,50 @@ it('explains pathways side by side and shows a configured third country from ser
   expect(screen.getByRole('heading', { name: 'Synthetic age' })).toBeInTheDocument();
   expect(screen.queryByText(/Default (age|language)/)).not.toBeInTheDocument();
 });
+
+it('shows an unavailable score with its reason, never as a pathway without a score system', async () => {
+  const fixture = structuredClone((await import('@/mocks/workflow-fixture.json')).default);
+  const results = fixture.results as unknown as Workflow['results'];
+  const crs = results.evaluations['ca.crs'];
+  if (!crs) throw new Error('Expected fixture evaluation');
+  // What the server sends for an expired source: coverage unavailable, no score.
+  results.evaluations['ca.crs'] = {
+    ...crs,
+    coverage: { status: 'unavailable', reason: 'assessment_date_out_of_coverage' },
+    score: { ...crs.score, status: 'not_applicable', value: null, breakdown: {} },
+  };
+  server.use(
+    http.get(endpoint, () =>
+      HttpResponse.json({
+        version: 'unified-workflow-4',
+        session_id: id,
+        revision: 3,
+        assessment_date: '2026-11-18',
+        active: false,
+        writable: true,
+        status: 'needs_review',
+        mode: 'assessment',
+        selected_pathways: ['ca-fsw', 'ca-cec'],
+        unavailable_pathways: [],
+        options: fixture.options,
+        questions: [],
+        review_questions: [],
+        next_question: null,
+        deferred: [],
+        blocked: [],
+        results,
+        decision_sha256: '4'.repeat(64),
+      }),
+    ),
+  );
+  renderApp(`/dev/assessment-workflow?session=${id}`);
+  const comparison = await screen.findByRole('region', { name: 'Compare pathways' });
+  expect(
+    within(comparison).getAllByText(
+      'Comprehensive Ranking System (CRS): Assessment date is outside supported source coverage',
+    ),
+  ).toHaveLength(2);
+  expect(
+    within(comparison).queryByText('This pathway has no score system.'),
+  ).not.toBeInTheDocument();
+});

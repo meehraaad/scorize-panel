@@ -51,7 +51,8 @@ export function WorkflowResults({ results, prefix }: { results: Results; prefix:
                 {row.coverage.reason && <p>{state(row.coverage.reason)}</p>}
                 {row.kind === 'score' && (
                   <p>
-                    {t('workflow.score')}: <bdi>{row.score.value ?? t('calculator.unknown')}</bdi> ·{' '}
+                    {t('workflow.score')}:{' '}
+                    <bdi>{row.score.value ?? t('workflow.comparison.notCalculated')}</bdi> ·{' '}
                     {state(row.score.status)}
                     {names.passMark(row) && <> · {names.passMark(row)}</>}
                   </p>
@@ -72,7 +73,7 @@ export function WorkflowResults({ results, prefix }: { results: Results; prefix:
                           <dt>{names.part(row, key)}</dt>
                           <dd>
                             {row.kind === 'score' ? (
-                              <bdi>{value ?? t('calculator.unknown')}</bdi>
+                              <bdi>{value ?? t('workflow.comparison.notCalculated')}</bdi>
                             ) : (
                               state(String(value))
                             )}
