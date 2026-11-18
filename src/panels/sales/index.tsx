@@ -1,5 +1,6 @@
 import { redirect } from 'react-router';
 import {
+  MANAGER_AREA_PERMISSIONS,
   MANAGER_PERMISSION,
   activityQuery,
   applyQuery,
@@ -42,7 +43,7 @@ import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { hasPermission } from '@/lib/auth/roles';
+import { hasAnyPermission, hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { notebookQuery } from '@/lib/notes/api';
@@ -52,6 +53,7 @@ import {
   phoneMenusQuery,
   phoneTeamsQuery,
   phoneBreakQuery,
+  phoneExtensionsQuery,
   phoneVoicesQuery,
   teamBreaksQuery,
 } from '@/lib/sales/phoneCalls';
@@ -71,6 +73,19 @@ const toMoney = ({ params, request }: LoaderFunctionArgs) =>
 async function managerOnly() {
   const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
   return user && hasPermission(user, MANAGER_PERMISSION) ? null : redirect('/sales');
+}
+
+/**
+ * The manager section: sales managers open all of it; the phone key alone (PHONE_PERMISSION) opens
+ * only its phone tab, so any other address there goes to the phone tab.
+ */
+async function managerArea({ request }: LoaderFunctionArgs) {
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+  if (user && hasPermission(user, MANAGER_PERMISSION)) return null;
+  if (!user || !hasAnyPermission(user, MANAGER_AREA_PERMISSIONS)) return redirect('/sales');
+  return new URL(request.url).pathname.includes('/sales/manager/phone')
+    ? null
+    : redirect('/sales/manager/phone');
 }
 
 /** Sales and support teams (User.is_seller). Design: canvas "Scorize Seller Panel". */
@@ -130,7 +145,7 @@ export const salesPanel: PanelDefinition = {
       to: 'manager',
       label: 'panels.sales.nav.manager',
       icon: 'settings',
-      permission: MANAGER_PERMISSION,
+      permission: MANAGER_AREA_PERMISSIONS,
     },
   ],
   // Search every customer from any page (S63), not only the leads page's button.
@@ -308,7 +323,7 @@ export const salesPanel: PanelDefinition = {
     // The sales manager's section (nav item and routes need can_assign_to_seller).
     {
       path: 'manager',
-      loader: managerOnly,
+      loader: managerArea,
       ...lazyPage(() => import('@/features/sales/manager/ManagerLayout'), ['sales']),
       children: [
         {
@@ -421,6 +436,18 @@ export const salesPanel: PanelDefinition = {
                               data: () => [officeHoursQuery],
                               skeleton: 'form',
                             },
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneExtensions
+                    ? [
+                        {
+                          path: 'extensions',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/PhoneExtensionsPage'),
+                            [],
+                            { data: () => [phoneExtensionsQuery], skeleton: 'list' },
                           ),
                         },
                       ]
