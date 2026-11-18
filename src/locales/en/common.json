@@ -440,5 +440,10 @@
       "note": "Note"
     }
   },
-  "noName": "No name"
+  "noName": "No name",
+  "me": {
+    "nav": "My sections",
+    "pay": "Score and pay",
+    "sales": "Sales performance"
+  }
 }

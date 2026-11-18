@@ -209,6 +209,7 @@ const PAGES: PageCase[] = [
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },
   { path: '/me', user: AMIR },
+  { path: '/me/sales', user: NIMA },
 ];
 
 /** Queries first loaded while `path` opens, and whether the load began after the route had. */

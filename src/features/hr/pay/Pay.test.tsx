@@ -171,5 +171,21 @@ describe('HR pay and KPIs', () => {
     expect(await toasts().findByText('اعتراض پذیرفته شد.')).toBeInTheDocument();
     expect(await within(objections).findByText('پذیرفته شد')).toBeInTheDocument();
   });
+
+  it('shows a seller their sales month on «من», behind their password', async () => {
+    const user = userEvent.setup();
+    loginAs(3); // Nima, a seller (src/mocks/handlers.ts)
+    renderApp('/me');
+    const tabs = await screen.findByRole('navigation', { name: 'بخش‌های من' });
+    await user.click(within(tabs).getByRole('link', { name: 'عملکرد فروش' }));
+    expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
+  });
+
+  it('sends a non-seller from the sales month back to their pay', async () => {
+    loginAs(2); // Maryam: staff, not a seller
+    renderApp('/me/sales');
+    expect(await screen.findByRole('heading', { name: 'امتیاز و پرداخت من' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'بخش‌های من' })).not.toBeInTheDocument();
+  });
 });
 

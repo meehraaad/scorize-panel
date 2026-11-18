@@ -10,6 +10,7 @@ import { myMonthQuery, thisMonth } from '@/features/hr/me/api';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
 import { restoreCacheFor } from '@/lib/api/persist';
+import { getRoles } from '@/lib/auth/roles';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
@@ -18,6 +19,7 @@ import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panel
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
+import { MeLayout } from './layouts/MeLayout';
 import { PanelLayout } from './layouts/PanelLayout';
 import { WorkspaceLayout } from './layouts/WorkspaceLayout';
 import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
@@ -168,12 +170,29 @@ const pageRoutes: RouteObject[] = [
             ...lazyPage(() => import('@/features/settings/SettingsPage'), [], { skeleton: 'form' }),
           },
           {
-            // A staff member's own KPIs and pay.
+            // A staff member's own pages: KPIs and pay, and a seller's sales month.
             path: 'me',
-            ...lazyPage(() => import('@/features/hr/me/MyPayPage'), ['hr'], {
-              data: () => [myMonthQuery(thisMonth())],
-              skeleton: 'dashboard',
-            }),
+            Component: MeLayout,
+            children: [
+              {
+                index: true,
+                ...lazyPage(() => import('@/features/hr/me/MyPayPage'), ['hr'], {
+                  data: () => [myMonthQuery(thisMonth())],
+                  skeleton: 'dashboard',
+                }),
+              },
+              {
+                path: 'sales',
+                // No data on open: the month is read only after the seller types their password.
+                ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], {
+                  skeleton: 'form',
+                  guard: async () => {
+                    const user = await currentUser();
+                    return user && getRoles(user).includes('sales') ? null : redirect('/me');
+                  },
+                }),
+              },
+            ],
           },
         ],
       },
