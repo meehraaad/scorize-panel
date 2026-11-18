@@ -80,12 +80,38 @@ export interface TicketMessage {
   auto: boolean;
 }
 
+/**
+ * The service a conversation belongs to (backend-changes.md SVC3): what the customer bought, one
+ * unit of work at a time ("Visa · Germany"), answered by its owner.
+ */
+export interface ThreadService {
+  id: number;
+  /** `ServiceType.key`: admission, visa, … */
+  kind: string;
+  name: string;
+  /** Localized; null for a kind that isn't per country. */
+  country: string | null;
+  /** closed: the history stays readable; nothing more can be sent. */
+  status: 'open' | 'paused' | 'closed';
+  /** The owner's name; null while nobody owns it (the case's supervisors answer). */
+  owner: string | null;
+}
+
+/** "Visa · Germany", or the kind alone. */
+export const serviceLabel = (service: Pick<ThreadService, 'name' | 'country'>) =>
+  service.country ? `${service.name} · ${service.country}` : service.name;
+
 export interface TicketThread {
-  /** URL segment: 'supervisor' or 'writing/<department>'. */
+  /**
+   * URL segment: 'supervisor' (with services: the case's general conversation), 'service/<id>' or
+   * 'writing/<department>'.
+   */
   id: string;
   department: 'supervisor' | 'writing';
   /** The writing department, for writing threads. */
   writing: WritingDepartment | null;
+  /** A service's conversation (SVC3); null or missing for the others and from an older Django. */
+  service?: ThreadService | null;
   /** Messages from the other side not seen yet. */
   unread: number;
   /** Who answers in this thread (shown in its header). */

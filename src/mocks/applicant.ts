@@ -1042,6 +1042,7 @@ function ticket(
 const MARYAM = { name: 'مریم کاظمی', role: 'supervisor' as const };
 const HOSSEIN = { name: 'حسین رحیمی', role: 'supervisor' as const };
 const ELHAM = { name: 'الهام رضوی', role: 'writer' as const };
+const NEGAR = { name: 'نگار صادقی', role: 'supervisor' as const };
 const file = (name: string) => ({ name, url: '#' });
 
 function saraThreads(): MockThread[] {
@@ -1092,6 +1093,31 @@ function saraThreads(): MockThread[] {
           HOSSEIN,
           minutesAgo(20),
           'بله، برای تورنتو کافی است. برای McGill هم نمره‌ی Writing باید حداقل ۶.۵ باشد که هست. کارنامه را در پرونده ثبت کردم.',
+          { seen: false },
+        ),
+      ],
+    },
+    // Her visa is its own service (SVC3), answered by the visa team's owner.
+    {
+      id: 'service/31',
+      department: 'supervisor',
+      writing: null,
+      service: {
+        id: 31,
+        kind: 'visa',
+        name: 'ویزا',
+        country: 'کانادا',
+        status: 'open',
+        owner: NEGAR.name,
+      },
+      team: [NEGAR],
+      messages: [
+        ticket(201, 'me', at(1, 9, 0), 'برای وقت سفارت کانادا چه مدارکی لازم است؟'),
+        ticket(
+          202,
+          NEGAR,
+          at(1, 11, 30),
+          'فهرست مدارک ویزای تحصیلی کانادا را در بخش مدارک گذاشتم؛ بعد از پذیرش نهایی وقت می‌گیریم.',
           { seen: false },
         ),
       ],
@@ -1188,7 +1214,11 @@ const isPriority = (value: number): value is Priority => [0, 1, 2, 3].includes(v
 
 /** `:type` present → a writing thread, else the supervisors'. */
 const threadIdOf = (params: Record<string, string | readonly string[] | undefined>) =>
-  typeof params.type === 'string' ? `writing/${params.type}` : 'supervisor';
+  typeof params.type === 'string'
+    ? `writing/${params.type}`
+    : typeof params.service === 'string'
+      ? `service/${params.service}`
+      : 'supervisor';
 
 function threadOrError(params: Record<string, string | readonly string[] | undefined>) {
   const state = caseOrError();
@@ -1196,7 +1226,11 @@ function threadOrError(params: Record<string, string | readonly string[] | undef
   return state.threads.find((thread) => thread.id === threadIdOf(params)) ?? notFound();
 }
 
-const THREADS = [`${BASE}/tickets/supervisor`, `${BASE}/tickets/writing/:type`];
+const THREADS = [
+  `${BASE}/tickets/supervisor`,
+  `${BASE}/tickets/service/:service`,
+  `${BASE}/tickets/writing/:type`,
+];
 
 const ticketHandlers = [
   http.get(`${BASE}/tickets/`, () => {
