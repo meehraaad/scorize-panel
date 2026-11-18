@@ -173,9 +173,7 @@ describe('sales: my consultations on a week calendar', () => {
       const dialog = await screen.findByRole('dialog', { name: 'پیگیری تازه' });
       // The same time picker as the contact log: quick times, and the picked spot on «از تقویم».
       expect(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' })).not.toBeChecked();
-      // The week is open in this window: the picked day, and its hour.
-      const hours = within(dialog).getByRole('group', { name: 'ساعت' });
-      expect(within(hours).getByRole('button', { pressed: true })).toHaveTextContent('۱۴:۰۰');
+      expect(within(dialog).getByRole('button', { pressed: true })).toHaveTextContent('۱۴:۰۰');
       expect(
         within(dialog).getByRole('textbox', { name: 'چه کاری (اختیاری)' }),
       ).toBeInTheDocument();

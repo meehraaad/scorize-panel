@@ -368,7 +368,7 @@ describe('session log: the next step on the board', () => {
     ).toBeInTheDocument();
   });
 
-  it('sets a follow-up for a day with no hour', async () => {
+  it('sets a follow-up for a day with no hour, picked on the week in the log', async () => {
     let sent: Record<string, unknown> | null = null;
     server.use(
       http.post('/api/sales/v1/customers/:id/contacts/', async ({ request }) => {
@@ -379,14 +379,20 @@ describe('session log: the next step on the board', () => {
     const user = userEvent.setup();
     renderApp('/sales/customers/105?log=call');
     const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
-    await user.click(await within(dialog).findByRole('switch', { name: /فقط روز، بدون ساعت/ }));
-    // The quick choices are days now.
-    await user.click(within(dialog).getByRole('radio', { name: 'فردا' }));
+    const chip = await within(dialog).findByRole('button', { name: 'فقط روز، بدون ساعت' });
+    await user.click(chip);
+    expect(chip).toHaveAttribute('aria-expanded', 'true');
+    // A day only: the strip, no hours.
+    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
+    const days = within(dialog).getByRole('group', { name: 'روز' });
+    const today = within(days)
+      .getAllByRole('button')
+      .find((day) => !(day as HTMLButtonElement).disabled) as HTMLElement;
+    await user.click(today);
+    expect(within(dialog).getByRole('button', { name: /، بدون ساعت$/ })).toBeInTheDocument();
     await user.click(first(within(dialog).getAllByRole('button', { name: /^ثبت/ })));
     await waitFor(() => expect(sent).not.toBeNull());
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    expect(sent).toMatchObject({ follow_up_at: null, follow_up_on: toValue(tomorrow, false) });
+    expect(sent).toMatchObject({ follow_up_at: null, follow_up_on: toValue(new Date(), false) });
   });
 
   it("asks a session log for the customer's missing facts, a GPA on its own", async () => {

@@ -1,148 +1,187 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import type { CalendarEvent } from '@/components/ui/EventCalendar';
 import { Icon } from '@/components/ui/Icon';
-import { Switch } from '@/components/ui/Switch';
+import { Dialog } from '@/components/ui/Dialog';
 import { WeekNav } from '@/components/ui/WeekNav';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { addDays, parseValue, sameDay, toValue, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { quickWhen } from '@/lib/when';
 import { FOLLOWS, followAtOf, followOnOf, isDayOnly, type Follow } from '../followUp';
+import { FollowUpSlots } from './FollowUpSlots';
 import { useSellerBusy } from './useSellerBusy';
 
 /** The hours offered on a day, the first at 9:00 and the last at 20:00. */
 const FIRST_HOUR = 9;
 const LAST_HOUR = 20;
-/** A day turned back into a time starts at this hour. */
-const DAY_HOUR = 10;
 /** How far ahead the week can go (as the office meeting window). */
 const WEEKS_AHEAD = 8;
 const MINUTE = 60_000;
 
-type Quick = (typeof FOLLOWS)[number];
-
-/** The day a quick choice falls on, for a follow-up with no hour («امروز عصر» is then today). */
-const quickDay = (follow: Quick) => (follow === 'evening' ? new Date() : quickWhen(follow));
-
 /**
- * When to follow up, the same everywhere a seller sets one (the contact log, the follow-up window):
- * a few quick times, «فقط روز، بدون ساعت» (a day with no hour, `dayFollowUps`: `date` is then
- * `YYYY-MM-DD`), or a day and hour on the seller's own week: the day strip, then that day's hours
- * with the seller's sessions, meetings, calls and tasks on them. `calendar="toggle"` keeps the week
- * folded behind «از تقویم» (the contact log, long already); `open` shows it. The exact time field
- * stays the keyboard way to type any time.
+ * When to follow up, the same everywhere a seller sets one: a few quick times, «از تقویم» (a day
+ * and hour on the seller's week) and «فقط روز، بدون ساعت» (a day with no hour, `dayFollowUps`:
+ * `date` is then `YYYY-MM-DD`). `calendar="inline"` (the contact and session log) opens the week
+ * in the form: a day strip, then that day's hours with the seller's own sessions, meetings, calls
+ * and tasks; for a day only, the strip alone. `dialog` (the follow-up window) opens the seller's
+ * full week calendar in a window, or a day picker. The exact time field stays the keyboard way.
  */
 export function FollowUpWhen({
   follow,
   date,
   onChange,
+  name = '',
   legend,
   hideLegend = true,
-  calendar = 'toggle',
+  calendar = 'inline',
 }: {
   follow: Follow;
   /** `YYYY-MM-DDTHH:mm`, or `YYYY-MM-DD` for a day with no hour; read when `follow` is `other`. */
   date: string;
   onChange: (change: { follow: Follow; date?: string }) => void;
+  /** The customer, named in the calendar window's title (`dialog`). */
+  name?: string;
   legend: string;
   hideLegend?: boolean;
-  calendar?: 'toggle' | 'open';
+  calendar?: 'inline' | 'dialog';
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
+  /** Which picker is open: the week and a time, or only a day. */
+  const [picking, setPicking] = useState<'time' | 'day' | null>(null);
   const followAt = followAtOf(follow, date);
   const followOn = followOnOf(follow, date);
   const followDay = followOn ? parseValue(followOn) : null;
-  // Day-only stays on while nothing is picked yet; a picked day keeps it on.
-  const [dayMode, setDayMode] = useState(followOn !== null);
-  const dayOnly = ON_SERVER.dayFollowUps && (dayMode || followOn !== null);
-  const [unfolded, setUnfolded] = useState(false);
-  const shown = calendar === 'open' || unfolded;
-  const quickPicked = dayOnly
-    ? (FOLLOWS.find((value) => followDay && sameDay(quickDay(value), followDay)) ?? null)
-    : follow === 'other'
-      ? null
-      : follow;
-  /** A time or a day picked on the week (not one of the quick choices). */
-  const fromWeek = follow === 'other' && (followAt !== null || followDay !== null) && !quickPicked;
+  const inline = calendar === 'inline';
   const pick = (value: string) => {
     onChange({ follow: 'other', date: value });
-    if (calendar === 'toggle') setUnfolded(false);
+    setPicking(null);
   };
-
-  const switchDayOnly = (on: boolean) => {
-    setDayMode(on);
-    if (on) {
-      // The day of what was picked: the picked time's, or the quick time's.
-      const day = follow === 'other' ? parseValue(date) : quickDay(follow);
-      if (day) onChange({ follow: 'other', date: toValue(day, false) });
-    } else if (followDay) {
-      const at = new Date(followDay);
-      at.setHours(DAY_HOUR, 0, 0, 0);
-      onChange({ follow: 'other', date: toValue(at, true) });
-    }
-  };
+  const toggle = (mode: 'time' | 'day') => setPicking(picking === mode ? null : mode);
+  const chip = (mode: 'time' | 'day') => (inline ? { expanded: picking === mode } : {});
 
   return (
     <div className="flex flex-col gap-3">
       <ChoiceGroup
         legend={legend}
         hideLegend={hideLegend}
-        value={quickPicked}
+        value={follow === 'other' ? null : follow}
         onChange={(value) => {
-          setUnfolded(false);
-          if (dayOnly) onChange({ follow: 'other', date: toValue(quickDay(value), false) });
-          else onChange({ follow: value });
+          setPicking(null);
+          onChange({ follow: value });
         }}
         options={FOLLOWS.map((value) => ({
           value,
-          label: t(
-            dayOnly
-              ? `customer.logDialog.followDayOption.${value}`
-              : `customer.logDialog.followOption.${value}`,
-          ),
+          label: t(`customer.logDialog.followOption.${value}`),
         }))}
         extra={
-          calendar === 'toggle' && (
-            <button
-              type="button"
-              onClick={() => setUnfolded(!unfolded)}
-              aria-expanded={unfolded}
-              className={`inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                fromWeek
-                  ? 'bg-hero text-on-hero'
-                  : 'text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint'
-              }`}
+          <>
+            <PickChip
+              on={follow === 'other' && followAt !== null}
+              onClick={() => toggle('time')}
+              {...chip('time')}
             >
               <Icon name="calendar" size={16} />
-              {fromWeek
-                ? followDay
+              {follow === 'other' && followAt
+                ? t('customer.logDialog.followWhen', {
+                    day: f.weekdayName(followAt),
+                    time: f.time(followAt),
+                  })
+                : t('customer.logDialog.fromCalendar')}
+            </PickChip>
+            {ON_SERVER.dayFollowUps && (
+              <PickChip on={followDay !== null} onClick={() => toggle('day')} {...chip('day')}>
+                {followDay
                   ? t('customer.logDialog.followDay', { day: f.weekday(followDay) })
-                  : t('customer.logDialog.followWhen', {
-                      day: f.weekdayName(followAt ?? ''),
-                      time: f.time(followAt ?? ''),
-                    })
-                : unfolded
-                  ? t('customer.logDialog.closeCalendar')
-                  : t('customer.logDialog.fromCalendar')}
-            </button>
-          )
+                  : t('followUpWhen.dayChip')}
+              </PickChip>
+            )}
+          </>
         }
       />
-      {ON_SERVER.dayFollowUps && (
-        <Switch
-          label={t('whenPicker.dateOnly')}
-          description={t('whenPicker.dateOnlyHint')}
-          checked={dayOnly}
-          onChange={switchDayOnly}
+      {inline && picking && (
+        <WhenWeek
+          key={picking}
+          value={follow === 'other' ? date : ''}
+          dayOnly={picking === 'day'}
+          onPick={pick}
         />
       )}
-      {shown && <WhenWeek value={follow === 'other' ? date : ''} dayOnly={dayOnly} onPick={pick} />}
+      {!inline && (
+        <Dialog
+          open={picking !== null}
+          onClose={() => setPicking(null)}
+          {...(picking === 'time' ? { size: 'wide' as const } : {})}
+          title={t('customer.logDialog.calendarTitle', { name })}
+          subtitle={t(
+            picking === 'day' ? 'followUpWhen.dayHint' : 'customer.logDialog.calendarHint',
+          )}
+          closeLabel={t('close')}
+        >
+          {picking && (
+            <div className="flex flex-col gap-4">
+              {picking === 'time' ? (
+                <>
+                  <FollowUpSlots
+                    value={followAt && follow === 'other' ? date : ''}
+                    onChange={pick}
+                  />
+                  <DatePicker
+                    time
+                    only="future"
+                    minuteStep={15}
+                    label={t('followUpWhen.exact')}
+                    value={followAt && follow === 'other' ? date : ''}
+                    onChange={pick}
+                  />
+                </>
+              ) : (
+                <DatePicker
+                  only="future"
+                  label={t('followUpWhen.day')}
+                  value={followOn ?? ''}
+                  onChange={pick}
+                />
+              )}
+            </div>
+          )}
+        </Dialog>
+      )}
     </div>
+  );
+}
+
+/**
+ * A chip beside the quick times that opens a picker; filled once something is picked there.
+ * Inline it unfolds the week below (`expanded`); else it opens a window (pressed when picked).
+ */
+function PickChip({
+  on,
+  expanded,
+  onClick,
+  children,
+}: {
+  on: boolean;
+  expanded?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      {...(expanded === undefined ? { 'aria-pressed': on } : { 'aria-expanded': expanded })}
+      className={`inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+        on
+          ? 'bg-hero text-on-hero'
+          : 'text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

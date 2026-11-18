@@ -625,14 +625,9 @@
         "call": "By phone",
         "meeting": "In person"
       },
-      "followDayOption": {
-        "evening": "Today",
-        "tomorrow": "Tomorrow",
-        "three": "In 3 days",
-        "week": "Next week"
-      },
-      "closeCalendar": "Close calendar",
-      "sessionEnded": "Ended · {{ago}}"
+      "sessionEnded": "Ended · {{ago}}",
+      "calendarTitle": "When to follow up with {{name}}?",
+      "calendarHint": "Tap a free spot; that time becomes the follow-up."
     },
     "tabs": {
       "label": "Customer page sections",
@@ -2832,7 +2827,10 @@
     "youAreBusy": "You have “{{what}}” at this hour. Pick another time."
   },
   "followUpWhen": {
-    "exact": "Or an exact day and time"
+    "exact": "Or an exact day and time",
+    "day": "Follow-up day",
+    "dayHint": "No hour; it stays on that day's list until the day ends.",
+    "dayChip": "Day only, no time"
   },
   "myReady": {
     "title": "My ready messages",
@@ -2873,8 +2871,6 @@
     "close": "Close"
   },
   "whenPicker": {
-    "dateOnly": "Day only, no time",
-    "dateOnlyHint": "It shows in “Today” on that day, to do whenever there is time.",
     "days": "Day",
     "hours": "Time",
     "hint": "Your own items are under each hour. An hour with your consultation or office meeting can’t be picked.",
@@ -2888,5 +2884,11 @@
   },
   "nextStep": {
     "pickCustomer": "Pick the customer first to see the office hours."
+  },
+  "followUpSlots": {
+    "label": "My week, to pick the follow-up time",
+    "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
+    "picked": "New follow-up",
+    "pickedAria": "Picked time: {{day}} at {{time}}"
   }
 }
