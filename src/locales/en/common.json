@@ -36,7 +36,8 @@
         "new": "New cases",
         "mail": "Mailboxes",
         "services": "My services",
-        "scopes": "Supervisors"
+        "scopes": "Supervisors",
+        "servicesReport": "Service status"
       },
       "tabs": {
         "today": "Today",

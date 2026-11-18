@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { SUPERVISOR_API, SUPERVISOR_KEY } from './common';
 import { useSupervisorMutation } from './case';
@@ -64,6 +64,8 @@ export interface ServiceDetail {
   stages: ServiceStage[];
   /** The viewer may set the stage: the owner, or a manager (not on a closed service). */
   editable: boolean;
+  /** Its stage is read from the case's (admission, SVC6): changed there, not here. */
+  follows_case?: boolean;
   /** Visa services: the country's results; null for other kinds. */
   visa: ServiceVisaResult[] | null;
 }
@@ -152,3 +154,44 @@ export function useSetServiceOwner(caseId: number) {
     api(ownerUrl(caseId, service), { method: 'POST', body: { owner } }),
   );
 }
+
+/** Kinds whose stage follows the case's (Django `client_services.stages.FOLLOW_CASE`). */
+export const FOLLOWS_CASE: readonly string[] = ['admission'];
+
+export const SERVICE_REPORT_PERIODS = ['week', 'month', 'quarter'] as const;
+export type ServiceReportPeriod = (typeof SERVICE_REPORT_PERIODS)[number];
+
+export interface ResponseNumbers {
+  /** Open and paused services. */
+  services: number;
+  /** Conversations whose last message is the customer's. */
+  waiting: number;
+  /** Customer messages answered in the period. */
+  answered: number;
+  median_minutes: number | null;
+  /** Answered after more than 24 hours. */
+  slow: number;
+}
+
+export interface OwnerNumbers extends ResponseNumbers {
+  /** null: the services nobody owns. */
+  id: number | null;
+  name: string | null;
+  team: string | null;
+}
+
+export interface ServicesReport {
+  days: number;
+  /** Most waiting first. */
+  owners: OwnerNumbers[];
+  teams: (ResponseNumbers & { team: string | null })[];
+}
+
+/** How the services are answered (SVC6): managers see all, a supervisor their scopes and own. */
+export const servicesReportQuery = (period: ServiceReportPeriod) =>
+  queryOptions({
+    queryKey: [...SUPERVISOR_KEY, 'services-report', period],
+    queryFn: ({ signal }) =>
+      api<ServicesReport>(`${SUPERVISOR_API}/services/report/?period=${period}`, { signal }),
+    placeholderData: keepPreviousData,
+  });

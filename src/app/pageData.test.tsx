@@ -160,6 +160,7 @@ const PAGES: PageCase[] = [
     '/supervisor/tasks',
     '/supervisor/services',
     '/supervisor/scopes',
+    '/supervisor/services/report',
     '/supervisor/reports',
     '/supervisor/mail',
   ].map((path) => ({ path, user: MARYAM })),

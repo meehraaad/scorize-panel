@@ -10,6 +10,7 @@ import {
   inboxQuery,
   myServicesQuery,
   scopesQuery,
+  servicesReportQuery,
   reportsQuery,
   todayBoardQuery,
   todayCountsQuery,
@@ -117,6 +118,12 @@ export const supervisorPanel: PanelDefinition = {
             to: 'services',
             label: 'panels.supervisor.nav.services',
             icon: 'list',
+          } as const,
+          {
+            id: 'services-report',
+            to: 'services/report',
+            label: 'panels.supervisor.nav.servicesReport',
+            icon: 'chart',
           } as const,
           {
             id: 'scopes',
@@ -247,6 +254,15 @@ export const supervisorPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/supervisor/MyServicesPage'), ['supervisor'], {
         guard: servicesOn,
         data: () => [myServicesQuery],
+        skeleton: 'list',
+      }),
+    },
+    // How the services are answered, per team and owner (SVC6).
+    {
+      path: 'services/report',
+      ...lazyPage(() => import('@/features/supervisor/ServicesReportPage'), ['supervisor'], {
+        guard: servicesOn,
+        data: () => [servicesReportQuery('month')],
         skeleton: 'list',
       }),
     },

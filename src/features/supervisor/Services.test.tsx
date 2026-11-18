@@ -107,4 +107,25 @@ describe('client services (SVC2)', () => {
     );
     expect(await within(people).findByText('هنوز محدوده‌ای تعریف نشده.')).toBeInTheDocument();
   });
+
+  it('shows how each team and owner answers, by period (SVC6)', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/services/report');
+    const teams = await screen.findByRole('region', { name: 'تیم‌ها' });
+    expect(within(teams).getByText('تیم ویزا')).toBeInTheDocument();
+    const owners = screen.getByRole('region', { name: 'مسئول‌ها' });
+    const rows = within(owners).getAllByRole('listitem');
+    expect(rows[0]).toHaveTextContent('نگار صادقی');
+    expect(rows[0]).toHaveTextContent('۲ ساعت');
+    expect(within(owners).getByText('بی‌مسئول')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '۷ روز' }));
+    expect(await within(owners).findByText('۳')).toBeInTheDocument(); // 14 answers a month, 3 a week
+  });
+
+  it('shows the admission stage, read from the case, without a stage button (SVC6)', async () => {
+    renderApp('/supervisor/files/1240');
+    const card = await screen.findByRole('region', { name: 'خدمت‌ها' });
+    expect(within(card).getAllByText('اپلای')).toHaveLength(2);
+    expect(within(card).queryByRole('button', { name: 'مرحله‌ی پذیرش · کانادا' })).toBeNull();
+  });
 });

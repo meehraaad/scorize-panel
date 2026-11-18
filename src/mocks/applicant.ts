@@ -1043,6 +1043,13 @@ const MARYAM = { name: 'مریم کاظمی', role: 'supervisor' as const };
 const HOSSEIN = { name: 'حسین رحیمی', role: 'supervisor' as const };
 const ELHAM = { name: 'الهام رضوی', role: 'writer' as const };
 const NEGAR = { name: 'نگار صادقی', role: 'supervisor' as const };
+/** Django's built-in admission stages (client_services/stages.py), read from the case. */
+export const ADMISSION_STAGES = [
+  { key: 'documents', name: 'مدارک', final: false },
+  { key: 'writing', name: 'نگارش', final: false },
+  { key: 'applying', name: 'اپلای', final: false },
+  { key: 'admitted', name: 'پذیرش گرفت', final: true },
+];
 /** Django's built-in visa stages (client_services/stages.py). */
 export const VISA_STAGES = [
   { key: 'documents', name: 'مدارک ویزا', final: false },
@@ -1396,8 +1403,8 @@ function overviewOf(state: SaraState): ApplicantOverview {
         country,
         status: 'open' as const,
         owner: MARYAM.name,
-        stage: null,
-        stages: [],
+        stage: 'applying',
+        stages: ADMISSION_STAGES,
       })),
       {
         id: 31,

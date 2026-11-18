@@ -16,6 +16,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
   ASSIGN_PERMISSION,
+  FOLLOWS_CASE,
   serviceOwnersQuery,
   serviceQuery,
   serviceTitle,
@@ -38,7 +39,9 @@ export function ServicesCard({ caseId, services }: { caseId: number; services: C
   const [staging, setStaging] = useState<CaseService | null>(null);
   // The owner or a manager works on a service's stage (SVC4).
   const mayStage = (service: CaseService) =>
-    Boolean(service.stage) && (manager || service.owner?.id === user.staff?.id);
+    Boolean(service.stage) &&
+    !FOLLOWS_CASE.includes(service.kind) &&
+    (manager || service.owner?.id === user.staff?.id);
 
   return (
     <SectionCard id="case-services" title={t('services.title')}>
@@ -294,6 +297,9 @@ function StageForm({
 
   return (
     <div className="flex flex-col gap-5">
+      {detail.follows_case && (
+        <p className="m-0 text-sm leading-6 text-text-2">{t('services.stage.followsCase')}</p>
+      )}
       {detail.editable && (
         <SelectField
           label={t('services.stage.label')}

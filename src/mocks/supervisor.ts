@@ -39,7 +39,7 @@ import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/
 import { faceOf, putFace } from './face';
 import { mockBotRules } from './mail';
 import { addToNotebook, changeInNotebook, importOldNotes, notebookOf } from './notebook';
-import { VISA_STAGES } from './applicant';
+import { ADMISSION_STAGES, VISA_STAGES } from './applicant';
 import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
@@ -777,7 +777,10 @@ function servicesOf(seed: CaseSeed): CaseService[] {
       country,
       status: 'open' as const,
       owner: kind === 'visa' ? null : owner,
-      stage: kind === 'visa' ? (VISA_STAGES[0] ?? null) : null,
+      stage:
+        kind === 'visa'
+          ? (VISA_STAGES[0] ?? null)
+          : (ADMISSION_STAGES.find((stage) => stage.key === admissionStageOf(seed.stage)) ?? null),
     })),
   );
 }
@@ -793,6 +796,12 @@ const SCOPE_COUNTRIES = [
   { id: 3, name: 'کانادا' },
 ];
 let mockScopes: Scope[] = [];
+
+/** Django: an admission service reads its stage from the case's (client_services/stages.py). */
+function admissionStageOf(stage: CaseStage) {
+  if (stage === 'admitted' || stage === 'visa') return 'admitted';
+  return stage === 'on_hold' || stage === 'closed' ? 'documents' : stage;
+}
 
 /** Open services nobody owns, as the new-cases page lists them (called by the handoff mock). */
 export function unassignedServices(): UnassignedServices {
@@ -1283,8 +1292,10 @@ export const supervisorHandlers = [
     const visa = service.kind === 'visa';
     return HttpResponse.json({
       service,
-      stages: visa ? VISA_STAGES : [],
-      editable: service.status !== 'closed',
+      stages: visa ? VISA_STAGES : ADMISSION_STAGES,
+      // Admission follows the case's stage (SVC6).
+      editable: visa && service.status !== 'closed',
+      follows_case: !visa,
       visa: visa
         ? [
             {
@@ -1372,6 +1383,69 @@ export const supervisorHandlers = [
     if (storage.get() !== SUPERVISOR) return forbidden();
     mockScopes = mockScopes.filter((scope) => scope.id !== Number(params['scope']));
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // SVC6: how the services are answered, per team and owner.
+  http.get(`${API}/services/report/`, ({ request }) => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    const period = new URL(request.url).searchParams.get('period') ?? 'month';
+    const days = { week: 7, month: 30, quarter: 90 }[period];
+    if (!days) return HttpResponse.json({ period: ['invalid'] }, { status: 400 });
+    const scale = days / 30;
+    return HttpResponse.json({
+      days,
+      owners: [
+        {
+          id: 21,
+          name: 'نگار صادقی',
+          team: 'visa',
+          services: 6,
+          waiting: 2,
+          answered: Math.round(14 * scale),
+          median_minutes: 95,
+          slow: 1,
+        },
+        {
+          id: 7,
+          name: 'مریم کاظمی',
+          team: 'executive',
+          services: 18,
+          waiting: 0,
+          answered: Math.round(40 * scale),
+          median_minutes: 40,
+          slow: 0,
+        },
+        {
+          id: null,
+          name: null,
+          team: null,
+          services: 1,
+          waiting: 1,
+          answered: 0,
+          median_minutes: null,
+          slow: 0,
+        },
+      ],
+      teams: [
+        { team: null, services: 1, waiting: 1, answered: 0, median_minutes: null, slow: 0 },
+        {
+          team: 'executive',
+          services: 18,
+          waiting: 0,
+          answered: Math.round(40 * scale),
+          median_minutes: 40,
+          slow: 0,
+        },
+        {
+          team: 'visa',
+          services: 6,
+          waiting: 2,
+          answered: Math.round(14 * scale),
+          median_minutes: 95,
+          slow: 1,
+        },
+      ],
+    });
   }),
 
   http.get(`${API}/services/mine/`, () => {
