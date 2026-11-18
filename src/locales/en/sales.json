@@ -259,12 +259,6 @@
       "cold": "Cold (under 45)"
     },
     "overdueOnly": "Overdue only",
-    "consultation": "Consultation",
-    "boughtOption": {
-      "all": "All",
-      "bought": "Bought consultations",
-      "none": "Never bought one"
-    },
     "consultationMode": "In person or not",
     "modeOption": {
       "all": "In person and not",
