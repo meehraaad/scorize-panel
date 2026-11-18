@@ -129,6 +129,7 @@ export interface HistoryRow {
   end?: string | null;
   amount?: number;
   status?: MoveStatus;
+  reason?: string;
 }
 
 export interface StaffFile extends StaffRow {
@@ -273,6 +274,12 @@ export const useNewSalary = (id: number) =>
 export const useStartExit = (id: number) =>
   useFileMutation((body: { day: string; reason?: string }) =>
     api<StaffFile>(staffPath(id, 'exit/'), { method: 'POST', body }),
+  );
+
+/** Someone who left comes back: active again, with a joining checklist from their first day back. */
+export const useReturn = (id: number) =>
+  useFileMutation((body: { day: string; reason: string }) =>
+    api<StaffFile>(staffPath(id, 'return/'), { method: 'POST', body }),
   );
 
 export const documentPath = (id: number) => staffPath(id, 'documents/');

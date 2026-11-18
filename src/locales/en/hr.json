@@ -149,6 +149,7 @@
     "missing": "This file wasn't found.",
     "edit": "Edit details",
     "exit": "Start leaving",
+    "return": "Bring back",
     "tabs": "File sections",
     "tab": {
       "info": "Details",
@@ -233,6 +234,14 @@
     "reason": "Reason",
     "save": "Start leaving",
     "saved": "Leaving checklist opened"
+  },
+  "returnDialog": {
+    "title": "Bring back",
+    "text": "They become active staff again and a joining checklist opens from their first day back. Their old access and groups don't come back: give them again on the access page.",
+    "day": "First day back",
+    "reason": "Why they come back",
+    "save": "Bring back",
+    "saved": "They are back"
   },
   "documentDialog": {
     "title": "Add document",
