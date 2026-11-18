@@ -198,6 +198,7 @@ const PAGES: PageCase[] = [
     '/hr/pay',
     '/hr/pay/results',
     '/hr/pay/kpis',
+    '/hr/pay/rules',
     '/hr/pay/settings',
     '/hr/access',
     '/hr/access/groups',

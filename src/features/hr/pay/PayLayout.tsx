@@ -9,12 +9,14 @@ const SECTIONS = [
   { id: 'payroll', to: '', end: true },
   { id: 'results', to: 'results' },
   { id: 'kpis', to: 'kpis' },
+  { id: 'rules', to: 'rules' },
   { id: 'settings', to: 'settings' },
 ] as const;
 
 /**
  * «حقوق و KPI» (canvas "HR panel" v2: KPI definition, monthly pay, payslip): the month's pay, the
- * month's KPI results, each position's KPIs and how pay is worked out, each a sub-tab.
+ * month's KPI values, the KPIs, the reward and penalty rules and how pay is worked out, each a
+ * sub-tab.
  */
 export default function PayLayout() {
   const { t } = useTranslation('hr');

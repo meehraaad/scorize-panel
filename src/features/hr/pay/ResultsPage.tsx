@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
 import { SaveBar } from '@/components/ui/SaveBar';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { TextField } from '@/components/ui/TextField';
@@ -14,11 +15,20 @@ import { toLatinDigits } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { PersonLink } from '../components/PersonLink';
 import { hrPath } from '../paths';
-import { payMonth, resultsQuery, useSaveResults, type Kpi, type ResultRow } from './api';
+import {
+  MANUAL,
+  payMonth,
+  resultsQuery,
+  useRefreshResults,
+  useSaveResults,
+  type Kpi,
+  type ResultInput,
+  type ResultRow,
+} from './api';
 import { MonthBar } from './components/MonthBar';
 
-/** `staff:kpi` → what is typed. */
-type Drafts = Record<string, string>;
+/** `staff:kpi` → what is typed (the value, and why a measured one changes). */
+type Drafts = Record<string, { value?: string; note?: string; back?: boolean }>;
 const keyOf = (staff: number, kpi: number) => `${String(staff)}:${String(kpi)}`;
 
 function parseResult(value: string): number | null | undefined {
@@ -29,9 +39,10 @@ function parseResult(value: string): number | null | undefined {
 }
 
 /**
- * The month's KPI results (canvas "ثبت نتیجه‌ها"): everyone who worked that month with their
- * position's KPIs; what is typed is saved together, and the score follows. A final month is read
- * only.
+ * The month's KPI values (canvas "ثبت نتیجه‌ها"): everyone who worked that month with the KPIs
+ * that apply to them. Manual KPIs are typed in; measured ones show what the system found (and
+ * why), and changing one by hand needs a reason. What is typed is saved together and the score
+ * follows. A final month is read only.
  */
 export default function ResultsPage() {
   const { t } = useTranslation('hr');
@@ -39,9 +50,18 @@ export default function ResultsPage() {
   const month = payMonth(shift);
   const { data } = useQuery(resultsQuery(month));
   const save = useSaveResults();
+  const refresh = useRefreshResults();
   const [drafts, setDrafts] = useState<Drafts>({});
-  const changed = Object.entries(drafts);
-  const invalid = changed.some(([, value]) => parseResult(value) === undefined);
+  const kpis = new Map((data?.kpis ?? []).map((kpi) => [kpi.id, kpi]));
+  const changed = Object.entries(drafts).filter(
+    ([, draft]) => draft.back || draft.value !== undefined,
+  );
+  const problem = changed.find(([key, draft]) => {
+    if (draft.back) return false;
+    const [, kpi = 0] = key.split(':').map(Number);
+    if (draft.value !== undefined && parseResult(draft.value) === undefined) return true;
+    return kpis.get(kpi)?.metric !== MANUAL && !draft.note?.trim();
+  });
 
   const move = (next: number) => {
     setDrafts({});
@@ -51,9 +71,14 @@ export default function ResultsPage() {
     save.mutate(
       {
         ...month,
-        results: changed.map(([key, value]) => {
+        results: changed.map(([key, draft]): ResultInput => {
           const [staff = 0, kpi = 0] = key.split(':').map(Number);
-          return { staff, kpi, result: parseResult(value) ?? null };
+          return {
+            staff,
+            kpi,
+            result: draft.back ? null : (parseResult(draft.value ?? '') ?? null),
+            note: draft.note?.trim() ?? '',
+          };
         }),
       },
       {
@@ -65,13 +90,8 @@ export default function ResultsPage() {
       },
     );
 
-  const byPosition = new Map<number, Kpi[]>();
-  for (const kpi of data?.kpis ?? []) {
-    byPosition.set(kpi.position, [...(byPosition.get(kpi.position) ?? []), kpi]);
-  }
-  const rows = (data?.rows ?? []).filter(
-    (row) => row.position !== null && byPosition.has(row.position),
-  );
+  const rows = (data?.rows ?? []).filter((row) => row.kpis.length > 0);
+  const measured = (data?.kpis ?? []).some((kpi) => kpi.metric !== MANUAL);
 
   return (
     <>
@@ -80,6 +100,21 @@ export default function ResultsPage() {
           <Chip tone="good" dot>
             {t('pay.results.final')}
           </Chip>
+        )}
+        {data && !data.final && measured && (
+          <Button
+            variant="outline"
+            disabled={refresh.isPending}
+            onClick={() =>
+              refresh.mutate(month, {
+                onSuccess: () => toast.success(t('pay.results.refreshed')),
+                onError: () => toast.error(t('error')),
+              })
+            }
+          >
+            <Icon name="retry" size={16} />
+            {t('pay.results.refresh')}
+          </Button>
         )}
       </MonthBar>
       {!data ? (
@@ -104,10 +139,13 @@ export default function ResultsPage() {
             <PersonResults
               key={row.staff.id}
               row={row}
-              kpis={byPosition.get(row.position ?? -1) ?? []}
+              kpis={row.kpis.flatMap((id) => kpis.get(id) ?? [])}
               drafts={drafts}
               readOnly={data.final}
-              onChange={(kpi, value) => setDrafts({ ...drafts, [keyOf(row.staff.id, kpi)]: value })}
+              onChange={(kpi, change) => {
+                const key = keyOf(row.staff.id, kpi);
+                setDrafts({ ...drafts, [key]: { ...drafts[key], ...change } });
+              }}
             />
           ))}
         </ul>
@@ -116,7 +154,7 @@ export default function ResultsPage() {
         <SaveBar
           dirty={changed.length > 0}
           message={
-            invalid
+            problem
               ? t('pay.results.invalid')
               : changed.length > 0
                 ? t('pay.results.unsaved')
@@ -128,7 +166,10 @@ export default function ResultsPage() {
               {t('pay.undo')}
             </Button>
           )}
-          <Button disabled={changed.length === 0 || invalid || save.isPending} onClick={submit}>
+          <Button
+            disabled={changed.length === 0 || problem !== undefined || save.isPending}
+            onClick={submit}
+          >
             {t('pay.save')}
           </Button>
         </SaveBar>
@@ -148,7 +189,7 @@ function PersonResults({
   kpis: Kpi[];
   drafts: Drafts;
   readOnly: boolean;
-  onChange: (kpi: number, value: string) => void;
+  onChange: (kpi: number, change: Drafts[string]) => void;
 }) {
   const { t } = useTranslation('hr');
   const f = useFormat();
@@ -171,34 +212,114 @@ function PersonResults({
           </span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {kpis.map((kpi) => {
-            const saved = row.results[String(kpi.id)];
-            const draft = drafts[keyOf(row.staff.id, kpi.id)];
-            const value = draft ?? (saved === undefined ? '' : String(saved));
-            return (
-              <TextField
-                key={kpi.id}
-                label={kpi.name}
-                hint={t('pay.results.target', {
-                  target: f.number(kpi.target),
-                  unit: kpi.unit,
-                  weight: f.number(kpi.weight),
-                })}
-                inputMode="decimal"
-                dir="ltr"
-                value={value}
-                readOnly={readOnly}
-                error={
-                  draft !== undefined && parseResult(draft) === undefined
-                    ? t('pay.results.notNumber')
-                    : undefined
-                }
-                onChange={(event) => onChange(kpi.id, event.target.value)}
-              />
-            );
-          })}
+          {kpis.map((kpi) => (
+            <KpiValue
+              key={kpi.id}
+              kpi={kpi}
+              row={row}
+              draft={drafts[keyOf(row.staff.id, kpi.id)]}
+              readOnly={readOnly}
+              onChange={(change) => onChange(kpi.id, change)}
+            />
+          ))}
         </div>
       </Card>
     </li>
+  );
+}
+
+function KpiValue({
+  kpi,
+  row,
+  draft,
+  readOnly,
+  onChange,
+}: {
+  kpi: Kpi;
+  row: ResultRow;
+  draft: Drafts[string] | undefined;
+  readOnly: boolean;
+  onChange: (change: Drafts[string]) => void;
+}) {
+  const { t } = useTranslation('hr');
+  const f = useFormat();
+  const detail = row.details[String(kpi.id)];
+  const manual = kpi.metric === MANUAL;
+  const saved = detail ? String(detail.value) : '';
+  const value = draft?.back ? String(detail?.measured ?? '') : (draft?.value ?? saved);
+  const editing = draft?.value !== undefined && !draft.back;
+  const target = t(kpi.direction === 'lower' ? 'pay.results.targetAtMost' : 'pay.results.target', {
+    target: f.number(kpi.target),
+    unit: kpi.unit,
+    weight: f.number(kpi.weight),
+  });
+  const hint = [
+    target,
+    !manual &&
+      (detail?.measured == null
+        ? t('pay.results.notMeasured')
+        : t('pay.results.measured', { value: f.number(detail.measured) })),
+    detail?.part != null && t('pay.results.part', { part: f.number(detail.part) }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return (
+    <div className="flex flex-col gap-2">
+      <TextField
+        label={kpi.name}
+        hint={hint}
+        inputMode="decimal"
+        dir="ltr"
+        value={value}
+        readOnly={readOnly}
+        error={
+          draft?.value !== undefined && parseResult(draft.value) === undefined
+            ? t('pay.results.notNumber')
+            : undefined
+        }
+        onChange={(event) => onChange({ value: event.target.value, back: false })}
+      />
+      <span className="flex flex-wrap items-center gap-1.5">
+        {!manual && (
+          <Chip tone={detail?.source === 'override' ? 'warn' : 'neutral'} small>
+            {detail?.source === 'override' ? t('pay.results.changed') : t('pay.results.auto')}
+          </Chip>
+        )}
+        {kpi.trial && (
+          <Chip tone="warn" small>
+            {t('pay.trial')}
+          </Chip>
+        )}
+        {detail && detail.evidence.length > 0 && (
+          <span className="text-[13px] text-text-2" dir="auto">
+            {f.list(detail.evidence.slice(0, 6))}
+          </span>
+        )}
+      </span>
+      {detail?.source === 'override' && !editing && (
+        <p className="m-0 text-[13px] text-text-2">
+          {t('pay.results.why', { note: detail.note })}
+          {!readOnly && !draft?.back && (
+            <button
+              type="button"
+              className="ms-2 min-h-11 font-semibold text-primary-text"
+              onClick={() => onChange({ back: true })}
+            >
+              {t('pay.results.backToMeasured')}
+            </button>
+          )}
+        </p>
+      )}
+      {!manual && editing && (
+        <TextField
+          label={t('pay.results.note')}
+          placeholder={t('pay.results.notePlaceholder')}
+          value={draft.note ?? ''}
+          maxLength={256}
+          error={draft.note?.trim() ? undefined : t('pay.results.noteNeeded')}
+          onChange={(event) => onChange({ note: event.target.value })}
+        />
+      )}
+    </div>
   );
 }

@@ -71,4 +71,68 @@ describe('HR pay and KPIs', () => {
     expect(await toasts().findByText('شاخص ذخیره شد.')).toBeInTheDocument();
     expect(await within(sales).findByText('رضایت مشتری')).toBeInTheDocument();
   });
+
+  it('measures a KPI for everyone and changes a value only with a reason', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/pay/kpis');
+    await user.click(await screen.findByRole('button', { name: 'شاخص تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'شاخص تازه' });
+    await user.selectOptions(
+      within(dialog).getByLabelText('چه چیزی اندازه گرفته شود'),
+      'tasks.on_time_percent',
+    );
+    expect(within(dialog).getByLabelText('نام شاخص')).toHaveValue('درصد کارهای انجام‌شده سر وقت');
+    await user.selectOptions(within(dialog).getByLabelText('برای چه کسی'), 'all');
+    await user.type(within(dialog).getByLabelText('هدف'), '90');
+    await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('شاخص ذخیره شد.')).toBeInTheDocument();
+    const everyone = await screen.findByRole('region', { name: 'همه‌ی کارکنان' });
+    expect(within(everyone).getByText('آزمایشی')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'نتیجه‌های KPI' }));
+    await user.click(await screen.findByRole('button', { name: 'اندازه‌گیری دوباره' }));
+    expect(await toasts().findByText('عددهای خودکار دوباره اندازه گرفته شد.')).toBeInTheDocument();
+    const ali = await rowOf('علی رضایی');
+    const field = await ali.findByLabelText('درصد کارهای انجام‌شده سر وقت');
+    expect(field).toHaveValue('80');
+    await user.clear(field);
+    await user.type(field, '85');
+    expect(screen.getByRole('button', { name: 'ذخیره' })).toBeDisabled();
+    await user.type(ali.getByLabelText('دلیل تغییر'), 'یک کار را مشتری لغو کرد');
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('نتیجه‌ها ذخیره شد.')).toBeInTheDocument();
+    expect(await ali.findByText('اصلاح‌شده')).toBeInTheDocument();
+    expect(ali.getByText('دلیل اصلاح: یک کار را مشتری لغو کرد')).toBeInTheDocument();
+  });
+
+  it('adds a reward rule that shows on the slip', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/pay/rules');
+    await user.click(await screen.findByRole('button', { name: 'قانون تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'قانون تازه' });
+    await user.type(within(dialog).getByLabelText('نام قانون'), 'پاداش امتیاز');
+    await user.type(within(dialog).getByLabelText('از'), '80');
+    await user.type(within(dialog).getByLabelText('مبلغ'), '1000000');
+    await user.click(within(dialog).getByRole('switch', { name: /روی فیش دیده می‌شود/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('قانون ذخیره شد.')).toBeInTheDocument();
+    const rewards = await screen.findByRole('region', { name: 'پاداش‌ها' });
+    expect(within(rewards).getByText('پاداش امتیاز')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'نتیجه‌های KPI' }));
+    const ali = await rowOf('علی رضایی');
+    await user.type(ali.getByLabelText('تماس موفق'), '300');
+    await user.type(ali.getByLabelText('قرارداد'), '8');
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('نتیجه‌ها ذخیره شد.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'حقوق ماه' }));
+    await user.click(await screen.findByRole('button', { name: 'شروع حقوق این ماه' }));
+    await user.click((await rowOf('علی رضایی')).getByRole('button', { name: 'فیش' }));
+    const slip = await screen.findByRole('dialog', { name: 'فیش حقوقی علی رضایی' });
+    expect(within(slip).getByText('پاداش امتیاز (100)')).toBeInTheDocument();
+    expect(within(slip).getByText('۱٬۰۰۰٬۰۰۰ تومان')).toBeInTheDocument();
+  });
 });
