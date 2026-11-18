@@ -28,7 +28,7 @@ describe('consultation types (S81)', () => {
 
   it('lists types on sale and paused, with price, discount and week', async () => {
     loginAs(REZA);
-    renderApp('/sales/manager/consultations/types');
+    renderApp('/sales/manager/consultations');
     expect(await screen.findByRole('heading', { name: 'انواع مشاوره' })).toBeInTheDocument();
     const onSale = screen.getByRole('region', { name: 'در حال فروش' });
     const online = within(onSale).getByRole('link', { name: /مشاوره تحصیلی دانشگاهی غیر حضوری/ });
@@ -43,15 +43,16 @@ describe('consultation types (S81)', () => {
   it('changes the price and a day of the week, refusing overlapping times', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/consultations/types/1');
+    renderApp('/sales/manager/consultations/1');
     const price = await screen.findByLabelText('قیمت (تومان)');
     await user.clear(price);
     await user.type(price, '1800000');
 
     const week = screen.getByRole('list', { name: 'ساعت‌های هفتگی' });
     const friday = within(week).getAllByRole('listitem').at(-1) as HTMLElement;
-    expect(friday).toHaveTextContent('این روز نوبتی ندارد.');
-    await user.click(within(friday).getByRole('button', { name: 'افزودن بازه' }));
+    expect(friday).toHaveTextContent('بسته');
+    // Opening a day gives it 10 to 17 and shows its times to edit.
+    await user.click(within(friday).getByRole('switch', { name: /جمعه/ }));
     expect(friday).toHaveTextContent('۷ نوبت');
     await user.click(within(friday).getByRole('button', { name: 'افزودن بازه' }));
     await user.selectOptions(within(friday).getAllByLabelText('از')[1] as HTMLElement, '16:00');
@@ -69,7 +70,7 @@ describe('consultation types (S81)', () => {
   it('a discount needs a lower price', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    renderApp('/sales/manager/consultations/types/1');
+    renderApp('/sales/manager/consultations/1');
     await user.click(await screen.findByRole('switch', { name: /تخفیف/ }));
     await user.type(screen.getByLabelText('قیمت با تخفیف (تومان)'), '2000000');
     await user.click(screen.getByRole('button', { name: 'ذخیره' }));
@@ -79,13 +80,13 @@ describe('consultation types (S81)', () => {
   it('makes a new online type and opens it', async () => {
     const user = userEvent.setup();
     loginAs(REZA);
-    const router = renderApp('/sales/manager/consultations/types/new');
+    const router = renderApp('/sales/manager/consultations/new');
     await user.type(await screen.findByLabelText('نام مشاوره'), 'مشاوره ویزای استرالیا');
     await user.click(screen.getByRole('radio', { name: 'آنلاین' }));
     await user.type(screen.getByLabelText('قیمت (تومان)'), '1200000');
     await user.click(screen.getByRole('button', { name: 'ساختن' }));
     expect(await toasts().findByText('نوع تازه ساخته شد.')).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/sales/manager/consultations/types/20');
+    expect(router.state.location.pathname).toBe('/sales/manager/consultations/20');
     expect(await screen.findByText('جلسه‌ها آنلاین است و عوض نمی‌شود.')).toBeInTheDocument();
   });
 });

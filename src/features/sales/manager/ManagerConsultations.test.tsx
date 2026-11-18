@@ -28,12 +28,12 @@ describe("the sales manager's consultations", () => {
 
   it('lists every session with its consultant, and the types in a sub-tab', async () => {
     loginAs(REZA);
-    renderApp('/sales/manager/consultations?view=all');
+    renderApp('/sales/manager/consultations/sessions?view=all');
     expect(await screen.findByRole('heading', { name: 'جلسه‌های مشاوره' })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'بخش‌های مشاوره' });
     expect(within(nav).getByRole('link', { name: 'نوع‌ها و قیمت‌ها' })).toHaveAttribute(
       'href',
-      '/sales/manager/consultations/types',
+      '/sales/manager/consultations',
     );
     expect(await screen.findByText('۷ جلسه')).toBeInTheDocument();
     // Every third mock session nobody holds: its menu says so.
@@ -44,7 +44,7 @@ describe("the sales manager's consultations", () => {
 
   it('shows those nobody holds, and gives one to a seller', async () => {
     loginAs(REZA);
-    renderApp('/sales/manager/consultations');
+    renderApp('/sales/manager/consultations/sessions');
     const tabs = await screen.findByRole('group', { name: 'کدام جلسه‌ها' });
     await userEvent.click(await within(tabs).findByRole('button', { name: /بدون مشاور/ }));
     await waitFor(() =>
@@ -62,7 +62,7 @@ describe("the sales manager's consultations", () => {
 
   it('filters by in person or online', async () => {
     loginAs(REZA);
-    renderApp('/sales/manager/consultations?view=all');
+    renderApp('/sales/manager/consultations/sessions?view=all');
     expect(await screen.findByText('۷ جلسه')).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'جلسه' }), 'in_person');
     await waitFor(() => expect(screen.queryByText('۷ جلسه')).not.toBeInTheDocument());
