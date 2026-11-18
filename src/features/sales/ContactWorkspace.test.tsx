@@ -1,7 +1,8 @@
-import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { toValue } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { clearContactDrafts } from '@/lib/sales/contactDrafts';
 import { renderApp } from '@/test/renderApp';
@@ -343,21 +344,90 @@ describe('session log: the next step on the board', () => {
     );
   });
 
-  it("picks another date's follow-up time on the seller's week", async () => {
+  it("picks another date's follow-up time on the seller's week, folded until asked", async () => {
     const user = userEvent.setup();
     renderApp('/sales/customers/105?log=call');
     const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
-    await user.click(await within(dialog).findByRole('button', { name: 'از تقویم' }));
-    const picker = await screen.findByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' });
-    const week = await within(picker).findByRole('region', {
-      name: 'هفته‌ی من برای انتخاب وقت پیگیری',
-    });
-    await user.click(within(picker).getByRole('button', { name: 'هفته‌ی بعد' }));
-    // The first day of next week; the grid starts at 9, an hour is 44px: 14:00. One click picks it.
-    fireEvent.click(first(within(week).getAllByTestId('schedule-slot')), { clientY: 220 });
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' })).toBeNull(),
+    // The week stays folded: the log is long enough already.
+    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
+    const toggle = await within(dialog).findByRole('button', { name: 'از تقویم' });
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await user.click(within(dialog).getByRole('button', { name: 'هفته‌ی بعد' }));
+    // The first day of next week, then 14:00; the pick folds the week again.
+    const days = within(dialog).getByRole('group', { name: 'روز' });
+    await user.click(first(within(days).getAllByRole('button')));
+    await user.click(
+      within(within(dialog).getByRole('group', { name: 'ساعت' })).getByRole('button', {
+        name: /^۱۴:۰۰/,
+      }),
     );
-    expect(within(dialog).getByRole('button', { pressed: true })).toHaveTextContent('۱۴:۰۰');
+    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
+    expect(
+      within(dialog).getByRole('button', { expanded: false, name: /۱۴:۰۰$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('sets a follow-up for a day with no hour, picked on the week in the log', async () => {
+    let sent: Record<string, unknown> | null = null;
+    server.use(
+      http.post('/api/sales/v1/customers/:id/contacts/', async ({ request }) => {
+        sent = (await request.json()) as Record<string, unknown>;
+        return new HttpResponse(null, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105?log=call');
+    const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
+    const chip = await within(dialog).findByRole('button', { name: 'فقط روز، بدون ساعت' });
+    await user.click(chip);
+    expect(chip).toHaveAttribute('aria-expanded', 'true');
+    // A day only: the strip, no hours.
+    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
+    const days = within(dialog).getByRole('group', { name: 'روز' });
+    const today = within(days)
+      .getAllByRole('button')
+      .find((day) => !(day as HTMLButtonElement).disabled) as HTMLElement;
+    await user.click(today);
+    expect(within(dialog).getByRole('button', { name: /، بدون ساعت$/ })).toBeInTheDocument();
+    await user.click(first(within(dialog).getAllByRole('button', { name: /^ثبت/ })));
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent).toMatchObject({ follow_up_at: null, follow_up_on: toValue(new Date(), false) });
+  });
+
+  it("asks a session log for the customer's missing facts, a GPA on its own", async () => {
+    const { fetchInfo } = await import('@/mocks/legacy/info');
+    let saved: Record<string, unknown> | null = null;
+    server.use(
+      http.get('/api/sales/v1/customers/:id/info/', async ({ params }) => {
+        const info = await fetchInfo(Number(params.id));
+        return HttpResponse.json({
+          ...info,
+          goal: { ...info.goal, wanted_degree: '3', countries: 'کانادا', budget: '' },
+          education: [{ university: '', degree: '2', field: 'کامپیوتر', gpa: '' }],
+        });
+      }),
+      http.patch('/api/sales/v1/customers/:id/info/', async ({ params, request }) => {
+        saved = (await request.json()) as Record<string, unknown>;
+        const info = await fetchInfo(Number(params.id));
+        return HttpResponse.json({ ...info, ...saved });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/sales/calendar');
+    await user.click(await screen.findByRole('button', { name: 'فهرست' }));
+    await user.click(first(await screen.findAllByRole('button', { name: /^ثبت جلسه: / })));
+    const dialog = await screen.findByRole('dialog', { name: /^ثبت جلسه‌ی / });
+    // Under the session: what is known, and how much is missing.
+    await user.click(await within(dialog).findByRole('button', { name: /^. مورد ناقص$/ }));
+    expect(within(dialog).getByText('این‌ها را هنوز نداریم')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: '+ معدل' }));
+    await user.type(within(dialog).getByRole('textbox', { name: 'معدل' }), '17.5');
+    await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
+    await waitFor(() =>
+      expect(saved).toMatchObject({
+        education: [{ degree: '2', field: 'کامپیوتر', gpa: '17.5' }],
+      }),
+    );
   });
 });

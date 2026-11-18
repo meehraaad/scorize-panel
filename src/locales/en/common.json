@@ -402,7 +402,9 @@
     "nothing": "Nothing",
     "days": "Days of the week",
     "count": "{{n}} items",
-    "nothingDay": "Nothing on your calendar on {{day}}."
+    "nothingDay": "Nothing on your calendar on {{day}}.",
+    "zoom": "Show {{day}} bigger",
+    "unzoom": "Show {{day}} at normal size"
   },
   "toast": {
     "region": "Panel messages",

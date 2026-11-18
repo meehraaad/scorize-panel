@@ -6,6 +6,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import { SelectField } from '@/components/ui/Choices';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { eventColor } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
@@ -21,14 +22,15 @@ import {
   type CalendarType,
 } from '../api';
 import {
-  CALL_MINUTES,
   DEFAULT_MINUTES,
   MINUTE,
+  callMinutes,
   statusOf,
   type Chosen,
   type Status,
 } from '../consultationStatus';
 import { useSalesFormat } from '../format';
+import { EventTimes, type TimedEvent } from './EventTimes';
 import { customerPath } from '../paths';
 
 /*
@@ -100,6 +102,7 @@ export function EventDetails({
   now,
   onClose,
   onMoveCall,
+  editTimes = false,
   sellers,
 }: {
   chosen: Chosen;
@@ -108,6 +111,8 @@ export function EventDetails({
   onClose: () => void;
   /** Another time for a follow-up call (dragging's keyboard and phone twin). */
   onMoveCall: (call: CalendarCall) => void;
+  /** The start and end can be changed in place (the calendar, `eventTimes`). */
+  editTimes?: boolean;
   /** A sales manager's calendar: who a consultation can be given to. */
   sellers?: { id: number; name: string }[] | undefined;
 }) {
@@ -120,20 +125,21 @@ export function EventDetails({
   const primary = buttonClass('primary', 'h-11 px-4 text-sm');
   const item = chosen.item;
   const start = new Date(chosen.kind === 'call' ? chosen.item.follow_up_at : chosen.item.starts_at);
-  const minutes = chosen.kind === 'call' ? CALL_MINUTES : (chosen.item.minutes ?? DEFAULT_MINUTES);
+  const minutes =
+    chosen.kind === 'call' ? callMinutes(chosen.item) : (chosen.item.minutes ?? DEFAULT_MINUTES);
   const end = new Date(start.getTime() + minutes * MINUTE);
   const status = chosen.kind === 'consultation' ? statusOf(chosen.item, now) : null;
   const action = (label: string) =>
     t('consultations.actionsFor', { action: label, name: named(item.name) });
-  const customerLink = (
-    <Link
-      to={customerPath(item.customer)}
-      aria-label={action(t('consultations.customer'))}
-      className={outline}
-    >
-      {t('consultations.customer')}
-    </Link>
-  );
+  // A call, or a meeting that is the seller's (any for a sales manager), still ahead.
+  const timed: TimedEvent | null =
+    !editTimes || !ON_SERVER.eventTimes || start.getTime() <= now
+      ? null
+      : chosen.kind === 'call'
+        ? { kind: 'call', lead: chosen.item.lead, starts_at: chosen.item.follow_up_at, minutes }
+        : chosen.kind === 'visit' && (chosen.item.mine || (sellers?.length ?? 0) > 0)
+          ? { kind: 'visit', id: chosen.item.id, starts_at: chosen.item.starts_at, minutes }
+          : null;
 
   let actions: ReactNode;
   let statusLine: ReactNode = null;
@@ -161,6 +167,13 @@ export function EventDetails({
           {t('consultationCalendar.callNow')}
         </a>
       </>
+    );
+  } else if (chosen.kind === 'visit') {
+    const visit = chosen.item;
+    actions = (
+      <a href={callHref(visit.phone, linphone)} className={primary}>
+        {t('consultationCalendar.callNow')}
+      </a>
     );
   } else {
     const consultation = chosen.item;
@@ -239,13 +252,8 @@ export function EventDetails({
       </span>
     );
     actions = {
-      done: customerLink,
-      need: (
-        <>
-          {customerLink}
-          {log(primary)}
-        </>
-      ),
+      done: null,
+      need: log(primary),
       live: (
         <>
           {log(outline)}
@@ -255,7 +263,6 @@ export function EventDetails({
       soon: (
         <>
           {formLink}
-          {customerLink}
           <StartAction item={consultation} status="soon" />
         </>
       ),
@@ -263,7 +270,6 @@ export function EventDetails({
         <>
           {formLink}
           {reminder}
-          {customerLink}
         </>
       ),
     }[status ?? 'upcoming'];
@@ -282,7 +288,9 @@ export function EventDetails({
           style={
             chosen.kind === 'call'
               ? { boxShadow: 'inset 0 0 0 1.5px var(--text-2)' }
-              : { background: eventColor(type?.color) }
+              : chosen.kind === 'visit'
+                ? { background: 'var(--cal-7)' }
+                : { background: eventColor(type?.color) }
           }
         />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -293,26 +301,35 @@ export function EventDetails({
           >
             {named(item.name)}
           </Link>
-          <span className="text-[13px]">
-            {t('consultationCalendar.when', {
-              day: f.weekday(start),
-              from: f.time(start),
-              to: f.time(end),
-            })}
-          </span>
+          {!timed && (
+            <span className="text-[13px]">
+              {t('consultationCalendar.when', {
+                day: f.weekday(start),
+                from: f.time(start),
+                to: f.time(end),
+              })}
+            </span>
+          )}
           {f.gregorian(start) && (
             <span className="text-xs text-text-2">{`⁦${f.gregorian(start) ?? ''}⁩`}</span>
           )}
         </span>
         <IconButton icon="close" aria-label={t('consultationCalendar.close')} onClick={onClose} />
       </div>
+      {timed && (
+        <EventTimes
+          key={timed.kind === 'call' ? `l${String(timed.lead)}` : `v${String(timed.id)}`}
+          event={timed}
+          now={now}
+        />
+      )}
       <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[13px] text-text-2">
         <li className="flex items-center gap-2.5">
           <Icon
             name={
               chosen.kind === 'call'
                 ? 'followUp'
-                : chosen.item.mode === 'online'
+                : chosen.kind === 'consultation' && chosen.item.mode === 'online'
                   ? 'phone'
                   : 'building'
             }
@@ -320,14 +337,22 @@ export function EventDetails({
           />
           {chosen.kind === 'call'
             ? t('consultationCalendar.followUp')
-            : [
-                type?.name,
-                t(`mode.${chosen.item.mode}`),
-                chosen.item.minutes !== null &&
+            : chosen.kind === 'visit'
+              ? [
+                  t('visit.onCalendar'),
+                  chosen.item.room && t('visit.room', { room: chosen.item.room }),
                   t('consultationCalendar.minutes', { n: f.number(chosen.item.minutes) }),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
+                ]
+                  .filter(Boolean)
+                  .join(' · ')
+              : [
+                  type?.name,
+                  t(`mode.${chosen.item.mode}`),
+                  chosen.item.minutes !== null &&
+                    t('consultationCalendar.minutes', { n: f.number(chosen.item.minutes) }),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
         </li>
         <li className="flex items-center gap-2.5">
           <Icon name="phone" size={16} />
@@ -373,7 +398,7 @@ export function EventDetails({
         )}
       </ul>
       {statusLine}
-      <div className="flex flex-wrap justify-end gap-2">{actions}</div>
+      {actions && <div className="flex flex-wrap justify-end gap-2">{actions}</div>}
     </section>
   );
 }

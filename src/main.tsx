@@ -1,3 +1,5 @@
+// First: the panel's local time is Tehran time on every computer (src/lib/tehranTime.ts).
+import '@/lib/tehranTimeInstall';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@/lib/i18n';

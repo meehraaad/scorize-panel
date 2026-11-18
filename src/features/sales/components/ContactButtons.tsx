@@ -3,7 +3,7 @@ import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Icon } from '@/components/ui/Icon';
 import { IconLink } from '@/components/ui/IconButton';
-import { MESSAGE_CHANNELS, messageHref } from '@/lib/sales/api';
+import { CHANNEL_ICON, MESSAGE_CHANNELS, messageHref } from '@/lib/sales/api';
 
 /**
  * "Call" opens the persistent contact form (the dialer button is there, so every
@@ -48,7 +48,7 @@ export function ContactButtons({
             href={messageHref(channel, phone)}
             target="_blank"
             rel="noreferrer"
-            icon={channel === 'sms' ? 'chat' : 'send'}
+            icon={CHANNEL_ICON[channel]}
             aria-label={t('messageTo', { channel: t(`channel.${channel}`), name })}
             tone={onHero ? 'inherit' : 'default'}
             className={onHero ? 'text-on-hero hover:bg-hero-raised' : ''}

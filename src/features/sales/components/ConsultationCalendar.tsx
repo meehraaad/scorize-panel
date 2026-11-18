@@ -24,8 +24,8 @@ import {
   type CalendarType,
 } from '../api';
 import {
-  CALL_MINUTES,
   DEFAULT_MINUTES,
+  callMinutes,
   statusOf,
   type Chosen,
   type Status,
@@ -192,7 +192,7 @@ export function ConsultationCalendar() {
       return {
         id: `l${String(item.lead)}`,
         start,
-        minutes: CALL_MINUTES,
+        minutes: callMinutes(item),
         color: 'var(--text-2)',
         look: 'call' as const,
         title: item.name,
@@ -252,10 +252,15 @@ export function ConsultationCalendar() {
         const item = consultations.find((row) => `c${String(row.id)}` === chosenId);
         return item && { kind: 'consultation' as const, item };
       })()
-    : (() => {
-        const item = calls.find((row) => `l${String(row.lead)}` === chosenId);
-        return item && { kind: 'call' as const, item };
-      })();
+    : chosenId?.startsWith('v')
+      ? (() => {
+          const item = visits.find((row) => `v${String(row.id)}` === chosenId);
+          return item && { kind: 'visit' as const, item };
+        })()
+      : (() => {
+          const item = calls.find((row) => `l${String(row.lead)}` === chosenId);
+          return item && { kind: 'call' as const, item };
+        })();
 
   const all = data?.consultations ?? [];
   const unlogged = all.filter((item) => statusOf(item, nowTime) === 'need').length;
@@ -280,19 +285,10 @@ export function ConsultationCalendar() {
           <Icon name="plus" size={16} />
           {t('followUpDialog.new')}
         </Button>
-        {unlogged > 0 && !onlyUnlogged && (
-          <button
-            type="button"
-            onClick={() => setOnlyUnlogged(true)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-warn-tint px-4 text-sm font-semibold text-warn"
-          >
-            <span aria-hidden="true" className="size-2 rounded-full bg-[var(--cal-few)]" />
-            {t('consultationCalendar.unlogged', { n: f.number(unlogged) })}
-          </button>
-        )}
         <TogglePill
           label={t('consultations.unloggedOnly')}
           checked={onlyUnlogged}
+          badge={unlogged > 0 ? f.number(unlogged) : undefined}
           onChange={setOnlyUnlogged}
         />
       </div>
@@ -399,6 +395,7 @@ export function ConsultationCalendar() {
             now={now}
             onSlotPick={pickSlot}
             onMove={moveCall}
+            zoomDays
             dayRow={{
               label: t('consultationCalendar.tasks.row'),
               cell: (day, compact) => (
@@ -429,6 +426,7 @@ export function ConsultationCalendar() {
                       lead: { id: call.lead, name: named(call.name) },
                     })
                   }
+                  editTimes
                 />
               )
             }

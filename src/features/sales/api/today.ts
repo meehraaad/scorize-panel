@@ -45,6 +45,8 @@ export interface TodayConsultation {
   /** ConsultationType name, localized. */
   type: string;
   mode: 'online' | 'in_person';
+  /** The customer's number, for the quick call on a phone consultation (absent from older servers). */
+  phone?: string;
   starts_at: string;
   /** The session length (the day calendar's block); null when the consultation type has none. */
   minutes: number | null;

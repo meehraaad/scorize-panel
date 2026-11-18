@@ -1,4 +1,13 @@
-import { Fragment, lazy, Suspense, useId, useState, type ReactNode, type SubmitEvent } from 'react';
+import {
+  Fragment,
+  lazy,
+  Suspense,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+  type SubmitEvent,
+} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -24,7 +33,9 @@ import { toast } from '@/lib/toast';
 import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
 import { customerPath } from '../paths';
-import { followAtOf } from '../followUp';
+import { useNow } from '../useNow';
+import { ON_SERVER } from '@/lib/applicant/onServer';
+import { followAtOf, followOnOf, isVisitConflict, meetingAhead } from '../followUp';
 import { FollowUpWhen } from './FollowUpWhen';
 import { ProfileChips } from './ProfileChips';
 import { laneOf, lanesOf, movableLanes, pickedLane } from '../boardLanes';
@@ -103,6 +114,9 @@ export function LogDialog({
   const [checked, setChecked] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [visiting, setVisiting] = useState(false);
+  const gapsRef = useRef<HTMLDivElement>(null);
+  /** A meeting at the office set from this log (S79): the customer page reloads after it. */
+  const [booked, setBooked] = useState<string | null>(null);
   /** A live (or just ended) office call: the channel is the phone and the strip names the call. */
   const liveCall = draft.call;
 
@@ -126,15 +140,18 @@ export function LogDialog({
         ? (target.key as StageChoice)
         : 'keep';
   const lost = talked && stage === 'lost';
-  const asksFollowUp = !noAnswer && !lost && !(call && outcome === 'wrong_number');
+  // A meeting at the office ahead is the follow-up (S79): the log keeps it as the next step.
+  const meeting = ON_SERVER.visitFollowUp ? (booked ?? meetingAhead(customer)) : null;
+  const asksFollowUp = !meeting && !noAnswer && !lost && !(call && outcome === 'wrong_number');
   const followAt = followAtOf(follow, date);
+  const followOn = followOnOf(follow, date);
   const chosen = customer.templates.find((item) => String(item.id) === template);
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (log.isPending || voiceBusy) return;
     setChecked(true);
-    if ((lost && !lostReason) || (asksFollowUp && !followAt)) return;
+    if ((lost && !lostReason) || (asksFollowUp && !followAt && !followOn)) return;
     // Open the app first: a window opened after the request would be blocked as a popup.
     if (isMessage(channel))
       window.open(messageHref(channel, customer.phone, chosen?.text), '_blank', 'noreferrer');
@@ -149,6 +166,7 @@ export function LogDialog({
         ...(lost && lostReason ? { lost_reason: lostReason } : {}),
         notes: notes.trim() || (message ? (chosen?.title ?? '') : ''),
         follow_up_at: asksFollowUp ? followAt : null,
+        ...(asksFollowUp && followOn ? { follow_up_on: followOn } : {}),
         customer_summary: noAnswer ? '' : customerSummary.trim(),
         email_summary: !noAnswer && email && !!customerSummary.trim(),
         ...(customer.supports.summary_sms
@@ -161,7 +179,7 @@ export function LogDialog({
           : notes.trim() || t('customer.logDialog.followTask'),
       },
       {
-        onError: () => toast.error(t('error')),
+        onError: (error) => toast.error(t(isVisitConflict(error) ? 'visit.lostFirst' : 'error')),
         onSuccess: () => {
           toast.success(t('contactDraft.saved'));
           onSaved();
@@ -273,18 +291,25 @@ export function LogDialog({
       {asksFollowUp && (
         <FollowUpWhen
           legend={t('customer.logDialog.followUp')}
-          name={named(customer.name)}
           follow={follow}
           date={date}
           onChange={(next) => updateContactDraft(draft.key, next)}
         />
       )}
-      {asksFollowUp && checked && !followAt && (
+      {asksFollowUp && checked && !followAt && !followOn && (
         <p role="alert" className="m-0 -mt-2 text-sm text-danger">
           {t('customer.logDialog.followDate')}
         </p>
       )}
-      {talked && !lost && (
+      {meeting && !lost && (
+        <Notice tone="info">
+          <strong className="block">
+            {t('visit.nextStep', { day: f.weekday(meeting), time: f.time(meeting) })}
+          </strong>
+          {t('visit.nextStepHint')}
+        </Notice>
+      )}
+      {talked && !lost && !meeting && (
         <button
           type="button"
           onClick={() => setVisiting(true)}
@@ -300,6 +325,7 @@ export function LogDialog({
             open
             customer={{ id: customer.id, name: named(customer.name) }}
             onClose={() => setVisiting(false)}
+            onBooked={setBooked}
           />
         </Suspense>
       )}
@@ -365,7 +391,16 @@ export function LogDialog({
   );
   const steps: { key: string; title: string; body: ReactNode }[] = session
     ? [
-        { key: 'meeting', title: t('customer.logDialog.step.meeting'), body: notesField },
+        {
+          key: 'meeting',
+          title: t('customer.logDialog.step.meeting'),
+          body: (
+            <>
+              {notesField}
+              <ProfileChips ref={gapsRef} customer={customer.id} dark={false} mode="gaps" />
+            </>
+          ),
+        },
         { key: 'customer', title: t('customer.logDialog.step.customer'), body: customerFields },
       ]
     : [
@@ -385,7 +420,7 @@ export function LogDialog({
               },
             ]),
       ];
-  if (asksStage || lost || asksFollowUp)
+  if (asksStage || lost || asksFollowUp || meeting)
     steps.push({ key: 'next', title: t('customer.logDialog.step.next'), body: nextFields });
 
   /** What we know about the customer, on the strip: the brief, then the profile chips. */
@@ -452,7 +487,23 @@ export function LogDialog({
           stage: stageName,
         })
       }
-      summary={session && start.session && <SessionSummary session={start.session} />}
+      summary={
+        session &&
+        start.session && (
+          <div className="flex flex-col gap-3">
+            <SessionSummary session={start.session} />
+            <ProfileChips
+              customer={customer.id}
+              dark={false}
+              mode="known"
+              onMissing={() => {
+                gapsRef.current?.scrollIntoView({ block: 'center' });
+                gapsRef.current?.querySelector('button')?.focus();
+              }}
+            />
+          </div>
+        )
+      }
       closeLabel={t('contactDraft.minimize')}
       footer={
         confirmDiscard ? (
@@ -562,6 +613,8 @@ function SessionSummary({ session }: { session: LogSession }) {
       : []),
     ...(session.mode ? [t(`mode.${session.mode}`)] : []),
   ];
+  const now = useNow(60_000);
+  const ends = new Date(session.starts_at).getTime() + (session.minutes ?? 0) * 60_000;
   return (
     <div className="flex items-start gap-3 rounded-xl bg-surface px-4 py-3 shadow-[inset_0_0_0_1px_var(--hair)]">
       <Icon
@@ -573,6 +626,11 @@ function SessionSummary({ session }: { session: LogSession }) {
         {session.title && <span className="text-[15px] font-semibold">{session.title}</span>}
         <span className="text-sm leading-6 text-text-2">{facts.join(' · ')}</span>
       </div>
+      {ends <= now && (
+        <span className="ms-auto flex-none rounded-full bg-good-tint px-2.5 py-1 text-xs font-semibold text-good">
+          {t('customer.logDialog.sessionEnded', { ago: f.timeAgo(new Date(ends)) })}
+        </span>
+      )}
     </div>
   );
 }

@@ -60,6 +60,41 @@ export interface DayPlanProps<T, F extends string> {
   /** "Right now" rows shown before "show all". */
   shown?: number;
   now: number;
+  /**
+   * Timed items with the same key share one row at the first one's time (a seller's tasks of one
+   * hour); null keeps an item on its own row. Needs `renderGroup`.
+   */
+  groupOf?: ((item: T) => string | null) | undefined;
+  /** One row for two or more grouped items, as an `<li>`. */
+  renderGroup?: ((items: readonly T[]) => ReactNode) | undefined;
+}
+
+/** A row of the timed list: one item, or several grouped ones. */
+interface Entry<T> {
+  key: string;
+  items: T[];
+}
+
+/** The timed items as rows, grouped ones together at the first one's place. */
+function entriesOf<T>(
+  items: readonly T[],
+  keyOf: (item: T) => string,
+  groupOf: ((item: T) => string | null) | undefined,
+): Entry<T>[] {
+  const entries: Entry<T>[] = [];
+  const groups = new Map<string, Entry<T>>();
+  for (const item of items) {
+    const group = groupOf?.(item) ?? null;
+    const existing = group === null ? undefined : groups.get(group);
+    if (existing) {
+      existing.items.push(item);
+      continue;
+    }
+    const entry = { key: group === null ? keyOf(item) : `group-${group}`, items: [item] };
+    if (group !== null) groups.set(group, entry);
+    entries.push(entry);
+  }
+  return entries;
 }
 
 /**
@@ -90,6 +125,8 @@ export function DayPlan<T, F extends string>({
   loading,
   shown = 5,
   now,
+  groupOf,
+  renderGroup,
 }: DayPlanProps<T, F>) {
   const { t } = useTranslation();
   const f = useFormat();
@@ -198,15 +235,21 @@ export function DayPlan<T, F extends string>({
         <p className="m-0 py-6 text-center text-sm text-text-2">{t('dayPlan.filteredEmpty')}</p>
       ) : (
         <ScheduleList
-          rows={listRowsOf(later, now, {
-            at: timeOf,
-            end: endOf,
+          rows={listRowsOf(entriesOf(later, keyOf, renderGroup && groupOf), now, {
+            at: (entry) => timeOf(entry.items[0] as T),
+            end: (entry) => Math.max(...entry.items.map(endOf)),
             freeMinutes: renderFree && today ? freeMinutes : Infinity,
           }).filter((row) => today || row.kind !== 'now')}
           now={now}
-          keyOf={keyOf}
-          timeOf={timeOf}
-          renderItem={(item) => <ul className="m-0 list-none p-0">{renderItem(item, false)}</ul>}
+          keyOf={(entry) => entry.key}
+          timeOf={(entry) => timeOf(entry.items[0] as T)}
+          renderItem={(entry) => (
+            <ul className="m-0 list-none p-0">
+              {entry.items.length > 1 && renderGroup
+                ? renderGroup(entry.items)
+                : renderItem(entry.items[0] as T, false)}
+            </ul>
+          )}
           renderFree={(free) => renderFree?.(free)}
         />
       )}

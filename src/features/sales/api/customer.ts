@@ -66,6 +66,8 @@ export interface CustomerData {
     seller: string | null;
     /** The team column it shows in on the board (S48); null for new, draft, won and lost. */
     column?: number | null;
+    /** S79: the meeting at the office ahead that is the follow-up, whoever's task it is. */
+    visit_at?: string | null;
   } | null;
   /** The board's team columns in the manager's order (S48, `supports.columns`). */
   columns?: CustomerColumn[];
@@ -176,14 +178,18 @@ export interface HistoryPage {
   next: number | null;
 }
 
-const historyKey = (id: number) => [...customerKey(id), 'history'] as const;
+const historyKey = (id: number, q = '') => [...customerKey(id), 'history', q] as const;
 
 /** Contacts, leads, sessions, payments and notes, newest first (S17). */
-export const historyQuery = (id: number) =>
+export const historyQuery = (id: number, q = '') =>
   infiniteQueryOptions({
-    queryKey: historyKey(id),
-    queryFn: ({ signal, pageParam }) =>
-      api<HistoryPage>(`${customerApi(id)}/history/?page=${String(pageParam)}`, { signal }),
+    queryKey: historyKey(id, q),
+    queryFn: ({ signal, pageParam }) => {
+      const params = new URLSearchParams({ page: String(pageParam) });
+      // `q`: only the events whose text has every typed word (S78).
+      if (q) params.set('q', q);
+      return api<HistoryPage>(`${customerApi(id)}/history/?${params.toString()}`, { signal });
+    },
     initialPageParam: 1,
     getNextPageParam: (page) => page.next,
     // A refetch reloads every page the seller has opened, one after another.
@@ -202,8 +208,10 @@ export interface ContactLog {
   lost_reason?: LostReason;
   notes: string;
   customer_summary: string;
-  /** Creates "my follow-up" at this time; null: none (a lost lead). */
+  /** Creates "my follow-up" at this time; null: none (a lost lead), or `follow_up_on`. */
   follow_up_at: string | null;
+  /** Instead of a time: a day with no hour (`YYYY-MM-DD`, due by its end). */
+  follow_up_on?: string;
   email_summary: boolean;
   /** Text the customer that a note waits in their panel (`supports.summary_sms`). */
   sms_summary?: boolean;

@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
 import { api } from '@/lib/api/client';
 import type { CustomerData, CustomerInfo, TodayData } from './api';
@@ -196,7 +197,7 @@ describe('sales panel, seller pages', () => {
     await user.clear(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }));
     await user.type(within(dialog).getByRole('searchbox', { name: 'جستجوی مشتری' }), 'مینا');
     const results = await within(dialog).findByRole('list', { name: 'مشتری‌های پیدا شده' });
-    const opens = within(results).getAllByRole('link', { name: 'باز کردن صفحه' });
+    const opens = within(results).getAllByRole('link');
     expect(opens.map((link) => link.getAttribute('href'))).toEqual([
       `/sales/customers/${String(ERFAN)}`,
       '/sales/customers/777',
@@ -206,7 +207,7 @@ describe('sales panel, seller pages', () => {
     for (const name of ['مینا آزاد', 'مینا دیگری']) {
       const row = within(results).getByText(name).closest('li');
       expect(row).not.toBeNull();
-      expect(within(row as HTMLElement).getByRole('link', { name: 'باز کردن صفحه' })).toBeVisible();
+      expect(within(row as HTMLElement).getByRole('link', { name })).toBeVisible();
     }
     const other = within(results).getByText('مینا دیگری').closest('li') as HTMLElement;
     expect(within(other).getByText('مشتریِ سارا')).toBeInTheDocument();
@@ -245,6 +246,25 @@ describe('sales panel, seller pages', () => {
     // The retry tomorrow is a task about him.
     const tasks = screen.getByRole('region', { name: 'کارهای باز عرفان' });
     expect(await within(tasks).findByText('تماس دوباره؛ قبلی بی‌پاسخ ماند')).toBeInTheDocument();
+  });
+
+  it('customer: the history search finds the words in a note, once Django has it (S78)', async () => {
+    const mutable = ON_SERVER as { historySearch: boolean };
+    mutable.historySearch = true;
+    try {
+      const user = userEvent.setup();
+      renderApp(`/sales/customers/${String(ERFAN)}`);
+      const history = await screen.findByRole('region', { name: 'تاریخچه' });
+      const before = (await within(history).findAllByRole('listitem')).length;
+      await user.type(
+        within(history).getByRole('searchbox', { name: 'جستجو در تاریخچه‌ی مشتری' }),
+        'چیزی که هرگز نوشته نشده',
+      );
+      expect(await within(history).findByText('موردی با این کلمه‌ها نیست.')).toBeInTheDocument();
+      expect(before).toBeGreaterThan(0);
+    } finally {
+      mutable.historySearch = false;
+    }
   });
 
   it('customer: a talked call goes to the history; no stage move until Django has stages', async () => {

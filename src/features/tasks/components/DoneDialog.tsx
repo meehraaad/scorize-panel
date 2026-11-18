@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { TextField } from '@/components/ui/TextField';
+import { ApiError } from '@/lib/api/client';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { type MyTask, type TaskOutcome } from '@/lib/tasks/api';
 import { useTaskChange } from '@/lib/tasks/changes';
 import { quickWhen } from '@/lib/when';
@@ -17,12 +19,16 @@ const OUTCOMES = [
   'messaged',
   'later',
 ] as const satisfies readonly TaskOutcome[];
+/** How a meeting at the office went (S79): its follow-up is done with one of these only. */
+const MEETING_OUTCOMES = ['met', 'no_show'] as const satisfies readonly TaskOutcome[];
 const WHENS = ['evening', 'tomorrow', 'three', 'week'] as const;
 const ENDS = ['won', 'lost', 'finished'] as const;
 
 /**
  * "Done" asks what happened and what comes next, so a person never ends up without a next step.
  * Closing without one needs a reason. Canvas "انجام شد ← قدم بعدی".
+ * A meeting at the office's follow-up (S79) asks whether the meeting was held instead; a customer
+ * who didn't come gets "call to book again" as the next step.
  */
 export function DoneDialog({
   task,
@@ -36,7 +42,9 @@ export function DoneDialog({
   const { t } = useTranslation('tasks');
   const named = useDisplayName();
   const change = useTaskChange();
-  const [outcome, setOutcome] = useState<TaskOutcome>('talked');
+  const meeting = ON_SERVER.visitFollowUp && !!task?.visit;
+  const outcomes = meeting ? MEETING_OUTCOMES : OUTCOMES;
+  const [outcome, setOutcome] = useState<TaskOutcome>(meeting ? 'met' : 'talked');
   const [note, setNote] = useState(task?.note ?? '');
   const [next, setNext] = useState(task?.suggested_next ?? '');
   const [when, setWhen] = useState<(typeof WHENS)[number]>('tomorrow');
@@ -59,7 +67,18 @@ export function DoneDialog({
           ...(ending ? { end_reason: end } : {}),
         },
       },
-      { onError: () => toast.error(t('error')), onSuccess: onClose },
+      {
+        onError: (error) =>
+          toast.error(
+            t(
+              error instanceof ApiError &&
+                (error.body as { code?: unknown } | null)?.code === 'visit'
+                ? 'done.visitAhead'
+                : 'error',
+            ),
+          ),
+        onSuccess: onClose,
+      },
     );
   };
 
@@ -88,10 +107,16 @@ export function DoneDialog({
           legend={t('done.outcome')}
           look="tiles"
           value={outcome}
-          onChange={setOutcome}
-          options={OUTCOMES.map((value) => ({
+          onChange={(value) => {
+            setOutcome(value);
+            if (value === 'no_show' && !next.trim()) setNext(t('done.noShowNext'));
+          }}
+          options={outcomes.map((value) => ({
             value,
-            label: t(`done.outcomeOption.${config.person}.${value}`),
+            label:
+              value === 'met' || value === 'no_show'
+                ? t(`done.meetingOutcome.${value}`)
+                : t(`done.outcomeOption.${config.person}.${value}`),
           }))}
         />
         <TextAreaField

@@ -49,6 +49,8 @@ export const FIRST_CALL_TARGET_MINUTES = 15;
 export type Channel = 'call' | 'whatsapp' | 'telegram' | 'sms' | 'meeting';
 export const MESSAGE_CHANNELS = ['whatsapp', 'telegram', 'sms'] as const;
 export type MessageChannel = (typeof MESSAGE_CHANNELS)[number];
+/** Each channel's icon: WhatsApp and Telegram by their logos. */
+export const CHANNEL_ICON = { whatsapp: 'whatsapp', telegram: 'telegram', sms: 'chat' } as const;
 
 /** 09xxxxxxxxx → 989xxxxxxxxx (international, no plus). */
 const international = (phone: string) => `98${phone.replace(/^0/, '')}`;

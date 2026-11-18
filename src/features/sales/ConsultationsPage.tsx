@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { buttonClass } from '@/components/ui/buttonStyles';
+import { buttonClass, iconButtonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { SelectField, TogglePill } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Icon } from '@/components/ui/Icon';
 import { FilterTabs } from '@/components/ui/Filters';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -19,6 +20,7 @@ import { toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { messageHref } from '@/lib/sales/api';
+import { useCallHref } from '@/lib/sales/dial';
 import { safeHref } from '@/lib/url';
 import { consultationsQuery, type Consultation, type ConsultationRange } from './api';
 import { ConsultationCalendar } from './components/ConsultationCalendar';
@@ -245,6 +247,7 @@ function ConsultationRow({
   const f = useFormat();
   const action = (label: string) =>
     t('consultations.actionsFor', { action: label, name: named(item.name) });
+  const callHref = useCallHref(item.phone);
   const reminder = t('consultations.remindText', {
     name: item.name,
     type: item.type.name,
@@ -287,6 +290,15 @@ function ConsultationRow({
         {t(`consultations.status.${status}`)}
       </Chip>
       <span className="flex flex-wrap gap-2">
+        {item.mode === 'online' && item.phone && status !== 'done' && (
+          <a
+            href={callHref}
+            aria-label={t('callName', { name: named(item.name) })}
+            className={iconButtonClass('outline')}
+          >
+            <Icon name="phone" size={20} />
+          </a>
+        )}
         {(status === 'need' || status === 'soon') && (
           <ContactLogButton
             customer={item.customer}
@@ -329,13 +341,6 @@ function ConsultationRow({
             {t('consultations.link')}
           </a>
         )}
-        <Link
-          to={customerPath(item.customer)}
-          aria-label={action(t('consultations.customer'))}
-          className={buttonClass('outline', 'h-11 px-4 text-sm')}
-        >
-          {t('consultations.customer')}
-        </Link>
       </span>
     </li>
   );

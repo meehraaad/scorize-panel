@@ -34,6 +34,11 @@ export function buttonClass(
   return `inline-flex items-center justify-center gap-2 whitespace-nowrap ${shape === 'pill' ? 'rounded-full' : 'rounded-xl'} transition-colors disabled:opacity-50 ${SIZES[size]} ${VARIANTS[variant]} ${className}`;
 }
 
+/** A round 44px button with only an icon (a call), in a button variant's colours. */
+export function iconButtonClass(variant: ButtonVariant = 'outline') {
+  return `inline-flex size-11 flex-none items-center justify-center rounded-full transition-colors disabled:opacity-50 ${VARIANTS[variant]}`;
+}
+
 /** A pill tab (filters, form tabs): raised when active. Also used by links (NavLink). */
 export const tabClass = (active: boolean) =>
   `inline-flex h-11 flex-none items-center gap-2 rounded-full px-4 text-[15px] font-medium whitespace-nowrap ${

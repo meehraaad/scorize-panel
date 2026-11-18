@@ -50,7 +50,7 @@
   "callName": "Call {{name}}",
   "messageTo": "{{channel}} to {{name}}",
   "mode": {
-    "online": "Online",
+    "online": "Phone",
     "in_person": "In person"
   },
   "millionToman": "{{n}} million toman",
@@ -92,7 +92,6 @@
       "late": "Follow-up today at {{time}} · past due",
       "position": "{{n}} of {{total}} urgent items",
       "source": "Source: {{source}}",
-      "customer": "Customer page",
       "customerName": "{{name}}'s page",
       "after": "After the call, log the result in one click:",
       "outcome": {
@@ -314,7 +313,6 @@
       "none": "Nobody matches that.",
       "addNew": "Add as a new lead",
       "noName": "No name",
-      "open": "Open page",
       "other": "{{seller}}'s customer"
     }
   },
@@ -527,6 +525,9 @@
         "money": "Money",
         "team": "Team"
       },
+      "search": "Search this customer's history",
+      "searchPlaceholder": "Search notes and summaries",
+      "emptySearch": "No entry has these words.",
       "emptyFilter": "Nothing of this kind."
     },
     "score": {
@@ -597,6 +598,7 @@
       "saveLost": "Save and close the lead",
       "choose": "Choose",
       "followWhen": "{{day}}, {{time}}",
+      "followDay": "{{day}}, no set time",
       "noAnswerToday": "A follow-up for tomorrow is made. The “unanswered call” SMS isn’t sent from the panel yet; send it yourself if needed.",
       "retryTask": "Call again; the last call wasn’t answered",
       "followTask": "Follow up after the last contact",
@@ -617,14 +619,15 @@
         "next": "Next step"
       },
       "fromCalendar": "From the calendar",
-      "calendarTitle": "When to follow up with {{name}}?",
-      "calendarHint": "Tap a free spot; that time becomes the follow-up.",
       "smsSummary": "Text it too",
       "saveWithFollow": "Save · follow up {{day}} {{time}}",
       "channelOption": {
         "call": "By phone",
         "meeting": "In person"
-      }
+      },
+      "sessionEnded": "Ended · {{ago}}",
+      "calendarTitle": "When to follow up with {{name}}?",
+      "calendarHint": "Tap a free spot; that time becomes the follow-up."
     },
     "tabs": {
       "label": "Customer page sections",
@@ -779,7 +782,6 @@
     "remind": "Reminder message",
     "remindText": "Hi {{name}}, a reminder that your {{type}} is on {{when}}. Scorize",
     "link": "Session link",
-    "customer": "Customer page",
     "actionsFor": "{{action}}: {{name}}",
     "empty": "No consultations in this range.",
     "metaShort": "{{type}} · {{mode}}",
@@ -817,7 +819,6 @@
     "modeFilter": "Format",
     "modeAll": "All",
     "layers": "Show on the calendar",
-    "unlogged": "{{n}} sessions not logged",
     "form": {
       "done": "Filled in the tablet form",
       "missing": "Hasn't filled in the tablet form",
@@ -2449,13 +2450,22 @@
     "saveAt": "Save follow-up · {{day}} {{time}}",
     "now": "Current follow-up: {{when}}",
     "log": "Talked to them? Log the contact",
-    "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step."
+    "noOpenLeadFound": "No open lead. Customers with an account:",
+    "noLead": "No open lead",
+    "belongsTo": "{{seller}}'s lead: open their page instead",
+    "taskText": "Follow up with {{name}}",
+    "noOpenLead": "This customer has no open lead (won, in a contract or lost). Use \"New task\" for the next step.",
+    "saveOn": "Save the follow-up · {{day}}"
   },
-  "followUpSlots": {
-    "label": "My week, to pick the follow-up time",
-    "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
-    "picked": "New follow-up",
-    "pickedAria": "Picked time: {{day}} at {{time}}"
+  "eventTimes": {
+    "start": "Start",
+    "end": "End",
+    "save": "Save time",
+    "saved": "Moved to {{day}}, {{from}} to {{to}}.",
+    "closed": "The office isn't open then. Set the start and end within office hours.",
+    "smsHint": "The customer gets the meeting's new time by SMS.",
+    "minutes": "{{n}} min",
+    "hours": "{{n}} h"
   },
   "instalment": {
     "state": {
@@ -2511,14 +2521,16 @@
       "countries": "Country",
       "budget": "Budget",
       "language": "Language certificate",
-      "education": "Degree"
+      "education": "Degree",
+      "gpa": "GPA"
     },
     "question": {
       "wanted_degree": "Which degree?",
       "countries": "Which countries?",
       "budget": "Budget?",
       "language": "Language certificate?",
-      "education": "Last degree?"
+      "education": "Last degree?",
+      "gpa": "GPA of the last degree?"
     },
     "budget": {
       "1": "Under 500M",
@@ -2536,7 +2548,15 @@
     "studyField": "Field",
     "gpaLabel": "GPA",
     "score": "Score",
-    "noCertificate": "No language certificate"
+    "noCertificate": "No language certificate",
+    "missing_one": "{{n}} missing",
+    "missing_other": "{{n}} missing",
+    "gaps": {
+      "title": "We don’t have these yet",
+      "hint": "Optional; it doesn’t block saving. Each answer is saved to the customer’s info for the whole team right away.",
+      "done": "The customer’s profile is complete",
+      "answered": "Saved in this session"
+    }
   },
   "callStrip": {
     "unknownNumber": "Unknown number",
@@ -2794,10 +2814,23 @@
     "closed": "The office is closed at this time.",
     "pickedShort": "In-person meeting",
     "roomsLeft_one": "{{n}} room free",
-    "roomsLeft_other": "{{n}} rooms free"
+    "roomsLeft_other": "{{n}} rooms free",
+    "nextStep": "Next step: in-person meeting on {{day}} at {{time}}",
+    "nextStepHint": "Until then the meeting is the follow-up. For another time, cancel the meeting and book again.",
+    "isFollowUp": "This customer's follow-up is their in-person meeting. For another time, cancel the meeting and book again.",
+    "lostFirst": "This customer has an in-person meeting ahead. Cancel it first.",
+    "cancelledToCall": "Meeting cancelled. The follow-up stays at that time, as a call.",
+    "kind": "Follow up by",
+    "kindCall": "Call",
+    "kindMeeting": "Meeting at the office",
+    "titleNew": "New office meeting",
+    "youAreBusy": "You have “{{what}}” at this hour. Pick another time."
   },
   "followUpWhen": {
-    "exact": "Or an exact day and time"
+    "exact": "Or an exact day and time",
+    "day": "Follow-up day",
+    "dayHint": "No hour; it stays on that day's list until the day ends.",
+    "dayChip": "Day only, no time"
   },
   "myReady": {
     "title": "My ready messages",
@@ -2836,5 +2869,26 @@
     "blank": "No ready message",
     "make": "Make a ready message in settings",
     "close": "Close"
+  },
+  "whenPicker": {
+    "days": "Day",
+    "hours": "Time",
+    "hint": "Your own items are under each hour. An hour with your consultation or office meeting can’t be picked.",
+    "dayHint": "Tap a day; the follow-up shows in “Today” that day, with no time.",
+    "kind": {
+      "session": "Consultation",
+      "visit": "In person",
+      "task": "Task",
+      "call": "Follow-up"
+    }
+  },
+  "nextStep": {
+    "pickCustomer": "Pick the customer first to see the office hours."
+  },
+  "followUpSlots": {
+    "label": "My week, to pick the follow-up time",
+    "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
+    "picked": "New follow-up",
+    "pickedAria": "Picked time: {{day}} at {{time}}"
   }
 }

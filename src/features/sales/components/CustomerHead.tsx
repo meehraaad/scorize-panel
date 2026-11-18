@@ -270,41 +270,58 @@ function followUpTask(customer: CustomerData) {
     : undefined;
 }
 
-/** "In-person": set a meeting at the office in a free room (S75). */
+/**
+ * "In-person": set a meeting at the office in a free room (S75). «تماس» switches to the follow-up
+ * window for the same customer (a customer with an open lead), and that one switches back.
+ */
 function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () => void }) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<'meeting' | 'call' | null>(null);
+  const lead =
+    customer.lead && !['won', 'lost'].includes(customer.lead.stage) ? customer.lead : null;
+  const task = followUpTask(customer);
+  const logInstead = () => {
+    setOpen(null);
+    onLog();
+  };
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen('meeting')}
         aria-label={t('visit.openAria', { name: named(customer.name) })}
         className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
       >
         <Icon name="building" size={17} />
         <span className="max-sm:sr-only">{t('visit.open')}</span>
       </button>
-      {open && (
+      {open === 'meeting' && (
         <Suspense fallback={null}>
           <VisitDialog
             open
             customer={customer}
-            onClose={() => setOpen(false)}
+            onClose={() => setOpen(null)}
             followUp={
               customer.lead?.follow_up_at
-                ? {
-                    at: customer.lead.follow_up_at,
-                    text: followUpTask(customer)?.text,
-                    timed: followUpTask(customer)?.timed,
-                  }
+                ? { at: customer.lead.follow_up_at, text: task?.text, timed: task?.timed }
                 : null
             }
-            onLog={() => {
-              setOpen(false);
-              onLog();
-            }}
+            onLog={logInstead}
+            {...(lead ? { onCall: () => setOpen('call') } : {})}
+          />
+        </Suspense>
+      )}
+      {open === 'call' && lead && (
+        <Suspense fallback={null}>
+          <FollowUpDialog
+            open
+            onClose={() => setOpen(null)}
+            at={lead.follow_up_at ? new Date(lead.follow_up_at) : null}
+            lead={{ id: lead.id, name: named(customer.name), customer: customer.id }}
+            current={task?.text}
+            timed={task?.timed}
+            onLog={logInstead}
           />
         </Suspense>
       )}
@@ -423,7 +440,7 @@ function NextStep({ customer, onCall }: { customer: CustomerData; onCall: () => 
             open
             onClose={() => setMoving(false)}
             at={lead.follow_up_at ? new Date(lead.follow_up_at) : null}
-            lead={{ id: lead.id, name: named(customer.name) }}
+            lead={{ id: lead.id, name: named(customer.name), customer: customer.id }}
             current={task?.text}
             timed={task?.timed}
             onLog={() => {

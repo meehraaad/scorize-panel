@@ -41,7 +41,9 @@ export function Dialog({
     <dialog
       ref={ref}
       aria-labelledby={titleId}
-      onClose={onClose}
+      // A window opened from this one (a picker) closes on its own: React hands its close event
+      // on to this one, which must stay open.
+      onClose={(event) => event.target === event.currentTarget && onClose()}
       onClick={(event) => event.target === event.currentTarget && ref.current?.close()}
       className={`p-0 text-text backdrop:bg-black/40 ${
         size === 'wide'

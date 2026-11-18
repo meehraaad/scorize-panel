@@ -6,6 +6,8 @@ const MINUTE = 60_000;
 /** Consultation types without a length, and calls and tasks, take this long on the day. */
 export const DEFAULT_MINUTES = 30;
 const SHORT_MINUTES = 15;
+/** A meeting at the office, unless its end was changed. */
+const VISIT_MINUTES = 60;
 /** Free time at least this long, still ahead, gets a hint between two items of the day. */
 export const FREE_MINUTES = 90;
 
@@ -128,7 +130,13 @@ export function agendaOf(sources: AgendaSources, now: number): Agenda {
 
 /** When an item of the day is over (for the free time after it). */
 export const endOf = (item: AgendaItem) =>
-  item.kind === 'consultation' ? item.end : (item.at ?? 0) + SHORT_MINUTES * MINUTE;
+  item.kind === 'consultation' ? item.end : (item.at ?? 0) + lengthOf(item) * MINUTE;
+
+/** A follow-up that is a meeting at the office (S79) lasts the meeting (an hour); others are short. */
+const lengthOf = (item: AgendaItem) =>
+  item.kind === 'task' && item.task.visit
+    ? (item.task.visit.minutes ?? VISIT_MINUTES)
+    : SHORT_MINUTES;
 
 /** A row of the timetable: an item, the line at the current time, or free time ahead. */
 export type TimelineRow = ListRow<AgendaItem>;

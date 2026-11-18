@@ -30,6 +30,9 @@ export type ServerFeature =
   | 'mobileExtensions'
   | 'leadSearch'
   | 'customerSearch'
+  | 'historySearch'
+  | 'visitFollowUp'
+  | 'eventTimes'
   | 'offerAgreement'
   | 'officeHours'
   | 'phoneTeams'
@@ -38,9 +41,16 @@ export type ServerFeature =
   | 'phoneBreak'
   | 'teamBreaks'
   | 'attendance'
-  | 'hr';
+  | 'hr'
+  | 'dayFollowUps';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * `follow_up_on` (a day with no hour) on `POST /sales/v1/customers/<id>/contacts/` and
+   * `leads/bulk/` (lang `claude/inspiring-dirac-6lpa16`). Off: the follow-up picker asks a time.
+   * An older Django ignores the field and drops the follow-up, so deploy Django first.
+   */
+  dayFollowUps: true,
   /**
    * `GET /hr/v1/today|staff|moves|calendar|options/`: the HR panel's staff files, contracts, salary
    * history and joining and leaving checklists, key `can_manage_support_staff` (lang
@@ -78,10 +88,30 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    */
   leadSearch: true,
   /**
+   * S79: a meeting at the office is the customer's follow-up there (lang
+   * `claude/sharp-wozniak-kn8ht5`). The customer's tasks name their meeting (`visit`), and a
+   * follow-up with a meeting ahead is moved only by the meeting (409 `visit`). On: the contact log
+   * shows the meeting as the next step, and the follow-up window offers a call or a meeting.
+   */
+  visitFollowUp: true,
+  /**
+   * S80 `PATCH /sales/v1/visits/<id>/ {starts_at, minutes}`, `follow_up_minutes` on `leads/bulk/`
+   * and `minutes` on the calendar's calls (lang `claude/admiring-fermat-gqxstn`): the calendar
+   * changes a follow-up call's or an office meeting's start and end. Off: calls stay 15 minutes and
+   * meetings an hour, moved only by dragging or the follow-up window.
+   */
+  eventTimes: true,
+  /**
    * S63 `GET /sales/v1/customers/search/?q=` and `POST customers/<id>/take/`: the leads page's
    * search in every customer, like the old CRM's (lang `claude/pensive-dirac-ekeuff`).
    */
   customerSearch: true,
+  /**
+   * S78 `GET /sales/v1/customers/<id>/history/?q=`: search inside one customer's history (contact
+   * notes and summaries, lead descriptions, sessions, visits, payments). Off until Django has it:
+   * the search box isn't shown, since an old server would answer the whole history.
+   */
+  historySearch: true,
   /** Seller PBX snapshots from the signed office bridge at /sales/v1/calls/. */
   livePhoneCalls: true,
   /** A staff member's softphone login at /sales/v1/calls/mobile/ (every team); on once the office worker runs. */

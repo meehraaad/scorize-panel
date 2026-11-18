@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { Button } from '@/components/ui/Button';
-import { buttonClass } from '@/components/ui/buttonStyles';
+import { iconButtonClass } from '@/components/ui/buttonStyles';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
@@ -14,6 +14,7 @@ import { addDays, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { useConfirmReceipt } from '@/lib/sales/api';
+import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
@@ -66,7 +67,6 @@ const TILE: Record<ChipTone, string> = {
   neutral: 'bg-canvas text-text',
 };
 
-const small = 'h-11 w-full px-4 text-sm sm:w-32';
 /** A card's title: its link or button stretches over the whole card. */
 const cardTitle =
   'cursor-pointer text-start text-[15px] font-semibold outline-none after:absolute after:inset-0 after:rounded-2xl';
@@ -195,6 +195,17 @@ export function TodayAgenda({
       endOf={endOf}
       renderItem={(item, due) => (
         <AgendaRow key={item.key} item={item} now={now} due={due} onOpen={opens(item)} />
+      )}
+      // Everything at one hour shares a line, side by side.
+      groupOf={(item) => (item.at === null ? null : String(new Date(item.at).getHours()))}
+      renderGroup={(items) => (
+        <li key={items[0]?.key}>
+          <ul className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-2 p-0">
+            {items.map((item) => (
+              <AgendaRow key={item.key} item={item} now={now} onOpen={opens(item)} />
+            ))}
+          </ul>
+        </li>
       )}
       filters={{
         label: t('today.agenda.filter'),
@@ -330,6 +341,7 @@ function AgendaRow({
   const f = useFormat();
   const s = useSalesFormat();
   const time = (at: number) => f.time(new Date(at));
+  const linphone = useLinphoneDial();
 
   switch (item.kind) {
     case 'lead': {
@@ -351,10 +363,9 @@ function AgendaRow({
               start={{ channel: 'call' }}
               phone={lead.phone}
               aria-label={t('callName', { name: named(lead.name) })}
-              className={buttonClass('primary', small)}
+              className={iconButtonClass('primary')}
             >
-              <Icon name="phone" size={16} />
-              {t('call')}
+              <Icon name="phone" size={20} />
             </ContactLogButton>
           }
         />
@@ -393,10 +404,9 @@ function AgendaRow({
               start={{ channel: 'call' }}
               phone={call.phone}
               aria-label={t('callName', { name: named(call.name) })}
-              className={buttonClass(late ? 'primary' : 'outline', small)}
+              className={iconButtonClass(late ? 'primary' : 'outline')}
             >
-              <Icon name="phone" size={16} />
-              {t('call')}
+              <Icon name="phone" size={20} />
             </ContactLogButton>
           }
         />
@@ -423,6 +433,21 @@ function AgendaRow({
           done={status === 'done'}
           highlight={status === 'live' || status === 'upcoming'}
           onOpen={onOpen}
+          action={
+            consultation.mode === 'online' &&
+            consultation.phone &&
+            status !== 'done' && (
+              <a
+                href={callHref(consultation.phone, linphone)}
+                aria-label={t('callName', { name: named(consultation.name) })}
+                className={iconButtonClass(
+                  status === 'live' || status === 'need' ? 'primary' : 'outline',
+                )}
+              >
+                <Icon name="phone" size={20} />
+              </a>
+            )
+          }
         />
       );
     }
@@ -452,10 +477,9 @@ function AgendaRow({
                 name={named(person.name)}
                 start={{ channel: 'call' }}
                 aria-label={t('callName', { name: named(person.name) })}
-                className={buttonClass(due ? 'primary' : 'outline', small)}
+                className={iconButtonClass(due ? 'primary' : 'outline')}
               >
-                <Icon name="phone" size={16} />
-                {t('call')}
+                <Icon name="phone" size={20} />
               </ContactLogButton>
             )
           }
@@ -522,7 +546,7 @@ function ReceiptRow({ item }: { item: Extract<AgendaItem, { kind: 'receipt' }> }
       action={
         <Button
           variant="outline"
-          className={small}
+          className="h-11 px-4 text-sm"
           aria-label={t('today.receipts.confirmName', { name: named(receipt.name) })}
           disabled={confirm.isPending}
           onClick={() =>
@@ -580,7 +604,7 @@ function Row({
     <li
       className={`relative flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl p-3 transition-colors has-[[data-card]:focus-visible]:outline-2 has-[[data-card]:focus-visible]:outline-primary ${
         highlight
-          ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]'
+          ? 'bg-tint'
           : done
             ? 'bg-canvas opacity-80 hover:opacity-100'
             : 'bg-surface shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-canvas'
@@ -623,7 +647,7 @@ function Row({
         {status && <span className="text-xs font-semibold text-text-2">{status}</span>}
       </span>
       {when && <span className="text-[13px] font-semibold whitespace-nowrap">{when}</span>}
-      {action && <span className="relative z-10 w-full flex-none sm:w-auto">{action}</span>}
+      {action && <span className="relative z-10 flex-none max-sm:ms-auto">{action}</span>}
     </li>
   );
 }

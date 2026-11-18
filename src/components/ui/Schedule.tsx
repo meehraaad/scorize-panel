@@ -184,10 +184,17 @@ export interface ScheduleProps {
   snap?: number;
   /** Quiet notes behind the blocks (each free hour's rooms); this week's are drawn. */
   marks?: readonly ScheduleMark[] | undefined;
+  /**
+   * Wide: a day's heading is a button that makes that day bigger (wider, taller hours, larger
+   * blocks) to read everything on it; clicking it again puts it back.
+   */
+  zoomDays?: boolean;
 }
 
 const DEFAULT_FROM = 9;
 const DEFAULT_TO = 18;
+/** How much taller the hours are while a day is made bigger (`zoomDays`). */
+const ZOOM_HOURS = 1.6;
 /** The shortest block, px. */
 const MIN_BLOCK = 22;
 
@@ -287,6 +294,7 @@ export function Schedule({
   onMove,
   snap = 15,
   marks = [],
+  zoomDays = false,
 }: ScheduleProps) {
   const [now] = useState(() => givenNow ?? new Date());
   const root = useRef<HTMLElement>(null);
@@ -331,7 +339,13 @@ export function Schedule({
     >
       {toolbar?.(wide)}
       {wide ? (
-        <Week {...props} hour={hourHeight} emptyColumn={emptyColumn} />
+        <Week
+          key={dayKey(week)}
+          {...props}
+          hour={hourHeight}
+          emptyColumn={emptyColumn}
+          zoomDays={zoomDays}
+        />
       ) : (
         <Day
           key={dayKey(week)}
@@ -581,15 +595,25 @@ function Week({
   now,
   hours,
   empty,
-  hour,
   emptyColumn,
   onSlotPick,
   snap,
   marks,
   onDrop,
-}: ViewProps & { hour: number; emptyColumn: (date: Date, today: Date) => string }) {
+  hour: baseHour,
+  zoomDays,
+}: ViewProps & {
+  hour: number;
+  emptyColumn: (date: Date, today: Date) => string;
+  zoomDays: boolean;
+}) {
+  const { t } = useTranslation();
   const f = useFormat();
   const cal = useCalendar();
+  /** The day made bigger (its key); the week remounts on a new week, so it starts unzoomed. */
+  const [zoomed, setZoomed] = useState<string | null>(null);
+  const isZoomed = (day: ScheduleDay) => zoomed === dayKey(day.date);
+  const hour = zoomed ? Math.round(baseHour * ZOOM_HOURS) : baseHour;
   const { from, to } = hoursOf(
     days.flatMap((day) => day.items),
     hours,
@@ -600,7 +624,13 @@ function Week({
     if (event.key === 'Escape' && value) onChange(null);
   };
   const narrowOf = (day: ScheduleDay) =>
-    !loading && day.items.length === 0 && !dayRow?.keepsWide?.(day.date);
+    !loading && day.items.length === 0 && !dayRow?.keepsWide?.(day.date) && !isZoomed(day);
+  const widthOf = (day: ScheduleDay) =>
+    isZoomed(day)
+      ? 'min-w-0 flex-[4]'
+      : narrowOf(day)
+        ? 'w-16 flex-none bg-canvas/60'
+        : 'min-w-0 flex-1';
 
   return (
     <div className="overflow-hidden rounded-2xl shadow-[inset_0_0_0_1px_var(--hair)]">
@@ -610,13 +640,9 @@ function Week({
           const narrow = narrowOf(day);
           const isToday = sameDay(day.date, today);
           const holiday = cal.kind === 'persian' && day.date.getDay() === 5;
-          return (
-            <div
-              key={dayKey(day.date)}
-              className={`flex flex-col items-center justify-center gap-0.5 border-s border-hair py-2 ${
-                narrow ? 'w-16 flex-none bg-canvas/60' : 'min-w-0 flex-1'
-              }`}
-            >
+          const big = isZoomed(day);
+          const heading = (
+            <>
               <span
                 className={`text-xs font-semibold ${isToday ? 'text-primary-text' : holiday ? 'text-danger' : narrow ? 'text-text-3' : 'text-text-2'}`}
               >
@@ -638,6 +664,26 @@ function Week({
                   {cal.gregorianDay.format(day.date)}
                 </span>
               )}
+            </>
+          );
+          const cell = `flex flex-col items-center justify-center gap-0.5 border-s border-hair py-2 ${widthOf(day)}`;
+          return zoomDays ? (
+            <button
+              key={dayKey(day.date)}
+              type="button"
+              aria-label={t(big ? 'eventCalendar.unzoom' : 'eventCalendar.zoom', {
+                day: f.weekday(day.date),
+              })}
+              onClick={() => setZoomed(big ? null : dayKey(day.date))}
+              className={`${cell} cursor-zoom-in hover:bg-tint/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus ${
+                big ? 'cursor-zoom-out bg-tint/60' : ''
+              }`}
+            >
+              {heading}
+            </button>
+          ) : (
+            <div key={dayKey(day.date)} className={cell}>
+              {heading}
             </div>
           );
         })}
@@ -652,9 +698,7 @@ function Week({
             return (
               <div
                 key={dayKey(day.date)}
-                className={`flex min-h-12 flex-col justify-center border-s border-hair p-1 ${
-                  narrow ? 'w-16 flex-none bg-canvas/60' : 'min-w-0 flex-1'
-                }`}
+                className={`flex min-h-12 flex-col justify-center border-s border-hair p-1 ${widthOf(day)}`}
               >
                 {!loading && (
                   <DayRowCell
@@ -691,7 +735,7 @@ function Week({
               role="group"
               aria-label={f.weekday(day.date)}
               data-schedule-day={column}
-              className={`relative border-s border-hair ${narrow ? 'w-16 flex-none bg-canvas/60' : 'min-w-0 flex-1'} ${
+              className={`relative border-s border-hair ${widthOf(day)} ${
                 !narrow && day.date < today ? 'bg-canvas/60' : ''
               }`}
               style={hourLines(hour)}
@@ -729,6 +773,7 @@ function Week({
                     hour={hour}
                     chosen={item.id === value && !item.disabled}
                     onChange={onChange}
+                    large={isZoomed(day)}
                     column={column}
                     onDrop={onDrop}
                   />

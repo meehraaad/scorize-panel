@@ -635,6 +635,7 @@ function todayOf(data: SalesState): TodayData {
       follow_up_at: item.lead.follow_up_at,
     }));
   const nameOf = (id: number) => data.customers.find((item) => item.id === id)?.name ?? '';
+  const phoneOf = (id: number) => data.customers.find((item) => item.id === id)?.phone ?? '';
   return {
     instalments: instalmentsToday(data),
     hot: fresh
@@ -663,6 +664,7 @@ function todayOf(data: SalesState): TodayData {
         name: nameOf(item.customer),
         type: item.type.name,
         mode: item.mode,
+        phone: phoneOf(item.customer),
         starts_at: item.starts_at,
         minutes: item.minutes,
         logged: item.logged,
@@ -1028,6 +1030,24 @@ interface MockVisit {
   colleague: string | null;
 }
 let visits: MockVisit[] = [];
+/** S80: a follow-up call's length once a seller changed its end (lead id → minutes); else 15. */
+const callLengths = new Map<number, number>();
+
+/** S79: the customer's meeting at the office still to come, which is their follow-up. */
+export function upcomingVisitOf(
+  customer: number,
+): { id: number; starts_at: string; minutes: number } | null {
+  const visit = visits.find(
+    (item) => item.customer === customer && new Date(item.starts_at).getTime() > Date.now(),
+  );
+  return visit ? { id: visit.id, starts_at: visit.starts_at, minutes: visit.minutes } : null;
+}
+
+const visitConflict = () =>
+  HttpResponse.json(
+    { detail: 'This customer has a meeting at the office ahead.', code: 'visit' },
+    { status: 409 },
+  );
 const VISIT_ROOMS = ['A', 'B'];
 const OFFICE_OPEN = 9;
 const OFFICE_CLOSE = 18;
@@ -1128,6 +1148,7 @@ function calendarOf(data: SalesState, from: string, to: string) {
         phone,
         reason,
         follow_up_at,
+        minutes: callLengths.get(lead) ?? 15,
       })),
     // The seller's tasks per day (S50): yesterday one left over, today some done, in two days two.
     tasks: [
@@ -1211,6 +1232,26 @@ export const salesHandlers = [
     };
     visits = [...visits, visit];
     return HttpResponse.json(visit, { status: 201 });
+  }),
+  // S80: a meeting's start and end from the calendar, inside the office's hours.
+  http.patch(`${BASE}/visits/:id/`, async ({ params, request }) => {
+    const data = stateOrError();
+    if (failed(data)) return data;
+    const visit = visits.find((item) => item.id === Number(params.id));
+    if (!visit) return notFound();
+    const body = (await request.json()) as { starts_at: string; minutes: number };
+    const start = new Date(body.starts_at);
+    const end = new Date(start.getTime() + body.minutes * 60_000);
+    const opens = new Date(start.getFullYear(), start.getMonth(), start.getDate(), OFFICE_OPEN);
+    const closes = new Date(start.getFullYear(), start.getMonth(), start.getDate(), OFFICE_CLOSE);
+    if (start.getTime() <= Date.now() || start < opens || end > closes)
+      return HttpResponse.json(
+        { starts_at: ['The office is not open for a meeting then.'] },
+        { status: 400 },
+      );
+    const changed = { ...visit, starts_at: start.toISOString(), minutes: body.minutes };
+    visits = visits.map((item) => (item.id === visit.id ? changed : item));
+    return HttpResponse.json(changed);
   }),
   http.delete(`${BASE}/visits/:id/`, ({ params }) => {
     const data = stateOrError();
@@ -1311,6 +1352,8 @@ export const salesHandlers = [
       ids: number[];
       stage?: LeadStage;
       follow_up_at?: string;
+      follow_up_minutes?: number;
+      follow_up_on?: string;
       add_tag?: number;
       remove_tag?: number;
     };
@@ -1332,15 +1375,25 @@ export const salesHandlers = [
     const open = data.customers.filter(
       (entry) => body.ids.includes(entry.lead.id) && openStages.includes(entry.lead.stage),
     );
-    if (body.follow_up_at && open.length === 0) {
+    // A day with no hour is due by its end (Django's 23:59).
+    const followUp = body.follow_up_on
+      ? new Date(`${body.follow_up_on}T23:59`).toISOString()
+      : body.follow_up_at;
+    if (followUp && open.length === 0) {
       return HttpResponse.json({ detail: 'no open lead', code: 'no_open_lead' }, { status: 409 });
     }
+    // S79: a meeting at the office ahead is the follow-up; one lead says so, a batch skips it.
+    if (followUp && open.length === 1 && open[0] && upcomingVisitOf(open[0].id))
+      return visitConflict();
     for (const item of open) {
+      if (followUp && upcomingVisitOf(item.id)) continue;
       if (body.stage) {
         item.lead.stage = body.stage;
         item.lead.stage_since = new Date().toISOString();
       }
-      if (body.follow_up_at) item.lead.follow_up_at = body.follow_up_at;
+      if (followUp) item.lead.follow_up_at = followUp;
+      if (body.follow_up_at && body.follow_up_minutes)
+        callLengths.set(item.lead.id, body.follow_up_minutes);
     }
     return new HttpResponse(null, { status: 204 });
   }),
