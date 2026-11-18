@@ -9,6 +9,7 @@ import {
   handoffsQuery,
   inboxQuery,
   myServicesQuery,
+  scopesQuery,
   reportsQuery,
   todayBoardQuery,
   todayCountsQuery,
@@ -43,6 +44,14 @@ async function assignersOnly() {
 /** The services page waits for Django's client services. */
 function servicesOn() {
   return Promise.resolve(ON_SERVER.clientServices ? null : redirect('/supervisor'));
+}
+
+/** The scopes page: managers, once Django serves client services. */
+async function scopeManagersOnly() {
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+  return ON_SERVER.clientServices && user && hasPermission(user, ASSIGN_PERMISSION)
+    ? null
+    : redirect('/supervisor');
 }
 
 /** The mail page is for managers with `mail_server.manage_mailboxes`, once Django serves it. */
@@ -108,6 +117,13 @@ export const supervisorPanel: PanelDefinition = {
             to: 'services',
             label: 'panels.supervisor.nav.services',
             icon: 'list',
+          } as const,
+          {
+            id: 'scopes',
+            to: 'scopes',
+            label: 'panels.supervisor.nav.scopes',
+            icon: 'shield',
+            permission: ASSIGN_PERMISSION,
           } as const,
         ]
       : []),
@@ -231,6 +247,15 @@ export const supervisorPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/supervisor/MyServicesPage'), ['supervisor'], {
         guard: servicesOn,
         data: () => [myServicesQuery],
+        skeleton: 'list',
+      }),
+    },
+    // Supervisors' scopes and where they differ from today's rule (SVC5): managers.
+    {
+      path: 'scopes',
+      ...lazyPage(() => import('@/features/supervisor/ScopesPage'), ['supervisor'], {
+        guard: scopeManagersOnly,
+        data: () => [scopesQuery],
         skeleton: 'list',
       }),
     },

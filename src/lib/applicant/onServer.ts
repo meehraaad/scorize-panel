@@ -49,7 +49,7 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   /**
    * `GET /supervisor/v1/services/mine/`: the services a supervisor or visa expert owns (lang
    * `claude/ecstatic-edison-jzr50i`, docs/client-services.md phase 4), behind Django's
-   * `SCORIZE_CLIENT_SERVICES`. Off: no «خدمت‌های من» page. The case page's services card and the
+   * `SCORIZE_CLIENT_SERVICES`, and `scopes/` (phase 5). Off: no «خدمت‌های من» and «سرپرست‌ها» pages. The case page's services card and the
    * service conversations need no switch here: they show when Django sends them.
    */
   clientServices: false,

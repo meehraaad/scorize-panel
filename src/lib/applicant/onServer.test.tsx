@@ -18,6 +18,8 @@ describe('features by what Django serves', () => {
 
   it('keeps unshipped endpoints off', () => {
     expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
+      // Behind Django's SCORIZE_CLIENT_SERVICES (backend-changes.md SVC4, SVC5).
+      ['clientServices', false],
       ['turkey', false],
       ['assistantOrganize', false],
     ]);

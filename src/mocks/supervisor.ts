@@ -21,6 +21,7 @@ import type {
   NewDocument,
   ProfessorEmailRow,
   ReportsData,
+  Scope,
   ServiceCandidate,
   StageFilter,
   TodayData,
@@ -781,6 +782,18 @@ function servicesOf(seed: CaseSeed): CaseService[] {
   );
 }
 
+const SCOPE_PEOPLE = [
+  { id: 7, name: 'مریم کاظمی', countries: ['کانادا', 'آلمان'] },
+  { id: 11, name: 'علی نوری', countries: ['ایتالیا'] },
+  { id: 21, name: 'نگار صادقی', countries: [] },
+];
+const SCOPE_COUNTRIES = [
+  { id: 1, name: 'آلمان' },
+  { id: 2, name: 'ایتالیا' },
+  { id: 3, name: 'کانادا' },
+];
+let mockScopes: Scope[] = [];
+
 /** Open services nobody owns, as the new-cases page lists them (called by the handoff mock). */
 export function unassignedServices(): UnassignedServices {
   const all = casesOrError();
@@ -1301,6 +1314,66 @@ export const supervisorHandlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
+  // SVC5: supervisors' scopes (managers) and where they differ from today's rule.
+  http.get(`${API}/scopes/`, () => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    const covered = new Set(mockScopes.filter((scope) => !scope.kind).map((scope) => scope.staff));
+    const results = covered.has(11)
+      ? []
+      : [
+          {
+            staff: 11,
+            staff_name: 'علی نوری',
+            case: 1227,
+            case_name: 'رضا احمدی',
+            side: 'old_only' as const,
+          },
+        ];
+    return HttpResponse.json({
+      applied: false,
+      people: SCOPE_PEOPLE,
+      scopes: mockScopes,
+      kinds: [
+        { key: 'admission', name: 'پذیرش' },
+        { key: 'visa', name: 'ویزا' },
+      ],
+      countries: SCOPE_COUNTRIES,
+      differences: { count: results.length, results },
+    });
+  }),
+
+  http.post(`${API}/scopes/`, async ({ request }) => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    const body = (await request.json()) as {
+      staff: number;
+      kind: string | null;
+      country: number | null;
+    };
+    if (
+      mockScopes.some(
+        (scope) =>
+          scope.staff === body.staff &&
+          (scope.kind?.key ?? null) === body.kind &&
+          (scope.country?.id ?? null) === body.country,
+      )
+    )
+      return HttpResponse.json({ detail: 'This person already has this scope.' }, { status: 409 });
+    const scope = {
+      id: newId(),
+      staff: body.staff,
+      kind: body.kind ? { key: body.kind, name: body.kind === 'visa' ? 'ویزا' : 'پذیرش' } : null,
+      country: SCOPE_COUNTRIES.find((country) => country.id === body.country) ?? null,
+    };
+    mockScopes.push(scope);
+    return HttpResponse.json(scope, { status: 201 });
+  }),
+
+  http.delete(`${API}/scopes/:scope/`, ({ params }) => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    mockScopes = mockScopes.filter((scope) => scope.id !== Number(params['scope']));
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get(`${API}/services/mine/`, () => {
     const all = casesOrError();
     if (all instanceof Response) return all;
@@ -1743,4 +1816,5 @@ export function resetSupervisorMocks() {
   cases = null;
   botSettings.clear();
   imports.clear();
+  mockScopes = [];
 }

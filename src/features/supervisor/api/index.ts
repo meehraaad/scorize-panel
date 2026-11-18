@@ -16,3 +16,4 @@ export * from './reports';
 export * from './import';
 export * from './handoffs';
 export * from './services';
+export * from './scopes';

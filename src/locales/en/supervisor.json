@@ -655,5 +655,42 @@
     "subtitle": "{{n}} services, {{waiting}} conversations waiting",
     "list": "The services you own",
     "empty": "You don't own any service yet."
+  },
+  "scopes": {
+    "title": "Supervisors and scopes",
+    "subtitle": "{{n}} scopes: which kind of service each supervisor oversees in which country",
+    "shadow": "Scopes aren't applied yet; the panel still uses today's rule: the cases people supervise and every case of their countries. Once the differences list is empty, the technical team can switch them on.",
+    "applied": "Scopes are applied: each supervisor sees the cases and conversations of the services in their scopes.",
+    "everyKind": "Every service",
+    "everyCountry": "Every country",
+    "differences": {
+      "title": "Differences from today's rule",
+      "count": "{{n}} differences",
+      "none": "No differences",
+      "old_only": "Sees it today, wouldn't with scopes",
+      "new_only": "Would see it with scopes, doesn't today"
+    },
+    "fromCountries": {
+      "button": "Make scopes from today's countries",
+      "hint": "Each country supervisor gets an «every service» scope in each of their countries.",
+      "done": "{{n}} scopes made."
+    },
+    "people": {
+      "title": "Supervisors",
+      "empty": "No scopes yet.",
+      "today": "Countries today: {{countries}}",
+      "remove": "Remove the {{scope}} scope from {{name}}",
+      "removeShort": "Remove",
+      "removed": "Removed the {{scope}} scope from {{name}}."
+    },
+    "add": {
+      "title": "New scope",
+      "staff": "Supervisor",
+      "kind": "Kind of service",
+      "country": "Country",
+      "save": "Add the scope",
+      "done": "Gave {{name}} the {{scope}} scope.",
+      "exists": "This supervisor already has this scope."
+    }
   }
 }

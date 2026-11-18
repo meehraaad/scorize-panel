@@ -82,4 +82,29 @@ describe('client services (SVC2)', () => {
     expect(rows[0]).toHaveTextContent('پذیرش · کانادا');
     expect(within(list).queryByText(/ویزا/)).toBeNull();
   });
+
+  it('gives a supervisor a scope until nothing differs from today (SVC5)', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/scopes');
+    const differences = await screen.findByRole('region', { name: 'اختلاف با قاعده‌ی امروز' });
+    expect(within(differences).getByText('۱ اختلاف')).toBeInTheDocument();
+    expect(within(differences).getByRole('link', { name: 'رضا احمدی' })).toBeInTheDocument();
+
+    const form = screen.getByRole('region', { name: 'محدوده‌ی تازه' });
+    await user.selectOptions(within(form).getByRole('combobox', { name: 'سرپرست' }), 'علی نوری');
+    await user.selectOptions(within(form).getByRole('combobox', { name: 'کشور' }), 'ایتالیا');
+    await user.click(within(form).getByRole('button', { name: 'افزودن محدوده' }));
+    expect(
+      await toasts().findByText('محدوده‌ی همه‌ی خدمت‌ها · ایتالیا به علی نوری داده شد.'),
+    ).toBeInTheDocument();
+    expect(await within(differences).findByText('بدون اختلاف')).toBeInTheDocument();
+
+    const people = screen.getByRole('region', { name: 'سرپرست‌ها' });
+    await user.click(
+      within(people).getByRole('button', {
+        name: 'حذف محدوده‌ی همه‌ی خدمت‌ها · ایتالیا از علی نوری',
+      }),
+    );
+    expect(await within(people).findByText('هنوز محدوده‌ای تعریف نشده.')).toBeInTheDocument();
+  });
 });
