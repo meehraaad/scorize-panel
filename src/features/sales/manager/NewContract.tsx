@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
 import { TextField } from '@/components/ui/TextField';
 import { toast } from '@/lib/toast';
-import { useCreateTemplate, type ContractOverviewRow } from '../api';
+import { type ContractOverviewRow } from '../api';
+import { useCreateTemplate } from '../api/managerMutations';
 
 /** The value of the "start from" choice for an empty contract. */
 const EMPTY = 'empty';

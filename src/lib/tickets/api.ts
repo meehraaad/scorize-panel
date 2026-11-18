@@ -1,10 +1,4 @@
-import {
-  infiniteQueryOptions,
-  queryOptions,
-  useMutation,
-  useQueryClient,
-  type QueryKey,
-} from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions, type QueryKey } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 
 /**
@@ -159,63 +153,8 @@ export const messagesQuery = (endpoint: TicketsEndpoint, thread: string) =>
 export const messagesOf = (pages: readonly MessagePage[]) =>
   pages.toReversed().flatMap((page) => page.messages);
 
-function useRefresh(endpoint: TicketsEndpoint) {
-  const client = useQueryClient();
-  return () =>
-    Promise.all(
-      [endpoint.queryKey, ...(endpoint.invalidateKeys ?? [])].map((queryKey) =>
-        client.invalidateQueries({ queryKey }),
-      ),
-    );
-}
-
 export interface NewMessage {
   text: string;
   priority: Priority;
   attachment: File | null;
-}
-
-export function useSendMessage(endpoint: TicketsEndpoint, thread: string) {
-  const client = useQueryClient();
-  const refresh = useRefresh(endpoint);
-  return useMutation({
-    mutationFn: ({ text, priority, attachment }: NewMessage) => {
-      const body = new FormData();
-      body.append('message', text);
-      body.append('priority', String(priority));
-      if (attachment) body.append('attachment', attachment);
-      return api<TicketMessage>(`${endpoint.api}/${thread}/messages/`, { method: 'POST', body });
-    },
-    // The sent message shows at once, from the server's answer; the rest refreshes behind it.
-    onSuccess: (message) => {
-      client.setQueryData(messagesQuery(endpoint, thread).queryKey, (data) => {
-        const [newest, ...older] = data?.pages ?? [];
-        return data && newest
-          ? { ...data, pages: [{ ...newest, messages: [...newest.messages, message] }, ...older] }
-          : data;
-      });
-      return refresh();
-    },
-  });
-}
-
-export function useRateMessage(endpoint: TicketsEndpoint, thread: string) {
-  const refresh = useRefresh(endpoint);
-  return useMutation({
-    mutationFn: ({ id, score }: { id: number; score: number }) =>
-      api(`${endpoint.api}/${thread}/messages/${String(id)}/rating/`, {
-        method: 'POST',
-        body: { score },
-      }),
-    onSuccess: refresh,
-  });
-}
-
-/** The viewer opened the thread: the other side's messages count as seen. */
-export function useMarkSeen(endpoint: TicketsEndpoint, thread: string) {
-  const refresh = useRefresh(endpoint);
-  return useMutation({
-    mutationFn: () => api(`${endpoint.api}/${thread}/seen/`, { method: 'POST' }),
-    onSuccess: refresh,
-  });
 }

@@ -1,9 +1,4 @@
-import {
-  infiniteQueryOptions,
-  queryOptions,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import {
   SALES_API,
@@ -131,7 +126,7 @@ export interface CustomerData {
 
 export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as const;
 
-const customerApi = (id: number) => `${SALES_API}/customers/${String(id)}`;
+export const customerApi = (id: number) => `${SALES_API}/customers/${String(id)}`;
 
 export const customerQuery = (id: number) =>
   queryOptions({
@@ -223,15 +218,6 @@ export interface ContactLog {
   follow_up_text: string;
 }
 
-export function useLogContact(customer: number) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (log: ContactLog) =>
-      api(`${customerApi(customer)}/contacts/`, { method: 'POST', body: log }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 /** What a seller reads while the phone rings (the call popup's "before you answer" box). */
 export interface CallBrief {
   last_contact: { at: string; notes: string; by: string } | null;
@@ -249,19 +235,5 @@ export const callBriefQuery = (customer: number) =>
     queryFn: ({ signal }) => api<CallBrief>(`${customerApi(customer)}/call-brief/`, { signal }),
     staleTime: 60_000,
   });
-
-/** A caller's other number kept as the customer's second phone; 409 `taken`: another account's. */
-export function useSetSecondPhone() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ customer, phone }: { customer: number; phone: string }) =>
-      api<{ phone: string }>(`${customerApi(customer)}/second-phone/`, {
-        method: 'PUT',
-        body: { phone },
-      }),
-    onSuccess: (_answer, { customer }) =>
-      client.invalidateQueries({ queryKey: customerKey(customer) }),
-  });
-}
 
 /** A quick note on the customer's history (S17). */

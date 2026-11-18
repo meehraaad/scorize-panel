@@ -7,7 +7,8 @@ import { Dialog } from '@/components/ui/Dialog';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useUser } from '@/lib/auth/session';
 import { toast } from '@/lib/toast';
-import { groupsQuery, keysQuery, useSavePerson, type AccessPerson } from '../api';
+import { groupsQuery, keysQuery, type AccessPerson } from '../api';
+import { useSavePerson } from '../mutations';
 import { KeyPicker } from './KeyPicker';
 
 const same = (a: ReadonlySet<unknown>, b: readonly unknown[]) =>

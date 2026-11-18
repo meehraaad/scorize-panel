@@ -19,14 +19,13 @@ import {
   catalogQuery,
   kpisQuery,
   rulesQuery,
-  useRemoveRule,
-  useSaveRule,
   type Basis,
   type Calculator,
   type Effect,
   type Kpi,
   type PayRule,
 } from './api';
+import { useRemoveRule, useSaveRule } from './mutations';
 import { ScopeFields } from './components/ScopeFields';
 import { scopeBody, scopeDraft, useScopeName } from './scope';
 import { useMetricNames } from './metricNames';

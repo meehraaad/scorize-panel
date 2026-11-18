@@ -13,14 +13,13 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
   leadImportSampleHref,
-  useApplyLeadImport,
-  usePreviewLeadImport,
   type LeadImportChange,
   type LeadImportPreview,
   type LeadImportRow,
   type LeadImportSource,
   type SellerLoad,
 } from '../api';
+import { useApplyLeadImport, usePreviewLeadImport } from '../api/managerMutations';
 
 const STEPS = ['file', 'review', 'done'] as const;
 const CHANGES: readonly LeadImportChange[] = ['new', 'existing', 'skip'];

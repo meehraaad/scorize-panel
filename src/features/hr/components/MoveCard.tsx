@@ -8,7 +8,8 @@ import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { ProgressBar } from '@/components/ui/Progress';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { useMoveAction, useSetStep, type Move, type MoveStep, type Named } from '../api';
+import { type Move, type MoveStep, type Named } from '../api';
+import { useMoveAction, useSetStep } from '../mutations';
 import { dayOf, daysUntil } from '../format';
 import { PersonLink } from './PersonLink';
 

@@ -1,10 +1,4 @@
-import {
-  keepPreviousData,
-  queryOptions,
-  useMutation,
-  useQueryClient,
-  type QueryKey,
-} from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 
@@ -14,7 +8,7 @@ import type { Page } from '@/lib/api/page';
  * docs/mail-servers.md there. Managers with `mail_server.manage_mailboxes` only.
  */
 export const MAIL_PERMISSION = 'manage_mailboxes';
-const MAIL_API = '/mail/v1';
+export const MAIL_API = '/mail/v1';
 export const MAIL_KEY = ['mail'] as const;
 
 export interface MailServer {
@@ -151,18 +145,6 @@ export const applicantSearchQuery = (search: string) =>
     placeholderData: keepPreviousData,
   });
 
-/** Invalidates the page's lists after a change. */
-function useMailMutation<TInput, TResult>(
-  mutationFn: (input: TInput) => Promise<TResult>,
-  key: QueryKey = MAIL_KEY,
-) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn,
-    onSuccess: () => client.invalidateQueries({ queryKey: key }),
-  });
-}
-
 export interface NewMailbox {
   server: number;
   local_part: string;
@@ -173,38 +155,9 @@ export interface NewMailbox {
   use_for_writing: boolean;
 }
 
-/** Answers the password once: it isn't shown again. */
-export const useCreateMailbox = () =>
-  useMailMutation((values: NewMailbox) =>
-    api<Mailbox & { password: string }>(`${MAIL_API}/mailboxes/`, {
-      method: 'POST',
-      body: values,
-    }),
-  );
-
 export type MailboxChange = Partial<
   Pick<Mailbox, 'quota_mb' | 'use_for_bot' | 'use_for_writing'> & { applicant: number | null }
 >;
-
-export const useChangeMailbox = (id: number) =>
-  useMailMutation((change: MailboxChange) =>
-    api<Mailbox>(`${MAIL_API}/mailboxes/${String(id)}/`, { method: 'PATCH', body: change }),
-  );
-
-export const useNewPassword = (id: number) =>
-  useMailMutation(() =>
-    api<{ password: string }>(`${MAIL_API}/mailboxes/${String(id)}/password/`, {
-      method: 'POST',
-    }),
-  );
-
-export const useDeleteMailbox = (id: number) =>
-  useMailMutation(() => api(`${MAIL_API}/mailboxes/${String(id)}/`, { method: 'DELETE' }));
-
-export const useRefreshServer = () =>
-  useMailMutation((id: number) =>
-    api<MailServer>(`${MAIL_API}/servers/${String(id)}/refresh/`, { method: 'POST' }),
-  );
 
 /** The limits every applicant's bot runs inside (BotRules). Days: 0 = Monday. */
 export interface BotRules {
@@ -235,13 +188,6 @@ export const botRulesQuery = queryOptions({
   queryFn: ({ signal }) => api<BotRules>(`${MAIL_API}/bot-rules/`, { signal }),
 });
 
-export const useSaveBotRules = () =>
-  useMailMutation(
-    (change: Partial<Omit<BotRules, 'updated_at'>>) =>
-      api<BotRules>(`${MAIL_API}/bot-rules/`, { method: 'PATCH', body: change }),
-    [...MAIL_KEY, 'rules'],
-  );
-
 export interface SuppressedAddress {
   id: number;
   address: string;
@@ -260,9 +206,3 @@ export const suppressedQuery = (search: string, page: number) => {
     placeholderData: keepPreviousData,
   });
 };
-
-export const useUnsuppress = () =>
-  useMailMutation(
-    (id: number) => api(`${MAIL_API}/suppressed/${String(id)}/`, { method: 'DELETE' }),
-    [...MAIL_KEY, 'suppressed'],
-  );

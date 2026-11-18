@@ -9,7 +9,8 @@ import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { botRulesQuery, useSaveBotRules, type BotRuleNumber, type BotRules } from '../api';
+import { botRulesQuery, type BotRuleNumber, type BotRules } from '../api';
+import { useSaveBotRules } from '../mutations';
 
 const GROUPS: { key: 'volume' | 'timing' | 'reminders' | 'safety'; fields: BotRuleNumber[] }[] = [
   {

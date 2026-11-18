@@ -11,10 +11,10 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import {
   MAX_RECEIPT_BYTES,
   RECEIPT_TYPES,
-  useInstalmentReceipt,
   type CustomerInstalment,
   type PaymentsData,
 } from '../api';
+import { useInstalmentReceipt } from '../api/paymentsMutations';
 import { useSalesFormat } from '../format';
 
 const RULE = { types: RECEIPT_TYPES, maxBytes: MAX_RECEIPT_BYTES };

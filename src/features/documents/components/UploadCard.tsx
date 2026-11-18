@@ -15,10 +15,10 @@ import {
   MAX_UPLOAD_BYTES,
   UPLOAD_TYPES,
   UploadError,
-  useUploadDocuments,
   type DocumentsData,
   type RequiredDocument,
 } from '../api';
+import { useUploadDocuments } from '../mutations';
 
 /** A deadline this close is shown in the warning colour. */
 const URGENT_DAYS = 7;

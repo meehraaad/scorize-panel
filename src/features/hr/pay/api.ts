@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { fromCalendar, toCalendar } from '@/lib/calendar';
 import type { Face } from '@/lib/face/api';
@@ -29,7 +29,8 @@ export function payMonth(shift = 0): PayMonth {
 export const firstDayOf = ({ year, month }: PayMonth) =>
   fromCalendar({ year, month, day: 1 }, 'persian');
 
-const monthQuery = ({ year, month }: PayMonth) => `year=${String(year)}&month=${String(month)}`;
+export const monthQuery = ({ year, month }: PayMonth) =>
+  `year=${String(year)}&month=${String(month)}`;
 
 export type Scope = 'all' | 'position' | 'team' | 'person';
 
@@ -292,26 +293,7 @@ export const payrollQuery = (month: PayMonth) =>
     queryFn: ({ signal }) => api<Payroll>(`${HR_API}/payroll/?${monthQuery(month)}`, { signal }),
   });
 
-/** Every pay write can change the slips and scores: the whole section follows. */
-function usePayMutation<V, T>(send: (value: V) => Promise<T>) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: send,
-    onSuccess: () => client.invalidateQueries({ queryKey: PAY_KEY }),
-  });
-}
-
 export type KpiInput = Omit<Kpi, 'id' | 'staff' | 'params'> & { staff: number | null };
-
-export const useSaveKpi = () =>
-  usePayMutation(({ id, ...body }: KpiInput & { id?: number }) =>
-    id === undefined
-      ? api<Kpi>(`${HR_API}/kpis/`, { method: 'POST', body })
-      : api<Kpi>(`${HR_API}/kpis/${String(id)}/`, { method: 'PUT', body }),
-  );
-
-export const useRemoveKpi = () =>
-  usePayMutation((id: number) => api(`${HR_API}/kpis/${String(id)}/`, { method: 'DELETE' }));
 
 export interface ResultInput {
   staff: number;
@@ -322,26 +304,6 @@ export interface ResultInput {
   note?: string;
 }
 
-export const useSaveResults = () =>
-  usePayMutation((body: PayMonth & { results: ResultInput[] }) =>
-    api<KpiResults>(`${HR_API}/kpi-results/`, { method: 'PUT', body }),
-  );
-
-export const useRefreshResults = () =>
-  usePayMutation((body: PayMonth) =>
-    api<KpiResults>(`${HR_API}/kpi-results/refresh/`, { method: 'POST', body }),
-  );
-
-export const useCloseMonth = () =>
-  usePayMutation((body: PayMonth & { days: number }) =>
-    api<KpiResults>(`${HR_API}/kpi-months/close/`, { method: 'POST', body }),
-  );
-
-export const useReopenMonth = () =>
-  usePayMutation((month: PayMonth) =>
-    api<KpiResults>(`${HR_API}/kpi-months/close/?${monthQuery(month)}`, { method: 'DELETE' }),
-  );
-
 export interface AnswerInput {
   id: number;
   accept: boolean;
@@ -350,38 +312,4 @@ export interface AnswerInput {
   value: number | null;
 }
 
-export const useAnswerDispute = () =>
-  usePayMutation(({ id, ...body }: AnswerInput) =>
-    api<KpiResults>(`${HR_API}/kpi-disputes/${String(id)}/answer/`, { method: 'POST', body }),
-  );
-
 export type RuleInput = Omit<PayRule, 'id' | 'staff'> & { staff: number | null };
-
-export const useSaveRule = () =>
-  usePayMutation(({ id, ...body }: RuleInput & { id?: number }) =>
-    id === undefined
-      ? api<PayRule>(`${HR_API}/pay-rules/`, { method: 'POST', body })
-      : api<PayRule>(`${HR_API}/pay-rules/${String(id)}/`, { method: 'PUT', body }),
-  );
-
-export const useRemoveRule = () =>
-  usePayMutation((id: number) => api(`${HR_API}/pay-rules/${String(id)}/`, { method: 'DELETE' }));
-
-export const useSavePaySettings = () =>
-  usePayMutation((body: PaySettings) =>
-    api<PaySettings>(`${HR_API}/pay-settings/`, { method: 'PUT', body }),
-  );
-
-export const useStartPayroll = () =>
-  usePayMutation((body: PayMonth) => api<Payroll>(`${HR_API}/payroll/`, { method: 'POST', body }));
-
-export const useFinalPayroll = () =>
-  usePayMutation((id: number) =>
-    api<Payroll>(`${HR_API}/payroll/${String(id)}/final/`, { method: 'POST' }),
-  );
-
-export const useEditSlip = (id: number) =>
-  usePayMutation(
-    (body: Partial<Pick<Slip, 'addition' | 'addition_note' | 'deduction' | 'deduction_note'>>) =>
-      api<SlipDetail>(`${HR_API}/payslips/${String(id)}/`, { method: 'PATCH', body }),
-  );

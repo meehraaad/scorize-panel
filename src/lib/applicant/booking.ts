@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
-import { useBookConsultation } from '@/lib/applicant/journey';
+import { useBookConsultation } from '@/lib/applicant/journeyMutations';
 import { eventColor, toValue, weekOf } from '@/lib/calendar';
 import { toast } from '@/lib/toast';
 

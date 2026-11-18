@@ -8,7 +8,8 @@ import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
-import { PROFILE_FIELDS, useSaveProfileField, type ContractData, type ProfileField } from '../api';
+import { PROFILE_FIELDS, type ContractData, type ProfileField } from '../api';
+import { useSaveProfileField } from '../mutations';
 import { missingDetails, RULES, type FieldRule, type Problem } from './profileRules';
 
 /** Fields shown left to right even though nobody edits them here. */

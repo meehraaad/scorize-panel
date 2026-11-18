@@ -10,12 +10,8 @@ import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import {
-  botSettingsQuery,
-  useSaveBotSettings,
-  type BotSettings,
-  type BotSettingsChange,
-} from '../api';
+import { botSettingsQuery, type BotSettings, type BotSettingsChange } from '../api';
+import { useSaveBotSettings } from '../api/applicationsMutations';
 
 /** A date on each weekday from Monday (0), as Django counts them (1 January 2024 was a Monday). */
 const weekday = (day: number) => new Date(2024, 0, 1 + day);

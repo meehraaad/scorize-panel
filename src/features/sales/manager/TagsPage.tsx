@@ -13,14 +13,8 @@ import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import {
-  TAG_TONES,
-  managerTagsQuery,
-  tagKey,
-  useDeleteTag,
-  useSaveTag,
-  type ManagerTag,
-} from '../api';
+import { TAG_TONES, managerTagsQuery, tagKey, type ManagerTag } from '../api';
+import { useDeleteTag, useSaveTag } from '../api/tagsMutations';
 
 /** The name error Django sends (`{name: ['…']}`), or null. */
 const nameErrorOf = (error: unknown) =>

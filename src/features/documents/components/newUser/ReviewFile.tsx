@@ -5,7 +5,8 @@ import { FileTile } from '@/components/ui/Files';
 import { IconButton } from '@/components/ui/IconButton';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useDeleteReviewDocument, type ReviewDocument } from '@/lib/applicant/journey';
+import { type ReviewDocument } from '@/lib/applicant/journey';
+import { useDeleteReviewDocument } from '@/lib/applicant/journeyMutations';
 import { toast } from '@/lib/toast';
 
 /**

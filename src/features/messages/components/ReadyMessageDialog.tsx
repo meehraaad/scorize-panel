@@ -14,13 +14,11 @@ import {
   READY_KINDS,
   readyHistoryQuery,
   readyVariablesQuery,
-  useAddReadyMessage,
-  useDeleteReadyMessage,
-  useSaveReadyMessage,
   type ReadyKind,
   type ReadyMessage,
   type ReadyTab,
 } from '../api';
+import { useAddReadyMessage, useDeleteReadyMessage, useSaveReadyMessage } from '../mutations';
 import { fieldError } from '../format';
 import { History } from './History';
 

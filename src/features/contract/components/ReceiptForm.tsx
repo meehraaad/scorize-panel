@@ -6,7 +6,8 @@ import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { checkFile, extensionOf, type FileProblem } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, useUploadReceipt, type PaymentData } from '../api';
+import { MAX_RECEIPT_BYTES, RECEIPT_TYPES, type PaymentData } from '../api';
+import { useUploadReceipt } from '../mutations';
 
 const RULE = { types: RECEIPT_TYPES, maxBytes: MAX_RECEIPT_BYTES };
 const INPUT_ID = 'payment-receipt';

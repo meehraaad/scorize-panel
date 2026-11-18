@@ -10,7 +10,8 @@ import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
-import { optionsQuery, useNewStaff, type ContractKind, type Team } from '../api';
+import { optionsQuery, type ContractKind, type Team } from '../api';
+import { useNewStaff } from '../mutations';
 import { fieldErrors, parseAmount, todayValue } from '../format';
 import { personPath } from '../paths';
 

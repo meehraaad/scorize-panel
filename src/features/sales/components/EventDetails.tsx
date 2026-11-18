@@ -13,12 +13,8 @@ import { messageHref } from '@/lib/sales/api';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
-import {
-  useMarkArrived,
-  type CalendarCall,
-  type CalendarConsultation,
-  type CalendarType,
-} from '../api';
+import { type CalendarCall, type CalendarConsultation, type CalendarType } from '../api';
+import { useMarkArrived } from '../api/calendarMutations';
 import {
   DEFAULT_MINUTES,
   MINUTE,

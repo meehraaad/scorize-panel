@@ -11,10 +11,10 @@ import { toast } from '@/lib/toast';
 import {
   isThrottled,
   markStarted,
-  useSubmitEstimate,
   type EstimateAnswers,
   type EstimateOptions,
 } from '@/lib/applicant/estimate';
+import { useSubmitEstimate } from '@/lib/applicant/estimateMutations';
 import {
   AGE_RANGE,
   GPA_EXAMPLE,

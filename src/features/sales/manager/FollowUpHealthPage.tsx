@@ -12,7 +12,8 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { healthQuery, useManageTask, type HealthData, type HealthTeam } from '../api';
+import { healthQuery, type HealthData, type HealthTeam } from '../api';
+import { useManageTask } from '../api/managerMutations';
 import { useSalesFormat } from '../format';
 
 const TEAMS = ['all', 'sales', 'supervisors'] as const satisfies readonly HealthTeam[];

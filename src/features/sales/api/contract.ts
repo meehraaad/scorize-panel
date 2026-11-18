@@ -1,9 +1,9 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import type { AgreementParty } from '@/lib/agreement/api';
 import { api } from '@/lib/api/client';
 import type { TextClause } from '@/lib/contractText';
 import { SALES_API, type Degree } from '@/lib/sales/api';
-import { uploadFile, type UploadMessages } from '@/lib/upload';
+
 import { customerKey } from './customer';
 
 /**
@@ -116,20 +116,3 @@ export const contractDocumentQuery = (id: number) =>
     queryFn: ({ signal }) =>
       api<ContractDocument>(`${SALES_API}/customers/${String(id)}/contract/document/`, { signal }),
   });
-
-export function useUploadScan(id: number) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ file, messages }: { file: File; messages?: UploadMessages }) => {
-      const body = new FormData();
-      body.append('file', file);
-      return uploadFile(
-        `${SALES_API}/customers/${String(id)}/contract/scan/`,
-        body,
-        file,
-        messages,
-      );
-    },
-    onSuccess: () => client.invalidateQueries({ queryKey: handoffQuery(id).queryKey }),
-  });
-}

@@ -8,7 +8,8 @@ import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
 import { Switch } from '@/components/ui/Switch';
 import { setLinphoneDial, useLinphoneDial } from '@/lib/sales/dial';
-import { mobileExtensionQuery, useRequestMobileExtension } from '@/lib/sales/phoneCalls';
+import { mobileExtensionQuery } from '@/lib/sales/phoneCalls';
+import { useRequestMobileExtension } from '@/lib/sales/phoneCallsMutations';
 import { toast } from '@/lib/toast';
 
 /** One login detail in a read-only field, with copy (and, for the password, show/hide) inside it. */

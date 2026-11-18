@@ -1,7 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { SALES_API } from '@/lib/sales/api';
-import { TAGS_KEY, managerTagsQuery, useTagChange, type CustomerTag } from './tags';
+import { TAGS_KEY, managerTagsQuery, type CustomerTag } from './tags';
+import { useTagChange } from './tagsMutations';
 
 // Only the tag picker imports this file (not `../api`), so it loads with the picker, not on the
 // first page: the sales API module is part of the first-load bundle.

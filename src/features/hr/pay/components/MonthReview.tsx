@@ -6,7 +6,8 @@ import { Dialog } from '@/components/ui/Dialog';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { useCloseMonth, useReopenMonth, type KpiResults, type PayMonth } from '../api';
+import { type KpiResults, type PayMonth } from '../api';
+import { useCloseMonth, useReopenMonth } from '../mutations';
 import { parseNumber } from '../numbers';
 
 /**

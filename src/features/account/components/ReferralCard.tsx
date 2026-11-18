@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
-import { REFERRALS, useUpdateAccount, type Referral } from '@/lib/account/api';
+import { REFERRALS, type Referral } from '@/lib/account/api';
+import { useUpdateAccount } from '@/lib/account/mutations';
 
 /** "How did you hear about us": asked once, then replaced by a thank-you. */
 export function ReferralCard() {

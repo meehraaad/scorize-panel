@@ -11,9 +11,9 @@ import {
   MAX_ATTACHMENT_BYTES,
   PRIORITIES,
   URGENT,
-  useSendMessage,
   type Priority,
 } from '@/lib/tickets/api';
+import { useSendMessage } from '@/lib/tickets/mutations';
 import { toast } from '@/lib/toast';
 import type { TicketsConfig } from '@/lib/tickets/api';
 

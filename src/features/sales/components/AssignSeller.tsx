@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { SelectField } from '@/components/ui/Choices';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { toast } from '@/lib/toast';
-import { useAssignConsultation } from '../api';
+import { useAssignConsultation } from '../api/calendarMutations';
 
 /** What the menu needs of a consultation: its customer's name and who holds it now. */
 export interface Assignable {

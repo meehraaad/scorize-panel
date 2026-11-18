@@ -24,14 +24,16 @@ import {
   consultationTypesQuery,
   overlapping,
   startsOf,
-  useAddClosure,
-  useRemoveClosure,
-  useSaveConsultationType,
   type ConsultationMode,
   type ConsultationTypeInput,
   type ConsultationTypeRow,
   type WeekRow,
 } from '../api';
+import {
+  useAddClosure,
+  useRemoveClosure,
+  useSaveConsultationType,
+} from '../api/consultationTypesMutations';
 import { useSalesFormat } from '../format';
 import { salesPath } from '../paths';
 
@@ -516,7 +518,7 @@ function WeekEditor({
   return (
     <div className="flex flex-col px-5 pb-5 lg:px-8 lg:pb-7">
       <div aria-hidden="true" className="flex gap-3 pb-1 max-sm:hidden">
-        <span className="w-52 flex-none max-sm:w-36" />
+        <span className="w-48 flex-none" />
         <span className="relative h-4 flex-1">
           {SCALE.map((hour) => (
             <span
@@ -553,7 +555,7 @@ function WeekEditor({
           return (
             <li key={day} className="border-b border-line-2 last:border-b-0">
               <div className="flex items-center gap-3 py-1.5">
-                <div className="w-52 flex-none max-sm:w-36">
+                <div className="w-48 flex-none">
                   <Switch
                     label={name}
                     description={

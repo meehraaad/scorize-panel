@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { useRemoveItem, type PaymentData, type PaymentItem } from '../api';
+import { type PaymentData, type PaymentItem } from '../api';
+import { useRemoveItem } from '../mutations';
 import { itemPrice, useItemNote, useMoney } from './money';
 
 /** A card that opens to show more: a header row (title, line under it, amount) and its body. */

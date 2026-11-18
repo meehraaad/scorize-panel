@@ -15,14 +15,10 @@ import {
   fileQuery,
   HR_KEY,
   optionsQuery,
-  useEditStaff,
-  useNewContract,
-  useNewSalary,
-  useStartExit,
-  useReturn,
   type ContractKind,
   type StaffFile,
 } from '../api';
+import { useEditStaff, useNewContract, useNewSalary, useStartExit, useReturn } from '../mutations';
 import { fieldErrors, parseAmount, todayValue } from '../format';
 
 const CONTRACTS: readonly ContractKind[] = ['trial', 'fixed', 'permanent', 'project'];

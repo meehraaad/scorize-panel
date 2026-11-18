@@ -8,7 +8,8 @@ import { IconButton, IconLink } from '@/components/ui/IconButton';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useDeleteFile, type CaseFile } from '../api';
+import { type CaseFile } from '../api';
+import { useDeleteFile } from '../mutations';
 import { toast } from '@/lib/toast';
 
 /**

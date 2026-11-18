@@ -392,9 +392,13 @@ describe('sales manager section', () => {
     );
 
     await user.selectOptions(screen.getByLabelText('فروشنده'), '32');
-    expect(
-      await screen.findByText('در این ماه قراردادی به نام این فروشنده بسته نشده.'),
-    ).toBeInTheDocument();
+    // The page renders the new seller twice (route data, then the query), so the text's node can
+    // be replaced between finding it and checking it: look it up again on each try.
+    await waitFor(() =>
+      expect(
+        screen.getByText('در این ماه قراردادی به نام این فروشنده بسته نشده.'),
+      ).toBeInTheDocument(),
+    );
     await waitFor(() => expect(router.state.location.pathname).toBe('/sales/manager/team/32'));
   });
 

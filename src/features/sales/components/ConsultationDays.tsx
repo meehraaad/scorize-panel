@@ -170,7 +170,7 @@ function ConsultationRow({
         )}
       </span>
       {sellers && (
-        <span className="lg:w-52 lg:flex-none">
+        <span className="lg:flex-none">
           <AssignSeller item={item} sellers={sellers} hideLabel />
         </span>
       )}

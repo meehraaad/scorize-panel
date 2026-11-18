@@ -1,4 +1,4 @@
-import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
 import type { Stage } from '@/lib/applicant/stages';
@@ -90,7 +90,7 @@ export interface ProfessorEmailPage {
 
 export const PROFESSORS_PAGE_SIZE = 5;
 
-const BASE = '/applicant/v1';
+export const BASE = '/applicant/v1';
 
 export const applicationsQuery = queryOptions({
   queryKey: [...APPLICANT_KEY, 'applications'],
@@ -118,12 +118,3 @@ export const professorEmailsQuery = (page: number) =>
     // Keep the current page on screen while the next one loads: no jump, no skeleton flash.
     placeholderData: keepPreviousData,
   });
-
-export function useShowcaseAnswer() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, allowed }: { id: number; allowed: boolean }) =>
-      api(`${BASE}/applications/${String(id)}/showcase/`, { method: 'POST', body: { allowed } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
-  });
-}
