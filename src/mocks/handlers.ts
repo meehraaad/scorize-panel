@@ -9,6 +9,8 @@ import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { mailHandlers, resetMailMocks } from './mail';
 import { attendanceHandlers, resetAttendanceMocks } from './attendance';
 import { hrHandlers, resetHrMocks } from './hr';
+import { marketingHandlers } from './marketing';
+import { marketingBoardHandlers, resetMarketingBoardMocks } from './marketingBoard';
 import { hrPayHandlers, resetHrPayMocks } from './hrPay';
 import { messagesHandlers, resetMessagesMocks } from './messages';
 import { accessHandlers, resetAccessMocks } from './access';
@@ -24,6 +26,7 @@ import { resetSessionSummaries, sessionSummaryHandlers } from './sessionSummarie
 import { resetWriterMocks, writerHandlers } from './writer';
 import { salesStaffHandlers } from './salesStaff';
 import { resetTagMocks, tagHandlers } from './salesTags';
+import { consultationTypeHandlers, resetConsultationTypeMocks } from './salesConsultationTypes';
 import { taskReactionHandlers } from './taskReactions';
 import { resetStaffMocks, staffHandlers } from './staff';
 
@@ -45,6 +48,7 @@ import { resetStaffMocks, staffHandlers } from './staff';
  *   09120000005 / amir.abedi@scorize.local     superuser: every panel; the messages section's
  *                                               keys and access page (src/mocks/messages.ts); the attendance section
  *                                               (src/mocks/attendance.ts); the HR panel (src/mocks/hr.ts)
+ *   09120000006 / elham.nouri@scorize.local    marketing team: the marketing panel (src/mocks/marketing.ts)
  */
 
 export const MOCK_OTP = '123456';
@@ -170,6 +174,22 @@ const users: MockUser[] = [
     permissions: [],
     group_permissions: [],
   },
+  {
+    // The marketing team: the marketing panel only (src/mocks/marketing.ts).
+    id: 7,
+    first_name: 'الهام',
+    last_name: 'نوری',
+    email: 'elham.nouri@scorize.local',
+    phone_number: '09120000006',
+    password: MOCK_PASSWORD,
+    staff: { id: 11, full_name: 'الهام نوری', team: 2, is_active: true },
+    applicant: null,
+    is_country_supervisor: false,
+    ...workspace(),
+    is_superuser: false,
+    permissions: [],
+    group_permissions: [],
+  },
 ];
 
 // Server-side login state (Django keeps this in the session).
@@ -232,6 +252,7 @@ export const handlers = [
     resetAgreementMocks();
     resetVoiceMocks();
     resetTagMocks();
+    resetConsultationTypeMocks();
     resetTaskMocks();
     resetManagerMocks();
     resetHandoffMocks();
@@ -355,6 +376,7 @@ export const handlers = [
   // Reactions for every panel's tasks, before the sellers' generic task actions.
   ...taskReactionHandlers,
   ...tagHandlers,
+  ...consultationTypeHandlers,
   ...salesStaffHandlers,
   ...voiceHandlers,
   ...applicantHandlers,
@@ -373,6 +395,8 @@ export const handlers = [
   ...accessHandlers,
   ...attendanceHandlers,
   ...hrHandlers,
+  ...marketingHandlers,
+  ...marketingBoardHandlers,
   ...hrPayHandlers,
 ];
 
@@ -390,6 +414,7 @@ export function resetMockSession() {
   resetAgreementMocks();
   resetVoiceMocks();
   resetTagMocks();
+  resetConsultationTypeMocks();
   resetTaskMocks();
   resetManagerMocks();
   resetSupervisorMocks();
@@ -402,6 +427,7 @@ export function resetMockSession() {
   resetAccessMocks();
   resetAttendanceMocks();
   resetHrMocks();
+  resetMarketingBoardMocks();
   resetHrPayMocks();
 }
 

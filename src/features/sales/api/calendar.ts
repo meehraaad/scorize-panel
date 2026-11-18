@@ -3,6 +3,7 @@ import { api } from '@/lib/api/client';
 import type { Face } from '@/lib/face/api';
 import { toValue } from '@/lib/calendar';
 import { SALES_API, SALES_KEY } from '@/lib/sales/api';
+import type { CalendarTaskDay, CalendarTaskRow } from '@/lib/tasks/calendar';
 
 /** A consultation type on the seller's calendar: its colour and how it is held. */
 export interface CalendarType {
@@ -56,31 +57,7 @@ export interface CalendarCall {
   minutes?: number;
 }
 
-/** One of the seller's own tasks in the range (not a customer's follow-up: those are `calls`). */
-export interface CalendarTaskRow {
-  id: number;
-  kind: 'mine' | 'request';
-  text: string;
-  due_at: string;
-  /** False: due some time that day, no hour; it shows on the day row only. */
-  timed: boolean;
-  done: boolean;
-  customer: number | null;
-  /** The customer's name; '' for a task about no one. */
-  name: string;
-}
-
-/** How many of the seller's own tasks fall on a day (S50): only days with any. */
-export interface CalendarTaskDay {
-  /** `YYYY-MM-DD`. */
-  day: string;
-  /** Open follow-ups of mine due that day. */
-  mine: number;
-  /** Open requests from colleagues due that day. */
-  requests: number;
-  /** Of both, how many are closed. */
-  done: number;
-}
+export type { CalendarTaskDay, CalendarTaskRow };
 
 /** An in-person meeting at the office (S75): the seller's own, one they were asked to join, or (a manager) all. */
 export interface CalendarVisit {

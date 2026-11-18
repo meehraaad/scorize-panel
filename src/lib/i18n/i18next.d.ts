@@ -23,6 +23,7 @@ import type writer from '@/locales/fa/writer.json';
 import type assistant from '@/locales/fa/assistant.json';
 import type attendance from '@/locales/fa/attendance.json';
 import type hr from '@/locales/fa/hr.json';
+import type marketing from '@/locales/fa/marketing.json';
 import type mail from '@/locales/fa/mail.json';
 import type messages from '@/locales/fa/messages.json';
 import type access from '@/locales/fa/access.json';
@@ -61,6 +62,7 @@ declare module 'i18next' {
       assistant: typeof assistant;
       attendance: typeof attendance;
       hr: typeof hr;
+      marketing: typeof marketing;
       mail: typeof mail;
       messages: typeof messages;
       access: typeof access;

@@ -40,6 +40,7 @@ const NIMA = 3; // seller
 const REZA = 4; // sales manager
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
 const AMIR = 6; // a superuser: the messages section (src/mocks/messages.ts)
+const ELHAM = 7; // the marketing team (src/mocks/marketing.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -116,7 +117,6 @@ const PAGES: PageCase[] = [
     '/sales/leads?stage=new',
     '/sales/calendar',
     '/sales/board',
-    '/sales/month',
     '/sales/tasks',
     `/sales/customers/${String(ERFAN)}`,
     `/sales/customers/${String(ERFAN)}/money`,
@@ -139,6 +139,9 @@ const PAGES: PageCase[] = [
     // A seller's month from the leaderboard (S75): Mahdi (src/mocks/salesManager.ts).
     '/sales/manager/team/31',
     '/sales/manager/commission',
+    '/sales/manager/consultations',
+    '/sales/manager/consultations/2',
+    '/sales/manager/consultations/new',
     '/sales/manager/follow-ups',
     '/sales/manager/stages',
     '/sales/manager/tags',
@@ -207,9 +210,24 @@ const PAGES: PageCase[] = [
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  // Marketing panel (src/mocks/marketing.ts): Elham is on the marketing team.
+  ...[
+    '/marketing',
+    '/marketing/board',
+    '/marketing/tasks',
+    '/marketing/calendar',
+    '/marketing/performance',
+  ].map((path) => ({ path, user: ELHAM })),
+  // The marketing manager's area (src/mocks/marketingBoard.ts): Amir holds the key.
+  ...['/marketing/manage', '/marketing/manage/stages', '/marketing/manage/types'].map((path) => ({
+    path,
+    user: AMIR,
+  })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },
+  { path: '/me', user: AMIR },
+  { path: '/me/sales', user: NIMA },
 ];
 
 /** Queries first loaded while `path` opens, and whether the load began after the route had. */

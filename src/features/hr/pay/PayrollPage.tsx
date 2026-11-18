@@ -9,6 +9,7 @@ import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { ApiError } from '@/lib/api/client';
 import { toast } from '@/lib/toast';
 import { PersonLink } from '../components/PersonLink';
 import {
@@ -149,7 +150,10 @@ function Month({
                     toast.success(t('pay.payroll.finalDone'));
                     setConfirming(false);
                   },
-                  onError: () => toast.error(t('error')),
+                  onError: (error) =>
+                    toast.error(
+                      t(openDisputes(error) ? 'pay.payroll.openDisputes' : 'error'),
+                    ),
                 })
               }
             />
@@ -208,3 +212,9 @@ function SlipRow({
     </li>
   );
 }
+
+/** Django refuses a final month while people's objections to KPI values are open. */
+const openDisputes = (error: unknown) =>
+  error instanceof ApiError &&
+  error.status === 409 &&
+  (error.body as { code?: string } | null)?.code === 'open_disputes';

@@ -43,6 +43,7 @@ export type ServerFeature =
   | 'teamBreaks'
   | 'attendance'
   | 'hr'
+  | 'marketing'
   | 'dayFollowUps';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
@@ -58,6 +59,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * `claude/project-thread-79hhr6`). Tasks: `?panel=hr`.
    */
   hr: true,
+  /**
+   * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
+   * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.
+   */
+  marketing: true,
   /**
    * `GET /attendance/v1/daily|summary|enrollments|…`: the office terminal's reports and the mapping
    * of its user numbers to staff, key `manage_attendance` (lang `attendance/`, branch `test`).

@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { api } from '@/lib/api/client';
 import { toValue } from '@/lib/calendar';
 import type { Face } from '@/lib/face/api';
+import type { TaskCalendarData } from '@/lib/tasks/calendar';
 
 /**
  * The HR panel: staff files, work contracts and salary history, joining and leaving checklists,
@@ -155,34 +156,11 @@ export interface HrToday {
   birthdays: { staff: Named; day: string }[];
 }
 
-/** My task on the calendar (the sales calendar's shape, lang `api/sales/v1/calendar.py` seller_tasks). */
-export interface CalendarTaskRow {
-  id: number;
-  kind: 'mine' | 'request';
-  text: string;
-  due_at: string;
-  /** False: due some time that day, no hour; it shows on the day row only. */
-  timed: boolean;
-  done: boolean;
-  /** HR tasks are about no customer: null and ''. */
-  customer: number | null;
-  name: string;
-}
-
-/** How many of my tasks fall on a day: only days with any. */
-export interface CalendarTaskDay {
-  /** `YYYY-MM-DD`. */
-  day: string;
-  mine: number;
-  requests: number;
-  done: number;
-}
+export type { CalendarTaskDay, CalendarTaskRow } from '@/lib/tasks/calendar';
 
 export type HrEventKind = 'contract_end' | 'trial_end' | 'entry' | 'exit' | 'birthday';
 
-export interface HrCalendar {
-  tasks: CalendarTaskDay[];
-  task_rows: CalendarTaskRow[];
+export interface HrCalendar extends TaskCalendarData {
   events: { id: string; kind: HrEventKind; day: string; staff: Named }[];
 }
 

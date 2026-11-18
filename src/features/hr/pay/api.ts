@@ -117,9 +117,40 @@ export interface ResultRow {
   missing: number;
 }
 
-export interface KpiResults extends PayMonth {
+export type DisputeStatus = 'open' | 'accepted' | 'rejected';
+
+/** A person's objection to one of their values in a closed month, and HR's answer. */
+export interface Dispute {
+  id: number;
+  staff: PersonRef;
+  kpi: { id: number; name: string; unit: string };
+  text: string;
+  /** The value objected to. */
+  value: number | null;
+  status: DisputeStatus;
+  answer: string;
+  /** The value it was changed to, when accepted with one. */
+  new_value: number | null;
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+}
+
+/**
+ * A month closed for review: no longer measured, and people can object until `disputes_until`
+ * (a date, inclusive). Pay can't be made final while an objection is open.
+ */
+export interface MonthReview {
+  closed: boolean;
+  closed_at: string | null;
+  closed_by: string | null;
+  disputes_until: string | null;
+}
+
+export interface KpiResults extends PayMonth, MonthReview {
   /** The month's pay is final: results no longer change. */
   final: boolean;
+  disputes: Dispute[];
   kpis: Kpi[];
   rows: ResultRow[];
 }
@@ -299,6 +330,29 @@ export const useSaveResults = () =>
 export const useRefreshResults = () =>
   usePayMutation((body: PayMonth) =>
     api<KpiResults>(`${HR_API}/kpi-results/refresh/`, { method: 'POST', body }),
+  );
+
+export const useCloseMonth = () =>
+  usePayMutation((body: PayMonth & { days: number }) =>
+    api<KpiResults>(`${HR_API}/kpi-months/close/`, { method: 'POST', body }),
+  );
+
+export const useReopenMonth = () =>
+  usePayMutation((month: PayMonth) =>
+    api<KpiResults>(`${HR_API}/kpi-months/close/?${monthQuery(month)}`, { method: 'DELETE' }),
+  );
+
+export interface AnswerInput {
+  id: number;
+  accept: boolean;
+  answer: string;
+  /** Accepting with a value changes the person's value to it. */
+  value: number | null;
+}
+
+export const useAnswerDispute = () =>
+  usePayMutation(({ id, ...body }: AnswerInput) =>
+    api<KpiResults>(`${HR_API}/kpi-disputes/${String(id)}/answer/`, { method: 'POST', body }),
   );
 
 export type RuleInput = Omit<PayRule, 'id' | 'staff'> & { staff: number | null };
