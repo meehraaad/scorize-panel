@@ -1,5 +1,4 @@
 import type { ChipTone } from '@/components/ui/Chip';
-import { ApiError } from '@/lib/api/client';
 import { toLatinDigits } from '@/lib/text';
 import type { ContractKind, HrEventKind, StaffState } from './api';
 
@@ -33,16 +32,7 @@ export function parseAmount(value: string) {
   return digits ? Number(digits) : null;
 }
 
-/** Django's field errors (`{field: [message]}`) as one message per field. */
-export function fieldErrors(error: unknown): Record<string, string> {
-  if (!(error instanceof ApiError) || error.status !== 400 || !error.body) return {};
-  const body = error.body as Record<string, unknown>;
-  return Object.fromEntries(
-    Object.entries(body).flatMap(([field, value]) =>
-      Array.isArray(value) && typeof value[0] === 'string' ? [[field, value[0]]] : [],
-    ),
-  );
-}
+export { fieldErrors } from '@/lib/api/fieldErrors';
 
 /** Today's local `YYYY-MM-DD`. */
 export function todayValue() {

@@ -277,5 +277,10 @@
     "showing": "Only this day's tasks:",
     "label": "Day",
     "clear": "Show all days"
+  },
+  "calendar": {
+    "task": "My task",
+    "tasks": "{{n}} tasks",
+    "add": "New task for {{day}}"
   }
 }

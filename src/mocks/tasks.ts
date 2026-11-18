@@ -248,8 +248,49 @@ function hrTasksState(): TasksState {
   };
 }
 
+/** Elham's tasks in the marketing panel (`?panel=marketing`, src/mocks/marketing.ts): about content. */
+function marketingTasksState(): TasksState {
+  const task = (id: number, text: string, due: string, source: MyTask['source']): MyTask => ({
+    id,
+    text,
+    due_at: due,
+    timed: true,
+    person: null,
+    source,
+    snoozed: 0,
+    step: null,
+    action: 'open',
+    note: '',
+    suggested_next: '',
+    follow_up: false,
+    receipt: null,
+  });
+  return {
+    overview: {
+      on_time: { week: 0.86, last_week: 0.9, target: 0.9 },
+      orphans: [],
+      mine: [
+        task(711, 'کپشن و هشتگ ریلز آلمان', todayAt(10), 'me'),
+        task(712, 'متن پیامک یادآوری وبینار کانادا', todayAt(16), 'system'),
+      ],
+      tomorrow: 2,
+      done_today: 1,
+      requests: [],
+      team: [],
+      sent: [],
+      colleagues: [
+        { id: 12, name: 'مینا صادقی', role: 'تیم مارکتینگ' },
+        { id: 13, name: 'پویا فرهادی', role: 'تیم مارکتینگ' },
+      ],
+    },
+    details: new Map(),
+  };
+}
+
 const HR_USER = 6;
+const MARKETING_USER = 7;
 let hrTasks: TasksState | null = null;
+let marketingTasks: TasksState | null = null;
 let supervisorTasks: TasksState | null = null;
 
 interface TasksContext {
@@ -264,6 +305,10 @@ function tasksOrError(): TasksContext | Response {
   if (storage.get() === HR_USER) {
     hrTasks ??= hrTasksState();
     return { tasks: hrTasks, me: 'امیر عابدی', onPerson: () => undefined };
+  }
+  if (storage.get() === MARKETING_USER) {
+    marketingTasks ??= marketingTasksState();
+    return { tasks: marketingTasks, me: 'الهام نوری', onPerson: () => undefined };
   }
   if (storage.get() !== SUPERVISOR) return forbidden();
   supervisorTasks ??= supervisorTasksState();
@@ -511,5 +556,6 @@ export const taskHandlers = [
 export function resetTaskMocks() {
   supervisorTasks = null;
   hrTasks = null;
+  marketingTasks = null;
   resetTaskReactionMocks();
 }
