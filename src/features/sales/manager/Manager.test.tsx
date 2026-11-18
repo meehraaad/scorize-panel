@@ -551,6 +551,36 @@ describe('commission rules (S60)', () => {
     ).toBeInTheDocument();
   });
 
+  it('still renders when Django sends no currencies, until or currency (a lagging backend)', async () => {
+    server.use(
+      http.get('/api/sales/v1/manager/commission/', () =>
+        HttpResponse.json({
+          rules: [
+            {
+              id: 1,
+              seller: null,
+              seller_name: null,
+              basis: 'contracts',
+              threshold: 4,
+              reward: 'percent',
+              percent: 3,
+              amount: null,
+              since: '2026-10-23',
+            },
+          ],
+          sellers: [{ id: 31, name: 'مهدی توکلی' }],
+        }),
+      ),
+    );
+    loginAs(REZA);
+    renderApp('/sales/manager/commission');
+    const everyone = await screen.findByRole('region', { name: 'همه‌ی فروشنده‌ها' });
+    expect(
+      within(everyone).getByText('با ۴ قرارداد یا بیشتر در ماه: ۳٪ از فروش ماه'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('form', { name: 'قانون تازه' })).toBeInTheDocument();
+  });
+
   it("the team report shows each seller's commission", async () => {
     loginAs(REZA);
     renderApp('/sales/manager/team');
