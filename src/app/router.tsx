@@ -184,8 +184,10 @@ const pageRoutes: RouteObject[] = [
     ],
   },
   ...PANELS.map(panelRoutes),
-  // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
-  ...(import.meta.env.DEV
+  // The assessment preview pages: development, and the test server's build
+  // (VITE_ASSESSMENT_PREVIEW=true). Production builds drop them; Django also refuses
+  // their API outside local mode.
+  ...(import.meta.env.DEV || import.meta.env.VITE_ASSESSMENT_PREVIEW === 'true'
     ? [
         {
           path: 'dev/assessments',
@@ -284,6 +286,11 @@ const pageRoutes: RouteObject[] = [
           }),
           HydrateFallback: BootFallback,
         },
+      ]
+    : []),
+  // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
+  ...(import.meta.env.DEV
+    ? [
         {
           path: 'dev/components',
           ...lazyPage(() => import('./dev/ComponentsPage')),
