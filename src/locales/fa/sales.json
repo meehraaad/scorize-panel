@@ -259,6 +259,17 @@
       "cold": "سرد (زیر ۴۵)"
     },
     "overdueOnly": "فقط عقب‌افتاده‌ها",
+    "consultation": "مشاوره‌ی خریداری‌شده",
+    "allConsultations": "همه",
+    "consultationOption": {
+      "any": "خریده (هر نوع)",
+      "in_person": "حضوری",
+      "online": "غیرحضوری",
+      "none": "مشاوره نخریده"
+    },
+    "consultationType": "نوع مشاوره",
+    "allConsultationTypes": "همه‌ی انواع",
+    "oldType": "{{name}} (قدیمی)",
     "list": "فهرست لیدها",
     "column": {
       "customer": "مشتری",
@@ -815,10 +826,19 @@
     },
     "tagNeed": "ثبت نشده",
     "followUp": "پیگیری",
-    "calls": "پیگیری‌های ساعت‌دار",
     "modeFilter": "نوع برگزاری",
     "modeAll": "همه",
-    "layers": "نمایش در تقویم",
+    "kinds": "نمایش در تقویم",
+    "kind": {
+      "consultations": "مشاوره",
+      "tasks": "کار",
+      "visits": "جلسه حضوری",
+      "calls": "پیگیری"
+    },
+    "types": "نوع مشاوره",
+    "typesShown": "{{shown}} از {{total}}",
+    "selectAll": "انتخاب همه",
+    "clearAll": "برداشتن همه",
     "form": {
       "done": "فرم تبلت را پر کرده",
       "missing": "فرم تبلت را هنوز پر نکرده",
@@ -859,7 +879,6 @@
       "aria": "کارهای {{day}}: {{parts}}. رفتن به صفحه‌ی کارها"
     },
     "taskBlock": "کار",
-    "taskLayer": "کارهای ساعت‌دار",
     "assign": {
       "label": "مشاور",
       "done": "مشاوره‌ی {{name}} به {{seller}} سپرده شد.",
