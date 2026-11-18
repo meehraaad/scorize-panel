@@ -33,6 +33,8 @@ describe('roles', () => {
     expect(getRoles(staff(Team.SALES))).toEqual(['sales']);
     expect(getRoles(staff(Team.SUPPORT))).toEqual(['sales']);
     expect(getRoles(staff(Team.EXECUTIVE))).toEqual(['supervisor']);
+    // The visa team owns visa services (backend-changes.md SVC2).
+    expect(getRoles(staff(Team.VISA))).toEqual(['supervisor']);
   });
 
   it('needs an email to be a seller, like User.is_seller', () => {

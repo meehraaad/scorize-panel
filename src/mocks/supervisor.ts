@@ -10,6 +10,7 @@ import type {
   CaseDocument,
   CaseDocuments,
   CaseRow,
+  CaseService,
   CaseStage,
   CaseWriting,
   Credential,
@@ -20,8 +21,10 @@ import type {
   NewDocument,
   ProfessorEmailRow,
   ReportsData,
+  ServiceCandidate,
   StageFilter,
   TodayData,
+  UnassignedServices,
   WaitingCase,
   WritingState,
   BotSettings,
@@ -85,6 +88,7 @@ interface MockCase {
   history: CaseActivity[];
   messages: TicketMessage[];
   unread: number;
+  services: CaseService[];
 }
 
 // ── Seed data ────────────────────────────────────────────────────────────────────────────────
@@ -747,7 +751,46 @@ function buildCase(seed: CaseSeed): MockCase {
     history,
     messages,
     unread: seed.unread ?? 0,
+    services: servicesOf(seed),
   };
+}
+
+/** Staff who may own a service (Django: the kind's team and the executive team). */
+export const SERVICE_STAFF: ServiceCandidate[] = [
+  { id: 7, name: 'مریم کاظمی', services: 18, team: 'executive', countries: ['کانادا', 'آلمان'] },
+  { id: 11, name: 'علی نوری', services: 12, team: 'executive', countries: ['ایتالیا'] },
+  { id: 21, name: 'نگار صادقی', services: 6, team: 'visa', countries: ['کانادا', 'آلمان'] },
+];
+const SERVICE_KINDS = { admission: 'پذیرش', visa: 'ویزا' } as const;
+
+/** One admission service per country; the first case also bought the visa (its owner not chosen yet). */
+function servicesOf(seed: CaseSeed): CaseService[] {
+  const owner = { id: 7, name: 'مریم کاظمی' };
+  const kinds = seed.id === 1240 ? (['admission', 'visa'] as const) : (['admission'] as const);
+  return kinds.flatMap((kind) =>
+    seed.countries.map((country, index) => ({
+      id: seed.id * 100 + (kind === 'visa' ? 50 : 0) + index,
+      kind,
+      name: SERVICE_KINDS[kind],
+      country,
+      status: 'open' as const,
+      owner: kind === 'visa' ? null : owner,
+    })),
+  );
+}
+
+/** Open services nobody owns, as the new-cases page lists them (called by the handoff mock). */
+export function unassignedServices(): UnassignedServices {
+  const all = casesOrError();
+  const results =
+    all instanceof Response
+      ? []
+      : [...all.values()].flatMap((item) =>
+          item.services
+            .filter((service) => service.status === 'open' && !service.owner)
+            .map((service) => ({ ...service, case: item.data.id, case_name: item.data.name })),
+        );
+  return { count: results.length, results };
 }
 
 // ── State ────────────────────────────────────────────────────────────────────────────────────
@@ -779,6 +822,7 @@ function caseData(item: MockCase): CaseData {
     documents_waiting: item.documents.filter((doc) => doc.state === 'review').length,
     applications: item.applications.length,
     face: faceOf(item.data.user),
+    services: item.services,
   };
 }
 
@@ -1175,6 +1219,44 @@ export const supervisorHandlers = [
   http.get(`${API}/cases/:id/`, ({ params }) => {
     const item = caseOr404(params);
     return item instanceof Response ? item : HttpResponse.json(caseData(item));
+  }),
+
+  // SVC2: who may own a service, and handing it over (managers only; the mock supervisor is one).
+  http.get(`${API}/cases/:id/services/:service/owner/`, ({ params }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    const results = SERVICE_STAFF.filter(
+      (person) => person.team === 'executive' || person.team === service.kind,
+    );
+    const team = results.filter((person) => person.team === service.kind);
+    const suggested =
+      (team.length ? team : results).find(
+        (person) => service.country && person.countries.includes(service.country),
+      ) ?? null;
+    return HttpResponse.json({ service, results, suggested: suggested?.id ?? null });
+  }),
+
+  http.post(`${API}/cases/:id/services/:service/owner/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    if (service.status === 'closed')
+      return HttpResponse.json({ detail: 'This service is closed.' }, { status: 409 });
+    const { owner } = (await request.json()) as { owner: number };
+    const person = SERVICE_STAFF.find(
+      (entry) => entry.id === owner && (entry.team === 'executive' || entry.team === service.kind),
+    );
+    if (!person)
+      return HttpResponse.json(
+        { owner: ["Choose an active person of the service's team."] },
+        { status: 400 },
+      );
+    service.owner = { id: person.id, name: person.name };
+    record(item, `مسئول خدمت ${service.name} · ${service.country ?? ''}: ${person.name}`);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.put(`${API}/cases/:id/face/`, ({ params, request }) => {

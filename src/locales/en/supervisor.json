@@ -596,5 +596,33 @@
       "done": "{{name}}'s case was cancelled.",
       "paid": "The prepayment is paid or its receipt is in review: refund or decline it in the admin first."
     }
+  },
+  "services": {
+    "title": "Services",
+    "empty": "This case has no services yet; they are made from the contract's ticks and countries.",
+    "noOwner": "No owner",
+    "paused": "Paused",
+    "change": "Change the owner of {{service}}",
+    "choose": "Choose an owner for {{service}}",
+    "dialog": {
+      "title": "Owner of {{service}}",
+      "now": "Owner now: {{name}}",
+      "none": "This service has no owner yet.",
+      "loadError": "The staff list didn't load. Open the page again.",
+      "nobody": "Nobody active in this service's team.",
+      "owner": "Owner",
+      "suggested": "Suggested: the service team's person for this country with the fewest open services",
+      "option": "{{name}} · {{n}} open services · {{countries}}",
+      "oldSite": "The new owner is also added to the case's supervisors on the old site.",
+      "save": "Hand over {{service}}",
+      "cancel": "Cancel",
+      "done": "{{service}} handed to {{name}}.",
+      "closed": "This service is closed; its owner can't change."
+    },
+    "unassigned": {
+      "title": "Services without an owner",
+      "count": "{{n}} services",
+      "empty": "Every open service has an owner."
+    }
   }
 }
