@@ -13,6 +13,7 @@ import { PageColumns } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SaveBar } from '@/components/ui/SaveBar';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { StatGrid } from '@/components/ui/StatGrid';
 import { Switch } from '@/components/ui/Switch';
 import { TextAreaField, TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
@@ -130,7 +131,7 @@ export default function ConsultationTypePage() {
   if (id !== 'new' && !item)
     return (
       <>
-        <BackLink to={salesPath('manager/consultations/types')}>
+        <BackLink to={salesPath('manager/consultations')}>
           {t('manager.consultations.back')}
         </BackLink>
         <EmptyState>{t('manager.consultations.missing')}</EmptyState>
@@ -171,7 +172,7 @@ function TypeForm({ item }: { item: ConsultationTypeRow | null }) {
         toast.success(t(item ? 'manager.consultations.saved' : 'manager.consultations.created'));
         setTried(false);
         if (!item) {
-          void navigate(salesPath(`manager/consultations/types/${String(row.id)}`), {
+          void navigate(salesPath(`manager/consultations/${String(row.id)}`), {
             replace: true,
           });
           return;
@@ -202,13 +203,12 @@ function TypeForm({ item }: { item: ConsultationTypeRow | null }) {
         submit();
       }}
     >
-      <BackLink to={salesPath('manager/consultations/types')}>
-        {t('manager.consultations.back')}
-      </BackLink>
+      <BackLink to={salesPath('manager/consultations')}>{t('manager.consultations.back')}</BackLink>
       <PageHeader
         title={item ? item.title : t('manager.consultations.new')}
         subtitle={item ? t('manager.consultations.editHint') : t('manager.consultations.newHint')}
       />
+      {item && <TypeFacts item={item} draft={draft} />}
       {serverError && <Notice tone="error">{serverError}</Notice>}
       <PageColumns
         asideLabel={t('manager.consultations.price.title')}
@@ -397,7 +397,69 @@ function TypeForm({ item }: { item: ConsultationTypeRow | null }) {
   );
 }
 
-/** The week, a block per day: its times (from, to, people at each start) and the starts they make. */
+/** The type at a glance, as the form now stands: price, length, starts a week, paid sessions ahead. */
+function TypeFacts({ item, draft }: { item: ConsultationTypeRow; draft: Draft }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const s = useSalesFormat();
+  const step = draft.step ? Number(draft.step) : null;
+  const starts = draft.week.reduce((sum, row) => sum + startsOf(row, draft.length, step).length, 0);
+  const days = new Set(draft.week.map((row) => row.day)).size;
+  const price = Number(draft.price) || 0;
+  const discounted = draft.discount ? Number(draft.discountedPrice) || 0 : 0;
+  return (
+    <StatGrid
+      compact
+      label={t('manager.consultations.facts.label')}
+      stats={[
+        {
+          label: t('manager.consultations.facts.price'),
+          value: discounted
+            ? s.toman(discounted)
+            : price
+              ? s.toman(price)
+              : t('manager.consultations.free'),
+          ...(discounted
+            ? { note: t('manager.consultations.facts.was', { price: s.toman(price) }) }
+            : {}),
+        },
+        {
+          label: t('manager.consultations.facts.length'),
+          value: f.number(draft.length),
+          unit: t('manager.consultations.facts.minutes'),
+        },
+        {
+          label: t('manager.consultations.facts.week'),
+          value: f.number(starts),
+          note: t('manager.consultations.facts.days', { n: f.number(days) }),
+        },
+        {
+          label: t('manager.consultations.facts.upcoming'),
+          value: f.number(item.upcoming),
+          ...(draft.active ? {} : { note: t('manager.consultations.off') }),
+        },
+      ]}
+    />
+  );
+}
+
+const minutesOf = (time: string) => {
+  const [hours = 0, minutes = 0] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+/** Where a time sits on a day's bar, 6:00 to midnight, in percent. */
+const DAY_FROM = 6 * 60;
+const DAY_TO = 24 * 60;
+const place = (time: string) =>
+  Math.min(100, Math.max(0, ((minutesOf(time) - DAY_FROM) / (DAY_TO - DAY_FROM)) * 100));
+const SCALE = [6, 9, 12, 15, 18, 21, 24];
+const NEW_ROW = { start: '10:00', end: '17:00', capacity: 1 };
+
+/**
+ * The week, a line per day as on the office hours page: a switch opens or closes the day, a bar
+ * shows its times and where each session starts, and the day opens to edit its times (from, to,
+ * people at each start), add another or copy them to every day.
+ */
 function WeekEditor({
   week,
   length,
@@ -413,152 +475,248 @@ function WeekEditor({
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
+  const [open, setOpen] = useState<Set<Weekday>>(new Set());
+  // A closed day's times, back if it is opened again before saving.
+  const [stash, setStash] = useState<Partial<Record<Weekday, WeekRow[]>>>({});
   const options = TIMES.map((value) => ({ value, label: f.digits(value) }));
   const withTime = (value: string) =>
     TIMES.includes(value) ? options : [{ value, label: f.digits(value) }, ...options];
   const rowsOf = (day: Weekday) => week.filter((row) => row.day === day);
   const replaceDay = (day: Weekday, rows: WeekRow[]) =>
     onChange([...week.filter((row) => row.day !== day), ...rows]);
-
+  const toggle = (day: Weekday) =>
+    setOpen((days) => {
+      const next = new Set(days);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  const switchDay = (day: Weekday, on: boolean) => {
+    if (on) {
+      replaceDay(day, stash[day]?.length ? stash[day] : [{ day, ...NEW_ROW }]);
+      setOpen((days) => new Set(days).add(day));
+      return;
+    }
+    setStash((current) => ({ ...current, [day]: rowsOf(day) }));
+    replaceDay(day, []);
+  };
   const copyToAll = (from: Weekday) => {
     const rows = rowsOf(from);
     onChange(WEEKDAYS.flatMap((day) => rows.map((row) => ({ ...row, day }))));
     toast.success(t('manager.consultations.week.copied', { day: t(`manager.hours.day.${from}`) }));
   };
+  const change = (day: Weekday, index: number, patch: Partial<WeekRow>) => {
+    const rows = rowsOf(day);
+    replaceDay(
+      day,
+      rows.map((item, at) => (at === index ? { ...item, ...patch } : item)),
+    );
+  };
 
   return (
-    <ul
-      className="m-0 flex list-none flex-col px-5 pb-5 lg:px-8 lg:pb-7"
-      aria-label={t('manager.consultations.week.title')}
-    >
-      {WEEKDAYS.map((day) => {
-        const rows = rowsOf(day);
-        const name = t(`manager.hours.day.${day}`);
-        const starts = rows
-          .flatMap((row) => startsOf(row, length, step))
-          .sort()
-          .map((value) => f.digits(value));
-        return (
-          <li key={day} className="flex flex-col gap-3 border-b border-line-2 py-4 last:border-b-0">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[15px] font-bold">{name}</span>
-              <span className="flex gap-1">
-                {rows.length > 0 && (
-                  <Button
-                    variant="outline"
-                    className="h-11 px-4 text-sm"
-                    onClick={() => copyToAll(day)}
-                  >
-                    {t('manager.consultations.week.copy')}
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  className="h-11 px-4 text-sm"
-                  onClick={() => {
-                    const last = rows.at(-1);
-                    replaceDay(day, [
-                      ...rows,
-                      last
-                        ? { ...last, start: last.end, end: last.end < '20:00' ? '21:00' : '23:59' }
-                        : { day, start: '10:00', end: '17:00', capacity: 1 },
-                    ]);
-                  }}
+    <div className="flex flex-col px-5 pb-5 lg:px-8 lg:pb-7">
+      <div aria-hidden="true" className="flex gap-3 pb-1 max-sm:hidden">
+        <span className="w-52 flex-none max-sm:w-36" />
+        <span className="relative h-4 flex-1">
+          {SCALE.map((hour) => (
+            <span
+              key={hour}
+              className="absolute -translate-x-1/2 text-xs text-text-2 rtl:translate-x-1/2"
+              style={{ insetInlineStart: `${String(place(`${String(hour)}:00`))}%` }}
+            >
+              {f.number(hour)}
+            </span>
+          ))}
+        </span>
+        <span className="w-11 flex-none" />
+      </div>
+      <ul
+        className="m-0 flex list-none flex-col p-0"
+        aria-label={t('manager.consultations.week.title')}
+      >
+        {WEEKDAYS.map((day) => {
+          const rows = rowsOf(day);
+          const name = t(`manager.hours.day.${day}`);
+          const starts = rows.flatMap((row) => startsOf(row, length, step)).sort();
+          const wrong = bad.has(day);
+          const editing = rows.length > 0 && (open.has(day) || wrong);
+          const ranges = f.list(
+            [...rows]
+              .sort((a, b) => minutesOf(a.start) - minutesOf(b.start))
+              .map((row) =>
+                t('manager.consultations.week.range', {
+                  from: f.digits(row.start),
+                  to: f.digits(row.end),
+                }),
+              ),
+          );
+          return (
+            <li key={day} className="border-b border-line-2 last:border-b-0">
+              <div className="flex items-center gap-3 py-1.5">
+                <div className="w-52 flex-none max-sm:w-36">
+                  <Switch
+                    label={name}
+                    description={
+                      rows.length
+                        ? t('manager.consultations.week.daySummary', {
+                            ranges,
+                            n: f.number(starts.length),
+                          })
+                        : t('manager.consultations.week.dayOff')
+                    }
+                    checked={rows.length > 0}
+                    onChange={(on) => switchDay(day, on)}
+                  />
+                </div>
+                <div
+                  aria-hidden="true"
+                  className={`relative h-11 min-w-0 flex-1 rounded-xl ${wrong ? 'bg-danger-tint' : 'bg-track/60'}`}
                 >
-                  {t('manager.consultations.week.add')}
-                </Button>
-              </span>
-            </div>
-            {rows.length === 0 ? (
-              <p className="m-0 text-[13px] text-text-2">
-                {t('manager.consultations.week.closed')}
-              </p>
-            ) : (
-              <>
-                {rows.map((row, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-2 max-sm:grid-cols-3"
-                  >
-                    <SelectField
-                      label={t('manager.consultations.week.from')}
-                      value={row.start}
-                      options={withTime(row.start)}
-                      onChange={(start) =>
-                        replaceDay(
-                          day,
-                          rows.map((item, at) => (at === index ? { ...item, start } : item)),
-                        )
-                      }
-                    />
-                    <SelectField
-                      label={t('manager.consultations.week.to')}
-                      value={row.end}
-                      options={withTime(row.end)}
-                      onChange={(end) =>
-                        replaceDay(
-                          day,
-                          rows.map((item, at) => (at === index ? { ...item, end } : item)),
-                        )
-                      }
-                    />
-                    <TextField
-                      type="number"
-                      inputMode="numeric"
-                      dir="ltr"
-                      min={1}
-                      max={50}
-                      label={t('manager.consultations.week.capacity')}
-                      value={String(row.capacity)}
-                      onChange={(event) =>
-                        replaceDay(
-                          day,
-                          rows.map((item, at) =>
-                            at === index
-                              ? {
-                                  ...item,
-                                  capacity: Math.min(
-                                    50,
-                                    Math.max(0, Math.round(Number(event.target.value))),
-                                  ),
-                                }
-                              : item,
-                          ),
-                        )
-                      }
-                    />
-                    <IconButton
-                      icon="trash"
-                      tone="danger"
-                      aria-label={t('manager.consultations.week.remove', { day: name })}
-                      onClick={() =>
-                        replaceDay(
-                          day,
-                          rows.filter((_, at) => at !== index),
-                        )
-                      }
-                    />
-                  </div>
-                ))}
-                <p
-                  className={`m-0 text-[13px] leading-6 ${bad.has(day) ? 'text-danger' : 'text-text-2'}`}
-                  role={bad.has(day) ? 'alert' : undefined}
-                >
-                  {bad.has(day)
-                    ? t('manager.consultations.errors.day')
-                    : starts.length
-                      ? t('manager.consultations.week.starts', {
+                  {rows.length ? (
+                    <>
+                      {rows.map((row, index) => (
+                        <span
+                          key={index}
+                          className="absolute inset-y-1.5 rounded-lg bg-tint ring-1 ring-primary/40"
+                          style={{
+                            insetInlineStart: `${String(place(row.start))}%`,
+                            width: `${String(Math.max(1, place(row.end) - place(row.start)))}%`,
+                          }}
+                        />
+                      ))}
+                      {starts.map((start) => (
+                        <span
+                          key={start}
+                          className="absolute bottom-2.5 h-2 w-0.5 rounded bg-primary"
+                          style={{ insetInlineStart: `${String(place(start))}%` }}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <span className="absolute inset-0 flex items-center justify-center text-[13px] text-text-2">
+                      {t('manager.consultations.week.dayOff')}
+                    </span>
+                  )}
+                </div>
+                <IconButton
+                  icon={editing ? 'collapse' : 'expand'}
+                  aria-expanded={editing}
+                  aria-label={t('manager.consultations.week.editDay', { day: name })}
+                  onClick={() => toggle(day)}
+                  disabled={rows.length === 0}
+                />
+              </div>
+              {editing && (
+                <div className="mb-3 flex flex-col gap-3 rounded-2xl bg-canvas p-4">
+                  {rows.map((row, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-2 max-sm:grid-cols-3"
+                    >
+                      <SelectField
+                        label={t('manager.consultations.week.from')}
+                        value={row.start}
+                        options={withTime(row.start)}
+                        onChange={(start) => change(day, index, { start })}
+                      />
+                      <SelectField
+                        label={t('manager.consultations.week.to')}
+                        value={row.end}
+                        options={withTime(row.end)}
+                        onChange={(end) => change(day, index, { end })}
+                      />
+                      <TextField
+                        type="number"
+                        inputMode="numeric"
+                        dir="ltr"
+                        min={1}
+                        max={50}
+                        label={t('manager.consultations.week.capacity')}
+                        value={String(row.capacity)}
+                        onChange={(event) =>
+                          change(day, index, {
+                            capacity: Math.min(
+                              50,
+                              Math.max(0, Math.round(Number(event.target.value))),
+                            ),
+                          })
+                        }
+                      />
+                      <IconButton
+                        icon="trash"
+                        tone="danger"
+                        aria-label={t('manager.consultations.week.remove', { day: name })}
+                        onClick={() =>
+                          replaceDay(
+                            day,
+                            rows.filter((_, at) => at !== index),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                  {wrong ? (
+                    <p className="m-0 text-[13px] leading-6 text-danger" role="alert">
+                      {t('manager.consultations.errors.day')}
+                    </p>
+                  ) : starts.length ? (
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[13px] text-text-2">
+                        {t('manager.consultations.week.startsTitle', {
                           n: f.number(starts.length),
-                          list: starts.join('، '),
-                        })
-                      : t('manager.consultations.week.tooShort')}
-                </p>
-              </>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+                        })}
+                      </span>
+                      <span className="flex flex-wrap gap-1.5">
+                        {starts.map((start) => (
+                          <span
+                            key={start}
+                            className="rounded-full bg-surface px-2.5 py-1 text-[13px] tabular-nums shadow-[inset_0_0_0_1px_var(--line-2)]"
+                          >
+                            {f.digits(start)}
+                          </span>
+                        ))}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="m-0 text-[13px] leading-6 text-text-2">
+                      {t('manager.consultations.week.tooShort')}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-11 px-4 text-sm"
+                      onClick={() => {
+                        const last = rows.at(-1);
+                        replaceDay(day, [
+                          ...rows,
+                          last
+                            ? {
+                                ...last,
+                                start: last.end,
+                                end: last.end < '20:00' ? '21:00' : '23:59',
+                              }
+                            : { day, ...NEW_ROW },
+                        ]);
+                      }}
+                    >
+                      {t('manager.consultations.week.add')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-11 px-4 text-sm"
+                      onClick={() => copyToAll(day)}
+                    >
+                      {t('manager.consultations.week.copy')}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
