@@ -12,6 +12,7 @@ import {
   stagesQuery,
   managerTagsQuery,
   consultationTypesQuery,
+  managerConsultationsQuery,
   contractBuilderQuery,
   contractOverviewQuery,
   templateParam,
@@ -379,20 +380,42 @@ export const salesPanel: PanelDefinition = {
           }),
         },
         {
-          // Consultation types, their prices and weekly times (S81).
+          // The team's booked sessions (filters, consultant menu), and the types with their
+          // prices and weekly times (S81) as a sub-tab.
           path: 'consultations',
-          ...lazyPage(() => import('@/features/sales/manager/ConsultationTypesPage'), [], {
-            data: () => [consultationTypesQuery],
-            skeleton: 'list',
-          }),
-        },
-        {
-          // One type's editor; `new` makes a type.
-          path: 'consultations/:id',
-          ...lazyPage(() => import('@/features/sales/manager/ConsultationTypePage'), [], {
-            data: () => [consultationTypesQuery],
-            skeleton: 'form',
-          }),
+          ...lazyPage(() => import('@/features/sales/manager/ConsultationsLayout'), []),
+          children: [
+            {
+              index: true,
+              ...lazyPage(() => import('@/features/sales/manager/ManagerConsultationsPage'), [], {
+                data: ({ request }) => [
+                  managerConsultationsQuery(new URL(request.url).searchParams),
+                ],
+                skeleton: 'list',
+              }),
+            },
+            {
+              path: 'types',
+              ...lazyPage(() => import('@/features/sales/manager/ConsultationTypesPage'), [], {
+                data: () => [consultationTypesQuery],
+                skeleton: 'list',
+              }),
+            },
+            {
+              // One type's editor; `new` makes a type.
+              path: 'types/:id',
+              ...lazyPage(() => import('@/features/sales/manager/ConsultationTypePage'), [], {
+                data: () => [consultationTypesQuery],
+                skeleton: 'form',
+              }),
+            },
+            // The editor's address before the sessions list took the tab.
+            {
+              path: ':id',
+              loader: ({ params }) =>
+                redirect(`/sales/manager/consultations/types/${params.id ?? ''}`),
+            },
+          ],
         },
         {
           path: 'stages',

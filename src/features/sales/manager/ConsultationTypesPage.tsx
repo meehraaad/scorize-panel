@@ -27,7 +27,10 @@ export default function ConsultationTypesPage() {
         title={t('manager.consultations.title')}
         subtitle={t('manager.consultations.subtitle')}
         actions={
-          <Link to={salesPath('manager/consultations/new')} className={buttonClass('primary')}>
+          <Link
+            to={salesPath('manager/consultations/types/new')}
+            className={buttonClass('primary')}
+          >
             {t('manager.consultations.new')}
           </Link>
         }
@@ -81,7 +84,7 @@ function TypeCard({ item }: { item: ConsultationTypeRow }) {
 
   return (
     <Link
-      to={salesPath(`manager/consultations/${String(item.id)}`)}
+      to={salesPath(`manager/consultations/types/${String(item.id)}`)}
       className="flex h-full flex-col gap-3 rounded-2xl p-4 text-text shadow-[inset_0_0_0_1px_var(--line-2)] transition-shadow hover:shadow-[inset_0_0_0_1.5px_var(--primary)]"
     >
       <span className="flex flex-wrap items-center justify-between gap-2">
