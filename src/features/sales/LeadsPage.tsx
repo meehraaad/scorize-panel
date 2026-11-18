@@ -18,7 +18,6 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES } from '@/lib/sales/api';
 import { pagesOf } from '@/lib/api/page';
 import {
-  CONSULTATION_FILTERS,
   LEAD_FILTERS,
   leadFilterOf,
   leadsQuery,
@@ -32,6 +31,17 @@ import { BulkBar } from './components/BulkBar';
 import { useSalesFormat } from './format';
 import { LeadTable } from './components/LeadTable';
 import { NewLeadDialog } from './components/NewLeadDialog';
+
+type BoughtFilter = 'all' | 'bought' | 'none';
+type ModeFilter = 'all' | 'in_person' | 'online';
+const BOUGHT_FILTERS: readonly BoughtFilter[] = ['all', 'bought', 'none'];
+const MODE_FILTERS: readonly ModeFilter[] = ['all', 'in_person', 'online'];
+
+/** The server's one `consultation` value for the two choices. */
+const consultationOf = (
+  bought: Exclude<BoughtFilter, 'all'>,
+  mode: ModeFilter,
+): ConsultationFilter => (bought === 'none' ? 'none' : mode === 'all' ? 'any' : mode);
 
 /**
  * Every lead of the seller, by stage, with its score and next follow-up; a sales manager's are
@@ -48,7 +58,9 @@ export default function LeadsPage() {
   const [overdue, setOverdue] = useState(false);
   const [tag, setTag] = useState<number | null>(null);
   const [seller, setSeller] = useState<number | 'none' | null>(null);
-  const [consultation, setConsultation] = useState<ConsultationFilter>('all');
+  // Bought consultations: the main choice, then (once bought) in person or not and the type.
+  const [bought, setBought] = useState<BoughtFilter>('all');
+  const [mode, setMode] = useState<ModeFilter>('all');
   const [consultationType, setConsultationType] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -63,7 +75,7 @@ export default function LeadsPage() {
     page,
     // Absent unless chosen: the first page stays the one the route prefetched.
     ...(seller === null ? {} : { seller }),
-    ...(consultation === 'all' ? {} : { consultation }),
+    ...(bought === 'all' ? {} : { consultation: consultationOf(bought, mode) }),
     ...(consultationType === null ? {} : { consultationType }),
   };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
@@ -100,18 +112,21 @@ export default function LeadsPage() {
     );
 
   const pages = pagesOf(data);
-  // The second layer: the types of the chosen mode, once a bought consultation is chosen.
-  const bought =
-    consultation === 'any' || consultation === 'in_person' || consultation === 'online';
   const typeOptions = (data?.consultation_types ?? []).filter(
-    (item) => consultation === 'any' || item.mode === consultation,
+    (item) => mode === 'all' || item.mode === mode,
   );
-  const chooseConsultation = refilter((value: ConsultationFilter) => {
-    setConsultation(value);
-    // A type of another mode would find nobody.
-    const kept = data?.consultation_types?.find((item) => item.id === consultationType);
-    if (!kept || value === 'all' || value === 'none' || (value !== 'any' && kept.mode !== value))
+  const chooseBought = refilter((value: BoughtFilter) => {
+    setBought(value);
+    if (value !== 'bought') {
+      setMode('all');
       setConsultationType(null);
+    }
+  });
+  const chooseMode = refilter((value: ModeFilter) => {
+    setMode(value);
+    // A type of the other mode would find nobody.
+    const kept = data?.consultation_types?.find((item) => item.id === consultationType);
+    if (kept && value !== 'all' && kept.mode !== value) setConsultationType(null);
   });
 
   return (
@@ -204,18 +219,27 @@ export default function LeadsPage() {
             <SelectField
               inline
               label={t('leads.consultation')}
-              value={consultation}
-              onChange={chooseConsultation}
-              options={CONSULTATION_FILTERS.map((value) => ({
+              value={bought}
+              onChange={chooseBought}
+              options={BOUGHT_FILTERS.map((value) => ({
                 value,
-                label:
-                  value === 'all'
-                    ? t('leads.allConsultations')
-                    : t(`leads.consultationOption.${value}`),
+                label: t(`leads.boughtOption.${value}`),
               }))}
             />
           )}
-          {data?.supports.consultations && bought && typeOptions.length > 0 && (
+          {data?.supports.consultations && bought === 'bought' && (
+            <SelectField
+              inline
+              label={t('leads.consultationMode')}
+              value={mode}
+              onChange={chooseMode}
+              options={MODE_FILTERS.map((value) => ({
+                value,
+                label: t(`leads.modeOption.${value}`),
+              }))}
+            />
+          )}
+          {data?.supports.consultations && bought === 'bought' && typeOptions.length > 0 && (
             <SelectField
               inline
               label={t('leads.consultationType')}

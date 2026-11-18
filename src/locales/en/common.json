@@ -127,6 +127,26 @@
         "calendar": "Calendar",
         "staff": "Staff"
       }
+    },
+    "marketing": {
+      "name": "Marketing",
+      "description": "The marketing team's tasks, calendar, campaigns and performance",
+      "nav": {
+        "label": "Marketing menu",
+        "today": "Today",
+        "tasks": "My tasks",
+        "calendar": "Calendar",
+        "performance": "My performance",
+        "board": "Board",
+        "manage": "Marketing management"
+      },
+      "tabs": {
+        "today": "Today",
+        "tasks": "Tasks",
+        "calendar": "Calendar",
+        "performance": "Performance",
+        "board": "Board"
+      }
     }
   },
   "tabs": {

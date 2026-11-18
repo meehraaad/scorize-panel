@@ -6,6 +6,7 @@ import { applicantPanel } from './applicant';
 import { attendancePanel } from './attendance';
 import { foundersPanel } from './founders';
 import { hrPanel } from './hr';
+import { marketingPanel } from './marketing';
 import { salesPanel } from './sales';
 import { supervisorPanel } from './supervisor';
 import type { PanelDefinition } from './types';
@@ -19,6 +20,7 @@ export const PANELS: readonly PanelDefinition[] = [
   supervisorPanel,
   writerPanel,
   salesPanel,
+  marketingPanel,
   foundersPanel,
   hrPanel,
   attendancePanel,

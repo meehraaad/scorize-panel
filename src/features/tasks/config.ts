@@ -5,7 +5,7 @@
  */
 export interface TasksConfig {
   /** Sent to the API (`?panel=`): which people and queues the page is about. */
-  panel: 'sales' | 'supervisor' | 'hr';
+  panel: 'sales' | 'supervisor' | 'hr' | 'marketing';
   /** The panel's home ("Today"), for the back link. */
   homePath: string;
   /** The page of the person a task is about; `action` opens it with a call or message ready. */

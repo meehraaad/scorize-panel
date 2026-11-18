@@ -116,6 +116,11 @@ describe('sales: my consultations on a week calendar', () => {
       sessions().every((block) => /ویزای تحصیلی/.test(block.getAttribute('aria-label') ?? '')),
     ).toBe(true);
     await user.click(screen.getByRole('button', { name: 'انتخاب همه' }));
+    await user.click(screen.getByRole('button', { name: /^فقط مشاوره‌ی ویزای تحصیلی/ }));
+    expect(
+      sessions().every((block) => /ویزای تحصیلی/.test(block.getAttribute('aria-label') ?? '')),
+    ).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'انتخاب همه' }));
     await user.click(screen.getByRole('checkbox', { name: /^مشاوره[\s۰-۹]*$/ }));
     expect(sessions()).toHaveLength(0);
     expect(screen.getByRole('checkbox', { name: /مشاوره‌ی ویزای تحصیلی/ })).toBeDisabled();

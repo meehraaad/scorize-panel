@@ -259,13 +259,17 @@
       "cold": "Cold (under 45)"
     },
     "overdueOnly": "Overdue only",
-    "consultation": "Bought consultation",
-    "allConsultations": "All",
-    "consultationOption": {
-      "any": "Bought (any kind)",
-      "in_person": "In person",
-      "online": "Not in person",
+    "consultation": "Consultation",
+    "boughtOption": {
+      "all": "All",
+      "bought": "Bought consultations",
       "none": "Never bought one"
+    },
+    "consultationMode": "In person or not",
+    "modeOption": {
+      "all": "In person and not",
+      "in_person": "In person",
+      "online": "Not in person"
     },
     "consultationType": "Consultation type",
     "allConsultationTypes": "All types",
@@ -833,6 +837,8 @@
     "typesShown": "{{shown}} of {{total}}",
     "selectAll": "Select all",
     "clearAll": "Clear all",
+    "onlyThis": "Only",
+    "onlyThisAria": "Only {{name}}",
     "form": {
       "done": "Filled in the tablet form",
       "missing": "Hasn't filled in the tablet form",
