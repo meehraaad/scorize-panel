@@ -4,6 +4,7 @@ import type {
   OfficeHoursInput,
   OfficeHoursState,
   PhoneBreakState,
+  PhoneExtensions,
   PhoneMenus,
   PhoneSnapshot,
   PhoneTeamInput,
@@ -48,6 +49,43 @@ const freshTeams = (): PhoneTeams => ({
   ],
 });
 let teams = freshTeams();
+
+// Like `GET calls/extensions/`: Nima (desk 104 + mobile 302) and Reza (mobile 305) ring in 1000.
+const freshExtensions = (): PhoneExtensions => ({
+  seen_at: '2026-11-10T14:00:00Z',
+  mobile_available: true,
+  people: [
+    {
+      id: 8,
+      name: 'نیما رضایی',
+      seller: true,
+      desk: '104',
+      mobile: { number: '302', status: 'ready' },
+      teams: [{ number: '1000', name: 'moshavere-foroosh' }],
+      changed: null,
+    },
+    {
+      id: 9,
+      name: 'رضا کامرانی',
+      seller: true,
+      desk: null,
+      mobile: { number: '305', status: 'ready' },
+      teams: [],
+      changed: null,
+    },
+    {
+      id: 10,
+      name: 'حسین دیانتی',
+      seller: false,
+      desk: null,
+      mobile: null,
+      teams: [],
+      changed: null,
+    },
+  ],
+  unlinked: [{ extension: '230', teams: [{ number: '1000', name: 'moshavere-foroosh' }] }],
+});
+let extensions = freshExtensions();
 
 const freshMenus = (): PhoneMenus => ({
   seen_at: '2026-11-10T14:00:00Z',
@@ -138,6 +176,7 @@ export function resetPhoneMocks() {
   snapshots = new Map();
   hours = freshHours();
   teams = freshTeams();
+  extensions = freshExtensions();
   menus = freshMenus();
   voices = freshVoices();
   breaks = new Map();
@@ -241,6 +280,55 @@ export const phoneCallHandlers = [
       ),
     };
     return HttpResponse.json(menus);
+  }),
+  // Extensions: phone managers only (here the sales manager), like IsPhoneManager.
+  http.get('/api/sales/v1/calls/extensions/', () =>
+    storage.get() === 4 ? HttpResponse.json(extensions) : forbidden(),
+  ),
+  http.put('/api/sales/v1/calls/extensions/:id/desk/', async ({ request, params }) => {
+    if (storage.get() !== 4) return forbidden();
+    const { desk } = (await request.json()) as { desk: string | null };
+    const id = Number(params.id);
+    if (!extensions.people.some((person) => person.id === id))
+      return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    if (desk !== null && !/^[1-9]\d{2}$/.test(desk))
+      return HttpResponse.json({ desk: ['Enter a valid value.'] }, { status: 400 });
+    if (desk && extensions.people.some((person) => person.desk === desk && person.id !== id))
+      return HttpResponse.json(
+        { detail: 'Another seller already uses this extension.', code: 'extension_taken' },
+        { status: 409 },
+      );
+    const changed = { by: 'رضا کامرانی', at: new Date().toISOString() };
+    extensions = {
+      ...extensions,
+      people: extensions.people.map((person) =>
+        person.id === id ? { ...person, desk, changed } : person,
+      ),
+      unlinked: extensions.unlinked.filter((row) => row.extension !== desk),
+    };
+    return HttpResponse.json(extensions);
+  }),
+  http.post('/api/sales/v1/calls/extensions/:id/mobile/', async ({ request, params }) => {
+    if (storage.get() !== 4) return forbidden();
+    const { action } = (await request.json()) as { action: 'create' | 'remove' };
+    const id = Number(params.id);
+    const changed = { by: 'رضا کامرانی', at: new Date().toISOString() };
+    extensions = {
+      ...extensions,
+      people: extensions.people.map((person) =>
+        person.id !== id
+          ? person
+          : {
+              ...person,
+              changed,
+              mobile:
+                action === 'create'
+                  ? { number: null, status: 'pending' }
+                  : person.mobile && { ...person.mobile, status: 'removing' },
+            },
+      ),
+    };
+    return HttpResponse.json(extensions);
   }),
   // Phone teams: sales managers only, like IsSalesManager.
   http.get('/api/sales/v1/calls/teams/', () =>

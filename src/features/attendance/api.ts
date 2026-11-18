@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { fromCalendar, monthLength, toCalendar, toValue, type CalendarKind } from '@/lib/calendar';
+import type { DayStatus } from '@/lib/attendance';
+import { toValue } from '@/lib/calendar';
 
 /**
  * The attendance section: the office terminal's punches turned into daily and monthly numbers, and
@@ -14,7 +15,7 @@ export const ATTENDANCE_PERMISSION = 'manage_attendance';
 export const ATTENDANCE_API = '/attendance/v1';
 export const ATTENDANCE_KEY = ['attendance'] as const;
 
-export type DayStatus = 'present' | 'late' | 'absent' | 'pending';
+export type { DayStatus };
 
 export interface DayRow {
   /** `YYYY-MM-DD`. */
@@ -125,12 +126,5 @@ export const devicesQuery = queryOptions({
 /** Today as `YYYY-MM-DD`: the daily page opens on it. */
 export const todayValue = () => toValue(new Date(), false);
 
-/** The first and last day of the calendar month `shift` months from today's (Jalali in Persian). */
-export function monthRange(kind: CalendarKind, shift = 0): Range {
-  const today = toCalendar(new Date(), kind);
-  const index = today.year * 12 + (today.month - 1) + shift;
-  const year = Math.floor(index / 12);
-  const month = (index % 12) + 1;
-  const day = (n: number) => toValue(fromCalendar({ year, month, day: n }, kind), false);
-  return { from: day(1), to: day(monthLength(year, month, kind)) };
-}
+/** The first and last day of the calendar month `shift` months from today's (`lib/calendar`). */
+export { monthRange } from '@/lib/calendar';

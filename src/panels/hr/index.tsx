@@ -24,11 +24,13 @@ import {
   todayQuery,
 } from '@/features/hr/api';
 import {
+  catalogQuery,
   kpisQuery,
   payMonth,
   paySettingsQuery,
   payrollQuery,
   resultsQuery,
+  rulesQuery,
 } from '@/features/hr/pay/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
@@ -183,7 +185,8 @@ export const hrPanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
-    // Pay and KPIs: the month's pay, the month's KPI results, each position's KPIs, the settings.
+    // Pay and KPIs: the month's pay, the month's KPI values, the KPIs, rewards and penalties, the
+    // settings.
     {
       path: 'pay',
       ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: hrOnly }),
@@ -205,7 +208,14 @@ export const hrPanel: PanelDefinition = {
         {
           path: 'kpis',
           ...lazyPage(() => import('@/features/hr/pay/KpisPage'), [], {
-            data: () => [kpisQuery, optionsQuery],
+            data: () => [kpisQuery, optionsQuery, catalogQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'rules',
+          ...lazyPage(() => import('@/features/hr/pay/RulesPage'), [], {
+            data: () => [rulesQuery, kpisQuery, optionsQuery, catalogQuery],
             skeleton: 'list',
           }),
         },

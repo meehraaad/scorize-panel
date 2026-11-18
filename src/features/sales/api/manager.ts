@@ -12,6 +12,11 @@ import type { MonthData } from './month';
 
 /** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
 export const MANAGER_PERMISSION = 'can_assign_to_seller';
+
+/** The phone tab alone (apply.can_manage_phone): the office line, without the other manager pages. */
+export const PHONE_PERMISSION = 'can_manage_phone';
+/** Opens the manager section: the whole of it, or only its phone tab. */
+export const MANAGER_AREA_PERMISSIONS = [MANAGER_PERMISSION, PHONE_PERMISSION] as const;
 const MANAGER_API = `${SALES_API}/manager`;
 const MANAGER_KEY = [...SALES_KEY, 'manager'] as const;
 

@@ -4,6 +4,7 @@ import { ApiError, api } from '@/lib/api/client';
 import type {
   CallBrief,
   ConsultationRange,
+  ConsultationTypeOption,
   ConsultationsData,
   ContactLog,
   CustomerData,
@@ -117,6 +118,31 @@ const MANAGER_TEAM = [
   { id: 9, name: 'رضا کاظمی' },
 ];
 
+/** The leads list's consultation types: the calendar mock's three (src/mocks/sales.ts) and an old one. */
+const CONSULTATION_TYPES: ConsultationTypeOption[] = [
+  { id: 1, name: 'مشاوره‌ی اپلای ارشد', mode: 'online', active: true },
+  { id: 2, name: 'مشاوره‌ی اپلای دکتری', mode: 'online', active: true },
+  { id: 3, name: 'مشاوره‌ی ویزای تحصیلی', mode: 'in_person', active: true },
+  { id: 4, name: 'مشاوره‌ی حضوری قدیمی', mode: 'in_person', active: false },
+];
+
+/** What a mock customer bought: by their id, a quarter none, the rest one type each. */
+function boughtType(customer: number): ConsultationTypeOption | null {
+  const kind = customer % 4;
+  return kind === 0 ? null : (CONSULTATION_TYPES[kind - 1] ?? null);
+}
+
+/** Whether a customer passes `?consultation=` and `?consultation_type=`, as Django filters them. */
+function consultationMatches(customer: number, mode: string | null, typeId: number | null) {
+  const type = boughtType(customer);
+  if (mode === 'none') return type === null;
+  if (type === null) return !mode || mode === 'all' ? typeId === null : false;
+  if (mode === 'in_person' || mode === 'online') {
+    if (type.mode !== mode) return false;
+  }
+  return typeId === null || type.id === typeId;
+}
+
 function columnsOf(): NonNullable<CustomerData['columns']> {
   const data = stateOrError();
   return failed(data)
@@ -136,6 +162,11 @@ export const salesStaffHandlers = [
       search: query.get('search') ?? '',
       page: Number(query.get('page') ?? 1),
     };
+    const consultation = query.get('consultation');
+    const consultationType = query.get('consultation_type')
+      ? Number(query.get('consultation_type'))
+      : null;
+    const consulted = (consultation && consultation !== 'all') || consultationType !== null;
     // Each row's customer tags (S49); `?tag=` keeps the customers with it (on this page).
     return answer<LeadsData>(() =>
       fetchLeads(leads).then((data) => {
@@ -149,12 +180,14 @@ export const salesStaffHandlers = [
             face: faceOf(row.customer),
             ...(manager ? { seller: row.id % 3 === 0 ? '' : SELLER_NAME } : {}),
           }))
-          .filter((row) => leads.tag === null || row.tags.includes(leads.tag));
+          .filter((row) => leads.tag === null || row.tags.includes(leads.tag))
+          .filter((row) => consultationMatches(row.customer, consultation, consultationType));
         return {
           ...data,
-          supports: { ...data.supports, tags: true },
+          supports: { ...data.supports, tags: true, consultations: true },
           sellers: manager ? MANAGER_TEAM : [],
-          ...(leads.tag === null ? {} : { count: results.length }),
+          consultation_types: CONSULTATION_TYPES,
+          ...(leads.tag === null && !consulted ? {} : { count: results.length }),
           results,
         };
       }),

@@ -193,6 +193,7 @@ export const payStaff = () =>
       name: row.name,
       face: row.face,
       position: row.position,
+      team: row.team,
       personnel_code: row.personnel_code,
       salary: row.pay.salary ?? 0,
       insured: row.pay.has_insurance,

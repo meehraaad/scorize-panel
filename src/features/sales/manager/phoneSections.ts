@@ -8,6 +8,7 @@ export const PHONE_SECTIONS = (
       path: 'overview',
       on: ON_SERVER.officeHours || ON_SERVER.phoneTeams || ON_SERVER.phoneMenus,
     },
+    { id: 'extensions', path: 'extensions', on: ON_SERVER.phoneExtensions },
     { id: 'hours', path: 'hours', on: ON_SERVER.officeHours },
     { id: 'teams', path: 'teams', on: ON_SERVER.phoneTeams },
     { id: 'menus', path: 'menus', on: ON_SERVER.phoneMenus },

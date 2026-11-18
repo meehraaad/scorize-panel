@@ -36,12 +36,14 @@ export type ServerFeature =
   | 'offerAgreement'
   | 'officeHours'
   | 'phoneTeams'
+  | 'phoneExtensions'
   | 'phoneMenus'
   | 'phoneVoices'
   | 'phoneBreak'
   | 'teamBreaks'
   | 'attendance'
   | 'hr'
+  | 'marketing'
   | 'dayFollowUps';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
@@ -58,6 +60,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    */
   hr: true,
   /**
+   * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
+   * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.
+   */
+  marketing: true,
+  /**
    * `GET /attendance/v1/daily|summary|enrollments|…`: the office terminal's reports and the mapping
    * of its user numbers to staff, key `manage_attendance` (lang `attendance/`, branch `test`).
    */
@@ -69,6 +76,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   officeHours: true,
   /** `GET/POST/PUT /sales/v1/calls/teams/`: the office line's teams (lang `claude/phone-teams`). */
   phoneTeams: true,
+  /**
+   * `GET /sales/v1/calls/extensions/`, `PUT extensions/<id>/desk/`, `POST extensions/<id>/mobile/`:
+   * who has which desk phone and mobile extension, set by phone managers (lang `test`).
+   */
+  phoneExtensions: true,
   /** `GET/PUT /sales/v1/calls/menus/`: what each phone menu key does (lang `claude/phone-menus`). */
   phoneMenus: true,
   /** `GET /sales/v1/calls/voices/`, `POST voices/<id>/`: the menus' greetings (lang `claude/phone-voices`). */

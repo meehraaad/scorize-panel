@@ -182,3 +182,16 @@ export function parseValue(value: string): Date | null {
  */
 export const eventColor = (id: string | null | undefined) =>
   `var(--cal-${id && /^(?:[1-9]|1[01])$/.test(id) ? id : '0'})`;
+
+/**
+ * The calendar month `shift` months from today's (Jalali in Persian): its number, and its first and
+ * last day as `YYYY-MM-DD`.
+ */
+export function monthRange(kind: CalendarKind, shift = 0) {
+  const today = toCalendar(new Date(), kind);
+  const index = today.year * 12 + (today.month - 1) + shift;
+  const year = Math.floor(index / 12);
+  const month = (index % 12) + 1;
+  const day = (n: number) => toValue(fromCalendar({ year, month, day: n }, kind), false);
+  return { year, month, from: day(1), to: day(monthLength(year, month, kind)) };
+}

@@ -50,7 +50,7 @@ function MonthLine({ month }: { month: MonthSummary }) {
         <h2 id="today-month" className={heading}>
           {t('today.month.title')}
         </h2>
-        <Link to={salesPath('month')} className={more}>
+        <Link to="/me/sales" className={more}>
           {t('today.month.details')}
         </Link>
       </div>
@@ -183,7 +183,7 @@ function InstalmentList({ instalments }: { instalments: TodayInstalments }) {
               })
             : t('today.instalments.title', { n: f.number(instalments.total) })}
         </h2>
-        <Link to={salesPath('month')} className={more}>
+        <Link to="/me/sales" className={more}>
           {t('today.month.details')}
         </Link>
       </div>

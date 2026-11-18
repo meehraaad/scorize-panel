@@ -9,6 +9,7 @@ import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
 import { restoreCacheFor } from '@/lib/api/persist';
+import { getRoles } from '@/lib/auth/roles';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
@@ -17,6 +18,7 @@ import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panel
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
+import { MeLayout } from './layouts/MeLayout';
 import { PanelLayout } from './layouts/PanelLayout';
 import { WorkspaceLayout } from './layouts/WorkspaceLayout';
 import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
@@ -26,7 +28,8 @@ import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedL
  *   /login                 AuthLayout   login, sign-up, password reset
  *   /start                 →            after login: the user's panel, or /choose
  *   /choose                             which panel to start in (several panels, first time or "ask")
- *   /account, /settings    PanelLayout  shared pages, shown inside the last-used panel
+ *   /account, /settings,   PanelLayout  shared pages, shown inside the last-used panel
+ *   /me                                (/me: a staff member's own KPIs and pay)
  *   /, /supervisor, …      PanelLayout  one route tree per panel (src/panels/*), guarded by role
  *   /dev/components                     shared blocks gallery (dev builds only)
  *
@@ -164,6 +167,31 @@ const pageRoutes: RouteObject[] = [
           {
             path: 'settings',
             ...lazyPage(() => import('@/features/settings/SettingsPage'), [], { skeleton: 'form' }),
+          },
+          {
+            // A staff member's own pages: KPIs and pay, and a seller's sales month.
+            path: 'me',
+            Component: MeLayout,
+            children: [
+              {
+                index: true,
+                // No data on open: my pay is read only after I type my password.
+                ...lazyPage(() => import('@/features/hr/me/MyPayPage'), ['hr'], {
+                  skeleton: 'form',
+                }),
+              },
+              {
+                path: 'sales',
+                // No data on open: the month is read only after the seller types their password.
+                ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], {
+                  skeleton: 'form',
+                  guard: async () => {
+                    const user = await currentUser();
+                    return user && getRoles(user).includes('sales') ? null : redirect('/me');
+                  },
+                }),
+              },
+            ],
           },
         ],
       },

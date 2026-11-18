@@ -26,7 +26,7 @@ const readMonth = () =>
 /** Opens "my month" and types the password it asks for. */
 async function openMonth(password = MONTH_PASSWORD) {
   const user = userEvent.setup();
-  const router = renderApp('/sales/month');
+  const router = renderApp('/me/sales');
   await user.type(await screen.findByLabelText('رمز عبور'), password);
   await user.click(screen.getByRole('button', { name: 'باز کردن ماه من' }));
   return { user, router };
@@ -126,6 +126,35 @@ describe('sales panel, seller pages', () => {
       'href',
       '/sales/customers/101',
     );
+  });
+
+  it('leads: the source "bought consultation" opens in person or not and the type', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/leads');
+    const source = await screen.findByRole('combobox', { name: 'منبع' });
+    const options = (name: string) =>
+      within(screen.getByRole('combobox', { name }))
+        .getAllByRole('option')
+        .map((option) => option.textContent);
+    expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
+
+    await user.selectOptions(source, 'consultation');
+    expect(await screen.findByRole('combobox', { name: 'نوع مشاوره' })).toBeInTheDocument();
+    expect(options('نوع مشاوره')).toHaveLength(5); // all + four types
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'حضوری یا غیرحضوری' }),
+      'in_person',
+    );
+    expect(options('نوع مشاوره')).toEqual([
+      'همه‌ی انواع',
+      'مشاوره‌ی ویزای تحصیلی',
+      'مشاوره‌ی حضوری قدیمی (قدیمی)',
+    ]);
+
+    await user.selectOptions(source, 'all');
+    expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
   });
 
   it("leads: a sales manager's rows name their seller, with a seller filter", async () => {
@@ -450,7 +479,7 @@ describe('sales panel, seller pages', () => {
     expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();
     await router.navigate('/sales/board');
     expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
-    await router.navigate('/sales/month');
+    await router.navigate('/me/sales');
     expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /^ماه من · / })).not.toBeInTheDocument();
   });

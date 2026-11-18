@@ -1114,6 +1114,58 @@ describe('phone teams', () => {
   });
 });
 
+describe('phone extensions', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('links a desk phone, refuses one someone has, and makes a mobile extension', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/phone/extensions');
+    expect(await screen.findByRole('heading', { name: 'داخلی‌ها' })).toBeInTheDocument();
+    const unlinked = screen.getByRole('region', { name: 'داخلی‌های بدون صاحب' });
+    expect(within(unlinked).getByText('داخلی ۲۳۰ · moshavere-foroosh')).toBeInTheDocument();
+
+    const hossein = screen.getByText('حسین دیانتی').closest('li') as HTMLElement;
+    await user.click(within(hossein).getByRole('button', { name: 'تلفن روی میز حسین دیانتی' }));
+    await user.type(within(hossein).getByLabelText('تلفن روی میز'), '104');
+    await user.click(within(hossein).getByRole('button', { name: 'ذخیره' }));
+    expect(await within(hossein).findByText(/مال کارمند دیگری است/)).toBeInTheDocument();
+    await user.clear(within(hossein).getByLabelText('تلفن روی میز'));
+    await user.type(within(hossein).getByLabelText('تلفن روی میز'), '۲۳۰');
+    await user.click(within(hossein).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('داخلی ۲۳۰ به حسین دیانتی وصل شد.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'داخلی‌های بدون صاحب' })).not.toBeInTheDocument();
+
+    await user.click(
+      within(hossein).getByRole('button', { name: 'ساختن داخلی موبایل برای حسین دیانتی' }),
+    );
+    expect(await within(hossein).findByText('در حال ساخت')).toBeInTheDocument();
+  });
+
+  it('opens only the phone tab for someone with the phone key alone', async () => {
+    loginAs(NIMA);
+    const me = await api<Record<string, unknown>>('/profile/auth/v1/whoami/');
+    server.use(
+      http.get('/api/profile/auth/v1/whoami/', () =>
+        HttpResponse.json({ ...me, permissions: [{ codename: 'can_manage_phone' }] }),
+      ),
+    );
+    const router = renderApp('/sales/manager/approvals');
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/sales\/manager\/phone\//),
+    );
+    const tabs = await screen.findByRole('navigation', { name: 'بخش‌های مدیریت فروش' });
+    expect(
+      within(tabs)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['تلفن']);
+  });
+});
+
 describe('phone menus', () => {
   beforeEach(async () => {
     localStorage.clear();
