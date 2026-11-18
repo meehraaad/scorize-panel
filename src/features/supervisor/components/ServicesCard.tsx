@@ -25,7 +25,9 @@ import {
   type CaseService,
   type ServiceDetail,
   type ServiceOwners,
+  type ServiceVisaResult,
 } from '../api';
+import { VisaResultForm } from './VisaResultForm';
 
 /**
  * The case's services and who owns each (SVC2). Managers change an owner; a service nobody owns
@@ -270,7 +272,10 @@ function StageForm({
   const save = useSetServiceStage(caseId);
   const { service } = detail;
   const [chosen, setChosen] = useState(service.stage?.key ?? detail.stages[0]?.key ?? '');
+  // The visa result being recorded: a new one, one of the list, or none.
+  const [recording, setRecording] = useState<ServiceVisaResult | 'new' | null>(null);
   const title = serviceTitle(service);
+  const countries = detail.countries ?? null;
 
   const submit = () => {
     const stage = detail.stages.find((entry) => entry.key === chosen);
@@ -340,11 +345,37 @@ function StageForm({
                       ` · ${t('services.visa.appointment', { when: f.dateTime(result.appointment_at) })}`}
                   </span>
                   {result.note && <span className="text-sm leading-6">{result.note}</span>}
+                  {countries && recording === null && (
+                    <Button
+                      variant="outline"
+                      className="mt-1 h-11 self-start px-4 text-sm"
+                      onClick={() => setRecording(result)}
+                    >
+                      {t('services.visa.form.edit', { title: result.title })}
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
           )}
-          <p className="m-0 text-sm leading-6 text-text-2">{t('services.visa.oldSite')}</p>
+          {countries && recording !== null && (
+            <VisaResultForm
+              key={recording === 'new' ? 'new' : recording.id}
+              caseId={caseId}
+              service={service.id}
+              countries={countries}
+              result={recording === 'new' ? null : recording}
+              onDone={() => setRecording(null)}
+            />
+          )}
+          {countries && recording === null && (
+            <Button variant="outline" className="self-start" onClick={() => setRecording('new')}>
+              {t('services.visa.form.new')}
+            </Button>
+          )}
+          <p className="m-0 text-sm leading-6 text-text-2">
+            {t(countries ? 'services.visa.followed' : 'services.visa.oldSite')}
+          </p>
         </section>
       )}
       <div className="flex flex-wrap gap-2">

@@ -23,6 +23,7 @@ import type {
   ReportsData,
   Scope,
   ServiceCandidate,
+  ServiceVisaResult,
   StageFilter,
   TodayData,
   UnassignedServices,
@@ -796,6 +797,28 @@ const SCOPE_COUNTRIES = [
   { id: 3, name: 'کانادا' },
 ];
 let mockScopes: Scope[] = [];
+/** Each visa service's results (Django's VisaResult rows of its case and country). */
+const visaResults = new Map<number, ServiceVisaResult[]>();
+function visaResultsOf(service: number) {
+  let results = visaResults.get(service);
+  if (!results) {
+    results = [
+      {
+        id: service * 10,
+        title: 'ویزای تحصیلی',
+        status: 'getting_appointment',
+        embassy: 'امارات',
+        embassy_id: 4,
+        appointment_at: null,
+        resolved_at: null,
+        note: null,
+        proof: null,
+      },
+    ];
+    visaResults.set(service, results);
+  }
+  return results;
+}
 
 /** Django: an admission service reads its stage from the case's (client_services/stages.py). */
 function admissionStageOf(stage: CaseStage) {
@@ -1296,20 +1319,43 @@ export const supervisorHandlers = [
       // Admission follows the case's stage (SVC6).
       editable: visa && service.status !== 'closed',
       follows_case: !visa,
-      visa: visa
-        ? [
-            {
-              id: 1,
-              title: 'ویزای تحصیلی',
-              status: 'getting_appointment',
-              embassy: 'امارات',
-              appointment_at: null,
-              resolved_at: null,
-              note: null,
-            },
-          ]
-        : null,
+      visa: visa ? visaResultsOf(service.id) : null,
+      countries: visa ? SCOPE_COUNTRIES : null,
     });
+  }),
+
+  http.post(`${API}/cases/:id/services/:service/visa/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (service?.kind !== 'visa') return notFound();
+    const form = await request.formData();
+    const status = form.get('status') as ServiceVisaResult['status'];
+    const result: ServiceVisaResult = {
+      id: newId(),
+      title: form.get('title') as string,
+      status,
+      embassy_id: Number(form.get('embassy')),
+      embassy:
+        SCOPE_COUNTRIES.find((country) => country.id === Number(form.get('embassy')))?.name ?? '',
+      appointment_at: (form.get('appointment_at') as string | null) || null,
+      resolved_at: (form.get('resolved_at') as string | null) || null,
+      note: (form.get('note') as string | null) || null,
+      proof: form.get('appointment_proof') instanceof File ? '#' : null,
+    };
+    visaResultsOf(service.id).unshift(result);
+    // Django: the visa service follows its result (client_services/stages.py).
+    const key = {
+      getting_appointment: 'appointment',
+      pending_appointment: 'interview',
+      pending_result: 'decision',
+      granted: 'granted',
+      refused: 'refused',
+      missed_appointment: 'appointment',
+      canceled_appointment: 'appointment',
+    }[status];
+    service.stage = VISA_STAGES.find((stage) => stage.key === key) ?? service.stage ?? null;
+    return HttpResponse.json(result, { status: 201 });
   }),
 
   http.post(`${API}/cases/:id/services/:service/stage/`, async ({ params, request }) => {
@@ -1781,6 +1827,7 @@ export const supervisorHandlers = [
           unread: item.unread,
           waiting_since: waitingMessages[0]?.sent_at ?? null,
           urgent: waitingMessages.some((message) => message.priority === 3),
+          thread: 'supervisor',
         };
       })
       .sort(
@@ -1891,4 +1938,5 @@ export function resetSupervisorMocks() {
   botSettings.clear();
   imports.clear();
   mockScopes = [];
+  visaResults.clear();
 }

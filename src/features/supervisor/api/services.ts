@@ -54,9 +54,36 @@ export interface ServiceVisaResult {
     | 'canceled_appointment';
   /** Localized. */
   embassy: string;
+  /** The embassy's country id. */
+  embassy_id: number;
   appointment_at: string | null;
   resolved_at: string | null;
   note: string | null;
+  /** The appointment's proof file. */
+  proof: string | null;
+}
+
+export type VisaStatus = ServiceVisaResult['status'];
+export const VISA_STATUSES: readonly VisaStatus[] = [
+  'getting_appointment',
+  'pending_appointment',
+  'pending_result',
+  'granted',
+  'refused',
+  'missed_appointment',
+  'canceled_appointment',
+];
+
+/** What the form sends; an absent field is left as it is (on a change). */
+export interface VisaResultInput {
+  title: string;
+  status: VisaStatus;
+  embassy: number;
+  /** ISO; null clears it. */
+  appointment_at: string | null;
+  resolved_at: string | null;
+  note: string;
+  appointment_proof: File | null;
 }
 
 export interface ServiceDetail {
@@ -68,6 +95,8 @@ export interface ServiceDetail {
   follows_case?: boolean;
   /** Visa services: the country's results; null for other kinds. */
   visa: ServiceVisaResult[] | null;
+  /** The embassies a result can name; null unless the viewer records results (owner or manager). */
+  countries?: { id: number; name: string }[] | null;
 }
 
 export interface MyService extends CaseService {
@@ -195,3 +224,22 @@ export const servicesReportQuery = (period: ServiceReportPeriod) =>
       api<ServicesReport>(`${SUPERVISOR_API}/services/report/?period=${period}`, { signal }),
     placeholderData: keepPreviousData,
   });
+
+/** Records a visa result for the service's case and country, or changes one (`id`). */
+export function useSaveVisaResult(caseId: number, service: number) {
+  return useSupervisorMutation(({ id, input }: { id: number | null; input: VisaResultInput }) => {
+    const body = new FormData();
+    body.append('title', input.title);
+    body.append('status', input.status);
+    body.append('embassy', String(input.embassy));
+    body.append('appointment_at', input.appointment_at ?? '');
+    body.append('resolved_at', input.resolved_at ?? '');
+    body.append('note', input.note);
+    if (input.appointment_proof) body.append('appointment_proof', input.appointment_proof);
+    const base = `${SUPERVISOR_API}/cases/${String(caseId)}/services/${String(service)}/visa/`;
+    return api<ServiceVisaResult>(id === null ? base : `${base}${String(id)}/`, {
+      method: id === null ? 'POST' : 'PATCH',
+      body,
+    });
+  });
+}

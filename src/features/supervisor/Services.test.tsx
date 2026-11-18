@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -71,7 +71,12 @@ describe('client services (SVC2)', () => {
     await user.click(within(dialog).getByRole('button', { name: 'ذخیره‌ی مرحله‌ی ویزا · آلمان' }));
     expect(await toasts().findByText('ویزا · آلمان: گرفتن نوبت سفارت')).toBeInTheDocument();
     const updated = await screen.findByRole('region', { name: 'خدمت‌ها' });
-    expect(await within(updated).findByText('گرفتن نوبت سفارت')).toBeInTheDocument();
+    await waitFor(() => {
+      const row = within(updated)
+        .getAllByRole('listitem')
+        .find((item) => item.textContent.includes('ویزا · آلمان'));
+      expect(row).toHaveTextContent('گرفتن نوبت سفارت');
+    });
   });
 
   it('lists the services the supervisor owns, unread first (SVC4)', async () => {
@@ -127,5 +132,40 @@ describe('client services (SVC2)', () => {
     const card = await screen.findByRole('region', { name: 'خدمت‌ها' });
     expect(within(card).getAllByText('اپلای')).toHaveLength(2);
     expect(within(card).queryByRole('button', { name: 'مرحله‌ی پذیرش · کانادا' })).toBeNull();
+  });
+
+  it('records a visa result and the visa service moves on', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/files/1240');
+    const card = await screen.findByRole('region', { name: 'خدمت‌ها' });
+    await user.click(within(card).getByRole('button', { name: 'مرحله‌ی ویزا · کانادا' }));
+    const dialog = await screen.findByRole('dialog', { name: 'مرحله‌ی ویزا · کانادا' });
+    await user.click(await within(dialog).findByRole('button', { name: 'ثبت نتیجه‌ی ویزا' }));
+    const form = within(dialog).getByRole('region', { name: 'نتیجه‌ی تازه‌ی ویزا' });
+    // An embassy session needs its date and proof: the form says so before sending.
+    await user.selectOptions(
+      within(form).getByRole('combobox', { name: 'وضعیت' }),
+      'منتظر جلسه‌ی سفارت',
+    );
+    await user.click(within(form).getByRole('button', { name: 'ثبت نتیجه' }));
+    expect(within(form).getByText('تاریخ نوبت را وارد کنید.')).toBeInTheDocument();
+    expect(within(form).getByText('مدرک نوبت را آپلود کنید.')).toBeInTheDocument();
+
+    await user.selectOptions(
+      within(form).getByRole('combobox', { name: 'وضعیت' }),
+      'در حال گرفتن نوبت',
+    );
+    await user.selectOptions(within(form).getByRole('combobox', { name: 'سفارت در' }), 'ایتالیا');
+    await user.click(within(form).getByRole('button', { name: 'ثبت نتیجه' }));
+    expect(await toasts().findByText('نتیجه‌ی ویزا ثبت شد: در حال گرفتن نوبت')).toBeInTheDocument();
+    expect(await within(dialog).findByText('سفارت: ایتالیا')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'انصراف' }));
+    const updated = await screen.findByRole('region', { name: 'خدمت‌ها' });
+    await waitFor(() => {
+      const row = within(updated)
+        .getAllByRole('listitem')
+        .find((item) => item.textContent.includes('ویزا · کانادا'));
+      expect(row).toHaveTextContent('گرفتن نوبت سفارت');
+    });
   });
 });

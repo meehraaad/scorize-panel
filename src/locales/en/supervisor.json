@@ -648,6 +648,29 @@
         "refused": "Visa refused",
         "missed_appointment": "Missed the appointment",
         "canceled_appointment": "Appointment cancelled"
+      },
+      "followed": "The visa service's stage follows each result recorded; the old site shows the same results.",
+      "form": {
+        "new": "Record a visa result",
+        "edit": "Edit {{title}}",
+        "newTitle": "New visa result",
+        "editTitle": "Edit the visa result",
+        "defaultTitle": "Student visa",
+        "title": "Title",
+        "status": "Status",
+        "embassy": "Embassy in",
+        "appointment": "Appointment date and time",
+        "proof": "Appointment proof (PDF or image)",
+        "proofKept": "The earlier proof stays unless you choose a new file.",
+        "resolved": "Date of the result",
+        "note": "Note",
+        "saveNew": "Record the result",
+        "saveEdit": "Save the result",
+        "done": "Visa result recorded: {{status}}",
+        "titleRequired": "Write a title.",
+        "appointmentRequired": "Enter the appointment's date.",
+        "proofRequired": "Upload the appointment's proof.",
+        "resolvedRequired": "Enter the date of the result."
       }
     }
   },
