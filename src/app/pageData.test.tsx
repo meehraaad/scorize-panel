@@ -208,6 +208,7 @@ const PAGES: PageCase[] = [
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },
+  { path: '/me', user: AMIR },
 ];
 
 /** Queries first loaded while `path` opens, and whether the load began after the route had. */

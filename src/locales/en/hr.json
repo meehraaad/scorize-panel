@@ -300,7 +300,8 @@
       "final": "Make final",
       "finalConfirm": "Make this month's pay final? Its slips and KPI results won't change after that.",
       "finalDone": "This month's pay is final.",
-      "finalBy": "Made final by {{name}} on {{date}}"
+      "finalBy": "Made final by {{name}} on {{date}}",
+      "openDisputes": "Answer the open objections in «Results» first."
     },
     "slip": {
       "title": "{{name}}'s payslip",
@@ -524,6 +525,69 @@
       "trial": "Trial",
       "trialHint": "Shows on the slip but isn't paid or taken off yet.",
       "saved": "Rule saved."
+    },
+    "review": {
+      "close": "Close month for review",
+      "closeTitle": "Close month for review",
+      "closeHint": "Once closed, this month's automatic values stop changing. Everyone sees their own values on their «Me» page and can object for a few days. While an objection is open, this month's pay can't be made final.",
+      "days": "Days to object",
+      "daysHint": "From today; 0 means today only",
+      "daysRange": "A whole number from 0 to 30",
+      "closed": "Closed for review",
+      "closedUntil": "Closed · objections until {{date}}",
+      "closedToast": "Month closed; everyone can see their values.",
+      "reopen": "Open again",
+      "reopened": "Month opened again; values are measured again."
+    },
+    "disputes": {
+      "title": "Objections",
+      "openHint": "This month's pay can't be final until every objection is answered.",
+      "open": "{{n}} open",
+      "status": {
+        "open": "Waiting",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      },
+      "about": "{{kpi}}: {{value}}",
+      "noValue": "no value",
+      "changedTo": "Changed to {{value}}.",
+      "answer": "{{name}} answered: {{answer}}",
+      "yourAnswer": "Your answer",
+      "newValue": "Right value (optional)",
+      "newValueHint": "If you accept and the value should change, enter it here",
+      "accept": "Accept",
+      "reject": "Reject",
+      "accepted": "Objection accepted.",
+      "rejected": "Objection rejected."
     }
+  },
+  "me": {
+    "title": "My score and pay",
+    "subtitle": "Your KPIs each month, their values and why, rewards and penalties, and your payslip.",
+    "final": "This month's pay is final",
+    "closed": "Month closed",
+    "objectUntil": "Objections until {{date}}",
+    "none": "No KPIs for you this month",
+    "noneHint": "When HR sets KPIs for you, they show here.",
+    "summary": "This month",
+    "score": "Score",
+    "percent": "{{n}}%",
+    "rewards": "Rewards and penalties",
+    "preview": "With today's values",
+    "net": "Net pay",
+    "kpis": "My KPIs",
+    "noValue": "No value yet",
+    "lines": "Rewards and penalties",
+    "linesPreview": "Worked out with today's values; changes until the month ends. Trial lines aren't paid yet.",
+    "slip": "Payslip",
+    "adjustment": "Rewards and penalties",
+    "yourObjection": "Your objection",
+    "hrAnswer": "HR's answer: {{answer}}",
+    "object": "I object to this value",
+    "objectLabel": "Why is this value wrong?",
+    "objectPlaceholder": "e.g. I was on a work trip that day",
+    "sendObjection": "Send objection",
+    "objected": "Your objection was sent.",
+    "cancel": "Cancel"
   }
 }

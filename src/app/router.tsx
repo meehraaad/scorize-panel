@@ -6,6 +6,7 @@ import {
   type RouteObject,
 } from 'react-router';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
+import { myMonthQuery, thisMonth } from '@/features/hr/me/api';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
 import { restoreCacheFor } from '@/lib/api/persist';
@@ -26,7 +27,8 @@ import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedL
  *   /login                 AuthLayout   login, sign-up, password reset
  *   /start                 →            after login: the user's panel, or /choose
  *   /choose                             which panel to start in (several panels, first time or "ask")
- *   /account, /settings    PanelLayout  shared pages, shown inside the last-used panel
+ *   /account, /settings,   PanelLayout  shared pages, shown inside the last-used panel
+ *   /me                                (/me: a staff member's own KPIs and pay)
  *   /, /supervisor, …      PanelLayout  one route tree per panel (src/panels/*), guarded by role
  *   /dev/components                     shared blocks gallery (dev builds only)
  *
@@ -164,6 +166,14 @@ const pageRoutes: RouteObject[] = [
           {
             path: 'settings',
             ...lazyPage(() => import('@/features/settings/SettingsPage'), [], { skeleton: 'form' }),
+          },
+          {
+            // A staff member's own KPIs and pay.
+            path: 'me',
+            ...lazyPage(() => import('@/features/hr/me/MyPayPage'), ['hr'], {
+              data: () => [myMonthQuery(thisMonth())],
+              skeleton: 'dashboard',
+            }),
           },
         ],
       },
