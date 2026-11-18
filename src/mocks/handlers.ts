@@ -10,6 +10,7 @@ import { mailHandlers, resetMailMocks } from './mail';
 import { attendanceHandlers, resetAttendanceMocks } from './attendance';
 import { hrHandlers, resetHrMocks } from './hr';
 import { marketingHandlers } from './marketing';
+import { marketingBoardHandlers, resetMarketingBoardMocks } from './marketingBoard';
 import { hrPayHandlers, resetHrPayMocks } from './hrPay';
 import { messagesHandlers, resetMessagesMocks } from './messages';
 import { accessHandlers, resetAccessMocks } from './access';
@@ -392,6 +393,7 @@ export const handlers = [
   ...attendanceHandlers,
   ...hrHandlers,
   ...marketingHandlers,
+  ...marketingBoardHandlers,
   ...hrPayHandlers,
 ];
 
@@ -421,6 +423,7 @@ export function resetMockSession() {
   resetAccessMocks();
   resetAttendanceMocks();
   resetHrMocks();
+  resetMarketingBoardMocks();
   resetHrPayMocks();
 }
 

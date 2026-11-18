@@ -206,9 +206,18 @@ const PAGES: PageCase[] = [
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
   // Marketing panel (src/mocks/marketing.ts): Elham is on the marketing team.
-  ...['/marketing', '/marketing/tasks', '/marketing/calendar', '/marketing/performance'].map(
-    (path) => ({ path, user: ELHAM }),
-  ),
+  ...[
+    '/marketing',
+    '/marketing/board',
+    '/marketing/tasks',
+    '/marketing/calendar',
+    '/marketing/performance',
+  ].map((path) => ({ path, user: ELHAM })),
+  // The marketing manager's area (src/mocks/marketingBoard.ts): Amir holds the key.
+  ...['/marketing/manage', '/marketing/manage/stages', '/marketing/manage/types'].map((path) => ({
+    path,
+    user: AMIR,
+  })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },

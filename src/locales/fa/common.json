@@ -138,13 +138,16 @@
         "today": "امروز",
         "tasks": "کارهای من",
         "calendar": "تقویم",
-        "performance": "عملکرد من"
+        "performance": "عملکرد من",
+        "board": "بُرد",
+        "manage": "مدیریت مارکتینگ"
       },
       "tabs": {
         "today": "امروز",
         "tasks": "کارها",
         "calendar": "تقویم",
-        "performance": "عملکرد"
+        "performance": "عملکرد",
+        "board": "بُرد"
       }
     }
   },

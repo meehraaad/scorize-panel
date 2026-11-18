@@ -4,12 +4,13 @@ import { toValue } from '@/lib/calendar';
 import type { DayStatus } from '@/lib/attendance';
 import type { Face } from '@/lib/face/api';
 import type { TaskCalendarData } from '@/lib/tasks/calendar';
+import type { StageColor } from './boardApi';
 
 /**
- * The marketing panel, phase 1: the team's day, the calendar and my own attendance. Django:
- * `api/marketing/v1/` (lang). Who: active staff who are marketers (the marketing team,
- * `apply.can_market`, superusers), as the old site's marketing pages. Tasks are the shared API
- * (`?panel=marketing`).
+ * The marketing panel: the team's day, the calendar and my own attendance (the board and the
+ * manager's pages: `boardApi.ts`). Django: `api/marketing/v1/` (lang). Who: active staff who are
+ * marketers (the marketing team, `apply.can_market`, superusers), as the old site's marketing
+ * pages. Tasks are the shared API (`?panel=marketing`).
  */
 export const MARKETING_API = '/marketing/v1';
 export const MARKETING_KEY = ['marketing'] as const;
@@ -53,11 +54,15 @@ export interface MarketingToday {
   team: TeamMember[];
   /** Running now, ending soonest first (a few). */
   campaigns: RunningCampaign[];
+  /** My open cards on the board, per stage (every stage, in order). */
+  cards: { stage: number; name: string; color: StageColor; count: number }[];
+  /** Of them, how many the manager sent back. */
+  returned: number;
 }
 
 export type { CalendarTaskDay, CalendarTaskRow } from '@/lib/tasks/calendar';
 
-export type MarketingEventKind = 'campaign_start' | 'campaign_end';
+export type MarketingEventKind = 'campaign_start' | 'campaign_end' | 'publish';
 
 export interface MarketingEvent {
   id: string;
@@ -66,7 +71,11 @@ export interface MarketingEvent {
   day: string;
   at: string;
   title: string;
-  campaign: number;
+  /** `campaign_*`: the campaign. */
+  campaign?: number;
+  /** `publish`: the board's card, and whether it is mine. */
+  card?: number;
+  mine?: boolean;
 }
 
 export interface MarketingCalendar extends TaskCalendarData {

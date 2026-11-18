@@ -13,7 +13,7 @@ import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import { todayQuery, type AttendanceDay } from './api';
-import { STATUS_TONE, clockOf } from './format';
+import { STAGE_DOT, STATUS_TONE, clockOf } from './format';
 import { marketingPath } from './paths';
 
 /** How many of today's tasks the page lists; the rest are a link away. */
@@ -100,6 +100,42 @@ export default function TodayPage() {
   const aside = (
     <PageStack>
       <MyDay day={data.me} />
+      <SectionCard
+        id="marketing-cards"
+        title={t('today.myCards')}
+        variant="panel"
+        end={
+          <Link to={marketingPath('board')} className="text-sm font-semibold text-primary-text">
+            {t('today.board')}
+          </Link>
+        }
+      >
+        {data.cards.every((row) => row.count === 0) ? (
+          <EmptyState variant="inset">{t('today.noCards')}</EmptyState>
+        ) : (
+          <dl className="m-0 flex flex-col gap-2.5">
+            {data.cards
+              .filter((row) => row.count > 0)
+              .map((row) => (
+                <div key={row.stage} className="flex items-center gap-2.5 text-[15px]">
+                  <dt className="flex flex-1 items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={`size-2 flex-none rounded-full ${STAGE_DOT[row.color]}`}
+                    />
+                    {row.name}
+                  </dt>
+                  <dd className="m-0 font-bold tabular-nums">{n(row.count)}</dd>
+                </div>
+              ))}
+          </dl>
+        )}
+        {data.returned > 0 && (
+          <p className="m-0 text-sm font-semibold text-danger">
+            {t('today.returnedNote', { n: n(data.returned) })}
+          </p>
+        )}
+      </SectionCard>
       <SectionCard id="marketing-team" title={t('today.team')} variant="panel">
         {data.team.length === 0 ? (
           <EmptyState variant="inset">{t('today.noTeam')}</EmptyState>

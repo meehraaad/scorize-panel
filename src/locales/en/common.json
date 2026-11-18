@@ -138,13 +138,16 @@
         "today": "Today",
         "tasks": "My tasks",
         "calendar": "Calendar",
-        "performance": "My performance"
+        "performance": "My performance",
+        "board": "Board",
+        "manage": "Marketing management"
       },
       "tabs": {
         "today": "Today",
         "tasks": "Tasks",
         "calendar": "Calendar",
-        "performance": "Performance"
+        "performance": "Performance",
+        "board": "Board"
       }
     }
   },

@@ -1,7 +1,7 @@
 import { FACE_FILL, type Face } from '@/lib/face/api';
 import { initialOf } from '@/lib/text';
 
-const SIZES = { sm: 'size-9 text-sm', md: 'size-10 text-base' } as const;
+const SIZES = { xs: 'size-6 text-[11px]', sm: 'size-9 text-sm', md: 'size-10 text-base' } as const;
 const TONES = { tint: 'bg-tint text-primary-text', hero: 'bg-hero text-on-hero' } as const;
 
 /**

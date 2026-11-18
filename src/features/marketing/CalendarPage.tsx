@@ -10,11 +10,11 @@ import { MARKETING_KEY, calendarQuery, type MarketingEventKind } from './api';
 import { EVENT_COLOR } from './format';
 import { marketingPath } from './paths';
 
-const KINDS: readonly MarketingEventKind[] = ['campaign_start', 'campaign_end'];
+const KINDS: readonly MarketingEventKind[] = ['publish', 'campaign_start', 'campaign_end'];
 
 /**
- * The marketing calendar: my tasks on the week (`TaskCalendar`) and above each day the campaigns
- * starting or ending. The board's publish dates join in phase 2.
+ * The marketing calendar: my tasks on the week (`TaskCalendar`) and above each day the board's
+ * cards to publish (each opening the card) and the campaigns starting or ending.
  */
 export default function CalendarPage() {
   const { t } = useTranslation('marketing');
@@ -32,7 +32,13 @@ export default function CalendarPage() {
         id: event.id,
         color: EVENT_COLOR[event.kind],
         text: t(`calendar.short.${event.kind}`, { title: event.title }),
-        title: `${t(`calendar.kind.${event.kind}`)} · ${event.title}`,
+        title: t('calendar.markTitle', {
+          kind: t(`calendar.kind.${event.kind}`),
+          title: event.title,
+        }),
+        ...(event.card !== undefined && {
+          to: `${marketingPath('board')}?card=${String(event.card)}`,
+        }),
       }));
 
   return (

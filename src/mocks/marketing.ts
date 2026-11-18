@@ -54,6 +54,12 @@ function today(): MarketingToday {
       },
       { id: 13, name: 'پویا فرهادی', face: null, me: false, attendance: null },
     ],
+    cards: [
+      { stage: 1, name: 'ایده‌ها', color: 'gray', count: 0 },
+      { stage: 2, name: 'برنامه‌ریزی', color: 'blue', count: 1 },
+      { stage: 3, name: 'در حال تولید', color: 'amber', count: 1 },
+    ],
+    returned: 1,
     campaigns: [
       {
         id: 31,

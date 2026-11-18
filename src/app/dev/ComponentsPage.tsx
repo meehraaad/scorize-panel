@@ -36,6 +36,7 @@ import { WeekCalendar, type CalendarTime } from '@/components/ui/WeekCalendar';
 import { addDays, weekOf } from '@/lib/calendar';
 import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
+import { KanbanBoard } from '@/components/board/KanbanBoard';
 import { Row, RowList } from '@/components/ui/RowList';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
@@ -60,6 +61,11 @@ export default function ComponentsPage() {
   const [filter, setFilter] = useState<'all' | 'waiting' | 'done'>('all');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [demoCards, setDemoCards] = useState([
+    { id: 1, lane: 1, title: 'سری «یک روز در دانشگاه»' },
+    { id: 2, lane: 2, title: 'ریلز پذیرش آلمان' },
+    { id: 3, lane: 2, title: 'کاروسل اشتباه‌های SOP' },
+  ]);
   const [tags, setTags] = useState(['Machine Learning', 'Computer Vision', 'Explainable AI']);
   const [confirm, setConfirm] = useState(true);
   const [draft, setDraft] = useState('');
@@ -363,6 +369,33 @@ export default function ComponentsPage() {
           <div className="flex gap-3">
             <DateTile value={new Date().toISOString()} highlight={false} />
             <DateTile value={new Date().toISOString()} highlight />
+          </div>
+        </Group>
+
+        <Group name="KanbanBoard">
+          <div className="flex h-[420px] flex-col overflow-hidden rounded-card-sm">
+            <KanbanBoard
+              label="بُرد نمونه"
+              lanes={[
+                { id: 1, title: 'ایده‌ها', dot: 'bg-neutral' },
+                { id: 2, title: 'در حال تولید', dot: 'bg-warn', limit: 2, note: 'لازم: مسئول' },
+                { id: 3, title: 'بازبینی', dot: 'bg-primary', locked: 'فقط مدیر' },
+              ]}
+              cards={demoCards}
+              laneOf={(card) => card.lane}
+              onMove={(card, lane) =>
+                setDemoCards((cards) =>
+                  cards.map((item) => (item.id === card.id ? { ...item, lane } : item)),
+                )
+              }
+              emptyText="کارتی نیست"
+              limitLabel={(count, limit) => `${count} از ${limit}`}
+              renderCard={(card) => (
+                <div className="rounded-xl border border-hair bg-surface p-3.5 pe-11 text-[15px] font-semibold shadow-board-card">
+                  {card.title}
+                </div>
+              )}
+            />
           </div>
         </Group>
 
