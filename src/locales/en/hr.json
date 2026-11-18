@@ -588,6 +588,8 @@
     "objectPlaceholder": "e.g. I was on a work trip that day",
     "sendObjection": "Send objection",
     "objected": "Your objection was sent.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "lockHint": "Your score, rewards and penalties and payslip open only with your account password, every time you open this page.",
+    "unlock": "Open"
   }
 }

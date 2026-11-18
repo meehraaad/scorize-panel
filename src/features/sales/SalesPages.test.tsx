@@ -26,7 +26,7 @@ const readMonth = () =>
 /** Opens "my month" and types the password it asks for. */
 async function openMonth(password = MONTH_PASSWORD) {
   const user = userEvent.setup();
-  const router = renderApp('/sales/month');
+  const router = renderApp('/me/sales');
   await user.type(await screen.findByLabelText('رمز عبور'), password);
   await user.click(screen.getByRole('button', { name: 'باز کردن ماه من' }));
   return { user, router };
@@ -475,7 +475,7 @@ describe('sales panel, seller pages', () => {
     expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();
     await router.navigate('/sales/board');
     expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
-    await router.navigate('/sales/month');
+    await router.navigate('/me/sales');
     expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /^ماه من · / })).not.toBeInTheDocument();
   });

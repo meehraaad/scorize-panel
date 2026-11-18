@@ -154,6 +154,8 @@ describe('HR pay and KPIs', () => {
     // The person (the mocks show «من» as Ali) objects to a value.
     await user.click(screen.getByRole('button', { name: 'حساب کاربری' }));
     await user.click(await screen.findByRole('link', { name: 'امتیاز و پرداخت من' }));
+    await user.type(await screen.findByLabelText('رمز عبور'), 'password123');
+    await user.click(screen.getByRole('button', { name: 'باز کردن' }));
     const calls = await screen.findByText('تماس موفق');
     const kpi = within(calls.closest('li') as HTMLElement);
     await user.click(kpi.getByRole('button', { name: 'به این عدد اعتراض دارم' }));
@@ -186,6 +188,19 @@ describe('HR pay and KPIs', () => {
     renderApp('/me/sales');
     expect(await screen.findByRole('heading', { name: 'امتیاز و پرداخت من' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'بخش‌های من' })).not.toBeInTheDocument();
+  });
+
+  it('opens my pay only with my password', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/me');
+    await user.type(await screen.findByLabelText('رمز عبور'), 'wrong');
+    await user.click(screen.getByRole('button', { name: 'باز کردن' }));
+    expect(await screen.findByText('رمز عبور درست نیست.')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('رمز عبور'));
+    await user.type(screen.getByLabelText('رمز عبور'), 'password123');
+    await user.click(screen.getByRole('button', { name: 'باز کردن' }));
+    expect(await screen.findByText('تماس موفق')).toBeInTheDocument();
   });
 });
 

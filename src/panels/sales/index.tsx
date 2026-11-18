@@ -120,13 +120,6 @@ export const salesPanel: PanelDefinition = {
       icon: 'check',
     },
     {
-      id: 'month',
-      to: 'month',
-      label: 'panels.sales.nav.month',
-      tab: 'panels.sales.tabs.month',
-      icon: 'chart',
-    },
-    {
       id: 'manager',
       to: 'manager',
       label: 'panels.sales.nav.manager',
@@ -203,11 +196,8 @@ export const salesPanel: PanelDefinition = {
         skeleton: 'board',
       }),
     },
-    {
-      path: 'month',
-      // No data on open: the month is read only after the seller types their password.
-      ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], { skeleton: 'form' }),
-    },
+    // The seller's month moved to «من» (/me/sales), with the rest of their pay.
+    { path: 'month', loader: () => redirect('/me/sales') },
     // Its first address.
     { path: 'consultations', loader: () => redirect('/sales/calendar') },
     {

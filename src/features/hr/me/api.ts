@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { toCalendar } from '@/lib/calendar';
 import type { DisputeStatus, Kpi, PayMonth, ResultDetail, SlipLine } from '../pay/api';
@@ -7,8 +7,6 @@ import type { DisputeStatus, Kpi, PayMonth, ResultDetail, SlipLine } from '../pa
  * «من»: a staff member's own KPIs and pay, open to anyone with an active staff file. Django:
  * `api/hr/v1/me/` (lang `api/hr/v1/me.py`).
  */
-export const ME_KEY = ['me', 'kpis'] as const;
-
 export interface MyKpi extends Pick<
   Kpi,
   'id' | 'name' | 'metric' | 'direction' | 'target' | 'worst' | 'weight' | 'unit' | 'trial'
@@ -59,29 +57,29 @@ export interface MyMonth extends PayMonth {
   disputes: MyDispute[];
 }
 
-const monthQuery = ({ year, month }: PayMonth) => `year=${String(year)}&month=${String(month)}`;
-
-/** This Persian month (kept here, not imported from the HR panel: the route is in the main bundle). */
+/** This Persian month. */
 export function thisMonth(): PayMonth {
   const today = toCalendar(new Date(), 'persian');
   return { year: today.year, month: today.month };
 }
 
-export const myMonthQuery = (month: PayMonth) =>
-  queryOptions({
-    queryKey: [...ME_KEY, month.year, month.month],
-    queryFn: ({ signal }) => api<MyMonth>(`/hr/v1/me/kpis/?${monthQuery(month)}`, { signal }),
+/**
+ * My month, read with my password on every visit (`POST`, never cached): 400 wrong password, 429
+ * too many, 409 no password (`api.core.password_gate`).
+ */
+export const useMyMonth = () =>
+  useMutation({
+    mutationFn: (body: PayMonth & { password: string }) =>
+      api<MyMonth>('/hr/v1/me/kpis/', { method: 'POST', body }),
   });
 
+/** Objects to one of my values; answers my month again. */
 export function useObject() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: PayMonth & { kpi: number; text: string }) =>
-      api<MyMonth>(`/hr/v1/me/disputes/`, { method: 'POST', body }),
-    onSuccess: (data) => {
-      client.setQueryData(myMonthQuery(data).queryKey, data);
-      // HR's «نتیجه‌ها» lists objections (the same person may be HR).
-      void client.invalidateQueries({ queryKey: ['hr', 'pay'] });
-    },
+    mutationFn: (body: PayMonth & { password: string; kpi: number; text: string }) =>
+      api<MyMonth>('/hr/v1/me/disputes/', { method: 'POST', body }),
+    // HR's «نتیجه‌ها» lists objections (the same person may be HR).
+    onSuccess: () => client.invalidateQueries({ queryKey: ['hr', 'pay'] }),
   });
 }

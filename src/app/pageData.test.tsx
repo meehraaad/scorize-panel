@@ -115,7 +115,6 @@ const PAGES: PageCase[] = [
     '/sales/leads?stage=new',
     '/sales/calendar',
     '/sales/board',
-    '/sales/month',
     '/sales/tasks',
     `/sales/customers/${String(ERFAN)}`,
     `/sales/customers/${String(ERFAN)}/money`,

@@ -15,6 +15,7 @@ import type {
   SlipLine,
   Totals,
 } from '@/features/hr/pay/api';
+import { payMonth } from '@/features/hr/pay/api';
 import { hrAllowed, payStaff } from './hr';
 import { forbidden, notFound, storage } from './session';
 
@@ -435,15 +436,26 @@ function myMonth(month: PayMonth): MyMonth {
   };
 }
 
+/** The staff users' password (MOCK_PASSWORD in src/mocks/handlers.ts). */
+export const ME_PASSWORD = 'password123';
+const wrongPassword = () =>
+  HttpResponse.json({ password: ['The password is wrong.'] }, { status: 400 });
+
 const staffAllowed = () => STAFF_USERS.has(storage.get() ?? 0);
 
 export const hrPayHandlers = [
-  http.get(`${API}/me/kpis/`, ({ request }) =>
-    staffAllowed() ? HttpResponse.json(myMonth(monthOf(request.url))) : forbidden(),
-  ),
+  // Read with my password, on every visit (400 when wrong).
+  http.post(`${API}/me/kpis/`, async ({ request }) => {
+    if (!staffAllowed()) return forbidden();
+    const body = (await request.json()) as Partial<PayMonth> & { password?: string };
+    if (body.password !== ME_PASSWORD) return wrongPassword();
+    const now = payMonth();
+    return HttpResponse.json(myMonth({ year: body.year ?? now.year, month: body.month ?? now.month }));
+  }),
   http.post(`${API}/me/disputes/`, async ({ request }) => {
     if (!staffAllowed()) return forbidden();
-    const body = (await request.json()) as PayMonth & { kpi: number; text: string };
+    const body = (await request.json()) as PayMonth & { kpi: number; text: string; password?: string };
+    if (body.password !== ME_PASSWORD) return wrongPassword();
     const state = myMonth(body);
     const me = payStaff()[0];
     if (!me || !state.can_object)

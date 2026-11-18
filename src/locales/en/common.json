@@ -81,7 +81,6 @@
         "calendar": "My calendar",
         "leads": "Customers",
         "tasks": "My tasks",
-        "month": "My performance",
         "manager": "Sales management"
       },
       "tabs": {
@@ -89,8 +88,7 @@
         "board": "Board",
         "calendar": "Calendar",
         "leads": "Customers",
-        "tasks": "Tasks",
-        "month": "Performance"
+        "tasks": "Tasks"
       },
       "description": "Leads, consultations, offers and contracts"
     },
@@ -445,5 +443,13 @@
     "nav": "My sections",
     "pay": "Score and pay",
     "sales": "Sales performance"
+  },
+  "passwordGate": {
+    "card": "Enter your password",
+    "password": "Password",
+    "required": "Enter your password.",
+    "wrong": "The password is wrong.",
+    "tooMany": "Too many wrong tries. Try again in 15 minutes.",
+    "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens."
   }
 }

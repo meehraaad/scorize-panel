@@ -719,12 +719,6 @@
     "lock": {
       "title": "My month",
       "subtitle": "Your sales, commission and rank open only with your account password, every time you open this page.",
-      "card": "Enter your password",
-      "password": "Password",
-      "required": "Enter your password.",
-      "wrong": "The password is wrong.",
-      "tooMany": "Too many wrong tries. Try again in 15 minutes.",
-      "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens.",
       "submit": "Open my month",
       "failed": "My month didn't open. Try again."
     },

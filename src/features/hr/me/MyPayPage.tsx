@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -7,47 +6,102 @@ import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PasswordGate } from '@/components/ui/PasswordGate';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { TextAreaField } from '@/components/ui/TextField';
+import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { MANUAL, payMonth } from '../pay/api';
 import { DISPUTE_TONES } from '../pay/disputeTones';
 import { MonthBar } from '../pay/components/MonthBar';
-import { myMonthQuery, useObject, type MyDispute, type MyKpi, type MyMonth } from './api';
+import { useMyMonth, useObject, type MyDispute, type MyKpi, type MyMonth } from './api';
 
 /**
  * «من» (/me): my KPIs this month, their values and why, my score, the rewards and penalties they
- * give and, once the month's pay is final, my slip. While a closed month is open for objections,
- * I can object to a value; HR answers in «نتیجه‌ها».
+ * give and, once the month's pay is final, my slip. Opens only after I type my password, on every
+ * visit (kept in the page's state, never a cache). While a closed month is open for objections, I
+ * can object to a value; HR answers in «نتیجه‌ها».
  */
 export default function MyPayPage() {
   const { t } = useTranslation('hr');
+  const unlock = useMyMonth();
+  const [opened, setOpened] = useState<{ password: string; data: MyMonth; shift: number } | null>(
+    null,
+  );
+  const open = (password: string, shift: number) =>
+    unlock.mutate(
+      { password, ...payMonth(shift) },
+      {
+        onSuccess: (data) => setOpened({ password, data, shift }),
+        onError: (error) => {
+          if (opened || !(error instanceof ApiError && [400, 409, 429].includes(error.status)))
+            toast.error(t('error'));
+        },
+      },
+    );
+  if (!opened)
+    return (
+      <PasswordGate
+        id="me-lock"
+        title={t('me.title')}
+        subtitle={t('me.lockHint')}
+        submit={t('me.unlock')}
+        pending={unlock.isPending}
+        error={unlock.error}
+        onSubmit={(password) => open(password, 0)}
+      />
+    );
+  return (
+    <Opened
+      data={opened.data}
+      shift={opened.shift}
+      pending={unlock.isPending}
+      password={opened.password}
+      onShift={(shift) => open(opened.password, shift)}
+      onChange={(data) => setOpened({ ...opened, data })}
+    />
+  );
+}
+
+function Opened({
+  data,
+  shift,
+  pending,
+  password,
+  onShift,
+  onChange,
+}: {
+  data: MyMonth;
+  shift: number;
+  pending: boolean;
+  password: string;
+  onShift: (shift: number) => void;
+  onChange: (data: MyMonth) => void;
+}) {
+  const { t } = useTranslation('hr');
   const f = useFormat();
-  const [shift, setShift] = useState(0);
-  const month = payMonth(shift);
-  const { data } = useQuery(myMonthQuery(month));
   return (
     <PageStack>
       <PageHeader title={t('me.title')} subtitle={t('me.subtitle')} />
-      <MonthBar month={month} shift={shift} onShift={setShift}>
-        {data?.final ? (
+      <MonthBar month={data} shift={shift} onShift={onShift}>
+        {data.final ? (
           <Chip tone="good" dot>
             {t('me.final')}
           </Chip>
-        ) : data?.can_object && data.disputes_until ? (
+        ) : data.can_object && data.disputes_until ? (
           <Chip tone="info" dot>
             {t('me.objectUntil', { date: f.date(data.disputes_until) })}
           </Chip>
-        ) : data?.closed ? (
+        ) : data.closed ? (
           <Chip tone="neutral" dot>
             {t('me.closed')}
           </Chip>
         ) : null}
       </MonthBar>
-      {!data ? (
+      {pending ? (
         <Card className="p-5">
           <SkeletonRows rows={4} />
         </Card>
@@ -56,13 +110,21 @@ export default function MyPayPage() {
           {t('me.noneHint')}
         </EmptyState>
       ) : (
-        <MonthBody data={data} />
+        <MonthBody data={data} password={password} onChange={onChange} />
       )}
     </PageStack>
   );
 }
 
-function MonthBody({ data }: { data: MyMonth }) {
+function MonthBody({
+  data,
+  password,
+  onChange,
+}: {
+  data: MyMonth;
+  password: string;
+  onChange: (data: MyMonth) => void;
+}) {
   const { t } = useTranslation('hr');
   const f = useFormat();
   const toman = (amount: number) => t('toman', { amount: f.number(amount) });
@@ -94,6 +156,8 @@ function MonthBody({ data }: { data: MyMonth }) {
               key={kpi.id}
               kpi={kpi}
               data={data}
+              password={password}
+              onChange={onChange}
               dispute={data.disputes.find((row) => row.kpi === kpi.id)}
             />
           ))}
@@ -175,10 +239,14 @@ function MonthBody({ data }: { data: MyMonth }) {
 function KpiRow({
   kpi,
   data,
+  password,
+  onChange,
   dispute,
 }: {
   kpi: MyKpi;
   data: MyMonth;
+  password: string;
+  onChange: (data: MyMonth) => void;
   dispute: MyDispute | undefined;
 }) {
   const { t } = useTranslation('hr');
@@ -260,9 +328,10 @@ function KpiRow({
                 disabled={!text.trim() || send.isPending}
                 onClick={() =>
                   send.mutate(
-                    { year: data.year, month: data.month, kpi: kpi.id, text: text.trim() },
+                    { year: data.year, month: data.month, password, kpi: kpi.id, text: text.trim() },
                     {
-                      onSuccess: () => {
+                      onSuccess: (next) => {
+                        onChange(next);
                         setWriting(false);
                         setText('');
                         toast.success(t('me.objected'));

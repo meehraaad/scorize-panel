@@ -6,7 +6,6 @@ import {
   type RouteObject,
 } from 'react-router';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
-import { myMonthQuery, thisMonth } from '@/features/hr/me/api';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
 import { restoreCacheFor } from '@/lib/api/persist';
@@ -176,9 +175,9 @@ const pageRoutes: RouteObject[] = [
             children: [
               {
                 index: true,
+                // No data on open: my pay is read only after I type my password.
                 ...lazyPage(() => import('@/features/hr/me/MyPayPage'), ['hr'], {
-                  data: () => [myMonthQuery(thisMonth())],
-                  skeleton: 'dashboard',
+                  skeleton: 'form',
                 }),
               },
               {
