@@ -97,6 +97,28 @@ describe('HR panel', () => {
     ).toBeInTheDocument();
   });
 
+  it('ends someone’s work and brings them back with a reason', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/staff/1');
+    await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
+    const exit = await screen.findByRole('dialog', { name: 'شروع جدایی' });
+    await user.click(within(exit).getByRole('button', { name: 'شروع جدایی' }));
+    await user.click(await screen.findByRole('button', { name: 'استخدام و جدایی' }));
+    await user.click(await screen.findByRole('button', { name: 'پایان همکاری' }));
+    const confirm = await screen.findByRole('group', { name: /همکاری تمام شود/ });
+    await user.click(within(confirm).getByRole('button', { name: 'پایان همکاری' }));
+    expect(await toasts().findByText('همکاری تمام شد')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'بازگرداندن همکاری' }));
+    const back = await screen.findByRole('dialog', { name: 'بازگرداندن همکاری' });
+    const save = within(back).getByRole('button', { name: 'بازگرداندن همکاری' });
+    expect(save).toBeDisabled();
+    await user.type(within(back).getByLabelText('دلیل برگشت'), 'برگشت از سفر');
+    await user.click(save);
+    expect(await toasts().findByText('همکاری دوباره شروع شد')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'شروع جدایی' })).toBeInTheDocument();
+  });
+
   it('changes a salary from today', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);

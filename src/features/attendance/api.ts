@@ -123,6 +123,36 @@ export const devicesQuery = queryOptions({
   queryFn: ({ signal }) => api<{ results: Device[] }>(`${ATTENDANCE_API}/devices/`, { signal }),
 });
 
+/** Python's names of the days, Saturday first (lang `api/sales/v1/calls/hours.py`). */
+export type Weekday = 'sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri';
+
+/**
+ * The week the reports count: each day's start (`HH:MM`, null: a day off), read from the office
+ * phone hours the sales manager keeps; `saved` false: nobody saved them yet (the PBX's own hours).
+ */
+export interface Schedule {
+  saved: boolean;
+  week: { day: Weekday; start: string | null }[];
+  /** Coming closed days, `YYYY-MM-DD`. */
+  closed_days: string[];
+  closed_today: boolean;
+  /** Coming in within this many minutes of the start is on time. */
+  grace_minutes: number;
+}
+
+export const scheduleQuery = queryOptions({
+  queryKey: [...ATTENDANCE_KEY, 'schedule'],
+  queryFn: ({ signal }) => api<Schedule>(`${ATTENDANCE_API}/schedule/`, { signal }),
+});
+
+/** The sales manager's key (`features/sales/api/manager.ts`): they edit the office phone hours. */
+export const PHONE_HOURS_PERMISSION = 'can_assign_to_seller';
+/** Where the phone hours are edited (the sales panel's manager area). */
+export const PHONE_HOURS_PATH = '/sales/manager/phone/hours';
+
+/** The attendance section's pages, inside the HR panel (features can't import panels). */
+export const attendancePath = (to = '') => (to ? `/hr/attendance/${to}` : '/hr/attendance');
+
 /** Today as `YYYY-MM-DD`: the daily page opens on it. */
 export const todayValue = () => toValue(new Date(), false);
 

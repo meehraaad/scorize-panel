@@ -12,6 +12,7 @@ import {
   stagesQuery,
   managerTagsQuery,
   consultationTypesQuery,
+  managerConsultationsQuery,
   contractBuilderQuery,
   contractOverviewQuery,
   templateParam,
@@ -379,20 +380,42 @@ export const salesPanel: PanelDefinition = {
           }),
         },
         {
-          // Consultation types, their prices and weekly times (S81).
+          // The consultation types with their prices and weekly times (S81), and the team's
+          // booked sessions (filters, consultant menu) as a sub-tab.
           path: 'consultations',
-          ...lazyPage(() => import('@/features/sales/manager/ConsultationTypesPage'), [], {
-            data: () => [consultationTypesQuery],
-            skeleton: 'list',
-          }),
-        },
-        {
-          // One type's editor; `new` makes a type.
-          path: 'consultations/:id',
-          ...lazyPage(() => import('@/features/sales/manager/ConsultationTypePage'), [], {
-            data: () => [consultationTypesQuery],
-            skeleton: 'form',
-          }),
+          ...lazyPage(() => import('@/features/sales/manager/ConsultationsLayout'), []),
+          children: [
+            {
+              index: true,
+              ...lazyPage(() => import('@/features/sales/manager/ConsultationTypesPage'), [], {
+                data: () => [consultationTypesQuery],
+                skeleton: 'list',
+              }),
+            },
+            {
+              path: 'sessions',
+              ...lazyPage(() => import('@/features/sales/manager/ManagerConsultationsPage'), [], {
+                data: ({ request }) => [
+                  managerConsultationsQuery(new URL(request.url).searchParams),
+                ],
+                skeleton: 'list',
+              }),
+            },
+            // The types' addresses while the sessions list was the tab's first page.
+            { path: 'types', loader: () => redirect('/sales/manager/consultations') },
+            {
+              path: 'types/:id',
+              loader: ({ params }) => redirect(`/sales/manager/consultations/${params.id ?? ''}`),
+            },
+            {
+              // One type's editor; `new` makes a type.
+              path: ':id',
+              ...lazyPage(() => import('@/features/sales/manager/ConsultationTypePage'), [], {
+                data: () => [consultationTypesQuery],
+                skeleton: 'form',
+              }),
+            },
+          ],
         },
         {
           path: 'stages',

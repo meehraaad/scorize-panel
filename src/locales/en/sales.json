@@ -805,7 +805,10 @@
         "meeting": "Session log"
       }
     },
-    "noSeller": "No consultant"
+    "noSeller": "No consultant",
+    "openCount": "{{n}} without a consultant",
+    "minutes": "{{n}} min",
+    "arrived": "Came at {{time}}"
   },
   "consultationCalendar": {
     "aside": "My calendar",
@@ -877,7 +880,8 @@
       "label": "Consultant",
       "done": "{{name}}'s consultation is now {{seller}}'s.",
       "cleared": "{{name}}'s consultation has no consultant now.",
-      "failed": "Couldn't assign it. Try again."
+      "failed": "Couldn't assign it. Try again.",
+      "labelFor": "{{name}}'s consultant"
     }
   },
   "purchases": {
@@ -2400,7 +2404,12 @@
         "capacity": "Capacity",
         "remove": "Remove this {{day}} range",
         "starts": "{{n}} times: {{list}}",
-        "tooShort": "This range is shorter than a session and makes no times."
+        "tooShort": "This range is shorter than a session and makes no times.",
+        "daySummary": "{{ranges}} · {{n}} times",
+        "dayOff": "Closed",
+        "editDay": "Edit {{day}} times",
+        "startsTitle": "{{n}} times this day",
+        "range": "{{from}} to {{to}}"
       },
       "closures": {
         "title": "Closed days",
@@ -2429,7 +2438,99 @@
       "save": "Save",
       "create": "Create",
       "saved": "Saved.",
-      "created": "New type created."
+      "created": "New type created.",
+      "stats": {
+        "label": "Consultations summary",
+        "selling": "On sale",
+        "of": "of {{n}}",
+        "weekly": "Times a week",
+        "upcoming": "Sessions ahead"
+      },
+      "modeFilter": "Session type",
+      "modeOption": {
+        "all": "All",
+        "in_person": "In person",
+        "online": "Online"
+      },
+      "dayShort": {
+        "sat": "Sa",
+        "sun": "Su",
+        "mon": "Mo",
+        "tue": "Tu",
+        "wed": "We",
+        "thu": "Th",
+        "fri": "Fr"
+      },
+      "facts": {
+        "label": "This consultation at a glance",
+        "price": "Price",
+        "was": "Full price {{price}}",
+        "length": "Session length",
+        "minutes": "min",
+        "week": "Times a week",
+        "days": "{{n}} open days",
+        "upcoming": "Sessions ahead"
+      }
+    },
+    "sessions": {
+      "nav": "Consultation sections",
+      "section": {
+        "sessions": "Sessions",
+        "types": "Types and prices"
+      },
+      "title": "Consultation sessions",
+      "subtitle": "Every paid session of the team. Change a session's consultant right here.",
+      "list": "Sessions",
+      "views": "Which sessions",
+      "view": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "week": "Next 7 days",
+        "unassigned": "No consultant",
+        "unlogged": "No log",
+        "past": "Past",
+        "all": "All",
+        "span": "Chosen days"
+      },
+      "needs": {
+        "unassigned": "{{n}} upcoming sessions have no consultant yet",
+        "unlogged": "{{n}} held sessions have no log"
+      },
+      "from": "From",
+      "to": "To",
+      "search": "Search customers",
+      "searchPlaceholder": "Customer name or phone",
+      "type": "Type",
+      "allTypes": "All types",
+      "mode": "Session",
+      "modeOption": {
+        "all": "In person and online",
+        "in_person": "In person",
+        "online": "Online"
+      },
+      "seller": "Consultant",
+      "allSellers": "All consultants",
+      "status": "Status",
+      "allStatuses": "All",
+      "statusOption": {
+        "upcoming": "Upcoming",
+        "done": "Held, logged",
+        "unlogged": "Held, not logged",
+        "arrived": "Came to the office"
+      },
+      "clear": "Clear filters",
+      "found": "{{n}} sessions",
+      "emptyFiltered": "No sessions match these filters.",
+      "empty": {
+        "today": "No sessions today.",
+        "tomorrow": "No sessions tomorrow.",
+        "week": "No sessions in the next 7 days.",
+        "unassigned": "Every upcoming session has a consultant.",
+        "unlogged": "Every held session has a log.",
+        "past": "No past sessions.",
+        "all": "No sessions booked yet.",
+        "span": "No sessions on these days."
+      }
     }
   },
   "handoff": {

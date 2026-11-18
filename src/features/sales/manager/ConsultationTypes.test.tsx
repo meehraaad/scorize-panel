@@ -50,8 +50,9 @@ describe('consultation types (S81)', () => {
 
     const week = screen.getByRole('list', { name: 'ساعت‌های هفتگی' });
     const friday = within(week).getAllByRole('listitem').at(-1) as HTMLElement;
-    expect(friday).toHaveTextContent('این روز نوبتی ندارد.');
-    await user.click(within(friday).getByRole('button', { name: 'افزودن بازه' }));
+    expect(friday).toHaveTextContent('بسته');
+    // Opening a day gives it 10 to 17 and shows its times to edit.
+    await user.click(within(friday).getByRole('switch', { name: /جمعه/ }));
     expect(friday).toHaveTextContent('۷ نوبت');
     await user.click(within(friday).getByRole('button', { name: 'افزودن بازه' }));
     await user.selectOptions(within(friday).getAllByLabelText('از')[1] as HTMLElement, '16:00');

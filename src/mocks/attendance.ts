@@ -171,6 +171,20 @@ export const attendanceHandlers = [
     });
   }),
 
+  http.get(`${API}/schedule/`, () =>
+    allowed()
+      ? HttpResponse.json({
+          saved: true,
+          week: ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'].map((day) => ({
+            day,
+            start: ['sat', 'fri'].includes(day) ? null : START,
+          })),
+          closed_days: ['2026-12-21'],
+          closed_today: false,
+          grace_minutes: 30,
+        })
+      : forbidden(),
+  ),
   http.get(`${API}/devices/`, () =>
     allowed() ? HttpResponse.json({ results: [device()] }) : forbidden(),
   ),

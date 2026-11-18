@@ -1084,6 +1084,13 @@ function holderOf(id: number, nobody: boolean) {
   return { seller: staff === null ? null : NIMA_NAME, seller_id: staff };
 }
 
+/**
+ * The consultations list's holder and arrival (src/mocks/salesStaff.ts): every third session
+ * nobody holds until a manager gives it to someone.
+ */
+export const listHolderOf = (id: number) => holderOf(id, id % 3 === 0);
+export const arrivalOf = (id: number) => arrivals.get(id) ?? null;
+
 /** The seller's consultations and timed follow-ups between two days (`YYYY-MM-DD`, both included). */
 function calendarOf(data: SalesState, from: string, to: string) {
   const lastId = Math.max(...data.consultations.map((item) => item.id));

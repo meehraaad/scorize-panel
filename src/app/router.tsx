@@ -197,8 +197,8 @@ const pageRoutes: RouteObject[] = [
       },
     ],
   },
-  // The messages section's earlier addresses (its own panel, then the sales management area):
-  // now sections of the management panel.
+  // Earlier addresses of sections that moved. The messages section (its own panel, then the sales
+  // management area): now sections of the management panel.
   ...[
     ['messages', '/founders/messages'],
     ['messages/ready', '/founders/messages/ready'],
@@ -206,6 +206,11 @@ const pageRoutes: RouteObject[] = [
     ['sales/manager/messages', '/founders/messages'],
     ['sales/manager/messages/ready', '/founders/messages/ready'],
     ['sales/manager/access/*', '/founders/access'],
+    // The attendance panel's addresses: now the HR panel's attendance section.
+    ['attendance', '/hr/attendance'],
+    ['attendance/month', '/hr/attendance/month'],
+    ['attendance/settings', '/hr/attendance/settings'],
+    ['attendance/*', '/hr/attendance'],
   ].map(([path = '', to = '']) => ({ path, loader: () => redirect(to) })),
   ...PANELS.map(panelRoutes),
   // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
