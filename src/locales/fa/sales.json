@@ -259,13 +259,17 @@
       "cold": "سرد (زیر ۴۵)"
     },
     "overdueOnly": "فقط عقب‌افتاده‌ها",
-    "consultation": "مشاوره‌ی خریداری‌شده",
-    "allConsultations": "همه",
-    "consultationOption": {
-      "any": "خریده (هر نوع)",
-      "in_person": "حضوری",
-      "online": "غیرحضوری",
+    "consultation": "مشاوره",
+    "boughtOption": {
+      "all": "همه",
+      "bought": "مشاوره‌های خریداری‌شده",
       "none": "مشاوره نخریده"
+    },
+    "consultationMode": "حضوری یا غیرحضوری",
+    "modeOption": {
+      "all": "حضوری و غیرحضوری",
+      "in_person": "حضوری",
+      "online": "غیرحضوری"
     },
     "consultationType": "نوع مشاوره",
     "allConsultationTypes": "همه‌ی انواع",

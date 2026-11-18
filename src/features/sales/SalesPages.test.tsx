@@ -128,28 +128,32 @@ describe('sales panel, seller pages', () => {
     );
   });
 
-  it('leads: filters bought consultations by in person or not, then by type', async () => {
+  it('leads: bought consultations open in person or not, then the type', async () => {
     const user = userEvent.setup();
     renderApp('/sales/leads');
-    const mode = await screen.findByRole('combobox', { name: 'مشاوره‌ی خریداری‌شده' });
-    // The type layer opens only once a bought consultation is chosen.
+    const main = await screen.findByRole('combobox', { name: 'مشاوره' });
+    const options = (name: string) =>
+      within(screen.getByRole('combobox', { name }))
+        .getAllByRole('option')
+        .map((option) => option.textContent);
+    // The deeper layer shows only once the main filter is on bought consultations.
+    expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
 
-    await user.selectOptions(mode, 'in_person');
-    const type = await screen.findByRole('combobox', { name: 'نوع مشاوره' });
-    const names = within(type)
-      .getAllByRole('option')
-      .map((option) => option.textContent);
-    expect(names).toEqual(['همه‌ی انواع', 'مشاوره‌ی ویزای تحصیلی', 'مشاوره‌ی حضوری قدیمی (قدیمی)']);
+    await user.selectOptions(main, 'bought');
+    expect(options('نوع مشاوره')).toHaveLength(5); // all + four types
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'حضوری یا غیرحضوری' }),
+      'in_person',
+    );
+    expect(options('نوع مشاوره')).toEqual([
+      'همه‌ی انواع',
+      'مشاوره‌ی ویزای تحصیلی',
+      'مشاوره‌ی حضوری قدیمی (قدیمی)',
+    ]);
 
-    await user.selectOptions(mode, 'online');
-    expect(
-      within(screen.getByRole('combobox', { name: 'نوع مشاوره' }))
-        .getAllByRole('option')
-        .map((option) => option.textContent),
-    ).toEqual(['همه‌ی انواع', 'مشاوره‌ی اپلای ارشد', 'مشاوره‌ی اپلای دکتری']);
-
-    await user.selectOptions(mode, 'none');
+    await user.selectOptions(main, 'none');
+    expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
   });
 
