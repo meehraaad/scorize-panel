@@ -10,6 +10,7 @@ import {
   commissionQuery,
   stagesQuery,
   managerTagsQuery,
+  consultationTypesQuery,
   contractBuilderQuery,
   contractOverviewQuery,
   templateParam,
@@ -370,6 +371,22 @@ export const salesPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/sales/manager/FollowUpHealthPage'), [], {
             data: () => [healthQuery('all')],
             skeleton: 'list',
+          }),
+        },
+        {
+          // Consultation types, their prices and weekly times (S81).
+          path: 'consultations',
+          ...lazyPage(() => import('@/features/sales/manager/ConsultationTypesPage'), [], {
+            data: () => [consultationTypesQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          // One type's editor; `new` makes a type.
+          path: 'consultations/:id',
+          ...lazyPage(() => import('@/features/sales/manager/ConsultationTypePage'), [], {
+            data: () => [consultationTypesQuery],
+            skeleton: 'form',
           }),
         },
         {

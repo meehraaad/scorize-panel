@@ -1293,7 +1293,8 @@
       "tags": "Customer tags",
       "commission": "Commission",
       "contract": "Contract",
-      "phone": "Phone"
+      "phone": "Phone",
+      "consultations": "Consultations"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -2284,6 +2285,95 @@
       "contractsSubtitle": "Contracts credited to this seller this month. Use “Move” to give one to another seller, with a reason.",
       "contractsEmpty": "No contracts were closed for this seller this month.",
       "instalmentsSubtitle": "Instalments of this seller's contracts due this month, and unpaid ones already past due."
+    },
+    "consultations": {
+      "title": "Consultation types",
+      "subtitle": "Each consultation's price, length, weekly times and closed days. The site and sellers see these.",
+      "new": "New type",
+      "active": "On sale",
+      "off": "Paused",
+      "offHint": "Not shown on the site, and sellers can't sell them.",
+      "emptyActive": "No consultation is on sale.",
+      "mode": {
+        "in_person": "In person",
+        "online": "Online"
+      },
+      "minutes": "{{n}} min",
+      "every": "Every {{n}} min",
+      "free": "Free",
+      "discountUntil": "Discount until {{date}}",
+      "noWeek": "No times set",
+      "weekSummary": "{{days}} days a week, {{times}} times",
+      "upcoming": "{{n}} upcoming sessions",
+      "closedCount": "{{n}} closures",
+      "back": "Consultation types",
+      "missing": "This consultation type wasn't found.",
+      "editHint": "Changes apply when you save. Sessions already booked keep their time.",
+      "newHint": "Write the name, price and times. In person or online can't be changed later.",
+      "about": {
+        "title": "Details",
+        "name": "Name",
+        "mode": "Session type",
+        "modeFixed": "Sessions are {{mode}}; this doesn't change.",
+        "active": "On sale",
+        "activeOn": "Shown on the site and to sellers.",
+        "activeOff": "Hidden; earlier bookings stay.",
+        "length": "Session length",
+        "step": "Start times",
+        "stepHint": "How often a session can start.",
+        "stepRow": "Only at the start of each range",
+        "description": "Short description"
+      },
+      "price": {
+        "title": "Price",
+        "price": "Price (toman)",
+        "discount": "Discount",
+        "discountHint": "The discounted price applies until the day you choose.",
+        "discounted": "Discounted price (toman)",
+        "until": "Discount until the end of"
+      },
+      "week": {
+        "title": "Weekly times",
+        "subtitle": "A day can have several ranges. Capacity is how many people at each start time.",
+        "add": "Add range",
+        "copy": "Same for every day",
+        "copied": "{{day}}'s times set for every day.",
+        "closed": "No times this day.",
+        "from": "From",
+        "to": "To",
+        "capacity": "Capacity",
+        "remove": "Remove this {{day}} range",
+        "starts": "{{n}} times: {{list}}",
+        "tooShort": "This range is shorter than a session and makes no times."
+      },
+      "closures": {
+        "title": "Closed days",
+        "subtitle": "A holiday or leave: that day or time can't be booked. Saved right away.",
+        "day": "Day",
+        "time": "Time",
+        "allDay": "All day",
+        "add": "Close",
+        "added": "Closed.",
+        "exists": "This time is already closed.",
+        "pickFirst": "Choose the day first.",
+        "empty": "No closed days.",
+        "remove": "Reopen {{day}}",
+        "removed": "Open again."
+      },
+      "errors": {
+        "title": "Write a name.",
+        "price": "Write the price.",
+        "discounted": "The discounted price must be less than the price.",
+        "until": "Choose when the discount ends.",
+        "day": "Fix this day's ranges: end after start, no overlaps, capacity at least one."
+      },
+      "unsaved": "You have unsaved changes.",
+      "allSaved": "Everything is saved.",
+      "undo": "Undo",
+      "save": "Save",
+      "create": "Create",
+      "saved": "Saved.",
+      "created": "New type created."
     }
   },
   "handoff": {

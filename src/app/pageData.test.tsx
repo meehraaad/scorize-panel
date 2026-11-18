@@ -138,6 +138,9 @@ const PAGES: PageCase[] = [
     // A seller's month from the leaderboard (S75): Mahdi (src/mocks/salesManager.ts).
     '/sales/manager/team/31',
     '/sales/manager/commission',
+    '/sales/manager/consultations',
+    '/sales/manager/consultations/2',
+    '/sales/manager/consultations/new',
     '/sales/manager/follow-ups',
     '/sales/manager/stages',
     '/sales/manager/tags',
