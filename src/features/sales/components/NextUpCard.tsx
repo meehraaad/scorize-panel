@@ -4,7 +4,12 @@ import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { IconLink } from '@/components/ui/IconButton';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { FIRST_CALL_TARGET_MINUTES, CHANNEL_ICON, MESSAGE_CHANNELS, messageHref } from '@/lib/sales/api';
+import {
+  FIRST_CALL_TARGET_MINUTES,
+  CHANNEL_ICON,
+  MESSAGE_CHANNELS,
+  messageHref,
+} from '@/lib/sales/api';
 import { openContactLog, type ContactValues } from '@/lib/sales/contactDrafts';
 import { dialWithLinphone } from '@/lib/sales/dial';
 import type { AgendaItem } from '../agenda';

@@ -48,8 +48,7 @@ export function PersonDialog({ person, onClose }: { person: AccessPerson; onClos
       .filter((key) => !editable || (limited && key.protected))
       .map((key) => [key.id, t(editable ? 'person.superusersOnly' : 'person.notYours')]),
   );
-  const changed =
-    !superuser && (!same(chosenGroups, person.groups) || !same(direct, person.keys));
+  const changed = !superuser && (!same(chosenGroups, person.groups) || !same(direct, person.keys));
 
   const submit = () =>
     save.mutate(
