@@ -10,8 +10,9 @@ import type { ContractDocument } from './contract';
 import type { BuiltinVariable, ContractVariable } from './offer';
 import type { MonthData } from './month';
 
-/** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
-export const MANAGER_PERMISSION = 'can_assign_to_seller';
+import { MANAGER_PERMISSION } from './managerPermission';
+
+export { MANAGER_PERMISSION };
 
 /** The phone tab alone (apply.can_manage_phone): the office line, without the other manager pages. */
 export const PHONE_PERMISSION = 'can_manage_phone';

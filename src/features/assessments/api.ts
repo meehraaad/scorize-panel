@@ -177,11 +177,11 @@ export interface Health {
   }[];
   issues_limit: number;
 }
-export const healthQuery = queryOptions({
+export const healthQuery = /* @__PURE__ */ queryOptions({
   queryKey: ['assessment-management', 'health'],
   queryFn: ({ signal }) => api<Health>(`${BASE}/health/`, { signal }),
 });
-export const optionsQuery = queryOptions({
+export const optionsQuery = /* @__PURE__ */ queryOptions({
   queryKey: ['assessment-management', 'options'],
   queryFn: ({ signal }) => api<Options>(`${BASE}/options/`, { signal }),
 });

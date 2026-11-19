@@ -243,9 +243,9 @@ function QuizPanel({
   const { t } = useTranslation('pathways');
   const f = useFormat();
   return (
-    <section className="overflow-hidden rounded-[28px] bg-surface shadow-panel">
+    <section className="overflow-hidden rounded-3xl bg-surface shadow-panel">
       {step && (
-        <div className="flex items-center gap-4 px-5 pt-5 sm:px-8 lg:px-14 lg:pt-8">
+        <div className="flex items-center gap-4 px-6 pt-6 lg:px-14 lg:pt-8">
           <ProgressBar
             size="sm"
             value={Math.round(((step.number - 1) / step.total) * 100)}
@@ -258,11 +258,11 @@ function QuizPanel({
         </div>
       )}
       <div
-        className={`grid gap-8 px-5 py-8 sm:px-8 lg:gap-x-16 lg:px-14 lg:py-14 ${
+        className={`grid gap-8 px-6 py-8 lg:gap-10 lg:px-14 lg:py-10 ${
           rail ? 'lg:grid-cols-[minmax(0,1fr)_17rem]' : ''
         }`}
       >
-        <div className="max-w-[46rem] min-w-0">{children}</div>
+        <div className="max-w-3xl min-w-0">{children}</div>
         {rail && <aside className="min-w-0 max-lg:order-first">{rail}</aside>}
       </div>
     </section>
@@ -275,15 +275,13 @@ function Intro({ pathways, onStart }: { pathways: FinderPathway[]; onStart: () =
   const countries = [...new Map(pathways.map((p) => [p.country.id, p.country.name])).values()];
   const fact = 'm-0 text-xl leading-8 font-bold text-text';
   return (
-    <div className="flex animate-rise flex-col">
+    <div className="flex animate-rise flex-col gap-4">
       <p className="m-0 text-[15px] font-semibold text-primary-text">{t('intro.eyebrow')}</p>
-      <h1 className="m-0 mt-4 text-[40px] leading-[1.2] font-extrabold tracking-tight text-balance lg:text-[64px]">
+      <h1 className="m-0 text-5xl leading-tight font-extrabold tracking-tight text-balance">
         {t('intro.title')}
       </h1>
-      <p className="m-0 mt-5 max-w-xl text-[17px] leading-8 text-text-2 lg:text-[19px]">
-        {t('intro.body')}
-      </p>
-      <dl className="m-0 mt-10 flex flex-wrap gap-x-12 gap-y-5 text-sm text-text-2">
+      <p className="m-0 max-w-xl text-lg leading-8 text-text-2 lg:text-xl">{t('intro.body')}</p>
+      <dl className="m-0 flex flex-wrap gap-x-10 gap-y-4 pt-6 pb-6 text-sm text-text-2">
         <div className="flex flex-col-reverse">
           <dt>{t('intro.time_label')}</dt>
           <dd className={fact}>{t('intro.time')}</dd>
@@ -299,8 +297,8 @@ function Intro({ pathways, onStart }: { pathways: FinderPathway[]; onStart: () =
           <dd className={fact}>{t('intro.free')}</dd>
         </div>
       </dl>
-      <div className="mt-10">
-        <Button size="lg" className="px-9" onClick={onStart} autoFocus>
+      <div>
+        <Button size="lg" className="px-8" onClick={onStart} autoFocus>
           {t('intro.start')}
         </Button>
       </div>
@@ -327,13 +325,11 @@ function Question({
       <p className="m-0 text-[15px] font-semibold text-primary-text">
         {t('question', { number: f.number(number) })}
       </p>
-      <h1 className="m-0 mt-3 text-[30px] leading-[1.35] font-extrabold tracking-tight text-balance lg:text-[46px] lg:leading-[1.3]">
+      <h1 className="m-0 mt-3 text-3xl leading-snug font-extrabold tracking-tight text-balance lg:text-4xl lg:leading-tight">
         {title}
       </h1>
-      <p className="m-0 mt-3 max-w-[36em] text-base leading-8 text-text-2 lg:mt-4 lg:text-lg">
-        {help}
-      </p>
-      <div className="mt-8 flex flex-col lg:mt-12">{children}</div>
+      <p className="m-0 mt-3 max-w-xl text-base leading-8 text-text-2 lg:text-lg">{help}</p>
+      <div className="flex flex-col gap-10 pt-8">{children}</div>
     </div>
   );
 }
@@ -351,7 +347,7 @@ function Actions({
 }) {
   const { t } = useTranslation('pathways');
   return (
-    <div className="mt-10 flex flex-wrap items-center gap-3 lg:mt-12">
+    <div className="flex flex-wrap items-center gap-3">
       {children}
       <Button variant="outline" size="lg" onClick={onBack} disabled={busy}>
         {t('back')}
@@ -511,7 +507,7 @@ function AskAnswer({
         </div>
       </form>
       <Actions onBack={onBack} busy={busy} hint={t('number_hint')}>
-        <Button type="submit" form={formId} size="lg" className="px-10" disabled={busy}>
+        <Button type="submit" form={formId} size="lg" className="px-8" disabled={busy}>
           {t('next')}
         </Button>
         {early}
@@ -535,10 +531,10 @@ function Ring({ total, left }: { total: number; left: number }) {
   return (
     <span
       aria-hidden="true"
-      className="relative size-8 flex-none rounded-full lg:size-10"
+      className="size-8 flex-none rounded-full p-1 lg:size-10"
       style={{ background: `conic-gradient(var(--primary) ${String(share)}%, var(--track) 0)` }}
     >
-      <span className="absolute inset-[3px] rounded-full bg-canvas lg:inset-1 lg:bg-surface" />
+      <span className="block size-full rounded-full bg-canvas" />
     </span>
   );
 }
@@ -554,25 +550,23 @@ function Rail({
   const { t } = useTranslation('pathways');
   const f = useFormat();
   return (
-    <div className="flex flex-col lg:sticky lg:top-24">
+    <div className="flex flex-col">
       <h2 className="m-0 mb-2 text-[13px] font-semibold text-text-2 max-lg:sr-only">
         {t('rail.title')}
       </h2>
-      <ul className="m-0 flex list-none gap-2 overflow-x-auto p-0 lg:flex-col lg:gap-0">
+      <ul className="m-0 flex list-none gap-2 overflow-x-auto p-0 lg:flex-col">
         {countries.map((country) => {
           const done = country.left === 0;
           return (
             <li
               key={country.id}
-              className="flex flex-none items-center gap-2.5 rounded-full bg-canvas py-1.5 ps-1.5 pe-3.5 lg:gap-3.5 lg:rounded-none lg:border-b lg:border-hair lg:bg-transparent lg:px-0 lg:py-3.5 lg:last:border-b-0"
+              className="flex flex-none items-center gap-2.5 rounded-full bg-canvas py-1.5 ps-1.5 pe-4 lg:gap-3.5 lg:py-3.5"
             >
               <Ring total={country.total} left={country.left} />
               <span className="flex flex-col">
-                <span className="text-sm leading-5 font-semibold lg:text-[15px]">
-                  {country.name}
-                </span>
+                <span className="text-sm leading-5 font-semibold lg:text-base">{country.name}</span>
                 <span
-                  className={`text-xs leading-5 lg:text-[13px] ${done ? 'text-good' : 'text-text-2'}`}
+                  className={`text-xs leading-5 lg:text-sm ${done ? 'text-good' : 'text-text-2'}`}
                 >
                   {done
                     ? t('rail.done')
@@ -606,7 +600,8 @@ function Peek({
   return (
     <div
       role="status"
-      className="mt-4 flex animate-unfold flex-col gap-0.5 rounded-[18px] bg-good-tint px-4 py-3.5"
+      style={{ animationDelay: '0.5s' }}
+      className="mt-4 flex animate-rise flex-col gap-0.5 rounded-2xl bg-good-tint px-4 py-3.5"
     >
       <span className="flex items-center gap-2 text-[13px] font-semibold text-good">
         <span aria-hidden="true" className="size-2 rounded-full bg-good" />
@@ -642,8 +637,8 @@ function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boo
   const max = Math.max(pathway.max_points, pathway.pass_mark ?? 0, result.points, 1);
   return (
     <article
-      className={`flex flex-col gap-6 rounded-[28px] bg-surface p-6 shadow-panel lg:p-9 ${
-        lead ? 'ring-1 ring-primary/25' : ''
+      className={`flex flex-col gap-6 rounded-3xl bg-surface p-6 shadow-panel lg:p-9 ${
+        lead ? 'lg:p-10' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-4">
@@ -651,7 +646,7 @@ function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boo
           <span className="text-sm text-text-2">{pathway.country.name}</span>
           <h2
             className={`m-0 mt-1 leading-snug font-extrabold tracking-tight text-balance ${
-              lead ? 'text-[26px] lg:text-[32px]' : 'text-[22px] lg:text-[26px]'
+              lead ? 'text-[26px] lg:text-3xl' : 'text-xl lg:text-2xl'
             }`}
           >
             {pathway.name}
@@ -659,9 +654,7 @@ function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boo
         </div>
         <Chip tone={fit.tone}>{t(key(fit.key))}</Chip>
       </div>
-      {pathway.summary && (
-        <p className="m-0 text-base leading-8 lg:text-[17px]">{pathway.summary}</p>
-      )}
+      {pathway.summary && <p className="m-0 text-base leading-8 lg:text-lg">{pathway.summary}</p>}
       {pathway.pass_mark !== null && (
         <div className="flex flex-col gap-2.5">
           <div className="flex justify-between gap-3 text-sm text-text-2">
@@ -707,7 +700,7 @@ function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boo
         </div>
       )}
       {pathway.tip && (
-        <div className="flex flex-col gap-1 rounded-[18px] bg-canvas p-4 text-sm leading-7 lg:px-5">
+        <div className="flex flex-col gap-1 rounded-2xl bg-canvas p-4 text-sm leading-7 lg:px-5">
           <span className="font-semibold text-primary-text">{t('tip')}</span>
           <span>{pathway.tip}</span>
         </div>
@@ -733,7 +726,7 @@ function FirstResult({
   const nextCountry = countries[0];
   return (
     <div className="flex animate-rise flex-col gap-8">
-      <h1 className="m-0 text-[32px] leading-tight font-extrabold tracking-tight lg:text-[48px]">
+      <h1 className="m-0 text-3xl leading-tight font-extrabold tracking-tight lg:text-4xl">
         {t('first.title')}
       </h1>
       {result && <RouteCard result={result} lead />}
@@ -771,10 +764,10 @@ function Results({
   const fitting = results.filter((r) => r.eligible).slice(0, 3);
   const others = results.filter((r) => !fitting.includes(r));
   return (
-    <div className="flex animate-rise flex-col gap-10 lg:gap-14">
+    <div className="flex animate-rise flex-col gap-10">
       <header className="flex flex-col">
         <p className="m-0 text-[15px] font-semibold text-primary-text">{t('results.eyebrow')}</p>
-        <h1 className="m-0 mt-3 text-[32px] leading-tight font-extrabold tracking-tight text-balance lg:text-[52px]">
+        <h1 className="m-0 mt-3 text-3xl leading-tight font-extrabold tracking-tight text-balance lg:text-4xl">
           {fitting.length ? t('results.title', { count: fitting.length }) : t('results.none')}
         </h1>
         {fitting.length > 0 && (
@@ -784,7 +777,7 @@ function Results({
         )}
       </header>
       {fitting.length > 0 && (
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="grid items-start gap-5 lg:grid-cols-2">
           {fitting.map((result, index) => (
             <RouteCard key={result.pathway.id} result={result} lead={index === 0} />
           ))}
@@ -813,12 +806,12 @@ function Results({
           </ul>
         </section>
       )}
-      <section className="grid items-center gap-6 rounded-[28px] bg-primary p-7 text-on-primary lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10 lg:p-12">
+      <section className="grid items-center gap-6 rounded-3xl bg-primary p-6 text-on-primary lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10 lg:p-10">
         <div className="flex flex-col gap-2">
-          <h2 className="m-0 text-2xl leading-snug font-bold tracking-tight lg:text-[30px]">
+          <h2 className="m-0 text-2xl leading-snug font-bold tracking-tight lg:text-3xl">
             {t('consult.title')}
           </h2>
-          <p className="m-0 text-base leading-8 opacity-85">{t('consult.body')}</p>
+          <p className="m-0 text-base leading-8 opacity-90">{t('consult.body')}</p>
         </div>
         <Button
           variant="outline"

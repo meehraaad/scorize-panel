@@ -51,14 +51,11 @@ export function ProgressBar({
     : { 'aria-hidden': true };
   return (
     <div {...a11y} className={`relative ${height} rounded-full ${track} ${className}`}>
-      <div
-        className={`${height} rounded-full ${fill} transition-[width] duration-700 ease-out`}
-        style={{ width: `${String(value)}%` }}
-      />
+      <div className={`${height} rounded-full ${fill}`} style={{ width: `${String(value)}%` }} />
       {mark !== undefined && (
         <span
           aria-hidden="true"
-          className="absolute -inset-y-1 w-0.5 rounded-full bg-text/55"
+          className="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-text"
           style={{ insetInlineStart: `${String(mark)}%` }}
         />
       )}

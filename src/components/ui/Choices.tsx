@@ -26,7 +26,7 @@ const segment =
  * and `extra` at the end (its key on the keyboard); checked = primary ring on the tint.
  */
 const answer =
-  'flex min-h-16 cursor-pointer items-center gap-4 rounded-[20px] bg-canvas px-5 py-4 text-start transition-[background-color,box-shadow,scale] duration-200 hover:bg-track active:scale-[0.99] lg:min-h-20 lg:px-6 has-checked:bg-tint has-checked:shadow-[inset_0_0_0_2px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
+  'flex min-h-16 cursor-pointer items-center gap-4 rounded-2xl bg-canvas px-5 py-4 text-start transition-colors hover:bg-track lg:px-6 has-checked:bg-tint has-checked:shadow-[inset_0_0_0_2px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
 const LOOKS = {
   answers: { list: 'grid gap-3 lg:grid-cols-2', item: answer },
@@ -104,9 +104,7 @@ export function ChoiceGroup<T extends string>({
             ) : look === 'answers' ? (
               <>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-[17px] leading-7 font-semibold lg:text-[19px]">
-                    {option.label}
-                  </span>
+                  <span className="text-lg leading-7 font-semibold">{option.label}</span>
                   {option.hint && (
                     <span className="text-sm leading-6 text-text-2">{option.hint}</span>
                   )}

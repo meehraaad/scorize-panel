@@ -76,7 +76,7 @@ export function NumberStepper({
           inputMode="decimal"
           className={
             hero
-              ? 'bg-transparent text-center text-[72px] leading-none font-light tracking-tight text-text tabular-nums outline-none lg:text-[96px]'
+              ? 'bg-transparent text-center text-7xl leading-none font-normal tracking-tight text-text tabular-nums outline-none'
               : 'bg-transparent text-center text-[17px] font-bold text-primary-text outline-none'
           }
           style={{
