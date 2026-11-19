@@ -7,7 +7,8 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 // CSS 21.3: the pathway-finder pages add about 0.1 KB of shared utility classes (merged into test 2026-11-19).
-const BUDGET_KB = { js: 186, css: 21.3 };
+// CSS 21.4: the HR score plans and month page (ac97474, test 2026-11-19) brought test to 21.35 KB.
+const BUDGET_KB = { js: 186, css: 21.4 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
