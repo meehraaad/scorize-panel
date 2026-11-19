@@ -206,6 +206,8 @@ const PAGES: PageCase[] = [
     '/hr/attendance/month',
     '/hr/attendance/settings',
     '/hr/pay',
+    '/hr/pay/plans',
+    '/hr/pay/payroll',
     '/hr/pay/results',
     '/hr/pay/kpis',
     '/hr/pay/rules',
@@ -215,6 +217,11 @@ const PAGES: PageCase[] = [
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  {
+    path: '/hr/pay/plans/position%3A2',
+    user: AMIR,
+    later: [{ key: 'plan-preview', why: 'waits until the plan being edited stops changing' }],
+  },
   // Marketing panel (src/mocks/marketing.ts): Elham is on the marketing team.
   ...[
     '/marketing',

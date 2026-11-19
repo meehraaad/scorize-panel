@@ -7,6 +7,10 @@ import type {
   KpiResults,
   PayMonth,
   PayRule,
+  Plan,
+  PlanInput,
+  PlanPreview,
+  Scoped,
   PaySettings,
   Payroll,
   ResultDetail,
@@ -425,6 +429,7 @@ function myMonth(month: PayMonth): MyMonth {
       lines: [],
       slip: null,
       disputes: [],
+      history: [],
     };
   const { own, values, details } = mine(month, me);
   const score = scoreOf(own, values);
@@ -442,8 +447,198 @@ function myMonth(month: PayMonth): MyMonth {
     disputes: disputesOf(month)
       .filter((row) => row.staff === me.id)
       .map(({ staff: _staff, year: _year, month: _month, resolved_by: _by, ...row }) => row),
+    history: historyOf(month, me),
   };
 }
+
+/** My score in the 5 months before (`history` in Django). */
+function historyOf(month: PayMonth, me: Person) {
+  const rows: MyMonth['history'] = [];
+  const number = month.year * 12 + month.month - 1;
+  for (let earlier = number - 5; earlier < number; earlier++) {
+    const at = { year: Math.floor(earlier / 12), month: (earlier % 12) + 1 };
+    const { own, values } = mine(at, me);
+    const score = scoreOf(own, values);
+    if (score !== null) rows.push({ ...at, score });
+  }
+  return rows;
+}
+
+// region Score plans (lang api/hr/v1/plans.py)
+const sameScope = (item: Scoped, plan: Scoped) =>
+  item.scope === plan.scope &&
+  item.position === plan.position &&
+  item.team === plan.team &&
+  (item.staff?.id ?? null) === (plan.staff?.id ?? null);
+
+const isReward = (rule: PayRule) =>
+  rule.effect === 'reward' &&
+  rule.basis === 'score' &&
+  rule.method === 'per_unit' &&
+  rule.amount_unit === 'percent' &&
+  !rule.pooled &&
+  !rule.above;
+
+function planOf(key: string, name: string, people: number, scope: Scoped): Plan {
+  const goals = kpis.filter((kpi) => sameScope(kpi, scope));
+  const ids = new Set(goals.map((kpi) => kpi.id));
+  const own = rules.filter((rule) => sameScope(rule, scope));
+  const reward = own.find(isReward) ?? null;
+  const penalty =
+    own.find(
+      (rule) =>
+        rule.effect === 'penalty' &&
+        rule.basis === 'kpi' &&
+        ids.has(rule.kpi ?? 0) &&
+        rule.method === 'per_unit' &&
+        rule.amount_unit === 'toman',
+    ) ?? null;
+  return {
+    key,
+    name,
+    people,
+    ...scope,
+    goals,
+    reward,
+    penalty,
+    others: own.filter((rule) => rule !== reward && rule !== penalty),
+    trial: goals.length > 0 && goals.every((kpi) => kpi.trial),
+  };
+}
+
+const POSITIONS: Record<number, string> = { 1: 'مدیر', 2: 'کارشناس فروش', 3: 'سرپرست' };
+
+function plansOf(): Plan[] {
+  const people = payStaff();
+  const none = { position: null, team: null, staff: null };
+  const rows = [planOf('all', '', people.length, { scope: 'all', ...none })];
+  const positions = new Set([
+    ...people.flatMap((person) => (person.position ? [person.position.id] : [])),
+    ...kpis.flatMap((kpi) => (kpi.scope === 'position' && kpi.position ? [kpi.position] : [])),
+  ]);
+  for (const id of [...positions].sort((a, b) => a - b)) {
+    const name =
+      people.find((person) => person.position?.id === id)?.position?.name ?? POSITIONS[id] ?? '';
+    rows.push(
+      planOf(
+        `position:${String(id)}`,
+        name,
+        people.filter((person) => person.position?.id === id).length,
+        { scope: 'position', ...none, position: id },
+      ),
+    );
+  }
+  return rows;
+}
+
+interface PlanBody extends Omit<PlanInput, 'goals'> {
+  goals: (PlanInput['goals'][number] & { direction: Kpi['direction'] })[];
+}
+
+function savePlan(body: PlanBody) {
+  const scope: Scoped = {
+    scope: body.scope,
+    position: body.position,
+    team: body.team,
+    staff: body.staff === null ? null : withStaff({ staff: body.staff }).staff,
+  };
+  const saved = body.goals.map(({ id, ...goal }): Kpi => ({
+    ...goal,
+    ...scope,
+    trial: body.trial,
+    id: id ?? ++nextId,
+  }));
+  kpis = [...kpis.filter((kpi) => !sameScope(kpi, scope)), ...saved];
+  rules = rules.filter(
+    (rule) => !sameScope(rule, scope) || (!isReward(rule) && rule.basis !== 'kpi'),
+  );
+  const base = { ...scope, calculator: '', steps: [], pooled: false, trial: body.trial };
+  if (body.reward)
+    rules.push({
+      ...base,
+      id: ++nextId,
+      name: 'پاداش امتیاز',
+      effect: 'reward',
+      basis: 'score',
+      kpi: null,
+      method: 'per_unit',
+      amount: body.reward.percent / 100,
+      above: 0,
+      minimum: body.reward.minimum,
+      amount_unit: 'percent',
+    });
+  const goal = body.penalty ? saved[body.penalty.goal] : undefined;
+  if (body.penalty && goal)
+    rules.push({
+      ...base,
+      id: ++nextId,
+      name: `جریمه‌ی ${goal.name}`,
+      effect: 'penalty',
+      basis: 'kpi',
+      kpi: goal.id,
+      method: 'per_unit',
+      amount: body.penalty.amount,
+      above: goal.target,
+      minimum: null,
+      amount_unit: 'toman',
+    });
+  const key = scope.scope === 'all' ? 'all' : `${scope.scope}:${String(scope.position ?? '')}`;
+  return plansOf().find((plan) => plan.key === key);
+}
+
+/** Last month's values: every automatic goal measured `MEASURED`, manual ones as entered. */
+function previewOf(body: PlanBody): PlanPreview {
+  const now = payMonth(-1);
+  const scope = { scope: body.scope, position: body.position, team: body.team, staff: null };
+  const people = payStaff().filter((person) => appliesTo(scope, person));
+  const goals = body.goals.map((goal, index) => ({
+    ...manualKpi(index, goal.name, goal.target, goal.weight, goal.unit),
+    ...goal,
+    id: goal.id ?? -1,
+  }));
+  const rows = people.map((person) => {
+    const values: Record<string, number> = {};
+    goals.forEach((goal, index) => {
+      const value =
+        goal.metric === 'manual'
+          ? results.get(resultKey(now, person.id, goal.id))?.value
+          : MEASURED;
+      if (value !== undefined) values[String(index)] = value;
+    });
+    let total = 0;
+    let weights = 0;
+    for (const [index, value] of Object.entries(values)) {
+      const goal = goals[Number(index)];
+      if (!goal) continue;
+      total += partOf(goal, value) * goal.weight;
+      weights += goal.weight;
+    }
+    const score = weights ? Math.round((total / weights) * 1000) / 10 : null;
+    const reward =
+      body.reward && score !== null && score >= (body.reward.minimum ?? 0)
+        ? Math.round((person.salary * body.reward.percent * score) / 10_000)
+        : 0;
+    const fined = body.penalty ? values[String(body.penalty.goal)] : undefined;
+    const target = body.penalty ? (goals[body.penalty.goal]?.target ?? 0) : 0;
+    const penalty =
+      body.penalty && fined !== undefined
+        ? Math.round(Math.max(fined - target, 0) * body.penalty.amount)
+        : 0;
+    return { staff: { id: person.id, name: person.name }, score, reward, penalty, values };
+  });
+  const scored = rows.flatMap((row) => (row.score === null ? [] : [row.score]));
+  return {
+    ...now,
+    people: rows,
+    averages: goals.map((_goal, index) => {
+      const found = rows.flatMap((row) => row.values[String(index)] ?? []);
+      return found.length ? found.reduce((sum, value) => sum + value, 0) / found.length : null;
+    }),
+    score: scored.length ? scored.reduce((sum, value) => sum + value, 0) / scored.length : null,
+    cost: rows.reduce((sum, row) => sum + row.reward - row.penalty, 0),
+  };
+}
+// endregion
 
 /** The staff users' password (MOCK_PASSWORD in src/mocks/handlers.ts). */
 export const ME_PASSWORD = 'password123';
@@ -539,6 +734,17 @@ export const hrPayHandlers = [
     }
     return HttpResponse.json(resultsOf(row));
   }),
+  http.get(`${API}/kpi-plans/`, () =>
+    hrAllowed() ? HttpResponse.json({ plans: plansOf() }) : forbidden(),
+  ),
+  http.put(`${API}/kpi-plans/`, async ({ request }) => {
+    if (!hrAllowed()) return forbidden();
+    const plan = savePlan((await request.json()) as PlanBody);
+    return plan ? HttpResponse.json(plan) : notFound();
+  }),
+  http.post(`${API}/kpi-plans/preview/`, async ({ request }) =>
+    hrAllowed() ? HttpResponse.json(previewOf((await request.json()) as PlanBody)) : forbidden(),
+  ),
   http.get(`${API}/kpi-catalog/`, () => (hrAllowed() ? HttpResponse.json(CATALOG) : forbidden())),
   http.get(`${API}/kpis/`, () => (hrAllowed() ? HttpResponse.json({ kpis }) : forbidden())),
   http.post(`${API}/kpis/`, async ({ request }) => {

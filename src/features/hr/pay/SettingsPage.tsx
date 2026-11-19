@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
+import { LinkTile, TileGrid } from '@/components/ui/LinkTile';
 import { SaveBar } from '@/components/ui/SaveBar';
 import { Switch } from '@/components/ui/Switch';
 import { TextField } from '@/components/ui/TextField';
@@ -12,8 +13,12 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinDigits } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { parseAmount } from '../format';
+import { hrPath } from '../paths';
 import { paySettingsQuery, type PaySettings } from './api';
 import { useSavePaySettings } from './mutations';
+
+/** The detailed pages, out of the section's tabs. */
+const DETAILED = ['results', 'kpis', 'rules'] as const;
 
 interface Bracket {
   upto: string;
@@ -201,6 +206,21 @@ export default function SettingsPage() {
           </div>
         </fieldset>
       </Card>
+      <section aria-labelledby="pay-detailed" className="flex flex-col gap-3">
+        <h2 id="pay-detailed" className="m-0 text-base font-bold">
+          {t('pay.detailed.title')}
+        </h2>
+        <TileGrid>
+          {DETAILED.map((page) => (
+            <LinkTile
+              key={page}
+              to={hrPath(`pay/${page}`)}
+              title={t(`pay.section.${page}`)}
+              text={t(`pay.detailed.${page}`)}
+            />
+          ))}
+        </TileGrid>
+      </section>
       <SaveBar
         dirty={dirty}
         message={

@@ -16,9 +16,26 @@ const METRICS = {
   'sales.contracts_won': 'salesContracts',
   'sales.paid_sales': 'salesPaid',
   'survey.supervisor_satisfied': 'surveySupervisor',
+  'tasks.penalized_on_time_percent': 'tasksPenalizedOnTime',
+  'tasks.penalized_late': 'tasksPenalizedLate',
+  'tickets.answer_hours': 'ticketsAnswerHours',
+  'tickets.slow_answers': 'ticketsSlow',
+  'applications.on_time_percent': 'applicationsOnTime',
+  'applications.submitted': 'applicationsSubmitted',
+  'applications.accepted': 'applicationsAccepted',
+  'writing.delivered': 'writingDelivered',
 } as const;
 
-const GROUPS = ['manual', 'attendance', 'tasks', 'sales', 'survey'] as const;
+const GROUPS = [
+  'manual',
+  'attendance',
+  'tasks',
+  'sales',
+  'survey',
+  'tickets',
+  'applications',
+  'writing',
+] as const;
 
 const CALCULATORS = { 'sales.commission': 'salesCommission' } as const;
 
