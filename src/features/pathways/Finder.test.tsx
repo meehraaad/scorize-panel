@@ -38,12 +38,16 @@ describe('pathway finder', () => {
     expect(peek).toHaveTextContent('کارت فرصت');
     await user.click(screen.getByRole('button', { name: 'ببین چرا' }));
     expect(await screen.findByRole('heading', { name: 'کارت فرصت' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /ادامه بده: (2|۲) سؤال تا کانادا/ }));
+    await user.click(screen.getByRole('button', { name: /ادامه بده: (3|۳) سؤال تا کانادا/ }));
     // Number questions start at a likely value: Next keeps it.
     await screen.findByRole('heading', { name: 'چند سالت است؟' });
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
     await screen.findByRole('heading', { name: 'چند سال سابقه کار مرتبط با رشته‌ات داری؟' });
     await user.click(screen.getByRole('button', { name: 'یکی بیشتر' }));
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    // A question about each country: only Canada's route asks it here.
+    await screen.findByRole('heading', { name: 'از کارفرمای کدام کشور پیشنهاد کار داری؟' });
+    await user.click(screen.getByRole('checkbox', { name: 'کانادا' }));
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
     expect(
       await screen.findByRole('heading', { name: /این (2|۲) راه برای تو مناسب‌ترند/ }),

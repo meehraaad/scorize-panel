@@ -112,10 +112,18 @@ function seed(): PathwayDetail[] {
           value: '',
           label: 'انگلیسی B2',
         },
+        {
+          group: 1,
+          factor: 'job_offer',
+          minimum: '',
+          maximum: '',
+          value: 'yes',
+          label: 'پیشنهاد کار از کانادا',
+        },
         { group: 3, factor: 'age', minimum: '18', maximum: '', value: '', label: 'حداقل ۱۸ سال' },
       ],
       criteria: [],
-      factors: ['work_years', 'english_level', 'age'],
+      factors: ['work_years', 'job_offer', 'english_level', 'age'],
     },
     {
       ...base,
@@ -201,6 +209,7 @@ function evaluate(p: PathwayDetail, given: Answers): PathwayResult {
     missing,
     scores: [],
     unanswered: p.factors.filter((factor) => answers[factor] === undefined),
+    improvements: [],
   };
 }
 
@@ -218,9 +227,13 @@ export const pathwayHandlers = [
   }),
   http.post('/api/applicant/v1/pathways/check/', async ({ request }) => {
     if (!storage.get()) return forbidden();
-    const body = (await request.json()) as { answers: Answers };
+    const body = (await request.json()) as {
+      answers: Answers;
+      by_country?: Record<string, Answers>;
+    };
+    // Answers about one country count for that country's routes only (Django: `by_country`).
     const results = usable()
-      .map((p) => evaluate(p, body.answers))
+      .map((p) => evaluate(p, { ...body.answers, ...body.by_country?.[String(p.country.id)] }))
       .sort((a, b) => Number(b.qualifies) - Number(a.qualifies));
     return HttpResponse.json({ id: 1, created_at: now(), results }, { status: 201 });
   }),

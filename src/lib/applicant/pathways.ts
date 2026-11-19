@@ -47,6 +47,19 @@ export interface FinderOptions {
 export type FactorValue = number | string | boolean;
 export type Answers = Record<string, FactorValue>;
 
+/** What would bring a route not passed yet over the line ("IELTS 7: 10 more points"). */
+export interface PathwayImprovement {
+  /** The criterion's label (Persian). */
+  label: string;
+  factor: string;
+  /** The value to reach: a number, a choice name, or `yes`. */
+  target: string;
+  /** The points it adds. */
+  points: number;
+  /** Enough alone to reach the pass mark. */
+  passes: boolean;
+}
+
 export interface PathwayResult {
   pathway: FinderPathway;
   qualifies: boolean;
@@ -56,6 +69,8 @@ export interface PathwayResult {
   missing: string[];
   scores: { label: string; points: number; max_points: number }[];
   unanswered: string[];
+  /** Best first; empty when it already passes or has no pass mark. Missing from older servers. */
+  improvements?: PathwayImprovement[];
 }
 
 export interface PathwayCheck {
@@ -72,5 +87,15 @@ export const finderOptionsQuery = queryOptions({
   queryFn: () => api<FinderOptions>(`${PATHWAYS_API}/`),
 });
 
-export const checkPathways = (answers: Answers, contact: FinderContact) =>
-  api<PathwayCheck>(`${PATHWAYS_API}/check/`, { method: 'POST', body: { answers, contact } });
+/** Answers about one destination (lived there, a job offer from it), by country id. */
+export type CountryAnswers = Record<number, Answers>;
+
+export const checkPathways = (
+  answers: Answers,
+  contact: FinderContact,
+  byCountry: CountryAnswers = {},
+) =>
+  api<PathwayCheck>(`${PATHWAYS_API}/check/`, {
+    method: 'POST',
+    body: { answers, by_country: byCountry, contact },
+  });

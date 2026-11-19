@@ -1,4 +1,4 @@
-import type { Answers, FactorValue, FinderPathway } from '@/lib/applicant/pathways';
+import type { Answers, CountryAnswers, FactorValue, FinderPathway } from '@/lib/applicant/pathways';
 
 /**
  * Which question to ask next: the fewest questions that answer one route fully come first, then
@@ -18,8 +18,13 @@ export interface Ask {
   id: string;
   /** The Django factors (`pathways.rules.FACTORS`) it answers. */
   factors: readonly string[];
-  /** A number typed in (`number`), or one of the options. */
-  input: 'number' | 'options';
+  /**
+   * A number (`number`), one of the options, or `countries`: one question about every destination at once
+   * ("which countries have you lived in, and for how long"), each country answered on its own.
+   */
+  input: 'number' | 'options' | 'countries';
+  /** `countries`: what to ask of each country picked: years there, or how fully the degree is recognised. */
+  detail?: 'years' | 'recognition';
   options?: readonly AskOption[];
   min?: number;
   max?: number;
@@ -27,10 +32,6 @@ export interface Ask {
   start?: number;
 }
 
-const yesNo = (factor: string): AskOption[] => [
-  { id: 'yes', set: { [factor]: true } },
-  { id: 'no', set: { [factor]: false } },
-];
 const levels = (factor: string, names: readonly string[]): AskOption[] =>
   names.map((name) => ({ id: name, set: { [factor]: name } }));
 
@@ -62,26 +63,11 @@ export const ASKS: readonly Ask[] = [
     input: 'options',
     options: levels('german_level', ['none', 'a1', 'a2', 'b1', 'b2', 'c1']),
   },
-  {
-    id: 'recognition',
-    factors: ['recognition'],
-    input: 'options',
-    options: levels('recognition', ['full', 'partial', 'none']),
-  },
-  { id: 'job_offer', factors: ['job_offer'], input: 'options', options: yesNo('job_offer') },
-  {
-    id: 'shortage_occupation',
-    factors: ['shortage_occupation'],
-    input: 'options',
-    options: yesNo('shortage_occupation'),
-  },
-  {
-    id: 'skills_assessment',
-    factors: ['skills_assessment'],
-    input: 'options',
-    options: yesNo('skills_assessment'),
-  },
-  { id: 'stay_months', factors: ['stay_months'], input: 'number', min: 0, max: 120, start: 0 },
+  { id: 'recognition', factors: ['recognition'], input: 'countries', detail: 'recognition' },
+  { id: 'job_offer', factors: ['job_offer'], input: 'countries' },
+  { id: 'shortage_occupation', factors: ['shortage_occupation'], input: 'countries' },
+  { id: 'skills_assessment', factors: ['skills_assessment'], input: 'countries' },
+  { id: 'stay_months', factors: ['stay_months'], input: 'countries', detail: 'years' },
   {
     id: 'partner',
     factors: ['partner'],
@@ -178,6 +164,28 @@ export function asksLeft(
     if (suits(pathway, goal)) for (const ask of remainingAsks(pathway, answered)) left.add(ask.id);
   return left.size;
 }
+
+/** The countries a `countries` question is about: those of the goal's routes that need its factor. */
+export function countriesFor(
+  pathways: readonly FinderPathway[],
+  goal: Goal,
+  ask: Ask,
+): { id: number; name: string }[] {
+  const found = new Map<number, { id: number; name: string }>();
+  for (const pathway of pathways)
+    if (suits(pathway, goal) && ask.factors.some((factor) => pathway.factors.includes(factor)))
+      found.set(pathway.country.id, pathway.country);
+  return [...found.values()];
+}
+
+/** Answers about one country merged by country, as Django takes them (`by_country`). */
+export const mergeByCountry = (parts: readonly (CountryAnswers | undefined)[]): CountryAnswers => {
+  const merged: CountryAnswers = {};
+  for (const part of parts)
+    for (const [country, answers] of Object.entries(part ?? {}))
+      merged[Number(country)] = { ...merged[Number(country)], ...answers };
+  return merged;
+};
 
 /** The answers as Django takes them: every option's factors merged. */
 export const mergeAnswers = (parts: Record<string, Answers>): Answers =>

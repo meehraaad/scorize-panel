@@ -155,6 +155,45 @@ export function ChoiceGroup<T extends string>({
   );
 }
 
+/**
+ * One of several picks in the `answers` look (a quiz's "which countries"): a checkbox row, and what to
+ * ask about the pick under it once it is checked (years there).
+ */
+export function CheckTile({
+  label,
+  checked,
+  onChange,
+  children,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <label className={answer}>
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+          className="sr-only"
+        />
+        <span className="min-w-0 flex-1 text-lg leading-7 font-semibold">{label}</span>
+        <span
+          aria-hidden="true"
+          className={`flex size-7 flex-none items-center justify-center rounded-full ${
+            checked ? 'bg-primary text-on-primary' : 'border-[1.5px] border-line-3'
+          }`}
+        >
+          {checked && <Icon name="check" size={16} />}
+        </span>
+      </label>
+      {checked && children && <div className="ps-5">{children}</div>}
+    </div>
+  );
+}
+
 /** A checkbox drawn as a pill ("Only overdue"). */
 export function TogglePill({
   label,

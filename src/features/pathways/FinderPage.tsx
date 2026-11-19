@@ -3,7 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
-import { ChoiceGroup } from '@/components/ui/Choices';
+import { CheckTile, ChoiceGroup } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { NumberStepper } from '@/components/ui/NumberStepper';
@@ -14,6 +14,7 @@ import {
   checkPathways,
   finderOptionsQuery,
   type Answers,
+  type CountryAnswers,
   type FinderContact,
   type FinderPathway,
   type PathwayResult,
@@ -25,8 +26,10 @@ import {
   answeredPathways,
   asksLeft,
   countriesLeft,
+  countriesFor,
   countryProgress,
   mergeAnswers,
+  mergeByCountry,
   nextAsk,
   type Ask,
   type Goal,
@@ -37,6 +40,21 @@ import type { ParseKeys } from 'i18next';
 const key = (name: string) => name as ParseKeys<'pathways'>;
 
 type Stage = 'intro' | 'ask' | 'first' | 'results';
+/** One answered question: what it sets for every route, and for each country's own routes. */
+interface Part {
+  id: string;
+  set: Answers;
+  byCountry?: CountryAnswers | undefined;
+}
+/** Everything answered, as Django takes it. */
+interface Given {
+  answers: Answers;
+  byCountry: CountryAnswers;
+}
+const givenOf = (parts: readonly Part[]): Given => ({
+  answers: mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set]))),
+  byCountry: mergeByCountry(parts.map((part) => part.byCountry)),
+});
 const GOALS: readonly Goal[] = ['work', 'study', 'any'];
 /** How long a picked answer stays shown before the next question comes in. */
 const PICK_DELAY = 280;
@@ -53,30 +71,28 @@ export default function FinderPage() {
   const [stage, setStage] = useState<Stage>('intro');
   const [goal, setGoal] = useState<Goal | null>(null);
   // Answers by question id, in the order given (Back takes the last one off).
-  const [parts, setParts] = useState<{ id: string; set: Answers }[]>([]);
+  const [parts, setParts] = useState<Part[]>([]);
   const [results, setResults] = useState<PathwayResult[]>([]);
   // The route answered first: shown beside the questions once it is ready.
   const [firstId, setFirstId] = useState<number | null>(null);
 
   const answered = useMemo(() => new Set(parts.map((part) => part.id)), [parts]);
-  const answers = useMemo(
-    () => mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set]))),
-    [parts],
-  );
+  const answers = useMemo(() => givenOf(parts), [parts]);
   const pathways = options.pathways;
   const ask = goal ? nextAsk(pathways, goal, answered) : null;
 
   const check = useMutation({
-    mutationFn: ({ given, contact }: { given: Answers; contact: FinderContact }) =>
-      checkPathways(given, contact),
+    mutationFn: ({ given, contact }: { given: Given; contact: FinderContact }) =>
+      checkPathways(given.answers, contact, given.byCountry),
   });
   // The first route's verdict, fetched in the background while the questions go on.
   const peek = useMutation({
-    mutationFn: (given: Answers) => checkPathways(given, { channel: 'none' }),
+    mutationFn: (given: Given) =>
+      checkPathways(given.answers, { channel: 'none' }, given.byCountry),
   });
 
   /** What the routes say for these answers, then on to `next`. */
-  const evaluate = (given: Answers, next: Stage) =>
+  const evaluate = (given: Given, next: Stage) =>
     check.mutate(
       { given, contact: { channel: 'none' } },
       {
@@ -88,11 +104,11 @@ export default function FinderPage() {
       },
     );
 
-  const afterAnswer = (nextParts: { id: string; set: Answers }[]) => {
+  const afterAnswer = (nextParts: Part[]) => {
     setParts(nextParts);
     if (!goal) return;
     const done = new Set(nextParts.map((part) => part.id));
-    const given = mergeAnswers(Object.fromEntries(nextParts.map((part) => [part.id, part.set])));
+    const given = givenOf(nextParts);
     if (nextAsk(pathways, goal, done) === null) {
       evaluate(given, 'results');
       return;
@@ -218,9 +234,10 @@ export default function FinderPage() {
           >
             <AskAnswer
               ask={ask}
+              countries={countriesFor(pathways, goal, ask)}
               busy={check.isPending}
               onBack={() => (parts.length ? setParts(parts.slice(0, -1)) : setGoal(null))}
-              onAnswer={(set) => afterAnswer([...parts, { id: ask.id, set }])}
+              onAnswer={(set, byCountry) => afterAnswer([...parts, { id: ask.id, set, byCountry }])}
               onShowResults={firstReady ? () => evaluate(answers, 'results') : undefined}
             />
           </Question>
@@ -417,15 +434,18 @@ function OptionsAnswer<T extends string>({
 
 function AskAnswer({
   ask,
+  countries,
   busy,
   onBack,
   onAnswer,
   onShowResults,
 }: {
   ask: Ask;
+  /** `countries` questions: the countries asked about. */
+  countries: { id: number; name: string }[];
   busy: boolean;
   onBack: () => void;
-  onAnswer: (set: Answers) => void;
+  onAnswer: (set: Answers, byCountry?: CountryAnswers) => void;
   /** Once a first route is ready: stop here and see the routes so far. */
   onShowResults?: (() => void) | undefined;
 }) {
@@ -446,6 +466,24 @@ function AskAnswer({
       {t('results.show')}
     </Button>
   );
+  if (ask.input === 'countries')
+    return (
+      <>
+        <CountriesAnswer
+          ask={ask}
+          countries={countries}
+          formId={formId}
+          busy={busy}
+          onAnswer={(byCountry) => onAnswer({}, byCountry)}
+        />
+        <Actions onBack={onBack} busy={busy}>
+          <Button type="submit" form={formId} size="lg" className="px-8" disabled={busy}>
+            {t('next')}
+          </Button>
+          {early}
+        </Actions>
+      </>
+    );
   if (ask.input === 'options')
     return (
       <>
@@ -513,6 +551,106 @@ function AskAnswer({
         {early}
       </Actions>
     </>
+  );
+}
+
+/** Months in a year: `stay_months` is asked in years. */
+const MONTHS = 12;
+
+/**
+ * One question about every destination at once ("which countries have you lived in?"): the person
+ * ticks the countries it is true of, says how long or how fully for each, or answers "none". Every
+ * country listed gets its own answer, so living in one never counts for another.
+ */
+function CountriesAnswer({
+  ask,
+  countries,
+  formId,
+  busy,
+  onAnswer,
+}: {
+  ask: Ask;
+  countries: { id: number; name: string }[];
+  formId: string;
+  busy: boolean;
+  onAnswer: (byCountry: CountryAnswers) => void;
+}) {
+  const { t } = useTranslation('pathways');
+  const factor = ask.factors[0] ?? ask.id;
+  // Picked countries, each with its detail: years there, or how fully the degree is recognised.
+  const [picked, setPicked] = useState<Record<number, number | string>>({});
+  const answerFor = (value: number | string | undefined): Answers => {
+    if (ask.detail === 'years') return { [factor]: typeof value === 'number' ? value * MONTHS : 0 };
+    if (ask.detail === 'recognition')
+      return { [factor]: typeof value === 'string' ? value : 'none' };
+    return { [factor]: value !== undefined };
+  };
+  const send = (choice: Record<number, number | string>) =>
+    onAnswer(
+      Object.fromEntries(countries.map((country) => [country.id, answerFor(choice[country.id])])),
+    );
+  return (
+    <form
+      id={formId}
+      className="flex flex-col gap-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!busy) send(picked);
+      }}
+    >
+      <div className="grid gap-3 lg:grid-cols-2">
+        {countries.map((country) => (
+          <CheckTile
+            key={country.id}
+            label={country.name}
+            checked={picked[country.id] !== undefined}
+            onChange={(checked) =>
+              setPicked((now) =>
+                checked
+                  ? { ...now, [country.id]: ask.detail === 'recognition' ? 'full' : 2 }
+                  : Object.fromEntries(
+                      Object.entries(now).filter(([id]) => Number(id) !== country.id),
+                    ),
+              )
+            }
+          >
+            {ask.detail === 'years' && typeof picked[country.id] === 'number' && (
+              <NumberStepper
+                label={t('countries.years_of', { country: country.name })}
+                value={Number(picked[country.id])}
+                onChange={(years) => setPicked((now) => ({ ...now, [country.id]: years }))}
+                min={1}
+                max={40}
+                unit={t('countries.years')}
+                decreaseLabel={t('less')}
+                increaseLabel={t('more')}
+              />
+            )}
+            {ask.detail === 'recognition' && typeof picked[country.id] === 'string' && (
+              <ChoiceGroup
+                legend={t('countries.how_fully', { country: country.name })}
+                hideLegend
+                look="segmented"
+                options={(['full', 'partial'] as const).map((value) => ({
+                  value,
+                  label: t(key(`choices.recognition.${value}`)),
+                }))}
+                value={String(picked[country.id])}
+                onChange={(value) => setPicked((now) => ({ ...now, [country.id]: value }))}
+              />
+            )}
+          </CheckTile>
+        ))}
+      </div>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => send({})}
+        className="min-h-11 self-start px-1 text-base font-semibold text-primary-text hover:underline disabled:opacity-50"
+      >
+        {t(key(`asks.${ask.id}.none`))}
+      </button>
+    </form>
   );
 }
 
@@ -629,11 +767,26 @@ const verdict = (result: PathwayResult): { tone: ChipTone; key: string } =>
       ? { tone: 'warn', key: 'fit.close' }
       : { tone: 'neutral', key: 'fit.not_now' };
 
+/** The factors a suggestion can name (Django `pathways.rules.IMPROVABLE`), and those named by a choice. */
+const IMPROVE_FACTORS = new Set([
+  'education',
+  'recognition',
+  'work_years',
+  'english_ielts',
+  'english_level',
+  'german_level',
+  'job_offer',
+  'skills_assessment',
+]);
+const CHOICE_FACTORS = new Set(['education', 'recognition', 'english_level', 'german_level']);
+
 function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boolean }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
   const { pathway } = result;
   const fit = verdict(result);
+  // Django's suggestions for this person, the ones this page can word.
+  const steps = (result.improvements ?? []).filter((step) => IMPROVE_FACTORS.has(step.factor));
   const max = Math.max(pathway.max_points, pathway.pass_mark ?? 0, result.points, 1);
   return (
     <article
@@ -695,6 +848,25 @@ function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boo
           <ul className="m-0 flex flex-col gap-1 ps-5 text-sm leading-7">
             {result.missing.map((line) => (
               <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {steps.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-2xl bg-tint p-4 lg:px-5">
+          <span className="text-sm font-semibold text-primary-text">{t('improve.title')}</span>
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-[15px] leading-7">
+            {steps.map((step) => (
+              <li key={step.factor}>
+                {t(step.passes ? 'improve.passes' : 'improve.gain', {
+                  text: t(key(`improve.${step.factor}`), {
+                    value: CHOICE_FACTORS.has(step.factor)
+                      ? t(key(`choices.${step.factor}.${step.target}`))
+                      : f.number(Number(step.target)),
+                  }),
+                  points: f.number(step.points),
+                })}
+              </li>
             ))}
           </ul>
         </div>

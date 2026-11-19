@@ -66,42 +66,29 @@
       }
     },
     "recognition": {
-      "title": "Is your degree recognised in the destination?",
-      "help": "In Germany, for example, your university is in anabin.",
-      "options": {
-        "full": "Yes, fully",
-        "partial": "Partly",
-        "none": "No, or I don't know"
-      }
+      "title": "In which countries is your degree recognised?",
+      "help": "In Germany, for example, your university is on the anabin list. If you don't know, our adviser will check.",
+      "none": "None, or I don't know"
     },
     "job_offer": {
-      "title": "Do you have a job offer from an employer there?",
-      "help": "A formal, written offer.",
-      "options": {
-        "yes": "Yes",
-        "no": "No"
-      }
+      "title": "Which country's employer has offered you a job?",
+      "help": "Only a formal, written job offer.",
+      "none": "None"
     },
     "shortage_occupation": {
-      "title": "Is your job on that country's shortage list?",
-      "help": "Not sure? Pick no; our adviser will check.",
-      "options": {
-        "yes": "Yes",
-        "no": "No, or I don't know"
-      }
+      "title": "Which countries list your occupation as in demand?",
+      "help": "If you don't know, our adviser will check.",
+      "none": "None, or I don't know"
     },
     "skills_assessment": {
-      "title": "Do you have a skills assessment for your job?",
-      "help": "Australia's work routes need one.",
-      "options": {
-        "yes": "Yes",
-        "no": "No"
-      }
+      "title": "Which country's skills assessment have you passed?",
+      "help": "Some work routes need one, such as Australia's.",
+      "none": "None"
     },
     "stay_months": {
-      "title": "How many months have you lived or studied there?",
-      "help": "Never? Enter 0.",
-      "label": "Months"
+      "title": "Which countries have you lived, worked or studied in?",
+      "help": "Pick the countries and say how many years in each.",
+      "none": "None"
     },
     "partner": {
       "title": "What about your partner?",
@@ -342,5 +329,23 @@
     "cost": "Cost",
     "score": "Your points",
     "score_value": "{{points}} of the {{pass}} points needed"
+  },
+  "countries": {
+    "years": "years",
+    "years_of": "Years in {{country}}",
+    "how_fully": "How fully {{country}} recognises your degree"
+  },
+  "improve": {
+    "title": "What would help you",
+    "education": "With a {{value}} degree",
+    "recognition": "With your degree recognised ({{value}})",
+    "work_years": "Once you have {{value}} years of work",
+    "english_ielts": "With an IELTS of {{value}}",
+    "english_level": "With English at {{value}}",
+    "german_level": "With German at {{value}}",
+    "job_offer": "With a job offer",
+    "skills_assessment": "With a skills assessment",
+    "gain": "{{text}}, you get {{points}} more points",
+    "passes": "{{text}}, you get {{points}} more points and pass"
   }
 }
