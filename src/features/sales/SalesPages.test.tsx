@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
 import { api } from '@/lib/api/client';
@@ -275,6 +275,28 @@ describe('sales panel, seller pages', () => {
     // The retry tomorrow is a task about him.
     const tasks = screen.getByRole('region', { name: 'کارهای باز عرفان' });
     expect(await within(tasks).findByText('تماس دوباره؛ قبلی بی‌پاسخ ماند')).toBeInTheDocument();
+  });
+
+  it('customer: a call with no answer can be followed on WhatsApp instead of the SMS', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    try {
+      const user = userEvent.setup();
+      renderApp(`/sales/customers/${String(ERFAN)}?log=call`);
+      const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
+      await user.click(within(dialog).getByRole('radio', { name: 'جواب نداد' }));
+      expect(within(dialog).getByRole('radio', { name: 'پیامک' })).toBeChecked();
+      await user.click(within(dialog).getByRole('radio', { name: 'واتس‌اپ' }));
+      expect(within(dialog).getByText(/پیامکی نمی‌رود/)).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
+      expect(open).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/wa\.me\//),
+        '_blank',
+        'noreferrer',
+      );
+      await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    } finally {
+      open.mockRestore();
+    }
   });
 
   it('customer: the history search finds the words in a note, once Django has it (S78)', async () => {

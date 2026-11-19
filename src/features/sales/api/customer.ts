@@ -114,6 +114,8 @@ export interface CustomerData {
   supports: {
     stages: boolean;
     no_answer_sms: boolean;
+    /** The log takes `no_answer_send`: SMS, the seller's WhatsApp / Telegram, or none. */
+    no_answer_send?: boolean;
     tags?: boolean;
     /** The log's `sms_summary` is sent (its SMS template is approved). */
     summary_sms?: boolean;
@@ -212,6 +214,8 @@ export interface ContactLog {
   email_summary: boolean;
   /** Text the customer that a note waits in their panel (`supports.summary_sms`). */
   sms_summary?: boolean;
+  /** A call with no answer: our SMS, a message from the seller's WhatsApp / Telegram, or none. */
+  no_answer_send?: 'sms' | 'whatsapp' | 'telegram' | 'none';
   /** Messages: the template sent. */
   template?: number;
   /** Logging a consultation session. */

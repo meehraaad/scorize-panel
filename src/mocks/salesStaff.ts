@@ -401,6 +401,7 @@ export const salesStaffHandlers = [
           call_brief: true,
           summary_sms: false,
           columns: true,
+          no_answer_send: true,
         },
         attribution: { first_contact: null, won_by: null },
       })),

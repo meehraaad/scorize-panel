@@ -636,7 +636,20 @@
       },
       "sessionEnded": "Ended · {{ago}}",
       "calendarTitle": "When to follow up with {{name}}?",
-      "calendarHint": "Tap a free spot; that time becomes the follow-up."
+      "calendarHint": "Tap a free spot; that time becomes the follow-up.",
+      "noAnswerSend": "How should we let them know?",
+      "noAnswerSendOption": {
+        "sms": "SMS",
+        "whatsapp": "WhatsApp",
+        "telegram": "Telegram",
+        "none": "Nothing"
+      },
+      "noAnswerSendNote": {
+        "sms": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
+        "whatsapp": "Saving opens your WhatsApp with the ready message; send it yourself. No SMS goes out, and a follow-up is set for tomorrow.",
+        "telegram": "Saving opens your Telegram and copies the ready message; paste and send it. No SMS goes out, and a follow-up is set for tomorrow.",
+        "none": "Nothing is sent. Only a follow-up for tomorrow is set."
+      }
     },
     "tabs": {
       "label": "Customer page sections",
