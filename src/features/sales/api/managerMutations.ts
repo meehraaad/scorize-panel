@@ -10,8 +10,6 @@ import {
   type StagesData,
   stagesQuery,
   type StageInput,
-  type LeadImportPreview,
-  type LeadImportOptions,
   type CommissionRule,
   type CommissionRuleInput,
   type BuilderPrice,
@@ -119,32 +117,6 @@ export function useSaveStages() {
         client.invalidateQueries({ queryKey: [...SALES_KEY, 'customer'] }),
       ]);
     },
-  });
-}
-
-/** Reads the file and answers what it would add; nothing is stored yet. */
-export function usePreviewLeadImport() {
-  return useMutation({
-    mutationFn: (file: File) => {
-      const body = new FormData();
-      body.append('file', file);
-      return api<LeadImportPreview>(`${MANAGER_API}/leads/import/preview/`, {
-        method: 'POST',
-        body,
-      });
-    },
-  });
-}
-
-export function useApplyLeadImport() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (options: LeadImportOptions) =>
-      api<{ created: number; new_customers: number }>(`${MANAGER_API}/leads/import/`, {
-        method: 'POST',
-        body: options,
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 

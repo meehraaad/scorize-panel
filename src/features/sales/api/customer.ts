@@ -53,6 +53,8 @@ export interface CustomerData {
   lead: {
     id: number;
     source: LeadSource;
+    /** A marketing team source's name; null for a system source. */
+    source_label?: string | null;
     stage: LeadStage;
     /** 0–100; null while unknown (the automatic score is S5). */
     score: number | null;

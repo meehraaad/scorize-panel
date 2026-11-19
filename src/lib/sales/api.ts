@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
+import { SYSTEM_SOURCES, type SystemSource } from '@/lib/leads/api';
 
 export type { Degree };
 
@@ -21,16 +22,12 @@ export const STAGES = ['new', 'contacted', 'consulted', 'offer', 'draft', 'won',
 export type LeadStage = (typeof STAGES)[number];
 
 /** SaleLead.Cause, grouped the way sellers think of them (S2). */
-export const SOURCES = [
-  'failed_purchase',
-  'call_request',
-  'chance_estimate',
-  'document_upload',
-  'campaign',
-  'consultation',
-  'manual',
-] as const;
-export type LeadSource = (typeof SOURCES)[number];
+export const SOURCES = SYSTEM_SOURCES;
+/**
+ * A lead's source: a system one, or `c<id>`, one the marketing team added (its name comes with
+ * the row as `source_label`; `sourceName` in the sales feature shows either).
+ */
+export type LeadSource = SystemSource | `c${number}`;
 
 /** Why a deal was lost: required to close a lead (S3). */
 export const LOST_REASONS = ['budget', 'competitor', 'gave_up', 'later', 'no_answer'] as const;

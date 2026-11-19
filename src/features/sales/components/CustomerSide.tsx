@@ -9,6 +9,7 @@ import { SALES_API, maskPhone } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
 import type { CustomerData, ProfileItem, ProfileKey } from '../api';
 import { customerPath } from '../paths';
+import { useSalesFormat } from '../format';
 
 /** Profile rows by group, in this order. */
 const GROUPS: { id: 'goal' | 'background' | 'more'; keys: ProfileKey[] }[] = [
@@ -25,6 +26,7 @@ const ALL = GROUPS.flatMap((group) => group.keys).length;
  */
 export function CustomerSide({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
+  const salesFormat = useSalesFormat();
   const named = useDisplayName();
   const { t: tc } = useTranslation();
   const f = useFormat();
@@ -73,7 +75,7 @@ export function CustomerSide({ customer }: { customer: CustomerData }) {
                 ? [{ label: t('side.email'), value: customer.email, ltr: true }]
                 : []),
               ...(customer.lead
-                ? [{ label: t('side.source'), value: t(`source.${customer.lead.source}`) }]
+                ? [{ label: t('side.source'), value: salesFormat.source(customer.lead) }]
                 : []),
             ]}
           />

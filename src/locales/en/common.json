@@ -123,14 +123,16 @@
         "calendar": "Calendar",
         "performance": "My performance",
         "board": "Board",
-        "manage": "Marketing management"
+        "manage": "Marketing management",
+        "leads": "Leads"
       },
       "tabs": {
         "today": "Today",
         "tasks": "Tasks",
         "calendar": "Calendar",
         "performance": "Performance",
-        "board": "Board"
+        "board": "Board",
+        "leads": "Leads"
       }
     }
   },

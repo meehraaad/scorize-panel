@@ -35,6 +35,7 @@ import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
 import { customerPath } from '../paths';
 import { useNow } from '../useNow';
+import { useSalesFormat } from '../format';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { followAtOf, followOnOf, isVisitConflict, meetingAhead } from '../followUp';
 import { FollowUpWhen } from './FollowUpWhen';
@@ -87,6 +88,7 @@ export function LogDialog({
   const named = useDisplayName();
   const linphone = useLinphoneDial();
   const { t: tSales } = useTranslation('sales');
+  const salesFormat = useSalesFormat();
   const f = useFormat();
   const formId = useId();
   const log = useLogContact(customer.id);
@@ -484,7 +486,7 @@ export function LogDialog({
       subtitle={
         lead &&
         t('customer.logDialog.subtitle', {
-          source: t(`source.${lead.source}`),
+          source: salesFormat.source(lead),
           stage: stageName,
         })
       }

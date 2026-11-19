@@ -29,6 +29,7 @@ import type mail from '@/locales/fa/mail.json';
 import type messages from '@/locales/fa/messages.json';
 import type access from '@/locales/fa/access.json';
 import type notes from '@/locales/fa/notes.json';
+import type leads from '@/locales/fa/leads.json';
 import type writing from '@/locales/fa/writing.json';
 
 // Persian is the source dictionary: t('...') keys are type-checked against it,
@@ -41,6 +42,7 @@ declare module 'i18next' {
       assessments: typeof assessments;
       voice: typeof voice;
       notes: typeof notes;
+      leads: typeof leads;
       auth: typeof auth;
       home: typeof home;
       applications: typeof applications;

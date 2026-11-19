@@ -123,14 +123,16 @@
         "calendar": "تقویم",
         "performance": "عملکرد من",
         "board": "بُرد",
-        "manage": "مدیریت مارکتینگ"
+        "manage": "مدیریت مارکتینگ",
+        "leads": "لیدها"
       },
       "tabs": {
         "today": "امروز",
         "tasks": "کارها",
         "calendar": "تقویم",
         "performance": "عملکرد",
-        "board": "بُرد"
+        "board": "بُرد",
+        "leads": "لیدها"
       }
     }
   },

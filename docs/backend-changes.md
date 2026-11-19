@@ -624,3 +624,19 @@ Staff assessment options add optional `currency_catalog` and `financial_targets`
 ### Read-only comparison scenarios
 
 The hypothetical comparison editor requires backend shamrad/lang#336 after its backend dependencies and panel #116 after its panel dependencies. It posts one explicit interview-group change with the current revision and decision digest to the local-gated `calculators/comparison/scenario/` endpoint. The backend validates the change and returns before/after route results without saving it. Legal dates and shared-evidence confirmation limits still apply; financial scenarios remain separate. No production activation or migration is included.
+
+## Lead sources (2026-11-19)
+
+lang branch `claude/project-thread-onvb1h`. Needs a migration (`user_profile`: `LeadSource`, `SaleLead.lead_source`).
+
+- **Model** `user_profile.LeadSource` (name, key, active): the marketing team's own sources. The
+  system's sources stay in code (`SYSTEM_SOURCES`, read from `SaleLead.cause`) and can't change.
+  A lead from a team source has `source: "c<id>"` and `source_label` (its name) on every sales row
+  (leads, today, customer, month and team `sources`); `source_label` is null for system sources.
+  `?source=c<id>` filters the leads list.
+- **Marketing** `GET/POST sources/`, `PATCH/DELETE sources/<id>/` (`{name, active}`): rows
+  `{id, code, name, system, active, leads}`, system ones first. Deleting a used source archives it.
+  `POST leads/import/preview/`, `POST leads/import/`, `GET leads/import/sample/`: the sales
+  manager's upload (S55); the leads always go to the sales queue.
+- **Sales** `GET sources/` (any seller): the same rows without `leads`. `manager/leads/import/`
+  accepts `source: campaign | manual | c<id>` (an active team source).

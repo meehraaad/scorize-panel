@@ -219,6 +219,7 @@ const PAGES: PageCase[] = [
   ...[
     '/marketing',
     '/marketing/board',
+    '/marketing/leads',
     '/marketing/tasks',
     '/marketing/calendar',
     '/marketing/performance',

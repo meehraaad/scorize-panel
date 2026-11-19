@@ -20,6 +20,8 @@ export interface LeadRow {
   /** Localized names. */
   countries: string[];
   source: LeadSource;
+  /** A marketing team source's name; null for a system source. */
+  source_label?: string | null;
   /** What brought them, localized ("Canada application consultation · 4 minutes ago"). */
   cause: string;
   /** Null until the automatic score (S5). */

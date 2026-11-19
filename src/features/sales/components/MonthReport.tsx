@@ -351,7 +351,7 @@ function Sources({ data, own }: { data: MonthData; own: boolean }) {
                     scope="row"
                     className="px-3 py-3.5 ps-5 text-start text-[15px] font-medium lg:ps-8"
                   >
-                    {t(`source.${row.source}`)}
+                    {s.source(row)}
                   </th>
                   <td className="px-3 py-3.5 text-sm tabular-nums">{f.number(row.leads)}</td>
                   <td className="px-3 py-3.5 text-sm tabular-nums">{f.number(row.won)}</td>

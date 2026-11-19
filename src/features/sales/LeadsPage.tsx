@@ -15,7 +15,8 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES } from '@/lib/sales/api';
+import { salesSourcesQuery } from '@/lib/leads/api';
+import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES, type LeadSource } from '@/lib/sales/api';
 import { pagesOf } from '@/lib/api/page';
 import {
   LEAD_FILTERS,
@@ -45,6 +46,7 @@ export default function LeadsPage() {
   const stage = leadFilterOf(params.get('stage'));
   // Starts as `firstLeadQuery`, which the route prefetches.
   const [source, setSource] = useState<LeadQuery['source']>('all');
+  const teamSources = useQuery(salesSourcesQuery);
   const [band, setBand] = useState<LeadQuery['band']>('all');
   const [overdue, setOverdue] = useState(false);
   const [tag, setTag] = useState<number | null>(null);
@@ -162,6 +164,10 @@ export default function LeadsPage() {
             options={[
               { value: 'all', label: t('leads.allSources') },
               ...SOURCES.map((value) => ({ value, label: t(`source.${value}`) })),
+              // The marketing team's sources, archived ones too: their leads are still there.
+              ...(teamSources.data ?? [])
+                .filter((item) => !item.system)
+                .map((item) => ({ value: item.code as LeadSource, label: item.name })),
             ]}
           />
           {data?.supports.band !== false && (

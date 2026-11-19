@@ -48,6 +48,7 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { hasAnyPermission, hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { salesSourcesQuery } from '@/lib/leads/api';
 import { notebookQuery } from '@/lib/notes/api';
 import { SALES_API } from '@/lib/sales/api';
 import {
@@ -179,6 +180,7 @@ export const salesPanel: PanelDefinition = {
                 firstLeadQuery(leadFilterOf(new URL(request.url).searchParams.get('stage'))),
               ),
               ON_SERVER.customerTags && tagsQuery,
+              salesSourcesQuery,
             ],
             skeleton: 'list',
           }),
@@ -320,7 +322,8 @@ export const salesPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          ...lazyPage(() => import('@/features/sales/manager/AssignPage'), [], {
+          // `leads`: the CSV upload dialog.
+          ...lazyPage(() => import('@/features/sales/manager/AssignPage'), ['leads'], {
             data: () => [assignQuery(1)],
             skeleton: 'list',
           }),
