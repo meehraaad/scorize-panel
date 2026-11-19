@@ -174,7 +174,9 @@ export function StartPaths({ access, offers }: { access: ApplicantAccess; offers
                 <p className="m-0 mt-auto flex items-baseline justify-between gap-2 pt-3.5 text-[13px] text-text-2 shadow-[inset_0_1px_0_var(--hair)]">
                   {t('paths.contract.from')}
                   <span className="font-display text-lg font-bold text-text">
-                    {t('slots.toman', { amount: f.number(contract.instalment) })}
+                    {f.price(contract.instalment, contract.currency, (amount) =>
+                      t('slots.toman', { amount }),
+                    )}
                   </span>
                 </p>
               </>

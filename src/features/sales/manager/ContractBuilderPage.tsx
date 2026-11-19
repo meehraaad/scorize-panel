@@ -712,7 +712,7 @@ function Settings({ data }: { data: ContractBuilder }) {
   const [rows, setRows] = useState(data.prices);
   const [form, setForm] = useState(data.rules);
   const { limits } = data;
-  // The standard contract is in toman; the others may be in any currency of the system.
+  // Every kind of contract, the standard one too, may be in any currency of the system.
   const standard = template === null;
   const free = !standard;
   const money = (value: number) => s.exact(value, form.currency);
@@ -853,17 +853,10 @@ function Settings({ data }: { data: ContractBuilder }) {
       >
         <SelectField
           label={t('manager.builder.settings.currency')}
-          hint={t(
-            standard
-              ? 'manager.builder.settings.currencyStandard'
-              : 'manager.builder.settings.currencyHint',
-          )}
-          value={standard ? 'IRT' : form.currency}
+          hint={t('manager.builder.settings.currencyHint')}
+          value={form.currency}
           onChange={(currency) => set('currency', currency)}
-          options={(standard
-            ? limits.currencies.filter((item) => item.id === 'IRT')
-            : limits.currencies
-          ).map((item) => ({ value: item.id, label: item.name }))}
+          options={limits.currencies.map((item) => ({ value: item.id, label: item.name }))}
         />
         <ul className="m-0 flex list-none flex-col gap-3 p-0">
           {rows.map((row, index) => (

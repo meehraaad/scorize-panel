@@ -802,13 +802,12 @@ describe('contract builder and agreement desk (S64)', () => {
     expect(within(list).getByText(/از ۱٬?۰۰۰ یورو/)).toBeInTheDocument();
   });
 
-  it('the standard contract is in toman only (S74)', async () => {
+  it('the standard contract may be in any currency too', async () => {
     renderApp('/sales/manager/contract/standard');
     const prices = await screen.findByRole('region', { name: '۱. خدمات و قیمت' });
-    expect(within(prices).getByText('قرارداد استاندارد همیشه به تومان است.')).toBeInTheDocument();
     expect(
       within(within(prices).getByLabelText('واحد پول قرارداد')).getAllByRole('option'),
-    ).toHaveLength(1);
+    ).toHaveLength(5);
   });
 
   it('the manager reads the whole contract before approving (S68)', async () => {

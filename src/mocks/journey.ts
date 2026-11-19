@@ -120,7 +120,13 @@ function defaultOffers(): StartOffers {
       full_price: null,
       slots: nextSlots(),
     },
-    contract: { price: 85_000_000, instalments: 4, instalment: 21_250_000, writing: true },
+    contract: {
+      price: 85_000_000,
+      instalments: 4,
+      instalment: 21_250_000,
+      writing: true,
+      currency: 'IRT',
+    },
     consultant: null,
   };
 }

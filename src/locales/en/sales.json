@@ -1961,7 +1961,6 @@
         "step3": "3. What a seller may change",
         "currency": "Contract currency",
         "currencyHint": "Prices, the amount range and instalments are in this currency. Changing it does not convert the numbers; enter them again.",
-        "currencyStandard": "The standard contract is always in toman.",
         "priceOf": "{{name}} price",
         "min_amount": "Lowest contract amount",
         "max_amount": "Highest contract amount",
