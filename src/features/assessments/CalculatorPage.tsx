@@ -1,0 +1,809 @@
+import { Link, useSearchParams } from 'react-router';
+import { FinancialPanel } from './FinancialPanel';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
+import { SelectField } from '@/components/ui/Choices';
+import { Notice } from '@/components/ui/Notice';
+import { Pager } from '@/components/ui/Pager';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { SectionCard } from '@/components/ui/SectionCard';
+import { SkeletonRows } from '@/components/ui/Skeleton';
+import { ApiError } from '@/lib/api/client';
+import { toast } from '@/lib/toast';
+import { CalculationResult } from './CalculatorResult';
+import { CalculatorReview } from './CalculatorReview';
+import { CalculatorForm } from './CalculatorForm';
+import { ProfileEvidence } from './ProfileEvidence';
+import { SharedFacts, type FactRef } from './SharedFacts';
+import { DocumentLinks } from './DocumentLinks';
+import { SessionTransfer } from './SessionTransfer';
+import { RouteComparison } from './RouteComparison';
+import { GuidedInterview } from './GuidedInterview';
+import {
+  calculatorOptionsQuery,
+  interviewQuery,
+  snapshotsQuery,
+  startCalculatorSession,
+  saveCalculatorAnswer,
+  recordCalculation,
+  readyForAutosave,
+  type Country,
+  type AnswerStatus,
+  type Options,
+  type Interview,
+  type Snapshot,
+  type ProfileCandidate,
+  type Answer,
+} from './calculatorApi';
+
+function capturedReferences(answer: Answer | undefined): FactRef[] | undefined {
+  return (
+    answer?.shared_fact_refs ??
+    answer?.shared_origin?.shared_fact_refs ??
+    (answer?.source === 'previous_session' ? capturedReferences(answer.previous_answer) : undefined)
+  );
+}
+
+function InterviewEditor({
+  id,
+  options,
+  ruleset,
+  onTransferred,
+  onTransferBusy,
+}: {
+  id: string;
+  options: Options;
+  ruleset: string;
+  onTransferred: (id: string) => void;
+  onTransferBusy: (busy: boolean) => void;
+}) {
+  const { t } = useTranslation('assessments');
+  const [search] = useSearchParams();
+  const routeParam = search.get('route') ?? '';
+  const routeCountry = search.get('country') === 'australia' ? 'australia' : 'canada';
+  const requestedRoute = (routeCountry === 'australia'
+    ? ['au-189', 'au-190', 'au-491']
+    : ['ca-fsw', 'ca-cec']
+  ).includes(routeParam)
+    ? routeParam
+    : null;
+  const routeLabels = t('comparison.labels', { returnObjects: true }) as Record<string, string>;
+  const labels = t('calculator.fields', { returnObjects: true }) as Record<string, string>;
+  const choicesText = t('calculator.choices', { returnObjects: true }) as Record<string, string>;
+  const sectionId = useId();
+  const editorRef = useRef<HTMLFieldSetElement>(null);
+  const hasNavigated = useRef(Boolean(requestedRoute));
+  const focusEditor = () =>
+    requestAnimationFrame(() => {
+      editorRef.current?.scrollIntoView({ block: 'start' });
+      editorRef.current?.focus({ preventScroll: true });
+    });
+  const cache = useQueryClient();
+  const query = useQuery(interviewQuery(id));
+  const [historyPage, setHistoryPage] = useState(1);
+  const history = useQuery(snapshotsQuery(id, historyPage));
+  const [country, setCountry] = useState<Country>(
+    search.get('country') === 'australia' ? 'australia' : 'canada',
+  );
+  const [field, setField] = useState(
+    country === 'australia' ? (requestedRoute ? 'subclass' : 'facts.birth_date') : 'birth_date',
+  );
+  const [status, setStatus] = useState<AnswerStatus | null>(null);
+  const [value, setValue] = useState<unknown>(undefined);
+  const [dirty, setDirty] = useState(false);
+  const [pending, setPending] = useState<unknown>(null);
+  const [autoPaused, setAutoPaused] = useState(false);
+  const [snapshotRequest, setSnapshotRequest] = useState<unknown>(null);
+  const [shown, setShown] = useState<Snapshot | null>(null);
+  const [profileCandidate, setProfileCandidate] = useState<ProfileCandidate | null>(null);
+  const [sharedRefs, setSharedRefs] = useState<FactRef[] | null>(null);
+  const [detachShared, setDetachShared] = useState(false);
+  const [guidanceDecision, setGuidanceDecision] = useState<string | null>(null);
+  const [guidanceBusy, setGuidanceBusy] = useState(false);
+  const [comparisonBusy, setComparisonBusy] = useState(false);
+  const [financialBusy, setFinancialBusy] = useState(false);
+  const [documentBusy, setDocumentBusy] = useState(false);
+  const [financialOpen, setFinancialOpen] = useState(false);
+  const data = query.data;
+  const australianRoute = data?.answers[options.identities.australia.subclass ?? ''];
+  const australiaRouteReady =
+    australianRoute?.status === 'known' &&
+    australianRoute.question_version === data?.adapter_version &&
+    typeof australianRoute.value === 'string' &&
+    ['189', '190', '491'].includes(australianRoute.value) &&
+    (!requestedRoute?.startsWith('au-') || australianRoute.value === requestedRoute.slice(3));
+  const save = useMutation({
+    mutationFn: (body: unknown) => saveCalculatorAnswer(id, body),
+    onSuccess: (next) => {
+      cache.setQueryData(interviewQuery(id).queryKey, (old: Interview | undefined) => ({
+        ...old,
+        ...next,
+      }));
+      void cache.invalidateQueries({ queryKey: ['calculator-snapshots', id] });
+      void cache.invalidateQueries({ queryKey: ['calculator-profile-evidence', id] });
+      void cache.invalidateQueries({ queryKey: ['calculator-guidance', id] });
+      void cache.invalidateQueries({ queryKey: ['calculator-comparison', id] });
+      setDirty(false);
+      setAutoPaused(false);
+      setPending(null);
+      setShown(null);
+      setSnapshotRequest(null);
+      setProfileCandidate(null);
+      setSharedRefs(null);
+      setDetachShared(false);
+      setGuidanceDecision(null);
+      toast.success(t('calculator.saved'));
+    },
+    onError: () => setAutoPaused(true),
+  });
+  const { mutate: saveAnswer, isPending: saving, error: saveError } = save;
+  const record = useMutation({
+    mutationFn: () => {
+      if (!data) throw new Error('Interview context unavailable');
+      const body = snapshotRequest ?? {
+        country,
+        expected_revision: data.revision,
+        expected_ruleset_hash: data.ruleset_sha256,
+        expected_source_hash: data.sources[country].sha256,
+        request_key: crypto.randomUUID(),
+      };
+      setSnapshotRequest(body);
+      return recordCalculation(id, body);
+    },
+    onSuccess: (snapshot) => {
+      setShown(snapshot);
+      setHistoryPage(1);
+      setSnapshotRequest(null);
+      void cache.invalidateQueries({ queryKey: ['calculator-snapshots', id] });
+    },
+  });
+  const current = data?.answers[options.identities[country][field] ?? ''];
+  const currentRefs = capturedReferences(current);
+  const answerStatus = status ?? current?.status ?? 'unknown';
+  const answerValue = dirty ? value : current?.value;
+  useEffect(() => {
+    if (
+      autoPaused ||
+      current?.source === 'previous_session' ||
+      Boolean(current?.shared_origin) ||
+      Boolean(currentRefs) ||
+      Boolean(sharedRefs) ||
+      !dirty ||
+      !data ||
+      saving ||
+      saveError ||
+      (answerStatus === 'known' && !readyForAutosave(options.schemas[country][field], answerValue))
+    )
+      return;
+    const timer = setTimeout(() => {
+      const body = pending ?? {
+        country,
+        field,
+        adapter_version: data.adapter_version,
+        revision: data.revision,
+        request_key: crypto.randomUUID(),
+        status: answerStatus,
+        value: answerStatus === 'known' ? answerValue : null,
+        ...(guidanceDecision ? { guidance_sha256: guidanceDecision } : {}),
+      };
+      setPending(body);
+      saveAnswer(body);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [
+    autoPaused,
+    current?.source,
+    current?.shared_origin,
+    currentRefs,
+    sharedRefs,
+    dirty,
+    data,
+    saving,
+    saveError,
+    saveAnswer,
+    pending,
+    country,
+    field,
+    answerStatus,
+    answerValue,
+    options.schemas,
+    guidanceDecision,
+  ]);
+  if (!data)
+    return (
+      <>
+        <SkeletonRows rows={4} />
+        {query.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+      </>
+    );
+  const dateNotice = (
+    <Notice tone="info">
+      <p>
+        {t('calculator.dateLabel')} <bdi>{data.assessment_date ?? t('calculator.unknown')}</bdi>
+      </p>
+      <p>{t('calculator.dateMeaning')}</p>
+    </Notice>
+  );
+  if (data.engine_available === false || data.transfer_required === true)
+    return (
+      <>
+        {dateNotice}
+        <SessionTransfer
+          id={id}
+          revision={data.revision}
+          ruleset={ruleset}
+          onTransferred={onTransferred}
+          onBusy={onTransferBusy}
+        />
+        <SectionCard
+          id={sectionId + '-old-history'}
+          title={t('calculator.history')}
+          variant="panel"
+        >
+          {history.data?.results.map((snapshot) => (
+            <CalculationResult key={snapshot.id} snapshot={snapshot} />
+          ))}
+          {history.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+        </SectionCard>
+      </>
+    );
+  const fields = options.schemas[country];
+  const choose = (nextCountry: Country, nextField: string) => {
+    hasNavigated.current = true;
+    const answer = data.answers[options.identities[nextCountry][nextField] ?? ''];
+    setCountry(nextCountry);
+    setField(nextField);
+    setStatus(answer?.status ?? 'unknown');
+    setValue(answer?.value ?? undefined);
+    setDirty(false);
+    setPending(null);
+    setShown(null);
+    setSnapshotRequest(null);
+    setProfileCandidate(null);
+    setSharedRefs(null);
+    setDetachShared(false);
+    setGuidanceDecision(null);
+    setAutoPaused(false);
+    save.reset();
+  };
+  const conflict = saveError instanceof ApiError && saveError.status === 409;
+  return (
+    <>
+      {dateNotice}
+      <Link className="underline" to={`/dev/assessment-workflow?session=${encodeURIComponent(id)}`}>
+        {t('workflow.open')}
+      </Link>
+      {requestedRoute && (
+        <div className="flex flex-col gap-3">
+          <Notice tone="info">
+            {t('destinationPlan.handoff', { route: routeLabels[requestedRoute] })}
+          </Notice>
+          {!dirty &&
+            !saving &&
+            !pending &&
+            !snapshotRequest &&
+            !record.isPending &&
+            !financialBusy &&
+            !documentBusy &&
+            !comparisonBusy &&
+            !guidanceBusy && (
+              <Link
+                className="underline"
+                to={`/dev/assessment-destinations?session=${encodeURIComponent(id)}`}
+              >
+                {t('destinationPlan.return')}
+              </Link>
+            )}
+          {routeCountry === 'australia' && (
+            <>
+              <p>{t('destinationPlan.prepareMeaning')}</p>
+              <Button
+                variant="outline"
+                disabled={
+                  dirty ||
+                  saving ||
+                  record.isPending ||
+                  comparisonBusy ||
+                  financialBusy ||
+                  documentBusy ||
+                  guidanceBusy ||
+                  Boolean(snapshotRequest) ||
+                  Boolean(pending)
+                }
+                onClick={() => {
+                  choose('australia', 'subclass');
+                  setStatus('known');
+                  setValue(requestedRoute.slice(3));
+                  setDirty(true);
+                  setAutoPaused(true);
+                  focusEditor();
+                }}
+              >
+                {t('destinationPlan.prepare', { route: routeLabels[requestedRoute] })}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+      <GuidedInterview
+        id={id}
+        country={country}
+        revision={data.revision}
+        disabled={
+          dirty || saving || record.isPending || comparisonBusy || financialBusy || documentBusy
+        }
+        canReview={Boolean(options.can_review)}
+        australiaRouteReady={australiaRouteReady}
+        onRestore={(nextCountry) => {
+          if (
+            !hasNavigated.current &&
+            !dirty &&
+            !saving &&
+            !record.isPending &&
+            !pending &&
+            !snapshotRequest &&
+            !shown
+          )
+            choose(nextCountry, Object.keys(options.schemas[nextCountry])[0] ?? '');
+        }}
+        onBusy={setGuidanceBusy}
+        onChanged={() => {
+          setShown(null);
+          setSnapshotRequest(null);
+          setGuidanceDecision(null);
+        }}
+        onSelect={(nextCountry, question) => {
+          choose(nextCountry, question.field);
+          setGuidanceDecision(question.decision_sha256);
+          const saved = data.answers[options.identities[nextCountry][question.field] ?? ''];
+          if (question.reason === 'source_changed' && saved?.status === 'known') {
+            setStatus('known');
+            setValue(saved.value);
+            setDirty(true);
+            setAutoPaused(true);
+          }
+          focusEditor();
+        }}
+        onSkip={(nextCountry, question) => {
+          choose(nextCountry, question.field);
+          setStatus('unknown');
+          setValue(undefined);
+          setDirty(true);
+          setAutoPaused(true);
+          const body = {
+            country: nextCountry,
+            field: question.field,
+            adapter_version: data.adapter_version,
+            revision: data.revision,
+            request_key: crypto.randomUUID(),
+            status: 'unknown',
+            value: null,
+            guidance_sha256: question.decision_sha256,
+          };
+          setPending(body);
+          saveAnswer(body);
+        }}
+      />
+      <SharedFacts
+        id={id}
+        country={country}
+        assessmentDate={data.assessment_date}
+        disabled={
+          dirty ||
+          saving ||
+          record.isPending ||
+          guidanceBusy ||
+          comparisonBusy ||
+          financialBusy ||
+          documentBusy
+        }
+        onPrepare={(nextField, nextValue, refs) => {
+          choose(country, nextField);
+          setSharedRefs(refs.map(({ id: factId, revision }) => ({ id: factId, revision })));
+          setStatus('known');
+          setValue(nextValue);
+          setDirty(true);
+          setAutoPaused(true);
+          focusEditor();
+        }}
+      />
+      <ProfileEvidence
+        id={id}
+        country={country}
+        disabled={
+          dirty ||
+          saving ||
+          record.isPending ||
+          guidanceBusy ||
+          comparisonBusy ||
+          financialBusy ||
+          documentBusy
+        }
+        onPrepare={(candidate) => {
+          choose(country, candidate.field);
+          setProfileCandidate(candidate);
+          setStatus('known');
+          setValue(candidate.value);
+          setDirty(true);
+          setAutoPaused(true);
+          focusEditor();
+        }}
+      />
+      <DocumentLinks
+        id={id}
+        country={country}
+        field={field}
+        factId={options.identities[country][field] ?? ''}
+        revision={data.revision}
+        known={current?.status === 'known'}
+        disabled={
+          dirty || saving || record.isPending || guidanceBusy || comparisonBusy || financialBusy
+        }
+        onBusy={setDocumentBusy}
+      />
+      <SectionCard id={sectionId} title={t('calculator.interview')} variant="panel">
+        <fieldset
+          ref={editorRef}
+          tabIndex={-1}
+          aria-label={t('calculator.interview')}
+          disabled={saving || guidanceBusy || comparisonBusy || financialBusy || documentBusy}
+          className="m-0 flex flex-col gap-4 border-0 p-0"
+        >
+          <SelectField
+            label={t('calculator.country')}
+            value={country}
+            disabled={dirty || saving}
+            options={(['canada', 'australia'] as const).map((key) => ({
+              value: key,
+              label: t(`calculator.choices.${key}`),
+            }))}
+            onChange={(next) => choose(next, Object.keys(options.schemas[next])[0] ?? '')}
+          />
+          <SelectField
+            label={t('calculator.question')}
+            value={field}
+            disabled={dirty || saving}
+            options={Object.keys(fields).map((key) => ({
+              value: key,
+              label: labels[key.replaceAll('.', '_')] ?? t('calculator.unknown'),
+            }))}
+            onChange={(next) => choose(country, next)}
+          />
+          <SelectField
+            label={t('calculator.answerStatus')}
+            value={answerStatus}
+            disabled={saving}
+            options={(['known', 'unknown', 'not_applicable', 'needs_confirmation'] as const).map(
+              (key) => ({ value: key, label: t(`calculator.choices.${key}`) }),
+            )}
+            onChange={(next) => {
+              setStatus(next);
+              if (next !== 'known') setProfileCandidate(null);
+              setValue(answerValue);
+              setDirty(true);
+              setPending(null);
+              save.reset();
+            }}
+          />
+          {answerStatus === 'known' && fields[field] && (
+            <CalculatorForm
+              schema={fields[field]}
+              field={field}
+              value={answerValue}
+              onChange={(next) => {
+                setValue(next);
+                setDirty(true);
+                setPending(null);
+                save.reset();
+              }}
+            />
+          )}
+          {current?.scope_reason === 'shared_evidence_changed' && (
+            <Notice tone="warn">
+              {t(
+                field === 'work'
+                  ? 'calculator.profile.sharedWorkChanged'
+                  : 'calculator.profile.sharedChanged',
+              )}
+            </Notice>
+          )}
+          {(current?.shared_origin || currentRefs) && !detachShared && (
+            <>
+              <Notice tone="info">{t('calculator.profile.sharedLinked')}</Notice>
+              <Button
+                variant="outline"
+                disabled={saving}
+                onClick={() => {
+                  setDetachShared(true);
+                  setProfileCandidate(null);
+                  setSharedRefs(null);
+                  setStatus(answerStatus);
+                  setValue(answerValue);
+                  setDirty(true);
+                  setAutoPaused(true);
+                  setPending(null);
+                  save.reset();
+                }}
+              >
+                {t('calculator.profile.detach')}
+              </Button>
+            </>
+          )}
+          {detachShared && (
+            <>
+              <Notice tone="warn">{t('calculator.profile.detaching')}</Notice>
+              <Button variant="outline" onClick={() => choose(country, field)}>
+                {t('calculator.profile.discardDetach')}
+              </Button>
+            </>
+          )}
+          {current?.source === 'previous_session' && current.previous_answer && (
+            <>
+              <Notice tone="warn">{t('transfer.reviewAnswer')}</Notice>
+              <Button
+                variant="outline"
+                disabled={dirty || saving}
+                onClick={() => {
+                  const prior = current.previous_answer;
+                  if (!prior) return;
+                  setStatus(prior.status);
+                  setValue(prior.value);
+                  setDirty(true);
+                  setAutoPaused(true);
+                  setPending(null);
+                }}
+              >
+                {t('transfer.prepare')}
+              </Button>
+            </>
+          )}
+          {current && (
+            <p>
+              {t('calculator.provenance', {
+                source: choicesText[current.source] ?? t('calculator.unknown'),
+              })}
+            </p>
+          )}
+          {dirty && <Notice tone="warn">{t('calculator.unsaved')}</Notice>}
+          {profileCandidate && <Notice tone="warn">{t('calculator.profile.confirmation')}</Notice>}
+          {profileCandidate && (
+            <Button variant="outline" onClick={() => choose(country, field)}>
+              {t('calculator.profile.discard')}
+            </Button>
+          )}
+          {save.isPaused && <Notice tone="warn">{t('calculator.offline')}</Notice>}
+          {saveError && (
+            <Notice tone="error">
+              {t(
+                conflict
+                  ? profileCandidate
+                    ? 'calculator.profile.reloadConflict'
+                    : 'calculator.conflict'
+                  : 'calculator.failed',
+              )}
+            </Notice>
+          )}
+          <Button
+            disabled={
+              !dirty ||
+              saving ||
+              conflict ||
+              (answerStatus === 'known' && !readyForAutosave(fields[field], answerValue))
+            }
+            onClick={() => {
+              const body = pending ?? {
+                country,
+                field,
+                adapter_version: data.adapter_version,
+                revision: data.revision,
+                request_key: crypto.randomUUID(),
+                status: answerStatus,
+                value: answerStatus === 'known' ? (answerValue ?? null) : null,
+                ...(guidanceDecision ? { guidance_sha256: guidanceDecision } : {}),
+                ...(detachShared ? { detach_shared: true } : {}),
+                ...(!detachShared &&
+                !profileCandidate &&
+                answerStatus === 'known' &&
+                (sharedRefs || currentRefs)
+                  ? {
+                      shared_references: (sharedRefs ?? currentRefs ?? []).map(
+                        ({ id: factId, revision }) => ({ id: factId, revision }),
+                      ),
+                    }
+                  : {}),
+                ...(profileCandidate && answerStatus === 'known'
+                  ? {
+                      profile_candidate: {
+                        id: profileCandidate.id,
+                        sha256: profileCandidate.sha256,
+                      },
+                    }
+                  : {}),
+              };
+              setPending(body);
+              saveAnswer(body);
+            }}
+          >
+            {t(
+              profileCandidate
+                ? 'calculator.profile.confirmSave'
+                : current?.source === 'previous_session'
+                  ? 'transfer.confirm'
+                  : 'calculator.save',
+            )}
+          </Button>
+          {conflict && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                void query.refetch();
+                save.reset();
+                setPending(null);
+              }}
+            >
+              {t('calculator.reload')}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            disabled={
+              dirty ||
+              saving ||
+              record.isPending ||
+              data.coverage_available?.[country] === false ||
+              (country === 'australia' && !australiaRouteReady)
+            }
+            onClick={() => record.mutate()}
+          >
+            {t('calculator.record')}
+          </Button>
+          {country === 'australia' && !australiaRouteReady && (
+            <Notice tone="warn">{t('calculator.guided.routeRequired')}</Notice>
+          )}
+          {data.coverage_available?.[country] === false && (
+            <Notice tone="warn">{t('transfer.sourceUnavailable')}</Notice>
+          )}
+          {record.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+        </fieldset>
+      </SectionCard>
+      <FinancialPanel
+        open={financialOpen}
+        onOpen={() => setFinancialOpen(true)}
+        id={id}
+        revision={data.revision}
+        disabled={
+          dirty || saving || record.isPending || guidanceBusy || comparisonBusy || documentBusy
+        }
+        onBusy={setFinancialBusy}
+      />
+      <RouteComparison
+        id={id}
+        revision={data.revision}
+        disabled={
+          dirty || saving || record.isPending || guidanceBusy || financialBusy || documentBusy
+        }
+        onBusy={setComparisonBusy}
+        onFinancialSelect={() => setFinancialOpen(true)}
+        onSelect={(nextCountry, nextField) => {
+          choose(nextCountry, nextField);
+          const existing = data.answers[options.identities[nextCountry][nextField] ?? ''];
+          if (existing?.status === 'known') {
+            setStatus('known');
+            setValue(existing.value);
+            setDirty(true);
+            setAutoPaused(true);
+          }
+          focusEditor();
+        }}
+      />
+      {shown && <CalculationResult snapshot={shown} />}
+      <SectionCard id={sectionId + '-history'} title={t('calculator.history')} variant="panel">
+        {history.data?.results.map((snapshot) => (
+          <CalculationResult key={snapshot.id} snapshot={snapshot} />
+        ))}
+        {history.data && (
+          <Pager
+            page={historyPage}
+            pages={Math.max(1, Math.ceil(history.data.count / history.data.page_size))}
+            onPage={setHistoryPage}
+          />
+        )}
+        {history.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+      </SectionCard>
+    </>
+  );
+}
+
+export default function CalculatorPage() {
+  const { t } = useTranslation('assessments');
+  const sectionId = useId();
+  const options = useQuery(calculatorOptionsQuery);
+  const cache = useQueryClient();
+  const [search] = useSearchParams();
+  const [session, setSession] = useState(() => {
+    const id = search.get('session') ?? '';
+    return /^[a-f0-9-]{36}$/i.test(id) ? id : '';
+  });
+  const [reviewing, setReviewing] = useState(false);
+  const [ruleset, setRuleset] = useState('');
+  const [transferBusy, setTransferBusy] = useState(false);
+  const [startKey, setStartKey] = useState(() => crypto.randomUUID());
+  const start = useMutation({
+    mutationFn: () => startCalculatorSession(Number(ruleset), startKey),
+    onSuccess: (result) => {
+      setSession(result.id);
+      setStartKey(crypto.randomUUID());
+      void cache.invalidateQueries({ queryKey: calculatorOptionsQuery.queryKey });
+    },
+  });
+  return (
+    <main className="mx-auto flex max-w-3xl flex-col gap-5 p-4 sm:p-8">
+      <PageHeader title={t('calculator.title')} />
+      <Notice tone="warn">{t('calculator.draft')}</Notice>
+      {!options.data ? (
+        <>
+          <SkeletonRows rows={4} />
+          {options.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+        </>
+      ) : (
+        <>
+          <SectionCard id={sectionId} title={t('calculator.session')} variant="panel">
+            <div className="flex flex-col gap-4">
+              <SelectField
+                label={t('calculator.resume')}
+                disabled={transferBusy}
+                value={session}
+                options={[
+                  { value: '', label: t('calculator.choose') },
+                  ...options.data.sessions.map((s, index) => ({
+                    value: s.id,
+                    label: t('calculator.sessionLabel', { index: index + 1, revision: s.revision }),
+                  })),
+                ]}
+                onChange={setSession}
+              />
+              <SelectField
+                label={t('calculator.ruleset')}
+                disabled={transferBusy}
+                value={ruleset}
+                options={[
+                  { value: '', label: t('calculator.choose') },
+                  ...options.data.rulesets.map((r) => ({
+                    value: String(r.id),
+                    label: t('calculator.bundleLabel', { version: r.version }),
+                  })),
+                ]}
+                onChange={setRuleset}
+              />
+              <Button
+                disabled={!ruleset || start.isPending || transferBusy}
+                onClick={() => start.mutate()}
+              >
+                {t('calculator.start')}
+              </Button>
+              {start.error && <Notice tone="error">{t('calculator.failed')}</Notice>}
+            </div>
+          </SectionCard>
+          {session && (
+            <InterviewEditor
+              key={session}
+              id={session}
+              options={options.data}
+              ruleset={ruleset}
+              onTransferred={setSession}
+              onTransferBusy={setTransferBusy}
+            />
+          )}
+          {options.data.can_review && (
+            <Button variant="outline" onClick={() => setReviewing(!reviewing)}>
+              {t('calculator.reviewQueue')}
+            </Button>
+          )}
+          {reviewing && <CalculatorReview options={options.data} />}
+        </>
+      )}
+    </main>
+  );
+}

@@ -7,6 +7,9 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install
 COPY . .
 ARG VITE_ENABLE_PWA=false
 ENV VITE_ENABLE_PWA=$VITE_ENABLE_PWA
+# "true" only on the test server: keeps the assessment preview pages in the build.
+ARG VITE_ASSESSMENT_PREVIEW=false
+ENV VITE_ASSESSMENT_PREVIEW=$VITE_ASSESSMENT_PREVIEW
 # Where the panel is served: `/panel/` behind the site's main nginx, `/` on panel.scorize.com.
 ARG PANEL_BASE=/panel/
 ENV PANEL_BASE=$PANEL_BASE

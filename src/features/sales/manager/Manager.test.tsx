@@ -392,10 +392,14 @@ describe('sales manager section', () => {
     );
 
     await user.selectOptions(screen.getByLabelText('فروشنده'), '32');
-    expect(
-      await screen.findByText('در این ماه قراردادی به نام این فروشنده بسته نشده.'),
-    ).toBeInTheDocument();
-    await waitFor(() => expect(router.state.location.pathname).toBe('/sales/manager/team/32'));
+    // Seller 31 is also empty after the move. Wait for seller 32 and query the
+    // current DOM together, rather than retaining an element from the old page.
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/sales/manager/team/32');
+      expect(
+        screen.getByText('در این ماه قراردادی به نام این فروشنده بسته نشده.'),
+      ).toBeInTheDocument();
+    });
   });
 
   it('shows the quiz funnel with the step that loses the most people', async () => {

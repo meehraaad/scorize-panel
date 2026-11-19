@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_ENABLE_PWA?: string;
   /** Set by vite.config.ts at build time: tells one build's saved cache from another's. */
   readonly VITE_APP_BUILD?: string;
+  /** "true" keeps the assessment preview pages in a build (the test server only). */
+  readonly VITE_ASSESSMENT_PREVIEW?: string;
   /** Dev only: "true" serves the API from src/mocks (MSW) instead of Django. */
 }
 

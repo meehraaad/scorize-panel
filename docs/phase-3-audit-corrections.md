@@ -1,0 +1,17 @@
+# Phase 3 audit corrections
+
+Application/test commit: `e4f7d133f5511e75154c50e4da8a1c0f93f65b96`, updating draft [#122](https://github.com/meehraaad/scorize-panel/pull/122) on panel #117 `bd9a5e0e9901cff0c9045f1290b77ddbc0e10110`. Requires backend [#339](https://github.com/shamrad/lang/pull/339), application/test commit `7e0a78a7e6f1ae0380e450aa53d5166689b578f4`, after backend #337 and its stack. No merge or deployment. Both PRs and their dependencies were open, draft and unmerged at inspection.
+
+The [backend section 9 handoff](https://github.com/shamrad/lang/blob/codex/phase3-shared-evidence/docs/assessment/phase-3-audit-corrections.md) contains the F01–F06 dispositions, ownership/serving boundary, PostgreSQL evidence, failed attempts, compatibility and rollback requirements. **Ready for independent re-audit of the corrections; G3 and A02 remain unapproved.** The accepted G2 standalone-finance exception remains unchanged. No Phase 4 work.
+
+Configured-program report selectors now require the backend-authored `question.shared_binding` contract. The bounded contract accepts only its declared IELTS General Training skill in IELTS bands, with identity interpretation. Unsupported numeric questions, including age, stay manual. The selector filters reports by test and exposes only the declared skill; unknown/non-band scores cannot be submitted. This is not a general evaluator registry. All added explanation/review text has Persian and English translations.
+
+MSW interview writes now retain `shared_references`, canonical provenance, document payloads and exact request replay. Evidence edits carry document associations and clear confirmation; document linking advances the evidence revision and invalidates bound answers; stale edits conflict. Program mocks reject unsupported bindings. These mocks remain UI test doubles; PostgreSQL/backend tests establish persistence/concurrency behavior.
+
+Affected comparison cards show a document-review explanation and an unavailable score rather than a date-coverage explanation. Unrelated results remain visible. No new route, first-render data dependency or production feature activation was introduced.
+
+Verification: full `pnpm test` **732 passed in 99 files**; targeted assessments/page-data **178 passed in 16 files** (included in the full run). Lint, TypeScript, locale parity (26 files/two languages), changed-file formatting, build and size checks pass. JS 178.9 KB gzip / 179 KB budget; CSS 20.5 KB / 20.5 KB. Existing jsdom navigation and Tailwind sourcemap diagnostics are retained in logs. Initial lint failures in the added test/mock and an i18n literal were fixed without suppression.
+
+A real local Chromium flow used actual Django/PostgreSQL and synthetic documents: Persian RTL at 412×915, link revision, canonical selection/binding, stale editor 409 with input retained, carried document after edit, separate confirmation, invalidation/reload and keyboard rebinding. No page errors or horizontal overflow. Component tests use MSW; this browser flow did not.
+
+Privacy remains operationally blocked until authorized server configuration/cache/inventory verification. Nonstandard historical filenames need storage review and cannot be promoted to canonical evidence; retention/deletion remains an owner decision. Generated test schemas are not production migration evidence. Reverting assessment UI must preserve protected document delivery, evidence versions, request history and snapshots. No release, legal approval or broad UX acceptance is claimed.
