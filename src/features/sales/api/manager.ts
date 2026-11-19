@@ -1,5 +1,5 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
-import { API_BASE, api } from '@/lib/api/client';
+import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
 import type { AgreementParty } from '@/lib/agreement/api';
@@ -224,7 +224,13 @@ export interface TeamData {
     commission: number | null;
   }[];
   alerts: TeamAlert[];
-  sources: { source: LeadSource | 'referral'; leads: number; won: number; sales: number }[];
+  sources: {
+    source: LeadSource | 'referral';
+    source_label?: string | null;
+    leads: number;
+    won: number;
+    sales: number;
+  }[];
 }
 
 export const teamQuery = (range: TeamRange) =>
@@ -352,53 +358,6 @@ export interface StageInput {
   max_days: number | null;
   activities: ActivityInput[];
 }
-
-/**
- * Leads from a CSV (S55): the server reads the file and answers what each row would do, then adds
- * the leads when the manager confirms. Columns: phone_number, and optionally first_name,
- * last_name, email, note.
- */
-
-/** A new customer and lead, a lead for a known customer, or left out. */
-export type LeadImportChange = 'new' | 'existing' | 'skip';
-
-/** Why a row is left out. */
-export type LeadImportProblem = 'missing_column' | 'bad_phone' | 'duplicate' | 'open_lead';
-
-export interface LeadImportRow {
-  /** Line in the file (the header is line 1). */
-  line: number;
-  phone: string;
-  name: string;
-  /** The known customer with this number; null for a new one. */
-  customer: number | null;
-  change: LeadImportChange;
-  problem: LeadImportProblem | null;
-}
-
-export interface LeadImportPreview {
-  /** Hands the checked file to the apply step (the server keeps it 15 minutes). */
-  token: string;
-  file: { name: string; size: number; rows: number };
-  counts: Record<LeadImportChange, number>;
-  rows: LeadImportRow[];
-}
-
-/** What the leads' source shows: a campaign, webinar or event list, or the manager's own. */
-export type LeadImportSource = 'campaign' | 'manual';
-
-export interface LeadImportOptions {
-  token: string;
-  source: LeadImportSource;
-  /** Added to every lead's description, after the row's own note. */
-  note: string;
-  /** null: the assignment queue. */
-  seller: number | null;
-  /** The welcome SMS for new customers. */
-  notify: boolean;
-}
-
-export const leadImportSampleHref = `${API_BASE}${MANAGER_API}/leads/import/sample/`;
 
 /** What a commission step counts: closed contracts, or paid sales (in the rule's currency), in a month (S60). */
 export type CommissionBasis = 'contracts' | 'sales';

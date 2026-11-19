@@ -1,0 +1,15 @@
+# Destination exploration panel
+
+Draft [#107](https://github.com/meehraaad/scorize-panel/pull/107) depends on panel #106 and [backend #322](https://github.com/shamrad/lang/pull/322), which depends on #321. Backend must be installed first. No merge, deployment or public activation has occurred.
+
+The development-only authenticated `/panel/dev/assessment-destinations` page captures goals, preferred countries, citizenship, residence and timing with explicit unknown states. It preserves unrelated edits, handles revision/hash conflicts and exact retries, and supports explicit version adoption, saved history and replay. Directory order and preference explanations do not rank country immigration scores. Missing country coverage is visible and does not imply ineligibility.
+
+Financial questions open independently on this page, including when the selected legal date is out of coverage. Financial saves invalidate destination results; pending edits protect conflicting operations. A shared semantic equality helper ignores JSON object-key order after PostgreSQL JSONB normalization while preserving array order and comparing only answer status/value.
+
+Managers use structured bilingual catalog/source controls and independent reference scenarios, followed by separate review and publication roles. Template dates are blank; sources must be reviewed/current before publication. Local synthetic activation is not public activation or legal approval.
+
+Default directory: 14 draft entries across CA/AU/DE/GB/US, configurable for ISO countries and study/work/family/business goals. Only existing CA/AU work routes have calculator bindings. Current legal coverage remains through 2026-11-12; 2026-11-13 reports out-of-coverage rather than extending rules. Unsupported programs and unconfigured financial components stay unknown.
+
+Chromium against real Django/PostgreSQL covered manager lifecycle, customer intake, missing-country coverage, controlled 400 preservation, financial independence, history/replay, Persian RTL/mobile 390 and keyboard. No page errors were observed. Final frozen regression: **695 tests / 92 files passed** at `255a83c` (product application `ebd06de`; subsequent commit only stabilizes a pre-existing ticket date fixture). The first full run had 694 passes and one ticket today-label failure near midnight; a Date-only clock and fixture reset fixed it without changing assertions, timeouts or product behavior. All 8 ticket tests and the final full rerun passed. Backend: **414 tests + 126 subtests** on real PostgreSQL. Application commits and limitations are recorded in backend `docs/assessment/destination-validation.json` and `destination-discovery.fa.md` in #322. Lint, typecheck, locale parity, build and bundle budgets passed; JS178.9KB/179, CSS20.5KB/20.5. Existing Tailwind sourcemap warning remains nonfatal.
+
+Current acceptance excludes verified new-country eligibility, real financial amounts/rates, production migration baseline, expert pilot and public rollout. Keep new snapshot readers when planning rollback; older deployments may not understand destination records.

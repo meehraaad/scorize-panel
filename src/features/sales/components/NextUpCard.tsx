@@ -106,7 +106,7 @@ export function NextUpCard({
           {reason && <p className="m-0 text-[15px] leading-8 text-on-hero-2">{reason}</p>}
           {item.kind === 'lead' && (
             <span className="text-xs text-on-hero-3">
-              {t('today.next.source', { source: t(`source.${item.lead.source}`) })}
+              {t('today.next.source', { source: s.source(item.lead) })}
             </span>
           )}
         </div>

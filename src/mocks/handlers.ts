@@ -1,4 +1,8 @@
+import { workflowHandlers, resetWorkflowMocks } from './workflow';
+import { destinationHandlers, resetDestinationMocks } from './destinations';
+import { calculatorHandlers, resetCalculatorMocks } from './calculators';
 import { http, HttpResponse } from 'msw';
+import { assessmentHandlers, resetAssessmentMocks } from './assessments';
 import { voiceHandlers, resetVoiceMocks } from './voice';
 import type { SessionUser } from '@/lib/auth/session';
 import { accountHandlers, resetAccountMocks } from './account';
@@ -10,9 +14,11 @@ import { mailHandlers, resetMailMocks } from './mail';
 import { attendanceHandlers, resetAttendanceMocks } from './attendance';
 import { hrHandlers, resetHrMocks } from './hr';
 import { marketingHandlers } from './marketing';
+import { leadSourceHandlers, resetLeadSourceMocks } from './leadSources';
 import { marketingBoardHandlers, resetMarketingBoardMocks } from './marketingBoard';
 import { hrPayHandlers, resetHrPayMocks } from './hrPay';
 import { messagesHandlers, resetMessagesMocks } from './messages';
+import { pathwayHandlers, resetPathwayMocks } from './pathways';
 import { accessHandlers, resetAccessMocks } from './access';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { agreementHandlers, resetAgreementMocks } from './agreement';
@@ -208,6 +214,10 @@ const login = (user: MockUser) => {
 
 const AUTH = '/profile/authentication';
 export const handlers = [
+  ...assessmentHandlers,
+  ...workflowHandlers,
+  ...destinationHandlers,
+  ...calculatorHandlers,
   ...phoneCallHandlers,
   ...sessionSummaryHandlers,
   ...activityHandlers,
@@ -392,16 +402,22 @@ export const handlers = [
   ...assistantHandlers,
   ...mailHandlers,
   ...messagesHandlers,
+  ...pathwayHandlers,
   ...accessHandlers,
   ...attendanceHandlers,
   ...hrHandlers,
   ...marketingHandlers,
   ...marketingBoardHandlers,
+  ...leadSourceHandlers,
   ...hrPayHandlers,
 ];
 
 /** Test helper: forget the mock login session and server-side flow. */
 export function resetMockSession() {
+  resetAssessmentMocks();
+  resetWorkflowMocks();
+  resetCalculatorMocks();
+  resetDestinationMocks();
   resetPhoneMocks();
   resetSessionSummaries();
   resetActivityMocks();
@@ -424,10 +440,12 @@ export function resetMockSession() {
   resetAssistantMocks();
   resetMailMocks();
   resetMessagesMocks();
+  resetPathwayMocks();
   resetAccessMocks();
   resetAttendanceMocks();
   resetHrMocks();
   resetMarketingBoardMocks();
+  resetLeadSourceMocks();
   resetHrPayMocks();
 }
 

@@ -14,7 +14,8 @@
         "documents": "Documents",
         "tickets": "Tickets",
         "contract": "Contract",
-        "services": "Academy"
+        "services": "Academy",
+        "pathways": "Migration paths"
       },
       "tabs": {
         "home": "Home",
@@ -50,12 +51,14 @@
         "label": "Management panel menu",
         "assistant": "Analysis assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "pathways": "Migration pathways"
       },
       "tabs": {
         "assistant": "Assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "pathways": "Pathways"
       },
       "description": "Analysis assistant, messages and access"
     },
@@ -123,14 +126,16 @@
         "calendar": "Calendar",
         "performance": "My performance",
         "board": "Board",
-        "manage": "Marketing management"
+        "manage": "Marketing management",
+        "leads": "Leads"
       },
       "tabs": {
         "today": "Today",
         "tasks": "Tasks",
         "calendar": "Calendar",
         "performance": "Performance",
-        "board": "Board"
+        "board": "Board",
+        "leads": "Leads"
       }
     }
   },

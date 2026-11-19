@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-const BUDGET_KB = { js: 186, css: 21.2 };
+// CSS 21.4: the pathway finder and its management pages add about 0.2 KB of shared utility classes (2026-11-19).
+const BUDGET_KB = { js: 186, css: 21.4 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

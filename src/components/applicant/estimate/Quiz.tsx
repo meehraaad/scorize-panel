@@ -1,9 +1,11 @@
 import { useEffect, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { Notice } from '@/components/ui/Notice';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { ChoiceGroup, SelectField, TogglePill } from '@/components/ui/Choices';
+import { SkeletonRows } from '@/components/ui/Skeleton';
 import { ProgressRing } from '@/components/ui/Progress';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -103,6 +105,14 @@ export function Quiz({
   const next = (event: SubmitEvent) => {
     event.preventDefault();
     if (!check(step)) return;
+    if (step === 'goal' && draft.goal === 'work') {
+      const inquiry = { goal: 'work', contact: { channel: 'none' } } as const;
+      submit.mutate(inquiry, {
+        onSuccess: () => onDone(inquiry.contact),
+        onError: (error) => toast.error(t(isThrottled(error) ? 'quiz.throttled' : 'quiz.error')),
+      });
+      return;
+    }
     const following = STEPS[index + 1];
     if (following) {
       setStep(following);
@@ -161,16 +171,19 @@ export function Quiz({
             value={draft.goal}
             onChange={(value) => set('goal', value)}
           />
-          <ChoiceGroup
-            legend={t('quiz.degree')}
-            look="segmented"
-            options={options.degrees.map((value) => ({
-              value,
-              label: t(`degree.${value}`),
-            }))}
-            value={draft.degree}
-            onChange={(value) => set('degree', value)}
-          />
+          {draft.goal === 'work' && <Notice tone="info">{t('result.workText')}</Notice>}
+          {draft.goal !== 'work' && (
+            <ChoiceGroup
+              legend={t('quiz.degree')}
+              look="segmented"
+              options={options.degrees.map((value) => ({
+                value,
+                label: t(`degree.${value}`),
+              }))}
+              value={draft.degree}
+              onChange={(value) => set('degree', value)}
+            />
+          )}
         </>
       )}
       {step === 'background' && (
@@ -421,8 +434,9 @@ export function Quiz({
     </section>
   );
 
-  if (inSheet) return submit.isPending ? <Analysing /> : question;
-  if (submit.isPending) return <Analysing />;
+  const pending = draft.goal === 'work' ? <SkeletonRows rows={3} /> : <Analysing />;
+  if (inSheet) return submit.isPending ? pending : question;
+  if (submit.isPending) return pending;
 
   return (
     <Card className="flex flex-col overflow-hidden lg:flex-row">

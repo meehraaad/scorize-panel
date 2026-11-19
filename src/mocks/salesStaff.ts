@@ -401,8 +401,11 @@ export const salesStaffHandlers = [
           call_brief: true,
           summary_sms: false,
           columns: true,
+          no_answer_send: true,
         },
         attribution: { first_contact: null, won_by: null },
+        // conf/notifications.json's crm_unanswered_call, with the customer's first name.
+        no_answer_sms_text: `سلام ${data.name.split(' ')[0] ?? ''} عزیز\nمتأسفانه مشاوران اسکورایز موفق به تماس با شما نشدند، لطفا جهت ارتباط با موسسه با شماره زیرتماس بگیرید.\n\nتیم اسکورایز - ۰۲۱۹۱۰۱۸۴۵7`,
       })),
     ),
   ),

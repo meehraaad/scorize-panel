@@ -9,12 +9,12 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { PasswordGate } from '@/components/ui/PasswordGate';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { StatGrid } from '@/components/ui/StatGrid';
+import { ProgressBar } from '@/components/ui/Progress';
 import { TextAreaField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { MANUAL, payMonth } from '../pay/api';
+import { firstDayOf, MANUAL, payMonth } from '../pay/api';
 import { DISPUTE_TONES } from '../pay/disputeTones';
 import { MonthBar } from '../pay/components/MonthBar';
 import { useMyMonth, useObject, type MyDispute, type MyKpi, type MyMonth } from './api';
@@ -131,24 +131,12 @@ function MonthBody({
   const paid = data.lines.filter((line) => !line.trial).reduce((sum, line) => sum + line.amount, 0);
   return (
     <>
-      <StatGrid
-        compact
-        label={t('me.summary')}
-        stats={[
-          {
-            label: t('me.score'),
-            value: data.score === null ? '—' : t('me.percent', { n: f.number(data.score) }),
-            tone: 'primary',
-          },
-          {
-            label: t('me.rewards'),
-            value: toman(paid),
-            tone: paid >= 0 ? 'good' : 'urgent',
-            ...(data.final ? {} : { note: t('me.preview') }),
-          },
-          ...(data.slip ? [{ label: t('me.net'), value: toman(data.slip.net) }] : []),
-        ]}
+      <ScoreHero
+        data={data}
+        paid={paid}
+        trial={data.lines.filter((line) => line.trial).reduce((sum, line) => sum + line.amount, 0)}
       />
+      <Tip data={data} />
       <SectionCard id="my-kpis" variant="panel" size="lg" title={t('me.kpis')}>
         <ul className="m-0 flex list-none flex-col p-0">
           {data.kpis.map((kpi) => (
@@ -232,7 +220,126 @@ function MonthBody({
           </div>
         </SectionCard>
       )}
+      <History data={data} />
     </>
+  );
+}
+
+/** My score as a ring, and what it pays if the month ends like this. */
+function ScoreHero({ data, paid, trial }: { data: MyMonth; paid: number; trial: number }) {
+  const { t } = useTranslation('hr');
+  const f = useFormat();
+  const score = data.score === null ? null : Math.round(data.score);
+  const ring = 2 * Math.PI * 52;
+  const filled = ((Math.min(score ?? 0, 100) / 100) * ring).toFixed(1);
+  const amount = t('toman', { amount: f.number(Math.abs(paid)) });
+  return (
+    <Card className="flex flex-col items-center gap-2 p-6 text-center">
+      <div className="relative size-36">
+        <svg
+          viewBox="0 0 120 120"
+          className="size-36 -rotate-90"
+          role="img"
+          aria-label={score === null ? t('me.noScore') : t('me.scoreOf', { n: f.number(score) })}
+        >
+          <circle cx="60" cy="60" r="52" fill="none" strokeWidth="10" className="stroke-track" />
+          <circle
+            cx="60"
+            cy="60"
+            r="52"
+            fill="none"
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={`${filled} ${ring.toFixed(1)}`}
+            className="stroke-primary"
+          />
+        </svg>
+        <span className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-[40px] leading-none font-extrabold">
+            {score === null ? '—' : f.number(score)}
+          </span>
+          <span className="text-[13px] text-text-2">{t('me.ofHundred')}</span>
+        </span>
+      </div>
+      {!data.closed && !data.final && (
+        <span className="text-[13px] text-text-2">{t('me.soFar')}</span>
+      )}
+      <p className="m-0 text-[17px] leading-8 font-bold">
+        {score === null
+          ? t('me.noValue')
+          : paid === 0
+            ? trial === 0
+              ? t('me.noMoney')
+              : t('me.trialMoney', { amount: t('toman', { amount: f.number(Math.abs(trial)) }) })
+            : t(
+                data.final
+                  ? paid > 0
+                    ? 'me.paidReward'
+                    : 'me.paidPenalty'
+                  : paid > 0
+                    ? 'me.ifReward'
+                    : 'me.ifPenalty',
+                { amount },
+              )}
+      </p>
+    </Card>
+  );
+}
+
+/** The one goal that would lift my score the most: the furthest from its target. */
+function Tip({ data }: { data: MyMonth }) {
+  const { t } = useTranslation('hr');
+  const f = useFormat();
+  if (data.final || data.closed) return null;
+  const behind = data.kpis
+    .filter((kpi) => !kpi.trial && kpi.detail?.part != null && kpi.detail.part < 100)
+    .sort((a, b) => (a.detail?.part ?? 0) * a.weight - (b.detail?.part ?? 0) * b.weight)[0];
+  if (!behind?.detail) return null;
+  return (
+    <p className="m-0 rounded-2xl bg-tint px-4 py-3 text-[15px] leading-7 text-primary-text">
+      {t(behind.direction === 'lower' ? 'me.tipLower' : 'me.tipHigher', {
+        name: behind.name,
+        value: f.number(behind.detail.value),
+        target: f.number(behind.target),
+        unit: behind.unit,
+      })}
+    </p>
+  );
+}
+
+/** My score in the months before, as bars, this month last. */
+function History({ data }: { data: MyMonth }) {
+  const { t } = useTranslation('hr');
+  const f = useFormat();
+  const months = [
+    ...data.history,
+    ...(data.score === null ? [] : [{ year: data.year, month: data.month, score: data.score }]),
+  ];
+  if (months.length < 2) return null;
+  return (
+    <SectionCard id="my-history" variant="panel" size="lg" title={t('me.history')}>
+      <ol className="m-0 flex h-36 list-none items-end gap-4 p-0">
+        {months.map((row, index) => {
+          const last = index === months.length - 1;
+          return (
+            <li
+              key={`${String(row.year)}-${String(row.month)}`}
+              className="flex flex-col items-center gap-1.5"
+            >
+              <span className={`text-[13px] font-bold ${last ? 'text-primary-text' : ''}`}>
+                {f.number(Math.round(row.score))}
+              </span>
+              <span
+                aria-hidden="true"
+                className={`w-8 rounded-lg ${last ? 'bg-primary' : 'bg-tint'}`}
+                style={{ height: `${String(Math.max(Math.min(row.score, 100), 4) * 0.8)}px` }}
+              />
+              <span className="text-[12px] text-text-2">{f.month(firstDayOf(row))}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </SectionCard>
   );
 }
 
@@ -269,6 +376,12 @@ function KpiRow({
           {detail ? `${f.number(detail.value)} ${kpi.unit}`.trim() : t('me.noValue')}
         </span>
       </div>
+      {detail?.part != null && (
+        <ProgressBar
+          value={Math.min(detail.part, 100)}
+          tone={detail.part >= 100 ? 'good' : 'primary'}
+        />
+      )}
       <p className="m-0 text-[13px] text-text-2">
         {[target, detail?.part != null && t('pay.results.part', { part: f.number(detail.part) })]
           .filter(Boolean)

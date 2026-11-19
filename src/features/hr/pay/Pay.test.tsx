@@ -90,7 +90,9 @@ describe('HR pay and KPIs', () => {
     const everyone = await screen.findByRole('region', { name: 'همه‌ی کارکنان' });
     expect(within(everyone).getByText('آزمایشی')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('link', { name: 'نتیجه‌های KPI' }));
+    // The detailed values page, from the settings
+    await user.click(screen.getByRole('link', { name: 'تنظیمات' }));
+    await user.click(await screen.findByRole('link', { name: /^نتیجه‌های KPI/ }));
     await user.click(await screen.findByRole('button', { name: 'اندازه‌گیری دوباره' }));
     expect(await toasts().findByText('عددهای خودکار دوباره اندازه گرفته شد.')).toBeInTheDocument();
     const ali = await rowOf('علی رضایی');
@@ -121,7 +123,9 @@ describe('HR pay and KPIs', () => {
     const rewards = await screen.findByRole('region', { name: 'پاداش‌ها' });
     expect(within(rewards).getByText('پاداش امتیاز')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('link', { name: 'نتیجه‌های KPI' }));
+    // The detailed values page, from the settings
+    await user.click(screen.getByRole('link', { name: 'تنظیمات' }));
+    await user.click(await screen.findByRole('link', { name: /^نتیجه‌های KPI/ }));
     const ali = await rowOf('علی رضایی');
     await user.type(ali.getByLabelText('تماس موفق'), '300');
     await user.type(ali.getByLabelText('قرارداد'), '8');
@@ -201,5 +205,46 @@ describe('HR pay and KPIs', () => {
     await user.type(screen.getByLabelText('رمز عبور'), 'password123');
     await user.click(screen.getByRole('button', { name: 'باز کردن' }));
     expect(await screen.findByText('تماس موفق')).toBeInTheDocument();
+  });
+
+  it("sets a group's score plan with − and +, and sees last month's effect", async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/pay/plans');
+    await user.click(await screen.findByRole('link', { name: /^کارشناس فروش/ }));
+    expect(
+      await screen.findByRole('heading', { name: 'برنامه‌ی امتیاز کارشناس فروش' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'بیشتر کردن هدف تماس موفق' }));
+    expect(screen.getByLabelText('هدف تماس موفق')).toHaveValue('۳۵۰');
+    const importance = screen.getByRole('group', { name: 'اهمیت قرارداد' });
+    await user.click(within(importance).getByRole('button', { name: 'زیاد' }));
+    expect(within(importance).getByRole('button', { name: 'زیاد' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await user.click(screen.getByRole('button', { name: 'بیشتر کردن درصد پاداش' }));
+    await user.click(screen.getByRole('button', { name: 'ذخیره‌ی برنامه' }));
+    expect(await toasts().findByText('برنامه ذخیره شد.')).toBeInTheDocument();
+    const preview = screen.getByRole('complementary', { name: 'اگر این برنامه ماه پیش بود' });
+    expect(await within(preview).findByText('علی رضایی')).toBeInTheDocument();
+  });
+
+  it("enters last month's missing values, then closes it for objections", async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/pay');
+    const missing = await screen.findByRole('region', { name: 'این عددها را سیستم نمی‌داند' });
+    const close = screen.getByRole('button', { name: 'بستن ماه برای بررسی' });
+    expect(close).toBeDisabled();
+    for (const field of within(missing).getAllByRole('textbox')) await user.type(field, '5');
+    await user.click(within(missing).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('نتیجه‌ها ذخیره شد.')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'بستن ماه برای بررسی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'بستن ماه برای بررسی' });
+    await user.click(within(dialog).getByRole('button', { name: 'بستن ماه برای بررسی' }));
+    expect(
+      await toasts().findByText('ماه بسته شد و همه می‌توانند عددهایشان را ببینند.'),
+    ).toBeInTheDocument();
   });
 });

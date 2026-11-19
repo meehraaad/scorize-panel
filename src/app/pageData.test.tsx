@@ -51,6 +51,13 @@ interface PageCase {
 }
 
 const PAGES: PageCase[] = [
+  { path: '/dev/assessments', user: REZA },
+  { path: '/dev/assessment-calculators', user: SARA },
+  { path: '/dev/assessment-calculators?session=11111111-1111-4111-8111-111111111111', user: SARA },
+  { path: '/dev/assessment-destinations', user: SARA },
+  { path: '/dev/assessment-destinations?session=22222222-2222-4222-8222-222222222222', user: SARA },
+  { path: '/dev/assessment-workflow', user: SARA },
+  { path: '/dev/assessment-workflow?session=11111111-1111-4111-8111-111111111111', user: SARA },
   // Applicant panel.
   ...[
     '/',
@@ -74,6 +81,7 @@ const PAGES: PageCase[] = [
     '/?session=41',
     '/consultations/book',
     '/estimate',
+    '/pathways',
     '/background',
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
@@ -186,6 +194,9 @@ const PAGES: PageCase[] = [
     '/founders/access/groups',
     '/founders/access/keys',
     '/founders/access/history',
+    '/founders/pathways',
+    '/founders/pathways/new',
+    '/founders/pathways/1',
   ].map((path) => ({ path, user: AMIR })),
   // HR panel (src/mocks/hr.ts, attendance: src/mocks/attendance.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
   ...[
@@ -199,6 +210,8 @@ const PAGES: PageCase[] = [
     '/hr/attendance/month',
     '/hr/attendance/settings',
     '/hr/pay',
+    '/hr/pay/plans',
+    '/hr/pay/payroll',
     '/hr/pay/results',
     '/hr/pay/kpis',
     '/hr/pay/rules',
@@ -208,10 +221,16 @@ const PAGES: PageCase[] = [
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  {
+    path: '/hr/pay/plans/position%3A2',
+    user: AMIR,
+    later: [{ key: 'plan-preview', why: 'waits until the plan being edited stops changing' }],
+  },
   // Marketing panel (src/mocks/marketing.ts): Elham is on the marketing team.
   ...[
     '/marketing',
     '/marketing/board',
+    '/marketing/leads',
     '/marketing/tasks',
     '/marketing/calendar',
     '/marketing/performance',

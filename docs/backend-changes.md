@@ -6,6 +6,14 @@ around each gap (column "Until then").
 
 Status: ☐ open · ☑ done
 
+Draft cross-country employment-period reuse and explicit shared-evidence detachment require `shamrad/lang:codex/assessment-shared-work` and its dependency stack. Only reported period dates and hours are reused; country-specific occupation and legal claims remain separate. Install the backend stack before the development-only panel interface.
+
+Draft shared IELTS evidence and pinned assessment-date labels require backend shamrad/lang#331 and its dependency stack. Only raw report details are reused after explicit confirmation; country-specific conditions remain separate. No production flag is enabled.
+
+Draft continuation of older assessment sessions requires shamrad/lang#330 and its dependency stack. Copied answers require individual confirmation; the prior session and snapshots remain unchanged. Legal calculations stay unavailable outside source coverage, while facts and financial information can still be saved. No production flag is enabled.
+
+Draft assessment document links require backend shamrad/lang#328 and its dependency stack before this development-only interface can be used. The endpoint links owned existing documents to session facts and returns explicit stale/review states; it does not upload files or verify eligibility. No production flag is enabled.
+
 Live seller call popups/timers: paired backend implementation is prepared on
 `shamrad/lang:codex/seller-live-calls`, with signed bridge ingestion and seller-scoped snapshots.
 The office bridge and backend are deployed; `ON_SERVER.livePhoneCalls` is enabled. Staff extension
@@ -584,3 +592,51 @@ override and panel headers together to enable contact/call note dictation. See b
 `phone_number`, `''` when none), like the consultations list already does
 (`api/sales/v1/seller.py`, `TodayConsultationSerializer`). Until then the dashboard's quick-call
 button on a phone (`online`) consultation stays hidden; the consultations page already has it.
+
+Local assessment comparison/action plans: paired backend draft shamrad/lang#320,
+with owned revision/hash-checked selection/progress, immutable comparison snapshots,
+replay and independent fact review. Panel draft #105 builds on #104 and consumes
+this contract only on the existing development route. No production enablement;
+see [scope and validation](assessment-route-comparison.md).
+
+Local financial policies and fit: backend shamrad/lang#321 on #320; companion
+panel #106 on #105. Reuses existing draft/review/release/session/snapshot models,
+with no new model or production migration. It does not change profile/sales budget
+enums, create contacts/leads or enable public assessment. Backend must precede
+panel. [Scope, compatibility and release limits](assessment-financial-fit.md).
+
+## Destination discovery dependency
+
+Development-only destination intake and structured catalog management in panel #107 require backend shamrad/lang#322 on #321, and panel #106. See [contract and limits](assessment-destination-discovery.md). No new production migrations or activation are included.
+
+## Destination follow-up dependency
+
+Panel #108 requires backend shamrad/lang#323 on #322 and panel #107. The existing destination POST adds select_routes/action_progress; the result adds an optional historical plan. See [contract](assessment-destination-follow-up.md). Backend first; no production migration/activation is included.
+
+## Country-independent program builder
+
+Panel #109 requires backend shamrad/lang#324 (on #323) and panel #108. Existing destination POST adds program_answer/program_adopt; optional program_result supplies typed questions and separate condition/point results. See [contract](assessment-program-builder.md). No new model, production migration or public activation.
+
+### Generic financial targets — draft #110 / backend #325
+
+Staff assessment options add optional `currency_catalog` and `financial_targets`. Financial policy schema 2 captures country/goal/title, selected currency minor-unit metadata and registry SHA; each component declares main/minor units. Destination entries add optional `financial_route_id` with runtime country/goal matching. Financial descriptions add `targets` and dynamic route keys; scenario IDs must belong to the recorded policy. Schema 1 remains supported. See [contract and validation](assessment-generic-finance.md). No new route/page, first-render query, model/migration or production activation.
+
+### Read-only comparison scenarios
+
+The hypothetical comparison editor requires backend shamrad/lang#336 after its backend dependencies and panel #116 after its panel dependencies. It posts one explicit interview-group change with the current revision and decision digest to the local-gated `calculators/comparison/scenario/` endpoint. The backend validates the change and returns before/after route results without saving it. Legal dates and shared-evidence confirmation limits still apply; financial scenarios remain separate. No production activation or migration is included.
+
+## Lead sources (2026-11-19)
+
+lang branch `claude/project-thread-onvb1h`. Needs a migration (`user_profile`: `LeadSource`, `SaleLead.lead_source`).
+
+- **Model** `user_profile.LeadSource` (name, key, active): the marketing team's own sources. The
+  system's sources stay in code (`SYSTEM_SOURCES`, read from `SaleLead.cause`) and can't change.
+  A lead from a team source has `source: "c<id>"` and `source_label` (its name) on every sales row
+  (leads, today, customer, month and team `sources`); `source_label` is null for system sources.
+  `?source=c<id>` filters the leads list.
+- **Marketing** `GET/POST sources/`, `PATCH/DELETE sources/<id>/` (`{name, active}`): rows
+  `{id, code, name, system, active, leads}`, system ones first. Deleting a used source archives it.
+  `POST leads/import/preview/`, `POST leads/import/`, `GET leads/import/sample/`: the sales
+  manager's upload (S55); the leads always go to the sales queue.
+- **Sales** `GET sources/` (any seller): the same rows without `leads`. `manager/leads/import/`
+  accepts `source: campaign | manual | c<id>` (an active team source).

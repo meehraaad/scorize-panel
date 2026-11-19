@@ -35,7 +35,7 @@ export interface MonthData {
   team_conversion: number;
   /** Median minutes to the first call, week by week; null when no samples exist. */
   weeks: (number | null)[];
-  sources: { source: LeadSource; leads: number; won: number }[];
+  sources: { source: LeadSource; source_label?: string | null; leads: number; won: number }[];
   /** The month's contracts that count for the seller, newest first (S59). */
   contracts: MonthContract[];
   /** Instalments due in the month, and the unpaid ones already due, oldest first. */

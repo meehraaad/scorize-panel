@@ -33,6 +33,7 @@ import {
   payMonth,
   paySettingsQuery,
   payrollQuery,
+  plansQuery,
   resultsQuery,
   rulesQuery,
 } from '@/features/hr/pay/api';
@@ -228,14 +229,35 @@ export const hrPanel: PanelDefinition = {
         },
       ],
     },
-    // Pay and KPIs: the month's pay, the month's KPI values, the KPIs, rewards and penalties, the
-    // settings.
+    // Pay and KPIs: this month's scores, the groups' score plans, the month's pay, the settings;
+    // the detailed pages (values, KPIs, rules) stay reachable from them.
     {
       path: 'pay',
       ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: hrOnly }),
       children: [
         {
           index: true,
+          ...lazyPage(() => import('@/features/hr/pay/MonthPage'), [], {
+            data: () => [resultsQuery(payMonth(-1))],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'plans',
+          ...lazyPage(() => import('@/features/hr/pay/PlansPage'), [], {
+            data: () => [plansQuery, optionsQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'plans/:key',
+          ...lazyPage(() => import('@/features/hr/pay/PlanPage'), [], {
+            data: () => [plansQuery, catalogQuery, optionsQuery],
+            skeleton: 'detail',
+          }),
+        },
+        {
+          path: 'payroll',
           ...lazyPage(() => import('@/features/hr/pay/PayrollPage'), [], {
             data: () => [payrollQuery(payMonth())],
             skeleton: 'list',

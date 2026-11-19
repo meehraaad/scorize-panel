@@ -55,7 +55,12 @@ export function CompactEstimate({
           onRetake={start}
         />
       ) : (
-        <StartCard options={options} empty={latest !== null} onStart={start} />
+        <StartCard
+          options={options}
+          empty={latest !== null}
+          workUnsupported={latest?.assessment_scope === 'work_not_supported'}
+          onStart={start}
+        />
       )}
       <Dialog
         open={open}
@@ -87,10 +92,12 @@ const VEILED = [78, 64, 51];
 function StartCard({
   options,
   empty,
+  workUnsupported,
   onStart,
 }: {
   options: EstimateOptions;
   empty: boolean;
+  workUnsupported: boolean;
   onStart: () => void;
 }) {
   const { t } = useTranslation('estimate');
@@ -108,7 +115,7 @@ function StartCard({
           className="m-0 font-display text-[21px] leading-[1.7] font-semibold"
         >
           {empty ? (
-            t('result.emptyTitle')
+            t(workUnsupported ? 'result.workTitle' : 'result.emptyTitle')
           ) : (
             <Trans
               ns="estimate"
@@ -118,7 +125,7 @@ function StartCard({
           )}
         </h2>
         <p className="m-0 text-sm leading-7 text-on-luxe-2">
-          {t(empty ? 'result.empty' : 'sheet.text')}
+          {t(workUnsupported ? 'result.workText' : empty ? 'result.empty' : 'sheet.text')}
         </p>
       </div>
       {!empty && shown.length > 0 && (

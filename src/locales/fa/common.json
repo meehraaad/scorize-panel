@@ -14,7 +14,8 @@
         "documents": "مدارک و نگارش",
         "tickets": "تیکت‌ها",
         "contract": "قرارداد و پرداخت",
-        "services": "آکادمی"
+        "services": "آکادمی",
+        "pathways": "مسیر مهاجرت"
       },
       "tabs": {
         "home": "خانه",
@@ -50,12 +51,14 @@
         "label": "منوی پنل مدیریت",
         "assistant": "دستیار تحلیلی",
         "messages": "پیام‌ها",
-        "access": "دسترسی‌ها"
+        "access": "دسترسی‌ها",
+        "pathways": "مسیرهای مهاجرت"
       },
       "tabs": {
         "assistant": "دستیار",
         "messages": "پیام‌ها",
-        "access": "دسترسی"
+        "access": "دسترسی",
+        "pathways": "مسیرها"
       },
       "description": "دستیار تحلیلی، پیام‌ها و دسترسی‌ها"
     },
@@ -123,14 +126,16 @@
         "calendar": "تقویم",
         "performance": "عملکرد من",
         "board": "بُرد",
-        "manage": "مدیریت مارکتینگ"
+        "manage": "مدیریت مارکتینگ",
+        "leads": "لیدها"
       },
       "tabs": {
         "today": "امروز",
         "tasks": "کارها",
         "calendar": "تقویم",
         "performance": "عملکرد",
-        "board": "بُرد"
+        "board": "بُرد",
+        "leads": "لیدها"
       }
     }
   },

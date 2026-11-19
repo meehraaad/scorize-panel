@@ -195,6 +195,8 @@ export interface PayRule extends Scoped {
   /** `per_unit`: for each unit above `above`. */
   amount: number;
   above: number;
+  /** Nothing below this value; null: no limit. */
+  minimum?: number | null;
   amount_unit: 'toman' | 'percent';
   /** A team's (or everyone's) value together, the same for all of them. */
   pooled: boolean;
@@ -313,3 +315,72 @@ export interface AnswerInput {
 }
 
 export type RuleInput = Omit<PayRule, 'id' | 'staff'> & { staff: number | null };
+
+/**
+ * A group's score plan («برنامه‌ی امتیاز», lang `api/hr/v1/plans.py`): the KPIs of exactly that
+ * group (its goals), one reward on the score and at most one penalty on a goal where less is
+ * better. Other rules of the group (`others`, such as a commission) are kept as they are.
+ */
+export interface Plan extends Scoped {
+  /** `all`, `position:<id>`, `team:<name>` or `person:<id>`. */
+  key: string;
+  /** A position's or person's name; empty for everyone or a team. */
+  name: string;
+  /** Active people in the group. */
+  people: number;
+  goals: Kpi[];
+  /** `amount` × 100 percent of the base at a full score; nothing under `minimum`. */
+  reward: PayRule | null;
+  /** `amount` Tomans for each unit of `kpi` over `above` (the goal's target). */
+  penalty: PayRule | null;
+  others: PayRule[];
+  /** Every goal on trial: shown, not paid. */
+  trial: boolean;
+}
+
+export interface GoalInput extends Omit<KpiInput, keyof Scoped | 'trial'> {
+  id: number | null;
+  params: Record<string, unknown>;
+}
+
+export interface PlanInput {
+  scope: Scope;
+  position: number | null;
+  team: string | null;
+  staff: number | null;
+  goals: GoalInput[];
+  /** null: no reward. */
+  reward: { percent: number; minimum: number | null } | null;
+  /** `goal`: index in `goals`. */
+  penalty: { goal: number; amount: number } | null;
+  trial: boolean;
+}
+
+/** The plan worked out on last month's values of the group's active people. */
+export interface PlanPreview extends PayMonth {
+  people: {
+    staff: { id: number; name: string };
+    score: number | null;
+    reward: number;
+    penalty: number;
+    /** Goal index → value. */
+    values: Record<string, number>;
+  }[];
+  /** The group's mean value of each goal (null: nothing measured). */
+  averages: (number | null)[];
+  score: number | null;
+  /** Rewards less penalties for everyone. */
+  cost: number;
+}
+
+export const plansQuery = queryOptions({
+  queryKey: [...PAY_KEY, 'plans'],
+  queryFn: ({ signal }) => api<{ plans: Plan[] }>(`${HR_API}/kpi-plans/`, { signal }),
+});
+
+export const planPreviewQuery = (body: PlanInput) =>
+  queryOptions({
+    queryKey: [...PAY_KEY, 'plan-preview', body],
+    queryFn: ({ signal }) =>
+      api<PlanPreview>(`${HR_API}/kpi-plans/preview/`, { method: 'POST', body, signal }),
+  });

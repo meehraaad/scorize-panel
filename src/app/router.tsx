@@ -1,3 +1,5 @@
+import { workflowQuery, workflowHistoryQuery } from '@/features/assessments/workflowApi';
+import { destinationOptionsQuery, destinationQuery } from '@/features/assessments/destinationApi';
 import {
   createBrowserRouter,
   redirect,
@@ -5,6 +7,18 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router';
+import {
+  calculatorOptionsQuery,
+  interviewQuery,
+  snapshotsQuery,
+  guidanceQuery,
+  profileEvidenceQuery,
+  documentLinksQuery,
+  sharedFactsQuery,
+} from '@/features/assessments/calculatorApi';
+import { draftsQuery, healthQuery, optionsQuery } from '@/features/assessments/api';
+import { ApiError, api } from '@/lib/api/client';
+import type { SessionUser } from '@/lib/auth/session';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
@@ -213,6 +227,110 @@ const pageRoutes: RouteObject[] = [
     ['attendance/*', '/hr/attendance'],
   ].map(([path = '', to = '']) => ({ path, loader: () => redirect(to) })),
   ...PANELS.map(panelRoutes),
+  // The assessment preview pages: development, and the test server's build
+  // (VITE_ASSESSMENT_PREVIEW=true). Production builds drop them; Django also refuses
+  // their API outside local mode.
+  ...(import.meta.env.DEV || import.meta.env.VITE_ASSESSMENT_PREVIEW === 'true'
+    ? [
+        {
+          path: 'dev/assessments',
+          loader: async ({ request }: LoaderFunctionArgs) => {
+            // This standalone development route has no panel session boundary.
+            // Keep its guard independent of StrictMode's disabled frame observer.
+            const user = await queryClient.query({
+              queryKey: ['assessment-management', 'viewer'],
+              queryFn: async () => {
+                try {
+                  return await api<SessionUser>('/profile/auth/v1/whoami/');
+                } catch (error) {
+                  if (error instanceof ApiError && (error.status === 401 || error.status === 403))
+                    return null;
+                  throw error;
+                }
+              },
+              staleTime: 0,
+            });
+            if (user) queryClient.setQueryData(sessionQuery.queryKey, user);
+            return user ? null : toLogin(request);
+          },
+          ErrorBoundary: ErrorPage,
+          HydrateFallback: BootFallback,
+          children: [
+            {
+              index: true,
+              ...lazyPage(() => import('@/features/assessments/ManagementPage'), ['assessments'], {
+                data: () => [draftsQuery(), optionsQuery, healthQuery],
+                skeleton: 'form',
+              }),
+            },
+          ],
+        },
+        {
+          path: 'dev/assessment-destinations',
+          loader: async ({ request }: LoaderFunctionArgs) =>
+            (await currentUser()) ? null : toLogin(request),
+          ...lazyPage(() => import('@/features/assessments/DestinationPage'), ['assessments'], {
+            data: ({ request }) => {
+              const session = new URL(request.url).searchParams.get('session');
+              return session
+                ? [
+                    destinationOptionsQuery,
+                    destinationQuery(session),
+                    snapshotsQuery(session, 1),
+                    sharedFactsQuery,
+                  ]
+                : [destinationOptionsQuery];
+            },
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
+        },
+        {
+          path: 'dev/assessment-workflow',
+          loader: async ({ request }: LoaderFunctionArgs) =>
+            (await currentUser()) ? null : toLogin(request),
+          ...lazyPage(() => import('@/features/assessments/WorkflowPage'), ['assessments'], {
+            data: ({ request }) => {
+              const id = new URL(request.url).searchParams.get('session') ?? '';
+              return /^[a-f0-9-]{36}$/i.test(id)
+                ? [
+                    calculatorOptionsQuery,
+                    workflowQuery(id),
+                    workflowHistoryQuery(id),
+                    sharedFactsQuery,
+                    documentLinksQuery(id),
+                  ]
+                : [calculatorOptionsQuery];
+            },
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
+        },
+        {
+          path: 'dev/assessment-calculators',
+          ...lazyPage(() => import('@/features/assessments/CalculatorPage'), ['assessments'], {
+            data: ({ request }) => {
+              const params = new URL(request.url).searchParams;
+              const id = params.get('session') ?? '';
+              const country = params.get('country') === 'australia' ? 'australia' : 'canada';
+              return /^[a-f0-9-]{36}$/i.test(id)
+                ? [
+                    calculatorOptionsQuery,
+                    profileEvidenceQuery(id, country),
+                    sharedFactsQuery,
+                    documentLinksQuery(id),
+                    interviewQuery(id),
+                    snapshotsQuery(id),
+                    guidanceQuery(id),
+                  ]
+                : [calculatorOptionsQuery];
+            },
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
+        },
+      ]
+    : []),
   // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
   ...(import.meta.env.DEV
     ? [

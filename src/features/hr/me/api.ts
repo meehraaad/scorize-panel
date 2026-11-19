@@ -55,6 +55,8 @@ export interface MyMonth extends PayMonth {
   lines: SlipLine[];
   slip: MySlip | null;
   disputes: MyDispute[];
+  /** My score in the months before, oldest first (months with no score left out). */
+  history: (PayMonth & { score: number })[];
 }
 
 /** This Persian month. */

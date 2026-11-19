@@ -53,6 +53,8 @@ export interface CustomerData {
   lead: {
     id: number;
     source: LeadSource;
+    /** A marketing team source's name; null for a system source. */
+    source_label?: string | null;
     stage: LeadStage;
     /** 0–100; null while unknown (the automatic score is S5). */
     score: number | null;
@@ -112,6 +114,8 @@ export interface CustomerData {
   supports: {
     stages: boolean;
     no_answer_sms: boolean;
+    /** The log takes `no_answer_send`: SMS, the seller's WhatsApp / Telegram, or none. */
+    no_answer_send?: boolean;
     tags?: boolean;
     /** The log's `sms_summary` is sent (its SMS template is approved). */
     summary_sms?: boolean;
@@ -122,6 +126,8 @@ export interface CustomerData {
   };
   /** Who first reached the customer, and who their closed contract counts for (S59). */
   attribution?: { first_contact: string | null; won_by: string | null };
+  /** The "missed call" SMS as this customer gets it, shown when the seller picks SMS. */
+  no_answer_sms_text?: string;
 }
 
 export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as const;
@@ -210,6 +216,8 @@ export interface ContactLog {
   email_summary: boolean;
   /** Text the customer that a note waits in their panel (`supports.summary_sms`). */
   sms_summary?: boolean;
+  /** A call with no answer: our SMS, a message from the seller's WhatsApp / Telegram, or none. */
+  no_answer_send?: 'sms' | 'whatsapp' | 'telegram' | 'none';
   /** Messages: the template sent. */
   template?: number;
   /** Logging a consultation session. */

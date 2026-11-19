@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { lazy, Suspense } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { lazy, Suspense, useCallback, useSyncExternalStore } from 'react';
 import { Outlet } from 'react-router';
-import { sessionQuery } from '@/lib/auth/session';
+import { sessionQuery, type SessionUser } from '@/lib/auth/session';
 import { getRoles } from '@/lib/auth/roles';
 
 const SalesWorkspace = lazy(() => import('@/features/sales/SalesWorkspace'));
@@ -13,7 +13,18 @@ const CaseChatDock = lazy(() => import('@/features/supervisor/chat/CaseChatDock'
  * and put back this tab's drafts and windows.
  */
 export function WorkspaceLayout() {
-  const { data: user } = useQuery({ ...sessionQuery, enabled: false });
+  const client = useQueryClient();
+  // This frame only observes cached identity. A disabled QueryObserver can cancel
+  // the loader's in-flight request during StrictMode cleanup on a cold load.
+  const subscribe = useCallback(
+    (notify: () => void) => client.getQueryCache().subscribe(notify),
+    [client],
+  );
+  const snapshot = useCallback(
+    () => client.getQueryData<SessionUser | null>(sessionQuery.queryKey),
+    [client],
+  );
+  const user = useSyncExternalStore(subscribe, snapshot, snapshot);
   const roles = user ? getRoles(user) : [];
   return (
     <>

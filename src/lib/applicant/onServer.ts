@@ -12,6 +12,8 @@ export type ServerFeature =
   | 'consultationInfo'
   | 'packages'
   | 'estimate'
+  | 'pathwayFinder'
+  | 'pathwaysManagement'
   | 'reviewDocuments'
   | 'background'
   | 'start'
@@ -144,6 +146,13 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   packages: true,
   /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution `mehrad-take-over`). */
   estimate: true,
+  /**
+   * `applicant/v1/pathways/` (+ `goal`, `summary`, `tip`, `duration`, `cost`): the simple pathway
+   * finder, fewest questions to the first country (needs `makemigrations pathways` + `migrate`).
+   */
+  pathwayFinder: true,
+  /** `staff/v1/pathways/`: management > pathways, key `manage_pathways`. */
+  pathwaysManagement: true,
   /** H59 `review-documents/`: files sent for a free review (scorize-revolution `claude/project-thread-aylffr`). */
   reviewDocuments: true,
   /** H60 `background/`: the tablet form. */

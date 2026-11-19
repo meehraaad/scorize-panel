@@ -4,6 +4,7 @@ import { ACCOUNT_KEY } from '@/lib/account/api';
 import {
   type EstimateAnswers,
   type EstimateResult,
+  type WorkInquiry,
   BASE,
   estimateOptionsQuery,
   latestEstimateQuery,
@@ -17,7 +18,7 @@ import {
 export function useSubmitEstimate() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (answers: EstimateAnswers) =>
+    mutationFn: (answers: EstimateAnswers | WorkInquiry) =>
       api<EstimateResult>(`${BASE}/`, { method: 'POST', body: answers }),
     onSuccess: (result, answers) => {
       client.setQueryData(latestEstimateQuery.queryKey, result);

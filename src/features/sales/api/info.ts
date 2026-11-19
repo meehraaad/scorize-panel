@@ -61,6 +61,8 @@ export interface CustomerInfo {
   exams: ExamEntry[];
   /** Exams from Django; the other selects use the fixed model choices (CHOICES). */
   exams_list: Option[];
+  /** The countries the goal picks from (`value` is the name sent back in `countries`). */
+  countries_list?: Option[];
   /** The office tablet form for this customer (the old site's tablet wizard). */
   tablet_url: string;
 }

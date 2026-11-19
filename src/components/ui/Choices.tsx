@@ -176,6 +176,7 @@ export function SelectField<T extends string>({
   options,
   value,
   onChange,
+  disabled = false,
   inline = false,
   hideLabel = false,
   hint,
@@ -186,6 +187,7 @@ export function SelectField<T extends string>({
   options: readonly { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
+  disabled?: boolean;
   inline?: boolean;
   hideLabel?: boolean;
   hint?: string | undefined;
@@ -200,6 +202,7 @@ export function SelectField<T extends string>({
     <div className="relative">
       <select
         id={id}
+        disabled={disabled}
         value={value}
         onChange={(event) =>
           onChange(options.find((option) => option.value === event.target.value)?.value ?? value)

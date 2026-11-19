@@ -12,9 +12,19 @@ import { parseNumber } from '../numbers';
 
 /**
  * Closing a month's KPIs for review: the values stop being measured, managers check them and each
- * person can object (on their «من» page) for a few days. Shown in the month bar of «نتیجه‌ها».
+ * person can object (on their «من» page) for a few days. Shown in the month bar of «نتیجه‌ها» and
+ * at the foot of «این ماه».
  */
-export function MonthReview({ month, data }: { month: PayMonth; data: KpiResults }) {
+export function MonthReview({
+  month,
+  data,
+  disabled = false,
+}: {
+  month: PayMonth;
+  data: KpiResults;
+  /** Closing waits (values still to enter). */
+  disabled?: boolean;
+}) {
   const { t } = useTranslation('hr');
   const f = useFormat();
   const reopen = useReopenMonth();
@@ -23,7 +33,7 @@ export function MonthReview({ month, data }: { month: PayMonth; data: KpiResults
   if (!data.closed)
     return (
       <>
-        <Button variant="outline" onClick={() => setClosing(true)}>
+        <Button variant="outline" disabled={disabled} onClick={() => setClosing(true)}>
           {t('pay.review.close')}
         </Button>
         {closing && <CloseDialog month={month} onClose={() => setClosing(false)} />}

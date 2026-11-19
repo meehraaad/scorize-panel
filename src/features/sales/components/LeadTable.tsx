@@ -112,7 +112,7 @@ export function LeadTable({
                   />
                 )}
                 <span className="text-[13px] leading-6 break-words text-text-2">
-                  <span className="font-medium text-text">{t(`source.${row.source}`)}</span>
+                  <span className="font-medium text-text">{s.source(row)}</span>
                   {row.cause && ` · ${row.cause}`}
                 </span>
                 {row.lost_reason && (
@@ -236,7 +236,7 @@ export function LeadTable({
                 </td>
                 <td className={cell}>
                   <span className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">{t(`source.${row.source}`)}</span>
+                    <span className="text-sm font-medium">{s.source(row)}</span>
                     <span className="text-[13px] leading-6 text-text-2">{row.cause}</span>
                   </span>
                 </td>

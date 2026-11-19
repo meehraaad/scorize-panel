@@ -1,6 +1,7 @@
 import { redirect } from 'react-router';
 import { attendanceQuery, calendarQuery, monthRange, todayQuery } from '@/features/marketing/api';
 import { MARKETING_MANAGER_PERMISSION, boardQuery, teamQuery } from '@/features/marketing/boardApi';
+import { sourcesQuery } from '@/features/marketing/sourcesApi';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
@@ -48,6 +49,13 @@ export const marketingPanel: PanelDefinition = {
       icon: 'grid',
     },
     {
+      id: 'leads',
+      to: 'leads',
+      label: 'panels.marketing.nav.leads',
+      tab: 'panels.marketing.tabs.leads',
+      icon: 'user',
+    },
+    {
       id: 'tasks',
       to: 'tasks',
       label: 'panels.marketing.nav.tasks',
@@ -89,6 +97,14 @@ export const marketingPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/marketing/BoardPage'), ['marketing'], {
         data: () => [boardQuery],
         skeleton: 'board',
+      }),
+    },
+    {
+      path: 'leads',
+      // `leads`: the CSV upload dialog and the system sources' names.
+      ...lazyPage(() => import('@/features/marketing/LeadsPage'), ['marketing', 'leads'], {
+        data: () => [sourcesQuery],
+        skeleton: 'list',
       }),
     },
     {

@@ -1,0 +1,391 @@
+{
+  "version": "financial-fit-1",
+  "revision": 0,
+  "assessment_date": "2026-11-12",
+  "policy": {
+    "id": 9,
+    "version": 1,
+    "sha256": "1f09a06b76ca9b326f992a14e6ec8b94ff918ca2c87abdb17825e1f913623f95",
+    "bundle": {
+      "schema_version": 1,
+      "ranges": [
+        {
+          "id": "bounded",
+          "title": "Synthetic range",
+          "min_toman": 90,
+          "max_toman": 110,
+          "order": 1,
+          "enabled": true
+        },
+        {
+          "id": "open",
+          "title": "Synthetic open range",
+          "min_toman": 90,
+          "max_toman": null,
+          "order": 2,
+          "enabled": true
+        }
+      ],
+      "open_ended": "ask_exact",
+      "sufficient_bps": 10000,
+      "tight_bps": 9000,
+      "max_fx_age_days": 7,
+      "round_to_toman": 1,
+      "rates": [],
+      "routes": [
+        {
+          "id": "ca-fsw",
+          "complete": true,
+          "assumptions": [],
+          "components": [
+            {
+              "id": "fee",
+              "kind": "application",
+              "amount": 100,
+              "currency": "TOMAN",
+              "basis": "household",
+              "status": "verified",
+              "source_title": "Synthetic test only",
+              "source_url": "https://example.org/synthetic",
+              "version": "fixture-1",
+              "effective_on": "2026-11-01",
+              "valid_until": "2026-11-30",
+              "checked_on": "2026-11-01",
+              "received_at": "2026-11-01T00:00:00+00:00"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "active_policy": {
+    "id": 9,
+    "version": 1,
+    "sha256": "1f09a06b76ca9b326f992a14e6ec8b94ff918ca2c87abdb17825e1f913623f95",
+    "bundle": {
+      "schema_version": 1,
+      "ranges": [
+        {
+          "id": "bounded",
+          "title": "Synthetic range",
+          "min_toman": 90,
+          "max_toman": 110,
+          "order": 1,
+          "enabled": true
+        },
+        {
+          "id": "open",
+          "title": "Synthetic open range",
+          "min_toman": 90,
+          "max_toman": null,
+          "order": 2,
+          "enabled": true
+        }
+      ],
+      "open_ended": "ask_exact",
+      "sufficient_bps": 10000,
+      "tight_bps": 9000,
+      "max_fx_age_days": 7,
+      "round_to_toman": 1,
+      "rates": [],
+      "routes": [
+        {
+          "id": "ca-fsw",
+          "complete": true,
+          "assumptions": [],
+          "components": [
+            {
+              "id": "fee",
+              "kind": "application",
+              "amount": 100,
+              "currency": "TOMAN",
+              "basis": "household",
+              "status": "verified",
+              "source_title": "Synthetic test only",
+              "source_url": "https://example.org/synthetic",
+              "version": "fixture-1",
+              "effective_on": "2026-11-01",
+              "valid_until": "2026-11-30",
+              "checked_on": "2026-11-01",
+              "received_at": "2026-11-01T00:00:00+00:00"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "policy_changed": false,
+  "inputs": {
+    "budget": {
+      "status": "known",
+      "value": {
+        "exact_toman": 100
+      }
+    },
+    "dependants": {
+      "status": "known",
+      "value": 0
+    },
+    "resources": {
+      "status": "known",
+      "value": [
+        {
+          "id": "cash",
+          "kind": "cash",
+          "amount_toman": 1000,
+          "allocations": {
+            "spending": 1000
+          }
+        }
+      ]
+    }
+  },
+  "routes": {
+    "ca-fsw": {
+      "status": "sufficient",
+      "assessment_date": "2026-11-12",
+      "engine_version": "financial-fit-1",
+      "unknowns": [],
+      "components": [
+        {
+          "id": "fee",
+          "kind": "application",
+          "amount": 100,
+          "currency": "TOMAN",
+          "basis": "household",
+          "status": "verified",
+          "source_title": "Synthetic test only",
+          "source_url": "https://example.org/synthetic",
+          "version": "fixture-1",
+          "effective_on": "2026-11-01",
+          "valid_until": "2026-11-30",
+          "checked_on": "2026-11-01",
+          "received_at": "2026-11-01T00:00:00+00:00",
+          "toman": 100,
+          "quantity": 1,
+          "rate": null,
+          "unknown_reason": null
+        }
+      ],
+      "inputs": {
+        "budget": {
+          "status": "known",
+          "value": {
+            "exact_toman": 100
+          }
+        },
+        "dependants": {
+          "status": "known",
+          "value": 0
+        },
+        "resources": {
+          "status": "known",
+          "value": [
+            {
+              "id": "cash",
+              "kind": "cash",
+              "amount_toman": 1000,
+              "allocations": {
+                "spending": 1000
+              }
+            }
+          ]
+        }
+      },
+      "assumptions": [],
+      "ask_exact": false,
+      "semantics": "financial_fit_not_legal_eligibility_or_visa_probability",
+      "spending_required_toman": 100,
+      "budget_fit": {
+        "status": "sufficient",
+        "ask_exact": false
+      },
+      "resource_checks": [
+        {
+          "id": "spending",
+          "required_toman": 100,
+          "allocated_toman": 1000,
+          "status": "sufficient"
+        }
+      ]
+    },
+    "ca-cec": {
+      "status": "unknown",
+      "assessment_date": "2026-11-12",
+      "engine_version": "financial-fit-1",
+      "unknowns": ["route_costs_unavailable"],
+      "components": [],
+      "inputs": {
+        "budget": {
+          "status": "known",
+          "value": {
+            "exact_toman": 100
+          }
+        },
+        "dependants": {
+          "status": "known",
+          "value": 0
+        },
+        "resources": {
+          "status": "known",
+          "value": [
+            {
+              "id": "cash",
+              "kind": "cash",
+              "amount_toman": 1000,
+              "allocations": {
+                "spending": 1000
+              }
+            }
+          ]
+        }
+      },
+      "assumptions": [],
+      "ask_exact": false,
+      "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+    },
+    "ca-fst": {
+      "status": "unknown",
+      "assessment_date": "2026-11-12",
+      "engine_version": "financial-fit-1",
+      "unknowns": ["route_costs_unavailable"],
+      "components": [],
+      "inputs": {
+        "budget": {
+          "status": "known",
+          "value": {
+            "exact_toman": 100
+          }
+        },
+        "dependants": {
+          "status": "known",
+          "value": 0
+        },
+        "resources": {
+          "status": "known",
+          "value": [
+            {
+              "id": "cash",
+              "kind": "cash",
+              "amount_toman": 1000,
+              "allocations": {
+                "spending": 1000
+              }
+            }
+          ]
+        }
+      },
+      "assumptions": [],
+      "ask_exact": false,
+      "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+    },
+    "au-189": {
+      "status": "unknown",
+      "assessment_date": "2026-11-12",
+      "engine_version": "financial-fit-1",
+      "unknowns": ["route_costs_unavailable"],
+      "components": [],
+      "inputs": {
+        "budget": {
+          "status": "known",
+          "value": {
+            "exact_toman": 100
+          }
+        },
+        "dependants": {
+          "status": "known",
+          "value": 0
+        },
+        "resources": {
+          "status": "known",
+          "value": [
+            {
+              "id": "cash",
+              "kind": "cash",
+              "amount_toman": 1000,
+              "allocations": {
+                "spending": 1000
+              }
+            }
+          ]
+        }
+      },
+      "assumptions": [],
+      "ask_exact": false,
+      "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+    },
+    "au-190": {
+      "status": "unknown",
+      "assessment_date": "2026-11-12",
+      "engine_version": "financial-fit-1",
+      "unknowns": ["route_costs_unavailable"],
+      "components": [],
+      "inputs": {
+        "budget": {
+          "status": "known",
+          "value": {
+            "exact_toman": 100
+          }
+        },
+        "dependants": {
+          "status": "known",
+          "value": 0
+        },
+        "resources": {
+          "status": "known",
+          "value": [
+            {
+              "id": "cash",
+              "kind": "cash",
+              "amount_toman": 1000,
+              "allocations": {
+                "spending": 1000
+              }
+            }
+          ]
+        }
+      },
+      "assumptions": [],
+      "ask_exact": false,
+      "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+    },
+    "au-491": {
+      "status": "unknown",
+      "assessment_date": "2026-11-12",
+      "engine_version": "financial-fit-1",
+      "unknowns": ["route_costs_unavailable"],
+      "components": [],
+      "inputs": {
+        "budget": {
+          "status": "known",
+          "value": {
+            "exact_toman": 100
+          }
+        },
+        "dependants": {
+          "status": "known",
+          "value": 0
+        },
+        "resources": {
+          "status": "known",
+          "value": [
+            {
+              "id": "cash",
+              "kind": "cash",
+              "amount_toman": 1000,
+              "allocations": {
+                "spending": 1000
+              }
+            }
+          ]
+        }
+      },
+      "assumptions": [],
+      "ask_exact": false,
+      "semantics": "financial_fit_not_legal_eligibility_or_visa_probability"
+    }
+  },
+  "writable": true,
+  "active": false,
+  "decision_sha256": "e689be584ab404a9ea3ae4135fbda83490acf4a7936bec2faff2f763ff029c1b"
+}

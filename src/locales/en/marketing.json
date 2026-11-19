@@ -264,5 +264,31 @@
     "added": "New type made",
     "off": "Off",
     "items": "{{n}} items"
+  },
+  "leads": {
+    "title": "Leads",
+    "subtitle": "The team's lead sources, and adding leads from a CSV file. Leads from a file go to the sales team's unassigned queue.",
+    "import": "Add from a CSV file",
+    "new": "New source",
+    "name": "Source name",
+    "namePlaceholder": "e.g. Instagram or Tehran expo",
+    "add": "Add",
+    "added": "Source added.",
+    "saved": "Saved.",
+    "own": "Team sources",
+    "ownHint": "The marketing team makes these; CSV uploads pick from them.",
+    "empty": "No sources yet.",
+    "system": "System sources",
+    "systemHint": "The site makes these leads itself. They can't be renamed or removed.",
+    "locked": "System",
+    "count": "{{n}} leads",
+    "archived": "Archived",
+    "delete": "Delete source {{name}}",
+    "archive": "Archive source {{name}}",
+    "deleted": "Source deleted.",
+    "archivedDone": "Leads use this source, so it was archived.",
+    "active": "Active",
+    "activeHint": "CSV uploads can pick it.",
+    "archivedHint": "Stays on earlier leads, but can't be picked."
   }
 }

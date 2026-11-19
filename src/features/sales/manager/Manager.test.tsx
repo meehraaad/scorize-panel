@@ -120,6 +120,13 @@ describe('sales manager section', () => {
     expect(within(dialog).getByText('شماره نامعتبر')).toBeInTheDocument();
     expect(within(dialog).getByText('شماره تکراری در فایل')).toBeInTheDocument();
 
+    // The marketing team's active sources are offered beside campaign and manual; archived aren't.
+    const source = within(dialog).getByLabelText('منبع لیدها');
+    expect(within(source).queryByRole('option', { name: 'نمایشگاه پاییز' })).toBeNull();
+    await user.selectOptions(
+      source,
+      await within(source).findByRole('option', { name: 'اینستاگرام' }),
+    );
     await user.type(
       within(dialog).getByLabelText('یادداشت برای همه‌ی لیدها (اختیاری)'),
       'نمایشگاه',

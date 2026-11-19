@@ -35,6 +35,56 @@ describe('marketing panel', () => {
     expect(within(me).getByText('حاضر')).toBeInTheDocument();
   });
 
+  it('keeps the team’s lead sources: system ones fixed, own ones added, renamed and deleted', async () => {
+    const user = userEvent.setup();
+    loginAs(ELHAM);
+    renderApp('/marketing/leads');
+    expect(await screen.findByRole('heading', { name: 'لیدها', level: 1 })).toBeInTheDocument();
+    const system = screen.getByRole('region', { name: 'منبع‌های سیستمی' });
+    expect(within(system).getByText('درخواست تماس از پنل')).toBeInTheDocument();
+    expect(within(system).queryByRole('button')).toBeNull();
+
+    const added = screen.getByRole('region', { name: 'منبع تازه' });
+    await user.type(within(added).getByRole('textbox', { name: 'نام منبع' }), 'اینستاگرام');
+    await user.click(within(added).getByRole('button', { name: 'افزودن' }));
+    expect(await within(added).findByText('منبعی با همین نام هست.')).toBeInTheDocument();
+    await user.clear(within(added).getByRole('textbox', { name: 'نام منبع' }));
+    await user.type(within(added).getByRole('textbox', { name: 'نام منبع' }), 'تلگرام');
+    await user.click(within(added).getByRole('button', { name: 'افزودن' }));
+    const own = screen.getByRole('region', { name: 'منبع‌های تیم' });
+    expect(await within(own).findByText('تلگرام')).toBeInTheDocument();
+    expect(await toasts().findByText('منبع اضافه شد.')).toBeInTheDocument();
+
+    // Unused: deleted. Used: archived instead.
+    await user.click(within(own).getByRole('button', { name: 'حذف منبع تلگرام' }));
+    await waitFor(() => expect(within(own).queryByText('تلگرام')).toBeNull());
+    await user.click(within(own).getByRole('button', { name: 'بایگانی منبع اینستاگرام' }));
+    expect(
+      await toasts().findByText('لیدهایی این منبع را دارند، پس بایگانی شد.'),
+    ).toBeInTheDocument();
+  });
+
+  it('adds leads from a CSV with a source; they go to the sales queue', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    loginAs(ELHAM);
+    renderApp('/marketing/leads');
+    await user.click(await screen.findByRole('button', { name: 'افزودن از فایل CSV' }));
+    const dialog = await screen.findByRole('dialog', { name: 'افزودن لید از فایل CSV' });
+    expect(within(dialog).getByRole('link', { name: 'دریافت فایل نمونه' })).toHaveAttribute(
+      'href',
+      '/api/marketing/v1/leads/import/sample/',
+    );
+    await user.upload(
+      within(dialog).getByLabelText('انتخاب فایل CSV'),
+      new File(['phone_number,first_name\n09125555555,مینا'], 'expo.csv', { type: 'text/csv' }),
+    );
+    await within(dialog).findByRole('list', { name: 'خلاصه‌ی فایل' });
+    expect(within(dialog).queryByLabelText('سپردن به')).toBeNull();
+    await user.selectOptions(within(dialog).getByLabelText('منبع لیدها'), 'اینستاگرام');
+    await user.click(within(dialog).getByRole('button', { name: 'افزودن ۱ لید' }));
+    expect(await within(dialog).findByText('۱ لید ثبت شد (۱ مشتری تازه).')).toBeInTheDocument();
+  });
+
   it('keeps people who aren’t marketers out', async () => {
     loginAs(NIMA);
     renderApp('/marketing/performance');
