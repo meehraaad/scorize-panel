@@ -16,6 +16,8 @@ import {
   type ResultInput,
   type AnswerInput,
   type RuleInput,
+  type Plan,
+  type PlanInput,
 } from './api';
 
 /**
@@ -94,3 +96,6 @@ export const useEditSlip = (id: number) =>
     (body: Partial<Pick<Slip, 'addition' | 'addition_note' | 'deduction' | 'deduction_note'>>) =>
       api<SlipDetail>(`${HR_API}/payslips/${String(id)}/`, { method: 'PATCH', body }),
   );
+
+export const useSavePlan = () =>
+  usePayMutation((body: PlanInput) => api<Plan>(`${HR_API}/kpi-plans/`, { method: 'PUT', body }));
