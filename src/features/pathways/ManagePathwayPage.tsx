@@ -17,15 +17,13 @@ import { idParam } from '@/lib/router/lazyPage';
 import { toast } from '@/lib/toast';
 import {
   PATHWAYS_PATH,
-  STATUS_TONE,
-  emptyInput,
-  inputOf,
   managedPathwayQuery,
   managedPathwaysQuery,
   type ConditionInput,
   type PathwayDetail,
   type PathwayInput,
 } from './manageApi';
+import { STATUS_TONE, emptyInput, inputOf } from './manageForm';
 import {
   useCreatePathway,
   useTryPathway,

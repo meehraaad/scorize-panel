@@ -11,11 +11,11 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import {
   PATHWAYS_PATH,
-  STATUS_TONE,
   managedPathwaysQuery,
   type PathwayRow,
   type PathwayStatus,
 } from './manageApi';
+import { STATUS_TONE } from './manageForm';
 import type { ParseKeys } from 'i18next';
 
 /** A key built at run time (a question's, a status's): one of this dictionary's. */

@@ -182,14 +182,7 @@ export const foundersPanel: PanelDefinition = {
             }),
           },
           {
-            path: 'pathways/new',
-            ...lazyPage(() => import('@/features/pathways/ManagePathwayPage'), ['pathways'], {
-              guard: pathwaysKey,
-              data: () => [managedPathwaysQuery],
-              skeleton: 'form',
-            }),
-          },
-          {
+            // `new` too: no id, an empty form.
             path: 'pathways/:id',
             ...lazyPage(() => import('@/features/pathways/ManagePathwayPage'), ['pathways'], {
               guard: pathwaysKey,
