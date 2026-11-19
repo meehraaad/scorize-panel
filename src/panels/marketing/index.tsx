@@ -10,6 +10,7 @@ import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { lazyPage } from '@/lib/router/lazyPage';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
+import { pathwayRoutes } from '../pathwayRoutes';
 import type { PanelDefinition } from '../types';
 
 /** The manager's pages check the key too: the menu only hides them. */
@@ -156,6 +157,8 @@ export const marketingPanel: PanelDefinition = {
             skeleton: 'detail',
           }),
         },
+        // Migration pathways, shared with the sales manager.
+        ...pathwayRoutes(),
       ],
     },
   ],

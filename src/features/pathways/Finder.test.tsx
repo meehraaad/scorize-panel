@@ -6,7 +6,8 @@ import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 
 const SARA = 1; // an applicant (src/mocks/applicant.ts)
-const AMIR = 6; // a superuser: management > pathways (src/mocks/pathways.ts)
+const REZA = 4; // a sales manager (not a superuser)
+const AMIR = 6; // a superuser, the marketing manager's area too (src/mocks/pathways.ts)
 
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
@@ -43,8 +44,17 @@ describe('pathway finder', () => {
 
   it('management lists the routes by country with their status', async () => {
     loginAs(AMIR);
-    renderApp('/founders/pathways');
+    renderApp('/marketing/manage/pathways');
     expect(await screen.findByRole('heading', { name: 'آلمان' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /کار ماهر ۱۸۹.*منتظر بررسی/ })).toBeInTheDocument();
+  });
+
+  it('the sales manager edits the same routes, and the old management address leads there', async () => {
+    loginAs(REZA);
+    renderApp('/founders/pathways/1');
+    expect(await screen.findByRole('link', { name: 'بازگشت به مسیرها' })).toHaveAttribute(
+      'href',
+      '/sales/manager/pathways',
+    );
   });
 });

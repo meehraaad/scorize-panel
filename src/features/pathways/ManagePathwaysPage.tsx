@@ -10,7 +10,7 @@ import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import {
-  PATHWAYS_PATH,
+  usePathwaysPath,
   managedPathwaysQuery,
   type PathwayRow,
   type PathwayStatus,
@@ -24,10 +24,11 @@ const key = (name: string) => name as ParseKeys<'pathways'>;
 type Filter = 'all' | PathwayStatus;
 const FILTERS: readonly Filter[] = ['all', 'published', 'draft', 'review_due', 'off'];
 
-/** Management > pathways: each country with its routes and where each stands. */
+/** Migration pathways (sales and marketing management): each country with its routes and where each stands. */
 export default function ManagePathwaysPage() {
   const { t } = useTranslation('pathways');
   const { data } = useSuspenseQuery(managedPathwaysQuery);
+  const base = usePathwaysPath();
   const [filter, setFilter] = useState<Filter>('all');
   const shown = data.pathways.filter((row) => filter === 'all' || row.status === filter);
   const countries = new Map<number, { name: string; rows: PathwayRow[] }>();
@@ -47,7 +48,7 @@ export default function ManagePathwaysPage() {
         title={t('manage.title')}
         subtitle={t('manage.subtitle')}
         actions={
-          <Link to={`${PATHWAYS_PATH}/new`} className={buttonClass('primary')}>
+          <Link to={`${base}/new`} className={buttonClass('primary')}>
             {t('manage.new')}
           </Link>
         }
@@ -84,7 +85,7 @@ export default function ManagePathwaysPage() {
                 {country.rows.map((row) => (
                   <li key={row.id} className="border-line border-t first:border-t-0">
                     <Link
-                      to={`${PATHWAYS_PATH}/${row.id}`}
+                      to={`${base}/${row.id}`}
                       className="flex min-h-12 items-center justify-between gap-3 text-text no-underline hover:text-primary-text"
                     >
                       <span className="min-w-0 text-[15px]">{row.name_persian || row.name}</span>

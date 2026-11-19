@@ -3,7 +3,7 @@ import { api } from '@/lib/api/client';
 
 /**
  * The pathway finder (any account): the official routes to work or live in a country that staff
- * keep and have checked (Django `pathways.Pathway`, management > pathways), the questions they
+ * keep and have checked (Django `pathways.Pathway`, sales or marketing management > pathways), the questions they
  * need, and what each says for the person's answers. Django: `api/applicant/v1/pathways.py`.
  * The person never picks a route: they answer a few questions and we say which routes fit.
  */

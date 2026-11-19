@@ -151,7 +151,7 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * finder, fewest questions to the first country (needs `makemigrations pathways` + `migrate`).
    */
   pathwayFinder: true,
-  /** `staff/v1/pathways/`: management > pathways, key `manage_pathways`. */
+  /** `staff/v1/pathways/`: migration pathways in sales and marketing management. */
   pathwaysManagement: true,
   /** H59 `review-documents/`: files sent for a free review (scorize-revolution `claude/project-thread-aylffr`). */
   reviewDocuments: true,

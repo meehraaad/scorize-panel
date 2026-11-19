@@ -16,11 +16,6 @@ import {
   readyVariablesQuery,
   systemMessagesQuery,
 } from '@/features/messages/api';
-import {
-  PATHWAYS_PERMISSION,
-  managedPathwayQuery,
-  managedPathwaysQuery,
-} from '@/features/pathways/manageApi';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { queryClient } from '@/lib/api/queryClient';
 import { FOUNDERS_PERMISSION, MESSAGES_PERMISSIONS, hasPermission } from '@/lib/auth/roles';
@@ -38,8 +33,6 @@ export function managementHome(user: SessionUser) {
   if (ON_SERVER.messageCenter && hasPermission(user, READY_PERMISSION))
     return `${MESSAGES_PATH}/ready`;
   if (ON_SERVER.accessPage && user.is_superuser) return '/founders/access';
-  if (ON_SERVER.pathwaysManagement && hasPermission(user, PATHWAYS_PERMISSION))
-    return '/founders/pathways';
   return null;
 }
 
@@ -54,7 +47,6 @@ const needs = (allowed: (user: SessionUser) => boolean) => async () => {
 const assistantOnly = needs((user) => hasPermission(user, FOUNDERS_PERMISSION));
 const messagesKey = (permission: string) => needs((user) => hasPermission(user, permission));
 const superusersOnly = needs((user) => user.is_superuser);
-const pathwaysKey = needs((user) => hasPermission(user, PATHWAYS_PERMISSION));
 
 const NAVIGATION: NavItem[] = [
   ...(ON_SERVER.foundersAssistant
@@ -78,18 +70,6 @@ const NAVIGATION: NavItem[] = [
           tab: 'panels.founders.tabs.messages',
           icon: 'bell',
           permission: MESSAGES_PERMISSIONS,
-        } satisfies NavItem,
-      ]
-    : []),
-  ...(ON_SERVER.pathwaysManagement
-    ? [
-        {
-          id: 'pathways',
-          to: 'pathways',
-          label: 'panels.founders.nav.pathways',
-          tab: 'panels.founders.tabs.pathways',
-          icon: 'pin',
-          permission: PATHWAYS_PERMISSION,
         } satisfies NavItem,
       ]
     : []),
@@ -168,30 +148,6 @@ export const foundersPanel: PanelDefinition = {
                 }),
               },
             ],
-          },
-        ]
-      : []),
-    ...(ON_SERVER.pathwaysManagement
-      ? [
-          {
-            path: 'pathways',
-            ...lazyPage(() => import('@/features/pathways/ManagePathwaysPage'), ['pathways'], {
-              guard: pathwaysKey,
-              data: () => [managedPathwaysQuery],
-              skeleton: 'list',
-            }),
-          },
-          {
-            // `new` too: no id, an empty form.
-            path: 'pathways/:id',
-            ...lazyPage(() => import('@/features/pathways/ManagePathwayPage'), ['pathways'], {
-              guard: pathwaysKey,
-              data: ({ params }) => {
-                const id = idParam(params.id);
-                return [managedPathwaysQuery, id !== null && managedPathwayQuery(id)];
-              },
-              skeleton: 'form',
-            }),
           },
         ]
       : []),

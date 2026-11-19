@@ -1,9 +1,11 @@
 import { queryOptions } from '@tanstack/react-query';
+import { useLocation } from 'react-router';
 import { api } from '@/lib/api/client';
 import type { Factor, PathwayCost, PathwayGoal } from '@/lib/applicant/pathways';
 
 /**
- * Management > pathways (key `manage_pathways`): countries and their official routes to work or
+ * Migration pathways, in the sales manager's and the marketing manager's area (either manager, or
+ * the key `manage_pathways`): countries and their official routes to work or
  * live there, with requirements and a points table, kept without code. A route reaches customers
  * (the pathway finder) only once checked against its official page; any edit clears that.
  * Django: `api/staff/v1/pathways.py`.
@@ -11,8 +13,15 @@ import type { Factor, PathwayCost, PathwayGoal } from '@/lib/applicant/pathways'
 
 export const MANAGE_PATHWAYS_API = '/staff/v1/pathways';
 export const MANAGE_PATHWAYS_KEY = ['manage-pathways'] as const;
-export { PATHWAYS_PERMISSION } from '@/lib/auth/roles';
-export const PATHWAYS_PATH = '/founders/pathways';
+/** Where the page lives: the sales manager's and the marketing manager's area, same data. */
+export const SALES_PATHWAYS_PATH = '/sales/manager/pathways';
+export const MARKETING_PATHWAYS_PATH = '/marketing/manage/pathways';
+
+/** The list's address in the panel showing it (sales or marketing management). */
+export function usePathwaysPath() {
+  const { pathname } = useLocation();
+  return pathname.startsWith('/marketing/') ? MARKETING_PATHWAYS_PATH : SALES_PATHWAYS_PATH;
+}
 
 /** off: switched off · draft: not checked · review_due: its recheck day passed · published. */
 export type PathwayStatus = 'published' | 'draft' | 'review_due' | 'off';

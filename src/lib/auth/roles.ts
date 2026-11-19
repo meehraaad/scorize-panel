@@ -40,8 +40,6 @@ export const MESSAGES_PERMISSIONS = [
 
 /** attendance.manage_attendance: the HR panel's attendance section (src/features/attendance/api.ts). */
 const ATTENDANCE_PERMISSION = 'manage_attendance';
-/** pathways.manage_pathways: management > pathways. */
-export const PATHWAYS_PERMISSION = 'manage_pathways';
 
 /** apply.can_manage_support_staff: the HR panel (src/features/hr/api.ts). */
 const HR_PERMISSION = 'can_manage_support_staff';
@@ -119,8 +117,7 @@ export function getRoles(user: SessionUser): Role[] {
   if (
     (ON_SERVER.foundersAssistant && hasPermission(user, FOUNDERS_PERMISSION)) ||
     (ON_SERVER.messageCenter && hasAnyPermission(user, MESSAGES_PERMISSIONS)) ||
-    (ON_SERVER.accessPage && user.is_superuser) ||
-    (ON_SERVER.pathwaysManagement && hasPermission(user, PATHWAYS_PERMISSION))
+    (ON_SERVER.accessPage && user.is_superuser)
   )
     roles.push('founders');
   // Human resources: staff files, joining and leaving, HR's tasks and calendar, and attendance.

@@ -64,6 +64,7 @@ import {
 import { PHONE_SECTIONS } from '@/features/sales/manager/phoneSections';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
+import { pathwayRoutes } from '../pathwayRoutes';
 import type { PanelDefinition } from '../types';
 
 /** A customer page's id, or null (the page says the customer doesn't exist). */
@@ -436,6 +437,8 @@ export const salesPanel: PanelDefinition = {
             skeleton: 'list',
           }),
         },
+        // Migration pathways, shared with the marketing manager.
+        ...pathwayRoutes(),
         // The office line: one tab, a sub-tab per setting (PhoneLayout).
         ...(PHONE_SECTIONS.length
           ? [
