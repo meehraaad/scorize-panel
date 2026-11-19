@@ -166,7 +166,9 @@ function InfoForm({
           >
             {state === 'error' && error instanceof UnknownNameError
               ? t('info.notFound', { value: error.value })
-              : t(`info.autosave.${state}`)}
+              : state === 'incomplete' && section === 'personal'
+                ? t('info.autosave.incompleteName')
+                : t(`info.autosave.${state}`)}
           </span>
           {state === 'error' && (
             <Button variant="outline" type="submit">

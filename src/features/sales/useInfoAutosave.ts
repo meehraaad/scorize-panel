@@ -16,6 +16,8 @@ const SECTIONS: SectionName[] = ['personal', 'goal', 'education', 'exams'];
 const DELAY = 1000;
 
 function incomplete(key: SectionName, draft: InfoDraft) {
+  // Django rejects a blank first name; one cleared to be retyped waits instead of failing.
+  if (key === 'personal') return !draft.personal.first_name.trim();
   if (key === 'education')
     return draft.education.some((row) => !row.degree || !row.university.trim() || !row.gpa.trim());
   if (key === 'exams') return draft.exams.some((row) => !row.exam || !row.score.trim());
