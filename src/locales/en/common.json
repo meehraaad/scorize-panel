@@ -14,7 +14,8 @@
         "documents": "Documents",
         "tickets": "Tickets",
         "contract": "Contract",
-        "services": "Academy"
+        "services": "Academy",
+        "pathways": "Migration paths"
       },
       "tabs": {
         "home": "Home",
@@ -50,12 +51,14 @@
         "label": "Management panel menu",
         "assistant": "Analysis assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "pathways": "Migration pathways"
       },
       "tabs": {
         "assistant": "Assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "pathways": "Pathways"
       },
       "description": "Analysis assistant, messages and access"
     },

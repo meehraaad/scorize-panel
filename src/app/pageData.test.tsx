@@ -81,6 +81,7 @@ const PAGES: PageCase[] = [
     '/?session=41',
     '/consultations/book',
     '/estimate',
+    '/pathways',
     '/background',
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
@@ -193,6 +194,9 @@ const PAGES: PageCase[] = [
     '/founders/access/groups',
     '/founders/access/keys',
     '/founders/access/history',
+    '/founders/pathways',
+    '/founders/pathways/new',
+    '/founders/pathways/1',
   ].map((path) => ({ path, user: AMIR })),
   // HR panel (src/mocks/hr.ts, attendance: src/mocks/attendance.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
   ...[
