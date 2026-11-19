@@ -14,13 +14,8 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
-import {
-  useRenewPayment,
-  useStartOnlinePayment,
-  type PaymentData,
-  type PaymentItem,
-  type PaymentItemKind,
-} from '../api';
+import { type PaymentData, type PaymentItem, type PaymentItemKind } from '../api';
+import { useRenewPayment, useStartOnlinePayment } from '../mutations';
 import { ReceiptForm } from '../components/ReceiptForm';
 import { useMoney } from './money';
 import { Collapsible, Facts, Hero, ItemRows } from './parts';

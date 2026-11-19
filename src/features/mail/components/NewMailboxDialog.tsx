@@ -8,7 +8,8 @@ import { Switch } from '@/components/ui/Switch';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { toast } from '@/lib/toast';
-import { serversQuery, useCreateMailbox, type MailboxApplicant } from '../api';
+import { serversQuery, type MailboxApplicant } from '../api';
+import { useCreateMailbox } from '../mutations';
 import { quotaOf, useFailure } from '../format';
 import { ApplicantPicker, PasswordReveal, QuotaField } from './fields';
 

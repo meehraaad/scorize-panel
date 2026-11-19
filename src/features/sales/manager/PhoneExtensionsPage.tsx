@@ -13,11 +13,10 @@ import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   phoneExtensionsQuery,
-  useSetStaffDesk,
-  useSetStaffMobile,
   type PhoneExtensions,
   type StaffPhone,
 } from '@/lib/sales/phoneCalls';
+import { useSetStaffDesk, useSetStaffMobile } from '@/lib/sales/phoneCallsMutations';
 import { toLatinDigits } from '@/lib/text';
 import { toast } from '@/lib/toast';
 

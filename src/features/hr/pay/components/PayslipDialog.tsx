@@ -8,7 +8,8 @@ import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { parseAmount } from '../../format';
-import { firstDayOf, payrollQuery, useEditSlip, type PayMonth, type Slip } from '../api';
+import { firstDayOf, payrollQuery, type PayMonth, type Slip } from '../api';
+import { useEditSlip } from '../mutations';
 
 /**
  * One payslip (canvas "فیش حقوقی"): earnings, then what is taken off, then what is paid. While

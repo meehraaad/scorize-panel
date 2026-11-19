@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useRegisterWebinar, type Webinar } from '../api';
+import { type Webinar } from '../api';
+import { useRegisterWebinar } from '../mutations';
 import { toast } from '@/lib/toast';
 
 const UNITS = ['days', 'hours', 'minutes', 'seconds'] as const;

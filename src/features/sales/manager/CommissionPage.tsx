@@ -15,13 +15,12 @@ import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import {
   commissionQuery,
-  useDeleteCommissionRule,
-  useSaveCommissionRule,
   type CommissionBasis,
   type CommissionReward,
   type CommissionRule,
   type CommissionRules,
 } from '../api';
+import { useDeleteCommissionRule, useSaveCommissionRule } from '../api/managerMutations';
 import { useSalesFormat } from '../format';
 
 const BASES = ['contracts', 'sales'] as const satisfies readonly CommissionBasis[];

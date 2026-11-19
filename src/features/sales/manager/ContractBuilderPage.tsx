@@ -20,18 +20,20 @@ import { toast } from '@/lib/toast';
 import {
   contractBuilderQuery,
   templateParam,
-  useOrderClauses,
-  useSaveClause,
-  useSavePrices,
-  useSaveRules,
-  useSaveVariables,
-  useUpdateTemplate,
   type BuilderClause,
   type BuilderPrice,
   type ContractBuilder,
   type OfferRules,
   type TextVersion,
 } from '../api';
+import {
+  useOrderClauses,
+  useSaveClause,
+  useSavePrices,
+  useSaveRules,
+  useSaveVariables,
+  useUpdateTemplate,
+} from '../api/managerMutations';
 import { ContractSheet } from '../components/ContractSheet';
 import { useSalesFormat } from '../format';
 import { salesPath } from '../paths';

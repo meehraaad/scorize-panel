@@ -19,10 +19,10 @@ import { Button } from '@/components/ui/Button';
 import {
   CALENDAR_KEY,
   sellerCalendarQuery,
-  useSetFollowUp,
   type CalendarConsultation,
   type CalendarType,
 } from '../api';
+import { useSetFollowUp } from '../api/calendarMutations';
 import {
   DEFAULT_MINUTES,
   callMinutes,
@@ -519,7 +519,7 @@ function LayerRow({
   const row = (
     <label
       className={`flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 has-focus-visible:outline-2 has-focus-visible:outline-focus ${
-        disabled ? 'cursor-not-allowed opacity-45' : 'cursor-pointer hover:bg-canvas'
+        disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer hover:bg-canvas'
       }`}
     >
       <input
@@ -643,7 +643,7 @@ function Layers({
             <button
               type="button"
               onClick={() => onTypes({ only: allShown, picked: new Set() })}
-              className="min-h-11 rounded-lg px-2 text-xs font-semibold text-primary-text hover:bg-tint disabled:cursor-not-allowed disabled:opacity-45"
+              className="min-h-11 rounded-lg px-2 text-xs font-semibold text-primary-text hover:bg-tint disabled:cursor-not-allowed disabled:opacity-40"
             >
               {allShown ? t('consultationCalendar.clearAll') : t('consultationCalendar.selectAll')}
             </button>

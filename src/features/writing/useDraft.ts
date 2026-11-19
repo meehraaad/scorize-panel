@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBlocker } from 'react-router';
-import { useSaveWriting, type WritingForm } from './api';
+import { type WritingForm } from './api';
+import { useSaveWriting } from './mutations';
 import type { AnswerValue, Answers, FormType } from './formSpec';
 
 const AUTOSAVE_MS = 1000;

@@ -8,7 +8,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { applicantTickets, writingThread } from '@/lib/applicant/tickets';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { ticketsQuery, useMarkSeen, type TicketThread } from '@/lib/tickets/api';
+import { ticketsQuery, type TicketThread } from '@/lib/tickets/api';
+import { useMarkSeen } from '@/lib/tickets/mutations';
 import type { FormType } from '../formSpec';
 
 /**

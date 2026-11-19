@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { Notice } from '@/components/ui/Notice';
-import { notificationsQuery, useMarkRead, type Notification } from '@/lib/account/api';
+import { notificationsQuery, type Notification } from '@/lib/account/api';
+import { useMarkRead } from '@/lib/account/mutations';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
 

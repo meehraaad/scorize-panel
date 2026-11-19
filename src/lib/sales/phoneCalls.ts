@@ -1,6 +1,6 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api/client';
-import { uploadFile, type UploadMessages } from '@/lib/upload';
+
 import { SALES_API, SALES_KEY } from './api';
 
 export interface PhoneCall {
@@ -57,21 +57,6 @@ export const officeExtensionQuery = queryOptions({
     api<{ extension: string | null }>(`${SALES_API}/calls/extension/`, { signal }),
 });
 
-export function useSetOfficeExtension() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (extension: string | null) =>
-      api<{ extension: string | null }>(`${SALES_API}/calls/extension/`, {
-        method: 'PUT',
-        body: { extension },
-      }),
-    onSuccess: (data) => {
-      client.setQueryData(officeExtensionQuery.queryKey, data);
-      return client.invalidateQueries({ queryKey: [...SALES_KEY, 'phone-calls'] });
-    },
-  });
-}
-
 export interface MobileExtensionState {
   /** The server offers mobile extensions; otherwise the settings card stays hidden. */
   available: boolean;
@@ -93,18 +78,6 @@ export const mobileExtensionQuery = queryOptions({
     return status === 'pending' ? 3000 : status === 'ready' ? 5 * 60_000 : false;
   },
 });
-
-export function useRequestMobileExtension() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (reset: boolean) =>
-      api<MobileExtensionState>(`${SALES_API}/calls/mobile/`, {
-        method: 'POST',
-        body: { reset },
-      }),
-    onSuccess: (data) => client.setQueryData(mobileExtensionQuery.queryKey, data),
-  });
-}
 
 export type Weekday = 'sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri';
 /** Saturday first, like the Persian week. */
@@ -143,15 +116,6 @@ export const officeHoursQuery = queryOptions({
   queryKey: [...SALES_KEY, 'office-hours'],
   queryFn: ({ signal }) => api<OfficeHoursState>(`${SALES_API}/calls/hours/`, { signal }),
 });
-
-export function useSaveOfficeHours() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (body: OfficeHoursInput) =>
-      api<OfficeHoursState>(`${SALES_API}/calls/hours/`, { method: 'PUT', body }),
-    onSuccess: (data) => client.setQueryData(officeHoursQuery.queryKey, data),
-  });
-}
 
 /** Someone who can ring in a team: they have a desk phone or a working mobile extension. */
 export interface TeamPerson {
@@ -195,19 +159,6 @@ export const phoneTeamsQuery = queryOptions({
   queryFn: ({ signal }) => api<PhoneTeams>(`${SALES_API}/calls/teams/`, { signal }),
 });
 
-/** Saves a team (`number`), or adds one with the next free number. */
-export function useSavePhoneTeam() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ number, ...body }: PhoneTeamInput & { number?: string }) =>
-      api<PhoneTeams>(
-        number === undefined ? `${SALES_API}/calls/teams/` : `${SALES_API}/calls/teams/${number}/`,
-        { method: number === undefined ? 'POST' : 'PUT', body },
-      ),
-    onSuccess: (data) => client.setQueryData(phoneTeamsQuery.queryKey, data),
-  });
-}
-
 /** A staff member's mobile extension: `pending` while the office worker makes it. */
 export interface StaffMobile {
   number: string | null;
@@ -242,39 +193,6 @@ export const phoneExtensionsQuery = queryOptions({
   queryKey: [...SALES_KEY, 'phone-extensions'],
   queryFn: ({ signal }) => api<PhoneExtensions>(`${SALES_API}/calls/extensions/`, { signal }),
 });
-
-/** Links a desk phone to someone (null unlinks); 409 `extension_taken` when another person has it. */
-export function useSetStaffDesk() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, desk }: { id: number; desk: string | null }) =>
-      api<PhoneExtensions>(`${SALES_API}/calls/extensions/${id}/desk/`, {
-        method: 'PUT',
-        body: { desk },
-      }),
-    onSuccess: (data) => {
-      client.setQueryData(phoneExtensionsQuery.queryKey, data);
-      // Teams show people by their phones.
-      void client.invalidateQueries({ queryKey: phoneTeamsQuery.queryKey });
-    },
-  });
-}
-
-/** Makes or removes someone's mobile extension (409 `removing` while the old one is going). */
-export function useSetStaffMobile() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, action }: { id: number; action: 'create' | 'remove' }) =>
-      api<PhoneExtensions>(`${SALES_API}/calls/extensions/${id}/mobile/`, {
-        method: 'POST',
-        body: { action },
-      }),
-    onSuccess: (data) => {
-      client.setQueryData(phoneExtensionsQuery.queryKey, data);
-      void client.invalidateQueries({ queryKey: phoneTeamsQuery.queryKey });
-    },
-  });
-}
 
 /**
  * Where a menu key goes: a team (`target` its queue), another menu (its id), a message box, an
@@ -318,15 +236,6 @@ export const phoneMenusQuery = queryOptions({
   queryFn: ({ signal }) => api<PhoneMenus>(`${SALES_API}/calls/menus/`, { signal }),
 });
 
-export function useSavePhoneMenu() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, keys }: { id: string; keys: MenuKey[] }) =>
-      api<PhoneMenus>(`${SALES_API}/calls/menus/${id}/`, { method: 'PUT', body: { keys } }),
-    onSuccess: (data) => client.setQueryData(phoneMenusQuery.queryKey, data),
-  });
-}
-
 /** One of the greetings the menus play (a PBX recording), with its latest upload. */
 export interface PhoneVoice {
   id: string;
@@ -355,24 +264,6 @@ export const phoneVoicesQuery = queryOptions({
     query.state.data?.voices.some((voice) => voice.last?.status === 'pending') ? 5000 : false,
 });
 
-/** A new greeting file for one recording: MP3, WAV, M4A or OGG, up to 10 MB. */
-export function useUploadVoice(recording: string) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ file, messages }: { file: File; messages?: UploadMessages }) => {
-      const body = new FormData();
-      body.append('file', file);
-      return uploadFile<PhoneVoices>(
-        `${SALES_API}/calls/voices/${recording}/`,
-        body,
-        file,
-        messages,
-      );
-    },
-    onSuccess: (data) => client.setQueryData(phoneVoicesQuery.queryKey, data),
-  });
-}
-
 /** The seller's own break from team calls; it ends when they end it, or at midnight. */
 export interface PhoneBreakState {
   /** False: no desk phone or mobile extension, so no team rings them. */
@@ -387,18 +278,6 @@ export const phoneBreakQuery = queryOptions({
   queryKey: [...SALES_KEY, 'phone-break'],
   queryFn: ({ signal }) => api<PhoneBreakState>(`${SALES_API}/calls/break/`, { signal }),
 });
-
-export function useSetPhoneBreak() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (onBreak: boolean) =>
-      api<PhoneBreakState>(`${SALES_API}/calls/break/`, {
-        method: 'PUT',
-        body: { on_break: onBreak },
-      }),
-    onSuccess: (data) => client.setQueryData(phoneBreakQuery.queryKey, data),
-  });
-}
 
 /** Someone a team can ring, as the sales manager sees them: ringing, or on a break since `since`. */
 export interface TeamBreakPerson {

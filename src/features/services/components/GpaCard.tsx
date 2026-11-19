@@ -7,7 +7,8 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinNumber } from '@/lib/text';
-import { useSaveGpa, type GpaCourse, type ServicesData } from '../api';
+import { type GpaCourse, type ServicesData } from '../api';
+import { useSaveGpa } from '../mutations';
 import { toast } from '@/lib/toast';
 
 interface Row {

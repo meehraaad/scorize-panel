@@ -6,7 +6,8 @@ import { StepDot } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { checkFile, extensionOf, type FileProblem } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useSendVersion, VERSION_FILE, type OrderData, type OrderVersion } from '../api';
+import { VERSION_FILE, type OrderData, type OrderVersion } from '../api';
+import { useSendVersion } from '../mutations';
 
 /** The order's versions, oldest first, each with the applicant's revision request; then the next. */
 export function Versions({ order }: { order: OrderData }) {

@@ -15,10 +15,10 @@ import {
   tagKey,
   tagsOf,
   tagsQuery,
-  useCustomerTags,
   type CustomerData,
   type CustomerTag,
 } from '../api';
+import { useCustomerTags } from '../api/tagsMutations';
 import { tagAddRefusal, useAddTagByName } from '../api/tagAdd';
 
 /**

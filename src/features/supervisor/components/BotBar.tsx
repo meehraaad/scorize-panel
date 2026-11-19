@@ -5,7 +5,8 @@ import { Card } from '@/components/ui/Card';
 import { Notice } from '@/components/ui/Notice';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useSaveBotSettings, useSetBot, type BotStatus, type BotStopReason } from '../api';
+import { type BotStatus, type BotStopReason } from '../api';
+import { useSaveBotSettings, useSetBot } from '../api/applicationsMutations';
 import { toast } from '@/lib/toast';
 import { BotSettingsDialog } from './BotSettingsDialog';
 

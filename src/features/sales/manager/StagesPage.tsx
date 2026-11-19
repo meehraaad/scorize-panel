@@ -18,7 +18,6 @@ import {
   FORM_ACTIVITIES,
   STAGE_PHASES,
   stagesQuery,
-  useSaveStages,
   type ActivityInput,
   type ActivityKind,
   type StageActivity,
@@ -26,6 +25,7 @@ import {
   type StagePhase,
   type StagesData,
 } from '../api';
+import { useSaveStages } from '../api/managerMutations';
 
 /** A column being edited: `key` names it on this page, `id` in Django (null until saved). */
 interface Draft {

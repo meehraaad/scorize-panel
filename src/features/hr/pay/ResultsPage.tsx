@@ -15,16 +15,8 @@ import { toLatinDigits } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { PersonLink } from '../components/PersonLink';
 import { hrPath } from '../paths';
-import {
-  MANUAL,
-  payMonth,
-  resultsQuery,
-  useRefreshResults,
-  useSaveResults,
-  type Kpi,
-  type ResultInput,
-  type ResultRow,
-} from './api';
+import { MANUAL, payMonth, resultsQuery, type Kpi, type ResultInput, type ResultRow } from './api';
+import { useRefreshResults, useSaveResults } from './mutations';
 import { Disputes } from './components/Disputes';
 import { MonthBar } from './components/MonthBar';
 import { MonthReview } from './components/MonthReview';

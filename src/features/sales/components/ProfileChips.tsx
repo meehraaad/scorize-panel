@@ -4,14 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import {
-  CHOICES,
-  UnknownNameError,
-  infoQuery,
-  useSaveInfo,
-  type CustomerInfo,
-  type InfoSection,
-} from '../api';
+import { CHOICES, UnknownNameError, infoQuery, type CustomerInfo, type InfoSection } from '../api';
+import { useSaveInfo } from '../api/infoMutations';
 
 /** What the popup asks for when it is missing, most useful first. */
 const ASKS = ['wanted_degree', 'countries', 'education', 'gpa', 'language', 'budget'] as const;

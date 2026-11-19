@@ -5,13 +5,8 @@ import { TicketRating } from '@/components/tickets/TicketRating';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
-import {
-  URGENT,
-  messagesOf,
-  messagesQuery,
-  useRateMessage,
-  type TicketMessage,
-} from '@/lib/tickets/api';
+import { URGENT, messagesOf, messagesQuery, type TicketMessage } from '@/lib/tickets/api';
+import { useRateMessage } from '@/lib/tickets/mutations';
 import { daysAgo, withDays } from '@/lib/tickets/thread';
 import type { TicketsConfig } from '@/lib/tickets/api';
 

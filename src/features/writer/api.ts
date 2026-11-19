@@ -1,8 +1,7 @@
-import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import type { TicketsEndpoint, WritingDepartment } from '@/lib/tickets/api';
-import { uploadFile, type UploadMessages } from '@/lib/upload';
 
 /**
  * The writer panel: writing orders (SOP, CV, letters, …) assigned to the logged-in writer.
@@ -133,36 +132,6 @@ export const VERSION_FILE = {
   ],
   maxBytes: 10 * 1024 * 1024,
 } as const;
-
-/** Sends a new version to the applicant, or the final file to the case's documents. */
-export function useSendVersion(id: number) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      file,
-      note,
-      final,
-      messages,
-    }: {
-      file: File;
-      note: string;
-      final: boolean;
-      messages?: UploadMessages;
-    }) => {
-      const body = new FormData();
-      body.append('file', file);
-      body.append('note', note);
-      body.append('final', String(final));
-      return uploadFile<OrderVersion>(
-        `${WRITER_API}/orders/${String(id)}/versions/`,
-        body,
-        file,
-        messages,
-      );
-    },
-    onSuccess: () => client.invalidateQueries({ queryKey: WRITER_KEY }),
-  });
-}
 
 /** One order's conversation with the applicant, for the shared tickets page (`viewer: 'staff'`). */
 export const orderTickets = (id: number): TicketsEndpoint => ({

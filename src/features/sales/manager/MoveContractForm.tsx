@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField, TextAreaField } from '@/components/ui/Choices';
 import { toast } from '@/lib/toast';
-import { useMoveContract } from '../api';
+import { useMoveContract } from '../api/managerMutations';
 import type { MonthContract } from '../api/month';
 
 /** Moves one of a seller's contracts to another seller, with a reason the customer's history keeps. */

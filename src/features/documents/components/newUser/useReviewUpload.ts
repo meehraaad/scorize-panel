@@ -1,12 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { checkFile } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
-import {
-  REVIEW_MAX_BYTES,
-  REVIEW_TYPES,
-  useUploadReviewDocument,
-  type ReviewKind,
-} from '@/lib/applicant/journey';
+import { REVIEW_MAX_BYTES, REVIEW_TYPES, type ReviewKind } from '@/lib/applicant/journey';
+import { useUploadReviewDocument } from '@/lib/applicant/journeyMutations';
 import { toast } from '@/lib/toast';
 
 const RULE = { types: REVIEW_TYPES, maxBytes: REVIEW_MAX_BYTES };

@@ -1,4 +1,4 @@
-import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Face } from '@/lib/face/api';
 import {
@@ -216,16 +216,6 @@ export type BulkChange =
   | { add_tag: number }
   | { remove_tag: number };
 
-/** Several leads at once from the list (S13; tags S49). */
-export function useBulkLeads() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ ids, change }: { ids: number[]; change: BulkChange }) =>
-      api(`${SALES_API}/leads/bulk/`, { method: 'POST', body: { ids, ...change } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 export interface NewLead {
   first_name: string;
   last_name: string;
@@ -245,13 +235,5 @@ export interface NewLeadAnswer {
  * A customer typed in by the seller (referral, walk-in): creates the user when the phone is new
  * and their lead (source `manual`, S14). Errors come back as `{phone: ['invalid' | 'exists']}`.
  */
-const createLead = (lead: NewLead) =>
+export const createLead = (lead: NewLead) =>
   api<NewLeadAnswer>(`${SALES_API}/leads/`, { method: 'POST', body: lead });
-
-export function useCreateLead() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: createLead,
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}

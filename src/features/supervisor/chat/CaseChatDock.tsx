@@ -24,12 +24,8 @@ import {
   useCaseChats,
   type CaseChat,
 } from '@/lib/supervisor/caseChats';
-import {
-  ticketsQuery,
-  useMarkSeen,
-  type TicketThread,
-  type TicketsConfig,
-} from '@/lib/tickets/api';
+import { ticketsQuery, type TicketThread, type TicketsConfig } from '@/lib/tickets/api';
+import { useMarkSeen } from '@/lib/tickets/mutations';
 import { caseTickets } from '../api';
 import { casePath } from '../paths';
 

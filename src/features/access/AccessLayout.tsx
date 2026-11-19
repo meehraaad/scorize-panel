@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { PageStack } from '@/components/ui/PageColumns';
 import { SectionNav } from '@/components/ui/SectionNav';
-import { useAccessPath } from './api';
+import { useAccessPath } from './mutations';
 
 const SECTIONS = [
   { id: 'people', to: '' },

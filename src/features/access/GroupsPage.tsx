@@ -12,7 +12,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useAccessPath, groupsQuery, keysQuery, type AccessGroup } from './api';
+import { groupsQuery, keysQuery, type AccessGroup } from './api';
+import { useAccessPath } from './mutations';
 import { GroupDialog } from './components/GroupDialog';
 
 /** The groups of keys: each one's keys and people; make a new one ("ناظر تماس": two keys). */

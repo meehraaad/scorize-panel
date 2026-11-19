@@ -15,10 +15,10 @@ import {
   MAX_SCAN_BYTES,
   SCAN_TYPES,
   handoffQuery,
-  useUploadScan,
   type HandoffContract,
   type Prepayment,
 } from '../api';
+import { useUploadScan } from '../api/contractMutations';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 

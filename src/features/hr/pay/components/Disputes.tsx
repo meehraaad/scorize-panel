@@ -7,7 +7,8 @@ import { TextAreaField, TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { PersonLink } from '../../components/PersonLink';
-import { useAnswerDispute, type Dispute } from '../api';
+import { type Dispute } from '../api';
+import { useAnswerDispute } from '../mutations';
 import { DISPUTE_TONES } from '../disputeTones';
 import { parseNumber } from '../numbers';
 

@@ -15,11 +15,11 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import {
   WEEKDAYS,
   officeHoursQuery,
-  useSaveOfficeHours,
   type OfficeHoursState,
   type OpenHours,
   type Weekday,
 } from '@/lib/sales/phoneCalls';
+import { useSaveOfficeHours } from '@/lib/sales/phoneCallsMutations';
 import { toast } from '@/lib/toast';
 import { LineSwitch } from './LineSwitch';
 

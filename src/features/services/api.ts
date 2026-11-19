@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 
@@ -79,38 +79,13 @@ export interface ServicesData {
   gpa: { courses: GpaCourse[]; result: number | null };
 }
 
-const BASE = '/applicant/v1/services';
+export const BASE = '/applicant/v1/services';
 
 export const servicesQuery = queryOptions({
   queryKey: [...APPLICANT_KEY, 'services'],
   queryFn: ({ signal }) => api<ServicesData>(`${BASE}/`, { signal }),
   staleTime: 60_000,
 });
-
-/**
- * Registers for a webinar. Free: registered at once (`payment_id` null). Paid: an invoice to pay
- * on the payment page.
- */
-export function useRegisterWebinar() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) =>
-      api<{ payment_id: number | null }>(`${BASE}/webinars/${String(id)}/register/`, {
-        method: 'POST',
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
-  });
-}
-
-/** Saves the courses; the server computes the GPA (the method universities use, out of 4). */
-export function useSaveGpa() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (courses: GpaCourse[]) =>
-      api<{ result: number }>(`${BASE}/gpa/`, { method: 'PUT', body: { courses } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: [...APPLICANT_KEY, 'services'] }),
-  });
-}
 
 export interface Lesson {
   id: number;
@@ -174,12 +149,3 @@ export const eventQuery = (id: number) =>
       orNull(() => api<EventDetail>(`${BASE}/events/${String(id)}/`, { signal })),
     staleTime: 60_000,
   });
-
-export function useReviewPackage(id: number) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (text: string) =>
-      api(`${BASE}/packages/${String(id)}/review/`, { method: 'POST', body: { text } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: [...APPLICANT_KEY, 'services'] }),
-  });
-}
