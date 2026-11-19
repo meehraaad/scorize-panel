@@ -1,19 +1,22 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterTabs } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { QuerySection } from '@/components/ui/QuerySection';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { WEEKDAYS } from '@/lib/sales/phoneCalls';
 import {
-  consultationTypesQuery,
+  pausedTypesQuery,
+  sellingTypesQuery,
   startsOf,
   type ConsultationMode,
   type ConsultationTypeRow,
@@ -35,17 +38,17 @@ const startsByDay = (item: ConsultationTypeRow) =>
 /**
  * The consultation types the team sells (S81), the first page of the manager's consultations tab:
  * each one's price, length and week at a glance (a strip of the seven days), filtered by in person
- * or online; a card opens its editor. Types that aren't sold sit in their own list below.
+ * or online; a card opens its editor. Types that aren't sold sit in a closed section below, read
+ * from Django only when the manager opens it.
  */
 export default function ConsultationTypesPage() {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const { data } = useSuspenseQuery(consultationTypesQuery);
+  const { data } = useSuspenseQuery(sellingTypesQuery);
   const [mode, setMode] = useState<ModeFilter>('all');
-  const shown = data.types.filter((item) => mode === 'all' || item.mode === mode);
-  const active = shown.filter((item) => item.active);
-  const off = shown.filter((item) => !item.active);
-  const selling = data.types.filter((item) => item.active);
+  const selling = data.types;
+  const active = selling.filter((item) => mode === 'all' || item.mode === mode);
+  const pausedCount = data.paused[mode];
   const weekly = selling.reduce(
     (sum, item) => sum + startsByDay(item).reduce((all, n) => all + n, 0),
     0,
@@ -70,12 +73,16 @@ export default function ConsultationTypesPage() {
           {
             label: t('manager.consultations.stats.selling'),
             value: f.number(selling.length),
-            unit: t('manager.consultations.stats.of', { n: f.number(data.types.length) }),
+            unit: t('manager.consultations.stats.of', {
+              n: f.number(selling.length + data.paused.all),
+            }),
           },
           { label: t('manager.consultations.stats.weekly'), value: f.number(weekly) },
           {
             label: t('manager.consultations.stats.upcoming'),
-            value: f.number(data.types.reduce((sum, item) => sum + item.upcoming, 0)),
+            value: f.number(
+              selling.reduce((sum, item) => sum + item.upcoming, data.paused.upcoming),
+            ),
           },
         ]}
       />
@@ -87,7 +94,8 @@ export default function ConsultationTypesPage() {
           value,
           label: t(`manager.consultations.modeOption.${value}`),
           count: f.number(
-            data.types.filter((item) => value === 'all' || item.mode === value).length,
+            selling.filter((item) => value === 'all' || item.mode === value).length +
+              data.paused[value],
           ),
         }))}
       />
@@ -102,17 +110,53 @@ export default function ConsultationTypesPage() {
           <TypeList types={active} />
         )}
       </SectionCard>
-      {off.length > 0 && (
-        <SectionCard
-          id="consultation-types-off"
-          variant="panel"
-          title={t('manager.consultations.off')}
-          subtitle={t('manager.consultations.offHint')}
-        >
-          <TypeList types={off} />
-        </SectionCard>
-      )}
+      {pausedCount > 0 && <PausedSection mode={mode} count={pausedCount} />}
     </>
+  );
+}
+
+/** The paused types: closed at first, read from Django the first time it is opened. */
+function PausedSection({ mode, count }: { mode: ModeFilter; count: number }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const [open, setOpen] = useState(false);
+  const paused = useQuery({ ...pausedTypesQuery, enabled: open });
+  const types = (paused.data?.types ?? []).filter((item) => mode === 'all' || item.mode === mode);
+
+  return (
+    <SectionCard
+      id="consultation-types-off"
+      variant="panel"
+      title={t('manager.consultations.offCount', { n: f.number(count) })}
+      subtitle={t('manager.consultations.offHint')}
+      end={
+        <Button
+          variant="outline"
+          aria-expanded={open}
+          aria-controls="consultation-types-off-list"
+          onClick={() => setOpen((value) => !value)}
+        >
+          <Icon
+            name="chevronDown"
+            size={18}
+            className={`transition-transform ${open ? 'rotate-180' : ''}`}
+          />
+          {t(open ? 'manager.consultations.offHide' : 'manager.consultations.offShow')}
+        </Button>
+      }
+    >
+      {open && (
+        <div id="consultation-types-off-list">
+          <QuerySection
+            pending={paused.isPending}
+            error={paused.error}
+            retry={() => void paused.refetch()}
+          >
+            <TypeList types={types} />
+          </QuerySection>
+        </div>
+      )}
+    </SectionCard>
   );
 }
 

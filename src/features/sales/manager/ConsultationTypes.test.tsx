@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
 
 const NIMA = 3; // seller
@@ -34,10 +34,28 @@ describe('consultation types (S81)', () => {
     const online = within(onSale).getByRole('link', { name: /مشاوره تحصیلی دانشگاهی غیر حضوری/ });
     expect(online).toHaveTextContent('۹۰۰٬۰۰۰ تومان');
     expect(online).toHaveTextContent('۳ روز در هفته، ۱۸ نوبت');
-    const paused = screen.getByRole('region', { name: 'متوقف' });
-    expect(within(paused).getByRole('link', { name: /ماک سفارت/ })).toHaveTextContent(
+  });
+
+  it('keeps paused types closed, reading them only when opened', async () => {
+    const user = userEvent.setup();
+    const asked: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (request.url.includes('/manager/consultation-types/'))
+        asked.push(new URL(request.url).search);
+    });
+    loginAs(REZA);
+    renderApp('/sales/manager/consultations');
+    const paused = await screen.findByRole('region', { name: 'متوقف (۱)' });
+    expect(within(paused).queryByRole('link')).not.toBeInTheDocument();
+    expect(asked).toEqual(['?active=1']);
+    await user.click(within(paused).getByRole('button', { name: 'نمایش' }));
+    expect(await within(paused).findByRole('link', { name: /ماک سفارت/ })).toHaveTextContent(
       'ساعتی برایش نگذاشته‌اید',
     );
+    expect(asked).toEqual(['?active=1', '?active=0']);
+    await user.click(within(paused).getByRole('button', { name: 'بستن' }));
+    expect(within(paused).queryByRole('link')).not.toBeInTheDocument();
+    server.events.removeAllListeners();
   });
 
   it('changes the price and a day of the week, refusing overlapping times', async () => {

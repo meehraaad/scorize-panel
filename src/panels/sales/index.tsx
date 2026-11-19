@@ -12,6 +12,7 @@ import {
   stagesQuery,
   managerTagsQuery,
   consultationTypesQuery,
+  sellingTypesQuery,
   managerConsultationsQuery,
   contractBuilderQuery,
   contractOverviewQuery,
@@ -391,7 +392,8 @@ export const salesPanel: PanelDefinition = {
             {
               index: true,
               ...lazyPage(() => import('@/features/sales/manager/ConsultationTypesPage'), [], {
-                data: () => [consultationTypesQuery],
+                // Paused types load when their section is opened.
+                data: () => [sellingTypesQuery],
                 skeleton: 'list',
               }),
             },

@@ -72,6 +72,28 @@ export const consultationTypesQuery = queryOptions({
   queryFn: ({ signal }) => api<{ types: ConsultationTypeRow[] }>(`${BASE}/`, { signal }),
 });
 
+/** The types not on sale, counted without loading them (`?active=1`). */
+export interface PausedCounts {
+  all: number;
+  in_person: number;
+  online: number;
+  /** Their paid sessions from now on. */
+  upcoming: number;
+}
+
+/** The list page's first answer: the types on sale, and how many are paused. */
+export const sellingTypesQuery = queryOptions({
+  queryKey: [...KEY, 'selling'],
+  queryFn: ({ signal }) =>
+    api<{ types: ConsultationTypeRow[]; paused: PausedCounts }>(`${BASE}/?active=1`, { signal }),
+});
+
+/** The paused types, read only when the manager opens their section. */
+export const pausedTypesQuery = queryOptions({
+  queryKey: [...KEY, 'paused'],
+  queryFn: ({ signal }) => api<{ types: ConsultationTypeRow[] }>(`${BASE}/?active=0`, { signal }),
+});
+
 const minutesOf = (time: string) => {
   const [hours = 0, minutes = 0] = time.split(':').map(Number);
   return hours * 60 + minutes;

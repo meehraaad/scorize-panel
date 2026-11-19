@@ -119,9 +119,24 @@ function apply(row: ConsultationTypeRow, body: ConsultationTypeInput) {
 }
 
 export const consultationTypeHandlers = [
-  http.get(`${BASE}/consultation-types/`, () =>
-    manager() ? HttpResponse.json({ types: state.types }) : forbidden(),
-  ),
+  // `?active=1`: on sale plus the paused counts; `?active=0`: only the paused ones.
+  http.get(`${BASE}/consultation-types/`, ({ request }) => {
+    if (!manager()) return forbidden();
+    const active = new URL(request.url).searchParams.get('active');
+    if (active === '0')
+      return HttpResponse.json({ types: state.types.filter((item) => !item.active) });
+    if (active !== '1') return HttpResponse.json({ types: state.types });
+    const paused = state.types.filter((item) => !item.active);
+    return HttpResponse.json({
+      types: state.types.filter((item) => item.active),
+      paused: {
+        all: paused.length,
+        in_person: paused.filter((item) => item.mode === 'in_person').length,
+        online: paused.filter((item) => item.mode === 'online').length,
+        upcoming: paused.reduce((sum, item) => sum + item.upcoming, 0),
+      },
+    });
+  }),
 
   http.post(`${BASE}/consultation-types/`, async ({ request }) => {
     if (!manager()) return forbidden();
