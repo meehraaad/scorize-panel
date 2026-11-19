@@ -19,22 +19,31 @@ describe('pathway finder', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('shows a first country after the fewest questions, then more for more countries', async () => {
+  it('shows the first country beside the questions, without stopping them', async () => {
     loginAs(SARA);
     const user = userEvent.setup();
     renderApp('/pathways');
-    await user.click(await screen.findByRole('radio', { name: 'کار' }));
+    await user.click(await screen.findByRole('button', { name: 'شروع کن' }));
+    await user.click(await screen.findByRole('radio', { name: /^کار/ }));
     // Germany needs only the degree and English: those come first.
     await screen.findByRole('heading', { name: 'آخرین مدرک تحصیلی‌ات چیست؟' });
     await user.click(screen.getByRole('radio', { name: 'کارشناسی' }));
-    await user.click(await screen.findByRole('radio', { name: 'آیلتس ۷ تا ۸' }));
-    expect(await screen.findByRole('heading', { name: 'اولین راهت پیدا شد' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'کارت فرصت' })).toBeInTheDocument();
-    // Canada is two questions away (age, work years).
+    // An option's number on the keyboard picks it (4: IELTS 7 to 8).
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+    await user.keyboard('4');
+    // The questions go on (Canada's age) while Germany's route opens beside them.
+    expect(await screen.findByRole('heading', { name: 'چند سالت است؟' })).toBeInTheDocument();
+    const peek = await screen.findByRole('status');
+    expect(peek).toHaveTextContent('اولین راهت پیدا شد');
+    expect(peek).toHaveTextContent('کارت فرصت');
+    await user.click(screen.getByRole('button', { name: 'ببین چرا' }));
+    expect(await screen.findByRole('heading', { name: 'کارت فرصت' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /ادامه بده: (2|۲) سؤال تا کانادا/ }));
-    await user.type(await screen.findByRole('textbox', { name: 'سن (سال)' }), '30');
+    // Number questions start at a likely value: Next keeps it.
+    await screen.findByRole('heading', { name: 'چند سالت است؟' });
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
-    await user.type(await screen.findByRole('textbox', { name: 'سال‌های سابقه' }), '4');
+    await screen.findByRole('heading', { name: 'چند سال سابقه کار مرتبط با رشته‌ات داری؟' });
+    await user.click(screen.getByRole('button', { name: 'یکی بیشتر' }));
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
     expect(
       await screen.findByRole('heading', { name: /این (2|۲) راه برای تو مناسب‌ترند/ }),

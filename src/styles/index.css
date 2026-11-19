@@ -123,6 +123,21 @@
 @utility animate-rise {
   animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+/* A quiet note opens in place after the content around it has settled (the finder's first route). */
+@keyframes unfold {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(8px);
+  }
+  to {
+    max-height: 240px;
+  }
+}
+@utility animate-unfold {
+  overflow: hidden;
+  animation: unfold 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s both;
+}
 /* A toast arrives from below. */
 @keyframes toast-in {
   from {

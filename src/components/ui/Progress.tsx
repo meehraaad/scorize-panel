@@ -15,6 +15,8 @@ interface ProgressBarProps {
   /** Read by screen readers. Without it the bar is decoration next to a visible "3 of 5". */
   label?: string;
   className?: string;
+  /** 0–100: a thin line across the bar where it must reach (the points a route needs). */
+  mark?: number | undefined;
 }
 
 /** The gold fill of a bar on a luxe card (progress, the current step). */
@@ -27,6 +29,7 @@ export function ProgressBar({
   tone = 'primary',
   label,
   className = '',
+  mark,
 }: ProgressBarProps) {
   const height = size === 'sm' ? 'h-1.5' : 'h-2';
   const track = tone === 'onHero' || tone === 'gold' ? 'bg-hero-line' : 'bg-track';
@@ -47,8 +50,18 @@ export function ProgressBar({
       }
     : { 'aria-hidden': true };
   return (
-    <div {...a11y} className={`${height} rounded-full ${track} ${className}`}>
-      <div className={`${height} rounded-full ${fill}`} style={{ width: `${String(value)}%` }} />
+    <div {...a11y} className={`relative ${height} rounded-full ${track} ${className}`}>
+      <div
+        className={`${height} rounded-full ${fill} transition-[width] duration-700 ease-out`}
+        style={{ width: `${String(value)}%` }}
+      />
+      {mark !== undefined && (
+        <span
+          aria-hidden="true"
+          className="absolute -inset-y-1 w-0.5 rounded-full bg-text/55"
+          style={{ insetInlineStart: `${String(mark)}%` }}
+        />
+      )}
     </div>
   );
 }

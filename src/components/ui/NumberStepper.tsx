@@ -17,6 +17,7 @@ export function NumberStepper({
   unit = '',
   decreaseLabel,
   increaseLabel,
+  look = 'field',
 }: {
   /** Names the input for screen readers (the visible words sit around the stepper). */
   label: string;
@@ -28,6 +29,8 @@ export function NumberStepper({
   unit?: string;
   decreaseLabel: string;
   increaseLabel: string;
+  /** `field`: a small boxed stepper; `hero`: one large number between round buttons (a quiz). */
+  look?: 'field' | 'hero';
 }) {
   const f = useFormat();
   const [typing, setTyping] = useState<string | null>(null);
@@ -44,10 +47,18 @@ export function NumberStepper({
     if (typing.trim() && Number.isFinite(parsed)) onChange(clamp(round(parsed)));
     setTyping(null);
   };
-  const button =
-    'flex size-11 flex-none items-center justify-center bg-canvas text-xl text-text-2 hover:text-text disabled:opacity-40';
+  const hero = look === 'hero';
+  const button = hero
+    ? 'flex size-14 flex-none items-center justify-center rounded-full bg-canvas text-2xl text-text hover:bg-track disabled:opacity-40'
+    : 'flex size-11 flex-none items-center justify-center bg-canvas text-xl text-text-2 hover:text-text disabled:opacity-40';
   return (
-    <span className="inline-flex items-center overflow-hidden rounded-xl shadow-[inset_0_0_0_1px_var(--line-2)]">
+    <span
+      className={
+        hero
+          ? 'inline-flex items-center gap-4 lg:gap-6'
+          : 'inline-flex items-center overflow-hidden rounded-xl shadow-[inset_0_0_0_1px_var(--line-2)]'
+      }
+    >
       <button
         type="button"
         aria-label={decreaseLabel}
@@ -57,12 +68,20 @@ export function NumberStepper({
       >
         −
       </button>
-      <span className="flex min-w-24 items-center justify-center gap-1 px-2">
+      <span
+        className={`flex items-center justify-center gap-1 px-2 ${hero ? 'min-w-40' : 'min-w-24'}`}
+      >
         <input
           aria-label={label}
           inputMode="decimal"
-          className="bg-transparent text-center text-[17px] font-bold text-primary-text outline-none"
-          style={{ width: `${String(Math.max(3, (typing ?? f.number(value)).length) + 1)}ch` }}
+          className={
+            hero
+              ? 'bg-transparent text-center text-[72px] leading-none font-light tracking-tight text-text tabular-nums outline-none lg:text-[96px]'
+              : 'bg-transparent text-center text-[17px] font-bold text-primary-text outline-none'
+          }
+          style={{
+            width: `${String(Math.max(hero ? 2 : 3, (typing ?? f.number(value)).length) + (hero ? 0.5 : 1))}ch`,
+          }}
           value={typing ?? f.number(value)}
           onFocus={() => setTyping(String(value))}
           onChange={(event) => setTyping(event.target.value)}
@@ -71,7 +90,9 @@ export function NumberStepper({
             if (event.key === 'Enter') commit();
           }}
         />
-        {unit && <span className="text-[13px] text-text-2">{unit}</span>}
+        {unit && (
+          <span className={hero ? 'text-lg text-text-2' : 'text-[13px] text-text-2'}>{unit}</span>
+        )}
       </span>
       <button
         type="button"

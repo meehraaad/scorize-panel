@@ -10,7 +10,11 @@
     "title": "Why do you want to go?",
     "work": "To work",
     "study": "To study",
-    "any": "Either; the best way to stay"
+    "any": "Either",
+    "help": "From your answer, we only check the routes that suit you.",
+    "work_hint": "Find work with the experience and skills you have, and stay",
+    "study_hint": "Study, then stay after you graduate",
+    "any_hint": "Tell me the best way to stay"
   },
   "question": "Question {{number}}",
   "next": "Next",
@@ -132,7 +136,8 @@
     "left_other": "{{count}} more questions",
     "continue_one": "Go on: 1 question to {{country}}",
     "continue_other": "Go on: {{count}} questions to {{country}}",
-    "enough": "That's enough"
+    "enough": "That's enough",
+    "keep": "Keep answering"
   },
   "results": {
     "title_one": "This route fits you best",
@@ -141,10 +146,12 @@
     "not_now": "Routes that don't fit now",
     "not_now_line": "{{country}}, {{name}}: {{why}}",
     "points_short": "Not enough points",
-    "show": "See the result",
+    "show": "See the result now",
     "more": "More questions, more countries",
     "edit": "Start over",
-    "disclaimer": "This is an estimate and each country's rules can change. An adviser makes the final check."
+    "disclaimer": "This is an estimate and each country's rules can change. An adviser makes the final check.",
+    "eyebrow": "Your result",
+    "intro": "These fit where you are today. We recommend the first one."
   },
   "consult": {
     "title": "Take the next step with our adviser",
@@ -298,5 +305,42 @@
     "try_button": "Try it",
     "before": "Before publishing",
     "before_body": "Compare the requirements and points with the official page, then press \"Checked, publish\". Any later change hides the route from customers until it is checked again."
+  },
+  "intro": {
+    "eyebrow": "Pathway finder",
+    "title": "Find your way abroad.",
+    "body": "Answer a few short questions. We check every route to work and live abroad for you and tell you which ones fit.",
+    "time": "About 2 minutes",
+    "time_label": "Time",
+    "countries_one": "{{n}} country",
+    "countries_other": "{{n}} countries",
+    "free": "Free",
+    "free_label": "No cost",
+    "start": "Start"
+  },
+  "step": "{{number}} of {{total}}",
+  "progress": "Question progress",
+  "keys_hint": "Press an option's number on your keyboard",
+  "number_hint": "Use + and − or drag the bar to change the number",
+  "more": "One more",
+  "less": "One less",
+  "rail": {
+    "title": "Checking for you",
+    "done": "Checked",
+    "waiting": "Not started yet",
+    "left_one": "{{n}} question left",
+    "left_other": "{{n}} questions left",
+    "note": "With each answer we check every country's work and residence routes ourselves. You don't need to pick a route."
+  },
+  "peek": {
+    "title": "Your first route is ready",
+    "route": "{{country}}, {{name}}",
+    "see": "See why"
+  },
+  "facts": {
+    "time": "Time",
+    "cost": "Cost",
+    "score": "Your points",
+    "score_value": "{{points}} of the {{pass}} points needed"
   }
 }
