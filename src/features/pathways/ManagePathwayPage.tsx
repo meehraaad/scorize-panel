@@ -16,7 +16,7 @@ import type { Answers, Factor } from '@/lib/applicant/pathways';
 import { idParam } from '@/lib/router/lazyPage';
 import { toast } from '@/lib/toast';
 import {
-  PATHWAYS_PATH,
+  usePathwaysPath,
   managedPathwayQuery,
   managedPathwaysQuery,
   type ConditionInput,
@@ -35,7 +35,7 @@ import type { ParseKeys } from 'i18next';
 /** A key built at run time (a question's, a status's): one of this dictionary's. */
 const key = (name: string) => name as ParseKeys<'pathways'>;
 
-/** A new route (`/founders/pathways/new`) or one to edit, check and publish. */
+/** A new route (`…/pathways/new`) or one to edit, check and publish. */
 export default function ManagePathwayPage() {
   const id = idParam(useParams().id);
   return id === null ? <Editor detail={null} /> : <Existing id={id} />;
@@ -66,6 +66,7 @@ const SAMPLE: Answers = {
 function Editor({ detail }: { detail: PathwayDetail | null }) {
   const { t } = useTranslation('pathways');
   const navigate = useNavigate();
+  const base = usePathwaysPath();
   const { data: list } = useSuspenseQuery(managedPathwaysQuery);
   const factors = list.factors;
   const [form, setForm] = useState<PathwayInput>(() =>
@@ -108,7 +109,7 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
       create.mutate(form, {
         onSuccess: (saved) => {
           toast.success(t('edit.saved'));
-          void navigate(`${PATHWAYS_PATH}/${saved.id}`, { replace: true });
+          void navigate(`${base}/${saved.id}`, { replace: true });
         },
         onError,
       });
@@ -125,7 +126,7 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
 
   return (
     <PageStack>
-      <Link to={PATHWAYS_PATH} className="text-sm">
+      <Link to={base} className="text-sm">
         {t('edit.back')}
       </Link>
       <PageHeader

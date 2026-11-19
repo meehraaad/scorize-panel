@@ -51,14 +51,12 @@
         "label": "Management panel menu",
         "assistant": "Analysis assistant",
         "messages": "Messages",
-        "access": "Access",
-        "pathways": "Migration pathways"
+        "access": "Access"
       },
       "tabs": {
         "assistant": "Assistant",
         "messages": "Messages",
-        "access": "Access",
-        "pathways": "Pathways"
+        "access": "Access"
       },
       "description": "Analysis assistant, messages and access"
     },

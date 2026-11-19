@@ -10,6 +10,9 @@ import { forbidden, notFound, storage } from './session';
  */
 
 const SUPERUSER = 6;
+/** Who keeps the pathways: a superuser, the sales manager (Reza, 4) or the marketing manager. */
+const MANAGERS: ReadonlySet<number | null> = new Set([SUPERUSER, 4]);
+const manages = () => MANAGERS.has(storage.get());
 const GERMANY = { id: 1, name: 'آلمان' };
 const CANADA = { id: 2, name: 'کانادا' };
 const AUSTRALIA = { id: 3, name: 'استرالیا' };
@@ -223,7 +226,7 @@ export const pathwayHandlers = [
   }),
 
   http.get('/api/staff/v1/pathways/', () => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     return HttpResponse.json({
       pathways: pathways.map((p) => ({
         id: p.id,
@@ -241,7 +244,7 @@ export const pathwayHandlers = [
     });
   }),
   http.post('/api/staff/v1/pathways/try/', async ({ request }) => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     const body = (await request.json()) as { pathway: PathwayInput; answers: Answers };
     const draft: PathwayDetail = {
       ...body.pathway,
@@ -262,7 +265,7 @@ export const pathwayHandlers = [
     });
   }),
   http.get('/api/staff/v1/pathways/:id/', ({ params }) => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     const row = pathways.find((p) => p.id === Number(params.id));
     return row ? HttpResponse.json(row) : notFound();
   }),
@@ -270,7 +273,7 @@ export const pathwayHandlers = [
     http[method](
       method === 'post' ? '/api/staff/v1/pathways/' : '/api/staff/v1/pathways/:id/',
       async ({ request, params }) => {
-        if (storage.get() !== SUPERUSER) return forbidden();
+        if (!manages()) return forbidden();
         const input = (await request.json()) as PathwayInput;
         if (!input.name)
           return HttpResponse.json({ name: ['This field is required.'] }, { status: 400 });
@@ -298,7 +301,7 @@ export const pathwayHandlers = [
     ),
   ),
   http.post('/api/staff/v1/pathways/:id/verify/', ({ params }) => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     const row = pathways.find((p) => p.id === Number(params.id));
     if (!row) return notFound();
     Object.assign(row, { verified_at: now(), verified_by: 'امیر عابدی', updated_at: now() });
