@@ -1023,7 +1023,9 @@
       "budget": "Budget (application, study, living)",
       "countries": "Wanted countries",
       "language": "Current language level",
-      "countriesHint": "Separate with commas: Canada, Germany"
+      "countriesHint": "Separate with commas: Canada, Germany",
+      "addCountry": "Add a country…",
+      "removeCountry": "Remove {{name}}"
     },
     "education": {
       "title": "Education",

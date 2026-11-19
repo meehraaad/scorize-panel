@@ -170,20 +170,22 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(within(notes).getByLabelText('متن یادداشت')).toHaveValue('تا آخر هفته خبر می‌دهد');
   });
 
-  it('details: countries are found by name; an unknown one is reported', async () => {
+  it('details: countries are picked from the list and removed from their pills', async () => {
     const user = userEvent.setup();
     renderApp(`${ERFAN}/info`);
     const goal = await screen.findByRole('region', { name: 'هدف و شرایط' });
-    const countries = within(goal).getByLabelText('کشورهای مورد نظر');
-    expect(countries).toHaveValue('هلند، آلمان');
-    await user.clear(countries);
-    await user.type(countries, 'هلند، Atlantis');
-    expect(await within(goal).findByText(/«Atlantis» پیدا نشد/)).toBeInTheDocument();
-
-    await user.clear(countries);
-    await user.type(countries, 'هلند، canada');
+    const picked = () =>
+      within(within(goal).getByRole('list', { name: 'کشورهای مورد نظر' }))
+        .getAllByRole('listitem')
+        .map((item) => item.textContent);
+    expect(picked()).toEqual(['هلند', 'آلمان']);
+    const add = within(goal).getByRole('combobox', { name: 'کشورهای مورد نظر' });
+    // A picked country isn't offered again.
+    expect(within(add).queryByRole('option', { name: 'آلمان' })).toBeNull();
+    await user.selectOptions(add, 'کانادا');
+    await user.click(within(goal).getByRole('button', { name: 'حذف هلند' }));
+    expect(picked()).toEqual(['آلمان', 'کانادا']);
     expect(await within(goal).findByText('همهٔ تغییرات ذخیره شد')).toBeInTheDocument();
-    expect(countries).toHaveValue('هلند، canada');
   });
 
   it('application file is read-only', async () => {
