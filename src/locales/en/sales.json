@@ -2406,7 +2406,10 @@
         "week": "Times a week",
         "days": "{{n}} open days",
         "upcoming": "Sessions ahead"
-      }
+      },
+      "offCount": "Paused ({{n}})",
+      "offShow": "Show",
+      "offHide": "Hide"
     },
     "sessions": {
       "nav": "Consultation sections",
