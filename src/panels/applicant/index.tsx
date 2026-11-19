@@ -37,6 +37,7 @@ import { prefetchTickets } from '@/features/tickets/config';
 import type { PanelDefinition } from '../types';
 import { CampaignFormRedirect, SessionRedirect } from './SessionRedirect';
 import { applicantTickets } from '@/lib/applicant/tickets';
+import { finderOptionsQuery } from '@/lib/applicant/pathways';
 
 /** Every account has this panel. Design: canvas V6/V7 "پنل متقاضی". */
 export const applicantPanel: PanelDefinition = {
@@ -82,6 +83,16 @@ export const applicantPanel: PanelDefinition = {
     },
     { id: 'contract', to: 'contract', label: 'panels.applicant.nav.contract', icon: 'card' },
     { id: 'services', to: 'services', label: 'panels.applicant.nav.services', icon: 'play' },
+    ...(ON_SERVER.pathwayFinder
+      ? [
+          {
+            id: 'pathways',
+            to: 'pathways',
+            label: 'panels.applicant.nav.pathways',
+            icon: 'pin',
+          } as const,
+        ]
+      : []),
   ],
   routes: [
     {
@@ -360,6 +371,18 @@ export const applicantPanel: PanelDefinition = {
               }),
             }
           : { path: 'estimate', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
+        // The pathway finder: a few questions, then the routes to work or live abroad that fit.
+        ...(ON_SERVER.pathwayFinder
+          ? [
+              {
+                path: 'pathways',
+                ...lazyPage(() => import('@/features/pathways/FinderPage'), ['pathways'], {
+                  data: () => [finderOptionsQuery],
+                  skeleton: 'form',
+                }),
+              },
+            ]
+          : []),
         // The tablet form (no nav item: the new-user home and the session card link to it).
         ON_SERVER.background
           ? {
