@@ -440,6 +440,16 @@ export function LogDialog({
               : t('customer.logDialog.noAnswerToday')}
         </Notice>
       )}
+      {sendChoice && noAnswerSend === 'sms' && customer.no_answer_sms_text && (
+        <figure className="m-0 flex flex-col gap-1">
+          <figcaption className="text-sm font-semibold text-text-2">
+            {t('customer.logDialog.noAnswerSmsText')}
+          </figcaption>
+          <blockquote className="m-0 rounded-xl border border-hair bg-canvas p-3 text-sm whitespace-pre-line">
+            {customer.no_answer_sms_text}
+          </blockquote>
+        </figure>
+      )}
     </>
   );
   const steps: { key: string; title: string; body: ReactNode }[] = session

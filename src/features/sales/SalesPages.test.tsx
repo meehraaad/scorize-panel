@@ -285,8 +285,11 @@ describe('sales panel, seller pages', () => {
       const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
       await user.click(within(dialog).getByRole('radio', { name: 'جواب نداد' }));
       expect(within(dialog).getByRole('radio', { name: 'پیامک' })).toBeChecked();
+      // The seller sees the SMS as the customer will get it.
+      expect(within(dialog).getByText(/^سلام عرفان عزیز/)).toBeInTheDocument();
       await user.click(within(dialog).getByRole('radio', { name: 'واتس‌اپ' }));
       expect(within(dialog).getByText(/پیامکی نمی‌رود/)).toBeInTheDocument();
+      expect(within(dialog).queryByText(/^سلام عرفان عزیز/)).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
       expect(open).toHaveBeenCalledWith(
         expect.stringMatching(/^https:\/\/wa\.me\//),

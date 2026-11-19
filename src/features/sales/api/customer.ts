@@ -126,6 +126,8 @@ export interface CustomerData {
   };
   /** Who first reached the customer, and who their closed contract counts for (S59). */
   attribution?: { first_contact: string | null; won_by: string | null };
+  /** The "missed call" SMS as this customer gets it, shown when the seller picks SMS. */
+  no_answer_sms_text?: string;
 }
 
 export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as const;

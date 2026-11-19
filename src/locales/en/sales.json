@@ -649,7 +649,8 @@
         "whatsapp": "Saving opens your WhatsApp with the ready message; send it yourself. No SMS goes out, and a follow-up is set for tomorrow.",
         "telegram": "Saving opens your Telegram and copies the ready message; paste and send it. No SMS goes out, and a follow-up is set for tomorrow.",
         "none": "Nothing is sent. Only a follow-up for tomorrow is set."
-      }
+      },
+      "noAnswerSmsText": "The SMS that goes out"
     },
     "tabs": {
       "label": "Customer page sections",
