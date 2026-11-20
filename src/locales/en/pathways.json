@@ -140,14 +140,43 @@
     },
     "income": {
       "title": "What is your monthly income?",
-      "help": "Net, in euros. Digital nomad visas ask a minimum monthly income.",
+      "help": "Net. We convert it to euros at today's rate and compare it with the minimum the visa asks.",
+      "currency": "Currency",
+      "currencies": {
+        "toman": "Toman",
+        "eur": "Euro",
+        "usd": "Dollar"
+      },
+      "label_toman": "Monthly income (million tomans)",
+      "label_eur": "Monthly income (euros)",
+      "label_usd": "Monthly income (dollars)",
+      "hint": "Just the number.",
+      "in_euros": "≈ {{amount}} euros at today's rate",
+      "no_rate": "Today's rate isn't available; we use the latest one."
+    },
+    "remote_months": {
+      "title": "How long have you worked with this company or client?",
+      "help": "Since your work together started. Some visas ask a few months at least.",
       "options": {
-        "under_1000": "Under €1,000",
-        "1000_2000": "€1,000 to €2,000",
-        "2000_2850": "€2,000 to €2,850",
-        "2850_4000": "€2,850 to €4,000",
-        "over_4000": "Over €4,000"
+        "under_3": "Under 3 months",
+        "3_12": "3 months to a year",
+        "over_12": "Over a year"
       }
+    },
+    "employer_years": {
+      "title": "How long has that company been in business?",
+      "help": "The company you work for. Freelance? Count your main client.",
+      "options": {
+        "under_1": "Under a year",
+        "1_3": "1 to 3 years",
+        "over_3": "Over 3 years",
+        "unsure": "I don't know"
+      }
+    },
+    "children": {
+      "title": "How many children are coming with you?",
+      "help": "Some visas ask more income for each person coming along. None? Leave it at zero.",
+      "label": "Children"
     }
   },
   "fit": {
@@ -209,7 +238,10 @@
     "stay_months": "Months of stay",
     "partner": "Partner",
     "remote_work": "Remote work",
-    "monthly_income_eur": "Monthly income (EUR)"
+    "monthly_income_eur": "Monthly income (EUR)",
+    "children": "Children coming",
+    "remote_months": "Months with the company",
+    "employer_years": "Company's years in business"
   },
   "choices": {
     "education": {
@@ -362,7 +394,10 @@
     "or": "or",
     "must": "Must {{number}}",
     "one_is_enough": "Any one of these is enough",
-    "add_or": "+ Or (another option instead)"
+    "add_or": "+ Or (another option instead)",
+    "family_help": "If the minimum rises with the family (Spain's digital nomad visa, say): what is added for people coming along. Empty: the same for everyone.",
+    "per_first": "Added for the first person coming (partner, or a child)",
+    "per_more": "Added for each one after"
   },
   "intro": {
     "eyebrow": "Pathway finder",
@@ -439,5 +474,9 @@
       "tight": "With the cheaper universities",
       "over": "Over your budget"
     }
+  },
+  "near": {
+    "title": "Close to the minimum",
+    "body": "Your income is just above the minimum ({{list}}). A change in the exchange rate could take it under; an adviser will check it closely."
   }
 }

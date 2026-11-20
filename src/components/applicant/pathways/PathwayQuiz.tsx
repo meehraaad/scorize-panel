@@ -13,6 +13,7 @@ import {
   type CountryAnswers,
   type FinderBudget,
   type FinderContact,
+  type FinderIncome,
   type FinderPathway,
   type PathwayResult,
 } from '@/lib/applicant/pathways';
@@ -23,6 +24,9 @@ import {
   answeredPathways,
   asksLeft,
   BUDGET,
+  INCOME_AMOUNT,
+  INCOME_CURRENCIES,
+  INCOME_CURRENCY,
   countriesFor,
   countriesLeft,
   countryProgress,
@@ -51,22 +55,36 @@ interface Part {
   id: string;
   set: Answers;
   byCountry?: CountryAnswers | undefined;
+  /** Questions this answer made pointless: counted as answered. */
+  skips?: readonly string[] | undefined;
 }
+/** The questions answered, or skipped by an answer. */
+const answeredOf = (parts: readonly Part[]) =>
+  new Set(parts.flatMap((part) => [part.id, ...(part.skips ?? [])]));
 /** Everything answered, as Django takes it. */
 interface Given {
   answers: Answers;
   byCountry: CountryAnswers;
   /** The first year's budget, asked for study routes with costs; sent apart from the factors. */
   budget: FinderBudget | null;
+  /** Monthly income, asked for digital nomad routes; sent apart from the factors. */
+  income: FinderIncome | null;
 }
 const givenOf = (parts: readonly Part[]): Given => {
-  const { [BUDGET]: budget, ...answers } = mergeAnswers(
-    Object.fromEntries(parts.map((part) => [part.id, part.set])),
-  );
+  const {
+    [BUDGET]: budget,
+    [INCOME_AMOUNT]: amount,
+    [INCOME_CURRENCY]: currency,
+    ...answers
+  } = mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set])));
   return {
     answers,
     byCountry: mergeByCountry(parts.map((part) => part.byCountry)),
     budget: typeof budget === 'string' ? (budget as FinderBudget) : null,
+    income:
+      typeof amount === 'number' && INCOME_CURRENCIES.some((name) => name === currency)
+        ? { amount, currency: currency as FinderIncome['currency'] }
+        : null,
   };
 };
 const GOALS: readonly Goal[] = ['work', 'study', 'any'];
@@ -90,19 +108,25 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
   // The route answered first: shown beside the questions once it is ready.
   const [firstId, setFirstId] = useState<number | null>(null);
 
-  const answered = useMemo(() => new Set(parts.map((part) => part.id)), [parts]);
+  const answered = useMemo(() => answeredOf(parts), [parts]);
   const answers = useMemo(() => givenOf(parts), [parts]);
   const pathways = options.pathways;
   const ask = goal ? nextAsk(pathways, goal, answered) : null;
 
   const check = useMutation({
     mutationFn: ({ given, contact }: { given: Given; contact: FinderContact }) =>
-      checkPathways(given.answers, contact, given.byCountry, given.budget),
+      checkPathways(given.answers, contact, given.byCountry, given.budget, given.income),
   });
   // The first route's verdict, fetched in the background while the questions go on.
   const peek = useMutation({
     mutationFn: (given: Given) =>
-      checkPathways(given.answers, { channel: 'none' }, given.byCountry, given.budget),
+      checkPathways(
+        given.answers,
+        { channel: 'none' },
+        given.byCountry,
+        given.budget,
+        given.income,
+      ),
   });
 
   /** What the routes say for these answers, then on to `next`. */
@@ -121,7 +145,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
   const afterAnswer = (nextParts: Part[]) => {
     setParts(nextParts);
     if (!goal) return;
-    const done = new Set(nextParts.map((part) => part.id));
+    const done = answeredOf(nextParts);
     const given = givenOf(nextParts);
     if (nextAsk(pathways, goal, done) === null) {
       evaluate(given, 'results');
@@ -259,7 +283,10 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
               countries={countriesFor(pathways, goal, ask)}
               busy={check.isPending}
               onBack={() => (parts.length ? setParts(parts.slice(0, -1)) : setGoal(null))}
-              onAnswer={(set, byCountry) => afterAnswer([...parts, { id: ask.id, set, byCountry }])}
+              rates={options.rates}
+              onAnswer={(set, byCountry, skips) =>
+                afterAnswer([...parts, { id: ask.id, set, byCountry, skips }])
+              }
               onShowResults={firstReady ? () => evaluate(answers, 'results') : undefined}
             />
           </Question>

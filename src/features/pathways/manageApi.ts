@@ -55,6 +55,12 @@ export interface RequirementInput extends ConditionInput {
   group: number;
   factor: string;
   label: string;
+  /**
+   * A number's minimum that rises with the family: added for the first person coming along (a partner, else a
+   * child) and for each one after. Absent on older servers.
+   */
+  per_first?: number | null;
+  per_more?: number | null;
 }
 
 export interface BandInput extends ConditionInput {

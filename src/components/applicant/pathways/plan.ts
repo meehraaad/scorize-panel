@@ -16,14 +16,26 @@ export type Goal = 'work' | 'study' | 'any';
 /** A route's country: its id, name and flag code. */
 export type Country = FinderPathway['country'];
 
-/** An option of a question: the factors it fills (`english`: an IELTS band fills both). */
+/**
+ * An option of a question: the factors it fills (`english`: an IELTS band fills both), and the questions it makes
+ * pointless ("no remote work": not how long with that company).
+ */
 export interface AskOption {
   id: string;
   set: Answers;
+  skips?: readonly string[];
 }
 
 /** The budget question's answer: not one of Django's factors, sent on its own (`budget`). */
 export const BUDGET = 'budget';
+/**
+ * The income question's answer: an amount and its currency (tomans by default; euros or dollars for people paid
+ * in them), sent on their own (`income`). Django converts them to euros at the newest rates.
+ */
+export const INCOME_AMOUNT = 'income_amount';
+export const INCOME_CURRENCY = 'income_currency';
+export const INCOME_CURRENCIES = ['toman', 'eur', 'usd'] as const;
+export type IncomeCurrency = (typeof INCOME_CURRENCIES)[number];
 /** Scales an English level can be given in: the options stay IELTS bands, worded in the scale picked. */
 export const ENGLISH_SCALES = ['ielts', 'toefl', 'duolingo'] as const;
 export type EnglishScale = (typeof ENGLISH_SCALES)[number];
@@ -36,7 +48,7 @@ export interface Ask {
    * A number (`number`), one of the options, or `countries`: one question about every destination at once
    * ("which countries have you lived in, and for how long"), each country answered on its own.
    */
-  input: 'number' | 'options' | 'countries';
+  input: 'number' | 'options' | 'countries' | 'money';
   /** `countries`: what to ask of each country picked: years there, or how fully the degree is recognised. */
   detail?: 'years' | 'recognition';
   options?: readonly AskOption[];
@@ -80,22 +92,34 @@ export const ASKS: readonly Ask[] = [
     input: 'options',
     options: [
       { id: 'yes', set: { remote_work: true } },
-      { id: 'no', set: { remote_work: false } },
+      // Not working remotely: how long with that company, and how old it is, don't apply.
+      { id: 'no', set: { remote_work: false }, skips: ['remote_months', 'employer_years'] },
     ],
   },
   {
-    // Each range counts as its lower end, so "2,850 to 4,000" passes a 2,849 minimum and "2,000 to 2,850" doesn't.
-    id: 'income',
-    factors: ['monthly_income_eur'],
+    // Each option counts as its lower end, so a route's minimum is never met by guesswork.
+    id: 'remote_months',
+    factors: ['remote_months'],
     input: 'options',
     options: [
-      { id: 'under_1000', set: { monthly_income_eur: 500 } },
-      { id: '1000_2000', set: { monthly_income_eur: 1000 } },
-      { id: '2000_2850', set: { monthly_income_eur: 2000 } },
-      { id: '2850_4000', set: { monthly_income_eur: 2850 } },
-      { id: 'over_4000', set: { monthly_income_eur: 4000 } },
+      { id: 'under_3', set: { remote_months: 1 } },
+      { id: '3_12', set: { remote_months: 3 } },
+      { id: 'over_12', set: { remote_months: 12 } },
     ],
   },
+  {
+    id: 'employer_years',
+    factors: ['employer_years'],
+    input: 'options',
+    options: [
+      { id: 'under_1', set: { employer_years: 0.5 } },
+      { id: '1_3', set: { employer_years: 1 } },
+      { id: 'over_3', set: { employer_years: 3 } },
+      { id: 'unsure', set: {} },
+    ],
+  },
+  // The amount itself, in tomans, euros or dollars; Django turns it into euros at the newest rate.
+  { id: 'income', factors: ['monthly_income_eur'], input: 'money' },
   {
     id: 'german',
     factors: ['german_level'],
@@ -113,6 +137,8 @@ export const ASKS: readonly Ask[] = [
     input: 'options',
     options: levels('partner', ['single', 'skilled', 'english', 'other']),
   },
+  // Children coming along: some routes ask more income for each.
+  { id: 'children', factors: ['children'], input: 'number', min: 0, max: 8, start: 0 },
   {
     id: BUDGET,
     factors: [BUDGET],

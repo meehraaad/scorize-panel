@@ -94,7 +94,7 @@ describe('the budget', () => {
 });
 
 describe('digital nomad questions', () => {
-  it('asks remote work and income, and an income range counts as its lower end', () => {
+  it('asks remote work, then the income as an amount', () => {
     const nomad = route(8, 'Spain', [
       'education',
       'work_years',
@@ -106,8 +106,15 @@ describe('digital nomad questions', () => {
     answered.add('remote_work');
     const income = nextAsk([nomad], 'work', answered);
     expect(income?.id).toBe('income');
-    expect(income?.options?.find((o) => o.id === '2850_4000')?.set).toEqual({
-      monthly_income_eur: 2850,
-    });
+    expect(income?.input).toBe('money');
+  });
+
+  it('asks how long with the company only of people who work remotely', () => {
+    const remote = ASKS.find((ask) => ask.id === 'remote_work');
+    expect(remote?.options?.find((o) => o.id === 'no')?.skips).toEqual([
+      'remote_months',
+      'employer_years',
+    ]);
+    expect(ASKS.find((ask) => ask.id === 'children')?.input).toBe('number');
   });
 });
