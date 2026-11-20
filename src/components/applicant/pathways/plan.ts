@@ -75,6 +75,28 @@ export const ASKS: readonly Ask[] = [
   },
   { id: 'work_years', factors: ['work_years'], input: 'number', min: 0, max: 40, start: 3 },
   {
+    id: 'remote_work',
+    factors: ['remote_work'],
+    input: 'options',
+    options: [
+      { id: 'yes', set: { remote_work: true } },
+      { id: 'no', set: { remote_work: false } },
+    ],
+  },
+  {
+    // Each range counts as its lower end, so "2,850 to 4,000" passes a 2,849 minimum and "2,000 to 2,850" doesn't.
+    id: 'income',
+    factors: ['monthly_income_eur'],
+    input: 'options',
+    options: [
+      { id: 'under_1000', set: { monthly_income_eur: 500 } },
+      { id: '1000_2000', set: { monthly_income_eur: 1000 } },
+      { id: '2000_2850', set: { monthly_income_eur: 2000 } },
+      { id: '2850_4000', set: { monthly_income_eur: 2850 } },
+      { id: 'over_4000', set: { monthly_income_eur: 4000 } },
+    ],
+  },
+  {
     id: 'german',
     factors: ['german_level'],
     input: 'options',

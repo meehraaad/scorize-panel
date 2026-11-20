@@ -36,6 +36,8 @@ const FACTORS = [
   { name: 'english_level', kind: 'level', choices: ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'] },
   { name: 'german_level', kind: 'level', choices: ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'] },
   { name: 'job_offer', kind: 'yes_no', choices: [] },
+  { name: 'remote_work', kind: 'yes_no', choices: [] },
+  { name: 'monthly_income_eur', kind: 'number', choices: [] },
 ] as const;
 
 const now = () => new Date().toISOString();
