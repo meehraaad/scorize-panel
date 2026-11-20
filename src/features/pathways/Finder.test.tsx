@@ -142,9 +142,8 @@ describe('pathway finder', () => {
     expect(await screen.findByText('شرط لازم ۳')).toBeInTheDocument();
     expect(screen.getAllByText('و')).toHaveLength(2);
     expect(screen.getAllByText('یا')).toHaveLength(1);
-    await user.click(
-      screen.getAllByRole('button', { name: '+ یا (گزینه‌ی دیگری به جای این)' })[1]!,
-    );
+    const [, second] = screen.getAllByRole('button', { name: '+ یا (گزینه‌ی دیگری به جای این)' });
+    if (second) await user.click(second);
     expect(screen.getAllByText('یا')).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: '+ شرط لازم دیگر' }));
     expect(screen.getByText('شرط لازم ۴')).toBeInTheDocument();
