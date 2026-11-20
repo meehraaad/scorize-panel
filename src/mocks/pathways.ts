@@ -13,9 +13,9 @@ const SUPERUSER = 6;
 /** Who keeps the pathways: a superuser, the sales manager (Reza, 4) or the marketing manager. */
 const MANAGERS: ReadonlySet<number | null> = new Set([SUPERUSER, 4]);
 const manages = () => MANAGERS.has(storage.get());
-const GERMANY = { id: 1, name: 'آلمان' };
-const CANADA = { id: 2, name: 'کانادا' };
-const AUSTRALIA = { id: 3, name: 'استرالیا' };
+const GERMANY = { id: 1, name: 'آلمان', code: 'DE' };
+const CANADA = { id: 2, name: 'کانادا', code: 'CA' };
+const AUSTRALIA = { id: 3, name: 'استرالیا', code: 'AU' };
 const COUNTRIES = [GERMANY, CANADA, AUSTRALIA];
 const FACTORS = [
   { name: 'age', kind: 'number', choices: [] },

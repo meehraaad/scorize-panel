@@ -333,7 +333,9 @@
   "countries": {
     "years": "years",
     "years_of": "Years in {{country}}",
-    "how_fully": "How fully {{country}} recognises your degree"
+    "how_fully": "How fully {{country}} recognises your degree",
+    "years_note_one": "{{n}} year",
+    "years_note_other": "{{n}} years"
   },
   "improve": {
     "title": "What would help you",
@@ -347,5 +349,8 @@
     "skills_assessment": "With a skills assessment",
     "gain": "{{text}}, you get {{points}} more points",
     "passes": "{{text}}, you get {{points}} more points and pass"
-  }
+  },
+  "restart": "Start again",
+  "close": "Close",
+  "home": "Go to the Scorize site"
 }

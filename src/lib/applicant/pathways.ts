@@ -22,7 +22,8 @@ export interface Factor {
 
 export interface FinderPathway {
   id: number;
-  country: { id: number; name: string };
+  /** `code`: ISO 3166 (DE) for its flag; empty or absent (older servers) when unknown. */
+  country: { id: number; name: string; code?: string };
   /** Persian when staff gave one. */
   name: string;
   pass_mark: number | null;

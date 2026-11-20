@@ -21,15 +21,7 @@ const card =
 const segment =
   'flex min-h-11 min-w-0 cursor-pointer items-center justify-center rounded-[10px] px-2 py-1.5 text-center text-sm leading-5 font-semibold text-balance text-text-2 sm:px-3 has-checked:bg-surface has-checked:text-text has-checked:shadow-panel has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
-/**
- * A large answer of a one-question-per-screen quiz (the pathway finder): a label, a line under it
- * and `extra` at the end (its key on the keyboard); checked = primary ring on the tint.
- */
-const answer =
-  'flex min-h-16 cursor-pointer items-center gap-4 rounded-2xl bg-canvas px-5 py-4 text-start transition-colors hover:bg-track lg:px-6 has-checked:bg-tint has-checked:shadow-[inset_0_0_0_2px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
-
 const LOOKS = {
-  answers: { list: 'grid gap-3 lg:grid-cols-2', item: answer },
   pills: { list: 'flex flex-wrap gap-2', item: pill },
   tiles: { list: 'grid gap-2 sm:grid-cols-2', item: tile },
   squares: { list: 'grid grid-cols-2 gap-2 sm:grid-cols-4', item: square },
@@ -43,12 +35,9 @@ const LOOKS = {
 export interface Choice<T extends string> {
   value: T;
   label: string;
-  /** `tiles`, `cards` and `answers` only: a line under the label. */
+  /** `tiles` and `cards` only: a line under the label. */
   hint?: string | undefined;
-  /**
-   * `cards`: more under the hint (a kind of contract's services and price); `answers`: at the
-   * end of the row (its key on the keyboard).
-   */
+  /** `cards`: more under the hint (a kind of contract's services and price). */
   extra?: ReactNode;
 }
 
@@ -73,7 +62,7 @@ export function ChoiceGroup<T extends string>({
   /**
    * `pills`: a wrapping row of short labels; `tiles`: a grid of labelled boxes; `cards`: tiles with
    * a radio dot; `squares`: short centred labels, four in a row; `segmented`: a few short labels
-   * on one track; `answers`: large rows of a one-question-per-screen quiz.
+   * on one track. (A quiz's large answers: `AnswerGroup`.)
    */
   look?: keyof typeof LOOKS;
   /** Under the choices: what the pick does. */
@@ -101,25 +90,6 @@ export function ChoiceGroup<T extends string>({
             />
             {look === 'pills' || look === 'segmented' || look === 'squares' ? (
               option.label
-            ) : look === 'answers' ? (
-              <>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-lg leading-7 font-semibold">{option.label}</span>
-                  {option.hint && (
-                    <span className="text-sm leading-6 text-text-2">{option.hint}</span>
-                  )}
-                </span>
-                {value === option.value ? (
-                  <span
-                    aria-hidden="true"
-                    className="flex size-7 flex-none items-center justify-center rounded-full bg-primary text-on-primary"
-                  >
-                    <Icon name="check" size={16} />
-                  </span>
-                ) : (
-                  option.extra
-                )}
-              </>
             ) : look === 'cards' ? (
               <>
                 <span
@@ -152,45 +122,6 @@ export function ChoiceGroup<T extends string>({
       </div>
       {hint && <span className="text-sm leading-6 text-text-2">{hint}</span>}
     </fieldset>
-  );
-}
-
-/**
- * One of several picks in the `answers` look (a quiz's "which countries"): a checkbox row, and what to
- * ask about the pick under it once it is checked (years there).
- */
-export function CheckTile({
-  label,
-  checked,
-  onChange,
-  children,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <label className={answer}>
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(event) => onChange(event.target.checked)}
-          className="sr-only"
-        />
-        <span className="min-w-0 flex-1 text-lg leading-7 font-semibold">{label}</span>
-        <span
-          aria-hidden="true"
-          className={`flex size-7 flex-none items-center justify-center rounded-full ${
-            checked ? 'bg-primary text-on-primary' : 'border-[1.5px] border-line-3'
-          }`}
-        >
-          {checked && <Icon name="check" size={16} />}
-        </span>
-      </label>
-      {checked && children && <div className="ps-5">{children}</div>}
-    </div>
   );
 }
 

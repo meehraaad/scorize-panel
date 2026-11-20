@@ -83,6 +83,8 @@ const PAGES: PageCase[] = [
     '/estimate',
     '/pathways',
     '/background',
+    // The pathway finder alone, without the panel's menus.
+    '/finder',
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
   { path: '/', user: MARYAM },
