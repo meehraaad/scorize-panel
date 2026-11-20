@@ -800,6 +800,60 @@ describe('contract builder and agreement desk (S64)', () => {
     ).toHaveLength(1);
   });
 
+  it("the manager lists a kind's services, each fixed or optional, with one price (SVC7)", async () => {
+    const user = userEvent.setup();
+    let sent: unknown = null;
+    const listen = ({ request }: { request: Request }) => {
+      if (request.method === 'PUT' && request.url.includes('/contract/services/'))
+        void request
+          .clone()
+          .json()
+          .then((body: unknown) => {
+            sent = body;
+          });
+    };
+    server.events.on('request:start', listen);
+    renderApp('/sales/manager/contract/standard');
+    const prices = await screen.findByRole('region', { name: '۱. خدمات و قیمت' });
+    await user.selectOptions(within(prices).getByLabelText('افزودن خدمت'), 'سرچ');
+    await user.click(within(prices).getByRole('button', { name: 'افزودن' }));
+    await user.selectOptions(within(prices).getByLabelText('افزودن خدمت'), 'نگارش');
+    await user.click(within(prices).getByRole('button', { name: 'افزودن' }));
+    // A listed kind has one price: the per-service prices are gone until it's set.
+    expect(within(prices).queryByLabelText('قیمت پذیرش')).not.toBeInTheDocument();
+    expect(within(prices).getByText('قیمت قرارداد را بنویسید.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ذخیره' })).toBeDisabled();
+    await user.type(within(prices).getByLabelText('قیمت قرارداد'), '100000000');
+    const writing = within(prices).getByRole('group', { name: 'نگارش: ثابت یا اختیاری' });
+    await user.click(within(writing).getByRole('radio', { name: 'اختیاری' }));
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(await screen.findByText('تنظیمات ذخیره شد.')).toBeInTheDocument();
+    expect(sent).toEqual({
+      price: 100_000_000,
+      rows: [
+        { key: 'search', mode: 'fixed' },
+        { key: 'writing', mode: 'optional' },
+      ],
+    });
+    server.events.removeListener('request:start', listen);
+  });
+
+  it('a seller turns optional services on or off and the price stays the same (SVC7)', async () => {
+    loginAs(NIMA);
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105/offer?template=2');
+    await screen.findByRole('heading', { level: 1, name: 'دکترای آمریکا' });
+    const card = screen.getByRole('region', { name: 'خدمات قرارداد' });
+    expect(within(card).getByRole('checkbox', { name: /سرچ/ })).toBeChecked();
+    expect(within(card).getByRole('checkbox', { name: /سرچ/ })).toBeDisabled();
+    const writing = within(card).getByRole('checkbox', { name: /نگارش/ });
+    expect(writing).not.toBeChecked();
+    expect(within(card).getByText(/قیمت قرارداد: ۱۰۰٬?۰۰۰٬?۰۰۰/)).toBeInTheDocument();
+    await user.click(writing);
+    expect(writing).toBeChecked();
+    expect(within(card).getByText(/قیمت قرارداد: ۱۰۰٬?۰۰۰٬?۰۰۰/)).toBeInTheDocument();
+  });
+
   it('the manager reads the whole contract before approving (S68)', async () => {
     const user = userEvent.setup();
     renderApp('/sales/manager/approvals');

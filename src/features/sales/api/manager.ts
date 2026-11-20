@@ -715,6 +715,25 @@ export interface ContractTemplate {
   is_active: boolean;
 }
 
+export type ServiceMode = 'fixed' | 'optional';
+
+/** A service a kind of contract includes (docs/backend-changes.md SVC7). */
+export interface ContractServiceRow {
+  key: string;
+  name: string;
+  mode: ServiceMode;
+}
+
+/** The kind's services and its one price; null while Django's client services are switched off. */
+export interface BuilderServices {
+  /** The whole contract, in `rules.currency`; null until set. */
+  price: number | null;
+  /** Empty: the kind is priced the old way, by `prices`. */
+  rows: ContractServiceRow[];
+  /** Every service a manager can add (Django's `ServiceType`s). */
+  catalog: { key: string; name: string; team: number | null }[];
+}
+
 export interface ContractBuilder {
   /** The kind of contract shown. */
   template: ContractTemplate;
@@ -728,6 +747,8 @@ export interface ContractBuilder {
   /** The blanks the seller fills (S69), and what the system fills with the preview's samples. */
   variables: ContractVariable[];
   builtins: BuiltinVariable[];
+  /** Absent from an older Django. */
+  services?: BuilderServices | null;
 }
 
 const BUILDER_API = `${MANAGER_API}/contract`;
@@ -811,6 +832,11 @@ export const useSavePrices = (template: number | null) =>
   useBuilderMutation(
     (prices: { feature: BuilderPrice['feature']; price: number; is_active: boolean }[]) =>
       api(`${BUILDER_API}/prices/${kindQuery(template)}`, { method: 'PUT', body: { prices } }),
+  );
+
+export const useSaveServices = (template: number | null) =>
+  useBuilderMutation((body: { price: number | null; rows: { key: string; mode: ServiceMode }[] }) =>
+    api(`${BUILDER_API}/services/${kindQuery(template)}`, { method: 'PUT', body }),
   );
 
 export const useSaveRules = (template: number | null) =>

@@ -3,6 +3,7 @@ import type {
   ApplyFile,
   NewSale,
   ClauseEdit,
+  ContractFeature,
   Offer,
   OfferData,
   Product,
@@ -304,7 +305,20 @@ function cleanClauses(
   return kept;
 }
 
-/** The kinds of contract a seller starts from (S68): the standard one, and free apply to Turkey. */
+/** SVC7: a kind that lists its services, with one price for the whole contract. */
+const PHD_SERVICES: NonNullable<OfferData['options']['services']> = {
+  price: 100_000_000,
+  services: [
+    { key: 'search', name: 'سرچ', mode: 'fixed' },
+    { key: 'correspondence', name: 'مکاتبه با استاد', mode: 'fixed' },
+    { key: 'writing', name: 'نگارش', mode: 'optional' },
+  ],
+};
+
+/**
+ * The kinds of contract a seller starts from (S68): the standard one, free apply to Turkey, and a
+ * PhD contract that lists its services (SVC7).
+ */
 export const OFFER_TEMPLATES: OfferData['options']['templates'] = [
   {
     id: null,
@@ -325,6 +339,15 @@ export const OFFER_TEMPLATES: OfferData['options']['templates'] = [
     features: [{ key: 'admission', price: 0 }],
     articles: 1,
     variables: 0,
+  },
+  {
+    id: 2,
+    name: 'دکترای آمریکا',
+    description: 'سرچ و مکاتبه با استاد، نگارش به انتخاب مشتری',
+    features: [],
+    services: PHD_SERVICES,
+    articles: 3,
+    variables: 1,
   },
 ];
 
@@ -364,7 +387,24 @@ const TURKEY_OPTIONS: OfferData['options'] = {
   variables: [],
 };
 
-const optionsOf = (template: number | null) => (template === 1 ? TURKEY_OPTIONS : OFFER_OPTIONS);
+/** Django's options of the PhD kind: its services and one price, no per-service prices. */
+const PHD_OPTIONS: OfferData['options'] = {
+  ...OFFER_OPTIONS,
+  template: 2,
+  features: [],
+  services: PHD_SERVICES,
+};
+
+const optionsOf = (template: number | null) =>
+  template === 1 ? TURKEY_OPTIONS : template === 2 ? PHD_OPTIONS : OFFER_OPTIONS;
+
+/** Django's `legacy_features`: the old ticks a contract with these services gets. */
+const legacyFeatures = (keys: string[]): ContractFeature[] => {
+  const features = new Set<ContractFeature>(
+    keys.map((key) => (key === 'writing' ? 'writing' : key === 'visa' ? 'visa' : 'admission')),
+  );
+  return (['admission', 'visa', 'writing'] as const).filter((key) => features.has(key));
+};
 
 const customerOrError = (data: SalesState, id: unknown) =>
   data.customers.find((item) => item.id === Number(id)) ?? null;
@@ -463,9 +503,25 @@ export const salesCustomerHandlers = [
     if (offer.template !== null && !OFFER_TEMPLATES.some((kind) => kind.id === offer.template))
       return HttpResponse.json({ template: ['invalid'] }, { status: 400 });
     const options = optionsOf(offer.template);
+    const listed = options.services ?? null;
+    if (listed) {
+      // Django's `chosen`: every fixed service, and the optional ones the seller sent.
+      const sent = offer.services ?? [];
+      if (sent.some((key) => !listed.services.some((row) => row.key === key)))
+        return HttpResponse.json({ services: ['unknown'] }, { status: 400 });
+      offer.services = listed.services
+        .filter((row) => row.mode === 'fixed' || sent.includes(row.key))
+        .map((row) => row.key);
+      if (!offer.services.some((key) => key !== 'writing'))
+        return HttpResponse.json({ services: ['writing_only'] }, { status: 400 });
+      offer.features = legacyFeatures(offer.services);
+    } else delete offer.services;
     if (offer.features.length === 0 || offer.countries.length === 0)
       return HttpResponse.json({ features: ['required'] }, { status: 400 });
-    if (offer.features.some((key) => !options.features.some((entry) => entry.key === key)))
+    if (
+      !listed &&
+      offer.features.some((key) => !options.features.some((entry) => entry.key === key))
+    )
       return HttpResponse.json({ features: ['no_price'] }, { status: 400 });
     if (action === 'send' && offer.discount > options.approval_above)
       return HttpResponse.json({ discount: ['needs_approval'] }, { status: 400 });
@@ -478,10 +534,12 @@ export const salesCustomerHandlers = [
       offer.schedule.some((row) => row.amount < 1 || (row.when === 'date' && !row.date))
     )
       return HttpResponse.json({ schedule: ['invalid'] }, { status: 400 });
-    const total = offer.features.reduce(
-      (sum, key) => sum + (options.features.find((entry) => entry.key === key)?.price ?? 0),
-      0,
-    );
+    const total = listed
+      ? (listed.price ?? 0)
+      : offer.features.reduce(
+          (sum, key) => sum + (options.features.find((entry) => entry.key === key)?.price ?? 0),
+          0,
+        );
     const amount = Math.round(total * (1 - offer.discount / 100));
     if (action !== 'save' && offer.schedule.reduce((sum, row) => sum + row.amount, 0) !== amount)
       return HttpResponse.json({ schedule: ['total'] }, { status: 400 });

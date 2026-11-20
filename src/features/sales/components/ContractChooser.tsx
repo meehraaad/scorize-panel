@@ -55,8 +55,17 @@ export function ContractChooser({
       );
   };
 
-  /** From the cheapest service it offers; free when it costs nothing. */
+  /**
+   * From the cheapest service it offers; free when it costs nothing. A kind that lists its
+   * services (SVC7) has one price for the whole contract.
+   */
   const price = (row: OfferTemplate) => {
+    if (row.services)
+      return row.services.price === null
+        ? t('chooser.noPrice')
+        : row.services.price === 0
+          ? t('chooser.free')
+          : s.exact(row.services.price, row.currency ?? 'IRT');
     const paid = row.features.map((feature) => feature.price).filter((amount) => amount > 0);
     return paid.length
       ? t('chooser.from', { price: s.exact(Math.min(...paid), row.currency ?? 'IRT') })
@@ -111,12 +120,18 @@ export function ContractChooser({
             extra: (
               <span className="mt-1.5 flex flex-col gap-1.5">
                 <span className="flex flex-wrap gap-1.5">
-                  {row.features.map((feature) => (
+                  {(row.services
+                    ? row.services.services.map((item) => ({ key: item.key, name: item.name }))
+                    : row.features.map((feature) => ({
+                        key: feature.key,
+                        name: t(`apply.feature.${feature.key}`),
+                      }))
+                  ).map((item) => (
                     <span
-                      key={feature.key}
+                      key={item.key}
                       className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-medium text-text-2"
                     >
-                      {t(`apply.feature.${feature.key}`)}
+                      {item.name}
                     </span>
                   ))}
                 </span>
