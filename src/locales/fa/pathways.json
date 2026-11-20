@@ -333,7 +333,9 @@
   "countries": {
     "years": "سال",
     "years_of": "چند سال در {{country}}",
-    "how_fully": "مدرکت در {{country}} چقدر شناخته می‌شود"
+    "how_fully": "مدرکت در {{country}} چقدر شناخته می‌شود",
+    "years_note_one": "{{n}} سال",
+    "years_note_other": "{{n}} سال"
   },
   "improve": {
     "title": "پیشنهاد برای تو",
@@ -347,5 +349,8 @@
     "skills_assessment": "اگر ارزیابی مهارت بگیری",
     "gain": "{{text}}، {{points}} امتیاز بیشتر می‌گیری",
     "passes": "{{text}}، {{points}} امتیاز بیشتر می‌گیری و از حد لازم رد می‌شوی"
-  }
+  },
+  "restart": "از اول",
+  "close": "بستن",
+  "home": "رفتن به سایت اسکورایز"
 }

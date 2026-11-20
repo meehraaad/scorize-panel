@@ -43,6 +43,7 @@ import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedL
  *   /login                 AuthLayout   login, sign-up, password reset
  *   /start                 →            after login: the user's panel, or /choose
  *   /choose                             which panel to start in (several panels, first time or "ask")
+ *   /finder                             the pathway finder alone (no panel menus)
  *   /account, /settings,   PanelLayout  shared pages, shown inside the last-used panel
  *   /me                                (/me: a staff member's own KPIs and pay)
  *   /, /supervisor, …      PanelLayout  one route tree per panel (src/panels/*), guarded by role
@@ -155,6 +156,14 @@ const pageRoutes: RouteObject[] = [
       return panelsFor(user).length < 2 ? redirect(START_PATH) : null;
     },
     ...lazyPage(() => import('./ChoosePanelPage')),
+    ErrorBoundary: ErrorPage,
+    HydrateFallback: BootFallback,
+  },
+  // The pathway finder alone: the logo and the quiz, no panel menus (links in ads and messages).
+  // Its loader comes with its page, so the first load only knows the path.
+  {
+    path: 'finder',
+    lazy: () => import('@/features/pathways/FinderPage').then((page) => page.alone),
     ErrorBoundary: ErrorPage,
     HydrateFallback: BootFallback,
   },

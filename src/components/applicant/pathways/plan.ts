@@ -7,6 +7,8 @@ import type { Answers, CountryAnswers, FactorValue, FinderPathway } from '@/lib/
  */
 
 export type Goal = 'work' | 'study' | 'any';
+/** A route's country: its id, name and flag code. */
+export type Country = FinderPathway['country'];
 
 /** An option of a question: the factors it fills (`english`: an IELTS band fills both). */
 export interface AskOption {
@@ -118,8 +120,8 @@ export function countriesLeft(
   pathways: readonly FinderPathway[],
   goal: Goal,
   answered: ReadonlySet<string>,
-): { id: number; name: string; left: number }[] {
-  const byCountry = new Map<number, { id: number; name: string; left: number }>();
+): (Country & { left: number })[] {
+  const byCountry = new Map<number, Country & { left: number }>();
   const done = new Set<number>();
   for (const pathway of pathways) {
     if (!suits(pathway, goal)) continue;
@@ -139,9 +141,9 @@ export function countryProgress(
   pathways: readonly FinderPathway[],
   goal: Goal,
   answered: ReadonlySet<string>,
-): { id: number; name: string; total: number; left: number }[] {
+): (Country & { total: number; left: number })[] {
   const none = new Set<string>();
-  const byCountry = new Map<number, { id: number; name: string; total: number; left: number }>();
+  const byCountry = new Map<number, Country & { total: number; left: number }>();
   for (const pathway of pathways) {
     if (!suits(pathway, goal)) continue;
     const left = remainingAsks(pathway, answered).length;
@@ -166,12 +168,8 @@ export function asksLeft(
 }
 
 /** The countries a `countries` question is about: those of the goal's routes that need its factor. */
-export function countriesFor(
-  pathways: readonly FinderPathway[],
-  goal: Goal,
-  ask: Ask,
-): { id: number; name: string }[] {
-  const found = new Map<number, { id: number; name: string }>();
+export function countriesFor(pathways: readonly FinderPathway[], goal: Goal, ask: Ask): Country[] {
+  const found = new Map<number, Country>();
   for (const pathway of pathways)
     if (suits(pathway, goal) && ask.factors.some((factor) => pathway.factors.includes(factor)))
       found.set(pathway.country.id, pathway.country);
