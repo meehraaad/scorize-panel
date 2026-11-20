@@ -216,6 +216,11 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
           </ul>
         </div>
       )}
+      {(result.near?.length ?? 0) > 0 && (
+        <Note icon="wallet" title={t('near.title')}>
+          {t('near.body', { list: f.list(result.near ?? []) })}
+        </Note>
+      )}
       {steps.length > 0 && (
         <Note icon="rise" title={t('improve.title')} good>
           <ul className="m-0 flex list-none flex-col gap-1 p-0">

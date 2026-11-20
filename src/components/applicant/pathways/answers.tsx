@@ -4,10 +4,19 @@ import { Button } from '@/components/ui/Button';
 import { AnswerGroup, CheckTile } from '@/components/ui/AnswerChoices';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { NumberStepper } from '@/components/ui/NumberStepper';
-import type { Answers, CountryAnswers } from '@/lib/applicant/pathways';
+import { TextField } from '@/components/ui/TextField';
+import type { Answers, CountryAnswers, FinderOptions } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinDigits } from '@/lib/text';
-import type { Ask, Country, EnglishScale } from './plan';
+import {
+  INCOME_AMOUNT,
+  INCOME_CURRENCIES,
+  INCOME_CURRENCY,
+  type Ask,
+  type Country,
+  type EnglishScale,
+  type IncomeCurrency,
+} from './plan';
 import { Flag, LevelBars, QuizIcon, type QuizIconName } from './art';
 import { key } from './keys';
 import { PinnedContext } from './pinned';
@@ -15,7 +24,14 @@ import { PinnedContext } from './pinned';
 /** How long a picked answer stays shown before the next question comes in. */
 const PICK_DELAY = 280;
 /** Questions whose options rise in level: drawn as a level meter. */
-const LEVEL_ASKS = new Set(['education', 'english', 'german', 'budget', 'income']);
+const LEVEL_ASKS = new Set([
+  'education',
+  'english',
+  'german',
+  'budget',
+  'remote_months',
+  'employer_years',
+]);
 /** Yes/no questions, drawn as yes and no. */
 const YES_NO_ICONS: Record<string, QuizIconName> = { yes: 'briefcase', no: 'none' };
 /** Options that mean "I don't know": drawn without a level. */
@@ -169,13 +185,16 @@ export function AskAnswer({
   onBack,
   onAnswer,
   onShowResults,
+  rates,
 }: {
   ask: Ask;
   /** `countries` questions: the countries asked about. */
   countries: Country[];
   busy: boolean;
   onBack: () => void;
-  onAnswer: (set: Answers, byCountry?: CountryAnswers) => void;
+  onAnswer: (set: Answers, byCountry?: CountryAnswers, skips?: readonly string[]) => void;
+  /** Today's rates, to show an income in euros as it is typed. */
+  rates?: FinderOptions['rates'] | undefined;
   /** Once a first route is ready: stop here and see the routes so far. */
   onShowResults?: (() => void) | undefined;
 }) {
@@ -259,7 +278,7 @@ export function AskAnswer({
           busy={busy}
           onPick={(id) => {
             const option = options.find((candidate) => candidate.id === id);
-            if (option) onAnswer(option.set);
+            if (option) onAnswer(option.set, undefined, option.skips);
           }}
         />
         <Actions onBack={onBack} busy={busy} hint={t('keys_hint')}>
@@ -268,6 +287,21 @@ export function AskAnswer({
       </>
     );
   }
+  if (ask.input === 'money')
+    return (
+      <MoneyAnswer
+        formId={formId}
+        busy={busy}
+        rates={rates}
+        onAnswer={onAnswer}
+        actions={(ready) => (
+          <Actions onBack={onBack} busy={busy}>
+            <Next formId={formId} disabled={busy || !ready} />
+            {early}
+          </Actions>
+        )}
+      />
+    );
   const label = t(key(`asks.${ask.id}.label`));
   return (
     <>
@@ -428,6 +462,95 @@ function CountriesAnswer({
         />
       </form>
       {actions(ready)}
+    </>
+  );
+}
+
+/** Tomans are typed in millions ("۱۵۰" million), euros and dollars as they are. */
+const TOMAN_UNIT = 1_000_000;
+
+/**
+ * The income itself: an amount, in tomans by default or in euros or dollars (people paid from abroad know it in
+ * those), shown in euros at today's rate as it is typed, since routes ask a minimum in euros.
+ */
+function MoneyAnswer({
+  formId,
+  busy,
+  rates,
+  onAnswer,
+  actions,
+}: {
+  formId: string;
+  busy: boolean;
+  rates?: FinderOptions['rates'] | undefined;
+  onAnswer: (set: Answers) => void;
+  actions: (ready: boolean) => ReactNode;
+}) {
+  const { t } = useTranslation('pathways');
+  const f = useFormat();
+  const [currency, setCurrency] = useState<IncomeCurrency>('toman');
+  const [text, setText] = useState('');
+  const typed = Number(toLatinDigits(text).replace(/[^\d.]/g, ''));
+  const amount = Number.isFinite(typed) && typed > 0 ? typed : null;
+  const sent =
+    amount === null ? null : Math.round(currency === 'toman' ? amount * TOMAN_UNIT : amount);
+  const tomans =
+    sent === null
+      ? null
+      : currency === 'toman'
+        ? sent
+        : currency === 'usd' && rates?.usd
+          ? sent * rates.usd
+          : null;
+  const euros =
+    currency === 'eur'
+      ? sent
+      : tomans !== null && rates?.eur
+        ? Math.round(tomans / rates.eur)
+        : null;
+  const label = t(key(`asks.income.label_${currency}`));
+  return (
+    <>
+      <form
+        id={formId}
+        className="flex max-w-md flex-col gap-5"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!busy && sent !== null)
+            onAnswer({ [INCOME_AMOUNT]: sent, [INCOME_CURRENCY]: currency });
+        }}
+      >
+        <ChoiceGroup
+          legend={t('asks.income.currency')}
+          hideLegend
+          look="segmented"
+          options={INCOME_CURRENCIES.map((value) => ({
+            value,
+            label: t(key(`asks.income.currencies.${value}`)),
+          }))}
+          value={currency}
+          onChange={(value) => {
+            setCurrency(value);
+            setText('');
+          }}
+        />
+        <TextField
+          size="lg"
+          label={label}
+          inputMode="decimal"
+          autoComplete="off"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          hint={
+            currency !== 'eur' && euros !== null
+              ? t('asks.income.in_euros', { amount: f.number(euros) })
+              : currency !== 'eur' && sent !== null
+                ? t('asks.income.no_rate')
+                : t('asks.income.hint')
+          }
+        />
+      </form>
+      {actions(sent !== null)}
     </>
   );
 }

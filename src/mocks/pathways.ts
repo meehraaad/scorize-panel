@@ -38,6 +38,9 @@ const FACTORS = [
   { name: 'job_offer', kind: 'yes_no', choices: [] },
   { name: 'remote_work', kind: 'yes_no', choices: [] },
   { name: 'monthly_income_eur', kind: 'number', choices: [] },
+  { name: 'remote_months', kind: 'number', choices: [] },
+  { name: 'employer_years', kind: 'number', choices: [] },
+  { name: 'children', kind: 'number', choices: [] },
 ] as const;
 
 const now = () => new Date().toISOString();
@@ -296,10 +299,17 @@ function evaluate(p: PathwayDetail, given: Answers): PathwayResult {
     answers.english_level = ieltsLevel(answers.english_ielts);
   const order = (factor: string, value: string) =>
     (factor === 'education' ? EDUCATION : LEVELS).indexOf(value);
+  // Django: a minimum that rises with the family (`per_first`, `per_more`).
+  const coming =
+    (answers.partner && answers.partner !== 'single' ? 1 : 0) + Number(answers.children ?? 0);
+  const minimumFor = (r: PathwayInput['requirements'][number]) =>
+    Number(r.minimum || -Infinity) +
+    (r.per_first ?? 0) * Math.min(coming, 1) +
+    (r.per_more ?? 0) * Math.max(coming - 1, 0);
   const holds = (r: PathwayInput['requirements'][number]) => {
     const answer = answers[r.factor];
     if (answer === undefined) return false;
-    if (typeof answer === 'number') return answer >= Number(r.minimum || -Infinity);
+    if (typeof answer === 'number') return answer >= minimumFor(r);
     if (typeof answer === 'string') return order(r.factor, answer) >= order(r.factor, r.minimum);
     return answer === (r.value === 'yes');
   };
@@ -331,6 +341,7 @@ export const pathwayHandlers = [
     return HttpResponse.json({
       pathways: usable().map(finderPathway),
       factors: FACTORS,
+      rates: { eur: TOMANS.e, usd: TOMANS.u },
     });
   }),
   http.post('/api/applicant/v1/pathways/check/', async ({ request }) => {
@@ -339,11 +350,15 @@ export const pathwayHandlers = [
       answers: Answers;
       by_country?: Record<string, Answers>;
       budget?: FinderBudget | null;
-      income_toman?: number | null;
+      income?: { amount: number; currency: 'toman' | 'eur' | 'usd' } | null;
     };
-    // Django: income in tomans becomes euros at the newest rate.
-    if (body.income_toman != null && body.answers.monthly_income_eur === undefined)
-      body.answers.monthly_income_eur = Math.round(body.income_toman / (TOMANS.e ?? 1));
+    // Django: the income becomes euros at the newest rates.
+    const { income } = body;
+    if (income && body.answers.monthly_income_eur === undefined) {
+      const tomans = income.currency === 'toman' ? income.amount : income.amount * (TOMANS.u ?? 0);
+      body.answers.monthly_income_eur =
+        income.currency === 'eur' ? income.amount : Math.round(tomans / (TOMANS.e ?? 1));
+    }
     // Answers about one country count for that country's routes only (Django: `by_country`).
     const results = usable()
       .map((p) => ({
