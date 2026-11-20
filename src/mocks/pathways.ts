@@ -40,6 +40,13 @@ function seed(): PathwayDetail[] {
     needs_licensed_agent: false,
     review_by: null,
     is_active: true,
+    currency: '' as const,
+    tuition_min: null,
+    tuition_max: null,
+    living_per_year: null,
+    post_study_visa: '',
+    post_study_months: null,
+    after_study: '',
     verified_by: 'امیر عابدی',
     updated_at: '2026-11-19T10:00:00Z',
   };

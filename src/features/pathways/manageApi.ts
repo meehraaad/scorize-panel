@@ -67,6 +67,9 @@ export interface CriterionInput {
   bands: BandInput[];
 }
 
+/** Django's CurrencyUnit without Toman: e euro, u US dollar, c Canadian dollar, p pound. */
+export type StudyCurrency = '' | 'e' | 'u' | 'c' | 'p';
+
 export interface PathwayInput {
   country: number;
   name: string;
@@ -81,6 +84,14 @@ export interface PathwayInput {
   tip: string;
   duration: string;
   cost: PathwayCost;
+  /** A study route's year: all four of currency, tuition min/max and living, or none. */
+  currency: StudyCurrency;
+  tuition_min: number | null;
+  tuition_max: number | null;
+  living_per_year: number | null;
+  post_study_visa: string;
+  post_study_months: number | null;
+  after_study: string;
   review_by: string | null;
   is_active: boolean;
   requirements: RequirementInput[];

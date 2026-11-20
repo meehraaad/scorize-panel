@@ -63,6 +63,13 @@ const SAMPLE: Answers = {
   partner: 'single',
 };
 
+/** A whole number typed in Latin or Persian digits, or null when empty. */
+const numberOf = (text: string) => {
+  const digits = text.replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/\D/g, '');
+  return digits ? Number(digits) : null;
+};
+const numberText = (value: number | null) => (value === null ? '' : String(value));
+
 function Editor({ detail }: { detail: PathwayDetail | null }) {
   const { t } = useTranslation('pathways');
   const navigate = useNavigate();
@@ -485,6 +492,67 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
               onChange={(event) => set('notes', event.target.value)}
             />
           </SectionCard>
+
+          {form.goal !== 'work' && (
+            <SectionCard
+              id="pathway-study"
+              variant="panel"
+              title={t('edit.study')}
+              subtitle={t('edit.study_help')}
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <SelectField
+                  label={t('edit.currency')}
+                  options={(['', 'e', 'u', 'c', 'p'] as const).map((value) => ({
+                    value,
+                    label: t(key(`edit.currencies.${value || 'none'}`)),
+                  }))}
+                  value={form.currency}
+                  onChange={(value) => set('currency', value)}
+                  error={error('currency')}
+                />
+                <TextField
+                  label={t('edit.living_per_year')}
+                  inputMode="numeric"
+                  value={numberText(form.living_per_year)}
+                  onChange={(event) => set('living_per_year', numberOf(event.target.value))}
+                  error={error('living_per_year')}
+                />
+                <TextField
+                  label={t('edit.tuition_min')}
+                  inputMode="numeric"
+                  value={numberText(form.tuition_min)}
+                  onChange={(event) => set('tuition_min', numberOf(event.target.value))}
+                  error={error('tuition_min')}
+                />
+                <TextField
+                  label={t('edit.tuition_max')}
+                  inputMode="numeric"
+                  value={numberText(form.tuition_max)}
+                  onChange={(event) => set('tuition_max', numberOf(event.target.value))}
+                  error={error('tuition_max')}
+                />
+                <TextField
+                  label={t('edit.post_study_visa')}
+                  value={form.post_study_visa}
+                  onChange={(event) => set('post_study_visa', event.target.value)}
+                  error={error('post_study_visa')}
+                />
+                <TextField
+                  label={t('edit.post_study_months')}
+                  inputMode="numeric"
+                  value={numberText(form.post_study_months)}
+                  onChange={(event) => set('post_study_months', numberOf(event.target.value))}
+                  error={error('post_study_months')}
+                />
+              </div>
+              <TextAreaField
+                label={t('edit.after_study')}
+                value={form.after_study}
+                onChange={(event) => set('after_study', event.target.value)}
+              />
+            </SectionCard>
+          )}
         </div>
 
         <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-5">

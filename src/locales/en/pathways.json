@@ -291,7 +291,23 @@
     "try_person": "28, bachelor's, IELTS 6.5, 4 years of work, no German",
     "try_button": "Try it",
     "before": "Before publishing",
-    "before_body": "Compare the requirements and points with the official page, then press \"Checked, publish\". Any later change hides the route from customers until it is checked again."
+    "before_body": "Compare the requirements and points with the official page, then press \"Checked, publish\". Any later change hides the route from customers until it is checked again.",
+    "study": "5. A year of study and after",
+    "study_help": "Give all the costs or none. The admission-chance quiz shows them on the country's card.",
+    "currency": "Currency",
+    "currencies": {
+      "none": "No costs",
+      "e": "Euro",
+      "u": "US dollar",
+      "c": "Canadian dollar",
+      "p": "Pound"
+    },
+    "tuition_min": "Tuition a year, cheapest",
+    "tuition_max": "Tuition a year, dearest",
+    "living_per_year": "Living costs a year",
+    "post_study_visa": "Stay after graduating",
+    "post_study_months": "How long (months)",
+    "after_study": "The way to stay from there"
   },
   "intro": {
     "eyebrow": "Pathway finder",
