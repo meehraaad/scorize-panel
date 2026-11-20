@@ -129,6 +129,25 @@
         "over_8b": "Over 8 billion",
         "unsure": "Not sure yet"
       }
+    },
+    "remote_work": {
+      "title": "Do you work remotely now?",
+      "help": "Employed or freelance, for a company or clients outside the country you want to go to, who let you work from there.",
+      "options": {
+        "yes": "Yes, I work remotely",
+        "no": "No"
+      }
+    },
+    "income": {
+      "title": "What is your monthly income?",
+      "help": "Net, in euros. Digital nomad visas ask a minimum monthly income.",
+      "options": {
+        "under_1000": "Under €1,000",
+        "1000_2000": "€1,000 to €2,000",
+        "2000_2850": "€2,000 to €2,850",
+        "2850_4000": "€2,850 to €4,000",
+        "over_4000": "Over €4,000"
+      }
     }
   },
   "fit": {
@@ -188,7 +207,9 @@
     "shortage_occupation": "Shortage occupation",
     "skills_assessment": "Skills assessment",
     "stay_months": "Months of stay",
-    "partner": "Partner"
+    "partner": "Partner",
+    "remote_work": "Remote work",
+    "monthly_income_eur": "Monthly income (EUR)"
   },
   "choices": {
     "education": {

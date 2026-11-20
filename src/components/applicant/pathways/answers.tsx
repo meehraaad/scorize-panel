@@ -15,7 +15,9 @@ import { PinnedContext } from './pinned';
 /** How long a picked answer stays shown before the next question comes in. */
 const PICK_DELAY = 280;
 /** Questions whose options rise in level: drawn as a level meter. */
-const LEVEL_ASKS = new Set(['education', 'english', 'german', 'budget']);
+const LEVEL_ASKS = new Set(['education', 'english', 'german', 'budget', 'income']);
+/** Yes/no questions, drawn as yes and no. */
+const YES_NO_ICONS: Record<string, QuizIconName> = { yes: 'briefcase', no: 'none' };
 /** Options that mean "I don't know": drawn without a level. */
 const UNSURE = 'unsure';
 /** The partner question's options, drawn as people. */
@@ -248,6 +250,8 @@ export function AskAnswer({
                 <QuizIcon name="none" />
               ) : LEVEL_ASKS.has(ask.id) ? (
                 <LevelBars level={index} of={levels} />
+              ) : ask.id === 'remote_work' && YES_NO_ICONS[option.id] ? (
+                <QuizIcon name={YES_NO_ICONS[option.id] ?? 'none'} />
               ) : ask.id === 'partner' && PARTNER_ICONS[option.id] ? (
                 <QuizIcon name={PARTNER_ICONS[option.id] ?? 'user'} />
               ) : undefined,
