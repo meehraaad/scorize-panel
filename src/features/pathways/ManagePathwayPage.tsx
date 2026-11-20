@@ -16,6 +16,7 @@ import type { Answers, Factor } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { idParam } from '@/lib/router/lazyPage';
 import { toast } from '@/lib/toast';
+import { toLatinDigits } from '@/lib/text';
 import {
   usePathwaysPath,
   managedPathwayQuery,
@@ -296,7 +297,15 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
                               set(
                                 'requirements',
                                 form.requirements.map((r, i) =>
-                                  i === index ? { ...r, factor, ...blankCondition } : r,
+                                  i === index
+                                    ? {
+                                        ...r,
+                                        factor,
+                                        ...blankCondition,
+                                        per_first: null,
+                                        per_more: null,
+                                      }
+                                    : r,
                                 ),
                               )
                             }
@@ -327,6 +336,19 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
                           }
                           error={JSON.stringify(errors[`requirements.${index}`] ?? '') || undefined}
                         />
+                        {factorOf(row.factor)?.kind === 'number' && (
+                          <FamilyFields
+                            value={row}
+                            onChange={(family) =>
+                              set(
+                                'requirements',
+                                form.requirements.map((r, i) =>
+                                  i === index ? { ...r, ...family } : r,
+                                ),
+                              )
+                            }
+                          />
+                        )}
                         <Button
                           variant="danger"
                           className="self-start"
@@ -677,6 +699,45 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
         </aside>
       </div>
     </PageStack>
+  );
+}
+
+/** A number typed in a field, or null when empty. */
+const numberOrNull = (text: string) => {
+  const value = Number(toLatinDigits(text));
+  return text.trim() === '' || !Number.isFinite(value) ? null : value;
+};
+
+/**
+ * A minimum that rises with the family (Spain's digital nomad visa: +75% of the minimum wage for the first person
+ * coming along, +25% for each more). Left empty, it is the same for everyone.
+ */
+function FamilyFields({
+  value,
+  onChange,
+}: {
+  value: Pick<RequirementInput, 'per_first' | 'per_more'>;
+  onChange: (value: Pick<RequirementInput, 'per_first' | 'per_more'>) => void;
+}) {
+  const { t } = useTranslation('pathways');
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm text-text-2">{t('edit.family_help')}</span>
+      <div className="grid gap-3 md:grid-cols-2">
+        <TextField
+          label={t('edit.per_first')}
+          inputMode="decimal"
+          value={value.per_first?.toString() ?? ''}
+          onChange={(event) => onChange({ ...value, per_first: numberOrNull(event.target.value) })}
+        />
+        <TextField
+          label={t('edit.per_more')}
+          inputMode="decimal"
+          value={value.per_more?.toString() ?? ''}
+          onChange={(event) => onChange({ ...value, per_more: numberOrNull(event.target.value) })}
+        />
+      </div>
+    </div>
   );
 }
 

@@ -53,6 +53,14 @@ export type FinderStudy = Omit<StudyInfo, 'source_url' | 'checked_at'>;
 export interface FinderOptions {
   pathways: FinderPathway[];
   factors: Factor[];
+  /** Tomans per euro and per dollar now (null without a rate): an income typed in tomans is shown in euros. */
+  rates?: { eur: number | null; usd: number | null };
+}
+
+/** Net income a month, in tomans, euros or dollars: Django converts it to euros at the newest rates. */
+export interface FinderIncome {
+  amount: number;
+  currency: 'toman' | 'eur' | 'usd';
 }
 
 export type FactorValue = number | string | boolean;
@@ -78,6 +86,8 @@ export interface PathwayResult {
   points: number;
   /** The requirements not met (Persian). */
   missing: string[];
+  /** Money requirements met by less than 10%: a change in the exchange rate can undo them. Absent on older servers. */
+  near?: string[];
   scores: { label: string; points: number; max_points: number }[];
   unanswered: string[];
   /** Best first; empty when it already passes or has no pass mark. Missing from older servers. */
@@ -108,9 +118,9 @@ export const checkPathways = (
   contact: FinderContact,
   byCountry: CountryAnswers = {},
   budget: FinderBudget | null = null,
-  incomeToman: number | null = null,
+  income: FinderIncome | null = null,
 ) =>
   api<PathwayCheck>(`${PATHWAYS_API}/check/`, {
     method: 'POST',
-    body: { answers, by_country: byCountry, budget, income_toman: incomeToman, contact },
+    body: { answers, by_country: byCountry, budget, income, contact },
   });
