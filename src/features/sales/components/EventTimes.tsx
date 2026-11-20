@@ -6,7 +6,7 @@ import { TimeSelect, type TimeOption } from '@/components/ui/TimeSelect';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { useSetFollowUp } from '../api';
+import { useSetFollowUp } from '../api/calendarMutations';
 import { useChangeVisit } from '../api/visits';
 import { MINUTE } from '../consultationStatus';
 

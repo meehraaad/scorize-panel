@@ -28,6 +28,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       clientServices: true,
       officeHours: true,
       phoneTeams: true,
+      phoneExtensions: true,
       phoneMenus: true,
       phoneVoices: true,
     },
@@ -40,6 +41,7 @@ const NIMA = 3; // seller
 const REZA = 4; // sales manager
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
 const AMIR = 6; // a superuser: the messages section (src/mocks/messages.ts)
+const ELHAM = 7; // the marketing team (src/mocks/marketing.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -50,6 +52,13 @@ interface PageCase {
 }
 
 const PAGES: PageCase[] = [
+  { path: '/dev/assessments', user: REZA },
+  { path: '/dev/assessment-calculators', user: SARA },
+  { path: '/dev/assessment-calculators?session=11111111-1111-4111-8111-111111111111', user: SARA },
+  { path: '/dev/assessment-destinations', user: SARA },
+  { path: '/dev/assessment-destinations?session=22222222-2222-4222-8222-222222222222', user: SARA },
+  { path: '/dev/assessment-workflow', user: SARA },
+  { path: '/dev/assessment-workflow?session=11111111-1111-4111-8111-111111111111', user: SARA },
   // Applicant panel.
   ...[
     '/',
@@ -73,7 +82,10 @@ const PAGES: PageCase[] = [
     '/?session=41',
     '/consultations/book',
     '/estimate',
+    '/pathways',
     '/background',
+    // The pathway finder alone, without the panel's menus.
+    '/finder',
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
   { path: '/', user: MARYAM },
@@ -116,7 +128,6 @@ const PAGES: PageCase[] = [
     '/sales/leads?stage=new',
     '/sales/calendar',
     '/sales/board',
-    '/sales/month',
     '/sales/tasks',
     `/sales/customers/${String(ERFAN)}`,
     `/sales/customers/${String(ERFAN)}/money`,
@@ -139,10 +150,19 @@ const PAGES: PageCase[] = [
     // A seller's month from the leaderboard (S75): Mahdi (src/mocks/salesManager.ts).
     '/sales/manager/team/31',
     '/sales/manager/commission',
+    '/sales/manager/consultations',
+    '/sales/manager/consultations/2',
+    '/sales/manager/consultations/new',
+    '/sales/manager/consultations/sessions',
+    '/sales/manager/consultations/sessions?view=unassigned&mode=in_person',
     '/sales/manager/follow-ups',
     '/sales/manager/stages',
     '/sales/manager/tags',
+    '/sales/manager/pathways',
+    '/sales/manager/pathways/new',
+    '/sales/manager/pathways/1',
     '/sales/manager/phone/overview',
+    '/sales/manager/phone/extensions',
     '/sales/manager/phone/hours',
     '/sales/manager/phone/teams',
     '/sales/manager/phone/menus',
@@ -184,12 +204,7 @@ const PAGES: PageCase[] = [
     '/founders/access/keys',
     '/founders/access/history',
   ].map((path) => ({ path, user: AMIR })),
-  // Attendance section (src/mocks/attendance.ts).
-  ...['/attendance', '/attendance/month', '/attendance/settings'].map((path) => ({
-    path,
-    user: AMIR,
-  })),
-  // HR panel (src/mocks/hr.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
+  // HR panel (src/mocks/hr.ts, attendance: src/mocks/attendance.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
   ...[
     '/hr',
     '/hr/tasks',
@@ -199,18 +214,49 @@ const PAGES: PageCase[] = [
     '/hr/moves',
     '/hr/attendance',
     '/hr/attendance/month',
+    '/hr/attendance/settings',
     '/hr/pay',
+    '/hr/pay/plans',
+    '/hr/pay/payroll',
     '/hr/pay/results',
     '/hr/pay/kpis',
+    '/hr/pay/rules',
     '/hr/pay/settings',
     '/hr/access',
     '/hr/access/groups',
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  {
+    path: '/hr/pay/plans/position%3A2',
+    user: AMIR,
+    later: [{ key: 'plan-preview', why: 'waits until the plan being edited stops changing' }],
+  },
+  // Marketing panel (src/mocks/marketing.ts): Elham is on the marketing team.
+  ...[
+    '/marketing',
+    '/marketing/board',
+    '/marketing/leads',
+    '/marketing/tasks',
+    '/marketing/calendar',
+    '/marketing/performance',
+  ].map((path) => ({ path, user: ELHAM })),
+  // The marketing manager's area (src/mocks/marketingBoard.ts): Amir holds the key.
+  ...[
+    '/marketing/manage',
+    '/marketing/manage/stages',
+    '/marketing/manage/types',
+    '/marketing/manage/pathways',
+    '/marketing/manage/pathways/1',
+  ].map((path) => ({
+    path,
+    user: AMIR,
+  })),
   // Shared pages.
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },
+  { path: '/me', user: AMIR },
+  { path: '/me/sales', user: NIMA },
 ];
 
 /** Queries first loaded while `path` opens, and whether the load began after the route had. */

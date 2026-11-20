@@ -17,15 +17,18 @@ import type {
   FunnelData,
   HealthData,
   HealthTeam,
-  LeadImportChange,
-  LeadImportOptions,
-  LeadImportPreview,
-  LeadImportProblem,
   StageInput,
   TeamData,
   TeamRange,
 } from '@/features/sales/api';
 import type { ClauseKind } from '@/lib/contractText';
+import type {
+  LeadImportChange,
+  LeadImportOptions,
+  LeadImportPreview,
+  LeadImportProblem,
+} from '@/lib/leads/api';
+import { uploadSource } from './leadSources';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { failed, monthOf, saveStages, stagesOf, stateOrError, type SalesState } from './sales';
 import { openHandoff } from './handoff';
@@ -905,6 +908,18 @@ interface ImportWork {
   name: string;
 }
 const leadImports = new Map<string, ImportWork[]>();
+
+/**
+ * A preview's rows, once (the token is used up), for the marketing panel's upload
+ * (src/mocks/leadSources.ts): numbers it adds become known customers.
+ */
+export function takeLeadImport(token: string): ImportWork[] | null {
+  const work = leadImports.get(token);
+  if (!work) return null;
+  leadImports.delete(token);
+  for (const item of work) KNOWN_PHONES.set(item.phone, true);
+  return work;
+}
 /** Contracts the manager moved to another seller in this run (S59). */
 const movedLeads = new Set<number>();
 /** Numbers the fake Django already knows, and whether each has an open lead. */
@@ -915,7 +930,7 @@ const knownPhones = (): Map<string, boolean> =>
   ]);
 let KNOWN_PHONES = knownPhones();
 
-function previewLeadImport(name: string, size: number, text: string): LeadImportPreview {
+export function previewLeadImport(name: string, size: number, text: string): LeadImportPreview {
   const [head = '', ...lines] = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   const header = head.split(',').map((cell) => cell.trim().toLowerCase().replace(/\s+/g, '_'));
   const at = (key: string) => header.findIndex((cell) => IMPORT_COLUMNS[key]?.includes(cell));
@@ -1036,7 +1051,8 @@ export const managerHandlers = [
   http.post(`${BASE}/leads/import/`, async ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const { token, seller } = (await request.json()) as LeadImportOptions;
+    const { token, seller, source } = (await request.json()) as LeadImportOptions;
+    if (!uploadSource(source)) return HttpResponse.json({ source: ['invalid'] }, { status: 400 });
     const work = leadImports.get(token);
     if (!work) return HttpResponse.json({ token: ['expired'] }, { status: 400 });
     leadImports.delete(token);

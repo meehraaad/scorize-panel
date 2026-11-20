@@ -31,13 +31,13 @@ import {
   boardQuery,
   columnKey,
   isMovableColumn,
-  useMoveBoardCard,
   type BoardCard,
   type BoardColumn as Column,
   type BoardData,
   type ColumnKey,
   type MoveSteps,
 } from '../api';
+import { useMoveBoardCard } from '../api/boardMutations';
 import { boardCollisionDetection, boardCoordinates } from '../boardDrag';
 import { useBoardOrder } from '../boardOrder';
 import { useSalesFormat } from '../format';

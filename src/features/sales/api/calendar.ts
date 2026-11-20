@@ -1,8 +1,9 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Face } from '@/lib/face/api';
 import { toValue } from '@/lib/calendar';
 import { SALES_API, SALES_KEY } from '@/lib/sales/api';
+import type { CalendarTaskDay, CalendarTaskRow } from '@/lib/tasks/calendar';
 
 /** A consultation type on the seller's calendar: its colour and how it is held. */
 export interface CalendarType {
@@ -56,31 +57,7 @@ export interface CalendarCall {
   minutes?: number;
 }
 
-/** One of the seller's own tasks in the range (not a customer's follow-up: those are `calls`). */
-export interface CalendarTaskRow {
-  id: number;
-  kind: 'mine' | 'request';
-  text: string;
-  due_at: string;
-  /** False: due some time that day, no hour; it shows on the day row only. */
-  timed: boolean;
-  done: boolean;
-  customer: number | null;
-  /** The customer's name; '' for a task about no one. */
-  name: string;
-}
-
-/** How many of the seller's own tasks fall on a day (S50): only days with any. */
-export interface CalendarTaskDay {
-  /** `YYYY-MM-DD`. */
-  day: string;
-  /** Open follow-ups of mine due that day. */
-  mine: number;
-  /** Open requests from colleagues due that day. */
-  requests: number;
-  /** Of both, how many are closed. */
-  done: number;
-}
+export type { CalendarTaskDay, CalendarTaskRow };
 
 /** An in-person meeting at the office (S75): the seller's own, one they were asked to join, or (a manager) all. */
 export interface CalendarVisit {
@@ -141,34 +118,6 @@ export const sellerDayQuery = (day: Date) => {
   });
 };
 
-/** An in-person customer arrived at the office (S47). */
-export function useMarkArrived() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) =>
-      api<{ arrived_at: string }>(`${SALES_API}/consultations/${String(id)}/arrived/`, {
-        method: 'POST',
-      }),
-    onSettled: () => client.invalidateQueries({ queryKey: CALENDAR_KEY }),
-  });
-}
-
-/**
- * A sales manager gives a paid consultation to a seller, or to nobody (`staff: null`). The
- * calendars, the consultations list and Today reload after.
- */
-export function useAssignConsultation() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, staff }: { id: number; staff: number | null }) =>
-      api<{ seller_id: number | null; seller: string | null }>(
-        `${SALES_API}/consultations/${String(id)}/assign/`,
-        { method: 'POST', body: { staff } },
-      ),
-    onSettled: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 export interface FollowUpChange {
   lead: number;
   /** ISO time; null with `on`. */
@@ -179,47 +128,4 @@ export interface FollowUpChange {
   text?: string;
   /** How long the call is (its end); not sent, a moved follow-up keeps its own. */
   minutes?: number;
-}
-
-/**
- * Sets a lead's one follow-up from the calendar (a new one, or one dragged to another time) through
- * `leads/bulk/`. A moved call jumps there at once; the calendars and lists reload after.
- */
-export function useSetFollowUp() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ lead, at, on, text, minutes }: FollowUpChange) =>
-      api(`${SALES_API}/leads/bulk/`, {
-        method: 'POST',
-        body: {
-          ids: [lead],
-          ...(on ? { follow_up_on: on } : { follow_up_at: at }),
-          ...(text ? { follow_up_text: text } : {}),
-          ...(minutes ? { follow_up_minutes: minutes } : {}),
-        },
-      }),
-    onMutate: async ({ lead, at, on, minutes }) => {
-      // A day with no hour is due by its end (Django's 23:59), on the day row.
-      const due = on ? new Date(`${on}T23:59`).toISOString() : at;
-      await client.cancelQueries({ queryKey: CALENDAR_KEY });
-      const before = client.getQueriesData<SellerCalendar>({ queryKey: CALENDAR_KEY });
-      client.setQueriesData<SellerCalendar>(
-        { queryKey: CALENDAR_KEY },
-        (data) =>
-          data && {
-            ...data,
-            calls: data.calls.map((call) =>
-              call.lead === lead && due
-                ? { ...call, follow_up_at: due, timed: !on, ...(minutes ? { minutes } : {}) }
-                : call,
-            ),
-          },
-      );
-      return { before };
-    },
-    onError: (_error, _change, context) => {
-      for (const [key, data] of context?.before ?? []) client.setQueryData(key, data);
-    },
-    onSettled: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
 }

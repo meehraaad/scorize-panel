@@ -13,7 +13,8 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { TextAreaField } from '@/components/ui/TextField';
 import { isolate, useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
-import { packageQuery, useReviewPackage, type PackageDetail } from './api';
+import { packageQuery, type PackageDetail } from './api';
+import { useReviewPackage } from './mutations';
 import { NotFound } from './components/NotFound';
 import { toast } from '@/lib/toast';
 

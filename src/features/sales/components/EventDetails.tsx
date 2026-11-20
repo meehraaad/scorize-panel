@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ContactLogButton } from '@/components/sales/ContactLogButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
-import { SelectField } from '@/components/ui/Choices';
 import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { ON_SERVER } from '@/lib/applicant/onServer';
@@ -14,13 +13,8 @@ import { messageHref } from '@/lib/sales/api';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
-import {
-  useAssignConsultation,
-  useMarkArrived,
-  type CalendarCall,
-  type CalendarConsultation,
-  type CalendarType,
-} from '../api';
+import { type CalendarCall, type CalendarConsultation, type CalendarType } from '../api';
+import { useMarkArrived } from '../api/calendarMutations';
 import {
   DEFAULT_MINUTES,
   MINUTE,
@@ -30,6 +24,7 @@ import {
   type Status,
 } from '../consultationStatus';
 import { useSalesFormat } from '../format';
+import { AssignSeller } from './AssignSeller';
 import { EventTimes, type TimedEvent } from './EventTimes';
 import { customerPath } from '../paths';
 
@@ -400,55 +395,5 @@ export function EventDetails({
       {statusLine}
       {actions && <div className="flex flex-wrap justify-end gap-2">{actions}</div>}
     </section>
-  );
-}
-
-/** A sales manager gives the consultation to a seller, or takes it back (nobody). */
-function AssignSeller({
-  item,
-  sellers,
-}: {
-  item: CalendarConsultation;
-  sellers: { id: number; name: string }[];
-}) {
-  const { t } = useTranslation('sales');
-  const named = useDisplayName();
-  const assign = useAssignConsultation();
-  const current = item.seller_id ?? null;
-  // Someone who left the team still shows as the holder until it is given to another.
-  const options = [
-    { value: 'none', label: t('consultationCalendar.noSeller') },
-    ...(current !== null && !sellers.some((seller) => seller.id === current)
-      ? [{ value: String(current), label: item.seller ?? '' }]
-      : []),
-    ...sellers.map((seller) => ({ value: String(seller.id), label: seller.name })),
-  ];
-  return (
-    <div className={current === null ? 'rounded-xl bg-warn-tint p-2' : ''}>
-      <SelectField
-        inline
-        label={t('consultationCalendar.assign.label')}
-        value={current === null ? 'none' : String(current)}
-        options={options}
-        onChange={(value) => {
-          const staff = value === 'none' ? null : Number(value);
-          assign.mutate(
-            { id: item.id, staff },
-            {
-              onSuccess: (result) =>
-                toast.success(
-                  result.seller
-                    ? t('consultationCalendar.assign.done', {
-                        name: named(item.name),
-                        seller: result.seller,
-                      })
-                    : t('consultationCalendar.assign.cleared', { name: named(item.name) }),
-                ),
-              onError: () => toast.error(t('consultationCalendar.assign.failed')),
-            },
-          );
-        }}
-      />
-    </div>
   );
 }

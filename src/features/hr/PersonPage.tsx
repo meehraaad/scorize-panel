@@ -25,11 +25,12 @@ const InfoDialog = lazy(() => dialogs().then((module) => ({ default: module.Info
 const ContractDialog = lazy(() => dialogs().then((module) => ({ default: module.ContractDialog })));
 const SalaryDialog = lazy(() => dialogs().then((module) => ({ default: module.SalaryDialog })));
 const ExitDialog = lazy(() => dialogs().then((module) => ({ default: module.ExitDialog })));
+const ReturnDialog = lazy(() => dialogs().then((module) => ({ default: module.ReturnDialog })));
 const DocumentDialog = lazy(() => dialogs().then((module) => ({ default: module.DocumentDialog })));
 
 type Tab = 'info' | 'work' | 'documents' | 'moves' | 'history';
 const TABS: readonly Tab[] = ['info', 'work', 'documents', 'moves', 'history'];
-type Open = 'info' | 'contract' | 'salary' | 'exit' | 'document' | null;
+type Open = 'info' | 'contract' | 'salary' | 'exit' | 'return' | 'document' | null;
 
 /** `/hr/staff/:id`: a staff member's file, or a short note when the id is wrong. */
 export default function PersonPage() {
@@ -85,6 +86,9 @@ function PersonFile({ id }: { id: number }) {
               <Button variant="danger" onClick={() => setOpen('exit')}>
                 {t('person.exit')}
               </Button>
+            )}
+            {!file.is_active && (
+              <Button onClick={() => setOpen('return')}>{t('person.return')}</Button>
             )}
           </>
         }
@@ -157,6 +161,7 @@ function PersonFile({ id }: { id: number }) {
           {open === 'contract' && <ContractDialog file={file} onClose={close} />}
           {open === 'salary' && <SalaryDialog file={file} onClose={close} />}
           {open === 'exit' && <ExitDialog file={file} onClose={close} />}
+          {open === 'return' && <ReturnDialog file={file} onClose={close} />}
           {open === 'document' && <DocumentDialog file={file} onClose={close} />}
         </Suspense>
       )}
@@ -372,7 +377,10 @@ function HistoryTab({ rows }: { rows: HistoryRow[] }) {
             className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-5 py-2 lg:px-8"
           >
             <span className="w-28 flex-none text-sm text-text-2">{f.date(dayOf(row.at))}</span>
-            <span className="flex-1 text-[15px]">{text(row)}</span>
+            <span className="flex-1 text-[15px]">
+              {text(row)}
+              {row.reason && <span className="text-text-2"> · {row.reason}</span>}
+            </span>
             {row.by && <span className="text-xs text-text-2">{row.by}</span>}
           </li>
         ))}

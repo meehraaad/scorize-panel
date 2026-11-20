@@ -10,7 +10,11 @@ import {
 import {
   ATTENDANCE_PERMISSION,
   dailyQuery,
+  devicesQuery,
+  enrollmentsQuery,
   monthRange,
+  peopleQuery as attendancePeopleQuery,
+  scheduleQuery,
   summaryQuery,
   todayValue,
 } from '@/features/attendance/api';
@@ -24,11 +28,14 @@ import {
   todayQuery,
 } from '@/features/hr/api';
 import {
+  catalogQuery,
   kpisQuery,
   payMonth,
   paySettingsQuery,
   payrollQuery,
+  plansQuery,
   resultsQuery,
+  rulesQuery,
 } from '@/features/hr/pay/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
@@ -40,10 +47,19 @@ import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
 
-/** The pages check the key too: the role only decides what the menu shows. */
+/**
+ * The pages check the key too: the role only decides what the menu shows. Someone without this
+ * page's key goes to the first part of the panel they may open: HR's day, else attendance (the
+ * attendance key alone opens the panel for its section only).
+ */
 const holders = (permission: string) => async () => {
   const me = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
-  return me && hasPermission(me, permission) ? null : redirect(START_PATH);
+  if (!me) return redirect(START_PATH);
+  if (hasPermission(me, permission)) return null;
+  if (permission !== HR_PERMISSION && hasPermission(me, HR_PERMISSION)) return redirect('/hr');
+  if (permission !== ATTENDANCE_PERMISSION && hasPermission(me, ATTENDANCE_PERMISSION))
+    return redirect('/hr/attendance');
+  return redirect(START_PATH);
 };
 const hrOnly = holders(HR_PERMISSION);
 const attendanceOnly = holders(ATTENDANCE_PERMISSION);
@@ -52,8 +68,8 @@ const accessOnly = holders(STAFF_ACCESS_PERMISSION);
 /**
  * Human resources, for holders of `can_manage_support_staff` (design: "HR panel" canvas v2): HR's
  * day, tasks and calendar like every panel, the staff files, joining and leaving checklists, and
- * the office terminal's attendance (the attendance pages, for holders of that key too). Django:
- * `api/hr/v1/`. Every page is its own lazy chunk.
+ * the office terminal's attendance (its day, month and settings: holders of the attendance key
+ * alone see only that section). Django: `api/hr/v1/`, `api/attendance/v1/`. Every page is its own lazy chunk.
  */
 export const hrPanel: PanelDefinition = {
   id: 'hr',
@@ -66,6 +82,7 @@ export const hrPanel: PanelDefinition = {
   navigation: [
     {
       id: 'today',
+      permission: HR_PERMISSION,
       to: '',
       label: 'panels.hr.nav.today',
       tab: 'panels.hr.tabs.today',
@@ -73,6 +90,7 @@ export const hrPanel: PanelDefinition = {
     },
     {
       id: 'tasks',
+      permission: HR_PERMISSION,
       to: 'tasks',
       label: 'panels.hr.nav.tasks',
       tab: 'panels.hr.tabs.tasks',
@@ -80,6 +98,7 @@ export const hrPanel: PanelDefinition = {
     },
     {
       id: 'calendar',
+      permission: HR_PERMISSION,
       to: 'calendar',
       label: 'panels.hr.nav.calendar',
       tab: 'panels.hr.tabs.calendar',
@@ -87,12 +106,19 @@ export const hrPanel: PanelDefinition = {
     },
     {
       id: 'staff',
+      permission: HR_PERMISSION,
       to: 'staff',
       label: 'panels.hr.nav.staff',
       tab: 'panels.hr.tabs.staff',
       icon: 'user',
     },
-    { id: 'moves', to: 'moves', label: 'panels.hr.nav.moves', icon: 'list' },
+    {
+      id: 'moves',
+      to: 'moves',
+      label: 'panels.hr.nav.moves',
+      icon: 'list',
+      permission: HR_PERMISSION,
+    },
     {
       id: 'attendance',
       to: 'attendance',
@@ -100,7 +126,13 @@ export const hrPanel: PanelDefinition = {
       icon: 'clock',
       permission: ATTENDANCE_PERMISSION,
     },
-    { id: 'pay', to: 'pay', label: 'panels.hr.nav.pay', icon: 'chart' },
+    {
+      id: 'pay',
+      to: 'pay',
+      label: 'panels.hr.nav.pay',
+      icon: 'chart',
+      permission: HR_PERMISSION,
+    },
     {
       id: 'access',
       to: 'access',
@@ -163,33 +195,69 @@ export const hrPanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
-    // The attendance section's daily and monthly reports, inside HR.
+    // Attendance (once its own panel, whose addresses redirect here): the day, the month per
+    // person and the settings, each a sub-tab.
     {
       path: 'attendance',
-      ...lazyPage(() => import('@/features/attendance/DailyPage'), ['attendance'], {
+      ...lazyPage(() => import('@/features/attendance/AttendanceLayout'), ['attendance'], {
         guard: attendanceOnly,
-        data: () => {
-          const today = todayValue();
-          return [dailyQuery({ from: today, to: today })];
+      }),
+      children: [
+        {
+          index: true,
+          ...lazyPage(() => import('@/features/attendance/DailyPage'), [], {
+            data: () => {
+              const today = todayValue();
+              return [dailyQuery({ from: today, to: today })];
+            },
+            skeleton: 'list',
+          }),
         },
-        skeleton: 'list',
-      }),
+        {
+          path: 'month',
+          ...lazyPage(() => import('@/features/attendance/MonthlyPage'), [], {
+            data: () => [summaryQuery(monthRange(calendarKind(i18n.language)))],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'settings',
+          ...lazyPage(() => import('@/features/attendance/SettingsPage'), [], {
+            data: () => [scheduleQuery, enrollmentsQuery, attendancePeopleQuery, devicesQuery],
+            skeleton: 'list',
+          }),
+        },
+      ],
     },
-    {
-      path: 'attendance/month',
-      ...lazyPage(() => import('@/features/attendance/MonthlyPage'), ['attendance'], {
-        guard: attendanceOnly,
-        data: () => [summaryQuery(monthRange(calendarKind(i18n.language)))],
-        skeleton: 'list',
-      }),
-    },
-    // Pay and KPIs: the month's pay, the month's KPI results, each position's KPIs, the settings.
+    // Pay and KPIs: this month's scores, the groups' score plans, the month's pay, the settings;
+    // the detailed pages (values, KPIs, rules) stay reachable from them.
     {
       path: 'pay',
       ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: hrOnly }),
       children: [
         {
           index: true,
+          ...lazyPage(() => import('@/features/hr/pay/MonthPage'), [], {
+            data: () => [resultsQuery(payMonth(-1))],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'plans',
+          ...lazyPage(() => import('@/features/hr/pay/PlansPage'), [], {
+            data: () => [plansQuery, optionsQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'plans/:key',
+          ...lazyPage(() => import('@/features/hr/pay/PlanPage'), [], {
+            data: () => [plansQuery, catalogQuery, optionsQuery],
+            skeleton: 'detail',
+          }),
+        },
+        {
+          path: 'payroll',
           ...lazyPage(() => import('@/features/hr/pay/PayrollPage'), [], {
             data: () => [payrollQuery(payMonth())],
             skeleton: 'list',
@@ -205,7 +273,14 @@ export const hrPanel: PanelDefinition = {
         {
           path: 'kpis',
           ...lazyPage(() => import('@/features/hr/pay/KpisPage'), [], {
-            data: () => [kpisQuery, optionsQuery],
+            data: () => [kpisQuery, optionsQuery, catalogQuery],
+            skeleton: 'list',
+          }),
+        },
+        {
+          path: 'rules',
+          ...lazyPage(() => import('@/features/hr/pay/RulesPage'), [], {
+            data: () => [rulesQuery, kpisQuery, optionsQuery, catalogQuery],
             skeleton: 'list',
           }),
         },

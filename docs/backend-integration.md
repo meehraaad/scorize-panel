@@ -63,10 +63,11 @@ Everything comes from Django (`claude/eager-bohr-8iw6h3` of scorize-revolution);
 | Account (every panel)       | `/api/profile/v1/` `account/`, `notifications/`                                                                                                                                                                                      | `lib/account/api.ts`                          |
 | Applicant panel             | `/api/applicant/v1/` (H1–H29, H36–H47, H49–H58)                                                                                                                                                                                      | `features/*`, `lib/applicant/`, `lib/tickets` |
 | Sales panel                 | `/api/sales/v1/` (S10–S40); receipts: `PATCH /api/profile/staff/v1/users/<id>/payments/<id>/confirm_receipt/`, `decline_receipt/`, `change_method/<0\|1>/` (S20, S23); manual assignment: `POST /api/sales/v1/manager/assign/` (S35) | `features/sales/api/`, `lib/sales/api.ts`     |
-| Staff tasks                 | `/api/staff/v1/tasks/?panel=sales\|supervisor` (T1–T14)                                                                                                                                                                              | `lib/tasks/api.ts`                            |
+| Staff tasks                 | `/api/staff/v1/tasks/?panel=sales\|supervisor\|hr\|marketing` (T1–T14)                                                                                                                                                               | `lib/tasks/api.ts`                            |
 | Supervisor panel            | `/api/supervisor/v1/` (SV1–SV17)                                                                                                                                                                                                     | `features/supervisor/api/`                    |
 | Founders panel              | `/api/ai/v1/` (AI1–AI6)                                                                                                                                                                                                              | `features/assistant/api.ts`                   |
 | Writer panel                | `/api/writer/v1/` (WR1–WR5)                                                                                                                                                                                                          | `features/writer/api.ts`                      |
+| Marketing panel             | `/api/marketing/v1/` `today/`, `calendar/`, `attendance/`, `board/`, `cards/…`, `stages/…`, `types/…`, `team/`; tasks `?panel=marketing`                                                                                             | `features/marketing/api.ts`                   |
 
 The sales month report uses the current Jalali month. Its headline `won` counts wins in that
 month; `funnel` and `sources` track leads created in that month, so lead estimates use
@@ -170,3 +171,44 @@ HTTPS and the deployed `microphone=(self)` permissions policy. Minimized forms s
 cancel requests; inserted text stays in that customer's draft. Recording also stops after ten
 seconds of silence, before the two-minute limit, or when the browser tab becomes hidden.
 See [Reusable voice fields](voice-input.md) for adding dictation to another controlled input.
+
+The local financial assessment flow consumes backend shamrad/lang#321 on #320:
+owned `calculators/financial/` and `financial/scenario/`, additive financial context
+in comparison/snapshots, and financial policy/scenario content in the existing
+staff draft lifecycle. Backend before panel #106 on #105. Existing development
+and sandbox gates remain; real financial references are not seeded. See
+[financial contract and behavior](assessment-financial-fit.md).
+
+## Destination discovery dependency
+
+Development-only destination intake and structured catalog management in panel #107 require backend shamrad/lang#322 on #321, and panel #106. See [contract and limits](assessment-destination-discovery.md). No new production migrations or activation are included.
+
+## Destination follow-up dependency
+
+Panel #108 requires backend shamrad/lang#323 on #322 and panel #107. The existing destination POST adds select_routes/action_progress; the result adds an optional historical plan. See [contract](assessment-destination-follow-up.md). Backend first; no production migration/activation is included.
+
+## Country-independent program builder
+
+Panel #109 requires backend shamrad/lang#324 (on #323) and panel #108. Existing destination POST adds program_answer/program_adopt; optional program_result supplies typed questions and separate condition/point results. See [contract](assessment-program-builder.md). No new model, production migration or public activation.
+
+### Generic financial targets — draft #110 / backend #325
+
+Staff assessment options add optional `currency_catalog` and `financial_targets`. Financial policy schema 2 captures country/goal/title, selected currency minor-unit metadata and registry SHA; each component declares main/minor units. Destination entries add optional `financial_route_id` with runtime country/goal matching. Financial descriptions add `targets` and dynamic route keys; scenario IDs must belong to the recorded policy. Schema 1 remains supported. See [contract and validation](assessment-generic-finance.md). No new route/page, first-render query, model/migration or production activation.
+
+### Shared assessment evidence (Phase 3 draft)
+
+The development calculator can create, edit and explicitly confirm account-owned birth-date, language and employment statements, select versions for country answers, and link existing owned documents. A configured numeric program question can bind a specifically selected confirmed report skill. These flows require the Phase 3 backend on top of shamrad/lang#337; the panel also depends on #117. Shared evidence and document links are preloaded on resumed calculator pages; shared evidence is also preloaded on resumed destination pages for configured questions. The API remains local-gated. The backend's `docs/assessment/phase-3-shared-facts.md` contains the ownership, migration-history, privacy, legal and replay limits. Existing media URLs are not made private by this interface. No legal content is activated.
+
+### Unified assessment workflow (development only)
+
+The Phase 5 page uses `GET/POST /api/applicant/v1/assessments/<uuid>/workflow/`,
+`POST .../workflow/scenario/`, and owned immutable `GET .../workflow/history/`
+(and `history/<id>/`). It depends on the Phase 5 backend atop the evaluator-registry
+branch. Both local-mode and assessment flags still guard the backend. See
+[Phase 5 workflow handoff](assessment/phase-5-unified-workflow.md) for revisions,
+exact retry, recorded-history and capability contracts. Existing Phase 3 shared
+evidence/document APIs remain the source for canonical statements and owned files.
+The contract is now `unified-workflow-4`: responses list `unavailable_pathways`
+(selected but no longer in the adopted catalog; status `pathway_unavailable`, choose
+again), and results from synthetic programs carry the `synthetic_not_law` limitation.
+See [Phase 6 comparison](assessment/phase-6-comparison.md).

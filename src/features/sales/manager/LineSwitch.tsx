@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChoiceGroup } from '@/components/ui/Choices';
-import { useSaveOfficeHours, type LineForce, type OfficeHoursState } from '@/lib/sales/phoneCalls';
+import { type LineForce, type OfficeHoursState } from '@/lib/sales/phoneCalls';
+import { useSaveOfficeHours } from '@/lib/sales/phoneCallsMutations';
 import { toast } from '@/lib/toast';
 
 const FORCES = ['', 'open', 'closed'] as const satisfies readonly LineForce[];

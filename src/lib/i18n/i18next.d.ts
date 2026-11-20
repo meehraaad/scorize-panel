@@ -1,4 +1,5 @@
 import 'i18next';
+import type assessments from '@/locales/fa/assessments.json';
 import type voice from '@/locales/fa/voice.json';
 import type account from '@/locales/fa/account.json';
 import type activities from '@/locales/fa/activities.json';
@@ -23,10 +24,13 @@ import type writer from '@/locales/fa/writer.json';
 import type assistant from '@/locales/fa/assistant.json';
 import type attendance from '@/locales/fa/attendance.json';
 import type hr from '@/locales/fa/hr.json';
+import type marketing from '@/locales/fa/marketing.json';
 import type mail from '@/locales/fa/mail.json';
 import type messages from '@/locales/fa/messages.json';
 import type access from '@/locales/fa/access.json';
 import type notes from '@/locales/fa/notes.json';
+import type leads from '@/locales/fa/leads.json';
+import type pathways from '@/locales/fa/pathways.json';
 import type writing from '@/locales/fa/writing.json';
 
 // Persian is the source dictionary: t('...') keys are type-checked against it,
@@ -36,8 +40,11 @@ declare module 'i18next' {
     defaultNS: 'common';
     resources: {
       common: typeof common;
+      assessments: typeof assessments;
       voice: typeof voice;
       notes: typeof notes;
+      leads: typeof leads;
+      pathways: typeof pathways;
       auth: typeof auth;
       home: typeof home;
       applications: typeof applications;
@@ -61,6 +68,7 @@ declare module 'i18next' {
       assistant: typeof assistant;
       attendance: typeof attendance;
       hr: typeof hr;
+      marketing: typeof marketing;
       mail: typeof mail;
       messages: typeof messages;
       access: typeof access;

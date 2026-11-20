@@ -37,6 +37,14 @@ describe('roles', () => {
     expect(getRoles(staff(Team.VISA))).toEqual(['supervisor']);
   });
 
+  it('gives marketers the marketing panel, like User.is_marketer with a staff record', () => {
+    expect(getRoles(staff(Team.MARKETING))).toEqual(['marketing']);
+    const key = { permissions: [{ codename: 'can_market' }] };
+    expect(getRoles(staff(Team.SALES, key))).toEqual(['sales', 'marketing']);
+    // The API wants an active staff record too.
+    expect(getRoles({ ...base, ...key })).toEqual(['applicant']);
+  });
+
   it('needs an email to be a seller, like User.is_seller', () => {
     expect(getRoles(staff(Team.SALES, { email: null }))).toEqual(['applicant']);
   });
@@ -78,16 +86,13 @@ describe('roles', () => {
     expect(getRoles({ ...base, is_country_supervisor: true })).toEqual(['supervisor']);
   });
 
+  it('opens the HR panel for the attendance key alone', () => {
+    expect(getRoles({ ...base, permissions: [{ codename: 'manage_attendance' }] })).toEqual(['hr']);
+  });
+
   it('treats superusers as having every permission', () => {
     const admin = { ...base, is_superuser: true };
     expect(hasPermission(admin, 'anything')).toBe(true);
-    expect(getRoles(admin)).toEqual([
-      'supervisor',
-      'writer',
-      'sales',
-      'founders',
-      'attendance',
-      'hr',
-    ]);
+    expect(getRoles(admin)).toEqual(['supervisor', 'writer', 'sales', 'founders', 'hr']);
   });
 });

@@ -11,6 +11,7 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { PathwaysCard } from './PathwaysCard';
 import { TurkeyCard } from './TurkeyCard';
 import { NewUserHome } from './journey/NewUserHome';
 
@@ -146,6 +147,7 @@ function ContractlessHome({ access }: { access: ApplicantAccess }) {
       )}
 
       {!pending && ON_SERVER.turkey && <TurkeyCard step={access.turkey} />}
+      {!pending && ON_SERVER.pathwayFinder && <PathwaysCard />}
     </PageStack>
   );
 }

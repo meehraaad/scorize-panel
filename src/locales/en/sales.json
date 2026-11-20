@@ -259,6 +259,15 @@
       "cold": "Cold (under 45)"
     },
     "overdueOnly": "Overdue only",
+    "consultationMode": "In person or not",
+    "modeOption": {
+      "all": "In person and not",
+      "in_person": "In person",
+      "online": "Not in person"
+    },
+    "consultationType": "Consultation type",
+    "allConsultationTypes": "All types",
+    "oldType": "{{name}} (old)",
     "list": "Leads list",
     "column": {
       "customer": "Customer",
@@ -627,7 +636,21 @@
       },
       "sessionEnded": "Ended · {{ago}}",
       "calendarTitle": "When to follow up with {{name}}?",
-      "calendarHint": "Tap a free spot; that time becomes the follow-up."
+      "calendarHint": "Tap a free spot; that time becomes the follow-up.",
+      "noAnswerSend": "How should we let them know?",
+      "noAnswerSendOption": {
+        "sms": "SMS",
+        "whatsapp": "WhatsApp",
+        "telegram": "Telegram",
+        "none": "Nothing"
+      },
+      "noAnswerSendNote": {
+        "sms": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
+        "whatsapp": "Saving opens your WhatsApp with the ready message; send it yourself. No SMS goes out, and a follow-up is set for tomorrow.",
+        "telegram": "Saving opens your Telegram and copies the ready message; paste and send it. No SMS goes out, and a follow-up is set for tomorrow.",
+        "none": "Nothing is sent. Only a follow-up for tomorrow is set."
+      },
+      "noAnswerSmsText": "The SMS that goes out"
     },
     "tabs": {
       "label": "Customer page sections",
@@ -708,12 +731,6 @@
     "lock": {
       "title": "My month",
       "subtitle": "Your sales, commission and rank open only with your account password, every time you open this page.",
-      "card": "Enter your password",
-      "password": "Password",
-      "required": "Enter your password.",
-      "wrong": "The password is wrong.",
-      "tooMany": "Too many wrong tries. Try again in 15 minutes.",
-      "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens.",
       "submit": "Open my month",
       "failed": "My month didn't open. Try again."
     },
@@ -802,7 +819,10 @@
         "meeting": "Session log"
       }
     },
-    "noSeller": "No consultant"
+    "noSeller": "No consultant",
+    "openCount": "{{n}} without a consultant",
+    "minutes": "{{n}} min",
+    "arrived": "Came at {{time}}"
   },
   "consultationCalendar": {
     "aside": "My calendar",
@@ -815,10 +835,21 @@
     },
     "tagNeed": "Not logged",
     "followUp": "Follow-up",
-    "calls": "Timed follow-ups",
     "modeFilter": "Format",
     "modeAll": "All",
-    "layers": "Show on the calendar",
+    "kinds": "Show on the calendar",
+    "kind": {
+      "consultations": "Consultations",
+      "tasks": "Tasks",
+      "visits": "In-person meetings",
+      "calls": "Follow-ups"
+    },
+    "types": "Consultation types",
+    "typesShown": "{{shown}} of {{total}}",
+    "selectAll": "Select all",
+    "clearAll": "Clear all",
+    "onlyThis": "Only",
+    "onlyThisAria": "Only {{name}}",
     "form": {
       "done": "Filled in the tablet form",
       "missing": "Hasn't filled in the tablet form",
@@ -859,12 +890,12 @@
       "aria": "Tasks on {{day}}: {{parts}}. Go to tasks"
     },
     "taskBlock": "task",
-    "taskLayer": "Tasks with a time",
     "assign": {
       "label": "Consultant",
       "done": "{{name}}'s consultation is now {{seller}}'s.",
       "cleared": "{{name}}'s consultation has no consultant now.",
-      "failed": "Couldn't assign it. Try again."
+      "failed": "Couldn't assign it. Try again.",
+      "labelFor": "{{name}}'s consultant"
     }
   },
   "purchases": {
@@ -1006,7 +1037,9 @@
       "budget": "Budget (application, study, living)",
       "countries": "Wanted countries",
       "language": "Current language level",
-      "countriesHint": "Separate with commas: Canada, Germany"
+      "countriesHint": "Separate with commas: Canada, Germany",
+      "addCountry": "Add a country…",
+      "removeCountry": "Remove {{name}}"
     },
     "education": {
       "title": "Education",
@@ -1058,6 +1091,7 @@
       "saving": "Saving…",
       "saved": "All changes saved",
       "incomplete": "Complete the degree, university and GPA, or exam and score, in each row to save this section.",
+      "incompleteName": "Enter the first name to save this section.",
       "error": "Could not save. Your changes are still here. Review your entries or check your connection, then retry.",
       "retry": "Retry saving",
       "leaveTitle": "Unsaved changes",
@@ -1297,9 +1331,11 @@
       "followUps": "Follow-up health",
       "stages": "Board stages",
       "tags": "Customer tags",
+      "pathways": "Migration pathways",
       "commission": "Commission",
       "contract": "Contract",
-      "phone": "Phone"
+      "phone": "Phone",
+      "consultations": "Consultations"
     },
     "assign": {
       "title": "{{n}} leads have no owner",
@@ -1648,73 +1684,6 @@
         "purple": "Purple",
         "gray": "Gray"
       }
-    },
-    "import": {
-      "open": "Add from CSV",
-      "title": "Add leads from a CSV",
-      "subtitle": "Each number becomes a customer with a new lead. You see what every row does before anything is saved.",
-      "close": "Close",
-      "cancel": "Cancel",
-      "back": "Another file",
-      "steps": "Import steps",
-      "step": "{{n}}. {{name}}",
-      "stepName": {
-        "file": "File",
-        "review": "Review",
-        "done": "Added"
-      },
-      "choose": "Choose a CSV file",
-      "reading": "Reading the file…",
-      "drop": "or drop the file here",
-      "problem": {
-        "badType": "CSV files only (.csv).",
-        "tooBig": "The file is larger than 2 MB."
-      },
-      "readError": "The file couldn't be read. Try again.",
-      "columns": "Columns:",
-      "columnNames": "phone_number, first_name, last_name, email, note",
-      "columnsOptional": "Only the phone number is required. Up to 500 rows per file.",
-      "sample": "Download a sample file",
-      "csv": "CSV",
-      "fileMeta": "{{rows}} rows · {{size}} KB",
-      "otherFile": "Choose another file",
-      "summary": "File summary",
-      "count": {
-        "new": "{{n}} new customers",
-        "existing": "{{n}} existing customers",
-        "skip": "{{n}} rows left out"
-      },
-      "empty": "This file has no rows.",
-      "rows": "Rows",
-      "more": "Show {{n}} more rows",
-      "noName": "No name",
-      "noPhone": "No number",
-      "line": "Row {{n}}",
-      "change": {
-        "new": "New customer and lead",
-        "existing": "Lead for an existing customer"
-      },
-      "skip": {
-        "missing_column": "No phone column",
-        "bad_phone": "Invalid number",
-        "duplicate": "Repeated in the file",
-        "open_lead": "Has an open lead"
-      },
-      "source": "Lead source",
-      "sourceOption": {
-        "campaign": "Campaign or webinar",
-        "manual": "Manual"
-      },
-      "note": "Note for every lead (optional)",
-      "noteHint": "For example the campaign or event name. It follows the row's own note.",
-      "to": "Assign to",
-      "queue": "Unassigned queue",
-      "queueHint": "With automatic assignment on, they are shared out among the sellers right away.",
-      "notify": "Welcome SMS for new customers",
-      "notifyHelp": "The same SMS a manually added lead gets. Off, nobody gets an SMS.",
-      "apply": "Add {{n}} leads",
-      "applyError": "The leads weren't added. Try again.",
-      "done": "{{n}} leads added ({{customers}} new customers)."
     },
     "contracts": {
       "move": "Move",
@@ -2243,6 +2212,7 @@
       "nav": "Phone sections",
       "section": {
         "overview": "Overview",
+        "extensions": "Extensions",
         "hours": "Office hours",
         "teams": "Teams",
         "menus": "Menus",
@@ -2305,6 +2275,240 @@
       "contractsSubtitle": "Contracts credited to this seller this month. Use “Move” to give one to another seller, with a reason.",
       "contractsEmpty": "No contracts were closed for this seller this month.",
       "instalmentsSubtitle": "Instalments of this seller's contracts due this month, and unpaid ones already past due."
+    },
+    "extensions": {
+      "title": "Extensions",
+      "subtitle": "{{linked}} of {{all}} staff have a phone.",
+      "people": "Staff",
+      "search": "Search a name or number",
+      "none": "No one with this name or number.",
+      "unlinked": "Extensions with no owner",
+      "unlinkedHint": "These ring in a PBX team but belong to no staff member. Enter one on that person's row.",
+      "unlinkedRow": "Extension {{extension}} · {{teams}}",
+      "changed": "Last change: {{by}}, {{time}}",
+      "someone": "a manager",
+      "desk": "Desk phone",
+      "deskHint": "Three digits, the extension on the desk phone.",
+      "noDesk": "Not linked",
+      "link": "Link",
+      "change": "Change",
+      "editDesk": "{{name}}'s desk phone",
+      "save": "Save",
+      "cancel": "Cancel",
+      "unlink": "Unlink",
+      "taken": "Another staff member has this extension. Unlink it from them first.",
+      "deskSaved": "Extension {{extension}} is now {{name}}'s.",
+      "deskCleared": "The desk phone was unlinked from {{name}}.",
+      "error": "Not saved. Try again.",
+      "mobile": "Mobile extension",
+      "noMobile": "None",
+      "makeMobile": "Make",
+      "retryMobile": "Try again",
+      "makeMobileFor": "Make a mobile extension for {{name}}",
+      "removeMobile": "Remove",
+      "removeMobileFor": "Remove {{name}}'s mobile extension",
+      "removeMobileAsk": "Remove {{name}}'s mobile extension? The phone app on their mobile stops working.",
+      "mobileAsked": "A mobile extension for {{name}} was requested. It is made in a few seconds.",
+      "mobileRemoved": "{{name}}'s mobile extension is removed in a few seconds.",
+      "mobileBusy": "The old extension is still being removed. Try again in a minute.",
+      "mobileStatus": {
+        "ready": "Working",
+        "pending": "Being made",
+        "failed": "Not made",
+        "removing": "Being removed"
+      }
+    },
+    "consultations": {
+      "title": "Consultation types",
+      "subtitle": "Each consultation's price, length, weekly times and closed days. The site and sellers see these.",
+      "new": "New type",
+      "active": "On sale",
+      "off": "Paused",
+      "offHint": "Not shown on the site, and sellers can't sell them.",
+      "emptyActive": "No consultation is on sale.",
+      "mode": {
+        "in_person": "In person",
+        "online": "Online"
+      },
+      "minutes": "{{n}} min",
+      "every": "Every {{n}} min",
+      "free": "Free",
+      "discountUntil": "Discount until {{date}}",
+      "noWeek": "No times set",
+      "weekSummary": "{{days}} days a week, {{times}} times",
+      "upcoming": "{{n}} upcoming sessions",
+      "closedCount": "{{n}} closures",
+      "back": "Consultation types",
+      "missing": "This consultation type wasn't found.",
+      "editHint": "Changes apply when you save. Sessions already booked keep their time.",
+      "newHint": "Write the name, price and times. In person or online can't be changed later.",
+      "about": {
+        "title": "Details",
+        "name": "Name",
+        "mode": "Session type",
+        "modeFixed": "Sessions are {{mode}}; this doesn't change.",
+        "active": "On sale",
+        "activeOn": "Shown on the site and to sellers.",
+        "activeOff": "Hidden; earlier bookings stay.",
+        "length": "Session length",
+        "step": "Start times",
+        "stepHint": "How often a session can start.",
+        "stepRow": "Only at the start of each range",
+        "description": "Short description"
+      },
+      "price": {
+        "title": "Price",
+        "price": "Price (toman)",
+        "discount": "Discount",
+        "discountHint": "The discounted price applies until the day you choose.",
+        "discounted": "Discounted price (toman)",
+        "until": "Discount until the end of"
+      },
+      "week": {
+        "title": "Weekly times",
+        "subtitle": "A day can have several ranges. Capacity is how many people at each start time.",
+        "add": "Add range",
+        "copy": "Same for every day",
+        "copied": "{{day}}'s times set for every day.",
+        "closed": "No times this day.",
+        "from": "From",
+        "to": "To",
+        "capacity": "Capacity",
+        "remove": "Remove this {{day}} range",
+        "starts": "{{n}} times: {{list}}",
+        "tooShort": "This range is shorter than a session and makes no times.",
+        "daySummary": "{{ranges}} · {{n}} times",
+        "dayOff": "Closed",
+        "editDay": "Edit {{day}} times",
+        "startsTitle": "{{n}} times this day",
+        "range": "{{from}} to {{to}}"
+      },
+      "closures": {
+        "title": "Closed days",
+        "subtitle": "A holiday or leave: that day or time can't be booked. Saved right away.",
+        "day": "Day",
+        "time": "Time",
+        "allDay": "All day",
+        "add": "Close",
+        "added": "Closed.",
+        "exists": "This time is already closed.",
+        "pickFirst": "Choose the day first.",
+        "empty": "No closed days.",
+        "remove": "Reopen {{day}}",
+        "removed": "Open again."
+      },
+      "errors": {
+        "title": "Write a name.",
+        "price": "Write the price.",
+        "discounted": "The discounted price must be less than the price.",
+        "until": "Choose when the discount ends.",
+        "day": "Fix this day's ranges: end after start, no overlaps, capacity at least one."
+      },
+      "unsaved": "You have unsaved changes.",
+      "allSaved": "Everything is saved.",
+      "undo": "Undo",
+      "save": "Save",
+      "create": "Create",
+      "saved": "Saved.",
+      "created": "New type created.",
+      "stats": {
+        "label": "Consultations summary",
+        "selling": "On sale",
+        "of": "of {{n}}",
+        "weekly": "Times a week",
+        "upcoming": "Sessions ahead"
+      },
+      "modeFilter": "Session type",
+      "modeOption": {
+        "all": "All",
+        "in_person": "In person",
+        "online": "Online"
+      },
+      "dayShort": {
+        "sat": "Sa",
+        "sun": "Su",
+        "mon": "Mo",
+        "tue": "Tu",
+        "wed": "We",
+        "thu": "Th",
+        "fri": "Fr"
+      },
+      "facts": {
+        "label": "This consultation at a glance",
+        "price": "Price",
+        "was": "Full price {{price}}",
+        "length": "Session length",
+        "minutes": "min",
+        "week": "Times a week",
+        "days": "{{n}} open days",
+        "upcoming": "Sessions ahead"
+      },
+      "offCount": "Paused ({{n}})",
+      "offShow": "Show",
+      "offHide": "Hide"
+    },
+    "sessions": {
+      "nav": "Consultation sections",
+      "section": {
+        "sessions": "Sessions",
+        "types": "Types and prices"
+      },
+      "title": "Consultation sessions",
+      "subtitle": "Every paid session of the team. Change a session's consultant right here.",
+      "list": "Sessions",
+      "views": "Which sessions",
+      "view": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "week": "Next 7 days",
+        "unassigned": "No consultant",
+        "unlogged": "No log",
+        "past": "Past",
+        "all": "All",
+        "span": "Chosen days"
+      },
+      "needs": {
+        "unassigned": "{{n}} upcoming sessions have no consultant yet",
+        "unlogged": "{{n}} held sessions have no log"
+      },
+      "from": "From",
+      "to": "To",
+      "search": "Search customers",
+      "searchPlaceholder": "Customer name or phone",
+      "type": "Type",
+      "allTypes": "All types",
+      "mode": "Session",
+      "modeOption": {
+        "all": "In person and online",
+        "in_person": "In person",
+        "online": "Online"
+      },
+      "seller": "Consultant",
+      "allSellers": "All consultants",
+      "status": "Status",
+      "allStatuses": "All",
+      "statusOption": {
+        "upcoming": "Upcoming",
+        "done": "Held, logged",
+        "unlogged": "Held, not logged",
+        "arrived": "Came to the office"
+      },
+      "clear": "Clear filters",
+      "found": "{{n}} sessions",
+      "emptyFiltered": "No sessions match these filters.",
+      "empty": {
+        "today": "No sessions today.",
+        "tomorrow": "No sessions tomorrow.",
+        "week": "No sessions in the next 7 days.",
+        "unassigned": "Every upcoming session has a consultant.",
+        "unlogged": "Every held session has a log.",
+        "past": "No past sessions.",
+        "all": "No sessions booked yet.",
+        "span": "No sessions on these days."
+      }
+    },
+    "import": {
+      "open": "Add from CSV"
     }
   },
   "handoff": {

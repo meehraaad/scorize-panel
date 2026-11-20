@@ -1,0 +1,482 @@
+{
+  "title": "Pathway finder",
+  "subtitle": "Answer a few simple questions; we check the routes to work and live abroad and tell you which fit best.",
+  "error": "That didn't work. Try again in a moment.",
+  "empty": {
+    "title": "Coming soon",
+    "body": "The routes are being prepared. Soon you can find yours here."
+  },
+  "goal": {
+    "title": "Why do you want to go?",
+    "work": "To work",
+    "study": "To study",
+    "any": "Either",
+    "help": "From your answer, we only check the routes that suit you.",
+    "work_hint": "Find work with the experience and skills you have, and stay",
+    "study_hint": "Study, then stay after you graduate",
+    "any_hint": "Tell me the best way to stay"
+  },
+  "question": "Question {{number}}",
+  "next": "Next",
+  "back": "Back",
+  "number_error": "Enter a valid number.",
+  "asks": {
+    "age": {
+      "title": "How old are you?",
+      "help": "Age earns points in most work routes.",
+      "label": "Age (years)"
+    },
+    "education": {
+      "title": "What is your highest degree?",
+      "help": "If you are studying, pick the degree you will get.",
+      "options": {
+        "secondary": "High school",
+        "vocational": "Associate or vocational",
+        "bachelor": "Bachelor's",
+        "master": "Master's",
+        "phd": "PhD"
+      }
+    },
+    "english": {
+      "title": "How is your English?",
+      "help": "IELTS, TOEFL or Duolingo. Without a certificate, your own guess is enough.",
+      "options": {
+        "none": "No certificate, or weak",
+        "ielts_4": "IELTS 4 to 5",
+        "ielts_5_5": "IELTS 5.5 to 6.5",
+        "ielts_7": "IELTS 7 to 8",
+        "ielts_8_5": "IELTS 8.5 or more"
+      },
+      "scale": "Which exam is your score in?",
+      "scales": {
+        "ielts": "IELTS",
+        "toefl": "TOEFL",
+        "duolingo": "Duolingo"
+      },
+      "toefl": {
+        "ielts_4": "TOEFL 32 to 45",
+        "ielts_5_5": "TOEFL 46 to 93",
+        "ielts_7": "TOEFL 94 to 114",
+        "ielts_8_5": "TOEFL 115 or more"
+      },
+      "duolingo": {
+        "ielts_4": "Duolingo 85 to 114",
+        "ielts_5_5": "Duolingo 115 to 144",
+        "ielts_7": "Duolingo 145 to 159",
+        "ielts_8_5": "Duolingo 160"
+      }
+    },
+    "work_years": {
+      "title": "How many years of work in your field?",
+      "help": "Full-time work counts. None? Enter 0.",
+      "label": "Years of work"
+    },
+    "german": {
+      "title": "Do you speak German?",
+      "help": "It matters for Germany's routes.",
+      "options": {
+        "none": "No",
+        "a1": "A1 (beginner)",
+        "a2": "A2",
+        "b1": "B1",
+        "b2": "B2",
+        "c1": "C1 or higher"
+      }
+    },
+    "recognition": {
+      "title": "In which countries is your degree recognised?",
+      "help": "In Germany, for example, your university is on the anabin list. If you don't know, our adviser will check.",
+      "none": "None, or I don't know"
+    },
+    "job_offer": {
+      "title": "Which country's employer has offered you a job?",
+      "help": "Only a formal, written job offer.",
+      "none": "None"
+    },
+    "shortage_occupation": {
+      "title": "Which countries list your occupation as in demand?",
+      "help": "If you don't know, our adviser will check.",
+      "none": "None, or I don't know"
+    },
+    "skills_assessment": {
+      "title": "Which country's skills assessment have you passed?",
+      "help": "Some work routes need one, such as Australia's.",
+      "none": "None"
+    },
+    "stay_months": {
+      "title": "Which countries have you lived, worked or studied in?",
+      "help": "Pick the countries and say how many years in each.",
+      "none": "None"
+    },
+    "partner": {
+      "title": "What about your partner?",
+      "help": "In some routes a partner earns points too.",
+      "options": {
+        "single": "Single, or not coming",
+        "skilled": "Skilled with enough English",
+        "english": "Only good English",
+        "other": "None of these"
+      }
+    },
+    "budget": {
+      "title": "How much can you spend on the first year?",
+      "help": "Tuition and a year of living, in tomans. We compare it with each country's costs.",
+      "options": {
+        "up_to_1b": "Up to 1 billion tomans",
+        "1b_2b": "1 to 2 billion",
+        "2b_4b": "2 to 4 billion",
+        "4b_8b": "4 to 8 billion",
+        "over_8b": "Over 8 billion",
+        "unsure": "Not sure yet"
+      }
+    },
+    "remote_work": {
+      "title": "Do you work remotely now?",
+      "help": "Employed or freelance, for a company or clients outside the country you want to go to, who let you work from there.",
+      "options": {
+        "yes": "Yes, I work remotely",
+        "no": "No"
+      }
+    },
+    "income": {
+      "title": "What is your monthly income?",
+      "help": "Net. We convert it to euros at today's rate and compare it with the minimum the visa asks.",
+      "currency": "Currency",
+      "currencies": {
+        "toman": "Toman",
+        "eur": "Euro",
+        "usd": "Dollar"
+      },
+      "label_toman": "Monthly income (million tomans)",
+      "label_eur": "Monthly income (euros)",
+      "label_usd": "Monthly income (dollars)",
+      "hint": "Just the number.",
+      "in_euros": "≈ {{amount}} euros at today's rate",
+      "no_rate": "Today's rate isn't available; we use the latest one."
+    },
+    "remote_months": {
+      "title": "How long have you worked with this company or client?",
+      "help": "Since your work together started. Some visas ask a few months at least.",
+      "options": {
+        "under_3": "Under 3 months",
+        "3_12": "3 months to a year",
+        "over_12": "Over a year"
+      }
+    },
+    "employer_years": {
+      "title": "How long has that company been in business?",
+      "help": "The company you work for. Freelance? Count your main client.",
+      "options": {
+        "under_1": "Under a year",
+        "1_3": "1 to 3 years",
+        "over_3": "Over 3 years",
+        "unsure": "I don't know"
+      }
+    },
+    "children": {
+      "title": "How many children are coming with you?",
+      "help": "Some visas ask more income for each person coming along. None? Leave it at zero.",
+      "label": "Children"
+    }
+  },
+  "fit": {
+    "good": "Good fit",
+    "close": "Close",
+    "not_now": "Not now"
+  },
+  "points": "Your points: {{points}} of {{pass}} needed",
+  "missing": "What is missing",
+  "tip": "What raises your chance",
+  "duration": "Time: {{value}}",
+  "cost": {
+    "label": "Cost: {{value}}",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
+  },
+  "first": {
+    "title": "Your first route",
+    "more": "A few more questions check more countries",
+    "left_one": "1 more question",
+    "left_other": "{{count}} more questions",
+    "continue_one": "Go on: 1 question to {{country}}",
+    "continue_other": "Go on: {{count}} questions to {{country}}",
+    "enough": "That's enough",
+    "keep": "Keep answering"
+  },
+  "results": {
+    "title_one": "This route fits you best",
+    "title_other": "These {{count}} routes fit you best",
+    "none": "With these answers, no route you qualify for now",
+    "not_now": "Routes that don't fit now",
+    "not_now_line": "{{country}}, {{name}}: {{why}}",
+    "points_short": "Not enough points",
+    "show": "See the result now",
+    "more": "More questions, more countries",
+    "edit": "Start over",
+    "disclaimer": "This is an estimate and each country's rules can change. An adviser makes the final check.",
+    "eyebrow": "Your result",
+    "intro": "These fit where you are today. We recommend the first one."
+  },
+  "consult": {
+    "title": "Take the next step with our adviser",
+    "body": "An adviser sees your answers and calls you with the exact route.",
+    "button": "Call me",
+    "sent": "Done. Our team will call you soon."
+  },
+  "factors": {
+    "age": "Age",
+    "education": "Degree",
+    "recognition": "Degree recognition",
+    "work_years": "Work years",
+    "english_ielts": "IELTS score",
+    "english_level": "English level",
+    "german_level": "German level",
+    "job_offer": "Job offer",
+    "shortage_occupation": "Shortage occupation",
+    "skills_assessment": "Skills assessment",
+    "stay_months": "Months of stay",
+    "partner": "Partner",
+    "remote_work": "Remote work",
+    "monthly_income_eur": "Monthly income (EUR)",
+    "children": "Children coming",
+    "remote_months": "Months with the company",
+    "employer_years": "Company's years in business"
+  },
+  "choices": {
+    "education": {
+      "none": "None",
+      "secondary": "High school",
+      "vocational": "Vocational",
+      "bachelor": "Bachelor's",
+      "master": "Master's",
+      "phd": "PhD"
+    },
+    "recognition": {
+      "none": "No",
+      "partial": "Partly",
+      "full": "Fully"
+    },
+    "english_level": {
+      "none": "None",
+      "a1": "A1",
+      "a2": "A2",
+      "b1": "B1",
+      "b2": "B2",
+      "c1": "C1",
+      "c2": "C2"
+    },
+    "german_level": {
+      "none": "None",
+      "a1": "A1",
+      "a2": "A2",
+      "b1": "B1",
+      "b2": "B2",
+      "c1": "C1",
+      "c2": "C2"
+    },
+    "partner": {
+      "single": "Single / no partner",
+      "skilled": "Skilled partner",
+      "english": "Partner with English",
+      "other": "Other"
+    }
+  },
+  "manage": {
+    "title": "Migration pathways",
+    "subtitle": "A route shows to customers after \"Checked, publish\".",
+    "new": "New route",
+    "filter": "Status",
+    "filters": {
+      "all": "All ({{count}})",
+      "published": "Published ({{count}})",
+      "draft": "Waiting for a check ({{count}})",
+      "review_due": "Recheck due ({{count}})",
+      "off": "Off ({{count}})"
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Waiting for a check",
+      "review_due": "Recheck due",
+      "off": "Off"
+    },
+    "routes_one": "1 route",
+    "routes_other": "{{count}} routes",
+    "empty": "No routes",
+    "empty_body": "Make the first one with \"New route\"."
+  },
+  "edit": {
+    "back": "Back to routes",
+    "new_title": "New route",
+    "save": "Save",
+    "saved": "Saved. Customers don't see it until it is checked.",
+    "verify": "Checked, publish",
+    "published": "Published. Customers see this route from now on.",
+    "verify_failed": "Add and save its requirements or points first.",
+    "check_fields": "Some fields need fixing.",
+    "basics": "1. Basics",
+    "country": "Country",
+    "goal": "For whom?",
+    "goals": {
+      "work": "Work",
+      "study": "Study",
+      "any": "Both"
+    },
+    "name_persian": "Persian name",
+    "name": "Official name",
+    "source_url": "Official page link",
+    "review_by": "Check again by",
+    "active": "On (when off, nobody sees it)",
+    "requirements": "2. Requirements",
+    "requirements_help": "Each box is a must: the customer needs every box (\"and\"). Inside a box, any one option is enough (\"or\").",
+    "factor": "Fact",
+    "label": "Text the customer sees",
+    "minimum": "At least",
+    "maximum": "Under",
+    "maximum_help": "This number itself doesn't count. Empty: no limit.",
+    "value": "Value",
+    "pick": "Pick one",
+    "any": "Any",
+    "yes": "Yes",
+    "no": "No",
+    "condition_error": "This condition isn't valid: fix the minimum, maximum or value.",
+    "remove": "Remove",
+    "add_requirement": "+ Another must",
+    "points": "3. Points table",
+    "points_help": "For points tests: each row gives the points of the best band the customer is in.",
+    "kind": "Kind",
+    "kinds": {
+      "requirements": "Requirements only",
+      "points": "Points test"
+    },
+    "pass_mark": "Pass mark",
+    "band_points": "Points",
+    "add_band": "+ Band",
+    "remove_criterion": "Remove this row",
+    "add_criterion": "+ Points row",
+    "customer": "4. Text for the customer",
+    "summary": "What it is (one or two plain sentences)",
+    "tip": "What raises the chance",
+    "duration": "Time it takes",
+    "cost": "Cost",
+    "costs": {
+      "none": "Not set",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "notes": "Notes for the team",
+    "notes_help": "What the rules leave out: money to show, quotas, invitations.",
+    "asks": "Questions this route needs",
+    "asks_help": "Worked out from the requirements and points.",
+    "try": "Try on a sample person",
+    "try_person": "28, bachelor's, IELTS 6.5, 4 years of work, no German",
+    "try_button": "Try it",
+    "before": "Before publishing",
+    "before_body": "Compare the requirements and points with the official page, then press \"Checked, publish\". Any later change hides the route from customers until it is checked again.",
+    "study": "5. A year of study and after",
+    "study_help": "Give all the costs or none. The admission-chance quiz shows them on the country's card.",
+    "currency": "Currency",
+    "currencies": {
+      "none": "No costs",
+      "e": "Euro",
+      "u": "US dollar",
+      "c": "Canadian dollar",
+      "p": "Pound"
+    },
+    "tuition_min": "Tuition a year, cheapest",
+    "tuition_max": "Tuition a year, dearest",
+    "living_per_year": "Living costs a year",
+    "post_study_visa": "Stay after graduating",
+    "post_study_months": "How long (months)",
+    "after_study": "The way to stay from there",
+    "and": "and",
+    "or": "or",
+    "must": "Must {{number}}",
+    "one_is_enough": "Any one of these is enough",
+    "add_or": "+ Or (another option instead)",
+    "family_help": "If the minimum rises with the family (Spain's digital nomad visa, say): what is added for people coming along. Empty: the same for everyone.",
+    "per_first": "Added for the first person coming (partner, or a child)",
+    "per_more": "Added for each one after"
+  },
+  "intro": {
+    "eyebrow": "Pathway finder",
+    "title": "Find your way abroad.",
+    "body": "Answer a few short questions. We check every route to work and live abroad for you and tell you which ones fit.",
+    "time": "About 2 minutes",
+    "time_label": "Time",
+    "countries_one": "{{n}} country",
+    "countries_other": "{{n}} countries",
+    "free": "Free",
+    "free_label": "No cost",
+    "start": "Start"
+  },
+  "step": "{{number}} of {{total}}",
+  "progress": "Question progress",
+  "keys_hint": "Press an option's number on your keyboard",
+  "number_hint": "Use + and − or drag the bar to change the number",
+  "more": "One more",
+  "less": "One less",
+  "rail": {
+    "title": "Checking for you",
+    "done": "Checked",
+    "waiting": "Not started yet",
+    "left_one": "{{n}} question left",
+    "left_other": "{{n}} questions left",
+    "note": "With each answer we check every country's work and residence routes ourselves. You don't need to pick a route."
+  },
+  "peek": {
+    "title": "Your first route is ready",
+    "route": "{{country}}, {{name}}",
+    "see": "See why"
+  },
+  "facts": {
+    "time": "Time",
+    "cost": "Cost",
+    "score": "Your points",
+    "score_value": "{{points}} of the {{pass}} points needed"
+  },
+  "countries": {
+    "years": "years",
+    "years_of": "Years in {{country}}",
+    "how_fully": "How fully {{country}} recognises your degree",
+    "years_note_one": "{{n}} year",
+    "years_note_other": "{{n}} years"
+  },
+  "improve": {
+    "title": "What would help you",
+    "education": "With a {{value}} degree",
+    "recognition": "With your degree recognised ({{value}})",
+    "work_years": "Once you have {{value}} years of work",
+    "english_ielts": "With an IELTS of {{value}}",
+    "english_level": "With English at {{value}}",
+    "german_level": "With German at {{value}}",
+    "job_offer": "With a job offer",
+    "skills_assessment": "With a skills assessment",
+    "gain": "{{text}}, you get {{points}} more points",
+    "passes": "{{text}}, you get {{points}} more points and pass"
+  },
+  "restart": "Start again",
+  "close": "Close",
+  "home": "Go to the Scorize site",
+  "study": {
+    "first_year": "The first year costs",
+    "billions": "About {{min}} to {{max}} billion tomans",
+    "billions_one": "About {{min}} billion tomans",
+    "millions": "About {{min}} to {{max}} million tomans",
+    "millions_one": "About {{min}} million tomans",
+    "no_rate": "In tomans: no exchange rate yet",
+    "range": "{{min}} to {{max}}",
+    "costs": "Tuition {{tuition}} a year and living {{living}}",
+    "after_months": "After the degree: {{visa}}, {{months}} months",
+    "fit": {
+      "fits": "Fits your budget",
+      "tight": "With the cheaper universities",
+      "over": "Over your budget"
+    }
+  },
+  "near": {
+    "title": "Close to the minimum",
+    "body": "Your income is just above the minimum ({{list}}). A change in the exchange rate could take it under; an adviser will check it closely."
+  }
+}

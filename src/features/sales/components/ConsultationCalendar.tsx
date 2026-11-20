@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Suspense, lazy, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaceDot } from '@/components/customers/FaceDot';
 import { Card } from '@/components/ui/Card';
@@ -19,10 +19,10 @@ import { Button } from '@/components/ui/Button';
 import {
   CALENDAR_KEY,
   sellerCalendarQuery,
-  useSetFollowUp,
   type CalendarConsultation,
   type CalendarType,
 } from '../api';
+import { useSetFollowUp } from '../api/calendarMutations';
 import {
   DEFAULT_MINUTES,
   callMinutes,
@@ -71,6 +71,26 @@ interface Setting {
 type ModeFilter = 'all' | CalendarType['mode'];
 const MODES: readonly ModeFilter[] = ['all', 'online', 'in_person'];
 
+/** What the calendar draws, each of which can be hidden: paid sessions, tasks, office meetings, calls. */
+type Kind = 'consultations' | 'tasks' | 'visits' | 'calls';
+const KINDS: readonly Kind[] = ['consultations', 'tasks', 'visits', 'calls'];
+const KIND_COLOR: Record<Kind, string> = {
+  consultations: 'var(--primary)',
+  tasks: TASK_COLOR,
+  visits: VISIT_COLOR,
+  calls: 'var(--text-2)',
+};
+
+/**
+ * Which consultation types show. `only` off: every type but those in `picked` (a new type in
+ * another week shows); on: only those in `picked` ("clear all" then a few ticked, in any week).
+ */
+interface TypePick {
+  only: boolean;
+  picked: ReadonlySet<string>;
+}
+const typeShown = (pick: TypePick, id: string) => pick.only === pick.picked.has(id);
+
 export function ConsultationCalendar() {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
@@ -81,7 +101,9 @@ export function ConsultationCalendar() {
   const [now] = useState(() => new Date());
   const thisWeek = weekOf(now, startDay);
   const [week, setWeek] = useState(thisWeek);
-  const [hidden, setHidden] = useState<Set<string>>(() => new Set());
+  const [kindsOff, setKindsOff] = useState<ReadonlySet<Kind>>(() => new Set());
+  const [typePick, setTypePick] = useState<TypePick>(() => ({ only: false, picked: new Set() }));
+  const shows = (kind: Kind) => !kindsOff.has(kind);
   const [onlyUnlogged, setOnlyUnlogged] = useState(false);
   const [mode, setMode] = useState<ModeFilter>('all');
   const inMode = (held: CalendarType['mode']) => mode === 'all' || held === mode;
@@ -126,21 +148,21 @@ export function ConsultationCalendar() {
   const nowTime = now.getTime();
   const consultations = (data?.consultations ?? []).filter(
     (item) =>
+      shows('consultations') &&
       inMode(item.mode) &&
-      !hidden.has(String(item.type)) &&
+      typeShown(typePick, String(item.type)) &&
       (!onlyUnlogged || statusOf(item, nowTime) === 'need'),
   );
   // A follow-up for a day with no hour is on the day row (its count), not drawn at 23:59.
   const calls =
-    hidden.has('calls') || onlyUnlogged
+    !shows('calls') || onlyUnlogged
       ? []
       : (data?.calls ?? []).filter((item) => item.timed !== false);
   // The seller's own tasks with an hour, at that hour; those without one stay on the day row.
   const taskRows =
-    hidden.has('tasks') || onlyUnlogged ? [] : (data?.task_rows ?? []).filter((item) => item.timed);
+    !shows('tasks') || onlyUnlogged ? [] : (data?.task_rows ?? []).filter((item) => item.timed);
   // In-person meetings at the office (S75): held in person, so "online only" hides them.
-  const visits =
-    hidden.has('visits') || onlyUnlogged || mode === 'online' ? [] : (data?.visits ?? []);
+  const visits = !shows('visits') || onlyUnlogged || mode === 'online' ? [] : (data?.visits ?? []);
 
   const sellerOf = (item: CalendarConsultation) =>
     item.seller ?? t('consultationCalendar.noSeller');
@@ -333,24 +355,32 @@ export function ConsultationCalendar() {
               }))}
             />
           </Card>
-          <Card className="p-3 max-lg:hidden">
+          <Card className="p-3">
             <Layers
-              types={(data?.types ?? []).filter((type) => inMode(type.mode))}
-              counts={(id) =>
-                id === 'calls'
-                  ? (data?.calls.length ?? 0)
-                  : id === 'visits'
-                    ? (data?.visits?.length ?? 0)
-                    : id === 'tasks'
-                      ? (data?.task_rows?.filter((item) => item.timed).length ?? 0)
-                      : all.filter((item) => String(item.type) === id).length
+              kinds={kindsOff}
+              kindCount={(kind) =>
+                kind === 'consultations'
+                  ? all.filter((item) => inMode(item.mode)).length
+                  : kind === 'calls'
+                    ? (data?.calls.filter((item) => item.timed !== false).length ?? 0)
+                    : kind === 'visits'
+                      ? mode === 'online'
+                        ? 0
+                        : (data?.visits?.length ?? 0)
+                      : (data?.task_rows?.filter((item) => item.timed).length ?? 0)
               }
-              hidden={hidden}
-              onToggle={(id) => {
-                const nextHidden = new Set(hidden);
-                if (nextHidden.has(id)) nextHidden.delete(id);
-                else nextHidden.add(id);
-                setHidden(nextHidden);
+              onKind={(kind) => {
+                const next = new Set(kindsOff);
+                if (next.has(kind)) next.delete(kind);
+                else next.add(kind);
+                setKindsOff(next);
+                setChosenId(null);
+              }}
+              types={(data?.types ?? []).filter((type) => inMode(type.mode))}
+              typeCount={(id) => all.filter((item) => String(item.type) === id).length}
+              typePick={typePick}
+              onTypes={(next) => {
+                setTypePick(next);
                 setChosenId(null);
               }}
             />
@@ -396,22 +426,27 @@ export function ConsultationCalendar() {
             onSlotPick={pickSlot}
             onMove={moveCall}
             zoomDays
-            dayRow={{
-              label: t('consultationCalendar.tasks.row'),
-              cell: (day, compact) => (
-                <TaskBrief
-                  day={day}
-                  tasks={taskDays.get(toValue(day, false))}
-                  today={today}
-                  compact={compact}
-                />
-              ),
-              onAdd: (day) => {
-                setChosenId(null);
-                setNewTaskOn(dueOn(day, new Date()));
-              },
-              addLabel: (day) => t('consultationCalendar.tasks.add', { day: f.weekday(day) }),
-            }}
+            // Tasks hidden: their day row (tasks without an hour) goes too.
+            dayRow={
+              shows('tasks')
+                ? {
+                    label: t('consultationCalendar.tasks.row'),
+                    cell: (day, compact) => (
+                      <TaskBrief
+                        day={day}
+                        tasks={taskDays.get(toValue(day, false))}
+                        today={today}
+                        compact={compact}
+                      />
+                    ),
+                    onAdd: (day) => {
+                      setChosenId(null);
+                      setNewTaskOn(dueOn(day, new Date()));
+                    },
+                    addLabel: (day) => t('consultationCalendar.tasks.add', { day: f.weekday(day) }),
+                  }
+                : undefined
+            }
             details={
               chosen && (
                 <EventDetails
@@ -460,65 +495,180 @@ function Legend({ swatch, children }: { swatch: string; children: ReactNode }) {
   );
 }
 
-/** Which layers show: each consultation type and the follow-up calls, like a calendar app's list. */
-function Layers({
-  types,
-  counts,
-  hidden,
+/** A row with a calendar-app check box in its colour, a label and its count. */
+function LayerRow({
+  label,
+  color,
+  on,
+  count,
   onToggle,
+  onOnly,
+  disabled = false,
 }: {
-  types: CalendarType[];
-  counts: (id: string) => number;
-  hidden: Set<string>;
-  onToggle: (id: string) => void;
+  label: string;
+  color: string;
+  on: boolean;
+  count: number;
+  onToggle: () => void;
+  /** "Only this": every other row off, this one on, in one click. */
+  onOnly?: (() => void) | undefined;
+  disabled?: boolean;
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const rows = [
-    ...types.map((type) => ({
-      id: String(type.id),
-      label: type.name,
-      color: eventColor(type.color),
-    })),
-    { id: 'calls', label: t('consultationCalendar.calls'), color: 'var(--text-2)' },
-    { id: 'visits', label: t('visit.onCalendar'), color: VISIT_COLOR },
-    { id: 'tasks', label: t('consultationCalendar.taskLayer'), color: TASK_COLOR },
-  ];
+  const row = (
+    <label
+      className={`flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-xl px-2 has-focus-visible:outline-2 has-focus-visible:outline-focus ${
+        disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer hover:bg-canvas'
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={on}
+        disabled={disabled}
+        onChange={onToggle}
+        className="sr-only"
+      />
+      <span
+        aria-hidden="true"
+        style={{ background: on ? color : undefined, boxShadow: `inset 0 0 0 2px ${color}` }}
+        className="flex size-[18px] flex-none items-center justify-center rounded-[5px] text-on-primary"
+      >
+        {on && <Icon name="check" size={12} />}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{label}</span>
+      <span className="text-xs text-text-2 tabular-nums">{f.number(count)}</span>
+    </label>
+  );
+  if (!onOnly) return row;
+  // Wide screens: shown on hover or focus, like a calendar app; phones: always there.
   return (
-    <fieldset className="m-0 border-0 p-0">
-      <legend className="mb-2 px-2 text-sm font-bold">{t('consultationCalendar.layers')}</legend>
-      {/* Many types: the list scrolls rather than pushing the page down. */}
-      <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-        {rows.map((row) => {
-          const on = !hidden.has(row.id);
-          return (
-            <label
-              key={row.id}
-              className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl px-2 hover:bg-canvas has-focus-visible:outline-2 has-focus-visible:outline-focus"
+    <div className="group flex items-center">
+      {row}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onOnly}
+        aria-label={t('consultationCalendar.onlyThisAria', { name: label })}
+        className="min-h-11 flex-none rounded-lg px-2 text-xs font-semibold text-primary-text hover:bg-tint focus-visible:opacity-100 disabled:hidden lg:opacity-0 lg:group-hover:opacity-100"
+      >
+        {t('consultationCalendar.onlyThis')}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * What the calendar shows, like a calendar app's list: each kind (consultations, tasks, office
+ * meetings, calls), then the consultation types with "select all" / "clear all". On phones the
+ * types fold under one button so the calendar stays near the top.
+ */
+function Layers({
+  kinds,
+  kindCount,
+  onKind,
+  types,
+  typeCount,
+  typePick,
+  onTypes,
+}: {
+  kinds: ReadonlySet<Kind>;
+  kindCount: (kind: Kind) => number;
+  onKind: (kind: Kind) => void;
+  types: CalendarType[];
+  typeCount: (id: string) => number;
+  typePick: TypePick;
+  onTypes: (next: TypePick) => void;
+}) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const [typesOpen, setTypesOpen] = useState(false);
+  const listId = useId();
+  const consultationsOn = !kinds.has('consultations');
+  const ids = types.map((type) => String(type.id));
+  const shown = ids.filter((id) => typeShown(typePick, id)).length;
+  const allShown = shown === ids.length;
+  const toggleType = (id: string) => {
+    const picked = new Set(typePick.picked);
+    if (picked.has(id)) picked.delete(id);
+    else picked.add(id);
+    onTypes({ only: typePick.only, picked });
+  };
+  return (
+    <div className="flex flex-col gap-3">
+      <fieldset className="m-0 border-0 p-0">
+        <legend className="mb-1.5 px-2 text-sm font-bold">{t('consultationCalendar.kinds')}</legend>
+        <div className="grid grid-cols-2 gap-0.5 lg:grid-cols-1">
+          {KINDS.map((kind) => (
+            <LayerRow
+              key={kind}
+              label={t(`consultationCalendar.kind.${kind}`)}
+              color={KIND_COLOR[kind]}
+              on={!kinds.has(kind)}
+              count={kindCount(kind)}
+              onToggle={() => onKind(kind)}
+            />
+          ))}
+        </div>
+      </fieldset>
+
+      {types.length > 0 && (
+        <fieldset
+          disabled={!consultationsOn}
+          className="border-line m-0 border-0 border-t p-0 pt-3"
+        >
+          <legend className="sr-only">{t('consultationCalendar.types')}</legend>
+          <div className="flex min-h-9 items-center gap-2 px-2">
+            {/* Phones: the list folds under this; wider screens: a plain heading. */}
+            <button
+              type="button"
+              aria-expanded={typesOpen}
+              aria-controls={listId}
+              onClick={() => setTypesOpen(!typesOpen)}
+              className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-start text-sm font-bold lg:pointer-events-none"
             >
-              <input
-                type="checkbox"
-                checked={on}
-                onChange={() => onToggle(row.id)}
-                className="sr-only"
-              />
-              <span
-                aria-hidden="true"
-                style={{
-                  background: on ? row.color : undefined,
-                  boxShadow: `inset 0 0 0 2px ${row.color}`,
-                }}
-                className="flex size-[18px] flex-none items-center justify-center rounded-[5px] text-on-primary"
-              >
-                {on && <Icon name="check" size={12} />}
+              {t('consultationCalendar.types')}
+              <span className="text-xs font-normal text-text-2">
+                {t('consultationCalendar.typesShown', {
+                  shown: f.number(shown),
+                  total: f.number(ids.length),
+                })}
               </span>
-              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{row.label}</span>
-              <span className="text-xs text-text-2">{f.number(counts(row.id))}</span>
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
+              <Icon
+                name="chevronDown"
+                size={14}
+                className={`text-text-2 transition-transform lg:hidden ${typesOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => onTypes({ only: allShown, picked: new Set() })}
+              className="min-h-11 rounded-lg px-2 text-xs font-semibold text-primary-text hover:bg-tint disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {allShown ? t('consultationCalendar.clearAll') : t('consultationCalendar.selectAll')}
+            </button>
+          </div>
+          {/* Many types: the list scrolls rather than pushing the page down. */}
+          <div
+            id={listId}
+            className={`mt-0.5 max-h-64 flex-col gap-0.5 overflow-y-auto lg:flex ${typesOpen ? 'flex' : 'hidden'}`}
+          >
+            {types.map((type) => (
+              <LayerRow
+                key={type.id}
+                label={type.name}
+                color={eventColor(type.color)}
+                on={typeShown(typePick, String(type.id))}
+                count={typeCount(String(type.id))}
+                onToggle={() => toggleType(String(type.id))}
+                onOnly={() => onTypes({ only: true, picked: new Set([String(type.id)]) })}
+                disabled={!consultationsOn}
+              />
+            ))}
+          </div>
+        </fieldset>
+      )}
+    </div>
   );
 }
 

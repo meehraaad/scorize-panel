@@ -23,13 +23,10 @@ import {
   conversationQuery,
   conversationsQuery,
   isWaiting,
-  useAsk,
-  useChangeConversation,
-  useFeedback,
-  useStartConversation,
   type AssistantMessage,
   type ConversationRow,
 } from './api';
+import { useAsk, useChangeConversation, useFeedback, useStartConversation } from './mutations';
 import { AnswerTableView } from './components/AnswerTableView';
 import { AnswerText } from './components/AnswerText';
 import { conversationPath, FOUNDERS_ROOT } from './paths';

@@ -1,4 +1,4 @@
-import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Face } from '@/lib/face/api';
 import {
@@ -20,6 +20,8 @@ export interface LeadRow {
   /** Localized names. */
   countries: string[];
   source: LeadSource;
+  /** A marketing team source's name; null for a system source. */
+  source_label?: string | null;
   /** What brought them, localized ("Canada application consultation · 4 minutes ago"). */
   cause: string;
   /** Null until the automatic score (S5). */
@@ -39,6 +41,26 @@ export interface LeadRow {
 }
 
 export type LeadFilter = LeadStage | 'all';
+
+/** Customers who bought (paid) a consultation: any, only in-person or not, or none ever. */
+export type ConsultationFilter = 'all' | 'any' | 'in_person' | 'online' | 'none';
+
+export const CONSULTATION_FILTERS: readonly ConsultationFilter[] = [
+  'all',
+  'any',
+  'in_person',
+  'online',
+  'none',
+];
+
+/** A consultation type for the list's filter; `online` is every type that is not in person. */
+export interface ConsultationTypeOption {
+  id: number;
+  name: string;
+  mode: 'in_person' | 'online';
+  /** Still sold; an old one only finds those who bought it. */
+  active: boolean;
+}
 
 export const LEAD_FILTERS: readonly LeadFilter[] = ['all', ...STAGES];
 
@@ -68,6 +90,10 @@ export interface LeadQuery {
   page: number;
   /** A sales manager's seller filter: a SupportStaff id, or the leads nobody has yet. */
   seller?: number | 'none' | null;
+  /** Bought consultations; absent: no filter, so the first page stays the prefetched one. */
+  consultation?: ConsultationFilter;
+  /** A ConsultationType id the customer bought. */
+  consultationType?: number | null;
 }
 
 export interface LeadsData {
@@ -81,6 +107,8 @@ export interface LeadsData {
     bulk: boolean;
     /** Customer tags: the filter, the row chips and bulk tagging (S49). */
     tags?: boolean;
+    /** The bought-consultation filters (mode and type). */
+    consultations?: boolean;
   };
   stats: {
     new_waiting: number;
@@ -98,6 +126,8 @@ export interface LeadsData {
   results: LeadRow[];
   /** A sales manager's seller filter (SupportStaff ids); empty or absent for a seller. */
   sellers?: { id: number; name: string }[];
+  /** For the consultation type filter, active ones first. */
+  consultation_types?: ConsultationTypeOption[];
 }
 
 /** The seller's leads (managers: everyone's), with per-stage counts and the stats line (S11). */
@@ -111,6 +141,10 @@ function fetchLeads(query: LeadQuery, signal?: AbortSignal) {
   if (query.search.trim()) params.set('search', query.search.trim());
   if (query.seller !== undefined && query.seller !== null)
     params.set('seller', String(query.seller));
+  if (query.consultation && query.consultation !== 'all')
+    params.set('consultation', query.consultation);
+  if (query.consultationType !== undefined && query.consultationType !== null)
+    params.set('consultation_type', String(query.consultationType));
   return api<LeadsData>(`${SALES_API}/leads/?${params.toString()}`, { signal });
 }
 
@@ -184,16 +218,6 @@ export type BulkChange =
   | { add_tag: number }
   | { remove_tag: number };
 
-/** Several leads at once from the list (S13; tags S49). */
-export function useBulkLeads() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ ids, change }: { ids: number[]; change: BulkChange }) =>
-      api(`${SALES_API}/leads/bulk/`, { method: 'POST', body: { ids, ...change } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 export interface NewLead {
   first_name: string;
   last_name: string;
@@ -213,13 +237,5 @@ export interface NewLeadAnswer {
  * A customer typed in by the seller (referral, walk-in): creates the user when the phone is new
  * and their lead (source `manual`, S14). Errors come back as `{phone: ['invalid' | 'exists']}`.
  */
-const createLead = (lead: NewLead) =>
+export const createLead = (lead: NewLead) =>
   api<NewLeadAnswer>(`${SALES_API}/leads/`, { method: 'POST', body: lead });
-
-export function useCreateLead() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: createLead,
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}

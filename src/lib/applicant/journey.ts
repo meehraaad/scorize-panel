@@ -1,8 +1,7 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { uploadFile, type UploadMessages } from '@/lib/upload';
 
 /**
  * The new-user dashboard's steps toward a contract (any account, contract or not): files sent for
@@ -37,9 +36,9 @@ export interface ReviewDocument {
   uploaded_at: string;
 }
 
-const BASE = '/applicant/v1';
-const REVIEW_KEY = [...APPLICANT_KEY, 'review-documents'] as const;
-const BACKGROUND_KEY = [...APPLICANT_KEY, 'background'] as const;
+export const BASE = '/applicant/v1';
+export const REVIEW_KEY = [...APPLICANT_KEY, 'review-documents'] as const;
+export const BACKGROUND_KEY = [...APPLICANT_KEY, 'background'] as const;
 
 export const reviewDocumentsQuery = queryOptions({
   queryKey: REVIEW_KEY,
@@ -49,37 +48,6 @@ export const reviewDocumentsQuery = queryOptions({
     ),
   staleTime: 60_000,
 });
-
-/** One file for the free review, under the upload toast; the sales team hears of it. */
-export function useUploadReviewDocument() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      kind,
-      file,
-      messages,
-    }: {
-      kind: ReviewKind;
-      file: File;
-      messages?: UploadMessages;
-    }) => {
-      const body = new FormData();
-      body.append('kind', kind);
-      body.append('file', file);
-      return uploadFile<ReviewDocument>(`${BASE}/review-documents/`, body, file, messages);
-    },
-    onSuccess: () => client.invalidateQueries({ queryKey: REVIEW_KEY }),
-  });
-}
-
-export function useDeleteReviewDocument() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) =>
-      api(`${BASE}/review-documents/${String(id)}/`, { method: 'DELETE' }),
-    onSuccess: () => client.invalidateQueries({ queryKey: REVIEW_KEY }),
-  });
-}
 
 export const BACKGROUND_DEGREES = ['diploma', 'bachelor', 'master', 'phd'] as const;
 export type BackgroundDegree = (typeof BACKGROUND_DEGREES)[number];
@@ -130,16 +98,6 @@ export const backgroundQuery = queryOptions({
   staleTime: 5 * 60_000,
 });
 
-/** Saves the whole form (degrees and exams are replaced by what is sent). */
-export function useSaveBackground() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (body: BackgroundWrite) =>
-      api<Background>(`${BASE}/background/`, { method: 'PUT', body }),
-    onSuccess: (saved) => client.setQueryData(BACKGROUND_KEY, saved),
-  });
-}
-
 /** The dashboard's offers to start with (H63): any account. */
 export interface StartOffers {
   /** The consultation it offers and books; null when none is set up. */
@@ -178,20 +136,3 @@ export const startQuery = queryOptions({
   // Free times change as people book: fresh enough for a visit, not for a day.
   staleTime: 60_000,
 });
-
-/**
- * Books a consultation at one of its times (H64): the dashboard's, or any on the booking calendar.
- * `payment_id`: its invoice, paid on the purchase page; `paid`: credit paid it all (PAY4).
- */
-export function useBookConsultation() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (body: { type: number; starts_at: string }) =>
-      api<{ consultation: number; payment_id: number; paid: boolean }>(
-        `${BASE}/consultations/book/`,
-        { method: 'POST', body },
-      ),
-    // Paid by credit, the session is in the consultations list now; a taken time leaves the offers.
-    onSettled: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
-  });
-}

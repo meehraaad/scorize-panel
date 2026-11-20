@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { SALES_API } from '@/lib/sales/api';
 import { customerKey } from './customer';
@@ -61,6 +61,8 @@ export interface CustomerInfo {
   exams: ExamEntry[];
   /** Exams from Django; the other selects use the fixed model choices (CHOICES). */
   exams_list: Option[];
+  /** The countries the goal picks from (`value` is the name sent back in `countries`). */
+  countries_list?: Option[];
   /** The office tablet form for this customer (the old site's tablet wizard). */
   tablet_url: string;
 }
@@ -111,7 +113,7 @@ function unknownName(section: InfoSection, body: unknown): string | null {
   return null;
 }
 
-async function saveSection(id: number, section: InfoSection) {
+export async function saveSection(id: number, section: InfoSection) {
   try {
     return await api<CustomerInfo>(infoApi(id), { method: 'PATCH', body: section });
   } catch (error) {
@@ -120,18 +122,4 @@ async function saveSection(id: number, section: InfoSection) {
     if (name) throw new UnknownNameError(name);
     throw error;
   }
-}
-
-/** Saves one section and answers the stored info. */
-export function useSaveInfo(id: number) {
-  const client = useQueryClient();
-  return useMutation({
-    // Fail visibly when offline; the editor retains input and retries on reconnection.
-    networkMode: 'always',
-    mutationFn: (section: InfoSection) => saveSection(id, section),
-    onSuccess: (data) => {
-      client.setQueryData(infoQuery(id).queryKey, data);
-      return client.invalidateQueries({ queryKey: customerKey(id), exact: true });
-    },
-  });
 }

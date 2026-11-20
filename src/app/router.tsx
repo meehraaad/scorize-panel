@@ -1,3 +1,5 @@
+import { workflowQuery, workflowHistoryQuery } from '@/features/assessments/workflowApi';
+import { destinationOptionsQuery, destinationQuery } from '@/features/assessments/destinationApi';
 import {
   createBrowserRouter,
   redirect,
@@ -5,18 +7,33 @@ import {
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router';
+import {
+  calculatorOptionsQuery,
+  interviewQuery,
+  snapshotsQuery,
+  guidanceQuery,
+  profileEvidenceQuery,
+  documentLinksQuery,
+  sharedFactsQuery,
+} from '@/features/assessments/calculatorApi';
+import { draftsQuery, healthQuery, optionsQuery } from '@/features/assessments/api';
+import { ApiError, api } from '@/lib/api/client';
+import type { SessionUser } from '@/lib/auth/session';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
 import { restoreCacheFor } from '@/lib/api/persist';
+import { getRoles } from '@/lib/auth/roles';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import { setPreloadRoutes } from '@/lib/router/preload';
+import { toPathways } from '@/panels/pathwayRoutes';
 import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
 import { AuthLayout } from './layouts/AuthLayout';
+import { MeLayout } from './layouts/MeLayout';
 import { PanelLayout } from './layouts/PanelLayout';
 import { WorkspaceLayout } from './layouts/WorkspaceLayout';
 import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
@@ -26,7 +43,9 @@ import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedL
  *   /login                 AuthLayout   login, sign-up, password reset
  *   /start                 →            after login: the user's panel, or /choose
  *   /choose                             which panel to start in (several panels, first time or "ask")
- *   /account, /settings    PanelLayout  shared pages, shown inside the last-used panel
+ *   /finder                             the pathway finder alone (no panel menus)
+ *   /account, /settings,   PanelLayout  shared pages, shown inside the last-used panel
+ *   /me                                (/me: a staff member's own KPIs and pay)
  *   /, /supervisor, …      PanelLayout  one route tree per panel (src/panels/*), guarded by role
  *   /dev/components                     shared blocks gallery (dev builds only)
  *
@@ -140,6 +159,14 @@ const pageRoutes: RouteObject[] = [
     ErrorBoundary: ErrorPage,
     HydrateFallback: BootFallback,
   },
+  // The pathway finder alone: the logo and the quiz, no panel menus (links in ads and messages).
+  // Its loader comes with its page, so the first load only knows the path.
+  {
+    path: 'finder',
+    lazy: () => import('@/features/pathways/FinderPage').then((page) => page.alone),
+    ErrorBoundary: ErrorPage,
+    HydrateFallback: BootFallback,
+  },
   {
     loader: async ({ request }) => {
       const user = await currentUser();
@@ -165,12 +192,37 @@ const pageRoutes: RouteObject[] = [
             path: 'settings',
             ...lazyPage(() => import('@/features/settings/SettingsPage'), [], { skeleton: 'form' }),
           },
+          {
+            // A staff member's own pages: KPIs and pay, and a seller's sales month.
+            path: 'me',
+            Component: MeLayout,
+            children: [
+              {
+                index: true,
+                // No data on open: my pay is read only after I type my password.
+                ...lazyPage(() => import('@/features/hr/me/MyPayPage'), ['hr'], {
+                  skeleton: 'form',
+                }),
+              },
+              {
+                path: 'sales',
+                // No data on open: the month is read only after the seller types their password.
+                ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], {
+                  skeleton: 'form',
+                  guard: async () => {
+                    const user = await currentUser();
+                    return user && getRoles(user).includes('sales') ? null : redirect('/me');
+                  },
+                }),
+              },
+            ],
+          },
         ],
       },
     ],
   },
-  // The messages section's earlier addresses (its own panel, then the sales management area):
-  // now sections of the management panel.
+  // Earlier addresses of sections that moved. The messages section (its own panel, then the sales
+  // management area): now sections of the management panel.
   ...[
     ['messages', '/founders/messages'],
     ['messages/ready', '/founders/messages/ready'],
@@ -178,8 +230,120 @@ const pageRoutes: RouteObject[] = [
     ['sales/manager/messages', '/founders/messages'],
     ['sales/manager/messages/ready', '/founders/messages/ready'],
     ['sales/manager/access/*', '/founders/access'],
+    // The attendance panel's addresses: now the HR panel's attendance section.
+    ['attendance', '/hr/attendance'],
+    ['attendance/month', '/hr/attendance/month'],
+    ['attendance/settings', '/hr/attendance/settings'],
+    ['attendance/*', '/hr/attendance'],
   ].map(([path = '', to = '']) => ({ path, loader: () => redirect(to) })),
+  // Migration pathways: from the management panel to the sales and the marketing manager's areas.
+  { path: 'founders/pathways', loader: toPathways },
+  { path: 'founders/pathways/:id', loader: toPathways },
   ...PANELS.map(panelRoutes),
+  // The assessment preview pages: development, and the test server's build
+  // (VITE_ASSESSMENT_PREVIEW=true). Production builds drop them; Django also refuses
+  // their API outside local mode.
+  ...(import.meta.env.DEV || import.meta.env.VITE_ASSESSMENT_PREVIEW === 'true'
+    ? [
+        {
+          path: 'dev/assessments',
+          loader: async ({ request }: LoaderFunctionArgs) => {
+            // This standalone development route has no panel session boundary.
+            // Keep its guard independent of StrictMode's disabled frame observer.
+            const user = await queryClient.query({
+              queryKey: ['assessment-management', 'viewer'],
+              queryFn: async () => {
+                try {
+                  return await api<SessionUser>('/profile/auth/v1/whoami/');
+                } catch (error) {
+                  if (error instanceof ApiError && (error.status === 401 || error.status === 403))
+                    return null;
+                  throw error;
+                }
+              },
+              staleTime: 0,
+            });
+            if (user) queryClient.setQueryData(sessionQuery.queryKey, user);
+            return user ? null : toLogin(request);
+          },
+          ErrorBoundary: ErrorPage,
+          HydrateFallback: BootFallback,
+          children: [
+            {
+              index: true,
+              ...lazyPage(() => import('@/features/assessments/ManagementPage'), ['assessments'], {
+                data: () => [draftsQuery(), optionsQuery, healthQuery],
+                skeleton: 'form',
+              }),
+            },
+          ],
+        },
+        {
+          path: 'dev/assessment-destinations',
+          loader: async ({ request }: LoaderFunctionArgs) =>
+            (await currentUser()) ? null : toLogin(request),
+          ...lazyPage(() => import('@/features/assessments/DestinationPage'), ['assessments'], {
+            data: ({ request }) => {
+              const session = new URL(request.url).searchParams.get('session');
+              return session
+                ? [
+                    destinationOptionsQuery,
+                    destinationQuery(session),
+                    snapshotsQuery(session, 1),
+                    sharedFactsQuery,
+                  ]
+                : [destinationOptionsQuery];
+            },
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
+        },
+        {
+          path: 'dev/assessment-workflow',
+          loader: async ({ request }: LoaderFunctionArgs) =>
+            (await currentUser()) ? null : toLogin(request),
+          ...lazyPage(() => import('@/features/assessments/WorkflowPage'), ['assessments'], {
+            data: ({ request }) => {
+              const id = new URL(request.url).searchParams.get('session') ?? '';
+              return /^[a-f0-9-]{36}$/i.test(id)
+                ? [
+                    calculatorOptionsQuery,
+                    workflowQuery(id),
+                    workflowHistoryQuery(id),
+                    sharedFactsQuery,
+                    documentLinksQuery(id),
+                  ]
+                : [calculatorOptionsQuery];
+            },
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
+        },
+        {
+          path: 'dev/assessment-calculators',
+          ...lazyPage(() => import('@/features/assessments/CalculatorPage'), ['assessments'], {
+            data: ({ request }) => {
+              const params = new URL(request.url).searchParams;
+              const id = params.get('session') ?? '';
+              const country = params.get('country') === 'australia' ? 'australia' : 'canada';
+              return /^[a-f0-9-]{36}$/i.test(id)
+                ? [
+                    calculatorOptionsQuery,
+                    profileEvidenceQuery(id, country),
+                    sharedFactsQuery,
+                    documentLinksQuery(id),
+                    interviewQuery(id),
+                    snapshotsQuery(id),
+                    guidanceQuery(id),
+                  ]
+                : [calculatorOptionsQuery];
+            },
+            skeleton: 'form',
+          }),
+          HydrateFallback: BootFallback,
+        },
+      ]
+    : []),
   // Developer-only gallery of the shared blocks (src/components/ui). Vite drops it from builds.
   ...(import.meta.env.DEV
     ? [

@@ -17,12 +17,12 @@ import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
   paymentsQuery,
-  usePaymentAction,
   type PaymentMethod,
   type PaymentRow,
   type PaymentStatus,
   type PaymentsData,
 } from './api';
+import { usePaymentAction } from './api/paymentsMutations';
 import { useCustomerId } from './useCustomerId';
 import { useSalesFormat } from './format';
 

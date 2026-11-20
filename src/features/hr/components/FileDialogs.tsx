@@ -15,13 +15,10 @@ import {
   fileQuery,
   HR_KEY,
   optionsQuery,
-  useEditStaff,
-  useNewContract,
-  useNewSalary,
-  useStartExit,
   type ContractKind,
   type StaffFile,
 } from '../api';
+import { useEditStaff, useNewContract, useNewSalary, useStartExit, useReturn } from '../mutations';
 import { fieldErrors, parseAmount, todayValue } from '../format';
 
 const CONTRACTS: readonly ContractKind[] = ['trial', 'fixed', 'permanent', 'project'];
@@ -34,18 +31,20 @@ interface DialogProps {
 function Footer({
   saveLabel,
   pending,
+  disabled = false,
   onSave,
   onClose,
 }: {
   saveLabel: string;
   pending: boolean;
+  disabled?: boolean;
   onSave: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation('hr');
   return (
     <>
-      <Button disabled={pending} onClick={onSave}>
+      <Button disabled={pending || disabled} onClick={onSave}>
         {saveLabel}
       </Button>
       <Button variant="outline" onClick={onClose}>
@@ -243,6 +242,60 @@ export function ExitDialog({ file, onClose }: DialogProps) {
         value={reason}
         onChange={(event) => setReason(event.target.value)}
         rows={3}
+      />
+    </Dialog>
+  );
+}
+
+/**
+ * Someone who left comes back: their first day back and why (required). They become staff again
+ * with a joining checklist; their old access doesn't come back and is given again on the access page.
+ */
+export function ReturnDialog({ file, onClose }: DialogProps) {
+  const { t } = useTranslation('hr');
+  const save = useReturn(file.id);
+  const [day, setDay] = useState(todayValue());
+  const [reason, setReason] = useState('');
+  const submit = () =>
+    save.mutate(
+      { day, reason: reason.trim() },
+      {
+        onSuccess: () => {
+          toast.success(t('returnDialog.saved'));
+          onClose();
+        },
+        onError: () => toast.error(t('error')),
+      },
+    );
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={t('returnDialog.title')}
+      subtitle={file.name}
+      closeLabel={t('close')}
+      footer={
+        <Footer
+          saveLabel={t('returnDialog.save')}
+          pending={save.isPending}
+          disabled={reason.trim() === ''}
+          onSave={submit}
+          onClose={onClose}
+        />
+      }
+    >
+      <p className="m-0 text-[15px] leading-7 text-text-2">{t('returnDialog.text')}</p>
+      <DatePicker
+        label={t('returnDialog.day')}
+        value={day}
+        onChange={(value) => value && setDay(value)}
+      />
+      <TextAreaField
+        label={t('returnDialog.reason')}
+        value={reason}
+        onChange={(event) => setReason(event.target.value)}
+        rows={3}
+        required
       />
     </Dialog>
   );

@@ -1,5 +1,6 @@
 import { redirect } from 'react-router';
 import {
+  MANAGER_AREA_PERMISSIONS,
   MANAGER_PERMISSION,
   activityQuery,
   applyQuery,
@@ -10,6 +11,9 @@ import {
   commissionQuery,
   stagesQuery,
   managerTagsQuery,
+  consultationTypesQuery,
+  sellingTypesQuery,
+  managerConsultationsQuery,
   contractBuilderQuery,
   contractOverviewQuery,
   templateParam,
@@ -42,9 +46,10 @@ import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { hasPermission } from '@/lib/auth/roles';
+import { hasAnyPermission, hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { salesSourcesQuery } from '@/lib/leads/api';
 import { notebookQuery } from '@/lib/notes/api';
 import { SALES_API } from '@/lib/sales/api';
 import {
@@ -52,12 +57,14 @@ import {
   phoneMenusQuery,
   phoneTeamsQuery,
   phoneBreakQuery,
+  phoneExtensionsQuery,
   phoneVoicesQuery,
   teamBreaksQuery,
 } from '@/lib/sales/phoneCalls';
 import { PHONE_SECTIONS } from '@/features/sales/manager/phoneSections';
 import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
+import { pathwayRoutes } from '../pathwayRoutes';
 import type { PanelDefinition } from '../types';
 
 /** A customer page's id, or null (the page says the customer doesn't exist). */
@@ -71,6 +78,19 @@ const toMoney = ({ params, request }: LoaderFunctionArgs) =>
 async function managerOnly() {
   const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
   return user && hasPermission(user, MANAGER_PERMISSION) ? null : redirect('/sales');
+}
+
+/**
+ * The manager section: sales managers open all of it; the phone key alone (PHONE_PERMISSION) opens
+ * only its phone tab, so any other address there goes to the phone tab.
+ */
+async function managerArea({ request }: LoaderFunctionArgs) {
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+  if (user && hasPermission(user, MANAGER_PERMISSION)) return null;
+  if (!user || !hasAnyPermission(user, MANAGER_AREA_PERMISSIONS)) return redirect('/sales');
+  return new URL(request.url).pathname.includes('/sales/manager/phone')
+    ? null
+    : redirect('/sales/manager/phone');
 }
 
 /** Sales and support teams (User.is_seller). Design: canvas "Scorize Seller Panel". */
@@ -119,18 +139,11 @@ export const salesPanel: PanelDefinition = {
       icon: 'check',
     },
     {
-      id: 'month',
-      to: 'month',
-      label: 'panels.sales.nav.month',
-      tab: 'panels.sales.tabs.month',
-      icon: 'chart',
-    },
-    {
       id: 'manager',
       to: 'manager',
       label: 'panels.sales.nav.manager',
       icon: 'settings',
-      permission: MANAGER_PERMISSION,
+      permission: MANAGER_AREA_PERMISSIONS,
     },
   ],
   // Search every customer from any page (S63), not only the leads page's button.
@@ -169,6 +182,7 @@ export const salesPanel: PanelDefinition = {
                 firstLeadQuery(leadFilterOf(new URL(request.url).searchParams.get('stage'))),
               ),
               ON_SERVER.customerTags && tagsQuery,
+              salesSourcesQuery,
             ],
             skeleton: 'list',
           }),
@@ -202,11 +216,8 @@ export const salesPanel: PanelDefinition = {
         skeleton: 'board',
       }),
     },
-    {
-      path: 'month',
-      // No data on open: the month is read only after the seller types their password.
-      ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], { skeleton: 'form' }),
-    },
+    // The seller's month moved to «من» (/me/sales), with the rest of their pay.
+    { path: 'month', loader: () => redirect('/me/sales') },
     // Its first address.
     { path: 'consultations', loader: () => redirect('/sales/calendar') },
     {
@@ -308,12 +319,13 @@ export const salesPanel: PanelDefinition = {
     // The sales manager's section (nav item and routes need can_assign_to_seller).
     {
       path: 'manager',
-      loader: managerOnly,
+      loader: managerArea,
       ...lazyPage(() => import('@/features/sales/manager/ManagerLayout'), ['sales']),
       children: [
         {
           index: true,
-          ...lazyPage(() => import('@/features/sales/manager/AssignPage'), [], {
+          // `leads`: the CSV upload dialog.
+          ...lazyPage(() => import('@/features/sales/manager/AssignPage'), ['leads'], {
             data: () => [assignQuery(1)],
             skeleton: 'list',
           }),
@@ -373,6 +385,45 @@ export const salesPanel: PanelDefinition = {
           }),
         },
         {
+          // The consultation types with their prices and weekly times (S81), and the team's
+          // booked sessions (filters, consultant menu) as a sub-tab.
+          path: 'consultations',
+          ...lazyPage(() => import('@/features/sales/manager/ConsultationsLayout'), []),
+          children: [
+            {
+              index: true,
+              ...lazyPage(() => import('@/features/sales/manager/ConsultationTypesPage'), [], {
+                // Paused types load when their section is opened.
+                data: () => [sellingTypesQuery],
+                skeleton: 'list',
+              }),
+            },
+            {
+              path: 'sessions',
+              ...lazyPage(() => import('@/features/sales/manager/ManagerConsultationsPage'), [], {
+                data: ({ request }) => [
+                  managerConsultationsQuery(new URL(request.url).searchParams),
+                ],
+                skeleton: 'list',
+              }),
+            },
+            // The types' addresses while the sessions list was the tab's first page.
+            { path: 'types', loader: () => redirect('/sales/manager/consultations') },
+            {
+              path: 'types/:id',
+              loader: ({ params }) => redirect(`/sales/manager/consultations/${params.id ?? ''}`),
+            },
+            {
+              // One type's editor; `new` makes a type.
+              path: ':id',
+              ...lazyPage(() => import('@/features/sales/manager/ConsultationTypePage'), [], {
+                data: () => [consultationTypesQuery],
+                skeleton: 'form',
+              }),
+            },
+          ],
+        },
+        {
           path: 'stages',
           ...lazyPage(() => import('@/features/sales/manager/StagesPage'), [], {
             data: () => [stagesQuery],
@@ -386,6 +437,8 @@ export const salesPanel: PanelDefinition = {
             skeleton: 'list',
           }),
         },
+        // Migration pathways, shared with the marketing manager.
+        ...pathwayRoutes(),
         // The office line: one tab, a sub-tab per setting (PhoneLayout).
         ...(PHONE_SECTIONS.length
           ? [
@@ -421,6 +474,18 @@ export const salesPanel: PanelDefinition = {
                               data: () => [officeHoursQuery],
                               skeleton: 'form',
                             },
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.phoneExtensions
+                    ? [
+                        {
+                          path: 'extensions',
+                          ...lazyPage(
+                            () => import('@/features/sales/manager/PhoneExtensionsPage'),
+                            [],
+                            { data: () => [phoneExtensionsQuery], skeleton: 'list' },
                           ),
                         },
                       ]

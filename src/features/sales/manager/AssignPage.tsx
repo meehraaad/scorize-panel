@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useState, useTransition } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '@/components/ui/Avatar';
@@ -15,20 +15,24 @@ import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
+  MANAGER_API,
   assignQuery,
-  useAssignLeads,
-  useAssignSettings,
-  useHiddenSellers,
   type AssignMode,
   type AssignSettings,
   type Escalation,
   type SellerLoad,
   type UnassignedLead,
 } from '../api';
+import { useAssignLeads, useAssignSettings, useHiddenSellers } from '../api/managerMutations';
 import { ScoreChip } from '../components/LeadChips';
 import { useSalesFormat } from '../format';
-import { LeadImportDialog } from './LeadImportDialog';
+import { LeadImportDialog } from '@/components/leads/LeadImportDialog';
+import { salesSourcesQuery } from '@/lib/leads/api';
+import { SALES_KEY } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
+
+/** Leads from a file change every sales page. */
+const REFRESH = [SALES_KEY] as const;
 
 const MODES = ['round_robin', 'least_load', 'match'] as const satisfies readonly AssignMode[];
 /** Working-hour choices, every half hour. */
@@ -67,6 +71,8 @@ export default function AssignPage() {
   // Read once: the waiting times don't need to tick here.
   const [now] = useState(() => Date.now());
   const [importing, setImporting] = useState(false);
+  // Only the upload picks a source: read when it opens, not with the page.
+  const sources = useQuery({ ...salesSourcesQuery, enabled: importing });
   const oldest = data.oldest_at
     ? Math.max(0, Math.round((now - new Date(data.oldest_at).getTime()) / 60_000))
     : 0;
@@ -91,7 +97,10 @@ export default function AssignPage() {
       <LeadImportDialog
         open={importing}
         onClose={() => setImporting(false)}
+        base={`${MANAGER_API}/leads/import`}
+        sources={sources.data ?? []}
         sellers={data.sellers}
+        refresh={REFRESH}
       />
       <AutoCard
         key={JSON.stringify(data.settings)}

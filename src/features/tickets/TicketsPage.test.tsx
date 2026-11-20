@@ -1,9 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { resetMockSession } from '@/mocks/handlers';
 
 const SARA = 1; // applicant: supervisor thread (7 messages), writing threads SOP (empty) and CV
 const MARYAM = 2; // no applicant file
@@ -28,9 +29,15 @@ const pdf = (name: string, bytes = 1024) =>
 
 describe('tickets page', () => {
   beforeEach(async () => {
+    // Recent messages must share today's date even when the suite runs near midnight.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 13, 12));
+    resetMockSession();
     localStorage.clear();
     await i18n.changeLanguage('fa');
   });
+
+  afterEach(() => vi.useRealTimers());
 
   it('shows the supervisors’ conversation, with earlier messages on request', async () => {
     await open();
@@ -112,10 +119,14 @@ describe('tickets page', () => {
     expect(within(sent).getByRole('link', { name: 'invite.pdf' })).toBeInTheDocument();
     expect(within(sent).getByText('ارسال شد')).toBeInTheDocument();
 
-    expect(card.getByLabelText('متن پیام')).toHaveValue('');
-    expect(card.getByRole('radio', { name: 'متوسط' })).toBeChecked();
-    expect(card.queryByRole('button', { name: 'برداشتن فایل پیوست' })).toBeNull();
-    expect(card.queryByRole('checkbox', { name: 'قبول دارم' })).toBeNull();
+    // The message cache updates before the mutation's success callback resets
+    // the composer. Observe that asynchronous reset instead of racing it.
+    await waitFor(() => {
+      expect(card.getByLabelText('متن پیام')).toHaveValue('');
+      expect(card.getByRole('radio', { name: 'متوسط' })).toBeChecked();
+      expect(card.queryByRole('button', { name: 'برداشتن فایل پیوست' })).toBeNull();
+      expect(card.queryByRole('checkbox', { name: 'قبول دارم' })).toBeNull();
+    });
   });
 
   it('opens the writing departments the contract has, each its own conversation', async () => {

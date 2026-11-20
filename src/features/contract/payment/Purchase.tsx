@@ -12,13 +12,8 @@ import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import {
-  useApplyCode,
-  useStartOnlinePayment,
-  useUseCredit,
-  type DiscountResult,
-  type PaymentData,
-} from '../api';
+import { type DiscountResult, type PaymentData } from '../api';
+import { useApplyCode, useStartOnlinePayment, useUseCredit } from '../mutations';
 import { ReceiptForm } from '../components/ReceiptForm';
 import { itemPrice, useItemNote, useMinutesLeft, useMoney } from './money';
 import { Collapsible, Dock, ItemRows, Row } from './parts';

@@ -1,0 +1,151 @@
+{
+  "bundle": {
+    "schema_version": 1,
+    "synthetic": true,
+    "questions": [
+      {
+        "id": "age",
+        "text": "سن شما چقدر است؟",
+        "kind": "number",
+        "minimum": 0,
+        "maximum": 120
+      },
+      {
+        "id": "language",
+        "text": "سطح فرضی زبان شما چیست؟",
+        "kind": "choice",
+        "choices": ["basic", "advanced"]
+      },
+      {
+        "id": "sponsor",
+        "text": "آیا حمایت فرضی دارید؟",
+        "kind": "boolean"
+      },
+      {
+        "id": "sponsor_confirmed",
+        "text": "آیا حمایت فرضی تأیید شده است؟",
+        "kind": "boolean",
+        "show_if": {
+          "fact": "sponsor",
+          "op": "eq",
+          "value": true
+        }
+      }
+    ],
+    "routes": [
+      {
+        "id": "sandbox-study",
+        "name": "مسیر تحصیلی آزمایشی؛ فاقد اعتبار مهاجرتی",
+        "requirements": [
+          {
+            "id": "adult",
+            "label": "حداقل سن آزمایشی",
+            "condition": {
+              "fact": "age",
+              "op": "gte",
+              "value": 18
+            }
+          },
+          {
+            "id": "language_or_sponsor",
+            "label": "زبان یا حمایت آزمایشی",
+            "condition": {
+              "any": [
+                {
+                  "fact": "language",
+                  "op": "eq",
+                  "value": "advanced"
+                },
+                {
+                  "all": [
+                    {
+                      "fact": "sponsor",
+                      "op": "eq",
+                      "value": true
+                    },
+                    {
+                      "fact": "sponsor_confirmed",
+                      "op": "eq",
+                      "value": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "scores": [
+          {
+            "id": "language_points",
+            "label": "امتیاز آزمایشی زبان",
+            "bands": [
+              {
+                "id": "advanced",
+                "condition": {
+                  "fact": "language",
+                  "op": "eq",
+                  "value": "advanced"
+                },
+                "points": 10
+              }
+            ]
+          }
+        ],
+        "pass_mark": 10
+      },
+      {
+        "id": "sandbox-work",
+        "name": "مسیر کاری آزمایشی؛ فاقد اعتبار مهاجرتی",
+        "requirements": [
+          {
+            "id": "adult",
+            "label": "حداقل سن آزمایشی",
+            "condition": {
+              "fact": "age",
+              "op": "gte",
+              "value": 21
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "اطلاعات کامل آزمایشی",
+      "assessment_date": "2026-11-11",
+      "answers": {
+        "age": {
+          "status": "known",
+          "value": 25
+        },
+        "language": {
+          "status": "known",
+          "value": "advanced"
+        }
+      },
+      "expected": [
+        {
+          "route_id": "sandbox-study",
+          "eligibility_status": "met",
+          "score_status": "complete_self_reported",
+          "score": 10,
+          "pass_mark_met": true
+        },
+        {
+          "route_id": "sandbox-work",
+          "eligibility_status": "met",
+          "score_status": "not_applicable",
+          "score": null,
+          "pass_mark_met": null
+        }
+      ]
+    }
+  ],
+  "permissions": {
+    "edit": true,
+    "create": true,
+    "review": true,
+    "publish": true
+  }
+}

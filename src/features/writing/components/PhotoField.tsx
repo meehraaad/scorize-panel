@@ -5,7 +5,8 @@ import { Icon } from '@/components/ui/Icon';
 import { TagList } from '@/components/ui/Tags';
 import { checkFile } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { MAX_PHOTO_BYTES, PHOTO_TYPES, useUploadPhoto } from '../api';
+import { MAX_PHOTO_BYTES, PHOTO_TYPES } from '../api';
+import { useUploadPhoto } from '../mutations';
 import type { FormType, InterestsSpec, PhotoSpec } from '../formSpec';
 import { useFormText } from '../useFormText';
 

@@ -17,12 +17,12 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import {
   phoneMenusQuery,
   phoneVoicesQuery,
-  useSavePhoneMenu,
   type MenuKey,
   type MenuKeyKind,
   type PhoneMenu,
   type PhoneMenus,
 } from '@/lib/sales/phoneCalls';
+import { useSavePhoneMenu } from '@/lib/sales/phoneCallsMutations';
 import { toLatinNumber } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { salesPath } from '../paths';

@@ -57,6 +57,8 @@ export const sessionQuery = queryOptions({
     }
   },
   staleTime: 5 * 60_000,
+  // The workspace frame observes identity passively for the lifetime of this app.
+  gcTime: Infinity,
 });
 
 export function useSession() {

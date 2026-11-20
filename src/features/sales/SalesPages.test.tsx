@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import i18n from '@/lib/i18n';
 import { api } from '@/lib/api/client';
@@ -26,7 +26,7 @@ const readMonth = () =>
 /** Opens "my month" and types the password it asks for. */
 async function openMonth(password = MONTH_PASSWORD) {
   const user = userEvent.setup();
-  const router = renderApp('/sales/month');
+  const router = renderApp('/me/sales');
   await user.type(await screen.findByLabelText('رمز عبور'), password);
   await user.click(screen.getByRole('button', { name: 'باز کردن ماه من' }));
   return { user, router };
@@ -126,6 +126,35 @@ describe('sales panel, seller pages', () => {
       'href',
       '/sales/customers/101',
     );
+  });
+
+  it('leads: the source "bought consultation" opens in person or not and the type', async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/leads');
+    const source = await screen.findByRole('combobox', { name: 'منبع' });
+    const options = (name: string) =>
+      within(screen.getByRole('combobox', { name }))
+        .getAllByRole('option')
+        .map((option) => option.textContent);
+    expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
+
+    await user.selectOptions(source, 'consultation');
+    expect(await screen.findByRole('combobox', { name: 'نوع مشاوره' })).toBeInTheDocument();
+    expect(options('نوع مشاوره')).toHaveLength(5); // all + four types
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'حضوری یا غیرحضوری' }),
+      'in_person',
+    );
+    expect(options('نوع مشاوره')).toEqual([
+      'همه‌ی انواع',
+      'مشاوره‌ی ویزای تحصیلی',
+      'مشاوره‌ی حضوری قدیمی (قدیمی)',
+    ]);
+
+    await user.selectOptions(source, 'all');
+    expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
   });
 
   it("leads: a sales manager's rows name their seller, with a seller filter", async () => {
@@ -246,6 +275,31 @@ describe('sales panel, seller pages', () => {
     // The retry tomorrow is a task about him.
     const tasks = screen.getByRole('region', { name: 'کارهای باز عرفان' });
     expect(await within(tasks).findByText('تماس دوباره؛ قبلی بی‌پاسخ ماند')).toBeInTheDocument();
+  });
+
+  it('customer: a call with no answer can be followed on WhatsApp instead of the SMS', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    try {
+      const user = userEvent.setup();
+      renderApp(`/sales/customers/${String(ERFAN)}?log=call`);
+      const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
+      await user.click(within(dialog).getByRole('radio', { name: 'جواب نداد' }));
+      expect(within(dialog).getByRole('radio', { name: 'پیامک' })).toBeChecked();
+      // The seller sees the SMS as the customer will get it.
+      expect(within(dialog).getByText(/^سلام عرفان عزیز/)).toBeInTheDocument();
+      await user.click(within(dialog).getByRole('radio', { name: 'واتس‌اپ' }));
+      expect(within(dialog).getByText(/پیامکی نمی‌رود/)).toBeInTheDocument();
+      expect(within(dialog).queryByText(/^سلام عرفان عزیز/)).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
+      expect(open).toHaveBeenCalledWith(
+        expect.stringMatching(/^https:\/\/wa\.me\//),
+        '_blank',
+        'noreferrer',
+      );
+      await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    } finally {
+      open.mockRestore();
+    }
   });
 
   it('customer: the history search finds the words in a note, once Django has it (S78)', async () => {
@@ -450,7 +504,7 @@ describe('sales panel, seller pages', () => {
     expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();
     await router.navigate('/sales/board');
     expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
-    await router.navigate('/sales/month');
+    await router.navigate('/me/sales');
     expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /^ماه من · / })).not.toBeInTheDocument();
   });

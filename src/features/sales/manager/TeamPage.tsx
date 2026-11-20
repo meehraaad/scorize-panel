@@ -325,7 +325,7 @@ function Sources({ data }: { data: TeamData }) {
                   <th scope="row" className={`${cell} text-start font-medium`}>
                     {row.source === 'referral'
                       ? t('manager.team.referral')
-                      : t(`source.${row.source}`)}
+                      : s.source({ source: row.source, source_label: row.source_label ?? null })}
                   </th>
                   <td className={`${cell} tabular-nums`}>{f.number(row.leads)}</td>
                   <td className={`${cell} tabular-nums`}>{f.number(row.won)}</td>

@@ -36,6 +36,8 @@ import { WeekCalendar, type CalendarTime } from '@/components/ui/WeekCalendar';
 import { addDays, weekOf } from '@/lib/calendar';
 import { PageSkeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { StarRating, StarScore } from '@/components/ui/StarRating';
+import { KanbanBoard } from '@/components/board/KanbanBoard';
+import { Row, RowList } from '@/components/ui/RowList';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
 import { TagList } from '@/components/ui/Tags';
@@ -59,6 +61,11 @@ export default function ComponentsPage() {
   const [filter, setFilter] = useState<'all' | 'waiting' | 'done'>('all');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [demoCards, setDemoCards] = useState([
+    { id: 1, lane: 1, title: 'سری «یک روز در دانشگاه»' },
+    { id: 2, lane: 2, title: 'ریلز پذیرش آلمان' },
+    { id: 3, lane: 2, title: 'کاروسل اشتباه‌های SOP' },
+  ]);
   const [tags, setTags] = useState(['Machine Learning', 'Computer Vision', 'Explainable AI']);
   const [confirm, setConfirm] = useState(true);
   const [draft, setDraft] = useState('');
@@ -88,7 +95,7 @@ export default function ComponentsPage() {
 
   return (
     <div className="min-h-dvh bg-canvas px-4 py-6 text-text lg:px-10 lg:py-10">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
+      <div className="mx-auto flex max-w-[1120px] flex-col gap-8">
         <PageHeader
           title="اجزای مشترک پنل"
           subtitle="src/components/ui · هر تغییری این‌جا، در همه‌ی صفحه‌ها دیده می‌شود."
@@ -365,6 +372,54 @@ export default function ComponentsPage() {
           </div>
         </Group>
 
+        <Group name="KanbanBoard">
+          <div className="flex h-[420px] flex-col overflow-hidden rounded-card-sm">
+            <KanbanBoard
+              label="بُرد نمونه"
+              lanes={[
+                { id: 1, title: 'ایده‌ها', dot: 'bg-neutral' },
+                { id: 2, title: 'در حال تولید', dot: 'bg-warn', limit: 2, note: 'لازم: مسئول' },
+                { id: 3, title: 'بازبینی', dot: 'bg-primary', locked: 'فقط مدیر' },
+              ]}
+              cards={demoCards}
+              laneOf={(card) => card.lane}
+              onMove={(card, lane) =>
+                setDemoCards((cards) =>
+                  cards.map((item) => (item.id === card.id ? { ...item, lane } : item)),
+                )
+              }
+              emptyText="کارتی نیست"
+              limitLabel={(count, limit) => `${count} از ${limit}`}
+              renderCard={(card) => (
+                <div className="rounded-xl border border-hair bg-surface p-3.5 pe-11 text-[15px] font-semibold shadow-board-card">
+                  {card.title}
+                </div>
+              )}
+            />
+          </div>
+        </Group>
+
+        <Group name="RowList">
+          <SectionCard id="demo-rows" title="کارهای امروز">
+            <RowList>
+              <Row>
+                <span className="min-w-0 flex-1 text-[15px] font-semibold">کپشن ریلز آلمان</span>
+                <Chip tone="neutral" small>
+                  ۱۰:۳۰
+                </Chip>
+              </Row>
+              <Row>
+                <span className="min-w-0 flex-1 text-[15px] font-semibold">
+                  پیامک یادآوری وبینار
+                </span>
+                <Chip tone="danger" small>
+                  عقب‌افتاده
+                </Chip>
+              </Row>
+            </RowList>
+          </SectionCard>
+        </Group>
+
         <Group name="StatGrid · Filters · Pager">
           <StatGrid
             label="آمار"
@@ -612,7 +667,7 @@ export default function ComponentsPage() {
               />
             </div>
           </div>
-          <div className="max-w-sm rounded-card bg-surface p-4 shadow-panel">
+          <div className="max-w-[360px] rounded-card bg-surface p-4 shadow-panel">
             <WeekCalendar
               label="WeekCalendar narrow"
               week={week}
@@ -709,7 +764,7 @@ export default function ComponentsPage() {
                     label="پیام‌ها"
                     firstKey="a"
                     lastKey="d"
-                    className="max-h-80 px-3.5 py-[18px] lg:px-7 lg:py-6"
+                    className="max-h-[320px] px-3.5 py-[18px] lg:px-7 lg:py-6"
                     earlier={{
                       label: 'نمایش پیام‌های قبلی',
                       pending: false,
@@ -817,7 +872,7 @@ export default function ComponentsPage() {
                     label="گفتگو با دستیار (chat)"
                     firstKey="q"
                     lastKey="a"
-                    className="max-h-72 px-4 py-6"
+                    className="max-h-64 px-4 py-6"
                   >
                     <MessageBubble
                       chat
@@ -1004,7 +1059,7 @@ function sampleEvents(): CalendarEvent[] {
     meta: `${start.getHours()}:${String(start.getMinutes()).padStart(2, '0')}`,
     aria: title,
     lead: <Icon name={look === 'call' ? 'followUp' : 'phone'} size={12} />,
-    trail: <Icon name="formDone" size={13} className="text-good opacity-75" />,
+    trail: <Icon name="formDone" size={13} className="text-good opacity-70" />,
     ...(look === 'need' ? { tag: 'ثبت نشده' } : {}),
   });
   return [

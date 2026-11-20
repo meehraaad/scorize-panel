@@ -120,6 +120,13 @@ describe('sales manager section', () => {
     expect(within(dialog).getByText('شماره نامعتبر')).toBeInTheDocument();
     expect(within(dialog).getByText('شماره تکراری در فایل')).toBeInTheDocument();
 
+    // The marketing team's active sources are offered beside campaign and manual; archived aren't.
+    const source = within(dialog).getByLabelText('منبع لیدها');
+    expect(within(source).queryByRole('option', { name: 'نمایشگاه پاییز' })).toBeNull();
+    await user.selectOptions(
+      source,
+      await within(source).findByRole('option', { name: 'اینستاگرام' }),
+    );
     await user.type(
       within(dialog).getByLabelText('یادداشت برای همه‌ی لیدها (اختیاری)'),
       'نمایشگاه',
@@ -392,9 +399,13 @@ describe('sales manager section', () => {
     );
 
     await user.selectOptions(screen.getByLabelText('فروشنده'), '32');
-    expect(
-      await screen.findByText('در این ماه قراردادی به نام این فروشنده بسته نشده.'),
-    ).toBeInTheDocument();
+    // The page renders the new seller twice (route data, then the query), so the text's node can
+    // be replaced between finding it and checking it: look it up again on each try.
+    await waitFor(() =>
+      expect(
+        screen.getByText('در این ماه قراردادی به نام این فروشنده بسته نشده.'),
+      ).toBeInTheDocument(),
+    );
     await waitFor(() => expect(router.state.location.pathname).toBe('/sales/manager/team/32'));
   });
 
@@ -1165,6 +1176,58 @@ describe('phone teams', () => {
     const router = renderApp('/sales/manager/phone/teams');
     await screen.findByRole('heading', { name: /^سلام نیما، / });
     expect(router.state.location.pathname).toBe('/sales');
+  });
+});
+
+describe('phone extensions', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('links a desk phone, refuses one someone has, and makes a mobile extension', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/phone/extensions');
+    expect(await screen.findByRole('heading', { name: 'داخلی‌ها' })).toBeInTheDocument();
+    const unlinked = screen.getByRole('region', { name: 'داخلی‌های بدون صاحب' });
+    expect(within(unlinked).getByText('داخلی ۲۳۰ · moshavere-foroosh')).toBeInTheDocument();
+
+    const hossein = screen.getByText('حسین دیانتی').closest('li') as HTMLElement;
+    await user.click(within(hossein).getByRole('button', { name: 'تلفن روی میز حسین دیانتی' }));
+    await user.type(within(hossein).getByLabelText('تلفن روی میز'), '104');
+    await user.click(within(hossein).getByRole('button', { name: 'ذخیره' }));
+    expect(await within(hossein).findByText(/مال کارمند دیگری است/)).toBeInTheDocument();
+    await user.clear(within(hossein).getByLabelText('تلفن روی میز'));
+    await user.type(within(hossein).getByLabelText('تلفن روی میز'), '۲۳۰');
+    await user.click(within(hossein).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText('داخلی ۲۳۰ به حسین دیانتی وصل شد.')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'داخلی‌های بدون صاحب' })).not.toBeInTheDocument();
+
+    await user.click(
+      within(hossein).getByRole('button', { name: 'ساختن داخلی موبایل برای حسین دیانتی' }),
+    );
+    expect(await within(hossein).findByText('در حال ساخت')).toBeInTheDocument();
+  });
+
+  it('opens only the phone tab for someone with the phone key alone', async () => {
+    loginAs(NIMA);
+    const me = await api<Record<string, unknown>>('/profile/auth/v1/whoami/');
+    server.use(
+      http.get('/api/profile/auth/v1/whoami/', () =>
+        HttpResponse.json({ ...me, permissions: [{ codename: 'can_manage_phone' }] }),
+      ),
+    );
+    const router = renderApp('/sales/manager/approvals');
+    await waitFor(() =>
+      expect(router.state.location.pathname).toMatch(/^\/sales\/manager\/phone\//),
+    );
+    const tabs = await screen.findByRole('navigation', { name: 'بخش‌های مدیریت فروش' });
+    expect(
+      within(tabs)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['تلفن']);
   });
 });
 

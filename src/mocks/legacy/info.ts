@@ -64,6 +64,7 @@ export interface CustomerInfo {
   exams: ExamEntry[];
   /** Exams from Django; the other selects use the fixed model choices (CHOICES). */
   exams_list: Option[];
+  countries_list?: Option[];
   /** The office tablet form for this customer (the old site's tablet wizard). */
   tablet_url: string;
 }
@@ -96,7 +97,11 @@ async function records(id: number, signal?: AbortSignal): Promise<InfoRecords> {
   return { user, personal: personal[0] ?? null, education, exams };
 }
 
-function infoOf({ user, personal, education, exams }: InfoRecords, list: DjangoExam[]) {
+function infoOf(
+  { user, personal, education, exams }: InfoRecords,
+  list: DjangoExam[],
+  countries: DjangoCountry[],
+) {
   return {
     personal: {
       first_name: personal?.first_name ?? user.first_name,
@@ -129,16 +134,20 @@ function infoOf({ user, personal, education, exams }: InfoRecords, list: DjangoE
       date: text(row.date_of_receipt),
     })),
     exams_list: list.map((exam) => ({ value: String(exam.id), label: exam.name })),
+    countries_list: countries
+      .map((country) => ({ value: countryName(country), label: countryName(country) }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
     tablet_url: `/profile/tablet-wizard/${String(user.id)}/`,
   } satisfies CustomerInfo;
 }
 
 export async function fetchInfo(id: number, signal?: AbortSignal): Promise<CustomerInfo> {
-  const [data, list] = await Promise.all([
+  const [data, list, countries] = await Promise.all([
     records(id, signal),
     allPages<DjangoExam>(`${EXAMS_API}/`, signal),
+    allPages<DjangoCountry>(`${COUNTRIES_API}/`, signal),
   ]);
-  return infoOf(data, list);
+  return infoOf(data, list, countries);
 }
 
 /** A country or study field typed on the page that Django doesn't know. */

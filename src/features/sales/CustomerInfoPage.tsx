@@ -166,7 +166,9 @@ function InfoForm({
           >
             {state === 'error' && error instanceof UnknownNameError
               ? t('info.notFound', { value: error.value })
-              : t(`info.autosave.${state}`)}
+              : state === 'incomplete' && section === 'personal'
+                ? t('info.autosave.incompleteName')
+                : t(`info.autosave.${state}`)}
           </span>
           {state === 'error' && (
             <Button variant="outline" type="submit">
@@ -240,12 +242,20 @@ function GoalCard() {
           onChange={set('budget')}
           options={choices.of('budget')}
         />
-        <TextField
-          label={t('info.goal.countries')}
-          hint={t('info.goal.countriesHint')}
-          value={form.countries}
-          onChange={(event) => set('countries')(event.target.value)}
-        />
+        {info.countries_list ? (
+          <CountryPicker
+            options={info.countries_list}
+            value={form.countries}
+            onChange={set('countries')}
+          />
+        ) : (
+          <TextField
+            label={t('info.goal.countries')}
+            hint={t('info.goal.countriesHint')}
+            value={form.countries}
+            onChange={(event) => set('countries')(event.target.value)}
+          />
+        )}
         <TextField
           label={t('info.goal.language')}
           value={form.language}
@@ -253,6 +263,63 @@ function GoalCard() {
         />
       </div>
     </InfoForm>
+  );
+}
+
+/** Names as Django splits them (`country_list`): commas, Persian or Latin. */
+const namesOf = (text: string) =>
+  text
+    .replaceAll('،', ',')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+/**
+ * The wanted countries, picked from Django's list: each picked one a removable pill, and a select
+ * that adds one. A name not in the list (typed before the picker) stays until removed.
+ */
+function CountryPicker({
+  options,
+  value,
+  onChange,
+}: {
+  options: Option[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const { t } = useTranslation('sales');
+  const picked = namesOf(value);
+  const save = (names: string[]) => onChange(names.join('، '));
+  const left = options.filter((option) => !picked.includes(option.value));
+  return (
+    <div className="flex flex-col gap-2 sm:col-span-2">
+      <SelectField
+        label={t('info.goal.countries')}
+        value=""
+        onChange={(name) => name && save([...picked, name])}
+        options={[{ value: '', label: t('info.goal.addCountry') }, ...left]}
+      />
+      {picked.length > 0 && (
+        <ul
+          aria-label={t('info.goal.countries')}
+          className="m-0 flex list-none flex-wrap gap-2 p-0"
+        >
+          {picked.map((name) => (
+            <li key={name}>
+              <button
+                type="button"
+                aria-label={t('info.goal.removeCountry', { name })}
+                onClick={() => save(picked.filter((other) => other !== name))}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-tint px-3 text-[13px] font-medium text-primary-text hover:opacity-80 focus-visible:outline-2 focus-visible:outline-[var(--focus)]"
+              >
+                {name}
+                <Icon name="close" size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

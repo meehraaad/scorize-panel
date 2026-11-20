@@ -1,7 +1,7 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryOptions } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import type { ChipTone } from '@/components/ui/Chip';
-import { ACCOUNT_KEY, type Referral } from '@/lib/account/api';
+import { type Referral } from '@/lib/account/api';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 
 /**
@@ -80,6 +80,12 @@ export interface EstimateAnswers {
   referral?: Referral;
 }
 
+/** Work-only intent needs no academic facts and grants no contact permission by default. */
+export interface WorkInquiry extends Pick<EstimateAnswers, 'contact' | 'referral'> {
+  goal: 'work';
+  gpa?: never;
+}
+
 /** How a band reads as a status pill. */
 /** How long a country's bar is when the server sends a level, not a percentage. */
 export const BAND_BAR: Record<Band, number> = { high: 85, medium: 55, low: 25 };
@@ -142,13 +148,14 @@ export interface CountryEstimate {
 }
 
 export interface EstimateResult {
+  assessment_scope?: 'academic_admission' | 'work_not_supported';
   id: number;
   created_at: string;
   /** Best chance first. */
   countries: CountryEstimate[];
 }
 
-const BASE = '/applicant/v1/estimate';
+export const BASE = '/applicant/v1/estimate';
 const KEY = [...APPLICANT_KEY, 'estimate'] as const;
 
 export const estimateOptionsQuery = queryOptions({
@@ -173,23 +180,6 @@ export const latestEstimateQuery = queryOptions({
 
 /** Where the contact answer of this visit's quiz is kept, so every page shows the same promise. */
 export const ANSWERED_CONTACT_KEY = [...KEY, 'answeredContact'] as const;
-
-export function useSubmitEstimate() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (answers: EstimateAnswers) =>
-      api<EstimateResult>(`${BASE}/`, { method: 'POST', body: answers }),
-    onSuccess: (result, answers) => {
-      client.setQueryData(latestEstimateQuery.queryKey, result);
-      // Kept for the whole visit, not dropped after the cache's idle time like a fetched query.
-      client.setQueryDefaults(ANSWERED_CONTACT_KEY, { gcTime: Infinity });
-      client.setQueryData(ANSWERED_CONTACT_KEY, answers.contact);
-      // The answers are now the profile's: the next quiz starts from them.
-      void client.invalidateQueries({ queryKey: estimateOptionsQuery.queryKey });
-      if (answers.referral) void client.invalidateQueries({ queryKey: ACCOUNT_KEY });
-    },
-  });
-}
 
 /** The quiz was opened (counted once a day on the server); failures don't matter to the user. */
 export function markStarted() {

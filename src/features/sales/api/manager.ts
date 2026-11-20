@@ -1,5 +1,5 @@
-import { keepPreviousData, queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { API_BASE, api } from '@/lib/api/client';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { SALES_API, SALES_KEY, type Degree, type LeadSource } from '@/lib/sales/api';
 import type { AgreementParty } from '@/lib/agreement/api';
@@ -10,10 +10,16 @@ import type { ContractDocument } from './contract';
 import type { BuiltinVariable, ContractVariable } from './offer';
 import type { MonthData } from './month';
 
-/** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
-export const MANAGER_PERMISSION = 'can_assign_to_seller';
-const MANAGER_API = `${SALES_API}/manager`;
-const MANAGER_KEY = [...SALES_KEY, 'manager'] as const;
+import { MANAGER_PERMISSION } from './managerPermission';
+
+export { MANAGER_PERMISSION };
+
+/** The phone tab alone (apply.can_manage_phone): the office line, without the other manager pages. */
+export const PHONE_PERMISSION = 'can_manage_phone';
+/** Opens the manager section: the whole of it, or only its phone tab. */
+export const MANAGER_AREA_PERMISSIONS = [MANAGER_PERMISSION, PHONE_PERMISSION] as const;
+export const MANAGER_API = `${SALES_API}/manager`;
+export const MANAGER_KEY = [...SALES_KEY, 'manager'] as const;
 
 export type AssignMode = 'round_robin' | 'least_load' | 'match';
 export type Escalation = 'alert' | 'next' | 'both';
@@ -88,38 +94,6 @@ export const assignQuery = (page: number) =>
       api<AssignData>(`${MANAGER_API}/assign/?page=${String(page)}`, { signal }),
     refetchInterval: 60_000,
   });
-
-export function useAssignSettings() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (settings: AssignSettings) =>
-      api(`${MANAGER_API}/assign/settings/`, { method: 'PUT', body: settings }),
-    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
-  });
-}
-
-/** Which sellers the load cards hide (one list for every manager); `sellers` is the whole new list. */
-export function useHiddenSellers() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (sellers: number[]) =>
-      api(`${MANAGER_API}/assign/hidden/`, { method: 'PUT', body: { sellers } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: [...MANAGER_KEY, 'assign'] }),
-  });
-}
-
-/** Assigns the queue through Django's manager API, which timestamps and logs each assignment. */
-export function useAssignLeads() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (assignments: { lead: number; seller: number }[]) =>
-      api<{ assigned: number }>(`${MANAGER_API}/assign/`, {
-        method: 'POST',
-        body: { assignments },
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
 
 export type DraftTerm =
   | 'template'
@@ -218,27 +192,6 @@ export const approvalDocumentQuery = (id: number) =>
 
 export type ApprovalAction = 'approve' | 'return' | 'reject';
 
-/** Approve (opens in the customer's panel), return to the seller, or reject; S36. */
-export function useDecideDraft() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      id,
-      action,
-      comment,
-    }: {
-      id: number;
-      action: ApprovalAction;
-      comment: string;
-    }) =>
-      api(`${MANAGER_API}/approvals/${String(id)}/`, {
-        method: 'POST',
-        body: { action, comment },
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 export type TeamRange = 'month' | 'last' | 'quarter';
 
 export type TeamAlert =
@@ -272,7 +225,13 @@ export interface TeamData {
     commission: number | null;
   }[];
   alerts: TeamAlert[];
-  sources: { source: LeadSource | 'referral'; leads: number; won: number; sales: number }[];
+  sources: {
+    source: LeadSource | 'referral';
+    source_label?: string | null;
+    leads: number;
+    won: number;
+    sales: number;
+  }[];
 }
 
 export const teamQuery = (range: TeamRange) =>
@@ -322,19 +281,6 @@ export const teamSellerQuery = (seller: number, month: string | null) =>
     placeholderData: keepPreviousData,
   });
 
-/** Moves a closed contract to another seller, with a reason the customer's history keeps (S59). */
-export function useMoveContract() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ lead, seller, reason }: { lead: number; seller: number; reason: string }) =>
-      api(`${MANAGER_API}/contracts/${String(lead)}/credit/`, {
-        method: 'POST',
-        body: { seller, reason },
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 export const teamExportHref = (range: TeamRange) =>
   `/api${MANAGER_API}/team/export/?range=${range}`;
 
@@ -374,19 +320,6 @@ export const healthQuery = (team: HealthTeam) =>
     placeholderData: keepPreviousData,
   });
 
-/** Nudge the owner of an overdue task, or hand it to someone else (T12). */
-export function useManageTask() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ task, assignee }: { task: number; assignee?: number }) =>
-      api(`/staff/v1/tasks/${String(task)}/${assignee ? 'reassign' : 'remind'}/`, {
-        method: 'POST',
-        body: assignee ? { assignee } : {},
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
-  });
-}
-
 /** A team column as the manager edits it (S48). */
 export interface StageSettings {
   id: number;
@@ -425,96 +358,6 @@ export interface StageInput {
   phase: StagePhase;
   max_days: number | null;
   activities: ActivityInput[];
-}
-
-/** The whole list at once: Django renames, reorders, adds and removes in one transaction. */
-export function useSaveStages() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (body: { stages: StageInput[]; moves: { source: number; to: number }[] }) =>
-      api<StagesData>(`${MANAGER_API}/stages/`, { method: 'PUT', body }),
-    onSuccess: (data) => {
-      client.setQueryData(stagesQuery.queryKey, data);
-      // The customer page's stage bar and the contact log show the same columns as the board.
-      return Promise.all([
-        client.invalidateQueries({ queryKey: [...SALES_KEY, 'board'] }),
-        client.invalidateQueries({ queryKey: [...SALES_KEY, 'customer'] }),
-      ]);
-    },
-  });
-}
-
-/**
- * Leads from a CSV (S55): the server reads the file and answers what each row would do, then adds
- * the leads when the manager confirms. Columns: phone_number, and optionally first_name,
- * last_name, email, note.
- */
-
-/** A new customer and lead, a lead for a known customer, or left out. */
-export type LeadImportChange = 'new' | 'existing' | 'skip';
-
-/** Why a row is left out. */
-export type LeadImportProblem = 'missing_column' | 'bad_phone' | 'duplicate' | 'open_lead';
-
-export interface LeadImportRow {
-  /** Line in the file (the header is line 1). */
-  line: number;
-  phone: string;
-  name: string;
-  /** The known customer with this number; null for a new one. */
-  customer: number | null;
-  change: LeadImportChange;
-  problem: LeadImportProblem | null;
-}
-
-export interface LeadImportPreview {
-  /** Hands the checked file to the apply step (the server keeps it 15 minutes). */
-  token: string;
-  file: { name: string; size: number; rows: number };
-  counts: Record<LeadImportChange, number>;
-  rows: LeadImportRow[];
-}
-
-/** What the leads' source shows: a campaign, webinar or event list, or the manager's own. */
-export type LeadImportSource = 'campaign' | 'manual';
-
-export interface LeadImportOptions {
-  token: string;
-  source: LeadImportSource;
-  /** Added to every lead's description, after the row's own note. */
-  note: string;
-  /** null: the assignment queue. */
-  seller: number | null;
-  /** The welcome SMS for new customers. */
-  notify: boolean;
-}
-
-export const leadImportSampleHref = `${API_BASE}${MANAGER_API}/leads/import/sample/`;
-
-/** Reads the file and answers what it would add; nothing is stored yet. */
-export function usePreviewLeadImport() {
-  return useMutation({
-    mutationFn: (file: File) => {
-      const body = new FormData();
-      body.append('file', file);
-      return api<LeadImportPreview>(`${MANAGER_API}/leads/import/preview/`, {
-        method: 'POST',
-        body,
-      });
-    },
-  });
-}
-
-export function useApplyLeadImport() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (options: LeadImportOptions) =>
-      api<{ created: number; new_customers: number }>(`${MANAGER_API}/leads/import/`, {
-        method: 'POST',
-        body: options,
-      }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
 }
 
 /** What a commission step counts: closed contracts, or paid sales (in the rule's currency), in a month (S60). */
@@ -581,31 +424,6 @@ export const commissionQuery = queryOptions({
   queryKey: [...MANAGER_KEY, 'commission'],
   queryFn: ({ signal }) => api<CommissionRules>(`${MANAGER_API}/commission/`, { signal }),
 });
-
-/** Adds a rule, or changes one (`id`) from this month on; past months keep the rules they had. */
-export function useSaveCommissionRule() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, ...body }: CommissionRuleInput & { id?: number }) =>
-      api<CommissionRule>(
-        id === undefined
-          ? `${MANAGER_API}/commission/`
-          : `${MANAGER_API}/commission/${String(id)}/`,
-        { method: id === undefined ? 'POST' : 'PUT', body },
-      ),
-    // The team report's commissions change too.
-    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
-  });
-}
-
-export function useDeleteCommissionRule() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) =>
-      api(`${MANAGER_API}/commission/${String(id)}/`, { method: 'DELETE' }),
-    onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
-  });
-}
 
 // region The contract builder (S64)
 /** A clause of the standard contract as the manager keeps it. `locked`: a seller can't change it. */
@@ -751,10 +569,10 @@ export interface ContractBuilder {
   services?: BuilderServices | null;
 }
 
-const BUILDER_API = `${MANAGER_API}/contract`;
+export const BUILDER_API = `${MANAGER_API}/contract`;
 
 /** `?template=` for a template; nothing for the standard contract. */
-const kindQuery = (template: number | null) =>
+export const kindQuery = (template: number | null) =>
   template === null ? '' : `?template=${String(template)}`;
 
 /** The builder's page address' template: an id, or null (none, or not a number) for the standard one. */
@@ -776,71 +594,7 @@ export const contractOverviewQuery = queryOptions({
     api<{ contracts: ContractOverviewRow[] }>(`${BUILDER_API}/overview/`, { signal }),
 });
 
-function useBuilderMutation<T, R = unknown>(send: (body: T) => Promise<R>) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: send,
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
-}
-
 export type ClauseInput = Partial<
   Pick<BuilderClause, 'kind' | 'title' | 'text' | 'locked' | 'is_active'>
 >;
-
-/** This kind of contract's blanks, all at once in their order (S69). */
-export const useSaveVariables = (template: number | null) =>
-  useBuilderMutation((variables: ContractVariable[]) =>
-    api(`${BUILDER_API}/variables/${kindQuery(template)}`, { method: 'PUT', body: { variables } }),
-  );
-
-/**
- * A new kind of contract (S68): empty, or (`copy`) a copy of `copy_from`'s clauses, prices and
- * rules (null: the standard contract).
- */
-export const useCreateTemplate = () =>
-  useBuilderMutation(
-    (body: { name: string; description: string; copy: boolean; copy_from: number | null }) =>
-      api<{ id: number }>(`${BUILDER_API}/templates/`, { method: 'POST', body }),
-  );
-
-/** Renames a template, changes its description, or puts it away from sellers (`is_active`). */
-export const useUpdateTemplate = () =>
-  useBuilderMutation(({ id, ...body }: { id: number } & Partial<Omit<ContractTemplate, 'id'>>) =>
-    api(`${BUILDER_API}/templates/${String(id)}/`, { method: 'PATCH', body }),
-  );
-
-/** Adds a clause to this kind of contract (no `id`) or changes one: its text, fixed or not, taken out or back. */
-export const useSaveClause = (template: number | null) =>
-  useBuilderMutation(({ id, ...body }: ClauseInput & { id?: number }) =>
-    id === undefined
-      ? api<{ id: number }>(`${BUILDER_API}/clauses/${kindQuery(template)}`, {
-          method: 'POST',
-          body,
-        })
-      : api(`${BUILDER_API}/clauses/${String(id)}/`, { method: 'PATCH', body }),
-  );
-
-/** The contract's clauses in their new order (every active clause, once). */
-export const useOrderClauses = (template: number | null) =>
-  useBuilderMutation((ids: number[]) =>
-    api(`${BUILDER_API}/clauses/order/${kindQuery(template)}`, { method: 'PUT', body: { ids } }),
-  );
-
-/** This kind of contract's prices; a template may offer a service at 0 toman (free), the standard one may not. */
-export const useSavePrices = (template: number | null) =>
-  useBuilderMutation(
-    (prices: { feature: BuilderPrice['feature']; price: number; is_active: boolean }[]) =>
-      api(`${BUILDER_API}/prices/${kindQuery(template)}`, { method: 'PUT', body: { prices } }),
-  );
-
-export const useSaveServices = (template: number | null) =>
-  useBuilderMutation((body: { price: number | null; rows: { key: string; mode: ServiceMode }[] }) =>
-    api(`${BUILDER_API}/services/${kindQuery(template)}`, { method: 'PUT', body }),
-  );
-
-export const useSaveRules = (template: number | null) =>
-  useBuilderMutation((rules: OfferRules) =>
-    api(`${BUILDER_API}/rules/${kindQuery(template)}`, { method: 'PUT', body: rules }),
-  );
 // endregion

@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
 import { Dialog } from '@/components/ui/Dialog';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { parseAmount } from '../../format';
-import { firstDayOf, payrollQuery, useEditSlip, type PayMonth, type Slip } from '../api';
+import { firstDayOf, payrollQuery, type PayMonth, type Slip } from '../api';
+import { useEditSlip } from '../mutations';
 
 /**
  * One payslip (canvas "فیش حقوقی"): earnings, then what is taken off, then what is paid. While
@@ -60,6 +62,14 @@ function SlipBody({ slip, editable }: { slip: Slip; editable: boolean }) {
           value={toman(slip.kpi_bonus)}
         />
         <Line label={slip.addition_note || t('pay.slip.addition')} value={toman(slip.addition)} />
+        {slip.lines.map((line, index) => (
+          <Line
+            key={index}
+            label={line.detail ? `${line.label} (${line.detail})` : line.label}
+            value={toman(line.amount)}
+            trial={line.trial}
+          />
+        ))}
         <Line strong label={t('pay.slip.gross')} value={toman(slip.gross)} />
       </Lines>
       <Lines title={t('pay.slip.taken')}>
@@ -91,15 +101,36 @@ function Lines({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Line({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+/** A trial line (a reward or penalty not paid yet) shows dimmed with its chip. */
+function Line({
+  label,
+  value,
+  strong,
+  trial,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  trial?: boolean;
+}) {
+  const { t } = useTranslation('hr');
   return (
     <div
       className={`flex items-center justify-between gap-3 border-t border-hair py-2 first:border-t-0 ${
         strong ? 'font-bold' : ''
-      }`}
+      } ${trial ? 'text-text-2' : ''}`}
     >
-      <dt className="min-w-0 truncate text-[15px]">{label}</dt>
-      <dd className="m-0 text-[15px]">{value}</dd>
+      <dt className="flex min-w-0 items-center gap-2 text-[15px]">
+        <span className="truncate">{label}</span>
+        {trial && (
+          <Chip tone="warn" small>
+            {t('pay.trial')}
+          </Chip>
+        )}
+      </dt>
+      <dd className="m-0 text-[15px]" dir="ltr">
+        {value}
+      </dd>
     </div>
   );
 }

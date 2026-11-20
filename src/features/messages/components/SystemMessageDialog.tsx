@@ -15,12 +15,11 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
   systemMessageQuery,
-  useSaveSystemMessage,
-  useTestSystemMessage,
   type SystemChange,
   type SystemMessage,
   type SystemMessageDetail,
 } from '../api';
+import { useSaveSystemMessage, useTestSystemMessage } from '../mutations';
 import { fieldError } from '../format';
 import { History } from './History';
 

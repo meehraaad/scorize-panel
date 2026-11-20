@@ -6,15 +6,16 @@ import { SectionNav } from '@/components/ui/SectionNav';
 import { hrPath } from '../paths';
 
 const SECTIONS = [
-  { id: 'payroll', to: '', end: true },
-  { id: 'results', to: 'results' },
-  { id: 'kpis', to: 'kpis' },
+  { id: 'month', to: '', end: true },
+  { id: 'plans', to: 'plans' },
+  { id: 'payroll', to: 'payroll' },
   { id: 'settings', to: 'settings' },
 ] as const;
 
 /**
- * «حقوق و KPI» (canvas "HR panel" v2: KPI definition, monthly pay, payslip): the month's pay, the
- * month's KPI results, each position's KPIs and how pay is worked out, each a sub-tab.
+ * «حقوق و KPI» (canvas "KPI ساده"): this month's scores to check and close, each group's score
+ * plan, the month's pay and the settings. The detailed pages (every KPI, every rule, every value)
+ * stay at `results`, `kpis` and `rules`, linked from the settings and the plans.
  */
 export default function PayLayout() {
   const { t } = useTranslation('hr');

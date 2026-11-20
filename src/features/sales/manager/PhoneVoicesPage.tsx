@@ -7,7 +7,8 @@ import { FileDrop } from '@/components/ui/Files';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { phoneVoicesQuery, useUploadVoice, type PhoneVoice } from '@/lib/sales/phoneCalls';
+import { phoneVoicesQuery, type PhoneVoice } from '@/lib/sales/phoneCalls';
+import { useUploadVoice } from '@/lib/sales/phoneCallsMutations';
 import { UploadCancelled, UploadFailed } from '@/lib/upload';
 import { useMenuName } from './phoneNames';
 

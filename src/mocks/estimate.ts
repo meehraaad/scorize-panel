@@ -7,12 +7,13 @@ import type {
   EstimatePrefill,
   EstimateResult,
   StudyInfo,
+  WorkInquiry,
 } from '@/lib/applicant/estimate';
 import { accountOf } from './account';
 import { forbidden, notFound, storage } from './session';
 
 /**
- * Django's admission-chance quiz (scorize-revolution `api/applicant/v1/estimate.py`), for the
+ * Django's admission-chance quiz (shamrad/lang `api/applicant/v1/estimate.py`), for the
  * tests: the same shapes, a toy estimate. A GPA of 17 or more (out of 20) is a high band, an
  * English certificate of 7 adds one, no certificate takes one away; percentages are off (null)
  * as on the server by default. Germany has checked facts on studying there (`study`), Italy none;
@@ -52,7 +53,7 @@ function germanStudy(budget: EstimateAnswers['budget']): StudyInfo {
     tuition: { min: 0, max: 3000 },
     living: 11904,
     first_year_toman: { min: 1_310_000_000, max: 1_640_000_000 },
-    budget_fit: budget === 'more_than_1b' ? 'fits' : 'over',
+    budget_fit: budget === 'more_than_1b' ? 'unknown' : 'over',
     post_study_visa: 'اقامت جست‌وجوی کار پس از فارغ‌التحصیلی',
     post_study_months: 18,
     after_study: 'با کار مرتبط با رشته: بلوکارت اروپا یا اقامت نیروی متخصص.',
@@ -65,7 +66,7 @@ const BANDS: Band[] = ['low', 'medium', 'high'];
 const IELTS_OF_LEVEL = { none: null, under_6: 5.5, '6_to_6_5': 6, '7_plus': 7 } as const;
 
 /** What the tests read back: every answer sent, the users who opened the quiz. */
-export const estimateAnswers: EstimateAnswers[] = [];
+export const estimateAnswers: (EstimateAnswers | WorkInquiry)[] = [];
 export const estimateStarts = new Set<number>();
 const latest = new Map<number, EstimateResult>();
 /** What each user's profile holds for the quiz: their last answers, as Django saves them. */
@@ -94,7 +95,14 @@ function ieltsOf(english: EstimateAnswers['english']) {
   return english.exam === 'toefl' ? (english.score >= 94 ? 7 : 6) : english.score >= 135 ? 7 : 6;
 }
 
-function estimateOf(answers: EstimateAnswers): EstimateResult {
+function estimateOf(answers: EstimateAnswers | WorkInquiry): EstimateResult {
+  if (answers.goal === 'work')
+    return {
+      id: nextId++,
+      created_at: new Date().toISOString(),
+      countries: [],
+      assessment_scope: 'work_not_supported',
+    };
   const gpa = gpaOn20(answers.gpa);
   const ielts = ieltsOf(answers.english);
   const base = gpa >= 17 ? 2 : gpa >= 14 ? 1 : 0;
@@ -125,7 +133,12 @@ function estimateOf(answers: EstimateAnswers): EstimateResult {
         : [],
     study: country.id === 10 ? germanStudy(answers.budget) : null,
   }));
-  return { id: nextId++, created_at: new Date().toISOString(), countries };
+  return {
+    id: nextId++,
+    created_at: new Date().toISOString(),
+    countries,
+    assessment_scope: 'academic_admission',
+  };
 }
 
 /** A quiz answered earlier by `user` (tests of the home after the quiz). */
@@ -158,7 +171,17 @@ export const estimateHandlers = [
   http.post(`${BASE}/`, async ({ request }) => {
     const user = storage.get();
     if (!user) return forbidden();
-    const answers = (await request.json()) as EstimateAnswers;
+    const answers = (await request.json()) as EstimateAnswers | WorkInquiry;
+    if (answers.goal === 'work') {
+      if (answers.referral && !ESTIMATE_OPTIONS.referrals.includes(answers.referral))
+        return invalid('referral');
+      const account = accountOf(user).data;
+      if (answers.referral && !account.referral) account.referral = answers.referral;
+      estimateAnswers.push(answers);
+      const result = estimateOf(answers);
+      latest.set(user, result);
+      return HttpResponse.json(result, { status: 201 });
+    }
     if (!ESTIMATE_OPTIONS.field_groups.some((group) => group.id === answers.field_group))
       return invalid('field_group');
     if (!(answers.gpa > 0 && answers.gpa <= 100)) return invalid('gpa');

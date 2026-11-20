@@ -1,9 +1,4 @@
-import {
-  infiniteQueryOptions,
-  queryOptions,
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import {
   SALES_API,
@@ -58,6 +53,8 @@ export interface CustomerData {
   lead: {
     id: number;
     source: LeadSource;
+    /** A marketing team source's name; null for a system source. */
+    source_label?: string | null;
     stage: LeadStage;
     /** 0–100; null while unknown (the automatic score is S5). */
     score: number | null;
@@ -117,6 +114,8 @@ export interface CustomerData {
   supports: {
     stages: boolean;
     no_answer_sms: boolean;
+    /** The log takes `no_answer_send`: SMS, the seller's WhatsApp / Telegram, or none. */
+    no_answer_send?: boolean;
     tags?: boolean;
     /** The log's `sms_summary` is sent (its SMS template is approved). */
     summary_sms?: boolean;
@@ -127,11 +126,13 @@ export interface CustomerData {
   };
   /** Who first reached the customer, and who their closed contract counts for (S59). */
   attribution?: { first_contact: string | null; won_by: string | null };
+  /** The "missed call" SMS as this customer gets it, shown when the seller picks SMS. */
+  no_answer_sms_text?: string;
 }
 
 export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as const;
 
-const customerApi = (id: number) => `${SALES_API}/customers/${String(id)}`;
+export const customerApi = (id: number) => `${SALES_API}/customers/${String(id)}`;
 
 export const customerQuery = (id: number) =>
   queryOptions({
@@ -215,21 +216,14 @@ export interface ContactLog {
   email_summary: boolean;
   /** Text the customer that a note waits in their panel (`supports.summary_sms`). */
   sms_summary?: boolean;
+  /** A call with no answer: our SMS, a message from the seller's WhatsApp / Telegram, or none. */
+  no_answer_send?: 'sms' | 'whatsapp' | 'telegram' | 'none';
   /** Messages: the template sent. */
   template?: number;
   /** Logging a consultation session. */
   reservation?: number;
   /** The follow-up task's text (a StaffToDo needs one). */
   follow_up_text: string;
-}
-
-export function useLogContact(customer: number) {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: (log: ContactLog) =>
-      api(`${customerApi(customer)}/contacts/`, { method: 'POST', body: log }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
-  });
 }
 
 /** What a seller reads while the phone rings (the call popup's "before you answer" box). */
@@ -249,19 +243,5 @@ export const callBriefQuery = (customer: number) =>
     queryFn: ({ signal }) => api<CallBrief>(`${customerApi(customer)}/call-brief/`, { signal }),
     staleTime: 60_000,
   });
-
-/** A caller's other number kept as the customer's second phone; 409 `taken`: another account's. */
-export function useSetSecondPhone() {
-  const client = useQueryClient();
-  return useMutation({
-    mutationFn: ({ customer, phone }: { customer: number; phone: string }) =>
-      api<{ phone: string }>(`${customerApi(customer)}/second-phone/`, {
-        method: 'PUT',
-        body: { phone },
-      }),
-    onSuccess: (_answer, { customer }) =>
-      client.invalidateQueries({ queryKey: customerKey(customer) }),
-  });
-}
 
 /** A quick note on the customer's history (S17). */

@@ -14,7 +14,8 @@ import { ApiError } from '@/lib/api/client';
 import { keyOf, kindOf, useClauseNames } from '@/lib/contractText';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { offerAgreementQuery, useAgreeToOffer, useAskAboutOffer } from '../api';
+import { offerAgreementQuery } from '../api';
+import { useAgreeToOffer, useAskAboutOffer } from '../mutations';
 
 /**
  * The contract offer the seller sent, for the customer to agree to before signing (S62): the

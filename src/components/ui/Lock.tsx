@@ -101,7 +101,7 @@ export function PreviewArea({ children }: { children: ReactNode }) {
   return (
     <div
       inert
-      className="pointer-events-none flex flex-col gap-4 opacity-45 saturate-50 select-none lg:gap-7"
+      className="pointer-events-none flex flex-col gap-4 opacity-40 saturate-50 select-none lg:gap-7"
     >
       {children}
     </div>

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { TOMAN, useFormat } from '@/lib/i18n/useFormat';
+import { isSystemSource } from '@/lib/leads/api';
 import { scoreBand, type LeadStage } from '@/lib/sales/api';
 
 const MINUTE = 60_000;
@@ -27,6 +28,9 @@ export function useSalesFormat() {
   };
 
   return {
+    /** A lead's source: a system one by the dictionary, a marketing team source by its name. */
+    source: ({ source, source_label }: { source: string; source_label?: string | null }) =>
+      source_label ?? (isSystemSource(source) ? t(`source.${source}`) : source),
     /**
      * Whose a row is, on a sales manager's lists ("Seller: Sara", "No seller"); null for a seller,
      * whose lists hold only their own.

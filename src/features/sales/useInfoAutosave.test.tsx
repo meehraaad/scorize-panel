@@ -140,6 +140,34 @@ describe('customer info autosave', () => {
     expect(savedLeaving.defaultPrevented).toBe(false);
   });
 
+  it('waits while the first name is cleared, then saves the retyped name', async () => {
+    const requests: InfoSection[] = [];
+    server.use(
+      http.patch(ENDPOINT, async ({ request }) => {
+        const body = (await request.json()) as InfoSection;
+        requests.push(body);
+        return HttpResponse.json({ ...initial, ...body });
+      }),
+    );
+    const { result } = setup();
+    act(() => {
+      result.current.update('personal', { ...initial.personal, first_name: ' ', last_name: '' });
+    });
+    await act(async () => {
+      expect(await result.current.flush()).toBe(false);
+    });
+    expect(requests).toHaveLength(0);
+    expect(result.current.statuses.personal).toBe('incomplete');
+    act(() => {
+      result.current.update('personal', { ...initial.personal, first_name: 'Sara', last_name: '' });
+    });
+    await act(async () => {
+      expect(await result.current.flush()).toBe(true);
+    });
+    expect(requests.map((body) => body.personal?.first_name)).toEqual(['Sara']);
+    expect(result.current.statuses.personal).toBe('saved');
+  });
+
   it('holds incomplete rows and adopts new row IDs without losing an edit made during saving', async () => {
     const requests: InfoSection[] = [];
     const held = deferred();

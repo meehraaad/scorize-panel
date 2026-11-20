@@ -16,6 +16,8 @@ export interface HotLead {
   /** What happened, written by the server ("A 4.5M payment for … failed · master's"). */
   reason: string;
   source: LeadSource;
+  /** A marketing team source's name; null for a system source. */
+  source_label?: string | null;
   /** A sales manager's lists: whose it is ('' while nobody has it); null or absent for a seller. */
   seller?: string | null;
 }

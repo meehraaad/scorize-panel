@@ -20,10 +20,10 @@ import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import {
   approvalDocumentQuery,
   approvalsQuery,
-  useDecideDraft,
   type ApprovalAction,
   type ContractDraft,
 } from '../api';
+import { useDecideDraft } from '../api/managerMutations';
 import { ContractSheet } from '../components/ContractSheet';
 import { useSalesFormat } from '../format';
 import { customerPath, salesPath } from '../paths';

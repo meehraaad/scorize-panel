@@ -8,7 +8,7 @@ import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
-import { useCreateLead } from '../api';
+import { useCreateLead } from '../api/leadsMutations';
 import { customerPath } from '../paths';
 
 /** A lead the seller found themselves (referral, walk-in). Opens the new customer's page. */

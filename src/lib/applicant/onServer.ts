@@ -12,6 +12,8 @@ export type ServerFeature =
   | 'consultationInfo'
   | 'packages'
   | 'estimate'
+  | 'pathwayFinder'
+  | 'pathwaysManagement'
   | 'reviewDocuments'
   | 'background'
   | 'start'
@@ -36,12 +38,14 @@ export type ServerFeature =
   | 'offerAgreement'
   | 'officeHours'
   | 'phoneTeams'
+  | 'phoneExtensions'
   | 'phoneMenus'
   | 'phoneVoices'
   | 'phoneBreak'
   | 'teamBreaks'
   | 'attendance'
   | 'hr'
+  | 'marketing'
   | 'dayFollowUps'
   | 'clientServices';
 
@@ -66,6 +70,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    */
   hr: true,
   /**
+   * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
+   * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.
+   */
+  marketing: true,
+  /**
    * `GET /attendance/v1/daily|summary|enrollments|…`: the office terminal's reports and the mapping
    * of its user numbers to staff, key `manage_attendance` (lang `attendance/`, branch `test`).
    */
@@ -77,6 +86,11 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   officeHours: true,
   /** `GET/POST/PUT /sales/v1/calls/teams/`: the office line's teams (lang `claude/phone-teams`). */
   phoneTeams: true,
+  /**
+   * `GET /sales/v1/calls/extensions/`, `PUT extensions/<id>/desk/`, `POST extensions/<id>/mobile/`:
+   * who has which desk phone and mobile extension, set by phone managers (lang `test`).
+   */
+  phoneExtensions: true,
   /** `GET/PUT /sales/v1/calls/menus/`: what each phone menu key does (lang `claude/phone-menus`). */
   phoneMenus: true,
   /** `GET /sales/v1/calls/voices/`, `POST voices/<id>/`: the menus' greetings (lang `claude/phone-voices`). */
@@ -140,6 +154,13 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   packages: true,
   /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution `mehrad-take-over`). */
   estimate: true,
+  /**
+   * `applicant/v1/pathways/` (+ `goal`, `summary`, `tip`, `duration`, `cost`): the simple pathway
+   * finder, fewest questions to the first country (needs `makemigrations pathways` + `migrate`).
+   */
+  pathwayFinder: true,
+  /** `staff/v1/pathways/`: migration pathways in sales and marketing management. */
+  pathwaysManagement: true,
   /** H59 `review-documents/`: files sent for a free review (scorize-revolution `claude/project-thread-aylffr`). */
   reviewDocuments: true,
   /** H60 `background/`: the tablet form. */

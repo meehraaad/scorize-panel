@@ -3,7 +3,10 @@ import { http, HttpResponse } from 'msw';
 import { ApiError, api } from '@/lib/api/client';
 import type {
   CallBrief,
+  Consultation,
   ConsultationRange,
+  ConsultationSummary,
+  ConsultationTypeOption,
   ConsultationsData,
   ContactLog,
   CustomerData,
@@ -28,8 +31,10 @@ import { fetchPayments } from './legacy/payments';
 import { fetchPurchases } from './legacy/purchases';
 import { faceOf, putFace } from './face';
 import {
+  arrivalOf,
   customerInstalments,
   failed,
+  listHolderOf,
   recordInstalmentReceipt,
   stateOrError,
   upcomingVisitOf,
@@ -117,6 +122,91 @@ const MANAGER_TEAM = [
   { id: 9, name: 'رضا کاظمی' },
 ];
 
+const DAY_MS = 86_400_000;
+const localDay = (value: string | Date) => {
+  const day = new Date(value);
+  day.setHours(0, 0, 0, 0);
+  return day.getTime();
+};
+
+/** Django's manager filters of `consultations/` (api/sales/v1/seller.py): span, mode, seller, status, q. */
+function filterConsultations(rows: Consultation[], query: URLSearchParams) {
+  const now = Date.now();
+  const from = query.get('from');
+  const to = query.get('to');
+  const seller = query.get('seller');
+  const typed = (query.get('q') ?? '').trim().toLowerCase();
+  return rows.filter((item) => {
+    const starts = new Date(item.starts_at).getTime();
+    if (query.get('range') === 'span') {
+      if (from && starts < localDay(`${from}T00:00:00`)) return false;
+      if (to && starts >= localDay(`${to}T00:00:00`) + DAY_MS) return false;
+    }
+    const mode = query.get('mode');
+    if (mode && item.mode !== mode) return false;
+    if (seller === 'none' && item.seller_id !== null) return false;
+    if (seller && seller !== 'none' && item.seller_id !== Number(seller)) return false;
+    switch (query.get('status')) {
+      case 'upcoming':
+        if (starts < now) return false;
+        break;
+      case 'done':
+        if (starts >= now || !item.logged) return false;
+        break;
+      case 'unlogged':
+        if (starts >= now || item.logged) return false;
+        break;
+      case 'arrived':
+        if (!item.arrived_at) return false;
+        break;
+    }
+    return !typed || item.name.toLowerCase().includes(typed) || item.phone.includes(typed);
+  });
+}
+
+/** The manager's cards: today, tomorrow, the next 7 days, upcoming with nobody, past without a log. */
+function summaryOf(rows: Consultation[]): ConsultationSummary {
+  const now = Date.now();
+  const today = localDay(new Date());
+  const within = (item: Consultation, days: number, skip = 0) => {
+    const day = localDay(item.starts_at);
+    return day >= today + skip * DAY_MS && day < today + days * DAY_MS;
+  };
+  const upcoming = (item: Consultation) => new Date(item.starts_at).getTime() >= now;
+  return {
+    today: rows.filter((item) => within(item, 1)).length,
+    tomorrow: rows.filter((item) => within(item, 2, 1)).length,
+    week: rows.filter((item) => within(item, 7)).length,
+    unassigned: rows.filter((item) => upcoming(item) && item.seller_id === null).length,
+    unlogged: rows.filter((item) => !upcoming(item) && !item.logged).length,
+  };
+}
+
+/** The leads list's consultation types: the calendar mock's three (src/mocks/sales.ts) and an old one. */
+const CONSULTATION_TYPES: ConsultationTypeOption[] = [
+  { id: 1, name: 'مشاوره‌ی اپلای ارشد', mode: 'online', active: true },
+  { id: 2, name: 'مشاوره‌ی اپلای دکتری', mode: 'online', active: true },
+  { id: 3, name: 'مشاوره‌ی ویزای تحصیلی', mode: 'in_person', active: true },
+  { id: 4, name: 'مشاوره‌ی حضوری قدیمی', mode: 'in_person', active: false },
+];
+
+/** What a mock customer bought: by their id, a quarter none, the rest one type each. */
+function boughtType(customer: number): ConsultationTypeOption | null {
+  const kind = customer % 4;
+  return kind === 0 ? null : (CONSULTATION_TYPES[kind - 1] ?? null);
+}
+
+/** Whether a customer passes `?consultation=` and `?consultation_type=`, as Django filters them. */
+function consultationMatches(customer: number, mode: string | null, typeId: number | null) {
+  const type = boughtType(customer);
+  if (mode === 'none') return type === null;
+  if (type === null) return !mode || mode === 'all' ? typeId === null : false;
+  if (mode === 'in_person' || mode === 'online') {
+    if (type.mode !== mode) return false;
+  }
+  return typeId === null || type.id === typeId;
+}
+
 function columnsOf(): NonNullable<CustomerData['columns']> {
   const data = stateOrError();
   return failed(data)
@@ -136,6 +226,11 @@ export const salesStaffHandlers = [
       search: query.get('search') ?? '',
       page: Number(query.get('page') ?? 1),
     };
+    const consultation = query.get('consultation');
+    const consultationType = query.get('consultation_type')
+      ? Number(query.get('consultation_type'))
+      : null;
+    const consulted = (consultation && consultation !== 'all') || consultationType !== null;
     // Each row's customer tags (S49); `?tag=` keeps the customers with it (on this page).
     return answer<LeadsData>(() =>
       fetchLeads(leads).then((data) => {
@@ -149,12 +244,14 @@ export const salesStaffHandlers = [
             face: faceOf(row.customer),
             ...(manager ? { seller: row.id % 3 === 0 ? '' : SELLER_NAME } : {}),
           }))
-          .filter((row) => leads.tag === null || row.tags.includes(leads.tag));
+          .filter((row) => leads.tag === null || row.tags.includes(leads.tag))
+          .filter((row) => consultationMatches(row.customer, consultation, consultationType));
         return {
           ...data,
-          supports: { ...data.supports, tags: true },
+          supports: { ...data.supports, tags: true, consultations: true },
           sellers: manager ? MANAGER_TEAM : [],
-          ...(leads.tag === null ? {} : { count: results.length }),
+          consultation_types: CONSULTATION_TYPES,
+          ...(leads.tag === null && !consulted ? {} : { count: results.length }),
           results,
         };
       }),
@@ -240,29 +337,42 @@ export const salesStaffHandlers = [
   http.get(`${BASE}/consultations/`, ({ request }) => {
     const query = new URL(request.url).searchParams;
     const type = query.get('type');
-    const range = (query.get('range') ?? 'today') as ConsultationRange;
+    const range = (query.get('range') ?? 'today') as ConsultationRange | 'span';
     const date = query.get('date');
+    const manager = storage.get() === MANAGER;
     return answer<ConsultationsData>(() =>
       fetchConsultations(
-        range === 'day' ? 'all' : range,
+        range === 'day' || range === 'span' ? 'all' : range,
         type ? Number(type) : null,
         query.get('unlogged') === '1',
       ).then((data) => {
+        // Who holds each one and when an in-person customer came, as the calendar mock keeps them.
+        const rows: Consultation[] = data.results.map((item) => ({
+          ...item,
+          ...listHolderOf(item.id),
+          arrived_at: arrivalOf(item.id),
+        }));
+        const shared = {
+          types: data.types,
+          unlogged: data.unlogged,
+          sellers: manager ? MANAGER_TEAM : [],
+          ...(manager ? { summary: summaryOf(rows) } : {}),
+        };
         if (range !== 'day' || !date) {
-          const { counts, ...rest } = data;
+          const results = filterConsultations(rows, query);
           return {
-            ...rest,
-            counts: date ? { ...counts, day: 0 } : counts,
-            ...pageOf(request, data.results, CONSULTATIONS_PAGE),
+            ...shared,
+            counts: date ? { ...data.counts, day: 0 } : data.counts,
+            ...pageOf(request, results, CONSULTATIONS_PAGE),
           };
         }
         // One chosen day (S59): its sessions, counted by type; the mock logs no contacts.
-        const results = data.results.filter((item) => item.starts_at.slice(0, 10) === date);
+        const results = rows.filter((item) => item.starts_at.slice(0, 10) === date);
         const byType = new Map<string, number>();
         for (const item of results)
           byType.set(item.type.name, (byType.get(item.type.name) ?? 0) + 1);
         return {
-          ...data,
+          ...shared,
           counts: { ...data.counts, day: results.length },
           day: {
             sessions: [...byType].map(([name, count]) => ({ type: name, count })),
@@ -291,8 +401,11 @@ export const salesStaffHandlers = [
           call_brief: true,
           summary_sms: false,
           columns: true,
+          no_answer_send: true,
         },
         attribution: { first_contact: null, won_by: null },
+        // conf/notifications.json's crm_unanswered_call, with the customer's first name.
+        no_answer_sms_text: `سلام ${data.name.split(' ')[0] ?? ''} عزیز\nمتأسفانه مشاوران اسکورایز موفق به تماس با شما نشدند، لطفا جهت ارتباط با موسسه با شماره زیرتماس بگیرید.\n\nتیم اسکورایز - ۰۲۱۹۱۰۱۸۴۵7`,
       })),
     ),
   ),

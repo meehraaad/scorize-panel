@@ -193,6 +193,7 @@ export const payStaff = () =>
       name: row.name,
       face: row.face,
       position: row.position,
+      team: row.team,
       personnel_code: row.personnel_code,
       salary: row.pay.salary ?? 0,
       insured: row.pay.has_insurance,
@@ -475,6 +476,19 @@ export const hrHandlers = [
       return HttpResponse.json({ detail: 'Their leaving has already started.' }, { status: 409 });
     const body = (await request.json()) as { day: string; reason?: string };
     row.moves.unshift(makeMove(row, 'exit', body.day, body.reason ?? ''));
+    return HttpResponse.json(fileOf(row), { status: 201 });
+  }),
+  http.post(`${API}/staff/:id/return/`, async ({ params, request }) => {
+    if (!allowed()) return forbidden();
+    const row = find(params.id);
+    if (!row) return notFound();
+    if (row.is_active)
+      return HttpResponse.json({ detail: 'They are still working here.' }, { status: 409 });
+    const body = (await request.json()) as { day: string; reason?: string };
+    if (!body.reason) return invalid({ reason: ['This field is required.'] });
+    row.is_active = true;
+    row.leaving_date = null;
+    row.moves.unshift(makeMove(row, 'entry', body.day, body.reason));
     return HttpResponse.json(fileOf(row), { status: 201 });
   }),
   http.post(`${API}/moves/:id/:action/`, ({ params }) => {

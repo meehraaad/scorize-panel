@@ -1,7 +1,8 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
+import { SelectField } from '@/components/ui/Choices';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Dialog } from '@/components/ui/Dialog';
 import { FileDrop, PickedFile } from '@/components/ui/Files';
@@ -12,60 +13,68 @@ import { isCsv, MAX_CSV_BYTES } from '@/lib/csv';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
-  leadImportSampleHref,
-  useApplyLeadImport,
-  usePreviewLeadImport,
+  UPLOAD_SYSTEM_SOURCES,
+  applyLeadImport,
+  previewLeadImport,
+  sampleHref,
   type LeadImportChange,
+  type LeadImportOptions,
   type LeadImportPreview,
   type LeadImportRow,
-  type LeadImportSource,
-  type SellerLoad,
-} from '../api';
+  type LeadSourceRow,
+} from '@/lib/leads/api';
 
 const STEPS = ['file', 'review', 'done'] as const;
 const CHANGES: readonly LeadImportChange[] = ['new', 'existing', 'skip'];
-const SOURCES = ['campaign', 'manual'] as const satisfies readonly LeadImportSource[];
 const TONE: Record<LeadImportChange, ChipTone> = { new: 'info', existing: 'good', skip: 'danger' };
 /** The seller select's value for the assignment queue. */
 const QUEUE = 'queue';
 /** Rows shown before "show the rest". */
 const FIRST_ROWS = 8;
 
+interface FlowProps {
+  /** The upload's endpoint: the sales manager's, or the marketing panel's. */
+  base: string;
+  /** Every source; the upload offers `campaign`, `manual` and the team's active ones. */
+  sources: readonly LeadSourceRow[];
+  /** Who may get the leads; without it (the marketing panel) they go to the sales queue. */
+  sellers?: readonly { id: number; name: string }[];
+  /** Query keys to refresh once the leads are added. */
+  refresh: readonly (readonly string[])[];
+  onClose: () => void;
+}
+
 /**
  * Add leads from a CSV (the old site's marketing "Campaign CSV"): pick the file, see what each row
  * does (left-out rows say why), choose the source, a note and who gets them, then add them.
  */
-export function LeadImportDialog({
-  open,
-  onClose,
-  sellers,
-}: {
-  open: boolean;
-  onClose: () => void;
-  sellers: readonly SellerLoad[];
-}) {
-  const { t } = useTranslation('sales');
+export function LeadImportDialog({ open, ...flow }: FlowProps & { open: boolean }) {
+  const { t } = useTranslation('leads');
   return (
     <Dialog
       open={open}
-      onClose={onClose}
-      title={t('manager.import.title')}
-      subtitle={t('manager.import.subtitle')}
-      closeLabel={t('manager.import.close')}
+      onClose={flow.onClose}
+      title={t('import.title')}
+      subtitle={t('import.subtitle')}
+      closeLabel={t('import.close')}
     >
       {/* Opening again starts over. */}
-      {open && <ImportFlow onClose={onClose} sellers={sellers} />}
+      {open && <ImportFlow {...flow} />}
     </Dialog>
   );
 }
 
-function ImportFlow({ onClose, sellers }: { onClose: () => void; sellers: readonly SellerLoad[] }) {
-  const { t } = useTranslation('sales');
+function ImportFlow({ base, sources, sellers, refresh, onClose }: FlowProps) {
+  const { t } = useTranslation('leads');
   const f = useFormat();
-  const preview = usePreviewLeadImport();
-  const apply = useApplyLeadImport();
+  const client = useQueryClient();
+  const preview = useMutation({ mutationFn: (file: File) => previewLeadImport(base, file) });
+  const apply = useMutation({
+    mutationFn: (options: LeadImportOptions) => applyLeadImport(base, options),
+    onSuccess: () => Promise.all(refresh.map((queryKey) => client.invalidateQueries({ queryKey }))),
+  });
   const [problem, setProblem] = useState<'badType' | 'tooBig' | null>(null);
-  const [source, setSource] = useState<LeadImportSource>('campaign');
+  const [source, setSource] = useState<string>(UPLOAD_SYSTEM_SOURCES[0]);
   const [note, setNote] = useState('');
   const [seller, setSeller] = useState<string>(QUEUE);
   const [notify, setNotify] = useState(false);
@@ -88,12 +97,12 @@ function ImportFlow({ onClose, sellers }: { onClose: () => void; sellers: readon
   return (
     <>
       <StepBar
-        label={t('manager.import.steps')}
+        label={t('import.steps')}
         steps={STEPS.map((key, index) => ({
           key,
-          label: t('manager.import.step', {
+          label: t('import.step', {
             n: f.number(index + 1),
-            name: t(`manager.import.stepName.${key}`),
+            name: t(`import.stepName.${key}`),
           }),
         }))}
         current={step}
@@ -107,52 +116,59 @@ function ImportFlow({ onClose, sellers }: { onClose: () => void; sellers: readon
             accept={['.csv', 'text/csv']}
             disabled={preview.isPending}
             errorId={problem || preview.isError ? 'lead-import-file-error' : null}
-            chooseLabel={
-              preview.isPending ? t('manager.import.reading') : t('manager.import.choose')
-            }
-            hint={t('manager.import.drop')}
-            inputLabel={t('manager.import.choose')}
+            chooseLabel={preview.isPending ? t('import.reading') : t('import.choose')}
+            hint={t('import.drop')}
+            inputLabel={t('import.choose')}
             onFile={pick}
           />
           {(problem || preview.isError) && (
             <span id="lead-import-file-error" className="text-[13px] leading-7 text-danger">
-              {problem ? t(`manager.import.problem.${problem}`) : t('manager.import.readError')}
+              {problem ? t(`import.problem.${problem}`) : t('import.readError')}
             </span>
           )}
-          <Columns />
+          <Columns base={base} />
         </div>
       )}
 
       {step === 1 && data && (
         <div className="flex flex-col gap-4">
           <Review data={data} onAgain={again} />
-          <ChoiceGroup
-            legend={t('manager.import.source')}
-            look="segmented"
+          <SelectField
+            label={t('import.source')}
+            hint={t('import.sourceHint')}
             value={source}
             onChange={setSource}
-            options={SOURCES.map((value) => ({
-              value,
-              label: t(`manager.import.sourceOption.${value}`),
-            }))}
+            options={[
+              ...UPLOAD_SYSTEM_SOURCES.map((value) => ({
+                value,
+                label: t(`import.sourceSystem.${value}`),
+              })),
+              ...sources
+                .filter((item) => !item.system && item.active)
+                .map((item) => ({ value: item.code, label: item.name })),
+            ]}
           />
           <TextField
-            label={t('manager.import.note')}
-            hint={t('manager.import.noteHint')}
+            label={t('import.note')}
+            hint={t('import.noteHint')}
             value={note}
             maxLength={500}
             onChange={(event) => setNote(event.target.value)}
           />
-          <SelectField
-            label={t('manager.import.to')}
-            value={seller}
-            onChange={setSeller}
-            hint={seller === QUEUE ? t('manager.import.queueHint') : undefined}
-            options={[
-              { value: QUEUE, label: t('manager.import.queue') },
-              ...sellers.map((item) => ({ value: String(item.id), label: item.name })),
-            ]}
-          />
+          {sellers ? (
+            <SelectField
+              label={t('import.to')}
+              value={seller}
+              onChange={setSeller}
+              hint={seller === QUEUE ? t('import.queueHint') : undefined}
+              options={[
+                { value: QUEUE, label: t('import.queue') },
+                ...sellers.map((item) => ({ value: String(item.id), label: item.name })),
+              ]}
+            />
+          ) : (
+            <p className="m-0 text-[13px] leading-7 text-text-2">{t('import.queueOnly')}</p>
+          )}
           <label className="flex cursor-pointer gap-3 rounded-[18px] bg-canvas p-4">
             <input
               type="checkbox"
@@ -162,9 +178,9 @@ function ImportFlow({ onClose, sellers }: { onClose: () => void; sellers: readon
               className="mt-1 size-[18px] flex-none accent-primary"
             />
             <span className="flex flex-col gap-1">
-              <span className="text-[15px] font-semibold">{t('manager.import.notify')}</span>
+              <span className="text-[15px] font-semibold">{t('import.notify')}</span>
               <span id="lead-import-notify-help" className="text-[13px] leading-6 text-text-2">
-                {t('manager.import.notifyHelp')}
+                {t('import.notifyHelp')}
               </span>
             </span>
           </label>
@@ -173,7 +189,7 @@ function ImportFlow({ onClose, sellers }: { onClose: () => void; sellers: readon
 
       {step === 2 && apply.data && (
         <Notice tone="success">
-          {t('manager.import.done', {
+          {t('import.done', {
             n: f.number(apply.data.created),
             customers: f.number(apply.data.new_customers),
           })}
@@ -189,19 +205,19 @@ function ImportFlow({ onClose, sellers }: { onClose: () => void; sellers: readon
               onClick={() =>
                 apply.mutate(
                   { token: data.token, source, note: note.trim(), seller: to, notify },
-                  { onError: () => toast.error(t('manager.import.applyError')) },
+                  { onError: () => toast.error(t('import.applyError')) },
                 )
               }
             >
-              {t('manager.import.apply', { n: f.number(adding) })}
+              {t('import.apply', { n: f.number(adding) })}
             </Button>
             <Button variant="outline" onClick={again}>
-              {t('manager.import.back')}
+              {t('import.back')}
             </Button>
           </>
         )}
         <Button variant={step === 2 ? 'primary' : 'outline'} onClick={onClose}>
-          {step === 2 ? t('manager.import.close') : t('manager.import.cancel')}
+          {step === 2 ? t('import.close') : t('import.cancel')}
         </Button>
       </div>
     </>
@@ -209,7 +225,7 @@ function ImportFlow({ onClose, sellers }: { onClose: () => void; sellers: readon
 }
 
 function Review({ data, onAgain }: { data: LeadImportPreview; onAgain: () => void }) {
-  const { t } = useTranslation('sales');
+  const { t } = useTranslation('leads');
   const f = useFormat();
   const [all, setAll] = useState(false);
   // Left-out rows first: they are what the manager may want to fix in the file.
@@ -221,32 +237,29 @@ function Review({ data, onAgain }: { data: LeadImportPreview; onAgain: () => voi
   return (
     <>
       <PickedFile
-        ext={t('manager.import.csv')}
+        ext={t('import.csv')}
         name={data.file.name}
-        meta={t('manager.import.fileMeta', {
+        meta={t('import.fileMeta', {
           rows: f.number(data.file.rows),
           size: f.number(Math.max(1, Math.round(data.file.size / 1024))),
         })}
-        removeLabel={t('manager.import.otherFile')}
+        removeLabel={t('import.otherFile')}
         onRemove={onAgain}
       />
-      <ul
-        aria-label={t('manager.import.summary')}
-        className="m-0 flex list-none flex-wrap gap-2 p-0"
-      >
+      <ul aria-label={t('import.summary')} className="m-0 flex list-none flex-wrap gap-2 p-0">
         {CHANGES.filter((change) => data.counts[change] > 0).map((change) => (
           <li key={change}>
             <Chip tone={TONE[change]}>
-              {t(`manager.import.count.${change}`, { n: f.number(data.counts[change]) })}
+              {t(`import.count.${change}`, { n: f.number(data.counts[change]) })}
             </Chip>
           </li>
         ))}
       </ul>
-      {data.rows.length === 0 && <Notice tone="warn">{t('manager.import.empty')}</Notice>}
+      {data.rows.length === 0 && <Notice tone="warn">{t('import.empty')}</Notice>}
       {data.rows.length > 0 && (
         <section aria-labelledby="lead-import-rows" className="flex flex-col gap-2">
           <h3 id="lead-import-rows" className="m-0 text-base font-bold">
-            {t('manager.import.rows')}
+            {t('import.rows')}
           </h3>
           <ul className="m-0 flex list-none flex-col rounded-[18px] p-0 shadow-[inset_0_0_0_1px_var(--hair)]">
             {shown.map((row) => (
@@ -255,7 +268,7 @@ function Review({ data, onAgain }: { data: LeadImportPreview; onAgain: () => voi
           </ul>
           {!all && rows.length > FIRST_ROWS && (
             <Button variant="outline" className="self-start" onClick={() => setAll(true)}>
-              {t('manager.import.more', { n: f.number(rows.length - FIRST_ROWS) })}
+              {t('import.more', { n: f.number(rows.length - FIRST_ROWS) })}
             </Button>
           )}
         </section>
@@ -265,7 +278,7 @@ function Review({ data, onAgain }: { data: LeadImportPreview; onAgain: () => voi
 }
 
 function ImportRow({ row }: { row: LeadImportRow }) {
-  const { t } = useTranslation('sales');
+  const { t } = useTranslation('leads');
   const f = useFormat();
   return (
     <li
@@ -274,32 +287,30 @@ function ImportRow({ row }: { row: LeadImportRow }) {
       }`}
     >
       <span className="flex min-w-0 flex-col gap-0.5">
-        <bdi className="truncate text-[15px] font-semibold">
-          {row.name || t('manager.import.noName')}
-        </bdi>
+        <bdi className="truncate text-[15px] font-semibold">{row.name || t('import.noName')}</bdi>
         <span className="text-[13px] text-text-2">
-          <bdi dir="ltr">{row.phone ? f.digits(row.phone) : t('manager.import.noPhone')}</bdi>
+          <bdi dir="ltr">{row.phone ? f.digits(row.phone) : t('import.noPhone')}</bdi>
           {' · '}
-          {t('manager.import.line', { n: f.number(row.line) })}
+          {t('import.line', { n: f.number(row.line) })}
         </span>
       </span>
       <Chip tone={TONE[row.change]} small>
         {row.change === 'skip'
-          ? t(`manager.import.skip.${row.problem ?? 'bad_phone'}`)
-          : t(`manager.import.change.${row.change}`)}
+          ? t(`import.skip.${row.problem ?? 'bad_phone'}`)
+          : t(`import.change.${row.change}`)}
       </Chip>
     </li>
   );
 }
 
-function Columns() {
-  const { t } = useTranslation('sales');
+function Columns({ base }: { base: string }) {
+  const { t } = useTranslation('leads');
   return (
     <p className="m-0 text-[13px] leading-7 text-text-2">
-      {t('manager.import.columns')} <bdi dir="ltr">{t('manager.import.columnNames')}</bdi>.{' '}
-      {t('manager.import.columnsOptional')}{' '}
-      <a href={leadImportSampleHref} download className="font-medium">
-        {t('manager.import.sample')}
+      {t('import.columns')} <bdi dir="ltr">{t('import.columnNames')}</bdi>.{' '}
+      {t('import.columnsOptional')}{' '}
+      <a href={sampleHref(base)} download className="font-medium">
+        {t('import.sample')}
       </a>
     </p>
   );

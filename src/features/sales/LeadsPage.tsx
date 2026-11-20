@@ -15,7 +15,8 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES } from '@/lib/sales/api';
+import { salesSourcesQuery } from '@/lib/leads/api';
+import { FIRST_CALL_TARGET_MINUTES, SCORE_BANDS, SOURCES, type LeadSource } from '@/lib/sales/api';
 import { pagesOf } from '@/lib/api/page';
 import {
   LEAD_FILTERS,
@@ -31,6 +32,9 @@ import { useSalesFormat } from './format';
 import { LeadTable } from './components/LeadTable';
 import { NewLeadDialog } from './components/NewLeadDialog';
 
+type ModeFilter = 'all' | 'in_person' | 'online';
+const MODE_FILTERS: readonly ModeFilter[] = ['all', 'in_person', 'online'];
+
 /**
  * Every lead of the seller, by stage, with its score and next follow-up; a sales manager's are
  * everyone's, each naming its seller, with a seller filter. Canvas "لیدها".
@@ -42,10 +46,14 @@ export default function LeadsPage() {
   const stage = leadFilterOf(params.get('stage'));
   // Starts as `firstLeadQuery`, which the route prefetches.
   const [source, setSource] = useState<LeadQuery['source']>('all');
+  const teamSources = useQuery(salesSourcesQuery);
   const [band, setBand] = useState<LeadQuery['band']>('all');
   const [overdue, setOverdue] = useState(false);
   const [tag, setTag] = useState<number | null>(null);
   const [seller, setSeller] = useState<number | 'none' | null>(null);
+  // With the source on bought consultations: in person or not, and the type.
+  const [mode, setMode] = useState<ModeFilter>('all');
+  const [consultationType, setConsultationType] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
@@ -59,6 +67,8 @@ export default function LeadsPage() {
     page,
     // Absent unless chosen: the first page stays the one the route prefetched.
     ...(seller === null ? {} : { seller }),
+    ...(mode === 'all' ? {} : { consultation: mode }),
+    ...(consultationType === null ? {} : { consultationType }),
   };
   const { data, isPending, isPlaceholderData } = useQuery(leadsQuery(query));
   const tagsOn = data?.supports.tags === true;
@@ -94,6 +104,23 @@ export default function LeadsPage() {
     );
 
   const pages = pagesOf(data);
+  const typeOptions = (data?.consultation_types ?? []).filter(
+    (item) => mode === 'all' || item.mode === mode,
+  );
+  const consulted = source === 'consultation' && data?.supports.consultations === true;
+  const chooseSource = refilter((value: LeadQuery['source']) => {
+    setSource(value);
+    if (value !== 'consultation') {
+      setMode('all');
+      setConsultationType(null);
+    }
+  });
+  const chooseMode = refilter((value: ModeFilter) => {
+    setMode(value);
+    // A type of the other mode would find nobody.
+    const kept = data?.consultation_types?.find((item) => item.id === consultationType);
+    if (kept && value !== 'all' && kept.mode !== value) setConsultationType(null);
+  });
 
   return (
     <PageStack>
@@ -133,10 +160,14 @@ export default function LeadsPage() {
             inline
             label={t('leads.source')}
             value={source}
-            onChange={refilter(setSource)}
+            onChange={chooseSource}
             options={[
               { value: 'all', label: t('leads.allSources') },
               ...SOURCES.map((value) => ({ value, label: t(`source.${value}`) })),
+              // The marketing team's sources, archived ones too: their leads are still there.
+              ...(teamSources.data ?? [])
+                .filter((item) => !item.system)
+                .map((item) => ({ value: item.code as LeadSource, label: item.name })),
             ]}
           />
           {data?.supports.band !== false && (
@@ -178,6 +209,35 @@ export default function LeadsPage() {
                 { value: 'all', label: t('owner.all') },
                 { value: 'none', label: t('owner.unassigned') },
                 ...data.sellers.map((item) => ({ value: String(item.id), label: item.name })),
+              ]}
+            />
+          )}
+          {consulted && (
+            <SelectField
+              inline
+              label={t('leads.consultationMode')}
+              value={mode}
+              onChange={chooseMode}
+              options={MODE_FILTERS.map((value) => ({
+                value,
+                label: t(`leads.modeOption.${value}`),
+              }))}
+            />
+          )}
+          {consulted && typeOptions.length > 0 && (
+            <SelectField
+              inline
+              label={t('leads.consultationType')}
+              value={consultationType === null ? 'all' : String(consultationType)}
+              onChange={refilter((value: string) =>
+                setConsultationType(value === 'all' ? null : Number(value)),
+              )}
+              options={[
+                { value: 'all', label: t('leads.allConsultationTypes') },
+                ...typeOptions.map((item) => ({
+                  value: String(item.id),
+                  label: item.active ? item.name : t('leads.oldType', { name: item.name }),
+                })),
               ]}
             />
           )}

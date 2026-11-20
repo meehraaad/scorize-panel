@@ -44,7 +44,11 @@ export interface ContactValues {
   /** The note for the customer is open (it starts folded in a contact log). */
   customerOpen?: boolean;
   template?: string;
+  /** A call with no answer: how the seller follows it (our SMS by default). */
+  noAnswerSend?: NoAnswerSend;
 }
+
+export type NoAnswerSend = 'sms' | 'whatsapp' | 'telegram' | 'none';
 
 export interface ContactDraft {
   key: string;

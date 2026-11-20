@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { fromCalendar, monthLength, toCalendar, toValue, type CalendarKind } from '@/lib/calendar';
+import type { DayStatus } from '@/lib/attendance';
+import { toValue } from '@/lib/calendar';
 
 /**
  * The attendance section: the office terminal's punches turned into daily and monthly numbers, and
@@ -14,7 +15,7 @@ export const ATTENDANCE_PERMISSION = 'manage_attendance';
 export const ATTENDANCE_API = '/attendance/v1';
 export const ATTENDANCE_KEY = ['attendance'] as const;
 
-export type DayStatus = 'present' | 'late' | 'absent' | 'pending';
+export type { DayStatus };
 
 export interface DayRow {
   /** `YYYY-MM-DD`. */
@@ -122,15 +123,38 @@ export const devicesQuery = queryOptions({
   queryFn: ({ signal }) => api<{ results: Device[] }>(`${ATTENDANCE_API}/devices/`, { signal }),
 });
 
+/** Python's names of the days, Saturday first (lang `api/sales/v1/calls/hours.py`). */
+export type Weekday = 'sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri';
+
+/**
+ * The week the reports count: each day's start (`HH:MM`, null: a day off), read from the office
+ * phone hours the sales manager keeps; `saved` false: nobody saved them yet (the PBX's own hours).
+ */
+export interface Schedule {
+  saved: boolean;
+  week: { day: Weekday; start: string | null }[];
+  /** Coming closed days, `YYYY-MM-DD`. */
+  closed_days: string[];
+  closed_today: boolean;
+  /** Coming in within this many minutes of the start is on time. */
+  grace_minutes: number;
+}
+
+export const scheduleQuery = queryOptions({
+  queryKey: [...ATTENDANCE_KEY, 'schedule'],
+  queryFn: ({ signal }) => api<Schedule>(`${ATTENDANCE_API}/schedule/`, { signal }),
+});
+
+/** The sales manager's key (`features/sales/api/manager.ts`): they edit the office phone hours. */
+export const PHONE_HOURS_PERMISSION = 'can_assign_to_seller';
+/** Where the phone hours are edited (the sales panel's manager area). */
+export const PHONE_HOURS_PATH = '/sales/manager/phone/hours';
+
+/** The attendance section's pages, inside the HR panel (features can't import panels). */
+export const attendancePath = (to = '') => (to ? `/hr/attendance/${to}` : '/hr/attendance');
+
 /** Today as `YYYY-MM-DD`: the daily page opens on it. */
 export const todayValue = () => toValue(new Date(), false);
 
-/** The first and last day of the calendar month `shift` months from today's (Jalali in Persian). */
-export function monthRange(kind: CalendarKind, shift = 0): Range {
-  const today = toCalendar(new Date(), kind);
-  const index = today.year * 12 + (today.month - 1) + shift;
-  const year = Math.floor(index / 12);
-  const month = (index % 12) + 1;
-  const day = (n: number) => toValue(fromCalendar({ year, month, day: n }, kind), false);
-  return { from: day(1), to: day(monthLength(year, month, kind)) };
-}
+/** The first and last day of the calendar month `shift` months from today's (`lib/calendar`). */
+export { monthRange } from '@/lib/calendar';
