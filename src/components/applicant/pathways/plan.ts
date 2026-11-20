@@ -1,4 +1,10 @@
-import type { Answers, CountryAnswers, FactorValue, FinderPathway } from '@/lib/applicant/pathways';
+import {
+  FINDER_BUDGETS,
+  type Answers,
+  type CountryAnswers,
+  type FactorValue,
+  type FinderPathway,
+} from '@/lib/applicant/pathways';
 
 /**
  * Which question to ask next: the fewest questions that answer one route fully come first, then
@@ -16,6 +22,12 @@ export interface AskOption {
   set: Answers;
 }
 
+/** The budget question's answer: not one of Django's factors, sent on its own (`budget`). */
+export const BUDGET = 'budget';
+/** Scales an English level can be given in: the options stay IELTS bands, worded in the scale picked. */
+export const ENGLISH_SCALES = ['ielts', 'toefl', 'duolingo'] as const;
+export type EnglishScale = (typeof ENGLISH_SCALES)[number];
+
 export interface Ask {
   id: string;
   /** The Django factors (`pathways.rules.FACTORS`) it answers. */
@@ -32,6 +44,8 @@ export interface Ask {
   max?: number;
   /** A number question's first value (the slider starts there). */
   start?: number;
+  /** `english`: the person picks the exam first, and the options are worded in its scores. */
+  scales?: readonly EnglishScale[];
 }
 
 const levels = (factor: string, names: readonly string[]): AskOption[] =>
@@ -50,6 +64,7 @@ export const ASKS: readonly Ask[] = [
     id: 'english',
     factors: ['english_ielts', 'english_level'],
     input: 'options',
+    scales: ENGLISH_SCALES,
     options: [
       { id: 'none', set: { english_level: 'a2' } },
       { id: 'ielts_4', set: { english_ielts: 4.5 } },
@@ -76,7 +91,20 @@ export const ASKS: readonly Ask[] = [
     input: 'options',
     options: levels('partner', ['single', 'skilled', 'english', 'other']),
   },
+  {
+    id: BUDGET,
+    factors: [BUDGET],
+    input: 'options',
+    options: [
+      ...FINDER_BUDGETS.map((id) => ({ id, set: { [BUDGET]: id } })),
+      { id: 'unsure', set: {} },
+    ],
+  },
 ];
+
+/** What a route needs asked: its factors, and the budget when it is a study route with costs. */
+const needs = (pathway: FinderPathway) =>
+  pathway.has_costs ? [...pathway.factors, BUDGET] : pathway.factors;
 
 const ASK_OF = new Map(ASKS.flatMap((ask) => ask.factors.map((factor) => [factor, ask] as const)));
 
@@ -86,7 +114,7 @@ export const suits = (pathway: FinderPathway, goal: Goal) =>
 /** The questions a route needs that aren't answered yet (factors we can't ask are skipped). */
 export function remainingAsks(pathway: FinderPathway, answered: ReadonlySet<string>): Ask[] {
   const asks = new Set<Ask>();
-  for (const factor of pathway.factors) {
+  for (const factor of needs(pathway)) {
     const ask = ASK_OF.get(factor);
     if (ask && !answered.has(ask.id)) asks.add(ask);
   }
@@ -171,7 +199,7 @@ export function asksLeft(
 export function countriesFor(pathways: readonly FinderPathway[], goal: Goal, ask: Ask): Country[] {
   const found = new Map<number, Country>();
   for (const pathway of pathways)
-    if (suits(pathway, goal) && ask.factors.some((factor) => pathway.factors.includes(factor)))
+    if (suits(pathway, goal) && ask.factors.some((factor) => needs(pathway).includes(factor)))
       found.set(pathway.country.id, pathway.country);
   return [...found.values()];
 }

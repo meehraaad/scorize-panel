@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/Progress';
-import type { PathwayResult } from '@/lib/applicant/pathways';
+import { CURRENCY_CODE, FIT_TONE } from '@/lib/applicant/estimate';
+import type { FinderStudy, PathwayResult } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { Country } from './plan';
 import { Forward } from './answers';
@@ -71,6 +72,77 @@ function Note({
   );
 }
 
+const MILLION = 1_000_000;
+const BILLION = 1_000_000_000;
+
+/**
+ * A study route's first year: tuition and living in tomans (in billions once it reaches one), the
+ * same in the country's own currency, how it fits the budget given, and the stay after graduating.
+ */
+function StudyCosts({ study }: { study: FinderStudy }) {
+  const { t } = useTranslation('pathways');
+  const f = useFormat();
+  const code = CURRENCY_CODE[study.currency];
+  const tomans = study.first_year_toman;
+  // One decimal in billions ("1.4 to 1.7 billion"), whole millions below a billion.
+  const inBillions = tomans !== null && tomans.max >= BILLION;
+  const amount = (value: number) =>
+    f.number(inBillions ? Math.round(value / (BILLION / 10)) / 10 : Math.round(value / MILLION));
+  const tuition =
+    study.tuition.min === study.tuition.max
+      ? f.money(study.tuition.min, code)
+      : t('study.range', {
+          min: f.money(study.tuition.min, code),
+          max: f.money(study.tuition.max, code),
+        });
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl bg-canvas p-4 lg:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-sm font-semibold text-primary-text">
+          <QuizIcon name="wallet" size={18} />
+          {t('study.first_year')}
+        </span>
+        {study.budget_fit !== 'unknown' && (
+          <Chip tone={FIT_TONE[study.budget_fit]} dot>
+            {t(key(`study.fit.${study.budget_fit}`))}
+          </Chip>
+        )}
+      </div>
+      <div className="flex flex-col gap-1">
+        <span className="text-2xl leading-tight font-extrabold tracking-tight tabular-nums">
+          {tomans
+            ? t(
+                key(
+                  `study.${inBillions ? 'billions' : 'millions'}${tomans.min === tomans.max ? '_one' : ''}`,
+                ),
+                { min: amount(tomans.min), max: amount(tomans.max) },
+              )
+            : t('study.no_rate')}
+        </span>
+        <span className="text-sm leading-7 text-text-2">
+          {t('study.costs', { tuition, living: f.money(study.living, code) })}
+        </span>
+      </div>
+      {study.post_study_visa && (
+        <div className="flex items-start gap-3 border-t border-hair pt-4 text-[15px] leading-7">
+          <QuizIcon name="cap" size={18} className="mt-1 flex-none text-text-2" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-semibold">
+              {study.post_study_months === null
+                ? study.post_study_visa
+                : t('study.after_months', {
+                    visa: study.post_study_visa,
+                    months: f.number(study.post_study_months),
+                  })}
+            </span>
+            {study.after_study && <span className="text-text-2">{study.after_study}</span>}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boolean }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
@@ -120,12 +192,13 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
           />
         </div>
       )}
-      {(pathway.duration || pathway.cost) && (
+      {result.study && <StudyCosts study={result.study} />}
+      {(pathway.duration || (pathway.cost && !result.study)) && (
         <dl className="m-0 grid grid-cols-2 gap-4 border-t border-hair pt-5">
           {pathway.duration && (
             <Fact icon="clock" label={t('facts.time')} value={pathway.duration} />
           )}
-          {pathway.cost && (
+          {pathway.cost && !result.study && (
             <Fact icon="wallet" label={t('facts.cost')} value={t(key(`cost.${pathway.cost}`))} />
           )}
         </dl>

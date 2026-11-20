@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/Switch';
 import { TextAreaField, TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import type { Answers, Factor } from '@/lib/applicant/pathways';
+import { useFormat } from '@/lib/i18n/useFormat';
 import { idParam } from '@/lib/router/lazyPage';
 import { toast } from '@/lib/toast';
 import {
@@ -22,6 +23,7 @@ import {
   type ConditionInput,
   type PathwayDetail,
   type PathwayInput,
+  type RequirementInput,
 } from './manageApi';
 import { STATUS_TONE, emptyInput, inputOf } from './manageForm';
 import {
@@ -70,8 +72,42 @@ const numberOf = (text: string) => {
 };
 const numberText = (value: number | null) => (value === null ? '' : String(value));
 
+/** The requirements by group, in the order the groups first appear, each row with its index in the form. */
+function requirementGroups(rows: readonly RequirementInput[]) {
+  const groups = new Map<
+    number,
+    { number: number; rows: { row: RequirementInput; index: number }[] }
+  >();
+  rows.forEach((row, index) => {
+    const group = groups.get(row.group) ?? { number: row.group, rows: [] };
+    group.rows.push({ row, index });
+    groups.set(row.group, group);
+  });
+  return [...groups.values()];
+}
+
+/** The word between two requirements: «و» between groups (all needed), «یا» inside one (one is enough). */
+function Joiner({ label, tone }: { label: string; tone: 'and' | 'or' }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span aria-hidden="true" className="h-px flex-1 bg-hair" />
+      <span
+        className={`rounded-full px-3 py-0.5 text-xs font-bold ${
+          tone === 'and'
+            ? 'bg-primary text-on-primary'
+            : 'bg-canvas text-primary-text shadow-[inset_0_0_0_1px_var(--line-2)]'
+        }`}
+      >
+        {label}
+      </span>
+      <span aria-hidden="true" className="h-px flex-1 bg-hair" />
+    </div>
+  );
+}
+
 function Editor({ detail }: { detail: PathwayDetail | null }) {
   const { t } = useTranslation('pathways');
+  const f = useFormat();
   const navigate = useNavigate();
   const base = usePathwaysPath();
   const { data: list } = useSuspenseQuery(managedPathwaysQuery);
@@ -127,6 +163,12 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
     label: t(key(`factors.${factor.name}`), { defaultValue: factor.name }),
   }));
   const factorOf = (name: string) => factors.find((factor) => factor.name === name);
+  const newRequirement = () => ({
+    group: 0,
+    factor: factors[0]?.name ?? 'age',
+    label: '',
+    ...blankCondition,
+  });
   const usedFactors = [
     ...new Set([...form.requirements.map((r) => r.factor), ...form.criteria.map((c) => c.factor)]),
   ];
@@ -227,73 +269,96 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
             title={t('edit.requirements')}
             subtitle={t('edit.requirements_help')}
           >
-            {form.requirements.map((row, index) => (
-              <div key={index} className="flex flex-col gap-3 rounded-xl bg-canvas p-3">
-                <div className="grid gap-3 md:grid-cols-[88px_1fr_1fr]">
-                  <TextField
-                    label={t('edit.group')}
-                    inputMode="numeric"
-                    value={String(row.group)}
-                    onChange={(event) =>
-                      set(
-                        'requirements',
-                        form.requirements.map((r, i) =>
-                          i === index ? { ...r, group: Number(event.target.value) || 1 } : r,
-                        ),
-                      )
-                    }
-                  />
-                  <SelectField
-                    label={t('edit.factor')}
-                    options={factorOptions}
-                    value={row.factor}
-                    onChange={(factor) =>
-                      set(
-                        'requirements',
-                        form.requirements.map((r, i) =>
-                          i === index ? { ...r, factor, ...blankCondition } : r,
-                        ),
-                      )
-                    }
-                  />
-                  <TextField
-                    label={t('edit.label')}
-                    value={row.label}
-                    onChange={(event) =>
-                      set(
-                        'requirements',
-                        form.requirements.map((r, i) =>
-                          i === index ? { ...r, label: event.target.value } : r,
-                        ),
-                      )
-                    }
-                  />
+            {requirementGroups(form.requirements).map((group, groupIndex) => (
+              <Fragment key={group.number}>
+                {groupIndex > 0 && <Joiner label={t('edit.and')} tone="and" />}
+                <div className="flex flex-col gap-3 rounded-2xl p-3 shadow-[inset_0_0_0_1px_var(--line-2)] lg:p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-bold">
+                      {t('edit.must', { number: f.number(groupIndex + 1) })}
+                    </span>
+                    {group.rows.length > 1 && (
+                      <Chip tone="info" small>
+                        {t('edit.one_is_enough')}
+                      </Chip>
+                    )}
+                  </div>
+                  {group.rows.map(({ row, index }, rowIndex) => (
+                    <Fragment key={index}>
+                      {rowIndex > 0 && <Joiner label={t('edit.or')} tone="or" />}
+                      <div className="flex flex-col gap-3 rounded-xl bg-canvas p-3">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <SelectField
+                            label={t('edit.factor')}
+                            options={factorOptions}
+                            value={row.factor}
+                            onChange={(factor) =>
+                              set(
+                                'requirements',
+                                form.requirements.map((r, i) =>
+                                  i === index ? { ...r, factor, ...blankCondition } : r,
+                                ),
+                              )
+                            }
+                          />
+                          <TextField
+                            label={t('edit.label')}
+                            value={row.label}
+                            onChange={(event) =>
+                              set(
+                                'requirements',
+                                form.requirements.map((r, i) =>
+                                  i === index ? { ...r, label: event.target.value } : r,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <ConditionFields
+                          factor={factorOf(row.factor)}
+                          value={row}
+                          onChange={(condition) =>
+                            set(
+                              'requirements',
+                              form.requirements.map((r, i) =>
+                                i === index ? { ...r, ...condition } : r,
+                              ),
+                            )
+                          }
+                          error={JSON.stringify(errors[`requirements.${index}`] ?? '') || undefined}
+                        />
+                        <Button
+                          variant="danger"
+                          className="self-start"
+                          onClick={() =>
+                            set(
+                              'requirements',
+                              form.requirements.filter((_, i) => i !== index),
+                            )
+                          }
+                        >
+                          {t('edit.remove')}
+                        </Button>
+                      </div>
+                    </Fragment>
+                  ))}
+                  <Button
+                    variant="outline"
+                    className="self-start"
+                    onClick={() => {
+                      // The new alternative goes right after its group's last one.
+                      const after = (group.rows.at(-1)?.index ?? -1) + 1;
+                      set('requirements', [
+                        ...form.requirements.slice(0, after),
+                        { ...newRequirement(), group: group.number },
+                        ...form.requirements.slice(after),
+                      ]);
+                    }}
+                  >
+                    {t('edit.add_or')}
+                  </Button>
                 </div>
-                <ConditionFields
-                  factor={factorOf(row.factor)}
-                  value={row}
-                  onChange={(condition) =>
-                    set(
-                      'requirements',
-                      form.requirements.map((r, i) => (i === index ? { ...r, ...condition } : r)),
-                    )
-                  }
-                  error={JSON.stringify(errors[`requirements.${index}`] ?? '') || undefined}
-                />
-                <Button
-                  variant="danger"
-
-                  className="self-start"
-                  onClick={() =>
-                    set(
-                      'requirements',
-                      form.requirements.filter((_, i) => i !== index),
-                    )
-                  }
-                >
-                  {t('edit.remove')}
-                </Button>
-              </div>
+              </Fragment>
             ))}
             <Button
               variant="outline"
@@ -302,10 +367,8 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
                 set('requirements', [
                   ...form.requirements,
                   {
-                    group: (form.requirements.at(-1)?.group ?? 0) + 1,
-                    factor: factors[0]?.name ?? 'age',
-                    label: '',
-                    ...blankCondition,
+                    ...newRequirement(),
+                    group: Math.max(0, ...form.requirements.map((r) => r.group)) + 1,
                   },
                 ])
               }
