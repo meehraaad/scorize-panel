@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { attendanceSyncCount } from '@/mocks/attendance';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
@@ -20,7 +20,14 @@ describe('attendance section', () => {
     await i18n.changeLanguage('fa');
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('shows today: who came when, the hours, late people and the unmapped number', async () => {
+    // A workday in Tehran: on Fridays and Saturdays (and after 20:30 UTC on Thursdays) nobody comes.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-16T08:00:00Z')); // Monday 11:30 in Tehran
     loginAs(AMIR);
     renderApp('/attendance');
     // The old address opens the HR panel's attendance section.

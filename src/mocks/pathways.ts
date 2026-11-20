@@ -10,9 +10,12 @@ import { forbidden, notFound, storage } from './session';
  */
 
 const SUPERUSER = 6;
-const GERMANY = { id: 1, name: 'آلمان' };
-const CANADA = { id: 2, name: 'کانادا' };
-const AUSTRALIA = { id: 3, name: 'استرالیا' };
+/** Who keeps the pathways: a superuser, the sales manager (Reza, 4) or the marketing manager. */
+const MANAGERS: ReadonlySet<number | null> = new Set([SUPERUSER, 4]);
+const manages = () => MANAGERS.has(storage.get());
+const GERMANY = { id: 1, name: 'آلمان', code: 'DE' };
+const CANADA = { id: 2, name: 'کانادا', code: 'CA' };
+const AUSTRALIA = { id: 3, name: 'استرالیا', code: 'AU' };
 const COUNTRIES = [GERMANY, CANADA, AUSTRALIA];
 const FACTORS = [
   { name: 'age', kind: 'number', choices: [] },
@@ -109,10 +112,18 @@ function seed(): PathwayDetail[] {
           value: '',
           label: 'انگلیسی B2',
         },
+        {
+          group: 1,
+          factor: 'job_offer',
+          minimum: '',
+          maximum: '',
+          value: 'yes',
+          label: 'پیشنهاد کار از کانادا',
+        },
         { group: 3, factor: 'age', minimum: '18', maximum: '', value: '', label: 'حداقل ۱۸ سال' },
       ],
       criteria: [],
-      factors: ['work_years', 'english_level', 'age'],
+      factors: ['work_years', 'job_offer', 'english_level', 'age'],
     },
     {
       ...base,
@@ -198,6 +209,7 @@ function evaluate(p: PathwayDetail, given: Answers): PathwayResult {
     missing,
     scores: [],
     unanswered: p.factors.filter((factor) => answers[factor] === undefined),
+    improvements: [],
   };
 }
 
@@ -215,15 +227,19 @@ export const pathwayHandlers = [
   }),
   http.post('/api/applicant/v1/pathways/check/', async ({ request }) => {
     if (!storage.get()) return forbidden();
-    const body = (await request.json()) as { answers: Answers };
+    const body = (await request.json()) as {
+      answers: Answers;
+      by_country?: Record<string, Answers>;
+    };
+    // Answers about one country count for that country's routes only (Django: `by_country`).
     const results = usable()
-      .map((p) => evaluate(p, body.answers))
+      .map((p) => evaluate(p, { ...body.answers, ...body.by_country?.[String(p.country.id)] }))
       .sort((a, b) => Number(b.qualifies) - Number(a.qualifies));
     return HttpResponse.json({ id: 1, created_at: now(), results }, { status: 201 });
   }),
 
   http.get('/api/staff/v1/pathways/', () => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     return HttpResponse.json({
       pathways: pathways.map((p) => ({
         id: p.id,
@@ -241,7 +257,7 @@ export const pathwayHandlers = [
     });
   }),
   http.post('/api/staff/v1/pathways/try/', async ({ request }) => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     const body = (await request.json()) as { pathway: PathwayInput; answers: Answers };
     const draft: PathwayDetail = {
       ...body.pathway,
@@ -262,7 +278,7 @@ export const pathwayHandlers = [
     });
   }),
   http.get('/api/staff/v1/pathways/:id/', ({ params }) => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     const row = pathways.find((p) => p.id === Number(params.id));
     return row ? HttpResponse.json(row) : notFound();
   }),
@@ -270,7 +286,7 @@ export const pathwayHandlers = [
     http[method](
       method === 'post' ? '/api/staff/v1/pathways/' : '/api/staff/v1/pathways/:id/',
       async ({ request, params }) => {
-        if (storage.get() !== SUPERUSER) return forbidden();
+        if (!manages()) return forbidden();
         const input = (await request.json()) as PathwayInput;
         if (!input.name)
           return HttpResponse.json({ name: ['This field is required.'] }, { status: 400 });
@@ -298,7 +314,7 @@ export const pathwayHandlers = [
     ),
   ),
   http.post('/api/staff/v1/pathways/:id/verify/', ({ params }) => {
-    if (storage.get() !== SUPERUSER) return forbidden();
+    if (!manages()) return forbidden();
     const row = pathways.find((p) => p.id === Number(params.id));
     if (!row) return notFound();
     Object.assign(row, { verified_at: now(), verified_by: 'امیر عابدی', updated_at: now() });

@@ -9,6 +9,7 @@ import type { ApplicantAccess } from '@/lib/applicant/access';
 import { latestEstimateQuery } from '@/lib/applicant/estimate';
 import { backgroundQuery, startQuery } from '@/lib/applicant/journey';
 import { useUser } from '@/lib/auth/session';
+import { PathwaysCard } from '../PathwaysCard';
 import { TurkeyCard } from '../TurkeyCard';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { SessionsCard } from '../SessionsCard';
@@ -107,6 +108,7 @@ export function NewUserHome({ access }: { access: ApplicantAccess }) {
       />
       {ON_SERVER.turkey && access.turkey && <TurkeyCard step={access.turkey} />}
       {blocks}
+      {ON_SERVER.pathwayFinder && <PathwaysCard />}
     </PageStack>
   );
 }

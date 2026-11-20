@@ -3,7 +3,7 @@ import { api } from '@/lib/api/client';
 
 /**
  * The pathway finder (any account): the official routes to work or live in a country that staff
- * keep and have checked (Django `pathways.Pathway`, management > pathways), the questions they
+ * keep and have checked (Django `pathways.Pathway`, sales or marketing management > pathways), the questions they
  * need, and what each says for the person's answers. Django: `api/applicant/v1/pathways.py`.
  * The person never picks a route: they answer a few questions and we say which routes fit.
  */
@@ -22,7 +22,8 @@ export interface Factor {
 
 export interface FinderPathway {
   id: number;
-  country: { id: number; name: string };
+  /** `code`: ISO 3166 (DE) for its flag; empty or absent (older servers) when unknown. */
+  country: { id: number; name: string; code?: string };
   /** Persian when staff gave one. */
   name: string;
   pass_mark: number | null;
@@ -47,6 +48,19 @@ export interface FinderOptions {
 export type FactorValue = number | string | boolean;
 export type Answers = Record<string, FactorValue>;
 
+/** What would bring a route not passed yet over the line ("IELTS 7: 10 more points"). */
+export interface PathwayImprovement {
+  /** The criterion's label (Persian). */
+  label: string;
+  factor: string;
+  /** The value to reach: a number, a choice name, or `yes`. */
+  target: string;
+  /** The points it adds. */
+  points: number;
+  /** Enough alone to reach the pass mark. */
+  passes: boolean;
+}
+
 export interface PathwayResult {
   pathway: FinderPathway;
   qualifies: boolean;
@@ -56,6 +70,8 @@ export interface PathwayResult {
   missing: string[];
   scores: { label: string; points: number; max_points: number }[];
   unanswered: string[];
+  /** Best first; empty when it already passes or has no pass mark. Missing from older servers. */
+  improvements?: PathwayImprovement[];
 }
 
 export interface PathwayCheck {
@@ -72,5 +88,15 @@ export const finderOptionsQuery = queryOptions({
   queryFn: () => api<FinderOptions>(`${PATHWAYS_API}/`),
 });
 
-export const checkPathways = (answers: Answers, contact: FinderContact) =>
-  api<PathwayCheck>(`${PATHWAYS_API}/check/`, { method: 'POST', body: { answers, contact } });
+/** Answers about one destination (lived there, a job offer from it), by country id. */
+export type CountryAnswers = Record<number, Answers>;
+
+export const checkPathways = (
+  answers: Answers,
+  contact: FinderContact,
+  byCountry: CountryAnswers = {},
+) =>
+  api<PathwayCheck>(`${PATHWAYS_API}/check/`, {
+    method: 'POST',
+    body: { answers, by_country: byCountry, contact },
+  });

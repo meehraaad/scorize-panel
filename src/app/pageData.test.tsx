@@ -83,6 +83,8 @@ const PAGES: PageCase[] = [
     '/estimate',
     '/pathways',
     '/background',
+    // The pathway finder alone, without the panel's menus.
+    '/finder',
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
   { path: '/', user: MARYAM },
@@ -155,6 +157,9 @@ const PAGES: PageCase[] = [
     '/sales/manager/follow-ups',
     '/sales/manager/stages',
     '/sales/manager/tags',
+    '/sales/manager/pathways',
+    '/sales/manager/pathways/new',
+    '/sales/manager/pathways/1',
     '/sales/manager/phone/overview',
     '/sales/manager/phone/extensions',
     '/sales/manager/phone/hours',
@@ -194,9 +199,6 @@ const PAGES: PageCase[] = [
     '/founders/access/groups',
     '/founders/access/keys',
     '/founders/access/history',
-    '/founders/pathways',
-    '/founders/pathways/new',
-    '/founders/pathways/1',
   ].map((path) => ({ path, user: AMIR })),
   // HR panel (src/mocks/hr.ts, attendance: src/mocks/attendance.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
   ...[
@@ -236,7 +238,13 @@ const PAGES: PageCase[] = [
     '/marketing/performance',
   ].map((path) => ({ path, user: ELHAM })),
   // The marketing manager's area (src/mocks/marketingBoard.ts): Amir holds the key.
-  ...['/marketing/manage', '/marketing/manage/stages', '/marketing/manage/types'].map((path) => ({
+  ...[
+    '/marketing/manage',
+    '/marketing/manage/stages',
+    '/marketing/manage/types',
+    '/marketing/manage/pathways',
+    '/marketing/manage/pathways/1',
+  ].map((path) => ({
     path,
     user: AMIR,
   })),

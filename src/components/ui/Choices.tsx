@@ -37,7 +37,7 @@ export interface Choice<T extends string> {
   label: string;
   /** `tiles` and `cards` only: a line under the label. */
   hint?: string | undefined;
-  /** `cards` only: more under the hint (a kind of contract's services and price). */
+  /** `cards`: more under the hint (a kind of contract's services and price). */
   extra?: ReactNode;
 }
 
@@ -62,7 +62,7 @@ export function ChoiceGroup<T extends string>({
   /**
    * `pills`: a wrapping row of short labels; `tiles`: a grid of labelled boxes; `cards`: tiles with
    * a radio dot; `squares`: short centred labels, four in a row; `segmented`: a few short labels
-   * on one track.
+   * on one track. (A quiz's large answers: `AnswerGroup`.)
    */
   look?: keyof typeof LOOKS;
   /** Under the choices: what the pick does. */
