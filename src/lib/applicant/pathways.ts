@@ -108,8 +108,9 @@ export const checkPathways = (
   contact: FinderContact,
   byCountry: CountryAnswers = {},
   budget: FinderBudget | null = null,
+  incomeToman: number | null = null,
 ) =>
   api<PathwayCheck>(`${PATHWAYS_API}/check/`, {
     method: 'POST',
-    body: { answers, by_country: byCountry, budget, contact },
+    body: { answers, by_country: byCountry, budget, income_toman: incomeToman, contact },
   });

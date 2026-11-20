@@ -140,13 +140,13 @@
     },
     "income": {
       "title": "What is your monthly income?",
-      "help": "Net, in euros. Digital nomad visas ask a minimum monthly income.",
+      "help": "Net, in tomans. We convert it at the latest euro rate and compare it with the minimum the visa asks.",
       "options": {
-        "under_1000": "Under €1,000",
-        "1000_2000": "€1,000 to €2,000",
-        "2000_2850": "€2,000 to €2,850",
-        "2850_4000": "€2,850 to €4,000",
-        "over_4000": "Over €4,000"
+        "under_100m": "Under 100 million tomans",
+        "100m_200m": "100 to 200 million",
+        "200m_350m": "200 to 350 million",
+        "350m_500m": "350 to 500 million",
+        "over_500m": "Over 500 million"
       }
     }
   },

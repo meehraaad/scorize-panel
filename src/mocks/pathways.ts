@@ -339,7 +339,11 @@ export const pathwayHandlers = [
       answers: Answers;
       by_country?: Record<string, Answers>;
       budget?: FinderBudget | null;
+      income_toman?: number | null;
     };
+    // Django: income in tomans becomes euros at the newest rate.
+    if (body.income_toman != null && body.answers.monthly_income_eur === undefined)
+      body.answers.monthly_income_eur = Math.round(body.income_toman / (TOMANS.e ?? 1));
     // Answers about one country count for that country's routes only (Django: `by_country`).
     const results = usable()
       .map((p) => ({
