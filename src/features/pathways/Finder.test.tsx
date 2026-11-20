@@ -106,11 +106,47 @@ describe('pathway finder', () => {
     expect(screen.getByRole('button', { name: 'بعدی' })).toBeEnabled();
   });
 
+  it('a study route asks the budget, takes TOEFL, and shows the first year in tomans', async () => {
+    loginAs(SARA);
+    const user = userEvent.setup();
+    renderApp('/pathways');
+    await user.click(await screen.findByRole('button', { name: 'شروع کن' }));
+    await user.click(await screen.findByRole('radio', { name: /^تحصیل/ }));
+    await user.click(await screen.findByRole('radio', { name: 'دیپلم' }));
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+    // In TOEFL's scores: the same levels, worded in TOEFL.
+    await user.click(screen.getByRole('radio', { name: 'تافل' }));
+    await user.click(screen.getByRole('radio', { name: 'تافل ۹۴ تا ۱۱۴' }));
+    await screen.findByRole('heading', { name: 'برای سال اول چقدر می‌توانی خرج کنی؟' });
+    await user.click(screen.getByRole('radio', { name: '۴ تا ۸ میلیارد' }));
+    // £25,539 to £40,539 at 130,000 tomans: 3.3 to 5.3 billion.
+    expect(
+      await screen.findByText(/حدود (3.3|۳٫۳) تا (5.3|۵٫۳) میلیارد تومان/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('با بودجه‌ات جور است')).toBeInTheDocument();
+    expect(screen.getByText(/ویزای فارغ‌التحصیلی \(Graduate\)/)).toBeInTheDocument();
+  });
+
   it('management lists the routes by country with their status', async () => {
     loginAs(AMIR);
     renderApp('/marketing/manage/pathways');
     expect(await screen.findByRole('heading', { name: 'آلمان' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /کار ماهر ۱۸۹.*منتظر بررسی/ })).toBeInTheDocument();
+  });
+
+  it('the editor shows requirements as musts joined by «و», alternatives by «یا»', async () => {
+    loginAs(AMIR);
+    const user = userEvent.setup();
+    renderApp('/marketing/manage/pathways/2');
+    // Canada: (a year of work or a job offer), English B2, at least 18.
+    expect(await screen.findByText('شرط لازم ۳')).toBeInTheDocument();
+    expect(screen.getAllByText('و')).toHaveLength(2);
+    expect(screen.getAllByText('یا')).toHaveLength(1);
+    const [, second] = screen.getAllByRole('button', { name: '+ یا (گزینه‌ی دیگری به جای این)' });
+    if (second) await user.click(second);
+    expect(screen.getAllByText('یا')).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: '+ شرط لازم دیگر' }));
+    expect(screen.getByText('شرط لازم ۴')).toBeInTheDocument();
   });
 
   it('the sales manager edits the same routes, and the old management address leads there', async () => {

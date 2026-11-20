@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { StudyInfo } from '@/lib/applicant/estimate';
 
 /**
  * The pathway finder (any account): the official routes to work or live in a country that staff
@@ -38,7 +39,16 @@ export interface FinderPathway {
   tip: string;
   duration: string;
   cost: PathwayCost;
+  /** A study route with a year's costs: the finder asks the budget for it. Absent on older servers. */
+  has_costs?: boolean;
 }
+
+/** What the person can spend on the first year, in tomans (Django `pathways.study.FINDER_BUDGETS`). */
+export const FINDER_BUDGETS = ['up_to_1b', '1b_2b', '2b_4b', '4b_8b', 'over_8b'] as const;
+export type FinderBudget = (typeof FINDER_BUDGETS)[number];
+
+/** A study route's year in costs and how it fits the budget. */
+export type FinderStudy = Omit<StudyInfo, 'source_url' | 'checked_at'>;
 
 export interface FinderOptions {
   pathways: FinderPathway[];
@@ -72,6 +82,8 @@ export interface PathwayResult {
   unanswered: string[];
   /** Best first; empty when it already passes or has no pass mark. Missing from older servers. */
   improvements?: PathwayImprovement[];
+  /** A study route with costs: its first year and how it fits the budget; null or absent otherwise. */
+  study?: FinderStudy | null;
 }
 
 export interface PathwayCheck {
@@ -95,8 +107,9 @@ export const checkPathways = (
   answers: Answers,
   contact: FinderContact,
   byCountry: CountryAnswers = {},
+  budget: FinderBudget | null = null,
 ) =>
   api<PathwayCheck>(`${PATHWAYS_API}/check/`, {
     method: 'POST',
-    body: { answers, by_country: byCountry, contact },
+    body: { answers, by_country: byCountry, budget, contact },
   });

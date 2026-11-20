@@ -79,3 +79,16 @@ describe('questions about each country', () => {
     expect(progress.find((c) => c.name === 'Germany')).toMatchObject({ total: 2, left: 1 });
   });
 });
+
+describe('the budget', () => {
+  it('is asked last, and only for study routes with costs', () => {
+    const study = { ...route(7, 'UK', ['education'], 'study'), has_costs: true };
+    expect(nextAsk([study], 'study', new Set(['education']))?.id).toBe('budget');
+    expect(nextAsk([study], 'study', new Set(['education', 'budget']))).toBeNull();
+    expect(nextAsk(ROUTES, 'study', new Set(['education']))).toBeNull();
+  });
+  it('offers "not sure", which sends no budget', () => {
+    const budget = ASKS.find((ask) => ask.id === 'budget');
+    expect(budget?.options?.at(-1)).toEqual({ id: 'unsure', set: {} });
+  });
+});
