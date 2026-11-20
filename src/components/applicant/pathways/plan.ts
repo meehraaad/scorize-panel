@@ -24,6 +24,8 @@ export interface AskOption {
 
 /** The budget question's answer: not one of Django's factors, sent on its own (`budget`). */
 export const BUDGET = 'budget';
+/** The income question's answer, in tomans: sent on its own (`income_toman`), Django converts it. */
+export const INCOME_TOMAN = 'income_toman';
 /** Scales an English level can be given in: the options stay IELTS bands, worded in the scale picked. */
 export const ENGLISH_SCALES = ['ielts', 'toefl', 'duolingo'] as const;
 export type EnglishScale = (typeof ENGLISH_SCALES)[number];
@@ -84,16 +86,17 @@ export const ASKS: readonly Ask[] = [
     ],
   },
   {
-    // Each range counts as its lower end, so "2,850 to 4,000" passes a 2,849 minimum and "2,000 to 2,850" doesn't.
+    // Asked in tomans; Django turns it into euros at the newest rate (`income_toman`). Each range counts as its
+    // lower end, so a route's minimum is never met by guesswork.
     id: 'income',
     factors: ['monthly_income_eur'],
     input: 'options',
     options: [
-      { id: 'under_1000', set: { monthly_income_eur: 500 } },
-      { id: '1000_2000', set: { monthly_income_eur: 1000 } },
-      { id: '2000_2850', set: { monthly_income_eur: 2000 } },
-      { id: '2850_4000', set: { monthly_income_eur: 2850 } },
-      { id: 'over_4000', set: { monthly_income_eur: 4000 } },
+      { id: 'under_100m', set: { [INCOME_TOMAN]: 50_000_000 } },
+      { id: '100m_200m', set: { [INCOME_TOMAN]: 100_000_000 } },
+      { id: '200m_350m', set: { [INCOME_TOMAN]: 200_000_000 } },
+      { id: '350m_500m', set: { [INCOME_TOMAN]: 350_000_000 } },
+      { id: 'over_500m', set: { [INCOME_TOMAN]: 500_000_000 } },
     ],
   },
   {

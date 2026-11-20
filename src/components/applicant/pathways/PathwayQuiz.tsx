@@ -23,6 +23,7 @@ import {
   answeredPathways,
   asksLeft,
   BUDGET,
+  INCOME_TOMAN,
   countriesFor,
   countriesLeft,
   countryProgress,
@@ -58,15 +59,20 @@ interface Given {
   byCountry: CountryAnswers;
   /** The first year's budget, asked for study routes with costs; sent apart from the factors. */
   budget: FinderBudget | null;
+  /** Monthly income in tomans, asked for digital nomad routes; sent apart from the factors. */
+  incomeToman: number | null;
 }
 const givenOf = (parts: readonly Part[]): Given => {
-  const { [BUDGET]: budget, ...answers } = mergeAnswers(
-    Object.fromEntries(parts.map((part) => [part.id, part.set])),
-  );
+  const {
+    [BUDGET]: budget,
+    [INCOME_TOMAN]: incomeToman,
+    ...answers
+  } = mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set])));
   return {
     answers,
     byCountry: mergeByCountry(parts.map((part) => part.byCountry)),
     budget: typeof budget === 'string' ? (budget as FinderBudget) : null,
+    incomeToman: typeof incomeToman === 'number' ? incomeToman : null,
   };
 };
 const GOALS: readonly Goal[] = ['work', 'study', 'any'];
@@ -97,12 +103,18 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
 
   const check = useMutation({
     mutationFn: ({ given, contact }: { given: Given; contact: FinderContact }) =>
-      checkPathways(given.answers, contact, given.byCountry, given.budget),
+      checkPathways(given.answers, contact, given.byCountry, given.budget, given.incomeToman),
   });
   // The first route's verdict, fetched in the background while the questions go on.
   const peek = useMutation({
     mutationFn: (given: Given) =>
-      checkPathways(given.answers, { channel: 'none' }, given.byCountry, given.budget),
+      checkPathways(
+        given.answers,
+        { channel: 'none' },
+        given.byCountry,
+        given.budget,
+        given.incomeToman,
+      ),
   });
 
   /** What the routes say for these answers, then on to `next`. */
