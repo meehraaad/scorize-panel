@@ -39,13 +39,31 @@
     },
     "english": {
       "title": "How is your English?",
-      "help": "No IELTS? Your own guess is fine.",
+      "help": "IELTS, TOEFL or Duolingo. Without a certificate, your own guess is enough.",
       "options": {
         "none": "No certificate, or weak",
         "ielts_4": "IELTS 4 to 5",
         "ielts_5_5": "IELTS 5.5 to 6.5",
         "ielts_7": "IELTS 7 to 8",
         "ielts_8_5": "IELTS 8.5 or more"
+      },
+      "scale": "Which exam is your score in?",
+      "scales": {
+        "ielts": "IELTS",
+        "toefl": "TOEFL",
+        "duolingo": "Duolingo"
+      },
+      "toefl": {
+        "ielts_4": "TOEFL 32 to 45",
+        "ielts_5_5": "TOEFL 46 to 93",
+        "ielts_7": "TOEFL 94 to 114",
+        "ielts_8_5": "TOEFL 115 or more"
+      },
+      "duolingo": {
+        "ielts_4": "Duolingo 85 to 114",
+        "ielts_5_5": "Duolingo 115 to 144",
+        "ielts_7": "Duolingo 145 to 159",
+        "ielts_8_5": "Duolingo 160"
       }
     },
     "work_years": {
@@ -98,6 +116,18 @@
         "skilled": "Skilled with enough English",
         "english": "Only good English",
         "other": "None of these"
+      }
+    },
+    "budget": {
+      "title": "How much can you spend on the first year?",
+      "help": "Tuition and a year of living, in tomans. We compare it with each country's costs.",
+      "options": {
+        "up_to_1b": "Up to 1 billion tomans",
+        "1b_2b": "1 to 2 billion",
+        "2b_4b": "2 to 4 billion",
+        "4b_8b": "4 to 8 billion",
+        "over_8b": "Over 8 billion",
+        "unsure": "Not sure yet"
       }
     }
   },
@@ -245,8 +275,7 @@
     "review_by": "Check again by",
     "active": "On (when off, nobody sees it)",
     "requirements": "2. Requirements",
-    "requirements_help": "The customer must meet every group. Requirements with the same group number are alternatives: one is enough.",
-    "group": "Group",
+    "requirements_help": "Each box is a must: the customer needs every box (\"and\"). Inside a box, any one option is enough (\"or\").",
     "factor": "Fact",
     "label": "Text the customer sees",
     "minimum": "At least",
@@ -259,7 +288,7 @@
     "no": "No",
     "condition_error": "This condition isn't valid: fix the minimum, maximum or value.",
     "remove": "Remove",
-    "add_requirement": "+ New requirement",
+    "add_requirement": "+ Another must",
     "points": "3. Points table",
     "points_help": "For points tests: each row gives the points of the best band the customer is in.",
     "kind": "Kind",
@@ -291,7 +320,28 @@
     "try_person": "28, bachelor's, IELTS 6.5, 4 years of work, no German",
     "try_button": "Try it",
     "before": "Before publishing",
-    "before_body": "Compare the requirements and points with the official page, then press \"Checked, publish\". Any later change hides the route from customers until it is checked again."
+    "before_body": "Compare the requirements and points with the official page, then press \"Checked, publish\". Any later change hides the route from customers until it is checked again.",
+    "study": "5. A year of study and after",
+    "study_help": "Give all the costs or none. The admission-chance quiz shows them on the country's card.",
+    "currency": "Currency",
+    "currencies": {
+      "none": "No costs",
+      "e": "Euro",
+      "u": "US dollar",
+      "c": "Canadian dollar",
+      "p": "Pound"
+    },
+    "tuition_min": "Tuition a year, cheapest",
+    "tuition_max": "Tuition a year, dearest",
+    "living_per_year": "Living costs a year",
+    "post_study_visa": "Stay after graduating",
+    "post_study_months": "How long (months)",
+    "after_study": "The way to stay from there",
+    "and": "and",
+    "or": "or",
+    "must": "Must {{number}}",
+    "one_is_enough": "Any one of these is enough",
+    "add_or": "+ Or (another option instead)"
   },
   "intro": {
     "eyebrow": "Pathway finder",
@@ -352,5 +402,21 @@
   },
   "restart": "Start again",
   "close": "Close",
-  "home": "Go to the Scorize site"
+  "home": "Go to the Scorize site",
+  "study": {
+    "first_year": "The first year costs",
+    "billions": "About {{min}} to {{max}} billion tomans",
+    "billions_one": "About {{min}} billion tomans",
+    "millions": "About {{min}} to {{max}} million tomans",
+    "millions_one": "About {{min}} million tomans",
+    "no_rate": "In tomans: no exchange rate yet",
+    "range": "{{min}} to {{max}}",
+    "costs": "Tuition {{tuition}} a year and living {{living}}",
+    "after_months": "After the degree: {{visa}}, {{months}} months",
+    "fit": {
+      "fits": "Fits your budget",
+      "tight": "With the cheaper universities",
+      "over": "Over your budget"
+    }
+  }
 }

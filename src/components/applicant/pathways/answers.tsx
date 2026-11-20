@@ -7,7 +7,7 @@ import { NumberStepper } from '@/components/ui/NumberStepper';
 import type { Answers, CountryAnswers } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toLatinDigits } from '@/lib/text';
-import type { Ask, Country } from './plan';
+import type { Ask, Country, EnglishScale } from './plan';
 import { Flag, LevelBars, QuizIcon, type QuizIconName } from './art';
 import { key } from './keys';
 import { PinnedContext } from './pinned';
@@ -15,7 +15,9 @@ import { PinnedContext } from './pinned';
 /** How long a picked answer stays shown before the next question comes in. */
 const PICK_DELAY = 280;
 /** Questions whose options rise in level: drawn as a level meter. */
-const LEVEL_ASKS = new Set(['education', 'english', 'german']);
+const LEVEL_ASKS = new Set(['education', 'english', 'german', 'budget']);
+/** Options that mean "I don't know": drawn without a level. */
+const UNSURE = 'unsure';
 /** The partner question's options, drawn as people. */
 const PARTNER_ICONS: Record<string, QuizIconName> = {
   single: 'user',
@@ -181,6 +183,7 @@ export function AskAnswer({
   const min = ask.min ?? 0;
   const max = ask.max ?? 100;
   const [value, setValue] = useState(ask.start ?? min);
+  const [scale, setScale] = useState<EnglishScale>(ask.scales?.[0] ?? 'ielts');
   const early = onShowResults && (
     <Button
       variant="outline"
@@ -210,18 +213,44 @@ export function AskAnswer({
     );
   if (ask.input === 'options') {
     const options = ask.options ?? [];
+    const levels = options.filter((option) => option.id !== UNSURE).length;
+    // In another exam's scores, every option but "no certificate" is worded in that exam.
+    const scaled = (id: string) =>
+      ask.scales && scale !== 'ielts' && id !== 'none'
+        ? t(key(`asks.${ask.id}.${scale}.${id}`))
+        : t(key(`asks.${ask.id}.options.${id}`));
     return (
       <>
+        {ask.scales && (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-text-2">{t('asks.english.scale')}</span>
+            <ChoiceGroup
+              legend={t('asks.english.scale')}
+              hideLegend
+              look="segmented"
+              options={ask.scales.map((value) => ({
+                value,
+                label: t(key(`asks.english.scales.${value}`)),
+              }))}
+              value={scale}
+              onChange={setScale}
+            />
+          </div>
+        )}
         <OptionsAnswer
+          key={scale}
           legend={t(key(`asks.${ask.id}.title`))}
           options={options.map((option, index) => ({
             value: option.id,
-            label: t(key(`asks.${ask.id}.options.${option.id}`)),
-            icon: LEVEL_ASKS.has(ask.id) ? (
-              <LevelBars level={index} of={options.length} />
-            ) : ask.id === 'partner' && PARTNER_ICONS[option.id] ? (
-              <QuizIcon name={PARTNER_ICONS[option.id] ?? 'user'} />
-            ) : undefined,
+            label: scaled(option.id),
+            icon:
+              option.id === UNSURE ? (
+                <QuizIcon name="none" />
+              ) : LEVEL_ASKS.has(ask.id) ? (
+                <LevelBars level={index} of={levels} />
+              ) : ask.id === 'partner' && PARTNER_ICONS[option.id] ? (
+                <QuizIcon name={PARTNER_ICONS[option.id] ?? 'user'} />
+              ) : undefined,
           }))}
           busy={busy}
           onPick={(id) => {

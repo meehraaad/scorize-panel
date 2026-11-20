@@ -1,5 +1,11 @@
 import { http, HttpResponse } from 'msw';
-import type { Answers, FinderPathway, PathwayResult } from '@/lib/applicant/pathways';
+import type {
+  Answers,
+  FinderBudget,
+  FinderPathway,
+  FinderStudy,
+  PathwayResult,
+} from '@/lib/applicant/pathways';
 import type { PathwayDetail, PathwayInput, PathwayStatus } from '@/features/pathways/manageApi';
 import { forbidden, notFound, storage } from './session';
 
@@ -16,7 +22,8 @@ const manages = () => MANAGERS.has(storage.get());
 const GERMANY = { id: 1, name: 'آلمان', code: 'DE' };
 const CANADA = { id: 2, name: 'کانادا', code: 'CA' };
 const AUSTRALIA = { id: 3, name: 'استرالیا', code: 'AU' };
-const COUNTRIES = [GERMANY, CANADA, AUSTRALIA];
+const UK = { id: 4, name: 'انگلیس', code: 'GB' };
+const COUNTRIES = [GERMANY, CANADA, AUSTRALIA, UK];
 const FACTORS = [
   { name: 'age', kind: 'number', choices: [] },
   {
@@ -40,6 +47,13 @@ function seed(): PathwayDetail[] {
     needs_licensed_agent: false,
     review_by: null,
     is_active: true,
+    currency: '' as const,
+    tuition_min: null,
+    tuition_max: null,
+    living_per_year: null,
+    post_study_visa: '',
+    post_study_months: null,
+    after_study: '',
     verified_by: 'امیر عابدی',
     updated_at: '2026-11-19T10:00:00Z',
   };
@@ -152,6 +166,49 @@ function seed(): PathwayDetail[] {
       ],
       factors: ['age'],
     },
+    {
+      ...base,
+      id: 4,
+      country: UK,
+      name: 'Student visa',
+      name_persian: 'ویزای تحصیلی',
+      goal: 'study',
+      kind: 'requirements',
+      source_url: 'https://www.gov.uk/student-visa',
+      summary: 'پذیرش از دانشگاه انگلیس و بعد ویزای فارغ‌التحصیلی برای کار.',
+      tip: '',
+      duration: '۳ تا ۶ ماه',
+      cost: 'high',
+      currency: 'p',
+      tuition_min: 15_000,
+      tuition_max: 30_000,
+      living_per_year: 10_539,
+      post_study_visa: 'ویزای فارغ‌التحصیلی (Graduate)',
+      post_study_months: 24,
+      after_study: 'با پیشنهاد کار، ویزای کار ماهر و بعد اقامت دائم.',
+      status: 'published',
+      verified_at: '2026-11-19T10:00:00Z',
+      requirements: [
+        {
+          group: 1,
+          factor: 'education',
+          minimum: 'secondary',
+          maximum: '',
+          value: '',
+          label: 'حداقل دیپلم',
+        },
+        {
+          group: 2,
+          factor: 'english_level',
+          minimum: 'b2',
+          maximum: '',
+          value: '',
+          label: 'انگلیسی B2',
+        },
+      ],
+      criteria: [],
+      factors: ['education', 'english_level'],
+    },
   ];
 }
 
@@ -175,7 +232,55 @@ const finderPathway = (p: PathwayDetail): FinderPathway => ({
   tip: p.tip,
   duration: p.duration,
   cost: p.cost,
+  has_costs: p.tuition_min !== null,
 });
+
+/** Tomans per unit (Django: the newest `finance.ExchangeRate`s through the US dollar). */
+const TOMANS: Record<string, number> = { e: 110_000, u: 100_000, c: 72_000, p: 130_000 };
+const CURRENCY: Record<string, FinderStudy['currency']> = {
+  e: 'eur',
+  u: 'usd',
+  c: 'cad',
+  p: 'pound',
+};
+/** The upper end of each budget (Django `pathways.study.FINDER_BUDGETS`). */
+const BUDGET_MAX: Record<FinderBudget, number | null> = {
+  up_to_1b: 1e9,
+  '1b_2b': 2e9,
+  '2b_4b': 4e9,
+  '4b_8b': 8e9,
+  over_8b: null,
+};
+const ROUND = 10_000_000;
+
+/** Django's `pathways.study.study_info` with `range_fit`. */
+function studyOf(p: PathwayDetail, budget: FinderBudget | null): FinderStudy | null {
+  if (p.tuition_min === null || p.tuition_max === null || p.living_per_year === null) return null;
+  const rate = TOMANS[p.currency] ?? 0;
+  const low = (p.tuition_min + p.living_per_year) * rate;
+  const high = (p.tuition_max + p.living_per_year) * rate;
+  const max = budget ? BUDGET_MAX[budget] : undefined;
+  return {
+    currency: CURRENCY[p.currency] ?? 'usd',
+    tuition: { min: p.tuition_min, max: p.tuition_max },
+    living: p.living_per_year,
+    first_year_toman: {
+      min: Math.round(low / ROUND) * ROUND,
+      max: Math.round(high / ROUND) * ROUND,
+    },
+    budget_fit:
+      max === undefined
+        ? 'unknown'
+        : max === null || high <= max
+          ? 'fits'
+          : low <= max
+            ? 'tight'
+            : 'over',
+    post_study_visa: p.post_study_visa,
+    post_study_months: p.post_study_months,
+    after_study: p.after_study,
+  };
+}
 
 const LEVELS = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2'];
 const EDUCATION = ['none', 'secondary', 'vocational', 'bachelor', 'master', 'phd'];
@@ -210,6 +315,7 @@ function evaluate(p: PathwayDetail, given: Answers): PathwayResult {
     scores: [],
     unanswered: p.factors.filter((factor) => answers[factor] === undefined),
     improvements: [],
+    study: null,
   };
 }
 
@@ -230,10 +336,14 @@ export const pathwayHandlers = [
     const body = (await request.json()) as {
       answers: Answers;
       by_country?: Record<string, Answers>;
+      budget?: FinderBudget | null;
     };
     // Answers about one country count for that country's routes only (Django: `by_country`).
     const results = usable()
-      .map((p) => evaluate(p, { ...body.answers, ...body.by_country?.[String(p.country.id)] }))
+      .map((p) => ({
+        ...evaluate(p, { ...body.answers, ...body.by_country?.[String(p.country.id)] }),
+        study: studyOf(p, body.budget ?? null),
+      }))
       .sort((a, b) => Number(b.qualifies) - Number(a.qualifies));
     return HttpResponse.json({ id: 1, created_at: now(), results }, { status: 201 });
   }),

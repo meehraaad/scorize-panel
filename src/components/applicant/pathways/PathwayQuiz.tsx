@@ -11,6 +11,7 @@ import {
   finderOptionsQuery,
   type Answers,
   type CountryAnswers,
+  type FinderBudget,
   type FinderContact,
   type FinderPathway,
   type PathwayResult,
@@ -21,6 +22,7 @@ import { toast } from '@/lib/toast';
 import {
   answeredPathways,
   asksLeft,
+  BUDGET,
   countriesFor,
   countriesLeft,
   countryProgress,
@@ -54,11 +56,19 @@ interface Part {
 interface Given {
   answers: Answers;
   byCountry: CountryAnswers;
+  /** The first year's budget, asked for study routes with costs; sent apart from the factors. */
+  budget: FinderBudget | null;
 }
-const givenOf = (parts: readonly Part[]): Given => ({
-  answers: mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set]))),
-  byCountry: mergeByCountry(parts.map((part) => part.byCountry)),
-});
+const givenOf = (parts: readonly Part[]): Given => {
+  const { [BUDGET]: budget, ...answers } = mergeAnswers(
+    Object.fromEntries(parts.map((part) => [part.id, part.set])),
+  );
+  return {
+    answers,
+    byCountry: mergeByCountry(parts.map((part) => part.byCountry)),
+    budget: typeof budget === 'string' ? (budget as FinderBudget) : null,
+  };
+};
 const GOALS: readonly Goal[] = ['work', 'study', 'any'];
 const GOAL_ICONS: Record<Goal, QuizIconName> = { work: 'briefcase', study: 'cap', any: 'compass' };
 
@@ -87,12 +97,12 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
 
   const check = useMutation({
     mutationFn: ({ given, contact }: { given: Given; contact: FinderContact }) =>
-      checkPathways(given.answers, contact, given.byCountry),
+      checkPathways(given.answers, contact, given.byCountry, given.budget),
   });
   // The first route's verdict, fetched in the background while the questions go on.
   const peek = useMutation({
     mutationFn: (given: Given) =>
-      checkPathways(given.answers, { channel: 'none' }, given.byCountry),
+      checkPathways(given.answers, { channel: 'none' }, given.byCountry, given.budget),
   });
 
   /** What the routes say for these answers, then on to `next`. */
