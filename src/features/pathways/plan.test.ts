@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { FinderPathway } from '@/lib/applicant/pathways';
-import { answeredPathways, countriesLeft, nextAsk } from './plan';
+import {
+  ASKS,
+  answeredPathways,
+  countriesFor,
+  countriesLeft,
+  countryProgress,
+  mergeByCountry,
+  nextAsk,
+} from './plan';
 
 const route = (
   id: number,
@@ -41,5 +49,33 @@ describe('the fewest questions to the first country', () => {
   it('keeps to the goal, and stops when every route is answered', () => {
     expect(nextAsk(ROUTES, 'study', new Set())?.id).toBe('education');
     expect(nextAsk(ROUTES, 'study', new Set(['education']))).toBeNull();
+  });
+});
+
+describe('questions about each country', () => {
+  const stay = ASKS.find((ask) => ask.id === 'stay_months');
+  it('asks once about every country whose routes need it', () => {
+    const routes = [
+      ...ROUTES,
+      route(5, 'Ireland', ['stay_months']),
+      route(6, 'Spain', ['stay_months']),
+    ];
+    expect(stay && countriesFor(routes, 'work', stay).map((c) => c.name)).toEqual([
+      'Ireland',
+      'Spain',
+    ]);
+  });
+  it('keeps each country its own answers', () => {
+    expect(
+      mergeByCountry([
+        { 1: { stay_months: 24 } },
+        undefined,
+        { 1: { job_offer: false }, 2: { job_offer: true } },
+      ]),
+    ).toEqual({ 1: { stay_months: 24, job_offer: false }, 2: { job_offer: true } });
+  });
+  it('counts what is left for each country', () => {
+    const progress = countryProgress(ROUTES, 'work', new Set(['education']));
+    expect(progress.find((c) => c.name === 'Germany')).toMatchObject({ total: 2, left: 1 });
   });
 });

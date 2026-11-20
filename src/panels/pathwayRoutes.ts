@@ -6,7 +6,7 @@ import {
   managedPathwayQuery,
   managedPathwaysQuery,
 } from '@/features/pathways/manageApi';
-import { MANAGER_PERMISSION } from '@/features/sales/api/manager';
+import { MANAGER_PERMISSION } from '@/features/sales/api/managerPermission';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';

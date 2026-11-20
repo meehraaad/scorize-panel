@@ -137,7 +137,7 @@ export interface DestinationOptions {
   sessions: { id: string; revision: number; assessment_date: string }[];
 }
 const PREFIX = '/applicant/v1/assessments';
-export const destinationOptionsQuery = queryOptions({
+export const destinationOptionsQuery = /* @__PURE__ */ queryOptions({
   queryKey: ['assessment-destinations', 'options'],
   queryFn: ({ signal }) => api<DestinationOptions>(`${PREFIX}/destinations/options/`, { signal }),
 });
