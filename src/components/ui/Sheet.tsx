@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Icon, type IconName } from './Icon';
 
 const sheetClass =
-  'm-0 mt-auto max-h-[85dvh] w-full max-w-none rounded-t-card bg-surface p-0 text-text backdrop:bg-black/40';
+  'm-0 mt-auto max-h-[85dvh] w-full max-w-none rounded-t-card bg-surface p-0 text-text outline-none backdrop:bg-black/40';
 
 /**
  * A bottom sheet (native <dialog>: focus trap, Esc and the back gesture close it), opened by its
@@ -27,7 +27,11 @@ export function Sheet({
   useEffect(() => {
     const dialog = sheet.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      // Start on the sheet itself, not its close button (a ring on a button the person didn't pick).
+      dialog.focus();
+    }
     if (!open && dialog.open) dialog.close();
   }, [open]);
   const close = () => sheet.current?.close();
@@ -35,6 +39,7 @@ export function Sheet({
     <dialog
       ref={sheet}
       aria-labelledby={titleId}
+      tabIndex={-1}
       onClose={onClose}
       onClick={(event) => event.target === event.currentTarget && close()}
       className={sheetClass}
@@ -64,7 +69,7 @@ function SheetBody({
   return (
     <div className="flex flex-col gap-3 p-5 pb-[calc(20px+env(safe-area-inset-bottom))]">
       <div className="flex items-center justify-between gap-3">
-        <h2 id={titleId} className="m-0 font-display text-lg font-bold">
+        <h2 id={titleId} className="m-0 font-display text-section font-bold">
           {title}
         </h2>
         <button

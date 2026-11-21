@@ -36,10 +36,11 @@ describe('pathway finder', () => {
     await user.keyboard('4');
     // The questions go on (Canada's age) while Germany's route opens beside them.
     expect(await screen.findByRole('heading', { name: 'چند سالت است؟' })).toBeInTheDocument();
-    const peek = await screen.findByRole('status');
-    expect(peek).toHaveTextContent('اولین راهت پیدا شد');
-    expect(peek).toHaveTextContent('کارت فرصت');
-    await user.click(screen.getByRole('button', { name: 'ببین چرا' }));
+    // Each route found joins a row above the buttons; a card opens its route.
+    const found = await screen.findByRole('status');
+    expect(await within(found).findByText('مناسب')).toBeInTheDocument();
+    await user.click(within(found).getByRole('button', { name: /کارت فرصت/ }));
+    expect(await screen.findByRole('heading', { name: 'اولین راهت پیدا شد' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'کارت فرصت' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /ادامه بده: (3|۳) سؤال تا کانادا/ }));
     // Number questions start at a likely value: Next keeps it.
@@ -59,6 +60,9 @@ describe('pathway finder', () => {
       await screen.findByRole('heading', { name: /این (2|۲) راه برای تو مناسب‌ترند/ }),
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'کار ماهر فدرال' })).toBeInTheDocument();
+    // The call is the one button at the bottom; once asked, it says so instead.
+    await user.click(screen.getByRole('button', { name: 'می‌خواهم با من تماس بگیرند' }));
+    expect(await screen.findByText('درخواستت ثبت شد، به‌زودی تماس می‌گیریم')).toBeInTheDocument();
   });
 
   it('opens from the home in a popup, and closes', async () => {

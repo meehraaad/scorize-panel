@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { use, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
@@ -10,6 +10,7 @@ import type { Country } from './plan';
 import { Bar, Forward, MAIN_ON_PHONE } from './answers';
 import { QuizIcon, SmallFlag, type QuizIconName } from './art';
 import { key } from './keys';
+import { BarContext } from './pinned';
 import { verdict } from './verdict';
 
 /** The factors a suggestion can name (Django `pathways.rules.IMPROVABLE`), and those named by a choice. */
@@ -153,19 +154,19 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
   const max = Math.max(pathway.max_points, pathway.pass_mark ?? 0, result.points, 1);
   return (
     <article
-      className={`flex flex-col gap-6 rounded-3xl bg-surface p-6 shadow-panel lg:p-9 ${
+      className={`flex flex-col gap-5 rounded-3xl bg-surface p-5 shadow-panel lg:gap-6 lg:p-9 ${
         lead ? 'shadow-[0_0_0_1.5px_var(--primary),var(--panel-shadow)] lg:p-10' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col">
-          <span className="flex items-center gap-2 text-sm text-text-2">
+          <span className="flex items-center gap-2 text-small text-text-2">
             <SmallFlag code={pathway.country.code} name={pathway.country.name} />
             {pathway.country.name}
           </span>
           <h2
             className={`m-0 mt-1.5 leading-snug font-extrabold tracking-tight text-balance ${
-              lead ? 'text-title lg:text-3xl' : 'text-xl lg:text-2xl'
+              lead ? 'text-title lg:text-3xl' : 'text-section lg:text-2xl'
             }`}
           >
             {pathway.name}
@@ -173,7 +174,9 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
         </div>
         <Chip tone={fit.tone}>{t(key(fit.key))}</Chip>
       </div>
-      {pathway.summary && <p className="m-0 text-base leading-8 lg:text-lg">{pathway.summary}</p>}
+      {pathway.summary && (
+        <p className="m-0 text-body leading-7 lg:text-lg lg:leading-8">{pathway.summary}</p>
+      )}
       {pathway.pass_mark !== null && (
         <div className="flex flex-col gap-2.5">
           <div className="flex justify-between gap-3 text-sm text-text-2">
@@ -250,22 +253,28 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
 
 export function FirstResult({
   result,
+  first,
   countries,
   busy,
   onMore,
   onEnough,
 }: {
   result: PathwayResult | undefined;
+  /** The route found first ("your first route"), or one found later ("a new route"). */
+  first: boolean;
   countries: (Country & { left: number })[];
   busy: boolean;
   onMore: () => void;
   onEnough: () => void;
 }) {
   const { t } = useTranslation('pathways');
+  const { wide } = use(BarContext);
   const nextCountry = countries[0];
   return (
     <div className="flex animate-rise flex-col gap-8">
-      <h1 className="m-0 text-title font-extrabold tracking-tight">{t('first.title')}</h1>
+      <h1 className="m-0 text-title font-extrabold tracking-tight">
+        {t(first ? 'first.title' : 'first.title_new')}
+      </h1>
       {result && <RouteCard result={result} lead />}
       <Bar stick={false}>
         <Button size="lg" className={MAIN_ON_PHONE} onClick={onMore}>
@@ -275,8 +284,8 @@ export function FirstResult({
           <Forward />
         </Button>
         <Button
-          variant="outline"
-          size="lg"
+          variant={wide ? 'outline' : 'quiet'}
+          size={wide ? 'lg' : 'md'}
           className="max-lg:w-full"
           onClick={onEnough}
           disabled={busy}
@@ -294,6 +303,7 @@ export function Results({
   onMore,
   onEdit,
   consulting,
+  consulted,
   onConsult,
 }: {
   results: PathwayResult[];
@@ -301,27 +311,52 @@ export function Results({
   onMore: () => void;
   onEdit: () => void;
   consulting: boolean;
+  /** The call was asked for: the button says so instead of asking again. */
+  consulted: boolean;
   onConsult: () => void;
 }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
+  const { wide } = use(BarContext);
   const fitting = results.filter((r) => r.eligible).slice(0, 3);
   const others = results.filter((r) => !fitting.includes(r));
+  const call = consulted ? (
+    <p
+      role="status"
+      className="m-0 flex min-h-cta items-center justify-center gap-2 rounded-full bg-good-tint px-5 text-small font-semibold text-good lg:min-h-14"
+    >
+      <QuizIcon name="phone" size={18} />
+      {t('consult.done')}
+    </p>
+  ) : (
+    <Button
+      variant={wide ? 'outline' : 'primary'}
+      size="lg"
+      className={wide ? 'text-primary-text' : MAIN_ON_PHONE}
+      onClick={onConsult}
+      disabled={consulting}
+    >
+      <QuizIcon name="phone" size={18} />
+      {t('consult.button')}
+    </Button>
+  );
   return (
-    <div className="flex animate-rise flex-col gap-10">
+    <div className="flex animate-rise flex-col gap-8 lg:gap-10">
       <header className="flex flex-col">
         <p className="m-0 text-label font-semibold text-primary-text lg:text-small">
           {t('results.eyebrow')}
         </p>
         <h1 className="m-0 mt-1.5 text-title font-extrabold tracking-tight text-balance lg:mt-3">
-          {fitting.length ? t('results.title', { count: fitting.length }) : t('results.none')}
+          {fitting.length
+            ? t('results.title', { count: fitting.length, n: f.number(fitting.length) })
+            : t('results.none')}
         </h1>
         {fitting.length > 0 && (
           <p className="m-0 mt-2 max-w-2xl text-lead text-text-2 lg:mt-4">{t('results.intro')}</p>
         )}
       </header>
       {fitting.length > 0 && (
-        <div className="grid items-start gap-5 lg:grid-cols-2">
+        <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-5">
           {fitting.map((result, index) => (
             <RouteCard key={result.pathway.id} result={result} lead={index === 0} />
           ))}
@@ -329,14 +364,14 @@ export function Results({
       )}
       {others.length > 0 && (
         <section className="flex flex-col">
-          <h2 className="m-0 mb-2 text-xl font-bold">{t('results.not_now')}</h2>
+          <h2 className="m-0 mb-1 text-section font-bold">{t('results.not_now')}</h2>
           <ul className="m-0 flex list-none flex-col p-0">
             {others.map((result) => (
               <li
                 key={result.pathway.id}
-                className="flex flex-col gap-1 border-b border-hair py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6"
+                className="flex flex-col gap-1 border-b border-hair py-3.5 last:border-b-0 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-4"
               >
-                <span className="flex items-center gap-3 text-base">
+                <span className="flex items-center gap-3 text-body font-semibold">
                   <SmallFlag
                     code={result.pathway.country.code}
                     name={result.pathway.country.name}
@@ -346,7 +381,7 @@ export function Results({
                     name: result.pathway.name,
                   })}
                 </span>
-                <span className="text-sm text-text-2">
+                <span className="ps-9 text-small text-text-2 lg:ps-0">
                   {f.list(result.missing) || t('results.points_short')}
                 </span>
               </li>
@@ -354,37 +389,53 @@ export function Results({
           </ul>
         </section>
       )}
-      <section className="grid items-center gap-6 rounded-3xl bg-primary p-6 text-on-primary lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10 lg:p-10">
-        <div className="flex flex-col gap-2">
-          <h2 className="m-0 text-2xl leading-snug font-bold tracking-tight lg:text-3xl">
-            {t('consult.title')}
-          </h2>
-          <p className="m-0 text-base leading-8 opacity-90">{t('consult.body')}</p>
-        </div>
-        <Button
-          variant="outline"
-          size="lg"
-          className="text-primary-text"
-          onClick={onConsult}
-          disabled={consulting}
-        >
-          {t('consult.button')}
-        </Button>
-      </section>
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap gap-3">
+      {wide ? (
+        <section className="grid items-center gap-10 rounded-3xl bg-primary p-10 text-on-primary lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="flex flex-col gap-2">
+            <h2 className="m-0 text-3xl leading-snug font-bold tracking-tight">
+              {t('consult.title')}
+            </h2>
+            <p className="m-0 text-base leading-8 opacity-90">{t('consult.body')}</p>
+          </div>
+          {call}
+        </section>
+      ) : (
+        // Phones: the call is the one button at the bottom; what it does is said here first.
+        <section className="flex items-start gap-3.5 rounded-2xl bg-tint p-4">
+          <span
+            aria-hidden="true"
+            className="flex size-9 flex-none items-center justify-center rounded-full bg-primary text-on-primary"
+          >
+            <QuizIcon name="chat" size={18} />
+          </span>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h2 className="m-0 text-body font-bold">{t('consult.title')}</h2>
+            <p className="m-0 text-small text-text-2">{t('consult.body')}</p>
+          </div>
+        </section>
+      )}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-x-2 gap-y-1 lg:gap-3">
           {canAskMore && (
-            <Button variant="outline" size="lg" onClick={onMore}>
+            <Button variant={wide ? 'outline' : 'quiet'} size={wide ? 'lg' : 'md'} onClick={onMore}>
               {t('results.more')}
             </Button>
           )}
-          <Button variant="outline" size="lg" onClick={onEdit}>
+          <Button variant={wide ? 'outline' : 'quiet'} size={wide ? 'lg' : 'md'} onClick={onEdit}>
             <QuizIcon name="restart" size={18} />
             {t('results.edit')}
           </Button>
         </div>
         <p className="m-0 text-label text-text-2">{t('results.disclaimer')}</p>
       </div>
+      {!wide && (
+        <Bar>
+          <p className="m-0 flex items-center justify-center gap-1.5 text-caption text-text-2">
+            {t('consult.note')}
+          </p>
+          {call}
+        </Bar>
+      )}
     </div>
   );
 }

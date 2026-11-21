@@ -113,85 +113,125 @@ export function Rail({
   );
 }
 
-/** The first route, ready: a quiet note that opens beside the questions without stopping them. */
-export function Peek({
-  pathway,
-  result,
-  onSee,
-}: {
-  pathway: FinderPathway | undefined;
+/** A route checked while the questions go on, with how it fits (once Django has answered). */
+export interface FoundRoute {
+  pathway: FinderPathway;
   result: PathwayResult | undefined;
-  onSee: () => void;
+}
+
+const TINT = { good: 'bg-good-tint', warn: 'bg-warn-tint', neutral: 'bg-canvas' } as const;
+const DOT = {
+  good: 'bg-good text-surface',
+  warn: 'bg-warn text-surface',
+  neutral: 'bg-surface text-text-2',
+} as const;
+
+/** One found route: its fit's colour, "new" or its verdict, the country and name. Opens it. */
+function FoundCard({
+  route,
+  fresh,
+  onOpen,
+  className = '',
+}: {
+  route: FoundRoute;
+  fresh: boolean;
+  onOpen: () => void;
+  className?: string;
 }) {
   const { t } = useTranslation('pathways');
-  if (!pathway) return null;
+  const { pathway, result } = route;
+  const fit = result ? verdict(result) : null;
+  const tone = (fit?.tone ?? 'neutral') as keyof typeof TINT;
   return (
-    <div
-      role="status"
-      style={{ animationDelay: '0.5s' }}
-      className="mt-4 flex animate-rise flex-col gap-0.5 rounded-2xl bg-good-tint px-4 py-3.5"
+    <button
+      type="button"
+      onClick={onOpen}
+      className={`flex min-h-row animate-rise items-center gap-3 rounded-2xl py-2 ps-2.5 pe-3 text-start ${TINT[tone]} ${className}`}
     >
-      <span className="flex items-center gap-2 text-label font-semibold text-good">
-        <Icon name="check" size={16} />
-        {t('peek.title')}
-      </span>
-      <span className="mt-1 flex items-center gap-2 text-base leading-7 font-bold">
-        <SmallFlag code={pathway.country.code} name={pathway.country.name} />
-        {t('peek.route', { country: pathway.country.name, name: pathway.name })}
-      </span>
-      {result && <span className="text-sm text-text-2">{t(key(verdict(result).key))}</span>}
-      <button
-        type="button"
-        onClick={onSee}
-        className="inline-flex min-h-tap items-center gap-1.5 self-start text-body font-semibold text-good hover:underline"
+      <span
+        aria-hidden="true"
+        className={`flex size-8 flex-none items-center justify-center rounded-full ${DOT[tone]}`}
       >
-        {t('peek.see')}
-        <QuizIcon name="forward" size={16} className="rtl:-scale-x-100" />
-      </button>
-    </div>
+        {tone === 'good' ? (
+          <Icon name="check" size={16} />
+        ) : (
+          <SmallFlag code={pathway.country.code} name={pathway.country.name} />
+        )}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span
+          className={`text-caption font-bold ${tone === 'good' ? 'text-good' : tone === 'warn' ? 'text-warn' : 'text-text-2'}`}
+        >
+          {fit
+            ? fresh
+              ? t('found.new', { verdict: t(key(fit.key)) })
+              : t(key(fit.key))
+            : t('found.checking')}
+        </span>
+        <span className="truncate text-small font-bold">
+          {t('peek.route', { country: pathway.country.name, name: pathway.name })}
+        </span>
+      </span>
+      <QuizIcon name="forward" size={16} className="flex-none text-text-2 rtl:-scale-x-100" />
+    </button>
   );
 }
 
 /**
- * Phones: the first route, ready, as a quiet strip above the buttons (it never pushes the question
- * down). "See why" opens it.
+ * The routes answered so far, newest first: they arrive one by one as the questions go on and never
+ * stop them. Phones: a row that slides sideways above the buttons (the next card peeks in at the
+ * edge). Wide screens: a list beside the questions. Each opens its route.
  */
-export function PeekStrip({
-  pathway,
-  result,
-  onSee,
+export function FoundRoutes({
+  routes,
+  onOpen,
 }: {
-  pathway: FinderPathway | undefined;
-  result: PathwayResult | undefined;
-  onSee: () => void;
+  routes: FoundRoute[];
+  onOpen: (id: number) => void;
 }) {
   const { t } = useTranslation('pathways');
-  if (!pathway) return null;
-  const route = t('peek.route', { country: pathway.country.name, name: pathway.name });
+  const f = useFormat();
+  const { wide } = use(BarContext);
+  if (!routes.length) return null;
+  const fits = routes.filter((route) => route.result?.eligible).length;
+  const title = fits
+    ? t('found.title', { count: fits, n: f.number(fits) })
+    : t('found.checked', { count: routes.length, n: f.number(routes.length) });
+  if (wide)
+    return (
+      <section role="status" className="mt-4 flex flex-col gap-2">
+        <h2 className="m-0 text-label font-semibold text-text-2">{title}</h2>
+        {routes.map((route, index) => (
+          <FoundCard
+            key={route.pathway.id}
+            route={route}
+            fresh={index === 0 && routes.length > 1}
+            onOpen={() => onOpen(route.pathway.id)}
+          />
+        ))}
+      </section>
+    );
+  const single = routes.length === 1;
   return (
-    <div
-      role="status"
-      className="flex min-h-row animate-rise items-center gap-3 rounded-2xl bg-good-tint py-1.5 ps-3 pe-1.5"
-    >
-      <span
-        aria-hidden="true"
-        className="flex size-7 flex-none items-center justify-center rounded-full bg-good text-surface"
+    <section role="status" aria-label={title} className="-mx-4 flex flex-col">
+      <ul
+        className="m-0 flex snap-x snap-mandatory [scrollbar-width:none] list-none gap-2 overflow-x-auto overscroll-x-contain px-4 py-0.5 [&::-webkit-scrollbar]:hidden"
+        style={{ scrollPaddingInline: '1rem' }}
       >
-        <Icon name="check" size={16} />
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-caption font-bold text-good">{t('peek.title')}</span>
-        <span className="truncate text-small font-bold">
-          {result ? t('peek.strip', { route, verdict: t(key(verdict(result).key)) }) : route}
-        </span>
-      </span>
-      <button
-        type="button"
-        onClick={onSee}
-        className="min-h-tap flex-none rounded-xl bg-surface px-3.5 text-small font-bold text-good"
-      >
-        {t('peek.see')}
-      </button>
-    </div>
+        {routes.map((route, index) => (
+          <li
+            key={route.pathway.id}
+            className={`flex snap-start ${single ? 'w-full' : 'w-[84%] flex-none'}`}
+          >
+            <FoundCard
+              route={route}
+              fresh={index === 0 && !single}
+              className="w-full"
+              onOpen={() => onOpen(route.pathway.id)}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

@@ -367,9 +367,14 @@ phones (below `lg`, 1024px). Use the name, never a pixel size:
 | `text-small`   | 14    | 14   | secondary text                                                                             |
 | `text-label`   | 13    | 13   | labels, eyebrows, meta                                                                     |
 | `text-caption` | 12    | 12   | footnotes, chips                                                                           |
+| `text-button`  | 15    | 16   | a large button's label (`Button size="lg"`)                                                |
 
 Touch sizes: `min-h-tap` (44px, any control), `min-h-row` (56px, a row you tap: an answer, a list
-row), `min-h-cta` (52px, the main button at the bottom of a phone screen). ESLint rejects `text-[Npx]`
+row), `min-h-cta` (48px, the main button at the bottom of a phone screen).
+
+Buttons follow the same rule: `size="md"` is 44px everywhere; `size="lg"` is 48px with a 15px label
+on phones and 56px with 16px on wide screens. In a sheet, the one main action is a full-width
+button and the others are quiet text buttons under it, never a row of large outlined buttons. ESLint rejects `text-[Npx]`
 where a screen has moved to the scale (the pathway finder first); move the rest screen by screen.
 
 ### Phone screens that fill the screen
