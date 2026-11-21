@@ -84,29 +84,39 @@
       }
     },
     "recognition": {
-      "title": "In which countries is your degree recognised?",
-      "help": "In Germany, for example, your university is on the anabin list. If you don't know, our adviser will check.",
-      "none": "None, or I don't know"
+      "title": "Is your degree assessed or recognised in another country?",
+      "help": "In Germany, for example, your university is listed in anabin. Not sure? Our adviser will check.",
+      "yes": "Yes",
+      "no": "No, or I don't know",
+      "which": "In which country, and how fully?"
     },
     "job_offer": {
-      "title": "Which country's employer has offered you a job?",
+      "title": "Do you have a formal job offer from an employer abroad?",
       "help": "Only a formal, written job offer.",
-      "none": "None"
+      "yes": "Yes, I do",
+      "no": "No",
+      "which": "From which country?"
     },
     "shortage_occupation": {
-      "title": "Which countries list your occupation as in demand?",
-      "help": "If you don't know, our adviser will check.",
-      "none": "None, or I don't know"
+      "title": "Is your occupation on a country's in-demand list?",
+      "help": "Not sure? Answer no and our adviser will check.",
+      "yes": "Yes, I know it is",
+      "no": "No, or I don't know",
+      "which": "On which country's list?"
     },
     "skills_assessment": {
-      "title": "Which country's skills assessment have you passed?",
+      "title": "Have you passed a country's skills assessment?",
       "help": "Some work routes need one, such as Australia's.",
-      "none": "None"
+      "yes": "Yes",
+      "no": "No",
+      "which": "Which country's?"
     },
     "stay_months": {
-      "title": "Which countries have you lived, worked or studied in?",
-      "help": "Pick the countries and say how many years in each.",
-      "none": "None"
+      "title": "Have you lived, worked or studied outside Iran?",
+      "help": "Some routes give points for time in the same country.",
+      "yes": "Yes",
+      "no": "No",
+      "which": "Which countries, and for how many years?"
     },
     "partner": {
       "title": "What about your partner?",
@@ -202,11 +212,12 @@
     "continue_one": "Go on: 1 question to {{country}}",
     "continue_other": "Go on: {{count}} questions to {{country}}",
     "enough": "That's enough",
-    "keep": "Keep answering"
+    "keep": "Keep answering",
+    "title_new": "A new route found"
   },
   "results": {
     "title_one": "This route fits you best",
-    "title_other": "These {{count}} routes fit you best",
+    "title_other": "These {{n}} routes fit you best",
     "none": "With these answers, no route you qualify for now",
     "not_now": "Routes that don't fit now",
     "not_now_line": "{{country}}, {{name}}: {{why}}",
@@ -222,7 +233,8 @@
     "title": "Take the next step with our adviser",
     "body": "An adviser sees your answers and calls you with the exact route.",
     "button": "Call me",
-    "sent": "Done. Our team will call you soon."
+    "note": "Free, no commitment",
+    "done": "Request sent, we will call you soon"
   },
   "factors": {
     "age": "Age",
@@ -423,12 +435,12 @@
     "waiting": "Not started yet",
     "left_one": "{{n}} question left",
     "left_other": "{{n}} questions left",
-    "note": "With each answer we check every country's work and residence routes ourselves. You don't need to pick a route."
+    "note": "With each answer we check every country's work and residence routes ourselves. You don't need to pick a route.",
+    "summary": "Checking {{n}} countries",
+    "summary_done": "{{done}} of {{n}} countries checked"
   },
   "peek": {
-    "title": "Your first route is ready",
-    "route": "{{country}}, {{name}}",
-    "see": "See why"
+    "route": "{{country}}, {{name}}"
   },
   "facts": {
     "time": "Time",
@@ -441,7 +453,10 @@
     "years_of": "Years in {{country}}",
     "how_fully": "How fully {{country}} recognises your degree",
     "years_note_one": "{{n}} year",
-    "years_note_other": "{{n}} years"
+    "years_note_other": "{{n}} years",
+    "other": "Another country?",
+    "search": "Type a country",
+    "not_found": "No country by that name."
   },
   "improve": {
     "title": "What would help you",
@@ -478,5 +493,23 @@
   "near": {
     "title": "Close to the minimum",
     "body": "Your income is just above the minimum ({{list}}). A change in the exchange rate could take it under; an adviser will check it closely."
+  },
+  "previous": "Previous question",
+  "question_of": "Question {{number}} of {{total}}",
+  "exit": {
+    "title": "Leave the pathway finder?",
+    "body": "Your answers stay on this device, and next time you carry on from this question.",
+    "stay": "Keep going",
+    "restart": "Start again",
+    "leave": "Leave",
+    "dismiss": "Close this window"
+  },
+  "found": {
+    "title_one": "{{n}} fitting route so far",
+    "title_other": "{{n}} fitting routes so far",
+    "checked_one": "{{n}} route checked",
+    "checked_other": "{{n}} routes checked",
+    "new": "New · {{verdict}}",
+    "checking": "Checking…"
   }
 }

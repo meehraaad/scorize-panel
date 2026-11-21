@@ -596,5 +596,159 @@
       "done": "{{name}}'s case was cancelled.",
       "paid": "The prepayment is paid or its receipt is in review: refund or decline it in the admin first."
     }
+  },
+  "services": {
+    "title": "Services",
+    "empty": "This case has no services yet; they are made from the contract's ticks and countries.",
+    "noOwner": "No owner",
+    "paused": "Paused",
+    "change": "Change the owner of {{service}}",
+    "choose": "Choose an owner for {{service}}",
+    "dialog": {
+      "title": "Owner of {{service}}",
+      "now": "Owner now: {{name}}",
+      "none": "This service has no owner yet.",
+      "loadError": "The staff list didn't load. Open the page again.",
+      "nobody": "Nobody active in this service's team.",
+      "owner": "Owner",
+      "suggested": "Suggested: the service team's person for this country with the fewest open services",
+      "option": "{{name}} · {{n}} open services · {{countries}}",
+      "oldSite": "The new owner is also added to the case's supervisors on the old site.",
+      "save": "Hand over {{service}}",
+      "cancel": "Cancel",
+      "done": "{{service}} handed to {{name}}.",
+      "closed": "This service is closed; its owner can't change."
+    },
+    "unassigned": {
+      "title": "Services without an owner",
+      "count": "{{n}} services",
+      "empty": "Every open service has an owner."
+    },
+    "stage": {
+      "open": "Stage of {{service}}",
+      "title": "Stage of {{service}}",
+      "now": "Now: {{stage}}",
+      "label": "Stage",
+      "save": "Save the stage of {{service}}",
+      "done": "{{service}}: {{stage}}",
+      "loadError": "The service didn't load. Open the page again.",
+      "followsCase": "The admission stage is read from the case's stage and this country's application results; change it at the top of the case."
+    },
+    "visa": {
+      "title": "Visa results",
+      "empty": "No visa result recorded for this country yet.",
+      "embassy": "Embassy: {{embassy}}",
+      "appointment": "Appointment: {{when}}",
+      "oldSite": "Visa results are recorded on the old site for now; the service's stage follows them.",
+      "status": {
+        "getting_appointment": "Getting an appointment",
+        "pending_appointment": "Waiting for the embassy session",
+        "pending_result": "Waiting for the answer",
+        "granted": "Visa granted",
+        "refused": "Visa refused",
+        "missed_appointment": "Missed the appointment",
+        "canceled_appointment": "Appointment cancelled"
+      },
+      "followed": "The visa service's stage follows each result recorded; the old site shows the same results.",
+      "form": {
+        "new": "Record a visa result",
+        "edit": "Edit {{title}}",
+        "newTitle": "New visa result",
+        "editTitle": "Edit the visa result",
+        "defaultTitle": "Student visa",
+        "title": "Title",
+        "status": "Status",
+        "embassy": "Embassy in",
+        "appointment": "Appointment date and time",
+        "proof": "Appointment proof (PDF or image)",
+        "proofKept": "The earlier proof stays unless you choose a new file.",
+        "resolved": "Date of the result",
+        "note": "Note",
+        "saveNew": "Record the result",
+        "saveEdit": "Save the result",
+        "done": "Visa result recorded: {{status}}",
+        "titleRequired": "Write a title.",
+        "appointmentRequired": "Enter the appointment's date.",
+        "proofRequired": "Upload the appointment's proof.",
+        "resolvedRequired": "Enter the date of the result."
+      }
+    }
+  },
+  "myServices": {
+    "title": "My services",
+    "subtitle": "{{n}} services, {{waiting}} conversations waiting",
+    "list": "The services you own",
+    "empty": "You don't own any service yet."
+  },
+  "scopes": {
+    "title": "Supervisors and scopes",
+    "subtitle": "{{n}} scopes: which kind of service each supervisor oversees in which country",
+    "shadow": "Scopes aren't applied yet; the panel still uses today's rule: the cases people supervise and every case of their countries. Once the differences list is empty, the technical team can switch them on.",
+    "applied": "Scopes are applied: each supervisor sees the cases and conversations of the services in their scopes.",
+    "everyKind": "Every service",
+    "everyCountry": "Every country",
+    "differences": {
+      "title": "Differences from today's rule",
+      "count": "{{n}} differences",
+      "none": "No differences",
+      "old_only": "Sees it today, wouldn't with scopes",
+      "new_only": "Would see it with scopes, doesn't today"
+    },
+    "fromCountries": {
+      "button": "Make scopes from today's countries",
+      "hint": "Each country supervisor gets an «every service» scope in each of their countries.",
+      "done": "{{n}} scopes made."
+    },
+    "people": {
+      "title": "Supervisors",
+      "empty": "No scopes yet.",
+      "today": "Countries today: {{countries}}",
+      "remove": "Remove the {{scope}} scope from {{name}}",
+      "removeShort": "Remove",
+      "removed": "Removed the {{scope}} scope from {{name}}."
+    },
+    "add": {
+      "title": "New scope",
+      "staff": "Supervisor",
+      "kind": "Kind of service",
+      "country": "Country",
+      "save": "Add the scope",
+      "done": "Gave {{name}} the {{scope}} scope.",
+      "exists": "This supervisor already has this scope."
+    }
+  },
+  "servicesReport": {
+    "title": "Service status",
+    "subtitle": "How each team and owner answers the services' conversations",
+    "period": "Period",
+    "periods": {
+      "week": "7 days",
+      "month": "30 days",
+      "quarter": "90 days"
+    },
+    "teams": "Teams",
+    "owners": "Owners",
+    "team": {
+      "sales": "Sales",
+      "executive": "Executive",
+      "marketing": "Marketing",
+      "management": "Management",
+      "support": "Support",
+      "technical": "Technical",
+      "writing": "Writing",
+      "search": "Search",
+      "language": "Language",
+      "visa": "Visa"
+    },
+    "noTeam": "No team",
+    "noOwner": "No owner",
+    "services": "Open services",
+    "waiting": "Waiting",
+    "answered": "Answered",
+    "median": "Median answer time",
+    "slow": "Over 24 hours",
+    "minutes": "{{n}} min",
+    "hours": "{{n}} h",
+    "empty": "No services here."
   }
 }

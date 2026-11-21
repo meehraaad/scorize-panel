@@ -13,6 +13,7 @@ import {
   type CommissionRule,
   type CommissionRuleInput,
   type BuilderPrice,
+  type ServiceMode,
   type OfferRules,
   type ContractTemplate,
   BUILDER_API,
@@ -197,6 +198,12 @@ export const useSavePrices = (template: number | null) =>
   useBuilderMutation(
     (prices: { feature: BuilderPrice['feature']; price: number; is_active: boolean }[]) =>
       api(`${BUILDER_API}/prices/${kindQuery(template)}`, { method: 'PUT', body: { prices } }),
+  );
+
+/** SVC7: the kind's services (replaced as a whole), each fixed or optional, and its one price. */
+export const useSaveServices = (template: number | null) =>
+  useBuilderMutation((body: { price: number | null; rows: { key: string; mode: ServiceMode }[] }) =>
+    api(`${BUILDER_API}/services/${kindQuery(template)}`, { method: 'PUT', body }),
   );
 
 export const useSaveRules = (template: number | null) =>

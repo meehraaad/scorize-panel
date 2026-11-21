@@ -74,9 +74,10 @@ export function NumberStepper({
         <input
           aria-label={label}
           inputMode="decimal"
+          enterKeyHint="done"
           className={
             hero
-              ? 'bg-transparent text-center text-7xl leading-none font-normal tracking-tight text-text tabular-nums outline-none'
+              ? 'bg-transparent text-center text-6xl leading-none font-normal tracking-tight text-text tabular-nums outline-none lg:text-7xl'
               : 'bg-transparent text-center text-[17px] font-bold text-primary-text outline-none'
           }
           style={{

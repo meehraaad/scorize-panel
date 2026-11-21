@@ -75,7 +75,10 @@ export default function InboxPage() {
               >
                 <button
                   type="button"
-                  onClick={() => openCaseChat(item.applicant.id, item.applicant.name)}
+                  // The longest-waiting conversation (a service's, or the general one).
+                  onClick={() =>
+                    openCaseChat(item.applicant.id, item.applicant.name, item.thread ?? null)
+                  }
                   className="flex min-w-0 flex-1 items-start gap-3 py-4 ps-5 pe-2 text-start text-text hover:bg-canvas lg:ps-8"
                 >
                   <Avatar name={item.applicant.name} />

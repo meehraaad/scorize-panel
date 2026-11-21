@@ -5,7 +5,7 @@ import { ERFAN, failed, stateOrError } from './sales';
 import { finalText, valuesOf } from './contractText';
 import { STANDARD_CLAUSES } from './salesCustomer';
 import { forbidden, notFound, storage } from './session';
-import { SUPERVISOR } from './supervisor';
+import { SUPERVISOR, unassignedServices } from './supervisor';
 
 /**
  * Fake contract handoff (docs/backend-changes.md S43–S45, SV18, SV19), shared by the seller's
@@ -164,7 +164,11 @@ export const handoffHandlers = [
         scans: contract.scans,
         prepayment: contract.prepayment,
       }));
-    return HttpResponse.json({ results, supervisors: SUPERVISORS });
+    return HttpResponse.json({
+      results,
+      supervisors: SUPERVISORS,
+      unassigned_services: unassignedServices(),
+    });
   }),
 
   // S52: the approved contract to print and sign.

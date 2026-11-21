@@ -11,6 +11,7 @@ import { overviewQuery } from './api';
 import { CaseHero } from './components/CaseHero';
 import { CaseSummary } from './components/CaseSummary';
 import { DeadlinesCard } from './components/DeadlinesCard';
+import { ServicesCard } from './components/ServicesCard';
 import { SessionsCard } from './components/SessionsCard';
 import { GuestHome } from './components/GuestHome';
 import { TicketCard } from './components/TicketCard';
@@ -66,6 +67,7 @@ function Home() {
           <>
             <NpsCard />
             <TodoCard todos={data.todos} />
+            {data.services && <ServicesCard services={data.services} />}
             <TicketCard ticket={data.ticket} />
             <DeadlinesCard deadlines={data.deadlines} />
             <SessionsCard />
