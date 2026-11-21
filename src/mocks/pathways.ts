@@ -342,6 +342,12 @@ export const pathwayHandlers = [
       pathways: usable().map(finderPathway),
       factors: FACTORS,
       rates: { eur: TOMANS.e, usd: TOMANS.u },
+      // Django: every country, for questions about destinations.
+      countries: [
+        ...new Map(usable().map((p) => [p.country.id, finderPathway(p).country])).values(),
+        { id: 90, name: 'اسپانیا', code: 'ES' },
+        { id: 91, name: 'هلند', code: 'NL' },
+      ],
     });
   }),
   http.post('/api/applicant/v1/pathways/check/', async ({ request }) => {

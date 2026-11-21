@@ -30,6 +30,7 @@ export default function HeaderCustomerSearch() {
         tone="muted"
         aria-label={label}
         title={label}
+        iconSize={18}
         className="transition-colors hover:text-text"
         onClick={() => setOpen(true)}
       />

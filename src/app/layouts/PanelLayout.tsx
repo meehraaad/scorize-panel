@@ -76,7 +76,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   return (
     // --panel-top / --panel-bottom: the header's height and the room kept for the bottom tabs, so a
     // page can fill the screen between them (PageFill: the tickets chat on phones).
-    <div className="group/panel flex min-h-dvh flex-col pb-(--panel-bottom) [--panel-bottom:calc(72px+env(safe-area-inset-bottom))] [--panel-top:76px] has-[[data-workspace-fullscreen]]:pb-0 lg:[--panel-bottom:0px] lg:[--panel-top:92px] print:pb-0">
+    <div className="group/panel flex min-h-dvh flex-col pb-(--panel-bottom) [--panel-bottom:calc(72px+env(safe-area-inset-bottom))] [--panel-top:64px] has-[[data-workspace-fullscreen]]:pb-0 lg:[--panel-bottom:0px] lg:[--panel-top:92px] print:pb-0">
       <NavigationProgress />
       <a
         href="#main"
@@ -87,17 +87,19 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
 
       <header className="mx-auto flex h-(--panel-top) w-full max-w-page items-center px-4 group-has-[[data-page-workspace]]/panel:max-w-none group-has-[[data-workspace-fullscreen]]/panel:hidden lg:px-8 print:hidden">
         {/* One floating capsule holds the whole bar: brand, menu and account. */}
-        <div className="flex h-14 w-full items-center justify-between gap-3 rounded-full bg-surface ps-5 pe-2 shadow-panel lg:h-16 lg:gap-3 lg:ps-6 xl:gap-4">
+        <div className="flex h-12 w-full items-center justify-between gap-2 rounded-full bg-surface ps-4 pe-0.5 shadow-panel lg:h-16 lg:gap-3 lg:ps-6 lg:pe-2 xl:gap-4">
           <div className="flex min-w-0 items-center gap-3 xl:gap-4">
             <Link
               to={panelHref(panel)}
               aria-label={t('app.homeLink')}
               className="flex min-h-11 flex-none items-center"
             >
-              <Logo className="text-base sm:text-xl" />
+              <Logo className="text-[15px] sm:text-xl" />
             </Link>
-            {/* Several panels: which one this is, and the way to the others. */}
-            <PanelSwitcher user={user} panel={panel} panels={listed} />
+            {/* Several panels: which one this is, and the way to the others. Phones: in the account menu. */}
+            <div className="hidden min-w-0 lg:block">
+              <PanelSwitcher user={user} panel={panel} panels={listed} />
+            </div>
           </div>
 
           <nav aria-label={t(panel.navLabel)} className="hidden items-center gap-0.5 lg:flex">
@@ -123,7 +125,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
             ))}
           </nav>
 
-          <div className="flex flex-none items-center gap-1.5">
+          <div className="flex flex-none items-center lg:gap-1.5">
             <span aria-hidden="true" className="me-1 hidden h-6 w-px bg-hair xl:block" />
             {HeaderAction && <HeaderAction />}
             <Link
@@ -135,7 +137,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
                   : t('header.notifications')
               }
             >
-              <Icon name="bell" />
+              <Icon name="bell" size={18} />
               {unread > 0 && (
                 <span
                   aria-hidden="true"
@@ -143,7 +145,13 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
                 />
               )}
             </Link>
-            <AccountMenu user={user} customerLink={customerLink} extra={panel.account} />
+            <AccountMenu
+              user={user}
+              customerLink={customerLink}
+              extra={panel.account}
+              panel={panel}
+              panels={listed}
+            />
           </div>
         </div>
       </header>

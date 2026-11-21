@@ -1,6 +1,7 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -235,11 +236,14 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
     else if (goal) setGoal(null);
     else setStage('intro');
   };
+  // Inside the panel, the questions take the whole screen (no menus around them); closing goes back to the start.
+  const fullScreen = host === 'panel' && stage !== 'intro';
   const frame = {
-    host,
-    onClose,
+    host: fullScreen ? ('page' as const) : host,
+    onClose: fullScreen ? restart : onClose,
     onRestart: stage === 'intro' ? undefined : restart,
     onBack: back,
+    fullScreen,
   };
 
   if (!pathways.length)
@@ -371,6 +375,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
               onBack={back}
               rates={options.rates}
               remembered={memory[ask.id]}
+              allCountries={options.countries}
               onAnswer={(set, byCountry, skips, picked) => {
                 if (picked) setMemory({ ...memory, [ask.id]: picked });
                 afterAnswer([...parts, { id: ask.id, set, byCountry, skips }]);
@@ -424,9 +429,12 @@ function Frame({
   step,
   rail,
   peek,
+  fullScreen = false,
   children,
 }: {
   host: QuizHost;
+  /** Over the whole page, its menus hidden. */
+  fullScreen?: boolean;
   onClose?: (() => void) | undefined;
   onRestart?: (() => void) | undefined;
   onBack: () => void;
@@ -455,26 +463,46 @@ function Frame({
   const phoneBar = !wide && full;
   useEffect(() => {
     if (body.current) body.current.scrollTop = 0;
+    if (layer.current) layer.current.scrollTop = 0;
     // The page itself scrolls (wide screens, the plain page): bring the new screen's top back.
     const top = frameRef.current?.getBoundingClientRect().top ?? 0;
     if (top < 0) window.scrollBy({ top });
   }, [screen]);
-  const leave =
-    host === 'dialog' && onClose ? (
-      <button type="button" className={buttonClass('outline', 'w-full', 'lg')} onClick={onClose}>
-        {t('exit.leave')}
-      </button>
-    ) : host === 'page' ? (
-      <a href={SITE.home} className={buttonClass('outline', 'w-full', 'lg')}>
-        {t('exit.leave')}
-      </a>
-    ) : (
-      <Link to="/" className={buttonClass('outline', 'w-full', 'lg')}>
-        {t('exit.leave')}
-      </Link>
-    );
-  return (
-    <BarContext value={{ pinned, wide, slot, peek: wide ? null : peek }}>
+  // Leaving keeps the answers: back to the panel, out of a popup, or to the site from the plain page.
+  const leave = fullScreen ? (
+    <Link to="/" className={buttonClass('outline', 'w-full', 'lg')}>
+      {t('exit.leave')}
+    </Link>
+  ) : host === 'dialog' && onClose ? (
+    <button type="button" className={buttonClass('outline', 'w-full', 'lg')} onClick={onClose}>
+      {t('exit.leave')}
+    </button>
+  ) : host === 'page' ? (
+    <a href={SITE.home} className={buttonClass('outline', 'w-full', 'lg')}>
+      {t('exit.leave')}
+    </a>
+  ) : (
+    <Link to="/" className={buttonClass('outline', 'w-full', 'lg')}>
+      {t('exit.leave')}
+    </Link>
+  );
+  const layer = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!fullScreen) return;
+    // The page under the layer doesn't scroll with it.
+    const before = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = before;
+    };
+  }, [fullScreen]);
+  // The screen's own back (Actions), else the quiz's: the top bar's back on phones.
+  const screenBack = useRef<(() => void) | null>(null);
+  const setBack = useCallback((next: (() => void) | null) => {
+    screenBack.current = next;
+  }, []);
+  const frame = (
+    <BarContext value={{ pinned, wide, slot, peek: wide ? null : peek, setBack }}>
       <div ref={frameRef} className={`flex flex-col bg-surface ${look.frame}`}>
         <header className={`pt-[env(safe-area-inset-top)] ${look.bar}`}>
           {host === 'dialog' && !phoneBar && (
@@ -485,7 +513,13 @@ function Frame({
           )}
           {phoneBar ? (
             <div className="flex min-h-14 items-center gap-1 px-1.5">
-              <IconButton icon="chevronStart" aria-label={t('previous')} onClick={onBack} />
+              <IconButton
+                icon="chevronStart"
+                aria-label={t('previous')}
+                onClick={() => {
+                  (screenBack.current ?? onBack)();
+                }}
+              />
               <span className="flex-1 text-center text-label font-semibold text-text-2 tabular-nums">
                 {step
                   ? t('question_of', { number: f.number(step.number), total: f.number(step.total) })
@@ -602,6 +636,20 @@ function Frame({
       </div>
     </BarContext>
   );
+  return fullScreen
+    ? createPortal(
+        <div
+          ref={layer}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('title')}
+          className="fixed inset-0 z-50 overflow-y-auto bg-surface"
+        >
+          {frame}
+        </div>,
+        document.body,
+      )
+    : frame;
 }
 
 /** Up to three of the countries checked, floating round a compass (wide screens). */

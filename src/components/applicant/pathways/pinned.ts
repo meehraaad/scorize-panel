@@ -13,6 +13,8 @@ export interface BarPlace {
   slot: HTMLElement | null;
   /** Phones: the first route's strip, shown above the buttons once it is ready. */
   peek: ReactNode;
+  /** The screen's own back, used by the top bar's back on phones (null: the quiz's). */
+  setBack: (back: (() => void) | null) => void;
 }
 
 export const BarContext = createContext<BarPlace>({
@@ -20,4 +22,5 @@ export const BarContext = createContext<BarPlace>({
   wide: true,
   slot: null,
   peek: null,
+  setBack: () => undefined,
 });

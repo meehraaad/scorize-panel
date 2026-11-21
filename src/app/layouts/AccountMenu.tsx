@@ -7,6 +7,7 @@ import { applicantPanel } from '@/panels/applicant';
 import { panelHref } from '@/panels/types';
 import type { SessionUser } from '@/lib/auth/session';
 import type { PanelDefinition } from '@/panels/types';
+import { PanelChoices } from './PanelChoices';
 
 interface Props {
   user: SessionUser;
@@ -14,6 +15,9 @@ interface Props {
   customerLink: boolean;
   /** The panel's own state and menu block (sales: phone break). */
   extra?: PanelDefinition['account'];
+  /** The open panel and the ones to switch to: listed here on phones, where the header has no switcher. */
+  panel: PanelDefinition;
+  panels: PanelDefinition[];
 }
 
 const RINGS = {
@@ -24,13 +28,14 @@ const RINGS = {
 const NO_STATUS = () => null;
 
 const itemClass =
-  'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-[15px] text-text hover:bg-canvas';
+  'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-sm text-text hover:bg-canvas';
 
 /**
  * Account button + dropdown (desktop and mobile header): who is logged in, settings, logout.
- * Switching panels is the PanelSwitcher beside the logo. Disclosure pattern: Esc and outside click close it.
+ * Switching panels is the PanelSwitcher beside the logo on desktop, and a section of this menu on
+ * phones. Disclosure pattern: Esc and outside click close it.
  */
-export function AccountMenu({ user, customerLink, extra }: Props) {
+export function AccountMenu({ user, customerLink, extra, panel, panels }: Props) {
   const { t } = useTranslation();
   const status = (extra?.useStatus ?? NO_STATUS)();
   const Extra = extra?.Menu;
@@ -41,6 +46,7 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
   const location = useLocation();
 
   const name = `${user.first_name} ${user.last_name}`.trim() || user.email || user.phone_number;
+  const switching = panels.length > 1;
   const initial = (user.first_name || user.email || '?').charAt(0).toUpperCase();
 
   // Close after navigating.
@@ -82,13 +88,18 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
-        className={`inline-flex size-11 items-center justify-center rounded-full bg-hero font-display text-[15px] font-bold text-hero-accent transition-shadow ${
-          status
-            ? RINGS[status]
-            : 'shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--line-2)] hover:shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--primary)]'
-        }`}
+        className="group/avatar inline-flex size-11 items-center justify-center rounded-full"
       >
-        {initial}
+        <span
+          aria-hidden="true"
+          className={`inline-flex size-8 items-center justify-center rounded-full bg-hero font-display text-[13px] font-bold text-hero-accent transition-shadow lg:size-11 lg:text-[15px] ${
+            status
+              ? RINGS[status]
+              : 'shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--line-2)] group-hover/avatar:shadow-[0_0_0_2px_var(--surface),0_0_0_3px_var(--primary)]'
+          }`}
+        >
+          {initial}
+        </span>
       </button>
 
       {open && (
@@ -99,7 +110,7 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
           <div className="flex flex-col px-3 py-2">
             <span className="truncate font-semibold">{name}</span>
             {user.email && (
-              <span dir="ltr" className="truncate text-start text-sm text-text-2">
+              <span dir="ltr" className="truncate text-start text-[13px] text-text-2">
                 {user.email}
               </span>
             )}
@@ -109,6 +120,22 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
             <Suspense fallback={null}>
               <Extra />
             </Suspense>
+          )}
+
+          {/* Phones: the header has no room for the panel switcher, so the panels are here. */}
+          {switching && (
+            <div className="flex flex-col gap-1 border-t border-hair pt-2 pb-1 lg:hidden">
+              <span className="px-2 pb-1 text-xs font-semibold text-text-2">
+                {t('switcher.title')}
+              </span>
+              <PanelChoices
+                user={user}
+                panel={panel}
+                panels={panels}
+                onPick={() => setOpen(false)}
+                compact
+              />
+            </div>
           )}
 
           <div className="flex flex-col gap-1 border-t border-hair pt-1">
@@ -127,7 +154,11 @@ export function AccountMenu({ user, customerLink, extra }: Props) {
               {t('account.settings')}
             </Link>
             {customerLink && (
-              <Link to={panelHref(applicantPanel)} className={`${itemClass} text-text-2`}>
+              <Link
+                to={panelHref(applicantPanel)}
+                // Phones list the applicant panel among the panels above.
+                className={`${itemClass} text-text-2 ${switching ? 'max-lg:hidden' : ''}`}
+              >
                 <Icon name="home" />
                 {t('account.asCustomer')}
               </Link>
