@@ -120,6 +120,8 @@ export interface StartOffers {
     instalment: number;
     /** The price includes the SOP and CV. */
     writing: boolean;
+    /** The standard contract's money, ISO (IRT: toman): `price` and `instalment` are in it. */
+    currency: string;
   } | null;
   /** The seller assigned to the person's open lead ("call me" reaches them). */
   consultant: { name: string; picture: string | null } | null;
