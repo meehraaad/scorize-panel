@@ -65,6 +65,27 @@ export default tseslint.config(
       ],
     },
   },
+  // The type scale (docs/architecture.md, "Type scale"): named sizes (text-title, text-lead, …), no
+  // pixel sizes. Enforced where a screen has moved to it; the rest of the panel moves screen by screen.
+  {
+    files: ['src/components/applicant/pathways/**/*.tsx', 'src/components/ui/AnswerChoices.tsx'],
+    ignores: ['**/*.test.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Literal[value=/text-\\[[0-9.]+(px|rem)\\]/]',
+          message:
+            'Use a size from the type scale (text-title, text-lead, text-body, …), not pixels.',
+        },
+        {
+          selector: 'TemplateElement[value.raw=/text-\\[[0-9.]+(px|rem)\\]/]',
+          message:
+            'Use a size from the type scale (text-title, text-lead, text-body, …), not pixels.',
+        },
+      ],
+    },
+  },
   // Layers (docs/architecture.md): lib + components ← features ← panels ← app.
   // A layer imports only from the layers on its left; tests may import anything.
   {

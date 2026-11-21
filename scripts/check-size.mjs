@@ -6,10 +6,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-// CSS 21.4: the pathway finder and its management pages add about 0.2 KB of shared utility classes (2026-11-19).
+// CSS 22.0: the type scale (named sizes, phone and wide values) and the finder's phone layout add
+// about 0.5 KB of shared utility classes (2026-11-21).
 // JS 187.2: the supervisor panel's client-services routes and nav (my services, their report, scopes; 2026-11-20).
-// JS 187.4: a case's tab per service, its route (2026-11-21).
-const BUDGET_KB = { js: 187.4, css: 21.4 };
+// JS 187.4, CSS 21.5: the phone header lists the panels in the account menu (PanelChoices) and has
+// smaller sizes (2026-11-21). JS 187.6: that panel list folds away on phones (2026-11-21).
+// CSS 22.2: the finder's found-routes row, its phone results bar and the button scale (2026-11-21).
+// JS 187.7: a case's tab per service, its route (2026-11-21).
+const BUDGET_KB = { js: 187.7, css: 22.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

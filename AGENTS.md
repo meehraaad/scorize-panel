@@ -22,6 +22,8 @@ versions V6/V7 for the applicant panel.
   language, used via `t('key')`. ESLint (`i18next/no-literal-string`) and `pnpm i18n:check` enforce it.
 - **No raw colors.** Use token classes (`bg-surface`, `text-text-2`, `bg-primary`, …) from
   `src/styles/tokens.css`. A new token needs both light and dark values.
+- **Type scale.** Text sizes by name (`text-title`, `text-lead`, `text-body`, …; smaller on phones),
+  not pixels (docs/architecture.md, "Type scale"). Answers and fields stay 16px on phones.
 - **RTL-safe layout.** Use logical utilities (`ps-*`, `me-*`, `start-*`, `text-start`), never `left`/`right`.
 - **Panels**: navigation and routes live in `src/panels/<panel>/`; layouts in `src/app/layouts/`.
   Every page is lazy (`lazyPage`). Layers are enforced by ESLint (see docs/architecture.md).
