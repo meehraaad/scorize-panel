@@ -165,6 +165,27 @@ export const occupationSearchQuery = (text: string) =>
     staleTime: 5 * 60_000,
   });
 
+/**
+ * What Django can already answer from this occupation, by the same code as `check/`: each country's list
+ * questions, and whether it is skilled. null: it can't tell (a partial list match, a row not checked yet, ISCO
+ * skill level 2), so the question is still asked. Absent on older servers: then nothing is skipped.
+ */
+export interface OccupationAnswers {
+  occupation_answers?: Record<
+    string,
+    Partial<Record<'shortage_occupation' | 'listed_occupation', boolean | null>>
+  >;
+  skilled_occupation?: boolean | null;
+}
+
+export const occupationAnswersQuery = (code: string) =>
+  queryOptions({
+    queryKey: ['applicant', 'pathways', 'occupation', code],
+    queryFn: () =>
+      api<OccupationAnswers>(`${PATHWAYS_API}/?occupation=${encodeURIComponent(code)}`),
+    staleTime: 5 * 60_000,
+  });
+
 /** Occupations people of this study field group usually have, shown first. */
 export const suggestedOccupationsQuery = (fieldGroup: number) =>
   queryOptions({

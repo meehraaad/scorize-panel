@@ -5,7 +5,9 @@ import { AnswerGroup } from '@/components/ui/AnswerChoices';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { TextField } from '@/components/ui/TextField';
 import {
+  occupationAnswersQuery,
   occupationSearchQuery,
+  type OccupationAnswers,
   suggestedOccupationsQuery,
   type FieldGroup,
   type Occupation,
@@ -43,7 +45,8 @@ export function OccupationAnswer({
   /** Picked before going back, else what the profile says. */
   initial: FieldOccupation;
   busy: boolean;
-  onAnswer: (answer: FieldOccupation) => void;
+  /** `known`: what Django can answer from the occupation picked (null: nothing, so every question is asked). */
+  onAnswer: (answer: FieldOccupation, known: OccupationAnswers | null) => void;
   /** The buttons, around this form's "next" (told whether it can be pressed and the form's id). */
   actions: (ready: boolean, formId: string) => ReactNode;
 }) {
@@ -62,6 +65,11 @@ export function OccupationAnswer({
     enabled: askOccupation && field !== null,
   });
   const found = useQuery({ ...occupationSearchQuery(typed), enabled: askOccupation && searching });
+  // Fetched as soon as one is picked, so "next" knows which list questions Django answers.
+  const answers = useQuery({
+    ...occupationAnswersQuery(occupation?.code ?? ''),
+    enabled: askOccupation && Boolean(occupation),
+  });
 
   // The chips: the occupation picked (if it isn't one of them), the field's usual ones, then «don't know».
   const chips: Pick<Occupation, 'code' | 'name'>[] = [...(suggested.data ?? [])];
@@ -72,7 +80,9 @@ export function OccupationAnswer({
     setOccupation(code === UNSURE_OCCUPATION ? null : (known.get(code) ?? occupation));
     setSearch('');
   };
-  const ready = field !== null && (!askOccupation || occupation !== undefined);
+  const ready =
+    field !== null &&
+    (!askOccupation || (occupation !== undefined && (!occupation || !answers.isPending)));
   return (
     <>
       <form
@@ -81,7 +91,10 @@ export function OccupationAnswer({
         onSubmit={(event) => {
           event.preventDefault();
           if (busy || !ready) return;
-          onAnswer(askOccupation ? { field, occupation } : { field });
+          onAnswer(
+            askOccupation ? { field, occupation } : { field },
+            occupation ? (answers.data ?? null) : null,
+          );
         }}
       >
         <AnswerGroup

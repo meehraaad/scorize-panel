@@ -129,7 +129,12 @@ describe('the occupation step', () => {
   ];
   it('comes before the list questions, and an occupation skips the countries Django checks', () => {
     expect(nextAsk(lists, 'work', new Set())?.id).toBe(FIELD_OCCUPATION);
-    const answered = new Set([FIELD_OCCUPATION, ...occupationSkips(lists, [{ country_id: 5 }])]);
+    // Germany's list answered (no); the Netherlands' can't be told (null); "skilled" answered.
+    const known = {
+      occupation_answers: { 5: { shortage_occupation: false }, 6: { shortage_occupation: null } },
+      skilled_occupation: true,
+    };
+    const answered = new Set([FIELD_OCCUPATION, ...occupationSkips(lists, known)]);
     const ask = nextAsk(lists, 'work', answered);
     expect(ask?.id).toBe('shortage_occupation');
     expect(ask && countriesFor(lists, 'work', ask, answered).map((c) => c.name)).toEqual([
@@ -140,5 +145,25 @@ describe('the occupation step', () => {
       'Germany',
       'Canada',
     ]);
+  });
+});
+
+describe('what an occupation skips', () => {
+  const lists = [route(5, 'Germany', ['shortage_occupation', 'listed_occupation'])];
+  it("nothing without answers from the server, or where it can't tell", () => {
+    expect(occupationSkips(lists, null)).toEqual([]);
+    expect(occupationSkips(lists, {})).toEqual([]);
+    expect(occupationSkips(lists, { occupation_answers: {}, skilled_occupation: null })).toEqual(
+      [],
+    );
+  });
+  it('only the question of the list the country has', () => {
+    const known = {
+      occupation_answers: { 5: { shortage_occupation: true, listed_occupation: false } },
+    };
+    expect(occupationSkips(lists, known, [{ country_id: 5, kind: 'shortage' }])).toEqual([
+      'shortage_occupation@5',
+    ]);
+    expect(occupationSkips(lists, known)).toEqual(['shortage_occupation@5', 'listed_occupation@5']);
   });
 });

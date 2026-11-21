@@ -414,11 +414,11 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
                 askOccupation={askOccupation}
                 initial={rememberedStep(memory[ask.id]) ?? prefilled(options.prefill)}
                 busy={check.isPending}
-                onAnswer={(step) => {
+                onAnswer={(step, known) => {
                   setMemory({ ...memory, [ask.id]: JSON.stringify(step) });
                   const set: Answers =
                     step.field === null ? {} : { field_group: String(step.field) };
-                  // Picked: Django checks it against the lists; «don't know»: the yes/no questions as before.
+                  // Picked: the questions Django answered from it are skipped; the rest (and «don't know») asked.
                   if (step.occupation !== undefined) set[OCCUPATION] = step.occupation?.code ?? '';
                   afterAnswer([
                     ...parts,
@@ -426,7 +426,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
                       id: ask.id,
                       set,
                       skips: step.occupation
-                        ? occupationSkips(pathways, options.occupation_lists ?? [])
+                        ? occupationSkips(pathways, known, options.occupation_lists)
                         : undefined,
                     },
                   ]);

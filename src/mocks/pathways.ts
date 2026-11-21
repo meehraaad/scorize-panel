@@ -243,13 +243,52 @@ const OCCUPATIONS: Occupation[] = [
 ];
 /** The occupations people of each field group usually have. */
 const SUGGESTED: Record<number, string[]> = { 1: ['2512', '2511'], 2: ['2142'], 3: ['2221'] };
-/** Official occupation lists: Germany's shortage list, Australia's skilled list. */
+/**
+ * Official occupation lists: Germany's shortage list, Australia's skilled list. `unknown`: codes Django can't
+ * answer for (only some of the unit group is listed, or the row isn't checked yet): the question is asked.
+ */
 const OCCUPATION_LISTS = [
-  { country_id: GERMANY.id, kind: 'shortage' as const, codes: ['2512', '2142', '2221'] },
-  { country_id: AUSTRALIA.id, kind: 'skilled' as const, codes: ['2512', '2611', '2142'] },
+  {
+    country_id: GERMANY.id,
+    kind: 'shortage' as const,
+    codes: ['2142', '2221'],
+    unknown: ['2512'],
+  },
+  {
+    country_id: AUSTRALIA.id,
+    kind: 'skilled' as const,
+    codes: ['2512', '2611', '2142'],
+    unknown: ['2511'],
+  },
 ];
-/** ISCO major groups 1 to 3 are skilled (Canada's TEER 0 to 3, roughly). */
-const isSkilled = (code: string) => ['1', '2', '3'].includes(code[0] ?? '');
+const LIST_FACTOR = { shortage: 'shortage_occupation', skilled: 'listed_occupation' } as const;
+/** ISCO skill levels 3 and 4 (major groups 1 to 3) are skilled, level 1 (group 9) isn't; level 2: unknown. */
+const isSkilled = (code: string) =>
+  ['1', '2', '3'].includes(code[0] ?? '') ? true : code[0] === '9' ? false : null;
+/** Django's country factors: the only ones `by_country` takes. */
+const COUNTRY_FACTORS = new Set([
+  'recognition',
+  'job_offer',
+  'shortage_occupation',
+  'listed_occupation',
+  'skills_assessment',
+  'stay_months',
+]);
+
+/** Django `GET pathways/?occupation=`: each list country's question, true, false or null (can't tell). */
+function occupationAnswers(code: string) {
+  return {
+    occupation_answers: Object.fromEntries(
+      OCCUPATION_LISTS.map((list) => [
+        String(list.country_id),
+        {
+          [LIST_FACTOR[list.kind]]: list.unknown.includes(code) ? null : list.codes.includes(code),
+        },
+      ]),
+    ),
+    skilled_occupation: isSkilled(code),
+  };
+}
 
 /**
  * Routes that ask about occupation lists or the field group, used instead of the usual ones by
@@ -339,6 +378,8 @@ let pathways = seed();
 let occupationRoutes: PathwayDetail[] | null = null;
 /** Tests: a server from before the field and occupation step (none of its fields). */
 let oldServer = false;
+/** Tests: a server with the step but without `?occupation=` answers. */
+let noOccupationAnswers = false;
 const NO_PREFILL: FinderPrefill = {
   field_group: null,
   occupation: null,
@@ -355,6 +396,7 @@ export function resetPathwayMocks() {
   pathways = seed();
   occupationRoutes = null;
   oldServer = false;
+  noOccupationAnswers = false;
   prefill = NO_PREFILL;
   lastCheck = null;
   searches = [];
@@ -365,6 +407,9 @@ export function withOccupationRoutes(kind: 'occupation' | 'field' = 'occupation'
 export function asOldPathwayServer() {
   oldServer = true;
 }
+export function withoutOccupationAnswers() {
+  noOccupationAnswers = true;
+}
 export function setFinderPrefill(next: Partial<FinderPrefill>) {
   prefill = { ...NO_PREFILL, ...next };
 }
@@ -374,12 +419,16 @@ export const occupationSearches = () => searches;
 /** Django: what the occupation says for each of the route's occupation factors. */
 function derivedFor(p: PathwayDetail, occupation: string | null | undefined): PathwayDerived {
   if (!occupation) return {};
+  const known = occupationAnswers(occupation);
   const derived: PathwayDerived = {};
-  const list = OCCUPATION_LISTS.find((one) => one.country_id === p.country.id);
   for (const factor of OCCUPATION_FACTORS) {
     if (!p.factors.includes(factor)) continue;
-    if (factor === 'skilled_occupation') derived[factor] = isSkilled(occupation);
-    else if (list) derived[factor] = list.codes.includes(occupation);
+    const value =
+      factor === 'skilled_occupation'
+        ? known.skilled_occupation
+        : known.occupation_answers[String(p.country.id)]?.[factor];
+    // Can't tell: left to the person's own answer.
+    if (typeof value === 'boolean') derived[factor] = value;
   }
   return derived;
 }
@@ -514,6 +563,9 @@ export const pathwayHandlers = [
         ).slice(0, 20),
       });
     }
+    const code = params.get('occupation');
+    if (code !== null && !oldServer)
+      return HttpResponse.json(noOccupationAnswers ? {} : occupationAnswers(code));
     const field = params.get('study_field');
     if (field !== null && !oldServer)
       return HttpResponse.json({
@@ -551,6 +603,15 @@ export const pathwayHandlers = [
       occupation?: string | null;
     };
     lastCheck = body;
+    // Django: 400 for a factor that isn't about one country.
+    const wrong = Object.values(body.by_country ?? {})
+      .flatMap((answers) => Object.keys(answers))
+      .filter((factor) => !COUNTRY_FACTORS.has(factor));
+    if (wrong.length)
+      return HttpResponse.json(
+        { by_country: [`Not a question about one country: ${wrong.join(', ')}`] },
+        { status: 400 },
+      );
     // Django: the income becomes euros at the newest rates.
     const { income } = body;
     if (income && body.answers.monthly_income_eur === undefined) {

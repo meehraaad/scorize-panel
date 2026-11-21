@@ -1,6 +1,7 @@
 import {
   FINDER_BUDGETS,
   OCCUPATION_FACTORS,
+  type OccupationAnswers,
   type Answers,
   type CountryAnswers,
   type FactorValue,
@@ -145,7 +146,16 @@ export const ASKS: readonly Ask[] = [
   { id: 'job_offer', factors: ['job_offer'], input: 'countries' },
   { id: 'shortage_occupation', factors: ['shortage_occupation'], input: 'countries' },
   { id: 'listed_occupation', factors: ['listed_occupation'], input: 'countries' },
-  { id: 'skilled_occupation', factors: ['skilled_occupation'], input: 'countries' },
+  // Not about one country (Django takes it in `answers`, never `by_country`): one yes or no.
+  {
+    id: 'skilled_occupation',
+    factors: ['skilled_occupation'],
+    input: 'options',
+    options: [
+      { id: 'yes', set: { skilled_occupation: true } },
+      { id: 'no', set: { skilled_occupation: false } },
+    ],
+  },
   { id: 'skills_assessment', factors: ['skills_assessment'], input: 'countries' },
   { id: 'stay_months', factors: ['stay_months'], input: 'countries', detail: 'years' },
   {
@@ -309,19 +319,31 @@ export const needsOccupation = (pathways: readonly FinderPathway[], goal: Goal) 
       p.factors.some((factor) => (OCCUPATION_FACTORS as readonly string[]).includes(factor)),
   );
 
+/** Which list question each kind of official list answers. */
+const LIST_FACTOR = { shortage: 'shortage_occupation', skilled: 'listed_occupation' } as const;
+
 /**
- * The questions an occupation makes pointless: the yes/no about each country whose list Django checks it
- * against, and whether it is a skilled occupation at all.
+ * The questions an occupation makes pointless: only those Django answered yes or no for it
+ * (`occupationAnswersQuery`). One it can't tell (null, missing), or a server that sends no answers, is
+ * still asked. When the server names its lists, a country's question is skipped only for its own kind of list.
  */
 export function occupationSkips(
   pathways: readonly FinderPathway[],
-  lists: readonly { country_id: number }[],
+  known: OccupationAnswers | null | undefined,
+  lists?: readonly { country_id: number; kind: keyof typeof LIST_FACTOR }[],
 ): string[] {
-  const listed = new Set(lists.map((list) => list.country_id));
-  const skips = new Set<string>(['skilled_occupation']);
-  for (const pathway of pathways)
-    if (listed.has(pathway.country.id))
-      for (const id of ['shortage_occupation', 'listed_occupation'])
-        skips.add(skipFor(id, pathway.country.id));
+  const skips = new Set<string>();
+  if (!known?.occupation_answers) return [];
+  if (typeof known.skilled_occupation === 'boolean') skips.add('skilled_occupation');
+  for (const pathway of pathways) {
+    const country = pathway.country.id;
+    const answers = known.occupation_answers[String(country)] ?? {};
+    for (const factor of Object.values(LIST_FACTOR)) {
+      const onItsList =
+        !lists ||
+        lists.some((list) => list.country_id === country && LIST_FACTOR[list.kind] === factor);
+      if (onItsList && typeof answers[factor] === 'boolean') skips.add(skipFor(factor, country));
+    }
+  }
   return [...skips];
 }

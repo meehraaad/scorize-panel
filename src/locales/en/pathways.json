@@ -127,11 +127,12 @@
       "which": "On which country's list?"
     },
     "skilled_occupation": {
-      "title": "Does your job count as skilled in a country?",
+      "title": "Does your job count as skilled?",
       "help": "Jobs that need a degree or a trade are usually skilled. Not sure? Answer no.",
-      "yes": "Yes, it is skilled",
-      "no": "No, or I don't know",
-      "which": "In which country?"
+      "options": {
+        "yes": "Yes, it is skilled",
+        "no": "No, or I don't know"
+      }
     },
     "skills_assessment": {
       "title": "Have you passed a country's skills assessment?",

@@ -8,6 +8,7 @@ import {
   occupationSearches,
   setFinderPrefill,
   withOccupationRoutes,
+  withoutOccupationAnswers,
 } from '@/mocks/pathways';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
@@ -17,10 +18,12 @@ const SARA = 1; // an applicant (src/mocks/applicant.ts)
 const STEP = 'رشته و شغلت چیست؟';
 const COMPUTING = 'مهندسی کامپیوتر و فناوری اطلاعات';
 const DEVELOPER = 'توسعه‌دهنده‌ی نرم‌افزار';
+const ENGINEER = 'مهندس عمران';
 const UNSURE = 'نمی‌دانم / ندارم';
 const SHORTAGE = 'شغلت در فهرست مشاغل مورد نیاز کشوری هست؟';
 const LISTED = 'شغلت در فهرست مشاغل ماهر کشوری هست؟';
-const SKILLED = 'شغلت در کشوری شغل ماهر حساب می‌شود؟';
+const SKILLED = 'شغلت شغل ماهر حساب می‌شود؟';
+const NO = 'نه یا نمی‌دانم';
 
 async function startWork() {
   localStorage.setItem('scorize.mock.session', String(SARA));
@@ -39,13 +42,13 @@ describe('pathway finder: study field and occupation', () => {
 
   it('asks field and occupation from the profile, then skips the lists Django checks', async () => {
     withOccupationRoutes();
-    setFinderPrefill({ field_group: 1, occupation: { code: '2512', name: DEVELOPER } });
+    setFinderPrefill({ field_group: 1, occupation: { code: '2142', name: ENGINEER } });
     const user = await startWork();
     await screen.findByRole('heading', { name: STEP });
     expect(screen.getByRole('radio', { name: COMPUTING })).toBeChecked();
     // The field's usual occupations come first, before the search; the profile's is picked.
-    const developer = await screen.findByRole('radio', { name: DEVELOPER });
-    expect(developer).toBeChecked();
+    expect(screen.getByRole('radio', { name: ENGINEER })).toBeChecked();
+    expect(await screen.findByRole('radio', { name: DEVELOPER })).not.toBeChecked();
     const analyst = await screen.findByRole('radio', { name: 'تحلیلگر سیستم' });
     const search = screen.getByRole('textbox', { name: 'جست‌وجوی شغل' });
     expect(analyst.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -64,7 +67,7 @@ describe('pathway finder: study field and occupation', () => {
     expect(screen.queryByRole('heading', { name: LISTED })).not.toBeInTheDocument();
     expect(lastPathwayCheck()).toMatchObject({
       answers: { field_group: '1' },
-      occupation: '2512',
+      occupation: '2142',
       by_country: { 91: { shortage_occupation: false } },
     });
     // What Django worked out is said on each route.
@@ -109,10 +112,59 @@ describe('pathway finder: study field and occupation', () => {
     await user.click(await screen.findByRole('radio', { name: 'نه یا نمی‌دانم' }));
     await screen.findByRole('heading', { name: LISTED });
     await user.click(screen.getByRole('radio', { name: 'نه یا نمی‌دانم' }));
+    // "Skilled" isn't about one country: one yes or no, sent with the other answers.
     await screen.findByRole('heading', { name: SKILLED });
-    await user.click(screen.getByRole('radio', { name: 'نه یا نمی‌دانم' }));
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: NO }));
     await screen.findByRole('heading', { name: /راه/, level: 1 });
-    expect(lastPathwayCheck()).toMatchObject({ answers: { field_group: '1' }, occupation: null });
+    const body = lastPathwayCheck();
+    expect(body).toMatchObject({
+      answers: { field_group: '1', skilled_occupation: false },
+      occupation: null,
+    });
+    expect(body).not.toHaveProperty('by_country.2');
+  });
+
+  it("still asks a list Django can't answer for the occupation (a partial match)", async () => {
+    withOccupationRoutes();
+    setFinderPrefill({ field_group: 1, occupation: { code: '2512', name: DEVELOPER } });
+    const user = await startWork();
+    await screen.findByRole('heading', { name: STEP });
+    await user.click(await screen.findByRole('button', { name: 'بعدی' }));
+    // Germany's list has only part of 2512: asked with the Netherlands. Australia's and "skilled" are known.
+    await screen.findByRole('heading', { name: SHORTAGE });
+    await user.click(screen.getByRole('radio', { name: 'بله، می‌دانم که هست' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'آلمان' }));
+    expect(screen.getByRole('checkbox', { name: 'هلند' })).not.toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await screen.findByRole('heading', { name: /راه/, level: 1 });
+    expect(screen.queryByRole('heading', { name: LISTED })).not.toBeInTheDocument();
+    expect(lastPathwayCheck()).toMatchObject({
+      occupation: '2512',
+      by_country: { 1: { shortage_occupation: true }, 91: { shortage_occupation: false } },
+    });
+    expect(screen.queryByText(/مشاغل کمبود آلمان/)).not.toBeInTheDocument();
+    expect(screen.getByText('شغلت در فهرست مشاغل ماهر استرالیا است')).toBeInTheDocument();
+  });
+
+  it('skips nothing when the server sends no answers for the occupation', async () => {
+    withOccupationRoutes();
+    withoutOccupationAnswers();
+    setFinderPrefill({ field_group: 1, occupation: { code: '2142', name: ENGINEER } });
+    const user = await startWork();
+    await screen.findByRole('heading', { name: STEP });
+    await user.click(await screen.findByRole('button', { name: 'بعدی' }));
+    await screen.findByRole('heading', { name: SHORTAGE });
+    await user.click(screen.getByRole('radio', { name: NO }));
+    await screen.findByRole('heading', { name: LISTED });
+    await user.click(screen.getByRole('radio', { name: NO }));
+    await screen.findByRole('heading', { name: SKILLED });
+    await user.click(screen.getByRole('radio', { name: 'بله، ماهر است' }));
+    await screen.findByRole('heading', { name: /راه/, level: 1 });
+    expect(lastPathwayCheck()).toMatchObject({
+      occupation: '2142',
+      answers: { skilled_occupation: true },
+    });
   });
 
   it('asks only the field when no route asks about occupations', async () => {
