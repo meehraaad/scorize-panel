@@ -47,9 +47,16 @@ export type ServerFeature =
   | 'hr'
   | 'marketing'
   | 'dayFollowUps'
-  | 'clientServices';
+  | 'clientServices'
+  | 'clientErrors';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * `POST /metrics/v1/errors/`: a crash in the panel's own code is logged on the server and its
+   * error screen shows the support code (lang `claude/affectionate-pasteur-nq4ojb`,
+   * docs/request-ids.md). Off: crashes show no code. Server errors show theirs either way.
+   */
+  clientErrors: false,
   /**
    * `GET /supervisor/v1/services/mine/`: the services a supervisor or visa expert owns (lang
    * `claude/ecstatic-edison-jzr50i`, docs/client-services.md phase 4), behind Django's
