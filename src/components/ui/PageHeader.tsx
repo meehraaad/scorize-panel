@@ -27,13 +27,13 @@ export function PageHeader({
     >
       <div className={`flex min-w-0 flex-col ${size === 'workspace' ? 'gap-1' : 'gap-2.5'}`}>
         <h1
-          className={`m-0 leading-snug font-bold ${size === 'workspace' ? 'text-xl tracking-tight' : 'font-display text-2xl lg:text-[32px]'}`}
+          className={`m-0 leading-snug font-bold ${size === 'workspace' ? 'text-xl tracking-tight' : 'font-display text-xl lg:text-[32px]'}`}
         >
           {title}
         </h1>
         {subtitle && (
           <p
-            className={`m-0 text-text-2 ${size === 'workspace' ? 'text-[13px] leading-6' : 'text-base leading-8 lg:text-lg'} ${
+            className={`m-0 text-text-2 ${size === 'workspace' ? 'text-[13px] leading-6' : 'text-sm leading-7 lg:text-lg'} ${
               compact ? 'max-lg:hidden' : ''
             }`}
           >

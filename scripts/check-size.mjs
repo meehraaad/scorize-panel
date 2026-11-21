@@ -8,7 +8,9 @@ import { gzipSync } from 'node:zlib';
 
 // CSS 21.4: the pathway finder and its management pages add about 0.2 KB of shared utility classes (2026-11-19).
 // JS 187.2: the supervisor panel's client-services routes and nav (my services, their report, scopes; 2026-11-20).
-const BUDGET_KB = { js: 187.2, css: 21.4 };
+// JS 187.4, CSS 21.5: the phone header lists the panels in the account menu (PanelChoices) and has
+// smaller sizes (2026-11-21).
+const BUDGET_KB = { js: 187.4, css: 21.5 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
