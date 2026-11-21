@@ -31,7 +31,7 @@ export default function HeaderCustomerSearch() {
         aria-label={label}
         title={label}
         iconSize={18}
-        className="transition-colors hover:text-text lg:[&>svg]:size-5"
+        className="transition-colors hover:text-text"
         onClick={() => setOpen(true)}
       />
       {open && (

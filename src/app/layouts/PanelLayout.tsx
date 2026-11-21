@@ -137,11 +137,11 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
                   : t('header.notifications')
               }
             >
-              <Icon name="bell" className="size-[18px] lg:size-5" />
+              <Icon name="bell" size={18} />
               {unread > 0 && (
                 <span
                   aria-hidden="true"
-                  className="absolute end-3 top-3 size-2 rounded-full bg-primary shadow-[0_0_0_2px_var(--surface)] lg:end-2.5 lg:top-2.5 lg:size-2.5"
+                  className="absolute end-2.5 top-2.5 size-2.5 rounded-full bg-primary shadow-[0_0_0_2px_var(--surface)]"
                 />
               )}
             </Link>

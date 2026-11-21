@@ -20,17 +20,15 @@ interface Props {
   panels: PanelDefinition[];
 }
 
-// Thinner on phones, where the avatar is smaller.
 const RINGS = {
-  queue:
-    'shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--hue-green)] lg:shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-green)]',
-  rest: 'shadow-[0_0_0_2px_var(--surface),0_0_0_4px_var(--hue-orange)] lg:shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-orange)]',
+  queue: 'shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-green)]',
+  rest: 'shadow-[0_0_0_2px_var(--surface),0_0_0_5px_var(--hue-orange)]',
 } as const;
 
 const NO_STATUS = () => null;
 
 const itemClass =
-  'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-sm text-text hover:bg-canvas lg:text-[15px]';
+  'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-sm text-text hover:bg-canvas';
 
 /**
  * Account button + dropdown (desktop and mobile header): who is logged in, settings, logout.
@@ -107,12 +105,12 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
       {open && (
         <div
           id={menuId}
-          className="absolute end-0 top-full z-40 mt-2 flex max-h-[calc(100dvh-var(--panel-top)-var(--panel-bottom)-1rem)] w-[min(18rem,calc(100vw-2rem))] flex-col gap-1 overflow-y-auto rounded-card-sm bg-surface p-2 shadow-panel lg:max-h-none lg:w-72"
+          className="absolute end-0 top-full z-40 mt-2 flex w-72 flex-col gap-1 rounded-card-sm bg-surface p-2 shadow-panel"
         >
           <div className="flex flex-col px-3 py-2">
-            <span className="truncate text-sm font-semibold lg:text-base">{name}</span>
+            <span className="truncate font-semibold">{name}</span>
             {user.email && (
-              <span dir="ltr" className="truncate text-start text-[13px] text-text-2 lg:text-sm">
+              <span dir="ltr" className="truncate text-start text-[13px] text-text-2">
                 {user.email}
               </span>
             )}

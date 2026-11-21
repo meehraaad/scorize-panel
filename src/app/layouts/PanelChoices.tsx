@@ -91,7 +91,7 @@ export function PanelChoices({ user, panel, panels, onPick, compact = false }: P
                   toast.error(t('switcher.saveFailed'));
                 });
               }}
-              className={`max-w-full rounded-full bg-canvas px-3 text-text ${compact ? 'h-11 text-[13px]' : 'h-11 text-sm'}`}
+              className={`h-11 max-w-full rounded-full bg-canvas px-3 text-text ${compact ? 'text-[13px]' : 'text-sm'}`}
             >
               <option value="last">{t('switcher.start.last')}</option>
               {own.map((item) => (
