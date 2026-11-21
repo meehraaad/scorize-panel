@@ -352,6 +352,34 @@ option existed.
 - The wordmark (`components/ui/Logo`) is the main site's: Arial Black, "rize" in the primary colour.
   It uses the installed Arial Black, else the font file Django already serves under `/static/`.
 
+### Type scale
+
+Text sizes have names, set once in `src/styles/index.css` (`--fs-*`, `--lh-*`) with a smaller step on
+phones (below `lg`, 1024px). Use the name, never a pixel size:
+
+| Class          | Phone | Wide | For                                                                                        |
+| -------------- | ----- | ---- | ------------------------------------------------------------------------------------------ |
+| `text-display` | 28    | 48   | a page's one big headline (the finder's start)                                             |
+| `text-title`   | 22    | 36   | a page's or a question's title                                                             |
+| `text-section` | 18    | 20   | a section or card title                                                                    |
+| `text-lead`    | 14    | 18   | the line under a title                                                                     |
+| `text-body`    | 16    | 16   | reading text, answers, fields (never below 16 on phones: iPhones zoom into smaller fields) |
+| `text-small`   | 14    | 14   | secondary text                                                                             |
+| `text-label`   | 13    | 13   | labels, eyebrows, meta                                                                     |
+| `text-caption` | 12    | 12   | footnotes, chips                                                                           |
+
+Touch sizes: `min-h-tap` (44px, any control), `min-h-row` (56px, a row you tap: an answer, a list
+row), `min-h-cta` (52px, the main button at the bottom of a phone screen). ESLint rejects `text-[Npx]`
+where a screen has moved to the scale (the pathway finder first); move the rest screen by screen.
+
+### Phone screens that fill the screen
+
+A flow with steps (the pathway finder's questions) fills the phone's screen once it starts: no panel
+menus, its own bar on top (back, where you are, close), the content scrolling in the middle, and the
+main button full width in a bar at the bottom, above the on-screen keyboard (`useKeyboardInset`) and
+the home indicator (`env(safe-area-inset-bottom)`). Close asks first when leaving would lose work
+(a bottom `Sheet`).
+
 ## i18n
 
 - Dictionaries: `src/locales/<lang>/<namespace>.json`. Persian (`fa`) is the source; `t()` keys are
