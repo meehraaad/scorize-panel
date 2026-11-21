@@ -186,6 +186,7 @@ export function AskAnswer({
   onAnswer,
   onShowResults,
   rates,
+  allCountries,
 }: {
   ask: Ask;
   /** `countries` questions: the countries asked about. */
@@ -193,6 +194,8 @@ export function AskAnswer({
   busy: boolean;
   onBack: () => void;
   onAnswer: (set: Answers, byCountry?: CountryAnswers, skips?: readonly string[]) => void;
+  /** `countries` questions: every country, for one with no route ("a job offer from Spain"). */
+  allCountries?: readonly Country[] | undefined;
   /** Today's rates, to show an income in euros as it is typed. */
   rates?: FinderOptions['rates'] | undefined;
   /** Once a first route is ready: stop here and see the routes so far. */
@@ -221,12 +224,17 @@ export function AskAnswer({
       <CountriesAnswer
         ask={ask}
         countries={countries}
+        allCountries={allCountries ?? []}
         formId={formId}
         busy={busy}
         onAnswer={(byCountry) => onAnswer({}, byCountry)}
-        actions={(ready) => (
-          <Actions onBack={onBack} busy={busy}>
-            <Next formId={formId} disabled={busy || !ready} />
+        actions={(ready, back, picking) => (
+          <Actions
+            onBack={back ?? onBack}
+            busy={busy}
+            {...(picking ? {} : { hint: t('keys_hint') })}
+          >
+            {picking && <Next formId={formId} disabled={busy || !ready} />}
             {early}
           </Actions>
         )}
@@ -350,14 +358,27 @@ export function AskAnswer({
   );
 }
 
+/** What "yes" looks like on each question about destinations. */
+const DESTINATION_ICONS: Record<string, QuizIconName> = {
+  job_offer: 'briefcase',
+  shortage_occupation: 'target',
+  skills_assessment: 'seal',
+  recognition: 'seal',
+  stay_months: 'compass',
+};
+/** How many other countries a search shows at once. */
+const SEARCH_LIMIT = 6;
+
 /**
- * One question about every destination at once ("which countries have you lived in?"): the person
- * ticks the countries it is true of, says how long or how fully for each, or answers "none". Every
- * country listed gets its own answer, so living in one never counts for another.
+ * One question about destinations ("a formal job offer from an employer abroad?"), first as yes or no, since most
+ * people say no and move on. On yes, which countries: those with a route first, and any other by search ("Spain"),
+ * each with how long or how fully. Every country gets its own answer, so a job offer from one never counts for
+ * another; one with no route counts for none, but the sales team sees it.
  */
 function CountriesAnswer({
   ask,
   countries,
+  allCountries,
   formId,
   busy,
   onAnswer,
@@ -365,25 +386,74 @@ function CountriesAnswer({
 }: {
   ask: Ask;
   countries: Country[];
+  allCountries: readonly Country[];
   formId: string;
   busy: boolean;
   onAnswer: (byCountry: CountryAnswers) => void;
-  /** The buttons, told whether an answer is given (a country, or "none"). */
-  actions: (ready: boolean) => ReactNode;
+  /** The buttons, told whether a country is picked, where Back goes, and whether countries are being picked. */
+  actions: (ready: boolean, back: (() => void) | undefined, picking: boolean) => ReactNode;
 }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
   const factor = ask.factors[0] ?? ask.id;
+  const [picking, setPicking] = useState(false);
   // Picked countries, each with its detail: years there, or how fully the degree is recognised.
   const [picked, setPicked] = useState<Record<number, number | string>>({});
-  const [none, setNone] = useState(false);
+  // Countries without a route the person added by search, in the order added.
+  const [extra, setExtra] = useState<Country[]>([]);
+  const [search, setSearch] = useState('');
   const answerFor = (value: number | string | undefined): Answers => {
     if (ask.detail === 'years') return { [factor]: typeof value === 'number' ? value * MONTHS : 0 };
     if (ask.detail === 'recognition')
       return { [factor]: typeof value === 'string' ? value : 'none' };
     return { [factor]: value !== undefined };
   };
-  const ready = none || Object.keys(picked).length > 0;
+  if (!picking)
+    return (
+      <>
+        <OptionsAnswer
+          legend={t(key(`asks.${ask.id}.title`))}
+          options={(['yes', 'no'] as const).map((value) => ({
+            value,
+            label: t(key(`asks.${ask.id}.${value}`)),
+            icon: (
+              <QuizIcon name={value === 'yes' ? (DESTINATION_ICONS[ask.id] ?? 'target') : 'none'} />
+            ),
+          }))}
+          busy={busy}
+          onPick={(value) => {
+            if (value === 'yes') setPicking(true);
+            else
+              onAnswer(
+                Object.fromEntries(countries.map((country) => [country.id, answerFor(undefined)])),
+              );
+          }}
+        />
+        {actions(false, undefined, false)}
+      </>
+    );
+  const shown = [...countries, ...extra];
+  const query = search.trim().toLowerCase();
+  const found = query
+    ? allCountries
+        .filter(
+          (country) =>
+            !shown.some((one) => one.id === country.id) &&
+            country.name.toLowerCase().includes(query),
+        )
+        .slice(0, SEARCH_LIMIT)
+    : [];
+  const pick = (country: Country, checked: boolean) =>
+    setPicked((now) =>
+      checked
+        ? {
+            ...now,
+            [country.id]:
+              ask.detail === 'recognition' ? 'full' : ask.detail === 'years' ? 2 : 'yes',
+          }
+        : Object.fromEntries(Object.entries(now).filter(([id]) => Number(id) !== country.id)),
+    );
+  const ready = Object.keys(picked).length > 0;
   return (
     <>
       <form
@@ -393,13 +463,12 @@ function CountriesAnswer({
           event.preventDefault();
           if (busy || !ready) return;
           onAnswer(
-            Object.fromEntries(
-              countries.map((country) => [country.id, answerFor(picked[country.id])]),
-            ),
+            Object.fromEntries(shown.map((country) => [country.id, answerFor(picked[country.id])])),
           );
         }}
       >
-        {countries.map((country) => {
+        <p className="m-0 text-lg font-semibold">{t(key(`asks.${ask.id}.which`))}</p>
+        {shown.map((country) => {
           const detail = picked[country.id];
           return (
             <CheckTile
@@ -407,21 +476,12 @@ function CountriesAnswer({
               label={country.name}
               icon={<Flag code={country.code} name={country.name} />}
               note={
-                typeof detail === 'number'
+                ask.detail === 'years' && typeof detail === 'number'
                   ? t('countries.years_note', { count: detail, n: f.number(detail) })
                   : undefined
               }
               checked={detail !== undefined}
-              onChange={(checked) => {
-                setNone(false);
-                setPicked((now) =>
-                  checked
-                    ? { ...now, [country.id]: ask.detail === 'recognition' ? 'full' : 2 }
-                    : Object.fromEntries(
-                        Object.entries(now).filter(([id]) => Number(id) !== country.id),
-                      ),
-                );
-              }}
+              onChange={(checked) => pick(country, checked)}
             >
               {ask.detail === 'years' && typeof detail === 'number' && (
                 <NumberStepper
@@ -451,17 +511,44 @@ function CountriesAnswer({
             </CheckTile>
           );
         })}
-        <CheckTile
-          label={t(key(`asks.${ask.id}.none`))}
-          icon={<QuizIcon name="none" />}
-          checked={none}
-          onChange={(checked) => {
-            setNone(checked);
-            if (checked) setPicked({});
-          }}
-        />
+        {allCountries.length > 0 && (
+          <div className="flex flex-col gap-2 pt-2">
+            <TextField
+              label={t('countries.other')}
+              placeholder={t('countries.search')}
+              autoComplete="off"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') event.preventDefault();
+              }}
+            />
+            {found.length > 0 && (
+              <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+                {found.map((country) => (
+                  <li key={country.id}>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setExtra((now) => [...now, country]);
+                        pick(country, true);
+                        setSearch('');
+                      }}
+                    >
+                      <Flag code={country.code} name={country.name} />
+                      {country.name}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {query && found.length === 0 && (
+              <p className="m-0 text-sm text-text-2">{t('countries.not_found')}</p>
+            )}
+          </div>
+        )}
       </form>
-      {actions(ready)}
+      {actions(ready, () => setPicking(false), true)}
     </>
   );
 }
