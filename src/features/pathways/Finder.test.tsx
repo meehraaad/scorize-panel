@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -69,8 +69,10 @@ describe('pathway finder', () => {
     expect(
       await within(quiz).findByRole('heading', { name: 'برای چه می‌خواهی بروی؟' }),
     ).toBeInTheDocument();
+    // Phones: close asks first (carry on, start again or leave).
     await user.click(within(quiz).getByRole('button', { name: 'بستن' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'بیرون برو' }));
+    expect(screen.queryByRole('dialog', { name: 'مسیریاب مهاجرت' })).not.toBeInTheDocument();
   });
 
   it('opens alone, without the panel menus', async () => {
@@ -82,9 +84,32 @@ describe('pathway finder', () => {
       await screen.findByRole('heading', { name: 'برای چه می‌خواهی بروی؟' }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-    // Start again goes back to the first screen.
-    await user.click(screen.getByRole('button', { name: 'از اول' }));
+    // Start again (in the close sheet on phones) goes back to the first screen.
+    await user.click(screen.getByRole('button', { name: 'بستن' }));
+    await user.click(await screen.findByRole('button', { name: 'از اول شروع کن' }));
     expect(await screen.findByRole('button', { name: 'شروع کن' })).toBeInTheDocument();
+  });
+
+  it('keeps an answer after going back, and the answers after leaving', async () => {
+    loginAs(SARA);
+    const user = userEvent.setup();
+    renderApp('/finder');
+    await user.click(await screen.findByRole('button', { name: 'شروع کن' }));
+    await user.click(await screen.findByRole('radio', { name: /^کار/ }));
+    await user.click(await screen.findByRole('radio', { name: 'کارشناسی' }));
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+    // Back (at the top on phones): the degree is still picked, and Next keeps it.
+    await user.click(screen.getByRole('button', { name: 'سؤال قبلی' }));
+    await screen.findByRole('heading', { name: 'آخرین مدرک تحصیلی‌ات چیست؟' });
+    expect(screen.getByRole('radio', { name: 'کارشناسی' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+    // Coming back later carries on at the same question.
+    cleanup();
+    renderApp('/finder');
+    expect(
+      await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' }),
+    ).toBeInTheDocument();
   });
 
   it('a country question needs a country or "none" before going on', async () => {

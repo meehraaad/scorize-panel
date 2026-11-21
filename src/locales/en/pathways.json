@@ -423,12 +423,15 @@
     "waiting": "Not started yet",
     "left_one": "{{n}} question left",
     "left_other": "{{n}} questions left",
-    "note": "With each answer we check every country's work and residence routes ourselves. You don't need to pick a route."
+    "note": "With each answer we check every country's work and residence routes ourselves. You don't need to pick a route.",
+    "summary": "Checking {{n}} countries",
+    "summary_done": "{{done}} of {{n}} countries checked"
   },
   "peek": {
     "title": "Your first route is ready",
     "route": "{{country}}, {{name}}",
-    "see": "See why"
+    "see": "See why",
+    "strip": "{{route}} · {{verdict}}"
   },
   "facts": {
     "time": "Time",
@@ -478,5 +481,15 @@
   "near": {
     "title": "Close to the minimum",
     "body": "Your income is just above the minimum ({{list}}). A change in the exchange rate could take it under; an adviser will check it closely."
+  },
+  "previous": "Previous question",
+  "question_of": "Question {{number}} of {{total}}",
+  "exit": {
+    "title": "Leave the pathway finder?",
+    "body": "Your answers stay on this device, and next time you carry on from this question.",
+    "stay": "Keep going",
+    "restart": "Start again",
+    "leave": "Leave",
+    "dismiss": "Close this window"
   }
 }

@@ -1,4 +1,5 @@
 import { use, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { AnswerGroup, CheckTile } from '@/components/ui/AnswerChoices';
@@ -19,7 +20,7 @@ import {
 } from './plan';
 import { Flag, LevelBars, QuizIcon, type QuizIconName } from './art';
 import { key } from './keys';
-import { PinnedContext } from './pinned';
+import { BarContext } from './pinned';
 
 /** How long a picked answer stays shown before the next question comes in. */
 const PICK_DELAY = 280;
@@ -62,14 +63,15 @@ export function Question({
   const f = useFormat();
   return (
     <div className="flex animate-rise flex-col">
-      <p className="m-0 text-[15px] font-semibold text-primary-text">
+      {/* Phones show the number in the bar on top. */}
+      <p className="m-0 text-label font-semibold text-primary-text max-lg:sr-only lg:text-small">
         {t('question', { number: f.number(number) })}
       </p>
-      <h1 className="m-0 mt-3 text-3xl leading-snug font-extrabold tracking-tight text-balance lg:text-4xl lg:leading-tight">
+      <h1 className="m-0 mt-2 text-title font-extrabold tracking-tight text-balance lg:mt-3">
         {title}
       </h1>
-      <p className="m-0 mt-3 max-w-xl text-base leading-8 text-text-2 lg:text-lg">{help}</p>
-      <div className="flex flex-col gap-10 pt-8 lg:pt-10">{children}</div>
+      <p className="m-0 mt-1 max-w-xl text-lead text-text-2 lg:mt-3">{help}</p>
+      <div className="flex flex-col gap-5 pt-5 lg:gap-10 lg:pt-10">{children}</div>
     </div>
   );
 }
@@ -79,6 +81,37 @@ export function Forward() {
   return <QuizIcon name="forward" size={20} className="rtl:-scale-x-100" />;
 }
 
+/**
+ * A screen's buttons. Wide screens: a row under the answers (kept in view where pinned). Phones,
+ * pinned: a bar at the bottom of the screen, in thumb reach, the main button full width, the first
+ * route's strip above it, lifted over the on-screen keyboard. `stick={false}`: never sticky on wide
+ * screens (the start screen).
+ */
+export function Bar({ children, stick = true }: { children: ReactNode; stick?: boolean }) {
+  const { pinned, wide, slot, peek } = use(BarContext);
+  if (wide)
+    return (
+      <div
+        className={`flex flex-wrap items-center gap-3 ${pinned && stick ? 'sticky bottom-0 z-10 bg-surface py-3' : ''}`}
+      >
+        {children}
+      </div>
+    );
+  if (!pinned) return <div className="flex flex-col gap-2">{children}</div>;
+  if (!slot) return null;
+  return createPortal(
+    <div className="flex flex-col gap-2 px-4 pt-3">
+      {peek}
+      {children}
+    </div>,
+    slot,
+  );
+}
+
+/** The main button's look on phones: full width, 52px. */
+export const MAIN_ON_PHONE = 'max-lg:min-h-cta max-lg:w-full';
+
+/** Under a question: its buttons, then (wide screens) "back" and a hint; phones go back at the top. */
 export function Actions({
   onBack,
   busy = false,
@@ -91,17 +124,17 @@ export function Actions({
   children?: ReactNode;
 }) {
   const { t } = useTranslation('pathways');
-  const pinned = use(PinnedContext);
+  const { wide } = use(BarContext);
   return (
-    <div
-      className={`flex flex-wrap items-center gap-3 ${pinned ? 'sticky bottom-0 z-10 bg-surface py-3' : ''}`}
-    >
+    <Bar>
       {children}
-      <Button variant="outline" size="lg" onClick={onBack} disabled={busy}>
-        {t('back')}
-      </Button>
-      {hint && <span className="text-sm text-text-2 max-lg:hidden">{hint}</span>}
-    </div>
+      {wide && (
+        <Button variant="outline" size="lg" onClick={onBack} disabled={busy}>
+          {t('back')}
+        </Button>
+      )}
+      {wide && hint && <span className="text-sm text-text-2">{hint}</span>}
+    </Bar>
   );
 }
 
@@ -113,7 +146,7 @@ function Next({ formId, disabled }: { formId: string; disabled: boolean }) {
       type="submit"
       form={formId}
       size="lg"
-      className="px-8 max-lg:flex-1"
+      className={`px-8 ${MAIN_ON_PHONE}`}
       disabled={disabled}
     >
       {t('next')}
@@ -122,19 +155,32 @@ function Next({ formId, disabled }: { formId: string; disabled: boolean }) {
   );
 }
 
-/** Large answers; a click or the option's number on the keyboard picks it and moves on. */
+/**
+ * Large answers; a click or the option's number on the keyboard picks it and moves on. `initial`:
+ * the answer given before going back, shown picked; on phones "next" keeps it (`actions` draws the
+ * buttons around that "next").
+ */
 export function OptionsAnswer<T extends string>({
   legend,
   options,
   busy,
   onPick,
+  initial = null,
+  actions,
 }: {
   legend: string;
   options: { value: T; label: string; hint?: string; icon?: ReactNode }[];
   busy: boolean;
   onPick: (value: T) => void;
+  initial?: T | null | undefined;
+  actions?: (next: ReactNode) => ReactNode;
 }) {
+  const { t } = useTranslation('pathways');
   const f = useFormat();
+  const { wide } = use(BarContext);
+  const [selected, setSelected] = useState<T | null>(
+    options.some((option) => option.value === initial) ? initial : null,
+  );
   const [picked, setPicked] = useState<T | null>(null);
   const pickRef = useRef(onPick);
   useEffect(() => {
@@ -145,36 +191,60 @@ export function OptionsAnswer<T extends string>({
     const timer = setTimeout(() => pickRef.current(picked), PICK_DELAY);
     return () => clearTimeout(timer);
   }, [picked]);
+  const pick = (value: T) => {
+    if (busy || picked !== null) return;
+    setSelected(value);
+    setPicked(value);
+  };
+  const pickRefFn = useRef(pick);
+  useEffect(() => {
+    pickRefFn.current = pick;
+  });
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (event.metaKey || event.ctrlKey || event.altKey || target?.closest('input,textarea'))
         return;
       const option = options[Number(toLatinDigits(event.key)) - 1];
-      if (option && !busy && picked === null) setPicked(option.value);
+      if (option) pickRefFn.current(option.value);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [options, busy, picked]);
-  return (
-    <AnswerGroup
-      legend={legend}
-      options={options.map((option, index) => ({
-        ...option,
-        extra: (
-          <span
-            aria-hidden="true"
-            className="flex size-7 flex-none items-center justify-center rounded-lg bg-surface text-[13px] text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] max-lg:hidden"
-          >
-            {f.number(index + 1)}
-          </span>
-        ),
-      }))}
-      value={picked}
-      onChange={(value) => {
-        if (!busy && picked === null) setPicked(value);
+  }, [options]);
+  // Phones: "next" waits for an answer (a tap moves on by itself; after going back it keeps one).
+  const next = wide ? null : (
+    <Button
+      size="lg"
+      className={`px-8 ${MAIN_ON_PHONE}`}
+      disabled={busy || selected === null || picked !== null}
+      onClick={() => {
+        if (selected !== null) pick(selected);
       }}
-    />
+    >
+      {t('next')}
+      <Forward />
+    </Button>
+  );
+  return (
+    <>
+      <AnswerGroup
+        legend={legend}
+        options={options.map((option, index) => ({
+          ...option,
+          extra: (
+            <span
+              aria-hidden="true"
+              className="flex size-7 flex-none items-center justify-center rounded-lg bg-surface text-label text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] max-lg:hidden"
+            >
+              {f.number(index + 1)}
+            </span>
+          ),
+        }))}
+        value={selected}
+        onChange={pick}
+      />
+      {actions?.(next)}
+    </>
   );
 }
 
@@ -186,13 +256,22 @@ export function AskAnswer({
   onAnswer,
   onShowResults,
   rates,
+  remembered,
 }: {
   ask: Ask;
   /** `countries` questions: the countries asked about. */
   countries: Country[];
   busy: boolean;
   onBack: () => void;
-  onAnswer: (set: Answers, byCountry?: CountryAnswers, skips?: readonly string[]) => void;
+  /** `picked`: the option chosen (options questions), remembered for going back. */
+  onAnswer: (
+    set: Answers,
+    byCountry?: CountryAnswers,
+    skips?: readonly string[],
+    picked?: string,
+  ) => void;
+  /** The option chosen before going back to this question. */
+  remembered?: string | undefined;
   /** Today's rates, to show an income in euros as it is typed. */
   rates?: FinderOptions['rates'] | undefined;
   /** Once a first route is ready: stop here and see the routes so far. */
@@ -205,7 +284,9 @@ export function AskAnswer({
   const max = ask.max ?? 100;
   const [value, setValue] = useState(ask.start ?? min);
   const [scale, setScale] = useState<EnglishScale>(ask.scales?.[0] ?? 'ielts');
-  const early = onShowResults && (
+  const { wide } = use(BarContext);
+  // Phones show the first route's strip above the buttons instead.
+  const early = wide && onShowResults && (
     <Button
       variant="outline"
       size="lg"
@@ -276,14 +357,18 @@ export function AskAnswer({
               ) : undefined,
           }))}
           busy={busy}
+          initial={remembered}
           onPick={(id) => {
             const option = options.find((candidate) => candidate.id === id);
-            if (option) onAnswer(option.set, undefined, option.skips);
+            if (option) onAnswer(option.set, undefined, option.skips, id);
           }}
+          actions={(next) => (
+            <Actions onBack={onBack} busy={busy} hint={t('keys_hint')}>
+              {next}
+              {early}
+            </Actions>
+          )}
         />
-        <Actions onBack={onBack} busy={busy} hint={t('keys_hint')}>
-          {early}
-        </Actions>
       </>
     );
   }
@@ -307,7 +392,7 @@ export function AskAnswer({
     <>
       <form
         id={formId}
-        className="flex max-w-md flex-col gap-6"
+        className="flex max-w-md flex-col gap-6 max-lg:items-center max-lg:pt-3"
         onSubmit={(event) => {
           event.preventDefault();
           if (!busy) onAnswer({ [ask.factors[0] ?? ask.id]: value });
@@ -323,7 +408,7 @@ export function AskAnswer({
           decreaseLabel={t('less')}
           increaseLabel={t('more')}
         />
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 max-lg:hidden">
           <input
             type="range"
             aria-label={label}
@@ -335,7 +420,7 @@ export function AskAnswer({
           />
           <div
             aria-hidden="true"
-            className="flex justify-between text-[13px] text-text-2 tabular-nums"
+            className="flex justify-between text-label text-text-2 tabular-nums"
           >
             <span>{f.number(min)}</span>
             <span>{f.number(max)}</span>

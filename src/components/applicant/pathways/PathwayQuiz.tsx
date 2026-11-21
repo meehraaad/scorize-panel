@@ -1,11 +1,14 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { Logo } from '@/components/ui/Logo';
 import { ProgressBar } from '@/components/ui/Progress';
+import { Sheet } from '@/components/ui/Sheet';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import {
   checkPathways,
   finderOptionsQuery,
@@ -19,6 +22,8 @@ import {
 } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
+import { useKeyboardInset } from '@/lib/useKeyboardInset';
+import { DESKTOP_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
 import { toast } from '@/lib/toast';
 import {
   answeredPathways,
@@ -36,11 +41,19 @@ import {
   type Country,
   type Goal,
 } from './plan';
-import { Actions, AskAnswer, Forward, OptionsAnswer, Question } from './answers';
+import {
+  Actions,
+  AskAnswer,
+  Bar,
+  Forward,
+  MAIN_ON_PHONE,
+  OptionsAnswer,
+  Question,
+} from './answers';
 import { Flag, QuizIcon, type QuizIconName } from './art';
 import { key } from './keys';
-import { PinnedContext } from './pinned';
-import { Peek, Rail } from './rail';
+import { BarContext } from './pinned';
+import { Peek, PeekStrip, Rail } from './rail';
 import { FirstResult, Results } from './routes';
 
 /**
@@ -91,6 +104,46 @@ const GOALS: readonly Goal[] = ['work', 'study', 'any'];
 const GOAL_ICONS: Record<Goal, QuizIconName> = { work: 'briefcase', study: 'cap', any: 'compass' };
 
 /**
+ * The answers so far, kept on this device (the close sheet promises it): a person who leaves comes
+ * back to the same question. Forgotten after two weeks, on "start again" and once nothing is left.
+ */
+const SAVED_KEY = 'scorize.finder';
+const SAVED_DAYS = 14;
+interface Saved {
+  goal: Goal;
+  parts: Part[];
+  /** The option picked for each options question, shown again after going back. */
+  memory: Record<string, string>;
+  at: number;
+}
+function loadSaved(): Saved | null {
+  try {
+    const raw = localStorage.getItem(SAVED_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as Partial<Saved>;
+    if (
+      !saved.goal ||
+      !GOALS.includes(saved.goal) ||
+      !Array.isArray(saved.parts) ||
+      typeof saved.at !== 'number' ||
+      Date.now() - saved.at > SAVED_DAYS * 86_400_000
+    )
+      return null;
+    return { goal: saved.goal, parts: saved.parts, memory: saved.memory ?? {}, at: saved.at };
+  } catch {
+    return null;
+  }
+}
+function save(saved: Omit<Saved, 'at'> | null) {
+  try {
+    if (saved) localStorage.setItem(SAVED_KEY, JSON.stringify({ ...saved, at: Date.now() }));
+    else localStorage.removeItem(SAVED_KEY);
+  } catch {
+    // Private mode or storage off: the quiz works, it just won't remember.
+  }
+}
+
+/**
  * The pathway finder (any account), one calm question per screen, the same wherever it is shown
  * (`host`). The person says what they want, then answers: first the fewest questions that answer
  * one route fully. When that route is ready it opens quietly beside the questions (it never takes
@@ -100,10 +153,19 @@ const GOAL_ICONS: Record<Goal, QuizIconName> = { work: 'briefcase', study: 'cap'
 export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () => void }) {
   const { t } = useTranslation('pathways');
   const { data: options } = useSuspenseQuery(finderOptionsQuery);
-  const [stage, setStage] = useState<Stage>('intro');
-  const [goal, setGoal] = useState<Goal | null>(null);
+  // Answers kept from an earlier visit: carry on at the next question.
+  const [saved] = useState(() => {
+    const kept = loadSaved();
+    return kept && nextAsk(options.pathways, kept.goal, answeredOf(kept.parts)) ? kept : null;
+  });
+  const [stage, setStage] = useState<Stage>(saved ? 'ask' : 'intro');
+  const [goal, setGoal] = useState<Goal | null>(saved?.goal ?? null);
   // Answers by question id, in the order given (Back takes the last one off).
-  const [parts, setParts] = useState<Part[]>([]);
+  const [parts, setParts] = useState<Part[]>(saved?.parts ?? []);
+  const [memory, setMemory] = useState<Record<string, string>>(saved?.memory ?? {});
+  useEffect(() => {
+    save(goal ? { goal, parts, memory } : null);
+  }, [goal, parts, memory]);
   const [results, setResults] = useState<PathwayResult[]>([]);
   // The route answered first: shown beside the questions once it is ready.
   const [firstId, setFirstId] = useState<number | null>(null);
@@ -160,12 +222,25 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
 
   const restart = () => {
     setParts([]);
+    setMemory({});
     setGoal(null);
     setFirstId(null);
     setResults([]);
     setStage('intro');
   };
-  const frame = { host, onClose, onRestart: stage === 'intro' ? undefined : restart };
+  /** Back one step: the last answer, the goal, or (past the questions) to the questions. */
+  const back = () => {
+    if (stage === 'first' || stage === 'results') setStage('ask');
+    else if (parts.length) setParts(parts.slice(0, -1));
+    else if (goal) setGoal(null);
+    else setStage('intro');
+  };
+  const frame = {
+    host,
+    onClose,
+    onRestart: stage === 'intro' ? undefined : restart,
+    onBack: back,
+  };
 
   if (!pathways.length)
     return (
@@ -251,6 +326,11 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
           />
         ) : null
       }
+      peek={
+        firstReady ? (
+          <PeekStrip pathway={firstPathway} result={firstResult} onSee={() => setStage('first')} />
+        ) : null
+      }
     >
       {!goal ? (
         <Question key="goal" title={t('goal.title')} help={t('goal.help')} number={number}>
@@ -263,12 +343,18 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
               icon: <QuizIcon name={GOAL_ICONS[value]} />,
             }))}
             busy={check.isPending}
+            initial={memory.goal as Goal | undefined}
             onPick={(value) => {
               setGoal(value);
+              setMemory({ ...memory, goal: value });
               if (!nextAsk(pathways, value, answered)) evaluate(answers, 'results');
             }}
+            actions={(next) => (
+              <Actions onBack={() => setStage('intro')} hint={t('keys_hint')}>
+                {next}
+              </Actions>
+            )}
           />
-          <Actions onBack={() => setStage('intro')} hint={t('keys_hint')} />
         </Question>
       ) : (
         ask && (
@@ -282,11 +368,13 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
               ask={ask}
               countries={countriesFor(pathways, goal, ask)}
               busy={check.isPending}
-              onBack={() => (parts.length ? setParts(parts.slice(0, -1)) : setGoal(null))}
+              onBack={back}
               rates={options.rates}
-              onAnswer={(set, byCountry, skips) =>
-                afterAnswer([...parts, { id: ask.id, set, byCountry, skips }])
-              }
+              remembered={memory[ask.id]}
+              onAnswer={(set, byCountry, skips, picked) => {
+                if (picked) setMemory({ ...memory, [ask.id]: picked });
+                afterAnswer([...parts, { id: ask.id, set, byCountry, skips }]);
+              }}
               onShowResults={firstReady ? () => evaluate(answers, 'results') : undefined}
             />
           </Question>
@@ -296,118 +384,223 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
   );
 }
 
-const FRAMES: Record<QuizHost, { frame: string; bar: string; body: string }> = {
-  panel: { frame: 'overflow-hidden rounded-3xl shadow-panel', bar: '', body: '' },
-  page: {
-    frame: 'min-h-dvh',
-    bar: 'sticky top-0 z-20 bg-surface',
-    body: 'flex-1',
-  },
-  dialog: { frame: 'h-full', bar: 'flex-none', body: 'min-h-0 flex-1 overflow-y-auto' },
-};
+/**
+ * The frame on each host. Phones: once the questions start, the quiz fills the screen (no panel
+ * menus): its own bar on top, the question scrolling in the middle, the buttons in a bar at the
+ * bottom (`slot`).
+ */
+function frameLook(host: QuizHost, full: boolean) {
+  if (host === 'page')
+    return {
+      frame: 'min-h-dvh max-lg:h-dvh',
+      bar: 'sticky top-0 z-20 bg-surface max-lg:flex-none',
+      body: 'flex-1 max-lg:min-h-0 max-lg:overflow-y-auto',
+    };
+  if (host === 'dialog')
+    return { frame: 'h-full', bar: 'flex-none', body: 'min-h-0 flex-1 overflow-y-auto' };
+  return full
+    ? {
+        frame:
+          'overflow-hidden rounded-3xl shadow-panel max-lg:fixed max-lg:inset-0 max-lg:z-40 max-lg:rounded-none max-lg:shadow-none',
+        bar: 'max-lg:flex-none',
+        body: 'max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-y-auto',
+      }
+    : { frame: 'overflow-hidden rounded-3xl shadow-panel', bar: '', body: '' };
+}
 
 /**
  * The quiz's frame: a bar with its name, the question count, "start again" and (in a popup) close,
- * the progress under it, then the screen and the countries beside it.
+ * the progress under it, then the screen and the countries beside it. Phones, during the questions:
+ * back, the count and close on top (close asks first: carry on, start again or leave), the buttons
+ * at the bottom.
  */
 function Frame({
   host,
   onClose,
   onRestart,
+  onBack,
   screen,
   progress,
   step,
   rail,
+  peek,
   children,
 }: {
   host: QuizHost;
   onClose?: (() => void) | undefined;
   onRestart?: (() => void) | undefined;
+  onBack: () => void;
   /** Which screen is shown: a new one starts at the top. */
   screen: string;
   /** 0–100 once the questions start. */
   progress?: number;
   step?: { number: number; total: number };
   rail?: ReactNode;
+  /** Phones: the first route's strip, over the buttons. */
+  peek?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
+  const wide = useMediaQuery(DESKTOP_QUERY);
+  const keyboard = useKeyboardInset();
+  const frameRef = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
-  const look = FRAMES[host];
+  const [slot, setSlot] = useState<HTMLDivElement | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  // The questions have started: on phones they take the whole screen.
+  const full = Boolean(onRestart);
+  const look = frameLook(host, full);
+  const pinned = host !== 'panel' || (full && !wide);
+  const phoneBar = !wide && full;
   useEffect(() => {
     if (body.current) body.current.scrollTop = 0;
+    // The page itself scrolls (wide screens, the plain page): bring the new screen's top back.
+    const top = frameRef.current?.getBoundingClientRect().top ?? 0;
+    if (top < 0) window.scrollBy({ top });
   }, [screen]);
+  const leave =
+    host === 'dialog' && onClose ? (
+      <button type="button" className={buttonClass('outline', 'w-full', 'lg')} onClick={onClose}>
+        {t('exit.leave')}
+      </button>
+    ) : host === 'page' ? (
+      <a href={SITE.home} className={buttonClass('outline', 'w-full', 'lg')}>
+        {t('exit.leave')}
+      </a>
+    ) : (
+      <Link to="/" className={buttonClass('outline', 'w-full', 'lg')}>
+        {t('exit.leave')}
+      </Link>
+    );
   return (
-    <PinnedContext value={host !== 'panel'}>
-      <div className={`flex flex-col bg-surface ${look.frame}`}>
-        <header className={look.bar}>
-          {host === 'dialog' && (
+    <BarContext value={{ pinned, wide, slot, peek: wide ? null : peek }}>
+      <div ref={frameRef} className={`flex flex-col bg-surface ${look.frame}`}>
+        <header className={`pt-[env(safe-area-inset-top)] ${look.bar}`}>
+          {host === 'dialog' && !phoneBar && (
             <span
               aria-hidden="true"
               className="mx-auto mt-2 block h-1.5 w-10 rounded-full bg-track lg:hidden"
             />
           )}
-          <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center gap-2 px-5 lg:min-h-16 lg:gap-4 lg:px-14">
-            {host === 'page' && (
-              <a href={SITE.home} aria-label={t('home')} className="flex min-h-11 items-center">
-                <Logo className="text-xl" />
-              </a>
-            )}
-            <span
-              className={`flex items-center gap-2 font-bold ${
-                host === 'page' ? 'text-[15px] font-medium text-text-2 max-lg:sr-only' : 'text-base'
-              }`}
-            >
-              <QuizIcon name="compass" size={20} className="text-primary-text" />
-              {t('title')}
-            </span>
-            <span className="flex-1" />
-            {step && (
-              <span className="text-sm text-text-2 tabular-nums">
-                {t('step', { number: f.number(step.number), total: f.number(step.total) })}
+          {phoneBar ? (
+            <div className="flex min-h-14 items-center gap-1 px-1.5">
+              <IconButton icon="chevronStart" aria-label={t('previous')} onClick={onBack} />
+              <span className="flex-1 text-center text-label font-semibold text-text-2 tabular-nums">
+                {step
+                  ? t('question_of', { number: f.number(step.number), total: f.number(step.total) })
+                  : t('title')}
               </span>
-            )}
-            {onRestart && (
-              <button
-                type="button"
-                onClick={onRestart}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3 text-[15px] text-text-2 hover:bg-canvas hover:text-text"
-              >
-                <QuizIcon name="restart" size={18} />
-                <span className="max-lg:sr-only">{t('restart')}</span>
-              </button>
-            )}
-            {onClose && (
               <IconButton
                 icon="close"
                 aria-label={t('close')}
-                onClick={onClose}
-                className="bg-canvas"
+                aria-haspopup="dialog"
+                onClick={() => setLeaving(true)}
               />
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="mx-auto flex min-h-14 w-full max-w-6xl items-center gap-2 px-5 lg:min-h-16 lg:gap-4 lg:px-14">
+              {host === 'page' && (
+                <a href={SITE.home} aria-label={t('home')} className="flex min-h-11 items-center">
+                  <Logo className="text-xl" />
+                </a>
+              )}
+              <span
+                className={`flex items-center gap-2 font-bold ${
+                  host === 'page'
+                    ? 'text-small font-medium text-text-2 max-lg:sr-only'
+                    : 'text-base'
+                }`}
+              >
+                <QuizIcon name="compass" size={20} className="text-primary-text" />
+                {t('title')}
+              </span>
+              <span className="flex-1" />
+              {step && (
+                <span className="text-sm text-text-2 tabular-nums">
+                  {t('step', { number: f.number(step.number), total: f.number(step.total) })}
+                </span>
+              )}
+              {onRestart && (
+                <button
+                  type="button"
+                  onClick={onRestart}
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3 text-small text-text-2 hover:bg-canvas hover:text-text"
+                >
+                  <QuizIcon name="restart" size={18} />
+                  <span className="max-lg:sr-only">{t('restart')}</span>
+                </button>
+              )}
+              {onClose && (
+                <IconButton
+                  icon="close"
+                  aria-label={t('close')}
+                  onClick={onClose}
+                  className="bg-canvas"
+                />
+              )}
+            </div>
+          )}
           {progress !== undefined && (
             <ProgressBar
               size="sm"
               value={progress}
               label={t('progress')}
-              className="mx-auto max-w-6xl"
+              className={`mx-auto max-w-6xl ${phoneBar ? 'mx-4' : ''}`}
             />
           )}
         </header>
         <div ref={body} className={look.body}>
           <div
-            className={`mx-auto grid w-full max-w-6xl gap-8 px-5 py-8 lg:gap-10 lg:px-14 lg:py-10 ${
+            className={`mx-auto grid w-full max-w-6xl gap-4 px-4 pt-3 pb-6 lg:gap-10 lg:px-14 lg:py-10 ${
               rail ? 'lg:grid-cols-[minmax(0,1fr)_17rem]' : ''
             }`}
           >
             <div className={`min-w-0 ${rail ? 'max-w-3xl' : ''}`}>{children}</div>
-            {rail && <aside className="min-w-0 max-lg:order-first">{rail}</aside>}
+            {rail && <aside className="flex min-w-0 flex-col max-lg:order-first">{rail}</aside>}
           </div>
         </div>
+        {!wide && pinned && (
+          <div
+            ref={setSlot}
+            className="flex-none bg-surface shadow-[0_-1px_0_var(--hair)] empty:hidden"
+            style={{
+              paddingBottom: keyboard
+                ? `${String(keyboard + 12)}px`
+                : 'max(0.75rem, env(safe-area-inset-bottom))',
+            }}
+          />
+        )}
+        {phoneBar && (
+          <Sheet
+            open={leaving}
+            onClose={() => setLeaving(false)}
+            title={t('exit.title')}
+            closeLabel={t('exit.dismiss')}
+          >
+            <p className="m-0 text-small text-text-2">{t('exit.body')}</p>
+            <div className="flex flex-col gap-2 pt-2">
+              <Button size="lg" className="w-full" onClick={() => setLeaving(false)}>
+                {t('exit.stay')}
+              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className={buttonClass('outline', 'w-full', 'lg')}
+                  onClick={() => {
+                    setLeaving(false);
+                    onRestart?.();
+                  }}
+                >
+                  {t('exit.restart')}
+                </button>
+                {leave}
+              </div>
+            </div>
+          </Sheet>
+        )}
       </div>
-    </PinnedContext>
+    </BarContext>
   );
 }
 
@@ -422,6 +615,7 @@ const ORBIT = [
 function Intro({ pathways, onStart }: { pathways: FinderPathway[]; onStart: () => void }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
+  const wide = useMediaQuery(DESKTOP_QUERY);
   const countries: Country[] = [
     ...new Map(pathways.map((p) => [p.country.id, p.country])).values(),
   ];
@@ -429,7 +623,7 @@ function Intro({ pathways, onStart }: { pathways: FinderPathway[]; onStart: () =
     <li className="flex items-center gap-3">
       {icon}
       <span className="flex flex-col">
-        <span className="text-lg leading-7 font-bold text-text">{value}</span>
+        <span className="text-body font-bold text-text lg:text-lg">{value}</span>
         {label}
       </span>
     </li>
@@ -444,13 +638,17 @@ function Intro({ pathways, onStart }: { pathways: FinderPathway[]; onStart: () =
   );
   return (
     <div className="grid animate-rise items-center gap-10 lg:grid-cols-[minmax(0,1fr)_17rem]">
-      <div className="flex flex-col gap-4">
-        <p className="m-0 text-[15px] font-semibold text-primary-text">{t('intro.eyebrow')}</p>
-        <h1 className="m-0 text-5xl leading-tight font-extrabold tracking-tight text-balance">
+      <div className="flex flex-col gap-2 lg:gap-4">
+        <p className="m-0 text-label font-semibold text-primary-text lg:text-small">
+          {t('intro.eyebrow')}
+        </p>
+        <h1 className="m-0 text-display font-extrabold tracking-tight text-balance">
           {t('intro.title')}
         </h1>
-        <p className="m-0 max-w-xl text-lg leading-8 text-text-2 lg:text-xl">{t('intro.body')}</p>
-        <ul className="m-0 flex list-none flex-wrap gap-x-8 gap-y-4 p-0 py-6 text-sm text-text-2">
+        <p className="m-0 max-w-xl text-body text-text-2 lg:text-xl lg:leading-8">
+          {t('intro.body')}
+        </p>
+        <ul className="m-0 flex list-none flex-wrap gap-x-8 gap-y-4 p-0 py-4 text-small text-text-2 lg:py-6">
           {fact(tile('clock'), t('intro.time'), t('intro.time_label'))}
           {fact(
             <span aria-hidden="true" className="flex ps-2">
@@ -471,12 +669,12 @@ function Intro({ pathways, onStart }: { pathways: FinderPathway[]; onStart: () =
           )}
           {fact(tile('seal'), t('intro.free'), t('intro.free_label'))}
         </ul>
-        <div>
-          <Button size="lg" className="px-8" onClick={onStart} autoFocus>
+        <Bar stick={false}>
+          <Button size="lg" className={`px-8 ${MAIN_ON_PHONE}`} onClick={onStart} autoFocus={wide}>
             {t('intro.start')}
             <Forward />
           </Button>
-        </div>
+        </Bar>
       </div>
       <div
         aria-hidden="true"
