@@ -23,8 +23,10 @@ import {
   useCancelHandoff,
   type HandoffCase,
   type HandoffSupervisor,
+  type UnassignedService,
   type UnassignedServices,
 } from './api';
+import { OwnerDialog } from './components/ServicesCard';
 
 const PAYMENT_TONE: Record<NonNullable<HandoffCase['prepayment']>['status'], ChipTone> = {
   unpaid: 'warn',
@@ -73,10 +75,14 @@ export default function HandoffsPage() {
   );
 }
 
-/** Open services nobody owns yet (SVC2): the manager opens the case and chooses an owner. */
+/**
+ * Open services nobody owns yet (SVC2): the manager chooses each one's owner here, or opens the
+ * case. A case's new services also give the managers a task until they all have one.
+ */
 function Unassigned({ data }: { data: UnassignedServices }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
+  const [editing, setEditing] = useState<UnassignedService | null>(null);
   return (
     <SectionCard
       id="unassigned-services"
@@ -105,9 +111,22 @@ function Unassigned({ data }: { data: UnassignedServices }) {
                 {service.case_name}
               </Link>
               <span className="flex-[1_1_160px] text-sm text-text-2">{serviceTitle(service)}</span>
+              <Button
+                variant="outline"
+                aria-label={t('services.unassigned.chooseFor', {
+                  service: serviceTitle(service),
+                  name: service.case_name,
+                })}
+                onClick={() => setEditing(service)}
+              >
+                {t('services.unassigned.choose')}
+              </Button>
             </li>
           ))}
         </ul>
+      )}
+      {editing && (
+        <OwnerDialog caseId={editing.case} service={editing} onClose={() => setEditing(null)} />
       )}
     </SectionCard>
   );

@@ -55,6 +55,20 @@ describe('client services (SVC2)', () => {
     expect(within(card).getByText('ویزا · آلمان')).toBeInTheDocument();
   });
 
+  it('chooses an owner right on the new-cases page', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/new');
+    const card = await screen.findByRole('region', { name: 'خدمت‌های بی‌مسئول' });
+    await user.click(
+      within(card).getByRole('button', { name: 'انتخاب مسئول ویزا · آلمان برای سارا محمدی' }),
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'مسئول ویزا · آلمان' });
+    await within(dialog).findByRole('combobox', { name: 'مسئول' });
+    await user.click(within(dialog).getByRole('button', { name: 'سپردن ویزا · آلمان' }));
+    expect(await toasts().findByText(/^ویزا · آلمان به .+ سپرده شد\.$/)).toBeInTheDocument();
+    await waitFor(() => expect(within(card).queryByText('ویزا · آلمان')).not.toBeInTheDocument());
+  });
+
   it('moves a visa service to another stage and shows its visa results (SVC4)', async () => {
     const user = userEvent.setup();
     renderApp('/supervisor/files/1240');

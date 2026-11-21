@@ -112,7 +112,8 @@ export function ServicesCard({ caseId, services }: { caseId: number; services: C
   );
 }
 
-function OwnerDialog({
+/** Choose a service's owner (managers): on the case page and on the new-cases page. */
+export function OwnerDialog({
   caseId,
   service,
   onClose,

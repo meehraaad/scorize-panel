@@ -622,7 +622,9 @@
     "unassigned": {
       "title": "Services without an owner",
       "count": "{{n}} services",
-      "empty": "Every open service has an owner."
+      "empty": "Every open service has an owner.",
+      "choose": "Choose owner",
+      "chooseFor": "Choose the owner of {{service}} for {{name}}"
     },
     "stage": {
       "open": "Stage of {{service}}",

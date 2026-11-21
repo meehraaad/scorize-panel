@@ -183,7 +183,7 @@ const STANDARD_TEMPLATE: ContractTemplate = {
 const SERVICE_CATALOG: NonNullable<ContractBuilder['services']>['catalog'] = [
   { key: 'admission', name: 'پذیرش', team: 1 },
   { key: 'visa', name: 'ویزا', team: 9 },
-  { key: 'search', name: 'سرچ', team: 1 },
+  { key: 'search', name: 'سرچ', team: 7 },
   { key: 'correspondence', name: 'مکاتبه با استاد', team: 1 },
   { key: 'writing', name: 'نگارش', team: 6 },
 ];
