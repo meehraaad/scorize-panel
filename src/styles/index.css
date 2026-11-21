@@ -124,12 +124,14 @@
   --text-label--line-height: var(--lh-label);
   --text-caption: var(--fs-caption);
   --text-caption--line-height: var(--lh-caption);
+  --text-button: var(--fs-button);
+  --text-button--line-height: 1.5;
 
   /* Touch sizes: min-h-tap (any control), min-h-row (a row you tap: an answer, a list row),
-     min-h-cta (the main button at the bottom of a phone screen). */
+     min-h-cta (the main button at the bottom of a phone screen, the large button's height there). */
   --spacing-tap: 2.75rem;
   --spacing-row: 3.5rem;
-  --spacing-cta: 3.25rem;
+  --spacing-cta: 3rem;
 }
 
 /*
@@ -153,6 +155,7 @@
   --lh-label: 1.5;
   --fs-caption: 0.75rem; /* footnotes, chips */
   --lh-caption: 1.5;
+  --fs-button: 0.9375rem; /* a button's label (Button, both sizes) */
 }
 @media (width >= 64rem) {
   :root {
@@ -163,6 +166,7 @@
     --fs-section: 1.25rem;
     --fs-lead: 1.125rem;
     --lh-lead: 1.8;
+    --fs-button: 1rem;
   }
 }
 

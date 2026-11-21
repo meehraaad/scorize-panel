@@ -54,7 +54,7 @@ import {
 import { Flag, QuizIcon, type QuizIconName } from './art';
 import { key } from './keys';
 import { BarContext } from './pinned';
-import { Peek, PeekStrip, Rail } from './rail';
+import { FoundRoutes, Rail } from './rail';
 import { FirstResult, Results } from './routes';
 
 /**
@@ -168,8 +168,11 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
     save(goal ? { goal, parts, memory } : null);
   }, [goal, parts, memory]);
   const [results, setResults] = useState<PathwayResult[]>([]);
-  // The route answered first: shown beside the questions once it is ready.
-  const [firstId, setFirstId] = useState<number | null>(null);
+  // The routes answered so far, in the order they were found (shown newest first as they arrive).
+  const [foundIds, setFoundIds] = useState<number[]>([]);
+  // The route opened from them (the route screen).
+  const [openId, setOpenId] = useState<number | null>(null);
+  const [consulted, setConsulted] = useState(false);
 
   const answered = useMemo(() => answeredOf(parts), [parts]);
   const answers = useMemo(() => givenOf(parts), [parts]);
@@ -180,7 +183,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
     mutationFn: ({ given, contact }: { given: Given; contact: FinderContact }) =>
       checkPathways(given.answers, contact, given.byCountry, given.budget, given.income),
   });
-  // The first route's verdict, fetched in the background while the questions go on.
+  // Found routes' verdicts, fetched in the background while the questions go on.
   const peek = useMutation({
     mutationFn: (given: Given) =>
       checkPathways(
@@ -214,9 +217,14 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
       evaluate(given, 'results');
       return;
     }
-    const ready = answeredPathways(pathways, goal, done)[0];
-    if (firstId === null && ready) {
-      setFirstId(ready.id);
+    // A route this answer completes: check it (again, after going back) and add it to the row.
+    const before = answeredPathways(pathways, goal, answered).map((p) => p.id);
+    const fresh = answeredPathways(pathways, goal, done).filter((p) => !before.includes(p.id));
+    if (fresh.length) {
+      setFoundIds([
+        ...foundIds.filter((id) => !fresh.some((p) => p.id === id)),
+        ...fresh.map((p) => p.id),
+      ]);
       peek.mutate(given, { onSuccess: (data) => setResults(data.results) });
     }
   };
@@ -225,7 +233,9 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
     setParts([]);
     setMemory({});
     setGoal(null);
-    setFirstId(null);
+    setFoundIds([]);
+    setOpenId(null);
+    setConsulted(false);
     setResults([]);
     setStage('intro');
   };
@@ -255,13 +265,19 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
       </Frame>
     );
 
-  const firstPathway = pathways.find((p) => p.id === firstId);
-  // Back past its last question hides the first route again.
-  const firstReady =
-    goal !== null &&
-    firstPathway !== undefined &&
-    answeredPathways(pathways, goal, answered).some((p) => p.id === firstPathway.id);
-  const firstResult = results.find((r) => r.pathway.id === firstId);
+  // Back past a route's last question takes it off the row again.
+  const ready = goal ? answeredPathways(pathways, goal, answered) : [];
+  const found = foundIds
+    .map((id) => ready.find((p) => p.id === id))
+    .filter((p) => p !== undefined)
+    .reverse()
+    .map((pathway) => ({ pathway, result: results.find((r) => r.pathway.id === pathway.id) }));
+  const open = (id: number) => {
+    setOpenId(id);
+    setStage('first');
+  };
+  const opened = found.find((route) => route.pathway.id === openId) ?? found[0];
+  const foundRow = found.length ? <FoundRoutes routes={found} onOpen={open} /> : null;
 
   if (stage === 'results' && goal)
     return (
@@ -274,11 +290,13 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
           onMore={() => setStage('ask')}
           onEdit={restart}
           consulting={check.isPending}
+          consulted={consulted}
           onConsult={() =>
             check.mutate(
               { given: answers, contact: { channel: 'call', time: 'now' } },
               {
-                onSuccess: () => toast.success(t('consult.sent')),
+                // The button itself says it was sent (a toast would cover the bar on phones).
+                onSuccess: () => setConsulted(true),
                 onError: () => toast.error(t('error')),
               },
             )
@@ -303,7 +321,8 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
     return (
       <Frame {...frame} screen="first" progress={progress}>
         <FirstResult
-          result={firstResult}
+          result={opened?.result}
+          first={opened?.pathway.id === foundIds[0]}
           countries={countriesLeft(pathways, goal, answered)}
           busy={check.isPending}
           onMore={() => setStage('ask')}
@@ -319,22 +338,9 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
       progress={progress}
       step={{ number, total }}
       rail={
-        goal ? (
-          <Rail
-            countries={countryProgress(pathways, goal, answered)}
-            peek={
-              firstReady ? (
-                <Peek pathway={firstPathway} result={firstResult} onSee={() => setStage('first')} />
-              ) : null
-            }
-          />
-        ) : null
+        goal ? <Rail countries={countryProgress(pathways, goal, answered)} peek={foundRow} /> : null
       }
-      peek={
-        firstReady ? (
-          <PeekStrip pathway={firstPathway} result={firstResult} onSee={() => setStage('first')} />
-        ) : null
-      }
+      peek={foundRow}
     >
       {!goal ? (
         <Question key="goal" title={t('goal.title')} help={t('goal.help')} number={number}>
@@ -380,7 +386,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
                 if (picked) setMemory({ ...memory, [ask.id]: picked });
                 afterAnswer([...parts, { id: ask.id, set, byCountry, skips }]);
               }}
-              onShowResults={firstReady ? () => evaluate(answers, 'results') : undefined}
+              onShowResults={found.length ? () => evaluate(answers, 'results') : undefined}
             />
           </Question>
         )
@@ -470,19 +476,23 @@ function Frame({
   }, [screen]);
   // Leaving keeps the answers: back to the panel, out of a popup, or to the site from the plain page.
   const leave = fullScreen ? (
-    <Link to="/" className={buttonClass('outline', 'w-full', 'lg')}>
+    <Link to="/" className={buttonClass('quiet', 'w-full text-text-2', 'md')}>
       {t('exit.leave')}
     </Link>
   ) : host === 'dialog' && onClose ? (
-    <button type="button" className={buttonClass('outline', 'w-full', 'lg')} onClick={onClose}>
+    <button
+      type="button"
+      className={buttonClass('quiet', 'w-full text-text-2', 'md')}
+      onClick={onClose}
+    >
       {t('exit.leave')}
     </button>
   ) : host === 'page' ? (
-    <a href={SITE.home} className={buttonClass('outline', 'w-full', 'lg')}>
+    <a href={SITE.home} className={buttonClass('quiet', 'w-full text-text-2', 'md')}>
       {t('exit.leave')}
     </a>
   ) : (
-    <Link to="/" className={buttonClass('outline', 'w-full', 'lg')}>
+    <Link to="/" className={buttonClass('quiet', 'w-full text-text-2', 'md')}>
       {t('exit.leave')}
     </Link>
   );
@@ -613,23 +623,22 @@ function Frame({
             closeLabel={t('exit.dismiss')}
           >
             <p className="m-0 text-small text-text-2">{t('exit.body')}</p>
-            <div className="flex flex-col gap-2 pt-2">
-              <Button size="lg" className="w-full" onClick={() => setLeaving(false)}>
+            <div className="flex flex-col gap-1 pt-2">
+              <Button size="lg" className="mb-1 w-full" onClick={() => setLeaving(false)}>
                 {t('exit.stay')}
               </Button>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  className={buttonClass('outline', 'w-full', 'lg')}
-                  onClick={() => {
-                    setLeaving(false);
-                    onRestart?.();
-                  }}
-                >
-                  {t('exit.restart')}
-                </button>
-                {leave}
-              </div>
+              <button
+                type="button"
+                className={buttonClass('quiet', 'w-full', 'md')}
+                onClick={() => {
+                  setLeaving(false);
+                  onRestart?.();
+                }}
+              >
+                <QuizIcon name="restart" size={18} />
+                {t('exit.restart')}
+              </button>
+              {leave}
             </div>
           </Sheet>
         )}
