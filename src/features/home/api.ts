@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { APPLICANT_KEY, type Degree } from '@/lib/applicant/approval';
 import type { Stage } from '@/lib/applicant/stages';
-import type { StaffRole, TicketMessage } from '@/lib/tickets/api';
+import type { StaffRole, ThreadService, TicketMessage } from '@/lib/tickets/api';
 
 export type { StaffRole, TicketMessage };
 
@@ -46,6 +46,14 @@ export type Todo =
   | { kind: 'form'; id: string; writing: WritingType }
   | { kind: 'pay'; id: string; installment: number };
 
+/** A service the customer bought and where it stands (backend-changes.md SVC4). */
+export interface ApplicantService extends ThreadService {
+  /** The key of the stage it is at; null for a kind without stages. */
+  stage: string | null;
+  /** The kind's stages in order; empty for a kind without stages. */
+  stages: { key: string; name: string; final: boolean }[];
+}
+
 export interface ApplicantOverview {
   file: {
     applicant_id: number;
@@ -61,6 +69,8 @@ export interface ApplicantOverview {
   };
   stats: { submitted: number; accepted: number };
   todos: Todo[];
+  /** Null while Django has client services off; missing from an older Django. */
+  services?: ApplicantService[] | null;
   /** The latest messages of the supervisors' thread (lib/tickets; replies go there too). */
   ticket: { unread: number; messages: TicketMessage[] } | null;
   deadlines: ApplicationSummary[];

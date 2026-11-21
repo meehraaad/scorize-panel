@@ -193,4 +193,31 @@ describe('tickets page', () => {
     expect(await screen.findByRole('region', { name: 'این بخش قفل است' })).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: 'متن پیام' })).toBeNull();
   });
+
+  it('opens a service’s own conversation and writes to its owner (SVC3)', async () => {
+    const user = userEvent.setup();
+    const router = await open('/tickets/service/31');
+    const card = thread('گفتگوی ویزا · کانادا');
+    expect(
+      within(card).getByText('نگار صادقی · پیام شما به مسئول همین خدمت می‌رسد'),
+    ).toBeInTheDocument();
+    expect(await messages().findByText(/فهرست مدارک ویزای تحصیلی کانادا/)).toBeInTheDocument();
+    // Its messages aren't in the general conversation, and the other way round.
+    expect(screen.queryByText(/کارنامه را در پرونده ثبت کردم/)).toBeNull();
+
+    const tabs = screen.getByRole('navigation', { name: 'گفتگوهای پرونده' });
+    expect(within(tabs).getByRole('link', { name: 'ویزا · کانادا' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await user.type(within(card).getByRole('textbox'), 'وقت سفارت را کی بگیرم؟');
+    await user.click(within(card).getByRole('button', { name: /ارسال/ }));
+    expect(await messages().findByText('وقت سفارت را کی بگیرم؟')).toBeInTheDocument();
+
+    // Its badge counts the general conversation's unread reply.
+    await user.click(within(tabs).getByRole('link', { name: /^عمومی/ }));
+    expect(router.state.location.pathname).toBe('/tickets');
+    const general = await screen.findByRole('region', { name: 'سوپروایزرهای پرونده' });
+    expect(await within(general).findByText(/کارنامه را در پرونده ثبت کردم/)).toBeInTheDocument();
+  });
 });

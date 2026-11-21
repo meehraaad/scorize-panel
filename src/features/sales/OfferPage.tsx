@@ -27,6 +27,7 @@ import {
   type Offer,
   type OfferAction,
   type OfferData,
+  type ListedServices,
   type OfferOptions,
 } from './api';
 import { clausesComplete, offerText } from './clauses';
@@ -54,12 +55,24 @@ const nextMonth = () => {
 
 const priceOf = (offer: Pick<Offer, 'features' | 'discount'>, options: OfferOptions) =>
   Math.round(
-    offer.features.reduce(
-      (sum, key) => sum + (options.features.find((item) => item.key === key)?.price ?? 0),
-      0,
-    ) *
+    (options.services
+      ? (options.services.price ?? 0)
+      : offer.features.reduce(
+          (sum, key) => sum + (options.features.find((item) => item.key === key)?.price ?? 0),
+          0,
+        )) *
       (1 - offer.discount / 100),
   );
+
+/** SVC7: a kind that lists its services starts with its fixed ones. */
+const fixedServices = (options: OfferOptions): string[] =>
+  (options.services?.services ?? []).filter((row) => row.mode === 'fixed').map((row) => row.key);
+
+/** The chosen services that this kind lists, its fixed ones always in. */
+const servicesOn = (chosen: string[] | undefined, options: OfferOptions): string[] =>
+  (options.services?.services ?? [])
+    .filter((row) => row.mode === 'fixed' || (chosen ?? []).includes(row.key))
+    .map((row) => row.key);
 
 /** The standard contract's value in the kind-of-contract choice (its id is null). */
 const STANDARD = 'standard';
@@ -72,7 +85,8 @@ const firstFeature = (options: OfferOptions): ContractFeature[] =>
 
 const startingOffer = (customer: CustomerData, options: OfferOptions): Offer => ({
   template: options.template,
-  features: firstFeature(options),
+  features: options.services ? [] : firstFeature(options),
+  ...(options.services ? { services: fixedServices(options) } : {}),
   // The customer's wanted degree, unless this kind of contract isn't offered for it (S73).
   degree:
     customer.headline.degree !== null && options.degrees.includes(customer.headline.degree)
@@ -109,14 +123,19 @@ const valuesFor = (values: Record<string, string> | undefined, options: OfferOpt
  */
 const draftOn = (draft: Offer, options: OfferOptions): Offer => {
   if (draft.template === options.template)
-    return { ...draft, variables: valuesFor(draft.variables, options) };
+    return {
+      ...draft,
+      variables: valuesFor(draft.variables, options),
+      ...(options.services ? { services: servicesOn(draft.services, options) } : {}),
+    };
   const features = draft.features.filter((key) =>
     options.features.some((item) => item.key === key),
   );
   return {
     ...draft,
     template: options.template,
-    features: features.length ? features : firstFeature(options),
+    features: options.services ? [] : features.length ? features : firstFeature(options),
+    ...(options.services ? { services: servicesOn(draft.services, options) } : {}),
     clauses: [],
     variables: defaultValues(options),
   };
@@ -266,7 +285,9 @@ function OfferForm({
   const base = offer.features.reduce((sum, key) => sum + price(key), 0);
   const total = priceOf(offer, options);
   // A free contract (a template's services at 0 toman, S68) has no instalments.
-  const free = total === 0 && offer.features.length > 0;
+  const listed = options.services ?? null;
+  const chosenServices = listed ? servicesOn(offer.services, options) : [];
+  const free = total === 0 && (listed ? listed.price !== null : offer.features.length > 0);
   const schedule = free
     ? []
     : custom
@@ -283,14 +304,20 @@ function OfferForm({
   // Every blank filled before it goes to the customer or the manager (S69).
   const filled = options.variables.every((row) => (offer.variables[row.name] ?? '').trim() !== '');
   const valid =
-    offer.features.length > 0 &&
+    (listed
+      ? listed.price !== null && chosenServices.some((key) => key !== 'writing')
+      : offer.features.length > 0) &&
     offer.countries.length > 0 &&
     offer.applies >= options.min_applies &&
     offer.applies <= options.max_applies &&
     rowsDone &&
     addsUp &&
     filled;
-  const names = f.list(offer.features.map((key) => t(`apply.feature.${key}`)));
+  const names = listed
+    ? f.list(
+        listed.services.filter((row) => chosenServices.includes(row.key)).map((row) => row.name),
+      )
+    : f.list(offer.features.map((key) => t(`apply.feature.${key}`)));
   const kind =
     options.templates.find((row) => row.id === options.template)?.name ?? t('chooser.title');
   const [choosing, setChoosing] = useState(false);
@@ -397,40 +424,49 @@ function OfferForm({
                   size="lg"
                   title={t('offer.features')}
                 >
-                  <fieldset className="m-0 grid gap-3 border-0 p-0 md:grid-cols-3">
-                    <legend className="sr-only">{t('offer.features')}</legend>
-                    {options.features.map((item) => (
-                      <label
-                        key={item.key}
-                        className="flex min-h-11 cursor-pointer flex-col gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-focus"
-                      >
-                        <span className="flex items-center justify-between gap-2">
-                          <span className="text-base font-bold">
-                            {t(`apply.feature.${item.key}`)}
+                  {listed ? (
+                    <ListedServicesField
+                      listed={listed}
+                      chosen={chosenServices}
+                      price={listed.price === null ? null : money(listed.price)}
+                      onChange={(keys) => set('services', keys)}
+                    />
+                  ) : (
+                    <fieldset className="m-0 grid gap-3 border-0 p-0 md:grid-cols-3">
+                      <legend className="sr-only">{t('offer.features')}</legend>
+                      {options.features.map((item) => (
+                        <label
+                          key={item.key}
+                          className="flex min-h-11 cursor-pointer flex-col gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-focus"
+                        >
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-base font-bold">
+                              {t(`apply.feature.${item.key}`)}
+                            </span>
+                            <input
+                              type="checkbox"
+                              checked={offer.features.includes(item.key)}
+                              onChange={(event) =>
+                                set(
+                                  'features',
+                                  event.target.checked
+                                    ? [...offer.features, item.key]
+                                    : offer.features.filter((key) => key !== item.key),
+                                )
+                              }
+                              className="size-[18px] accent-primary"
+                            />
                           </span>
-                          <input
-                            type="checkbox"
-                            checked={offer.features.includes(item.key)}
-                            onChange={(event) =>
-                              set(
-                                'features',
-                                event.target.checked
-                                  ? [...offer.features, item.key]
-                                  : offer.features.filter((key) => key !== item.key),
-                              )
-                            }
-                            className="size-[18px] accent-primary"
-                          />
-                        </span>
-                        <span className="text-[13px] leading-6 text-text-2">
-                          {t(`offer.featureHint.${item.key}`)}
-                        </span>
-                        <span className="text-sm font-semibold">
-                          {item.price === 0 ? t('offer.freePrice') : money(item.price)}
-                        </span>
-                      </label>
-                    ))}
-                  </fieldset>
+                          <span className="text-[13px] leading-6 text-text-2">
+                            {t(`offer.featureHint.${item.key}`)}
+                          </span>
+                          <span className="text-sm font-semibold">
+                            {item.price === 0 ? t('offer.freePrice') : money(item.price)}
+                          </span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
                 </SectionCard>
 
                 <SectionCard
@@ -761,6 +797,63 @@ function StepButtons({
         {next && <Button onClick={onNext}>{next}</Button>}
         {children}
       </div>
+    </div>
+  );
+}
+
+/**
+ * SVC7: the services of a kind that lists them. Fixed ones are ticked and locked; the seller turns
+ * the optional ones on or off. The price is the contract's, whatever is chosen.
+ */
+function ListedServicesField({
+  listed,
+  chosen,
+  price,
+  onChange,
+}: {
+  listed: ListedServices;
+  chosen: string[];
+  price: string | null;
+  onChange: (keys: string[]) => void;
+}) {
+  const { t } = useTranslation('sales');
+  return (
+    <div className="flex flex-col gap-3">
+      <fieldset className="m-0 grid gap-3 border-0 p-0 md:grid-cols-3">
+        <legend className="sr-only">{t('offer.features')}</legend>
+        {listed.services.map((row) => {
+          const fixed = row.mode === 'fixed';
+          return (
+            <label
+              key={row.key}
+              className={`flex min-h-11 flex-col gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-focus ${fixed ? '' : 'cursor-pointer'}`}
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-base font-bold">{row.name}</span>
+                <input
+                  type="checkbox"
+                  checked={fixed || chosen.includes(row.key)}
+                  disabled={fixed}
+                  onChange={(event) =>
+                    onChange(
+                      event.target.checked
+                        ? [...chosen, row.key]
+                        : chosen.filter((key) => key !== row.key),
+                    )
+                  }
+                  className="size-[18px] accent-primary"
+                />
+              </span>
+              <span className="text-[13px] leading-6 text-text-2">
+                {t(fixed ? 'offer.service.fixed' : 'offer.service.optional')}
+              </span>
+            </label>
+          );
+        })}
+      </fieldset>
+      <p className="m-0 text-sm font-semibold">
+        {price === null ? t('offer.service.noPrice') : t('offer.service.price', { price })}
+      </p>
     </div>
   );
 }

@@ -29,6 +29,12 @@ export interface InboxItem {
   waiting_since: string | null;
   /** The applicant marked a waiting message «خیلی ضروری». */
   urgent: boolean;
+  /**
+   * The conversation to open (SVC3): the longest-waiting one, `service/<id>`, else `supervisor`.
+   * Counts and waiting cover only the conversations the viewer may read. Missing from an older
+   * Django.
+   */
+  thread?: string;
 }
 
 /** A page of the chosen filter, and how many threads each filter has. */

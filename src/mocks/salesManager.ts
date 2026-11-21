@@ -179,6 +179,15 @@ const STANDARD_TEMPLATE: ContractTemplate = {
   is_active: true,
 };
 
+/** Django's service kinds a manager can put in a contract (`client_services.offers.catalog`). */
+const SERVICE_CATALOG: NonNullable<ContractBuilder['services']>['catalog'] = [
+  { key: 'admission', name: 'پذیرش', team: 1 },
+  { key: 'visa', name: 'ویزا', team: 9 },
+  { key: 'search', name: 'سرچ', team: 1 },
+  { key: 'correspondence', name: 'مکاتبه با استاد', team: 1 },
+  { key: 'writing', name: 'نگارش', team: 6 },
+];
+
 /** Django's contract builder (S64): the standard clauses, the price list and the offer's rules. */
 const builderState = (): ContractBuilder => ({
   template: STANDARD_TEMPLATE,
@@ -229,6 +238,8 @@ const builderState = (): ContractBuilder => ({
   versions: [],
   variables: STANDARD_VARIABLES,
   builtins: BUILTIN_VARIABLES,
+  // SVC7: none listed yet, so the kind is priced the old way.
+  services: { price: null, rows: [], catalog: SERVICE_CATALOG },
 });
 
 /** Free apply to Turkey (S68): one fixed clause, admission at 0 toman, no instalments. */
@@ -1258,6 +1269,36 @@ export const managerHandlers = [
       const next = prices.find((item) => item.feature === row.feature);
       return next ? { ...next, is_active: next.is_active && !!next.price } : row;
     });
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Django's `ServicesView` (SVC7): the kind's services, replaced as a whole, and its one price.
+  http.put(`${BASE}/contract/services/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const state = kindState(kindOf(request));
+    if (!state?.services) return notFound();
+    const { price, rows } = (await request.json()) as {
+      price: number | null;
+      rows: { key: string; mode: 'fixed' | 'optional' }[];
+    };
+    const catalog = state.services.catalog;
+    const keys = rows.map((row) => row.key);
+    if (
+      new Set(keys).size !== keys.length ||
+      keys.some((key) => !catalog.some((kind) => kind.key === key))
+    )
+      return HttpResponse.json({ rows: ['invalid'] }, { status: 400 });
+    if (rows.length && (price === null || keys.every((key) => key === 'writing')))
+      return HttpResponse.json({ price: ['required'] }, { status: 400 });
+    state.services = {
+      catalog,
+      price: rows.length ? price : null,
+      rows: rows.map((row) => ({
+        ...row,
+        name: catalog.find((kind) => kind.key === row.key)?.name ?? row.key,
+      })),
+    };
     return new HttpResponse(null, { status: 204 });
   }),
 

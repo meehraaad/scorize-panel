@@ -13,12 +13,17 @@ import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
+import { Link } from 'react-router';
+import { SectionCard } from '@/components/ui/SectionCard';
+import { casePath } from './paths';
 import {
   handoffsQuery,
+  serviceTitle,
   useAssignSupervisor,
   useCancelHandoff,
   type HandoffCase,
   type HandoffSupervisor,
+  type UnassignedServices,
 } from './api';
 
 const PAYMENT_TONE: Record<NonNullable<HandoffCase['prepayment']>['status'], ChipTone> = {
@@ -63,7 +68,48 @@ export default function HandoffsPage() {
           ))}
         </ul>
       )}
+      {data.unassigned_services && <Unassigned data={data.unassigned_services} />}
     </PageStack>
+  );
+}
+
+/** Open services nobody owns yet (SVC2): the manager opens the case and chooses an owner. */
+function Unassigned({ data }: { data: UnassignedServices }) {
+  const { t } = useTranslation('supervisor');
+  const f = useFormat();
+  return (
+    <SectionCard
+      id="unassigned-services"
+      title={t('services.unassigned.title')}
+      end={
+        data.count > 0 && (
+          <span className="text-sm text-text-2">
+            {t('services.unassigned.count', { n: f.number(data.count) })}
+          </span>
+        )
+      }
+    >
+      {data.results.length === 0 ? (
+        <EmptyState>{t('services.unassigned.empty')}</EmptyState>
+      ) : (
+        <ul className="m-0 list-none p-0 pb-2">
+          {data.results.map((service) => (
+            <li
+              key={service.id}
+              className="flex flex-wrap items-center gap-x-5 gap-y-1 px-5 py-3 shadow-[inset_0_1px_0_var(--hair)] lg:px-8"
+            >
+              <Link
+                to={casePath(service.case)}
+                className="inline-flex min-h-11 flex-[1_1_180px] items-center font-medium text-primary-text hover:underline"
+              >
+                {service.case_name}
+              </Link>
+              <span className="flex-[1_1_160px] text-sm text-text-2">{serviceTitle(service)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
   );
 }
 

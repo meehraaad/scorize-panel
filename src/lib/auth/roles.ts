@@ -19,6 +19,7 @@ export const Team = {
   WRITING: 6,
   SEARCH: 7,
   LANGUAGE: 8,
+  VISA: 9,
 } as const;
 
 export type Role =
@@ -90,6 +91,8 @@ export function getRoles(user: SessionUser): Role[] {
     // Same rule as the old React staff dashboard (/new-dashboard/): the executive team works on
     // applicant files. It reads only `staff.team` and `is_superuser` from whoami.
     (staff && team === Team.EXECUTIVE) ||
+    // The visa team owns visa services (backend-changes.md SVC2) and works on the same files.
+    (staff && team === Team.VISA) ||
     hasPermission(user, 'can_manage_applicant') ||
     // Country supervisors outside the executive team (backend-changes.md, R2).
     user.is_country_supervisor

@@ -8,6 +8,9 @@ import {
   firstCasesQuery,
   handoffsQuery,
   inboxQuery,
+  myServicesQuery,
+  scopesQuery,
+  servicesReportQuery,
   reportsQuery,
   todayBoardQuery,
   todayCountsQuery,
@@ -37,6 +40,19 @@ import type { PanelDefinition } from '../types';
 async function assignersOnly() {
   const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
   return user && hasPermission(user, ASSIGN_PERMISSION) ? null : redirect('/supervisor');
+}
+
+/** The services page waits for Django's client services. */
+function servicesOn() {
+  return Promise.resolve(ON_SERVER.clientServices ? null : redirect('/supervisor'));
+}
+
+/** The scopes page: managers, once Django serves client services. */
+async function scopeManagersOnly() {
+  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+  return ON_SERVER.clientServices && user && hasPermission(user, ASSIGN_PERMISSION)
+    ? null
+    : redirect('/supervisor');
 }
 
 /** The mail page is for managers with `mail_server.manage_mailboxes`, once Django serves it. */
@@ -95,6 +111,29 @@ export const supervisorPanel: PanelDefinition = {
       icon: 'user',
       permission: ASSIGN_PERMISSION,
     },
+    ...(ON_SERVER.clientServices
+      ? [
+          {
+            id: 'services',
+            to: 'services',
+            label: 'panels.supervisor.nav.services',
+            icon: 'list',
+          } as const,
+          {
+            id: 'services-report',
+            to: 'services/report',
+            label: 'panels.supervisor.nav.servicesReport',
+            icon: 'chart',
+          } as const,
+          {
+            id: 'scopes',
+            to: 'scopes',
+            label: 'panels.supervisor.nav.scopes',
+            icon: 'shield',
+            permission: ASSIGN_PERMISSION,
+          } as const,
+        ]
+      : []),
     { id: 'reports', to: 'reports', label: 'panels.supervisor.nav.reports', icon: 'chart' },
     ...(ON_SERVER.mailServers
       ? [
@@ -206,6 +245,33 @@ export const supervisorPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/supervisor/HandoffsPage'), ['supervisor'], {
         guard: assignersOnly,
         data: () => [handoffsQuery],
+        skeleton: 'list',
+      }),
+    },
+    // The services the viewer owns (SVC4), once Django serves them.
+    {
+      path: 'services',
+      ...lazyPage(() => import('@/features/supervisor/MyServicesPage'), ['supervisor'], {
+        guard: servicesOn,
+        data: () => [myServicesQuery],
+        skeleton: 'list',
+      }),
+    },
+    // How the services are answered, per team and owner (SVC6).
+    {
+      path: 'services/report',
+      ...lazyPage(() => import('@/features/supervisor/ServicesReportPage'), ['supervisor'], {
+        guard: servicesOn,
+        data: () => [servicesReportQuery('month')],
+        skeleton: 'list',
+      }),
+    },
+    // Supervisors' scopes and where they differ from today's rule (SVC5): managers.
+    {
+      path: 'scopes',
+      ...lazyPage(() => import('@/features/supervisor/ScopesPage'), ['supervisor'], {
+        guard: scopeManagersOnly,
+        data: () => [scopesQuery],
         skeleton: 'list',
       }),
     },
