@@ -46,10 +46,17 @@ export interface CaseApplication {
   approval: Approval;
   /** Shown to the applicant under the application. */
   note: string | null;
+  /** The destination it's for (SVC9); missing from an older Django. */
+  country?: string | null;
 }
 
-/** What the side editor sends (create or update). */
-export type ApplicationInput = Omit<CaseApplication, 'id' | 'approval'>;
+/**
+ * What the side editor sends (create or update). `service`: a new one added from an admission
+ * service's tab is for that service's country (SVC9).
+ */
+export type ApplicationInput = Omit<CaseApplication, 'id' | 'approval' | 'country'> & {
+  service?: number;
+};
 
 export interface Credential {
   label: string;

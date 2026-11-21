@@ -402,7 +402,7 @@ the home indicator (`env(safe-area-inset-bottom)`). Close asks first when leavin
 
 ## Performance budget
 
-First load (gzip, `pnpm size` checks it in CI): JS ≈ 187.1 KB (budget 187.2), CSS ≈ 21.4 KB (budget 21.4);
+First load (gzip, `pnpm size` checks it in CI): JS ≈ 187.2 KB (budget 187.4), CSS ≈ 21.4 KB (budget 21.4);
 fonts are loaded per script as text appears. How pages stay fast (page data, skeletons, preload,
 cache, measuring): docs/performance.md.
 

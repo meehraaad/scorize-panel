@@ -55,6 +55,48 @@ describe('client services (SVC2)', () => {
     expect(within(card).getByText('ویزا · آلمان')).toBeInTheDocument();
   });
 
+  it('opens a tab per service with its owner, stages and tool (SVC9)', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/files/1240');
+    const nav = await screen.findByRole('navigation', { name: 'خدمت‌های این پرونده' });
+    await user.click(within(nav).getByRole('link', { name: /ویزا · کانادا/ }));
+
+    const tab = await screen.findByRole('region', { name: 'ویزا · کانادا' });
+    expect(within(tab).getByText('بی‌مسئول')).toBeInTheDocument();
+    expect(within(tab).getByRole('button', { name: 'گفتگوی این خدمت' })).toBeInTheDocument();
+    const stages = within(tab).getByRole('list', { name: 'مرحله‌ها' });
+    expect(within(stages).getAllByRole('listitem')[0]).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('region', { name: 'نتیجه‌های ویزا' })).toBeInTheDocument();
+  });
+
+  it('an admission tab lists its country’s applications and adds one for that country', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/files/1240/services/124001');
+    const tool = await screen.findByRole('region', { name: 'اپلای‌های آلمان' });
+    const before = within(tool).getAllByRole('row').length;
+    await user.click(within(tool).getByRole('button', { name: 'افزودن اپلای' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText('دانشگاه'), 'TU Berlin');
+    await user.type(within(dialog).getByLabelText('رشته'), 'Physics');
+    await user.click(within(dialog).getByRole('button', { name: 'ذخیره‌ی تغییرات' }));
+    await waitFor(() => expect(within(tool).getAllByRole('row')).toHaveLength(before + 1));
+    expect(within(tool).getAllByText('TU Berlin').length).toBeGreaterThan(0);
+  });
+
+  it('chooses an owner right on the new-cases page', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/new');
+    const card = await screen.findByRole('region', { name: 'خدمت‌های بی‌مسئول' });
+    await user.click(
+      within(card).getByRole('button', { name: 'انتخاب مسئول ویزا · آلمان برای سارا محمدی' }),
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'مسئول ویزا · آلمان' });
+    await within(dialog).findByRole('combobox', { name: 'مسئول' });
+    await user.click(within(dialog).getByRole('button', { name: 'سپردن ویزا · آلمان' }));
+    expect(await toasts().findByText(/^ویزا · آلمان به .+ سپرده شد\.$/)).toBeInTheDocument();
+    await waitFor(() => expect(within(card).queryByText('ویزا · آلمان')).not.toBeInTheDocument());
+  });
+
   it('moves a visa service to another stage and shows its visa results (SVC4)', async () => {
     const user = userEvent.setup();
     renderApp('/supervisor/files/1240');

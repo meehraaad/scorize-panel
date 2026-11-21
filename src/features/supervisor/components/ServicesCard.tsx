@@ -112,7 +112,8 @@ export function ServicesCard({ caseId, services }: { caseId: number; services: C
   );
 }
 
-function OwnerDialog({
+/** Choose a service's owner (managers): on the case page and on the new-cases page. */
+export function OwnerDialog({
   caseId,
   service,
   onClose,
@@ -268,19 +269,42 @@ function StageForm({
   onDone: () => void;
 }) {
   const { t } = useTranslation('supervisor');
-  const f = useFormat();
+  return (
+    <div className="flex flex-col gap-5">
+      {detail.follows_case && (
+        <p className="m-0 text-sm leading-6 text-text-2">{t('services.stage.followsCase')}</p>
+      )}
+      {detail.editable && <StagePicker caseId={caseId} detail={detail} onSaved={onDone} />}
+      {detail.visa && <VisaResults caseId={caseId} detail={detail} />}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={onDone}>
+          {t(detail.editable ? 'services.dialog.cancel' : 'close')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Moves a service to another of its stages (its owner or a manager: `detail.editable`). */
+export function StagePicker({
+  caseId,
+  detail,
+  onSaved,
+}: {
+  caseId: number;
+  detail: ServiceDetail;
+  onSaved?: () => void;
+}) {
+  const { t } = useTranslation('supervisor');
   const save = useSetServiceStage(caseId);
   const { service } = detail;
   const [chosen, setChosen] = useState(service.stage?.key ?? detail.stages[0]?.key ?? '');
-  // The visa result being recorded: a new one, one of the list, or none.
-  const [recording, setRecording] = useState<ServiceVisaResult | 'new' | null>(null);
   const title = serviceTitle(service);
-  const countries = detail.countries ?? null;
 
   const submit = () => {
     const stage = detail.stages.find((entry) => entry.key === chosen);
     if (!stage || stage.key === service.stage?.key) {
-      onDone();
+      onSaved?.();
       return;
     }
     save.mutate(
@@ -288,7 +312,7 @@ function StageForm({
       {
         onSuccess: () => {
           toast.success(t('services.stage.done', { service: title, stage: stage.name }));
-          onDone();
+          onSaved?.();
         },
         onError: (error) =>
           toast.error(
@@ -301,93 +325,99 @@ function StageForm({
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      {detail.follows_case && (
-        <p className="m-0 text-sm leading-6 text-text-2">{t('services.stage.followsCase')}</p>
-      )}
-      {detail.editable && (
+    <div className="flex flex-wrap items-end gap-3">
+      <div className="min-w-0 flex-[1_1_220px]">
         <SelectField
           label={t('services.stage.label')}
           value={chosen}
           onChange={setChosen}
           options={detail.stages.map((stage) => ({ value: stage.key, label: stage.name }))}
         />
-      )}
-      {detail.visa && (
-        <section aria-labelledby="service-visa-results" className="flex flex-col gap-2">
-          <h3 id="service-visa-results" className="m-0 text-base font-bold">
-            {t('services.visa.title')}
-          </h3>
-          {detail.visa.length === 0 ? (
-            <p className="m-0 text-sm leading-6 text-text-2">{t('services.visa.empty')}</p>
-          ) : (
-            <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {detail.visa.map((result) => (
-                <li key={result.id} className="flex flex-col gap-1 rounded-2xl bg-canvas p-4">
-                  <span className="flex flex-wrap items-center gap-2 text-[15px] font-medium">
-                    {result.title}
-                    <Chip
-                      tone={
-                        result.status === 'granted'
-                          ? 'good'
-                          : result.status === 'refused'
-                            ? 'danger'
-                            : 'info'
-                      }
-                      small
-                    >
-                      {t(`services.visa.status.${result.status}`)}
-                    </Chip>
-                  </span>
-                  <span className="text-sm text-text-2">
-                    {t('services.visa.embassy', { embassy: result.embassy })}
-                    {result.appointment_at &&
-                      ` · ${t('services.visa.appointment', { when: f.dateTime(result.appointment_at) })}`}
-                  </span>
-                  {result.note && <span className="text-sm leading-6">{result.note}</span>}
-                  {countries && recording === null && (
-                    <Button
-                      variant="outline"
-                      className="mt-1 h-11 self-start px-4 text-sm"
-                      onClick={() => setRecording(result)}
-                    >
-                      {t('services.visa.form.edit', { title: result.title })}
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          {countries && recording !== null && (
-            <VisaResultForm
-              key={recording === 'new' ? 'new' : recording.id}
-              caseId={caseId}
-              service={service.id}
-              countries={countries}
-              result={recording === 'new' ? null : recording}
-              onDone={() => setRecording(null)}
-            />
-          )}
-          {countries && recording === null && (
-            <Button variant="outline" className="self-start" onClick={() => setRecording('new')}>
-              {t('services.visa.form.new')}
-            </Button>
-          )}
-          <p className="m-0 text-sm leading-6 text-text-2">
-            {t(countries ? 'services.visa.followed' : 'services.visa.oldSite')}
-          </p>
-        </section>
-      )}
-      <div className="flex flex-wrap gap-2">
-        {detail.editable && (
-          <Button disabled={!chosen || save.isPending} onClick={submit}>
-            {t('services.stage.save', { service: title })}
-          </Button>
-        )}
-        <Button variant="outline" onClick={onDone}>
-          {t(detail.editable ? 'services.dialog.cancel' : 'close')}
-        </Button>
       </div>
+      <Button disabled={!chosen || save.isPending} onClick={submit}>
+        {t('services.stage.save', { service: title })}
+      </Button>
     </div>
+  );
+}
+
+/**
+ * A visa service's tool: its country's results from the old site, and (owner or manager) recording
+ * a new one or changing one (SVC4).
+ */
+export function VisaResults({ caseId, detail }: { caseId: number; detail: ServiceDetail }) {
+  const { t } = useTranslation('supervisor');
+  const f = useFormat();
+  const { service } = detail;
+  // The visa result being recorded: a new one, one of the list, or none.
+  const [recording, setRecording] = useState<ServiceVisaResult | 'new' | null>(null);
+  const countries = detail.countries ?? null;
+  const results = detail.visa ?? [];
+  const heading = `service-visa-results-${String(service.id)}`;
+
+  return (
+    <section aria-labelledby={heading} className="flex flex-col gap-2">
+      <h3 id={heading} className="m-0 text-base font-bold">
+        {t('services.visa.title')}
+      </h3>
+      {results.length === 0 ? (
+        <p className="m-0 text-sm leading-6 text-text-2">{t('services.visa.empty')}</p>
+      ) : (
+        <ul className="m-0 flex list-none flex-col gap-3 p-0">
+          {results.map((result) => (
+            <li key={result.id} className="flex flex-col gap-1 rounded-2xl bg-canvas p-4">
+              <span className="flex flex-wrap items-center gap-2 text-[15px] font-medium">
+                {result.title}
+                <Chip
+                  tone={
+                    result.status === 'granted'
+                      ? 'good'
+                      : result.status === 'refused'
+                        ? 'danger'
+                        : 'info'
+                  }
+                  small
+                >
+                  {t(`services.visa.status.${result.status}`)}
+                </Chip>
+              </span>
+              <span className="text-sm text-text-2">
+                {t('services.visa.embassy', { embassy: result.embassy })}
+                {result.appointment_at &&
+                  ` · ${t('services.visa.appointment', { when: f.dateTime(result.appointment_at) })}`}
+              </span>
+              {result.note && <span className="text-sm leading-6">{result.note}</span>}
+              {countries && recording === null && (
+                <Button
+                  variant="outline"
+                  className="mt-1 h-11 self-start px-4 text-sm"
+                  onClick={() => setRecording(result)}
+                >
+                  {t('services.visa.form.edit', { title: result.title })}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {countries && recording !== null && (
+        <VisaResultForm
+          key={recording === 'new' ? 'new' : recording.id}
+          caseId={caseId}
+          service={service.id}
+          countries={countries}
+          result={recording === 'new' ? null : recording}
+          onDone={() => setRecording(null)}
+        />
+      )}
+      {countries && recording === null && (
+        <Button variant="outline" className="self-start" onClick={() => setRecording('new')}>
+          {t('services.visa.form.new')}
+        </Button>
+      )}
+      <p className="m-0 text-sm leading-6 text-text-2">
+        {t(countries ? 'services.visa.followed' : 'services.visa.oldSite')}
+      </p>
+    </section>
   );
 }
