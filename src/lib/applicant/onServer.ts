@@ -12,6 +12,8 @@ export type ServerFeature =
   | 'consultationInfo'
   | 'packages'
   | 'estimate'
+  | 'pathwayFinder'
+  | 'pathwaysManagement'
   | 'reviewDocuments'
   | 'background'
   | 'start'
@@ -44,9 +46,17 @@ export type ServerFeature =
   | 'attendance'
   | 'hr'
   | 'marketing'
-  | 'dayFollowUps';
+  | 'dayFollowUps'
+  | 'clientServices';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  /**
+   * `GET /supervisor/v1/services/mine/`: the services a supervisor or visa expert owns (lang
+   * `claude/ecstatic-edison-jzr50i`, docs/client-services.md phase 4), behind Django's
+   * `SCORIZE_CLIENT_SERVICES`, and `scopes/` (phase 5). Off: no «خدمت‌های من» and «سرپرست‌ها» pages. The case page's services card and the
+   * service conversations need no switch here: they show when Django sends them.
+   */
+  clientServices: false,
   /**
    * `follow_up_on` (a day with no hour) on `POST /sales/v1/customers/<id>/contacts/` and
    * `leads/bulk/` (lang `claude/inspiring-dirac-6lpa16`). Off: the follow-up picker asks a time.
@@ -144,6 +154,13 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   packages: true,
   /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution `mehrad-take-over`). */
   estimate: true,
+  /**
+   * `applicant/v1/pathways/` (+ `goal`, `summary`, `tip`, `duration`, `cost`): the simple pathway
+   * finder, fewest questions to the first country (needs `makemigrations pathways` + `migrate`).
+   */
+  pathwayFinder: true,
+  /** `staff/v1/pathways/`: migration pathways in sales and marketing management. */
+  pathwaysManagement: true,
   /** H59 `review-documents/`: files sent for a free review (scorize-revolution `claude/project-thread-aylffr`). */
   reviewDocuments: true,
   /** H60 `background/`: the tablet form. */

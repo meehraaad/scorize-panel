@@ -19,6 +19,7 @@ import {
   type ContactDraft,
   type ContactValues,
   type LogSession,
+  type NoAnswerSend,
   type StageChoice,
 } from '@/lib/sales/contactDrafts';
 import { Icon } from '@/components/ui/Icon';
@@ -59,6 +60,14 @@ const OUTCOMES = [
   'call_later',
   'wrong_number',
 ] as const satisfies readonly CallOutcome[];
+
+/** How a call with no answer is followed (`supports.no_answer_send`): SMS is the default. */
+const NO_ANSWER_SENDS = [
+  'sms',
+  'whatsapp',
+  'telegram',
+  'none',
+] as const satisfies readonly NoAnswerSend[];
 
 const isMessage = (channel: Channel) =>
   channel === 'whatsapp' || channel === 'telegram' || channel === 'sms';
@@ -108,6 +117,7 @@ export function LogDialog({
     email,
     sms = false,
     customerOpen = false,
+    noAnswerSend = 'sms',
   } = values;
   const template = values.template ?? String(customer.templates[0]?.id ?? '');
   const change =
@@ -128,6 +138,13 @@ export function LogDialog({
   /** Logging a booked consultation: the channel is fixed. */
   const session = !!start.reservation;
   const noAnswer = call && outcome === 'no_answer';
+  /** The seller picks how a no-answer is followed (an older server always sends the SMS). */
+  const sendChoice = noAnswer && !!customer.supports.no_answer_send;
+  /** A no-answer followed from the seller's own WhatsApp or Telegram: it opens with a ready text. */
+  const appSend =
+    sendChoice && (noAnswerSend === 'whatsapp' || noAnswerSend === 'telegram')
+      ? noAnswerSend
+      : null;
   const talked = !call || outcome === 'talked' || outcome === 'call_later';
   // The board's lanes, the sales manager's columns included (S48): the log moves the card the
   // board shows, forward only; drafts and contracts come from the offer page.
@@ -156,12 +173,18 @@ export function LogDialog({
     setChecked(true);
     if ((lost && !lostReason) || (asksFollowUp && !followAt && !followOn)) return;
     // Open the app first: a window opened after the request would be blocked as a popup.
-    if (isMessage(channel))
-      window.open(messageHref(channel, customer.phone, chosen?.text), '_blank', 'noreferrer');
+    const app = isMessage(channel) ? channel : appSend;
+    if (app) {
+      window.open(messageHref(app, customer.phone, chosen?.text), '_blank', 'noreferrer');
+      // A Telegram link can't carry the text: it waits on the clipboard to paste.
+      if (app === 'telegram' && chosen?.text)
+        void navigator.clipboard.writeText(chosen.text).catch(() => {});
+    }
     log.mutate(
       {
         channel,
         ...(call ? { outcome } : {}),
+        ...(sendChoice ? { no_answer_send: noAnswerSend } : {}),
         ...(talked && lost ? { stage: 'lost' as const } : {}),
         ...(talked && target && stage !== 'keep' && !lost
           ? { stage: target.stage, ...(target.column !== null ? { column: target.column } : {}) }
@@ -383,12 +406,49 @@ export function LogDialog({
           }))}
         />
       )}
+      {sendChoice && (
+        <ChoiceGroup
+          legend={t('customer.logDialog.noAnswerSend')}
+          look="segmented"
+          value={noAnswerSend}
+          onChange={change('noAnswerSend')}
+          options={NO_ANSWER_SENDS.map((value) => ({
+            value,
+            label: t(`customer.logDialog.noAnswerSendOption.${value}`),
+          }))}
+        />
+      )}
+      {appSend && customer.templates.length > 0 && (
+        <ChoiceGroup
+          legend={t('customer.logDialog.template')}
+          look="tiles"
+          value={template}
+          onChange={change('template')}
+          options={customer.templates.map((item) => ({
+            value: String(item.id),
+            label: item.title,
+            hint: item.text,
+          }))}
+        />
+      )}
       {noAnswer && (
         <Notice tone="info">
-          {customer.supports.no_answer_sms
-            ? t('customer.logDialog.noAnswer')
-            : t('customer.logDialog.noAnswerToday')}
+          {sendChoice
+            ? t(`customer.logDialog.noAnswerSendNote.${noAnswerSend}`)
+            : customer.supports.no_answer_sms
+              ? t('customer.logDialog.noAnswer')
+              : t('customer.logDialog.noAnswerToday')}
         </Notice>
+      )}
+      {sendChoice && noAnswerSend === 'sms' && customer.no_answer_sms_text && (
+        <figure className="m-0 flex flex-col gap-1">
+          <figcaption className="text-sm font-semibold text-text-2">
+            {t('customer.logDialog.noAnswerSmsText')}
+          </figcaption>
+          <blockquote className="m-0 rounded-xl border border-hair bg-canvas p-3 text-sm whitespace-pre-line">
+            {customer.no_answer_sms_text}
+          </blockquote>
+        </figure>
       )}
     </>
   );

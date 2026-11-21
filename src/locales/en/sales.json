@@ -636,7 +636,21 @@
       },
       "sessionEnded": "Ended · {{ago}}",
       "calendarTitle": "When to follow up with {{name}}?",
-      "calendarHint": "Tap a free spot; that time becomes the follow-up."
+      "calendarHint": "Tap a free spot; that time becomes the follow-up.",
+      "noAnswerSend": "How should we let them know?",
+      "noAnswerSendOption": {
+        "sms": "SMS",
+        "whatsapp": "WhatsApp",
+        "telegram": "Telegram",
+        "none": "Nothing"
+      },
+      "noAnswerSendNote": {
+        "sms": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
+        "whatsapp": "Saving opens your WhatsApp with the ready message; send it yourself. No SMS goes out, and a follow-up is set for tomorrow.",
+        "telegram": "Saving opens your Telegram and copies the ready message; paste and send it. No SMS goes out, and a follow-up is set for tomorrow.",
+        "none": "Nothing is sent. Only a follow-up for tomorrow is set."
+      },
+      "noAnswerSmsText": "The SMS that goes out"
     },
     "tabs": {
       "label": "Customer page sections",
@@ -1300,7 +1314,13 @@
     "previewHint": "The page that is printed and signed; variables are coloured and this customer's clauses framed.",
     "fullScreen": "Full screen",
     "textTitle": "Contract text",
-    "amountManager": "This amount is outside the contract's range ({{range}}). It goes to the manager only and does not reach the customer until approved."
+    "amountManager": "This amount is outside the contract's range ({{range}}). It goes to the manager only and does not reach the customer until approved.",
+    "service": {
+      "fixed": "Fixed: always in the contract",
+      "optional": "Optional: for this customer",
+      "price": "Contract price: {{price}}, whatever services are chosen",
+      "noPrice": "The sales manager hasn't set this contract's price yet."
+    }
   },
   "manager": {
     "nav": "Sales management sections",
@@ -1311,6 +1331,7 @@
       "followUps": "Follow-up health",
       "stages": "Board stages",
       "tags": "Customer tags",
+      "pathways": "Migration pathways",
       "commission": "Commission",
       "contract": "Contract",
       "phone": "Phone",
@@ -1977,6 +1998,21 @@
         "undo": "Undo",
         "saved": "Settings saved.",
         "step2Hint": "The countries, degrees, amount range and number of applications this contract covers."
+      },
+      "services": {
+        "price": "Contract price",
+        "priceHint": "One price for the whole contract; an optional service doesn't change it.",
+        "priceMissing": "Enter the contract's price.",
+        "modeOf": "{{name}}: fixed or optional",
+        "mode": {
+          "fixed": "Fixed",
+          "optional": "Optional"
+        },
+        "remove": "Remove {{name}} from this contract",
+        "onlyWriting": "Besides writing, the contract needs at least one other service.",
+        "intro": "Adding a service gives this contract one price, and each service becomes fixed or optional. The separate prices above stop being used.",
+        "add": "Add a service",
+        "addButton": "Add"
       }
     },
     "hours": {
@@ -2907,7 +2943,8 @@
     "open": "An open contract: “{{name}}” · {{state}} · {{when}}",
     "continue": "Continue it",
     "hint": "Only the contracts the sales manager has turned on are here.",
-    "replaces": "Saving this contract replaces the open “{{name}}”."
+    "replaces": "Saving this contract replaces the open “{{name}}”.",
+    "noPrice": "No price set yet"
   },
   "contractCard": {
     "title": "Contract · {{name}}",

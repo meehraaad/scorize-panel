@@ -369,4 +369,16 @@ describe('applicant home', () => {
     expect(action).toHaveTextContent('پیش‌پرداخت قرارداد (۱٬۲۰۰٬۰۰۰ تومان) را بپردازید');
     expect(screen.queryByRole('region', { name: 'بخش‌هایی که به‌زودی فعال می‌شوند' })).toBeNull();
   });
+
+  it('shows each service and where the visa stands (SVC4)', async () => {
+    await openHome();
+    const card = screen.getByRole('region', { name: 'خدمت‌های شما' });
+    expect(within(card).getByText('ویزا · کانادا')).toBeInTheDocument();
+    expect(within(card).getByText('مسئول: نگار صادقی')).toBeInTheDocument();
+    const steps = within(card).getByRole('list', { name: 'مرحله‌های ویزا · کانادا' });
+    // Done up to the appointment; the outcome is one "result" step until reached.
+    expect(within(steps).getAllByText('انجام شد')).toHaveLength(2);
+    expect(within(steps).getByText('نتیجه')).toBeInTheDocument();
+    expect(within(steps).queryByText('ویزا رد شد')).toBeNull();
+  });
 });

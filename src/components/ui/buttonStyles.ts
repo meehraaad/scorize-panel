@@ -6,6 +6,8 @@ const VARIANTS = {
     'bg-surface text-text font-medium shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)]',
   /** A strong action next to a primary one (an offer card that isn't the featured one). */
   dark: 'bg-hero text-on-hero hover:bg-hero-raised font-semibold',
+  /** A second or third action under the main one (in a sheet): text only, no frame. */
+  quiet: 'bg-transparent text-text font-semibold hover:bg-canvas',
   danger: 'bg-transparent text-danger font-medium hover:bg-danger-tint',
   /** The main action on a luxe or forest card: gold, dark text. */
   gold: 'bg-luxe-gold font-bold shadow-[inset_0_1px_0_rgb(255_255_255/0.55)] hover:brightness-105',
@@ -14,10 +16,14 @@ const VARIANTS = {
     'bg-transparent text-on-hero font-semibold shadow-[inset_0_0_0_1px_var(--luxe-rim)] hover:bg-hero-raised',
 } as const;
 
+/**
+ * Button sizes follow the type scale: phones get a calmer step (docs/architecture.md, "Type
+ * scale"). md stays 44px everywhere (the smallest touch target); lg is 48px on phones, 56px wide.
+ */
 const SIZES = {
   md: 'h-11 px-5 text-[15px]',
-  /** Main action of a form (login, sign-up). */
-  lg: 'h-14 px-6 text-base',
+  /** Main action of a form (login, sign-up) or a screen (the bar at the bottom of a phone). */
+  lg: 'h-12 px-5 text-button lg:h-14 lg:px-6',
 } as const;
 
 export type ButtonShape = 'pill' | 'rounded';

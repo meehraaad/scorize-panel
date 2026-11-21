@@ -101,7 +101,7 @@ downloads are ignored.
 ## 5. Measure
 
 - **First-load budget in CI**: `pnpm size` sums the gzip size of what `dist/index.html` loads
-  (scripts, preloaded modules, stylesheets) and fails above JS 186 KB / CSS 21.2 KB. Today: JS
+  (scripts, preloaded modules, stylesheets) and fails above JS 187.2 KB / CSS 21.4 KB. Today: JS
   ≈ 185.3 KB, CSS ≈ 21.0 KB (JS raised from 170 on 2026-10-27, when the to-do box's chunk links and
   dictionary loaders took the last bytes; JS 172 → 173 and CSS 18 → 18.5 on 2026-11-01, for the
   assistant's chat layout: one stylesheet holds every page's classes, and the shared icons ship
@@ -109,7 +109,10 @@ downloads are ignored.
   on 2026-11-06, for the customer tag picker and the seller calendar's tasks row, 0.3 KB; JS 179 → 186
   and CSS 20.5 → 21.2 on 2026-11-18, to what main weighed after the HR, access, attendance and
   messages panels, whose route definitions import their API modules on first load, and Tehran time;
-  making those panels' routes lazy would win most of it back). Raise a
+  making those panels' routes lazy would win most of it back; JS 186 → 186.2 on 2026-11-20 for
+  the pathway finder's plain page `/finder`, whose route is on the first load: its loader comes
+  with its page, so it costs only its path, under 0.1 KB; JS 186.2 → 187.2 on 2026-11-20 for the supervisor panel's
+  client-services routes and nav, «خدمت‌های من», their report and the scopes page, 0.9 KB). Raise a
   budget only on purpose, in review.
 - **Real users** (`src/lib/vitals.ts`): LCP, INP, CLS, FCP and TTFB per page pattern, sent with
   `sendBeacon` when the tab is hidden. Off (and not even loaded) until Django's endpoint ships

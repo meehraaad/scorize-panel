@@ -10,6 +10,7 @@ import type {
   CaseDocument,
   CaseDocuments,
   CaseRow,
+  CaseService,
   CaseStage,
   CaseWriting,
   Credential,
@@ -20,8 +21,12 @@ import type {
   NewDocument,
   ProfessorEmailRow,
   ReportsData,
+  Scope,
+  ServiceCandidate,
+  ServiceVisaResult,
   StageFilter,
   TodayData,
+  UnassignedServices,
   WaitingCase,
   WritingState,
   BotSettings,
@@ -35,6 +40,7 @@ import type { MessagePage, TicketMessage, TicketsOverview } from '@/lib/tickets/
 import { faceOf, putFace } from './face';
 import { mockBotRules } from './mail';
 import { addToNotebook, changeInNotebook, importOldNotes, notebookOf } from './notebook';
+import { ADMISSION_STAGES, VISA_STAGES } from './applicant';
 import { forbidden, notFound, pageOf, storage } from './session';
 
 /**
@@ -85,6 +91,7 @@ interface MockCase {
   history: CaseActivity[];
   messages: TicketMessage[];
   unread: number;
+  services: CaseService[];
 }
 
 // ── Seed data ────────────────────────────────────────────────────────────────────────────────
@@ -747,7 +754,90 @@ function buildCase(seed: CaseSeed): MockCase {
     history,
     messages,
     unread: seed.unread ?? 0,
+    services: servicesOf(seed),
   };
+}
+
+/** Staff who may own a service (Django: the kind's team and the executive team). */
+export const SERVICE_STAFF: ServiceCandidate[] = [
+  { id: 7, name: 'مریم کاظمی', services: 18, team: 'executive', countries: ['کانادا', 'آلمان'] },
+  { id: 11, name: 'علی نوری', services: 12, team: 'executive', countries: ['ایتالیا'] },
+  { id: 21, name: 'نگار صادقی', services: 6, team: 'visa', countries: ['کانادا', 'آلمان'] },
+];
+const SERVICE_KINDS = { admission: 'پذیرش', visa: 'ویزا' } as const;
+
+/** One admission service per country; the first case also bought the visa (its owner not chosen yet). */
+function servicesOf(seed: CaseSeed): CaseService[] {
+  const owner = { id: 7, name: 'مریم کاظمی' };
+  const kinds = seed.id === 1240 ? (['admission', 'visa'] as const) : (['admission'] as const);
+  return kinds.flatMap((kind) =>
+    seed.countries.map((country, index) => ({
+      id: seed.id * 100 + (kind === 'visa' ? 50 : 0) + index,
+      kind,
+      name: SERVICE_KINDS[kind],
+      country,
+      status: 'open' as const,
+      owner: kind === 'visa' ? null : owner,
+      stage:
+        kind === 'visa'
+          ? (VISA_STAGES[0] ?? null)
+          : (ADMISSION_STAGES.find((stage) => stage.key === admissionStageOf(seed.stage)) ?? null),
+    })),
+  );
+}
+
+const SCOPE_PEOPLE = [
+  { id: 7, name: 'مریم کاظمی', countries: ['کانادا', 'آلمان'] },
+  { id: 11, name: 'علی نوری', countries: ['ایتالیا'] },
+  { id: 21, name: 'نگار صادقی', countries: [] },
+];
+const SCOPE_COUNTRIES = [
+  { id: 1, name: 'آلمان' },
+  { id: 2, name: 'ایتالیا' },
+  { id: 3, name: 'کانادا' },
+];
+let mockScopes: Scope[] = [];
+/** Each visa service's results (Django's VisaResult rows of its case and country). */
+const visaResults = new Map<number, ServiceVisaResult[]>();
+function visaResultsOf(service: number) {
+  let results = visaResults.get(service);
+  if (!results) {
+    results = [
+      {
+        id: service * 10,
+        title: 'ویزای تحصیلی',
+        status: 'getting_appointment',
+        embassy: 'امارات',
+        embassy_id: 4,
+        appointment_at: null,
+        resolved_at: null,
+        note: null,
+        proof: null,
+      },
+    ];
+    visaResults.set(service, results);
+  }
+  return results;
+}
+
+/** Django: an admission service reads its stage from the case's (client_services/stages.py). */
+function admissionStageOf(stage: CaseStage) {
+  if (stage === 'admitted' || stage === 'visa') return 'admitted';
+  return stage === 'on_hold' || stage === 'closed' ? 'documents' : stage;
+}
+
+/** Open services nobody owns, as the new-cases page lists them (called by the handoff mock). */
+export function unassignedServices(): UnassignedServices {
+  const all = casesOrError();
+  const results =
+    all instanceof Response
+      ? []
+      : [...all.values()].flatMap((item) =>
+          item.services
+            .filter((service) => service.status === 'open' && !service.owner)
+            .map((service) => ({ ...service, case: item.data.id, case_name: item.data.name })),
+        );
+  return { count: results.length, results };
 }
 
 // ── State ────────────────────────────────────────────────────────────────────────────────────
@@ -779,6 +869,7 @@ function caseData(item: MockCase): CaseData {
     documents_waiting: item.documents.filter((doc) => doc.state === 'review').length,
     applications: item.applications.length,
     face: faceOf(item.data.user),
+    services: item.services,
   };
 }
 
@@ -1177,6 +1268,251 @@ export const supervisorHandlers = [
     return item instanceof Response ? item : HttpResponse.json(caseData(item));
   }),
 
+  // SVC2: who may own a service, and handing it over (managers only; the mock supervisor is one).
+  http.get(`${API}/cases/:id/services/:service/owner/`, ({ params }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    const results = SERVICE_STAFF.filter(
+      (person) => person.team === 'executive' || person.team === service.kind,
+    );
+    const team = results.filter((person) => person.team === service.kind);
+    const suggested =
+      (team.length ? team : results).find(
+        (person) => service.country && person.countries.includes(service.country),
+      ) ?? null;
+    return HttpResponse.json({ service, results, suggested: suggested?.id ?? null });
+  }),
+
+  http.post(`${API}/cases/:id/services/:service/owner/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    if (service.status === 'closed')
+      return HttpResponse.json({ detail: 'This service is closed.' }, { status: 409 });
+    const { owner } = (await request.json()) as { owner: number };
+    const person = SERVICE_STAFF.find(
+      (entry) => entry.id === owner && (entry.team === 'executive' || entry.team === service.kind),
+    );
+    if (!person)
+      return HttpResponse.json(
+        { owner: ["Choose an active person of the service's team."] },
+        { status: 400 },
+      );
+    service.owner = { id: person.id, name: person.name };
+    record(item, `مسئول خدمت ${service.name} · ${service.country ?? ''}: ${person.name}`);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // SVC4: one service with its stages (and a visa's results); its stage; the viewer's services.
+  http.get(`${API}/cases/:id/services/:service/`, ({ params }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    const visa = service.kind === 'visa';
+    return HttpResponse.json({
+      service,
+      stages: visa ? VISA_STAGES : ADMISSION_STAGES,
+      // Admission follows the case's stage (SVC6).
+      editable: visa && service.status !== 'closed',
+      follows_case: !visa,
+      visa: visa ? visaResultsOf(service.id) : null,
+      countries: visa ? SCOPE_COUNTRIES : null,
+    });
+  }),
+
+  http.post(`${API}/cases/:id/services/:service/visa/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (service?.kind !== 'visa') return notFound();
+    const form = await request.formData();
+    const status = form.get('status') as ServiceVisaResult['status'];
+    const result: ServiceVisaResult = {
+      id: newId(),
+      title: form.get('title') as string,
+      status,
+      embassy_id: Number(form.get('embassy')),
+      embassy:
+        SCOPE_COUNTRIES.find((country) => country.id === Number(form.get('embassy')))?.name ?? '',
+      appointment_at: (form.get('appointment_at') as string | null) || null,
+      resolved_at: (form.get('resolved_at') as string | null) || null,
+      note: (form.get('note') as string | null) || null,
+      proof: form.get('appointment_proof') instanceof File ? '#' : null,
+    };
+    visaResultsOf(service.id).unshift(result);
+    // Django: the visa service follows its result (client_services/stages.py).
+    const key = {
+      getting_appointment: 'appointment',
+      pending_appointment: 'interview',
+      pending_result: 'decision',
+      granted: 'granted',
+      refused: 'refused',
+      missed_appointment: 'appointment',
+      canceled_appointment: 'appointment',
+    }[status];
+    service.stage = VISA_STAGES.find((stage) => stage.key === key) ?? service.stage ?? null;
+    return HttpResponse.json(result, { status: 201 });
+  }),
+
+  http.post(`${API}/cases/:id/services/:service/stage/`, async ({ params, request }) => {
+    const item = caseOr404(params);
+    if (item instanceof Response) return item;
+    const service = item.services.find((entry) => entry.id === Number(params['service']));
+    if (!service) return notFound();
+    const { stage } = (await request.json()) as { stage: string };
+    const found = (service.kind === 'visa' ? VISA_STAGES : []).find((entry) => entry.key === stage);
+    if (!found) return HttpResponse.json({ stage: ['invalid'] }, { status: 400 });
+    service.stage = found;
+    record(item, `مرحله‌ی ${service.name}: ${found.name}`);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // SVC5: supervisors' scopes (managers) and where they differ from today's rule.
+  http.get(`${API}/scopes/`, () => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    const covered = new Set(mockScopes.filter((scope) => !scope.kind).map((scope) => scope.staff));
+    const results = covered.has(11)
+      ? []
+      : [
+          {
+            staff: 11,
+            staff_name: 'علی نوری',
+            case: 1227,
+            case_name: 'رضا احمدی',
+            side: 'old_only' as const,
+          },
+        ];
+    return HttpResponse.json({
+      applied: false,
+      people: SCOPE_PEOPLE,
+      scopes: mockScopes,
+      kinds: [
+        { key: 'admission', name: 'پذیرش' },
+        { key: 'visa', name: 'ویزا' },
+      ],
+      countries: SCOPE_COUNTRIES,
+      differences: { count: results.length, results },
+    });
+  }),
+
+  http.post(`${API}/scopes/`, async ({ request }) => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    const body = (await request.json()) as {
+      staff: number;
+      kind: string | null;
+      country: number | null;
+    };
+    if (
+      mockScopes.some(
+        (scope) =>
+          scope.staff === body.staff &&
+          (scope.kind?.key ?? null) === body.kind &&
+          (scope.country?.id ?? null) === body.country,
+      )
+    )
+      return HttpResponse.json({ detail: 'This person already has this scope.' }, { status: 409 });
+    const scope = {
+      id: newId(),
+      staff: body.staff,
+      kind: body.kind ? { key: body.kind, name: body.kind === 'visa' ? 'ویزا' : 'پذیرش' } : null,
+      country: SCOPE_COUNTRIES.find((country) => country.id === body.country) ?? null,
+    };
+    mockScopes.push(scope);
+    return HttpResponse.json(scope, { status: 201 });
+  }),
+
+  http.delete(`${API}/scopes/:scope/`, ({ params }) => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    mockScopes = mockScopes.filter((scope) => scope.id !== Number(params['scope']));
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // SVC6: how the services are answered, per team and owner.
+  http.get(`${API}/services/report/`, ({ request }) => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    const period = new URL(request.url).searchParams.get('period') ?? 'month';
+    const days = { week: 7, month: 30, quarter: 90 }[period];
+    if (!days) return HttpResponse.json({ period: ['invalid'] }, { status: 400 });
+    const scale = days / 30;
+    return HttpResponse.json({
+      days,
+      owners: [
+        {
+          id: 21,
+          name: 'نگار صادقی',
+          team: 'visa',
+          services: 6,
+          waiting: 2,
+          answered: Math.round(14 * scale),
+          median_minutes: 95,
+          slow: 1,
+        },
+        {
+          id: 7,
+          name: 'مریم کاظمی',
+          team: 'executive',
+          services: 18,
+          waiting: 0,
+          answered: Math.round(40 * scale),
+          median_minutes: 40,
+          slow: 0,
+        },
+        {
+          id: null,
+          name: null,
+          team: null,
+          services: 1,
+          waiting: 1,
+          answered: 0,
+          median_minutes: null,
+          slow: 0,
+        },
+      ],
+      teams: [
+        { team: null, services: 1, waiting: 1, answered: 0, median_minutes: null, slow: 0 },
+        {
+          team: 'executive',
+          services: 18,
+          waiting: 0,
+          answered: Math.round(40 * scale),
+          median_minutes: 40,
+          slow: 0,
+        },
+        {
+          team: 'visa',
+          services: 6,
+          waiting: 2,
+          answered: Math.round(14 * scale),
+          median_minutes: 95,
+          slow: 1,
+        },
+      ],
+    });
+  }),
+
+  http.get(`${API}/services/mine/`, () => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    // The mock supervisor is SupportStaff 7 (src/mocks/handlers.ts).
+    const results = [...all.values()].flatMap((item) =>
+      item.services
+        .filter((service) => service.owner?.id === 7 && service.status !== 'closed')
+        .map((service) => ({
+          ...service,
+          case: item.data.id,
+          case_name: item.data.name,
+          unread: item.data.id === 1240 ? 1 : 0,
+          last_message_at: item.last_activity,
+        })),
+    );
+    results.sort((a, b) => b.unread - a.unread);
+    return HttpResponse.json({ count: results.length, results });
+  }),
+
   http.put(`${API}/cases/:id/face/`, ({ params, request }) => {
     const item = caseOr404(params);
     return item instanceof Response ? item : putFace(item.data.user, request);
@@ -1491,6 +1827,7 @@ export const supervisorHandlers = [
           unread: item.unread,
           waiting_since: waitingMessages[0]?.sent_at ?? null,
           urgent: waitingMessages.some((message) => message.priority === 3),
+          thread: 'supervisor',
         };
       })
       .sort(
@@ -1600,4 +1937,6 @@ export function resetSupervisorMocks() {
   cases = null;
   botSettings.clear();
   imports.clear();
+  mockScopes = [];
+  visaResults.clear();
 }

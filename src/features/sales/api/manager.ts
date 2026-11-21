@@ -10,8 +10,9 @@ import type { ContractDocument } from './contract';
 import type { BuiltinVariable, ContractVariable } from './offer';
 import type { MonthData } from './month';
 
-/** Django permission of the sales manager's section (SupportStaff Meta: can_assign_to_seller). */
-export const MANAGER_PERMISSION = 'can_assign_to_seller';
+import { MANAGER_PERMISSION } from './managerPermission';
+
+export { MANAGER_PERMISSION };
 
 /** The phone tab alone (apply.can_manage_phone): the office line, without the other manager pages. */
 export const PHONE_PERMISSION = 'can_manage_phone';
@@ -532,6 +533,25 @@ export interface ContractTemplate {
   is_active: boolean;
 }
 
+export type ServiceMode = 'fixed' | 'optional';
+
+/** A service a kind of contract includes (docs/backend-changes.md SVC7). */
+export interface ContractServiceRow {
+  key: string;
+  name: string;
+  mode: ServiceMode;
+}
+
+/** The kind's services and its one price; null while Django's client services are switched off. */
+export interface BuilderServices {
+  /** The whole contract, in `rules.currency`; null until set. */
+  price: number | null;
+  /** Empty: the kind is priced the old way, by `prices`. */
+  rows: ContractServiceRow[];
+  /** Every service a manager can add (Django's `ServiceType`s). */
+  catalog: { key: string; name: string; team: number | null }[];
+}
+
 export interface ContractBuilder {
   /** The kind of contract shown. */
   template: ContractTemplate;
@@ -545,6 +565,8 @@ export interface ContractBuilder {
   /** The blanks the seller fills (S69), and what the system fills with the preview's samples. */
   variables: ContractVariable[];
   builtins: BuiltinVariable[];
+  /** Absent from an older Django. */
+  services?: BuilderServices | null;
 }
 
 export const BUILDER_API = `${MANAGER_API}/contract`;

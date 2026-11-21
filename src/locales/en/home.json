@@ -83,7 +83,12 @@
     "estimate": {
       "text": "Answer a few short questions to see your chance of admission in each country. Under two minutes."
     },
-    "journey": "Every step you take brings your case closer to starting."
+    "journey": "Every step you take brings your case closer to starting.",
+    "pathways": {
+      "title": "Find your way abroad",
+      "text": "Answer a few short questions to see which work and residence routes in each country fit you. About two minutes.",
+      "start": "Start"
+    }
   },
   "hero": {
     "label": "Case card",
@@ -259,5 +264,15 @@
       "online": "Online",
       "in_person": "In person"
     }
+  },
+  "services": {
+    "title": "Your services",
+    "owner": "Owner: {{name}}",
+    "noOwner": "An owner will be assigned soon",
+    "paused": "Paused",
+    "stages": "Stages of {{service}}",
+    "done": "Done",
+    "waiting": "Waiting",
+    "result": "Result"
   }
 }

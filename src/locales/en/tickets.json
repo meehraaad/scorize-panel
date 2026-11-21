@@ -31,6 +31,13 @@
       "subtitle": "Writer: {{names}}",
       "noTeam": "No writer has been assigned yet. Your message reaches the writing department.",
       "staffSubtitle": "Writer: {{names}} · The applicant’s conversation with the writing team"
+    },
+    "service": {
+      "title": "{{service}} conversation",
+      "subtitle": "{{names}} · your message goes to this service's owner",
+      "noTeam": "Your message goes to the case's supervisors until this service has an owner",
+      "staffSubtitle": "{{names}} · the applicant's conversation about this service",
+      "closed": "This service has ended; its conversation is read-only. Write new messages in the general conversation."
     }
   },
   "messages": "Messages",
@@ -100,5 +107,8 @@
     "loading": "Loading…",
     "none": "No ready ticket replies yet.",
     "error": "Ready messages didn't load. Open them again."
-  }
+  },
+  "generalTab": "General",
+  "serviceTabs": "The case's conversations",
+  "serviceLead": "Conversation"
 }

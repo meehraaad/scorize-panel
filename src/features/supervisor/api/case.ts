@@ -3,6 +3,7 @@ import { ApiError, api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
 import type { Face } from '@/lib/face/api';
 import { SUPERVISOR_API, type CaseStage, type Money, SUPERVISOR_KEY } from './common';
+import type { CaseService } from './services';
 
 /** Why the professor-email bot can't send for this applicant. */
 export type BotProblem =
@@ -77,6 +78,11 @@ export interface CaseData {
   notes: CaseNotes;
   /** The emoji and color the team gave the customer (S66), the same as on the sales page. */
   face?: Face | null;
+  /**
+   * The case's open and paused services and their owners (SVC2). null while Django has client
+   * services switched off; missing from a Django before them.
+   */
+  services?: CaseService[] | null;
 }
 
 /** Staff-only notes on the case; the applicant never sees them. */

@@ -14,7 +14,8 @@
         "documents": "Documents",
         "tickets": "Tickets",
         "contract": "Contract",
-        "services": "Academy"
+        "services": "Academy",
+        "pathways": "Migration paths"
       },
       "tabs": {
         "home": "Home",
@@ -34,7 +35,10 @@
         "reports": "Reports",
         "tasks": "My tasks",
         "new": "New cases",
-        "mail": "Mailboxes"
+        "mail": "Mailboxes",
+        "services": "My services",
+        "scopes": "Supervisors",
+        "servicesReport": "Service status"
       },
       "tabs": {
         "today": "Today",

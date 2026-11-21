@@ -6,6 +6,17 @@ import { customerKey } from './customer';
 
 export type ContractFeature = 'admission' | 'visa' | 'writing';
 
+/**
+ * A kind of contract that lists its services (SVC7): each fixed (always in) or optional (the
+ * seller's choice), and one price for the whole contract in `currency`. Null: the old way, priced
+ * by `features`.
+ */
+export interface ListedServices {
+  /** Null until the manager sets it. */
+  price: number | null;
+  services: { key: string; name: string; mode: 'fixed' | 'optional' }[];
+}
+
 /** A kind of contract a seller can start from (S68); `id` null: the standard one. */
 export interface OfferTemplate {
   id: number | null;
@@ -13,6 +24,8 @@ export interface OfferTemplate {
   description: string;
   /** Its services and their prices, toman (S71): what its card on the customer page shows. */
   features: { key: ContractFeature; price: number }[];
+  /** SVC7; absent from an older Django. */
+  services?: ListedServices | null;
   /** S74: ISO code of the money the amounts are in; absent: IRT (toman). */
   currency?: string;
   /** How many articles its text has, and how many blanks the seller fills (S71). */
@@ -45,6 +58,8 @@ export interface OfferOptions {
   templates: OfferTemplate[];
   /** Price of each service, in `currency`; 0: free (a template's, S68). */
   features: { key: ContractFeature; price: number }[];
+  /** SVC7: this kind's services and one price; null or absent: the old way, by `features`. */
+  services?: ListedServices | null;
   degrees: Degree[];
   /** Months. */
   durations: number[];
@@ -139,6 +154,11 @@ export const MAX_INSTALMENTS = 12;
 
 export interface Offer {
   features: ContractFeature[];
+  /**
+   * SVC7, on a kind that lists its services: the keys chosen (the fixed ones are always in). Django
+   * fills `features` from them.
+   */
+  services?: string[];
   degree: Degree;
   applies: number;
   /** ISO date. */

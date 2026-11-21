@@ -18,6 +18,7 @@ import { leadSourceHandlers, resetLeadSourceMocks } from './leadSources';
 import { marketingBoardHandlers, resetMarketingBoardMocks } from './marketingBoard';
 import { hrPayHandlers, resetHrPayMocks } from './hrPay';
 import { messagesHandlers, resetMessagesMocks } from './messages';
+import { pathwayHandlers, resetPathwayMocks } from './pathways';
 import { accessHandlers, resetAccessMocks } from './access';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { agreementHandlers, resetAgreementMocks } from './agreement';
@@ -401,6 +402,7 @@ export const handlers = [
   ...assistantHandlers,
   ...mailHandlers,
   ...messagesHandlers,
+  ...pathwayHandlers,
   ...accessHandlers,
   ...attendanceHandlers,
   ...hrHandlers,
@@ -438,6 +440,7 @@ export function resetMockSession() {
   resetAssistantMocks();
   resetMailMocks();
   resetMessagesMocks();
+  resetPathwayMocks();
   resetAccessMocks();
   resetAttendanceMocks();
   resetHrMocks();

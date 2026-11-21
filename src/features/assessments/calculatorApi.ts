@@ -41,7 +41,7 @@ export interface ProfileEvidence {
   candidates: ProfileCandidate[];
   context: { source: string; reason: string; original: Record<string, unknown> }[];
 }
-export const sharedFactsQuery = queryOptions({
+export const sharedFactsQuery = /* @__PURE__ */ queryOptions({
   queryKey: ['shared-assessment-evidence'],
   queryFn: () => api<{ evidence: unknown[] }>('/applicant/v1/assessments/shared-evidence/'),
 });
@@ -120,7 +120,7 @@ export interface SingleSnapshot {
   };
   reviews: { id: number; decision: string; note: string }[];
 }
-export const calculatorOptionsQuery = queryOptions({
+export const calculatorOptionsQuery = /* @__PURE__ */ queryOptions({
   queryKey: ['calculator-interview', 'options'],
   queryFn: () => api<Options>('/applicant/v1/assessments/calculators/options/'),
 });

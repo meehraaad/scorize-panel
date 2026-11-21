@@ -19,6 +19,8 @@ const SECTIONS = [
   { id: 'followUps', to: 'manager/follow-ups' },
   { id: 'stages', to: 'manager/stages' },
   { id: 'tags', to: 'manager/tags' },
+  // Migration pathways: the same page as the marketing manager's (features/pathways).
+  { id: 'pathways', to: 'manager/pathways', end: false },
   // One tab for the office line; its pages are sub-tabs (PhoneLayout).
   { id: 'phone', to: 'manager/phone', end: false },
 ] as const;
@@ -26,11 +28,13 @@ const SECTIONS = [
 const OFF = new Set<string>([
   ...(ON_SERVER.customerTags ? [] : ['tags']),
   ...(PHONE_SECTIONS.length ? [] : ['phone']),
+  ...(ON_SERVER.pathwaysManagement ? [] : ['pathways']),
 ]);
 
 /**
  * The sales manager's section: lead assignment, the agreement desk, the contract builder, team
- * report, commission rules, consultation types, follow-ups, board stages, customer tags and the office phone line.
+ * report, commission rules, consultation types, follow-ups, board stages, customer tags, migration pathways and the office
+ * phone line.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('sales');

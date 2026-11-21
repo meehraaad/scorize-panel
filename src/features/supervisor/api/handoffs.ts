@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
 import { SUPERVISOR_API, SUPERVISOR_KEY } from './common';
+import type { UnassignedServices } from './services';
 
 /**
  * New cases waiting for a supervisor (docs/backend-changes.md SV18–SV20), for managers with
@@ -46,6 +47,8 @@ export interface HandoffSupervisor {
 export interface HandoffsData {
   results: HandoffCase[];
   supervisors: HandoffSupervisor[];
+  /** Open services nobody owns (SVC2); null while switched off, missing from an older Django. */
+  unassigned_services?: UnassignedServices | null;
 }
 
 export const handoffsQuery = queryOptions({

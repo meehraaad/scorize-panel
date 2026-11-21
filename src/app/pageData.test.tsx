@@ -14,7 +14,7 @@ import '@/test/server';
  */
 
 // The admission-chance quiz, Turkey, the founders assistant, the mail page, customer tags and the
-// office line's phone settings aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
+// office line's phone settings and the client services page aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
   return {
@@ -25,6 +25,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       foundersAssistant: true,
       customerTags: true,
       mailServers: true,
+      clientServices: true,
       officeHours: true,
       phoneTeams: true,
       phoneExtensions: true,
@@ -81,7 +82,10 @@ const PAGES: PageCase[] = [
     '/?session=41',
     '/consultations/book',
     '/estimate',
+    '/pathways',
     '/background',
+    // The pathway finder alone, without the panel's menus.
+    '/finder',
   ].map((path) => ({ path, user: SARA })),
   // No contract: the guest home, with the quiz card.
   { path: '/', user: MARYAM },
@@ -154,6 +158,9 @@ const PAGES: PageCase[] = [
     '/sales/manager/follow-ups',
     '/sales/manager/stages',
     '/sales/manager/tags',
+    '/sales/manager/pathways',
+    '/sales/manager/pathways/new',
+    '/sales/manager/pathways/1',
     '/sales/manager/phone/overview',
     '/sales/manager/phone/extensions',
     '/sales/manager/phone/hours',
@@ -171,6 +178,9 @@ const PAGES: PageCase[] = [
     '/supervisor/files/1227/activity',
     '/supervisor/tickets',
     '/supervisor/tasks',
+    '/supervisor/services',
+    '/supervisor/scopes',
+    '/supervisor/services/report',
     '/supervisor/reports',
     '/supervisor/mail',
   ].map((path) => ({ path, user: MARYAM })),
@@ -232,7 +242,13 @@ const PAGES: PageCase[] = [
     '/marketing/performance',
   ].map((path) => ({ path, user: ELHAM })),
   // The marketing manager's area (src/mocks/marketingBoard.ts): Amir holds the key.
-  ...['/marketing/manage', '/marketing/manage/stages', '/marketing/manage/types'].map((path) => ({
+  ...[
+    '/marketing/manage',
+    '/marketing/manage/stages',
+    '/marketing/manage/types',
+    '/marketing/manage/pathways',
+    '/marketing/manage/pathways/1',
+  ].map((path) => ({
     path,
     user: AMIR,
   })),

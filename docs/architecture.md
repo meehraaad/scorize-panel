@@ -113,10 +113,12 @@ numbers as props (no fetching, no dictionary of their own), so any panel can use
 | `TaskCalendar` (`components/tasks/`)                                       | A panel's week of my tasks on `EventCalendar` (`WeekNav`, legend, the day row with the panel's own marks and a link to that day's tasks, the new-task composer on a click): the HR and marketing calendars. The page keeps the week and its query                                                                                                                                                                                                                                                                                                                       |
 | `MiniMonth`                                                                | The small month beside a `WeekCalendar`: the week on screen shaded, days with something free bold, picking a day shows its week                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `Dialog`                                                                   | A modal form: bottom sheet on phones, side panel from lg (log a call, add a lead). `size="wide"`: a large centred window from lg, the whole screen on phones (booking on the week calendar). Parent controls `open`                                                                                                                                                                                                                                                                                                                                                     |
+| `StageDialog`                                                              | A modal window for content with its own header and close (the pathway finder's popup): a large centred window from lg, a tall sheet on phones. Its own file, off the first load                                                                                                                                                                                                                                                                                                                                                                                         |
 | `FloatingPanel`                                                            | A non-modal floating form with a scrolling body and pinned footer. The sales contact workspace uses it so navigation stays usable; minimize retains the draft. `variant="chat"`: fixed height, unpadded body, `actions` in the header (the supervisor's chat window, `src/features/supervisor/chat/`).                                                                                                                                                                                                                                                                  |
 | `OtpInput`                                                                 | An SMS code as boxes over one real input (paste, autofill, screen readers); `length` digits. Login and the Turkey pledge                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `Switch`                                                                   | An on/off setting row: a real checkbox with `role="switch"`, label and a line under it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `NumberStepper`                                                            | One number with − and + beside it, also typed in (any digits): a goal's target, a percent. Score plans                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `AnswerChoices`                                                            | A quiz's large answers: `AnswerGroup` (radio rows with a picture and a key) and `CheckTile` (check a country, then say how many years inside it). Its own file, off the first load                                                                                                                                                                                                                                                                                                                                                                                      |
 | `SectionNav`                                                               | A row of pill tabs (links) that scrolls sideways on phones: the sections of the management area and their sub-tabs                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `VariableField`, `VariablePreview`                                         | A message text with its variables as buttons above the box (each puts `{name}` at the cursor), and the text as it will read with samples marked. The messages section                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `SaveBar`                                                                  | The save row of a long form, kept in view at the bottom: what is unsaved, then undo and save (`dirty` lights it up). Office hours                                                                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -350,6 +352,39 @@ option existed.
 - The wordmark (`components/ui/Logo`) is the main site's: Arial Black, "rize" in the primary colour.
   It uses the installed Arial Black, else the font file Django already serves under `/static/`.
 
+### Type scale
+
+Text sizes have names, set once in `src/styles/index.css` (`--fs-*`, `--lh-*`) with a smaller step on
+phones (below `lg`, 1024px). Use the name, never a pixel size:
+
+| Class          | Phone | Wide | For                                                                                        |
+| -------------- | ----- | ---- | ------------------------------------------------------------------------------------------ |
+| `text-display` | 28    | 48   | a page's one big headline (the finder's start)                                             |
+| `text-title`   | 22    | 36   | a page's or a question's title                                                             |
+| `text-section` | 18    | 20   | a section or card title                                                                    |
+| `text-lead`    | 14    | 18   | the line under a title                                                                     |
+| `text-body`    | 16    | 16   | reading text, answers, fields (never below 16 on phones: iPhones zoom into smaller fields) |
+| `text-small`   | 14    | 14   | secondary text                                                                             |
+| `text-label`   | 13    | 13   | labels, eyebrows, meta                                                                     |
+| `text-caption` | 12    | 12   | footnotes, chips                                                                           |
+| `text-button`  | 15    | 16   | a large button's label (`Button size="lg"`)                                                |
+
+Touch sizes: `min-h-tap` (44px, any control), `min-h-row` (56px, a row you tap: an answer, a list
+row), `min-h-cta` (48px, the main button at the bottom of a phone screen).
+
+Buttons follow the same rule: `size="md"` is 44px everywhere; `size="lg"` is 48px with a 15px label
+on phones and 56px with 16px on wide screens. In a sheet, the one main action is a full-width
+button and the others are quiet text buttons under it, never a row of large outlined buttons. ESLint rejects `text-[Npx]`
+where a screen has moved to the scale (the pathway finder first); move the rest screen by screen.
+
+### Phone screens that fill the screen
+
+A flow with steps (the pathway finder's questions) fills the phone's screen once it starts: no panel
+menus, its own bar on top (back, where you are, close), the content scrolling in the middle, and the
+main button full width in a bar at the bottom, above the on-screen keyboard (`useKeyboardInset`) and
+the home indicator (`env(safe-area-inset-bottom)`). Close asks first when leaving would lose work
+(a bottom `Sheet`).
+
 ## i18n
 
 - Dictionaries: `src/locales/<lang>/<namespace>.json`. Persian (`fa`) is the source; `t()` keys are
@@ -367,7 +402,7 @@ option existed.
 
 ## Performance budget
 
-First load (gzip, `pnpm size` checks it in CI): JS ≈ 185.3 KB (budget 186), CSS ≈ 21.0 KB (budget 21.2);
+First load (gzip, `pnpm size` checks it in CI): JS ≈ 187.1 KB (budget 187.2), CSS ≈ 21.4 KB (budget 21.4);
 fonts are loaded per script as text appears. How pages stay fast (page data, skeletons, preload,
 cache, measuring): docs/performance.md.
 

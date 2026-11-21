@@ -23,7 +23,9 @@ import {
   type BuilderClause,
   type BuilderPrice,
   type ContractBuilder,
+  type ContractServiceRow,
   type OfferRules,
+  type ServiceMode,
   type TextVersion,
 } from '../api';
 import {
@@ -31,6 +33,7 @@ import {
   useSaveClause,
   useSavePrices,
   useSaveRules,
+  useSaveServices,
   useSaveVariables,
   useUpdateTemplate,
 } from '../api/managerMutations';
@@ -709,8 +712,13 @@ function Settings({ data }: { data: ContractBuilder }) {
   const template = data.template.id;
   const savePrices = useSavePrices(template);
   const saveRules = useSaveRules(template);
+  const saveServices = useSaveServices(template);
   const [rows, setRows] = useState(data.prices);
   const [form, setForm] = useState(data.rules);
+  // The kind's services and one price (SVC7); null while Django's client services are off.
+  const listing = data.services ?? null;
+  const [services, setServices] = useState<ContractServiceRow[]>(listing?.rows ?? []);
+  const [price, setPrice] = useState<number | null>(listing?.price ?? null);
   const { limits } = data;
   // Every kind of contract, the standard one too, may be in any currency of the system.
   const standard = template === null;
@@ -722,13 +730,27 @@ function Settings({ data }: { data: ContractBuilder }) {
     setRows(rows.map((item, at) => (at === index ? { ...item, ...row } : item)));
   const toggle = (list: number[], value: number, on: boolean) =>
     (on ? [...list, value] : list.filter((item) => item !== value)).sort((a, b) => a - b);
-  const dirty = JSON.stringify([rows, form]) !== JSON.stringify([data.prices, data.rules]);
+  const dirty =
+    JSON.stringify([rows, form, services, price]) !==
+    JSON.stringify([data.prices, data.rules, listing?.rows ?? [], listing?.price ?? null]);
+  const listed = services.length > 0;
+  const servicesBad = listed && services.every((row) => row.key === 'writing');
   const rangeBad =
     form.min_amount !== null && form.max_amount !== null && form.min_amount > form.max_amount;
   const appliesBad = form.min_applies > form.max_applies;
-  const valid = form.durations.length > 0 && !rangeBad && !appliesBad;
-  const saving = savePrices.isPending || saveRules.isPending;
+  const valid =
+    form.durations.length > 0 &&
+    !rangeBad &&
+    !appliesBad &&
+    !servicesBad &&
+    (!listed || price !== null);
+  const saving = savePrices.isPending || saveRules.isPending || saveServices.isPending;
 
+  const saveRest = () =>
+    saveRules.mutate(form, {
+      onSuccess: () => toast.success(t('manager.builder.settings.saved')),
+      onError: () => toast.error(t('error')),
+    });
   const save = () =>
     savePrices.mutate(
       rows.map((row) => ({
@@ -738,13 +760,23 @@ function Settings({ data }: { data: ContractBuilder }) {
       })),
       {
         onSuccess: () =>
-          saveRules.mutate(form, {
-            onSuccess: () => toast.success(t('manager.builder.settings.saved')),
-            onError: () => toast.error(t('error')),
-          }),
+          listing
+            ? saveServices.mutate(
+                {
+                  price: listed ? price : null,
+                  rows: services.map(({ key, mode }) => ({ key, mode })),
+                },
+                { onSuccess: saveRest, onError: () => toast.error(t('error')) },
+              )
+            : saveRest(),
         onError: () => toast.error(t('error')),
       },
     );
+  const setMode = (key: string, mode: ServiceMode) =>
+    setServices(services.map((row) => (row.key === key ? { ...row, mode } : row)));
+  const addable = (listing?.catalog ?? []).filter(
+    (kind) => !services.some((row) => row.key === kind.key),
+  );
 
   const amountField = (key: 'min_amount' | 'max_amount', error?: string) => (
     <TextField
@@ -858,46 +890,113 @@ function Settings({ data }: { data: ContractBuilder }) {
           onChange={(currency) => set('currency', currency)}
           options={limits.currencies.map((item) => ({ value: item.id, label: item.name }))}
         />
-        <ul className="m-0 flex list-none flex-col gap-3 p-0">
-          {rows.map((row, index) => (
-            <li
-              key={row.feature}
-              className="grid grid-cols-1 items-start gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] sm:grid-cols-[1fr_auto]"
-            >
-              <TextField
-                type="number"
-                inputMode="numeric"
-                dir="ltr"
-                min={0}
-                label={t('manager.builder.settings.priceOf', {
-                  name: t(`manager.contracts.feature.${row.feature}`),
-                })}
-                value={row.price === null ? '' : String(row.price)}
-                hint={
-                  row.price
-                    ? money(row.price)
-                    : free && row.price === 0
-                      ? t('manager.builder.prices.free')
-                      : t('manager.builder.prices.none')
-                }
-                onChange={(event) =>
-                  change(index, {
-                    price:
-                      event.target.value === ''
-                        ? null
-                        : Math.max(0, Math.round(Number(event.target.value))),
-                  })
-                }
-              />
-              <Switch
-                label={t('manager.builder.prices.offered')}
-                checked={row.is_active && (free ? row.price !== null : !!row.price)}
-                disabled={free ? row.price === null : !row.price}
-                onChange={(is_active) => change(index, { is_active })}
-              />
-            </li>
-          ))}
-        </ul>
+        {listed ? (
+          <>
+            <TextField
+              type="number"
+              inputMode="numeric"
+              dir="ltr"
+              min={0}
+              label={t('manager.builder.services.price')}
+              hint={
+                price === null
+                  ? t('manager.builder.services.priceHint')
+                  : `${money(price)} · ${t('manager.builder.services.priceHint')}`
+              }
+              error={price === null ? t('manager.builder.services.priceMissing') : undefined}
+              value={price === null ? '' : String(price)}
+              onChange={(event) =>
+                setPrice(
+                  event.target.value === ''
+                    ? null
+                    : Math.max(0, Math.round(Number(event.target.value))),
+                )
+              }
+            />
+            <ul className="m-0 flex list-none flex-col gap-3 p-0">
+              {services.map((row) => (
+                <li
+                  key={row.key}
+                  className="flex flex-wrap items-center gap-3 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)]"
+                >
+                  <span className="min-w-0 flex-1 text-[15px] font-medium">{row.name}</span>
+                  <ChoiceGroup
+                    legend={t('manager.builder.services.modeOf', { name: row.name })}
+                    hideLegend
+                    look="segmented"
+                    value={row.mode}
+                    onChange={(mode) => setMode(row.key, mode)}
+                    options={(['fixed', 'optional'] as const).map((mode) => ({
+                      value: mode,
+                      label: t(`manager.builder.services.mode.${mode}`),
+                    }))}
+                  />
+                  <IconButton
+                    icon="trash"
+                    aria-label={t('manager.builder.services.remove', { name: row.name })}
+                    onClick={() => setServices(services.filter((item) => item.key !== row.key))}
+                  />
+                </li>
+              ))}
+            </ul>
+            {servicesBad && (
+              <p role="alert" className="m-0 text-[13px] text-danger">
+                {t('manager.builder.services.onlyWriting')}
+              </p>
+            )}
+          </>
+        ) : (
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {rows.map((row, index) => (
+              <li
+                key={row.feature}
+                className="grid grid-cols-1 items-start gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)] sm:grid-cols-[1fr_auto]"
+              >
+                <TextField
+                  type="number"
+                  inputMode="numeric"
+                  dir="ltr"
+                  min={0}
+                  label={t('manager.builder.settings.priceOf', {
+                    name: t(`manager.contracts.feature.${row.feature}`),
+                  })}
+                  value={row.price === null ? '' : String(row.price)}
+                  hint={
+                    row.price
+                      ? money(row.price)
+                      : free && row.price === 0
+                        ? t('manager.builder.prices.free')
+                        : t('manager.builder.prices.none')
+                  }
+                  onChange={(event) =>
+                    change(index, {
+                      price:
+                        event.target.value === ''
+                          ? null
+                          : Math.max(0, Math.round(Number(event.target.value))),
+                    })
+                  }
+                />
+                <Switch
+                  label={t('manager.builder.prices.offered')}
+                  checked={row.is_active && (free ? row.price !== null : !!row.price)}
+                  disabled={free ? row.price === null : !row.price}
+                  onChange={(is_active) => change(index, { is_active })}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+        {listing && addable.length > 0 && (
+          <AddService
+            options={addable}
+            first={!listed}
+            onAdd={(key) => {
+              const kind = addable.find((item) => item.key === key);
+              if (kind) setServices([...services, { key, name: kind.name, mode: 'fixed' }]);
+            }}
+          />
+        )}
       </SectionCard>
 
       <SectionCard
@@ -947,6 +1046,8 @@ function Settings({ data }: { data: ContractBuilder }) {
             onClick={() => {
               setRows(data.prices);
               setForm(data.rules);
+              setServices(listing?.rows ?? []);
+              setPrice(listing?.price ?? null);
             }}
           >
             {t('manager.builder.settings.undo')}
@@ -960,6 +1061,43 @@ function Settings({ data }: { data: ContractBuilder }) {
   );
 }
 // endregion
+
+/** Adds a service from the catalog; the first one moves the kind from per-service prices to one price. */
+function AddService({
+  options,
+  first,
+  onAdd,
+}: {
+  options: { key: string; name: string }[];
+  first: boolean;
+  onAdd: (key: string) => void;
+}) {
+  const { t } = useTranslation('sales');
+  const [key, setKey] = useState(options[0]?.key ?? '');
+  const chosen = options.some((item) => item.key === key) ? key : (options[0]?.key ?? '');
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl p-4 shadow-[inset_0_0_0_1px_var(--line-2)]">
+      {first && (
+        <p className="m-0 text-[13px] leading-6 text-text-2">
+          {t('manager.builder.services.intro')}
+        </p>
+      )}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <SelectField
+            label={t('manager.builder.services.add')}
+            value={chosen}
+            onChange={setKey}
+            options={options.map((item) => ({ value: item.key, label: item.name }))}
+          />
+        </div>
+        <Button variant="outline" disabled={!chosen} onClick={() => onAdd(chosen)}>
+          {t('manager.builder.services.addButton')}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // region Versions
 function Versions({ data }: { data: ContractBuilder }) {
