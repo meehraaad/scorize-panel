@@ -30,7 +30,8 @@ export default function HeaderCustomerSearch() {
         tone="muted"
         aria-label={label}
         title={label}
-        className="transition-colors hover:text-text"
+        iconSize={18}
+        className="transition-colors hover:text-text lg:[&>svg]:size-5"
         onClick={() => setOpen(true)}
       />
       {open && (
