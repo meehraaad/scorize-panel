@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ApiError } from '@/lib/api/client';
 import i18n from '@/lib/i18n';
 import { SectionError } from './ErrorPage';
-import { missingOf } from './routeFailure';
+import { missingOf, supportCodeOf } from './routeFailure';
 
 /** A page whose data answered with `error`, in a panel's section boundary. */
 function renderFailingPage(error: Error) {
@@ -50,5 +50,30 @@ describe('missingOf', () => {
     expect(missingOf(new ApiError(500, null))).toBeNull();
     expect(missingOf(new ApiError(403, { code: 'inactive' }))).toBeNull();
     expect(missingOf(new TypeError('boom'))).toBeNull();
+  });
+});
+
+describe('the support code', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fa');
+  });
+
+  it('shows the request ID of a server error, to find it in the logs', async () => {
+    renderFailingPage(new ApiError(500, null, 'a1b2c3d4e5f60718293a4b5c6d7e8f90'));
+    expect(await screen.findByText(i18n.t('errors.sectionTitle'))).toBeInTheDocument();
+    expect(screen.getByText('a1b2c3d4e5f60718293a4b5c6d7e8f90')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: i18n.t('errors.copyCode') })).toBeInTheDocument();
+  });
+
+  it('shows none when there is nothing to look up', async () => {
+    renderFailingPage(new ApiError(500, null));
+    expect(await screen.findByText(i18n.t('errors.sectionTitle'))).toBeInTheDocument();
+    expect(screen.queryByText(i18n.t('errors.supportCode'))).toBeNull();
+  });
+
+  it('is only for failures on the server', () => {
+    expect(supportCodeOf(new ApiError(502, null, 'abc12345'))).toBe('abc12345');
+    expect(supportCodeOf(new ApiError(400, null, 'abc12345'))).toBeNull();
+    expect(supportCodeOf(new TypeError('boom'))).toBeNull();
   });
 });

@@ -8,7 +8,7 @@ import { PageSkeleton } from '@/components/ui/Skeleton';
 import { START_PATH } from '@/lib/auth/session';
 import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { reloadForNewBuild, shouldReloadFor } from '@/lib/router/staleBuild';
-import { missingOf } from './routeFailure';
+import { missingOf, supportCodeOf } from './routeFailure';
 
 function useRouteFailure() {
   const error = useRouteError();
@@ -21,7 +21,35 @@ function useRouteFailure() {
     if (reloading) reloadForNewBuild();
   }, [reloading]);
   if (!notFound && !reloading) console.error(error);
-  return { notFound, missing, reloading };
+  return { notFound, missing, reloading, code: supportCodeOf(error) };
+}
+
+/** The request's ID, for support to find the failure in the server's logs (scorize docs/request-ids.md). */
+function SupportCode({ code }: { code: string }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex w-full items-center justify-between gap-4 rounded-2xl border border-hair bg-surface px-4 py-3">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-small text-text-2">{t('errors.supportCode')}</span>
+        <code dir="ltr" className="truncate text-start font-bold tracking-wide">
+          {code}
+        </code>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          void navigator.clipboard
+            .writeText(code)
+            .then(() => setCopied(true))
+            .catch(() => {});
+        }}
+        className={buttonClass('outline', 'flex-none')}
+      >
+        {copied ? t('errors.codeCopied') : t('errors.copyCode')}
+      </button>
+    </div>
+  );
 }
 
 /**
@@ -30,7 +58,7 @@ function useRouteFailure() {
  */
 export function ErrorPage() {
   const { t } = useTranslation();
-  const { notFound, reloading } = useRouteFailure();
+  const { notFound, reloading, code } = useRouteFailure();
   if (reloading) return null;
 
   return (
@@ -49,6 +77,7 @@ export function ErrorPage() {
           {t('errors.backHome')}
         </Link>
       </div>
+      {code && <SupportCode code={code} />}
     </div>
   );
 }
@@ -56,7 +85,7 @@ export function ErrorPage() {
 /** Boundary inside a panel: only the page area is replaced, the header and menus keep working. */
 export function SectionError() {
   const { t } = useTranslation();
-  const { missing, reloading } = useRouteFailure();
+  const { missing, reloading, code } = useRouteFailure();
   const skeleton = usePageSkeleton();
   if (missing) return <NotFoundPage inactive={missing === 'inactive'} />;
   if (reloading) return <PageSkeleton kind={skeleton} />;
@@ -68,6 +97,7 @@ export function SectionError() {
       <button type="button" onClick={() => window.location.reload()} className={buttonClass()}>
         {t('errors.retry')}
       </button>
+      {code && <SupportCode code={code} />}
     </Card>
   );
 }
