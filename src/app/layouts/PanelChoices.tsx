@@ -57,9 +57,7 @@ export function PanelChoices({ user, panel, panels, onPick, compact = false }: P
                 >
                   {t(item.name)}
                 </span>
-                {!compact && (
-                  <span className="text-[13px] text-text-2">{t(item.description)}</span>
-                )}
+                {!compact && <span className="text-[13px] text-text-2">{t(item.description)}</span>}
               </span>
               {current && (
                 <Icon

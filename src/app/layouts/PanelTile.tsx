@@ -15,7 +15,13 @@ const SIZES = {
 } as const;
 
 /** A panel's icon on its colour: same in the switcher and the chooser, so panels are recognisable. */
-export function PanelTile({ panel, size = 'md' }: { panel: PanelDefinition; size?: 'sm' | 'md' | 'lg' }) {
+export function PanelTile({
+  panel,
+  size = 'md',
+}: {
+  panel: PanelDefinition;
+  size?: 'sm' | 'md' | 'lg';
+}) {
   return (
     <span
       className={`flex flex-none items-center justify-center ${SIZES[size].box} ${TONES[panel.tone]}`}
