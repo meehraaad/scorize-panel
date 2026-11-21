@@ -176,6 +176,7 @@ const PAGES: PageCase[] = [
     '/supervisor/files/1227/documents',
     '/supervisor/files/1227/applications',
     '/supervisor/files/1227/activity',
+    '/supervisor/files/1240/services/124050',
     '/supervisor/tickets',
     '/supervisor/tasks',
     '/supervisor/services',

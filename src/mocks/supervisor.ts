@@ -551,8 +551,12 @@ const toStep = (state: WritingState): CaseWriting['step'] =>
 
 function buildCase(seed: CaseSeed): MockCase {
   const applications: CaseApplication[] = seed.apps.map(
-    ([university, program, deadline, fee, payment, result, approval, note]) => ({
+    ([university, program, deadline, fee, payment, result, approval, note], index) => ({
       id: newId(),
+      // Django's `country` (SVC9): the contract's countries in turn.
+      country: seed.countries.length
+        ? (seed.countries[index % seed.countries.length] ?? null)
+        : null,
       university,
       program,
       degree: seed.degree,
@@ -1640,10 +1644,16 @@ export const supervisorHandlers = [
   http.post(`${API}/cases/:id/applications/`, async ({ params, request }) => {
     const item = caseOr404(params);
     if (item instanceof Response) return item;
-    const values = (await request.json()) as ApplicationInput;
+    const { service: from, ...values } = (await request.json()) as ApplicationInput;
     if (!values.university.trim())
       return HttpResponse.json({ university: ['required'] }, { status: 400 });
-    item.applications.push({ ...values, id: newId(), approval: 'pending' });
+    // SVC9: added from an admission service's tab, it's for that service's country.
+    const service =
+      from === undefined ? null : item.services.find((entry) => entry.id === from && entry.country);
+    if (from !== undefined && !service)
+      return HttpResponse.json({ service: ['invalid'] }, { status: 400 });
+    const country = service?.country ?? item.data.contract.countries[0] ?? null;
+    item.applications.push({ ...values, country, id: newId(), approval: 'pending' });
     record(item, `${SUPERVISOR_NAME} اپلای ${values.university} را اضافه کرد`);
     return new HttpResponse(null, { status: 201 });
   }),
