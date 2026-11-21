@@ -6,10 +6,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-// CSS 21.9: the type scale (named sizes, phone and wide values) and the finder's phone layout add
+// CSS 22.0: the type scale (named sizes, phone and wide values) and the finder's phone layout add
 // about 0.5 KB of shared utility classes (2026-11-21).
 // JS 187.2: the supervisor panel's client-services routes and nav (my services, their report, scopes; 2026-11-20).
-const BUDGET_KB = { js: 187.2, css: 21.9 };
+const BUDGET_KB = { js: 187.2, css: 22.0 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
