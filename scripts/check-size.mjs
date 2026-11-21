@@ -10,8 +10,8 @@ import { gzipSync } from 'node:zlib';
 // about 0.5 KB of shared utility classes (2026-11-21).
 // JS 187.2: the supervisor panel's client-services routes and nav (my services, their report, scopes; 2026-11-20).
 // JS 187.4, CSS 21.5: the phone header lists the panels in the account menu (PanelChoices) and has
-// smaller sizes (2026-11-21).
-const BUDGET_KB = { js: 187.4, css: 22.0 };
+// smaller sizes (2026-11-21). JS 187.6: that panel list folds away on phones (2026-11-21).
+const BUDGET_KB = { js: 187.6, css: 22.0 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

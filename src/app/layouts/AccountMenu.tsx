@@ -124,18 +124,30 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
 
           {/* Phones: the header has no room for the panel switcher, so the panels are here. */}
           {switching && (
-            <div className="flex flex-col gap-1 border-t border-hair pt-2 pb-1 lg:hidden">
-              <span className="px-2 pb-1 text-xs font-semibold text-text-2">
-                {t('switcher.title')}
-              </span>
-              <PanelChoices
-                user={user}
-                panel={panel}
-                panels={panels}
-                onPick={() => setOpen(false)}
-                compact
-              />
-            </div>
+            // Collapsed at first: the menu opens on the account, the panels are one tap away.
+            <details className="group/panels flex flex-col border-t border-hair pt-1 lg:hidden">
+              <summary
+                className={`${itemClass} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
+              >
+                <Icon name="grid" />
+                <span className="flex-1">{t('switcher.title')}</span>
+                <span className="truncate text-[13px] text-text-2">{t(panel.name)}</span>
+                <Icon
+                  name="chevronDown"
+                  size={16}
+                  className="flex-none opacity-60 transition-transform group-open/panels:rotate-180"
+                />
+              </summary>
+              <div className="flex flex-col gap-1 pt-1 pb-1">
+                <PanelChoices
+                  user={user}
+                  panel={panel}
+                  panels={panels}
+                  onPick={() => setOpen(false)}
+                  compact
+                />
+              </div>
+            </details>
           )}
 
           <div className="flex flex-col gap-1 border-t border-hair pt-1">
