@@ -1,10 +1,15 @@
 import { http, HttpResponse } from 'msw';
-import type {
-  Answers,
-  FinderBudget,
-  FinderPathway,
-  FinderStudy,
-  PathwayResult,
+import {
+  OCCUPATION_FACTORS,
+  type Answers,
+  type FinderBudget,
+  type FinderOptions,
+  type FinderPathway,
+  type FinderPrefill,
+  type FinderStudy,
+  type Occupation,
+  type PathwayDerived,
+  type PathwayResult,
 } from '@/lib/applicant/pathways';
 import type { PathwayDetail, PathwayInput, PathwayStatus } from '@/features/pathways/manageApi';
 import { forbidden, notFound, storage } from './session';
@@ -217,9 +222,166 @@ function seed(): PathwayDetail[] {
   ];
 }
 
+const NETHERLANDS = { id: 91, name: 'هلند', code: 'NL' };
+
+/** Study field groups (Django: the cleaned study field table; 19 there, a few here). */
+const FIELD_GROUPS = [
+  { id: 1, name: 'مهندسی کامپیوتر و فناوری اطلاعات' },
+  { id: 2, name: 'مهندسی عمران و معماری' },
+  { id: 3, name: 'پزشکی، پرستاری و پیراپزشکی' },
+  { id: 4, name: 'حقوق' },
+  { id: 5, name: 'هنر و علوم انسانی' },
+];
+/** ISCO-08 occupations (Django `occupations.Occupation`). */
+const OCCUPATIONS: Occupation[] = [
+  { code: '2512', name: 'توسعه‌دهنده‌ی نرم‌افزار', name_english: 'Software developers' },
+  { code: '2511', name: 'تحلیلگر سیستم', name_english: 'Systems analysts' },
+  { code: '2142', name: 'مهندس عمران', name_english: 'Civil engineers' },
+  { code: '2221', name: 'پرستار', name_english: 'Nursing professionals' },
+  { code: '2611', name: 'وکیل', name_english: 'Lawyers' },
+  { code: '5120', name: 'آشپز', name_english: 'Cooks' },
+];
+/** The occupations people of each field group usually have. */
+const SUGGESTED: Record<number, string[]> = { 1: ['2512', '2511'], 2: ['2142'], 3: ['2221'] };
+/** Official occupation lists: Germany's shortage list, Australia's skilled list. */
+const OCCUPATION_LISTS = [
+  { country_id: GERMANY.id, kind: 'shortage' as const, codes: ['2512', '2142', '2221'] },
+  { country_id: AUSTRALIA.id, kind: 'skilled' as const, codes: ['2512', '2611', '2142'] },
+];
+/** ISCO major groups 1 to 3 are skilled (Canada's TEER 0 to 3, roughly). */
+const isSkilled = (code: string) => ['1', '2', '3'].includes(code[0] ?? '');
+
+/**
+ * Routes that ask about occupation lists or the field group, used instead of the usual ones by
+ * `useOccupationRoutes` (the tests of the field and occupation step).
+ */
+function occupationSeed(kind: 'occupation' | 'field'): PathwayDetail[] {
+  const [germany] = seed();
+  if (!germany) return [];
+  const route = (
+    id: number,
+    country: PathwayDetail['country'],
+    name: string,
+    factors: string[],
+    requirements: PathwayDetail['requirements'],
+  ): PathwayDetail => ({
+    ...germany,
+    id,
+    country,
+    name,
+    name_persian: name,
+    summary: '',
+    tip: '',
+    factors,
+    requirements,
+  });
+  const yes = (group: number, factor: string, label: string) => ({
+    group,
+    factor,
+    minimum: '',
+    maximum: '',
+    value: 'yes',
+    label,
+  });
+  if (kind === 'field')
+    return [
+      route(
+        20,
+        GERMANY,
+        'کار ماهر با مدرک',
+        ['field_group', 'education'],
+        [
+          {
+            group: 1,
+            factor: 'education',
+            minimum: 'bachelor',
+            maximum: '',
+            value: '',
+            label: 'حداقل کارشناسی',
+          },
+        ],
+      ),
+    ];
+  return [
+    route(
+      10,
+      GERMANY,
+      'ویزای کار ماهر',
+      ['shortage_occupation'],
+      [yes(1, 'shortage_occupation', 'شغل در فهرست کمبود آلمان')],
+    ),
+    route(
+      11,
+      AUSTRALIA,
+      'کار ماهر ۱۹۰',
+      ['listed_occupation'],
+      [yes(1, 'listed_occupation', 'شغل در فهرست مشاغل ماهر استرالیا')],
+    ),
+    route(
+      12,
+      NETHERLANDS,
+      'مهاجر بسیار ماهر',
+      ['shortage_occupation'],
+      [yes(1, 'shortage_occupation', 'شغل مورد نیاز هلند')],
+    ),
+    route(
+      13,
+      CANADA,
+      'اکسپرس انتری',
+      ['field_group', 'skilled_occupation'],
+      [yes(1, 'skilled_occupation', 'شغل ماهر')],
+    ),
+  ];
+}
+
 let pathways = seed();
+/** Tests: routes about occupations instead of the usual ones. */
+let occupationRoutes: PathwayDetail[] | null = null;
+/** Tests: a server from before the field and occupation step (none of its fields). */
+let oldServer = false;
+const NO_PREFILL: FinderPrefill = {
+  field_group: null,
+  occupation: null,
+  work_years: null,
+  work_years_source: '',
+};
+let prefill = NO_PREFILL;
+/** The last body the finder sent to `check/`. */
+let lastCheck: object | null = null;
+/** How many occupation searches came in, by text. */
+let searches: string[] = [];
+
 export function resetPathwayMocks() {
   pathways = seed();
+  occupationRoutes = null;
+  oldServer = false;
+  prefill = NO_PREFILL;
+  lastCheck = null;
+  searches = [];
+}
+export function withOccupationRoutes(kind: 'occupation' | 'field' = 'occupation') {
+  occupationRoutes = occupationSeed(kind);
+}
+export function asOldPathwayServer() {
+  oldServer = true;
+}
+export function setFinderPrefill(next: Partial<FinderPrefill>) {
+  prefill = { ...NO_PREFILL, ...next };
+}
+export const lastPathwayCheck = () => lastCheck;
+export const occupationSearches = () => searches;
+
+/** Django: what the occupation says for each of the route's occupation factors. */
+function derivedFor(p: PathwayDetail, occupation: string | null | undefined): PathwayDerived {
+  if (!occupation) return {};
+  const derived: PathwayDerived = {};
+  const list = OCCUPATION_LISTS.find((one) => one.country_id === p.country.id);
+  for (const factor of OCCUPATION_FACTORS) {
+    if (!p.factors.includes(factor)) continue;
+    if (factor === 'skilled_occupation') derived[factor] = isSkilled(occupation);
+    else if (list) derived[factor] = list.codes.includes(occupation);
+  }
+  return derived;
 }
 
 const finderPathway = (p: PathwayDetail): FinderPathway => ({
@@ -331,14 +493,43 @@ function evaluate(p: PathwayDetail, given: Answers): PathwayResult {
   };
 }
 
-const usable = () => pathways.filter((p) => p.status === 'published');
+const usable = () => occupationRoutes ?? pathways.filter((p) => p.status === 'published');
 const status = (p: PathwayDetail): PathwayStatus =>
   !p.is_active ? 'off' : p.verified_at === null ? 'draft' : 'published';
 
 export const pathwayHandlers = [
-  http.get('/api/applicant/v1/pathways/', () => {
+  http.get('/api/applicant/v1/pathways/', ({ request }) => {
     if (!storage.get()) return forbidden();
+    const params = new URL(request.url).searchParams;
+    const text = params.get('occupation_search');
+    if (text !== null && !oldServer) {
+      searches = [...searches, text];
+      const query = text.trim().toLowerCase();
+      return HttpResponse.json({
+        occupations: OCCUPATIONS.filter(
+          (one) =>
+            one.code.startsWith(query) ||
+            one.name.includes(query) ||
+            (one.name_english ?? '').toLowerCase().includes(query),
+        ).slice(0, 20),
+      });
+    }
+    const field = params.get('study_field');
+    if (field !== null && !oldServer)
+      return HttpResponse.json({
+        suggested_occupations: (SUGGESTED[Number(field)] ?? []).flatMap((code) =>
+          OCCUPATIONS.filter((one) => one.code === code),
+        ),
+      });
+    const extra: Partial<FinderOptions> = oldServer
+      ? {}
+      : {
+          field_groups: FIELD_GROUPS,
+          prefill,
+          occupation_lists: OCCUPATION_LISTS.map(({ country_id, kind }) => ({ country_id, kind })),
+        };
     return HttpResponse.json({
+      ...extra,
       pathways: usable().map(finderPathway),
       factors: FACTORS,
       rates: { eur: TOMANS.e, usd: TOMANS.u },
@@ -357,7 +548,9 @@ export const pathwayHandlers = [
       by_country?: Record<string, Answers>;
       budget?: FinderBudget | null;
       income?: { amount: number; currency: 'toman' | 'eur' | 'usd' } | null;
+      occupation?: string | null;
     };
+    lastCheck = body;
     // Django: the income becomes euros at the newest rates.
     const { income } = body;
     if (income && body.answers.monthly_income_eur === undefined) {
@@ -367,10 +560,19 @@ export const pathwayHandlers = [
     }
     // Answers about one country count for that country's routes only (Django: `by_country`).
     const results = usable()
-      .map((p) => ({
-        ...evaluate(p, { ...body.answers, ...body.by_country?.[String(p.country.id)] }),
-        study: studyOf(p, body.budget ?? null),
-      }))
+      .map((p) => {
+        // Django: the occupation answers the route's list questions itself.
+        const derived = oldServer ? undefined : derivedFor(p, body.occupation);
+        return {
+          ...evaluate(p, {
+            ...body.answers,
+            ...body.by_country?.[String(p.country.id)],
+            ...derived,
+          }),
+          study: studyOf(p, body.budget ?? null),
+          ...(derived ? { derived } : {}),
+        };
+      })
       .sort((a, b) => Number(b.qualifies) - Number(a.qualifies));
     return HttpResponse.json({ id: 1, created_at: now(), results }, { status: 201 });
   }),

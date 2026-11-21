@@ -57,6 +57,36 @@ export interface FinderOptions {
   countries?: FinderPathway['country'][];
   /** Tomans per euro and per dollar now (null without a rate): an income typed in tomans is shown in euros. */
   rates?: { eur: number | null; usd: number | null };
+  /** The study field groups (Persian names), for the field and occupation step. Absent on older servers. */
+  field_groups?: FieldGroup[];
+  /** What the profile already says: shown picked in the questions, every one editable. Absent on older servers. */
+  prefill?: FinderPrefill;
+  /**
+   * Countries whose official occupation list Django checks the occupation against: their yes/no question
+   * (`shortage_occupation`, `listed_occupation`) isn't asked once an occupation is picked.
+   */
+  occupation_lists?: { country_id: number; kind: 'shortage' | 'skilled' }[];
+}
+
+/** One of the study field groups (Django: the cleaned study field table). */
+export interface FieldGroup {
+  id: number;
+  name: string;
+}
+
+/** An ISCO-08 occupation: its 4-digit code and its names. */
+export interface Occupation {
+  code: string;
+  name: string;
+  name_english?: string;
+}
+
+export interface FinderPrefill {
+  field_group: number | null;
+  occupation: { code: string; name: string } | null;
+  work_years: number | null;
+  /** From the work history, or what the person said before. */
+  work_years_source: 'history' | 'reported' | '';
 }
 
 /** Net income a month, in tomans, euros or dollars: Django converts it to euros at the newest rates. */
@@ -96,7 +126,18 @@ export interface PathwayResult {
   improvements?: PathwayImprovement[];
   /** A study route with costs: its first year and how it fits the budget; null or absent otherwise. */
   study?: FinderStudy | null;
+  /** Answers Django worked out from the occupation (on the country's list or not). Absent on older servers. */
+  derived?: PathwayDerived;
 }
+
+/** The yes/no factors the occupation answers by itself. */
+export const OCCUPATION_FACTORS = [
+  'shortage_occupation',
+  'listed_occupation',
+  'skilled_occupation',
+] as const;
+export type OccupationFactor = (typeof OCCUPATION_FACTORS)[number];
+export type PathwayDerived = Partial<Record<OccupationFactor, boolean>>;
 
 export interface PathwayCheck {
   id: number;
@@ -112,6 +153,28 @@ export const finderOptionsQuery = queryOptions({
   queryFn: () => api<FinderOptions>(`${PATHWAYS_API}/`),
 });
 
+/** Occupations whose Persian or English name, or code, has this text (up to 20). */
+export const occupationSearchQuery = (text: string) =>
+  queryOptions({
+    queryKey: ['applicant', 'pathways', 'occupations', text],
+    queryFn: () =>
+      api<{ occupations?: Occupation[] }>(
+        `${PATHWAYS_API}/?occupation_search=${encodeURIComponent(text)}`,
+      ),
+    select: (data) => data.occupations ?? [],
+    staleTime: 5 * 60_000,
+  });
+
+/** Occupations people of this study field group usually have, shown first. */
+export const suggestedOccupationsQuery = (fieldGroup: number) =>
+  queryOptions({
+    queryKey: ['applicant', 'pathways', 'suggested', fieldGroup],
+    queryFn: () =>
+      api<{ suggested_occupations?: Occupation[] }>(`${PATHWAYS_API}/?study_field=${fieldGroup}`),
+    select: (data) => data.suggested_occupations ?? [],
+    staleTime: 5 * 60_000,
+  });
+
 /** Answers about one destination (lived there, a job offer from it), by country id. */
 export type CountryAnswers = Record<number, Answers>;
 
@@ -121,8 +184,17 @@ export const checkPathways = (
   byCountry: CountryAnswers = {},
   budget: FinderBudget | null = null,
   income: FinderIncome | null = null,
+  /** The ISCO code picked, null for "don't know"; left out when the question wasn't asked (older servers). */
+  occupation?: string | null,
 ) =>
   api<PathwayCheck>(`${PATHWAYS_API}/check/`, {
     method: 'POST',
-    body: { answers, by_country: byCountry, budget, income, contact },
+    body: {
+      answers,
+      by_country: byCountry,
+      budget,
+      income,
+      contact,
+      ...(occupation === undefined ? {} : { occupation }),
+    },
   });

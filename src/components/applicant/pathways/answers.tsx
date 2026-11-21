@@ -458,6 +458,8 @@ export function AskAnswer({
 const DESTINATION_ICONS: Record<string, QuizIconName> = {
   job_offer: 'briefcase',
   shortage_occupation: 'target',
+  listed_occupation: 'target',
+  skilled_occupation: 'seal',
   skills_assessment: 'seal',
   recognition: 'seal',
   stay_months: 'compass',

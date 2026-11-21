@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { FinderPathway } from '@/lib/applicant/pathways';
 import {
   ASKS,
+  FIELD_OCCUPATION,
   answeredPathways,
   countriesFor,
   countriesLeft,
   countryProgress,
   mergeByCountry,
   nextAsk,
+  occupationSkips,
 } from './plan';
 
 const route = (
@@ -116,5 +118,27 @@ describe('digital nomad questions', () => {
       'employer_years',
     ]);
     expect(ASKS.find((ask) => ask.id === 'children')?.input).toBe('number');
+  });
+});
+
+describe('the occupation step', () => {
+  const lists = [
+    route(5, 'Germany', ['shortage_occupation']),
+    route(6, 'Netherlands', ['shortage_occupation']),
+    route(7, 'Canada', ['skilled_occupation']),
+  ];
+  it('comes before the list questions, and an occupation skips the countries Django checks', () => {
+    expect(nextAsk(lists, 'work', new Set())?.id).toBe(FIELD_OCCUPATION);
+    const answered = new Set([FIELD_OCCUPATION, ...occupationSkips(lists, [{ country_id: 5 }])]);
+    const ask = nextAsk(lists, 'work', answered);
+    expect(ask?.id).toBe('shortage_occupation');
+    expect(ask && countriesFor(lists, 'work', ask, answered).map((c) => c.name)).toEqual([
+      'Netherlands',
+    ]);
+    // Germany's and Canada's routes are answered by the occupation alone.
+    expect(answeredPathways(lists, 'work', answered).map((p) => p.name)).toEqual([
+      'Germany',
+      'Canada',
+    ]);
   });
 });

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/Progress';
 import { CURRENCY_CODE, FIT_TONE } from '@/lib/applicant/estimate';
-import type { FinderStudy, PathwayResult } from '@/lib/applicant/pathways';
+import { OCCUPATION_FACTORS, type FinderStudy, type PathwayResult } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { Country } from './plan';
 import { Bar, Forward, MAIN_ON_PHONE } from './answers';
@@ -144,6 +144,32 @@ function StudyCosts({ study }: { study: FinderStudy }) {
   );
 }
 
+/** What Django worked out from the occupation for this route ("on Germany's shortage list"). */
+function Derived({ result }: { result: PathwayResult }) {
+  const { t } = useTranslation('pathways');
+  const lines = OCCUPATION_FACTORS.flatMap((factor) => {
+    const value = result.derived?.[factor];
+    return value === undefined ? [] : [{ factor, value }];
+  });
+  if (!lines.length) return null;
+  return (
+    <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm leading-7">
+      {lines.map(({ factor, value }) => (
+        <li key={factor} className="flex items-start gap-2">
+          <QuizIcon
+            name={value ? 'seal' : 'none'}
+            size={18}
+            className={`mt-1 flex-none ${value ? 'text-good' : 'text-text-2'}`}
+          />
+          {t(key(`derived.${factor}.${value ? 'yes' : 'no'}`), {
+            country: result.pathway.country.name,
+          })}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boolean }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
@@ -195,6 +221,7 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
           />
         </div>
       )}
+      <Derived result={result} />
       {result.study && <StudyCosts study={result.study} />}
       {(pathway.duration || (pathway.cost && !result.study)) && (
         <dl className="m-0 grid grid-cols-2 gap-4 border-t border-hair pt-5">
@@ -381,9 +408,10 @@ export function Results({
                     name: result.pathway.name,
                   })}
                 </span>
-                <span className="ps-9 text-small text-text-2 lg:ps-0">
+                <div className="flex flex-col gap-1 ps-9 text-small text-text-2 lg:ps-0">
                   {f.list(result.missing) || t('results.points_short')}
-                </span>
+                  <Derived result={result} />
+                </div>
               </li>
             ))}
           </ul>
