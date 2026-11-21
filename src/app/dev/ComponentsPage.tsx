@@ -554,6 +554,16 @@ export default function ComponentsPage() {
               hint="یک پیگیری برای شما ساخته می‌شود."
             />
             <ChoiceGroup
+              legend="ChoiceGroup (chips: long labels wrap)"
+              look="chips"
+              value={when}
+              onChange={setWhen}
+              options={[
+                { value: 'evening', label: 'مهندسان نرم‌افزار و توسعه‌دهندگان برنامه‌های کاربردی' },
+                { value: 'tomorrow', label: 'پرستاران' },
+              ]}
+            />
+            <ChoiceGroup
               legend="ChoiceGroup (tiles)"
               look="tiles"
               value={outcome}

@@ -1,5 +1,7 @@
 import {
   FINDER_BUDGETS,
+  OCCUPATION_FACTORS,
+  type OccupationAnswers,
   type Answers,
   type CountryAnswers,
   type FactorValue,
@@ -36,6 +38,17 @@ export const INCOME_AMOUNT = 'income_amount';
 export const INCOME_CURRENCY = 'income_currency';
 export const INCOME_CURRENCIES = ['toman', 'eur', 'usd'] as const;
 export type IncomeCurrency = (typeof INCOME_CURRENCIES)[number];
+/** The field and occupation step: the study field group (a factor) and the occupation (sent on its own). */
+export const FIELD_OCCUPATION = 'field_occupation';
+export const FIELD_GROUP = 'field_group';
+/** The ISCO code picked; empty for "don't know / none". Sent as `occupation`, apart from the factors. */
+export const OCCUPATION = 'occupation';
+/**
+ * A `countries` question skipped for one country only (Django answers it from that country's occupation list):
+ * counted as answered for that country's routes.
+ */
+export const skipFor = (askId: string, countryId: number) => `${askId}@${String(countryId)}`;
+
 /** Scales an English level can be given in: the options stay IELTS bands, worded in the scale picked. */
 export const ENGLISH_SCALES = ['ielts', 'toefl', 'duolingo'] as const;
 export type EnglishScale = (typeof ENGLISH_SCALES)[number];
@@ -48,7 +61,7 @@ export interface Ask {
    * A number (`number`), one of the options, or `countries`: one question about every destination at once
    * ("which countries have you lived in, and for how long"), each country answered on its own.
    */
-  input: 'number' | 'options' | 'countries' | 'money';
+  input: 'number' | 'options' | 'countries' | 'money' | 'occupation';
   /** `countries`: what to ask of each country picked: years there, or how fully the degree is recognised. */
   detail?: 'years' | 'recognition';
   options?: readonly AskOption[];
@@ -86,6 +99,9 @@ export const ASKS: readonly Ask[] = [
     ],
   },
   { id: 'work_years', factors: ['work_years'], input: 'number', min: 0, max: 40, start: 3 },
+  // The study field group, and the occupation when a route asks about occupation lists: Django then answers
+  // those lists itself (the yes/no questions below are skipped). Only asked when Django sends the groups.
+  { id: FIELD_OCCUPATION, factors: [FIELD_GROUP, ...OCCUPATION_FACTORS], input: 'occupation' },
   {
     id: 'remote_work',
     factors: ['remote_work'],
@@ -129,6 +145,17 @@ export const ASKS: readonly Ask[] = [
   { id: 'recognition', factors: ['recognition'], input: 'countries', detail: 'recognition' },
   { id: 'job_offer', factors: ['job_offer'], input: 'countries' },
   { id: 'shortage_occupation', factors: ['shortage_occupation'], input: 'countries' },
+  { id: 'listed_occupation', factors: ['listed_occupation'], input: 'countries' },
+  // Not about one country (Django takes it in `answers`, never `by_country`): one yes or no.
+  {
+    id: 'skilled_occupation',
+    factors: ['skilled_occupation'],
+    input: 'options',
+    options: [
+      { id: 'yes', set: { skilled_occupation: true } },
+      { id: 'no', set: { skilled_occupation: false } },
+    ],
+  },
   { id: 'skills_assessment', factors: ['skills_assessment'], input: 'countries' },
   { id: 'stay_months', factors: ['stay_months'], input: 'countries', detail: 'years' },
   {
@@ -154,7 +181,15 @@ export const ASKS: readonly Ask[] = [
 const needs = (pathway: FinderPathway) =>
   pathway.has_costs ? [...pathway.factors, BUDGET] : pathway.factors;
 
-const ASK_OF = new Map(ASKS.flatMap((ask) => ask.factors.map((factor) => [factor, ask] as const)));
+/** The questions that answer each factor (an occupation factor: the occupation step, then its yes/no). */
+const ASKS_OF = new Map<string, Ask[]>();
+for (const ask of ASKS)
+  for (const factor of ask.factors) ASKS_OF.set(factor, [...(ASKS_OF.get(factor) ?? []), ask]);
+
+/** Answered for this route: the question, or (a question about destinations) its country's part. */
+const isAnswered = (ask: Ask, pathway: FinderPathway, answered: ReadonlySet<string>) =>
+  answered.has(ask.id) ||
+  (ask.input === 'countries' && answered.has(skipFor(ask.id, pathway.country.id)));
 
 export const suits = (pathway: FinderPathway, goal: Goal) =>
   goal === 'any' || pathway.goal === 'any' || pathway.goal === goal;
@@ -162,10 +197,9 @@ export const suits = (pathway: FinderPathway, goal: Goal) =>
 /** The questions a route needs that aren't answered yet (factors we can't ask are skipped). */
 export function remainingAsks(pathway: FinderPathway, answered: ReadonlySet<string>): Ask[] {
   const asks = new Set<Ask>();
-  for (const factor of needs(pathway)) {
-    const ask = ASK_OF.get(factor);
-    if (ask && !answered.has(ask.id)) asks.add(ask);
-  }
+  for (const factor of needs(pathway))
+    for (const ask of ASKS_OF.get(factor) ?? [])
+      if (!isAnswered(ask, pathway, answered)) asks.add(ask);
   return ASKS.filter((ask) => asks.has(ask));
 }
 
@@ -243,11 +277,23 @@ export function asksLeft(
   return left.size;
 }
 
-/** The countries a `countries` question is about: those of the goal's routes that need its factor. */
-export function countriesFor(pathways: readonly FinderPathway[], goal: Goal, ask: Ask): Country[] {
+/**
+ * The countries a `countries` question is about: those of the goal's routes that need its factor, but not one
+ * whose part an answer already gave (the occupation, checked against that country's list).
+ */
+export function countriesFor(
+  pathways: readonly FinderPathway[],
+  goal: Goal,
+  ask: Ask,
+  answered: ReadonlySet<string> = new Set(),
+): Country[] {
   const found = new Map<number, Country>();
   for (const pathway of pathways)
-    if (suits(pathway, goal) && ask.factors.some((factor) => needs(pathway).includes(factor)))
+    if (
+      suits(pathway, goal) &&
+      ask.factors.some((factor) => needs(pathway).includes(factor)) &&
+      !answered.has(skipFor(ask.id, pathway.country.id))
+    )
       found.set(pathway.country.id, pathway.country);
   return [...found.values()];
 }
@@ -264,3 +310,40 @@ export const mergeByCountry = (parts: readonly (CountryAnswers | undefined)[]): 
 /** The answers as Django takes them: every option's factors merged. */
 export const mergeAnswers = (parts: Record<string, Answers>): Answers =>
   Object.assign({}, ...Object.values(parts)) as Record<string, FactorValue>;
+
+/** Whether any of the goal's routes asks about an occupation list: the step then asks the occupation too. */
+export const needsOccupation = (pathways: readonly FinderPathway[], goal: Goal) =>
+  pathways.some(
+    (p) =>
+      suits(p, goal) &&
+      p.factors.some((factor) => (OCCUPATION_FACTORS as readonly string[]).includes(factor)),
+  );
+
+/** Which list question each kind of official list answers. */
+const LIST_FACTOR = { shortage: 'shortage_occupation', skilled: 'listed_occupation' } as const;
+
+/**
+ * The questions an occupation makes pointless: only those Django answered yes or no for it
+ * (`occupationAnswersQuery`). One it can't tell (null, missing), or a server that sends no answers, is
+ * still asked. When the server names its lists, a country's question is skipped only for its own kind of list.
+ */
+export function occupationSkips(
+  pathways: readonly FinderPathway[],
+  known: OccupationAnswers | null | undefined,
+  lists?: readonly { country_id: number; kind: keyof typeof LIST_FACTOR }[],
+): string[] {
+  const skips = new Set<string>();
+  if (!known?.occupation_answers) return [];
+  if (typeof known.skilled_occupation === 'boolean') skips.add('skilled_occupation');
+  for (const pathway of pathways) {
+    const country = pathway.country.id;
+    const answers = known.occupation_answers[String(country)] ?? {};
+    for (const factor of Object.values(LIST_FACTOR)) {
+      const onItsList =
+        !lists ||
+        lists.some((list) => list.country_id === country && LIST_FACTOR[list.kind] === factor);
+      if (onItsList && typeof answers[factor] === 'boolean') skips.add(skipFor(factor, country));
+    }
+  }
+  return [...skips];
+}

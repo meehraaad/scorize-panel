@@ -5,6 +5,11 @@ import { Icon } from './Icon';
 const pill =
   'inline-flex min-h-11 flex-none cursor-pointer items-center justify-center rounded-full px-4 text-sm font-medium whitespace-nowrap text-text shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-hero has-checked:text-on-hero has-checked:shadow-none has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
 
+/** A pill whose label may be long (an occupation's name): it wraps inside the row instead of overflowing. */
+const chip = pill
+  .replace('flex-none', 'max-w-full')
+  .replace('whitespace-nowrap', 'py-2 text-start text-balance');
+
 /** A tile: a title and a line under it, checked = primary ring (outcomes, message templates). */
 const tile =
   'flex min-h-11 cursor-pointer flex-col gap-1 rounded-2xl px-4 py-3 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:shadow-[inset_0_0_0_1px_var(--line-3)] has-checked:bg-tint has-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus';
@@ -23,6 +28,7 @@ const segment =
 
 const LOOKS = {
   pills: { list: 'flex flex-wrap gap-2', item: pill },
+  chips: { list: 'flex flex-wrap gap-2', item: chip },
   tiles: { list: 'grid gap-2 sm:grid-cols-2', item: tile },
   squares: { list: 'grid grid-cols-2 gap-2 sm:grid-cols-4', item: square },
   cards: { list: 'grid gap-2.5 sm:grid-cols-2', item: card },
@@ -60,7 +66,7 @@ export function ChoiceGroup<T extends string>({
   value: T | null;
   onChange: (value: T) => void;
   /**
-   * `pills`: a wrapping row of short labels; `tiles`: a grid of labelled boxes; `cards`: tiles with
+   * `pills`: a wrapping row of short labels; `chips`: the same for longer labels, each wrapping inside; `tiles`: a grid of labelled boxes; `cards`: tiles with
    * a radio dot; `squares`: short centred labels, four in a row; `segmented`: a few short labels
    * on one track. (A quiz's large answers: `AnswerGroup`.)
    */
@@ -88,7 +94,7 @@ export function ChoiceGroup<T extends string>({
               onChange={() => onChange(option.value)}
               className="sr-only"
             />
-            {look === 'pills' || look === 'segmented' || look === 'squares' ? (
+            {look === 'pills' || look === 'chips' || look === 'segmented' || look === 'squares' ? (
               option.label
             ) : look === 'cards' ? (
               <>
