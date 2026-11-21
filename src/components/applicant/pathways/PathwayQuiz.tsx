@@ -1,5 +1,6 @@
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -165,7 +166,14 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
     setResults([]);
     setStage('intro');
   };
-  const frame = { host, onClose, onRestart: stage === 'intro' ? undefined : restart };
+  // Inside the panel, the questions take the whole screen (no menus around them); closing goes back to the start.
+  const fullScreen = host === 'panel' && stage !== 'intro';
+  const frame = {
+    host: fullScreen ? ('page' as const) : host,
+    onClose: fullScreen ? restart : onClose,
+    onRestart: stage === 'intro' ? undefined : restart,
+    fullScreen,
+  };
 
   if (!pathways.length)
     return (
@@ -284,6 +292,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
               busy={check.isPending}
               onBack={() => (parts.length ? setParts(parts.slice(0, -1)) : setGoal(null))}
               rates={options.rates}
+              allCountries={options.countries}
               onAnswer={(set, byCountry, skips) =>
                 afterAnswer([...parts, { id: ask.id, set, byCountry, skips }])
               }
@@ -318,9 +327,12 @@ function Frame({
   progress,
   step,
   rail,
+  fullScreen = false,
   children,
 }: {
   host: QuizHost;
+  /** Over the whole page, its menus hidden. */
+  fullScreen?: boolean;
   onClose?: (() => void) | undefined;
   onRestart?: (() => void) | undefined;
   /** Which screen is shown: a new one starts at the top. */
@@ -335,10 +347,21 @@ function Frame({
   const f = useFormat();
   const body = useRef<HTMLDivElement>(null);
   const look = FRAMES[host];
+  const layer = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (body.current) body.current.scrollTop = 0;
+    if (layer.current) layer.current.scrollTop = 0;
   }, [screen]);
-  return (
+  useEffect(() => {
+    if (!fullScreen) return;
+    // The page under the layer doesn't scroll with it.
+    const before = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = before;
+    };
+  }, [fullScreen]);
+  const frame = (
     <PinnedContext value={host !== 'panel'}>
       <div className={`flex flex-col bg-surface ${look.frame}`}>
         <header className={look.bar}>
@@ -409,6 +432,20 @@ function Frame({
       </div>
     </PinnedContext>
   );
+  return fullScreen
+    ? createPortal(
+        <div
+          ref={layer}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('title')}
+          className="fixed inset-0 z-50 overflow-y-auto bg-surface"
+        >
+          {frame}
+        </div>,
+        document.body,
+      )
+    : frame;
 }
 
 /** Up to three of the countries checked, floating round a compass (wide screens). */

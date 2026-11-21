@@ -26,6 +26,8 @@ describe('pathway finder', () => {
     renderApp('/pathways');
     await user.click(await screen.findByRole('button', { name: 'شروع کن' }));
     await user.click(await screen.findByRole('radio', { name: /^کار/ }));
+    // The questions take the whole screen, over the panel's menus.
+    expect(await screen.findByRole('dialog', { name: 'مسیریاب مهاجرت' })).toBeInTheDocument();
     // Germany needs only the degree and English: those come first.
     await screen.findByRole('heading', { name: 'آخرین مدرک تحصیلی‌ات چیست؟' });
     await user.click(screen.getByRole('radio', { name: 'کارشناسی' }));
@@ -46,9 +48,12 @@ describe('pathway finder', () => {
     await screen.findByRole('heading', { name: 'چند سال سابقه کار مرتبط با رشته‌ات داری؟' });
     await user.click(screen.getByRole('button', { name: 'یکی بیشتر' }));
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
-    // A question about each country: only Canada's route asks it here.
-    await screen.findByRole('heading', { name: 'از کارفرمای کدام کشور پیشنهاد کار داری؟' });
-    await user.click(screen.getByRole('checkbox', { name: 'کانادا' }));
+    // A question about destinations: yes or no first, then which country (Canada's route asks it).
+    await screen.findByRole('heading', {
+      name: 'پیشنهاد کار رسمی از یک کارفرمای خارج از ایران داری؟',
+    });
+    await user.click(screen.getByRole('radio', { name: 'بله، دارم' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'کانادا' }));
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
     expect(
       await screen.findByRole('heading', { name: /این (2|۲) راه برای تو مناسب‌ترند/ }),
@@ -87,7 +92,7 @@ describe('pathway finder', () => {
     expect(await screen.findByRole('button', { name: 'شروع کن' })).toBeInTheDocument();
   });
 
-  it('a country question needs a country or "none" before going on', async () => {
+  it('a destination question is yes or no first; yes asks which country, any one by search', async () => {
     loginAs(SARA);
     const user = userEvent.setup();
     renderApp('/pathways');
@@ -100,10 +105,22 @@ describe('pathway finder', () => {
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
     await screen.findByRole('heading', { name: 'چند سال سابقه کار مرتبط با رشته‌ات داری؟' });
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
-    await screen.findByRole('heading', { name: 'از کارفرمای کدام کشور پیشنهاد کار داری؟' });
-    expect(screen.getByRole('button', { name: 'بعدی' })).toBeDisabled();
-    await user.click(screen.getByRole('checkbox', { name: /هیچ/ }));
+    await screen.findByRole('heading', {
+      name: 'پیشنهاد کار رسمی از یک کارفرمای خارج از ایران داری؟',
+    });
+    await user.click(screen.getByRole('radio', { name: 'بله، دارم' }));
+    expect(await screen.findByRole('button', { name: 'بعدی' })).toBeDisabled();
+    // A country without a route, found by search: it goes to the sales team.
+    await user.type(screen.getByRole('textbox', { name: 'کشور دیگری؟' }), 'اسپا');
+    await user.click(await screen.findByRole('button', { name: /اسپانیا/ }));
+    expect(screen.getByRole('checkbox', { name: /اسپانیا/ })).toBeChecked();
     expect(screen.getByRole('button', { name: 'بعدی' })).toBeEnabled();
+    // Back goes to yes or no; no moves on.
+    await user.click(screen.getByRole('button', { name: 'قبلی' }));
+    await user.click(await screen.findByRole('radio', { name: 'نه' }));
+    expect(
+      await screen.findByRole('heading', { name: /این (1|۱) راه برای تو مناسب‌تر|راه/ }),
+    ).toBeInTheDocument();
   });
 
   it('a study route asks the budget, takes TOEFL, and shows the first year in tomans', async () => {

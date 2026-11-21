@@ -53,6 +53,8 @@ export type FinderStudy = Omit<StudyInfo, 'source_url' | 'checked_at'>;
 export interface FinderOptions {
   pathways: FinderPathway[];
   factors: Factor[];
+  /** Every country, for questions about destinations; empty or absent when no route asks one. */
+  countries?: FinderPathway['country'][];
   /** Tomans per euro and per dollar now (null without a rate): an income typed in tomans is shown in euros. */
   rates?: { eur: number | null; usd: number | null };
 }

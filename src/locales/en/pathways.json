@@ -84,29 +84,39 @@
       }
     },
     "recognition": {
-      "title": "In which countries is your degree recognised?",
-      "help": "In Germany, for example, your university is on the anabin list. If you don't know, our adviser will check.",
-      "none": "None, or I don't know"
+      "title": "Is your degree assessed or recognised in another country?",
+      "help": "In Germany, for example, your university is listed in anabin. Not sure? Our adviser will check.",
+      "yes": "Yes",
+      "no": "No, or I don't know",
+      "which": "In which country, and how fully?"
     },
     "job_offer": {
-      "title": "Which country's employer has offered you a job?",
+      "title": "Do you have a formal job offer from an employer abroad?",
       "help": "Only a formal, written job offer.",
-      "none": "None"
+      "yes": "Yes, I do",
+      "no": "No",
+      "which": "From which country?"
     },
     "shortage_occupation": {
-      "title": "Which countries list your occupation as in demand?",
-      "help": "If you don't know, our adviser will check.",
-      "none": "None, or I don't know"
+      "title": "Is your occupation on a country's in-demand list?",
+      "help": "Not sure? Answer no and our adviser will check.",
+      "yes": "Yes, I know it is",
+      "no": "No, or I don't know",
+      "which": "On which country's list?"
     },
     "skills_assessment": {
-      "title": "Which country's skills assessment have you passed?",
+      "title": "Have you passed a country's skills assessment?",
       "help": "Some work routes need one, such as Australia's.",
-      "none": "None"
+      "yes": "Yes",
+      "no": "No",
+      "which": "Which country's?"
     },
     "stay_months": {
-      "title": "Which countries have you lived, worked or studied in?",
-      "help": "Pick the countries and say how many years in each.",
-      "none": "None"
+      "title": "Have you lived, worked or studied outside Iran?",
+      "help": "Some routes give points for time in the same country.",
+      "yes": "Yes",
+      "no": "No",
+      "which": "Which countries, and for how many years?"
     },
     "partner": {
       "title": "What about your partner?",
@@ -441,7 +451,10 @@
     "years_of": "Years in {{country}}",
     "how_fully": "How fully {{country}} recognises your degree",
     "years_note_one": "{{n}} year",
-    "years_note_other": "{{n}} years"
+    "years_note_other": "{{n}} years",
+    "other": "Another country?",
+    "search": "Type a country",
+    "not_found": "No country by that name."
   },
   "improve": {
     "title": "What would help you",
