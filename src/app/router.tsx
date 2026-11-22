@@ -28,6 +28,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import { setPreloadRoutes } from '@/lib/router/preload';
+import { executionPreviewRoute } from '@/panels/execution';
 import { toPathways } from '@/panels/pathwayRoutes';
 import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
@@ -240,6 +241,9 @@ const pageRoutes: RouteObject[] = [
   { path: 'founders/pathways', loader: toPathways },
   { path: 'founders/pathways/:id', loader: toPathways },
   ...PANELS.map(panelRoutes),
+  ...(import.meta.env.DEV || import.meta.env.VITE_ASSESSMENT_PREVIEW === 'true'
+    ? [executionPreviewRoute()]
+    : []),
   // The assessment preview pages: development, and the test server's build
   // (VITE_ASSESSMENT_PREVIEW=true). Production builds drop them; Django also refuses
   // their API outside local mode.

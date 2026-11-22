@@ -1,7 +1,9 @@
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Outlet } from 'react-router';
+import { Link, Outlet } from 'react-router';
 import { Logo } from '@/components/ui/Logo';
+import { EXECUTION_PATH } from '@/lib/execution/paths';
+import { executionPreviewEnabled } from '@/lib/execution/preview';
 import { LOCALES, type Locale } from '@/lib/i18n/config';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE, SUPPORT_PHONE, formatPhone } from '@/lib/site';
@@ -58,6 +60,14 @@ export function AuthLayout() {
             {t('auth.troubleLoggingIn')} {phone}
           </span>
           <div className="flex items-center gap-3">
+            {executionPreviewEnabled && (
+              <Link
+                to={EXECUTION_PATH}
+                className="inline-flex min-h-11 items-center font-semibold text-primary-text hover:underline"
+              >
+                {t('executionPreview')}
+              </Link>
+            )}
             <LanguageSwitch />
             <span className="hidden lg:inline">{t('auth.copyright')}</span>
           </div>

@@ -51,6 +51,12 @@ interface PageCase {
 }
 
 const PAGES: PageCase[] = [
+  ...[
+    '/dev/execution',
+    '/dev/execution/cases/negar',
+    '/dev/execution/cases/negar/italy',
+    '/dev/execution/cases/negar/italy/search/missing',
+  ].map((path) => ({ path, user: SARA })),
   { path: '/dev/assessments', user: REZA },
   { path: '/dev/assessment-calculators', user: SARA },
   { path: '/dev/assessment-calculators?session=11111111-1111-4111-8111-111111111111', user: SARA },
