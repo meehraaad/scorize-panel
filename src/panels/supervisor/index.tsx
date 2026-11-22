@@ -11,6 +11,7 @@ import {
   managerTeamQuery,
   myServicesQuery,
   scopesQuery,
+  serviceKindsQuery,
   servicesReportQuery,
   serviceQuery,
   reportsQuery,
@@ -297,6 +298,15 @@ export const supervisorPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/supervisor/ScopesPage'), [], {
             guard: managerServicesOn,
             data: () => [scopesQuery],
+            skeleton: 'list',
+          }),
+        },
+        // The services: name, team, country rule, stages; new simple ones.
+        {
+          path: 'kinds',
+          ...lazyPage(() => import('@/features/supervisor/manager/KindsPage'), [], {
+            guard: managerServicesOn,
+            data: () => [serviceKindsQuery],
             skeleton: 'list',
           }),
         },

@@ -10,6 +10,9 @@ import type {
   CaseDocument,
   CaseDocuments,
   CaseRow,
+  ServiceKind,
+  ServiceKindsData,
+  StageBody,
   TeamData,
   CaseService,
   CaseStage,
@@ -848,6 +851,7 @@ export function unassignedServices(): UnassignedServices {
 // ── State ────────────────────────────────────────────────────────────────────────────────────
 
 let cases: Map<number, MockCase> | null = null;
+let mockKinds: ServiceKind[] | null = null;
 /** Cases a manager moved to someone else (POST manager/move/). */
 const movedTo = new Map<number, { id: number; name: string }>();
 
@@ -926,6 +930,77 @@ function supervisorsOf(id: number): CaseRow['supervisors'] {
   const maryam = { id: 7, name: 'مریم کاظمی' };
   return id % 3 === 0 ? [{ id: 11, name: 'علی نوری' }] : [maryam];
 }
+
+const KIND_COUNTRIES = [
+  { id: 1, name: 'آلمان' },
+  { id: 2, name: 'ایتالیا' },
+  { id: 3, name: 'کانادا' },
+];
+const KIND_TEAMS = [
+  { key: 'executive', name: 'تیم اجرا' },
+  { key: 'visa', name: 'تیم ویزا' },
+  { key: 'search', name: 'تیم سرچ' },
+  { key: 'writing', name: 'تیم نگارش' },
+];
+
+/** The built-in kinds as Django makes them (`sync.CONTRACT_KINDS`, `stages.KIND_STAGES`). */
+function kindsList(): ServiceKind[] {
+  const stage = (id: number, key: string, name: string, final = false, keyed = false) => ({
+    id,
+    key,
+    name,
+    final,
+    country: null,
+    services: key === 'documents' ? 3 : 0,
+    removable: !keyed && key !== 'documents',
+  });
+  const kind = (
+    id: number,
+    key: string,
+    name: string,
+    team: string,
+    stages: ServiceKind['stages'],
+    extra: Partial<ServiceKind> = {},
+  ): ServiceKind => ({
+    id,
+    key,
+    name,
+    team,
+    needs_country: true,
+    is_active: true,
+    order: id,
+    built_in: true,
+    tool: key === 'search' ? null : (key as ServiceKind['tool']),
+    services: 4,
+    has_stages: true,
+    stages,
+    ...extra,
+  });
+  mockKinds ??= [
+    kind(1, 'admission', 'پذیرش', 'executive', [
+      stage(11, 'documents', 'مدارک', false, true),
+      stage(12, 'applying', 'اپلای', false, true),
+      stage(13, 'admitted', 'پذیرش گرفت', true, true),
+    ]),
+    kind(2, 'visa', 'ویزا', 'visa', [
+      stage(21, 'documents', 'مدارک ویزا', false, true),
+      stage(22, 'granted', 'ویزا صادر شد', true, true),
+    ]),
+    kind(3, 'search', 'سرچ', 'search', [
+      stage(31, 'interests', 'گرفتن علاقه‌ها'),
+      stage(32, 'list', 'لیست اولیه'),
+      stage(33, 'approved', 'تأیید مشتری', true),
+    ]),
+    kind(4, 'writing', 'نگارش', 'writing', [], { needs_country: false, has_stages: false }),
+  ];
+  return mockKinds;
+}
+
+const kindsData = (): ServiceKindsData => ({
+  kinds: kindsList(),
+  teams: KIND_TEAMS,
+  countries: KIND_COUNTRIES,
+});
 
 /** The manager's team page (GET manager/team/), from the mock cases' supervisors. */
 function teamData(cases: MockCase[]): TeamData {
@@ -1321,6 +1396,59 @@ export const supervisorHandlers = [
   http.get(`${API}/manager/team/`, () => {
     const all = casesOrError();
     return all instanceof Response ? all : HttpResponse.json(teamData([...all.values()]));
+  }),
+
+  // The manager's service settings (Django: api/supervisor/v1/service_types.py).
+  http.get(`${API}/manager/service-types/`, () => {
+    const all = casesOrError();
+    return all instanceof Response ? all : HttpResponse.json(kindsData());
+  }),
+  http.post(`${API}/manager/service-types/`, async ({ request }) => {
+    const body = (await request.json()) as Pick<
+      ServiceKind,
+      'name' | 'team' | 'needs_country' | 'is_active'
+    >;
+    const kinds = kindsList();
+    kinds.push({
+      ...body,
+      id: newId(),
+      key: `kind-${String(kinds.length)}`,
+      order: kinds.length,
+      built_in: false,
+      tool: null,
+      services: 0,
+      has_stages: true,
+      stages: [],
+    });
+    return HttpResponse.json(kindsData(), { status: 201 });
+  }),
+  http.patch(`${API}/manager/service-types/:id/`, async ({ params, request }) => {
+    const kind = kindsList().find((one) => one.id === Number(params['id']));
+    if (!kind) return new HttpResponse(null, { status: 404 });
+    Object.assign(kind, await request.json());
+    return HttpResponse.json(kindsData());
+  }),
+  http.put(`${API}/manager/service-types/:id/stages/`, async ({ params, request }) => {
+    const kind = kindsList().find((one) => one.id === Number(params['id']));
+    if (!kind) return new HttpResponse(null, { status: 404 });
+    const { stages } = (await request.json()) as { stages: StageBody[] };
+    const kept = new Set(stages.map((row) => row.id));
+    if (kind.stages.some((stage) => !kept.has(stage.id) && !stage.removable))
+      return HttpResponse.json({ detail: 'This stage stays.' }, { status: 409 });
+    kind.stages = stages.map((row, index) => {
+      const old = kind.stages.find((stage) => stage.id === row.id);
+      const country = KIND_COUNTRIES.find((one) => one.id === row.country) ?? null;
+      return {
+        id: old?.id ?? newId(),
+        key: old?.key ?? `stage-${String(index)}`,
+        name: row.name,
+        final: row.final,
+        country,
+        services: old?.services ?? 0,
+        removable: old?.removable ?? true,
+      };
+    });
+    return HttpResponse.json(kindsData());
   }),
 
   http.post(`${API}/manager/move/`, async ({ request }) => {
@@ -2025,6 +2153,7 @@ export const supervisorHandlers = [
 
 export function resetSupervisorMocks() {
   cases = null;
+  mockKinds = null;
   movedTo.clear();
   botSettings.clear();
   imports.clear();

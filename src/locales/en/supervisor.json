@@ -781,7 +781,8 @@
       "team": "Team",
       "move": "Move cases",
       "services": "Service status",
-      "scopes": "Supervisors"
+      "scopes": "Supervisors",
+      "kinds": "Services"
     },
     "cases": {
       "title": "Team cases",
@@ -833,6 +834,61 @@
       "pageSubtitle": "When someone leaves or is on leave, give their cases to someone else: all at once, or a few from their list.",
       "moveAll": "Move all {{n}} active cases",
       "pick": "Choose some cases"
+    },
+    "kinds": {
+      "title": "Services",
+      "subtitle": "What we sell and work on: each service's name, team, stages and tool. Make a simple service such as a digital nomad visa here, without code.",
+      "new": "New service",
+      "newText": "A simple service has stages only, no tool of its own. It is added to contracts like any other.",
+      "make": "Make service",
+      "made": "\"{{name}}\" was made. Now add its stages.",
+      "edit": "Edit",
+      "editTitle": "Edit {{name}}",
+      "save": "Save",
+      "saved": "\"{{name}}\" saved.",
+      "name": "Service name",
+      "nameRequired": "Write a name.",
+      "team": "Team",
+      "noTeam": "No team",
+      "perCountry": "Per country",
+      "oncePerCase": "One per case",
+      "open": "{{n}} open",
+      "inactive": "Inactive",
+      "perCountryLabel": "Per country",
+      "perCountryHint": "On: one service for each country of the contract.",
+      "perCountryFixed": "This rule no longer changes: it is a built-in service or has open services.",
+      "activeLabel": "Active",
+      "activeHint": "Off: not offered in new contracts. Open services stay.",
+      "tool": {
+        "admission": "Tool: the country's applications on the case page",
+        "visa": "Tool: visa results and their form",
+        "correspondence": "Tool: the professors' email bot and the emails it sent",
+        "writing": "Tool: the writing order (SOP and CV), no stages",
+        "none": "Tool: not built yet, stages only for now",
+        "simple": "Simple service: stages only"
+      },
+      "stages": {
+        "open": "Stages",
+        "of": "Stages of {{name}}",
+        "none": "This service has no stages yet.",
+        "chip": "{{n}}. {{name}}",
+        "inCountry": "{{name}} ({{country}})",
+        "title": "Stages of {{name}}",
+        "text": "In order, first to last. A final stage means the service is done.",
+        "row": "Stage {{n}}",
+        "country": "Country",
+        "everyCountry": "Every country",
+        "final": "Final",
+        "up": "Move {{name}} up",
+        "down": "Move {{name}} down",
+        "remove": "Remove {{name}}",
+        "stays": "This stage stays: the system moves services to it, or open services are at it.",
+        "add": "Add a stage",
+        "save": "Save stages",
+        "saved": "Stages of \"{{name}}\" saved.",
+        "conflict": "A stage you removed still has open services, or the system uses it.",
+        "note": "A stage with open services, or one the system moves services to, can be renamed but not removed."
+      }
     }
   }
 }
