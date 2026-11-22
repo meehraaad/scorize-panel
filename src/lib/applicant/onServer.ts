@@ -51,7 +51,7 @@ export type ServerFeature =
   | 'clientServices'
   | 'clientErrors';
 
-export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+const DEFAULTS: Record<ServerFeature, boolean> = {
   /** Voice messages in tickets: Django checks audio attachments (shamrad/lang `common/uploads.py`). */
   ticketVoice: true,
   /**
@@ -246,4 +246,19 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * (`MessageTemplate.owner`, needs `makemigrations user_profile` + `migrate`). Off: no settings card.
    */
   sellerReadyMessages: true,
+};
+
+/**
+ * Entries one build turns on, from `VITE_SERVER_FEATURES` (comma-separated names, e.g.
+ * "clientServices"): the test server (build.scorize.com) tries a feature whose Django switch is on
+ * only there. Production builds don't set it, so they keep the defaults above.
+ */
+function buildFeatures(list: string | undefined): Partial<Record<ServerFeature, boolean>> {
+  const names = (list ?? '').split(',').map((name) => name.trim());
+  return Object.fromEntries(names.filter((name) => name in DEFAULTS).map((name) => [name, true]));
+}
+
+export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  ...DEFAULTS,
+  ...buildFeatures(import.meta.env.VITE_SERVER_FEATURES),
 };

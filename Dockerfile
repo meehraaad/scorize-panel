@@ -10,6 +10,9 @@ ENV VITE_ENABLE_PWA=$VITE_ENABLE_PWA
 # "true" only on the test server: keeps the assessment preview pages in the build.
 ARG VITE_ASSESSMENT_PREVIEW=false
 ENV VITE_ASSESSMENT_PREVIEW=$VITE_ASSESSMENT_PREVIEW
+# The test server only: comma-separated ON_SERVER entries to turn on (src/lib/applicant/onServer.ts).
+ARG VITE_SERVER_FEATURES=
+ENV VITE_SERVER_FEATURES=$VITE_SERVER_FEATURES
 # Where the panel is served: `/panel/` behind the site's main nginx, `/` on panel.scorize.com.
 ARG PANEL_BASE=/panel/
 ENV PANEL_BASE=$PANEL_BASE
