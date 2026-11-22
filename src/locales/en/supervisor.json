@@ -400,6 +400,7 @@
     "unread": "unread messages",
     "emptyTitle": "Nothing waiting",
     "empty": "New messages from applicants show up here.",
+    "openOrder": "Open the writing order for {{name}}",
     "openCase": "{{name}}'s file"
   },
   "chat": {

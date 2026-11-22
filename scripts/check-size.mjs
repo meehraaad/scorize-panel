@@ -17,7 +17,8 @@ import { gzipSync } from 'node:zlib';
 // page's own code fails to load; the crash reporter itself loads only on a failure (2026-11-22).
 // JS 189.1: the supervisor manager's section, its six sub-tab routes (team cases, team, moving
 // cases, service settings) and their two queries, 0.7 KB (2026-11-22).
-const BUDGET_KB = { js: 189.1, css: 22.2 };
+// JS 189.8: Executive Panel role, navigation and route prefetch definitions (2026-11-22).
+const BUDGET_KB = { js: 189.8, css: 22.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

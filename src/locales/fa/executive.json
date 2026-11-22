@@ -1,0 +1,25 @@
+{
+  "service": "خدمت",
+  "active": "فعال",
+  "total": "کل محول‌شده‌ها",
+  "customer": "مشتری",
+  "all": "همه خدمات",
+  "allCustomers": "نمایش همه مشتریان",
+  "empty": "کاری برای نمایش وجود ندارد.",
+  "writing": "نگارش",
+  "writingWaiting": "{{n}} مورد منتظر شماست",
+  "department": "دپارتمان",
+  "caseFile": "پرونده",
+  "general": "عمومی",
+  "caseServices": "خدمات پرونده",
+  "status": {
+    "open": "باز",
+    "paused": "متوقف",
+    "closed": "بسته",
+    "new": "جدید",
+    "drafting": "در حال نگارش",
+    "revision": "درخواست اصلاح",
+    "waiting_applicant": "منتظر مشتری",
+    "delivered": "تحویل شده"
+  }
+}

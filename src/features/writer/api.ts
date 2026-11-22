@@ -9,6 +9,7 @@ import type { TicketsEndpoint, WritingDepartment } from '@/lib/tickets/api';
  */
 
 export const WRITER_KEY = ['writer'] as const;
+export const WRITER_INBOX_KEY = [...WRITER_KEY, 'inbox'] as const;
 export const WRITER_API = '/writer/v1';
 
 /**
@@ -137,4 +138,5 @@ export const VERSION_FILE = {
 export const orderTickets = (id: number): TicketsEndpoint => ({
   api: `${WRITER_API}/orders/${String(id)}/tickets`,
   queryKey: orderKey(id),
+  invalidateKeys: [WRITER_INBOX_KEY],
 });

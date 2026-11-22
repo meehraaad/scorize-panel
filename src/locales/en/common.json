@@ -61,6 +61,17 @@
       },
       "description": "Analysis assistant, messages and access"
     },
+    "executive": {
+      "name": "Executive Panel",
+      "description": "Assigned customer work, tickets and tasks",
+      "nav": {
+        "label": "Executive Panel menu",
+        "table": "Table",
+        "work": "Work Table",
+        "tickets": "Tickets",
+        "tasks": "Tasks"
+      }
+    },
     "writer": {
       "name": "Writing panel",
       "nav": {

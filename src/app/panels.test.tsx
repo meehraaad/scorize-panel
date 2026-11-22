@@ -12,7 +12,7 @@ const loginAs = (id: 1 | 2 | 3) => {
   localStorage.setItem('scorize.mock.session', String(id));
 };
 const SARA = 1; // applicant only
-const MARYAM = 2; // staff: supervisor + writer
+const MARYAM = 2; // staff: supervisor, writer, executive
 const NIMA = 3; // staff: sales only
 
 describe('panels', () => {
@@ -31,7 +31,11 @@ describe('panels', () => {
     expect(router.state.location.pathname).toBe('/choose');
     // Work panels only: Maryam has no applicant file of her own. Each card opens its panel.
     const cards = within(screen.getByRole('navigation', { name: 'پنل‌ها' })).getAllByRole('link');
-    expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/supervisor', '/writer']);
+    expect(cards.map((card) => card.getAttribute('href'))).toEqual([
+      '/supervisor',
+      '/writer',
+      '/executive',
+    ]);
     expect(screen.getByRole('link', { name: 'ورود به پنل به‌عنوان کاربر عادی' })).toHaveAttribute(
       'href',
       '/',
@@ -86,7 +90,12 @@ describe('panels', () => {
     await user.click(await header.findByRole('button', { name: 'پنل سوپروایزر' }));
     const switcher = screen.getByRole('navigation', { name: 'پنل‌های شما' });
     const links = within(switcher).getAllByRole('link');
-    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/supervisor', '/writer', '/']);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/supervisor',
+      '/writer',
+      '/executive',
+      '/',
+    ]);
     expect(links[0]).toHaveAttribute('aria-current', 'page');
 
     await user.selectOptions(screen.getByLabelText('بعد از ورود باز شود'), 'همیشه بپرس');

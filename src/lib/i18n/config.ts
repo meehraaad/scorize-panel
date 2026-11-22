@@ -34,6 +34,7 @@ export const NAMESPACES = [
   'sales',
   'tasks',
   'supervisor',
+  'executive',
   'writer',
   'assistant',
   'mail',

@@ -1,0 +1,25 @@
+{
+  "service": "Service",
+  "active": "Active",
+  "total": "Total assigned",
+  "customer": "Customer",
+  "all": "All services",
+  "allCustomers": "Show all customers",
+  "empty": "No assigned work to show.",
+  "writing": "Writing",
+  "writingWaiting": "{{n}} waiting on you",
+  "department": "Department",
+  "caseFile": "Case file",
+  "general": "General",
+  "caseServices": "Case services",
+  "status": {
+    "open": "Open",
+    "paused": "Paused",
+    "closed": "Closed",
+    "new": "New",
+    "drafting": "Drafting",
+    "revision": "Revision",
+    "waiting_applicant": "Waiting for customer",
+    "delivered": "Delivered"
+  }
+}

@@ -189,6 +189,13 @@ const PAGES: PageCase[] = [
     '/supervisor/mail',
   ].map((path) => ({ path, user: MARYAM })),
   // Writer panel.
+  ...[
+    '/executive',
+    '/executive/work',
+    '/executive/tickets',
+    '/executive/tickets?department=writing',
+    '/executive/tasks',
+  ].map((path) => ({ path, user: MARYAM })),
   ...['/writer', '/writer/orders/1240'].map((path) => ({ path, user: MARYAM })),
   // Tickets pages: the thread's messages are chained after the list in the loader. (A case's
   // tickets address in the supervisor panel opens the chat window: Supervisor.test.tsx.)

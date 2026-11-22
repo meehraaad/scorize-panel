@@ -23,7 +23,7 @@ export const Team = {
 } as const;
 
 export type Role =
-  'applicant' | 'supervisor' | 'writer' | 'sales' | 'marketing' | 'founders' | 'hr';
+  'applicant' | 'supervisor' | 'writer' | 'executive' | 'sales' | 'marketing' | 'founders' | 'hr';
 
 /** ai.use_founders_assistant: the four partners (Django group `Founders`), and superusers. */
 export const FOUNDERS_PERMISSION = 'use_founders_assistant';
@@ -100,6 +100,14 @@ export function getRoles(user: SessionUser): Role[] {
     roles.push('supervisor');
   }
   if (WRITER_PERMISSIONS.some((codename) => hasPermission(user, codename))) roles.push('writer');
+  if (
+    staff &&
+    user.email &&
+    user.executive_panel &&
+    (roles.includes('supervisor') || roles.includes('writer'))
+  ) {
+    roles.push('executive');
+  }
   // is_seller: needs an email and a sales or support team (or superuser).
   if (
     user.email &&

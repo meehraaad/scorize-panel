@@ -27,6 +27,7 @@ import { salesCustomerHandlers } from './salesCustomer';
 import { managerHandlers, resetManagerMocks } from './salesManager';
 import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
 import { resetTaskMocks, taskHandlers } from './tasks';
+import { executiveHandlers } from './executive';
 import { storage } from './session';
 import { phoneCallHandlers, resetPhoneMocks } from './phoneCalls';
 import { resetSessionSummaries, sessionSummaryHandlers } from './sessionSummaries';
@@ -102,6 +103,7 @@ const users: MockUser[] = [
     email: 'maryam.kazemi@scorize.local',
     phone_number: '09120000001',
     password: MOCK_PASSWORD,
+    executive_panel: true,
     staff: { id: 7, full_name: 'مریم کاظمی', team: 1, is_active: true },
     applicant: null,
     is_country_supervisor: false,
@@ -400,6 +402,7 @@ export const handlers = [
   ...supervisorHandlers,
   ...handoffHandlers,
   ...writerHandlers,
+  ...executiveHandlers,
   ...assistantHandlers,
   ...mailHandlers,
   ...messagesHandlers,
