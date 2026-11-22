@@ -3127,5 +3127,9 @@
     "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
     "picked": "New follow-up",
     "pickedAria": "Picked time: {{day}} at {{time}}"
+  },
+  "phoneLog": {
+    "open": "Log a call with {{name}}, {{phone}}",
+    "hint": "Open the call log, with the full number"
   }
 }

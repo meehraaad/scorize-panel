@@ -158,6 +158,15 @@ describe('sales panel, seller pages', () => {
     expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
   });
 
+  it("leads: the customer's number opens the call log", async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/leads');
+    await user.click(await screen.findByRole('link', { name: /^ثبت تماس با کیانا رضوی/ }));
+    expect(
+      await screen.findByRole('dialog', { name: 'ثبت ارتباط با کیانا رضوی' }),
+    ).toBeInTheDocument();
+  });
+
   it('leads: finds the open leads with no next step', async () => {
     const asked: string[] = [];
     server.events.on('request:start', ({ request }) => {
