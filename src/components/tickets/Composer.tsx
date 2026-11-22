@@ -267,9 +267,9 @@ export function Composer({
         <Button
           type="submit"
           disabled={!canSend || sending}
-          className={compact ? 'size-11 px-0' : 'max-lg:size-11 max-lg:px-0'}
+          className={compact ? 'size-11 flex-none px-0!' : 'flex-none max-lg:size-11 max-lg:px-0!'}
         >
-          <Icon name="send" size={18} className={lg('lg:hidden')} />
+          <Icon name="send" size={18} className={`shrink-0 ${lg('lg:hidden')}`} />
           <span className={compact ? 'sr-only' : 'max-lg:sr-only'}>{sendLabel}</span>
         </Button>
       </div>
