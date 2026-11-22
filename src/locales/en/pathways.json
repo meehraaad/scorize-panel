@@ -89,8 +89,9 @@
       "unsure": "I don't know / none",
       "search": "Search jobs",
       "search_hint": "In Persian, English or the job code",
+      "search_help": "Jobs come from the international list of occupations (ISCO), so their names are general. Can't find yours? Search more broadly, e.g. «nurse» rather than «operating-room nurse».",
       "found": "Jobs found",
-      "not_found": "No job by that name. Pick «I don't know / none» and our adviser will check."
+      "not_found": "No job by that name. Try a broader word or English, or pick «I don't know / none» and our adviser will check."
     },
     "german": {
       "title": "Do you speak German?",
