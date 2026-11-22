@@ -84,7 +84,7 @@ export function CustomerPathways({
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
-  const [tab, setTab] = useState<'routes' | 'answers'>('routes');
+  const [tab, setTab] = useState<'routes' | 'chances' | 'answers'>('routes');
   const routes = check.results;
   const best = routes.find((route) => route.qualifies);
   const fitting = routes.filter((route) => route.qualifies).length;
@@ -95,6 +95,13 @@ export function CustomerPathways({
       (a, b) =>
         BANDS.indexOf(b.admission?.band ?? 'low') - BANDS.indexOf(a.admission?.band ?? 'low'),
     )[0];
+  // The best chance: from the insights (every country with outcomes), else a study route's.
+  const topChance =
+    check.insights?.countries[0] ??
+    (admitted?.admission && {
+      band: admitted.admission.band,
+      country: admitted.country,
+    });
   const differing = [...check.answers, ...check.by_country.flatMap((row) => row.answers)].filter(
     (answer) => answer.matches === false,
   ).length;
@@ -112,6 +119,9 @@ export function CustomerPathways({
           look="segmented"
           options={[
             { value: 'routes', label: t('customer.pathways.tabs.routes') },
+            ...(check.insights
+              ? [{ value: 'chances' as const, label: t('customer.pathways.tabs.chances') }]
+              : []),
             { value: 'answers', label: t('customer.pathways.tabs.answers') },
           ]}
           value={tab}
@@ -135,12 +145,12 @@ export function CustomerPathways({
           )}
         </Number>
         <Number label={t('customer.pathways.numbers.admission')}>
-          {admitted?.admission ? (
+          {topChance ? (
             <>
-              <span className={admitted.admission.band === 'high' ? 'text-good' : ''}>
-                {t(`customer.pathways.band.${admitted.admission.band}`)}
+              <span className={topChance.band === 'high' ? 'text-good' : ''}>
+                {t(`customer.pathways.band.${topChance.band}`)}
               </span>
-              <span className="text-small font-medium text-text-2"> {admitted.country}</span>
+              <span className="text-small font-medium text-text-2"> {topChance.country}</span>
             </>
           ) : (
             <span className="text-text-2">{t('customer.pathways.numbers.none')}</span>
@@ -150,6 +160,8 @@ export function CustomerPathways({
 
       {tab === 'routes' ? (
         <Routes routes={routes} />
+      ) : tab === 'chances' && check.insights ? (
+        <Chances insights={check.insights} />
       ) : (
         <Answers check={check} customer={customer} differing={differing} />
       )}
@@ -173,6 +185,93 @@ export function CustomerPathways({
         </Button>
       </div>
     </SectionCard>
+  );
+}
+
+const CHANCE_TONE = { high: 'good', medium: 'warn', low: 'neutral' } as const;
+const CHANCE_FILL = {
+  high: 'w-full bg-good',
+  medium: 'w-2/3 bg-warn',
+  low: 'w-1/3 bg-neutral',
+} as const;
+
+/**
+ * The insights tab: the chance of admission per country from Scorize's own decided applications,
+ * for the degree they would study and their background (worked out when the page opens, so it
+ * follows the nightly rebuild), with the newest accepted applicants like them.
+ */
+function Chances({ insights }: { insights: NonNullable<CustomerPathwayCheck['insights']> }) {
+  const { t } = useTranslation('sales');
+  const { t: tc } = useTranslation();
+  const f = useFormat();
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h3 className="m-0 text-small font-extrabold">{t('customer.pathways.chances.title')}</h3>
+        <span className="text-caption text-text-2">
+          {t(
+            insights.gpa_from === 'profile'
+              ? 'customer.pathways.chances.forProfile'
+              : 'customer.pathways.chances.for',
+            {
+              degree: tc(`degree.${insights.degree}`),
+              gpa: f.number(insights.gpa),
+            },
+          )}
+        </span>
+      </div>
+      <ul aria-label={t('customer.pathways.chances.title')} className="m-0 list-none p-0">
+        {insights.countries.map((row) => (
+          <li
+            key={row.country}
+            className="flex flex-col gap-2 border-b border-hair px-2 py-3.5 last:border-b-0"
+          >
+            <div className="flex items-center gap-3.5">
+              <span className="size-10 flex-none overflow-hidden rounded-xl border border-hair">
+                <Flag code={row.code} name={row.country} />
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-body font-bold">{row.country}</span>
+                <span className="text-caption text-text-2">
+                  {t('customer.pathways.detail.decided', { n: f.number(row.decided) })}
+                </span>
+              </span>
+              <span className="flex w-36 flex-none flex-col items-end gap-2">
+                <Chip tone={CHANCE_TONE[row.band]} dot small>
+                  {row.chance === null
+                    ? t(`customer.pathways.admissionShort.${row.band}`)
+                    : t('customer.pathways.chances.percent', { n: f.number(row.chance) })}
+                </Chip>
+                <span aria-hidden="true" className="block h-1.5 w-full rounded-full bg-track">
+                  <span className={`block h-full rounded-full ${CHANCE_FILL[row.band]}`} />
+                </span>
+              </span>
+            </div>
+            {row.similar.length > 0 && (
+              <ul
+                aria-label={t('customer.pathways.chances.similar', { country: row.country })}
+                className="m-0 flex list-none flex-wrap gap-1.5 p-0 ps-[54px]"
+              >
+                {row.similar.map((one) => (
+                  <li
+                    key={`${one.university}-${String(one.year)}-${one.field ?? ''}`}
+                    className="rounded-lg bg-canvas px-2.5 py-1 text-caption"
+                    dir="auto"
+                  >
+                    {[one.university, one.field, f.digits(String(one.year))]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="m-0 text-caption leading-6 text-text-2">
+        {t('customer.pathways.chances.note')}
+      </p>
+    </div>
   );
 }
 

@@ -557,7 +557,8 @@
       "view": "Card view",
       "tabs": {
         "routes": "Routes",
-        "answers": "Answers"
+        "answers": "Answers",
+        "chances": "Admission"
       },
       "best": {
         "eyebrow": "Best option for this customer",
@@ -649,7 +650,15 @@
       "note": "The answers the customer gave in the finder; it doesn't change their profile.",
       "copyLink": "Copy finder link",
       "copied": "Finder link copied.",
-      "copyFailed": "Couldn't copy. Try again."
+      "copyFailed": "Couldn't copy. Try again.",
+      "chances": {
+        "title": "Chance of admission by country",
+        "for": "For {{degree}} · GPA {{gpa}}",
+        "forProfile": "For {{degree}} · GPA {{gpa}} (from the profile)",
+        "percent": "About {{n}}% chance",
+        "similar": "Admissions of people like them in {{country}}",
+        "note": "From Scorize's own applicants' final results, updated nightly. An estimate, not a promise."
+      }
     },
     "profile": {
       "key": {
