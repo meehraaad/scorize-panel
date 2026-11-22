@@ -74,7 +74,7 @@ describe('ticket voice messages', () => {
     await user.click(screen.getByRole('button', { name: 'لغو ضبط' }));
     expect(signal?.aborted).toBe(true);
     expect(screen.queryByLabelText('پیش‌نمایش پیام صوتی')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'ارسال' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ارسال' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'ضبط پیام صوتی' }));
     await act(() => router.navigate('/account'));
     expect(signal?.aborted).toBe(true);

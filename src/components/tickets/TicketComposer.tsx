@@ -116,6 +116,7 @@ export function TicketComposer({
       <div className="flex min-w-0 items-center gap-1.5 bg-surface px-3 py-3 shadow-[inset_0_1px_0_var(--hair)]">
         <IconButton
           icon="trash"
+          tone="danger"
           aria-label={t(clip ? 'voice.discard' : 'voice.cancel')}
           disabled={send.isPending}
           onClick={clip ? () => setClip(null) : voice.cancel}
@@ -184,7 +185,7 @@ export function TicketComposer({
         placeholder={t('composer.placeholder')}
         value={text}
         onChange={setText}
-        emptyAction={
+        secondaryAction={
           ON_SERVER.ticketVoice &&
           voice.supported &&
           !text.trim() &&
@@ -192,7 +193,6 @@ export function TicketComposer({
           (!urgent || accepted) ? (
             <IconButton
               icon="microphone"
-              tone="primary"
               aria-label={t('voice.record')}
               disabled={voice.busy || send.isPending}
               onClick={() => void voice.start()}
