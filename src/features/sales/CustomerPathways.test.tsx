@@ -29,6 +29,7 @@ describe("sales customer page: the customer's pathway quiz", () => {
       field_group: 'مهندسی',
       occupation: { code: '2142', name: 'مهندسان عمران' },
       budget: '1b_2b',
+      gpa: 17,
       results: [
         {
           country: 'آلمان',
@@ -39,6 +40,7 @@ describe("sales customer page: the customer's pathway quiz", () => {
           points: 8,
           pass_mark: 6,
           missing: [],
+          admission: { band: 'high', chance: null },
         },
         {
           country: 'کانادا',
@@ -63,6 +65,8 @@ describe("sales customer page: the customer's pathway quiz", () => {
     expect(within(card).getByText('مهندسان عمران')).toBeInTheDocument();
     expect(within(card).getByText('۱ تا ۲ میلیارد')).toBeInTheDocument();
     expect(within(card).getByText('پیشنهاد کار: بله')).toBeInTheDocument();
+    expect(within(routes).getByText('شانس پذیرش: بالا')).toBeInTheDocument();
+    expect(within(card).getByText('۱۷')).toBeInTheDocument();
   });
 
   it('has no card for a customer who never took the quiz', async () => {

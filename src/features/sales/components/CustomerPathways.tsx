@@ -61,6 +61,9 @@ export function CustomerPathways({ check }: { check: CustomerPathwayCheck }) {
           },
         ]
       : []),
+    ...(typeof check.gpa === 'number'
+      ? [{ key: 'gpa', label: t('customer.pathways.gpa'), value: f.number(check.gpa) }]
+      : []),
     ...(check.budget
       ? [
           {
@@ -115,6 +118,15 @@ export function CustomerPathways({ check }: { check: CustomerPathwayCheck }) {
                     </Chip>
                   </span>
                 </div>
+                {result.admission && (
+                  <span className="text-caption text-text-2">
+                    {result.admission.chance === null
+                      ? t(`customer.pathways.admission.${result.admission.band}`)
+                      : t('customer.pathways.admissionPercent', {
+                          n: f.number(result.admission.chance),
+                        })}
+                  </span>
+                )}
                 {result.missing.length > 0 && (
                   <span className="text-caption leading-6 text-text-2">
                     {t('customer.pathways.missing', { list: f.list(result.missing) })}

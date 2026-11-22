@@ -571,7 +571,14 @@
       "yes": "Yes",
       "no": "No",
       "noRoutes": "No routes were checked.",
-      "note": "As the customer answered the quiz; it doesn't change their profile. Confirm with the customer before relying on it."
+      "note": "As the customer answered the quiz; it doesn't change their profile. Confirm with the customer before relying on it.",
+      "gpa": "GPA",
+      "admission": {
+        "high": "Chance of admission: high",
+        "medium": "Chance of admission: medium",
+        "low": "Chance of admission: low"
+      },
+      "admissionPercent": "Chance of admission: about {{n}}%"
     },
     "profile": {
       "key": {

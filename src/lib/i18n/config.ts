@@ -25,7 +25,6 @@ export const NAMESPACES = [
   'tickets',
   'contract',
   'turkey',
-  'estimate',
   'journey',
   'services',
   'consultations',

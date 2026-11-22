@@ -355,7 +355,7 @@ export const salesPanel: PanelDefinition = {
         {
           path: 'team',
           ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
-            data: () => [teamQuery('month'), ON_SERVER.estimate && funnelQuery('month')],
+            data: () => [teamQuery('month'), funnelQuery('month')],
             skeleton: 'dashboard',
           }),
         },

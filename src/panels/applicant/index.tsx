@@ -14,7 +14,6 @@ import {
   paymentQuery,
 } from '@/features/contract/api';
 import { eventQuery, packageQuery, servicesQuery } from '@/features/services/api';
-import { estimateOptionsQuery, latestEstimateQuery } from '@/lib/applicant/estimate';
 import { turkeyQuery } from '@/lib/applicant/turkey';
 import { documentsQuery } from '@/features/documents/api';
 import { writingOffersQuery } from '@/features/documents/offers';
@@ -107,10 +106,10 @@ export const applicantPanel: PanelDefinition = {
           index: true,
           ...lazyPage(
             () => import('@/features/home/HomePage'),
-            ['home', 'gates', 'estimate', 'journey', 'booking', 'consultations'],
+            ['home', 'gates', 'journey', 'booking', 'consultations'],
             {
-              // Without a contract the home is the journey toward one: the admission-chance quiz
-              // (or its last result), the tablet form, the next session and what to start with
+              // Without a contract the home is the journey toward one: the pathway finder's card,
+              // the tablet form, the next session and what to start with
               // (free times, prices, their seller). A case with a contract (or one in review)
               // reads none of them. Every home but one in review lists the sessions and what the
               // consultant wrote after each (there is no consultations page).
@@ -120,12 +119,10 @@ export const applicantPanel: PanelDefinition = {
                 const opened = idParam(
                   new URL(request.url).searchParams.get(SESSION_PARAM) ?? undefined,
                 );
-                const guest = ON_SERVER.estimate && state !== 'active' && state !== 'pending';
+                const guest = state !== 'active' && state !== 'pending';
                 const sessions = state !== 'pending';
                 return [
                   overviewQuery,
-                  guest && latestEstimateQuery,
-                  guest && estimateOptionsQuery,
                   guest && backgroundQuery,
                   sessions && consultationsQuery,
                   sessions && sessionSummariesQuery(),
@@ -145,10 +142,10 @@ export const applicantPanel: PanelDefinition = {
           path: 'applications',
           ...lazyPage(
             () => import('@/features/applications/ApplicationsPage'),
-            ['applications', 'home', 'estimate', 'documents'],
+            ['applications', 'home', 'documents'],
             {
               // With a case: its applications and research interests. Without one, the page that
-              // sells the service: the chance form reads the quiz's choices and last result.
+              // sells the service.
               data: () => {
                 const state = queryClient.getQueryData(accessQuery.queryKey)?.state ?? 'guest';
                 const guest = state === 'guest';
@@ -157,8 +154,6 @@ export const applicantPanel: PanelDefinition = {
                   // The case's research interests. Opened first (access not known yet), it loads
                   // them too, as the documents tab does: a guest gets a 404 and nothing is shown.
                   documentsQuery,
-                  guest && ON_SERVER.estimate && estimateOptionsQuery,
-                  guest && ON_SERVER.estimate && latestEstimateQuery,
                   guest && guestInterestsQuery,
                 ];
               },
@@ -361,16 +356,8 @@ export const applicantPanel: PanelDefinition = {
               }),
             }
           : { path: 'turkey', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
-        // The admission-chance quiz of the new-user dashboard (no nav item: the guest home links to it).
-        ON_SERVER.estimate
-          ? {
-              path: 'estimate',
-              ...lazyPage(() => import('@/features/estimate/EstimatePage'), ['estimate'], {
-                data: () => [accessQuery, latestEstimateQuery, estimateOptionsQuery],
-                skeleton: 'form',
-              }),
-            }
-          : { path: 'estimate', element: <ComingSoonPage title="panels.applicant.nav.home" /> },
+        // The admission-chance quiz's old address: the pathway finder replaced it (study routes carry the chance).
+        { path: 'estimate', element: <Navigate to="/pathways" replace /> },
         // The pathway finder: a few questions, then the routes to work or live abroad that fit.
         ...(ON_SERVER.pathwayFinder
           ? [

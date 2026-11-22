@@ -70,7 +70,11 @@ export interface CustomerPathwayCheck {
     pass_mark: number | null;
     /** The requirements not met (Persian, from Django). */
     missing: string[];
+    /** A study route: the chance of admission from Scorize's outcomes (older servers: missing). */
+    admission?: { band: 'low' | 'medium' | 'high'; chance: number | null } | null;
   }[];
+  /** The GPA they gave, out of 20 (older servers: missing). */
+  gpa?: number | null;
 }
 
 export interface CustomerData {

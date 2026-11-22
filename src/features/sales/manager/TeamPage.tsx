@@ -11,7 +11,6 @@ import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { StatGrid } from '@/components/ui/StatGrid';
-import { ON_SERVER } from '@/lib/applicant/onServer';
 import { FIRST_CALL_TARGET_MINUTES } from '@/lib/sales/api';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
@@ -138,7 +137,7 @@ export default function TeamPage() {
           <Leaderboard data={data} range={range} />
           {data.alerts.length > 0 && <Alerts alerts={data.alerts} />}
           <Sources data={data} />
-          {ON_SERVER.estimate && <QuizFunnel range={range} />}
+          <QuizFunnel range={range} />
         </>
       )}
     </>

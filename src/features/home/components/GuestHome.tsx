@@ -11,7 +11,7 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SITE } from '@/lib/site';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { PathwaysCard } from './PathwaysCard';
+import { PathwaysCard } from '@/components/applicant/pathways/PathwaysCard';
 import { TurkeyCard } from './TurkeyCard';
 import { NewUserHome } from './journey/NewUserHome';
 
@@ -23,12 +23,11 @@ const REVIEW_STEP = 1;
 /**
  * Home of an account without an active contract: no contract yet (`guest`), or one in review
  * (`pending`). What working with Scorize looks like. Design: canvas V7 section 2 (AppGuest, AppGuestPending). Without a contract, the
- * admission-chance quiz and its result take the hero's place once the quiz is on the server (the
- * new-user dashboard: "Scorize New User Dashboard" canvas).
+ * new-user dashboard takes the hero's place ("Scorize New User Dashboard" canvas).
  */
 export function GuestHome({ access }: { access: ApplicantAccess }) {
-  // Without a contract, once the quiz is on the server: the journey toward one.
-  if (access.state !== 'pending' && ON_SERVER.estimate) return <NewUserHome access={access} />;
+  // Without a contract: the journey toward one.
+  if (access.state !== 'pending') return <NewUserHome access={access} />;
   return <ContractlessHome access={access} />;
 }
 

@@ -217,6 +217,17 @@
       "title": "How many children are coming with you?",
       "help": "Some visas ask more income for each person coming along. None? Leave it at zero.",
       "label": "Children"
+    },
+    "gpa": {
+      "title": "What is the GPA of your latest degree?",
+      "help": "Out of 20. We compare it with Scorize applicants with a GPA close to yours.",
+      "options": {
+        "below_14": "Under 14",
+        "14_16": "14 to 16",
+        "16_18": "16 to 18",
+        "18_plus": "18 or more",
+        "unsure": "I don't know"
+      }
     }
   },
   "fit": {
@@ -558,5 +569,18 @@
     "checked_other": "{{n}} routes checked",
     "new": "New · {{verdict}}",
     "checking": "Checking…"
+  },
+  "admission": {
+    "title": "Chance of admission",
+    "band": {
+      "high": "High chance",
+      "medium": "Medium chance",
+      "low": "Low chance"
+    },
+    "percent": "About {{n}}% chance",
+    "based": "Based on {{n}} Scorize applicants with a final result in this country and degree.",
+    "similar": "Admissions of people like you",
+    "similar_row": "{{university}} · {{field}} · {{year}}",
+    "similar_row_no_field": "{{university}} · {{year}}"
   }
 }

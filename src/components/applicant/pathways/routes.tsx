@@ -3,8 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/Progress';
-import { CURRENCY_CODE, FIT_TONE } from '@/lib/applicant/estimate';
-import { OCCUPATION_FACTORS, type FinderStudy, type PathwayResult } from '@/lib/applicant/pathways';
+import { CURRENCY_CODE, FIT_TONE } from '@/lib/applicant/study';
+import {
+  OCCUPATION_FACTORS,
+  type FinderStudy,
+  type PathwayAdmission,
+  type PathwayResult,
+} from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { Country } from './plan';
 import { Bar, Forward, MAIN_ON_PHONE } from './answers';
@@ -144,6 +149,53 @@ function StudyCosts({ study }: { study: FinderStudy }) {
   );
 }
 
+const ADMISSION_TONE = { high: 'good', medium: 'warn', low: 'danger' } as const;
+
+/**
+ * A study route's chance of admission from Scorize's own decided applications: the level (a
+ * percentage only where there are enough), how many it rests on, and the newest similar admissions.
+ */
+function Admission({ admission }: { admission: PathwayAdmission }) {
+  const { t } = useTranslation('pathways');
+  const f = useFormat();
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl bg-canvas p-4 lg:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-sm font-semibold text-primary-text">
+          <QuizIcon name="cap" size={18} />
+          {t('admission.title')}
+        </span>
+        <Chip tone={ADMISSION_TONE[admission.band]} dot>
+          {admission.chance === null
+            ? t(key(`admission.band.${admission.band}`))
+            : t('admission.percent', { n: f.number(admission.chance) })}
+        </Chip>
+      </div>
+      <span className="text-small text-text-2">
+        {t('admission.based', { n: f.number(admission.decided) })}
+      </span>
+      {admission.similar.length > 0 && (
+        <ul aria-label={t('admission.similar')} className="m-0 flex list-none flex-col gap-1 p-0">
+          {admission.similar.map((row) => (
+            <li key={`${row.university}-${String(row.year)}`} className="text-small">
+              {row.field
+                ? t('admission.similar_row', {
+                    university: row.university,
+                    field: row.field,
+                    year: f.digits(String(row.year)),
+                  })
+                : t('admission.similar_row_no_field', {
+                    university: row.university,
+                    year: f.digits(String(row.year)),
+                  })}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /** What Django worked out from the occupation for this route ("on Germany's shortage list"). */
 function Derived({ result }: { result: PathwayResult }) {
   const { t } = useTranslation('pathways');
@@ -222,6 +274,7 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
         </div>
       )}
       <Derived result={result} />
+      {result.admission && <Admission admission={result.admission} />}
       {result.study && <StudyCosts study={result.study} />}
       {(pathway.duration || (pathway.cost && !result.study)) && (
         <dl className="m-0 grid grid-cols-2 gap-4 border-t border-hair pt-5">

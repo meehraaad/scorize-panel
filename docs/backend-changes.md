@@ -32,7 +32,9 @@ scorize-revolution (tested, not deployed; its `docs/panel-backend-plan.md` has t
 status and the deploy checklist), and the panel calls those endpoints (backend-integration.md).
 Built since then (branch `claude/applicant-endpoints-h29-h51`): H7, H29, H37, H38, H41–H43, H50,
 H51; the panel uses them. The admission-chance quiz H52–H54 and H56 and its funnel S42 (branch `claude/trusting-goodall-zn3nyn`):
-merged into `mehrad-take-over`; the panel's quiz is on (`ON_SERVER.estimate`) and is the guest home.
+merged into `mehrad-take-over`. **Retired in the panel (2026-11-22):** the pathway finder replaced the quiz
+(its study routes carry the chance of admission, `admission` on `pathways/check/`; `/estimate` redirects to
+`/pathways`; the funnel S42 counts finder runs, `pathways/started/`). H52–H54 stay on the server for old clients.
 Work and migration checks H57–H58 are on the same branch; the panel has no page for them yet.
 The new-user journey H59–H62 (free-review files, the tablet form, document review states) is on
 scorize-revolution `claude/project-thread-aylffr`; the panel uses them (`ON_SERVER.reviewDocuments`, `background`). Not built yet: H30–H35, WR6, R5, R7, R8, A10–A12, A15, A16 and the wiring
