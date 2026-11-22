@@ -45,7 +45,7 @@ describe('ticket voice messages', () => {
     const user = userEvent.setup();
     renderApp('/tickets');
     await user.click(await screen.findByRole('button', { name: 'ضبط پیام صوتی' }));
-    expect(screen.getByRole('button', { name: 'ارسال' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'ارسال' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'پایان ضبط' }));
     expect(await screen.findByLabelText('پیش‌نمایش پیام صوتی')).toHaveAttribute(
       'src',
@@ -74,7 +74,7 @@ describe('ticket voice messages', () => {
     await user.click(screen.getByRole('button', { name: 'لغو ضبط' }));
     expect(signal?.aborted).toBe(true);
     expect(screen.queryByLabelText('پیش‌نمایش پیام صوتی')).toBeNull();
-    expect(screen.getByRole('button', { name: 'ارسال' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'ارسال' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ضبط پیام صوتی' }));
     await act(() => router.navigate('/account'));
     expect(signal?.aborted).toBe(true);

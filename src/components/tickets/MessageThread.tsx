@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { VoicePlayer } from '@/components/tickets/VoiceMessage';
 import { Avatar } from '@/components/ui/Avatar';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
@@ -204,7 +205,7 @@ export function MessageBubble({
           >
             {body}
           </div>
-        ) : (
+        ) : text ? (
           <p
             className={`m-0 rounded-[20px] px-4 py-3 text-[15px] leading-[1.85] break-words whitespace-pre-line ${
               mine ? 'rounded-ee-md' : 'rounded-es-md'
@@ -212,15 +213,13 @@ export function MessageBubble({
           >
             {text}
           </p>
-        )}
+        ) : null}
         {attachment &&
           (/\.(ogg|webm|m4a|mp4|mp3|wav)$/i.test(attachment.name) ? (
-            <audio
-              controls
-              preload="none"
+            <VoicePlayer
+              key={attachment.url}
               src={safeHref(attachment.url)}
-              aria-label={audioLabel ?? attachment.name}
-              className="h-11 w-full max-w-full"
+              label={audioLabel ?? attachment.name}
             />
           ) : (
             <a
