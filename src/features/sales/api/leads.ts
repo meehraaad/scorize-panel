@@ -84,6 +84,8 @@ export interface LeadQuery {
   source: LeadSource | 'all';
   band: 'hot' | 'warm' | 'cold' | 'all';
   overdue: boolean;
+  /** Open leads with no next step (no follow-up, no session ahead); absent: no filter. */
+  noFollowUp?: boolean;
   /** Customers with this tag (S49). */
   tag: number | null;
   search: string;
@@ -109,6 +111,8 @@ export interface LeadsData {
     tags?: boolean;
     /** The bought-consultation filters (mode and type). */
     consultations?: boolean;
+    /** The «بدون قدم بعدی» filter and its count. */
+    no_follow_up?: boolean;
   };
   stats: {
     new_waiting: number;
@@ -118,6 +122,8 @@ export interface LeadsData {
     /** Null until follow-ups are stored on the lead (S3). */
     overdue: number | null;
     max_overdue_days: number;
+    /** Open leads with no next step; absent on an older server. */
+    no_follow_up?: number;
     /** Null until the first answered call is recorded (S6). */
     first_call_minutes: number | null;
   };
@@ -137,6 +143,7 @@ function fetchLeads(query: LeadQuery, signal?: AbortSignal) {
   if (query.source !== 'all') params.set('source', query.source);
   if (query.band !== 'all') params.set('band', query.band);
   if (query.overdue) params.set('overdue', '1');
+  if (query.noFollowUp) params.set('no_follow_up', '1');
   if (query.tag !== null) params.set('tag', String(query.tag));
   if (query.search.trim()) params.set('search', query.search.trim());
   if (query.seller !== undefined && query.seller !== null)

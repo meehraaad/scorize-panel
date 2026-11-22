@@ -116,7 +116,8 @@ describe('sales panel, seller pages', () => {
     const cards = await screen.findByRole('list', { name: 'فهرست لیدها' });
     expect(cards.children).toHaveLength(10); // not called yet
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    // No row selection on phones (the filter pills are checkboxes too).
+    expect(within(cards).queryByRole('checkbox')).not.toBeInTheDocument();
     const tabs = screen.getByRole('group', { name: 'مرحله' });
     expect(within(tabs).getAllByRole('button')).toHaveLength(3); // all, new, contacted
 
@@ -155,6 +156,28 @@ describe('sales panel, seller pages', () => {
     await user.selectOptions(source, 'all');
     expect(screen.queryByRole('combobox', { name: 'حضوری یا غیرحضوری' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'نوع مشاوره' })).not.toBeInTheDocument();
+  });
+
+  it("leads: the customer's number opens the call log", async () => {
+    const user = userEvent.setup();
+    renderApp('/sales/leads');
+    await user.click(await screen.findByRole('link', { name: /^ثبت تماس با کیانا رضوی/ }));
+    expect(
+      await screen.findByRole('dialog', { name: 'ثبت ارتباط با کیانا رضوی' }),
+    ).toBeInTheDocument();
+  });
+
+  it('leads: finds the open leads with no next step', async () => {
+    const asked: string[] = [];
+    server.events.on('request:start', ({ request }) => {
+      if (request.url.includes('/api/sales/v1/leads/?')) asked.push(request.url);
+    });
+    const user = userEvent.setup();
+    renderApp('/sales/leads');
+    const pill = await screen.findByRole('checkbox', { name: /^بدون قدم بعدی/ });
+    await user.click(pill);
+    await waitFor(() => expect(asked.some((url) => url.includes('no_follow_up=1'))).toBe(true));
+    server.events.removeAllListeners('request:start');
   });
 
   it("leads: a sales manager's rows name their seller, with a seller filter", async () => {

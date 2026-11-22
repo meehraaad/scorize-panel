@@ -5,13 +5,13 @@ import { TagList } from '@/components/ui/Tags';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { DESKTOP_QUERY, useMediaQuery } from '@/lib/useMediaQuery';
-import { maskPhone } from '@/lib/sales/api';
 import { tagsOf, type CustomerTag, type LeadRow } from '../api';
 import { useSalesFormat } from '../format';
 import { customerPath } from '../paths';
 import { ContactButtons } from './ContactButtons';
 import { ScoreChip, StageChip } from './LeadChips';
 import { OwnerTag } from './OwnerTag';
+import { PhoneLogLink } from './PhoneLogLink';
 
 const COLUMNS = ['customer', 'source', 'score', 'stage', 'next'] as const;
 
@@ -66,7 +66,6 @@ export function LeadTable({
           const meta = [
             row.degree !== null ? tc(`degree.${row.degree}`) : null,
             row.countries.length ? f.list(row.countries) : null,
-            f.digits(maskPhone(row.phone)),
           ].filter(Boolean);
           const rowTags = tagsOf(row.tags, tags);
           const toneOf = new Map(rowTags.map((tag) => [tag.name, tag.tone]));
@@ -94,7 +93,14 @@ export function LeadTable({
                       <FaceDot name={row.name} face={row.face} />
                       {named(row.name)}
                     </Link>
-                    <span className="text-[13px] break-words text-text-2">{meta.join(' · ')}</span>
+                    <span className="text-[13px] break-words text-text-2">
+                      {meta.length > 0 && <>{meta.join(' · ')} · </>}
+                      <PhoneLogLink
+                        customer={row.customer}
+                        phone={row.phone}
+                        name={named(row.name)}
+                      />
+                    </span>
                   </span>
                   <span className="flex flex-none flex-col items-end gap-1">
                     <StageChip stage={row.stage} />
@@ -192,7 +198,6 @@ export function LeadTable({
             const meta = [
               row.degree !== null ? tc(`degree.${row.degree}`) : null,
               row.countries.length ? f.list(row.countries) : null,
-              f.digits(maskPhone(row.phone)),
             ].filter(Boolean);
             const rowTags = tagsOf(row.tags, tags);
             const toneOf = new Map(rowTags.map((tag) => [tag.name, tag.tone]));
@@ -221,7 +226,14 @@ export function LeadTable({
                       <FaceDot name={row.name} face={row.face} />
                       {named(row.name)}
                     </Link>
-                    <span className="text-[13px] text-text-2">{meta.join(' · ')}</span>
+                    <span className="text-[13px] text-text-2">
+                      {meta.length > 0 && <>{meta.join(' · ')} · </>}
+                      <PhoneLogLink
+                        customer={row.customer}
+                        phone={row.phone}
+                        name={named(row.name)}
+                      />
+                    </span>
                     <OwnerTag seller={row.seller} />
                     {rowTags.length > 0 && (
                       <TagList

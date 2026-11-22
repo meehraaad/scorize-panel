@@ -46,6 +46,10 @@ export interface ContactValues {
   template?: string;
   /** A call with no answer: how the seller follows it (our SMS by default). */
   noAnswerSend?: NoAnswerSend;
+  /** The lead needs no follow-up: the log ends the open one and sets none («بدون پیگیری»). */
+  noFollowUp?: boolean;
+  /** Why it needs none (required with `noFollowUp`): saved at the end of the notes. */
+  noFollowReason?: string;
 }
 
 export type NoAnswerSend = 'sms' | 'whatsapp' | 'telegram' | 'none';
