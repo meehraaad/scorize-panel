@@ -214,8 +214,9 @@ describe('pathway finder', () => {
     // From the profile: 17.2 is in 16 to 18.
     expect(screen.getByRole('radio', { name: '۱۶ تا ۱۸' })).toBeChecked();
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await user.type(await screen.findByRole('combobox', { name: 'رشته‌ی تحصیلی' }), 'کامپیوتر');
     await user.click(
-      await screen.findByRole('radio', { name: 'مهندسی کامپیوتر و فناوری اطلاعات' }),
+      await screen.findByRole('option', { name: 'مهندسی کامپیوتر و فناوری اطلاعات' }),
     );
     await user.click(screen.getByRole('button', { name: 'بعدی' }));
     await screen.findByRole('heading', { name: 'برای سال اول چقدر می‌توانی خرج کنی؟' });
