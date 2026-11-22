@@ -74,6 +74,12 @@ export interface FieldGroup {
   name: string;
 }
 
+/** A top study field found by a search, maybe through one of its sub-fields. */
+export interface FieldMatch extends FieldGroup {
+  /** The sub-field whose name matched; '' when the group's own name did. */
+  matched: string;
+}
+
 /** An ISCO-08 occupation: its 4-digit code and its names. */
 export interface Occupation {
   code: string;
@@ -162,6 +168,21 @@ export const occupationSearchQuery = (text: string) =>
         `${PATHWAYS_API}/?occupation_search=${encodeURIComponent(text)}`,
       ),
     select: (data) => data.occupations ?? [],
+    staleTime: 5 * 60_000,
+  });
+
+/**
+ * Top study fields whose own name, or a sub-field's at any depth, has these words (up to 20): "نرم افزار" finds
+ * its group. Absent on older servers: then only the groups' own names are searched, on the device.
+ */
+export const fieldSearchQuery = (text: string) =>
+  queryOptions({
+    queryKey: ['applicant', 'pathways', 'fields', text],
+    queryFn: () =>
+      api<{ field_matches?: FieldMatch[] }>(
+        `${PATHWAYS_API}/?field_search=${encodeURIComponent(text)}`,
+      ),
+    select: (data) => data.field_matches ?? [],
     staleTime: 5 * 60_000,
   });
 

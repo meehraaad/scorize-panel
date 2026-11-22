@@ -41,6 +41,7 @@ import { Row, RowList } from '@/components/ui/RowList';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
 import { TagList } from '@/components/ui/Tags';
+import { SearchSelect, type SearchOption } from '@/components/ui/SearchSelect';
 import { TimeSelect } from '@/components/ui/TimeSelect';
 import { TextField } from '@/components/ui/TextField';
 import { Toast } from '@/components/ui/Toast';
@@ -60,6 +61,8 @@ export default function ComponentsPage() {
   const f = useFormat();
   const [filter, setFilter] = useState<'all' | 'waiting' | 'done'>('all');
   const [query, setQuery] = useState('');
+  const [fieldText, setFieldText] = useState('');
+  const [field, setField] = useState<SearchOption | null>(null);
   const [page, setPage] = useState(1);
   const [demoCards, setDemoCards] = useState([
     { id: 1, lane: 1, title: 'سری «یک روز در دانشگاه»' },
@@ -529,6 +532,23 @@ export default function ComponentsPage() {
             <TextField label="نام" placeholder="مثلاً سارا" />
             <TextField label="ایمیل" error="ایمیل درست نیست." defaultValue="sara@" />
             <TextField label="کد پستی (برچسب پنهان: hideLabel)" hideLabel dir="ltr" />
+            <SearchSelect
+              label="SearchSelect: رشته‌ی تحصیلی"
+              hint="مثلاً نرم‌افزار یا عمران"
+              value={field}
+              onChange={setField}
+              search={fieldText}
+              onSearch={setFieldText}
+              options={[
+                { value: '1', label: 'مهندسی کامپیوتر', hint: 'از گرایش مهندسی نرم‌افزار' },
+                { value: '2', label: 'مهندسی عمران و معماری' },
+              ].filter(
+                (one) =>
+                  fieldText.trim() && `${one.label} ${one.hint ?? ''}`.includes(fieldText.trim()),
+              )}
+              listLabel="رشته‌های پیدا شده"
+              changeLabel="تغییر"
+            />
             <OtpInput
               length={5}
               value="482"
