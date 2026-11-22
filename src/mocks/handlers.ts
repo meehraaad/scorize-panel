@@ -20,6 +20,7 @@ import { hrPayHandlers, resetHrPayMocks } from './hrPay';
 import { messagesHandlers, resetMessagesMocks } from './messages';
 import { pathwayHandlers, resetPathwayMocks } from './pathways';
 import { accessHandlers, resetAccessMocks } from './access';
+import { clientErrorHandlers } from './clientErrors';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { agreementHandlers, resetAgreementMocks } from './agreement';
 import { salesCustomerHandlers } from './salesCustomer';
@@ -404,6 +405,7 @@ export const handlers = [
   ...messagesHandlers,
   ...pathwayHandlers,
   ...accessHandlers,
+  ...clientErrorHandlers,
   ...attendanceHandlers,
   ...hrHandlers,
   ...marketingHandlers,

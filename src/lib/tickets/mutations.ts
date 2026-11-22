@@ -35,7 +35,7 @@ export function useSendMessage(endpoint: TicketsEndpoint, thread: string) {
           ? { ...data, pages: [{ ...newest, messages: [...newest.messages, message] }, ...older] }
           : data;
       });
-      return refresh();
+      void refresh();
     },
   });
 }

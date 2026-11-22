@@ -71,6 +71,21 @@
       "help": "Full-time work counts. None? Enter 0.",
       "label": "Years of work"
     },
+    "field_occupation": {
+      "title": "What did you study, and what is your job?",
+      "help": "From your field and job we check whether it is on each country's in-demand lists.",
+      "title_field": "What did you study?",
+      "help_field": "Pick the field of your latest degree.",
+      "field": "Field of study",
+      "occupation": "What is your job?",
+      "occupation_help": "Common jobs for your field come first. Not there? Search for it.",
+      "suggested": "Common jobs for this field",
+      "unsure": "I don't know / none",
+      "search": "Search jobs",
+      "search_hint": "In Persian, English or the job code",
+      "found": "Jobs found",
+      "not_found": "No job by that name. Pick «I don't know / none» and our adviser will check."
+    },
     "german": {
       "title": "Do you speak German?",
       "help": "It matters for Germany's routes.",
@@ -103,6 +118,21 @@
       "yes": "Yes, I know it is",
       "no": "No, or I don't know",
       "which": "On which country's list?"
+    },
+    "listed_occupation": {
+      "title": "Is your occupation on a country's skilled occupation list?",
+      "help": "Not sure? Answer no and our adviser will check.",
+      "yes": "Yes, I know it is",
+      "no": "No, or I don't know",
+      "which": "On which country's list?"
+    },
+    "skilled_occupation": {
+      "title": "Does your job count as skilled?",
+      "help": "Jobs that need a degree or a trade are usually skilled. Not sure? Answer no.",
+      "options": {
+        "yes": "Yes, it is skilled",
+        "no": "No, or I don't know"
+      }
     },
     "skills_assessment": {
       "title": "Have you passed a country's skills assessment?",
@@ -241,11 +271,14 @@
     "education": "Degree",
     "recognition": "Degree recognition",
     "work_years": "Work years",
+    "field_group": "Field of study",
     "english_ielts": "IELTS score",
     "english_level": "English level",
     "german_level": "German level",
     "job_offer": "Job offer",
     "shortage_occupation": "Shortage occupation",
+    "listed_occupation": "Listed occupation",
+    "skilled_occupation": "Skilled occupation",
     "skills_assessment": "Skills assessment",
     "stay_months": "Months of stay",
     "partner": "Partner",
@@ -493,6 +526,20 @@
   "near": {
     "title": "Close to the minimum",
     "body": "Your income is just above the minimum ({{list}}). A change in the exchange rate could take it under; an adviser will check it closely."
+  },
+  "derived": {
+    "shortage_occupation": {
+      "yes": "Your job is on {{country}}'s shortage list",
+      "no": "Your job is not on {{country}}'s shortage list"
+    },
+    "listed_occupation": {
+      "yes": "Your job is on {{country}}'s skilled occupation list",
+      "no": "Your job is not on {{country}}'s skilled occupation list"
+    },
+    "skilled_occupation": {
+      "yes": "Your job counts as skilled in {{country}}",
+      "no": "Your job doesn't count as skilled in {{country}}"
+    }
   },
   "previous": "Previous question",
   "question_of": "Question {{number}} of {{total}}",

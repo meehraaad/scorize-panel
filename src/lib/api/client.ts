@@ -31,10 +31,15 @@ function timeoutFor(body: unknown) {
 }
 
 /** Django answered with an error status. */
+/** The answer's request ID (Django `X-Request-ID`, scorize docs/request-ids.md): the support code on error screens. */
+export const REQUEST_ID_HEADER = 'X-Request-ID';
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly body: unknown,
+    /** Finds this request in the server's logs; null when the answer had none. */
+    readonly requestId: string | null = null,
   ) {
     super(`HTTP ${status}`);
     this.name = 'ApiError';
@@ -61,6 +66,7 @@ export interface RawResponse {
   ok: boolean;
   status: number;
   data: unknown;
+  requestId: string | null;
 }
 
 /** Sends a request and returns status + parsed JSON without throwing on HTTP errors. */
@@ -92,13 +98,18 @@ export async function request(
   }
 
   const data: unknown = response.status === 204 ? null : await response.json().catch(() => null);
-  return { ok: response.ok, status: response.status, data };
+  return {
+    ok: response.ok,
+    status: response.status,
+    data,
+    requestId: response.headers.get(REQUEST_ID_HEADER),
+  };
 }
 
 /** REST API call under /api: returns the JSON body or throws ApiError / NetworkError. */
 export async function api<T>(path: string, options?: RequestOptions) {
-  const { ok, status, data } = await request(`${API_BASE}${path}`, options);
-  if (!ok) throw new ApiError(status, data);
+  const { ok, status, data, requestId } = await request(`${API_BASE}${path}`, options);
+  if (!ok) throw new ApiError(status, data, requestId);
   return data as T;
 }
 
@@ -170,7 +181,7 @@ export async function uploadApi<T>(
         data = null;
       }
       if (xhr.status >= 200 && xhr.status < 300) resolve(data as T);
-      else reject(new ApiError(xhr.status, data));
+      else reject(new ApiError(xhr.status, data, xhr.getResponseHeader(REQUEST_ID_HEADER)));
     };
     xhr.onerror = () => {
       done();

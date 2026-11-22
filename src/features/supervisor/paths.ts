@@ -12,6 +12,10 @@ export type CaseTab = '' | 'documents' | 'applications' | 'tickets' | 'activity'
 export const casePath = (id: number, tab: CaseTab = '') =>
   `${SUPERVISOR_ROOT}/files/${String(id)}${tab ? `/${tab}` : ''}`;
 
+/** One service's tab of a case file (SVC9): its owner, conversation, stages and tool. */
+export const servicePath = (id: number, service: number) =>
+  `${SUPERVISOR_ROOT}/files/${String(id)}/services/${String(service)}`;
+
 /** The list of every case, optionally on one stage or with the email bot on or off. */
 export const casesPath = (stage?: string, bot?: 'on' | 'off') => {
   const query = new URLSearchParams();

@@ -369,7 +369,8 @@ export function AskAnswer({
                 <QuizIcon name="none" />
               ) : LEVEL_ASKS.has(ask.id) ? (
                 <LevelBars level={index} of={levels} />
-              ) : ask.id === 'remote_work' && YES_NO_ICONS[option.id] ? (
+              ) : (ask.id === 'remote_work' || ask.id === 'skilled_occupation') &&
+                YES_NO_ICONS[option.id] ? (
                 <QuizIcon name={YES_NO_ICONS[option.id] ?? 'none'} />
               ) : ask.id === 'partner' && PARTNER_ICONS[option.id] ? (
                 <QuizIcon name={PARTNER_ICONS[option.id] ?? 'user'} />
@@ -458,6 +459,7 @@ export function AskAnswer({
 const DESTINATION_ICONS: Record<string, QuizIconName> = {
   job_offer: 'briefcase',
   shortage_occupation: 'target',
+  listed_occupation: 'target',
   skills_assessment: 'seal',
   recognition: 'seal',
   stay_months: 'compass',

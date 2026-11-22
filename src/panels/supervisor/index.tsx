@@ -11,6 +11,7 @@ import {
   myServicesQuery,
   scopesQuery,
   servicesReportQuery,
+  serviceQuery,
   reportsQuery,
   todayBoardQuery,
   todayCountsQuery,
@@ -210,6 +211,20 @@ export const supervisorPanel: PanelDefinition = {
             return null;
           },
           ...lazyPage(() => import('./CaseTicketsPage'), ['tickets']),
+        },
+        // One service's tab (SVC9): its owner, conversation, stages and tool.
+        {
+          path: 'services/:service',
+          ...lazyPage(() => import('@/features/supervisor/CaseServicePage'), [], {
+            data: ({ params }) => {
+              const id = idParam(params.id);
+              const service = idParam(params['service']);
+              return [
+                id !== null && service !== null && serviceQuery(id, service),
+                id !== null && applicationsQuery(id),
+              ];
+            },
+          }),
         },
         {
           path: 'activity',

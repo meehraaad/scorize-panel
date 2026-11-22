@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { FinderPathway } from '@/lib/applicant/pathways';
 import {
   ASKS,
+  FIELD_OCCUPATION,
   answeredPathways,
   countriesFor,
   countriesLeft,
   countryProgress,
   mergeByCountry,
   nextAsk,
+  occupationSkips,
 } from './plan';
 
 const route = (
@@ -116,5 +118,52 @@ describe('digital nomad questions', () => {
       'employer_years',
     ]);
     expect(ASKS.find((ask) => ask.id === 'children')?.input).toBe('number');
+  });
+});
+
+describe('the occupation step', () => {
+  const lists = [
+    route(5, 'Germany', ['shortage_occupation']),
+    route(6, 'Netherlands', ['shortage_occupation']),
+    route(7, 'Canada', ['skilled_occupation']),
+  ];
+  it('comes before the list questions, and an occupation skips the countries Django checks', () => {
+    expect(nextAsk(lists, 'work', new Set())?.id).toBe(FIELD_OCCUPATION);
+    // Germany's list answered (no); the Netherlands' can't be told (null); "skilled" answered.
+    const known = {
+      occupation_answers: { 5: { shortage_occupation: false }, 6: { shortage_occupation: null } },
+      skilled_occupation: true,
+    };
+    const answered = new Set([FIELD_OCCUPATION, ...occupationSkips(lists, known)]);
+    const ask = nextAsk(lists, 'work', answered);
+    expect(ask?.id).toBe('shortage_occupation');
+    expect(ask && countriesFor(lists, 'work', ask, answered).map((c) => c.name)).toEqual([
+      'Netherlands',
+    ]);
+    // Germany's and Canada's routes are answered by the occupation alone.
+    expect(answeredPathways(lists, 'work', answered).map((p) => p.name)).toEqual([
+      'Germany',
+      'Canada',
+    ]);
+  });
+});
+
+describe('what an occupation skips', () => {
+  const lists = [route(5, 'Germany', ['shortage_occupation', 'listed_occupation'])];
+  it("nothing without answers from the server, or where it can't tell", () => {
+    expect(occupationSkips(lists, null)).toEqual([]);
+    expect(occupationSkips(lists, {})).toEqual([]);
+    expect(occupationSkips(lists, { occupation_answers: {}, skilled_occupation: null })).toEqual(
+      [],
+    );
+  });
+  it('only the question of the list the country has', () => {
+    const known = {
+      occupation_answers: { 5: { shortage_occupation: true, listed_occupation: false } },
+    };
+    expect(occupationSkips(lists, known, [{ country_id: 5, kind: 'shortage' }])).toEqual([
+      'shortage_occupation@5',
+    ]);
+    expect(occupationSkips(lists, known)).toEqual(['shortage_occupation@5', 'listed_occupation@5']);
   });
 });

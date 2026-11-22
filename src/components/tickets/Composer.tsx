@@ -34,6 +34,7 @@ interface ComposerProps {
     | undefined;
   /** Attaching a file; left out where messages are text only (the assistant). */
   attach?: {
+    disabled?: boolean;
     /** "Attach a file". */
     label: string;
     accept: readonly string[];
@@ -59,6 +60,7 @@ interface ComposerProps {
   hint?: string | undefined;
   /** `ticket` in a narrow box (a floating chat window): the phone bar at every size. */
   compact?: boolean;
+  accessory?: ReactNode;
 }
 
 const CHOICE = {
@@ -94,6 +96,7 @@ export function Composer({
   variant = 'ticket',
   hint,
   compact = false,
+  accessory,
 }: ComposerProps) {
   // The wide layout's classes, left out when compact keeps the phone bar at every size.
   const lg = (classes: string) => (compact ? '' : classes);
@@ -177,11 +180,12 @@ export function Composer({
             name={attach.file.name}
             meta={attach.file.meta}
             removeLabel={attach.removeLabel}
-            disabled={sending}
+            disabled={sending || !!attach.disabled}
             onRemove={attach.onRemove}
           />
         </div>
       )}
+      {accessory && <div className={`col-span-3 ${lg('lg:order-4')}`}>{accessory}</div>}
       {attach?.error && (
         <p
           id={fileError ?? undefined}
@@ -231,7 +235,7 @@ export function Composer({
             id={`${id}-file`}
             compact
             accept={attach.accept}
-            disabled={sending}
+            disabled={sending || !!attach.disabled}
             errorId={fileError}
             chooseLabel={attach.label}
             onFile={attach.onFile}

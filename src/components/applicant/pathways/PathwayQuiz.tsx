@@ -18,6 +18,7 @@ import {
   type FinderBudget,
   type FinderContact,
   type FinderIncome,
+  type FinderOptions,
   type FinderPathway,
   type PathwayResult,
 } from '@/lib/applicant/pathways';
@@ -30,6 +31,8 @@ import {
   answeredPathways,
   asksLeft,
   BUDGET,
+  FIELD_OCCUPATION,
+  OCCUPATION,
   INCOME_AMOUNT,
   INCOME_CURRENCIES,
   INCOME_CURRENCY,
@@ -38,7 +41,10 @@ import {
   countryProgress,
   mergeAnswers,
   mergeByCountry,
+  needsOccupation,
   nextAsk,
+  occupationSkips,
+  type Ask,
   type Country,
   type Goal,
 } from './plan';
@@ -55,6 +61,7 @@ import { Flag, QuizIcon, type QuizIconName } from './art';
 import { key } from './keys';
 import { BarContext } from './pinned';
 import { FoundRoutes, Rail } from './rail';
+import { OccupationAnswer, type FieldOccupation } from './occupation';
 import { FirstResult, Results } from './routes';
 
 /**
@@ -72,9 +79,9 @@ interface Part {
   /** Questions this answer made pointless: counted as answered. */
   skips?: readonly string[] | undefined;
 }
-/** The questions answered, or skipped by an answer. */
-const answeredOf = (parts: readonly Part[]) =>
-  new Set(parts.flatMap((part) => [part.id, ...(part.skips ?? [])]));
+/** The questions answered, or skipped by an answer; `never`: questions this server can't take. */
+const answeredOf = (parts: readonly Part[], never: readonly string[] = []) =>
+  new Set([...never, ...parts.flatMap((part) => [part.id, ...(part.skips ?? [])])]);
 /** Everything answered, as Django takes it. */
 interface Given {
   answers: Answers;
@@ -83,12 +90,15 @@ interface Given {
   budget: FinderBudget | null;
   /** Monthly income, asked for digital nomad routes; sent apart from the factors. */
   income: FinderIncome | null;
+  /** The ISCO code, null for «don't know»; undefined when the occupation wasn't asked (sent only once it was). */
+  occupation?: string | null | undefined;
 }
 const givenOf = (parts: readonly Part[]): Given => {
   const {
     [BUDGET]: budget,
     [INCOME_AMOUNT]: amount,
     [INCOME_CURRENCY]: currency,
+    [OCCUPATION]: occupation,
     ...answers
   } = mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set])));
   return {
@@ -99,6 +109,12 @@ const givenOf = (parts: readonly Part[]): Given => {
       typeof amount === 'number' && INCOME_CURRENCIES.some((name) => name === currency)
         ? { amount, currency: currency as FinderIncome['currency'] }
         : null,
+    occupation:
+      occupation === undefined
+        ? undefined
+        : typeof occupation === 'string' && occupation
+          ? occupation
+          : null,
   };
 };
 const GOALS: readonly Goal[] = ['work', 'study', 'any'];
@@ -154,10 +170,15 @@ function save(saved: Omit<Saved, 'at'> | null) {
 export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () => void }) {
   const { t } = useTranslation('pathways');
   const { data: options } = useSuspenseQuery(finderOptionsQuery);
+  // An older server sends no field groups: it can't take the field and occupation step, so it is never asked.
+  const hasGroups = Boolean(options.field_groups?.length);
+  const never = useMemo(() => (hasGroups ? [] : [FIELD_OCCUPATION]), [hasGroups]);
   // Answers kept from an earlier visit: carry on at the next question.
   const [saved] = useState(() => {
     const kept = loadSaved();
-    return kept && nextAsk(options.pathways, kept.goal, answeredOf(kept.parts)) ? kept : null;
+    return kept && nextAsk(options.pathways, kept.goal, answeredOf(kept.parts, never))
+      ? kept
+      : null;
   });
   const [stage, setStage] = useState<Stage>(saved ? 'ask' : 'intro');
   const [goal, setGoal] = useState<Goal | null>(saved?.goal ?? null);
@@ -174,14 +195,31 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
   const [openId, setOpenId] = useState<number | null>(null);
   const [consulted, setConsulted] = useState(false);
 
-  const answered = useMemo(() => answeredOf(parts), [parts]);
+  const answered = useMemo(() => answeredOf(parts, never), [parts, never]);
   const answers = useMemo(() => givenOf(parts), [parts]);
   const pathways = options.pathways;
   const ask = goal ? nextAsk(pathways, goal, answered) : null;
+  // The field and occupation step asks only the field when no route asks about occupation lists.
+  const askOccupation = goal !== null && needsOccupation(pathways, goal);
+  const askText = (part: 'title' | 'help') =>
+    ask
+      ? t(
+          key(
+            `asks.${ask.id}.${part}${ask.input === 'occupation' && !askOccupation ? '_field' : ''}`,
+          ),
+        )
+      : '';
 
   const check = useMutation({
     mutationFn: ({ given, contact }: { given: Given; contact: FinderContact }) =>
-      checkPathways(given.answers, contact, given.byCountry, given.budget, given.income),
+      checkPathways(
+        given.answers,
+        contact,
+        given.byCountry,
+        given.budget,
+        given.income,
+        given.occupation,
+      ),
   });
   // Found routes' verdicts, fetched in the background while the questions go on.
   const peek = useMutation({
@@ -192,6 +230,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
         given.byCountry,
         given.budget,
         given.income,
+        given.occupation,
       ),
   });
 
@@ -211,7 +250,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
   const afterAnswer = (nextParts: Part[]) => {
     setParts(nextParts);
     if (!goal) return;
-    const done = answeredOf(nextParts);
+    const done = answeredOf(nextParts, never);
     const given = givenOf(nextParts);
     if (nextAsk(pathways, goal, done) === null) {
       evaluate(given, 'results');
@@ -368,31 +407,90 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
         </Question>
       ) : (
         ask && (
-          <Question
-            key={ask.id}
-            title={t(key(`asks.${ask.id}.title`))}
-            help={t(key(`asks.${ask.id}.help`))}
-            number={number}
-          >
-            <AskAnswer
-              ask={ask}
-              countries={countriesFor(pathways, goal, ask)}
-              busy={check.isPending}
-              onBack={back}
-              rates={options.rates}
-              remembered={memory[ask.id]}
-              allCountries={options.countries}
-              onAnswer={(set, byCountry, skips, picked) => {
-                if (picked) setMemory({ ...memory, [ask.id]: picked });
-                afterAnswer([...parts, { id: ask.id, set, byCountry, skips }]);
-              }}
-              onShowResults={found.length ? () => evaluate(answers, 'results') : undefined}
-            />
+          <Question key={ask.id} title={askText('title')} help={askText('help')} number={number}>
+            {ask.input === 'occupation' ? (
+              <OccupationAnswer
+                groups={options.field_groups ?? []}
+                askOccupation={askOccupation}
+                initial={rememberedStep(memory[ask.id]) ?? prefilled(options.prefill)}
+                busy={check.isPending}
+                onAnswer={(step, known) => {
+                  setMemory({ ...memory, [ask.id]: JSON.stringify(step) });
+                  const set: Answers =
+                    step.field === null ? {} : { field_group: String(step.field) };
+                  // Picked: the questions Django answered from it are skipped; the rest (and «don't know») asked.
+                  if (step.occupation !== undefined) set[OCCUPATION] = step.occupation?.code ?? '';
+                  afterAnswer([
+                    ...parts,
+                    {
+                      id: ask.id,
+                      set,
+                      skips: step.occupation
+                        ? occupationSkips(pathways, known, options.occupation_lists)
+                        : undefined,
+                    },
+                  ]);
+                }}
+                actions={(ready, formId) => (
+                  <Actions onBack={back} busy={check.isPending}>
+                    <Button
+                      type="submit"
+                      form={formId}
+                      size="lg"
+                      className={`px-8 ${MAIN_ON_PHONE}`}
+                      disabled={check.isPending || !ready}
+                    >
+                      {t('next')}
+                      <Forward />
+                    </Button>
+                  </Actions>
+                )}
+              />
+            ) : (
+              <AskAnswer
+                ask={withPrefill(ask, options.prefill?.work_years)}
+                countries={countriesFor(pathways, goal, ask, answered)}
+                busy={check.isPending}
+                onBack={back}
+                rates={options.rates}
+                remembered={memory[ask.id]}
+                allCountries={options.countries}
+                onAnswer={(set, byCountry, skips, picked) => {
+                  if (picked) setMemory({ ...memory, [ask.id]: picked });
+                  afterAnswer([...parts, { id: ask.id, set, byCountry, skips }]);
+                }}
+                onShowResults={found.length ? () => evaluate(answers, 'results') : undefined}
+              />
+            )}
           </Question>
         )
       )}
     </Frame>
   );
+}
+
+/** The work years from the profile, as the number question's first value (still editable). */
+function withPrefill(ask: Ask, workYears: number | null | undefined): Ask {
+  if (ask.id !== 'work_years' || typeof workYears !== 'number') return ask;
+  const years = Math.round(workYears);
+  return { ...ask, start: Math.min(Math.max(years, ask.min ?? 0), ask.max ?? years) };
+}
+
+/** The field and occupation from the profile, shown picked. */
+const prefilled = (prefill: FinderOptions['prefill']): FieldOccupation => ({
+  field: prefill?.field_group ?? null,
+  occupation: prefill?.occupation ?? undefined,
+});
+
+/** The step's answer given before going back (kept as text with the other remembered picks). */
+function rememberedStep(text: string | undefined): FieldOccupation | null {
+  if (!text) return null;
+  try {
+    const step = JSON.parse(text) as FieldOccupation;
+    return typeof step === 'object' ? step : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

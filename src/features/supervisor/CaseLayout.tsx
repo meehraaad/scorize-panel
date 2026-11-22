@@ -15,7 +15,9 @@ import { caseQuery, type CaseData } from './api';
 import { BotProblems } from './components/BotProblems';
 import { CaseHero } from './components/CaseHero';
 import { StageDialog } from './components/StageDialog';
-import { casePath, supervisorPath, type CaseTab } from './paths';
+import { Chip } from '@/components/ui/Chip';
+import { serviceTitle } from './api';
+import { casePath, servicePath, supervisorPath, type CaseTab } from './paths';
 import { useCaseId } from './useCaseId';
 
 // Tickets have no tab: they open in the chat window (the case card's button).
@@ -100,6 +102,27 @@ function Case({ data }: { data: CaseData }) {
           );
         })}
       </nav>
+      {data.services && data.services.length > 0 && (
+        <nav
+          aria-label={t('serviceTab.nav')}
+          className="relative -mx-4 -mt-2 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 py-0.5 lg:mx-0 lg:px-0.5"
+        >
+          {data.services.map((service) => (
+            <NavLink
+              key={service.id}
+              to={servicePath(data.id, service.id)}
+              className={({ isActive }) => tabClass(isActive)}
+            >
+              {serviceTitle(service)}
+              {!service.owner && service.status === 'open' && (
+                <Chip tone="warn" small>
+                  {t('services.noOwner')}
+                </Chip>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+      )}
       {/* A tab's data must not hide the case card and its tabs. */}
       <Suspense fallback={<PageSkeleton kind="tab" />}>
         <Outlet />

@@ -1,0 +1,175 @@
+<!doctype html>
+<!--
+  To be served by the site's main nginx (scorize conf/nginx.conf, panel.scorize.com; docs/backend-changes.md P4) when the panel stack doesn't answer
+  (502/503/504). Self-contained on purpose: the panel's own files and fonts are what's missing.
+  No scripts (the CSP nginx sends with it allows none); "تلاش دوباره" is a plain link to the same page.
+-->
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="color-scheme" content="light dark" />
+    <title>پنل اسکورایز در دسترس نیست</title>
+    <style>
+      :root {
+        --canvas: #f6f4f7;
+        --surface: #ffffff;
+        --text: #1b1020;
+        --text-2: #645c6b;
+        --hair: rgb(27 16 32 / 0.07);
+        --line-2: rgb(27 16 32 / 0.14);
+        --primary: #951768;
+        --primary-hover: #7a1250;
+        --on-primary: #ffffff;
+        --tint: #f8e9f2;
+        --focus: #951768;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --canvas: #111113;
+          --surface: #1b1b1f;
+          --text: #ededf0;
+          --text-2: #a1a1aa;
+          --hair: rgb(255 255 255 / 0.06);
+          --line-2: rgb(255 255 255 / 0.12);
+          --primary-hover: #a61f74;
+          --tint: rgb(255 255 255 / 0.09);
+          --focus: #ffffff;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        background: var(--canvas);
+        color: var(--text);
+        font-family: 'Vazirmatn Variable', Vazirmatn, Tahoma, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        width: 100%;
+        max-width: 440px;
+        padding: 40px 28px 32px;
+        text-align: center;
+        background: var(--surface);
+        border: 1px solid var(--hair);
+        border-radius: 20px;
+        box-shadow:
+          0 1px 2px rgb(27 16 32 / 0.04),
+          0 12px 32px -12px rgb(27 16 32 / 0.12);
+      }
+      .mark {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 24px;
+        display: grid;
+        place-items: center;
+        border-radius: 18px;
+        background: var(--tint);
+        color: var(--primary);
+      }
+      @media (prefers-color-scheme: dark) {
+        .mark {
+          color: var(--text);
+        }
+      }
+      .code {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--text-2);
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 22px;
+        line-height: 1.5;
+        font-weight: 800;
+      }
+      p {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.9;
+        color: var(--text-2);
+      }
+      .actions {
+        margin-top: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      a.btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: 0 20px;
+        border-radius: 12px;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      a.primary {
+        background: var(--primary);
+        color: var(--on-primary);
+      }
+      a.primary:hover {
+        background: var(--primary-hover);
+      }
+      a.outline {
+        border: 1px solid var(--line-2);
+        color: var(--text);
+      }
+      a.outline:hover {
+        background: var(--tint);
+      }
+      a:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark" aria-hidden="true">
+        <svg
+          width="30"
+          height="30"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5"
+          />
+          <circle cx="12" cy="12" r="3.2" />
+        </svg>
+      </div>
+      <p class="code">خطای ۵۰۳</p>
+      <h1>پنل چند لحظه در دسترس نیست</h1>
+      <p>
+        داریم پنل را به‌روز می‌کنیم یا مشکلی موقت پیش آمده. اطلاعات شما سر جایش است؛ چند دقیقه‌ی
+        دیگر دوباره سر بزنید.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="">تلاش دوباره</a>
+        <a class="btn outline" href="https://scorize.com/">رفتن به سایت اسکورایز</a>
+      </div>
+    </main>
+  </body>
+</html>

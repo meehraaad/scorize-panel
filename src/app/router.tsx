@@ -356,7 +356,10 @@ const pageRoutes: RouteObject[] = [
     : []),
 ];
 
-export const routes: RouteObject[] = [{ Component: WorkspaceLayout, children: pageRoutes }];
+// The shell's own boundary: if WorkspaceLayout itself fails, the user still gets our error page.
+export const routes: RouteObject[] = [
+  { Component: WorkspaceLayout, ErrorBoundary: ErrorPage, children: pageRoutes },
+];
 
 setPreloadRoutes(routes);
 

@@ -35,12 +35,15 @@ const dayOf = (value: string | null) => (value ? value.slice(0, 10) : '');
 export function ApplicationDialog({
   caseId,
   application,
+  service,
   open,
   onClose,
 }: {
   caseId: number;
   /** null: a new application. */
   application: CaseApplication | null;
+  /** Added from an admission service's tab: for that service's country (SVC9). */
+  service?: number;
   open: boolean;
   onClose: () => void;
 }) {
@@ -76,6 +79,7 @@ export function ApplicationDialog({
       payment: currency ? payment : null,
       result: result || null,
       note: note.trim() || null,
+      ...(service !== undefined && !application ? { service } : {}),
     };
     save.mutate(
       { application: application?.id ?? null, values },
