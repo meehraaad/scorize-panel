@@ -159,7 +159,8 @@
     "logout": "Log out",
     "asCustomer": "Customer view",
     "logoutFailed": "Couldn't log out. Check your internet connection and try again.",
-    "myPay": "My score and pay"
+    "myPay": "My score and pay",
+    "onboarding": "Personal details form"
   },
   "more": {
     "title": "More",
@@ -456,7 +457,8 @@
   "me": {
     "nav": "My sections",
     "pay": "Score and pay",
-    "sales": "Sales performance"
+    "sales": "Sales performance",
+    "onboarding": "Personal details form"
   },
   "passwordGate": {
     "card": "Enter your password",

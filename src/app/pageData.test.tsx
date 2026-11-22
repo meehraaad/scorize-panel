@@ -14,7 +14,7 @@ import '@/test/server';
  */
 
 // The admission-chance quiz, Turkey, the founders assistant, the mail page, customer tags and the
-// office line's phone settings and the client services page aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
+// office line's phone settings, the client services page and the new-hire form aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
   return {
@@ -31,6 +31,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       phoneExtensions: true,
       phoneMenus: true,
       phoneVoices: true,
+      hrOnboarding: true,
     },
   };
 });
@@ -42,6 +43,7 @@ const REZA = 4; // sales manager
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
 const AMIR = 6; // a superuser: the messages section (src/mocks/messages.ts)
 const ELHAM = 7; // the marketing team (src/mocks/marketing.ts)
+const HIRE = 603; // a new hire with her personal details form open (src/mocks/hr.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -228,6 +230,8 @@ const PAGES: PageCase[] = [
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  // The new hire's form (docs/backend-changes.md OB3).
+  { path: '/me/onboarding', user: HIRE },
   {
     path: '/hr/pay/plans/position%3A2',
     user: AMIR,

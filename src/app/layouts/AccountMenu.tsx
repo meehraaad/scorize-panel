@@ -2,6 +2,8 @@ import { Suspense, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
+import { ONBOARDING_PATH } from '@/features/hr/paths';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { logout } from '@/lib/auth/logout';
 import { applicantPanel } from '@/panels/applicant';
 import { panelHref } from '@/panels/types';
@@ -159,6 +161,12 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
               <Link to="/me" className={itemClass}>
                 <Icon name="chart" />
                 {t('account.myPay')}
+              </Link>
+            )}
+            {ON_SERVER.hrOnboarding && user.staff?.onboarding && (
+              <Link to={ONBOARDING_PATH} className={itemClass}>
+                <Icon name="document" />
+                {t('account.onboarding')}
               </Link>
             )}
             <Link to="/settings" className={itemClass}>

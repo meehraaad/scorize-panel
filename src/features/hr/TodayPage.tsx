@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { StatGrid } from '@/components/ui/StatGrid';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { todayQuery } from './api';
 import { PersonLink } from './components/PersonLink';
@@ -154,6 +155,15 @@ export default function TodayPage() {
           { label: t('state.trial'), value: n(counts.trial), tone: 'primary' },
           { label: t('state.joining'), value: n(counts.joining), tone: 'good' },
           { label: t('state.leaving'), value: n(counts.leaving), tone: 'urgent' },
+          ...(ON_SERVER.hrOnboarding && counts.forms_to_review !== undefined
+            ? [
+                {
+                  label: t('onboarding.today'),
+                  value: n(counts.forms_to_review),
+                  tone: 'primary' as const,
+                },
+              ]
+            : []),
         ]}
       />
       <PageColumns main={main} aside={aside} asideLabel={t('today.aside')} />

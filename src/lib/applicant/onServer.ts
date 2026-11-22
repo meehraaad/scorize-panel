@@ -46,6 +46,7 @@ export type ServerFeature =
   | 'teamBreaks'
   | 'attendance'
   | 'hr'
+  | 'hrOnboarding'
   | 'marketing'
   | 'dayFollowUps'
   | 'clientServices'
@@ -79,6 +80,13 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * `claude/project-thread-79hhr6`). Tasks: `?panel=hr`.
    */
   hr: true,
+  /**
+   * OB1–OB8 `hr/v1/me/onboarding/…` and `hr/v1/staff/<id>/onboarding/…`: the new-hire form
+   * (replaces the Porsline «ثبت اطلاعات فردی» link) and HR's review of it on the staff file, plus
+   * `whoami.staff.onboarding`. Off: no form page, tab or chips; HR keeps sending the Porsline link.
+   * Needs `makemigrations human_resource` + `migrate`; deploy Django first.
+   */
+  hrOnboarding: false,
   /**
    * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
    * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.

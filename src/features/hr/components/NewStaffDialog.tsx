@@ -7,6 +7,7 @@ import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { TextField } from '@/components/ui/TextField';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
@@ -75,7 +76,11 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         onSuccess: (file) => {
           toast.success(t('newStaff.saved', { name: file.name }));
           onClose();
-          void navigate(personPath(file.id));
+          // With the form on: its tab first, where the invite to send the hire is.
+          void navigate(
+            personPath(file.id),
+            ON_SERVER.hrOnboarding ? { state: { tab: 'form' } } : undefined,
+          );
         },
         onError: (error) => {
           const fields = fieldErrors(error);

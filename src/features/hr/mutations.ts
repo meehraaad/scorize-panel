@@ -31,7 +31,7 @@ function useHrMutation<V, T>(send: (value: V) => Promise<T>, onDone?: (data: T) 
 }
 
 /** Writes that answer the file put it in the cache at once. */
-function useFileMutation<V>(send: (value: V) => Promise<StaffFile>) {
+export function useFileMutation<V>(send: (value: V) => Promise<StaffFile>) {
   const client = useQueryClient();
   return useHrMutation(send, (data) => client.setQueryData(fileQuery(data.id).queryKey, data));
 }

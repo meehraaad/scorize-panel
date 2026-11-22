@@ -57,7 +57,7 @@ describe('HR panel', () => {
     expect(
       await screen.findByRole('heading', { name: 'سینا مرادی', level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: '۰ از ۸ انجام شده' })).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: '۰ از ۹ انجام شده' })).toBeInTheDocument();
   });
 
   it('asks for the missing fields before saving', async () => {
@@ -79,7 +79,7 @@ describe('HR panel', () => {
     const step = await screen.findByRole('checkbox', { name: /ایمیل شرکتی/ });
     await user.click(step);
     await waitFor(() => {
-      expect(screen.getByRole('progressbar', { name: '۱ از ۸ انجام شده' })).toBeInTheDocument();
+      expect(screen.getByRole('progressbar', { name: '۱ از ۹ انجام شده' })).toBeInTheDocument();
     });
   });
 

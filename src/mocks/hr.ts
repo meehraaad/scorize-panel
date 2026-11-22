@@ -14,6 +14,13 @@ import type {
   StaffRow,
   Team,
 } from '@/features/hr/api';
+import type {
+  OnboardingAnswers,
+  OnboardingFileKind,
+  OnboardingReview,
+  OnboardingStatus,
+} from '@/features/hr/onboarding/api';
+import { EMPTY_ANSWERS } from '@/features/hr/onboarding/fields';
 import { forbidden, notFound, storage } from './session';
 
 /**
@@ -30,13 +37,16 @@ const dayValue = (date: Date) =>
   `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 const inDays = (days: number) => dayValue(new Date(Date.now() + days * DAY));
 
+/** The joining step done by sending the new-hire form (OB2). */
+const FORM_STEP = 'تکمیل فرم اطلاعات فردی';
 const ENTRY_STEPS: [string, string][] = [
   ['ساخت حساب پنل و نقش‌ها', 'hr'],
   ['ایمیل شرکتی', 'hr'],
   ['داخلی تلفن دفتر و داخلی موبایل', 'hr'],
   ['ثبت روی دستگاه حضور و غیاب و وصل شماره', 'hr'],
   ['قرارداد امضاشده در مدارک', 'hr'],
-  ['مدارک: کارت ملی، مدرک تحصیلی، گواهی سوء پیشینه', 'employee'],
+  [FORM_STEP, 'employee'],
+  ['مدارک: مدرک تحصیلی، گواهی سوء پیشینه', 'employee'],
   ['معرفی به بیمه', 'hr'],
   ['معرفی به تیم و آموزش هفته‌ی اول', 'manager'],
 ];
@@ -54,7 +64,7 @@ const ME = { id: 10, name: 'امیر عابدی' };
 let nextId = 1000;
 const newId = () => ++nextId;
 
-interface MockStaff extends Omit<StaffFile, 'move' | 'state' | 'contract'> {
+interface MockStaff extends Omit<StaffFile, 'move' | 'state' | 'contract' | 'onboarding'> {
   moves: (Move & { steps: MoveStep[] })[];
 }
 
@@ -176,10 +186,108 @@ function initial(): MockStaff[] {
   ];
 }
 
+// The new-hire forms (OB1–OB6), oldest first; Bahar's opened with her joining.
+interface MockForm extends OnboardingReview {
+  /** Its joining step (null when HR sent it on demand). */
+  stepId: number | null;
+}
+
 let staff = initial();
+let forms: MockForm[] = [];
+
+const plusDays = (day: string, days: number) => {
+  const date = new Date(`${day}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return dayValue(date);
+};
+
+const OPEN_FORM: readonly OnboardingStatus[] = ['draft', 'returned', 'submitted'];
+const latestForm = (staffId: number) => forms.findLast((form) => form.staff.id === staffId);
+function openFormOf(staffId: number) {
+  const form = latestForm(staffId);
+  return form && OPEN_FORM.includes(form.status) ? form : undefined;
+}
+const brief = (form: MockForm) => ({
+  id: form.id,
+  status: form.status,
+  submitted_at: form.submitted_at,
+  reviewed_at: form.reviewed_at,
+  note: form.note,
+});
+const publicForm = ({ stepId: _step, ...form }: MockForm) => form;
+
+/** whoami `staff.onboarding`: the staff member's open form (src/mocks/handlers.ts). */
+export function openFormStatus(staffId: number) {
+  const status = openFormOf(staffId)?.status;
+  return status === 'draft' || status === 'returned' || status === 'submitted' ? status : null;
+}
+
+/** A new form, prefilled from the file (and an earlier approved form on a rehire). */
+function openForm(row: MockStaff, move: (Move & { steps: MoveStep[] }) | null) {
+  const [first = '', ...rest] = row.name.split(' ');
+  const form: MockForm = {
+    id: newId(),
+    status: 'draft',
+    note: '',
+    due: move ? plusDays(move.day, 7) : null,
+    answers: {
+      ...EMPTY_ANSWERS,
+      first_name: first,
+      last_name: rest.join(' '),
+      fathers_name: row.info.fathers_name,
+      national_code: row.info.national_code,
+      birth_date: row.info.birth_date,
+      birth_place: row.info.birth_place,
+      marital_status: row.info.marital_status,
+      number_of_children: row.info.number_of_children,
+      address: row.info.address,
+      ...row.personal,
+    },
+    files: [],
+    fixed: {
+      full_name: row.name,
+      phone_number: row.info.phone_number ?? '',
+      id_number: row.info.id_number,
+    },
+    staff: { id: row.id, name: row.name },
+    submitted_at: null,
+    reviewed_at: null,
+    reviewed_by: null,
+    stepId: move?.steps.find((step) => step.label === FORM_STEP)?.id ?? null,
+  };
+  forms.push(form);
+  return form;
+}
+
+function setStep(form: MockForm, done: boolean) {
+  for (const row of staff)
+    for (const move of row.moves) {
+      const step = move.steps.find((item) => item.id === form.stepId);
+      if (step) step.done = done;
+    }
+}
+
+/** A cancelled joining or a leaving closes the form (OB6). */
+function cancelForms(staffId: number, move?: Move & { steps: MoveStep[] }) {
+  for (const form of forms)
+    if (
+      form.staff.id === staffId &&
+      OPEN_FORM.includes(form.status) &&
+      (!move || move.steps.some((step) => step.id === form.stepId))
+    )
+      form.status = 'cancelled';
+}
+
+function initialForms() {
+  forms = [];
+  const bahar = staff.find((row) => row.id === 3);
+  if (bahar) openForm(bahar, bahar.moves[0] ?? null);
+}
+initialForms();
 
 export function resetHrMocks() {
   staff = initial();
+  initialForms();
 }
 
 const allowed = () => storage.get() === HR_USER;
@@ -224,6 +332,7 @@ function rowOf(row: MockStaff): StaffRow {
     devices: _v,
     moves: _m,
     history: _h,
+    personal: _p,
     ...rest
   } = row;
   let move: Move | null = null;
@@ -231,14 +340,26 @@ function rowOf(row: MockStaff): StaffRow {
     const { steps: _steps, ...brief } = counted(open);
     move = brief;
   }
-  return { ...rest, contract: contracts[0] ?? null, move, state: stateOf(row) };
+  const form = openFormOf(row.id);
+  return {
+    ...rest,
+    contract: contracts[0] ?? null,
+    move,
+    state: stateOf(row),
+    onboarding: form ? brief(form) : null,
+  };
 }
 
-const fileOf = (row: MockStaff): StaffFile => ({
-  ...row,
-  ...rowOf(row),
-  moves: row.moves.map(counted),
-});
+const fileOf = (row: MockStaff): StaffFile => {
+  const latest = latestForm(row.id);
+  return {
+    ...row,
+    ...rowOf(row),
+    moves: row.moves.map(counted),
+    onboarding: latest ? brief(latest) : null,
+    personal: row.personal ?? null,
+  };
+};
 
 function openMoves(): OpenMove[] {
   return staff
@@ -267,6 +388,9 @@ function today(): HrToday {
       leaving: count('leaving'),
       total: active.length,
       no_device: active.filter((row) => !row.device).length,
+      forms_to_review: forms.filter(
+        (form) => form.status === 'submitted' && find(form.staff.id)?.is_active,
+      ).length,
     },
     attendance: { present: 1, late: 1, absent: 0, pending: 1 },
     moves: openMoves(),
@@ -353,10 +477,20 @@ const OPTIONS: HrOptions = {
   document_types: [
     { id: 1, name: 'کارت ملی' },
     { id: 2, name: 'مدرک تحصیلی' },
+    { id: 3, name: 'شناسنامه' },
   ],
 };
 
 const invalid = (errors: Record<string, string[]>) => HttpResponse.json(errors, { status: 400 });
+
+/** The logged-in user's own active staff file (the hire's side of the form). */
+const me = () => staff.find((row) => row.user === storage.get() && row.is_active);
+const myOpenForm = () => {
+  const row = me();
+  return row ? openFormOf(row.id) : undefined;
+};
+const EDITABLE: readonly OnboardingStatus[] = ['draft', 'returned'];
+const closed = () => HttpResponse.json({ detail: 'This form is closed.' }, { status: 409 });
 
 export const hrHandlers = [
   http.get(`${API}/today/`, () => (allowed() ? HttpResponse.json(today()) : forbidden())),
@@ -400,6 +534,7 @@ export const hrHandlers = [
     row.pay = { salary: body.salary, has_insurance: false, commission: '', changes: [] };
     row.moves = [makeMove(row, 'entry', body.entry_date)];
     staff.push(row);
+    openForm(row, row.moves[0] ?? null);
     return HttpResponse.json(fileOf(row), { status: 201 });
   }),
   http.get(`${API}/staff/:id/`, ({ params }) => {
@@ -489,6 +624,7 @@ export const hrHandlers = [
     row.is_active = true;
     row.leaving_date = null;
     row.moves.unshift(makeMove(row, 'entry', body.day, body.reason));
+    openForm(row, row.moves[0] ?? null);
     return HttpResponse.json(fileOf(row), { status: 201 });
   }),
   http.post(`${API}/moves/:id/:action/`, ({ params }) => {
@@ -496,13 +632,16 @@ export const hrHandlers = [
     const owner = staff.find((row) => row.moves.some((move) => move.id === Number(params.id)));
     const move = owner?.moves.find((item) => item.id === Number(params.id));
     if (!owner || move?.status !== 'open') return notFound();
-    if (params.action === 'cancel') move.status = 'cancelled';
-    else if (params.action === 'finish' && move.kind === 'exit') {
+    if (params.action === 'cancel') {
+      move.status = 'cancelled';
+      if (move.kind === 'entry') cancelForms(owner.id, move);
+    } else if (params.action === 'finish' && move.kind === 'exit') {
       if (move.day > inDays(0))
         return HttpResponse.json({ detail: 'The last day has not come yet.' }, { status: 409 });
       move.status = 'done';
       owner.is_active = false;
       owner.leaving_date = move.day;
+      cancelForms(owner.id);
     } else return invalid({ detail: ['Unknown action.'] });
     return HttpResponse.json({ results: openMoves() });
   }),
@@ -521,4 +660,194 @@ export const hrHandlers = [
       }
     return notFound();
   }),
+  // The new hire's own form (OB3): whoever is logged in, with an active staff file.
+  http.get(`${API}/me/onboarding/`, () => {
+    const row = me();
+    if (!row) return forbidden();
+    const form = latestForm(row.id);
+    return form && form.status !== 'cancelled' ? HttpResponse.json(publicForm(form)) : notFound();
+  }),
+  http.patch(`${API}/me/onboarding/`, async ({ request }) => {
+    const form = myOpenForm();
+    if (!form) return notFound();
+    if (!EDITABLE.includes(form.status)) return closed();
+    const body = (await request.json()) as Partial<OnboardingAnswers>;
+    for (const key of Object.keys(EMPTY_ANSWERS) as (keyof OnboardingAnswers)[])
+      if (key in body) Object.assign(form.answers, { [key]: body[key] });
+    return HttpResponse.json(publicForm(form));
+  }),
+  http.post(`${API}/me/onboarding/files/`, async ({ request }) => {
+    const form = myOpenForm();
+    if (!form) return notFound();
+    if (!EDITABLE.includes(form.status)) return closed();
+    const data = await request.formData();
+    const kind = data.get('kind') as OnboardingFileKind | null;
+    const file = data.get('file');
+    if (!kind || !(file instanceof File)) return invalid({ file: ['No file was submitted.'] });
+    const id = newId();
+    form.files.push({ id, kind, name: file.name, url: `/media/hr/onboarding/${String(id)}` });
+    return HttpResponse.json(publicForm(form), { status: 201 });
+  }),
+  http.delete(`${API}/me/onboarding/files/:id/`, ({ params }) => {
+    const form = myOpenForm();
+    if (!form) return notFound();
+    if (!EDITABLE.includes(form.status)) return closed();
+    form.files = form.files.filter((file) => file.id !== Number(params.id));
+    return HttpResponse.json(publicForm(form));
+  }),
+  http.post(`${API}/me/onboarding/submit/`, () => {
+    const form = myOpenForm();
+    const row = me();
+    if (!form || !row) return notFound();
+    if (!EDITABLE.includes(form.status)) return closed();
+    const errors: Record<string, string[]> = {};
+    const { answers } = form;
+    const studies = answers.education !== null && answers.education !== 'below_diploma';
+    for (const key of Object.keys(EMPTY_ANSWERS) as (keyof OnboardingAnswers)[]) {
+      if (key === 'preferred_name' || key === 'real_birth_date') continue;
+      if (!studies && (key === 'field_of_study' || key === 'university')) continue;
+      const value = answers[key];
+      if (value === null || value === '') errors[key] = ['This field is required.'];
+    }
+    if (
+      answers.national_code &&
+      staff.some(
+        (other) => other.id !== row.id && other.info.national_code === answers.national_code,
+      )
+    )
+      errors.national_code = ['A staff file with this national code exists.'];
+    const kinds: OnboardingFileKind[] = ['birth_certificate', 'national_card'];
+    if (kinds.some((kind) => !form.files.some((file) => file.kind === kind)))
+      errors.files = ['Upload the birth certificate and the national card.'];
+    if (Object.keys(errors).length) return invalid(errors);
+    form.status = 'submitted';
+    form.submitted_at = new Date().toISOString();
+    setStep(form, true);
+    return HttpResponse.json(publicForm(form));
+  }),
+  // HR's side (OB4).
+  http.get(`${API}/staff/:id/onboarding/`, ({ params }) => {
+    if (!allowed()) return forbidden();
+    const form = latestForm(Number(params.id));
+    return form ? HttpResponse.json(publicForm(form)) : notFound();
+  }),
+  http.post(`${API}/staff/:id/onboarding/`, ({ params }) => {
+    if (!allowed()) return forbidden();
+    const row = find(params.id);
+    if (!row?.is_active) return notFound();
+    if (openFormOf(row.id))
+      return HttpResponse.json({ detail: 'A form is already open.' }, { status: 409 });
+    openForm(row, null);
+    return HttpResponse.json(fileOf(row), { status: 201 });
+  }),
+  http.post(`${API}/staff/:id/onboarding/:action/`, async ({ params, request }) => {
+    if (!allowed()) return forbidden();
+    const row = find(params.id);
+    const form = row && openFormOf(row.id);
+    if (!row || !form) return notFound();
+    const now = new Date().toISOString();
+    switch (params.action) {
+      case 'approve': {
+        if (form.status !== 'submitted') return closed();
+        const { answers } = form;
+        if (
+          staff.some(
+            (other) => other.id !== row.id && other.info.national_code === answers.national_code,
+          )
+        )
+          return invalid({ national_code: ['A staff file with this national code exists.'] });
+        row.name = `${answers.first_name} ${answers.last_name}`;
+        Object.assign(row.info, {
+          full_name: row.name,
+          national_code: answers.national_code,
+          fathers_name: answers.fathers_name,
+          birth_date: answers.birth_date,
+          birth_place: answers.birth_place,
+          marital_status: answers.marital_status,
+          number_of_children: answers.number_of_children,
+          address: answers.address,
+        });
+        row.birth_date = answers.birth_date;
+        row.personal = {
+          gender: answers.gender,
+          preferred_name: answers.preferred_name,
+          first_name_en: answers.first_name_en,
+          last_name_en: answers.last_name_en,
+          real_birth_date: answers.real_birth_date,
+          id_issue_place: answers.id_issue_place,
+          education: answers.education,
+          field_of_study: answers.field_of_study,
+          university: answers.university,
+          military_status: answers.military_status,
+          iban: answers.iban,
+          bank_name: answers.bank_name,
+          emergency_name: answers.emergency_name,
+          emergency_relation: answers.emergency_relation,
+          emergency_phone: answers.emergency_phone,
+        };
+        for (const file of form.files)
+          row.documents.push({
+            id: newId(),
+            type:
+              file.kind === 'national_card'
+                ? { id: 1, name: 'کارت ملی' }
+                : { id: 3, name: 'شناسنامه' },
+            url: file.url,
+          });
+        form.status = 'approved';
+        break;
+      }
+      case 'return': {
+        if (form.status !== 'submitted') return closed();
+        const { note } = (await request.json()) as { note?: string };
+        if (!note?.trim()) return invalid({ note: ['This field is required.'] });
+        form.status = 'returned';
+        form.note = note.trim();
+        setStep(form, false);
+        break;
+      }
+      case 'cancel':
+        form.status = 'cancelled';
+        break;
+      default:
+        return invalid({ detail: ['Unknown action.'] });
+    }
+    form.reviewed_at = now;
+    form.reviewed_by = ME.name;
+    return HttpResponse.json(fileOf(row));
+  }),
 ];
+
+/** Test helper: the staff member's open form filled in and sent, as a hire would (OB3). */
+export function mockSubmittedForm(staffId: number) {
+  const form = openFormOf(staffId);
+  if (!form) throw new Error(`No open form for staff ${String(staffId)}`);
+  Object.assign(form.answers, {
+    first_name_en: 'Bahar',
+    last_name_en: 'Niko',
+    fathers_name: 'حسن',
+    national_code: '0499370899',
+    gender: 'female',
+    id_issue_place: 'تهران',
+    education: 'bachelor',
+    field_of_study: 'مدیریت',
+    university: 'دانشگاه تهران',
+    marital_status: 'single',
+    number_of_children: 0,
+    military_status: 'not_applicable',
+    iban: 'IR820540102680020817909002',
+    bank_name: 'ملت',
+    email: 'bahar.niko@gmail.com',
+    address: 'تهران، خیابان آزادی',
+    emergency_name: 'مریم نیکو',
+    emergency_relation: 'مادر',
+    emergency_phone: '09121234567',
+  } satisfies Partial<OnboardingAnswers>);
+  form.files = [
+    { id: newId(), kind: 'birth_certificate', name: 'shenasname.pdf', url: '/media/hr/1.pdf' },
+    { id: newId(), kind: 'national_card', name: 'melli.jpg', url: '/media/hr/2.jpg' },
+  ];
+  form.status = 'submitted';
+  form.submitted_at = new Date().toISOString();
+  setStep(form, true);
+}

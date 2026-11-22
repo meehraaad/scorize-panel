@@ -1,0 +1,119 @@
+import { queryOptions } from '@tanstack/react-query';
+import { api } from '@/lib/api/client';
+import { HR_KEY, type Named, staffPath } from '../api';
+import { orNull } from './me';
+
+/**
+ * The new-hire form (replaces the Porsline «ثبت اطلاعات فردی» link): the hire fills it after
+ * logging in, HR approves it into the staff file or returns it with a note. Django: `api/hr/v1/`
+ * `me/onboarding/…` (the hire) and `staff/<id>/onboarding/…` (HR), docs/backend-changes.md OB1–OB8.
+ * Off until lang ships it: `ON_SERVER.hrOnboarding`. The hire's own query is in `./me` (route data,
+ * kept small for the first load).
+ */
+
+/** Open: `draft`, `returned` (the hire can edit), `submitted` (HR reviews). */
+export type OnboardingStatus = 'draft' | 'submitted' | 'returned' | 'approved' | 'cancelled';
+export type Gender = 'male' | 'female' | 'unspecified';
+export type Education =
+  'below_diploma' | 'diploma' | 'associate' | 'bachelor' | 'master' | 'doctorate';
+export type MilitaryStatus =
+  'not_applicable' | 'not_served' | 'student_exempt' | 'permanent_exempt' | 'completed';
+export type MaritalStatus = 'single' | 'married';
+export type OnboardingFileKind = 'birth_certificate' | 'national_card';
+
+/** What the hire types. Dates are `YYYY-MM-DD`; the IBAN is `IR` + 24 digits. */
+export interface OnboardingAnswers {
+  first_name: string;
+  last_name: string;
+  preferred_name: string;
+  first_name_en: string;
+  last_name_en: string;
+  fathers_name: string;
+  national_code: string;
+  gender: Gender | null;
+  birth_date: string | null;
+  /** Only when the real birthday differs from the ID card. */
+  real_birth_date: string | null;
+  birth_place: string;
+  id_issue_place: string;
+  education: Education | null;
+  field_of_study: string;
+  university: string;
+  marital_status: MaritalStatus | null;
+  number_of_children: number | null;
+  military_status: MilitaryStatus | null;
+  iban: string;
+  bank_name: string;
+  email: string;
+  address: string;
+  emergency_name: string;
+  emergency_relation: string;
+  emergency_phone: string;
+}
+
+export interface OnboardingFile {
+  id: number;
+  kind: OnboardingFileKind;
+  name: string;
+  url: string | null;
+}
+
+export interface Onboarding {
+  id: number;
+  status: OnboardingStatus;
+  /** HR's note when it was returned. */
+  note: string;
+  /** When HR wants it by (the checklist step's day); null when sent on demand. */
+  due: string | null;
+  answers: OnboardingAnswers;
+  files: OnboardingFile[];
+  /** Set by HR on the file; shown, not edited. */
+  fixed: { full_name: string; phone_number: string; id_number: string };
+}
+
+/** HR's view of a form: the same, with who and when. */
+export interface OnboardingReview extends Onboarding {
+  staff: Named;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+}
+
+/** On the staff file: the latest form. */
+export interface OnboardingBrief {
+  id: number;
+  status: OnboardingStatus;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  note: string;
+}
+
+/** The approved details the staff file had no place for (`personal` on the file). */
+export type PersonalInfo = Pick<
+  OnboardingAnswers,
+  | 'gender'
+  | 'preferred_name'
+  | 'first_name_en'
+  | 'last_name_en'
+  | 'real_birth_date'
+  | 'id_issue_place'
+  | 'education'
+  | 'field_of_study'
+  | 'university'
+  | 'military_status'
+  | 'iban'
+  | 'bank_name'
+  | 'emergency_name'
+  | 'emergency_relation'
+  | 'emergency_phone'
+>;
+
+export const onboardingPath = (staffId: number, action = '') =>
+  staffPath(staffId, `onboarding/${action ? `${action}/` : ''}`);
+
+/** A staff member's latest form, for HR. */
+export const onboardingQuery = (staffId: number) =>
+  queryOptions({
+    queryKey: [...HR_KEY, 'onboarding', staffId],
+    queryFn: ({ signal }) => orNull(api<OnboardingReview>(onboardingPath(staffId), { signal })),
+  });

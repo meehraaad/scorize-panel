@@ -9,6 +9,7 @@ import { FilterTabs, SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { matchesSearch } from '@/lib/text';
 import { staffQuery, type StaffRow, type StaffState } from './api';
@@ -159,6 +160,14 @@ function StaffItem({ row }: { row: StaffRow }) {
               : t(`state.${row.state}`)}
           </Chip>
         )}
+        {ON_SERVER.hrOnboarding &&
+          row.onboarding &&
+          row.onboarding.status !== 'approved' &&
+          row.onboarding.status !== 'cancelled' && (
+            <Chip tone={row.onboarding.status === 'submitted' ? 'info' : 'neutral'} small>
+              {t(`onboarding.chip.${row.onboarding.status}`)}
+            </Chip>
+          )}
         {row.is_active && !row.device && (
           <Chip tone="warn" small>
             {t('staff.noDevice')}
