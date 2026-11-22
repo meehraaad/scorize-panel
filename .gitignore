@@ -8,3 +8,15 @@ coverage
 !.env.example
 .DS_Store
 *.tsbuildinfo
+
+# JetBrains IDE files
+.idea/
+
+# Graphify index files(local only)
+graphify-out/
+
+# Local onboarding docs
+docs/onboarding/
+
+# Playwright
+.playwright-mcp/
