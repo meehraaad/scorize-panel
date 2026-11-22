@@ -18,3 +18,4 @@ export * from './handoffs';
 export * from './services';
 export * from './scopes';
 export * from './manager';
+export * from './serviceKinds';

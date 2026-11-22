@@ -12,6 +12,7 @@ const SECTIONS: readonly { id: ManagerSection; services?: true }[] = [
   { id: 'move' },
   { id: 'services', services: true },
   { id: 'scopes', services: true },
+  { id: 'kinds', services: true },
 ];
 
 /**

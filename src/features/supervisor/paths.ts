@@ -7,7 +7,7 @@ export const SUPERVISOR_ROOT = '/supervisor';
 export const supervisorPath = (to = '') => (to ? `${SUPERVISOR_ROOT}/${to}` : SUPERVISOR_ROOT);
 
 /** Sub-tabs of the manager's section (`can_assign_supervisor`); 'new' is its first page. */
-export type ManagerSection = 'new' | 'cases' | 'team' | 'move' | 'services' | 'scopes';
+export type ManagerSection = 'new' | 'cases' | 'team' | 'move' | 'services' | 'scopes' | 'kinds';
 
 export const managerPath = (section: ManagerSection = 'new') =>
   `${SUPERVISOR_ROOT}/manager${section === 'new' ? '' : `/${section}`}`;

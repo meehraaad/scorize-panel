@@ -649,11 +649,12 @@ While Django has it off, `services` and `unassigned_services` are null and the p
 The supervisor panel's «مدیریت سرپرستی» tab (`/supervisor/manager`, `can_assign_supervisor`): new cases, team cases,
 team, service status and supervisors as sub-tabs. Backend: `api/supervisor/v1/manager.py` in `shamrad/lang`.
 
-| #   | Change                                                                                                                                                                                                | State |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| SM1 | `GET cases/?scope=all` (managers) lists every case, with `?supervisor=<id>\|none` and `?country=<id>`; each case row has `supervisors` (`[{id, name}]`); a manager opens any case                     | ☑     |
-| SM2 | `GET manager/team/`: each executive and visa team member's open cases, cases waiting for an answer (and the oldest), open services, open and overdue tasks; totals                                    | ☑     |
-| SM3 | `POST manager/move/` `{person, to, cases?}`: all of a person's open cases, or the chosen ones, get `to` as supervisor in their place; their open services there go along; answers `{cases, services}` | ☑     |
+| #   | Change                                                                                                                                                                                                                                                            | State |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| SM1 | `GET cases/?scope=all` (managers) lists every case, with `?supervisor=<id>\|none` and `?country=<id>`; each case row has `supervisors` (`[{id, name}]`); a manager opens any case                                                                                 | ☑     |
+| SM2 | `GET manager/team/`: each executive and visa team member's open cases, cases waiting for an answer (and the oldest), open services, open and overdue tasks; totals                                                                                                | ☑     |
+| SM3 | `POST manager/move/` `{person, to, cases?}`: all of a person's open cases, or the chosen ones, get `to` as supervisor in their place; their open services there go along; answers `{cases, services}`                                                             | ☑     |
+| SM4 | Service settings: `GET/POST manager/service-types/`, `PATCH …/<id>/` (name, team, per country, active), `PUT …/<id>/stages/` (the stages in order); a built-in kind's per-country rule, admission's and visa's built-in stages and stages with open services stay | ☑     |
 
 Local assessment comparison/action plans: paired backend draft shamrad/lang#320,
 with owned revision/hash-checked selection/progress, immutable comparison snapshots,
