@@ -523,9 +523,14 @@
         "lead": "لید ساخته شد و به {{author}} رسید",
         "leadNew": "لید ساخته شد",
         "assign": "لید از {{previous}} به {{title}} رسید · {{author}}",
-        "assignFirst": "لید به {{title}} سپرده شد · {{author}}"
+        "assignFirst": "لید به {{title}} سپرده شد · {{author}}",
+        "assignSession": "مشاوره از {{previous}} به {{title}} رسید · {{author}}",
+        "assignSessionFirst": "مشاوره به {{title}} سپرده شد · {{author}}"
       },
       "system": "سیستم",
+      "reason": "دلیل: {{reason}}",
+      "noReason": "دلیل ثبت نشده (قبل از ثبت دلیل‌ها)",
+      "otherSeller": "مشتریِ {{owner}} بود",
       "stageTag": "مرحله: {{stage}}",
       "filter": "نمایش",
       "filters": {
@@ -1439,6 +1444,7 @@
     },
     "assign": {
       "title": "{{n}} لید بی‌صاحب است",
+      "history": "تغییرات تنظیمات تقسیم",
       "titleNone": "همه‌ی لیدها صاحب دارند",
       "subtitle": "قدیمی‌ترین {{age}} منتظر مانده. با تخصیص خودکار، این صف همیشه خالی می‌ماند.",
       "auto": "تخصیص خودکار",

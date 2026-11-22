@@ -632,8 +632,36 @@ describe('sales panel, seller pages', () => {
               channel: null,
               title: 'نیما',
               previous: 'کاوه',
+              subject: 'lead',
+              reason: 'همراه مشاوره‌ی مشتری',
+              note: 'مشاوره‌ی ۱۴۰۵/۰۹/۰۱ ۱۰:۰۰',
               text: '',
               stage: null,
+            },
+            {
+              id: 'assign-2',
+              kind: 'assign',
+              at: new Date().toISOString(),
+              author: null,
+              channel: null,
+              title: 'کاوه',
+              previous: null,
+              subject: 'lead',
+              reason: null,
+              note: '',
+              text: '',
+              stage: null,
+            },
+            {
+              id: 'contact-3',
+              kind: 'message',
+              at: new Date().toISOString(),
+              author: 'الهام',
+              channel: null,
+              title: null,
+              text: '',
+              stage: null,
+              owner: 'نادیا',
             },
           ],
           next: null,
@@ -652,6 +680,11 @@ describe('sales panel, seller pages', () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
     expect(await screen.findByText('لید از کاوه به نیما رسید · رضا')).toBeInTheDocument();
+    expect(
+      screen.getByText('دلیل: همراه مشاوره‌ی مشتری · مشاوره‌ی ۱۴۰۵/۰۹/۰۱ ۱۰:۰۰'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('دلیل ثبت نشده (قبل از ثبت دلیل‌ها)')).toBeInTheDocument();
+    expect(screen.getByText('مشتریِ نادیا بود')).toBeInTheDocument();
     // In the shared column (a sheet on phones).
     await user.click(screen.getByRole('button', { name: 'درباره‌ی مشتری و یادداشت‌ها' }));
     const about = await screen.findByRole('region', { name: /^درباره‌ی / });

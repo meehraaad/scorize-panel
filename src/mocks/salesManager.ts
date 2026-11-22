@@ -988,6 +988,7 @@ export const managerHandlers = [
       sellers: sellers(data.manager),
       queue: pageOf(request, queue, QUEUE_PAGE),
       oldest_at: queue.map((lead) => lead.created_at).sort()[0] ?? null,
+      history: [],
     };
     return HttpResponse.json(body);
   }),
