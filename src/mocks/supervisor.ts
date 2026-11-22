@@ -10,6 +10,7 @@ import type {
   CaseDocument,
   CaseDocuments,
   CaseRow,
+  TeamData,
   CaseService,
   CaseStage,
   CaseWriting,
@@ -911,6 +912,45 @@ function rowOf(item: MockCase): CaseRow {
     bot: data.bot.active,
     docs: docCount(item),
     last_activity: item.last_activity,
+    supervisors: supervisorsOf(data.id),
+  };
+}
+
+/** Who supervises a mock case: Maryam most, Ali some, and 1219 nobody (the manager's list). */
+function supervisorsOf(id: number): CaseRow['supervisors'] {
+  if (id === 1219) return [];
+  const maryam = { id: 7, name: 'مریم کاظمی' };
+  return id % 3 === 0 ? [{ id: 11, name: 'علی نوری' }] : [maryam];
+}
+
+/** The manager's team page (GET manager/team/), from the mock cases' supervisors. */
+function teamData(cases: MockCase[]): TeamData {
+  const people = SERVICE_STAFF.map((person) => {
+    const theirs = cases.filter((item) =>
+      supervisorsOf(item.data.id).some((one) => one.id === person.id),
+    );
+    const waiting = theirs.filter((item) => item.unread > 0);
+    return {
+      id: person.id,
+      name: person.name,
+      team: person.team === 'visa' ? ('visa' as const) : ('executive' as const),
+      countries: person.countries,
+      cases: theirs.length,
+      waiting: waiting.length,
+      waiting_since: waiting.length ? ago(2 * DAY) : null,
+      services: person.services,
+      tasks: person.id === 7 ? 6 : 2,
+      overdue: person.id === 7 ? 2 : 0,
+    };
+  }).sort((a, b) => b.waiting - a.waiting || b.overdue - a.overdue || b.cases - a.cases);
+  return {
+    people,
+    totals: {
+      cases: cases.length,
+      waiting: cases.filter((item) => item.unread > 0).length,
+      no_supervisor: cases.filter((item) => supervisorsOf(item.data.id).length === 0).length,
+      unowned_services: cases.flatMap((item) => item.services).filter((one) => !one.owner).length,
+    },
   };
 }
 
@@ -1246,7 +1286,14 @@ export const supervisorHandlers = [
           ),
       )
       .filter((item) => bot === null || item.data.bot.active === (bot === 'on'))
-      .map(rowOf);
+      .map(rowOf)
+      // The manager's list (`scope=all`): one supervisor's cases, or nobody's.
+      .filter((row) => {
+        const supervisor = params.get('scope') === 'all' ? params.get('supervisor') : null;
+        if (supervisor === null) return true;
+        if (supervisor === 'none') return row.supervisors.length === 0;
+        return row.supervisors.some((person) => String(person.id) === supervisor);
+      });
     const counts = { all: rows.length } as Record<StageFilter, number>;
     for (const value of [
       'documents',
@@ -1265,6 +1312,11 @@ export const supervisorHandlers = [
       counts,
       results: filtered.slice((page - 1) * CASES_PAGE, page * CASES_PAGE),
     });
+  }),
+
+  http.get(`${API}/manager/team/`, () => {
+    const all = casesOrError();
+    return all instanceof Response ? all : HttpResponse.json(teamData([...all.values()]));
   }),
 
   http.get(`${API}/cases/:id/`, ({ params }) => {
