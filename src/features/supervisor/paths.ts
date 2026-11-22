@@ -6,6 +6,12 @@ export const SUPERVISOR_ROOT = '/supervisor';
 
 export const supervisorPath = (to = '') => (to ? `${SUPERVISOR_ROOT}/${to}` : SUPERVISOR_ROOT);
 
+/** Sub-tabs of the manager's section (`can_assign_supervisor`); 'new' is its first page. */
+export type ManagerSection = 'new' | 'services' | 'scopes';
+
+export const managerPath = (section: ManagerSection = 'new') =>
+  `${SUPERVISOR_ROOT}/manager${section === 'new' ? '' : `/${section}`}`;
+
 /** Tabs of a case file; '' is the overview. */
 export type CaseTab = '' | 'documents' | 'applications' | 'tickets' | 'activity';
 

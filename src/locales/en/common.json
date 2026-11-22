@@ -34,11 +34,9 @@
         "tickets": "Tickets",
         "reports": "Reports",
         "tasks": "My tasks",
-        "new": "New cases",
         "mail": "Mailboxes",
         "services": "My services",
-        "scopes": "Supervisors",
-        "servicesReport": "Service status"
+        "manager": "Management"
       },
       "tabs": {
         "today": "Today",
