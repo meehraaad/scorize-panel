@@ -43,10 +43,47 @@ export interface CustomerColumn {
   activities?: StageActivity[];
 }
 
-/** One answer of the pathway quiz: a finder factor (`pathways.rules.FACTORS`) and its value. */
+/** One answer of the pathway quiz: a finder factor (`pathways.rules.FACTORS`, or `gpa`) and its value. */
 export interface PathwayAnswer {
   factor: string;
   value: number | string | boolean;
+  /** The profile's value (age, education, english_ielts, work_years, gpa); null: it has none. */
+  profile?: number | string | null;
+  /** The answer says what the profile does; null: the profile doesn't say (older servers: missing). */
+  matches?: boolean | null;
+}
+
+/** One route as the finder showed it to the customer. */
+export interface CustomerPathwayRoute {
+  country: string;
+  /** ISO 3166, for the flag (older servers: missing). */
+  code?: string;
+  pathway: string;
+  goal: 'work' | 'study' | 'any';
+  qualifies: boolean;
+  eligible: boolean;
+  points: number;
+  pass_mark: number | null;
+  max_points?: number;
+  /** The requirements not met (Persian, from Django). */
+  missing: string[];
+  /** Points per criterion (Persian labels). */
+  scores?: { label: string; points: number; max_points: number }[];
+  /** Up to two steps that would raise the points, best first. */
+  improvements?: { label: string; points: number; passes: boolean }[];
+  /** A study route: the chance of admission from Scorize's outcomes. */
+  admission?: {
+    band: 'low' | 'medium' | 'high';
+    chance: number | null;
+    decided?: number;
+    universities?: string[];
+  } | null;
+  /** A study route with costs: the first year in tomans and how it fits the budget. */
+  study?: {
+    first_year_toman: { min: number; max: number } | null;
+    budget_fit: 'fits' | 'tight' | 'over' | 'unknown' | null;
+  } | null;
+  needs_licensed_agent?: boolean;
 }
 
 export interface CustomerPathwayCheck {
@@ -60,19 +97,8 @@ export interface CustomerPathwayCheck {
   occupation: { code: string; name: string } | null;
   /** `pathways.study.FINDER_BUDGETS` key. */
   budget: string | null;
-  results: {
-    country: string;
-    pathway: string;
-    goal: 'work' | 'study' | 'any';
-    qualifies: boolean;
-    eligible: boolean;
-    points: number;
-    pass_mark: number | null;
-    /** The requirements not met (Persian, from Django). */
-    missing: string[];
-    /** A study route: the chance of admission from Scorize's outcomes (older servers: missing). */
-    admission?: { band: 'low' | 'medium' | 'high'; chance: number | null } | null;
-  }[];
+  /** Best first, as the finder sorted them. */
+  results: CustomerPathwayRoute[];
   /** The GPA they gave, out of 20 (older servers: missing). */
   gpa?: number | null;
 }
