@@ -216,11 +216,13 @@ export function MessageBubble({
         ) : null}
         {attachment &&
           (/\.(ogg|webm|m4a|mp4|mp3|wav)$/i.test(attachment.name) ? (
-            <VoicePlayer
-              key={attachment.url}
-              src={safeHref(attachment.url)}
-              label={audioLabel ?? attachment.name}
-            />
+            <div className="w-64 max-w-full">
+              <VoicePlayer
+                key={attachment.url}
+                src={safeHref(attachment.url)}
+                label={audioLabel ?? attachment.name}
+              />
+            </div>
           ) : (
             <a
               href={safeHref(attachment.url)}
