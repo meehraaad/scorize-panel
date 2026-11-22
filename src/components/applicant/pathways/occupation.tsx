@@ -192,6 +192,7 @@ export function OccupationAnswer({
             </p>
             <SearchSelect
               label={t('asks.field_occupation.search')}
+              hint={t('asks.field_occupation.search_help')}
               placeholder={t('asks.field_occupation.search_hint')}
               value={occupationValue}
               onChange={pick}
