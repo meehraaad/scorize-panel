@@ -274,6 +274,14 @@ export const supervisorPanel: PanelDefinition = {
             skeleton: 'list',
           }),
         },
+        // Moving one person's cases to another.
+        {
+          path: 'move',
+          ...lazyPage(() => import('@/features/supervisor/manager/MovePage'), [], {
+            data: () => [managerTeamQuery],
+            skeleton: 'form',
+          }),
+        },
         // How the services are answered, per team and owner (SVC6).
         {
           path: 'services',

@@ -848,6 +848,8 @@ export function unassignedServices(): UnassignedServices {
 // ── State ────────────────────────────────────────────────────────────────────────────────────
 
 let cases: Map<number, MockCase> | null = null;
+/** Cases a manager moved to someone else (POST manager/move/). */
+const movedTo = new Map<number, { id: number; name: string }>();
 
 function casesOrError(): Map<number, MockCase> | Response {
   if (storage.get() !== SUPERVISOR) return forbidden();
@@ -918,6 +920,8 @@ function rowOf(item: MockCase): CaseRow {
 
 /** Who supervises a mock case: Maryam most, Ali some, and 1219 nobody (the manager's list). */
 function supervisorsOf(id: number): CaseRow['supervisors'] {
+  const moved = movedTo.get(id);
+  if (moved) return [moved];
   if (id === 1219) return [];
   const maryam = { id: 7, name: 'مریم کاظمی' };
   return id % 3 === 0 ? [{ id: 11, name: 'علی نوری' }] : [maryam];
@@ -1317,6 +1321,30 @@ export const supervisorHandlers = [
   http.get(`${API}/manager/team/`, () => {
     const all = casesOrError();
     return all instanceof Response ? all : HttpResponse.json(teamData([...all.values()]));
+  }),
+
+  http.post(`${API}/manager/move/`, async ({ request }) => {
+    const all = casesOrError();
+    if (all instanceof Response) return all;
+    const body = (await request.json()) as { person: number; to: number; cases?: number[] };
+    const target = SERVICE_STAFF.find((person) => person.id === body.to);
+    if (!target || body.to === body.person)
+      return HttpResponse.json({ to: ['Choose someone else.'] }, { status: 400 });
+    const theirs = [...all.values()].filter(
+      (item) =>
+        supervisorsOf(item.data.id).some((one) => one.id === body.person) &&
+        (body.cases ? body.cases.includes(item.data.id) : item.data.stage !== 'closed'),
+    );
+    let services = 0;
+    for (const item of theirs) {
+      movedTo.set(item.data.id, { id: target.id, name: target.name });
+      item.services = item.services.map((service) => {
+        if (service.owner?.id !== body.person) return service;
+        services += 1;
+        return { ...service, owner: { id: target.id, name: target.name } };
+      });
+    }
+    return HttpResponse.json({ cases: theirs.length, services });
   }),
 
   http.get(`${API}/cases/:id/`, ({ params }) => {
@@ -1997,6 +2025,7 @@ export const supervisorHandlers = [
 
 export function resetSupervisorMocks() {
   cases = null;
+  movedTo.clear();
   botSettings.clear();
   imports.clear();
   mockScopes = [];

@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { SUPERVISOR_API, SUPERVISOR_KEY } from './common';
 
@@ -33,3 +33,22 @@ export const managerTeamQuery = queryOptions({
   queryKey: [...SUPERVISOR_KEY, 'manager', 'team'],
   queryFn: ({ signal }) => api<TeamData>(`${SUPERVISOR_API}/manager/team/`, { signal }),
 });
+
+/** What a move did: cases that changed hands, and the services that went along. */
+export interface MoveResult {
+  cases: number;
+  services: number;
+}
+
+/**
+ * Moves a person's cases to another (POST manager/move/): the chosen ones, or with no `cases` all
+ * their open ones. Their open services on those cases go along.
+ */
+export function useMoveCases() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { person: number; to: number; cases?: readonly number[] }) =>
+      api<MoveResult>(`${SUPERVISOR_API}/manager/move/`, { method: 'POST', body }),
+    onSuccess: () => client.invalidateQueries({ queryKey: SUPERVISOR_KEY }),
+  });
+}

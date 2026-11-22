@@ -9,14 +9,15 @@ const SECTIONS: readonly { id: ManagerSection; services?: true }[] = [
   { id: 'new' },
   { id: 'cases' },
   { id: 'team' },
+  { id: 'move' },
   { id: 'services', services: true },
   { id: 'scopes', services: true },
 ];
 
 /**
  * The supervisor manager's section (`can_assign_supervisor`), like the sales manager's: new cases
- * and their owners, every case with its supervisors, the team's load, how the services are
- * answered, and the supervisors' scopes.
+ * and their owners, every case with its supervisors, the team's load, moving cases between
+ * people, how the services are answered, and the supervisors' scopes.
  */
 export default function ManagerLayout() {
   const { t } = useTranslation('supervisor');

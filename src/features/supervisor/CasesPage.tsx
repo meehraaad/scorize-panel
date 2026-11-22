@@ -28,6 +28,7 @@ import {
 import { pagesOf } from '@/lib/api/page';
 import { CaseTable } from './components/CaseTable';
 import { ImportDialog } from './components/ImportDialog';
+import { MoveDialog } from './manager/MoveDialog';
 
 /**
  * Every case the supervisor runs: by stage, searchable, with the professor-email bot and
@@ -56,6 +57,9 @@ export function CaseList({ team = false }: { team?: boolean }) {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
   const [importing, setImporting] = useState(false);
+  const [moving, setMoving] = useState(false);
+  // One person's list: their chosen cases can go to someone else.
+  const owner = people?.find((person) => String(person.id) === supervisor);
   const query: CasesQuery = {
     stage,
     bot,
@@ -118,6 +122,15 @@ export function CaseList({ team = false }: { team?: boolean }) {
         }
       />
       {!team && <ImportDialog open={importing} onClose={() => setImporting(false)} />}
+      {owner && (
+        <MoveDialog
+          person={owner}
+          cases={[...selected]}
+          open={moving}
+          onClose={() => setMoving(false)}
+          onMoved={() => setSelected(new Set())}
+        />
+      )}
 
       <section aria-label={t('cases.list')} className="flex flex-col gap-4">
         <FilterTabs
@@ -177,10 +190,19 @@ export function CaseList({ team = false }: { team?: boolean }) {
               <span className="text-sm font-semibold text-primary-text">
                 {t('cases.selected', { n: f.number(selected.size) })}
               </span>
+              {owner && (
+                <Button
+                  variant="outline"
+                  className="ms-auto h-11 text-sm"
+                  onClick={() => setMoving(true)}
+                >
+                  {t('manager.move.chosenOpen')}
+                </Button>
+              )}
               <a
                 href={exportHref([...selected])}
                 download
-                className={buttonClass('outline', 'ms-auto h-11 text-sm')}
+                className={buttonClass('outline', `${owner ? '' : 'ms-auto'}h-11 text-sm`)}
               >
                 <Icon name="download" size={18} />
                 {t('cases.export')}
