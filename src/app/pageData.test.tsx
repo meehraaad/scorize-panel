@@ -181,6 +181,8 @@ const PAGES: PageCase[] = [
     '/supervisor/tasks',
     '/supervisor/services',
     '/supervisor/manager',
+    '/supervisor/manager/cases',
+    '/supervisor/manager/team',
     '/supervisor/manager/scopes',
     '/supervisor/manager/services',
     '/supervisor/reports',

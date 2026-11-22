@@ -175,6 +175,7 @@
     "open": "Open {{name}}'s file",
     "column": {
       "applicant": "Applicant",
+      "supervisors": "Supervisors",
       "stage": "Stage",
       "contract": "Contract",
       "cv": "CV",
@@ -776,8 +777,42 @@
     "nav": "Supervisor management sections",
     "section": {
       "new": "New cases",
+      "cases": "Team cases",
+      "team": "Team",
       "services": "Service status",
       "scopes": "Supervisors"
+    },
+    "cases": {
+      "title": "Team cases",
+      "subtitle": "{{n}} cases. Each case names its supervisors.",
+      "supervisor": "Supervisor",
+      "everyone": "Everyone",
+      "nobody": "No supervisor"
+    },
+    "team": {
+      "title": "Team",
+      "subtitle": "Each supervisor's and visa expert's load in active cases, the busiest first.",
+      "people": "Team members",
+      "empty": "Nobody is on the executive or visa team.",
+      "kind": {
+        "executive": "Executive",
+        "visa": "Visa"
+      },
+      "cases": "Cases",
+      "waiting": "Waiting for an answer",
+      "waitingSince": "{{n}} · oldest {{since}}",
+      "services": "Services",
+      "tasks": "Open tasks",
+      "overdue": "Overdue tasks",
+      "totals": {
+        "label": "Team summary",
+        "cases": "Active cases",
+        "waiting": "Cases waiting for an answer",
+        "noSupervisor": "Cases without a supervisor",
+        "unownedServices": "Services without an owner"
+      },
+      "openNoSupervisor": "See cases without a supervisor",
+      "openUnowned": "Choose service owners"
     }
   }
 }

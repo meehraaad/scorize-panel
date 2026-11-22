@@ -644,6 +644,16 @@ While Django has it off, `services` and `unassigned_services` are null and the p
 | SVC8 | Owners of new services: managers choose a service's owner on any case (`GET/POST cases/<id>/services/<service>/owner/`, not only cases they supervise), right from the new-cases page; a case's new services nobody owns give each manager a task, done once they all have one (`client_services/asks.py`). Search belongs to the search team                                                                                                                                                                        | ☑ (off: `SCORIZE_CLIENT_SERVICES`) |
 | SVC9 | A tab per service on the case page: each application says its `country` (`GET cases/<id>/applications/`); `POST` takes an optional `service` (an admission service of the case) and the new application is for that service's country, else the contract's first country as before                                                                                                                                                                                                                                   | ☑                                  |
 
+## Supervisor manager's section (2026-11-22)
+
+The supervisor panel's «مدیریت سرپرستی» tab (`/supervisor/manager`, `can_assign_supervisor`): new cases, team cases,
+team, service status and supervisors as sub-tabs. Backend: `api/supervisor/v1/manager.py` in `shamrad/lang`.
+
+| #   | Change                                                                                                                                                                            | State |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| SM1 | `GET cases/?scope=all` (managers) lists every case, with `?supervisor=<id>\|none` and `?country=<id>`; each case row has `supervisors` (`[{id, name}]`); a manager opens any case | ☑     |
+| SM2 | `GET manager/team/`: each executive and visa team member's open cases, cases waiting for an answer (and the oldest), open services, open and overdue tasks; totals                | ☑     |
+
 Local assessment comparison/action plans: paired backend draft shamrad/lang#320,
 with owned revision/hash-checked selection/progress, immutable comparison snapshots,
 replay and independent fact review. Panel draft #105 builds on #104 and consumes

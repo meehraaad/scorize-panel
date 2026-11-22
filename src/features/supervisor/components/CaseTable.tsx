@@ -10,6 +10,8 @@ import { StageChip, WritingCell } from './Chips';
 import { useCaseLine } from './useCaseLine';
 
 const COLUMNS = ['applicant', 'stage', 'contract', 'cv', 'sop', 'bot', 'docs', 'activity'] as const;
+/** The manager's list also names each case's supervisors, after the applicant. */
+const TEAM_COLUMNS = ['applicant', 'supervisors', ...COLUMNS.slice(1)] as const;
 
 const cell = 'px-3 py-4 align-middle first:ps-5 last:pe-5 lg:first:ps-8 lg:last:pe-8';
 
@@ -18,10 +20,13 @@ export function CaseTable({
   rows,
   selected,
   onSelect,
+  team = false,
 }: {
   rows: readonly CaseRow[];
   selected: ReadonlySet<number>;
   onSelect: (selected: ReadonlySet<number>) => void;
+  /** The manager's list of every case: a supervisors column. */
+  team?: boolean;
 }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
@@ -51,7 +56,7 @@ export function CaseTable({
                 className="size-[18px] accent-primary"
               />
             </th>
-            {COLUMNS.map((column) => (
+            {(team ? TEAM_COLUMNS : COLUMNS).map((column) => (
               <th key={column} scope="col" className={`${cell} py-3 text-start font-medium`}>
                 {t(`cases.column.${column}`)}
               </th>
@@ -89,6 +94,15 @@ export function CaseTable({
                   <span className="text-[13px] text-text-2">{line(row)}</span>
                 </span>
               </td>
+              {team && (
+                <td className={`${cell} text-sm`}>
+                  {row.supervisors.length === 0 ? (
+                    <span className="font-semibold text-warn">{t('manager.cases.nobody')}</span>
+                  ) : (
+                    f.list(row.supervisors.map((person) => person.name))
+                  )}
+                </td>
+              )}
               <td className={cell}>
                 <StageChip stage={row.stage} small />
               </td>

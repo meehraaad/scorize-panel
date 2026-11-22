@@ -8,6 +8,7 @@ import {
   firstCasesQuery,
   handoffsQuery,
   inboxQuery,
+  managerTeamQuery,
   myServicesQuery,
   scopesQuery,
   servicesReportQuery,
@@ -251,6 +252,25 @@ export const supervisorPanel: PanelDefinition = {
           index: true,
           ...lazyPage(() => import('@/features/supervisor/HandoffsPage'), [], {
             data: () => [handoffsQuery],
+            skeleton: 'list',
+          }),
+        },
+        // Every case with its supervisors (`?supervisor=`: one person's, from the team page).
+        {
+          path: 'cases',
+          ...lazyPage(() => import('@/features/supervisor/manager/TeamCasesPage'), [], {
+            data: ({ request }) => [
+              casesQuery(firstCasesQuery(new URL(request.url).searchParams, true)),
+              managerTeamQuery,
+            ],
+            skeleton: 'list',
+          }),
+        },
+        // Each supervisor's and visa expert's load.
+        {
+          path: 'team',
+          ...lazyPage(() => import('@/features/supervisor/manager/TeamPage'), [], {
+            data: () => [managerTeamQuery],
             skeleton: 'list',
           }),
         },
