@@ -15,10 +15,15 @@ it('hands the search across roles, shares one option and converts it only once',
     id: 'option-1',
     university: 'دانشگاه بولونیا',
     program: 'علوم داده',
-    deadline: seed.applications[0]!.deadline,
+    deadline: seed.draft.due,
   };
   let state = updateExecution(seed, { type: 'create', id, criteria: seed.draft });
-  expect(nextActor[openRequest(state)!.phase]).toBe('researcher');
+  const activeRequest = () => {
+    const request = openRequest(state);
+    if (!request) throw new Error('Expected an open search request');
+    return request;
+  };
+  expect(nextActor[activeRequest().phase]).toBe('researcher');
   expect(updateExecution(state, { type: 'deliver', id })).toBe(state);
   state = updateExecution(state, { type: 'option', id, option });
   state = updateExecution(state, {
@@ -27,16 +32,16 @@ it('hands the search across roles, shares one option and converts it only once',
     option: { ...option, id: 'option-2', university: 'دانشگاه تورین' },
   });
   state = updateExecution(state, { type: 'deliver', id });
-  expect(nextActor[openRequest(state)!.phase]).toBe(caseFile.admissionOwner);
-  expect(nextActor[openRequest(state)!.phase]).toBe('mina');
+  expect(nextActor[activeRequest().phase]).toBe(caseFile.admissionOwner);
+  expect(nextActor[activeRequest().phase]).toBe('mina');
 
   state = updateExecution(state, { type: 'share', id, optionId: option.id });
-  expect(nextActor[openRequest(state)!.phase]).toBe('applicant');
-  expect(sharedProgram(openRequest(state)!)).toEqual(option);
+  expect(nextActor[activeRequest().phase]).toBe('applicant');
+  expect(sharedProgram(activeRequest())).toEqual(option);
   expect(updateExecution(state, { type: 'apply', id })).toBe(state);
 
   state = updateExecution(state, { type: 'confirm', id });
-  expect(nextActor[openRequest(state)!.phase]).toBe('mina');
+  expect(nextActor[activeRequest().phase]).toBe('mina');
   state = updateExecution(state, { type: 'apply', id });
   expect(openRequest(state)).toBeUndefined();
   expect(state.applications).toEqual([...seed.applications, option]);
