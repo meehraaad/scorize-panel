@@ -24,6 +24,23 @@ function withCheck() {
     field_group: 'مهندسی',
     occupation: { code: '2142', name: 'مهندسان عمران' },
     budget: '1b_2b',
+    insights: {
+      degree: 2,
+      gpa: 17,
+      gpa_from: 'quiz',
+      english_ielts: 7.5,
+      countries: [
+        {
+          country: 'ایتالیا',
+          code: 'IT',
+          band: 'high',
+          chance: null,
+          decided: 60,
+          similar: [{ university: 'University of Padova', field: 'مهندسی', year: 2025 }],
+        },
+        { country: 'آلمان', code: 'DE', band: 'medium', chance: 54, decided: 30, similar: [] },
+      ],
+    },
     results: [
       {
         country: 'آلمان',
@@ -115,6 +132,24 @@ describe("sales customer page: the customer's pathway quiz", () => {
     expect(within(card).getByText('۱۶ تا ۱۸')).toBeInTheDocument();
     expect(within(card).getByText('مهندسان عمران')).toBeInTheDocument();
     expect(within(card).getByText('پیشنهاد کار: بله')).toBeInTheDocument();
+  });
+
+  it("shows the chance of admission per country from Scorize's outcomes", async () => {
+    withCheck();
+    const user = userEvent.setup();
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    const card = await screen.findByRole('region', { name: TITLE });
+    // The best chance is the insights' first country.
+    expect(within(card).getByText('بهترین شانس پذیرش').nextSibling).toHaveTextContent(
+      'بالا ایتالیا',
+    );
+    await user.click(within(card).getByRole('radio', { name: 'شانس پذیرش' }));
+    const list = within(card).getByRole('list', { name: 'شانس پذیرش در هر کشور' });
+    expect(within(card).getByText('برای کارشناسی ارشد · معدل ۱۷')).toBeInTheDocument();
+    expect(within(list).getByText('شانس پذیرش بالا')).toBeInTheDocument();
+    expect(within(list).getByText('شانس حدود ۵۴٪')).toBeInTheDocument();
+    expect(within(list).getByText('بر اساس ۶۰ متقاضی اسکورایز با سوابق نزدیک')).toBeInTheDocument();
+    expect(within(list).getByText(/University of Padova · مهندسی/)).toBeInTheDocument();
   });
 
   it('has no card for a customer who never took the quiz', async () => {

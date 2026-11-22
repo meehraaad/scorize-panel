@@ -101,6 +101,26 @@ export interface CustomerPathwayCheck {
   results: CustomerPathwayRoute[];
   /** The GPA they gave, out of 20 (older servers: missing). */
   gpa?: number | null;
+  /**
+   * The chance of admission per country from Scorize's own decided applications (`insights`), worked
+   * out when the page is read; null without a degree, GPA or field (older servers: missing).
+   */
+  insights?: {
+    /** The degree it is for. */
+    degree: Degree;
+    gpa: number;
+    gpa_from: 'quiz' | 'profile';
+    english_ielts: number | null;
+    /** Best chance first, at most six. */
+    countries: {
+      country: string;
+      code: string;
+      band: 'low' | 'medium' | 'high';
+      chance: number | null;
+      decided: number;
+      similar: { university: string; field: string | null; year: number }[];
+    }[];
+  } | null;
 }
 
 export interface CustomerData {
