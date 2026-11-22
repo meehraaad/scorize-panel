@@ -6,7 +6,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import type { ApplicantAccess } from '@/lib/applicant/access';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { ChanceSection } from './ChanceSection';
+import { PathwaysCard } from '@/components/applicant/pathways/PathwaysCard';
 import { GuestHero } from './GuestHero';
 
 /** What every application goes through, in order. */
@@ -15,7 +15,7 @@ const STEPS = ['pick', 'approve', 'send', 'result'] as const;
 /**
  * "Applications & results" without a contract: a page that sells the service instead of a locked
  * preview. The promise and the way to start; their research interests and the professors on them;
- * their chance per country with the answers it reads; the four steps of an application; one line
+ * the pathway finder (where they could go, and their chance of admission there); the four steps of an application; one line
  * to start with a consultation. Design: canvas "تب اپلای‌ها و نتایج", بدون قرارداد.
  */
 export function GuestApplications({ access }: { access: ApplicantAccess }) {
@@ -30,7 +30,8 @@ export function GuestApplications({ access }: { access: ApplicantAccess }) {
           <GuestInterests id="apps-interests" />
         </Suspense>
       )}
-      {ON_SERVER.estimate && <ChanceSection />}
+      {/* Where they could study and their chance there: the pathway finder (it replaced the chance quiz). */}
+      {ON_SERVER.pathwayFinder && <PathwaysCard />}
 
       <section
         aria-labelledby="apps-steps"

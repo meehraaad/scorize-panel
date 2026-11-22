@@ -8,6 +8,7 @@ import {
   type FinderPathway,
   type FinderPrefill,
   type FinderStudy,
+  type PathwayAdmission,
   type Occupation,
   type PathwayDerived,
   type PathwayResult,
@@ -403,8 +404,34 @@ export function setCustomerPathwayCheck(userId: number, check: CustomerPathwayCh
   customerChecks.set(userId, check);
 }
 
+/** Countries with decided applications (Django `insights`): their study routes get an admission chance. */
+let admissionCountries = new Set<number>();
+export function withAdmissions(countryIds: number[]) {
+  admissionCountries = new Set(countryIds);
+}
+/** Django `insights.estimating`, roughly: the GPA sets the level. */
+function admissionOf(p: PathwayDetail, answers: Answers, gpa: number | null | undefined) {
+  if (p.goal === 'work' || !admissionCountries.has(p.country.id)) return null;
+  if (typeof gpa !== 'number' || answers.field_group === undefined || answers.education === 'phd')
+    return null;
+  const band: PathwayAdmission['band'] = gpa >= 16 ? 'high' : gpa >= 14 ? 'medium' : 'low';
+  return {
+    band,
+    chance: null,
+    decided: 40,
+    degree: answers.education === 'master' ? 3 : 2,
+    similar: [{ university: 'University of Manchester', field: 'مهندسی', year: 2025 }],
+  } satisfies PathwayAdmission;
+}
+
+/** How often the finder said it was opened. */
+let finderStarts = 0;
+export const finderStartCount = () => finderStarts;
+
 export function resetPathwayMocks() {
+  finderStarts = 0;
   customerChecks.clear();
+  admissionCountries = new Set();
   pathways = seed();
   occupationRoutes = null;
   oldServer = false;
@@ -461,6 +488,7 @@ const finderPathway = (p: PathwayDetail): FinderPathway => ({
   duration: p.duration,
   cost: p.cost,
   has_costs: p.tuition_min !== null,
+  has_admission: p.goal !== 'work' && admissionCountries.has(p.country.id),
 });
 
 /** Tomans per unit (Django: the newest `finance.ExchangeRate`s through the US dollar). */
@@ -605,6 +633,12 @@ export const pathwayHandlers = [
       ],
     });
   }),
+  // Django: the finder was opened (one `EstimateStart` a day, the sales funnel's first step).
+  http.post('/api/applicant/v1/pathways/started/', () => {
+    if (!storage.get()) return forbidden();
+    finderStarts += 1;
+    return new HttpResponse(null, { status: 204 });
+  }),
   http.post('/api/applicant/v1/pathways/check/', async ({ request }) => {
     if (!storage.get()) return forbidden();
     const body = (await request.json()) as {
@@ -613,6 +647,7 @@ export const pathwayHandlers = [
       budget?: FinderBudget | null;
       income?: { amount: number; currency: 'toman' | 'eur' | 'usd' } | null;
       occupation?: string | null;
+      gpa?: number | null;
     };
     lastCheck = body;
     // Django: 400 for a factor that isn't about one country.
@@ -643,6 +678,7 @@ export const pathwayHandlers = [
             ...derived,
           }),
           study: studyOf(p, body.budget ?? null),
+          admission: admissionOf(p, body.answers, body.gpa),
           ...(derived ? { derived } : {}),
         };
       })

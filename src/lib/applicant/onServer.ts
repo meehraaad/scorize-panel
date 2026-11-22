@@ -12,7 +12,6 @@ export type ServerFeature =
   | 'gpaSave'
   | 'consultationInfo'
   | 'packages'
-  | 'estimate'
   | 'pathwayFinder'
   | 'pathwaysManagement'
   | 'reviewDocuments'
@@ -162,8 +161,6 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
   consultationInfo: true,
   /** H42, H43 `services/packages/<id>/` and its review. */
   packages: true,
-  /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution `mehrad-take-over`). */
-  estimate: true,
   /**
    * `applicant/v1/pathways/` (+ `goal`, `summary`, `tip`, `duration`, `cost`): the simple pathway
    * finder, fewest questions to the first country (needs `makemigrations pathways` + `migrate`).

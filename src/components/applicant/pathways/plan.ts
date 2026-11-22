@@ -1,5 +1,6 @@
 import {
   FINDER_BUDGETS,
+  FINDER_GPAS,
   OCCUPATION_FACTORS,
   type OccupationAnswers,
   type Answers,
@@ -41,6 +42,8 @@ export type IncomeCurrency = (typeof INCOME_CURRENCIES)[number];
 /** The field and occupation step: the study field group (a factor) and the occupation (sent on its own). */
 export const FIELD_OCCUPATION = 'field_occupation';
 export const FIELD_GROUP = 'field_group';
+/** The GPA band's middle (out of 20), for study routes' admission chance: sent as `gpa`, apart from the factors. */
+export const GPA = 'gpa';
 /** The ISCO code picked; empty for "don't know / none". Sent as `occupation`, apart from the factors. */
 export const OCCUPATION = 'occupation';
 /**
@@ -96,6 +99,16 @@ export const ASKS: readonly Ask[] = [
       { id: 'ielts_5_5', set: { english_ielts: 6 } },
       { id: 'ielts_7', set: { english_ielts: 7.5 } },
       { id: 'ielts_8_5', set: { english_ielts: 8.5 } },
+    ],
+  },
+  {
+    // A study route's admission chance (Django `insights`): asked only where there are outcomes.
+    id: GPA,
+    factors: [GPA],
+    input: 'options',
+    options: [
+      ...Object.entries(FINDER_GPAS).map(([id, middle]) => ({ id, set: { [GPA]: middle } })),
+      { id: 'unsure', set: {} },
     ],
   },
   { id: 'work_years', factors: ['work_years'], input: 'number', min: 0, max: 40, start: 3 },
@@ -177,9 +190,15 @@ export const ASKS: readonly Ask[] = [
   },
 ];
 
-/** What a route needs asked: its factors, and the budget when it is a study route with costs. */
-const needs = (pathway: FinderPathway) =>
-  pathway.has_costs ? [...pathway.factors, BUDGET] : pathway.factors;
+/**
+ * What a route needs asked: its factors, the budget when it is a study route with costs, and the
+ * GPA and study field when Django can say its chance of admission.
+ */
+const needs = (pathway: FinderPathway) => [
+  ...pathway.factors,
+  ...(pathway.has_costs ? [BUDGET] : []),
+  ...(pathway.has_admission ? [GPA, FIELD_GROUP] : []),
+];
 
 /** The questions that answer each factor (an occupation factor: the occupation step, then its yes/no). */
 const ASKS_OF = new Map<string, Ask[]>();

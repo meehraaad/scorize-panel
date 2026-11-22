@@ -36,16 +36,16 @@ src/
 │                          components/applicant/ = applicant-panel pieces several pages share and
 │                          that talk to the API (SectionLock, CallRequestButton; booking/: the
 │                          consultation booking flow, its dialog and page; canvas V7;
-│                          estimate/: the admission-chance quiz and result, guest home + /estimate;
-│                          on phones the home shows one gauge card and asks in a bottom sheet;
+│                          pathways/: the pathway finder (work, study and the chance of admission
+│                          from insights; it replaced the admission-chance quiz, /estimate redirects);
 │                          activities/: the to-do box floating over every applicant page, shown
 │                          by GatesLayout when no gate is up; off until Django serves AC1–AC7)
 ├── lib/                   Infrastructure (bottom layer)
 │   ├── api/               fetch client (session cookie + CSRF), React Query client
 │   ├── applicant/         Shared by applicant pages: query-key prefix, approve/reject an application,
 │   │                      the tickets endpoint (tickets page + home card), access
-│   │                      (which sections are locked), the call request and the admission-chance
-│   │                      quiz (estimate.ts: the guest home's card and features/estimate)
+│   │                      (which sections are locked), the call request, the pathway finder
+│   │                      (pathways.ts) and study costs (study.ts)
 │   ├── tickets/           Panel-neutral ticket API: types, queries, send/rate/seen hooks, day grouping
 │   ├── sales/             Shared by sales pages: lead stages, sources, lost reasons, score bands,
 │   │                      message links (WhatsApp/Telegram/SMS), receipt confirmation

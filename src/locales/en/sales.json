@@ -552,26 +552,104 @@
       "backgroundNoField": "{{degree}}, GPA {{gpa}}"
     },
     "pathways": {
-      "title": "Work and migration quiz",
-      "taken": "Last taken: {{date}}",
-      "routes": "Routes",
+      "title": "Migration routes",
+      "taken": "From the panel's finder · {{date}}",
+      "view": "Card view",
+      "tabs": {
+        "routes": "Routes",
+        "answers": "Answers"
+      },
+      "best": {
+        "eyebrow": "Best option for this customer",
+        "of": "of {{n}}",
+        "extra": "{{n}} points over the pass mark.",
+        "admission": "Qualifies, with a {{band}} chance of admission.",
+        "plain": "Meets every requirement of this route."
+      },
+      "numbers": {
+        "fits": "Routes that fit",
+        "of": "of {{n}}",
+        "near": "Close to passing",
+        "admission": "Best admission chance",
+        "none": "—"
+      },
       "route": "{{country}} · {{pathway}}",
-      "points": "{{points}} of {{pass}} points",
+      "routes": "All routes",
+      "sorted": "Best fit first",
+      "noRoutes": "No routes were checked.",
+      "goal": {
+        "work": "Work",
+        "study": "Study",
+        "any": "Work and study"
+      },
       "verdict": {
         "qualifies": "Qualifies",
         "eligible": "Short on points",
+        "near": "Close",
         "not": "Doesn't qualify"
       },
-      "missing": "Missing: {{list}}",
+      "band": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low"
+      },
+      "admissionShort": {
+        "high": "High admission chance",
+        "medium": "Medium admission chance",
+        "low": "Low admission chance"
+      },
+      "points": "{{points}} of {{pass}} points",
+      "detail": {
+        "points": "Points",
+        "score": "{{label}} {{n}}",
+        "admission": "Chance of admission",
+        "percent": "about {{n}}%",
+        "decided": "Based on {{n}} Scorize applicants with a similar background",
+        "similar": "People like them were accepted at: {{list}}",
+        "cost": "First-year cost",
+        "costRange": "About {{min}} to {{max}} billion tomans",
+        "fit": {
+          "fits": "Fits their budget",
+          "tight": "Only at cheaper universities",
+          "over": "Over their budget"
+        },
+        "missing": "Missing",
+        "next": "Next step",
+        "nothing": "Nothing missing.",
+        "step": "{{step}}: +{{n}} points",
+        "stepPasses": "{{step}}: +{{n}} points, enough to pass",
+        "agent": "Only a licensed agent may handle this route."
+      },
       "answers": "The customer's answers",
+      "differ": "{{n}} answers differ from the profile",
+      "groups": {
+        "education": "Education",
+        "languageWork": "Language and work",
+        "personal": "Personal and money",
+        "other": "Other"
+      },
+      "same": "Same as profile",
+      "inProfile": "In the profile: {{value}}",
+      "editProfile": "Edit profile",
       "about": "About {{country}}",
       "pair": "{{label}}: {{value}}",
+      "ielts": "IELTS {{n}}",
+      "years": "{{n}} years",
       "occupation": "Occupation",
       "budget": "First-year budget",
+      "gpa": "GPA",
       "yes": "Yes",
       "no": "No",
-      "noRoutes": "No routes were checked.",
-      "note": "As the customer answered the quiz; it doesn't change their profile. Confirm with the customer before relying on it."
+      "call": {
+        "title": "For the call",
+        "best": "{{route}} is ready.",
+        "near": "{{country}} passes with “{{step}}” (+{{n}} points).",
+        "admission": "For {{country}} the chance of admission is {{band}}."
+      },
+      "note": "The answers the customer gave in the finder; it doesn't change their profile.",
+      "copyLink": "Copy finder link",
+      "copied": "Finder link copied.",
+      "copyFailed": "Couldn't copy. Try again."
     },
     "profile": {
       "key": {

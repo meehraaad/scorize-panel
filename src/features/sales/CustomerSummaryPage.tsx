@@ -18,9 +18,9 @@ export default function CustomerSummaryPage() {
       <ContractCard customer={data.id} />
       <CustomerTasks customer={data} />
       <HistoryCard customer={data.id} />
+      {data.pathway_check && <CustomerPathways check={data.pathway_check} customer={data.id} />}
       <div className="grid gap-4 empty:hidden lg:grid-cols-2 lg:gap-6 [&>*:only-child]:lg:col-span-2">
         <CustomerInsights customer={data} />
-        {data.pathway_check && <CustomerPathways check={data.pathway_check} />}
       </div>
     </>
   );

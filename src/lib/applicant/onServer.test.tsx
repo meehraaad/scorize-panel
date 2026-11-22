@@ -27,11 +27,12 @@ describe('features by what Django serves', () => {
     ]);
   });
 
-  it('opens the guest home on the admission-chance quiz', async () => {
+  it('opens the guest home on the pathway finder', async () => {
     loginAs(2); // Maryam: no contract
     renderApp('/');
-    // At phone width the quiz is one card that opens its questions in a sheet.
-    expect(await screen.findByRole('button', { name: 'دیدن شانس من' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('region', { name: 'راه مهاجرتت را پیدا کن' }),
+    ).toBeInTheDocument();
   });
 
   it('offers the GPA calculator, webinar sign-up and package pages on the services page', async () => {

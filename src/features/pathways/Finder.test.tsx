@@ -2,7 +2,7 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
-import { lastPathwayCheck, setFinderPrefill } from '@/mocks/pathways';
+import { lastPathwayCheck, setFinderPrefill, withAdmissions } from '@/mocks/pathways';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 
@@ -197,6 +197,33 @@ describe('pathway finder', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('با بودجه‌ات جور است')).toBeInTheDocument();
     expect(screen.getByText(/ویزای فارغ‌التحصیلی \(Graduate\)/)).toBeInTheDocument();
+  });
+
+  it("a study route with Scorize's outcomes asks the GPA and field, and shows the chance", async () => {
+    withAdmissions([4]); // the UK
+    setFinderPrefill({ gpa: 17.2 });
+    loginAs(SARA);
+    const user = userEvent.setup();
+    renderApp('/pathways');
+    await user.click(await screen.findByRole('button', { name: 'شروع کن' }));
+    await user.click(await screen.findByRole('radio', { name: /^تحصیل/ }));
+    await user.click(await screen.findByRole('radio', { name: 'کارشناسی' }));
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+    await user.click(screen.getByRole('radio', { name: 'آیلتس ۷ تا ۸' }));
+    await screen.findByRole('heading', { name: 'معدل آخرین مدرکت چند است؟' });
+    // From the profile: 17.2 is in 16 to 18.
+    expect(screen.getByRole('radio', { name: '۱۶ تا ۱۸' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await user.click(
+      await screen.findByRole('radio', { name: 'مهندسی کامپیوتر و فناوری اطلاعات' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await screen.findByRole('heading', { name: 'برای سال اول چقدر می‌توانی خرج کنی؟' });
+    await user.click(screen.getByRole('radio', { name: '۴ تا ۸ میلیارد' }));
+    expect(await screen.findByText('شانس پذیرش')).toBeInTheDocument();
+    expect(screen.getByText('شانس بالا')).toBeInTheDocument();
+    expect(screen.getByText(/University of Manchester/)).toBeInTheDocument();
+    expect(lastPathwayCheck()).toMatchObject({ gpa: 17 });
   });
 
   it('management lists the routes by country with their status', async () => {

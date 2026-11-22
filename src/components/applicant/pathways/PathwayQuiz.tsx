@@ -13,6 +13,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import {
   checkPathways,
   finderOptionsQuery,
+  markFinderStarted,
   type Answers,
   type CountryAnswers,
   type FinderBudget,
@@ -31,6 +32,7 @@ import {
   answeredPathways,
   asksLeft,
   BUDGET,
+  GPA,
   FIELD_OCCUPATION,
   OCCUPATION,
   INCOME_AMOUNT,
@@ -92,6 +94,8 @@ interface Given {
   income: FinderIncome | null;
   /** The ISCO code, null for «don't know»; undefined when the occupation wasn't asked (sent only once it was). */
   occupation?: string | null | undefined;
+  /** The GPA band's middle (out of 20), asked for study routes' admission chance; sent apart from the factors. */
+  gpa: number | null;
 }
 const givenOf = (parts: readonly Part[]): Given => {
   const {
@@ -99,12 +103,14 @@ const givenOf = (parts: readonly Part[]): Given => {
     [INCOME_AMOUNT]: amount,
     [INCOME_CURRENCY]: currency,
     [OCCUPATION]: occupation,
+    [GPA]: gpa,
     ...answers
   } = mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set])));
   return {
     answers,
     byCountry: mergeByCountry(parts.map((part) => part.byCountry)),
     budget: typeof budget === 'string' ? (budget as FinderBudget) : null,
+    gpa: typeof gpa === 'number' ? gpa : null,
     income:
       typeof amount === 'number' && INCOME_CURRENCIES.some((name) => name === currency)
         ? { amount, currency: currency as FinderIncome['currency'] }
@@ -219,6 +225,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
         given.budget,
         given.income,
         given.occupation,
+        { gpa: given.gpa, goal },
       ),
   });
   // Found routes' verdicts, fetched in the background while the questions go on.
@@ -231,6 +238,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
         given.budget,
         given.income,
         given.occupation,
+        { gpa: given.gpa, goal },
       ),
   });
 
@@ -396,6 +404,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
             onPick={(value) => {
               setGoal(value);
               setMemory({ ...memory, goal: value });
+              void markFinderStarted();
               if (!nextAsk(pathways, value, answered)) evaluate(answers, 'results');
             }}
             actions={(next) => (
@@ -485,6 +494,10 @@ function withPrefill(ask: Ask, prefill: FinderOptions['prefill']): Ask {
 /** The option of an options question the profile picks first (education, the English band). */
 function prefilledOption(askId: string, prefill: FinderOptions['prefill']): string | undefined {
   if (askId === 'education') return prefill?.education ?? undefined;
+  if (askId === GPA && typeof prefill?.gpa === 'number') {
+    const gpa = prefill.gpa;
+    return gpa >= 18 ? '18_plus' : gpa >= 16 ? '16_18' : gpa >= 14 ? '14_16' : 'below_14';
+  }
   if (askId !== 'english' || typeof prefill?.english_ielts !== 'number') return undefined;
   const band = prefill.english_ielts;
   return band >= 8.5
