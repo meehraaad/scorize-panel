@@ -18,7 +18,7 @@ interface Overview {
   writing_waiting: number;
 }
 
-type WorkItem = { id: number; kind: string; detail: string | null } & (
+export type WorkItem = { id: number; kind: string; detail: string | null } & (
   | { case: number; name: string; status: 'open' | 'paused' | 'closed' }
   | {
       case: null;
