@@ -12,9 +12,9 @@ const UpdatePrompt =
 
 export function App() {
   const [router] = useState(createRouter);
-  // Phones keep a tab (or the home-screen app) open for days: load a new deploy when it comes back.
-  // Its own small chunk, so the first load stays in budget.
+  // Builds without a service worker use the foreground build check to pick up a new deploy.
   useEffect(() => {
+    if (UpdatePrompt) return;
     let stop: (() => void) | undefined;
     let done = false;
     void import('@/lib/router/newBuild').then(({ watchForNewBuild }) => {
@@ -33,8 +33,12 @@ export function App() {
         <Suspense fallback={<div className="min-h-dvh" />}>
           <RouterProvider router={router} />
           <Toaster />
-          {UpdatePrompt && <UpdatePrompt />}
         </Suspense>
+        {UpdatePrompt && (
+          <Suspense fallback={null}>
+            <UpdatePrompt />
+          </Suspense>
+        )}
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -38,15 +38,15 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       VitePWA({
-        // Off until the PWA milestone: the manifest ships now, the service worker later.
-        // Flip to true (and see docs/PWA.md) to turn on offline caching and install prompts.
+        // Enabled by the Docker build. Local builds can opt in for preview (docs/PWA.md).
         disable: env.VITE_ENABLE_PWA !== 'true',
         registerType: 'prompt',
         injectRegister: false,
         manifest: false, // public/manifest.webmanifest is the source of truth
         workbox: {
           navigateFallback: `${BASE}index.html`,
-          navigateFallbackDenylist: [/^\/api\//],
+          // On the dedicated panel domain the worker's scope is /, including Django proxy paths.
+          navigateFallbackDenylist: [/^\/(?:api|profile|static|media|admin)(?:[/?]|$)/],
           globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
           // Rare font subsets (math, symbols) load on demand instead of on install.
           globIgnores: ['**/*-{math,symbols}-*.woff2'],
