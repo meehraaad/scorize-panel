@@ -82,6 +82,12 @@ export interface Occupation {
 }
 
 export interface FinderPrefill {
+  /** From the birth date (older servers: missing). */
+  age?: number | null;
+  /** The highest degree, as a finder level. */
+  education?: 'secondary' | 'bachelor' | 'master' | 'phd' | null;
+  /** The best English exam as its IELTS band. */
+  english_ielts?: number | null;
   field_group: number | null;
   occupation: { code: string; name: string } | null;
   work_years: number | null;

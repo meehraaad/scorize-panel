@@ -1,3 +1,4 @@
+import type { CustomerPathwayCheck } from '@/features/sales/api';
 import { http, HttpResponse } from 'msw';
 import {
   OCCUPATION_FACTORS,
@@ -381,6 +382,9 @@ let oldServer = false;
 /** Tests: a server with the step but without `?occupation=` answers. */
 let noOccupationAnswers = false;
 const NO_PREFILL: FinderPrefill = {
+  age: null,
+  education: null,
+  english_ielts: null,
   field_group: null,
   occupation: null,
   work_years: null,
@@ -392,7 +396,15 @@ let lastCheck: object | null = null;
 /** How many occupation searches came in, by text. */
 let searches: string[] = [];
 
+/** The sales customer page's `pathway_check`: a customer's latest quiz, by user id (Django's latest `PathwayCheck`). */
+const customerChecks = new Map<number, CustomerPathwayCheck>();
+export const customerPathwayCheck = (userId: number) => customerChecks.get(userId) ?? null;
+export function setCustomerPathwayCheck(userId: number, check: CustomerPathwayCheck) {
+  customerChecks.set(userId, check);
+}
+
 export function resetPathwayMocks() {
+  customerChecks.clear();
   pathways = seed();
   occupationRoutes = null;
   oldServer = false;

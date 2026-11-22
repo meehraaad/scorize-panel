@@ -448,12 +448,12 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
               />
             ) : (
               <AskAnswer
-                ask={withPrefill(ask, options.prefill?.work_years)}
+                ask={withPrefill(ask, options.prefill)}
                 countries={countriesFor(pathways, goal, ask, answered)}
                 busy={check.isPending}
                 onBack={back}
                 rates={options.rates}
-                remembered={memory[ask.id]}
+                remembered={memory[ask.id] ?? prefilledOption(ask.id, options.prefill)}
                 allCountries={options.countries}
                 onAnswer={(set, byCountry, skips, picked) => {
                   if (picked) setMemory({ ...memory, [ask.id]: picked });
@@ -470,10 +470,32 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
 }
 
 /** The work years from the profile, as the number question's first value (still editable). */
-function withPrefill(ask: Ask, workYears: number | null | undefined): Ask {
-  if (ask.id !== 'work_years' || typeof workYears !== 'number') return ask;
-  const years = Math.round(workYears);
-  return { ...ask, start: Math.min(Math.max(years, ask.min ?? 0), ask.max ?? years) };
+/**
+ * A number question starts at what the profile says (age, years of work). Only a starting point: the
+ * person can change it, and the quiz never writes it back to the profile.
+ */
+function withPrefill(ask: Ask, prefill: FinderOptions['prefill']): Ask {
+  const known =
+    ask.id === 'work_years' ? prefill?.work_years : ask.id === 'age' ? prefill?.age : undefined;
+  if (typeof known !== 'number') return ask;
+  const value = Math.round(known);
+  return { ...ask, start: Math.min(Math.max(value, ask.min ?? 0), ask.max ?? value) };
+}
+
+/** The option of an options question the profile picks first (education, the English band). */
+function prefilledOption(askId: string, prefill: FinderOptions['prefill']): string | undefined {
+  if (askId === 'education') return prefill?.education ?? undefined;
+  if (askId !== 'english' || typeof prefill?.english_ielts !== 'number') return undefined;
+  const band = prefill.english_ielts;
+  return band >= 8.5
+    ? 'ielts_8_5'
+    : band >= 7
+      ? 'ielts_7'
+      : band >= 5.5
+        ? 'ielts_5_5'
+        : band >= 4
+          ? 'ielts_4'
+          : 'none';
 }
 
 /** The field and occupation from the profile, shown picked. */

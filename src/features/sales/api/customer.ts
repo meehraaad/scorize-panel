@@ -43,6 +43,36 @@ export interface CustomerColumn {
   activities?: StageActivity[];
 }
 
+/** One answer of the pathway quiz: a finder factor (`pathways.rules.FACTORS`) and its value. */
+export interface PathwayAnswer {
+  factor: string;
+  value: number | string | boolean;
+}
+
+export interface CustomerPathwayCheck {
+  id: number;
+  created_at: string;
+  answers: PathwayAnswer[];
+  /** Answers about one destination ("a job offer from Germany"). */
+  by_country: { country: string; answers: PathwayAnswer[] }[];
+  /** The study field group, named. */
+  field_group: string | null;
+  occupation: { code: string; name: string } | null;
+  /** `pathways.study.FINDER_BUDGETS` key. */
+  budget: string | null;
+  results: {
+    country: string;
+    pathway: string;
+    goal: 'work' | 'study' | 'any';
+    qualifies: boolean;
+    eligible: boolean;
+    points: number;
+    pass_mark: number | null;
+    /** The requirements not met (Persian, from Django). */
+    missing: string[];
+  }[];
+}
+
 export interface CustomerData {
   /** User id. */
   id: number;
@@ -88,6 +118,11 @@ export interface CustomerData {
     count: number;
     universities: string[];
   } | null;
+  /**
+   * The latest work and migration quiz, as the customer answered it and what they were told. A
+   * record only: the quiz never changes the profile. Null (or missing, an older server): never taken.
+   */
+  pathway_check?: CustomerPathwayCheck | null;
   profile: ProfileItem[];
   purchases: { label: string; status: 'paid' | 'pending' | 'failed' }[];
   /** Wallet credit, toman. */

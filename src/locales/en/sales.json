@@ -551,6 +551,28 @@
       "background": "{{degree}} in {{field}}, GPA {{gpa}}",
       "backgroundNoField": "{{degree}}, GPA {{gpa}}"
     },
+    "pathways": {
+      "title": "Work and migration quiz",
+      "taken": "Last taken: {{date}}",
+      "routes": "Routes",
+      "route": "{{country}} · {{pathway}}",
+      "points": "{{points}} of {{pass}} points",
+      "verdict": {
+        "qualifies": "Qualifies",
+        "eligible": "Short on points",
+        "not": "Doesn't qualify"
+      },
+      "missing": "Missing: {{list}}",
+      "answers": "The customer's answers",
+      "about": "About {{country}}",
+      "pair": "{{label}}: {{value}}",
+      "occupation": "Occupation",
+      "budget": "First-year budget",
+      "yes": "Yes",
+      "no": "No",
+      "noRoutes": "No routes were checked.",
+      "note": "As the customer answered the quiz; it doesn't change their profile. Confirm with the customer before relying on it."
+    },
     "profile": {
       "key": {
         "current_degree": "Current degree",

@@ -551,6 +551,28 @@
       "background": "{{degree}} {{field}}، معدل {{gpa}}",
       "backgroundNoField": "{{degree}}، معدل {{gpa}}"
     },
+    "pathways": {
+      "title": "نتیجه‌ی آزمون مسیر کار و اقامت",
+      "taken": "آخرین بار: {{date}}",
+      "routes": "مسیرها",
+      "route": "{{country}} · {{pathway}}",
+      "points": "{{points}} از {{pass}} امتیاز",
+      "verdict": {
+        "qualifies": "شرایط دارد",
+        "eligible": "امتیاز کم دارد",
+        "not": "شرایط ندارد"
+      },
+      "missing": "کم دارد: {{list}}",
+      "answers": "پاسخ‌های مشتری",
+      "about": "درباره‌ی {{country}}",
+      "pair": "{{label}}: {{value}}",
+      "occupation": "شغل",
+      "budget": "بودجه‌ی سال اول",
+      "yes": "بله",
+      "no": "نه",
+      "noRoutes": "مسیری بررسی نشد.",
+      "note": "همان پاسخ‌هایی که مشتری در آزمون داده؛ پرونده‌اش را تغییر نمی‌دهد. پیش از تکیه بر آن، با مشتری تأیید کنید."
+    },
     "profile": {
       "key": {
         "current_degree": "مقطع فعلی",
