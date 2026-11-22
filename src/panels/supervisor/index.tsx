@@ -35,6 +35,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { redirect } from 'react-router';
+import { managerPath } from '@/features/supervisor/paths';
 import type { PanelDefinition } from '../types';
 
 /** Supervisors who don't assign new cases are sent back to the panel's home. */
@@ -48,12 +49,9 @@ function servicesOn() {
   return Promise.resolve(ON_SERVER.clientServices ? null : redirect('/supervisor'));
 }
 
-/** The scopes page: managers, once Django serves client services. */
-async function scopeManagersOnly() {
-  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
-  return ON_SERVER.clientServices && user && hasPermission(user, ASSIGN_PERMISSION)
-    ? null
-    : redirect('/supervisor');
+/** The manager's pages about services wait for Django's client services. */
+function managerServicesOn() {
+  return Promise.resolve(ON_SERVER.clientServices ? null : redirect(managerPath()));
 }
 
 /** The mail page is for managers with `mail_server.manage_mailboxes`, once Django serves it. */
@@ -105,13 +103,6 @@ export const supervisorPanel: PanelDefinition = {
       tab: 'panels.supervisor.tabs.tasks',
       icon: 'check',
     },
-    {
-      id: 'new',
-      to: 'new',
-      label: 'panels.supervisor.nav.new',
-      icon: 'user',
-      permission: ASSIGN_PERMISSION,
-    },
     ...(ON_SERVER.clientServices
       ? [
           {
@@ -119,19 +110,6 @@ export const supervisorPanel: PanelDefinition = {
             to: 'services',
             label: 'panels.supervisor.nav.services',
             icon: 'list',
-          } as const,
-          {
-            id: 'services-report',
-            to: 'services/report',
-            label: 'panels.supervisor.nav.servicesReport',
-            icon: 'chart',
-          } as const,
-          {
-            id: 'scopes',
-            to: 'scopes',
-            label: 'panels.supervisor.nav.scopes',
-            icon: 'shield',
-            permission: ASSIGN_PERMISSION,
           } as const,
         ]
       : []),
@@ -147,6 +125,14 @@ export const supervisorPanel: PanelDefinition = {
           } as const,
         ]
       : []),
+    // The manager's section (can_assign_supervisor), its pages are sub-tabs (ManagerLayout).
+    {
+      id: 'manager',
+      to: 'manager',
+      label: 'panels.supervisor.nav.manager',
+      icon: 'settings',
+      permission: ASSIGN_PERMISSION,
+    },
   ],
   routes: [
     {
@@ -254,39 +240,50 @@ export const supervisorPanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
-    // New cases waiting for a supervisor (managers with can_assign_supervisor).
+    // The manager's section (can_assign_supervisor): sub-tabs in ManagerLayout.
     {
-      path: 'new',
-      ...lazyPage(() => import('@/features/supervisor/HandoffsPage'), ['supervisor'], {
-        guard: assignersOnly,
-        data: () => [handoffsQuery],
-        skeleton: 'list',
-      }),
+      path: 'manager',
+      loader: assignersOnly,
+      ...lazyPage(() => import('@/features/supervisor/manager/ManagerLayout'), ['supervisor']),
+      children: [
+        // New cases waiting for a supervisor, and services waiting for an owner.
+        {
+          index: true,
+          ...lazyPage(() => import('@/features/supervisor/HandoffsPage'), [], {
+            data: () => [handoffsQuery],
+            skeleton: 'list',
+          }),
+        },
+        // How the services are answered, per team and owner (SVC6).
+        {
+          path: 'services',
+          ...lazyPage(() => import('@/features/supervisor/ServicesReportPage'), [], {
+            guard: managerServicesOn,
+            data: () => [servicesReportQuery('month')],
+            skeleton: 'list',
+          }),
+        },
+        // Supervisors' scopes and where they differ from today's rule (SVC5).
+        {
+          path: 'scopes',
+          ...lazyPage(() => import('@/features/supervisor/ScopesPage'), [], {
+            guard: managerServicesOn,
+            data: () => [scopesQuery],
+            skeleton: 'list',
+          }),
+        },
+      ],
     },
+    // Old addresses of the manager's pages (links in tasks and messages).
+    { path: 'new', loader: () => redirect(managerPath()) },
+    { path: 'scopes', loader: () => redirect(managerPath('scopes')) },
+    { path: 'services/report', loader: () => redirect(managerPath('services')) },
     // The services the viewer owns (SVC4), once Django serves them.
     {
       path: 'services',
       ...lazyPage(() => import('@/features/supervisor/MyServicesPage'), ['supervisor'], {
         guard: servicesOn,
         data: () => [myServicesQuery],
-        skeleton: 'list',
-      }),
-    },
-    // How the services are answered, per team and owner (SVC6).
-    {
-      path: 'services/report',
-      ...lazyPage(() => import('@/features/supervisor/ServicesReportPage'), ['supervisor'], {
-        guard: servicesOn,
-        data: () => [servicesReportQuery('month')],
-        skeleton: 'list',
-      }),
-    },
-    // Supervisors' scopes and where they differ from today's rule (SVC5): managers.
-    {
-      path: 'scopes',
-      ...lazyPage(() => import('@/features/supervisor/ScopesPage'), ['supervisor'], {
-        guard: scopeManagersOnly,
-        data: () => [scopesQuery],
         skeleton: 'list',
       }),
     },
