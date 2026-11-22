@@ -12,16 +12,10 @@ import {
 
 // The default language ships in the main bundle (no extra request on first paint);
 // every other language/namespace is its own chunk, fetched on demand.
-const lazyDictionaries = {
-  ...import.meta.glob<{ default: ResourceKey }>([
-    '../../locales/*/*.json',
-    '!../../locales/fa/common.json',
-    '!../../locales/*/execution.json',
-  ]),
-  ...(import.meta.env.DEV || import.meta.env.VITE_ASSESSMENT_PREVIEW === 'true'
-    ? import.meta.glob<{ default: ResourceKey }>('../../locales/*/execution.json')
-    : {}),
-};
+const lazyDictionaries = import.meta.glob<{ default: ResourceKey }>([
+  '../../locales/*/*.json',
+  '!../../locales/fa/common.json',
+]);
 
 const lazyBackend: BackendModule = {
   type: 'backend',

@@ -717,20 +717,3 @@ lang branch `claude/confident-euler-llixz4`. No migration.
 - **Leads** `GET leads/?no_follow_up=1`: open leads with no next step (no open follow-up, no paid
   consultation ahead, the first call made). `stats.no_follow_up` counts them and
   `supports.no_follow_up` turns on the «بدون قدم بعدی» pill on the leads page (hidden on an older server).
-
-## Operations desk preview
-
-The preview uses tab-local data. Before connecting it to Django, the operations desk needs:
-
-- A case and service projection for one staff member's assignments, plus a work queue with a
-  separate next actor, reason, due date and link to the underlying work. Existing supervisor
-  service ownership and ticket threads can supply part of this projection.
-- Internal search requests linked to their originating admission or correspondence service.
-  Persist criteria, assignee, due date, programme results and handoff back to the requester.
-- An applicant-visible shortlist and approval endpoint. Serve only the shared options to the
-  applicant and preserve their approval with the selected programme details.
-- An idempotent conversion from an approved option into a service-scoped application.
-  Existing application creation accepts a service country, but does not take an approved-option
-  identifier or deduplicate retries using it.
-- Writing service ownership at contract time, before forms arrive, with separate assignments per
-  document. Writer order and ticket APIs cover the later document workflow.

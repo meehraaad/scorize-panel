@@ -3,7 +3,7 @@ import '@/lib/tehranTimeInstall';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@/lib/i18n';
-import '@/styles/app.css';
+import '@/styles/index.css';
 import { App } from '@/app/App';
 import { startCachePersistence } from '@/lib/api/persist';
 import { reportWebVitals } from '@/lib/vitals';

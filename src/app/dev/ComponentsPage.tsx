@@ -1,8 +1,6 @@
 /* eslint-disable i18next/no-literal-string -- developer-only page (never in the production build): sample text is fine here. */
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { EXECUTION_PATH } from '@/lib/execution/paths';
 import { Composer } from '@/components/tickets/Composer';
 import { FaqList } from '@/components/tickets/FaqList';
 import { DaySeparator, MessageBubble, MessageThread } from '@/components/tickets/MessageThread';
@@ -100,12 +98,6 @@ export default function ComponentsPage() {
 
   return (
     <div className="min-h-dvh bg-canvas px-4 py-6 text-text lg:px-10 lg:py-10">
-      <Link
-        to={EXECUTION_PATH}
-        className="inline-flex min-h-11 items-center text-primary-text hover:underline"
-      >
-        {i18n.t('executionPreview')}
-      </Link>
       <div className="mx-auto flex max-w-[1120px] flex-col gap-8">
         <PageHeader
           title="اجزای مشترک پنل"

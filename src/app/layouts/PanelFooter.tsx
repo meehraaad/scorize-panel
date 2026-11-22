@@ -1,7 +1,4 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { EXECUTION_PATH } from '@/lib/execution/paths';
-import { executionPreviewEnabled } from '@/lib/execution/preview';
 import { Icon } from '@/components/ui/Icon';
 import { DEFAULT_LOCALE, LOCALES, isLocale, type Locale } from '@/lib/i18n/config';
 import { useTheme } from '@/lib/theme/ThemeProvider';
@@ -29,17 +26,7 @@ export function PanelFooter() {
   return (
     <footer className="group-has-[[data-page-workspace]]/panel:hidden max-lg:group-has-[[data-page-fill]]/panel:hidden">
       <div className="mx-auto flex w-full max-w-page items-center justify-between px-4 py-3 text-[11px] text-text-3 lg:px-8">
-        <div className="flex flex-wrap items-center gap-x-4">
-          <span>{t('auth.copyright')}</span>
-          {executionPreviewEnabled && (
-            <Link
-              to={EXECUTION_PATH}
-              className="inline-flex min-h-11 items-center text-primary-text hover:underline"
-            >
-              {t('executionPreview')}
-            </Link>
-          )}
-        </div>
+        <span>{t('auth.copyright')}</span>
 
         <div className="flex items-center gap-4">
           <button
