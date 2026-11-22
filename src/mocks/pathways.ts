@@ -14,6 +14,7 @@ import {
   type PathwayResult,
 } from '@/lib/applicant/pathways';
 import type { PathwayDetail, PathwayInput, PathwayStatus } from '@/features/pathways/manageApi';
+import { searchKey } from '@/lib/text';
 import { forbidden, notFound, storage } from './session';
 
 /**
@@ -233,6 +234,13 @@ const FIELD_GROUPS = [
   { id: 3, name: 'پزشکی، پرستاری و پیراپزشکی' },
   { id: 4, name: 'حقوق' },
   { id: 5, name: 'هنر و علوم انسانی' },
+];
+/** Sub-fields under the groups (Django `StudyField.parent`), found by `?field_search=`. */
+const SUB_FIELDS = [
+  { group: 1, name: 'مهندسی نرم‌افزار' },
+  { group: 1, name: 'هوش مصنوعی' },
+  { group: 2, name: 'مهندسی سازه' },
+  { group: 3, name: 'پرستاری' },
 ];
 /** ISCO-08 occupations (Django `occupations.Occupation`). */
 const OCCUPATIONS: Occupation[] = [
@@ -601,6 +609,30 @@ export const pathwayHandlers = [
             one.name.includes(query) ||
             (one.name_english ?? '').toLowerCase().includes(query),
         ).slice(0, 20),
+      });
+    }
+    const fieldText = params.get('field_search');
+    if (fieldText !== null && !oldServer) {
+      // Django: each word in the name, groups matched by their own name first, then through a sub-field.
+      const words = searchKey(fieldText).split(' ').filter(Boolean);
+      const has = (name: string) => words.every((word) => searchKey(name).includes(word));
+      const own = FIELD_GROUPS.filter((group) => has(group.name)).map((group) => ({
+        ...group,
+        matched: '',
+      }));
+      const through = SUB_FIELDS.filter(
+        (sub) => has(sub.name) && !own.some((group) => group.id === sub.group),
+      ).flatMap((sub) =>
+        FIELD_GROUPS.filter((group) => group.id === sub.group).map((group) => ({
+          ...group,
+          matched: sub.name,
+        })),
+      );
+      const seen = new Set<number>();
+      return HttpResponse.json({
+        field_matches: [...own, ...through]
+          .filter((group) => !seen.has(group.id) && seen.add(group.id))
+          .slice(0, 20),
       });
     }
     const code = params.get('occupation');
