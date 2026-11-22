@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { Button } from '@/components/ui/Button';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -10,6 +11,7 @@ import { StatGrid, type Stat } from '@/components/ui/StatGrid';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { managerTeamQuery, type TeamPerson } from '../api';
 import { managerPath, teamCasesPath } from '../paths';
+import { MoveDialog } from './MoveDialog';
 
 /**
  * The manager's team (`can_assign_supervisor`): each supervisor's and visa expert's open cases,
@@ -90,6 +92,7 @@ export default function TeamPage() {
 function PersonRow({ person }: { person: TeamPerson }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
+  const [moving, setMoving] = useState(false);
   const cell = (label: string, value: ReactNode, warn = false) => (
     <div className="flex flex-col gap-0.5">
       <dt className="text-xs text-text-2">{label}</dt>
@@ -103,7 +106,7 @@ function PersonRow({ person }: { person: TeamPerson }) {
       aria-label={person.name}
       className="flex flex-col gap-2 px-5 py-3.5 shadow-[inset_0_1px_0_var(--hair)] lg:px-8"
     >
-      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <Link
           to={teamCasesPath(person.id)}
           className="text-[15px] font-semibold text-text hover:underline"
@@ -113,7 +116,22 @@ function PersonRow({ person }: { person: TeamPerson }) {
         <span className="text-[13px] text-text-2">
           {[t(`manager.team.kind.${person.team}`), ...person.countries].join(' · ')}
         </span>
+        {person.cases > 0 && (
+          <Button
+            variant="outline"
+            className="ms-auto h-11 text-sm"
+            onClick={() => setMoving(true)}
+          >
+            {t('manager.move.open')}
+          </Button>
+        )}
       </span>
+      <MoveDialog
+        person={person}
+        count={person.cases}
+        open={moving}
+        onClose={() => setMoving(false)}
+      />
       <dl className="m-0 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-5">
         {cell(t('manager.team.cases'), f.number(person.cases))}
         {cell(

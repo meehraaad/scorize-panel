@@ -779,6 +779,7 @@
       "new": "New cases",
       "cases": "Team cases",
       "team": "Team",
+      "move": "Move cases",
       "services": "Service status",
       "scopes": "Supervisors"
     },
@@ -813,6 +814,25 @@
       },
       "openNoSupervisor": "See cases without a supervisor",
       "openUnowned": "Choose service owners"
+    },
+    "move": {
+      "open": "Move cases",
+      "chosenOpen": "Give to someone else",
+      "title": "Move {{name}}'s cases",
+      "all": "All {{n}} of their active cases go to the person you choose.",
+      "chosen": "The {{n}} chosen cases go to the person you choose.",
+      "to": "Give to",
+      "from": "Whose cases?",
+      "choose": "Choose",
+      "toRequired": "Choose who gets the cases.",
+      "person": "{{name}} ({{n}} cases)",
+      "confirm": "Move cases",
+      "note": "The services they own on these cases go too. The new supervisor gets each case's \"contact the applicant\" task.",
+      "done": "{{n}} cases and {{services}} services went to {{name}}.",
+      "pageTitle": "Move cases",
+      "pageSubtitle": "When someone leaves or is on leave, give their cases to someone else: all at once, or a few from their list.",
+      "moveAll": "Move all {{n}} active cases",
+      "pick": "Choose some cases"
     }
   }
 }
