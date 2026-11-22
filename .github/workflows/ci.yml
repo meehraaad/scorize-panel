@@ -63,6 +63,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+        env:
+          VITE_ENABLE_PWA: 'true'
       - run: pnpm size
 
   check:
