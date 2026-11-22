@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { Composer } from '@/components/tickets/Composer';
 import { ReadyReplies } from '@/components/tickets/ReadyReplies';
-import { AudioPreview, VoiceMessage } from '@/components/tickets/VoiceMessage';
+import { AudioPreview } from '@/components/tickets/VoiceMessage';
+import { useVoiceMessage, voiceTime } from './useVoiceMessage';
+import { IconButton } from '@/components/ui/IconButton';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { checkFile, extensionOf, type FileRule } from '@/lib/files';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -49,7 +51,7 @@ export function TicketComposer({
   const [accepted, setAccepted] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [recording, setRecording] = useState(false);
+  const [clip, setClip] = useState<{ file: File; duration: number } | null>(null);
   const attachmentTypes = ON_SERVER.ticketVoice
     ? [...ATTACHMENT_TYPES, ...AUDIO_ATTACHMENT_TYPES]
     : ATTACHMENT_TYPES;
@@ -58,12 +60,9 @@ export function TicketComposer({
   const applicant = config.viewer === 'applicant';
   const urgent = applicant && priority === URGENT;
   const canSend =
-    (text.trim().length > 0 || (ON_SERVER.ticketVoice && file !== null)) &&
-    !recording &&
-    (!urgent || accepted);
+    (text.trim().length > 0 || (ON_SERVER.ticketVoice && file !== null)) && (!urgent || accepted);
 
-  const pick = (picked: File | undefined) => {
-    if (!picked) return;
+  const validFile = (picked: File) => {
     // MediaRecorder includes a codec parameter; the server validates the actual container again.
     const problem = checkFile(
       new File([picked], picked.name, { type: picked.type.split(';')[0] ?? '' }),
@@ -79,23 +78,96 @@ export function TicketComposer({
         }),
       );
     else setFileError(null);
-    setFile(problem ? null : picked);
+    return !problem;
   };
 
-  const submit = () => {
+  const pickAttachment = (picked: File | undefined) => {
+    if (picked && validFile(picked)) setFile(picked);
+  };
+  const voice = useVoiceMessage((recorded, duration) => {
+    if (!validFile(recorded)) return;
+    setClip({ file: recorded, duration });
+  });
+
+  const submit = (voiceFile?: File) => {
     send.mutate(
-      { text: text.trim(), priority: applicant ? priority : DEFAULT_PRIORITY, attachment: file },
+      {
+        text: voiceFile ? '' : text.trim(),
+        priority: applicant ? priority : DEFAULT_PRIORITY,
+        attachment: voiceFile ?? file,
+      },
       {
         onError: () => toast.error(t('composer.sendError')),
         onSuccess: () => {
-          setText('');
-          setFile(null);
+          if (voiceFile) setClip(null);
+          else {
+            setText('');
+            setFile(null);
+          }
           setPriority(DEFAULT_PRIORITY);
           setAccepted(false);
         },
       },
     );
   };
+
+  if (voice.phase !== 'idle' || clip) {
+    return (
+      <div className="flex min-w-0 items-center gap-1.5 bg-surface px-3 py-3 shadow-[inset_0_1px_0_var(--hair)]">
+        <IconButton
+          icon="trash"
+          aria-label={t(clip ? 'voice.discard' : 'voice.cancel')}
+          disabled={send.isPending}
+          onClick={clip ? () => setClip(null) : voice.cancel}
+        />
+        {clip ? (
+          <>
+            <AudioPreview file={clip.file} duration={clip.duration} label={t('voice.preview')} />
+            <IconButton
+              icon="send"
+              tone="primary"
+              aria-label={t('composer.send')}
+              aria-busy={send.isPending}
+              disabled={send.isPending}
+              onClick={() => submit(clip.file)}
+            />
+          </>
+        ) : (
+          <>
+            <div className="flex min-w-0 flex-1 items-center gap-2 text-sm text-text-2">
+              {voice.phase === 'recording' && (
+                <span
+                  aria-hidden="true"
+                  className="size-2 flex-none rounded-full bg-danger motion-safe:animate-pulse"
+                />
+              )}
+              <span role="status">
+                {t(
+                  voice.phase === 'opening'
+                    ? 'voice.opening'
+                    : voice.phase === 'finishing'
+                      ? 'voice.finishing'
+                      : 'voice.active',
+                )}
+              </span>
+              {voice.phase === 'recording' && (
+                <span dir="ltr" className="font-semibold text-text tabular-nums">
+                  {voiceTime(voice.seconds)}
+                </span>
+              )}
+            </div>
+            <IconButton
+              icon="stop"
+              tone="danger"
+              aria-label={t('voice.stop')}
+              disabled={voice.phase !== 'recording'}
+              onClick={voice.stop}
+            />
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -112,19 +184,29 @@ export function TicketComposer({
         placeholder={t('composer.placeholder')}
         value={text}
         onChange={setText}
+        emptyAction={
+          ON_SERVER.ticketVoice &&
+          voice.supported &&
+          !text.trim() &&
+          !file &&
+          (!urgent || accepted) ? (
+            <IconButton
+              icon="microphone"
+              tone="primary"
+              aria-label={t('voice.record')}
+              disabled={voice.busy || send.isPending}
+              onClick={() => void voice.start()}
+            />
+          ) : null
+        }
         accessory={
-          ON_SERVER.ticketVoice && (
-            <>
-              <VoiceMessage
-                disabled={send.isPending || file !== null}
-                onFile={pick}
-                onActive={setRecording}
-              />
-              {file?.type.startsWith('audio/') && (
-                <AudioPreview file={file} label={t('voice.preview')} />
-              )}
-            </>
-          )
+          voice.error ? (
+            <p role="alert" className="m-0 text-sm text-danger">
+              {t('voice.error')}
+            </p>
+          ) : file?.type.startsWith('audio/') ? (
+            <AudioPreview file={file} label={t('voice.preview')} />
+          ) : null
         }
         priority={
           applicant
@@ -152,7 +234,6 @@ export function TicketComposer({
             : null
         }
         attach={{
-          disabled: recording,
           label: t('composer.attach'),
           accept: attachmentTypes,
           file: file && {
@@ -162,14 +243,14 @@ export function TicketComposer({
           },
           removeLabel: t('composer.remove'),
           error: fileError,
-          onFile: pick,
+          onFile: pickAttachment,
           onRemove: () => setFile(null),
         }}
         compact={compact}
         sendLabel={t('composer.send')}
         sending={send.isPending}
         canSend={canSend}
-        onSubmit={submit}
+        onSubmit={() => submit()}
       />
     </>
   );
