@@ -8,7 +8,6 @@ import { PageSkeleton } from '@/components/ui/Skeleton';
 import { START_PATH } from '@/lib/auth/session';
 import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { reloadForNewBuild, shouldReloadFor } from '@/lib/router/staleBuild';
-import { reportClientCrash } from '@/lib/clientErrors';
 import { missingOf, supportCodeOf } from './routeFailure';
 
 function useRouteFailure() {
@@ -27,9 +26,13 @@ function useRouteFailure() {
   useEffect(() => {
     if (reloading || notFound) return;
     let current = true;
-    void reportClientCrash(error).then((code) => {
-      if (current) setCrashCode(code);
-    });
+    // Loaded only when a page fails, so the reporter stays out of every visitor's first load.
+    void import('@/lib/clientErrors')
+      .then(({ reportClientCrash }) => reportClientCrash(error))
+      .then((code) => {
+        if (current) setCrashCode(code);
+      })
+      .catch(() => undefined);
     return () => {
       current = false;
     };
