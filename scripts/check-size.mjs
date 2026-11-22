@@ -13,7 +13,9 @@ import { gzipSync } from 'node:zlib';
 // smaller sizes (2026-11-21). JS 187.6: that panel list folds away on phones (2026-11-21).
 // CSS 22.2: the finder's found-routes row, its phone results bar and the button scale (2026-11-21).
 // JS 187.7: a case's tab per service, its route (2026-11-21).
-const BUDGET_KB = { js: 187.7, css: 22.2 };
+// JS 188.4: the error screen's support code and the API client's request ID, which must work when a
+// page's own code fails to load; the crash reporter itself loads only on a failure (2026-11-22).
+const BUDGET_KB = { js: 188.4, css: 22.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
