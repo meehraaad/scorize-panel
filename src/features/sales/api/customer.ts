@@ -233,8 +233,16 @@ export interface HistoryEvent {
   title: string | null;
   text: string;
   customer_summary?: string;
-  /** `assign`: who had the lead before. */
+  /** `assign`: who had the lead (or session) before. */
   previous?: string | null;
+  /** `assign`: a lead or a consultation session changed hands. */
+  subject?: 'lead' | 'consultation';
+  /** `assign`: why, in words; null on rows from before reasons were kept. */
+  reason?: string | null;
+  /** `assign`: the detail of the reason ("همراه لید ۱۲"). */
+  note?: string;
+  /** A contact: the customer's seller at the time, when someone else made the contact. */
+  owner?: string | null;
   /** The stage the contact moved the lead to. */
   stage: LeadStage | null;
 }

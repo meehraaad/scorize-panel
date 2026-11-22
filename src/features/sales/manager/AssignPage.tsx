@@ -21,6 +21,7 @@ import {
   type AssignSettings,
   type Escalation,
   type SellerLoad,
+  type SettingsChange,
   type UnassignedLead,
 } from '../api';
 import { useAssignLeads, useAssignSettings, useHiddenSellers } from '../api/managerMutations';
@@ -154,7 +155,42 @@ export default function AssignPage() {
           />
         )}
       </SectionCard>
+
+      <SettingsHistory changes={data.history} />
     </>
+  );
+}
+
+/** Who changed the assignment settings, when, and what (e.g. a seller left out of automatic assignment). */
+function SettingsHistory({ changes }: { changes: SettingsChange[] }) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  if (changes.length === 0) return null;
+  return (
+    <SectionCard id="settings-history-title" title={t('manager.assign.history')}>
+      <ul className="m-0 list-none p-0 pb-2">
+        {changes.map((change) => (
+          <li
+            key={change.id}
+            className="flex flex-col gap-1 px-5 py-3 shadow-[inset_0_1px_0_var(--hair)] lg:px-8"
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <span className="text-sm font-semibold">
+                {change.by ?? t('customer.history.system')}
+              </span>
+              <time dateTime={change.at} className="text-xs text-text-2">
+                {f.dateTime(change.at)}
+              </time>
+            </div>
+            {change.lines.map((line) => (
+              <p key={line} className="m-0 text-sm leading-7 text-neutral">
+                {line}
+              </p>
+            ))}
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
   );
 }
 

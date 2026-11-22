@@ -523,9 +523,14 @@
         "lead": "Lead created and given to {{author}}",
         "leadNew": "Lead created",
         "assign": "Lead moved from {{previous}} to {{title}} · {{author}}",
-        "assignFirst": "Lead given to {{title}} · {{author}}"
+        "assignFirst": "Lead given to {{title}} · {{author}}",
+        "assignSession": "Session moved from {{previous}} to {{title}} · {{author}}",
+        "assignSessionFirst": "Session given to {{title}} · {{author}}"
       },
       "system": "System",
+      "reason": "Why: {{reason}}",
+      "noReason": "No reason kept (from before reasons were recorded)",
+      "otherSeller": "{{owner}}'s customer at the time",
       "stageTag": "Stage: {{stage}}",
       "filter": "Show",
       "filters": {
@@ -1439,6 +1444,7 @@
     },
     "assign": {
       "title": "{{n}} leads have no owner",
+      "history": "Changes to these settings",
       "titleNone": "Every lead has an owner",
       "subtitle": "The oldest has waited {{age}}. With automatic assignment this queue stays empty.",
       "auto": "Automatic assignment",
