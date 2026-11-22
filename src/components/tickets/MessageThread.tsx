@@ -221,6 +221,7 @@ export function MessageBubble({
                 key={attachment.url}
                 src={safeHref(attachment.url)}
                 label={audioLabel ?? attachment.name}
+                fileName={attachment.name}
               />
             </div>
           ) : (

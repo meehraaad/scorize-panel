@@ -1,17 +1,51 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@/components/ui/IconButton';
+import { MAX_ATTACHMENT_BYTES } from '@/lib/tickets/api';
 import { voiceTime } from './useVoiceMessage';
+
+const AUDIO_MIME: Readonly<Partial<Record<string, string>>> = {
+  ogg: 'audio/ogg',
+  webm: 'audio/webm',
+  m4a: 'audio/mp4',
+  mp4: 'audio/mp4',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+};
+
+/** Protected media may be served as a download. Keep the request on the authenticated origin. */
+async function loadAudioDownload(src: string, fileName: string, signal: AbortSignal) {
+  const url = new URL(src, window.location.href);
+  const mime = AUDIO_MIME[fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase()];
+  if (!mime || url.origin !== window.location.origin) return;
+  const response = await fetch(url, { mode: 'same-origin', redirect: 'error', signal });
+  const contentType = response.headers.get('content-type')?.split(';')[0];
+  if (
+    !response.ok ||
+    (contentType &&
+      !contentType.startsWith('audio/') &&
+      !['application/octet-stream', 'application/ogg', 'video/webm', 'video/mp4'].includes(
+        contentType,
+      )) ||
+    Number(response.headers.get('content-length')) > MAX_ATTACHMENT_BYTES
+  )
+    return;
+  const file = await response.blob();
+  if (!file.size || file.size > MAX_ATTACHMENT_BYTES || signal.aborted) return;
+  return URL.createObjectURL(new Blob([file], { type: mime }));
+}
 
 let playingAudio: HTMLAudioElement | null = null;
 
 export function VoicePlayer({
   src,
   label,
+  fileName,
   duration: estimatedDuration = 0,
 }: {
   src?: string | undefined;
   label: string;
+  fileName?: string;
   duration?: number;
 }) {
   const { t } = useTranslation('tickets');
@@ -20,9 +54,14 @@ export function VoicePlayer({
   const [duration, setDuration] = useState(estimatedDuration);
   const [position, setPosition] = useState(0);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const download = useRef<AbortController | null>(null);
+  const objectUrl = useRef<string | undefined>(undefined);
   useEffect(() => {
     const node = audio.current;
     return () => {
+      download.current?.abort();
+      if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
       if (node && playingAudio === node) {
         playingAudio = null;
         node.pause();
@@ -38,17 +77,43 @@ export function VoicePlayer({
     else if (node.ended && node.currentTime > 0) setDuration(node.currentTime);
     setPosition(node.currentTime);
   };
-  const toggle = () => {
+  const toggle = async () => {
     const node = audio.current;
-    if (!node) return;
+    if (!node || download.current) return;
     if (!node.paused) {
       node.pause();
       return;
     }
     setError(false);
-    void node.play().catch((failure: unknown) => {
-      if (!(failure instanceof DOMException && failure.name === 'AbortError')) setError(true);
-    });
+    try {
+      await node.play();
+      return;
+    } catch (failure) {
+      if (failure instanceof DOMException && failure.name === 'AbortError') return;
+      if (!src || !fileName || objectUrl.current || !node.error) {
+        setError(true);
+        return;
+      }
+    }
+    const controller = new AbortController();
+    download.current = controller;
+    setLoading(true);
+    try {
+      const downloaded = await loadAudioDownload(src, fileName, controller.signal);
+      if (!downloaded || controller.signal.aborted) {
+        if (downloaded) URL.revokeObjectURL(downloaded);
+        if (!controller.signal.aborted) setError(true);
+        return;
+      }
+      objectUrl.current = downloaded;
+      node.src = downloaded;
+      await node.play();
+    } catch {
+      if (!controller.signal.aborted) setError(true);
+    } finally {
+      download.current = null;
+      if (!controller.signal.aborted) setLoading(false);
+    }
   };
 
   return (
@@ -73,14 +138,17 @@ export function VoicePlayer({
           update(event.currentTarget);
           setPlaying(false);
         }}
-        onError={() => setError(true)}
+        onError={() => {
+          if (!fileName || objectUrl.current) setError(true);
+        }}
       />
-      <div className="flex min-w-0 items-center gap-1 rounded-[22px] bg-tint ps-1 pe-3">
+      <div className="flex min-w-0 items-center gap-1 rounded-[22px] bg-canvas ps-1 pe-3">
         <IconButton
           icon={playing ? 'pause' : 'play'}
           aria-label={playing ? t('voice.pause') : t('voice.startPlayback')}
-          tone="primary"
-          onClick={toggle}
+          disabled={loading}
+          aria-busy={loading}
+          onClick={() => void toggle()}
         />
         <div className="flex min-w-0 flex-1 items-center gap-1.5" dir="ltr">
           <input
@@ -92,7 +160,7 @@ export function VoicePlayer({
             disabled={!duration}
             aria-label={t('voice.seek')}
             aria-valuetext={voiceTime(position)}
-            className="h-11 min-w-0 flex-1 accent-primary"
+            className="h-11 min-w-0 flex-1 accent-text"
             onChange={(event) => {
               const node = audio.current;
               if (!node || node.readyState === 0) return;
