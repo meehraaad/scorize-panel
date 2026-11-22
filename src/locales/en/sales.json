@@ -259,6 +259,8 @@
       "cold": "Cold (under 45)"
     },
     "overdueOnly": "Overdue only",
+    "noFollowUpOnly": "No next step",
+    "noFollowUpCount": "No next step ({{n}})",
     "consultationMode": "In person or not",
     "modeOption": {
       "all": "In person and not",
@@ -650,7 +652,16 @@
         "telegram": "Saving opens your Telegram and copies the ready message; paste and send it. No SMS goes out, and a follow-up is set for tomorrow.",
         "none": "Nothing is sent. Only a follow-up for tomorrow is set."
       },
-      "noAnswerSmsText": "The SMS that goes out"
+      "noAnswerSmsText": "The SMS that goes out",
+      "noFollowUp": "No follow-up",
+      "noFollowUpOn": "This lead needs no follow-up",
+      "setFollowUp": "Set a follow-up",
+      "noFollowReason": "Why is no follow-up needed? (required)",
+      "noFollowReasonPlaceholder": "e.g. they will call us, they only had a question",
+      "noFollowReasonNeeded": "Write why no follow-up is needed",
+      "noFollowHint": "The customer's open follow-up closes and the lead shows in the “No next step” list.",
+      "noFollowNote": "No follow-up: {{reason}}",
+      "saveNoFollow": "Save without follow-up"
     },
     "tabs": {
       "label": "Customer page sections",

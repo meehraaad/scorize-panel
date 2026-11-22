@@ -231,6 +231,10 @@ export const salesStaffHandlers = [
       ? Number(query.get('consultation_type'))
       : null;
     const consulted = (consultation && consultation !== 'all') || consultationType !== null;
+    // Open leads with no next step (no follow-up), the first call made: a log can end it on purpose.
+    const noFollowUp = query.get('no_follow_up') === '1';
+    const idle = (row: { stage: string; follow_up_at: string | null }) =>
+      ['contacted', 'consulted', 'offer'].includes(row.stage) && row.follow_up_at === null;
     // Each row's customer tags (S49); `?tag=` keeps the customers with it (on this page).
     return answer<LeadsData>(() =>
       fetchLeads(leads).then((data) => {
@@ -245,13 +249,15 @@ export const salesStaffHandlers = [
             ...(manager ? { seller: row.id % 3 === 0 ? '' : SELLER_NAME } : {}),
           }))
           .filter((row) => leads.tag === null || row.tags.includes(leads.tag))
-          .filter((row) => consultationMatches(row.customer, consultation, consultationType));
+          .filter((row) => consultationMatches(row.customer, consultation, consultationType))
+          .filter((row) => !noFollowUp || idle(row));
         return {
           ...data,
-          supports: { ...data.supports, tags: true, consultations: true },
+          supports: { ...data.supports, tags: true, consultations: true, no_follow_up: true },
+          stats: { ...data.stats, no_follow_up: data.results.filter(idle).length },
           sellers: manager ? MANAGER_TEAM : [],
           consultation_types: CONSULTATION_TYPES,
-          ...(leads.tag === null && !consulted ? {} : { count: results.length }),
+          ...(leads.tag === null && !consulted && !noFollowUp ? {} : { count: results.length }),
           results,
         };
       }),

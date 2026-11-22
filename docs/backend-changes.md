@@ -658,3 +658,14 @@ lang branch `claude/project-thread-onvb1h`. Needs a migration (`user_profile`: `
   manager's upload (S55); the leads always go to the sales queue.
 - **Sales** `GET sources/` (any seller): the same rows without `leads`. `manager/leads/import/`
   accepts `source: campaign | manual | c<id>` (an active team source).
+
+## Logs without a follow-up (2026-11-22)
+
+lang branch `claude/confident-euler-llixz4`. No migration.
+
+- **Log** `POST customers/<id>/contacts/` already takes `follow_up_at: null` on an open lead: the open
+  follow-up ends (`finished`) and none is set. The log popup now offers «بدون پیگیری» for a talk or a
+  call-later; the seller must write why, saved at the end of the notes («بدون پیگیری: …»).
+- **Leads** `GET leads/?no_follow_up=1`: open leads with no next step (no open follow-up, no paid
+  consultation ahead, the first call made). `stats.no_follow_up` counts them and
+  `supports.no_follow_up` turns on the «بدون قدم بعدی» pill on the leads page (hidden on an older server).
