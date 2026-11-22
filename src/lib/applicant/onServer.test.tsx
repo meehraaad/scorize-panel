@@ -18,6 +18,8 @@ describe('features by what Django serves', () => {
 
   it('keeps unshipped endpoints off', () => {
     expect(Object.entries(ON_SERVER).filter(([, on]) => !on)).toEqual([
+      // Crash reports (scorize docs/request-ids.md): on once Django's POST /metrics/v1/errors/ is live.
+      ['clientErrors', false],
       // Behind Django's SCORIZE_CLIENT_SERVICES (backend-changes.md SVC4, SVC5).
       ['clientServices', false],
       ['turkey', false],
