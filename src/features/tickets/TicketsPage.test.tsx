@@ -106,7 +106,7 @@ describe('tickets page', () => {
 
     const attach = card.getByLabelText('پیوست فایل');
     await user.upload(attach, new File(['x'], 'notes.txt', { type: 'text/plain' }));
-    expect(attach).toHaveAccessibleDescription(/این نوع فایل پذیرفته نمی‌شود/);
+    expect(attach).toHaveAccessibleDescription(/فایل PDF، تصویر، ورد یا پیام صوتی/);
     await user.upload(attach, pdf('invite.pdf', 2.4 * 1024 * 1024));
     expect(card.getByText('invite.pdf')).toBeInTheDocument();
     expect(card.getByText('۲٫۴ مگابایت · همراه پیام ارسال می‌شود')).toBeInTheDocument();

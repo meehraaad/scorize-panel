@@ -52,8 +52,8 @@ export type ServerFeature =
   | 'clientErrors';
 
 export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
-  /** Enable after the paired ticket-audio backend release is deployed. */
-  ticketVoice: false,
+  /** Voice messages in tickets: Django checks audio attachments (shamrad/lang `common/uploads.py`). */
+  ticketVoice: true,
   /**
    * `POST /metrics/v1/errors/`: a crash in the panel's own code is logged on the server and its
    * error screen shows the support code (lang `claude/affectionate-pasteur-nq4ojb`,
