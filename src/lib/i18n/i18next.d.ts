@@ -31,6 +31,7 @@ import type access from '@/locales/fa/access.json';
 import type notes from '@/locales/fa/notes.json';
 import type leads from '@/locales/fa/leads.json';
 import type pathways from '@/locales/fa/pathways.json';
+import type pwa from '@/locales/fa/pwa.json';
 import type writing from '@/locales/fa/writing.json';
 
 // Persian is the source dictionary: t('...') keys are type-checked against it,
@@ -45,6 +46,7 @@ declare module 'i18next' {
       notes: typeof notes;
       leads: typeof leads;
       pathways: typeof pathways;
+      pwa: typeof pwa;
       auth: typeof auth;
       home: typeof home;
       applications: typeof applications;

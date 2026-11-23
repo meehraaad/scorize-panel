@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router';
 import { Toaster } from '@/components/ui/Toast';
 import { queryClient } from '@/lib/api/queryClient';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
+import '@/pwa/captureInstallPrompt';
 import { createRouter } from './router';
 
 // The service worker code is only bundled when the PWA is switched on (VITE_ENABLE_PWA).
@@ -12,9 +13,9 @@ const UpdatePrompt =
 
 export function App() {
   const [router] = useState(createRouter);
-  // Phones keep a tab (or the home-screen app) open for days: load a new deploy when it comes back.
-  // Its own small chunk, so the first load stays in budget.
+  // Builds without a service worker use the foreground build check to pick up a new deploy.
   useEffect(() => {
+    if (UpdatePrompt) return;
     let stop: (() => void) | undefined;
     let done = false;
     void import('@/lib/router/newBuild').then(({ watchForNewBuild }) => {
@@ -33,8 +34,12 @@ export function App() {
         <Suspense fallback={<div className="min-h-dvh" />}>
           <RouterProvider router={router} />
           <Toaster />
-          {UpdatePrompt && <UpdatePrompt />}
         </Suspense>
+        {UpdatePrompt && (
+          <Suspense fallback={null}>
+            <UpdatePrompt />
+          </Suspense>
+        )}
       </ThemeProvider>
     </QueryClientProvider>
   );

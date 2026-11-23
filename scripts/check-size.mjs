@@ -20,7 +20,8 @@ import { gzipSync } from 'node:zlib';
 // JS 189.8: Executive Panel role, navigation and route prefetch definitions (2026-11-22).
 // JS 196.1, CSS 22.3: what `test` weighed when the HR new-hire form merged in (195.3 / 22.201)
 // plus the form's 0.5 KB, as CI measures it on Node 24 (2026-11-23, docs/performance.md).
-const BUDGET_KB = { js: 196.1, css: 22.3 };
+// JS 196.2, CSS 22.4: enable the PWA build in CI and add the mobile install guide (2026-11-23).
+const BUDGET_KB = { js: 196.2, css: 22.4 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
