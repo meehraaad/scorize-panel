@@ -107,6 +107,24 @@ describe('sales manager section', () => {
     expect(saved.at(-1)).toMatchObject({ escalate_after: 240 });
   });
 
+  it('adds, updates and removes a consultation assignment rule', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager');
+    const card = within(await screen.findByRole('region', { name: 'قوانین سفارشی تخصیص' }));
+    await user.selectOptions(card.getByLabelText('شرط تخصیص'), 'consultation');
+    await user.selectOptions(card.getByLabelText('نوع مشاوره'), '1');
+    await user.selectOptions(card.getByLabelText('فروشندهٔ اولویت‌دار'), '8');
+    await user.click(card.getByRole('button', { name: 'افزودن قانون' }));
+    const remove = await card.findByRole('button', { name: /حذف قانون برای/ });
+    expect(card.getByRole('button', { name: 'ویرایش قانون' })).toBeDisabled();
+    await user.selectOptions(card.getByLabelText('فروشندهٔ اولویت‌دار'), '33');
+    await user.click(card.getByRole('button', { name: 'ویرایش قانون' }));
+    expect(await card.findByText('امید رنجبر', { selector: 'span' })).toBeInTheDocument();
+    await user.click(remove);
+    await waitFor(() => expect(remove).not.toBeInTheDocument());
+  });
+
   it('adds leads from a CSV after showing what each row does', async () => {
     const user = userEvent.setup({ applyAccept: false });
     loginAs(REZA);
