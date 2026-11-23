@@ -191,6 +191,23 @@ function EventRow({ event, customer }: { event: HistoryEvent; customer: number }
               requestAnimationFrame(() => editButton.current?.focus());
             }}
           />
+        ) : event.contact_edit ? (
+          // The description on one side, its pencil at the other end (left in RTL).
+          <div className="flex items-start justify-between gap-3">
+            <p className="m-0 min-w-0 text-sm leading-7 break-words whitespace-pre-wrap text-neutral">
+              {event.text}
+            </p>
+            <IconButton
+              ref={editButton}
+              icon="pen"
+              tone="muted"
+              iconSize={18}
+              className="-my-2 -me-2"
+              aria-label={t('customer.history.edit.label', { title })}
+              title={t('customer.history.edit.label', { title })}
+              onClick={() => setEditing(true)}
+            />
+          </div>
         ) : (
           event.text && (
             <p className="m-0 text-sm leading-7 break-words whitespace-pre-wrap text-neutral">
@@ -216,18 +233,6 @@ function EventRow({ event, customer }: { event: HistoryEvent; customer: number }
           </span>
         )}
       </div>
-      {event.contact_edit && !editing && (
-        <IconButton
-          ref={editButton}
-          icon="pen"
-          tone="muted"
-          iconSize={18}
-          className="-my-1.5 -me-2 self-start"
-          aria-label={t('customer.history.edit.label', { title })}
-          title={t('customer.history.edit.label', { title })}
-          onClick={() => setEditing(true)}
-        />
-      )}
     </li>
   );
 }

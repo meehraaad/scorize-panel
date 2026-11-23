@@ -35,8 +35,9 @@ it('edits a contact description and leaves other sellers’ text read-only', asy
   const colleague = await within(history).findByText(/^پیشنهاد مشاور: ۶ اپلای هلند/);
   expect(entryFor(colleague).queryByRole('button', { name: editLabel })).toBeNull();
   const edit = entry.getByRole('button', { name: editLabel });
-  // Icon only, after the entry's text.
+  // Icon only, at the far end of the description's own row.
   expect(edit).toHaveTextContent('');
+  expect(edit.parentElement).toBe(own.parentElement);
   expect(own.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   await user.click(edit);
   expect(description()).toHaveValue(own.textContent);
