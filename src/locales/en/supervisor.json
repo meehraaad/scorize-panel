@@ -307,7 +307,10 @@
       "empty": "The applicant hasn't recorded any research interests yet.",
       "hint": "The email bot finds professors with these keywords. The applicant edits them in their own panel."
     },
-    "zip": "Download all (zip)"
+    "zip": "Download all (zip)",
+    "all": "All documents",
+    "uploadForCustomer": "Upload for customer",
+    "uploadNamed": "Upload {{name}} for the customer"
   },
   "requestDialog": {
     "title": "Request a document",

@@ -99,5 +99,100 @@
       "done": "Customer records updated: {{n}}",
       "error": "The CSV could not be processed. Try again."
     }
+  },
+  "workspace": {
+    "navigation": "Customer workspace",
+    "tab": {
+      "desk": "Work Desk",
+      "tasks": "Tasks",
+      "summary": "Summary",
+      "contract": "Contract & Payments",
+      "information": "Information",
+      "documents": "Documents",
+      "reports": "Reports"
+    },
+    "call": "Call",
+    "nextDue": "My next task · {{when}}",
+    "myTasks": "All my tasks · {{n}}",
+    "missing": "Customer unavailable",
+    "unavailable": "This customer could not be opened with your access.",
+    "serviceTabs": "Customer services",
+    "serviceUnavailable": "This service is unavailable to your account.",
+    "openService": "Open service",
+    "openTasks": "Open",
+    "completedTasks": "Completed",
+    "newTask": "New task",
+    "noTasks": "No tasks in this view.",
+    "completeTask": "Mark done",
+    "taskCompleted": "Task completed.",
+    "saveError": "The change could not be saved.",
+    "notes": "Case notes",
+    "payments": "Payments",
+    "purchases": "Purchases outside the contract",
+    "payment": "Payment",
+    "receipt": "Receipt",
+    "noPayments": "No payments to show.",
+    "management": "Case management",
+    "status": "Contract status",
+    "terminationReason": "Termination reason",
+    "disablePanel": "Terminate contract and disable access",
+    "saveStatus": "Save status",
+    "statusSaved": "Contract status updated.",
+    "contractStatus": {
+      "pending": "Pending",
+      "accepted": "Active",
+      "rejected": "Rejected",
+      "terminated": "Terminated",
+      "on_hold": "On hold",
+      "finished": "Finished",
+      "end_of_contract": "Contract ended"
+    },
+    "search": {
+      "catalog": "Program catalogue",
+      "find": "Search the program catalogue",
+      "add": "Add to shortlist",
+      "noPrograms": "No matching programs.",
+      "shortlist": "Program shortlist",
+      "review": "Send to {{name}} for review",
+      "empty": "No programs shortlisted.",
+      "reviewSent": "Sent for review.",
+      "added": "Program added."
+    },
+    "mail": {
+      "title": "Customer email",
+      "folder": {
+        "all": "All",
+        "inbox": "Inbox",
+        "sent": "Sent",
+        "unread": "Unread"
+      },
+      "empty": "No messages in this view.",
+      "new": "New email",
+      "message": "Message",
+      "recipient": "Recipient",
+      "subject": "Subject",
+      "body": "Message",
+      "send": "Send",
+      "cancel": "Cancel",
+      "queued": "Email queued.",
+      "reply": "Reply",
+      "replySubject": "Re: {{subject}}",
+      "choose": "Select a message to read it."
+    },
+    "report": {
+      "period": "Report period",
+      "range": {
+        "all": "Since start",
+        "month": "Last 30 days",
+        "quarter": "Last 90 days"
+      },
+      "print": "Print or save as PDF",
+      "progress": "Service progress",
+      "noServices": "No service progress to show.",
+      "response": "Response times",
+      "answered": "Answered",
+      "waiting": "Awaiting reply",
+      "slow": "Answered after 24 hours"
+    }
   }
 }

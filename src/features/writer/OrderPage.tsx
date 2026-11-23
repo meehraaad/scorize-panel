@@ -4,7 +4,7 @@ import { useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { PageColumns, PageStack } from '@/components/ui/PageColumns';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
-import { orderQuery } from './api';
+import { orderQuery, type OrderData } from './api';
 import { ApplicantForm } from './components/ApplicantForm';
 import { OrderSide } from './components/OrderSide';
 import { OrderSummary } from './components/OrderSummary';
@@ -28,13 +28,29 @@ export default function OrderPage() {
   return (
     <PageStack>
       <BackLink to={WRITER_ROOT}>{t('order.back')}</BackLink>
+      <OrderDetails order={data} />
+    </PageStack>
+  );
+}
+
+export function OrderDetails({
+  order: data,
+  formFirst = false,
+}: {
+  order: OrderData;
+  formFirst?: boolean;
+}) {
+  const { t } = useTranslation('writer');
+  return (
+    <PageStack>
       <OrderSummary order={data} />
       <PageColumns
         asideLabel={t('order.side')}
         main={
           <>
+            {formFirst && <ApplicantForm form={data.form} />}
             <Versions order={data} />
-            <ApplicantForm form={data.form} />
+            {!formFirst && <ApplicantForm form={data.form} />}
           </>
         }
         aside={<OrderSide order={data} />}

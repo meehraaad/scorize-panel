@@ -115,7 +115,11 @@ export function useSupervisorMutation<T, R = unknown>(mutationFn: (variables: T)
   return useMutation({
     mutationFn,
     // Stage, documents and applications show on Today, the list and the case: refresh them all.
-    onSuccess: () => client.invalidateQueries({ queryKey: SUPERVISOR_KEY }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: SUPERVISOR_KEY }),
+        client.invalidateQueries({ queryKey: ['executive', 'customer-workspace'] }),
+      ]),
   });
 }
 

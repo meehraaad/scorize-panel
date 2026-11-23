@@ -217,3 +217,20 @@ The contract is now `unified-workflow-4`: responses list `unavailable_pathways`
 (selected but no longer in the adopted catalog; status `pathway_unavailable`, choose
 again), and results from synthetic programs carry the `synthetic_not_law` limitation.
 See [Phase 6 comparison](assessment/phase-6-comparison.md).
+
+## Executive customer workspace
+
+Django advertises the workspace through `whoami.executive_customer_workspace`. The customer route
+uses the account ID. A workspace returns the applicant ID only when the staff member can open the
+case. Writing-only assignments use the existing writing order permissions.
+
+The routes under `/api/executive/v1/customers/<user>/` cover the workspace summary, open and completed
+tasks, customer information, contract payments, and the case report. Documents, application
+editing, service stages, and writing versions use the existing case and writing APIs. The
+`contract-status/` action uses the legacy `apply.can_manage_applicant` permission and the existing
+contract statuses. Termination requires a reason.
+
+Search and correspondence use `services/<service>/search/` and `services/<service>/mail/`.
+Staff must be able to open the service. Adding programs, requesting review, and queueing mail
+also require the service owner or manager permission. A search review uses an existing staff
+task. Mail sends through the existing applicant mailbox workers.
