@@ -184,14 +184,13 @@ export interface HrOptions {
 }
 
 /**
- * A new staff member. HR sends the hire's phone (their login), first day, contract and salary; the
- * hire types their names and ID card number on the new-hire form. Until it is approved the file's
- * `name` is the phone and `info.id_number` is `''`.
+ * A new staff member. HR sends the hire's names and phone (their login), first day, contract and
+ * salary; the hire types their ID card number and the rest on the new-hire form.
  */
 export interface NewStaff {
   phone_number: string;
-  first_name?: string;
-  last_name?: string;
+  first_name: string;
+  last_name: string;
   id_number?: string;
   /** Work email, optional. */
   email?: string;

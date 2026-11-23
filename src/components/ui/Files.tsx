@@ -9,7 +9,7 @@ import { IconButton } from './IconButton';
  * the picker (camera and gallery on phones) and a dropped file lands on it. The caller checks the
  * file (see lib/files.ts) and shows its own error, linked with `errorId`.
  * `compact`: an outline "Attach a file" button instead of the zone (message composers); on phones
- * only its paperclip shows (the label stays for screen readers).
+ * only its paperclip shows (the label stays for screen readers), unless `keepLabel`.
  */
 export function FileDrop({
   id,
@@ -21,6 +21,7 @@ export function FileDrop({
   touchHint,
   compact = false,
   iconOnly = false,
+  keepLabel = false,
   inputLabel,
   onFile,
 }: {
@@ -36,6 +37,8 @@ export function FileDrop({
   touchHint?: string;
   compact?: boolean;
   iconOnly?: boolean;
+  /** `compact` with its label on phones too ("Add another page"). */
+  keepLabel?: boolean;
   /** The picker's full name when the visible label is short ("Upload" → "Upload Passport"). */
   inputLabel?: string;
   onFile: (file: File | undefined) => void;
@@ -60,10 +63,13 @@ export function FileDrop({
   if (compact)
     return (
       <span
-        className={`${iconOnly ? iconButtonClass() : buttonClass('outline', 'px-4 max-lg:size-11 max-lg:px-0')} relative has-[input:disabled]:opacity-50 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus`}
+        className={`${iconOnly ? iconButtonClass() : buttonClass('outline', keepLabel ? 'px-4' : 'px-4 max-lg:size-11 max-lg:px-0')} relative has-[input:disabled]:opacity-50 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus`}
       >
         <Icon name="paperclip" size={18} />
-        <label htmlFor={id} className={iconOnly ? 'sr-only' : 'max-lg:sr-only'}>
+        <label
+          htmlFor={id}
+          className={iconOnly ? 'sr-only' : keepLabel ? undefined : 'max-lg:sr-only'}
+        >
           {chooseLabel}
         </label>
         {input}

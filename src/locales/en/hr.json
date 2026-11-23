@@ -103,13 +103,25 @@
     "salaryHint": "In tomans, no decimals",
     "required": "Fill this in",
     "phone": "This mobile number isn't right",
-    "mobileHint": "They log in with this number and an SMS code."
+    "mobileHint": "They log in with this number and an SMS code.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "persian": "Use Persian letters",
+    "hasFile": "This number already has a staff file",
+    "emailBad": "Enter a valid email",
+    "salaryZero": "The salary must be more than zero",
+    "endBefore": "The contract ends before the first day"
   },
   "newStaff": {
     "title": "New staff member",
-    "subtitle": "Enter only their mobile and contract; they type their names, ID card number and the rest in the personal details form. Their panel account and file are made and their joining checklist opens.",
+    "subtitle": "Enter their names, mobile and contract; they type their ID card number and the rest in the personal details form. Their panel account and file are made and their joining checklist opens.",
     "save": "Create file",
-    "saved": "File created; send them the invite."
+    "saved": "File created; send them the invite.",
+    "exists": "This staff member was just added. Check the list.",
+    "openFile": "Open their file",
+    "account": "This number belongs to {{name}}’s account on the site; the names and email came from it.",
+    "accounts": "Accounts with this number",
+    "onStaff": "{{name}} · already on staff"
   },
   "move": {
     "entry": "Joining",
@@ -155,7 +167,8 @@
       "documents": "Documents",
       "moves": "Joining and leaving",
       "history": "History",
-      "form": "Hiring form"
+      "form": "Hiring form",
+      "access": "Access"
     },
     "personal": "Personal details",
     "workContact": "Work and contact",
@@ -821,9 +834,10 @@
       "national_code": "10 digits",
       "id_number": "Up to 10 digits; on newer cards it is the national code",
       "birth_date": "As on your national card",
-      "iban": "IR and 24 digits",
+      "iban": "24 digits; with or without IR in front",
       "email": "Preferably the Gmail you use for work",
-      "number_of_children": "Leave at zero if none"
+      "number_of_children": "Leave at zero if none",
+      "field_of_study": "Type it, or pick a suggested major"
     },
     "gender": {
       "male": "Male",
@@ -867,7 +881,8 @@
       "badType": "PDF, JPG or PNG only",
       "tooBig": "The file is larger than 10 MB",
       "open": "Open",
-      "missing": "Not uploaded"
+      "missing": "Not uploaded",
+      "limit": "You can send up to 10 files. Remove one to add another."
     },
     "problem": {
       "required": "Complete this field",
@@ -879,7 +894,9 @@
       "mobile": "This mobile number isn't valid",
       "email": "This email isn't valid",
       "future": "This date hasn't come yet",
-      "files": "Upload your birth certificate and national card"
+      "age": "The age must be from 15 to 100 years",
+      "special": "Remove the special characters",
+      "file": "Upload this document"
     },
     "fix": "Some answers are missing or not valid; each one says why.",
     "draft": {
@@ -931,7 +948,8 @@
       "cancelConfirm": "Cancel the form? They won't see it anymore.",
       "cancelled": "Form cancelled",
       "differs": "In the file: {{value}}",
-      "files": "Documents"
+      "files": "Documents",
+      "changed": "This form was already reviewed or cancelled. Showing it as it is now."
     },
     "today": "Forms to review",
     "personal": "More details",
@@ -943,8 +961,12 @@
       "copyMessage": "Copy message",
       "copyLink": "Copy link",
       "copied": "Copied",
-      "failed": "Couldn't copy; select the text and copy it."
+      "failed": "Couldn't copy; select the text and copy it.",
+      "share": "Share",
+      "shareFailed": "Couldn’t share; copy the message instead."
     },
-    "pending": "Waiting for their form"
+    "pending": "Waiting for their form",
+    "changed": "The form changed meanwhile. The page is up to date now.",
+    "majors": "Suggested majors"
   }
 }

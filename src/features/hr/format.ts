@@ -40,6 +40,10 @@ export { fieldErrors } from '@/lib/api/fieldErrors';
  */
 export const isPhoneName = (name: string) => /^09\d{9}$/.test(toLatinDigits(name.trim()));
 
+/** The hire still has their form to fill (sent, or back for a fix): the file waits for it. */
+export const waitsForForm = (name: string, form: { status: string } | null | undefined) =>
+  isPhoneName(name) || form?.status === 'draft' || form?.status === 'returned';
+
 /** Today's local `YYYY-MM-DD`. */
 export function todayValue() {
   const now = new Date();

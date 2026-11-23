@@ -15,7 +15,7 @@ export const isLatinName = (value: string) => /^[A-Za-z][A-Za-z .'-]*$/.test(val
  * is right, else null. Ten equal digits pass the sum but are never issued.
  */
 export function normalizeNationalCode(input: string): string | null {
-  const code = toLatinDigits(input).replace(/[\s-]/g, '');
+  const code = toLatinDigits(input).replace(/[\s\-()]/g, '');
   if (!/^\d{10}$/.test(code) || /^(\d)\1{9}$/.test(code)) return null;
   const digits = Array.from({ length: 10 }, (_, index) => Number(code.charAt(index)));
   const sum = digits.slice(0, 9).reduce((total, digit, index) => total + digit * (10 - index), 0);
@@ -29,7 +29,9 @@ export function normalizeNationalCode(input: string): string | null {
  * its check (ISO 13616, mod 97) is right, else null.
  */
 export function normalizeIban(input: string): string | null {
-  const compact = toLatinDigits(input).replace(/[\s-]/g, '').toUpperCase();
+  const compact = toLatinDigits(input)
+    .replace(/[\s\-()]/g, '')
+    .toUpperCase();
   const digits = compact.startsWith('IR') ? compact.slice(2) : compact;
   if (!/^\d{24}$/.test(digits)) return null;
   // IR + check digits move to the end; I = 18, R = 27.
@@ -44,6 +46,6 @@ export function normalizeIban(input: string): string | null {
  * the national code), else null.
  */
 export function normalizeIdNumber(input: string): string | null {
-  const number = toLatinDigits(input).replace(/[\s-]/g, '');
+  const number = toLatinDigits(input).replace(/[\s\-()]/g, '');
   return /^\d{1,10}$/.test(number) ? number : null;
 }

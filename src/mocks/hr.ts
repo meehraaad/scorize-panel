@@ -484,6 +484,14 @@ const OPTIONS: HrOptions = {
   ],
 };
 
+/** Accounts of people who used the site before (not staff): the new-staff lookup finds them. */
+const SITE_ACCOUNTS = [
+  {
+    phone: '09121110000',
+    match: { id: 900, first_name: 'سارا', last_name: 'محمدی', email: 'sara.m@gmail.com' },
+  },
+];
+
 const invalid = (errors: Record<string, string[]>) => HttpResponse.json(errors, { status: 400 });
 
 /** The logged-in user's own active staff file (the hire's side of the form). */
@@ -525,6 +533,33 @@ export const hrHandlers = [
     const rows = staff.filter((row) => all || row.is_active).map(rowOf);
     return HttpResponse.json({ results: rows.sort((a, b) => a.name.localeCompare(b.name)) });
   }),
+  // OB12: the account a mobile already has (staff or someone who used the site), else 404.
+  http.get(`${API}/accounts/`, ({ request }) => {
+    if (!allowed()) return forbidden();
+    const prefix = new URL(request.url).searchParams.get('phone') ?? '';
+    if (!/^09\d{2,9}$/.test(prefix)) return invalid({ phone: ['Enter at least 4 digits.'] });
+    const staffRows = staff.map((row) => {
+      const [first = '', ...rest] = row.name.split(' ');
+      return {
+        id: row.user,
+        phone_number: row.info.phone_number ?? '',
+        first_name: first,
+        last_name: rest.join(' '),
+        email: '',
+        staff_id: row.id,
+      };
+    });
+    const siteRows = SITE_ACCOUNTS.map((one) => ({
+      ...one.match,
+      phone_number: one.phone,
+      staff_id: null,
+    }));
+    const results = [...staffRows, ...siteRows]
+      .filter((row) => row.phone_number.startsWith(prefix))
+      .sort((a, b) => a.phone_number.localeCompare(b.phone_number))
+      .slice(0, 5);
+    return HttpResponse.json({ results });
+  }),
   http.post(`${API}/staff/`, async ({ request }) => {
     if (!allowed()) return forbidden();
     const body = (await request.json()) as NewStaff;
@@ -533,7 +568,7 @@ export const hrHandlers = [
     const position = OPTIONS.positions.find((item) => item.id === body.position);
     // Without names (HR sends only the phone), the file is named by the phone until the form is
     // approved.
-    const name = `${body.first_name ?? ''} ${body.last_name ?? ''}`.trim() || body.phone_number;
+    const name = `${body.first_name} ${body.last_name}`.trim() || body.phone_number;
     const row = person(newId(), name, {
       kind: body.contract,
       start: body.entry_date,
@@ -699,6 +734,13 @@ export const hrHandlers = [
     const children = body.number_of_children;
     if (typeof children === 'number' && (children < 0 || children > 20))
       return invalid({ number_of_children: ['Ensure this value is less than or equal to 20.'] });
+    // Django's draft lengths for the numbers (a longer one refuses the whole draft).
+    const LENGTHS = { national_code: 20, id_number: 20, iban: 40, emergency_phone: 20 } as const;
+    for (const [key, max] of Object.entries(LENGTHS))
+      if ((body[key as keyof typeof LENGTHS] ?? '').length > max)
+        return invalid({
+          [key]: [`Ensure this field has no more than ${String(max)} characters.`],
+        });
     for (const key of Object.keys(EMPTY_ANSWERS) as (keyof OnboardingAnswers)[])
       if (key in body) Object.assign(form.answers, { [key]: body[key] });
     return HttpResponse.json(publicForm(form));
@@ -838,6 +880,14 @@ export const hrHandlers = [
 
 /** Test helper: the staff member's open form filled in and sent, as a hire would (OB3). */
 export function mockSubmittedForm(staffId: number) {
+  const form = mockCompleteForm(staffId);
+  form.status = 'submitted';
+  form.submitted_at = new Date().toISOString();
+  setStep(form, true);
+}
+
+/** Test helper: the staff member's open form filled in (every answer and both files), not sent. */
+export function mockCompleteForm(staffId: number) {
   const form = openFormOf(staffId);
   if (!form) throw new Error(`No open form for staff ${String(staffId)}`);
   Object.assign(form.answers, {
@@ -865,7 +915,5 @@ export function mockSubmittedForm(staffId: number) {
     { id: newId(), kind: 'birth_certificate', name: 'shenasname.pdf', url: '/media/hr/1.pdf' },
     { id: newId(), kind: 'national_card', name: 'melli.jpg', url: '/media/hr/2.jpg' },
   ];
-  form.status = 'submitted';
-  form.submitted_at = new Date().toISOString();
-  setStep(form, true);
+  return form;
 }

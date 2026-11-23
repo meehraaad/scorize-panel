@@ -1,4 +1,5 @@
-import { useId, type ComponentProps, type ReactNode } from 'react';
+import { useId, type ChangeEvent, type ComponentProps, type ReactNode } from 'react';
+import { toLatinDigits } from '@/lib/text';
 
 interface TextFieldProps extends Omit<ComponentProps<'input'>, 'size'> {
   label: string;
@@ -12,6 +13,25 @@ interface TextFieldProps extends Omit<ComponentProps<'input'>, 'size'> {
   size?: 'md' | 'lg';
   /** The label is read by screen readers only (the row already shows it, e.g. a details list). */
   hideLabel?: boolean;
+  /**
+   * Persian and Arabic digits become Latin as they are typed. On by default for numbers, phones
+   * and emails (`inputMode` numeric, decimal or tel, `type="email"`); free text keeps them.
+   */
+  latinDigits?: boolean;
+}
+
+const NUMBER_MODES = new Set(['numeric', 'decimal', 'tel']);
+
+/** Rewrites the typed value with Latin digits, keeping the caret (each digit is one character). */
+function toLatinInput(event: ChangeEvent<HTMLInputElement>) {
+  const input = event.target;
+  const latin = toLatinDigits(input.value);
+  if (latin === input.value) return;
+  const { selectionStart, selectionEnd } = input;
+  input.value = latin;
+  // Email inputs have no selection API.
+  if (selectionStart !== null && input.type !== 'email')
+    input.setSelectionRange(selectionStart, selectionEnd);
 }
 
 const SIZES = {
@@ -31,10 +51,13 @@ export function TextField({
   labelAside,
   size = 'md',
   hideLabel = false,
+  latinDigits,
   id,
   className = '',
+  onChange,
   ...props
 }: TextFieldProps) {
+  const latin = latinDigits ?? (NUMBER_MODES.has(props.inputMode ?? '') || props.type === 'email');
   const autoId = useId();
   const inputId = id ?? autoId;
   const messageId = `${inputId}-message`;
@@ -61,6 +84,10 @@ export function TextField({
           aria-describedby={message ? messageId : undefined}
           className={`w-full bg-surface text-text ${SIZES[size]} shadow-[inset_0_0_0_1px_var(--line-2)] transition-shadow outline-none placeholder:text-text-3 read-only:bg-canvas read-only:text-text-2 hover:shadow-[inset_0_0_0_1px_var(--line-3)] focus-visible:shadow-[inset_0_0_0_2px_var(--focus)] aria-invalid:shadow-[inset_0_0_0_1.5px_var(--danger)] ${trailing ? 'pe-14' : ''} ${className}`}
           {...props}
+          onChange={(event) => {
+            if (latin) toLatinInput(event);
+            onChange?.(event);
+          }}
         />
         {trailing && <div className="absolute end-1.5 flex items-center">{trailing}</div>}
       </div>
