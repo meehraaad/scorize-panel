@@ -53,6 +53,7 @@ const HOUR = 60 * MINUTE;
 const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 
 interface ManagerState {
+  routingRules: NonNullable<AssignData['routing']>['rules'];
   settings: AssignSettings;
   queue: AssignData['queue']['results'];
   /** Leads given out, by seller. */
@@ -80,6 +81,7 @@ const SELLER_NAMES = new Map([
 ]);
 
 const managerState = (): ManagerState => ({
+  routingRules: [],
   settings: {
     on: true,
     mode: 'least_load',
@@ -989,6 +991,11 @@ export const managerHandlers = [
       queue: pageOf(request, queue, QUEUE_PAGE),
       oldest_at: queue.map((lead) => lead.created_at).sort()[0] ?? null,
       history: [],
+      routing: {
+        rules: data.manager.routingRules,
+        lead: [{ value: 'document_upload', label: 'مدرک برای ارزیابی' }],
+        consultation: [{ value: '1', label: 'مشاوره‌ی اپلای ایتالیا' }],
+      },
     };
     return HttpResponse.json(body);
   }),
@@ -998,6 +1005,22 @@ export const managerHandlers = [
     if (data instanceof Response) return data;
     data.manager.settings = (await request.json()) as AssignSettings;
     return HttpResponse.json(data.manager.settings);
+  }),
+
+  http.put(`${BASE}/assign/rules/`, async ({ request }) => {
+    const data = managerOrError();
+    if (data instanceof Response) return data;
+    const { kind, match, seller } = (await request.json()) as {
+      kind: 'lead' | 'consultation';
+      match: string;
+      seller: number | null;
+    };
+    const rules = data.manager.routingRules.filter(
+      (rule) => rule.kind !== kind || rule.match !== match,
+    );
+    if (seller !== null) rules.push({ kind, match, seller });
+    data.manager.routingRules = rules;
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.put(`${BASE}/assign/hidden/`, async ({ request }) => {

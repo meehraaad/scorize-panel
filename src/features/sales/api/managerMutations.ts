@@ -6,6 +6,7 @@ import {
   MANAGER_API,
   MANAGER_KEY,
   type AssignSettings,
+  type RoutingRule,
   type ApprovalAction,
   type StagesData,
   stagesQuery,
@@ -31,6 +32,15 @@ export function useAssignSettings() {
     mutationFn: (settings: AssignSettings) =>
       api(`${MANAGER_API}/assign/settings/`, { method: 'PUT', body: settings }),
     onSuccess: () => client.invalidateQueries({ queryKey: MANAGER_KEY }),
+  });
+}
+
+export function useAssignRule() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (rule: Omit<RoutingRule, 'seller'> & { seller: number | null }) =>
+      api(`${MANAGER_API}/assign/rules/`, { method: 'PUT', body: rule }),
+    onSuccess: () => client.invalidateQueries({ queryKey: [...MANAGER_KEY, 'assign'] }),
   });
 }
 
