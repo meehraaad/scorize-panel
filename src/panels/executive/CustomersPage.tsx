@@ -12,8 +12,8 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { overviewQuery } from '@/features/executive/api';
-import { ON_SERVER } from '@/lib/applicant/onServer';
 import { pagesOf, useClampPage, type Page } from '@/lib/api/page';
+import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SEARCH_DELAY_MS } from '@/lib/useDebouncedValue';
 import {
@@ -21,6 +21,7 @@ import {
   customerPageOf,
   customersExportHref,
   customersQuery,
+  hasExpandedCustomers,
   CUSTOMER_ORDERS,
   CUSTOMER_QUEUES,
   CUSTOMER_SCOPES,
@@ -39,7 +40,8 @@ const QUEUE_COLOR = {
 };
 
 export default function CustomersPage() {
-  return ON_SERVER.executiveCustomers ? <CustomerList /> : <AssignedCustomers />;
+  const user = useUser();
+  return hasExpandedCustomers(user.executive_customers) ? <CustomerList /> : <AssignedCustomers />;
 }
 
 function useCustomerListParams() {

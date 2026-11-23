@@ -45,6 +45,34 @@ it('opens the new Customers tab and uses the existing assigned-customer list', a
   expect(screen.queryByRole('button', { name: 'Upload CSV' })).not.toBeInTheDocument();
 });
 
+it('opens the expanded list when the live Django session advertises it', async () => {
+  flag.expanded = false;
+  server.use(
+    http.get('/api/profile/auth/v1/whoami/', () =>
+      HttpResponse.json({
+        id: 2,
+        first_name: 'Maryam',
+        last_name: 'Kazemi',
+        email: 'maryam@example.test',
+        phone_number: null,
+        staff: { id: 7, full_name: 'Maryam Kazemi', is_active: true, team: 1 },
+        is_superuser: false,
+        permissions: [],
+        group_permissions: [],
+        applicant: null,
+        is_country_supervisor: false,
+        executive_panel: true,
+        executive_customers: true,
+        last_workspace: 'executive',
+        workspace_mode: 'last',
+      }),
+    ),
+  );
+  renderApp('/executive/customers');
+  expect(await screen.findByRole('searchbox', { name: 'Search customers' })).toBeVisible();
+  expect(await screen.findByRole('columnheader', { name: 'My next task' })).toBeInTheDocument();
+});
+
 it('switches scope, pages through customers and resets to page one when filtering by a queue', async () => {
   const user = userEvent.setup();
   const router = renderApp('/executive/customers');

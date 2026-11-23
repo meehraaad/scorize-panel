@@ -65,8 +65,15 @@ export const executivePanel: PanelDefinition = {
         skeleton: 'list',
       }),
       loader: async ({ request }) => {
-        const { customerListQueries } = await import('./customersApi');
-        prefetchQueries(customerListQueries(new URL(request.url).searchParams));
+        const [user, { customerListQueries }] = await Promise.all([
+          queryClient.query({ ...sessionQuery, staleTime: 'static' }),
+          import('./customersApi'),
+        ]);
+        if (user && getRoles(user).includes('executive')) {
+          prefetchQueries(
+            customerListQueries(new URL(request.url).searchParams, user.executive_customers),
+          );
+        }
         return null;
       },
     },
