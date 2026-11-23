@@ -175,6 +175,7 @@
     "open": "Open {{name}}'s file",
     "column": {
       "applicant": "Applicant",
+      "supervisors": "Supervisors",
       "stage": "Stage",
       "contract": "Contract",
       "cv": "CV",
@@ -399,6 +400,7 @@
     "unread": "unread messages",
     "emptyTitle": "Nothing waiting",
     "empty": "New messages from applicants show up here.",
+    "openOrder": "Open the writing order for {{name}}",
     "openCase": "{{name}}'s file"
   },
   "chat": {
@@ -771,5 +773,123 @@
     "allApplications": "All applications and emails",
     "noApplications": "No application for {{country}} yet.",
     "searchSoon": "The search tool (suggested programs and professors) will come here. For now, move the search on by its stages on this tab."
+  },
+  "manager": {
+    "nav": "Supervisor management sections",
+    "section": {
+      "new": "New cases",
+      "cases": "Team cases",
+      "team": "Team",
+      "move": "Move cases",
+      "services": "Service status",
+      "scopes": "Supervisors",
+      "kinds": "Services"
+    },
+    "cases": {
+      "title": "Team cases",
+      "subtitle": "{{n}} cases. Each case names its supervisors.",
+      "supervisor": "Supervisor",
+      "everyone": "Everyone",
+      "nobody": "No supervisor"
+    },
+    "team": {
+      "title": "Team",
+      "subtitle": "Each supervisor's and visa expert's load in active cases, the busiest first.",
+      "people": "Team members",
+      "empty": "Nobody is on the executive or visa team.",
+      "kind": {
+        "executive": "Executive",
+        "visa": "Visa"
+      },
+      "cases": "Cases",
+      "waiting": "Waiting for an answer",
+      "waitingSince": "{{n}} · oldest {{since}}",
+      "services": "Services",
+      "tasks": "Open tasks",
+      "overdue": "Overdue tasks",
+      "totals": {
+        "label": "Team summary",
+        "cases": "Active cases",
+        "waiting": "Cases waiting for an answer",
+        "noSupervisor": "Cases without a supervisor",
+        "unownedServices": "Services without an owner"
+      },
+      "openNoSupervisor": "See cases without a supervisor",
+      "openUnowned": "Choose service owners"
+    },
+    "move": {
+      "open": "Move cases",
+      "chosenOpen": "Give to someone else",
+      "title": "Move {{name}}'s cases",
+      "all": "All {{n}} of their active cases go to the person you choose.",
+      "chosen": "The {{n}} chosen cases go to the person you choose.",
+      "to": "Give to",
+      "from": "Whose cases?",
+      "choose": "Choose",
+      "toRequired": "Choose who gets the cases.",
+      "person": "{{name}} ({{n}} cases)",
+      "confirm": "Move cases",
+      "note": "The services they own on these cases go too. The new supervisor gets each case's \"contact the applicant\" task.",
+      "done": "{{n}} cases and {{services}} services went to {{name}}.",
+      "pageTitle": "Move cases",
+      "pageSubtitle": "When someone leaves or is on leave, give their cases to someone else: all at once, or a few from their list.",
+      "moveAll": "Move all {{n}} active cases",
+      "pick": "Choose some cases"
+    },
+    "kinds": {
+      "title": "Services",
+      "subtitle": "What we sell and work on: each service's name, team, stages and tool. Make a simple service such as a digital nomad visa here, without code.",
+      "new": "New service",
+      "newText": "A simple service has stages only, no tool of its own. It is added to contracts like any other.",
+      "make": "Make service",
+      "made": "\"{{name}}\" was made. Now add its stages.",
+      "edit": "Edit",
+      "editTitle": "Edit {{name}}",
+      "save": "Save",
+      "saved": "\"{{name}}\" saved.",
+      "name": "Service name",
+      "nameRequired": "Write a name.",
+      "team": "Team",
+      "noTeam": "No team",
+      "perCountry": "Per country",
+      "oncePerCase": "One per case",
+      "open": "{{n}} open",
+      "inactive": "Inactive",
+      "perCountryLabel": "Per country",
+      "perCountryHint": "On: one service for each country of the contract.",
+      "perCountryFixed": "This rule no longer changes: it is a built-in service or has open services.",
+      "activeLabel": "Active",
+      "activeHint": "Off: not offered in new contracts. Open services stay.",
+      "tool": {
+        "admission": "Tool: the country's applications on the case page",
+        "visa": "Tool: visa results and their form",
+        "correspondence": "Tool: the professors' email bot and the emails it sent",
+        "writing": "Tool: the writing order (SOP and CV), no stages",
+        "none": "Tool: not built yet, stages only for now",
+        "simple": "Simple service: stages only"
+      },
+      "stages": {
+        "open": "Stages",
+        "of": "Stages of {{name}}",
+        "none": "This service has no stages yet.",
+        "chip": "{{n}}. {{name}}",
+        "inCountry": "{{name}} ({{country}})",
+        "title": "Stages of {{name}}",
+        "text": "In order, first to last. A final stage means the service is done.",
+        "row": "Stage {{n}}",
+        "country": "Country",
+        "everyCountry": "Every country",
+        "final": "Final",
+        "up": "Move {{name}} up",
+        "down": "Move {{name}} down",
+        "remove": "Remove {{name}}",
+        "stays": "This stage stays: the system moves services to it, or open services are at it.",
+        "add": "Add a stage",
+        "save": "Save stages",
+        "saved": "Stages of \"{{name}}\" saved.",
+        "conflict": "A stage you removed still has open services, or the system uses it.",
+        "note": "A stage with open services, or one the system moves services to, can be renamed but not removed."
+      }
+    }
   }
 }

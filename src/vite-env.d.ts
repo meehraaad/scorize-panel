@@ -8,6 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_APP_BUILD?: string;
   /** "true" keeps the assessment preview pages in a build (the test server only). */
   readonly VITE_ASSESSMENT_PREVIEW?: string;
+  /** Comma-separated `ON_SERVER` entries this build turns on (the test server only). */
+  readonly VITE_SERVER_FEATURES?: string;
   /** Dev only: "true" serves the API from src/mocks (MSW) instead of Django. */
 }
 

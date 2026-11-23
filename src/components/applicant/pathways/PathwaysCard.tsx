@@ -40,7 +40,7 @@ export function PathwaysCard() {
         ))}
       </span>
       <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-1.5">
-        <h2 id="guest-pathways" className="m-0 font-display text-[21px] font-bold">
+        <h2 id="guest-pathways" className="m-0 font-display text-section font-bold">
           {t('guest.pathways.title')}
         </h2>
         <p className="m-0 text-sm leading-7 text-text-2">{t('guest.pathways.text')}</p>

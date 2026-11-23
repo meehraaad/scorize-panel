@@ -43,6 +43,86 @@ export interface CustomerColumn {
   activities?: StageActivity[];
 }
 
+/** One answer of the pathway quiz: a finder factor (`pathways.rules.FACTORS`, or `gpa`) and its value. */
+export interface PathwayAnswer {
+  factor: string;
+  value: number | string | boolean;
+  /** The profile's value (age, education, english_ielts, work_years, gpa); null: it has none. */
+  profile?: number | string | null;
+  /** The answer says what the profile does; null: the profile doesn't say (older servers: missing). */
+  matches?: boolean | null;
+}
+
+/** One route as the finder showed it to the customer. */
+export interface CustomerPathwayRoute {
+  country: string;
+  /** ISO 3166, for the flag (older servers: missing). */
+  code?: string;
+  pathway: string;
+  goal: 'work' | 'study' | 'any';
+  qualifies: boolean;
+  eligible: boolean;
+  points: number;
+  pass_mark: number | null;
+  max_points?: number;
+  /** The requirements not met (Persian, from Django). */
+  missing: string[];
+  /** Points per criterion (Persian labels). */
+  scores?: { label: string; points: number; max_points: number }[];
+  /** Up to two steps that would raise the points, best first. */
+  improvements?: { label: string; points: number; passes: boolean }[];
+  /** A study route: the chance of admission from Scorize's outcomes. */
+  admission?: {
+    band: 'low' | 'medium' | 'high';
+    chance: number | null;
+    decided?: number;
+    universities?: string[];
+  } | null;
+  /** A study route with costs: the first year in tomans and how it fits the budget. */
+  study?: {
+    first_year_toman: { min: number; max: number } | null;
+    budget_fit: 'fits' | 'tight' | 'over' | 'unknown' | null;
+  } | null;
+  needs_licensed_agent?: boolean;
+}
+
+export interface CustomerPathwayCheck {
+  id: number;
+  created_at: string;
+  answers: PathwayAnswer[];
+  /** Answers about one destination ("a job offer from Germany"). */
+  by_country: { country: string; answers: PathwayAnswer[] }[];
+  /** The study field group, named. */
+  field_group: string | null;
+  occupation: { code: string; name: string } | null;
+  /** `pathways.study.FINDER_BUDGETS` key. */
+  budget: string | null;
+  /** Best first, as the finder sorted them. */
+  results: CustomerPathwayRoute[];
+  /** The GPA they gave, out of 20 (older servers: missing). */
+  gpa?: number | null;
+  /**
+   * The chance of admission per country from Scorize's own decided applications (`insights`), worked
+   * out when the page is read; null without a degree, GPA or field (older servers: missing).
+   */
+  insights?: {
+    /** The degree it is for. */
+    degree: Degree;
+    gpa: number;
+    gpa_from: 'quiz' | 'profile';
+    english_ielts: number | null;
+    /** Best chance first, at most six. */
+    countries: {
+      country: string;
+      code: string;
+      band: 'low' | 'medium' | 'high';
+      chance: number | null;
+      decided: number;
+      similar: { university: string; field: string | null; year: number }[];
+    }[];
+  } | null;
+}
+
 export interface CustomerData {
   /** User id. */
   id: number;
@@ -88,6 +168,11 @@ export interface CustomerData {
     count: number;
     universities: string[];
   } | null;
+  /**
+   * The latest work and migration quiz, as the customer answered it and what they were told. A
+   * record only: the quiz never changes the profile. Null (or missing, an older server): never taken.
+   */
+  pathway_check?: CustomerPathwayCheck | null;
   profile: ProfileItem[];
   purchases: { label: string; status: 'paid' | 'pending' | 'failed' }[];
   /** Wallet credit, toman. */
@@ -168,8 +253,16 @@ export interface HistoryEvent {
   title: string | null;
   text: string;
   customer_summary?: string;
-  /** `assign`: who had the lead before. */
+  /** `assign`: who had the lead (or session) before. */
   previous?: string | null;
+  /** `assign`: a lead or a consultation session changed hands. */
+  subject?: 'lead' | 'consultation';
+  /** `assign`: why, in words; null on rows from before reasons were kept. */
+  reason?: string | null;
+  /** `assign`: the detail of the reason ("همراه لید ۱۲"). */
+  note?: string;
+  /** A contact: the customer's seller at the time, when someone else made the contact. */
+  owner?: string | null;
   /** The stage the contact moved the lead to. */
   stage: LeadStage | null;
 }

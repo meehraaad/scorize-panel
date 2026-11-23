@@ -24,19 +24,21 @@ export function StatGrid({
   label,
   stats,
   compact = false,
+  className = '',
 }: {
   label: string;
   stats: readonly Stat[];
   compact?: boolean;
+  className?: string;
 }) {
   return (
     <section aria-label={label}>
       <dl
-        className={
+        className={`${
           compact
             ? 'm-0 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3'
             : 'm-0 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4'
-        }
+        } ${className}`}
       >
         {stats.map((stat) => (
           <div

@@ -13,14 +13,13 @@ import '@/test/server';
  * page marks something seen, are not waterfalls.)
  */
 
-// The admission-chance quiz, Turkey, the founders assistant, the mail page, customer tags and the
-// office line's phone settings, the client services page and the new-hire form aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
+// Turkey, the founders assistant, the mail page, customer tags and the
+// office line's phone settings and the client services page aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
   return {
     ON_SERVER: {
       ...ON_SERVER,
-      estimate: true,
       turkey: true,
       foundersAssistant: true,
       customerTags: true,
@@ -83,7 +82,6 @@ const PAGES: PageCase[] = [
     // A session's details over the home (old /consultations/41 links land here).
     '/?session=41',
     '/consultations/book',
-    '/estimate',
     '/pathways',
     '/background',
     // The pathway finder alone, without the panel's menus.
@@ -182,12 +180,24 @@ const PAGES: PageCase[] = [
     '/supervisor/tickets',
     '/supervisor/tasks',
     '/supervisor/services',
-    '/supervisor/scopes',
-    '/supervisor/services/report',
+    '/supervisor/manager',
+    '/supervisor/manager/cases',
+    '/supervisor/manager/team',
+    '/supervisor/manager/move',
+    '/supervisor/manager/scopes',
+    '/supervisor/manager/kinds',
+    '/supervisor/manager/services',
     '/supervisor/reports',
     '/supervisor/mail',
   ].map((path) => ({ path, user: MARYAM })),
   // Writer panel.
+  ...[
+    '/executive',
+    '/executive/work',
+    '/executive/tickets',
+    '/executive/tickets?department=writing',
+    '/executive/tasks',
+  ].map((path) => ({ path, user: MARYAM })),
   ...['/writer', '/writer/orders/1240'].map((path) => ({ path, user: MARYAM })),
   // Tickets pages: the thread's messages are chained after the list in the loader. (A case's
   // tickets address in the supervisor panel opens the chat window: Supervisor.test.tsx.)

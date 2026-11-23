@@ -1,6 +1,6 @@
 import type { ChangeEvent, ReactNode } from 'react';
 import { safeHref } from '@/lib/url';
-import { buttonClass } from './buttonStyles';
+import { buttonClass, iconButtonClass } from './buttonStyles';
 import { Icon } from './Icon';
 import { IconButton } from './IconButton';
 
@@ -20,6 +20,7 @@ export function FileDrop({
   hint,
   touchHint,
   compact = false,
+  iconOnly = false,
   inputLabel,
   onFile,
 }: {
@@ -34,6 +35,7 @@ export function FileDrop({
   hint?: string;
   touchHint?: string;
   compact?: boolean;
+  iconOnly?: boolean;
   /** The picker's full name when the visible label is short ("Upload" → "Upload Passport"). */
   inputLabel?: string;
   onFile: (file: File | undefined) => void;
@@ -58,13 +60,10 @@ export function FileDrop({
   if (compact)
     return (
       <span
-        className={buttonClass(
-          'outline',
-          'relative px-4 has-[input:disabled]:opacity-50 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus max-lg:size-11 max-lg:px-0',
-        )}
+        className={`${iconOnly ? iconButtonClass() : buttonClass('outline', 'px-4 max-lg:size-11 max-lg:px-0')} relative has-[input:disabled]:opacity-50 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-focus`}
       >
         <Icon name="paperclip" size={18} />
-        <label htmlFor={id} className="max-lg:sr-only">
+        <label htmlFor={id} className={iconOnly ? 'sr-only' : 'max-lg:sr-only'}>
           {chooseLabel}
         </label>
         {input}

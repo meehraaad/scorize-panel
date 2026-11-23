@@ -14,12 +14,14 @@ export async function beginRecording({
   onTick,
   onFinish,
   onError,
+  stopOnSilence = true,
 }: {
   signal: AbortSignal;
   onStart: () => void;
   onTick: (seconds: number) => void;
   onFinish: (file: File, reason: StopReason) => void;
   onError: () => void;
+  stopOnSilence?: boolean;
 }): Promise<Recording | undefined> {
   const media = await navigator.mediaDevices.getUserMedia({ audio: true });
   if (signal.aborted) {
@@ -93,7 +95,7 @@ export async function beginRecording({
     onStart();
     interval = setInterval(() => onTick(Math.floor((Date.now() - started) / 1000)), 1000);
     timeout = setTimeout(() => stop('limit'), (MAX_VOICE_SECONDS - 1) * 1000);
-    silence = watchSilence(media, () => stop('silence'));
+    if (stopOnSilence) silence = watchSilence(media, () => stop('silence'));
     if (document.visibilityState === 'hidden') stop('hidden');
     return { stop };
   } catch (error) {

@@ -395,6 +395,36 @@ describe('session log: the next step on the board', () => {
     expect(sent).toMatchObject({ follow_up_at: null, follow_up_on: toValue(new Date(), false) });
   });
 
+  it('logs a talk with no follow-up once the seller writes why', async () => {
+    let sent: Record<string, unknown> | null = null;
+    server.use(
+      http.post('/api/sales/v1/customers/:id/contacts/', async ({ request }) => {
+        sent = (await request.json()) as Record<string, unknown>;
+        return new HttpResponse(null, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/sales/customers/105?log=call');
+    const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
+    await user.click(await within(dialog).findByRole('button', { name: 'بدون پیگیری' }));
+    // The follow-up times give way to the reason; the seller can still go back to them.
+    expect(within(dialog).queryByRole('button', { name: 'فقط روز، بدون ساعت' })).toBeNull();
+    expect(within(dialog).getByRole('button', { name: 'تنظیم پیگیری' })).toBeInTheDocument();
+    const save = within(dialog).getByRole('button', { name: 'ثبت بدون پیگیری' });
+    await user.click(save);
+    expect(await within(dialog).findByText('بنویسید چرا پیگیری لازم نیست')).toBeInTheDocument();
+    expect(sent).toBeNull();
+    await user.type(notes(), 'Asked about fees');
+    await user.type(within(dialog).getByLabelText(/چرا پیگیری لازم نیست/), 'He will call us');
+    await user.click(save);
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent).toMatchObject({
+      follow_up_at: null,
+      notes: 'Asked about fees\nبدون پیگیری: He will call us',
+    });
+    expect(sent).not.toHaveProperty('follow_up_on');
+  });
+
   it("asks a session log for the customer's missing facts, a GPA on its own", async () => {
     const { fetchInfo } = await import('@/mocks/legacy/info');
     let saved: Record<string, unknown> | null = null;

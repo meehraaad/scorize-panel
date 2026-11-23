@@ -81,12 +81,12 @@
       }
     },
     "estimate": {
-      "text": "Answer a few short questions to see your chance of admission in each country. Under two minutes."
+      "text": "Answer a few short questions to see which ways abroad fit you and your chance of admission in each country. Only a few minutes."
     },
     "journey": "Every step you take brings your case closer to starting.",
     "pathways": {
       "title": "Find your way abroad",
-      "text": "Answer a few short questions to see which work and residence routes in each country fit you. About two minutes.",
+      "text": "Answer a few short questions to see which ways to study, work or live abroad fit you, and your chance of admission. Only a few minutes.",
       "start": "Start"
     }
   },

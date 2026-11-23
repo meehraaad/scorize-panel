@@ -13,6 +13,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import {
   checkPathways,
   finderOptionsQuery,
+  markFinderStarted,
   type Answers,
   type CountryAnswers,
   type FinderBudget,
@@ -31,6 +32,7 @@ import {
   answeredPathways,
   asksLeft,
   BUDGET,
+  GPA,
   FIELD_OCCUPATION,
   OCCUPATION,
   INCOME_AMOUNT,
@@ -92,6 +94,8 @@ interface Given {
   income: FinderIncome | null;
   /** The ISCO code, null for «don't know»; undefined when the occupation wasn't asked (sent only once it was). */
   occupation?: string | null | undefined;
+  /** The GPA band's middle (out of 20), asked for study routes' admission chance; sent apart from the factors. */
+  gpa: number | null;
 }
 const givenOf = (parts: readonly Part[]): Given => {
   const {
@@ -99,12 +103,14 @@ const givenOf = (parts: readonly Part[]): Given => {
     [INCOME_AMOUNT]: amount,
     [INCOME_CURRENCY]: currency,
     [OCCUPATION]: occupation,
+    [GPA]: gpa,
     ...answers
   } = mergeAnswers(Object.fromEntries(parts.map((part) => [part.id, part.set])));
   return {
     answers,
     byCountry: mergeByCountry(parts.map((part) => part.byCountry)),
     budget: typeof budget === 'string' ? (budget as FinderBudget) : null,
+    gpa: typeof gpa === 'number' ? gpa : null,
     income:
       typeof amount === 'number' && INCOME_CURRENCIES.some((name) => name === currency)
         ? { amount, currency: currency as FinderIncome['currency'] }
@@ -219,6 +225,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
         given.budget,
         given.income,
         given.occupation,
+        { gpa: given.gpa, goal },
       ),
   });
   // Found routes' verdicts, fetched in the background while the questions go on.
@@ -231,6 +238,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
         given.budget,
         given.income,
         given.occupation,
+        { gpa: given.gpa, goal },
       ),
   });
 
@@ -396,6 +404,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
             onPick={(value) => {
               setGoal(value);
               setMemory({ ...memory, goal: value });
+              void markFinderStarted();
               if (!nextAsk(pathways, value, answered)) evaluate(answers, 'results');
             }}
             actions={(next) => (
@@ -448,12 +457,12 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
               />
             ) : (
               <AskAnswer
-                ask={withPrefill(ask, options.prefill?.work_years)}
+                ask={withPrefill(ask, options.prefill)}
                 countries={countriesFor(pathways, goal, ask, answered)}
                 busy={check.isPending}
                 onBack={back}
                 rates={options.rates}
-                remembered={memory[ask.id]}
+                remembered={memory[ask.id] ?? prefilledOption(ask.id, options.prefill)}
                 allCountries={options.countries}
                 onAnswer={(set, byCountry, skips, picked) => {
                   if (picked) setMemory({ ...memory, [ask.id]: picked });
@@ -470,10 +479,36 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
 }
 
 /** The work years from the profile, as the number question's first value (still editable). */
-function withPrefill(ask: Ask, workYears: number | null | undefined): Ask {
-  if (ask.id !== 'work_years' || typeof workYears !== 'number') return ask;
-  const years = Math.round(workYears);
-  return { ...ask, start: Math.min(Math.max(years, ask.min ?? 0), ask.max ?? years) };
+/**
+ * A number question starts at what the profile says (age, years of work). Only a starting point: the
+ * person can change it, and the quiz never writes it back to the profile.
+ */
+function withPrefill(ask: Ask, prefill: FinderOptions['prefill']): Ask {
+  const known =
+    ask.id === 'work_years' ? prefill?.work_years : ask.id === 'age' ? prefill?.age : undefined;
+  if (typeof known !== 'number') return ask;
+  const value = Math.round(known);
+  return { ...ask, start: Math.min(Math.max(value, ask.min ?? 0), ask.max ?? value) };
+}
+
+/** The option of an options question the profile picks first (education, the English band). */
+function prefilledOption(askId: string, prefill: FinderOptions['prefill']): string | undefined {
+  if (askId === 'education') return prefill?.education ?? undefined;
+  if (askId === GPA && typeof prefill?.gpa === 'number') {
+    const gpa = prefill.gpa;
+    return gpa >= 18 ? '18_plus' : gpa >= 16 ? '16_18' : gpa >= 14 ? '14_16' : 'below_14';
+  }
+  if (askId !== 'english' || typeof prefill?.english_ielts !== 'number') return undefined;
+  const band = prefill.english_ielts;
+  return band >= 8.5
+    ? 'ielts_8_5'
+    : band >= 7
+      ? 'ielts_7'
+      : band >= 5.5
+        ? 'ielts_5_5'
+        : band >= 4
+          ? 'ielts_4'
+          : 'none';
 }
 
 /** The field and occupation from the profile, shown picked. */

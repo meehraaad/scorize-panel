@@ -1,10 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { ON_SERVER, type ServerFeature } from '@/lib/applicant/onServer';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { addHeldConsultation, feedbackSent } from '@/mocks/applicant';
-import { addLatestEstimate } from '@/mocks/estimate';
 import { bookingsSent, setStartOffers } from '@/mocks/journey';
 import { renderApp } from '@/test/renderApp';
 import { toasts } from '@/test/toasts';
@@ -104,31 +102,6 @@ describe('applicant home', () => {
     expect(await within(ticket).findByText('امتیاز شما: ۴ از ۵')).toBeInTheDocument();
   });
 
-  it('welcomes someone without a contract: the journey', async () => {
-    // Before the quiz is on the server; with it, the quiz takes the journey's place (estimate tests).
-    const onServer = ON_SERVER as Record<ServerFeature, boolean>;
-    onServer.estimate = false;
-    onTestFinished(() => {
-      onServer.estimate = true;
-    });
-    loginAs(MARYAM);
-    renderApp('/');
-    expect(
-      await screen.findByRole('heading', { name: 'سلام مریم، به اسکورایز خوش آمدید', level: 1 }),
-    ).toBeInTheDocument();
-    const hero = screen.getByRole('region', { name: 'از اولین مشاوره تا ویزا، همه‌چیز در یک پنل' });
-    expect(within(hero).getAllByRole('listitem')).toHaveLength(6);
-    expect(within(hero).getByRole('link', { name: 'رزرو مشاوره‌ی اپلای' })).toHaveAttribute(
-      'href',
-      '/consultation/',
-    );
-    expect(within(hero).getByRole('button', { name: 'درخواست تماس مشاور' })).toBeInTheDocument();
-
-    // No previews of the locked sections, no list of what is open now.
-    expect(screen.queryByRole('region', { name: 'پنل شما بعد از قرارداد' })).toBeNull();
-    expect(screen.queryByRole('region', { name: 'همین حالا در دسترس شماست' })).toBeNull();
-  });
-
   it('leads someone without a contract toward one: the consultation, ways to start', async () => {
     loginAs(MARYAM);
     renderApp('/');
@@ -157,18 +130,6 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
   });
 
-  it('after the quiz, with nothing booked: the consultation card leads', async () => {
-    loginAs(MARYAM);
-    addLatestEstimate(MARYAM);
-    renderApp('/');
-    const card = await screen.findByRole('region', {
-      name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید',
-    });
-    const paths = screen.getByRole('region', { name: 'از کجا شروع کنیم؟' });
-    expect(card.compareDocumentPosition(paths) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.queryByRole('region', { name: 'پرونده‌ی شما چقدر آماده است؟' })).toBeNull();
-  });
-
   it('before a booked session: the countdown, the calendar, its topics and their seller', async () => {
     loginAs(MARYAM);
     addHeldConsultation(MARYAM, -2);
@@ -193,13 +154,14 @@ describe('applicant home', () => {
     ).toBeInTheDocument();
   });
 
-  it('first visit: the result locked beside the quiz, and the consultation at its soonest free time', async () => {
+  it('first visit: the pathway finder leads, and the consultation at its soonest free time', async () => {
     onDesktop();
     const user = userEvent.setup();
     loginAs(MARYAM);
     const router = renderApp('/');
-    expect(await screen.findByRole('region', { name: 'شانس شما در هر کشور' })).toBeInTheDocument();
+    const finder = await screen.findByRole('region', { name: 'راه مهاجرتت را پیدا کن' });
     const talk = screen.getByRole('region', { name: 'قبل از هر هزینه‌ای، مسیرتان را روشن کنید' });
+    expect(finder.compareDocumentPosition(talk) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // One offer: the soonest free time, whichever way it is held.
     expect(await within(talk).findByText('نزدیک‌ترین وقت خالی')).toBeInTheDocument();
     // "Another time" opens the booking popup.

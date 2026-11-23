@@ -61,6 +61,7 @@ interface ComposerProps {
   /** `ticket` in a narrow box (a floating chat window): the phone bar at every size. */
   compact?: boolean;
   accessory?: ReactNode;
+  secondaryAction?: ReactNode;
 }
 
 const CHOICE = {
@@ -97,6 +98,7 @@ export function Composer({
   hint,
   compact = false,
   accessory,
+  secondaryAction,
 }: ComposerProps) {
   // The wide layout's classes, left out when compact keeps the phone bar at every size.
   const lg = (classes: string) => (compact ? '' : classes);
@@ -234,6 +236,7 @@ export function Composer({
           <FileDrop
             id={`${id}-file`}
             compact
+            iconOnly
             accept={attach.accept}
             disabled={sending || !!attach.disabled}
             errorId={fileError}
@@ -257,16 +260,19 @@ export function Composer({
         placeholder={placeholder}
         className={`min-h-11 w-full resize-none rounded-[22px] bg-canvas px-4 py-2 text-base leading-7 text-text shadow-[inset_0_0_0_1px_var(--line-2)] outline-0 placeholder:text-text-2 focus-visible:shadow-[inset_0_0_0_2px_var(--focus)] ${lg('lg:order-1 lg:col-span-3 lg:min-h-[124px] lg:rounded-[18px] lg:py-3.5 lg:leading-[1.9]')}`}
       />
-      <Button
-        type="submit"
-        disabled={!canSend || sending}
-        className={
-          compact ? 'size-11 px-0' : 'max-lg:size-11 max-lg:px-0 lg:order-5 lg:col-start-3'
-        }
+      <div
+        className={`flex items-center gap-1 ${lg('lg:order-5 lg:col-start-3 lg:justify-self-end')}`}
       >
-        <Icon name="send" size={18} className={lg('lg:hidden')} />
-        <span className={compact ? 'sr-only' : 'max-lg:sr-only'}>{sendLabel}</span>
-      </Button>
+        {secondaryAction}
+        <Button
+          type="submit"
+          disabled={!canSend || sending}
+          className={compact ? 'size-11 flex-none px-0!' : 'flex-none max-lg:size-11 max-lg:px-0!'}
+        >
+          <Icon name="send" size={18} className={`shrink-0 ${lg('lg:hidden')}`} />
+          <span className={compact ? 'sr-only' : 'max-lg:sr-only'}>{sendLabel}</span>
+        </Button>
+      </div>
     </form>
   );
 }

@@ -237,7 +237,8 @@ export const salesPanel: PanelDefinition = {
       children: [
         {
           index: true,
-          ...lazyPage(() => import('@/features/sales/CustomerSummaryPage'), [], {
+          // `pathways`: the quiz card names the factors and choices as the quiz words them.
+          ...lazyPage(() => import('@/features/sales/CustomerSummaryPage'), ['pathways'], {
             data: (args) => {
               const id = customerOf(args);
               // The contract card (S71): the open offer, or the approved contract.
@@ -354,7 +355,7 @@ export const salesPanel: PanelDefinition = {
         {
           path: 'team',
           ...lazyPage(() => import('@/features/sales/manager/TeamPage'), [], {
-            data: () => [teamQuery('month'), ON_SERVER.estimate && funnelQuery('month')],
+            data: () => [teamQuery('month'), funnelQuery('month')],
             skeleton: 'dashboard',
           }),
         },

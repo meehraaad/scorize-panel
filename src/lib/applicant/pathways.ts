@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import type { StudyInfo } from '@/lib/applicant/estimate';
+import type { StudyInfo } from '@/lib/applicant/study';
 
 /**
  * The pathway finder (any account): the official routes to work or live in a country that staff
@@ -41,6 +41,28 @@ export interface FinderPathway {
   cost: PathwayCost;
   /** A study route with a year's costs: the finder asks the budget for it. Absent on older servers. */
   has_costs?: boolean;
+  /**
+   * A study route in a country with Scorize's own decided applications: the finder asks the GPA and
+   * the field, and the result carries `admission`. Absent on older servers.
+   */
+  has_admission?: boolean;
+}
+
+/** GPA bands the finder asks in (out of 20); each sends its middle (Django `insights` groups by them). */
+export const FINDER_GPAS = { below_14: 13, '14_16': 15, '16_18': 17, '18_plus': 18.5 } as const;
+export type FinderGpa = keyof typeof FINDER_GPAS;
+
+/** A study route's chance of admission, from Scorize's own decided applications. */
+export interface PathwayAdmission {
+  band: 'low' | 'medium' | 'high';
+  /** 0–100 where there are enough outcomes to show it; null: the band only. */
+  chance: number | null;
+  /** Decided applicants behind it (country and degree). */
+  decided: number;
+  /** The degree it is for (0 diploma … 3 PhD). */
+  degree: number;
+  /** Newest accepted applicants like them, where at least 5 match. */
+  similar: { university: string; field: string | null; year: number }[];
 }
 
 /** What the person can spend on the first year, in tomans (Django `pathways.study.FINDER_BUDGETS`). */
@@ -74,6 +96,12 @@ export interface FieldGroup {
   name: string;
 }
 
+/** A top study field found by a search, maybe through one of its sub-fields. */
+export interface FieldMatch extends FieldGroup {
+  /** The sub-field whose name matched; '' when the group's own name did. */
+  matched: string;
+}
+
 /** An ISCO-08 occupation: its 4-digit code and its names. */
 export interface Occupation {
   code: string;
@@ -82,6 +110,14 @@ export interface Occupation {
 }
 
 export interface FinderPrefill {
+  /** The highest degree's GPA, out of 20 (older servers: missing). */
+  gpa?: number | null;
+  /** From the birth date (older servers: missing). */
+  age?: number | null;
+  /** The highest degree, as a finder level. */
+  education?: 'secondary' | 'bachelor' | 'master' | 'phd' | null;
+  /** The best English exam as its IELTS band. */
+  english_ielts?: number | null;
   field_group: number | null;
   occupation: { code: string; name: string } | null;
   work_years: number | null;
@@ -128,6 +164,8 @@ export interface PathwayResult {
   study?: FinderStudy | null;
   /** Answers Django worked out from the occupation (on the country's list or not). Absent on older servers. */
   derived?: PathwayDerived;
+  /** A study route: the chance of admission there; null without the GPA and field, or no outcomes. */
+  admission?: PathwayAdmission | null;
 }
 
 /** The yes/no factors the occupation answers by itself. */
@@ -162,6 +200,21 @@ export const occupationSearchQuery = (text: string) =>
         `${PATHWAYS_API}/?occupation_search=${encodeURIComponent(text)}`,
       ),
     select: (data) => data.occupations ?? [],
+    staleTime: 5 * 60_000,
+  });
+
+/**
+ * Top study fields whose own name, or a sub-field's at any depth, has these words (up to 20): "نرم افزار" finds
+ * its group. Absent on older servers: then only the groups' own names are searched, on the device.
+ */
+export const fieldSearchQuery = (text: string) =>
+  queryOptions({
+    queryKey: ['applicant', 'pathways', 'fields', text],
+    queryFn: () =>
+      api<{ field_matches?: FieldMatch[] }>(
+        `${PATHWAYS_API}/?field_search=${encodeURIComponent(text)}`,
+      ),
+    select: (data) => data.field_matches ?? [],
     staleTime: 5 * 60_000,
   });
 
@@ -207,6 +260,11 @@ export const checkPathways = (
   income: FinderIncome | null = null,
   /** The ISCO code picked, null for "don't know"; left out when the question wasn't asked (older servers). */
   occupation?: string | null,
+  /**
+   * `gpa`: out of 20, asked for study routes with an admission chance (left out when not asked);
+   * `goal`: what they picked first, for the sales funnel.
+   */
+  extra: { gpa?: number | null; goal?: PathwayGoal | null } = {},
 ) =>
   api<PathwayCheck>(`${PATHWAYS_API}/check/`, {
     method: 'POST',
@@ -217,5 +275,11 @@ export const checkPathways = (
       income,
       contact,
       ...(occupation === undefined ? {} : { occupation }),
+      ...(typeof extra.gpa === 'number' ? { gpa: extra.gpa } : {}),
+      ...(extra.goal ? { goal: extra.goal } : {}),
     },
   });
+
+/** The person opened the finder: the sales funnel's first step (once a day per person on the server). */
+export const markFinderStarted = () =>
+  api<undefined>(`${PATHWAYS_API}/started/`, { method: 'POST' }).catch(() => undefined);

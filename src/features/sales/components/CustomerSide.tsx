@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { Link } from 'react-router';
@@ -5,11 +6,12 @@ import { Notebook } from '@/components/notes/Notebook';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { SALES_API, maskPhone } from '@/lib/sales/api';
+import { SALES_API } from '@/lib/sales/api';
 import { safeHref } from '@/lib/url';
 import type { CustomerData, ProfileItem, ProfileKey } from '../api';
 import { customerPath } from '../paths';
 import { useSalesFormat } from '../format';
+import { PhoneLogLink } from './PhoneLogLink';
 
 /** Profile rows by group, in this order. */
 const GROUPS: { id: 'goal' | 'background' | 'more'; keys: ProfileKey[] }[] = [
@@ -70,7 +72,16 @@ export function CustomerSide({ customer }: { customer: CustomerData }) {
           <Rows
             label={t('side.contact')}
             rows={[
-              { label: t('side.phone'), value: f.digits(maskPhone(customer.phone)), ltr: true },
+              {
+                label: t('side.phone'),
+                value: (
+                  <PhoneLogLink
+                    customer={customer.id}
+                    phone={customer.phone}
+                    name={named(customer.name)}
+                  />
+                ),
+              },
               ...(customer.email
                 ? [{ label: t('side.email'), value: customer.email, ltr: true }]
                 : []),
@@ -150,7 +161,7 @@ function Rows({
   rows,
 }: {
   label: string;
-  rows: { label: string; value: string; ltr?: boolean }[];
+  rows: { label: string; value: ReactNode; ltr?: boolean }[];
 }) {
   return (
     <div className="flex flex-col gap-1 pt-3 shadow-[inset_0_1px_0_var(--hair)] first:pt-0 first:shadow-none">

@@ -37,6 +37,8 @@ export interface SessionUser {
   } | null;
   /** Supervises a country's applicants (User.is_user_country_supervisor, R2). */
   is_country_supervisor: boolean;
+  /** Older Django versions do not advertise the Executive Panel API. */
+  executive_panel?: boolean;
   /** The panel opened last (or the one pinned with `always`), and what opens after login (R6). */
   last_workspace: Role | null;
   workspace_mode: 'last' | 'always' | 'ask';

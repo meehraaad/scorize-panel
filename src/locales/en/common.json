@@ -34,11 +34,9 @@
         "tickets": "Tickets",
         "reports": "Reports",
         "tasks": "My tasks",
-        "new": "New cases",
         "mail": "Mailboxes",
         "services": "My services",
-        "scopes": "Supervisors",
-        "servicesReport": "Service status"
+        "manager": "Management"
       },
       "tabs": {
         "today": "Today",
@@ -62,6 +60,17 @@
         "access": "Access"
       },
       "description": "Analysis assistant, messages and access"
+    },
+    "executive": {
+      "name": "Executive Panel",
+      "description": "Assigned customer work, tickets and tasks",
+      "nav": {
+        "label": "Executive Panel menu",
+        "table": "Table",
+        "work": "Work Table",
+        "tickets": "Tickets",
+        "tasks": "Tasks"
+      }
     },
     "writer": {
       "name": "Writing panel",

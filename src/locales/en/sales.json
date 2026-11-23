@@ -259,6 +259,8 @@
       "cold": "Cold (under 45)"
     },
     "overdueOnly": "Overdue only",
+    "noFollowUpOnly": "No next step",
+    "noFollowUpCount": "No next step ({{n}})",
     "consultationMode": "In person or not",
     "modeOption": {
       "all": "In person and not",
@@ -523,9 +525,14 @@
         "lead": "Lead created and given to {{author}}",
         "leadNew": "Lead created",
         "assign": "Lead moved from {{previous}} to {{title}} · {{author}}",
-        "assignFirst": "Lead given to {{title}} · {{author}}"
+        "assignFirst": "Lead given to {{title}} · {{author}}",
+        "assignSession": "Session moved from {{previous}} to {{title}} · {{author}}",
+        "assignSessionFirst": "Session given to {{title}} · {{author}}"
       },
       "system": "System",
+      "reason": "Why: {{reason}}",
+      "noReason": "No reason kept (from before reasons were recorded)",
+      "otherSeller": "{{owner}}'s customer at the time",
       "stageTag": "Stage: {{stage}}",
       "filter": "Show",
       "filters": {
@@ -550,6 +557,115 @@
       "text": "{{n}} Scorize applicants with a background like {{name}}'s ({{background}}) got offers from these universities:",
       "background": "{{degree}} in {{field}}, GPA {{gpa}}",
       "backgroundNoField": "{{degree}}, GPA {{gpa}}"
+    },
+    "pathways": {
+      "title": "Migration routes",
+      "taken": "From the panel's finder · {{date}}",
+      "view": "Card view",
+      "tabs": {
+        "routes": "Routes",
+        "answers": "Answers",
+        "chances": "Admission"
+      },
+      "best": {
+        "eyebrow": "Best option for this customer",
+        "of": "of {{n}}",
+        "extra": "{{n}} points over the pass mark.",
+        "admission": "Qualifies, with a {{band}} chance of admission.",
+        "plain": "Meets every requirement of this route."
+      },
+      "numbers": {
+        "fits": "Routes that fit",
+        "of": "of {{n}}",
+        "near": "Close to passing",
+        "admission": "Best admission chance",
+        "none": "—"
+      },
+      "route": "{{country}} · {{pathway}}",
+      "routes": "All routes",
+      "sorted": "Best fit first",
+      "noRoutes": "No routes were checked.",
+      "goal": {
+        "work": "Work",
+        "study": "Study",
+        "any": "Work and study"
+      },
+      "verdict": {
+        "qualifies": "Qualifies",
+        "eligible": "Short on points",
+        "near": "Close",
+        "not": "Doesn't qualify"
+      },
+      "band": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low"
+      },
+      "admissionShort": {
+        "high": "High admission chance",
+        "medium": "Medium admission chance",
+        "low": "Low admission chance"
+      },
+      "points": "{{points}} of {{pass}} points",
+      "detail": {
+        "points": "Points",
+        "score": "{{label}} {{n}}",
+        "admission": "Chance of admission",
+        "percent": "about {{n}}%",
+        "decided": "Based on {{n}} Scorize applicants with a similar background",
+        "similar": "People like them were accepted at: {{list}}",
+        "cost": "First-year cost",
+        "costRange": "About {{min}} to {{max}} billion tomans",
+        "fit": {
+          "fits": "Fits their budget",
+          "tight": "Only at cheaper universities",
+          "over": "Over their budget"
+        },
+        "missing": "Missing",
+        "next": "Next step",
+        "nothing": "Nothing missing.",
+        "step": "{{step}}: +{{n}} points",
+        "stepPasses": "{{step}}: +{{n}} points, enough to pass",
+        "agent": "Only a licensed agent may handle this route."
+      },
+      "answers": "The customer's answers",
+      "differ": "{{n}} answers differ from the profile",
+      "groups": {
+        "education": "Education",
+        "languageWork": "Language and work",
+        "personal": "Personal and money",
+        "other": "Other"
+      },
+      "same": "Same as profile",
+      "inProfile": "In the profile: {{value}}",
+      "editProfile": "Edit profile",
+      "about": "About {{country}}",
+      "pair": "{{label}}: {{value}}",
+      "ielts": "IELTS {{n}}",
+      "years": "{{n}} years",
+      "occupation": "Occupation",
+      "budget": "First-year budget",
+      "gpa": "GPA",
+      "yes": "Yes",
+      "no": "No",
+      "call": {
+        "title": "For the call",
+        "best": "{{route}} is ready.",
+        "near": "{{country}} passes with “{{step}}” (+{{n}} points).",
+        "admission": "For {{country}} the chance of admission is {{band}}."
+      },
+      "note": "The answers the customer gave in the finder; it doesn't change their profile.",
+      "copyLink": "Copy finder link",
+      "copied": "Finder link copied.",
+      "copyFailed": "Couldn't copy. Try again.",
+      "chances": {
+        "title": "Chance of admission by country",
+        "for": "For {{degree}} · GPA {{gpa}}",
+        "forProfile": "For {{degree}} · GPA {{gpa}} (from the profile)",
+        "percent": "About {{n}}% chance",
+        "similar": "Admissions of people like them in {{country}}",
+        "note": "From Scorize's own applicants' final results, updated nightly. An estimate, not a promise."
+      }
     },
     "profile": {
       "key": {
@@ -650,7 +766,16 @@
         "telegram": "Saving opens your Telegram and copies the ready message; paste and send it. No SMS goes out, and a follow-up is set for tomorrow.",
         "none": "Nothing is sent. Only a follow-up for tomorrow is set."
       },
-      "noAnswerSmsText": "The SMS that goes out"
+      "noAnswerSmsText": "The SMS that goes out",
+      "noFollowUp": "No follow-up",
+      "noFollowUpOn": "This lead needs no follow-up",
+      "setFollowUp": "Set a follow-up",
+      "noFollowReason": "Why is no follow-up needed? (required)",
+      "noFollowReasonPlaceholder": "e.g. they will call us, they only had a question",
+      "noFollowReasonNeeded": "Write why no follow-up is needed",
+      "noFollowHint": "The customer's open follow-up closes and the lead shows in the “No next step” list.",
+      "noFollowNote": "No follow-up: {{reason}}",
+      "saveNoFollow": "Save without follow-up"
     },
     "tabs": {
       "label": "Customer page sections",
@@ -1339,6 +1464,7 @@
     },
     "assign": {
       "title": "{{n}} leads have no owner",
+      "history": "Changes to these settings",
       "titleNone": "Every lead has an owner",
       "subtitle": "The oldest has waited {{age}}. With automatic assignment this queue stays empty.",
       "auto": "Automatic assignment",
@@ -3115,5 +3241,9 @@
     "hint": "Tap a free spot to pick that time. Your sessions and other follow-ups show too.",
     "picked": "New follow-up",
     "pickedAria": "Picked time: {{day}} at {{time}}"
+  },
+  "phoneLog": {
+    "open": "Log a call with {{name}}, {{phone}}",
+    "hint": "Open the call log, with the full number"
   }
 }

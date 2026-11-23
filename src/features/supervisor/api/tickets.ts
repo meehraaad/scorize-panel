@@ -35,6 +35,7 @@ export interface InboxItem {
    * Django.
    */
   thread?: string;
+  thread_name?: string;
 }
 
 /** A page of the chosen filter, and how many threads each filter has. */
