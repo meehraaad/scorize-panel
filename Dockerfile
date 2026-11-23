@@ -5,7 +5,7 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 COPY . .
-ARG VITE_ENABLE_PWA=false
+ARG VITE_ENABLE_PWA=true
 ENV VITE_ENABLE_PWA=$VITE_ENABLE_PWA
 # "true" only on the test server: keeps the assessment preview pages in the build.
 ARG VITE_ASSESSMENT_PREVIEW=false

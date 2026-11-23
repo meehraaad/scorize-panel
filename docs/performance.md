@@ -94,8 +94,8 @@ downloads are ignored.
   names the same user. The session is never saved; logout and login wipe it; an hour, a new
   build or another language discards it.
 - **Static files**: hashed assets are `immutable` for a year, `index.html` is `no-cache`, files are
-  pre-gzipped (`nginx.conf.template`, `Dockerfile`). The service worker (offline precache) is off until
-  the PWA milestone (`VITE_ENABLE_PWA`, docs/PWA.md).
+  pre-gzipped (`nginx.conf.template`, `Dockerfile`). Docker builds precache the app shell and static
+  assets through the service worker ([PWA](PWA.md)).
 - A language change refetches (Django words some fields per language).
 
 ## 5. Measure
@@ -137,7 +137,6 @@ downloads are ignored.
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Django | backend-changes H55 (tickets in one request), V1 (speed reports; then set `VITALS_ON_SERVER`), V2 (p95 under 300 ms, `Server-Timing`), V3 (no N+1), V4 (compressed API answers) |
 | Panel  | Brotli next to the pre-gzipped assets needs an nginx image with the brotli module (the `Dockerfile` uses `nginx-unprivileged`)                                                  |
-| Panel  | The service worker (PWA milestone): repeat visits then load the app's code from the device, even offline                                                                        |
 
 ## Libraries load with their page
 

@@ -39,7 +39,14 @@ server {
     }
 
     # Must always be re-checked, or users get stuck on an old version.
-    location ~ ^${PANEL_BASE}(sw\.js|workbox-.*\.js|manifest\.webmanifest)$ {
+    location ~ ^${PANEL_BASE}(sw\.js|workbox-.*\.js)$ {
+        add_header Cache-Control "no-cache" always;
+        include /etc/nginx/snippets/security-headers.conf;
+        try_files $uri =404;
+    }
+
+    location = ${PANEL_BASE}manifest.webmanifest {
+        types { application/manifest+json webmanifest; }
         add_header Cache-Control "no-cache" always;
         include /etc/nginx/snippets/security-headers.conf;
         try_files $uri =404;
