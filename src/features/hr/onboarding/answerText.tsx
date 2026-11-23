@@ -6,7 +6,7 @@ import { FIELDS, type FieldKey } from './fields';
 import type { OnboardingAnswers } from './api';
 
 /** Digits shown in the reader's numerals: codes and numbers, not emails or names. */
-const NUMERIC = new Set<FieldKey>(['national_code', 'iban', 'emergency_phone']);
+const NUMERIC = new Set<FieldKey>(['national_code', 'id_number', 'iban', 'emergency_phone']);
 
 /** An answer as text (choices in words, dates in the reader's calendar); '' when empty. */
 export function useAnswerText() {
@@ -25,7 +25,6 @@ export function useAnswerText() {
       case 'marital_status':
         return answers.marital_status && t(`marital.${answers.marital_status}`);
       case 'birth_date':
-      case 'real_birth_date':
         return f.date(dayOf(String(value)));
       case 'number_of_children':
         return f.number(Number(value));

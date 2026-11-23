@@ -2,7 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
+import { copyText } from '@/lib/clipboard';
 import { toast } from '@/lib/toast';
+import { isPhoneName } from '../../format';
 import { ONBOARDING_PATH } from '../../paths';
 
 /**
@@ -23,12 +25,16 @@ function inviteLink() {
 export function InviteCard({ name, phone }: { name: string; phone: string }) {
   const { t } = useTranslation('hr');
   const link = inviteLink();
-  const message = t('onboarding.invite.message', { name, phone, url: link });
+  // A file made with the phone only has no name yet: greet without one.
+  const message = isPhoneName(name)
+    ? t('onboarding.invite.messageNoName', { phone, url: link })
+    : t('onboarding.invite.message', { name, phone, url: link });
+  // Every press says how it went (`copyText` falls back where the Clipboard API is missing).
   const copy = (text: string) => {
-    void navigator.clipboard
-      .writeText(text)
-      .then(() => toast.success(t('onboarding.invite.copied')))
-      .catch(() => toast.error(t('onboarding.invite.failed')));
+    copyText(text).then(
+      () => toast.success(t('onboarding.invite.copied')),
+      () => toast.error(t('onboarding.invite.failed')),
+    );
   };
   return (
     <Card aria-label={t('onboarding.invite.title')} className="flex flex-col gap-4 p-5 lg:p-7">

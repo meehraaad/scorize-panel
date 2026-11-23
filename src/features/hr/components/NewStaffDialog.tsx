@@ -19,9 +19,11 @@ import { personPath } from '../paths';
 const CONTRACTS: readonly ContractKind[] = ['trial', 'fixed', 'permanent', 'project'];
 
 /**
- * A new staff member (canvas "کارمند جدید"): who, their position and team, the first day, the
- * first contract and salary. Saving makes their account and file and opens the joining checklist,
- * then opens the file.
+ * A new staff member (canvas "کارمند جدید"): HR only gives what the hire can't type themselves —
+ * their mobile (the login), position and team, the first day, the first contract and salary. The
+ * hire types their names, ID card number and the rest on the new-hire form (until it is approved
+ * the file is named by the phone). Saving makes their account and file, opens the joining
+ * checklist and the form, then opens the file on the invite to send them.
  */
 export default function NewStaffDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation('hr');
@@ -30,11 +32,8 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
   const options = useQuery(optionsQuery);
   const save = useNewStaff();
   const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
     phone: '',
     email: '',
-    id_number: '',
     position: '',
     team: '' as Team | '',
     entry_date: todayValue(),
@@ -51,20 +50,14 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
   const submit = () => {
     const phone = normalizePhone(form.phone);
     const missing: Record<string, string> = {};
-    if (!form.first_name.trim()) missing.first_name = t('form.required');
-    if (!form.last_name.trim()) missing.last_name = t('form.required');
     if (!phone) missing.phone_number = t('form.phone');
-    if (!form.id_number.trim()) missing.id_number = t('form.required');
     if (salary === null) missing.salary = t('form.required');
     setErrors(missing);
     if (Object.keys(missing).length > 0 || !phone || salary === null) return;
     save.mutate(
       {
-        first_name: form.first_name.trim(),
-        last_name: form.last_name.trim(),
         phone_number: phone,
         email: form.email.trim(),
-        id_number: form.id_number.trim(),
         position: form.position ? Number(form.position) : null,
         team: form.team || null,
         entry_date: form.entry_date,
@@ -74,7 +67,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
       },
       {
         onSuccess: (file) => {
-          toast.success(t('newStaff.saved', { name: file.name }));
+          toast.success(t('newStaff.saved'));
           onClose();
           // With the form on: its tab first, where the invite to send the hire is.
           void navigate(
@@ -109,38 +102,16 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField
-          label={t('form.firstName')}
-          value={form.first_name}
-          onChange={(event) => set('first_name')(event.target.value)}
-          error={errors.first_name}
-          autoComplete="off"
-        />
-        <TextField
-          label={t('form.lastName')}
-          value={form.last_name}
-          onChange={(event) => set('last_name')(event.target.value)}
-          error={errors.last_name}
-          autoComplete="off"
-        />
-        <TextField
-          label={t('form.mobile')}
-          value={form.phone}
-          inputMode="tel"
-          dir="ltr"
-          onChange={(event) => set('phone')(event.target.value)}
-          error={errors.phone_number}
-        />
-        <TextField
-          label={t('form.idNumber')}
-          value={form.id_number}
-          inputMode="numeric"
-          dir="ltr"
-          onChange={(event) => set('id_number')(event.target.value)}
-          error={errors.id_number}
-        />
-      </div>
+      <TextField
+        label={t('form.mobile')}
+        hint={t('form.mobileHint')}
+        value={form.phone}
+        inputMode="tel"
+        dir="ltr"
+        autoComplete="off"
+        onChange={(event) => set('phone')(event.target.value)}
+        error={errors.phone_number}
+      />
       <TextField
         label={t('form.email')}
         hint={t('form.emailHint')}

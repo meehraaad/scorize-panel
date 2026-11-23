@@ -38,3 +38,12 @@ export function normalizeIban(input: string): string | null {
   for (const digit of rearranged) rest = (rest * 10 + Number(digit)) % 97;
   return rest === 1 ? `IR${digits}` : null;
 }
+
+/**
+ * An ID card number (شماره شناسنامه) typed with any digits: 1 to 10 Latin digits (newer cards carry
+ * the national code), else null.
+ */
+export function normalizeIdNumber(input: string): string | null {
+  const number = toLatinDigits(input).replace(/[\s-]/g, '');
+  return /^\d{1,10}$/.test(number) ? number : null;
+}

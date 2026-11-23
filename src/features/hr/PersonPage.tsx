@@ -20,7 +20,7 @@ import { safeHref } from '@/lib/url';
 import { fileQuery, type HistoryRow, type StaffFile } from './api';
 import { Facts } from './components/Facts';
 import { MoveCard } from './components/MoveCard';
-import { CONTRACT_TONE, STATE_TONE, dayOf } from './format';
+import { CONTRACT_TONE, STATE_TONE, dayOf, isPhoneName } from './format';
 import { useAnswerText } from './onboarding/answerText';
 import { EMPTY_ANSWERS, type FieldKey } from './onboarding/fields';
 import { hrPath } from './paths';
@@ -47,7 +47,6 @@ const PERSONAL: readonly FieldKey[] = [
   'first_name_en',
   'last_name_en',
   'gender',
-  'real_birth_date',
   'id_issue_place',
   'education',
   'field_of_study',
@@ -81,7 +80,9 @@ export default function PersonPage() {
  */
 function PersonFile({ id }: { id: number }) {
   const { t } = useTranslation('hr');
+  const f = useFormat();
   const { data: file } = useSuspenseQuery(fileQuery(id));
+  const pending = isPhoneName(file.name);
   // Just made (the new staff dialog asks for the form's tab: the invite to send), or a form waiting
   // for HR, come first; then a joining or leaving under way.
   const opened = (useLocation().state as { tab?: Tab } | null)?.tab;
@@ -103,10 +104,16 @@ function PersonFile({ id }: { id: number }) {
     <PageStack>
       <BackLink to={hrPath('staff')}>{t('person.back')}</BackLink>
       <PageHeader
-        title={file.name}
+        // Named by the phone until the hire's form is approved: the number, and why.
+        title={pending ? f.digits(file.name) : file.name}
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
             {sub && <span>{sub}</span>}
+            {pending && (
+              <Chip tone="neutral" small>
+                {t('onboarding.pending')}
+              </Chip>
+            )}
             <Chip tone={STATE_TONE[file.state]} small dot>
               {t(`state.${file.state}`)}
             </Chip>

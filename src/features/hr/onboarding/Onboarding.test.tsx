@@ -38,10 +38,14 @@ describe('new-hire form', () => {
     // Prefilled from the staff file HR made.
     expect(screen.getByLabelText('نام')).toHaveValue('بهار');
     expect(screen.getByLabelText('محل تولد')).toHaveValue('تهران');
+    expect(screen.getByLabelText('شماره شناسنامه')).toHaveValue('4003');
+    // One birth date, two genders.
+    expect(screen.queryByText('تاریخ تولد واقعی')).toBeNull();
+    expect(screen.getAllByRole('radio', { name: /^(مرد|زن)$/ })).toHaveLength(2);
 
-    const send = screen.getByRole('button', { name: 'ارسال برای منابع انسانی' });
+    const send = screen.getByRole('button', { name: 'ارسال' });
     await user.click(send);
-    expect(screen.getAllByText('این را پر کنید').length).toBeGreaterThan(5);
+    expect(screen.getAllByText('این فیلد را کامل کنید').length).toBeGreaterThan(5);
     expect(screen.getByText('تصویر شناسنامه و کارت ملی را بارگذاری کنید')).toBeInTheDocument();
 
     const code = screen.getByLabelText('کد ملی');
@@ -65,9 +69,9 @@ describe('new-hire form', () => {
     await user.type(screen.getByLabelText('نام بانک'), 'ملت');
     await user.type(screen.getByLabelText('ایمیل'), 'bahar.niko@gmail.com');
     await user.type(screen.getByLabelText('نشانی محل سکونت'), 'تهران، خیابان آزادی');
-    await user.type(screen.getByLabelText('نام تماس اضطراری'), 'مریم نیکو');
+    await user.type(screen.getByLabelText('نام مخاطب'), 'مریم نیکو');
     await user.type(screen.getByLabelText('نسبت با شما'), 'مادر');
-    await user.type(screen.getByLabelText('موبایل تماس اضطراری'), '09121234567');
+    await user.type(screen.getByLabelText('شماره تماس'), '09121234567');
 
     await user.upload(
       screen.getByLabelText('انتخاب فایل برای تصویر شناسنامه'),
@@ -79,7 +83,18 @@ describe('new-hire form', () => {
       new File(['x'], 'melli.jpg', { type: 'image/jpeg' }),
     );
     await screen.findByText('melli.jpg');
-    expect(screen.queryByText('این را پر کنید')).toBeNull();
+    expect(screen.queryByText('این فیلد را کامل کنید')).toBeNull();
+
+    // Ali's ID card number: Django refuses it on submit, under the field.
+    const idNumber = screen.getByLabelText('شماره شناسنامه');
+    await user.clear(idNumber);
+    await user.type(idNumber, '4001');
+    await user.click(send);
+    expect(
+      await screen.findByText('A staff file with this ID card number exists.'),
+    ).toBeInTheDocument();
+    await user.clear(idNumber);
+    await user.type(idNumber, '۴۰۰۳');
 
     await user.click(send);
     expect(await toasts().findByText('فرم برای منابع انسانی فرستاده شد')).toBeInTheDocument();
@@ -89,7 +104,7 @@ describe('new-hire form', () => {
       ),
     ).toBeInTheDocument();
     // Sent: read only, with the IBAN as it was cleaned up.
-    expect(screen.queryByRole('button', { name: 'ارسال برای منابع انسانی' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'ارسال' })).toBeNull();
     expect(screen.getByText('IR۸۲۰۵۴۰۱۰۲۶۸۰۰۲۰۸۱۷۹۰۹۰۰۲')).toBeInTheDocument();
   });
 
@@ -143,7 +158,7 @@ describe('new-hire form', () => {
     await user.click(await screen.findByRole('button', { name: 'برگرداندن برای اصلاح' }));
     const dialog = await screen.findByRole('dialog', { name: 'برگرداندن فرم' });
     await user.click(within(dialog).getByRole('button', { name: 'برگرداندن' }));
-    expect(within(dialog).getByText('این را پر کنید')).toBeInTheDocument();
+    expect(within(dialog).getByText('این فیلد را کامل کنید')).toBeInTheDocument();
     await user.type(
       within(dialog).getByLabelText('چه چیزی را باید اصلاح کند؟'),
       'شبا را بررسی کنید',
@@ -158,7 +173,7 @@ describe('new-hire form', () => {
     expect(
       await screen.findByText('منابع انسانی فرم را برای اصلاح برگرداند: شبا را بررسی کنید'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'ارسال برای منابع انسانی' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ارسال' })).toBeInTheDocument();
   });
 
   it('lets HR send the form to a current employee', async () => {
@@ -179,15 +194,14 @@ describe('new-hire form', () => {
     renderApp('/hr/staff');
     await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
     const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
-    await user.type(within(dialog).getByLabelText('نام'), 'سینا');
-    await user.type(within(dialog).getByLabelText('نام خانوادگی'), 'مرادی');
-    await user.type(within(dialog).getByLabelText('موبایل'), '09121112233');
-    await user.type(within(dialog).getByLabelText('شماره شناسنامه'), '5566');
+    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121112233');
     await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '20000000');
     await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
 
     const invite = await screen.findByRole('region', { name: 'دعوت به فرم' });
-    expect(invite).toHaveTextContent('سلام سینا مرادی');
+    // No name until the hire types it: a greeting without one.
+    expect(invite).toHaveTextContent('سلام،');
+    expect(invite).not.toHaveTextContent('سلام 0912');
     expect(invite).toHaveTextContent('09121112233');
     // The panel's login, then the form (BASE_URL is "/panel/" in a build, "/" in tests).
     const link = `${window.location.origin}${import.meta.env.BASE_URL}login?next=${encodeURIComponent(`${import.meta.env.BASE_URL}me/onboarding`)}`;
@@ -196,5 +210,17 @@ describe('new-hire form', () => {
     await user.click(within(invite).getByRole('button', { name: 'کپی پیام' }));
     expect(await toasts().findByText('کپی شد')).toBeInTheDocument();
     expect(write).toHaveBeenCalledWith(expect.stringContaining(link));
+  });
+  it('points the hire back to their form from the account menu', async () => {
+    const user = userEvent.setup();
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'حساب کاربری · فرم اطلاعات فردی منتظر تکمیل است',
+      }),
+    );
+    const link = screen.getByRole('link', { name: /منتظر تکمیل/ });
+    expect(link).toHaveTextContent('فرم اطلاعات فردی');
   });
 });

@@ -82,11 +82,12 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   hr: true,
   /**
    * OB1–OB8 `hr/v1/me/onboarding/…` and `hr/v1/staff/<id>/onboarding/…`: the new-hire form
-   * (replaces the Porsline «ثبت اطلاعات فردی» link) and HR's review of it on the staff file, plus
-   * `whoami.staff.onboarding`. Off: no form page, tab or chips; HR keeps sending the Porsline link.
-   * Needs `makemigrations human_resource` + `migrate`; deploy Django first.
+   * (replaces the Porsline «ثبت اطلاعات فردی» link), HR's review of it and the invite to send, plus
+   * `whoami.staff.onboarding` (lang `feature/hr-onboarding-form`). Needs
+   * `makemigrations apply human_resource` + `migrate`; deploy Django first. Off: no form page, tab
+   * or chips, and HR keeps sending the Porsline link.
    */
-  hrOnboarding: false,
+  hrOnboarding: true,
   /**
    * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
    * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.

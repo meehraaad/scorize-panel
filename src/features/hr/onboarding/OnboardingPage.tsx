@@ -55,6 +55,7 @@ const AUTOCOMPLETE: Partial<Record<FieldKey, string>> = {
 };
 const INPUT_MODE: Partial<Record<FieldKey, 'numeric' | 'tel' | 'email'>> = {
   national_code: 'numeric',
+  id_number: 'numeric',
   emergency_phone: 'tel',
   email: 'email',
 };
@@ -111,6 +112,13 @@ const initialAnswers = (form: Onboarding): OnboardingAnswers => ({
   // A stepper always shows a number: zero children until told otherwise.
   number_of_children: form.answers.number_of_children ?? 0,
 });
+
+/** `YYYY-MM-DD` the given number of years before today. */
+const yearsAgo = (years: number) => {
+  const day = new Date();
+  day.setFullYear(day.getFullYear() - years);
+  return `${String(day.getFullYear())}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+};
 
 const focusField = (id: string) => {
   const target = document.getElementById(id);
@@ -295,9 +303,7 @@ function OnboardingForm({ form }: { form: Onboarding }) {
         <Facts
           label={t('onboarding.fixed.title')}
           rows={[
-            [t('info.full_name'), form.fixed.full_name],
             [t('onboarding.fixed.phone'), <bdi dir="ltr">{f.digits(form.fixed.phone_number)}</bdi>],
-            [t('onboarding.fixed.idNumber'), <bdi dir="ltr">{f.digits(form.fixed.id_number)}</bdi>],
           ]}
         />
       </SectionCard>
@@ -353,9 +359,11 @@ function Field({
           value={(answers[key] as string | null) ?? ''}
           onChange={(value) => onChange(key, value || null)}
           max={todayValue()}
+          // Nobody is born today: open on the years around 30 years ago.
+          openOn={yearsAgo(30)}
+          openView="years"
           hint={hint}
           error={error}
-          clearable={key === 'real_birth_date'}
         />
       </Focusable>
     );
@@ -370,6 +378,7 @@ function Field({
           onChange={(value) => onChange('number_of_children', value)}
           min={0}
           max={MAX_CHILDREN}
+          fill
           decreaseLabel={t('onboarding.fewer')}
           increaseLabel={t('onboarding.more')}
         />
@@ -455,8 +464,8 @@ function hintOf(key: FieldKey, t: ReturnType<typeof useTranslation<'hr'>>['t']) 
     case 'preferred_name':
     case 'first_name_en':
     case 'national_code':
+    case 'id_number':
     case 'birth_date':
-    case 'real_birth_date':
     case 'iban':
     case 'email':
     case 'number_of_children':

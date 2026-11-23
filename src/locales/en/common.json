@@ -160,7 +160,9 @@
     "asCustomer": "Customer view",
     "logoutFailed": "Couldn't log out. Check your internet connection and try again.",
     "myPay": "My score and pay",
-    "onboarding": "Personal details form"
+    "onboarding": "Personal details form",
+    "onboardingWaiting": "Your personal details form is waiting",
+    "onboardingBadge": "To complete"
   },
   "more": {
     "title": "More",

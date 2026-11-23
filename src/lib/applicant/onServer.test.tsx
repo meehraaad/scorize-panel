@@ -22,8 +22,6 @@ describe('features by what Django serves', () => {
       ['clientErrors', false],
       // Behind Django's SCORIZE_CLIENT_SERVICES (backend-changes.md SVC4, SVC5).
       ['clientServices', false],
-      // The new-hire form (backend-changes.md OB1–OB8): on once lang ships it.
-      ['hrOnboarding', false],
       ['turkey', false],
       ['assistantOrganize', false],
     ]);

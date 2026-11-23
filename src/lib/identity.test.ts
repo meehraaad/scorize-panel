@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { isLatinName, isPersianText, normalizeIban, normalizeNationalCode } from './identity';
+import {
+  isLatinName,
+  isPersianText,
+  normalizeIban,
+  normalizeIdNumber,
+  normalizeNationalCode,
+} from './identity';
 
 describe('national code', () => {
   it('accepts a code with the right check digit, typed with any digits', () => {
@@ -36,5 +42,14 @@ describe('names', () => {
     expect(isPersianText('Ali')).toBe(false);
     expect(isLatinName("O'Neil")).toBe(true);
     expect(isLatinName('علی')).toBe(false);
+  });
+});
+
+describe('ID card number', () => {
+  it('takes 1 to 10 digits, typed with any digits', () => {
+    expect(normalizeIdNumber('۴۰۰۳')).toBe('4003');
+    expect(normalizeIdNumber('0499370899')).toBe('0499370899');
+    expect(normalizeIdNumber('12345678901')).toBeNull();
+    expect(normalizeIdNumber('12a')).toBeNull();
   });
 });

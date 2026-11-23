@@ -101,7 +101,7 @@ downloads are ignored.
 ## 5. Measure
 
 - **First-load budget in CI**: `pnpm size` sums the gzip size of what `dist/index.html` loads
-  (scripts, preloaded modules, stylesheets) and fails above JS 188.8 KB / CSS 22.2 KB. Today: JS
+  (scripts, preloaded modules, stylesheets) and fails above JS 188.9 KB / CSS 22.2 KB. Today: JS
   ≈ 185.3 KB, CSS ≈ 21.0 KB (JS raised from 170 on 2026-10-27, when the to-do box's chunk links and
   dictionary loaders took the last bytes; JS 172 → 173 and CSS 18 → 18.5 on 2026-11-01, for the
   assistant's chat layout: one stylesheet holds every page's classes, and the shared icons ship
@@ -119,7 +119,9 @@ downloads are ignored.
   request ID, which must work when a page fails to load (the crash reporter loads only on a failure),
   0.5 KB, and the 0.1 KB test already weighed over the old budget; JS 188.4 → 188.8 on 2026-11-22 for the
   new-hire form's route, its route data and the `/start` redirect to it, the «من» tab and the account
-  menu link, 0.4 KB: the form, its checks and HR's tab load only with their pages). Raise a
+  menu link, 0.4 KB: the form, its checks and HR's tab load only with their pages; JS 188.8 → 188.9 on 2026-11-23 for the
+  toasts finding their way back out of a dialog React removed, the account button's dot for a new
+  hire's open form, and the date picker's `openOn`/`openView`, 0.07 KB). Raise a
   budget only on purpose, in review.
 - **Real users** (`src/lib/vitals.ts`): LCP, INP, CLS, FCP and TTFB per page pattern, sent with
   `sendBeacon` when the tab is hidden. Off (and not even loaded) until Django's endpoint ships

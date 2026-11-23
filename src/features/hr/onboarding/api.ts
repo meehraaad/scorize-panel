@@ -13,7 +13,7 @@ import { orNull } from './me';
 
 /** Open: `draft`, `returned` (the hire can edit), `submitted` (HR reviews). */
 export type OnboardingStatus = 'draft' | 'submitted' | 'returned' | 'approved' | 'cancelled';
-export type Gender = 'male' | 'female' | 'unspecified';
+export type Gender = 'male' | 'female';
 export type Education =
   'below_diploma' | 'diploma' | 'associate' | 'bachelor' | 'master' | 'doctorate';
 export type MilitaryStatus =
@@ -30,10 +30,11 @@ export interface OnboardingAnswers {
   last_name_en: string;
   fathers_name: string;
   national_code: string;
+  /** شماره شناسنامه: 1–10 digits (newer cards carry the national code). */
+  id_number: string;
   gender: Gender | null;
+  /** As on the national card. */
   birth_date: string | null;
-  /** Only when the real birthday differs from the ID card. */
-  real_birth_date: string | null;
   birth_place: string;
   id_issue_place: string;
   education: Education | null;
@@ -67,8 +68,8 @@ export interface Onboarding {
   due: string | null;
   answers: OnboardingAnswers;
   files: OnboardingFile[];
-  /** Set by HR on the file; shown, not edited. */
-  fixed: { full_name: string; phone_number: string; id_number: string };
+  /** Set by HR on the file (the hire's login); shown, not edited. */
+  fixed: { phone_number: string };
 }
 
 /** HR's view of a form: the same, with who and when. */
@@ -95,7 +96,6 @@ export type PersonalInfo = Pick<
   | 'preferred_name'
   | 'first_name_en'
   | 'last_name_en'
-  | 'real_birth_date'
   | 'id_issue_place'
   | 'education'
   | 'field_of_study'

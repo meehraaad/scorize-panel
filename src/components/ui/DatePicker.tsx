@@ -34,6 +34,12 @@ interface DatePickerProps {
   /** Show a button that empties the field. */
   clearable?: boolean;
   placeholder?: string;
+  /**
+   * Where an empty field's calendar opens (`YYYY-MM-DD`) instead of today, and on which view: a
+   * birth date opens on the years around 30 years ago, a tap or two from any year.
+   */
+  openOn?: string | undefined;
+  openView?: 'days' | 'years';
 }
 
 type View = 'days' | 'months' | 'years';
@@ -59,6 +65,8 @@ export function DatePicker({
   error,
   clearable = false,
   placeholder,
+  openOn,
+  openView = 'days',
 }: DatePickerProps) {
   const { t } = useTranslation();
   const f = useFormat();
@@ -141,6 +149,8 @@ export function DatePicker({
             min={parseValue(min ?? '')}
             max={parseValue(max ?? '')}
             only={only}
+            openOn={parseValue(openOn ?? '')}
+            openView={openView}
             onPick={(date) => {
               onChange(toValue(date, time));
               close();
@@ -161,11 +171,15 @@ function Calendar({
   min,
   max,
   only,
+  openOn,
+  openView,
   onPick,
   onClose,
 }: {
   label: string;
   selected: Date | null;
+  openOn: Date | null;
+  openView: View;
   time: boolean;
   minuteStep: number;
   min: Date | null;
@@ -182,11 +196,12 @@ function Calendar({
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const from = only === 'future' && (!min || min < today) ? today : min;
   const until = only === 'past' && (!max || max > today) ? today : max;
-  const start = selected ?? (from && from > today ? from : until && until < today ? until : today);
+  const start =
+    selected ?? openOn ?? (from && from > today ? from : until && until < today ? until : today);
   // The day the keyboard is on, and the month on screen.
   const [focus, setFocus] = useState(start);
   const [month, setMonth] = useState<CalendarDay>(() => toCalendar(start, cal.kind));
-  const [view, setView] = useState<View>('days');
+  const [view, setView] = useState<View>(selected ? 'days' : openView);
   const [day, setDay] = useState<Date | null>(selected);
   const [hour, setHour] = useState(selected ? selected.getHours() : DEFAULT_HOUR);
   const [minute, setMinute] = useState(

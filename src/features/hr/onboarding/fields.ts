@@ -1,5 +1,11 @@
-import { isLatinName, isPersianText, normalizeIban, normalizeNationalCode } from '@/lib/identity';
-import { normalizePhone, toLatinDigits } from '@/lib/text';
+import {
+  isLatinName,
+  isPersianText,
+  normalizeIban,
+  normalizeIdNumber,
+  normalizeNationalCode,
+} from '@/lib/identity';
+import { normalizePhone } from '@/lib/text';
 import type {
   Education,
   Gender,
@@ -12,7 +18,7 @@ import type {
 
 /** The choices, in the order the form offers them. */
 
-export const GENDERS: readonly Gender[] = ['male', 'female', 'unspecified'];
+export const GENDERS: readonly Gender[] = ['male', 'female'];
 export const EDUCATIONS: readonly Education[] = [
   'below_diploma',
   'diploma',
@@ -46,12 +52,14 @@ export const SECTIONS: readonly Section[] = [
 ];
 
 export type FieldKey = keyof OnboardingAnswers;
-export type Rule = 'persian' | 'latin' | 'nationalCode' | 'iban' | 'mobile' | 'email' | 'text';
+export type Rule =
+  'persian' | 'latin' | 'nationalCode' | 'idNumber' | 'iban' | 'mobile' | 'email' | 'text';
 export type Problem =
   | 'required'
   | 'persian'
   | 'latin'
   | 'nationalCode'
+  | 'idNumber'
   | 'iban'
   | 'mobile'
   | 'email'
@@ -69,16 +77,18 @@ export interface FieldSpec {
 }
 
 export const FIELDS: readonly FieldSpec[] = [
+  // Two to a row on wide screens: names, then preferred and father's name, the English names,
+  // the two numbers, gender and birth date, the two places.
   { key: 'first_name', section: 'identity', kind: 'text', rule: 'persian', max: 100 },
   { key: 'last_name', section: 'identity', kind: 'text', rule: 'persian', max: 100 },
   { key: 'preferred_name', section: 'identity', kind: 'text', rule: 'persian', max: 100 },
+  { key: 'fathers_name', section: 'identity', kind: 'text', rule: 'persian', max: 100 },
   { key: 'first_name_en', section: 'identity', kind: 'text', rule: 'latin', ltr: true, max: 100 },
   { key: 'last_name_en', section: 'identity', kind: 'text', rule: 'latin', ltr: true, max: 100 },
-  { key: 'fathers_name', section: 'identity', kind: 'text', rule: 'persian', max: 100 },
   { key: 'national_code', section: 'identity', kind: 'text', rule: 'nationalCode', ltr: true },
+  { key: 'id_number', section: 'identity', kind: 'text', rule: 'idNumber', ltr: true },
   { key: 'gender', section: 'identity', kind: 'choice' },
   { key: 'birth_date', section: 'identity', kind: 'date' },
-  { key: 'real_birth_date', section: 'identity', kind: 'date' },
   { key: 'birth_place', section: 'identity', kind: 'text', rule: 'persian', max: 64 },
   { key: 'id_issue_place', section: 'identity', kind: 'text', rule: 'persian', max: 64 },
   { key: 'education', section: 'education', kind: 'choice' },
@@ -97,7 +107,7 @@ export const FIELDS: readonly FieldSpec[] = [
 ];
 
 export const MAX_CHILDREN = 20;
-const OPTIONAL = new Set<FieldKey>(['preferred_name', 'real_birth_date']);
+const OPTIONAL = new Set<FieldKey>(['preferred_name']);
 /** No field of study or university below a diploma. */
 const NO_STUDIES = new Set<Education | null>(['below_diploma', null]);
 
@@ -122,6 +132,10 @@ function checkText(rule: Rule, raw: string): { value: string } | { problem: Prob
       const code = normalizeNationalCode(value);
       return code ? { value: code } : { problem: 'nationalCode' };
     }
+    case 'idNumber': {
+      const number = normalizeIdNumber(value);
+      return number ? { value: number } : { problem: 'idNumber' };
+    }
     case 'iban': {
       const iban = normalizeIban(value);
       return iban ? { value: iban } : { problem: 'iban' };
@@ -133,7 +147,9 @@ function checkText(rule: Rule, raw: string): { value: string } | { problem: Prob
     case 'email':
       return EMAIL.test(value) ? { value: value.toLowerCase() } : { problem: 'email' };
     case 'text':
-      return { value: toLatinDigits(value) };
+      // Free text (address, university) is kept as typed, Persian digits too: Django only
+      // normalises the numbers (national code, ID card number, IBAN, phone).
+      return { value };
   }
 }
 
@@ -220,9 +236,9 @@ export const EMPTY_ANSWERS: OnboardingAnswers = {
   last_name_en: '',
   fathers_name: '',
   national_code: '',
+  id_number: '',
   gender: null,
   birth_date: null,
-  real_birth_date: null,
   birth_place: '',
   id_issue_place: '',
   education: null,

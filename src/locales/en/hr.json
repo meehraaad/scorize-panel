@@ -90,12 +90,9 @@
     "unplaced": "No position ({{n}})"
   },
   "form": {
-    "firstName": "First name",
-    "lastName": "Last name",
-    "mobile": "Mobile",
-    "idNumber": "ID number",
+    "mobile": "Their mobile",
     "email": "Work email",
-    "emailHint": "Optional; they can also sign in with it",
+    "emailHint": "Optional",
     "position": "Position",
     "team": "Team",
     "none": "None",
@@ -105,13 +102,14 @@
     "salary": "Monthly base salary (tomans)",
     "salaryHint": "In tomans, no decimals",
     "required": "Fill this in",
-    "phone": "This mobile number isn't right"
+    "phone": "This mobile number isn't right",
+    "mobileHint": "They log in with this number and an SMS code."
   },
   "newStaff": {
     "title": "New staff member",
-    "subtitle": "Their panel account and file are made and their joining checklist opens.",
+    "subtitle": "Enter only their mobile and contract; they type their names, ID card number and the rest in the personal details form. Their panel account and file are made and their joining checklist opens.",
     "save": "Create file",
-    "saved": "{{name}}'s file is ready"
+    "saved": "File created; send them the invite."
   },
   "move": {
     "entry": "Joining",
@@ -770,7 +768,7 @@
   },
   "onboarding": {
     "title": "Personal details form",
-    "subtitle": "These details go into your staff file. Keep your national card and birth certificate at hand.",
+    "subtitle": "These details go into your staff file. Keep your national card and birth certificate at hand. The draft saves itself; come back any time from the account menu (the circle at the top) › “Personal details form”.",
     "due": "Please complete it by {{day}}",
     "progress": "{{done}} of {{total}} sections complete",
     "sections": "Form sections",
@@ -798,9 +796,9 @@
       "last_name_en": "Last name in English",
       "fathers_name": "Father's name",
       "national_code": "National code",
+      "id_number": "ID card number",
       "gender": "Gender",
       "birth_date": "Date of birth",
-      "real_birth_date": "Actual date of birth",
       "birth_place": "Place of birth",
       "id_issue_place": "Birth certificate issued in",
       "education": "Highest degree",
@@ -813,24 +811,23 @@
       "bank_name": "Bank",
       "email": "Email",
       "address": "Home address",
-      "emergency_name": "Emergency contact name",
+      "emergency_name": "Contact name",
       "emergency_relation": "Relationship to you",
-      "emergency_phone": "Emergency contact mobile"
+      "emergency_phone": "Phone"
     },
     "hint": {
       "preferred_name": "Optional: what would you like us to call you?",
       "first_name_en": "As on your passport or bank card",
       "national_code": "10 digits",
+      "id_number": "Up to 10 digits; on newer cards it is the national code",
       "birth_date": "As on your national card",
-      "real_birth_date": "Optional: only if it differs from your national card",
       "iban": "IR and 24 digits",
       "email": "Preferably the Gmail you use for work",
       "number_of_children": "Leave at zero if none"
     },
     "gender": {
       "male": "Male",
-      "female": "Female",
-      "unspecified": "Prefer not to say"
+      "female": "Female"
     },
     "education": {
       "below_diploma": "Below high-school diploma",
@@ -851,9 +848,8 @@
     "more": "One more",
     "fixed": {
       "title": "Entered by HR",
-      "hint": "If something is wrong, let HR know.",
-      "phone": "Mobile",
-      "idNumber": "Birth certificate number"
+      "hint": "You log in with this number. If it is wrong, let HR know.",
+      "phone": "Mobile"
     },
     "file": {
       "birth_certificate": "Birth certificate",
@@ -874,10 +870,11 @@
       "missing": "Not uploaded"
     },
     "problem": {
-      "required": "Fill this in",
+      "required": "Complete this field",
       "persian": "Use Persian letters only",
       "latin": "Use English letters only",
       "nationalCode": "This national code isn't valid",
+      "idNumber": "Digits only, up to 10",
       "iban": "This IBAN isn't valid",
       "mobile": "This mobile number isn't valid",
       "email": "This email isn't valid",
@@ -892,7 +889,7 @@
       "failed": "Draft not saved",
       "retry": "Save again"
     },
-    "submit": "Send to HR",
+    "submit": "Send",
     "submitted": "Form sent to HR",
     "returnedNote": "HR sent the form back for changes: {{note}}",
     "status": {
@@ -914,7 +911,7 @@
     "review": {
       "title": "Personal details form",
       "send": "Send the form",
-      "sendHint": "They'll see it under “Me” after logging in with an SMS code.",
+      "sendHint": "After logging in with an SMS code the form opens for them; later they find it under the account menu (the circle at the top) › “Personal details form”.",
       "sent": "Form sent to {{name}}",
       "none": "No form has been sent to this staff member yet.",
       "waiting": "They haven't sent the form yet.",
@@ -940,12 +937,14 @@
     "personal": "More details",
     "invite": {
       "title": "Invite to the form",
-      "hint": "Send this message on WhatsApp or by text. They log in with this number and an SMS code; no password needed.",
-      "message": "Hi {{name}},\nWelcome to Scorize. Please fill in your personal details form here:\n{{url}}\nTo log in, enter {{phone}} and the code we text you.",
+      "hint": "Send this message on WhatsApp or by text. They log in with this number and an SMS code (no password) and the form opens; later it is under the account menu (the circle at the top) › “Personal details form”.",
+      "message": "Hi {{name}},\nWelcome to Scorize. Please fill in your personal details form here:\n{{url}}\nTo log in, enter {{phone}} and the code we text you.\nIf you close the page, come back from the account menu (the circle at the top) › “Personal details form”.",
+      "messageNoName": "Hi,\nWelcome to Scorize. Please fill in your personal details form here:\n{{url}}\nTo log in, enter {{phone}} and the code we text you.\nIf you close the page, come back from the account menu (the circle at the top) › “Personal details form”.",
       "copyMessage": "Copy message",
       "copyLink": "Copy link",
       "copied": "Copied",
       "failed": "Couldn't copy; select the text and copy it."
-    }
+    },
+    "pending": "Waiting for their form"
   }
 }

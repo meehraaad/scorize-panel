@@ -78,7 +78,11 @@ function makeMove(staff: { id: number; name: string }, kind: MoveKind, day: stri
     label,
     done: false,
     task: newId(),
-    due: day,
+    // The hire's form is due a week after the first day (OB2).
+    due:
+      label === FORM_STEP
+        ? dayValue(new Date(new Date(`${day}T00:00:00`).getTime() + 7 * DAY))
+        : day,
     owner: owner === 'employee' ? { id: staff.id, name: staff.name } : ME,
   }));
   return {
@@ -224,7 +228,9 @@ export function openFormStatus(staffId: number) {
 
 /** A new form, prefilled from the file (and an earlier approved form on a rehire). */
 function openForm(row: MockStaff, move: (Move & { steps: MoveStep[] }) | null) {
-  const [first = '', ...rest] = row.name.split(' ');
+  // Names from the account; a file made with the phone only has none yet.
+  const named = row.name !== row.info.phone_number;
+  const [first = '', ...rest] = named ? row.name.split(' ') : [];
   const form: MockForm = {
     id: newId(),
     status: 'draft',
@@ -236,6 +242,7 @@ function openForm(row: MockStaff, move: (Move & { steps: MoveStep[] }) | null) {
       last_name: rest.join(' '),
       fathers_name: row.info.fathers_name,
       national_code: row.info.national_code,
+      id_number: row.info.id_number,
       birth_date: row.info.birth_date,
       birth_place: row.info.birth_place,
       marital_status: row.info.marital_status,
@@ -244,11 +251,7 @@ function openForm(row: MockStaff, move: (Move & { steps: MoveStep[] }) | null) {
       ...row.personal,
     },
     files: [],
-    fixed: {
-      full_name: row.name,
-      phone_number: row.info.phone_number ?? '',
-      id_number: row.info.id_number,
-    },
+    fixed: { phone_number: row.info.phone_number ?? '' },
     staff: { id: row.id, name: row.name },
     submitted_at: null,
     reviewed_at: null,
@@ -490,6 +493,16 @@ const myOpenForm = () => {
   return row ? openFormOf(row.id) : undefined;
 };
 const EDITABLE: readonly OnboardingStatus[] = ['draft', 'returned'];
+/** The unique numbers another staff file already has (submit and approve check both). */
+function clashes(row: MockStaff, answers: OnboardingAnswers) {
+  const errors: Record<string, string[]> = {};
+  const others = staff.filter((other) => other.id !== row.id);
+  if (answers.national_code && others.some((o) => o.info.national_code === answers.national_code))
+    errors.national_code = ['A staff file with this national code exists.'];
+  if (answers.id_number && others.some((o) => o.info.id_number === answers.id_number))
+    errors.id_number = ['A staff file with this ID card number exists.'];
+  return errors;
+}
 const closed = () => HttpResponse.json({ detail: 'This form is closed.' }, { status: 409 });
 
 export const hrHandlers = [
@@ -518,7 +531,9 @@ export const hrHandlers = [
     if (staff.some((row) => row.info.phone_number === body.phone_number))
       return invalid({ phone_number: ['This number already has a staff file.'] });
     const position = OPTIONS.positions.find((item) => item.id === body.position);
-    const name = `${body.first_name} ${body.last_name}`;
+    // Without names (HR sends only the phone), the file is named by the phone until the form is
+    // approved.
+    const name = `${body.first_name ?? ''} ${body.last_name ?? ''}`.trim() || body.phone_number;
     const row = person(newId(), name, {
       kind: body.contract,
       start: body.entry_date,
@@ -530,7 +545,8 @@ export const hrHandlers = [
       devices: [],
     });
     row.info.phone_number = body.phone_number;
-    row.info.id_number = body.id_number;
+    row.info.full_name = name;
+    row.info.id_number = body.id_number ?? '';
     row.pay = { salary: body.salary, has_insurance: false, commission: '', changes: [] };
     row.moves = [makeMove(row, 'entry', body.entry_date)];
     staff.push(row);
@@ -665,13 +681,24 @@ export const hrHandlers = [
     const row = me();
     if (!row) return forbidden();
     const form = latestForm(row.id);
-    return form && form.status !== 'cancelled' ? HttpResponse.json(publicForm(form)) : notFound();
+    // An approved form stays for 30 days; a cancelled one is gone.
+    const stale =
+      form?.status === 'approved' &&
+      Date.now() - new Date(form.reviewed_at ?? 0).getTime() > 30 * DAY;
+    return form && form.status !== 'cancelled' && !stale
+      ? HttpResponse.json(publicForm(form))
+      : notFound();
   }),
   http.patch(`${API}/me/onboarding/`, async ({ request }) => {
     const form = myOpenForm();
     if (!form) return notFound();
     if (!EDITABLE.includes(form.status)) return closed();
     const body = (await request.json()) as Partial<OnboardingAnswers>;
+    if (body.gender && !['male', 'female'].includes(body.gender))
+      return invalid({ gender: ['"unspecified" is not a valid choice.'] });
+    const children = body.number_of_children;
+    if (typeof children === 'number' && (children < 0 || children > 20))
+      return invalid({ number_of_children: ['Ensure this value is less than or equal to 20.'] });
     for (const key of Object.keys(EMPTY_ANSWERS) as (keyof OnboardingAnswers)[])
       if (key in body) Object.assign(form.answers, { [key]: body[key] });
     return HttpResponse.json(publicForm(form));
@@ -684,6 +711,7 @@ export const hrHandlers = [
     const kind = data.get('kind') as OnboardingFileKind | null;
     const file = data.get('file');
     if (!kind || !(file instanceof File)) return invalid({ file: ['No file was submitted.'] });
+    if (form.files.length >= 10) return invalid({ file: ['A form takes up to 10 files.'] });
     const id = newId();
     form.files.push({ id, kind, name: file.name, url: `/media/hr/onboarding/${String(id)}` });
     return HttpResponse.json(publicForm(form), { status: 201 });
@@ -704,18 +732,12 @@ export const hrHandlers = [
     const { answers } = form;
     const studies = answers.education !== null && answers.education !== 'below_diploma';
     for (const key of Object.keys(EMPTY_ANSWERS) as (keyof OnboardingAnswers)[]) {
-      if (key === 'preferred_name' || key === 'real_birth_date') continue;
+      if (key === 'preferred_name') continue;
       if (!studies && (key === 'field_of_study' || key === 'university')) continue;
       const value = answers[key];
       if (value === null || value === '') errors[key] = ['This field is required.'];
     }
-    if (
-      answers.national_code &&
-      staff.some(
-        (other) => other.id !== row.id && other.info.national_code === answers.national_code,
-      )
-    )
-      errors.national_code = ['A staff file with this national code exists.'];
+    Object.assign(errors, clashes(row, answers));
     const kinds: OnboardingFileKind[] = ['birth_certificate', 'national_card'];
     if (kinds.some((kind) => !form.files.some((file) => file.kind === kind)))
       errors.files = ['Upload the birth certificate and the national card.'];
@@ -750,16 +772,13 @@ export const hrHandlers = [
       case 'approve': {
         if (form.status !== 'submitted') return closed();
         const { answers } = form;
-        if (
-          staff.some(
-            (other) => other.id !== row.id && other.info.national_code === answers.national_code,
-          )
-        )
-          return invalid({ national_code: ['A staff file with this national code exists.'] });
+        const clash = clashes(row, answers);
+        if (Object.keys(clash).length) return invalid(clash);
         row.name = `${answers.first_name} ${answers.last_name}`;
         Object.assign(row.info, {
           full_name: row.name,
           national_code: answers.national_code,
+          id_number: answers.id_number,
           fathers_name: answers.fathers_name,
           birth_date: answers.birth_date,
           birth_place: answers.birth_place,
@@ -773,7 +792,6 @@ export const hrHandlers = [
           preferred_name: answers.preferred_name,
           first_name_en: answers.first_name_en,
           last_name_en: answers.last_name_en,
-          real_birth_date: answers.real_birth_date,
           id_issue_place: answers.id_issue_place,
           education: answers.education,
           field_of_study: answers.field_of_study,
