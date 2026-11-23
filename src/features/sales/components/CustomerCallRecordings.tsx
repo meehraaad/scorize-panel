@@ -52,7 +52,7 @@ export function CustomerCallRecordings({ customer }: { customer: number }) {
                   : 'customer.recordings.offline',
               )}
             </p>
-          ) : data?.results.length ? (
+          ) : data.results.length ? (
             <ul className="m-0 list-none p-0">
               {data.results.map((row) => (
                 <li
