@@ -5,7 +5,6 @@ import { sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
-import { caseInboxQuery, ticketDepartment, writingInboxQuery } from './tickets';
 
 export const executivePanel: PanelDefinition = {
   id: 'executive',
@@ -22,6 +21,13 @@ export const executivePanel: PanelDefinition = {
       label: 'panels.executive.nav.table',
       tab: 'panels.executive.nav.table',
       icon: 'home',
+    },
+    {
+      id: 'customers',
+      to: 'customers',
+      label: 'panels.executive.nav.customers',
+      tab: 'panels.executive.nav.customers',
+      icon: 'user',
     },
     {
       id: 'work',
@@ -54,6 +60,17 @@ export const executivePanel: PanelDefinition = {
       }),
     },
     {
+      path: 'customers',
+      ...lazyPage(() => import('./CustomersPage'), ['executive', 'supervisor', 'writer'], {
+        skeleton: 'list',
+      }),
+      loader: async ({ request }) => {
+        const { customerListQueries } = await import('./customersApi');
+        prefetchQueries(customerListQueries(new URL(request.url).searchParams));
+        return null;
+      },
+    },
+    {
       path: 'work',
       ...lazyPage(() => import('./WorkPage'), ['executive', 'writer'], {
         data: ({ request }) => [overviewQuery, workQuery(new URL(request.url).searchParams)],
@@ -66,7 +83,10 @@ export const executivePanel: PanelDefinition = {
         skeleton: 'list',
       }),
       loader: async ({ request }) => {
-        const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
+        const [user, { caseInboxQuery, ticketDepartment, writingInboxQuery }] = await Promise.all([
+          queryClient.query({ ...sessionQuery, staleTime: 'static' }),
+          import('./tickets'),
+        ]);
         const roles = user ? getRoles(user) : [];
         if (roles.includes('executive')) {
           const department = ticketDepartment(roles, new URL(request.url).searchParams);

@@ -31,6 +31,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       phoneMenus: true,
       phoneVoices: true,
       hrOnboarding: true,
+      executiveCustomers: true,
     },
   };
 });
@@ -194,6 +195,7 @@ const PAGES: PageCase[] = [
   ...[
     '/executive',
     '/executive/work',
+    '/executive/customers',
     '/executive/tickets',
     '/executive/tickets?department=writing',
     '/executive/tasks',
