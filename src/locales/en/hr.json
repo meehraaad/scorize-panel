@@ -109,7 +109,8 @@
     "title": "New staff member",
     "subtitle": "Enter only their mobile and contract; they type their names, ID card number and the rest in the personal details form. Their panel account and file are made and their joining checklist opens.",
     "save": "Create file",
-    "saved": "File created; send them the invite."
+    "saved": "File created; send them the invite.",
+    "exists": "This staff member was just added. Check the list."
   },
   "move": {
     "entry": "Joining",
@@ -867,7 +868,8 @@
       "badType": "PDF, JPG or PNG only",
       "tooBig": "The file is larger than 10 MB",
       "open": "Open",
-      "missing": "Not uploaded"
+      "missing": "Not uploaded",
+      "limit": "You can send up to 10 files. Remove one to add another."
     },
     "problem": {
       "required": "Complete this field",
@@ -879,7 +881,9 @@
       "mobile": "This mobile number isn't valid",
       "email": "This email isn't valid",
       "future": "This date hasn't come yet",
-      "files": "Upload your birth certificate and national card"
+      "files": "Upload your birth certificate and national card",
+      "age": "The age must be from 15 to 100 years",
+      "special": "Remove the special characters"
     },
     "fix": "Some answers are missing or not valid; each one says why.",
     "draft": {
@@ -931,7 +935,8 @@
       "cancelConfirm": "Cancel the form? They won't see it anymore.",
       "cancelled": "Form cancelled",
       "differs": "In the file: {{value}}",
-      "files": "Documents"
+      "files": "Documents",
+      "changed": "This form was already reviewed or cancelled. Showing it as it is now."
     },
     "today": "Forms to review",
     "personal": "More details",
@@ -945,6 +950,7 @@
       "copied": "Copied",
       "failed": "Couldn't copy; select the text and copy it."
     },
-    "pending": "Waiting for their form"
+    "pending": "Waiting for their form",
+    "changed": "The form changed meanwhile. The page is up to date now."
   }
 }

@@ -699,6 +699,13 @@ export const hrHandlers = [
     const children = body.number_of_children;
     if (typeof children === 'number' && (children < 0 || children > 20))
       return invalid({ number_of_children: ['Ensure this value is less than or equal to 20.'] });
+    // Django's draft lengths for the numbers (a longer one refuses the whole draft).
+    const LENGTHS = { national_code: 20, id_number: 20, iban: 40, emergency_phone: 20 } as const;
+    for (const [key, max] of Object.entries(LENGTHS))
+      if ((body[key as keyof typeof LENGTHS] ?? '').length > max)
+        return invalid({
+          [key]: [`Ensure this field has no more than ${String(max)} characters.`],
+        });
     for (const key of Object.keys(EMPTY_ANSWERS) as (keyof OnboardingAnswers)[])
       if (key in body) Object.assign(form.answers, { [key]: body[key] });
     return HttpResponse.json(publicForm(form));

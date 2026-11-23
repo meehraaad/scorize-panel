@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -20,7 +20,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Facts } from '../components/Facts';
-import { dayOf, todayValue } from '../format';
+import { dayOf } from '../format';
 import type { Onboarding, OnboardingAnswers, OnboardingStatus } from './api';
 import { myOnboardingQuery } from './me';
 import { AnswersSummary } from './components/AnswersSummary';
@@ -33,16 +33,19 @@ import {
   GENDERS,
   MARITAL,
   MILITARY,
+  MAX_AGE,
   MAX_CHILDREN,
+  MIN_AGE,
   SECTIONS,
   checkAnswers,
   isAsked,
   sectionProgress,
+  yearsAgo,
   type FieldKey,
   type FieldSpec,
   type Problem,
 } from './fields';
-import { useSaveDraft, useSubmitOnboarding } from './mutations';
+import { isGone, useSaveDraft, useSubmitOnboarding } from './mutations';
 
 /** Wait this long after the last keystroke before saving the draft. */
 const DRAFT_DELAY_MS = 1200;
@@ -113,13 +116,6 @@ const initialAnswers = (form: Onboarding): OnboardingAnswers => ({
   number_of_children: form.answers.number_of_children ?? 0,
 });
 
-/** `YYYY-MM-DD` the given number of years before today. */
-const yearsAgo = (years: number) => {
-  const day = new Date();
-  day.setFullYear(day.getFullYear() - years);
-  return `${String(day.getFullYear())}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-};
-
 const focusField = (id: string) => {
   const target = document.getElementById(id);
   target?.focus();
@@ -131,6 +127,8 @@ function OnboardingForm({ form }: { form: Onboarding }) {
   const f = useFormat();
   const save = useSaveDraft();
   const submit = useSubmitOnboarding();
+  // `disabled` comes with the next render: a quick second click must not send it twice.
+  const sendingRef = useRef(false);
   const [answers, setAnswers] = useState(() => initialAnswers(form));
   const [savedBody, setSavedBody] = useState(() => JSON.stringify(form.answers));
   const [touched, setTouched] = useState<ReadonlySet<FieldKey>>(new Set());
@@ -174,6 +172,7 @@ function OnboardingForm({ form }: { form: Onboarding }) {
   const complete = progress.filter(({ done, total }) => done === total).length;
 
   const send = () => {
+    if (sendingRef.current) return;
     setAttempted(true);
     const checked = checkAnswers(answers, form.files, true);
     const first = FIELDS.find((field) => checked.problems[field.key]);
@@ -183,12 +182,17 @@ function OnboardingForm({ form }: { form: Onboarding }) {
     }
     // Sent, the form gives way to the summary: `mutateAsync` still reports after it unmounts
     // (a callback passed to `mutate` would be dropped).
+    sendingRef.current = true;
     void submit.mutateAsync(checked.answers).then(
       () => {
+        sendingRef.current = false;
         toast.success(t('onboarding.submitted'));
         window.scrollTo({ top: 0 });
       },
       (error: unknown) => {
+        sendingRef.current = false;
+        // Sent or cancelled meanwhile: the mutation says so and the page catches up.
+        if (isGone(error)) return;
         const fields = fieldErrors(error);
         setServerErrors(fields);
         const bad = FIELDS.find((field) => fields[field.key]);
@@ -358,8 +362,9 @@ function Field({
           label={label}
           value={(answers[key] as string | null) ?? ''}
           onChange={(value) => onChange(key, value || null)}
-          max={todayValue()}
-          // Nobody is born today: open on the years around 30 years ago.
+          min={yearsAgo(MAX_AGE)}
+          max={yearsAgo(MIN_AGE)}
+          // Open on the years around 30 years ago.
           openOn={yearsAgo(30)}
           openView="years"
           hint={hint}

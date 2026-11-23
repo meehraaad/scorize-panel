@@ -1,10 +1,11 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { mockSubmittedForm } from '@/mocks/hr';
 import { renderApp } from '@/test/renderApp';
-import '@/test/server';
+import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
 
 // The form isn't on the server yet (docs/backend-changes.md OB1–OB8): tested as it will be.
@@ -16,6 +17,8 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
 const HIRE = 603; // Bahar Niko: staff 3, joining today, her form open (src/mocks/hr.ts)
 const AMIR = 6; // superuser: holds can_manage_support_staff
 const BAHAR_FILE = 3;
+
+const API = '/api/hr/v1';
 
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
@@ -211,6 +214,106 @@ describe('new-hire form', () => {
     expect(await toasts().findByText('کپی شد')).toBeInTheDocument();
     expect(write).toHaveBeenCalledWith(expect.stringContaining(link));
   });
+  it('switches the hire to the sent form when a draft finds it closed', async () => {
+    const user = userEvent.setup();
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    const name = await screen.findByLabelText('نام پدر');
+    // HR (or another tab) sent it meanwhile: Django answers the next draft with 409.
+    mockSubmittedForm(BAHAR_FILE);
+    await user.type(name, 'حسن');
+    expect(
+      await toasts().findByText('وضعیت فرم تغییر کرده است. صفحه به‌روز شد.'),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'فرم را فرستادید. منابع انسانی آن را بررسی می‌کند و اگر چیزی لازم باشد خبرتان می‌کند.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('stops offering uploads at ten files', async () => {
+    const user = userEvent.setup();
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    for (let page = 1; page <= 10; page++) {
+      await user.upload(
+        await screen.findByLabelText('انتخاب فایل برای تصویر شناسنامه'),
+        new File(['x'], `page-${String(page)}.pdf`, { type: 'application/pdf' }),
+      );
+      // The name is in the upload toast too: wait for its tile, a link to the file.
+      await screen.findByRole('link', { name: new RegExp(`page-${String(page)}\\.pdf`) });
+    }
+    await waitFor(() => {
+      expect(screen.queryByLabelText('انتخاب فایل برای تصویر شناسنامه')).toBeNull();
+    });
+    expect(screen.queryByLabelText('انتخاب فایل برای تصویر کارت ملی')).toBeNull();
+    expect(
+      screen.getByText('حداکثر ۱۰ فایل می‌توانید بفرستید. برای فایل تازه، یکی را حذف کنید.'),
+    ).toBeInTheDocument();
+  });
+
+  it('tells HR when approving clashes with another file', async () => {
+    const user = userEvent.setup();
+    mockSubmittedForm(BAHAR_FILE);
+    server.use(
+      http.post(`${API}/staff/:id/onboarding/approve/`, () =>
+        HttpResponse.json(
+          { national_code: ['A staff file with this national code exists.'] },
+          { status: 400 },
+        ),
+      ),
+    );
+    loginAs(AMIR);
+    renderApp('/hr/staff/3');
+    const card = await screen.findByRole('region', { name: 'فرم اطلاعات فردی' });
+    await user.click(within(card).getByRole('button', { name: 'تأیید و ثبت در پرونده' }));
+    await user.click(within(card).getByRole('button', { name: 'تأیید و ثبت در پرونده' }));
+    expect(
+      await toasts().findByText('A staff file with this national code exists.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows HR the form as it is when another reviewer got there first', async () => {
+    const user = userEvent.setup();
+    mockSubmittedForm(BAHAR_FILE);
+    server.use(
+      http.post(`${API}/staff/:id/onboarding/approve/`, () =>
+        HttpResponse.json({ detail: 'Not found.' }, { status: 404 }),
+      ),
+    );
+    loginAs(AMIR);
+    renderApp('/hr/staff/3');
+    const card = await screen.findByRole('region', { name: 'فرم اطلاعات فردی' });
+    await user.click(within(card).getByRole('button', { name: 'تأیید و ثبت در پرونده' }));
+    await user.click(within(card).getByRole('button', { name: 'تأیید و ثبت در پرونده' }));
+    expect(
+      await toasts().findByText('این فرم پیش‌تر بررسی یا لغو شده است. وضعیت تازه نمایش داده شد.'),
+    ).toBeInTheDocument();
+  });
+
+  it('says so when the same new staff member was just saved by someone else', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post(`${API}/staff/`, () =>
+        HttpResponse.json(
+          { detail: 'This staff member was just added.', code: 'exists' },
+          { status: 409 },
+        ),
+      ),
+    );
+    loginAs(AMIR);
+    renderApp('/hr/staff');
+    await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
+    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121112244');
+    await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '20000000');
+    await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
+    expect(
+      await toasts().findByText('این کارمند همین حالا ثبت شده است. فهرست را بررسی کنید.'),
+    ).toBeInTheDocument();
+  });
+
   it('points the hire back to their form from the account menu', async () => {
     const user = userEvent.setup();
     loginAs(HIRE);

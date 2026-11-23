@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -7,11 +7,12 @@ import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { TextField } from '@/components/ui/TextField';
+import { ApiError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
-import { optionsQuery, type ContractKind, type Team } from '../api';
+import { HR_KEY, optionsQuery, type ContractKind, type Team } from '../api';
 import { useNewStaff } from '../mutations';
 import { fieldErrors, parseAmount, todayValue } from '../format';
 import { personPath } from '../paths';
@@ -31,6 +32,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
   const navigate = useNavigate();
   const options = useQuery(optionsQuery);
   const save = useNewStaff();
+  const client = useQueryClient();
   const [form, setForm] = useState({
     phone: '',
     email: '',
@@ -76,6 +78,12 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
           );
         },
         onError: (error) => {
+          if (error instanceof ApiError && error.status === 409) {
+            // Saved by someone else at the same moment (the same phone or email): the list shows it.
+            toast.error(t('newStaff.exists'));
+            void client.invalidateQueries({ queryKey: HR_KEY });
+            return;
+          }
           const fields = fieldErrors(error);
           setErrors(fields);
           if (Object.keys(fields).length === 0) toast.error(t('error'));

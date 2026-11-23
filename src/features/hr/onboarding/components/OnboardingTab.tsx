@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -11,12 +11,13 @@ import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { TextAreaField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { fieldErrors } from '@/lib/api/fieldErrors';
 import { toast } from '@/lib/toast';
-import type { StaffFile } from '../../api';
+import { fileQuery, type StaffFile } from '../../api';
 import { dayOf } from '../../format';
 import { onboardingQuery, type OnboardingReview } from '../api';
 import type { FieldKey } from '../fields';
-import { useReviewOnboarding, useSendOnboarding, type ReviewAction } from '../mutations';
+import { isGone, useReviewOnboarding, useSendOnboarding, type ReviewAction } from '../mutations';
 import { STATUS_TONE } from '../status';
 import { AnswersSummary } from './AnswersSummary';
 import { InviteCard } from './InviteCard';
@@ -105,6 +106,7 @@ function Header({ file, form }: { file: StaffFile; form: OnboardingReview }) {
   const { t } = useTranslation('hr');
   const f = useFormat();
   const review = useReviewOnboarding(file.id);
+  const client = useQueryClient();
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [returning, setReturning] = useState(false);
   const day = (value: string) => f.date(new Date(value));
@@ -126,7 +128,20 @@ function Header({ file, form }: { file: StaffFile; form: OnboardingReview }) {
         setReturning(false);
         toast.success(done);
       },
-      onError: () => toast.error(t('error')),
+      onError: (error) => {
+        setConfirm(null);
+        if (isGone(error)) {
+          // Another reviewer (or the hire) got there first: show the form as it is now.
+          setReturning(false);
+          toast.info(t('onboarding.review.changed'));
+          void client.invalidateQueries({ queryKey: onboardingQuery(file.id).queryKey });
+          void client.invalidateQueries({ queryKey: fileQuery(file.id).queryKey });
+          return;
+        }
+        // Approving: another file has this national code or ID card number.
+        const [clash] = Object.values(fieldErrors(error));
+        toast.error(clash ?? t('error'));
+      },
     });
 
   return (

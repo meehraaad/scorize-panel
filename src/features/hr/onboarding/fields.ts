@@ -64,6 +64,8 @@ export type Problem =
   | 'mobile'
   | 'email'
   | 'future'
+  | 'age'
+  | 'special'
   | 'files';
 
 export interface FieldSpec {
@@ -85,8 +87,15 @@ export const FIELDS: readonly FieldSpec[] = [
   { key: 'fathers_name', section: 'identity', kind: 'text', rule: 'persian', max: 100 },
   { key: 'first_name_en', section: 'identity', kind: 'text', rule: 'latin', ltr: true, max: 100 },
   { key: 'last_name_en', section: 'identity', kind: 'text', rule: 'latin', ltr: true, max: 100 },
-  { key: 'national_code', section: 'identity', kind: 'text', rule: 'nationalCode', ltr: true },
-  { key: 'id_number', section: 'identity', kind: 'text', rule: 'idNumber', ltr: true },
+  {
+    key: 'national_code',
+    section: 'identity',
+    kind: 'text',
+    rule: 'nationalCode',
+    ltr: true,
+    max: 20,
+  },
+  { key: 'id_number', section: 'identity', kind: 'text', rule: 'idNumber', ltr: true, max: 20 },
   { key: 'gender', section: 'identity', kind: 'choice' },
   { key: 'birth_date', section: 'identity', kind: 'date' },
   { key: 'birth_place', section: 'identity', kind: 'text', rule: 'persian', max: 64 },
@@ -97,16 +106,28 @@ export const FIELDS: readonly FieldSpec[] = [
   { key: 'marital_status', section: 'education', kind: 'choice' },
   { key: 'number_of_children', section: 'education', kind: 'number' },
   { key: 'military_status', section: 'education', kind: 'choice' },
-  { key: 'iban', section: 'bank', kind: 'text', rule: 'iban', ltr: true },
+  { key: 'iban', section: 'bank', kind: 'text', rule: 'iban', ltr: true, max: 40 },
   { key: 'bank_name', section: 'bank', kind: 'text', rule: 'persian', max: 64 },
   { key: 'email', section: 'contact', kind: 'text', rule: 'email', ltr: true, max: 254 },
   { key: 'address', section: 'contact', kind: 'longtext', rule: 'text', max: 1000 },
   { key: 'emergency_name', section: 'emergency', kind: 'text', rule: 'persian', max: 100 },
   { key: 'emergency_relation', section: 'emergency', kind: 'text', rule: 'persian', max: 64 },
-  { key: 'emergency_phone', section: 'emergency', kind: 'text', rule: 'mobile', ltr: true },
+  {
+    key: 'emergency_phone',
+    section: 'emergency',
+    kind: 'text',
+    rule: 'mobile',
+    ltr: true,
+    max: 20,
+  },
 ];
 
 export const MAX_CHILDREN = 20;
+/** Files on one form at most (Django refuses the next upload). */
+export const MAX_FILES = 10;
+/** The ages a birth date may give (Django: `MIN_AGE`, `MAX_AGE`). */
+export const MIN_AGE = 15;
+export const MAX_AGE = 100;
 const OPTIONAL = new Set<FieldKey>(['preferred_name']);
 /** No field of study or university below a diploma. */
 const NO_STUDIES = new Set<Education | null>(['below_diploma', null]);
@@ -119,6 +140,12 @@ export const isRequired = (key: FieldKey, answers: OnboardingAnswers) =>
   isAsked(key, answers) && !OPTIONAL.has(key);
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// eslint-disable-next-line no-control-regex -- what no typed answer has (Django: `CONTROL`)
+const CONTROL = /[\u0000-\u001f\u007f]/;
+
+/** Whether the answer has characters nobody types (a newline is fine only in the address). */
+const hasControl = (key: FieldKey, value: string) =>
+  CONTROL.test(key === 'address' ? value.replace(/\n/g, '') : value);
 
 /** A typed value checked by its rule: the value to send (digits made Latin) or what is wrong. */
 function checkText(rule: Rule, raw: string): { value: string } | { problem: Problem } {
@@ -156,10 +183,20 @@ function checkText(rule: Rule, raw: string): { value: string } | { problem: Prob
 const isEmpty = (value: unknown) =>
   value === null || value === undefined || (typeof value === 'string' && !value.trim());
 
+const dayValue = (year: number, month: number, day: number) =>
+  `${String(year)}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
 /** Today as `YYYY-MM-DD` (local). */
-function today() {
+const today = () => yearsAgo(0);
+
+/** `YYYY-MM-DD` the given number of years before today; 29 February falls on the 28th. */
+export function yearsAgo(years: number) {
   const now = new Date();
-  return `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const year = now.getFullYear() - years;
+  const month = now.getMonth() + 1;
+  const leap = new Date(year, 1, 29).getMonth() === 1;
+  const day = month === 2 && now.getDate() === 29 && !leap ? 28 : now.getDate();
+  return dayValue(year, month, day);
 }
 
 export interface Checked {
@@ -193,13 +230,19 @@ export function checkAnswers(
       if (complete && isRequired(key, answers)) problems[key] = 'required';
       continue;
     }
+    if (typeof value === 'string' && field.kind !== 'date' && hasControl(key, value)) {
+      problems[key] = 'special';
+      continue;
+    }
     if (typeof value === 'string' && field.rule) {
       const result = checkText(field.rule, value);
       if ('problem' in result) problems[key] = result.problem;
       else set(key, result.value);
     }
-    if (field.kind === 'date' && typeof value === 'string' && value > today())
-      problems[key] = 'future';
+    if (field.kind === 'date' && typeof value === 'string') {
+      if (value > today()) problems[key] = 'future';
+      else if (value > yearsAgo(MIN_AGE) || value < yearsAgo(MAX_AGE)) problems[key] = 'age';
+    }
     if (field.kind === 'number' && typeof value === 'number' && (value < 0 || value > MAX_CHILDREN))
       problems[key] = 'required';
   }
