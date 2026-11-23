@@ -15,6 +15,7 @@ export function Dialog({
   closeLabel,
   footer,
   size = 'panel',
+  className = '',
   children,
 }: {
   open: boolean;
@@ -25,6 +26,7 @@ export function Dialog({
   /** Pinned under the scrolling body: the form's buttons. */
   footer?: ReactNode;
   size?: 'panel' | 'wide';
+  className?: string | undefined;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -49,7 +51,7 @@ export function Dialog({
         size === 'wide'
           ? 'm-0 h-dvh max-h-dvh w-full max-w-none bg-canvas lg:m-auto lg:h-[min(940px,94dvh)] lg:max-h-[94dvh] lg:w-[min(1280px,95vw)] lg:rounded-card'
           : 'm-0 mt-auto max-h-[92dvh] w-full max-w-none rounded-t-card bg-surface lg:ms-auto lg:mt-0 lg:h-dvh lg:max-h-dvh lg:w-[480px] lg:rounded-none lg:rounded-s-card'
-      }`}
+      } ${className}`}
     >
       {open && (
         <div

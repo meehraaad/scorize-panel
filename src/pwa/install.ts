@@ -1,6 +1,15 @@
 import { androidPrompt } from './captureInstallPrompt';
 
-export type InstallPlatform = 'android' | 'iphone';
+export type InstallPlatform = 'android' | 'iphone-safari' | 'iphone-other';
+
+export function isIphoneSafari(userAgent: string): boolean {
+  // iOS browsers share WebKit and often include Safari/ in their user agent. Safari's Version/
+  // token and final Safari/ product identify normal Safari tabs. Embedded browsers can spoof this.
+  return (
+    /\biPhone\b.*\bVersion\/[\d.]+.*\bMobile\/\S+.*\bSafari\/[\d.]+$/i.test(userAgent) &&
+    !/\b(?:CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|Brave|GSA|Instagram|FBAN|FBAV)\b/i.test(userAgent)
+  );
+}
 
 const dismissalKey = 'scorize.pwaInstallDismissed';
 
@@ -23,7 +32,8 @@ function detectInstallPlatform(): InstallPlatform | null {
   }
 
   if (/Android/i.test(userAgent)) return 'android';
-  if (/iPhone/i.test(userAgent)) return 'iphone';
+  if (/\biPhone\b/i.test(userAgent))
+    return isIphoneSafari(userAgent) ? 'iphone-safari' : 'iphone-other';
   return null;
 }
 
