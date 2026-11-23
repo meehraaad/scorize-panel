@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router';
 import { Toaster } from '@/components/ui/Toast';
 import { queryClient } from '@/lib/api/queryClient';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
+import '@/pwa/captureInstallPrompt';
 import { createRouter } from './router';
 
 // The service worker code is only bundled when the PWA is switched on (VITE_ENABLE_PWA).
