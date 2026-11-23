@@ -52,6 +52,7 @@ import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { salesSourcesQuery } from '@/lib/leads/api';
 import { notebookQuery } from '@/lib/notes/api';
 import { SALES_API } from '@/lib/sales/api';
+import { callRatingsQuery } from '@/lib/sales/callRatings';
 import {
   officeHoursQuery,
   phoneMenusQuery,
@@ -138,6 +139,9 @@ export const salesPanel: PanelDefinition = {
       tab: 'panels.sales.tabs.tasks',
       icon: 'check',
     },
+    ...(ON_SERVER.callRatings
+      ? [{ id: 'call-ratings', to: 'call-ratings', label: 'panels.sales.nav.callRatings', icon: 'star' } as const]
+      : []),
     {
       id: 'manager',
       to: 'manager',
@@ -170,6 +174,17 @@ export const salesPanel: PanelDefinition = {
         skeleton: 'dashboard',
       }),
     },
+    ...(ON_SERVER.callRatings
+      ? [
+          {
+            path: 'call-ratings',
+            ...lazyPage(() => import('@/features/sales/CallRatingsPage'), ['sales'], {
+              data: () => [callRatingsQuery('mine')],
+              skeleton: 'list',
+            }),
+          },
+        ]
+      : []),
     {
       path: 'leads',
       ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
@@ -516,6 +531,17 @@ export const salesPanel: PanelDefinition = {
                               ...(ON_SERVER.phoneVoices ? [phoneVoicesQuery] : []),
                             ],
                             skeleton: 'form',
+                          }),
+                        },
+                      ]
+                    : []),
+                  ...(ON_SERVER.callRatings
+                    ? [
+                        {
+                          path: 'ratings',
+                          ...lazyPage(() => import('@/features/sales/manager/PhoneRatingsPage'), [], {
+                            data: () => [callRatingsQuery('team')],
+                            skeleton: 'list',
                           }),
                         },
                       ]
