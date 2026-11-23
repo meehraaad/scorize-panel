@@ -252,6 +252,7 @@ export interface HistoryEvent {
   /** Payments and leads: what it was, localized ("Master's application consultation"). */
   title: string | null;
   text: string;
+  contact_edit?: { id: number; version: string };
   customer_summary?: string;
   /** `assign`: who had the lead (or session) before. */
   previous?: string | null;

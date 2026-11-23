@@ -851,6 +851,16 @@ function examScoreOf(body: Record<string, unknown>, current: DjangoExamScore | n
 
 const TYPE_LABEL = ['تماس تلفنی', 'جلسه مشاوره', 'پیام رسان', 'ایمیل', 'تیکت', 'تماس بی پاسخ'];
 
+export function contactNoteRow(customer: number, contact: number) {
+  return data().contacts.find((row) => row.user === customer && row.data.id === contact)?.data;
+}
+
+export function canEditContactNote(row: DjangoContact) {
+  return (
+    isSeller() && (isManager() || row.support_staves.some((staff) => staff.id === meStaff()?.id))
+  );
+}
+
 /** user_profile.classes.ContactHistory → HistorySerializer. */
 const contactItem = (row: StaffDb['contacts'][number]): DjangoHistoryItem => ({
   unique_id: `contact-${String(row.data.id)}`,

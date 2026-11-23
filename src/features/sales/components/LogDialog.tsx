@@ -28,6 +28,8 @@ import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
+import { copyText } from '@/lib/clipboard';
+import { toLatinDigits } from '@/lib/text';
 import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { type CallOutcome, type CustomerData } from '../api';
@@ -419,14 +421,28 @@ export function LogDialog({
           }))}
         />
       )}
-      {call && !liveCall && (
-        <a
-          href={callHref(customer.phone, linphone)}
-          className={buttonClass('outline', 'self-start')}
-        >
-          <Icon name="phone" size={18} />
-          <span dir="ltr">{f.digits(customer.phone)}</span>
-        </a>
+      {call && !liveCall && customer.phone && (
+        <div className="flex flex-wrap items-center gap-2">
+          <a href={callHref(customer.phone, linphone)} className={buttonClass('outline')}>
+            <Icon name="phone" size={18} />
+            <span dir="ltr">{f.digits(customer.phone)}</span>
+          </a>
+          <Button
+            type="button"
+            variant="quiet"
+            onClick={(event) =>
+              void copyText(
+                toLatinDigits(customer.phone),
+                event.currentTarget.closest<HTMLElement>('[role="dialog"]') ?? undefined,
+              ).then(
+                () => toast.success(t('customer.logDialog.phoneCopied')),
+                () => toast.error(t('customer.logDialog.phoneCopyFailed')),
+              )
+            }
+          >
+            {t('customer.logDialog.copyPhone')}
+          </Button>
+        </div>
       )}
       {message && customer.templates.length > 0 && (
         <ChoiceGroup

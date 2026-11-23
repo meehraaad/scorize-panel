@@ -42,7 +42,8 @@ import {
 } from './sales';
 import { customerTemplates } from './messages';
 import { tagsOfCustomer } from './salesTags';
-import { notFound, pageOf, storage } from './session';
+import { forbidden, notFound, pageOf, storage } from './session';
+import { canEditContactNote, contactNoteRow } from './staff';
 import { overviewOf, taskListOf } from './tasks';
 
 /**
@@ -441,10 +442,18 @@ export const salesStaffHandlers = [
     const words = (query.get('q') ?? '').trim().toLowerCase().split(/\s+/).filter(Boolean);
     return answer<HistoryPage>(async () => {
       const history = await fetchHistory(id(params), page);
-      const results = history.results.map((event) => ({
-        ...event,
-        customer_summary: summaryForContact(id(params), event.id) ?? '',
-      }));
+      const results = history.results.map((event) => {
+        const contact = event.id.startsWith('contact-')
+          ? contactNoteRow(id(params), Number(event.id.slice('contact-'.length)))
+          : undefined;
+        return {
+          ...event,
+          customer_summary: summaryForContact(id(params), event.id) ?? '',
+          ...(contact && canEditContactNote(contact)
+            ? { contact_edit: { id: contact.id, version: contact.notes ?? '' } }
+            : {}),
+        };
+      });
       if (words.length === 0) return { ...history, results };
       return {
         ...history,
@@ -457,6 +466,27 @@ export const salesStaffHandlers = [
         ),
       };
     });
+  }),
+  http.get(`${BASE}/customers/:id/contacts/:contact/`, ({ params }) => {
+    const contact = contactNoteRow(id(params), Number(params.contact));
+    if (!contact) return notFound();
+    if (!canEditContactNote(contact)) return forbidden();
+    return HttpResponse.json({ notes: contact.notes ?? '', version: contact.notes ?? '' });
+  }),
+  http.patch(`${BASE}/customers/:id/contacts/:contact/`, async ({ params, request }) => {
+    const contact = contactNoteRow(id(params), Number(params.contact));
+    if (!contact) return notFound();
+    if (!canEditContactNote(contact)) return forbidden();
+    const body = (await request.json()) as { notes?: unknown; version?: unknown };
+    if (typeof body.notes !== 'string' || Array.from(body.notes.trim()).length > 5000)
+      return HttpResponse.json({ notes: ['Enter up to 5,000 characters.'] }, { status: 400 });
+    if (typeof body.version !== 'string')
+      return HttpResponse.json({ version: ['This field is required.'] }, { status: 400 });
+    if (body.version !== (contact.notes ?? ''))
+      return HttpResponse.json({ code: 'contact_note_changed' }, { status: 409 });
+    const notes = body.notes.trim();
+    contact.notes = notes || null;
+    return HttpResponse.json({ notes, version: notes });
   }),
   http.post(`${BASE}/customers/:id/contacts/`, async ({ params, request }) => {
     const log = (await request.json()) as ContactLog;

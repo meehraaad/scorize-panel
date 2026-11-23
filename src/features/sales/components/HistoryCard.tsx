@@ -13,6 +13,7 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { historyQuery, type HistoryEvent, type HistoryKind } from '../api';
+import { ContactNoteEditor } from './ContactNoteEditor';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
@@ -102,7 +103,7 @@ export function HistoryCard({ customer }: { customer: number }) {
       ) : (
         <ol className="m-0 list-none p-0">
           {events.map((event) => (
-            <EventRow key={event.id} event={event} />
+            <EventRow key={event.id} event={event} customer={customer} />
           ))}
         </ol>
       )}
@@ -122,7 +123,7 @@ export function HistoryCard({ customer }: { customer: number }) {
   );
 }
 
-function EventRow({ event }: { event: HistoryEvent }) {
+function EventRow({ event, customer }: { event: HistoryEvent; customer: number }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const look = LOOK[event.kind];
@@ -175,7 +176,16 @@ function EventRow({ event }: { event: HistoryEvent }) {
             </Chip>
           </span>
         )}
-        {event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>}
+        {event.contact_edit ? (
+          <ContactNoteEditor
+            customer={customer}
+            contact={event.contact_edit.id}
+            version={event.contact_edit.version}
+            text={event.text}
+          />
+        ) : (
+          event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>
+        )}
         {event.customer_summary && (
           <div className="rounded-xl bg-info-tint p-3">
             <span className="text-xs font-semibold text-text-2">
