@@ -15,8 +15,13 @@ import { gzipSync } from 'node:zlib';
 // JS 187.7: a case's tab per service, its route (2026-11-21).
 // JS 188.4: the error screen's support code and the API client's request ID, which must work when a
 // page's own code fails to load; the crash reporter itself loads only on a failure (2026-11-22).
-// JS 188.5: capture Android's install event before the lazy PWA bundle loads (2026-11-23).
-const BUDGET_KB = { js: 188.5, css: 22.2 };
+// JS 189.1: the supervisor manager's section, its six sub-tab routes (team cases, team, moving
+// cases, service settings) and their two queries, 0.7 KB (2026-11-22).
+// JS 189.8: Executive Panel role, navigation and route prefetch definitions (2026-11-22).
+// JS 196.1, CSS 22.3: what `test` weighed when the HR new-hire form merged in (195.3 / 22.201)
+// plus the form's 0.5 KB, as CI measures it on Node 24 (2026-11-23, docs/performance.md).
+// JS 196.2, CSS 22.4: enable the PWA build in CI and add the mobile install guide (2026-11-23).
+const BUDGET_KB = { js: 196.2, css: 22.4 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

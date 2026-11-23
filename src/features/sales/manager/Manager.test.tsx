@@ -60,6 +60,30 @@ describe('sales manager section', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows who changed the settings and what', async () => {
+    loginAs(REZA);
+    const data = await api<AssignData>('/sales/v1/manager/assign/');
+    server.use(
+      http.get('/api/sales/v1/manager/assign/', () =>
+        HttpResponse.json({
+          ...data,
+          history: [
+            {
+              id: 1,
+              at: new Date().toISOString(),
+              by: 'رضا',
+              lines: ['فرزان از تقسیم خودکار کنار گذاشته شد'],
+            },
+          ],
+        }),
+      ),
+    );
+    renderApp('/sales/manager');
+    const card = await screen.findByRole('region', { name: 'تغییرات تنظیمات تقسیم' });
+    expect(within(card).getByText('رضا')).toBeInTheDocument();
+    expect(within(card).getByText('فرزان از تقسیم خودکار کنار گذاشته شد')).toBeInTheDocument();
+  });
+
   it('sets working hours and the wait for a first call', async () => {
     const user = userEvent.setup();
     loginAs(REZA);

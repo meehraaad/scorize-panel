@@ -12,7 +12,6 @@ export type ServerFeature =
   | 'gpaSave'
   | 'consultationInfo'
   | 'packages'
-  | 'estimate'
   | 'pathwayFinder'
   | 'pathwaysManagement'
   | 'reviewDocuments'
@@ -46,12 +45,13 @@ export type ServerFeature =
   | 'teamBreaks'
   | 'attendance'
   | 'hr'
+  | 'hrOnboarding'
   | 'marketing'
   | 'dayFollowUps'
   | 'clientServices'
   | 'clientErrors';
 
-export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+const DEFAULTS: Record<ServerFeature, boolean> = {
   /** Voice messages in tickets: Django checks audio attachments (shamrad/lang `common/uploads.py`). */
   ticketVoice: true,
   /**
@@ -79,6 +79,14 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * `claude/project-thread-79hhr6`). Tasks: `?panel=hr`.
    */
   hr: true,
+  /**
+   * OB1–OB8 `hr/v1/me/onboarding/…` and `hr/v1/staff/<id>/onboarding/…`: the new-hire form
+   * (replaces the Porsline «ثبت اطلاعات فردی» link), HR's review of it and the invite to send, plus
+   * `whoami.staff.onboarding` (lang `feature/hr-onboarding-form`). Needs
+   * `makemigrations apply human_resource` + `migrate`; deploy Django first. Off: no form page, tab
+   * or chips, and HR keeps sending the Porsline link.
+   */
+  hrOnboarding: true,
   /**
    * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
    * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.
@@ -162,8 +170,6 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
   consultationInfo: true,
   /** H42, H43 `services/packages/<id>/` and its review. */
   packages: true,
-  /** H52–H54, H56 `estimate/…`: the admission-chance quiz (scorize-revolution `mehrad-take-over`). */
-  estimate: true,
   /**
    * `applicant/v1/pathways/` (+ `goal`, `summary`, `tip`, `duration`, `cost`): the simple pathway
    * finder, fewest questions to the first country (needs `makemigrations pathways` + `migrate`).
@@ -246,4 +252,19 @@ export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
    * (`MessageTemplate.owner`, needs `makemigrations user_profile` + `migrate`). Off: no settings card.
    */
   sellerReadyMessages: true,
+};
+
+/**
+ * Entries one build turns on, from `VITE_SERVER_FEATURES` (comma-separated names, e.g.
+ * "clientServices"): the test server (build.scorize.com) tries a feature whose Django switch is on
+ * only there. Production builds don't set it, so they keep the defaults above.
+ */
+function buildFeatures(list: string | undefined): Partial<Record<ServerFeature, boolean>> {
+  const names = (list ?? '').split(',').map((name) => name.trim());
+  return Object.fromEntries(names.filter((name) => name in DEFAULTS).map((name) => [name, true]));
+}
+
+export const ON_SERVER: Readonly<Record<ServerFeature, boolean>> = {
+  ...DEFAULTS,
+  ...buildFeatures(import.meta.env.VITE_SERVER_FEATURES),
 };

@@ -49,6 +49,7 @@ export default function LeadsPage() {
   const teamSources = useQuery(salesSourcesQuery);
   const [band, setBand] = useState<LeadQuery['band']>('all');
   const [overdue, setOverdue] = useState(false);
+  const [noFollowUp, setNoFollowUp] = useState(false);
   const [tag, setTag] = useState<number | null>(null);
   const [seller, setSeller] = useState<number | 'none' | null>(null);
   // With the source on bought consultations: in person or not, and the type.
@@ -67,6 +68,7 @@ export default function LeadsPage() {
     page,
     // Absent unless chosen: the first page stays the one the route prefetched.
     ...(seller === null ? {} : { seller }),
+    ...(noFollowUp ? { noFollowUp } : {}),
     ...(mode === 'all' ? {} : { consultation: mode }),
     ...(consultationType === null ? {} : { consultationType }),
   };
@@ -246,6 +248,17 @@ export default function LeadsPage() {
               label={t('leads.overdueOnly')}
               checked={overdue}
               onChange={refilter(setOverdue)}
+            />
+          )}
+          {data?.supports.no_follow_up && (
+            <TogglePill
+              label={
+                data.stats.no_follow_up
+                  ? t('leads.noFollowUpCount', { n: f.number(data.stats.no_follow_up) })
+                  : t('leads.noFollowUpOnly')
+              }
+              checked={noFollowUp}
+              onChange={refilter(setNoFollowUp)}
             />
           )}
         </div>

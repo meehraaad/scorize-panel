@@ -10,11 +10,11 @@ import type booking from '@/locales/fa/booking.json';
 import type consultations from '@/locales/fa/consultations.json';
 import type contract from '@/locales/fa/contract.json';
 import type documents from '@/locales/fa/documents.json';
-import type estimate from '@/locales/fa/estimate.json';
 import type journey from '@/locales/fa/journey.json';
 import type gates from '@/locales/fa/gates.json';
 import type home from '@/locales/fa/home.json';
 import type services from '@/locales/fa/services.json';
+import type executive from '@/locales/fa/executive.json';
 import type supervisor from '@/locales/fa/supervisor.json';
 import type sales from '@/locales/fa/sales.json';
 import type tasks from '@/locales/fa/tasks.json';
@@ -55,7 +55,6 @@ declare module 'i18next' {
       tickets: typeof tickets;
       contract: typeof contract;
       turkey: typeof turkey;
-      estimate: typeof estimate;
       journey: typeof journey;
       services: typeof services;
       consultations: typeof consultations;
@@ -66,6 +65,7 @@ declare module 'i18next' {
       sales: typeof sales;
       tasks: typeof tasks;
       supervisor: typeof supervisor;
+      executive: typeof executive;
       writer: typeof writer;
       assistant: typeof assistant;
       attendance: typeof attendance;

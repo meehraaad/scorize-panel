@@ -19,13 +19,16 @@ import {
   casesQuery,
   firstCasesQuery,
   exportHref,
+  managerTeamQuery,
   type BotFilter,
   type CasesQuery,
   type StageFilter,
+  type SupervisorFilter,
 } from './api';
 import { pagesOf } from '@/lib/api/page';
 import { CaseTable } from './components/CaseTable';
 import { ImportDialog } from './components/ImportDialog';
+import { MoveDialog } from './manager/MoveDialog';
 
 /**
  * Every case the supervisor runs: by stage, searchable, with the professor-email bot and
@@ -33,18 +36,37 @@ import { ImportDialog } from './components/ImportDialog';
  * Design: canvas V1 "سوپروایزر · فهرست متقاضیان" (Main), in the V6 look.
  */
 export default function CasesPage() {
+  return <CaseList />;
+}
+
+/**
+ * The list; `team`: the manager's list of every case (manager section), with each case's
+ * supervisors and a supervisor filter (the team page links to one person's cases).
+ */
+export function CaseList({ team = false }: { team?: boolean }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const [params, setParams] = useSearchParams();
   // Starts as the route prefetched it: the URL's stage and bot (reports link to stopped bots).
-  const first = firstCasesQuery(params);
+  const first = firstCasesQuery(params, team);
   const stage = first.stage;
+  const supervisor = first.team?.supervisor ?? 'all';
+  const people = useQuery({ ...managerTeamQuery, enabled: team }).data?.people;
   const [bot, setBot] = useState<BotFilter>(first.bot);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
   const [importing, setImporting] = useState(false);
-  const query: CasesQuery = { stage, bot, search: useDeferredValue(search), page };
+  const [moving, setMoving] = useState(false);
+  // One person's list: their chosen cases can go to someone else.
+  const owner = people?.find((person) => String(person.id) === supervisor);
+  const query: CasesQuery = {
+    stage,
+    bot,
+    search: useDeferredValue(search),
+    page,
+    ...(team && { team: { supervisor } }),
+  };
   const { data, isPending, isPlaceholderData } = useQuery(casesQuery(query));
 
   // Any filter change starts again at page 1 with nothing selected.
@@ -66,21 +88,49 @@ export default function CasesPage() {
     ),
   );
 
+  const setSupervisor = refilter((value: SupervisorFilter) =>
+    setParams(
+      (current) => {
+        if (value === 'all') current.delete('supervisor');
+        else current.set('supervisor', value);
+        return current;
+      },
+      { replace: true },
+    ),
+  );
+
   const pages = pagesOf(data);
 
   return (
     <PageStack>
       <PageHeader
-        title={t('cases.title')}
-        subtitle={data ? t('cases.subtitle', { n: f.number(data.counts.all) }) : undefined}
+        title={t(team ? 'manager.cases.title' : 'cases.title')}
+        subtitle={
+          data
+            ? t(team ? 'manager.cases.subtitle' : 'cases.subtitle', {
+                n: f.number(data.counts.all),
+              })
+            : undefined
+        }
         actions={
-          <Button variant="outline" onClick={() => setImporting(true)}>
-            <Icon name="upload" size={18} />
-            {t('import.open')}
-          </Button>
+          team ? undefined : (
+            <Button variant="outline" onClick={() => setImporting(true)}>
+              <Icon name="upload" size={18} />
+              {t('import.open')}
+            </Button>
+          )
         }
       />
-      <ImportDialog open={importing} onClose={() => setImporting(false)} />
+      {!team && <ImportDialog open={importing} onClose={() => setImporting(false)} />}
+      {owner && (
+        <MoveDialog
+          person={owner}
+          cases={[...selected]}
+          open={moving}
+          onClose={() => setMoving(false)}
+          onMoved={() => setSelected(new Set())}
+        />
+      )}
 
       <section aria-label={t('cases.list')} className="flex flex-col gap-4">
         <FilterTabs
@@ -100,6 +150,23 @@ export default function CasesPage() {
             value={search}
             onChange={refilter(setSearch)}
           />
+          {team && (
+            <SelectField
+              inline
+              label={t('manager.cases.supervisor')}
+              value={supervisor}
+              onChange={setSupervisor}
+              options={[
+                { value: 'all', label: t('manager.cases.everyone') },
+                { value: 'none', label: t('manager.cases.nobody') },
+                // The route loads the team with the list.
+                ...(people ?? []).map((person) => ({
+                  value: String(person.id) as SupervisorFilter,
+                  label: person.name,
+                })),
+              ]}
+            />
+          )}
           <SelectField
             inline
             label={t('cases.bot')}
@@ -123,10 +190,19 @@ export default function CasesPage() {
               <span className="text-sm font-semibold text-primary-text">
                 {t('cases.selected', { n: f.number(selected.size) })}
               </span>
+              {owner && (
+                <Button
+                  variant="outline"
+                  className="ms-auto h-11 text-sm"
+                  onClick={() => setMoving(true)}
+                >
+                  {t('manager.move.chosenOpen')}
+                </Button>
+              )}
               <a
                 href={exportHref([...selected])}
                 download
-                className={buttonClass('outline', 'ms-auto h-11 text-sm')}
+                className={buttonClass('outline', `${owner ? '' : 'ms-auto'}h-11 text-sm`)}
               >
                 <Icon name="download" size={18} />
                 {t('cases.export')}
@@ -145,7 +221,7 @@ export default function CasesPage() {
           ) : data.results.length === 0 ? (
             <EmptyState variant="padded">{t('cases.empty')}</EmptyState>
           ) : (
-            <CaseTable rows={data.results} selected={selected} onSelect={setSelected} />
+            <CaseTable rows={data.results} selected={selected} onSelect={setSelected} team={team} />
           )}
           {data && data.count > 0 && (
             <Pager

@@ -10,3 +10,6 @@ export const personPath = (id: number) => `${HR_ROOT}/staff/${String(id)}`;
 
 /** A group's score plan (`all`, `position:<id>`, `team:<name>`, `person:<id>`). */
 export const planPath = (key: string) => `${HR_ROOT}/pay/plans/${encodeURIComponent(key)}`;
+
+/** The new hire's own form, under «من» (outside the HR panel: every staff member may have one). */
+export const ONBOARDING_PATH = '/me/onboarding';

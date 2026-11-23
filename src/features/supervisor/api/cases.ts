@@ -19,7 +19,7 @@ export const STAGE_FILTERS: readonly StageFilter[] = ['all', ...CASE_STAGES];
  * The list as the page first shows it: the URL's stage tab and bot filter (reports link to
  * "bots that are stopped"), no search, page 1. The route prefetches it.
  */
-export function firstCasesQuery(params: URLSearchParams): CasesQuery {
+export function firstCasesQuery(params: URLSearchParams, team = false): CasesQuery {
   const stage = params.get('stage');
   const bot = params.get('bot');
   return {
@@ -27,8 +27,16 @@ export function firstCasesQuery(params: URLSearchParams): CasesQuery {
     bot: bot === 'on' || bot === 'off' ? bot : 'all',
     search: '',
     page: 1,
+    // The manager's list of every case; the team page links to one person's (`?supervisor=`).
+    ...(team && { team: { supervisor: supervisorFilter(params.get('supervisor')) } }),
   };
 }
+
+/** The manager's supervisor filter: everyone, cases nobody supervises, or one person's id. */
+export type SupervisorFilter = 'all' | 'none' | `${number}`;
+
+const supervisorFilter = (value: string | null): SupervisorFilter =>
+  value === 'none' ? 'none' : value && /^\d+$/.test(value) ? (value as `${number}`) : 'all';
 
 export interface CaseRow {
   id: number;
@@ -44,6 +52,7 @@ export interface CaseRow {
   bot: boolean;
   docs: DocCount;
   last_activity: string;
+  supervisors: { id: number; name: string }[];
 }
 
 export interface CasesQuery {
@@ -51,6 +60,8 @@ export interface CasesQuery {
   stage: StageFilter;
   bot: BotFilter;
   page: number;
+  /** Managers: every case (`scope=all`), optionally one supervisor's. */
+  team?: { supervisor: SupervisorFilter };
 }
 
 export interface CasesPage {
@@ -68,6 +79,10 @@ export const casesQuery = (query: CasesQuery) =>
       if (query.search.trim()) params.set('search', query.search.trim());
       if (query.stage !== 'all') params.set('stage', query.stage);
       if (query.bot !== 'all') params.set('bot', query.bot);
+      if (query.team) {
+        params.set('scope', 'all');
+        if (query.team.supervisor !== 'all') params.set('supervisor', query.team.supervisor);
+      }
       return api<CasesPage>(`${SUPERVISOR_API}/cases/?${params.toString()}`, { signal });
     },
     placeholderData: keepPreviousData,

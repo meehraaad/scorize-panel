@@ -1,3 +1,5 @@
+import type { TasksPanel } from '@/lib/tasks/api';
+
 /**
  * What a panel passes to the tasks page. The page is panel-neutral (canvas "پیگیری‌ها" has a
  * seller and a supervisor version): the sales panel passes its own today; the supervisor panel
@@ -5,7 +7,7 @@
  */
 export interface TasksConfig {
   /** Sent to the API (`?panel=`): which people and queues the page is about. */
-  panel: 'sales' | 'supervisor' | 'hr' | 'marketing';
+  panel: TasksPanel;
   /** The panel's home ("Today"), for the back link. */
   homePath: string;
   /** The page of the person a task is about; `action` opens it with a call or message ready. */

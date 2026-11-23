@@ -106,4 +106,22 @@ describe('DatePicker', () => {
     expect(value()).toBe('2026-10-24');
     await i18n.changeLanguage('fa');
   });
+  it('opens an empty birth date on the years around where it asks to', async () => {
+    const user = userEvent.setup();
+    render(
+      <DatePicker
+        label="تاریخ تولد"
+        value=""
+        onChange={() => undefined}
+        only="past"
+        openOn="1996-04-01"
+        openView="years"
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: /تاریخ تولد/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'تاریخ تولد' });
+    // 1996 = 1375: its page of twelve years (1368–1379), one tap from the right year.
+    expect(within(dialog).getByRole('button', { name: '۱۳۷۵' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: '۱۳۶۸' })).toBeInTheDocument();
+  });
 });

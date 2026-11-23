@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
@@ -181,9 +181,13 @@ describe('HR pay and KPIs', () => {
   it('shows a seller their sales month on «من», behind their password', async () => {
     const user = userEvent.setup();
     loginAs(3); // Nima, a seller (src/mocks/handlers.ts)
-    renderApp('/me');
+    const router = renderApp('/me');
     const tabs = await screen.findByRole('navigation', { name: 'بخش‌های من' });
     await user.click(within(tabs).getByRole('link', { name: 'عملکرد فروش' }));
+    // My pay has a password field too: wait for the sales month before looking for its own.
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/me/sales');
+    });
     expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
   });
 

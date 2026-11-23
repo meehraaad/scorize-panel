@@ -45,7 +45,6 @@ import { plForm } from '@/features/writing/plForm';
 import { psForm } from '@/features/writing/psForm';
 import { recommendationForm } from '@/features/writing/recommendationForm';
 import { sopForm } from '@/features/writing/sopForm';
-import { estimateHandlers, resetEstimateMocks } from './estimate';
 import { journeyHandlers, resetJourneyMocks } from './journey';
 import { forbidden, notFound, storage } from './session';
 import { ownTicketHandlers, resetWritingOfferMocks, writingOfferHandlers } from './writingOffers';
@@ -2715,7 +2714,6 @@ export const applicantHandlers = [
   ...servicesHandlers,
   ...consultationHandlers,
   ...gateHandlers,
-  ...estimateHandlers,
   ...journeyHandlers,
 ];
 
@@ -2757,6 +2755,5 @@ export function resetApplicantMocks() {
   feedbackSent.length = 0;
   transcriptReturned.clear();
   gateState = null;
-  resetEstimateMocks();
   resetJourneyMocks();
 }

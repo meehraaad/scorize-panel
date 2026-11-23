@@ -2,6 +2,8 @@ import { Suspense, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
+import { ONBOARDING_PATH } from '@/features/hr/paths';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { logout } from '@/lib/auth/logout';
 import { applicantPanel } from '@/panels/applicant';
 import { panelHref } from '@/panels/types';
@@ -48,6 +50,10 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
   const name = `${user.first_name} ${user.last_name}`.trim() || user.email || user.phone_number;
   const switching = panels.length > 1;
   const initial = (user.first_name || user.email || '?').charAt(0).toUpperCase();
+  // A new hire's form still theirs to fill: a dot on the button, a badge on its line.
+  const formWaiting =
+    ON_SERVER.hrOnboarding &&
+    (user.staff?.onboarding === 'draft' || user.staff?.onboarding === 'returned');
 
   // Close after navigating.
   const [lastPath, setLastPath] = useState(location.pathname);
@@ -80,16 +86,25 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
       <button
         ref={button}
         type="button"
-        aria-label={
+        aria-label={[
           status
             ? `${t('account.menu')}: ${t(status === 'queue' ? 'account.inQueue' : 'account.onBreak')}`
-            : t('account.menu')
-        }
+            : t('account.menu'),
+          formWaiting && t('account.onboardingWaiting'),
+        ]
+          .filter(Boolean)
+          .join(' · ')}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
-        className="group/avatar inline-flex size-11 items-center justify-center rounded-full"
+        className="group/avatar relative inline-flex size-11 items-center justify-center rounded-full"
       >
+        {formWaiting && (
+          <span
+            aria-hidden="true"
+            className="absolute end-0.5 top-0.5 size-3 rounded-full bg-warn shadow-[0_0_0_2px_var(--surface)]"
+          />
+        )}
         <span
           aria-hidden="true"
           className={`inline-flex size-8 items-center justify-center rounded-full bg-hero font-display text-[13px] font-bold text-hero-accent transition-shadow lg:size-11 lg:text-[15px] ${
@@ -159,6 +174,17 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
               <Link to="/me" className={itemClass}>
                 <Icon name="chart" />
                 {t('account.myPay')}
+              </Link>
+            )}
+            {ON_SERVER.hrOnboarding && user.staff?.onboarding && (
+              <Link to={ONBOARDING_PATH} className={itemClass}>
+                <Icon name="document" />
+                <span className="flex-1">{t('account.onboarding')}</span>
+                {formWaiting && (
+                  <span className="rounded-full bg-warn-tint px-2 py-0.5 text-xs font-semibold text-warn">
+                    {t('account.onboardingBadge')}
+                  </span>
+                )}
               </Link>
             )}
             <Link to="/settings" className={itemClass}>

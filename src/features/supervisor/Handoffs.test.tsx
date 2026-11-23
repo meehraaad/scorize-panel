@@ -66,15 +66,20 @@ describe('contract handoff', () => {
   it('starts a ready case with the chosen supervisor; others wait', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/new');
+    renderApp('/supervisor/manager');
     expect(
       await screen.findByRole('heading', { name: 'پرونده‌های تازه', level: 1 }),
     ).toBeInTheDocument();
     expect(
       within(
         screen.getAllByRole('navigation', { name: 'منوی پنل سوپروایزر' })[0] as HTMLElement,
-      ).getByRole('link', { name: 'پرونده‌های تازه' }),
+      ).getByRole('link', { name: 'مدیریت سرپرستی' }),
     ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('navigation', { name: 'بخش‌های مدیریت سرپرستی' })).getByRole('link', {
+        name: 'پرونده‌های تازه',
+      }),
+    ).toHaveAttribute('aria-current', 'page');
 
     const waiting = screen.getByRole('region', { name: 'کیان مرادی' });
     expect(within(waiting).getByRole('button', { name: 'سپردن و شروع پرونده' })).toBeDisabled();
@@ -97,7 +102,7 @@ describe('contract handoff', () => {
   it('cancels a case that will not start, with a reason; not once it is prepaid', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/new');
+    renderApp('/supervisor/manager');
     await screen.findByRole('heading', { name: 'پرونده‌های تازه', level: 1 });
 
     // Prepaid: refunded in the admin first.
@@ -118,8 +123,15 @@ describe('contract handoff', () => {
 
   it('is only for those who assign supervisors', async () => {
     loginAs(NIMA);
-    const router = renderApp('/supervisor/new');
+    const router = renderApp('/supervisor/manager');
     await screen.findByRole('heading', { level: 1 });
-    expect(router.state.location.pathname).not.toBe('/supervisor/new');
+    expect(router.state.location.pathname).not.toBe('/supervisor/manager');
+  });
+
+  it('keeps the old addresses working', async () => {
+    loginAs(MARYAM);
+    const router = renderApp('/supervisor/new');
+    await screen.findByRole('heading', { name: 'پرونده‌های تازه', level: 1 });
+    expect(router.state.location.pathname).toBe('/supervisor/manager');
   });
 });

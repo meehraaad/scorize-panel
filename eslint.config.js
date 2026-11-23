@@ -68,7 +68,11 @@ export default tseslint.config(
   // The type scale (docs/architecture.md, "Type scale"): named sizes (text-title, text-lead, …), no
   // pixel sizes. Enforced where a screen has moved to it; the rest of the panel moves screen by screen.
   {
-    files: ['src/components/applicant/pathways/**/*.tsx', 'src/components/ui/AnswerChoices.tsx'],
+    files: [
+      'src/components/applicant/pathways/**/*.tsx',
+      'src/components/ui/AnswerChoices.tsx',
+      'src/features/hr/onboarding/**/*.tsx',
+    ],
     ignores: ['**/*.test.tsx'],
     rules: {
       'no-restricted-syntax': [

@@ -1,3 +1,4 @@
+import type { CustomerPathwayCheck } from '@/features/sales/api';
 import { http, HttpResponse } from 'msw';
 import {
   OCCUPATION_FACTORS,
@@ -7,11 +8,13 @@ import {
   type FinderPathway,
   type FinderPrefill,
   type FinderStudy,
+  type PathwayAdmission,
   type Occupation,
   type PathwayDerived,
   type PathwayResult,
 } from '@/lib/applicant/pathways';
 import type { PathwayDetail, PathwayInput, PathwayStatus } from '@/features/pathways/manageApi';
+import { searchKey } from '@/lib/text';
 import { forbidden, notFound, storage } from './session';
 
 /**
@@ -232,6 +235,13 @@ const FIELD_GROUPS = [
   { id: 4, name: 'حقوق' },
   { id: 5, name: 'هنر و علوم انسانی' },
 ];
+/** Sub-fields under the groups (Django `StudyField.parent`), found by `?field_search=`. */
+const SUB_FIELDS = [
+  { group: 1, name: 'مهندسی نرم‌افزار' },
+  { group: 1, name: 'هوش مصنوعی' },
+  { group: 2, name: 'مهندسی سازه' },
+  { group: 3, name: 'پرستاری' },
+];
 /** ISCO-08 occupations (Django `occupations.Occupation`). */
 const OCCUPATIONS: Occupation[] = [
   { code: '2512', name: 'توسعه‌دهنده‌ی نرم‌افزار', name_english: 'Software developers' },
@@ -381,6 +391,9 @@ let oldServer = false;
 /** Tests: a server with the step but without `?occupation=` answers. */
 let noOccupationAnswers = false;
 const NO_PREFILL: FinderPrefill = {
+  age: null,
+  education: null,
+  english_ielts: null,
   field_group: null,
   occupation: null,
   work_years: null,
@@ -392,7 +405,41 @@ let lastCheck: object | null = null;
 /** How many occupation searches came in, by text. */
 let searches: string[] = [];
 
+/** The sales customer page's `pathway_check`: a customer's latest quiz, by user id (Django's latest `PathwayCheck`). */
+const customerChecks = new Map<number, CustomerPathwayCheck>();
+export const customerPathwayCheck = (userId: number) => customerChecks.get(userId) ?? null;
+export function setCustomerPathwayCheck(userId: number, check: CustomerPathwayCheck) {
+  customerChecks.set(userId, check);
+}
+
+/** Countries with decided applications (Django `insights`): their study routes get an admission chance. */
+let admissionCountries = new Set<number>();
+export function withAdmissions(countryIds: number[]) {
+  admissionCountries = new Set(countryIds);
+}
+/** Django `insights.estimating`, roughly: the GPA sets the level. */
+function admissionOf(p: PathwayDetail, answers: Answers, gpa: number | null | undefined) {
+  if (p.goal === 'work' || !admissionCountries.has(p.country.id)) return null;
+  if (typeof gpa !== 'number' || answers.field_group === undefined || answers.education === 'phd')
+    return null;
+  const band: PathwayAdmission['band'] = gpa >= 16 ? 'high' : gpa >= 14 ? 'medium' : 'low';
+  return {
+    band,
+    chance: null,
+    decided: 40,
+    degree: answers.education === 'master' ? 3 : 2,
+    similar: [{ university: 'University of Manchester', field: 'مهندسی', year: 2025 }],
+  } satisfies PathwayAdmission;
+}
+
+/** How often the finder said it was opened. */
+let finderStarts = 0;
+export const finderStartCount = () => finderStarts;
+
 export function resetPathwayMocks() {
+  finderStarts = 0;
+  customerChecks.clear();
+  admissionCountries = new Set();
   pathways = seed();
   occupationRoutes = null;
   oldServer = false;
@@ -449,6 +496,7 @@ const finderPathway = (p: PathwayDetail): FinderPathway => ({
   duration: p.duration,
   cost: p.cost,
   has_costs: p.tuition_min !== null,
+  has_admission: p.goal !== 'work' && admissionCountries.has(p.country.id),
 });
 
 /** Tomans per unit (Django: the newest `finance.ExchangeRate`s through the US dollar). */
@@ -563,6 +611,30 @@ export const pathwayHandlers = [
         ).slice(0, 20),
       });
     }
+    const fieldText = params.get('field_search');
+    if (fieldText !== null && !oldServer) {
+      // Django: each word in the name, groups matched by their own name first, then through a sub-field.
+      const words = searchKey(fieldText).split(' ').filter(Boolean);
+      const has = (name: string) => words.every((word) => searchKey(name).includes(word));
+      const own = FIELD_GROUPS.filter((group) => has(group.name)).map((group) => ({
+        ...group,
+        matched: '',
+      }));
+      const through = SUB_FIELDS.filter(
+        (sub) => has(sub.name) && !own.some((group) => group.id === sub.group),
+      ).flatMap((sub) =>
+        FIELD_GROUPS.filter((group) => group.id === sub.group).map((group) => ({
+          ...group,
+          matched: sub.name,
+        })),
+      );
+      const seen = new Set<number>();
+      return HttpResponse.json({
+        field_matches: [...own, ...through]
+          .filter((group) => !seen.has(group.id) && seen.add(group.id))
+          .slice(0, 20),
+      });
+    }
     const code = params.get('occupation');
     if (code !== null && !oldServer)
       return HttpResponse.json(noOccupationAnswers ? {} : occupationAnswers(code));
@@ -593,6 +665,12 @@ export const pathwayHandlers = [
       ],
     });
   }),
+  // Django: the finder was opened (one `EstimateStart` a day, the sales funnel's first step).
+  http.post('/api/applicant/v1/pathways/started/', () => {
+    if (!storage.get()) return forbidden();
+    finderStarts += 1;
+    return new HttpResponse(null, { status: 204 });
+  }),
   http.post('/api/applicant/v1/pathways/check/', async ({ request }) => {
     if (!storage.get()) return forbidden();
     const body = (await request.json()) as {
@@ -601,6 +679,7 @@ export const pathwayHandlers = [
       budget?: FinderBudget | null;
       income?: { amount: number; currency: 'toman' | 'eur' | 'usd' } | null;
       occupation?: string | null;
+      gpa?: number | null;
     };
     lastCheck = body;
     // Django: 400 for a factor that isn't about one country.
@@ -631,6 +710,7 @@ export const pathwayHandlers = [
             ...derived,
           }),
           study: studyOf(p, body.budget ?? null),
+          admission: admissionOf(p, body.answers, body.gpa),
           ...(derived ? { derived } : {}),
         };
       })

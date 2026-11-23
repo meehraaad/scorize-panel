@@ -13,14 +13,13 @@ import '@/test/server';
  * page marks something seen, are not waterfalls.)
  */
 
-// The admission-chance quiz, Turkey, the founders assistant, the mail page, customer tags and the
+// Turkey, the founders assistant, the mail page, customer tags and the
 // office line's phone settings and the client services page aren't on the server yet (onServer.ts): their pages are checked as they will be once they are.
 vi.mock('@/lib/applicant/onServer', async (original) => {
   const { ON_SERVER } = await original<{ ON_SERVER: Record<string, boolean> }>();
   return {
     ON_SERVER: {
       ...ON_SERVER,
-      estimate: true,
       turkey: true,
       foundersAssistant: true,
       customerTags: true,
@@ -31,6 +30,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       phoneExtensions: true,
       phoneMenus: true,
       phoneVoices: true,
+      hrOnboarding: true,
     },
   };
 });
@@ -42,6 +42,7 @@ const REZA = 4; // sales manager
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
 const AMIR = 6; // a superuser: the messages section (src/mocks/messages.ts)
 const ELHAM = 7; // the marketing team (src/mocks/marketing.ts)
+const HIRE = 603; // a new hire with her personal details form open (src/mocks/hr.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -81,7 +82,6 @@ const PAGES: PageCase[] = [
     // A session's details over the home (old /consultations/41 links land here).
     '/?session=41',
     '/consultations/book',
-    '/estimate',
     '/pathways',
     '/background',
     // The pathway finder alone, without the panel's menus.
@@ -180,12 +180,24 @@ const PAGES: PageCase[] = [
     '/supervisor/tickets',
     '/supervisor/tasks',
     '/supervisor/services',
-    '/supervisor/scopes',
-    '/supervisor/services/report',
+    '/supervisor/manager',
+    '/supervisor/manager/cases',
+    '/supervisor/manager/team',
+    '/supervisor/manager/move',
+    '/supervisor/manager/scopes',
+    '/supervisor/manager/kinds',
+    '/supervisor/manager/services',
     '/supervisor/reports',
     '/supervisor/mail',
   ].map((path) => ({ path, user: MARYAM })),
   // Writer panel.
+  ...[
+    '/executive',
+    '/executive/work',
+    '/executive/tickets',
+    '/executive/tickets?department=writing',
+    '/executive/tasks',
+  ].map((path) => ({ path, user: MARYAM })),
   ...['/writer', '/writer/orders/1240'].map((path) => ({ path, user: MARYAM })),
   // Tickets pages: the thread's messages are chained after the list in the loader. (A case's
   // tickets address in the supervisor panel opens the chat window: Supervisor.test.tsx.)
@@ -228,6 +240,8 @@ const PAGES: PageCase[] = [
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  // The new hire's form (docs/backend-changes.md OB3).
+  { path: '/me/onboarding', user: HIRE },
   {
     path: '/hr/pay/plans/position%3A2',
     user: AMIR,

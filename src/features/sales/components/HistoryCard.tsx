@@ -128,12 +128,17 @@ function EventRow({ event }: { event: HistoryEvent }) {
   const look = LOOK[event.kind];
   const author = event.author ?? t('customer.history.system');
   // Django's history doesn't say who a lead went to.
+  const session = event.kind === 'assign' && event.subject === 'consultation';
   const key =
     event.kind === 'lead' && !event.author
       ? 'leadNew'
-      : event.kind === 'assign' && !event.previous
-        ? 'assignFirst'
-        : event.kind;
+      : session
+        ? event.previous
+          ? 'assignSession'
+          : 'assignSessionFirst'
+        : event.kind === 'assign' && !event.previous
+          ? 'assignFirst'
+          : event.kind;
   const title = t(`customer.history.event.${key}`, {
     author,
     channel: event.channel ? t(`channel.${event.channel}`) : '',
@@ -155,6 +160,21 @@ function EventRow({ event }: { event: HistoryEvent }) {
             {f.timeAgo(event.at)}
           </time>
         </div>
+        {event.kind === 'assign' && event.reason !== undefined && (
+          <p className="m-0 text-sm leading-7 text-neutral">
+            {event.reason
+              ? t('customer.history.reason', { reason: event.reason })
+              : t('customer.history.noReason')}
+            {event.note ? ` · ${event.note}` : ''}
+          </p>
+        )}
+        {event.owner && (
+          <span>
+            <Chip tone="warn" small>
+              {t('customer.history.otherSeller', { owner: event.owner })}
+            </Chip>
+          </span>
+        )}
         {event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>}
         {event.customer_summary && (
           <div className="rounded-xl bg-info-tint p-3">

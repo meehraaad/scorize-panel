@@ -78,6 +78,14 @@ export interface UnassignedLead {
   suggested: number | null;
 }
 
+/** A change to the assignment settings, with who made it and what changed, in words. */
+export interface SettingsChange {
+  id: number;
+  at: string;
+  by: string | null;
+  lines: string[];
+}
+
 export interface AssignData {
   settings: AssignSettings;
   sellers: SellerLoad[];
@@ -85,6 +93,8 @@ export interface AssignData {
   queue: Page<UnassignedLead>;
   /** When the longest-waiting unassigned lead arrived; null with an empty queue. */
   oldest_at: string | null;
+  /** The latest changes to the settings, newest first. */
+  history: SettingsChange[];
 }
 
 export const assignQuery = (page: number) =>

@@ -25,6 +25,7 @@ import {
 import { Icon } from '@/components/ui/Icon';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
+import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
@@ -118,6 +119,8 @@ export function LogDialog({
     sms = false,
     customerOpen = false,
     noAnswerSend = 'sms',
+    noFollowUp = false,
+    noFollowReason = '',
   } = values;
   const template = values.template ?? String(customer.templates[0]?.id ?? '');
   const change =
@@ -162,7 +165,11 @@ export function LogDialog({
   const lost = talked && stage === 'lost';
   // A meeting at the office ahead is the follow-up (S79): the log keeps it as the next step.
   const meeting = ON_SERVER.visitFollowUp ? (booked ?? meetingAhead(customer)) : null;
-  const asksFollowUp = !meeting && !noAnswer && !lost && !(call && outcome === 'wrong_number');
+  const followable = !meeting && !noAnswer && !lost && !(call && outcome === 'wrong_number');
+  /** The seller chose «بدون پیگیری»: the log ends the open follow-up and sets none, with a reason. */
+  const skipsFollowUp = followable && noFollowUp;
+  const asksFollowUp = followable && !noFollowUp;
+  const reason = noFollowReason.trim();
   const followAt = followAtOf(follow, date);
   const followOn = followOnOf(follow, date);
   const chosen = customer.templates.find((item) => String(item.id) === template);
@@ -171,7 +178,13 @@ export function LogDialog({
     event.preventDefault();
     if (log.isPending || voiceBusy) return;
     setChecked(true);
-    if ((lost && !lostReason) || (asksFollowUp && !followAt && !followOn)) return;
+    if (
+      (lost && !lostReason) ||
+      (asksFollowUp && !followAt && !followOn) ||
+      (skipsFollowUp && !reason)
+    )
+      return;
+    const typed = notes.trim() || (message ? (chosen?.title ?? '') : '');
     // Open the app first: a window opened after the request would be blocked as a popup.
     const app = isMessage(channel) ? channel : appSend;
     if (app) {
@@ -190,7 +203,9 @@ export function LogDialog({
           ? { stage: target.stage, ...(target.column !== null ? { column: target.column } : {}) }
           : {}),
         ...(lost && lostReason ? { lost_reason: lostReason } : {}),
-        notes: notes.trim() || (message ? (chosen?.title ?? '') : ''),
+        notes: skipsFollowUp
+          ? [typed, t('customer.logDialog.noFollowNote', { reason })].filter(Boolean).join('\n')
+          : typed,
         follow_up_at: asksFollowUp ? followAt : null,
         ...(asksFollowUp && followOn ? { follow_up_on: followOn } : {}),
         customer_summary: noAnswer ? '' : customerSummary.trim(),
@@ -326,6 +341,40 @@ export function LogDialog({
         <p role="alert" className="m-0 -mt-2 text-sm text-danger">
           {t('customer.logDialog.followDate')}
         </p>
+      )}
+      {asksFollowUp && (
+        <button
+          type="button"
+          onClick={() => change('noFollowUp')(true)}
+          className="-mt-1 inline-flex min-h-11 items-center gap-2 self-start rounded-full px-1 text-sm font-semibold text-text-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          <Icon name="close" size={16} />
+          {t('customer.logDialog.noFollowUp')}
+        </button>
+      )}
+      {skipsFollowUp && (
+        <div className="flex flex-col gap-3 rounded-card border border-hair bg-row-highlight p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <strong className="text-sm">{t('customer.logDialog.noFollowUpOn')}</strong>
+            <button
+              type="button"
+              onClick={() => change('noFollowUp')(false)}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-1 text-sm font-semibold text-primary-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <Icon name="calendar" size={16} />
+              {t('customer.logDialog.setFollowUp')}
+            </button>
+          </div>
+          <TextField
+            label={t('customer.logDialog.noFollowReason')}
+            placeholder={t('customer.logDialog.noFollowReasonPlaceholder')}
+            maxLength={300}
+            value={noFollowReason}
+            onChange={(event) => change('noFollowReason')(event.target.value)}
+            error={checked && !reason ? t('customer.logDialog.noFollowReasonNeeded') : undefined}
+            hint={t('customer.logDialog.noFollowHint')}
+          />
+        </div>
       )}
       {meeting && !lost && (
         <Notice tone="info">
@@ -483,7 +532,7 @@ export function LogDialog({
               },
             ]),
       ];
-  if (asksStage || lost || asksFollowUp || meeting)
+  if (asksStage || lost || followable || meeting)
     steps.push({ key: 'next', title: t('customer.logDialog.step.next'), body: nextFields });
 
   /** What we know about the customer, on the strip: the brief, then the profile chips. */
@@ -595,12 +644,14 @@ export function LogDialog({
                     ? t('customer.logDialog.saveLost')
                     : session
                       ? t('customer.logDialog.saveMeeting')
-                      : asksFollowUp && followAt
-                        ? t('customer.logDialog.saveWithFollow', {
-                            day: f.weekdayName(followAt),
-                            time: f.time(followAt),
-                          })
-                        : t('customer.logDialog.save')}
+                      : skipsFollowUp
+                        ? t('customer.logDialog.saveNoFollow')
+                        : asksFollowUp && followAt
+                          ? t('customer.logDialog.saveWithFollow', {
+                              day: f.weekdayName(followAt),
+                              time: f.time(followAt),
+                            })
+                          : t('customer.logDialog.save')}
               </span>
             </Button>
             <Button

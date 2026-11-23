@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { Suspense, lazy, useState, type ReactNode } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -12,12 +12,17 @@ import { Icon } from '@/components/ui/Icon';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { ON_SERVER } from '@/lib/applicant/onServer';
+import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { idParam } from '@/lib/router/lazyPage';
 import { safeHref } from '@/lib/url';
 import { fileQuery, type HistoryRow, type StaffFile } from './api';
+import { Facts } from './components/Facts';
 import { MoveCard } from './components/MoveCard';
-import { CONTRACT_TONE, STATE_TONE, dayOf } from './format';
+import { CONTRACT_TONE, STATE_TONE, dayOf, isPhoneName } from './format';
+import { useAnswerText } from './onboarding/answerText';
+import { EMPTY_ANSWERS, type FieldKey } from './onboarding/fields';
 import { hrPath } from './paths';
 
 const dialogs = () => import('./components/FileDialogs');
@@ -28,8 +33,31 @@ const ExitDialog = lazy(() => dialogs().then((module) => ({ default: module.Exit
 const ReturnDialog = lazy(() => dialogs().then((module) => ({ default: module.ReturnDialog })));
 const DocumentDialog = lazy(() => dialogs().then((module) => ({ default: module.DocumentDialog })));
 
-type Tab = 'info' | 'work' | 'documents' | 'moves' | 'history';
-const TABS: readonly Tab[] = ['info', 'work', 'documents', 'moves', 'history'];
+// The new-hire form's tab is HR's own chunk, opened only on that tab.
+const OnboardingTab = lazy(() => import('./onboarding/components/OnboardingTab'));
+
+type Tab = 'info' | 'form' | 'work' | 'documents' | 'moves' | 'history';
+/** «فرم استخدام» only once Django serves the form (`ON_SERVER.hrOnboarding`). */
+const TABS: readonly Tab[] = ON_SERVER.hrOnboarding
+  ? ['info', 'form', 'work', 'documents', 'moves', 'history']
+  : ['info', 'work', 'documents', 'moves', 'history'];
+/** What an approved form added to the file, in the form's order. */
+const PERSONAL: readonly FieldKey[] = [
+  'preferred_name',
+  'first_name_en',
+  'last_name_en',
+  'gender',
+  'id_issue_place',
+  'education',
+  'field_of_study',
+  'university',
+  'military_status',
+  'iban',
+  'bank_name',
+  'emergency_name',
+  'emergency_relation',
+  'emergency_phone',
+];
 type Open = 'info' | 'contract' | 'salary' | 'exit' | 'return' | 'document' | null;
 
 /** `/hr/staff/:id`: a staff member's file, or a short note when the id is wrong. */
@@ -52,9 +80,18 @@ export default function PersonPage() {
  */
 function PersonFile({ id }: { id: number }) {
   const { t } = useTranslation('hr');
+  const f = useFormat();
   const { data: file } = useSuspenseQuery(fileQuery(id));
+  const pending = isPhoneName(file.name);
+  // Just made (the new staff dialog asks for the form's tab: the invite to send), or a form waiting
+  // for HR, come first; then a joining or leaving under way.
+  const opened = (useLocation().state as { tab?: Tab } | null)?.tab;
   const [tab, setTab] = useState<Tab>(() =>
-    file.moves.some((move) => move.status === 'open') ? 'moves' : 'info',
+    ON_SERVER.hrOnboarding && (opened === 'form' || file.onboarding?.status === 'submitted')
+      ? 'form'
+      : file.moves.some((move) => move.status === 'open')
+        ? 'moves'
+        : 'info',
   );
   const [open, setOpen] = useState<Open>(null);
   const leaving = file.moves.some((move) => move.kind === 'exit' && move.status === 'open');
@@ -67,10 +104,16 @@ function PersonFile({ id }: { id: number }) {
     <PageStack>
       <BackLink to={hrPath('staff')}>{t('person.back')}</BackLink>
       <PageHeader
-        title={file.name}
+        // Named by the phone until the hire's form is approved: the number, and why.
+        title={pending ? f.digits(file.name) : file.name}
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
             {sub && <span>{sub}</span>}
+            {pending && (
+              <Chip tone="neutral" small>
+                {t('onboarding.pending')}
+              </Chip>
+            )}
             <Chip tone={STATE_TONE[file.state]} small dot>
               {t(`state.${file.state}`)}
             </Chip>
@@ -154,6 +197,11 @@ function PersonFile({ id }: { id: number }) {
         ) : (
           file.moves.map((move) => <MoveCard key={move.id} move={move} />)
         ))}
+      {tab === 'form' && (
+        <Suspense fallback={<SkeletonRows rows={4} />}>
+          <OnboardingTab file={file} />
+        </Suspense>
+      )}
       {tab === 'history' && <HistoryTab rows={file.history} />}
       {open && (
         <Suspense fallback={null}>
@@ -166,19 +214,6 @@ function PersonFile({ id }: { id: number }) {
         </Suspense>
       )}
     </PageStack>
-  );
-}
-
-function Facts({ label, rows }: { label: string; rows: [string, ReactNode][] }) {
-  return (
-    <dl aria-label={label} className="m-0 grid gap-x-6 gap-y-3 px-5 pb-5 sm:grid-cols-2 lg:px-8">
-      {rows.map(([name, value]) => (
-        <div key={name} className="flex flex-col gap-0.5">
-          <dt className="text-xs text-text-2">{name}</dt>
-          <dd className="m-0 text-[15px] font-medium [overflow-wrap:anywhere]">{value || '–'}</dd>
-        </div>
-      ))}
-    </dl>
   );
 }
 
@@ -231,7 +266,23 @@ function InfoTab({ file }: { file: StaffFile }) {
           ]}
         />
       </SectionCard>
+      {file.personal && <PersonalCard personal={file.personal} />}
     </>
+  );
+}
+
+/** The details an approved new-hire form added (OB1). */
+function PersonalCard({ personal }: { personal: NonNullable<StaffFile['personal']> }) {
+  const { t } = useTranslation('hr');
+  const text = useAnswerText();
+  const answers = { ...EMPTY_ANSWERS, ...personal };
+  return (
+    <SectionCard id="hr-personal-more" title={t('onboarding.personal')}>
+      <Facts
+        label={t('onboarding.personal')}
+        rows={PERSONAL.map((key) => [t(`onboarding.field.${key}`), text(key, answers)])}
+      />
+    </SectionCard>
   );
 }
 

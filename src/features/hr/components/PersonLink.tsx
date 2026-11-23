@@ -1,10 +1,16 @@
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { FaceDot } from '@/components/customers/FaceDot';
 import type { Face } from '@/lib/face/api';
+import { useFormat } from '@/lib/i18n/useFormat';
+import { isPhoneName } from '../format';
 import { personPath } from '../paths';
 
-/** A staff member's name with their face (or first letter), linking to their file. */
+/**
+ * A staff member's name with their face (or first letter), linking to their file. A file still
+ * named by its phone (the hire's form isn't approved yet) shows the number and says so.
+ */
 export function PersonLink({
   id,
   name,
@@ -16,6 +22,10 @@ export function PersonLink({
   face?: Face | null;
   sub?: string | undefined;
 }) {
+  const { t } = useTranslation('hr');
+  const f = useFormat();
+  const pending = isPhoneName(name);
+  const line = pending ? [t('onboarding.pending'), sub].filter(Boolean).join(' · ') : sub;
   return (
     <Link
       to={personPath(id)}
@@ -23,8 +33,10 @@ export function PersonLink({
     >
       {face ? <FaceDot name={name} face={face} /> : <Avatar name={name} size="sm" />}
       <span className="flex min-w-0 flex-col">
-        <span className="truncate font-semibold">{name}</span>
-        {sub && <span className="truncate text-xs text-text-2">{sub}</span>}
+        <span className="truncate font-semibold">
+          {pending ? <bdi dir="ltr">{f.digits(name)}</bdi> : name}
+        </span>
+        {line && <span className="truncate text-xs text-text-2">{line}</span>}
       </span>
     </Link>
   );

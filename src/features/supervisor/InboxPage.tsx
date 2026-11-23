@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
@@ -16,21 +16,37 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { openCaseChat } from '@/lib/supervisor/caseChats';
-import { inboxQuery, type InboxFilter } from './api';
+import { inboxQuery, type InboxFilter, type InboxItem } from './api';
 import { casePath } from './paths';
 
 /**
  * Every case's supervisors' thread in one list, those waiting for an answer first; a row opens the
  * conversation in the chat window, so the supervisor stays on the list and answers one after another. (The canvas has the nav item "تیکت‌ها ۷" but no screen.)
  */
-export default function InboxPage() {
+export interface InboxPageProps {
+  query?: typeof inboxQuery;
+  controls?: ReactNode;
+  threadLabel?: (item: InboxItem) => string;
+  threadPath?: (item: InboxItem) => string;
+  detailPath?: (item: InboxItem) => string;
+}
+
+export default function InboxPage({
+  query = inboxQuery,
+  controls,
+  threadLabel,
+  threadPath,
+  detailPath,
+}: InboxPageProps) {
+  const navigate = useNavigate();
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const [filter, setFilter] = useState<InboxFilter>('waiting');
   const [page, setPage] = useState(1);
-  const { data, isPlaceholderData } = useQuery(inboxQuery(filter, page));
+  const { data, error, isPlaceholderData } = useQuery(query(filter, page));
   const pages = pagesOf(data);
   useClampPage(data, page, setPage);
+  if (error && !data) throw error;
 
   return (
     <PageStack>
@@ -44,6 +60,7 @@ export default function InboxPage() {
             : undefined
         }
       />
+      {controls}
       <FilterTabs
         label={t('inbox.filter')}
         value={filter}
@@ -68,7 +85,7 @@ export default function InboxPage() {
           <ul className="m-0 list-none p-0">
             {data.results.map((item) => (
               <li
-                key={item.applicant.id}
+                key={`${String(item.applicant.id)}:${item.thread ?? ''}`}
                 className={`flex items-stretch not-first:shadow-[inset_0_1px_0_var(--hair)] ${
                   item.waiting_since ? 'bg-row-highlight' : ''
                 }`}
@@ -76,9 +93,10 @@ export default function InboxPage() {
                 <button
                   type="button"
                   // The longest-waiting conversation (a service's, or the general one).
-                  onClick={() =>
-                    openCaseChat(item.applicant.id, item.applicant.name, item.thread ?? null)
-                  }
+                  onClick={() => {
+                    if (threadPath) void navigate(threadPath(item));
+                    else openCaseChat(item.applicant.id, item.applicant.name, item.thread ?? null);
+                  }}
                   className="flex min-w-0 flex-1 items-start gap-3 py-4 ps-5 pe-2 text-start text-text hover:bg-canvas lg:ps-8"
                 >
                   <Avatar name={item.applicant.name} />
@@ -88,6 +106,11 @@ export default function InboxPage() {
                       <span className="text-[13px] text-text-2">
                         {t('fileNumber', { n: f.digits(String(item.applicant.file_number)) })}
                       </span>
+                      {threadLabel && (
+                        <Chip tone="neutral" small>
+                          {threadLabel(item)}
+                        </Chip>
+                      )}
                       {item.urgent && (
                         <Chip tone="warn" small>
                           {t('inbox.urgent')}
@@ -118,9 +141,13 @@ export default function InboxPage() {
                   </span>
                 </button>
                 <Link
-                  to={casePath(item.applicant.id)}
-                  aria-label={t('inbox.openCase', { name: item.applicant.name })}
-                  title={t('inbox.openCase', { name: item.applicant.name })}
+                  to={detailPath ? detailPath(item) : casePath(item.applicant.id)}
+                  aria-label={t(detailPath ? 'inbox.openOrder' : 'inbox.openCase', {
+                    name: item.applicant.name,
+                  })}
+                  title={t(detailPath ? 'inbox.openOrder' : 'inbox.openCase', {
+                    name: item.applicant.name,
+                  })}
                   className="flex w-14 flex-none items-center justify-center text-text-2 hover:bg-canvas hover:text-text lg:w-16"
                 >
                   <Icon name="folder" size={20} />

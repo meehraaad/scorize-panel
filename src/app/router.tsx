@@ -17,6 +17,9 @@ import {
   sharedFactsQuery,
 } from '@/features/assessments/calculatorApi';
 import { draftsQuery, healthQuery, optionsQuery } from '@/features/assessments/api';
+import { myOnboardingQuery } from '@/features/hr/onboarding/me';
+import { ONBOARDING_PATH } from '@/features/hr/paths';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { ApiError, api } from '@/lib/api/client';
 import type { SessionUser } from '@/lib/auth/session';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
@@ -56,6 +59,11 @@ const CHOOSE_PATH = '/choose';
 
 // Loaders run in parallel, so each one asks for the session; React Query sends a single request.
 const currentUser = () => queryClient.query({ ...sessionQuery, staleTime: 'static' });
+
+/** A new hire whose form is still theirs to fill (whoami OB5): it opens first after login. */
+const hasOpenForm = (user: SessionUser) =>
+  ON_SERVER.hrOnboarding &&
+  (user.staff?.onboarding === 'draft' || user.staff?.onboarding === 'returned');
 
 /** The data of a panel's frame (header badge, locked sections), started with the page's own. */
 const prefetchFrame = (panel: PanelDefinition, user: { id: number }) => {
@@ -142,6 +150,7 @@ const pageRoutes: RouteObject[] = [
     loader: async ({ request }) => {
       const user = await currentUser();
       if (!user) return toLogin(request);
+      if (hasOpenForm(user)) return redirect(ONBOARDING_PATH);
       const target = startTarget(user);
       return redirect(target === 'choose' ? CHOOSE_PATH : panelHref(target));
     },
@@ -202,6 +211,15 @@ const pageRoutes: RouteObject[] = [
                 // No data on open: my pay is read only after I type my password.
                 ...lazyPage(() => import('@/features/hr/me/MyPayPage'), ['hr'], {
                   skeleton: 'form',
+                }),
+              },
+              {
+                // The new hire's personal details form (replaces the Porsline link).
+                path: 'onboarding',
+                ...lazyPage(() => import('@/features/hr/onboarding/OnboardingPage'), ['hr'], {
+                  data: () => [myOnboardingQuery],
+                  skeleton: 'form',
+                  guard: () => Promise.resolve(ON_SERVER.hrOnboarding ? null : redirect('/me')),
                 }),
               },
               {
