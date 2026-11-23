@@ -1,8 +1,6 @@
-export type InstallPlatform = 'android' | 'iphone';
+import { androidPrompt } from './captureInstallPrompt';
 
-interface AndroidInstallEvent extends Event {
-  prompt(): Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+export type InstallPlatform = 'android' | 'iphone';
 
 const dismissalKey = 'scorize.pwaInstallDismissed';
 
@@ -31,28 +29,13 @@ function detectInstallPlatform(): InstallPlatform | null {
 
 export const installPlatform = detectInstallPlatform();
 
-let androidPrompt: AndroidInstallEvent | null = null;
-const subscribers = new Set<() => void>();
-
-// Chrome can offer installation before the dialog chunk has loaded. Keep that event for the
-// Install button, since a native prompt must be triggered by a user gesture.
-if (installPlatform === 'android') {
-  window.addEventListener('beforeinstallprompt', (event) => {
-    event.preventDefault();
-    androidPrompt = event as AndroidInstallEvent;
-    subscribers.forEach((notify) => notify());
-  });
-}
-
 export function getAndroidPrompt() {
   return androidPrompt;
 }
 
 export function subscribeToAndroidPrompt(notify: () => void) {
-  subscribers.add(notify);
-  return () => {
-    subscribers.delete(notify);
-  };
+  window.addEventListener('beforeinstallprompt', notify);
+  return () => window.removeEventListener('beforeinstallprompt', notify);
 }
 
 export function rememberInstallDismissal() {
