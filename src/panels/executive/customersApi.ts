@@ -75,8 +75,11 @@ export function assignedCustomersQuery(search: URLSearchParams) {
   return workQuery(params);
 }
 
-export function customerListQueries(search: URLSearchParams) {
-  return ON_SERVER.executiveCustomers
+export const hasExpandedCustomers = (capability?: boolean) =>
+  capability === true || ON_SERVER.executiveCustomers;
+
+export function customerListQueries(search: URLSearchParams, capability?: boolean) {
+  return hasExpandedCustomers(capability)
     ? [customersQuery(search)]
     : [overviewQuery, assignedCustomersQuery(search)];
 }

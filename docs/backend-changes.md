@@ -764,32 +764,34 @@ A null seller removes the rule. Deploy the Django assignment rules and their sch
 
 ## Executive panel · Customers (EC1–EC3)
 
-The Customers tab uses the existing Executive `overview/` and `work/` endpoints until the expanded
-list ships. Set `VITE_SERVER_FEATURES=executiveCustomers` for a build backed by EC1. The requests
-below use the Django session. Each must enforce row and action permissions on the server.
+Django advertises the expanded Customers list via `whoami.executive_customers`. Older Django
+builds still use the Executive `overview/` and `work/` endpoints. The expanded list uses the
+Django session, with row and action permissions checked on the server.
 
-- **EC1** ☐ `GET /api/executive/v1/customers/`. Return one row per customer with authorized services
+- **EC1** ☑ `GET /api/executive/v1/customers/`. Return one row per customer with authorized services
   and their owners, the case number/contract/stage, my next task, document counts, email state,
   and last activity. The request takes `scope=mine|team|all`, `search` (name, case number, phone,
   email), `queue=today|late|review|reply|unassigned`, `country`, `stage`, `contract`, `service`,
   `order=next_task|recent_activity|name`, and `page`. Default to my cases and next task due.
-  Scope totals count distinct customers. Return only scope keys the user may access, and reject
+  Scope totals count distinct customers. My team includes team-owned cases already visible to
+  the supervisor and their own assignments. All is for supervisor managers. Django rejects
   unauthorized scopes. Queue totals count matching customers within the chosen scope and other
   filters before applying the queue filter. Filter options cover the scope. Send `case_id` only
   when the existing supervisor case page is accessible. Only expose the task and document data
   each user is authorized to read. The response fields are in
   `src/panels/executive/customersApi.ts`. Only set `can_export` or `can_import` when the
   corresponding endpoints below are available to the requester.
-- **EC2** ☐ `GET /api/executive/v1/customers/export/`. Export all matching customer rows using the
+- **EC2** ☑ `GET /api/executive/v1/customers/export/`. Export all matching customer rows using the
   same filters, permissions and sort as EC1, without pagination. Escape spreadsheet formulas
   in user-controlled fields and omit credentials and any fields outside the authorized list.
-- **EC3** ☐ `GET customers/import/sample/`, `POST customers/import/preview/` (multipart `file`,
+- **EC3** ☑ `GET customers/import/sample/`, `POST customers/import/preview/` (multipart `file`,
   up to 2 MB), and `POST customers/import/` (`{token}`). Update existing customer records by
   `applicant_id` only for customers assigned to the requesting supervisor through a supervisor
   service, using the same ownership restriction regardless of the selected list scope. Recheck
   ownership when applying the preview and bind a one-use token to that same supervisor. Skip
   unknown, unassigned and out-of-scope rows. Do not create or reassign customers. Use an explicit
-  allowlist of editable fields, excluding credentials. Return `{token, ready, skipped}` on preview
+  allowlist of `name`, `description`, `status`, and `search_status`. Blank cells leave a field
+  unchanged. Return `{token, ready, skipped}` on preview
   and `{updated}` on apply. The old bulk applicant upload upserts by applicant number and does
   not guarantee this assignment boundary. The current Supervisor import endpoint edits
   application results, which is a separate workflow.

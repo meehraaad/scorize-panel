@@ -39,6 +39,8 @@ export interface SessionUser {
   is_country_supervisor: boolean;
   /** Older Django versions do not advertise the Executive Panel API. */
   executive_panel?: boolean;
+  /** Django serves the expanded Executive Customers list (EC1–EC3). */
+  executive_customers?: boolean;
   /** The panel opened last (or the one pinned with `always`), and what opens after login (R6). */
   last_workspace: Role | null;
   workspace_mode: 'last' | 'always' | 'ask';
