@@ -126,7 +126,16 @@ export interface TeamPerson {
 }
 
 /** A team the office line rings (a PBX queue, `number` 1000-1099). */
+export const PHONE_QUEUE_STRATEGIES = ['rrmemory', 'ringall', 'leastrecent', 'fewestcalls'] as const;
+
+export interface PhoneTeamRouting {
+  strategy: (typeof PHONE_QUEUE_STRATEGIES)[number];
+  timeout: number;
+}
+
 export interface PhoneTeam {
+  routing?: PhoneTeamRouting | null;
+  routing_override?: PhoneTeamRouting | null;
   number: string;
   name: string;
   /** False: what the PBX has, not managed from the panel yet. */
@@ -149,6 +158,7 @@ export interface PhoneTeams {
 }
 
 export interface PhoneTeamInput {
+  routing?: PhoneTeamRouting;
   name: string;
   members: number[];
   outside_numbers: string[];
