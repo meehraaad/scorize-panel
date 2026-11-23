@@ -1,0 +1,17 @@
+{
+  "title": "Install Scorize Panel",
+  "install": "Install",
+  "later": "Maybe later",
+  "close": "Close",
+  "android": {
+    "intro": "Add Scorize Panel to your home screen for quick access.",
+    "menu": "Open this page in Chrome and tap the three-dot menu (⋮).",
+    "addToHome": "Choose Install app or Add to Home screen.",
+    "confirm": "Follow the on-screen steps to add Scorize Panel."
+  },
+  "iphone": {
+    "share": "Open this page in Safari and tap Share. If Share is hidden, tap More first.",
+    "addToHome": "Scroll down and tap Add to Home Screen.",
+    "confirm": "If you see Open as Web App, leave it on. Then tap Add."
+  }
+}
