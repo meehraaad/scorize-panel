@@ -126,7 +126,12 @@ export interface TeamPerson {
 }
 
 /** A team the office line rings (a PBX queue, `number` 1000-1099). */
-export const PHONE_QUEUE_STRATEGIES = ['rrmemory', 'ringall', 'leastrecent', 'fewestcalls'] as const;
+export const PHONE_QUEUE_STRATEGIES = [
+  'rrmemory',
+  'ringall',
+  'leastrecent',
+  'fewestcalls',
+] as const;
 
 export interface PhoneTeamRouting {
   strategy: (typeof PHONE_QUEUE_STRATEGIES)[number];
