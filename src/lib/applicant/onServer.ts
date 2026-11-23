@@ -41,7 +41,6 @@ export type ServerFeature =
   | 'phoneExtensions'
   | 'phoneMenus'
   | 'phoneVoices'
-  | 'callRatings'
   | 'phoneBreak'
   | 'teamBreaks'
   | 'attendance'
@@ -114,8 +113,6 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
   phoneMenus: true,
   /** `GET /sales/v1/calls/voices/`, `POST voices/<id>/`: the menus' greetings (lang `claude/phone-voices`). */
   phoneVoices: true,
-  /** Caller ratings for the sales team and phone managers. */
-  callRatings: true,
   /** `GET/PUT /sales/v1/calls/break/`: a seller's break from team calls (lang `claude/seller-break`). */
   phoneBreak: true,
   /** `GET /sales/v1/calls/breaks/`: who is on a break, on the manager's phone teams page (lang `test`). */

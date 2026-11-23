@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMatch } from 'react-router';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -9,7 +10,8 @@ import { callRatingsQuery, type RatingScope, type RatingStats } from '@/lib/sale
 
 type RatingRow = RatingStats & { id: string | number; label: ReactNode };
 
-export default function CallRatingsPage({ scope = 'mine' }: { scope?: RatingScope }) {
+export default function CallRatingsPage() {
+  const scope: RatingScope = useMatch('/sales/manager/phone/ratings') ? 'team' : 'mine';
   const { t } = useTranslation('sales');
   const f = useFormat();
   const { data } = useSuspenseQuery(callRatingsQuery(scope));
@@ -30,7 +32,9 @@ export default function CallRatingsPage({ scope = 'mine' }: { scope?: RatingScop
             </dd>
           </div>
         </dl>
-        {data.total.count === 0 && <p className="m-0 text-body text-text-2">{t('callRatings.empty')}</p>}
+        {data.total.count === 0 && (
+          <p className="m-0 text-body text-text-2">{t('callRatings.empty')}</p>
+        )}
       </SectionCard>
       {data.queues.length > 0 && (
         <RatingsTable
@@ -50,7 +54,8 @@ export default function CallRatingsPage({ scope = 'mine' }: { scope?: RatingScop
             id: `${row.queue}-${row.staff_id ?? ''}-${row.extension ?? ''}`,
             label: (
               <>
-                {row.agent ?? (row.extension === null ? t('callRatings.unknown') : f.number(row.extension))}
+                {row.agent ??
+                  (row.extension === null ? t('callRatings.unknown') : f.number(row.extension))}
                 <span className="ms-2 text-text-2">{f.number(row.queue)}</span>
               </>
             ),
@@ -61,7 +66,12 @@ export default function CallRatingsPage({ scope = 'mine' }: { scope?: RatingScop
   );
 }
 
-function RatingsTable({ id, title, column, rows }: {
+function RatingsTable({
+  id,
+  title,
+  column,
+  rows,
+}: {
   id: string;
   title: string;
   column: string;
@@ -74,15 +84,23 @@ function RatingsTable({ id, title, column, rows }: {
       <table className="w-full text-body">
         <thead>
           <tr className="text-text-2">
-            <th scope="col" className="py-2 text-start">{column}</th>
-            <th scope="col" className="py-2 text-start">{t('callRatings.responseCount')}</th>
-            <th scope="col" className="py-2 text-start">{t('callRatings.average')}</th>
+            <th scope="col" className="py-2 text-start">
+              {column}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t('callRatings.responseCount')}
+            </th>
+            <th scope="col" className="py-2 text-start">
+              {t('callRatings.average')}
+            </th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className="border-t border-line">
-              <th scope="row" className="py-2 text-start font-medium">{row.label}</th>
+            <tr key={row.id} className="border-line border-t">
+              <th scope="row" className="py-2 text-start font-medium">
+                {row.label}
+              </th>
               <td className="py-2">{f.number(row.count)}</td>
               <td className="py-2">
                 {row.average === null ? '—' : f.number(Math.round(row.average * 10) / 10)}
