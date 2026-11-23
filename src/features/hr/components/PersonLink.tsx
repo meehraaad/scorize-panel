@@ -4,7 +4,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { FaceDot } from '@/components/customers/FaceDot';
 import type { Face } from '@/lib/face/api';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { isPhoneName } from '../format';
+import { isPhoneName, waitsForForm } from '../format';
 import { personPath } from '../paths';
 
 /**
@@ -16,15 +16,19 @@ export function PersonLink({
   name,
   face,
   sub,
+  form,
 }: {
   id: number;
   name: string;
   face?: Face | null;
   sub?: string | undefined;
+  /** Their open new-hire form, if any: "waiting for the form" while the hire fills it. */
+  form?: { status: string } | null | undefined;
 }) {
   const { t } = useTranslation('hr');
   const f = useFormat();
-  const pending = isPhoneName(name);
+  const phoneName = isPhoneName(name);
+  const pending = waitsForForm(name, form);
   const line = pending ? [t('onboarding.pending'), sub].filter(Boolean).join(' · ') : sub;
   return (
     <Link
@@ -34,7 +38,7 @@ export function PersonLink({
       {face ? <FaceDot name={name} face={face} /> : <Avatar name={name} size="sm" />}
       <span className="flex min-w-0 flex-col">
         <span className="truncate font-semibold">
-          {pending ? <bdi dir="ltr">{f.digits(name)}</bdi> : name}
+          {phoneName ? <bdi dir="ltr">{f.digits(name)}</bdi> : name}
         </span>
         {line && <span className="truncate text-xs text-text-2">{line}</span>}
       </span>

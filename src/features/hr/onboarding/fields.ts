@@ -66,7 +66,7 @@ export type Problem =
   | 'future'
   | 'age'
   | 'special'
-  | 'files';
+  | 'file';
 
 export interface FieldSpec {
   key: FieldKey;
@@ -134,7 +134,9 @@ const NO_STUDIES = new Set<Education | null>(['below_diploma', null]);
 
 /** Whether the field is asked at all with these answers. */
 export const isAsked = (key: FieldKey, answers: OnboardingAnswers) =>
-  !((key === 'field_of_study' || key === 'university') && NO_STUDIES.has(answers.education));
+  !((key === 'field_of_study' || key === 'university') && NO_STUDIES.has(answers.education)) &&
+  // Military service is asked of men only (OB14): a woman's is sent as `not_applicable`.
+  !(key === 'military_status' && answers.gender === 'female');
 
 export const isRequired = (key: FieldKey, answers: OnboardingAnswers) =>
   isAsked(key, answers) && !OPTIONAL.has(key);
@@ -202,8 +204,12 @@ export function yearsAgo(years: number) {
 export interface Checked {
   /** The answers as they are sent: trimmed, Latin digits, not-asked fields emptied. */
   answers: OnboardingAnswers;
-  problems: Partial<Record<FieldKey | 'files', Problem>>;
+  problems: Partial<Record<FieldKey | FileKey, Problem>>;
 }
+
+/** A missing document's problem goes under its own kind: `file_birth_certificate`, … */
+export type FileKey = `file_${OnboardingFileKind}`;
+export const fileKey = (kind: OnboardingFileKind): FileKey => `file_${kind}`;
 
 /**
  * Every rule of the form. `complete`: also what is required (on submit); without it only what was
@@ -224,6 +230,7 @@ export function checkAnswers(
     const value = answers[key];
     if (!isAsked(key, answers)) {
       if (field.kind === 'text') set(key, '');
+      if (key === 'military_status') set(key, 'not_applicable');
       continue;
     }
     if (isEmpty(value)) {
@@ -246,8 +253,9 @@ export function checkAnswers(
     if (field.kind === 'number' && typeof value === 'number' && (value < 0 || value > MAX_CHILDREN))
       problems[key] = 'required';
   }
-  if (complete && FILE_KINDS.some((kind) => !files.some((file) => file.kind === kind)))
-    problems.files = 'files';
+  if (complete)
+    for (const kind of FILE_KINDS)
+      if (!files.some((file) => file.kind === kind)) problems[fileKey(kind)] = 'file';
   return { answers: clean, problems };
 }
 

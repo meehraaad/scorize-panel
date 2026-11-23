@@ -22,6 +22,8 @@ describe('features by what Django serves', () => {
       ['clientErrors', false],
       // Behind Django's SCORIZE_CLIENT_SERVICES (backend-changes.md SVC4, SVC5).
       ['clientServices', false],
+      // OB12: the new-staff dialog's account lookup by mobile.
+      ['hrAccountLookup', false],
       ['turkey', false],
       ['assistantOrganize', false],
     ]);

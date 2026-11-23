@@ -155,6 +155,13 @@ const STUDY_FIELDS: DjangoStudyField[] = [
   { id: 3, name: 'Artificial Intelligence', name_persian: 'هوش مصنوعی' },
   { id: 4, name: 'Electrical Engineering', name_persian: 'مهندسی برق' },
   { id: 5, name: 'Civil Engineering', name_persian: 'مهندسی عمران' },
+  // A sub-field: the new-hire form suggests top-level majors only.
+  {
+    id: 6,
+    name: 'Software Engineering',
+    name_persian: 'مهندسی کامپیوتر - نرم‌افزار',
+    parent: { id: 1, name: 'Computer Engineering', name_persian: 'مهندسی کامپیوتر' },
+  },
 ];
 
 const CONSULTATION_TYPES: DjangoConsultationType[] = [

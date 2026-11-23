@@ -47,18 +47,21 @@ describe('HR panel', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(3);
     await user.click(screen.getByRole('button', { name: 'کارمند جدید' }));
     const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
-    // The hire types their names and ID card number on their form: HR doesn't.
-    expect(within(dialog).queryByLabelText('نام')).toBeNull();
+    // HR gives the names (the invite greets them); the ID card number is the hire's to type.
     expect(within(dialog).queryByLabelText('شماره شناسنامه')).toBeNull();
-    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121112233');
+    await user.type(within(dialog).getByLabelText('نام'), 'سارا');
+    await user.type(within(dialog).getByLabelText('نام خانوادگی'), 'رضایی');
+    // Typed with Persian digits: the field holds Latin ones.
+    const mobile = within(dialog).getByLabelText('موبایل کارمند');
+    await user.type(mobile, '۰۹۱۲۱۱۱۲۲۳۳');
+    expect(mobile).toHaveValue('09121112233');
     await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '20000000');
     await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
     expect(
       await toasts().findByText('پرونده ساخته شد؛ پیام دعوت را برای کارمند بفرستید.'),
     ).toBeInTheDocument();
-    // Named by the phone until the form is approved.
     expect(
-      await screen.findByRole('heading', { name: '۰۹۱۲۱۱۱۲۲۳۳', level: 1 }),
+      await screen.findByRole('heading', { name: 'سارا رضایی', level: 1 }),
     ).toBeInTheDocument();
     expect(screen.getByText('در انتظار فرم')).toBeInTheDocument();
     // With the new-hire form on, the file opens on the invite: the checklist is its own tab.
@@ -73,10 +76,16 @@ describe('HR panel', () => {
     await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
     const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
     await user.type(within(dialog).getByLabelText('موبایل کارمند'), '123');
+    await user.type(within(dialog).getByLabelText('نام'), 'Sara');
+    await user.type(within(dialog).getByLabelText('ایمیل کاری'), 'sara@');
+    await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '0');
     await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
     expect(within(dialog).getByText('شماره‌ی موبایل درست نیست')).toBeInTheDocument();
-    // The salary is the other thing HR must give.
+    expect(within(dialog).getByText('با حروف فارسی بنویسید')).toBeInTheDocument();
+    // The last name is missing.
     expect(within(dialog).getByText('این را پر کنید')).toBeInTheDocument();
+    expect(within(dialog).getByText('ایمیل درست نیست')).toBeInTheDocument();
+    expect(within(dialog).getByText('حقوق باید بیشتر از صفر باشد')).toBeInTheDocument();
   });
 
   it('ticks a checklist step', async () => {

@@ -133,7 +133,7 @@ function StaffItem({ row }: { row: StaffRow }) {
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-hair px-5 py-2.5 first:border-t-0 lg:px-8">
       <div className="min-w-0 flex-[1_1_220px]">
-        <PersonLink id={row.id} name={row.name} face={row.face} sub={sub} />
+        <PersonLink id={row.id} name={row.name} face={row.face} sub={sub} form={row.onboarding} />
       </div>
       <span className="min-w-0 flex-[0_1_160px] truncate text-sm text-text-2">
         {row.manager ? t('staff.manager', { name: row.manager.name }) : ''}

@@ -1,12 +1,13 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import i18n from '@/lib/i18n';
-import { mockSubmittedForm } from '@/mocks/hr';
+import { mockCompleteForm, mockSubmittedForm } from '@/mocks/hr';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 
 // The form isn't on the server yet (docs/backend-changes.md OB1–OB8): tested as it will be.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -19,6 +20,8 @@ const AMIR = 6; // superuser: holds can_manage_support_staff
 const BAHAR_FILE = 3;
 
 const API = '/api/hr/v1';
+
+const IBAN = 'IR820540102680020817909002';
 
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
@@ -49,7 +52,8 @@ describe('new-hire form', () => {
     const send = screen.getByRole('button', { name: 'ارسال' });
     await user.click(send);
     expect(screen.getAllByText('این فیلد را کامل کنید').length).toBeGreaterThan(5);
-    expect(screen.getByText('تصویر شناسنامه و کارت ملی را بارگذاری کنید')).toBeInTheDocument();
+    // Each missing document says so under its own kind.
+    expect(screen.getAllByText('این مدرک را بارگذاری کنید')).toHaveLength(2);
 
     const code = screen.getByLabelText('کد ملی');
     await user.type(code, '0499370898');
@@ -67,7 +71,8 @@ describe('new-hire form', () => {
     await user.type(screen.getByLabelText('رشته‌ی تحصیلی'), 'مدیریت');
     await user.type(screen.getByLabelText('دانشگاه یا مؤسسه'), 'دانشگاه تهران');
     await user.click(screen.getByRole('radio', { name: 'مجرد' }));
-    await user.click(screen.getByRole('radio', { name: 'مشمول نیستم' }));
+    // A woman isn't asked about military service (sent as not applicable).
+    expect(screen.queryByRole('radio', { name: 'مشمول نیستم' })).toBeNull();
     await user.type(screen.getByLabelText('شماره‌ی شبا'), 'IR82 0540 1026 8002 0817 9090 02');
     await user.type(screen.getByLabelText('نام بانک'), 'ملت');
     await user.type(screen.getByLabelText('ایمیل'), 'bahar.niko@gmail.com');
@@ -197,15 +202,18 @@ describe('new-hire form', () => {
     renderApp('/hr/staff');
     await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
     const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
+    await user.type(within(dialog).getByLabelText('نام'), 'سارا');
+    await user.type(within(dialog).getByLabelText('نام خانوادگی'), 'رضایی');
     await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121112233');
     await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '20000000');
     await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
 
     const invite = await screen.findByRole('region', { name: 'دعوت به فرم' });
-    // No name until the hire types it: a greeting without one.
-    expect(invite).toHaveTextContent('سلام،');
-    expect(invite).not.toHaveTextContent('سلام 0912');
+    // HR gave the names: the greeting uses them.
+    expect(invite).toHaveTextContent('سارا رضایی');
     expect(invite).toHaveTextContent('09121112233');
+    // No share sheet in this browser: copying is the way.
+    expect(within(invite).queryByRole('button', { name: 'اشتراک‌گذاری' })).toBeNull();
     // The panel's login, then the form (BASE_URL is "/panel/" in a build, "/" in tests).
     const link = `${window.location.origin}${import.meta.env.BASE_URL}login?next=${encodeURIComponent(`${import.meta.env.BASE_URL}me/onboarding`)}`;
     expect(invite).toHaveTextContent(link);
@@ -214,6 +222,22 @@ describe('new-hire form', () => {
     expect(await toasts().findByText('کپی شد')).toBeInTheDocument();
     expect(write).toHaveBeenCalledWith(expect.stringContaining(link));
   });
+  it('shares the invite through the phone’s share sheet', async () => {
+    const user = userEvent.setup();
+    const share = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+    try {
+      loginAs(AMIR);
+      renderApp('/hr/staff/3');
+      await user.click(await screen.findByRole('button', { name: 'فرم استخدام' }));
+      const invite = await screen.findByRole('region', { name: 'دعوت به فرم' });
+      await user.click(within(invite).getByRole('button', { name: 'اشتراک‌گذاری' }));
+      expect(share).toHaveBeenCalledWith({ text: expect.stringContaining('بهار') as string });
+    } finally {
+      Reflect.deleteProperty(navigator, 'share');
+    }
+  });
+
   it('switches the hire to the sent form when a draft finds it closed', async () => {
     const user = userEvent.setup();
     loginAs(HIRE);
@@ -306,12 +330,146 @@ describe('new-hire form', () => {
     renderApp('/hr/staff');
     await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
     const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
+    await user.type(within(dialog).getByLabelText('نام'), 'سارا');
+    await user.type(within(dialog).getByLabelText('نام خانوادگی'), 'رضایی');
     await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121112244');
     await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '20000000');
     await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
     expect(
       await toasts().findByText('این کارمند همین حالا ثبت شده است. فهرست را بررسی کنید.'),
     ).toBeInTheDocument();
+  });
+
+  it('sends the form once however fast Send is pressed twice', async () => {
+    const user = userEvent.setup();
+    mockCompleteForm(BAHAR_FILE);
+    let posts = 0;
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.post(`${API}/me/onboarding/submit/`, async () => {
+        posts++;
+        await held;
+        return HttpResponse.json({ detail: 'This form is closed.' }, { status: 409 });
+      }),
+    );
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    const send = await screen.findByRole('button', { name: 'ارسال' });
+    await user.dblClick(send);
+    await waitFor(() => {
+      expect(posts).toBe(1);
+    });
+    release();
+    expect(
+      await toasts().findByText('وضعیت فرم تغییر کرده است. صفحه به‌روز شد.'),
+    ).toBeInTheDocument();
+    expect(posts).toBe(1);
+  });
+
+  it('waits for a pause before saying the IBAN is wrong, and takes it with or without IR', async () => {
+    const user = userEvent.setup();
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    const iban = await screen.findByLabelText('شماره‌ی شبا');
+    await user.type(iban, '۸۲۰۵');
+    await user.tab();
+    // Left half-typed: said at once.
+    expect(screen.getByText('شماره‌ی شبا درست نیست')).toBeInTheDocument();
+    await user.clear(iban);
+    // Persian digits become Latin as they are typed; without IR is fine.
+    await user.type(iban, '۸۲۰۵۴۰۱۰۲۶۸۰۰۲۰۸۱۷۹۰۹۰۰۲');
+    expect(iban).toHaveValue(IBAN.slice(2));
+    expect(screen.queryByText('شماره‌ی شبا درست نیست')).toBeNull();
+    await user.clear(iban);
+    await user.type(iban, `${IBAN}9`);
+    // Wrong while typing: only once typing pauses.
+    expect(screen.queryByText('شماره‌ی شبا درست نیست')).toBeNull();
+    expect(await screen.findByText('شماره‌ی شبا درست نیست')).toBeInTheDocument();
+    await user.type(iban, '{Backspace}');
+    expect(screen.queryByText('شماره‌ی شبا درست نیست')).toBeNull();
+  });
+
+  it('suggests majors the site knows and keeps a new one as typed', async () => {
+    const user = userEvent.setup();
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    await user.click(await screen.findByRole('radio', { name: 'کارشناسی' }));
+    const major = screen.getByRole('combobox', { name: 'رشته‌ی تحصیلی' });
+    await user.type(major, 'مهندسی');
+    const list = await screen.findByRole('listbox', { name: 'رشته‌های پیشنهادی' });
+    // Top-level majors only: no sub-field.
+    expect(within(list).getByRole('option', { name: 'مهندسی کامپیوتر' })).toBeInTheDocument();
+    expect(within(list).queryByRole('option', { name: /نرم‌افزار/ })).toBeNull();
+    await user.click(within(list).getByRole('option', { name: 'مهندسی برق' }));
+    expect(major).toHaveValue('مهندسی برق');
+    await user.clear(major);
+    await user.type(major, 'رشته‌ای تازه');
+    expect(major).toHaveValue('رشته‌ای تازه');
+  });
+
+  it('puts away the drop zones once a document is there', async () => {
+    const user = userEvent.setup();
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    await user.upload(
+      await screen.findByLabelText('انتخاب فایل برای تصویر کارت ملی'),
+      new File(['x'], 'melli.jpg', { type: 'image/jpeg' }),
+    );
+    await screen.findByRole('link', { name: /melli\.jpg/ });
+    expect(screen.queryByLabelText('انتخاب فایل برای تصویر کارت ملی')).toBeNull();
+    await user.upload(
+      screen.getByLabelText('انتخاب فایل برای تصویر شناسنامه'),
+      new File(['x'], 'page-1.pdf', { type: 'application/pdf' }),
+    );
+    await screen.findByRole('link', { name: /page-1\.pdf/ });
+    // Another page: a small button, not the zone.
+    expect(screen.getByText('افزودن فایل دیگر')).toBeInTheDocument();
+    expect(screen.queryByText('یا فایل را اینجا رها کنید')).toBeNull();
+  });
+
+  it('gives a new staff member access from their file', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/staff/3');
+    await user.click(await screen.findByRole('button', { name: 'دسترسی‌ها' }));
+    const card = await screen.findByRole('region', { name: 'دسترسی‌ها' });
+    const group = await within(card).findByRole('checkbox', { name: 'Founders' });
+    await user.click(group);
+    await user.click(within(card).getByRole('button', { name: 'ذخیره' }));
+    expect(await toasts().findByText(/ذخیره شد/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole('region', { name: 'دسترسی‌ها' })).getByRole('checkbox', {
+          name: 'Founders',
+        }),
+      ).toBeChecked();
+    });
+  });
+
+  it('fills a new staff member from the account their mobile already has', async () => {
+    // OB12 isn't served yet: on for this test (the mocked module's object).
+    (ON_SERVER as Record<string, boolean>).hrAccountLookup = true;
+    onTestFinished(() => {
+      (ON_SERVER as Record<string, boolean>).hrAccountLookup = false;
+    });
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/staff');
+    await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
+    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121110000');
+    await waitFor(() => {
+      expect(within(dialog).getByLabelText('نام')).toHaveValue('سارا');
+    });
+    expect(within(dialog).getByLabelText('نام خانوادگی')).toHaveValue('محمدی');
+    expect(within(dialog).getByLabelText('ایمیل کاری')).toHaveValue('sara.m@gmail.com');
+    // Someone already on staff can't get a second file.
+    await user.clear(within(dialog).getByLabelText('موبایل کارمند'));
+    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121000001');
+    expect(await within(dialog).findByText('این شماره پرونده‌ی کارمندی دارد')).toBeInTheDocument();
   });
 
   it('points the hire back to their form from the account menu', async () => {

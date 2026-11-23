@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Page } from '@/lib/api/page';
 import { HR_KEY, type Named, staffPath } from '../api';
 import { orNull } from './me';
 
@@ -116,4 +117,35 @@ export const onboardingQuery = (staffId: number) =>
   queryOptions({
     queryKey: [...HR_KEY, 'onboarding', staffId],
     queryFn: ({ signal }) => orNull(api<OnboardingReview>(onboardingPath(staffId), { signal })),
+  });
+
+/** A study field (`apply/v1/study-fields/`): the majors the site knows, with their sub-fields. */
+interface StudyFieldRow {
+  id: number;
+  name: string;
+  name_persian: string | null;
+  parent?: { id: number } | null;
+}
+
+/**
+ * Majors matching what the hire typed, for suggestions only: top-level ones (sub-fields are left
+ * out until OB15 filters them on the server), by their Persian name. Nothing is ever created here:
+ * the answer stays the typed text.
+ */
+export const majorsQuery = (search: string) =>
+  queryOptions({
+    queryKey: ['study-fields', 'top', search],
+    queryFn: ({ signal }) =>
+      api<Page<StudyFieldRow>>(`/apply/v1/study-fields/?search=${encodeURIComponent(search)}`, {
+        signal,
+      }),
+    select: (page) => [
+      ...new Set(
+        page.results
+          .filter((row) => !row.parent)
+          .map((row) => (row.name_persian ?? row.name).trim())
+          .filter(Boolean),
+      ),
+    ],
+    staleTime: 5 * 60_000,
   });

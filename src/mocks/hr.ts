@@ -484,6 +484,14 @@ const OPTIONS: HrOptions = {
   ],
 };
 
+/** Accounts of people who used the site before (not staff): the new-staff lookup finds them. */
+const SITE_ACCOUNTS = [
+  {
+    phone: '09121110000',
+    match: { id: 900, first_name: 'سارا', last_name: 'محمدی', email: 'sara.m@gmail.com' },
+  },
+];
+
 const invalid = (errors: Record<string, string[]>) => HttpResponse.json(errors, { status: 400 });
 
 /** The logged-in user's own active staff file (the hire's side of the form). */
@@ -525,6 +533,26 @@ export const hrHandlers = [
     const rows = staff.filter((row) => all || row.is_active).map(rowOf);
     return HttpResponse.json({ results: rows.sort((a, b) => a.name.localeCompare(b.name)) });
   }),
+  // OB12: the account a mobile already has (staff or someone who used the site), else 404.
+  http.get(`${API}/accounts/`, ({ request }) => {
+    if (!allowed()) return forbidden();
+    const phone = new URL(request.url).searchParams.get('phone') ?? '';
+    const row = staff.find((one) => one.info.phone_number === phone);
+    if (row) {
+      const [first = '', ...rest] = row.name.split(' ');
+      return HttpResponse.json({
+        id: row.user,
+        first_name: first,
+        last_name: rest.join(' '),
+        email: '',
+        staff_id: row.id,
+      });
+    }
+    const account = SITE_ACCOUNTS.find((one) => one.phone === phone);
+    return account
+      ? HttpResponse.json({ ...account.match, staff_id: null })
+      : HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+  }),
   http.post(`${API}/staff/`, async ({ request }) => {
     if (!allowed()) return forbidden();
     const body = (await request.json()) as NewStaff;
@@ -533,7 +561,7 @@ export const hrHandlers = [
     const position = OPTIONS.positions.find((item) => item.id === body.position);
     // Without names (HR sends only the phone), the file is named by the phone until the form is
     // approved.
-    const name = `${body.first_name ?? ''} ${body.last_name ?? ''}`.trim() || body.phone_number;
+    const name = `${body.first_name} ${body.last_name}`.trim() || body.phone_number;
     const row = person(newId(), name, {
       kind: body.contract,
       start: body.entry_date,
@@ -845,6 +873,14 @@ export const hrHandlers = [
 
 /** Test helper: the staff member's open form filled in and sent, as a hire would (OB3). */
 export function mockSubmittedForm(staffId: number) {
+  const form = mockCompleteForm(staffId);
+  form.status = 'submitted';
+  form.submitted_at = new Date().toISOString();
+  setStep(form, true);
+}
+
+/** Test helper: the staff member's open form filled in (every answer and both files), not sent. */
+export function mockCompleteForm(staffId: number) {
   const form = openFormOf(staffId);
   if (!form) throw new Error(`No open form for staff ${String(staffId)}`);
   Object.assign(form.answers, {
@@ -872,7 +908,5 @@ export function mockSubmittedForm(staffId: number) {
     { id: newId(), kind: 'birth_certificate', name: 'shenasname.pdf', url: '/media/hr/1.pdf' },
     { id: newId(), kind: 'national_card', name: 'melli.jpg', url: '/media/hr/2.jpg' },
   ];
-  form.status = 'submitted';
-  form.submitted_at = new Date().toISOString();
-  setStep(form, true);
+  return form;
 }

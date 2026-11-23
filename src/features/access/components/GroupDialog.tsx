@@ -20,7 +20,7 @@ import {
   useRemoveMember,
   useSaveGroup,
 } from '../mutations';
-import { KeyPicker } from './KeyPicker';
+import { KeyPicker } from '@/components/access/KeyPicker';
 
 /** Django's own words for an invalid field (`{"name": ["…"]}`), if it sent any. */
 function fieldError(error: unknown, field: string): string | undefined {

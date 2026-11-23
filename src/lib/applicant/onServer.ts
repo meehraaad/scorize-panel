@@ -46,6 +46,7 @@ export type ServerFeature =
   | 'attendance'
   | 'hr'
   | 'hrOnboarding'
+  | 'hrAccountLookup'
   | 'marketing'
   | 'dayFollowUps'
   | 'clientServices'
@@ -87,6 +88,11 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
    * or chips, and HR keeps sending the Porsline link.
    */
   hrOnboarding: true,
+  /**
+   * OB12 `GET /hr/v1/accounts/?phone=`: the new-staff dialog finds an existing account by its
+   * mobile and fills the names and email. Off: the dialog takes what HR types.
+   */
+  hrAccountLookup: false,
   /**
    * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
    * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.

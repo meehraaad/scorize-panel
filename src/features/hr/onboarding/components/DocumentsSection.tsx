@@ -19,14 +19,16 @@ const ACCEPT = ['.pdf', '.jpg', '.jpeg', '.png'] as const;
 /**
  * The form's documents: the birth certificate (every page, one file each) and the national card.
  * Each file is sent as soon as it is picked (the upload toast shows its progress) and can be
- * removed while the form is open. `onb-files` takes the focus when one is missing.
+ * removed while the form is open. A kind still missing (`onb-files-<kind>`) takes the focus, with
+ * its error under it. Once a kind has a file its drop zone goes: the birth certificate keeps a small
+ * button for another page.
  */
 export function DocumentsSection({
   files,
-  error,
+  errors,
 }: {
   files: readonly OnboardingFile[];
-  error: string | undefined;
+  errors: Record<OnboardingFileKind, string | undefined>;
 }) {
   const { t } = useTranslation('hr');
   // Django takes MAX_FILES per form: at the limit a file has to go before another comes.
@@ -38,17 +40,17 @@ export function DocumentsSection({
       title={t('onboarding.section.documents')}
       subtitle={t('onboarding.sectionHint.documents')}
     >
-      <div id="onb-files" tabIndex={-1} className="flex flex-col gap-5 rounded-2xl outline-none">
+      <div className="flex flex-col gap-5">
         {FILE_KINDS.map((kind) => (
           <KindFiles
             key={kind}
             kind={kind}
             files={files.filter((file) => file.kind === kind)}
             full={full}
+            missing={errors[kind]}
           />
         ))}
         {full && <p className="m-0 text-small text-text-2">{t('onboarding.file.limit')}</p>}
-        {error && <p className="m-0 text-small text-danger">{error}</p>}
       </div>
     </SectionCard>
   );
@@ -58,10 +60,13 @@ function KindFiles({
   kind,
   files,
   full,
+  missing,
 }: {
   kind: OnboardingFileKind;
   files: OnboardingFile[];
   full: boolean;
+  /** This kind has no file yet and the form was sent. */
+  missing: string | undefined;
 }) {
   const { t } = useTranslation('hr');
   const remove = useDeleteOnboardingFile();
@@ -69,6 +74,9 @@ function KindFiles({
   const [problem, setProblem] = useState<FileProblem | null>(null);
   const name = t(`onboarding.file.${kind}`);
   const errorId = `onb-file-${kind}-error`;
+  const missingId = `onb-files-${kind}-error`;
+  // The birth certificate takes several pages; the national card one file (both sides).
+  const more = kind === 'birth_certificate' && files.length > 0;
 
   const pick = (file: File | undefined) => {
     if (!file) return;
@@ -79,7 +87,12 @@ function KindFiles({
   };
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div
+      id={`onb-files-${kind}`}
+      tabIndex={-1}
+      aria-describedby={missing ? missingId : undefined}
+      className="flex flex-col gap-2.5 rounded-2xl outline-none"
+    >
       <div className="flex flex-col gap-0.5">
         <h3 className="m-0 text-body font-semibold">{name}</h3>
         <span className="text-small text-text-2">{t(`onboarding.file.${kind}Hint`)}</span>
@@ -110,21 +123,27 @@ function KindFiles({
           }
         />
       ))}
-      {/* The birth certificate takes several pages; the national card one file (both sides). */}
-      {!full && (kind === 'birth_certificate' || files.length === 0) && (
-        <FileDrop
-          id={`onb-file-${kind}`}
-          accept={ACCEPT}
-          disabled={upload.isPending}
-          errorId={problem ? errorId : null}
-          chooseLabel={
-            files.length > 0 ? t('onboarding.file.another') : t('onboarding.file.choose')
-          }
-          hint={t('onboarding.file.hint')}
-          touchHint={t('onboarding.file.touchHint')}
-          inputLabel={t('onboarding.file.chooseFor', { name })}
-          onFile={pick}
-        />
+      {!full && (files.length === 0 || more) && (
+        <div className={more ? 'self-start' : ''}>
+          <FileDrop
+            id={`onb-file-${kind}`}
+            accept={ACCEPT}
+            disabled={upload.isPending}
+            errorId={problem ? errorId : null}
+            compact={more}
+            keepLabel
+            chooseLabel={more ? t('onboarding.file.another') : t('onboarding.file.choose')}
+            hint={t('onboarding.file.hint')}
+            touchHint={t('onboarding.file.touchHint')}
+            inputLabel={t('onboarding.file.chooseFor', { name })}
+            onFile={pick}
+          />
+        </div>
+      )}
+      {missing && (
+        <p id={missingId} className="m-0 text-small text-danger">
+          {missing}
+        </p>
       )}
       {problem && (
         <p id={errorId} className="m-0 text-small text-danger">

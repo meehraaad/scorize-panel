@@ -1,70 +1,135 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
+import { Notice } from '@/components/ui/Notice';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { isPersianText } from '@/lib/identity';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import { accountQuery, type AccountMatch } from '../accounts';
 import { HR_KEY, optionsQuery, type ContractKind, type Team } from '../api';
 import { useNewStaff } from '../mutations';
 import { fieldErrors, parseAmount, todayValue } from '../format';
 import { personPath } from '../paths';
 
 const CONTRACTS: readonly ContractKind[] = ['trial', 'fixed', 'permanent', 'project'];
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type Form = {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  position: string;
+  team: Team | '';
+  entry_date: string;
+  contract: ContractKind;
+  contract_end: string;
+  salary: string;
+};
+type Key = keyof Form;
 
 /**
- * A new staff member (canvas "کارمند جدید"): HR only gives what the hire can't type themselves —
- * their mobile (the login), position and team, the first day, the first contract and salary. The
- * hire types their names, ID card number and the rest on the new-hire form (until it is approved
- * the file is named by the phone). Saving makes their account and file, opens the joining
- * checklist and the form, then opens the file on the invite to send them.
+ * A new staff member (canvas "کارمند جدید"): HR gives the hire's names and mobile (their login),
+ * position and team, the first day, the first contract and salary; the hire types the rest on the
+ * new-hire form. With OB12 the mobile finds an account the person already has on the site: its
+ * names and email fill in, and someone already on staff can't get a second file. Saving makes their
+ * account and file, opens the joining checklist and the form, then opens the file on the invite.
  */
 export default function NewStaffDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation('hr');
   const f = useFormat();
   const navigate = useNavigate();
+  const client = useQueryClient();
   const options = useQuery(optionsQuery);
   const save = useNewStaff();
-  const client = useQueryClient();
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<Form>({
+    first_name: '',
+    last_name: '',
     phone: '',
     email: '',
     position: '',
-    team: '' as Team | '',
+    team: '',
     entry_date: todayValue(),
-    contract: 'trial' as ContractKind,
+    contract: 'trial',
     contract_end: '',
     salary: '',
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const set = (field: keyof typeof form) => (value: string) => {
+  const [touched, setTouched] = useState<ReadonlySet<Key>>(new Set());
+  const [attempted, setAttempted] = useState(false);
+  const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
+  const set = (field: Key) => (value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
+    if (serverErrors[field]) setServerErrors(({ [field]: _gone, ...rest }) => rest);
   };
+  const touch = (field: Key) => () => {
+    setTouched((current) => (current.has(field) ? current : new Set(current).add(field)));
+  };
+
+  const phone = normalizePhone(form.phone);
   const salary = parseAmount(form.salary);
+  const contractEnd = form.contract === 'permanent' ? '' : form.contract_end;
+
+  // OB12: the account this mobile already has, once the number is whole and typing pauses.
+  const settledPhone = useDebouncedValue(phone);
+  const lookup = useQuery({
+    ...accountQuery(settledPhone ?? ''),
+    enabled: ON_SERVER.hrAccountLookup && Boolean(settledPhone) && settledPhone === phone,
+  });
+  const account: AccountMatch | null = phone && lookup.data ? lookup.data : null;
+  // An account found fills the empty names and email once (HR can still change them).
+  const [filledFrom, setFilledFrom] = useState<number | null>(null);
+  if (account && !account.staff_id && filledFrom !== account.id) {
+    setFilledFrom(account.id);
+    setForm((current) => ({
+      ...current,
+      first_name: current.first_name || account.first_name,
+      last_name: current.last_name || account.last_name,
+      email: current.email || account.email,
+    }));
+  }
+
+  // What is wrong, field by field (shown once the field is left, or on save).
+  const problems: Partial<Record<Key, string>> = {};
+  const name = (value: string) =>
+    !value.trim() ? t('form.required') : isPersianText(value) ? null : t('form.persian');
+  const first = name(form.first_name);
+  if (first) problems.first_name = first;
+  const last = name(form.last_name);
+  if (last) problems.last_name = last;
+  if (!phone) problems.phone = form.phone.trim() ? t('form.phone') : t('form.required');
+  else if (account?.staff_id) problems.phone = t('form.hasFile');
+  if (form.email.trim() && !EMAIL.test(form.email.trim())) problems.email = t('form.emailBad');
+  if (salary === null) problems.salary = t('form.required');
+  else if (salary <= 0) problems.salary = t('form.salaryZero');
+  if (contractEnd && contractEnd < form.entry_date) problems.contract_end = t('form.endBefore');
+
+  const errorOf = (field: Key, server = field as string) =>
+    serverErrors[server] ?? (attempted || touched.has(field) ? problems[field] : undefined);
 
   const submit = () => {
-    const phone = normalizePhone(form.phone);
-    const missing: Record<string, string> = {};
-    if (!phone) missing.phone_number = t('form.phone');
-    if (salary === null) missing.salary = t('form.required');
-    setErrors(missing);
-    if (Object.keys(missing).length > 0 || !phone || salary === null) return;
+    setAttempted(true);
+    if (Object.keys(problems).length > 0 || !phone || salary === null) return;
     save.mutate(
       {
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
         phone_number: phone,
         email: form.email.trim(),
         position: form.position ? Number(form.position) : null,
         team: form.team || null,
         entry_date: form.entry_date,
         contract: form.contract,
-        contract_end: form.contract === 'permanent' ? null : form.contract_end || null,
+        contract_end: contractEnd || null,
         salary,
       },
       {
@@ -85,7 +150,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
             return;
           }
           const fields = fieldErrors(error);
-          setErrors(fields);
+          setServerErrors(fields);
           if (Object.keys(fields).length === 0) toast.error(t('error'));
         },
       },
@@ -118,8 +183,42 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         dir="ltr"
         autoComplete="off"
         onChange={(event) => set('phone')(event.target.value)}
-        error={errors.phone_number}
+        onBlur={touch('phone')}
+        // A file already made for this number is said at once: no need to leave the field.
+        error={account?.staff_id ? problems.phone : errorOf('phone', 'phone_number')}
       />
+      {account?.staff_id && (
+        <Link to={personPath(account.staff_id)} className="-mt-2 text-small text-primary-text">
+          {t('newStaff.openFile')}
+        </Link>
+      )}
+      {account && !account.staff_id && filledFrom === account.id && (
+        <Notice tone="info">
+          {t('newStaff.account', {
+            name: `${account.first_name} ${account.last_name}`.trim() || form.phone,
+          })}
+        </Notice>
+      )}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          label={t('form.firstName')}
+          value={form.first_name}
+          autoComplete="off"
+          maxLength={150}
+          onChange={(event) => set('first_name')(event.target.value)}
+          onBlur={touch('first_name')}
+          error={errorOf('first_name')}
+        />
+        <TextField
+          label={t('form.lastName')}
+          value={form.last_name}
+          autoComplete="off"
+          maxLength={150}
+          onChange={(event) => set('last_name')(event.target.value)}
+          onBlur={touch('last_name')}
+          error={errorOf('last_name')}
+        />
+      </div>
       <TextField
         label={t('form.email')}
         hint={t('form.emailHint')}
@@ -127,7 +226,8 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         dir="ltr"
         value={form.email}
         onChange={(event) => set('email')(event.target.value)}
-        error={errors.email}
+        onBlur={touch('email')}
+        error={errorOf('email')}
       />
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField
@@ -141,7 +241,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
               label: position.name,
             })),
           ]}
-          error={errors.position}
+          error={serverErrors.position}
         />
         <SelectField
           label={t('form.team')}
@@ -160,7 +260,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         label={t('form.entryDate')}
         value={form.entry_date}
         onChange={(value) => value && set('entry_date')(value)}
-        error={errors.entry_date}
+        error={serverErrors.entry_date}
       />
       <ChoiceGroup
         legend={t('form.contract')}
@@ -176,17 +276,22 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
           onChange={set('contract_end')}
           min={form.entry_date}
           clearable
-          error={errors.contract_end}
+          error={serverErrors.contract_end ?? (attempted ? problems.contract_end : undefined)}
         />
       )}
       <TextField
         label={t('form.salary')}
-        hint={salary !== null ? t('toman', { amount: f.number(salary) }) : t('form.salaryHint')}
+        hint={
+          salary !== null && salary > 0
+            ? t('toman', { amount: f.number(salary) })
+            : t('form.salaryHint')
+        }
         inputMode="numeric"
         dir="ltr"
         value={form.salary}
         onChange={(event) => set('salary')(event.target.value)}
-        error={errors.salary}
+        onBlur={touch('salary')}
+        error={errorOf('salary')}
       />
     </Dialog>
   );
