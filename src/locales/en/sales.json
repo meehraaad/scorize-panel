@@ -2225,6 +2225,20 @@
       "undo": "Undo changes"
     },
     "teams": {
+      "routing": {
+        "title": "Ringing rules",
+        "strategy": "Ring strategy",
+        "timeout": "Ring time per attempt",
+        "seconds": "sec",
+        "decrease": "Decrease ring time",
+        "increase": "Increase ring time",
+        "options": {
+          "rrmemory": "Rotate between available phones",
+          "ringall": "Ring all available phones",
+          "leastrecent": "Ring the longest-idle member",
+          "fewestcalls": "Ring the member with fewest answered calls"
+        }
+      },
       "title": "Phone teams",
       "seen": "The PBX was last read {{time}}.",
       "notSeen": "No report from the PBX yet.",
