@@ -71,6 +71,9 @@ Everything comes from Django (`claude/eager-bohr-8iw6h3` of scorize-revolution);
 | Marketing panel             | `/api/marketing/v1/` `today/`, `calendar/`, `attendance/`, `board/`, `cards/…`, `stages/…`, `types/…`, `team/`; tasks `?panel=marketing`                                                                                                                                                                                                 | `features/marketing/api.ts`                     |
 | HR panel                    | `/api/hr/v1/` `today/`, `options/`, `calendar/`, `staff/…`, `moves/…`, `steps/…`, pay and KPIs; new-hire form (OB0–OB16): `me/onboarding/…`, `staff/<id>/onboarding/…`, whoami `staff.onboarding`; `accounts/?phone=` (OB12, off); the file's access tab: `/api/access/v1/people/<user>/`; majors: `/api/apply/v1/study-fields/?search=` | `features/hr/api.ts`, `features/hr/onboarding/` |
 
+The planned Executive Customers endpoints (EC1–EC3) are under `/api/executive/v1/customers/`.
+The list and CSV export queries are in `panels/executive/customersApi.ts`.
+
 The sales month report uses the current Jalali month. Its headline `won` counts wins in that
 month; `funnel` and `sources` track leads created in that month, so lead estimates use
 `funnel.won / funnel.leads`. A zero `target` means no positive target is configured. Each value

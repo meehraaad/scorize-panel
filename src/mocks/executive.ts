@@ -11,6 +11,38 @@ const customer = {
   ],
 };
 
+const customerCases = [
+  {
+    id: 1240,
+    name: customer.name,
+    case_id: 1240,
+    file_number: 1240,
+    contract: 'دکترای کانادا',
+    services: [
+      { id: 124000, name: 'پذیرش کانادا', owner: { name: 'مریم کاظمی', mine: true } },
+      { id: 124001, name: 'ویزا', owner: null },
+    ],
+    stage: 'applying',
+    next_task: { title: 'بررسی برنامه‌ها', due_at: '2026-11-24T14:30:00Z', urgency: 'today' },
+    docs: { uploaded: 9, required: 14, review: 2 },
+    email: 'on',
+    last_activity: '2026-11-24T10:30:00Z',
+  },
+  {
+    id: 1218,
+    name: 'امید رضوانی',
+    case_id: 1218,
+    file_number: 1218,
+    contract: 'ارشد آلمان',
+    services: [{ id: 121800, name: 'پذیرش آلمان', owner: { name: 'علی نوری', mine: false } }],
+    stage: 'documents',
+    next_task: null,
+    docs: { uploaded: 4, required: 10, review: 0 },
+    email: null,
+    last_activity: null,
+  },
+];
+
 const forStaff = (body: object) =>
   storage.get() === 2 ? HttpResponse.json(body) : new HttpResponse(null, { status: 403 });
 
@@ -33,6 +65,43 @@ export const executiveHandlers = [
       items.length && (!userId || userId === String(customer.id)) ? [{ ...customer, items }] : [];
     return forStaff({ count: results.length, page_size: 20, results });
   }),
+  http.get(`${api}/customers/`, ({ request }) => {
+    const params = new URL(request.url).searchParams;
+    const scope = params.get('scope');
+    const queue = params.get('queue');
+    const search = params.get('search');
+    const rows = customerCases.filter(
+      (row) =>
+        (scope !== 'mine' || row.id === 1240) &&
+        (!queue || (queue === 'today' && row.id === 1240)) &&
+        (!search || row.name.includes(search) || String(row.file_number).includes(search)),
+    );
+    const page = Number(params.get('page') ?? 1);
+    return forStaff({
+      scopes: { mine: 1, team: 2, all: 2 },
+      queues: { today: 1, late: 0, review: 1, reply: 0, unassigned: 1 },
+      options: {
+        country: [
+          { value: 'CA', label: 'کانادا' },
+          { value: 'DE', label: 'آلمان' },
+        ],
+        contract: [
+          { value: 'phd', label: 'دکترا' },
+          { value: 'masters', label: 'ارشد' },
+        ],
+        service: [{ value: 'admission', label: 'پذیرش' }],
+      },
+      can_export: true,
+      can_import: true,
+      count: rows.length,
+      page_size: 1,
+      results: rows.slice(page - 1, page),
+    });
+  }),
+  http.post(`${api}/customers/import/preview/`, () =>
+    forStaff({ token: 'customer-preview', ready: 1, skipped: 1 }),
+  ),
+  http.post(`${api}/customers/import/`, () => forStaff({ updated: 1 })),
   http.get(`${api}/tickets/:department/`, ({ params }) => {
     const writing = params.department === 'writing';
     const last = {
