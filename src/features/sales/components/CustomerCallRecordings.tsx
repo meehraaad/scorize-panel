@@ -55,7 +55,10 @@ export function CustomerCallRecordings({ customer }: { customer: number }) {
           ) : data?.results.length ? (
             <ul className="m-0 list-none p-0">
               {data.results.map((row) => (
-                <li key={row.id} className="flex flex-wrap items-center gap-3 border-t border-line-2 py-2">
+                <li
+                  key={row.id}
+                  className="flex flex-wrap items-center gap-3 border-t border-line-2 py-2"
+                >
                   <time dateTime={row.at}>{f.dateTime(row.at)}</time>
                   <span className="text-text-2">
                     {t('customer.recordings.duration', { seconds: f.number(row.duration) })}
