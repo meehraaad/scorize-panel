@@ -1,11 +1,12 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui/IconButton';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { SearchField } from '@/components/ui/Filters';
@@ -126,6 +127,8 @@ export function HistoryCard({ customer }: { customer: number }) {
 function EventRow({ event, customer }: { event: HistoryEvent; customer: number }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
+  const [editing, setEditing] = useState(false);
+  const editButton = useRef<HTMLButtonElement>(null);
   const look = LOOK[event.kind];
   const author = event.author ?? t('customer.history.system');
   // Django's history doesn't say who a lead went to.
@@ -176,15 +179,24 @@ function EventRow({ event, customer }: { event: HistoryEvent; customer: number }
             </Chip>
           </span>
         )}
-        {event.contact_edit ? (
+        {editing && event.contact_edit ? (
           <ContactNoteEditor
             customer={customer}
             contact={event.contact_edit.id}
             version={event.contact_edit.version}
             text={event.text}
+            onClose={() => {
+              setEditing(false);
+              // The button is back after this render.
+              requestAnimationFrame(() => editButton.current?.focus());
+            }}
           />
         ) : (
-          event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>
+          event.text && (
+            <p className="m-0 text-sm leading-7 break-words whitespace-pre-wrap text-neutral">
+              {event.text}
+            </p>
+          )
         )}
         {event.customer_summary && (
           <div className="rounded-xl bg-info-tint p-3">
@@ -204,6 +216,18 @@ function EventRow({ event, customer }: { event: HistoryEvent; customer: number }
           </span>
         )}
       </div>
+      {event.contact_edit && !editing && (
+        <IconButton
+          ref={editButton}
+          icon="pen"
+          tone="muted"
+          iconSize={18}
+          className="-my-1.5 -me-2 self-start"
+          aria-label={t('customer.history.edit.label', { title })}
+          title={t('customer.history.edit.label', { title })}
+          onClick={() => setEditing(true)}
+        />
+      )}
     </li>
   );
 }

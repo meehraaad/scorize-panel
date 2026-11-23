@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, it, vi } from 'vitest';
@@ -12,7 +12,7 @@ import { clearContactDrafts } from '@/lib/sales/contactDrafts';
 
 const customer = '/sales/customers/105';
 const apiPath = '/api/sales/v1/customers/105';
-const editLabel = 'ویرایش توضیح ارتباط';
+const editLabel = /^ویرایش توضیح /;
 const description = () => screen.getByRole('textbox', { name: 'چه گذشت؟' });
 function entryFor(text: HTMLElement) {
   const entry = text.closest('li');
@@ -34,11 +34,23 @@ it('edits a contact description and leaves other sellers’ text read-only', asy
   const entry = entryFor(own);
   const colleague = await within(history).findByText(/^پیشنهاد مشاور: ۶ اپلای هلند/);
   expect(entryFor(colleague).queryByRole('button', { name: editLabel })).toBeNull();
-  await user.click(entry.getByRole('button', { name: editLabel }));
+  const edit = entry.getByRole('button', { name: editLabel });
+  // Icon only, after the entry's text.
+  expect(edit).toHaveTextContent('');
+  expect(own.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  await user.click(edit);
   expect(description()).toHaveValue(own.textContent);
+  expect(description()).toHaveFocus();
+  expect(entry.queryByRole('button', { name: editLabel })).toBeNull();
   await user.clear(description());
   await user.type(description(), 'Discarded');
   await user.click(entry.getByRole('button', { name: 'لغو' }));
+  expect(entry.queryByRole('textbox')).toBeNull();
+  expect(entry.getByText(own.textContent)).toBeInTheDocument();
+  await waitFor(() => expect(entry.getByRole('button', { name: editLabel })).toHaveFocus());
+  await user.keyboard('{Enter}');
+  await user.type(description(), ' more');
+  await user.keyboard('{Escape}');
   expect(entry.queryByRole('textbox')).toBeNull();
   await user.click(entry.getByRole('button', { name: editLabel }));
   await user.clear(description());

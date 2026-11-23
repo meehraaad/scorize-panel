@@ -525,8 +525,7 @@
     },
     "history": {
       "edit": {
-        "action": "Edit",
-        "label": "Edit contact description",
+        "label": "Edit description: {{title}}",
         "save": "Save",
         "cancel": "Cancel",
         "saved": "Description saved.",

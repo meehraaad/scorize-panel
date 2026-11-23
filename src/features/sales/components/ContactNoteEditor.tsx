@@ -1,7 +1,6 @@
-import { useRef, useState, type SubmitEvent } from 'react';
+import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
 import { TextAreaField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { fieldErrors } from '@/lib/api/fieldErrors';
@@ -15,19 +14,30 @@ export function ContactNoteEditor({
   contact,
   version,
   text,
+  onClose,
 }: {
   customer: number;
   contact: number;
   version: string;
   text: string;
+  /** Cancel, or a successful save. */
+  onClose: () => void;
 }) {
   const { t } = useTranslation('sales');
   const edit = useEditContactNote(customer, contact);
-  const [draft, setDraft] = useState<ContactNote | null>(null);
+  const [draft, setDraft] = useState<ContactNote>({ notes: text, version });
   const [review, setReview] = useState<ContactNote | 'reload' | null>(null);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  const field = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const textarea = field.current;
+    if (!textarea) return;
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  }, []);
 
   async function loadCurrentNote() {
     setReview('reload');
@@ -40,7 +50,7 @@ export function ContactNoteEditor({
 
   async function save(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft || review || inFlight.current) return;
+    if (review || inFlight.current) return;
     const notes = draft.notes.trim();
     if (Array.from(notes).length > MAX_LENGTH) {
       setError(t('customer.history.edit.tooLong'));
@@ -51,8 +61,8 @@ export function ContactNoteEditor({
     setError(undefined);
     try {
       await edit.mutateAsync({ ...draft, notes });
-      setDraft(null);
       toast.success(t('customer.history.edit.saved'));
+      onClose();
     } catch (failure) {
       if (failure instanceof ApiError && failure.status === 409) {
         await loadCurrentNote();
@@ -66,27 +76,19 @@ export function ContactNoteEditor({
     }
   }
 
-  if (!draft) {
-    return (
-      <div className="flex flex-wrap items-center gap-x-2">
-        {text && <p className="m-0 text-sm leading-7 break-words whitespace-pre-wrap">{text}</p>}
-        <Button
-          variant="quiet"
-          type="button"
-          className="min-h-11 px-2"
-          aria-label={t('customer.history.edit.label')}
-          onClick={() => setDraft({ notes: text, version })}
-        >
-          <Icon name="pen" size={16} />
-          {t('customer.history.edit.action')}
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={(event) => void save(event)} className="flex min-w-0 flex-col gap-2">
+    <form
+      onSubmit={(event) => void save(event)}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !busy) {
+          event.stopPropagation();
+          onClose();
+        }
+      }}
+      className="flex min-w-0 flex-col gap-2"
+    >
       <TextAreaField
+        ref={field}
         label={t('customer.logDialog.notes')}
         rows={3}
         value={draft.notes}
@@ -142,16 +144,7 @@ export function ContactNoteEditor({
         <Button type="submit" disabled={busy || review !== null}>
           {t('customer.history.edit.save')}
         </Button>
-        <Button
-          type="button"
-          variant="quiet"
-          disabled={busy}
-          onClick={() => {
-            setDraft(null);
-            setReview(null);
-            setError(undefined);
-          }}
-        >
+        <Button type="button" variant="quiet" disabled={busy} onClick={onClose}>
           {t('customer.history.edit.cancel')}
         </Button>
       </div>
