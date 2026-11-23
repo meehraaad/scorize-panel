@@ -119,7 +119,9 @@
     "saved": "File created; send them the invite.",
     "exists": "This staff member was just added. Check the list.",
     "openFile": "Open their file",
-    "account": "This number belongs to {{name}}’s account on the site; the names and email came from it."
+    "account": "This number belongs to {{name}}’s account on the site; the names and email came from it.",
+    "accounts": "Accounts with this number",
+    "onStaff": "{{name}} · already on staff"
   },
   "move": {
     "entry": "Joining",

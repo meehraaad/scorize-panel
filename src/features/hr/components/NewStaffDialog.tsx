@@ -7,6 +7,7 @@ import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { Notice } from '@/components/ui/Notice';
+import { SuggestField } from '@/components/ui/SuggestField';
 import { TextField } from '@/components/ui/TextField';
 import { ApiError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
@@ -15,7 +16,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { normalizePhone } from '@/lib/text';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { accountQuery, type AccountMatch } from '../accounts';
+import { accountSearchQuery, phonePrefix, type AccountMatch } from '../accounts';
 import { HR_KEY, optionsQuery, type ContractKind, type Team } from '../api';
 import { useNewStaff } from '../mutations';
 import { fieldErrors, parseAmount, todayValue } from '../format';
@@ -79,13 +80,17 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
   const salary = parseAmount(form.salary);
   const contractEnd = form.contract === 'permanent' ? '' : form.contract_end;
 
-  // OB12: the account this mobile already has, once the number is whole and typing pauses.
-  const settledPhone = useDebouncedValue(phone);
+  // OB12: live search of accounts by the start of the mobile (from 4 digits, after a pause in
+  // typing); the whole number's account fills the names and email.
+  const prefix = phonePrefix(form.phone);
+  const settledPrefix = useDebouncedValue(prefix);
   const lookup = useQuery({
-    ...accountQuery(settledPhone ?? ''),
-    enabled: ON_SERVER.hrAccountLookup && Boolean(settledPhone) && settledPhone === phone,
+    ...accountSearchQuery(settledPrefix ?? ''),
+    enabled: ON_SERVER.hrAccountLookup && Boolean(settledPrefix),
   });
-  const account: AccountMatch | null = phone && lookup.data ? lookup.data : null;
+  const matches = settledPrefix && settledPrefix === prefix ? (lookup.data ?? []) : [];
+  const account: AccountMatch | null =
+    (phone && matches.find((match) => match.phone_number === phone)) || null;
   // An account found fills the empty names and email once (HR can still change them).
   const [filledFrom, setFilledFrom] = useState<number | null>(null);
   if (account && !account.staff_id && filledFrom !== account.id) {
@@ -181,15 +186,28 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         </>
       }
     >
-      <TextField
+      <SuggestField
         label={t('form.mobile')}
         hint={t('form.mobileHint')}
         value={form.phone}
         inputMode="tel"
         dir="ltr"
-        autoComplete="off"
-        onChange={(event) => set('phone')(event.target.value)}
+        onValue={set('phone')}
         onBlur={touch('phone')}
+        suggestions={matches.map((match) => match.phone_number)}
+        listLabel={t('newStaff.accounts')}
+        describe={(number) => {
+          const match = matches.find((one) => one.phone_number === number);
+          const name = match ? `${match.first_name} ${match.last_name}`.trim() : '';
+          return (
+            <span className="flex w-full items-center justify-between gap-3">
+              <span dir="ltr">{number}</span>
+              <span className="truncate text-small text-text-2">
+                {match?.staff_id ? t('newStaff.onStaff', { name }) : name}
+              </span>
+            </span>
+          );
+        }}
         // A file already made for this number is said at once: no need to leave the field.
         error={account?.staff_id ? problems.phone : errorOf('phone', 'phone_number')}
       />

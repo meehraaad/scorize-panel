@@ -515,6 +515,26 @@ describe('new-hire form', () => {
     expect(await within(dialog).findByText('این شماره پرونده‌ی کارمندی دارد')).toBeInTheDocument();
   });
 
+  it('suggests accounts while HR types the mobile, and picking one fills the dialog', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/staff');
+    await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
+    const mobile = within(dialog).getByLabelText('موبایل کارمند');
+    // Three digits are too few; from four (Persian digits too) the list opens.
+    await user.type(mobile, '۰۹۱');
+    expect(within(dialog).queryByRole('listbox')).toBeNull();
+    await user.type(mobile, '۲۱۱۱');
+    const list = await within(dialog).findByRole('listbox', { name: 'حساب‌های با این شماره' });
+    await user.click(within(list).getByRole('option', { name: /09121110000.*سارا محمدی/ }));
+    expect(mobile).toHaveValue('09121110000');
+    await waitFor(() => {
+      expect(within(dialog).getByLabelText('نام')).toHaveValue('سارا');
+    });
+    expect(within(dialog).getByLabelText('ایمیل کاری')).toHaveValue('sara.m@gmail.com');
+  });
+
   it('points the hire back to their form from the account menu', async () => {
     const user = userEvent.setup();
     loginAs(HIRE);

@@ -536,22 +536,29 @@ export const hrHandlers = [
   // OB12: the account a mobile already has (staff or someone who used the site), else 404.
   http.get(`${API}/accounts/`, ({ request }) => {
     if (!allowed()) return forbidden();
-    const phone = new URL(request.url).searchParams.get('phone') ?? '';
-    const row = staff.find((one) => one.info.phone_number === phone);
-    if (row) {
+    const prefix = new URL(request.url).searchParams.get('phone') ?? '';
+    if (!/^09\d{2,9}$/.test(prefix)) return invalid({ phone: ['Enter at least 4 digits.'] });
+    const staffRows = staff.map((row) => {
       const [first = '', ...rest] = row.name.split(' ');
-      return HttpResponse.json({
+      return {
         id: row.user,
+        phone_number: row.info.phone_number ?? '',
         first_name: first,
         last_name: rest.join(' '),
         email: '',
         staff_id: row.id,
-      });
-    }
-    const account = SITE_ACCOUNTS.find((one) => one.phone === phone);
-    return account
-      ? HttpResponse.json({ ...account.match, staff_id: null })
-      : HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+      };
+    });
+    const siteRows = SITE_ACCOUNTS.map((one) => ({
+      ...one.match,
+      phone_number: one.phone,
+      staff_id: null,
+    }));
+    const results = [...staffRows, ...siteRows]
+      .filter((row) => row.phone_number.startsWith(prefix))
+      .sort((a, b) => a.phone_number.localeCompare(b.phone_number))
+      .slice(0, 5);
+    return HttpResponse.json({ results });
   }),
   http.post(`${API}/staff/`, async ({ request }) => {
     if (!allowed()) return forbidden();

@@ -1,4 +1,4 @@
-import { useId, useState, type ComponentProps, type KeyboardEvent } from 'react';
+import { useId, useState, type ComponentProps, type KeyboardEvent, type ReactNode } from 'react';
 import { TextField } from './TextField';
 
 /**
@@ -11,6 +11,7 @@ import { TextField } from './TextField';
 export function SuggestField({
   suggestions,
   listLabel,
+  describe,
   value,
   onValue,
   onFocus,
@@ -24,6 +25,8 @@ export function SuggestField({
   suggestions: readonly string[];
   /** The list's name for screen readers. */
   listLabel: string;
+  /** How an option reads, when more than its value (a number with its owner's name). */
+  describe?: (suggestion: string) => ReactNode;
 }) {
   const id = useId();
   const listId = `${id}-list`;
@@ -105,7 +108,7 @@ export function SuggestField({
                 index === current ? 'bg-tint' : ''
               }`}
             >
-              {suggestion}
+              {describe ? describe(suggestion) : suggestion}
             </li>
           ))}
         </ul>
