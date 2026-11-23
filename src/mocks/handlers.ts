@@ -12,7 +12,7 @@ import { assistantHandlers, resetAssistantMocks } from './assistant';
 import { handoffHandlers, resetHandoffMocks } from './handoff';
 import { mailHandlers, resetMailMocks } from './mail';
 import { attendanceHandlers, resetAttendanceMocks } from './attendance';
-import { hrHandlers, resetHrMocks } from './hr';
+import { hrHandlers, openFormStatus, resetHrMocks } from './hr';
 import { marketingHandlers } from './marketing';
 import { leadSourceHandlers, resetLeadSourceMocks } from './leadSources';
 import { marketingBoardHandlers, resetMarketingBoardMocks } from './marketingBoard';
@@ -199,6 +199,23 @@ const users: MockUser[] = [
     permissions: [],
     group_permissions: [],
   },
+  {
+    // A new hire on the support team (src/mocks/hr.ts: Bahar Niko, staff 3, joining today): no
+    // work panel yet; her personal details form is open (whoami `staff.onboarding`, OB5).
+    id: 603,
+    first_name: 'بهار',
+    last_name: 'نیکو',
+    email: null,
+    phone_number: '09121000003',
+    password: MOCK_PASSWORD,
+    staff: { id: 3, full_name: 'بهار نیکو', team: 4, is_active: true },
+    applicant: null,
+    is_country_supervisor: false,
+    ...workspace(),
+    is_superuser: false,
+    permissions: [],
+    group_permissions: [],
+  },
 ];
 
 // Server-side login state (Django keeps this in the session).
@@ -208,6 +225,12 @@ const code = (value: number, status = 200, extra: object = {}) =>
   HttpResponse.json({ code: value, ...extra }, { status });
 
 const publicUser = ({ password: _password, ...user }: MockUser): SessionUser => user;
+
+/** whoami's `staff.onboarding`: the user's own open new-hire form, from the HR mocks (OB5). */
+const withForm = (user: SessionUser): SessionUser =>
+  user.staff
+    ? { ...user, staff: { ...user.staff, onboarding: openFormStatus(user.staff.id) } }
+    : user;
 
 const login = (user: MockUser) => {
   storage.set(user.id);
@@ -227,7 +250,7 @@ export const handlers = [
   http.get('/api/profile/auth/v1/whoami/', () => {
     const user = users.find((candidate) => candidate.id === storage.get());
     return user
-      ? HttpResponse.json(publicUser(user))
+      ? HttpResponse.json(withForm(publicUser(user)))
       : HttpResponse.json(
           { detail: 'Authentication credentials were not provided.' },
           { status: 403 },

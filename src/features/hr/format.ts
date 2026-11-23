@@ -34,6 +34,12 @@ export function parseAmount(value: string) {
 
 export { fieldErrors } from '@/lib/api/fieldErrors';
 
+/**
+ * A file still named by its phone: HR made it with the mobile only and the hire's form (which
+ * brings their names) isn't approved yet.
+ */
+export const isPhoneName = (name: string) => /^09\d{9}$/.test(toLatinDigits(name.trim()));
+
 /** Today's local `YYYY-MM-DD`. */
 export function todayValue() {
   const now = new Date();

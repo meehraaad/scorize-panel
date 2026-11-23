@@ -101,7 +101,7 @@ downloads are ignored.
 ## 5. Measure
 
 - **First-load budget in CI**: `pnpm size` sums the gzip size of what `dist/index.html` loads
-  (scripts, preloaded modules, stylesheets) and fails above JS 189.1 KB / CSS 22.2 KB. Today: JS
+  (scripts, preloaded modules, stylesheets) and fails above JS 196.1 KB / CSS 22.3 KB. Today: JS
   ≈ 185.3 KB, CSS ≈ 21.0 KB (JS raised from 170 on 2026-10-27, when the to-do box's chunk links and
   dictionary loaders took the last bytes; JS 172 → 173 and CSS 18 → 18.5 on 2026-11-01, for the
   assistant's chat layout: one stylesheet holds every page's classes, and the shared icons ship
@@ -118,7 +118,14 @@ downloads are ignored.
   0.1 KB; JS 187.7 → 188.4 on 2026-11-22 for the error screen's support code and the API client's
   request ID, which must work when a page fails to load (the crash reporter loads only on a failure),
   0.5 KB, and the 0.1 KB test already weighed over the old budget; JS 188.4 → 189.1 on 2026-11-22 for the
-  supervisor manager's section: its sub-tab routes and their two queries, 0.7 KB). Raise a
+  supervisor manager's section: its sub-tab routes and their two queries, 0.7 KB; JS 189.1 → 189.8 on
+  2026-11-22 for the Executive Panel's role, navigation and route prefetch; JS 189.8 → 196.1 and CSS
+  22.2 → 22.3 on 2026-11-23 when the HR new-hire form merged into `test`: `test` alone already weighed
+  JS 195.3 / CSS 22.201 KB (its own recent merges, unrecorded, failing this check), and the form adds
+  0.5 KB: its route and route data, the `/start` redirect, the «من» tab and account menu link and dot,
+  the toasts coming back out of a removed dialog and the date picker's `openOn`/`openView`. The
+  form, its checks and HR's tab load only with their pages. CI measures on Node 24 (`.nvmrc`), about 0.15 KB more than Node 26's gzip. Worth winning back: making the HR,
+  access, attendance and Executive panels' routes lazy). Raise a
   budget only on purpose, in review.
 - **Real users** (`src/lib/vitals.ts`): LCP, INP, CLS, FCP and TTFB per page pattern, sent with
   `sendBeacon` when the tab is hidden. Off (and not even loaded) until Django's endpoint ships

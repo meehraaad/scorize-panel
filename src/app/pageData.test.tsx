@@ -30,6 +30,7 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       phoneExtensions: true,
       phoneMenus: true,
       phoneVoices: true,
+      hrOnboarding: true,
     },
   };
 });
@@ -41,6 +42,7 @@ const REZA = 4; // sales manager
 const BAHAR = 5; // a founder (src/mocks/assistant.ts)
 const AMIR = 6; // a superuser: the messages section (src/mocks/messages.ts)
 const ELHAM = 7; // the marketing team (src/mocks/marketing.ts)
+const HIRE = 603; // a new hire with her personal details form open (src/mocks/hr.ts)
 const ERFAN = 105; // a customer with history, purchases and payments (src/mocks/sales.ts)
 
 interface PageCase {
@@ -238,6 +240,8 @@ const PAGES: PageCase[] = [
     '/hr/access/keys',
     '/hr/access/history',
   ].map((path) => ({ path, user: AMIR })),
+  // The new hire's form (docs/backend-changes.md OB3).
+  { path: '/me/onboarding', user: HIRE },
   {
     path: '/hr/pay/plans/position%3A2',
     user: AMIR,

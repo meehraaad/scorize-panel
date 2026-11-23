@@ -39,7 +39,7 @@ describe('HR panel', () => {
     });
   });
 
-  it('adds a staff member and opens their file on the joining checklist', async () => {
+  it('adds a staff member from their mobile and contract and opens the joining checklist', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
     renderApp('/hr/staff');
@@ -47,17 +47,23 @@ describe('HR panel', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(3);
     await user.click(screen.getByRole('button', { name: 'کارمند جدید' }));
     const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
-    await user.type(within(dialog).getByLabelText('نام'), 'سینا');
-    await user.type(within(dialog).getByLabelText('نام خانوادگی'), 'مرادی');
-    await user.type(within(dialog).getByLabelText('موبایل'), '09121112233');
-    await user.type(within(dialog).getByLabelText('شماره شناسنامه'), '5566');
+    // The hire types their names and ID card number on their form: HR doesn't.
+    expect(within(dialog).queryByLabelText('نام')).toBeNull();
+    expect(within(dialog).queryByLabelText('شماره شناسنامه')).toBeNull();
+    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121112233');
     await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '20000000');
     await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
-    expect(await toasts().findByText('پرونده‌ی سینا مرادی ساخته شد')).toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', { name: 'سینا مرادی', level: 1 }),
+      await toasts().findByText('پرونده ساخته شد؛ پیام دعوت را برای کارمند بفرستید.'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: '۰ از ۸ انجام شده' })).toBeInTheDocument();
+    // Named by the phone until the form is approved.
+    expect(
+      await screen.findByRole('heading', { name: '۰۹۱۲۱۱۱۲۲۳۳', level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('در انتظار فرم')).toBeInTheDocument();
+    // With the new-hire form on, the file opens on the invite: the checklist is its own tab.
+    await user.click(screen.getByRole('button', { name: 'استخدام و جدایی' }));
+    expect(screen.getByRole('progressbar', { name: '۰ از ۹ انجام شده' })).toBeInTheDocument();
   });
 
   it('asks for the missing fields before saving', async () => {
@@ -66,10 +72,11 @@ describe('HR panel', () => {
     renderApp('/hr/staff');
     await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
     const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
-    await user.type(within(dialog).getByLabelText('موبایل'), '123');
+    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '123');
     await user.click(within(dialog).getByRole('button', { name: 'ساخت پرونده' }));
     expect(within(dialog).getByText('شماره‌ی موبایل درست نیست')).toBeInTheDocument();
-    expect(within(dialog).getAllByText('این را پر کنید').length).toBeGreaterThan(1);
+    // The salary is the other thing HR must give.
+    expect(within(dialog).getByText('این را پر کنید')).toBeInTheDocument();
   });
 
   it('ticks a checklist step', async () => {
@@ -79,7 +86,7 @@ describe('HR panel', () => {
     const step = await screen.findByRole('checkbox', { name: /ایمیل شرکتی/ });
     await user.click(step);
     await waitFor(() => {
-      expect(screen.getByRole('progressbar', { name: '۱ از ۸ انجام شده' })).toBeInTheDocument();
+      expect(screen.getByRole('progressbar', { name: '۱ از ۹ انجام شده' })).toBeInTheDocument();
     });
   });
 

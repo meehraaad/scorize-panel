@@ -18,6 +18,7 @@ export function NumberStepper({
   decreaseLabel,
   increaseLabel,
   look = 'field',
+  fill = false,
 }: {
   /** Names the input for screen readers (the visible words sit around the stepper). */
   label: string;
@@ -31,6 +32,8 @@ export function NumberStepper({
   increaseLabel: string;
   /** `field`: a small boxed stepper; `hero`: one large number between round buttons (a quiz). */
   look?: 'field' | 'hero';
+  /** `field` only: as wide as its row (next to text fields), − and + at the two ends. */
+  fill?: boolean;
 }) {
   const f = useFormat();
   const [typing, setTyping] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export function NumberStepper({
       className={
         hero
           ? 'inline-flex items-center gap-4 lg:gap-6'
-          : 'inline-flex items-center overflow-hidden rounded-xl shadow-[inset_0_0_0_1px_var(--line-2)]'
+          : `${fill ? 'flex w-full' : 'inline-flex'} items-center overflow-hidden rounded-xl shadow-[inset_0_0_0_1px_var(--line-2)]`
       }
     >
       <button
@@ -69,7 +72,7 @@ export function NumberStepper({
         −
       </button>
       <span
-        className={`flex items-center justify-center gap-1 px-2 ${hero ? 'min-w-40' : 'min-w-24'}`}
+        className={`flex items-center justify-center gap-1 px-2 ${hero ? 'min-w-40' : 'min-w-24'} ${fill && !hero ? 'flex-1' : ''}`}
       >
         <input
           aria-label={label}

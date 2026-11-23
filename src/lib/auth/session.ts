@@ -14,7 +14,14 @@ export interface SessionUser {
   email: string | null;
   phone_number: string | null;
   /** SupportStaff (BDSupportStaffSerializer); null for customers and applicants. */
-  staff: { id: number; full_name: string; team: number | null; is_active: boolean } | null;
+  staff: {
+    id: number;
+    full_name: string;
+    team: number | null;
+    is_active: boolean;
+    /** Their own new-hire form, while open (OB5; absent until shipped). */
+    onboarding?: 'draft' | 'returned' | 'submitted' | null;
+  } | null;
   is_superuser: boolean;
   /** Direct user permissions. */
   permissions: Permission[];

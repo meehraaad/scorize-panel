@@ -90,12 +90,9 @@
     "unplaced": "No position ({{n}})"
   },
   "form": {
-    "firstName": "First name",
-    "lastName": "Last name",
-    "mobile": "Mobile",
-    "idNumber": "ID number",
+    "mobile": "Their mobile",
     "email": "Work email",
-    "emailHint": "Optional; they can also sign in with it",
+    "emailHint": "Optional",
     "position": "Position",
     "team": "Team",
     "none": "None",
@@ -105,13 +102,14 @@
     "salary": "Monthly base salary (tomans)",
     "salaryHint": "In tomans, no decimals",
     "required": "Fill this in",
-    "phone": "This mobile number isn't right"
+    "phone": "This mobile number isn't right",
+    "mobileHint": "They log in with this number and an SMS code."
   },
   "newStaff": {
     "title": "New staff member",
-    "subtitle": "Their panel account and file are made and their joining checklist opens.",
+    "subtitle": "Enter only their mobile and contract; they type their names, ID card number and the rest in the personal details form. Their panel account and file are made and their joining checklist opens.",
     "save": "Create file",
-    "saved": "{{name}}'s file is ready"
+    "saved": "File created; send them the invite."
   },
   "move": {
     "entry": "Joining",
@@ -156,7 +154,8 @@
       "work": "Contract and pay",
       "documents": "Documents",
       "moves": "Joining and leaving",
-      "history": "History"
+      "history": "History",
+      "form": "Hiring form"
     },
     "personal": "Personal details",
     "workContact": "Work and contact",
@@ -766,5 +765,186 @@
     "tipHigher": "For a higher score: bring “{{name}}” from {{value}} to {{target}} {{unit}}.",
     "tipLower": "For a higher score: bring “{{name}}” from {{value}} down to {{target}} {{unit}} or less.",
     "history": "Earlier months"
+  },
+  "onboarding": {
+    "title": "Personal details form",
+    "subtitle": "These details go into your staff file. Keep your national card and birth certificate at hand. The draft saves itself; come back any time from the account menu (the circle at the top) › “Personal details form”.",
+    "due": "Please complete it by {{day}}",
+    "progress": "{{done}} of {{total}} sections complete",
+    "sections": "Form sections",
+    "section": {
+      "identity": "Identity",
+      "education": "Education and family",
+      "bank": "Bank account",
+      "contact": "Contact and address",
+      "emergency": "Emergency contact",
+      "documents": "Documents"
+    },
+    "sectionHint": {
+      "identity": "Write names and the birth date as on your national card.",
+      "education": "If you are a student, choose your current level.",
+      "bank": "Your salary is paid into this account.",
+      "contact": "For official correspondence.",
+      "emergency": "Who should we call if something happens?",
+      "documents": "PDF, JPG or PNG, up to 10 MB each."
+    },
+    "field": {
+      "first_name": "First name",
+      "last_name": "Last name",
+      "preferred_name": "Preferred name",
+      "first_name_en": "First name in English",
+      "last_name_en": "Last name in English",
+      "fathers_name": "Father's name",
+      "national_code": "National code",
+      "id_number": "ID card number",
+      "gender": "Gender",
+      "birth_date": "Date of birth",
+      "birth_place": "Place of birth",
+      "id_issue_place": "Birth certificate issued in",
+      "education": "Highest degree",
+      "field_of_study": "Field of study",
+      "university": "University or institute",
+      "marital_status": "Marital status",
+      "number_of_children": "Number of children",
+      "military_status": "Military service",
+      "iban": "IBAN (Sheba)",
+      "bank_name": "Bank",
+      "email": "Email",
+      "address": "Home address",
+      "emergency_name": "Contact name",
+      "emergency_relation": "Relationship to you",
+      "emergency_phone": "Phone"
+    },
+    "hint": {
+      "preferred_name": "Optional: what would you like us to call you?",
+      "first_name_en": "As on your passport or bank card",
+      "national_code": "10 digits",
+      "id_number": "Up to 10 digits; on newer cards it is the national code",
+      "birth_date": "As on your national card",
+      "iban": "IR and 24 digits",
+      "email": "Preferably the Gmail you use for work",
+      "number_of_children": "Leave at zero if none"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "education": {
+      "below_diploma": "Below high-school diploma",
+      "diploma": "High-school diploma",
+      "associate": "Associate degree",
+      "bachelor": "Bachelor's",
+      "master": "Master's",
+      "doctorate": "Doctorate"
+    },
+    "military": {
+      "not_applicable": "Not applicable",
+      "not_served": "Not served / absent",
+      "student_exempt": "Student exemption",
+      "permanent_exempt": "Permanent exemption",
+      "completed": "Completed"
+    },
+    "fewer": "One fewer",
+    "more": "One more",
+    "fixed": {
+      "title": "Entered by HR",
+      "hint": "You log in with this number. If it is wrong, let HR know.",
+      "phone": "Mobile"
+    },
+    "file": {
+      "birth_certificate": "Birth certificate",
+      "national_card": "National card",
+      "birth_certificateHint": "Every page; one file per page",
+      "national_cardHint": "Front and back",
+      "choose": "Choose a file",
+      "chooseFor": "Choose a file for {{name}}",
+      "another": "Add another file",
+      "hint": "or drop it here",
+      "touchHint": "from your gallery or camera",
+      "remove": "Remove {{name}}",
+      "uploaded": "File uploaded",
+      "removed": "File removed",
+      "badType": "PDF, JPG or PNG only",
+      "tooBig": "The file is larger than 10 MB",
+      "open": "Open",
+      "missing": "Not uploaded"
+    },
+    "problem": {
+      "required": "Complete this field",
+      "persian": "Use Persian letters only",
+      "latin": "Use English letters only",
+      "nationalCode": "This national code isn't valid",
+      "idNumber": "Digits only, up to 10",
+      "iban": "This IBAN isn't valid",
+      "mobile": "This mobile number isn't valid",
+      "email": "This email isn't valid",
+      "future": "This date hasn't come yet",
+      "files": "Upload your birth certificate and national card"
+    },
+    "fix": "Some answers are missing or not valid; each one says why.",
+    "draft": {
+      "saving": "Saving draft…",
+      "saved": "Draft saved",
+      "unsaved": "Changes not saved yet",
+      "failed": "Draft not saved",
+      "retry": "Save again"
+    },
+    "submit": "Send",
+    "submitted": "Form sent to HR",
+    "returnedNote": "HR sent the form back for changes: {{note}}",
+    "status": {
+      "draft": "Draft",
+      "submitted": "Waiting for review",
+      "returned": "Sent back for changes",
+      "approved": "Approved",
+      "cancelled": "Cancelled"
+    },
+    "submittedText": "You've sent the form. HR will review it and let you know if anything else is needed.",
+    "approvedText": "HR approved the form and your details are in your staff file.",
+    "none": "You have no form to fill in.",
+    "answers": "Answers",
+    "chip": {
+      "draft": "Form not completed",
+      "returned": "Form sent back",
+      "submitted": "Form to review"
+    },
+    "review": {
+      "title": "Personal details form",
+      "send": "Send the form",
+      "sendHint": "After logging in with an SMS code the form opens for them; later they find it under the account menu (the circle at the top) › “Personal details form”.",
+      "sent": "Form sent to {{name}}",
+      "none": "No form has been sent to this staff member yet.",
+      "waiting": "They haven't sent the form yet.",
+      "submittedAt": "Sent on {{day}}",
+      "reviewedAt": "Reviewed on {{day}}",
+      "reviewedBy": "Reviewed on {{day}} by {{name}}",
+      "approve": "Approve into the file",
+      "approveConfirm": "The answers replace what the file has now. Approve?",
+      "approved": "Form approved into the file",
+      "return": "Send back for changes",
+      "returnTitle": "Send the form back",
+      "returnText": "They see your note above the form and send it again once fixed.",
+      "returnNote": "What should they change?",
+      "returnSave": "Send back",
+      "returned": "Form sent back for changes",
+      "cancel": "Cancel the form",
+      "cancelConfirm": "Cancel the form? They won't see it anymore.",
+      "cancelled": "Form cancelled",
+      "differs": "In the file: {{value}}",
+      "files": "Documents"
+    },
+    "today": "Forms to review",
+    "personal": "More details",
+    "invite": {
+      "title": "Invite to the form",
+      "hint": "Send this message on WhatsApp or by text. They log in with this number and an SMS code (no password) and the form opens; later it is under the account menu (the circle at the top) › “Personal details form”.",
+      "message": "Hi {{name}},\nWelcome to Scorize. Please fill in your personal details form here:\n{{url}}\nTo log in, enter {{phone}} and the code we text you.\nIf you close the page, come back from the account menu (the circle at the top) › “Personal details form”.",
+      "messageNoName": "Hi,\nWelcome to Scorize. Please fill in your personal details form here:\n{{url}}\nTo log in, enter {{phone}} and the code we text you.\nIf you close the page, come back from the account menu (the circle at the top) › “Personal details form”.",
+      "copyMessage": "Copy message",
+      "copyLink": "Copy link",
+      "copied": "Copied",
+      "failed": "Couldn't copy; select the text and copy it."
+    },
+    "pending": "Waiting for their form"
   }
 }
