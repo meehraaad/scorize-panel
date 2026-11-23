@@ -4,13 +4,11 @@ import { RouterProvider } from 'react-router';
 import { Toaster } from '@/components/ui/Toast';
 import { queryClient } from '@/lib/api/queryClient';
 import { ThemeProvider } from '@/lib/theme/ThemeProvider';
-import { installPlatform } from '@/pwa/install';
 import { createRouter } from './router';
 
 // The service worker code is only bundled when the PWA is switched on (VITE_ENABLE_PWA).
 const UpdatePrompt =
   import.meta.env.VITE_ENABLE_PWA === 'true' ? lazy(() => import('@/pwa/UpdatePrompt')) : null;
-const InstallPrompt = installPlatform ? lazy(() => import('@/pwa/InstallPrompt')) : null;
 
 export function App() {
   const [router] = useState(createRouter);
@@ -39,11 +37,6 @@ export function App() {
         {UpdatePrompt && (
           <Suspense fallback={null}>
             <UpdatePrompt />
-          </Suspense>
-        )}
-        {InstallPrompt && installPlatform && (
-          <Suspense fallback={null}>
-            <InstallPrompt platform={installPlatform} />
           </Suspense>
         )}
       </ThemeProvider>
