@@ -1,13 +1,12 @@
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { mockCompleteForm, mockSubmittedForm } from '@/mocks/hr';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
-import { ON_SERVER } from '@/lib/applicant/onServer';
 
 // The form isn't on the server yet (docs/backend-changes.md OB1–OB8): tested as it will be.
 vi.mock('@/lib/applicant/onServer', async (original) => {
@@ -158,6 +157,28 @@ describe('new-hire form', () => {
     expect(screen.getByText('مشمول نیستم')).toBeInTheDocument();
   });
 
+  it('approves once however fast the confirm is pressed twice', async () => {
+    const user = userEvent.setup();
+    mockSubmittedForm(BAHAR_FILE);
+    let posts = 0;
+    server.use(
+      http.post(`${API}/staff/:id/onboarding/approve/`, () => {
+        posts++;
+        return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+      }),
+    );
+    loginAs(AMIR);
+    renderApp('/hr/staff/3');
+    const card = await screen.findByRole('region', { name: 'فرم اطلاعات فردی' });
+    await user.click(within(card).getByRole('button', { name: 'تأیید و ثبت در پرونده' }));
+    // Both clicks in one task, before React renders the button disabled.
+    const confirm = within(card).getByRole('button', { name: 'تأیید و ثبت در پرونده' });
+    confirm.click();
+    confirm.click();
+    await toasts().findByText(/پیش‌تر بررسی یا لغو شده/);
+    expect(posts).toBe(1);
+  });
+
   it('returns a form with a note the hire sees on top', async () => {
     const user = userEvent.setup();
     mockSubmittedForm(BAHAR_FILE);
@@ -221,6 +242,33 @@ describe('new-hire form', () => {
     await user.click(within(invite).getByRole('button', { name: 'کپی پیام' }));
     expect(await toasts().findByText('کپی شد')).toBeInTheDocument();
     expect(write).toHaveBeenCalledWith(expect.stringContaining(link));
+  });
+  it('makes one file however fast «ساخت پرونده» is pressed twice', async () => {
+    const user = userEvent.setup();
+    let posts = 0;
+    server.use(
+      http.post(`${API}/staff/`, () => {
+        posts++;
+        return HttpResponse.json({ detail: 'held' }, { status: 409 });
+      }),
+    );
+    loginAs(AMIR);
+    renderApp('/hr/staff');
+    await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کارمند جدید' });
+    await user.type(within(dialog).getByLabelText('نام'), 'سارا');
+    await user.type(within(dialog).getByLabelText('نام خانوادگی'), 'رضایی');
+    await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121112244');
+    await user.type(within(dialog).getByLabelText('حقوق پایه‌ی ماهانه (تومان)'), '20000000');
+    // Both clicks in one task, before React renders the button disabled (what a fast double click does).
+    const create = within(dialog).getByRole('button', { name: 'ساخت پرونده' });
+    create.click();
+    create.click();
+    await waitFor(() => {
+      expect(posts).toBe(1);
+    });
+    await toasts().findByText(/همین حالا ثبت شده/);
+    expect(posts).toBe(1);
   });
   it('shares the invite through the phone’s share sheet', async () => {
     const user = userEvent.setup();
@@ -450,11 +498,6 @@ describe('new-hire form', () => {
   });
 
   it('fills a new staff member from the account their mobile already has', async () => {
-    // OB12 isn't served yet: on for this test (the mocked module's object).
-    (ON_SERVER as Record<string, boolean>).hrAccountLookup = true;
-    onTestFinished(() => {
-      (ON_SERVER as Record<string, boolean>).hrAccountLookup = false;
-    });
     const user = userEvent.setup();
     loginAs(AMIR);
     renderApp('/hr/staff');

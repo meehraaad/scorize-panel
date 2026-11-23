@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -116,9 +116,12 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
   const errorOf = (field: Key, server = field as string) =>
     serverErrors[server] ?? (attempted || touched.has(field) ? problems[field] : undefined);
 
+  // A double click sends once: `disabled` only lands on the next render, the ref at once.
+  const sending = useRef(false);
   const submit = () => {
     setAttempted(true);
-    if (Object.keys(problems).length > 0 || !phone || salary === null) return;
+    if (sending.current || Object.keys(problems).length > 0 || !phone || salary === null) return;
+    sending.current = true;
     save.mutate(
       {
         first_name: form.first_name.trim(),
@@ -133,6 +136,9 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         salary,
       },
       {
+        onSettled: () => {
+          sending.current = false;
+        },
         onSuccess: (file) => {
           toast.success(t('newStaff.saved'));
           onClose();

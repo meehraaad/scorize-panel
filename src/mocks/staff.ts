@@ -1056,10 +1056,14 @@ export const staffHandlers = [
     );
   }),
   http.get(`${API}/apply/v1/study-fields/`, ({ request }) => {
-    const search = new URL(request.url).searchParams.get('search');
+    const params = new URL(request.url).searchParams;
+    const search = params.get('search');
+    const top = params.get('top') === '1';
     return paginate(
       request,
-      STUDY_FIELDS.filter((item) => matches(search, [item.name, item.name_persian])),
+      STUDY_FIELDS.filter(
+        (item) => (!top || !item.parent) && matches(search, [item.name, item.name_persian]),
+      ),
       30,
     );
   }),

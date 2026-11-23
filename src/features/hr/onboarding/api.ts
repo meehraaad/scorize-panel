@@ -128,17 +128,20 @@ interface StudyFieldRow {
 }
 
 /**
- * Majors matching what the hire typed, for suggestions only: top-level ones (sub-fields are left
- * out until OB15 filters them on the server), by their Persian name. Nothing is ever created here:
+ * Majors matching what the hire typed, for suggestions only: top-level ones (`?top=1`, OB15; the
+ * `parent` filter stays for an older server), by their Persian name. Nothing is ever created here:
  * the answer stays the typed text.
  */
 export const majorsQuery = (search: string) =>
   queryOptions({
     queryKey: ['study-fields', 'top', search],
     queryFn: ({ signal }) =>
-      api<Page<StudyFieldRow>>(`/apply/v1/study-fields/?search=${encodeURIComponent(search)}`, {
-        signal,
-      }),
+      api<Page<StudyFieldRow>>(
+        `/apply/v1/study-fields/?top=1&search=${encodeURIComponent(search)}`,
+        {
+          signal,
+        },
+      ),
     select: (page) => [
       ...new Set(
         page.results

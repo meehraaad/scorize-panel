@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -121,8 +121,15 @@ function Header({ file, form }: { file: StaffFile; form: OnboardingReview }) {
         : '';
   const open = form.status === 'draft' || form.status === 'returned' || form.status === 'submitted';
 
-  const run = (action: ReviewAction, done: string) =>
+  // A double click acts once: `pending` disables the button only on the next render, the ref at once.
+  const acting = useRef(false);
+  const run = (action: ReviewAction, done: string) => {
+    if (acting.current) return;
+    acting.current = true;
     review.mutate(action, {
+      onSettled: () => {
+        acting.current = false;
+      },
       onSuccess: () => {
         setConfirm(null);
         setReturning(false);
@@ -143,6 +150,7 @@ function Header({ file, form }: { file: StaffFile; form: OnboardingReview }) {
         toast.error(clash ?? t('error'));
       },
     });
+  };
 
   return (
     <Card aria-label={t('onboarding.review.title')} className="flex flex-col gap-4 p-5 lg:p-7">
@@ -217,6 +225,7 @@ function Header({ file, form }: { file: StaffFile; form: OnboardingReview }) {
 function SendForm({ file }: { file: StaffFile }) {
   const { t } = useTranslation('hr');
   const send = useSendOnboarding(file.id);
+  const sending = useRef(false);
   return (
     <Card className="flex flex-wrap items-center gap-3 p-5 lg:px-7">
       <span className="min-w-0 flex-1 text-small text-text-2">
@@ -225,11 +234,18 @@ function SendForm({ file }: { file: StaffFile }) {
       <Button
         disabled={send.isPending}
         onClick={() => {
+          if (sending.current) return; // a double click sends once
+          sending.current = true;
           // This card goes once the form is open: `mutateAsync` reports after it unmounts.
-          void send.mutateAsync(undefined).then(
-            () => toast.success(t('onboarding.review.sent', { name: file.name })),
-            () => toast.error(t('error')),
-          );
+          void send
+            .mutateAsync(undefined)
+            .then(
+              () => toast.success(t('onboarding.review.sent', { name: file.name })),
+              () => toast.error(t('error')),
+            )
+            .finally(() => {
+              sending.current = false;
+            });
         }}
       >
         <Icon name="send" size={18} />
