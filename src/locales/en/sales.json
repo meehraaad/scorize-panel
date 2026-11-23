@@ -452,6 +452,14 @@
     }
   },
   "customer": {
+    "recordings": {
+      "title": "Call recordings",
+      "play": "Play recording",
+      "duration": "{{seconds}} sec",
+      "empty": "No recordings for this customer in the past 30 days.",
+      "unavailable": "Recordings are unavailable for this customer.",
+      "offline": "The office recording service couldn’t be reached."
+    },
     "back": "My leads",
     "summary": "Customer summary",
     "noFollowUp": "Not set",
