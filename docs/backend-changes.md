@@ -748,3 +748,10 @@ lang branch `claude/confident-euler-llixz4`. No migration.
 - **Leads** `GET leads/?no_follow_up=1`: open leads with no next step (no open follow-up, no paid
   consultation ahead, the first call made). `stats.no_follow_up` counts them and
   `supports.no_follow_up` turns on the «بدون قدم بعدی» pill on the leads page (hidden on an older server).
+
+## Custom assignment rules
+
+Custom assignment rules extend `GET /api/sales/v1/manager/assign/` with `routing` (saved rules and
+the available lead sources and consultation types). The panel shows the editor when this field is
+present. `PUT /api/sales/v1/manager/assign/rules/` saves one rule using `{kind, match, seller}`.
+A null seller removes the rule. Deploy the Django assignment rules and their schema before use.

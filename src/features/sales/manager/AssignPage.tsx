@@ -31,6 +31,7 @@ import { LeadImportDialog } from '@/components/leads/LeadImportDialog';
 import { salesSourcesQuery } from '@/lib/leads/api';
 import { SALES_KEY } from '@/lib/sales/api';
 import { toast } from '@/lib/toast';
+import { AssignmentRules } from './AssignmentRules';
 
 /** Leads from a file change every sales page. */
 const REFRESH = [SALES_KEY] as const;
@@ -108,6 +109,7 @@ export default function AssignPage() {
         settings={data.settings}
         sellers={data.sellers}
       />
+      {data.routing && <AssignmentRules routing={data.routing} sellers={data.sellers} />}
 
       <SellerLoads sellers={data.sellers} />
 
