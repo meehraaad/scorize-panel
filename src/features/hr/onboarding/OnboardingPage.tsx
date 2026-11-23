@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -123,9 +123,18 @@ function SentForm({ form }: { form: Onboarding }) {
 const initialAnswers = (form: Onboarding): OnboardingAnswers => ({
   ...EMPTY_ANSWERS,
   ...form.answers,
+  ...form.suggested_answers,
   // A stepper always shows a number: zero children until told otherwise.
   number_of_children: form.answers.number_of_children ?? 0,
 });
+
+const changedAnswers = (
+  previous: OnboardingAnswers,
+  current: OnboardingAnswers,
+): Partial<OnboardingAnswers> =>
+  Object.fromEntries(
+    Object.entries(current).filter(([key, value]) => previous[key as FieldKey] !== value),
+  );
 
 const focusField = (id: string) => {
   const target = document.getElementById(id);
@@ -141,7 +150,9 @@ function OnboardingForm({ form }: { form: Onboarding }) {
   // `disabled` comes with the next render: a quick second click must not send it twice.
   const sendingRef = useRef(false);
   const [answers, setAnswers] = useState(() => initialAnswers(form));
-  const [savedBody, setSavedBody] = useState(() => JSON.stringify(form.answers));
+  // The initial display includes suggestions. Only edits to it belong in a draft PATCH.
+  const [savedAnswers, setSavedAnswers] = useState(answers);
+  const lastDraftAttempt = useRef<OnboardingAnswers | null>(null);
   const [touched, setTouched] = useState<ReadonlySet<FieldKey>>(new Set());
   const [attempted, setAttempted] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
@@ -157,18 +168,26 @@ function OnboardingForm({ form }: { form: Onboarding }) {
     () => checkAnswers(paused, form.files, attempted).problems,
     [paused, form.files, attempted],
   );
-  const body = JSON.stringify(answers);
-  const dirty = body !== savedBody;
+  const dirty = Object.keys(changedAnswers(savedAnswers, answers)).length > 0;
 
   // The draft follows the typing: saved once it pauses.
   const settled = useDebouncedValue(answers, DRAFT_DELAY_MS);
   const saveDraft = save.mutate;
+  const saving = save.isPending;
   const sending = submit.isPending;
+  const saveChanges = useCallback(
+    (current: OnboardingAnswers) => {
+      const patch = changedAnswers(savedAnswers, current);
+      if (Object.keys(patch).length === 0) return;
+      lastDraftAttempt.current = current;
+      saveDraft(patch, { onSuccess: () => setSavedAnswers(current) });
+    },
+    [savedAnswers, saveDraft],
+  );
   useEffect(() => {
-    const next = JSON.stringify(settled);
-    if (next === savedBody || sending) return;
-    saveDraft(settled, { onSuccess: () => setSavedBody(next) });
-  }, [settled, savedBody, sending, saveDraft]);
+    if (saving || sending || settled !== answers || settled === lastDraftAttempt.current) return;
+    saveChanges(settled);
+  }, [answers, settled, saving, sending, saveChanges]);
 
   const set = <K extends FieldKey>(key: K, value: OnboardingAnswers[K]) => {
     setAnswers((current) => ({ ...current, [key]: value }));
@@ -296,10 +315,7 @@ function OnboardingForm({ form }: { form: Onboarding }) {
       )}
       <SaveBar message={draftMessage} dirty={dirty}>
         {save.isError && dirty && (
-          <Button
-            variant="outline"
-            onClick={() => saveDraft(answers, { onSuccess: () => setSavedBody(body) })}
-          >
+          <Button variant="outline" disabled={sending} onClick={() => saveChanges(answers)}>
             {t('onboarding.draft.retry')}
           </Button>
         )}

@@ -68,6 +68,8 @@ export interface Onboarding {
   /** When HR wants it by (the checklist step's day); null when sent on demand. */
   due: string | null;
   answers: OnboardingAnswers;
+  /** Private profile suggestions for blank fields in the hire's editable form. */
+  suggested_answers?: Partial<OnboardingAnswers>;
   files: OnboardingFile[];
   /** Set by HR on the file (the hire's login); shown, not edited. */
   fixed: { phone_number: string };

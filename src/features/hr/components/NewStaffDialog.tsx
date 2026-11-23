@@ -26,10 +26,10 @@ const CONTRACTS: readonly ContractKind[] = ['trial', 'fixed', 'permanent', 'proj
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Form = {
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
   phone: string;
-  email: string;
+  email?: string;
   position: string;
   team: Team | '';
   entry_date: string;
@@ -54,10 +54,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
   const options = useQuery(optionsQuery);
   const save = useNewStaff();
   const [form, setForm] = useState<Form>({
-    first_name: '',
-    last_name: '',
     phone: '',
-    email: '',
     position: '',
     team: '',
     entry_date: todayValue(),
@@ -91,29 +88,23 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
   const matches = settledPrefix && settledPrefix === prefix ? (lookup.data ?? []) : [];
   const account: AccountMatch | null =
     (phone && matches.find((match) => match.phone_number === phone)) || null;
-  // An account found fills the empty names and email once (HR can still change them).
-  const [filledFrom, setFilledFrom] = useState<number | null>(null);
-  if (account && !account.staff_id && filledFrom !== account.id) {
-    setFilledFrom(account.id);
-    setForm((current) => ({
-      ...current,
-      first_name: current.first_name || account.first_name,
-      last_name: current.last_name || account.last_name,
-      email: current.email || account.email,
-    }));
-  }
+  // Derive suggestions from the current phone. An explicit edit, including clearing a field, wins.
+  const existing = account && !account.staff_id ? account : null;
+  const firstName = form.first_name ?? existing?.first_name ?? '';
+  const lastName = form.last_name ?? existing?.last_name ?? '';
+  const email = form.email ?? existing?.email ?? '';
 
   // What is wrong, field by field (shown once the field is left, or on save).
   const problems: Partial<Record<Key, string>> = {};
   const name = (value: string) =>
     !value.trim() ? t('form.required') : isPersianText(value) ? null : t('form.persian');
-  const first = name(form.first_name);
+  const first = name(firstName);
   if (first) problems.first_name = first;
-  const last = name(form.last_name);
+  const last = name(lastName);
   if (last) problems.last_name = last;
   if (!phone) problems.phone = form.phone.trim() ? t('form.phone') : t('form.required');
   else if (account?.staff_id) problems.phone = t('form.hasFile');
-  if (form.email.trim() && !EMAIL.test(form.email.trim())) problems.email = t('form.emailBad');
+  if (email.trim() && !EMAIL.test(email.trim())) problems.email = t('form.emailBad');
   if (salary === null) problems.salary = t('form.required');
   else if (salary <= 0) problems.salary = t('form.salaryZero');
   if (contractEnd && contractEnd < form.entry_date) problems.contract_end = t('form.endBefore');
@@ -129,10 +120,10 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
     sending.current = true;
     save.mutate(
       {
-        first_name: form.first_name.trim(),
-        last_name: form.last_name.trim(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         phone_number: phone,
-        email: form.email.trim(),
+        email: email.trim(),
         position: form.position ? Number(form.position) : null,
         team: form.team || null,
         entry_date: form.entry_date,
@@ -216,17 +207,17 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
           {t('newStaff.openFile')}
         </Link>
       )}
-      {account && !account.staff_id && filledFrom === account.id && (
+      {existing && (
         <Notice tone="info">
           {t('newStaff.account', {
-            name: `${account.first_name} ${account.last_name}`.trim() || form.phone,
+            name: `${existing.first_name} ${existing.last_name}`.trim() || form.phone,
           })}
         </Notice>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField
           label={t('form.firstName')}
-          value={form.first_name}
+          value={firstName}
           autoComplete="off"
           maxLength={150}
           onChange={(event) => set('first_name')(event.target.value)}
@@ -235,7 +226,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         />
         <TextField
           label={t('form.lastName')}
-          value={form.last_name}
+          value={lastName}
           autoComplete="off"
           maxLength={150}
           onChange={(event) => set('last_name')(event.target.value)}
@@ -248,7 +239,7 @@ export default function NewStaffDialog({ open, onClose }: { open: boolean; onClo
         hint={t('form.emailHint')}
         type="email"
         dir="ltr"
-        value={form.email}
+        value={email}
         onChange={(event) => set('email')(event.target.value)}
         onBlur={touch('email')}
         error={errorOf('email')}

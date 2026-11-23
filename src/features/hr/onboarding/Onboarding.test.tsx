@@ -32,6 +32,49 @@ describe('new-hire form', () => {
     await i18n.changeLanguage('fa');
   });
 
+  it('keeps profile suggestions out of autosave until the hire edits or sends them', async () => {
+    const user = userEvent.setup();
+    const form = mockCompleteForm(BAHAR_FILE);
+    const nationalCode = form.answers.national_code;
+    form.answers.national_code = '';
+    const path = `${API}/me/onboarding/`;
+    const response = () =>
+      HttpResponse.json({
+        ...form,
+        suggested_answers: form.answers.national_code ? {} : { national_code: nationalCode },
+      });
+    const patches: unknown[] = [];
+    server.use(
+      http.get(path, response),
+      http.patch(path, async ({ request }) => {
+        const patch = await request.json();
+        patches.push(patch);
+        if (patches.length === 1) return HttpResponse.json({}, { status: 400 });
+        Object.assign(form.answers, patch);
+        return response();
+      }),
+    );
+
+    loginAs(HIRE);
+    renderApp('/me/onboarding');
+    expect(await screen.findByLabelText('کد ملی')).toHaveValue(nationalCode);
+    expect(patches).toEqual([]);
+
+    const father = screen.getByLabelText('نام پدر');
+    await user.clear(father);
+    await user.type(father, 'رضا');
+    const retry = await screen.findByRole('button', { name: 'دوباره ذخیره کن' }, { timeout: 3000 });
+    expect(patches).toEqual([{ fathers_name: 'رضا' }]);
+    await user.click(retry);
+    await waitFor(() => expect(form.answers.fathers_name).toBe('رضا'));
+    expect(patches).toEqual([{ fathers_name: 'رضا' }, { fathers_name: 'رضا' }]);
+    expect(form.answers.national_code).toBe('');
+
+    await user.click(screen.getByRole('button', { name: 'ارسال' }));
+    expect(await toasts().findByText('فرم برای منابع انسانی فرستاده شد')).toBeInTheDocument();
+    expect(patches[2]).toMatchObject({ national_code: nationalCode, fathers_name: 'رضا' });
+  });
+
   it('opens first after login, says what is missing, and goes to HR once complete', async () => {
     const user = userEvent.setup();
     loginAs(HIRE);
@@ -513,6 +556,56 @@ describe('new-hire form', () => {
     await user.clear(within(dialog).getByLabelText('موبایل کارمند'));
     await user.type(within(dialog).getByLabelText('موبایل کارمند'), '09121000001');
     expect(await within(dialog).findByText('این شماره پرونده‌ی کارمندی دارد')).toBeInTheDocument();
+  });
+
+  it('replaces lookup suggestions when the mobile changes and preserves manual edits', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get(`${API}/accounts/`, ({ request }) => {
+        const prefix = new URL(request.url).searchParams.get('phone') ?? '';
+        const accounts = [
+          {
+            id: 1,
+            phone_number: '09121110000',
+            first_name: 'سارا',
+            last_name: 'محمدی',
+            email: 'sara@example.com',
+          },
+          {
+            id: 2,
+            phone_number: '09121110001',
+            first_name: 'مینا',
+            last_name: 'احمدی',
+            email: 'mina@example.com',
+          },
+        ];
+        return HttpResponse.json({
+          results: accounts
+            .filter((account) => account.phone_number.startsWith(prefix))
+            .map((account) => ({ ...account, staff_id: null })),
+        });
+      }),
+    );
+    loginAs(AMIR);
+    renderApp('/hr/staff');
+    await user.click(await screen.findByRole('button', { name: 'کارمند جدید' }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'کارمند جدید' }));
+    const mobile = dialog.getByLabelText('موبایل کارمند');
+    const first = dialog.getByLabelText('نام');
+    const last = dialog.getByLabelText('نام خانوادگی');
+    const email = dialog.getByLabelText('ایمیل کاری');
+    await user.type(mobile, '09121110000');
+    await waitFor(() => expect(first).toHaveValue('سارا'));
+    expect(email).toHaveValue('sara@example.com');
+    await user.clear(last);
+    await user.type(last, 'رضایی');
+    await user.clear(mobile);
+    expect(first).toHaveValue('');
+    expect(email).toHaveValue('');
+    await user.type(mobile, '09121110001');
+    await waitFor(() => expect(first).toHaveValue('مینا'));
+    expect(last).toHaveValue('رضایی');
+    expect(email).toHaveValue('mina@example.com');
   });
 
   it('suggests accounts while HR types the mobile, and picking one fills the dialog', async () => {
