@@ -46,9 +46,11 @@ export type ServerFeature =
   | 'attendance'
   | 'hr'
   | 'hrOnboarding'
+  | 'hrAccountLookup'
   | 'marketing'
   | 'dayFollowUps'
   | 'clientServices'
+  | 'executiveCustomers'
   | 'clientErrors';
 
 const DEFAULTS: Record<ServerFeature, boolean> = {
@@ -67,6 +69,8 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
    * service conversations need no switch here: they show when Django sends them.
    */
   clientServices: false,
+  /** Expanded Executive Customers list and CSV actions (backend-changes EC1–EC3). */
+  executiveCustomers: false,
   /**
    * `follow_up_on` (a day with no hour) on `POST /sales/v1/customers/<id>/contacts/` and
    * `leads/bulk/` (lang `claude/inspiring-dirac-6lpa16`). Off: the follow-up picker asks a time.
@@ -87,6 +91,12 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
    * or chips, and HR keeps sending the Porsline link.
    */
   hrOnboarding: true,
+  /**
+   * OB12 `GET /hr/v1/accounts/?phone=`: the new-staff dialog finds an existing account by its
+   * mobile and fills the names and email (lang `feature/hr-onboarding-followups`, OB12–OB16).
+   * Off: the dialog takes what HR types.
+   */
+  hrAccountLookup: true,
   /**
    * `GET /marketing/v1/today|calendar|attendance/` and tasks `?panel=marketing`: the marketing
    * panel, phase 1 (lang `claude/stoic-volta-ie4s9n`). Deploy Django first.

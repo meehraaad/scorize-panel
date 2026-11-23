@@ -67,6 +67,7 @@
       "nav": {
         "label": "Executive Panel menu",
         "table": "Table",
+        "customers": "Customers",
         "work": "Work Table",
         "tickets": "Tickets",
         "tasks": "Tasks"
@@ -299,6 +300,7 @@
     "6": "Visa"
   },
   "pager": {
+    "goTo": "Go to page {{page}}",
     "previous": "Previous",
     "next": "Next",
     "page": "Page {{page}} of {{pages}}"

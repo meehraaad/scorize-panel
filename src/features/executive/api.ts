@@ -27,7 +27,7 @@ export type WorkItem = { id: number; kind: string; detail: string | null } & (
     }
 );
 
-interface Customer {
+export interface WorkCustomer {
   id: number;
   name: string;
   items: WorkItem[];
@@ -47,7 +47,7 @@ export function workQuery(search: URLSearchParams) {
   return queryOptions({
     queryKey: [...EXECUTIVE_KEY, 'work', params.toString()],
     queryFn: ({ signal }) =>
-      api<Page<Customer>>(`${EXECUTIVE_API}/work/?${params.toString()}`, { signal }),
+      api<Page<WorkCustomer>>(`${EXECUTIVE_API}/work/?${params.toString()}`, { signal }),
     placeholderData: keepPreviousData,
   });
 }

@@ -30,5 +30,74 @@
     "revision": "Revision",
     "waiting_applicant": "Waiting for customer",
     "delivered": "Delivered"
+  },
+  "customers": {
+    "attention": "Needs your attention",
+    "list": "Customer list",
+    "export": "Export CSV",
+    "upload": "Upload CSV",
+    "search": "Search customers",
+    "searchPlaceholder": "Name, case number, phone or email…",
+    "country": "Country",
+    "anyCountry": "Country · All",
+    "stage": "Case status",
+    "contract": "Contract type",
+    "order": "Sort customers",
+    "you": "You",
+    "unassigned": "Unassigned",
+    "emailing": "Emailing professors",
+    "empty": "No customers match these filters.",
+    "fileNumber": "#{{n}}",
+    "noTask": "No open task",
+    "docsCount": "{{uploaded}} of {{required}}",
+    "reviewCount": "{{n}} to review",
+    "page_one": "{{n}} customer · Page {{page}} of {{pages}}",
+    "page_other": "{{n}} customers · Page {{page}} of {{pages}}",
+    "scope": {
+      "label": "Customer scope",
+      "mine": "My cases",
+      "team": "My team",
+      "all": "All"
+    },
+    "queue": {
+      "today": "Due today",
+      "late": "Overdue",
+      "review": "Documents to review",
+      "reply": "New professor replies",
+      "unassigned": "Unassigned services"
+    },
+    "sort": {
+      "next_task": "Next task due",
+      "recent_activity": "Recent activity",
+      "name": "Customer name"
+    },
+    "column": {
+      "name": "Customer",
+      "services": "Services and owners",
+      "status": "Case status",
+      "next": "My next task",
+      "docs": "Documents",
+      "email": "Email",
+      "activity": "Last activity"
+    },
+    "emailState": {
+      "on": "On",
+      "off": "Off",
+      "waiting": "Waiting for text"
+    },
+    "import": {
+      "title": "Update customer records from CSV",
+      "subtitle": "Upload a CSV to preview updates to customers assigned to you.",
+      "sample": "Download CSV template",
+      "choose": "Choose CSV file",
+      "reading": "Reading CSV…",
+      "drop": "Or drop the file here",
+      "badFile": "Choose a CSV file under 2 MB.",
+      "ready": "Rows ready to update",
+      "skipped": "Rows skipped",
+      "apply": "Apply updates",
+      "done": "Customer records updated: {{n}}",
+      "error": "The CSV could not be processed. Try again."
+    }
   }
 }

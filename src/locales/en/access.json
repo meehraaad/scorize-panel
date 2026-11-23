@@ -42,7 +42,8 @@
     "saved": "{{name}}'s access was saved.",
     "superusersOnly": "Only a superuser gives or takes it",
     "notYours": "Can't be changed",
-    "lockedForYou": "Only a superuser changes a superuser's access, or your own."
+    "lockedForYou": "Only a superuser changes a superuser's access, or your own.",
+    "title": "Access"
   },
   "groups": {
     "title": "Groups",
@@ -115,5 +116,6 @@
       "superuser_on": "{{name}} was made a superuser",
       "superuser_off": "{{name}} is no longer a superuser"
     }
-  }
+  },
+  "loadError": "Couldn’t load their access. Try again."
 }

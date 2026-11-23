@@ -1,4 +1,4 @@
-import { tabClass } from './buttonStyles';
+import { buttonClass, tabClass } from './buttonStyles';
 import { Icon } from './Icon';
 
 /** A row of pill buttons to filter a list, each with its count. Scrolls sideways on phones. */
@@ -7,12 +7,14 @@ export function FilterTabs<T extends string>({
   options,
   value,
   onChange,
+  look = 'tabs',
 }: {
   label: string;
   /** `count` already formatted for the locale. */
   options: readonly { value: T; label: string; count?: string }[];
   value: T;
   onChange: (value: T) => void;
+  look?: 'tabs' | 'pills';
 }) {
   return (
     <div
@@ -26,7 +28,11 @@ export function FilterTabs<T extends string>({
           type="button"
           aria-pressed={value === option.value}
           onClick={() => onChange(option.value)}
-          className={tabClass(value === option.value)}
+          className={
+            look === 'pills'
+              ? buttonClass(value === option.value ? 'dark' : 'outline')
+              : tabClass(value === option.value)
+          }
         >
           {option.label}
           {option.count !== undefined && (

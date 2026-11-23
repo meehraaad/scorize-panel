@@ -29,10 +29,7 @@ function useAccessMutation<TInput, TResult>(mutationFn: (input: TInput) => Promi
   });
 }
 
-export const useSavePerson = (id: number) =>
-  useAccessMutation((change: Partial<Pick<AccessPerson, 'groups' | 'keys'>>) =>
-    api<AccessPerson>(`${ACCESS_API}/people/${String(id)}/`, { method: 'PATCH', body: change }),
-  );
+export { useSavePerson } from '@/lib/access/people';
 
 export const useAddGroup = () =>
   useAccessMutation((group: GroupInput) =>

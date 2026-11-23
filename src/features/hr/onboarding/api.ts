@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import type { Page } from '@/lib/api/page';
 import { HR_KEY, type Named, staffPath } from '../api';
 import { orNull } from './me';
 
@@ -67,6 +68,8 @@ export interface Onboarding {
   /** When HR wants it by (the checklist step's day); null when sent on demand. */
   due: string | null;
   answers: OnboardingAnswers;
+  /** Private profile suggestions for blank fields in the hire's editable form. */
+  suggested_answers?: Partial<OnboardingAnswers>;
   files: OnboardingFile[];
   /** Set by HR on the file (the hire's login); shown, not edited. */
   fixed: { phone_number: string };
@@ -116,4 +119,38 @@ export const onboardingQuery = (staffId: number) =>
   queryOptions({
     queryKey: [...HR_KEY, 'onboarding', staffId],
     queryFn: ({ signal }) => orNull(api<OnboardingReview>(onboardingPath(staffId), { signal })),
+  });
+
+/** A study field (`apply/v1/study-fields/`): the majors the site knows, with their sub-fields. */
+interface StudyFieldRow {
+  id: number;
+  name: string;
+  name_persian: string | null;
+  parent?: { id: number } | null;
+}
+
+/**
+ * Majors matching what the hire typed, for suggestions only: top-level ones (`?top=1`, OB15; the
+ * `parent` filter stays for an older server), by their Persian name. Nothing is ever created here:
+ * the answer stays the typed text.
+ */
+export const majorsQuery = (search: string) =>
+  queryOptions({
+    queryKey: ['study-fields', 'top', search],
+    queryFn: ({ signal }) =>
+      api<Page<StudyFieldRow>>(
+        `/apply/v1/study-fields/?top=1&search=${encodeURIComponent(search)}`,
+        {
+          signal,
+        },
+      ),
+    select: (page) => [
+      ...new Set(
+        page.results
+          .filter((row) => !row.parent)
+          .map((row) => (row.name_persian ?? row.name).trim())
+          .filter(Boolean),
+      ),
+    ],
+    staleTime: 5 * 60_000,
   });

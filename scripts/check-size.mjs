@@ -22,7 +22,10 @@ import { gzipSync } from 'node:zlib';
 // plus the form's 0.5 KB, as CI measures it on Node 24 (2026-11-23, docs/performance.md).
 // JS 196.2, CSS 22.4: enable the PWA build in CI and add the mobile install guide (2026-11-23).
 // JS 196.4: sales call-rating navigation and routes. Their page and query code stay lazy (2026-11-23).
-const BUDGET_KB = { js: 196.4, css: 22.4 };
+// JS 196.5: the new-staff dialog's account-lookup flag and the hiring follow-ups in shared blocks,
+// under 0.1 KB locally, plus CI's Node 24 margin (2026-11-23).
+// JS 196.7: main's call-rating routes and test's hiring follow-ups together (+0.2 and +0.3 on 196.2).
+const BUDGET_KB = { js: 196.7, css: 22.4 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
