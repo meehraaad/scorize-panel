@@ -5,6 +5,7 @@ import i18n from '@/lib/i18n';
 import { lastPathwayCheck, setFinderPrefill, withAdmissions } from '@/mocks/pathways';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
+import { onDesktop } from '@/test/viewport';
 
 const SARA = 1; // an applicant (src/mocks/applicant.ts)
 const MARYAM = 2; // no contract: the guest home
@@ -141,6 +142,29 @@ describe('pathway finder', () => {
     // Coming back later carries on at the same question.
     cleanup();
     renderApp('/finder');
+    expect(
+      await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' }),
+    ).toBeInTheDocument();
+  });
+
+  it('continues from a remembered answer on desktop by clicking it or pressing Next', async () => {
+    onDesktop();
+    loginAs(SARA);
+    const user = userEvent.setup();
+    renderApp('/finder');
+    await user.click(await screen.findByRole('button', { name: 'شروع کن' }));
+    await user.click(await screen.findByRole('radio', { name: /^کار/ }));
+    await user.click(await screen.findByRole('radio', { name: 'کارشناسی' }));
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+
+    await user.click(screen.getByRole('button', { name: 'قبلی' }));
+    const degree = await screen.findByRole('radio', { name: 'کارشناسی' });
+    expect(degree).toBeChecked();
+    await user.click(degree);
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+
+    await user.click(screen.getByRole('button', { name: 'قبلی' }));
+    await user.click(await screen.findByRole('button', { name: 'بعدی' }));
     expect(
       await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' }),
     ).toBeInTheDocument();
