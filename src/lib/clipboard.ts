@@ -4,7 +4,10 @@
  * There, and when the Clipboard API refuses, a hidden textarea is selected and copied the old way.
  * Rejects when neither worked, so the caller can say so.
  */
-export async function copyText(text: string): Promise<void> {
+export async function copyText(
+  text: string,
+  container: HTMLElement = document.body,
+): Promise<void> {
   const clipboard = (navigator as Partial<Navigator>).clipboard;
   if (clipboard && typeof clipboard.writeText === 'function') {
     try {
@@ -20,7 +23,8 @@ export async function copyText(text: string): Promise<void> {
   area.style.position = 'fixed';
   area.style.inset = '0 auto auto 0';
   area.style.opacity = '0';
-  document.body.append(area);
+  // When a modal is open, the fallback must stay inside it so it can receive focus.
+  container.append(area);
   area.select();
   let copied: boolean;
   try {

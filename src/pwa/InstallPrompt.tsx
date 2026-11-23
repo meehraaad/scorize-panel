@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
@@ -8,6 +8,8 @@ import {
   subscribeToAndroidPrompt,
   type InstallPlatform,
 } from './install';
+
+const IphoneInstallGuide = lazy(() => import('./IphoneInstallGuide'));
 
 export default function InstallPrompt({ platform }: { platform: InstallPlatform }) {
   const { t } = useTranslation('pwa');
@@ -49,7 +51,18 @@ export default function InstallPrompt({ platform }: { platform: InstallPlatform 
 
   if (!ready) return null;
 
-  const iphone = platform === 'iphone';
+  if (platform !== 'android') {
+    return (
+      <Suspense fallback={null}>
+        <IphoneInstallGuide
+          open={!dismissed}
+          onClose={dismiss}
+          inSafari={platform === 'iphone-safari'}
+        />
+      </Suspense>
+    );
+  }
+
   return (
     <Dialog
       open={!dismissed}
@@ -73,9 +86,9 @@ export default function InstallPrompt({ platform }: { platform: InstallPlatform 
         <p className="text-body text-text-2">{t('android.intro')}</p>
       ) : (
         <ol className="list-decimal space-y-2 ps-5 text-body text-text-2">
-          <li>{iphone ? t('iphone.share') : t('android.menu')}</li>
-          <li>{iphone ? t('iphone.addToHome') : t('android.addToHome')}</li>
-          <li>{iphone ? t('iphone.confirm') : t('android.confirm')}</li>
+          <li>{t('android.menu')}</li>
+          <li>{t('android.addToHome')}</li>
+          <li>{t('android.confirm')}</li>
         </ol>
       )}
     </Dialog>
