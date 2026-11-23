@@ -337,7 +337,7 @@ option existed.
 | API mocking     | **MSW**                                                                             | Tests only: a fake Django in `src/mocks/`. The app always calls Django (no mock mode)                                                       |
 | Tests           | **Vitest + Testing Library**                                                        | Same config as Vite. Add Playwright for end-to-end tests once real flows exist                                                              |
 | Lint/format     | **ESLint (typescript-eslint strict-type-checked) + Prettier**                       | Includes `i18next/no-literal-string`, which enforces "all text in dictionaries"                                                             |
-| PWA             | **vite-plugin-pwa (Workbox)**                                                       | Manifest ships now; service worker turns on with one flag (see PWA.md)                                                                      |
+| PWA             | **vite-plugin-pwa (Workbox)**                                                       | Docker builds enable the service worker for the static app shell (see [PWA](PWA.md))                                                        |
 | Package manager | **pnpm** (pinned via `packageManager`)                                              | Strict dependency resolution, fast CI                                                                                                       |
 | Deploy          | **Docker image (non-root nginx, port 8080) → ghcr.io**, same Swarm as the main site | Pre-gzipped assets, `immutable` caching for hashed files, `no-cache` for `index.html`                                                       |
 
