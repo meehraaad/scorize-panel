@@ -181,13 +181,23 @@ function topModal() {
   );
 }
 
+/**
+ * The modal the toasts live in while one is open. A dialog can close by losing `open` or by being
+ * taken out of the page (React unmounts it after a save): both are watched, or the toasts would
+ * keep going into a detached dialog and never show.
+ */
 function useModalHost() {
   const [host, setHost] = useState<Element | null>(null);
   useEffect(() => {
     const check = () => setHost(topModal());
     check();
     const observer = new MutationObserver(check);
-    observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['open'],
+    });
     return () => observer.disconnect();
   }, []);
   return host;
