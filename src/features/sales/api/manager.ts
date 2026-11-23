@@ -86,6 +86,20 @@ export interface SettingsChange {
   lines: string[];
 }
 
+export type RoutingKind = 'lead' | 'consultation';
+
+export interface RoutingRule {
+  kind: RoutingKind;
+  match: string;
+  seller: number;
+}
+
+export interface AssignRouting {
+  rules: RoutingRule[];
+  lead: { value: string; label: string }[];
+  consultation: { value: string; label: string }[];
+}
+
 export interface AssignData {
   settings: AssignSettings;
   sellers: SellerLoad[];
@@ -95,6 +109,8 @@ export interface AssignData {
   oldest_at: string | null;
   /** The latest changes to the settings, newest first. */
   history: SettingsChange[];
+  /** Present when Django supports custom assignment rules. */
+  routing?: AssignRouting;
 }
 
 export const assignQuery = (page: number) =>
