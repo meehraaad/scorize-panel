@@ -1,4 +1,11 @@
+import { createContext, useContext } from 'react';
 import { useParams } from 'react-router';
 
-/** The case of the page (`files/:id`), for the layout and its tabs. */
-export const useCaseId = () => Number(useParams().id);
+export const CaseIdContext = createContext<number | null>(null);
+
+/** Executive routes carry a customer ID and provide the separately authorized applicant ID. */
+export function useCaseId() {
+  const caseId = useContext(CaseIdContext);
+  const params = useParams();
+  return caseId ?? Number(params.id);
+}

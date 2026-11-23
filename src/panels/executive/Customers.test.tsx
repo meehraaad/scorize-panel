@@ -79,11 +79,11 @@ it('switches scope, pages through customers and resets to page one when filterin
   await user.click(await screen.findByRole('button', { name: /My team/ }));
   await user.click(await screen.findByRole('button', { name: 'Go to page 2' }));
   const result = await screen.findAllByRole('link', { name: 'امید رضوانی' });
-  expect(result[0]).toHaveAttribute('href', '/supervisor/files/1218');
+  expect(result[0]).toHaveAttribute('href', '/executive/customers/1218');
   await user.click(screen.getByRole('button', { name: /Due today/ }));
   await waitFor(() => expect(router.state.location.search).toBe('?scope=team&queue=today'));
   const matching = await screen.findAllByRole('link', { name: 'سارا محمدی' });
-  expect(matching[0]).toHaveAttribute('href', '/supervisor/files/1240');
+  expect(matching[0]).toHaveAttribute('href', '/executive/customers/1240');
   expect(await screen.findByRole('link', { name: 'Export CSV' })).toHaveAttribute(
     'href',
     '/api/executive/v1/customers/export/?scope=team&queue=today',

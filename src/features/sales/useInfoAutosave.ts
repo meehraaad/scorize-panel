@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBlocker } from 'react-router';
 import i18n from '@/lib/i18n';
 import { toast } from '@/lib/toast';
-import { UnknownNameError, type CustomerInfo, type InfoSection } from './api';
+import { UnknownNameError, type CustomerInfo, type InfoSection, type InfoSource } from './api';
 import { useSaveInfo } from './api/infoMutations';
 
 export type SectionName = keyof InfoSection;
@@ -25,8 +25,8 @@ function incomplete(key: SectionName, draft: InfoDraft) {
 }
 
 /** One queue for the page: section PATCH responses must never race or replace newer input. */
-export function useInfoAutosave(id: number, initial: CustomerInfo) {
-  const { mutateAsync } = useSaveInfo(id);
+export function useInfoAutosave(id: number, initial: CustomerInfo, source?: InfoSource) {
+  const { mutateAsync } = useSaveInfo(id, source);
   const [draft, setDraft] = useState<InfoDraft>(() => ({
     ...initial,
     education: initial.education.map((row) => ({ ...row, localId: crypto.randomUUID() })),
