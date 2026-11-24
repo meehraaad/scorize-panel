@@ -58,7 +58,7 @@ export const loadWorkspacePage: WorkspaceLoader = async (page, { params }) => {
   const id = idParam(params.id);
   if (id === null) return null;
   const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
-  if (!user?.executive_customer_workspace || !getRoles(user).includes('executive')) return null;
+  if (!user || !getRoles(user).includes('executive')) return null;
 
   const workspace = await queryClient.query(workspaceQuery(id));
   if (!workspace) return null;
