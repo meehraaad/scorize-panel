@@ -42,6 +42,8 @@ import {
   IMPORTANCE,
   importanceOf,
   LATE_DAYS,
+  afterRemoving,
+  NO_EXTRAS,
   stepOf,
   TEMPLATES,
   zeroOf,
@@ -131,6 +133,8 @@ function useTemplateDraft(metrics: Metric[]) {
       minimum: template.minimum,
       penaltyGoal: template.latePenalty && late >= 0 ? late : null,
       penaltyAmount: 200_000,
+      ...NO_EXTRAS,
+      commission: template.id === 'sales',
       trial: true,
     };
   };
@@ -211,6 +215,8 @@ function TemplatePicker({
                   const draft = draftOfPlan(source);
                   onPick({
                     ...draft,
+                    commission: false,
+                    teamGoal: null,
                     trial: true,
                     goals: source.goals.map((kpi) => ({ ...goalOfKpi(kpi), id: null })),
                   });
@@ -232,6 +238,7 @@ function TemplatePicker({
                 minimum: 60,
                 penaltyGoal: null,
                 penaltyAmount: 200_000,
+                ...NO_EXTRAS,
                 trial: true,
               })
             }
@@ -268,6 +275,11 @@ function bodyOf(plan: Plan, draft: PlanDraft): PlanInput {
     penalty:
       draft.penaltyGoal !== null && draft.goals[draft.penaltyGoal]?.direction === 'lower'
         ? { goal: draft.penaltyGoal, amount: draft.penaltyAmount }
+        : null,
+    commission: draft.commission,
+    team_bonus:
+      draft.teamGoal !== null && draft.goals[draft.teamGoal]?.direction === 'higher'
+        ? { goal: draft.teamGoal, at_least: draft.teamAtLeast, amount: draft.teamAmount }
         : null,
     trial: draft.trial,
   };
@@ -309,18 +321,17 @@ function Editor({
   const lowers = draft.goals
     .map((goal, index) => ({ goal, index }))
     .filter(({ goal }) => goal.direction === 'lower');
+  const highers = draft.goals
+    .map((goal, index) => ({ goal, index }))
+    .filter(({ goal }) => goal.direction === 'higher');
   const setGoal = (index: number, goal: GoalDraft) =>
     onChange({ ...draft, goals: draft.goals.map((row, at) => (at === index ? goal : row)) });
   const removeGoal = (index: number) =>
     onChange({
       ...draft,
       goals: draft.goals.filter((_row, at) => at !== index),
-      penaltyGoal:
-        draft.penaltyGoal === null || draft.penaltyGoal === index
-          ? null
-          : draft.penaltyGoal > index
-            ? draft.penaltyGoal - 1
-            : draft.penaltyGoal,
+      penaltyGoal: afterRemoving(draft.penaltyGoal, index),
+      teamGoal: afterRemoving(draft.teamGoal, index),
     });
   const stepper = (label: string) => ({
     label,
@@ -430,6 +441,60 @@ function Editor({
                   min={1}
                   unit={t('pay.tomanUnit')}
                 />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-3 border-t border-hair pt-4">
+            <Switch
+              label={t('pay.plans.commission')}
+              description={t('pay.plans.commissionHint')}
+              checked={draft.commission}
+              onChange={(on) => onChange({ ...draft, commission: on })}
+            />
+          </div>
+          <div className="flex flex-col gap-3 border-t border-hair pt-4">
+            <Switch
+              label={t('pay.plans.team')}
+              description={highers.length === 0 ? t('pay.plans.teamNone') : t('pay.plans.teamHint')}
+              checked={draft.teamGoal !== null}
+              disabled={highers.length === 0}
+              onChange={(on) =>
+                onChange({ ...draft, teamGoal: on ? (highers[0]?.index ?? null) : null })
+              }
+            />
+            {draft.teamGoal !== null && (
+              <div className="flex flex-wrap items-center gap-3 text-[16px] leading-8">
+                {highers.length > 1 && (
+                  <SelectField
+                    label={t('pay.plans.teamGoal')}
+                    value={String(draft.teamGoal)}
+                    onChange={(value) => onChange({ ...draft, teamGoal: Number(value) })}
+                    options={highers.map(({ goal, index }) => ({
+                      value: String(index),
+                      label: goal.name,
+                    }))}
+                  />
+                )}
+                <span>
+                  {t('pay.plans.teamBefore', { name: draft.goals[draft.teamGoal]?.name ?? '' })}
+                </span>
+                <NumberStepper
+                  {...stepper(t('pay.plans.teamAtLeast'))}
+                  value={draft.teamAtLeast}
+                  onChange={(value) => onChange({ ...draft, teamAtLeast: Math.max(value, 1) })}
+                  min={1}
+                  unit={draft.goals[draft.teamGoal]?.unit ?? ''}
+                />
+                <span>{t('pay.plans.teamMiddle')}</span>
+                <NumberStepper
+                  {...stepper(t('pay.plans.teamAmount'))}
+                  value={draft.teamAmount}
+                  onChange={(value) => onChange({ ...draft, teamAmount: Math.max(value, 1) })}
+                  step={250_000}
+                  min={1}
+                  unit={t('pay.tomanUnit')}
+                />
+                <span>{t('pay.plans.teamAfter')}</span>
               </div>
             )}
           </div>

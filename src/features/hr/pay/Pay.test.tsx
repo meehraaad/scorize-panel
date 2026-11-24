@@ -209,7 +209,7 @@ describe('HR pay and KPIs', () => {
     renderApp('/hr/pay/plans');
     await user.click(await screen.findByRole('link', { name: /^کارشناس فروش/ }));
     expect(
-      await screen.findByRole('heading', { name: 'برنامه‌ی امتیاز کارشناس فروش' }),
+      await screen.findByRole('heading', { name: 'قاعده‌ی کارشناس فروش' }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'بیشتر کردن هدف تماس موفق' }));
     expect(screen.getByLabelText('هدف تماس موفق')).toHaveValue('۳۵۰');
@@ -220,10 +220,15 @@ describe('HR pay and KPIs', () => {
       'true',
     );
     await user.click(screen.getByRole('button', { name: 'بیشتر کردن درصد پاداش' }));
-    await user.click(screen.getByRole('button', { name: 'ذخیره‌ی برنامه' }));
-    expect(await toasts().findByText('برنامه ذخیره شد.')).toBeInTheDocument();
-    const preview = screen.getByRole('complementary', { name: 'اگر این برنامه ماه پیش بود' });
+    await user.click(screen.getByRole('switch', { name: /پورسانت فروش/ }));
+    await user.click(screen.getByRole('switch', { name: /پاداش تیمی/ }));
+    expect(screen.getByRole('button', { name: 'بیشتر کردن حد پاداش تیمی' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'ذخیره‌ی قاعده' }));
+    expect(await toasts().findByText('قاعده ذخیره شد.')).toBeInTheDocument();
+    const preview = screen.getByRole('complementary', { name: 'اگر این قاعده ماه پیش بود' });
     expect(await within(preview).findByText('علی رضایی')).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'همه‌ی قاعده‌ها' }));
+    expect(await screen.findByText(/پورسانت · پاداش تیمی/)).toBeInTheDocument();
   });
 
   it('checks last month, shows it to staff, adds overtime, pays it and corrects it next month', async () => {

@@ -193,7 +193,9 @@
     "documents": "Documents",
     "addDocument": "Add document",
     "noDocuments": "No documents yet.",
-    "noMoves": "No joining or leaving checklist."
+    "noMoves": "No joining or leaving checklist.",
+    "ownRule": "This person's own score rule",
+    "slips": "Slips in «Pay and rewards»"
   },
   "info": {
     "full_name": "Full name",
@@ -610,15 +612,15 @@
       "rules": "Every reward and penalty rule, such as commission and team rewards"
     },
     "plans": {
-      "hint": "Each group has a plan: a few simple goals, and what reaching them pays. The system measures them every night.",
-      "noGoals": "No plan yet",
+      "hint": "Each group has one rule: a few simple goals, what reaching them pays and what missing them takes. The system measures them every night.",
+      "noGoals": "No rule yet",
       "people": "{{n}} people",
       "live": "Live",
       "open": "View and change",
-      "make": "Make a plan",
-      "back": "Score plans",
+      "make": "Make a rule",
+      "back": "All rules",
       "notFound": "This group wasn't found",
-      "title": "{{name}}'s score plan",
+      "title": "Rule for {{name}}",
       "trialChip": "On trial: shown, not paid yet",
       "goalNames": {
         "quality": "Quality of work"
@@ -637,10 +639,10 @@
       "templateReward": "Reward up to {{n}}% of pay",
       "useTemplate": "Use this plan",
       "copyTitle": "Copy another group's",
-      "copyFrom": "From the plan of",
+      "copyFrom": "From the rule of",
       "pickGroup": "Pick a group",
       "copy": "Copy",
-      "copyNone": "No other group has a plan yet.",
+      "copyNone": "No other group has a rule yet.",
       "blank": "From scratch",
       "less": "Lower {{what}}",
       "more": "Raise {{what}}",
@@ -666,10 +668,10 @@
       "others": "This group has other rules that don't change here: {{names}}.",
       "trial": "On trial for now",
       "trialHint": "Scores and rewards are shown to everyone but not paid or taken yet.",
-      "save": "Save plan",
-      "saved": "Plan saved.",
+      "save": "Save rule",
+      "saved": "Rule saved.",
       "needName": "Name the goals entered by hand.",
-      "previewTitle": "Had this plan been in place last month",
+      "previewTitle": "If this rule had applied last month",
       "previewHint": "With this group's real values of {{month}}",
       "previewEmpty": "Add a goal to see what it does.",
       "avgScore": "Average score",
@@ -702,12 +704,30 @@
       "capOf": "{{name}} highest score",
       "addGoal": "Add a goal from the list",
       "manualGoal": "A number a manager enters",
-      "manualGoalHint": "Such as quality, one number a month"
+      "manualGoalHint": "Such as quality, one number a month",
+      "commission": "Sales commission",
+      "commissionHint": "The commission on sales contracts, from the system's commission rule, goes on this group's slips.",
+      "team": "Team bonus",
+      "teamHint": "When the group's total reaches a number, everyone gets a bonus.",
+      "teamNone": "Add a goal where more is better first.",
+      "teamGoal": "Team bonus goal",
+      "teamBefore": "If the whole group's total of “{{name}}” reaches",
+      "teamAtLeast": "Team bonus threshold",
+      "teamMiddle": ", each person gets",
+      "teamAmount": "Team bonus amount",
+      "teamAfter": "as a bonus.",
+      "says": {
+        "goals": "Goals: {{goals}}",
+        "reward": "Reward up to {{n}}%",
+        "penalty": "Penalty on “{{name}}”",
+        "commission": "Commission",
+        "team": "Team bonus"
+      }
     },
     "month": {
-      "none": "No score plan yet",
-      "noneHint": "Make plans for the groups first; each month's scores come here.",
-      "makePlans": "Make plans",
+      "none": "No rules yet",
+      "noneHint": "Make the groups' rules first; then each month's scores come here.",
+      "makePlans": "Make rules",
       "steps": "The month's steps",
       "missingTitle": "Values the system doesn't know",
       "missingHint": "Enter them before closing the month.",
@@ -833,7 +853,11 @@
     "trialMoney": "The plan is still on trial; for real it would be about {{amount}}.",
     "tipHigher": "For a higher score: bring “{{name}}” from {{value}} to {{target}} {{unit}}.",
     "tipLower": "For a higher score: bring “{{name}}” from {{value}} down to {{target}} {{unit}} or less.",
-    "history": "Earlier months"
+    "history": "Earlier months",
+    "slipDraft": "Until it is paid, it may change if an objection is accepted.",
+    "slipPaid": "Paid",
+    "slipShown": "Before payment",
+    "afterTax": "Advances and other deductions"
   },
   "onboarding": {
     "title": "Personal details form",

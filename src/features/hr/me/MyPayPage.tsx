@@ -128,7 +128,9 @@ function MonthBody({
   const { t } = useTranslation('hr');
   const f = useFormat();
   const toman = (amount: number) => t('toman', { amount: f.number(amount) });
-  const paid = data.lines.filter((line) => !line.trial).reduce((sum, line) => sum + line.amount, 0);
+  const paid = data.lines
+    .filter((line) => !line.trial && (line.kind ?? 'rule') === 'rule')
+    .reduce((sum, line) => sum + line.amount, 0);
   return (
     <>
       <ScoreHero
@@ -189,7 +191,18 @@ function MonthBody({
         </SectionCard>
       )}
       {data.slip && (
-        <SectionCard id="my-slip" variant="panel" size="lg" title={t('me.slip')}>
+        <SectionCard
+          id="my-slip"
+          variant="panel"
+          size="lg"
+          title={t('me.slip')}
+          subtitle={data.slip.final ? undefined : t('me.slipDraft')}
+          badge={
+            <Chip tone={data.slip.final ? 'good' : 'info'} small>
+              {t(data.slip.final ? 'me.slipPaid' : 'me.slipShown')}
+            </Chip>
+          }
+        >
           <dl className="m-0 flex flex-col">
             {(
               [
@@ -201,18 +214,24 @@ function MonthBody({
                 [t('pay.slip.insurance'), -data.slip.insurance],
                 [t('pay.slip.tax'), -data.slip.tax],
                 [t('pay.slip.deduction'), -data.slip.deduction],
+                [t('me.afterTax'), -data.slip.after_tax],
               ] as const
-            ).map(([label, amount]) => (
-              <div
-                key={label}
-                className="flex items-center justify-between gap-3 border-t border-hair py-2 first:border-t-0"
-              >
-                <dt className="text-[15px]">{label}</dt>
-                <dd className="m-0 text-[15px]" dir="ltr">
-                  {toman(amount)}
-                </dd>
-              </div>
-            ))}
+            )
+              .filter(
+                ([label, amount], index) =>
+                  amount !== 0 || index === 0 || label === t('pay.slip.gross'),
+              )
+              .map(([label, amount]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-3 border-t border-hair py-2 first:border-t-0"
+                >
+                  <dt className="text-[15px]">{label}</dt>
+                  <dd className="m-0 text-[15px]" dir="ltr">
+                    {toman(amount)}
+                  </dd>
+                </div>
+              ))}
           </dl>
           <div className="mt-2 flex items-center justify-between rounded-2xl bg-tint px-4 py-3 text-primary-text">
             <span className="font-bold">{t('pay.slip.net')}</span>

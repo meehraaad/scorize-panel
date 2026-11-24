@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -26,7 +26,7 @@ import { MoveCard } from './components/MoveCard';
 import { CONTRACT_TONE, STATE_TONE, dayOf, isPhoneName, waitsForForm } from './format';
 import { useAnswerText } from './onboarding/answerText';
 import { EMPTY_ANSWERS, type FieldKey } from './onboarding/fields';
-import { hrPath } from './paths';
+import { hrPath, planPath } from './paths';
 
 const dialogs = () => import('./components/FileDialogs');
 const InfoDialog = lazy(() => dialogs().then((module) => ({ default: module.InfoDialog })));
@@ -411,6 +411,20 @@ function WorkTab({
             ))}
           </ul>
         )}
+        <p className="m-0 flex flex-wrap gap-x-5 border-t border-hair px-5 py-2 text-[14px] lg:px-8">
+          <Link
+            className="min-h-11 content-center font-semibold text-primary-text"
+            to={planPath(`person:${String(file.id)}`)}
+          >
+            {t('person.ownRule')}
+          </Link>
+          <Link
+            className="min-h-11 content-center font-semibold text-primary-text"
+            to={hrPath('pay')}
+          >
+            {t('person.slips')}
+          </Link>
+        </p>
       </SectionCard>
     </>
   );
