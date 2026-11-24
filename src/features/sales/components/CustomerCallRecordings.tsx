@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { api, ApiError } from '@/lib/api/client';
+import { API_BASE, api, ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SALES_API, SALES_KEY } from '@/lib/sales/api';
 
@@ -68,7 +68,7 @@ export function CustomerCallRecordings({ customer }: { customer: number }) {
                       controls
                       autoPlay
                       aria-label={t('customer.recordings.play')}
-                      src={`${path}${encodeURIComponent(row.id)}/`}
+                      src={`${API_BASE}${path}${encodeURIComponent(row.id)}/`}
                     />
                   ) : (
                     <Button variant="outline" onClick={() => setPlaying(row.id)}>
