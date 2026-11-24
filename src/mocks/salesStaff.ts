@@ -434,6 +434,7 @@ export const salesStaffHandlers = [
       ? HttpResponse.json({ phone })
       : HttpResponse.json({ phone: ['invalid'] }, { status: 400 });
   }),
+  http.get(`${BASE}/customers/:id/recordings/`, () => HttpResponse.json({ results: [] })),
   http.get(`${BASE}/customers/:id/history/`, ({ params, request }) => {
     const query = new URL(request.url).searchParams;
     const page = Number(query.get('page') ?? 1);

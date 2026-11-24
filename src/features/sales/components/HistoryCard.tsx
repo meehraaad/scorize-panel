@@ -1,5 +1,5 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
@@ -9,10 +9,12 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { SearchField } from '@/components/ui/Filters';
+import { ApiError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { historyQuery, type HistoryEvent, type HistoryKind } from '../api';
+import { callRecordingsQuery, historyQuery, type HistoryEvent, type HistoryKind } from '../api';
+import { CallRecordingPlayer } from './CustomerCallRecordings';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
@@ -44,6 +46,8 @@ const MIN_LETTERS = 2;
  */
 export function HistoryCard({ customer }: { customer: number }) {
   const { t } = useTranslation('sales');
+  const f = useFormat();
+  const [playing, setPlaying] = useState<string>();
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const settled = useDebouncedValue(search.trim(), 300);
@@ -53,9 +57,22 @@ export function HistoryCard({ customer }: { customer: number }) {
     historyQuery(customer, q),
   );
   const kinds: readonly HistoryKind[] | null = FILTERS[filter];
-  const events = (data?.pages.flatMap((page) => page.results) ?? []).filter(
-    (event) => kinds === null || kinds.includes(event.kind),
-  );
+  const showsRecordings = (filter === 'all' || filter === 'contact') && !q;
+  const { data: recordings, error: recordingsError } = useQuery({
+    ...callRecordingsQuery(customer),
+    enabled: showsRecordings,
+  });
+  const history = data?.pages.flatMap((page) => page.results) ?? [];
+  const events = history.filter((event) => kinds === null || kinds.includes(event.kind));
+  // Older recordings enter the timeline as history pages are loaded.
+  const oldest = history.at(-1)?.at;
+  const calls = showsRecordings
+    ? (recordings?.results ?? []).filter(
+        (call) => !hasNextPage || !oldest || Date.parse(call.at) >= Date.parse(oldest),
+      )
+    : [];
+  const timeline = [...events, ...calls.map((call) => ({ ...call, kind: 'recording' as const }))];
+  if (calls.length) timeline.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   return (
     <SectionCard
@@ -68,7 +85,10 @@ export function HistoryCard({ customer }: { customer: number }) {
               label={t('customer.history.search')}
               placeholder={t('customer.history.searchPlaceholder')}
               value={search}
-              onChange={setSearch}
+              onChange={(value) => {
+                setPlaying(undefined);
+                setSearch(value);
+              }}
               maxLength={100}
               className="flex-[1_1_100%] sm:flex-[0_1_240px]"
             />
@@ -78,7 +98,10 @@ export function HistoryCard({ customer }: { customer: number }) {
             hideLegend
             look="segmented"
             value={filter}
-            onChange={setFilter}
+            onChange={(value) => {
+              setPlaying(undefined);
+              setFilter(value);
+            }}
             options={(Object.keys(FILTERS) as Filter[]).map((value) => ({
               value,
               label: t(`customer.history.filters.${value}`),
@@ -87,9 +110,14 @@ export function HistoryCard({ customer }: { customer: number }) {
         </div>
       }
     >
+      {showsRecordings && recordingsError instanceof ApiError && recordingsError.status === 503 && (
+        <p role="status" className="m-0 px-5 py-3 text-sm text-neutral lg:px-8">
+          {t('customer.recordings.offline')}
+        </p>
+      )}
       {isPending ? (
         <SkeletonRows rows={4} />
-      ) : events.length === 0 ? (
+      ) : timeline.length === 0 ? (
         <EmptyState>
           {t(
             q
@@ -101,9 +129,31 @@ export function HistoryCard({ customer }: { customer: number }) {
         </EmptyState>
       ) : (
         <ol className="m-0 list-none p-0">
-          {events.map((event) => (
-            <EventRow key={event.id} event={event} />
-          ))}
+          {timeline.map((event) => {
+            if (event.kind !== 'recording') return <EventRow key={event.id} event={event} />;
+
+            const key = `${customer}:${event.id}`;
+            return (
+              <TimelineRow
+                key={key}
+                kind="call"
+                at={event.at}
+                title={t('customer.recordings.call')}
+              >
+                <span className="text-sm text-text-2">
+                  {t('customer.recordings.duration', { seconds: f.number(event.duration) })}
+                </span>
+                <div>
+                  <CallRecordingPlayer
+                    customer={customer}
+                    recording={event.id}
+                    playing={playing === key}
+                    onPlay={() => setPlaying(key)}
+                  />
+                </div>
+              </TimelineRow>
+            );
+          })}
         </ol>
       )}
       {hasNextPage && (
@@ -124,8 +174,6 @@ export function HistoryCard({ customer }: { customer: number }) {
 
 function EventRow({ event }: { event: HistoryEvent }) {
   const { t } = useTranslation('sales');
-  const f = useFormat();
-  const look = LOOK[event.kind];
   const author = event.author ?? t('customer.history.system');
   // Django's history doesn't say who a lead went to.
   const session = event.kind === 'assign' && event.subject === 'consultation';
@@ -146,6 +194,58 @@ function EventRow({ event }: { event: HistoryEvent }) {
     previous: event.previous ?? '',
   });
   return (
+    <TimelineRow kind={event.kind} at={event.at} title={title}>
+      {event.kind === 'assign' && event.reason !== undefined && (
+        <p className="m-0 text-sm leading-7 text-neutral">
+          {event.reason
+            ? t('customer.history.reason', { reason: event.reason })
+            : t('customer.history.noReason')}
+          {event.note ? ` · ${event.note}` : ''}
+        </p>
+      )}
+      {event.owner && (
+        <span>
+          <Chip tone="warn" small>
+            {t('customer.history.otherSeller', { owner: event.owner })}
+          </Chip>
+        </span>
+      )}
+      {event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>}
+      {event.customer_summary && (
+        <div className="rounded-xl bg-info-tint p-3">
+          <span className="text-xs font-semibold text-text-2">
+            {t('customer.logDialog.customerSummary')}
+          </span>
+          <p className="m-0 text-sm leading-7 break-words whitespace-pre-wrap">
+            {event.customer_summary}
+          </p>
+        </div>
+      )}
+      {event.stage && (
+        <span>
+          <Chip tone="info" small>
+            {t('customer.history.stageTag', { stage: t(`stage.${event.stage}`) })}
+          </Chip>
+        </span>
+      )}
+    </TimelineRow>
+  );
+}
+
+function TimelineRow({
+  kind,
+  at,
+  title,
+  children,
+}: {
+  kind: HistoryKind;
+  at: string;
+  title: string;
+  children: ReactNode;
+}) {
+  const f = useFormat();
+  const look = LOOK[kind];
+  return (
     <li className="flex gap-4 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:px-8">
       <span
         aria-hidden="true"
@@ -156,43 +256,11 @@ function EventRow({ event }: { event: HistoryEvent }) {
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[15px] font-semibold">{title}</span>
-          <time dateTime={event.at} className="text-xs text-text-2">
-            {f.timeAgo(event.at)}
+          <time dateTime={at} className="text-xs text-text-2">
+            {f.timeAgo(at)}
           </time>
         </div>
-        {event.kind === 'assign' && event.reason !== undefined && (
-          <p className="m-0 text-sm leading-7 text-neutral">
-            {event.reason
-              ? t('customer.history.reason', { reason: event.reason })
-              : t('customer.history.noReason')}
-            {event.note ? ` · ${event.note}` : ''}
-          </p>
-        )}
-        {event.owner && (
-          <span>
-            <Chip tone="warn" small>
-              {t('customer.history.otherSeller', { owner: event.owner })}
-            </Chip>
-          </span>
-        )}
-        {event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>}
-        {event.customer_summary && (
-          <div className="rounded-xl bg-info-tint p-3">
-            <span className="text-xs font-semibold text-text-2">
-              {t('customer.logDialog.customerSummary')}
-            </span>
-            <p className="m-0 text-sm leading-7 break-words whitespace-pre-wrap">
-              {event.customer_summary}
-            </p>
-          </div>
-        )}
-        {event.stage && (
-          <span>
-            <Chip tone="info" small>
-              {t('customer.history.stageTag', { stage: t(`stage.${event.stage}`) })}
-            </Chip>
-          </span>
-        )}
+        {children}
       </div>
     </li>
   );

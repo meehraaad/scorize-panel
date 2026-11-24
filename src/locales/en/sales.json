@@ -1,4 +1,18 @@
 {
+  "callRatings": {
+    "mine": "My call ratings",
+    "team": "Team call ratings",
+    "period": "Past 30 days · scores from 1 to 5",
+    "overview": "Overview",
+    "responseCount": "Responses",
+    "average": "Average score",
+    "queues": "By queue",
+    "queue": "Queue",
+    "agents": "By agent",
+    "agent": "Agent",
+    "unknown": "Unassigned",
+    "empty": "No ratings in the past 30 days."
+  },
   "stage": {
     "new": "New",
     "contacted": "Contacted",
@@ -438,6 +452,12 @@
     }
   },
   "customer": {
+    "recordings": {
+      "call": "Recorded phone call",
+      "play": "Play recording",
+      "duration": "{{seconds}} sec",
+      "offline": "The office recording service couldn’t be reached."
+    },
     "back": "My leads",
     "summary": "Customer summary",
     "noFollowUp": "Not set",
@@ -2227,6 +2247,20 @@
       "undo": "Undo changes"
     },
     "teams": {
+      "routing": {
+        "title": "Ringing rules",
+        "strategy": "Ring strategy",
+        "timeout": "Ring time per attempt",
+        "seconds": "sec",
+        "decrease": "Decrease ring time",
+        "increase": "Increase ring time",
+        "options": {
+          "rrmemory": "Rotate between available phones",
+          "ringall": "Ring all available phones",
+          "leastrecent": "Ring the longest-idle member",
+          "fewestcalls": "Ring the member with fewest answered calls"
+        }
+      },
       "title": "Phone teams",
       "seen": "The PBX was last read {{time}}.",
       "notSeen": "No report from the PBX yet.",
@@ -2352,6 +2386,7 @@
     "phone": {
       "nav": "Phone sections",
       "section": {
+        "ratings": "Call ratings",
         "overview": "Overview",
         "extensions": "Extensions",
         "hours": "Office hours",

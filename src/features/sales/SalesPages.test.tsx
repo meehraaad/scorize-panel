@@ -642,6 +642,39 @@ describe('sales panel, seller pages', () => {
     expect(asked.at(-1)).toMatch(/^day \d{4}-\d{2}-\d{2}$/);
   });
 
+  it('customer: the Play button opens the recording for its own call', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/sales/v1/customers/:id/history/', () =>
+        HttpResponse.json({ results: [], next: null }),
+      ),
+      http.get('/api/sales/v1/customers/:id/recordings/', () =>
+        HttpResponse.json({
+          results: [
+            { id: 'recording-newer', at: '2026-11-24T11:12:31+03:30', duration: 1231 },
+            { id: 'recording-older', at: '2026-11-23T11:12:31+03:30', duration: 64 },
+          ],
+        }),
+      ),
+    );
+    renderApp(`/sales/customers/${ERFAN}`);
+    const [newer, older] = await screen.findAllByText('تماس تلفنی ضبط‌شده');
+    const first = newer?.closest('li');
+    const second = older?.closest('li');
+    if (!first || !second) throw new Error('Expected two recorded call cards');
+    await user.click(within(first).getByRole('button', { name: 'پخش ضبط تماس' }));
+    expect(within(first).getByLabelText('پخش ضبط تماس')).toHaveAttribute(
+      'src',
+      `/api/sales/v1/customers/${ERFAN}/recordings/recording-newer/`,
+    );
+    await user.click(within(second).getByRole('button', { name: 'پخش ضبط تماس' }));
+    expect(within(first).getByRole('button', { name: 'پخش ضبط تماس' })).toBeInTheDocument();
+    expect(within(second).getByLabelText('پخش ضبط تماس')).toHaveAttribute(
+      'src',
+      `/api/sales/v1/customers/${ERFAN}/recordings/recording-older/`,
+    );
+  });
+
   it('customer: whose work it is, and who the lead went to', async () => {
     server.use(
       http.get('/api/sales/v1/customers/:id/history/', () =>

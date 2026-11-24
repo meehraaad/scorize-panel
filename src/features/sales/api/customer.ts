@@ -219,6 +219,20 @@ export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as con
 
 export const customerApi = (id: number) => `${SALES_API}/customers/${String(id)}`;
 
+interface CallRecording {
+  id: string;
+  at: string;
+  duration: number;
+}
+
+export const callRecordingsQuery = (customer: number) =>
+  queryOptions({
+    queryKey: [...SALES_KEY, 'call-recordings', customer],
+    queryFn: ({ signal }) =>
+      api<{ results: CallRecording[] }>(`${customerApi(customer)}/recordings/`, { signal }),
+    retry: false,
+  });
+
 export const customerQuery = (id: number) =>
   queryOptions({
     queryKey: customerKey(id),

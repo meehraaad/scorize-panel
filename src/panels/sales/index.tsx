@@ -25,6 +25,7 @@ import {
   leadsQuery,
   healthQuery,
   historyQuery,
+  callRecordingsQuery,
   infoQuery,
   leadFilterOf,
   handoffQuery,
@@ -48,10 +49,11 @@ import { calendarKind } from '@/lib/i18n/useCalendar';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { hasAnyPermission, hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
-import { idParam, lazyPage } from '@/lib/router/lazyPage';
+import { idParam, lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import { salesSourcesQuery } from '@/lib/leads/api';
 import { notebookQuery } from '@/lib/notes/api';
 import { SALES_API } from '@/lib/sales/api';
+import type { RatingScope } from '@/lib/sales/callRatings';
 import {
   officeHoursQuery,
   phoneMenusQuery,
@@ -69,6 +71,15 @@ import type { PanelDefinition } from '../types';
 
 /** A customer page's id, or null (the page says the customer doesn't exist). */
 const customerOf = ({ params }: LoaderFunctionArgs) => idParam(params.id);
+
+const ratingsPage = (scope: RatingScope) => ({
+  ...lazyPage(() => import('@/features/sales/CallRatingsPage'), ['sales'], { skeleton: 'list' }),
+  loader: async () => {
+    const { callRatingsQuery } = await import('@/lib/sales/callRatings');
+    prefetchQueries([callRatingsQuery(scope)]);
+    return null;
+  },
+});
 
 /** `customers/:id/purchases|payments` (with `?payment=`) → the one "contract and money" tab. */
 const toMoney = ({ params, request }: LoaderFunctionArgs) =>
@@ -139,6 +150,12 @@ export const salesPanel: PanelDefinition = {
       icon: 'check',
     },
     {
+      id: 'call-ratings',
+      to: 'call-ratings',
+      label: 'panels.sales.nav.callRatings',
+      icon: 'star',
+    },
+    {
       id: 'manager',
       to: 'manager',
       label: 'panels.sales.nav.manager',
@@ -170,6 +187,7 @@ export const salesPanel: PanelDefinition = {
         skeleton: 'dashboard',
       }),
     },
+    { path: 'call-ratings', ...ratingsPage('mine') },
     {
       path: 'leads',
       ...lazyPage(() => import('@/features/sales/LeadsLayout'), ['sales']),
@@ -242,7 +260,9 @@ export const salesPanel: PanelDefinition = {
             data: (args) => {
               const id = customerOf(args);
               // The contract card (S71): the open offer, or the approved contract.
-              return id === null ? [] : [historyQuery(id), offerQuery(id), handoffQuery(id)];
+              return id === null
+                ? []
+                : [historyQuery(id), callRecordingsQuery(id), offerQuery(id), handoffQuery(id)];
             },
           }),
         },
@@ -520,6 +540,7 @@ export const salesPanel: PanelDefinition = {
                         },
                       ]
                     : []),
+                  { path: 'ratings', ...ratingsPage('team') },
                   ...(ON_SERVER.phoneVoices
                     ? [
                         {
