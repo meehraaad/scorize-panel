@@ -132,7 +132,12 @@ export function HistoryCard({ customer }: { customer: number }) {
 
             const key = `${customer}:${event.id}`;
             return (
-              <TimelineRow key={key} kind="call" at={event.at} title={t('customer.recordings.call')}>
+              <TimelineRow
+                key={key}
+                kind="call"
+                at={event.at}
+                title={t('customer.recordings.call')}
+              >
                 <span className="text-sm text-text-2">
                   {t('customer.recordings.duration', { seconds: f.number(event.duration) })}
                 </span>
