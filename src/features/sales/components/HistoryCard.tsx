@@ -15,7 +15,6 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { callRecordingsQuery, historyQuery, type HistoryEvent, type HistoryKind } from '../api';
-import { ContactNoteEditor } from './ContactNoteEditor';
 import { CallRecordingPlayer } from './CustomerCallRecordings';
 import { ContactNoteEditor } from './ContactNoteEditor';
 
