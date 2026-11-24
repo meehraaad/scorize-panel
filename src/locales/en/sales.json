@@ -799,7 +799,7 @@
       "noAnswerSendNote": {
         "sms": "An \"unanswered call\" SMS goes to the customer automatically and a follow-up is set for tomorrow. This call doesn't count as reaching them.",
         "whatsapp": "Saving opens your WhatsApp with the ready message; send it yourself. No SMS goes out, and a follow-up is set for tomorrow.",
-        "telegram": "Saving opens your Telegram with the ready message; send it yourself. No SMS goes out, and a follow-up is set for tomorrow.",
+        "telegram": "Saving opens your Telegram with the ready message and copies it too; send it yourself. No SMS goes out, and a follow-up is set for tomorrow.",
         "none": "Nothing is sent. Only a follow-up for tomorrow is set."
       },
       "noAnswerSmsText": "The SMS that goes out",
@@ -3287,7 +3287,13 @@
     "close": "Close"
   },
   "whatsAppPicker": {
-    "note": "WhatsApp's first preview may show question marks instead of emoji; the chat itself shows the text correctly.",
+    "copy": "Copy the text of “{{title}}”",
+    "copied": "Message copied.",
+    "copyFailed": "Couldn't copy the message. Try again.",
+    "noPhone": "This customer has no valid mobile number, so no chat opens. Copy the message and send it another way.",
+    "noPhoneShort": "No valid mobile number on file",
+    "noPhoneCopied": "No valid mobile number, so no chat opened; the message was copied.",
+    "note": "WhatsApp's first preview may show question marks instead of emoji; check the text in the chat itself before sending.",
     "title": "Which message should WhatsApp start with?",
     "own": "Mine",
     "blank": "No ready message",
@@ -3296,7 +3302,7 @@
   },
   "telegramPicker": {
     "title": "Which message to type in Telegram?",
-    "note": "Tapping a message opens the customer's Telegram chat with that text. If the customer doesn't let people find them by number in Telegram, the chat won't open."
+    "note": "Tapping a message opens the customer's Telegram chat with that text. If the customer doesn't let people find them by number in Telegram, the chat won't open; use the copy button beside the message."
   },
   "whenPicker": {
     "days": "Day",

@@ -30,7 +30,8 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { copyText } from '@/lib/clipboard';
 import { toLatinDigits } from '@/lib/text';
-import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
+import { LOST_REASONS, type Channel } from '@/lib/sales/api';
+import { messageHref } from '@/lib/sales/messageLink';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { type CallOutcome, type CustomerData } from '../api';
 import { useLogContact } from '../api/customerMutations';
@@ -190,7 +191,16 @@ export function LogDialog({
     // Open the app first: a window opened after the request would be blocked as a popup.
     const app = isMessage(channel) ? channel : appSend;
     if (app) {
-      window.open(messageHref(app, customer.phone, chosen?.text), '_blank', 'noreferrer');
+      const href = messageHref(app, customer.phone, chosen?.text);
+      // The text also waits on the clipboard (copied first, while the page still has focus):
+      // Telegram may not find the customer or take the draft, and with no mobile number no app opens.
+      if (chosen?.text && (app === 'telegram' || !href))
+        copyText(chosen.text, event.currentTarget)
+          .then(() =>
+            toast.success(t(href ? 'whatsAppPicker.copied' : 'whatsAppPicker.noPhoneCopied')),
+          )
+          .catch(() => toast.error(t('whatsAppPicker.copyFailed')));
+      if (href) window.open(href, '_blank', 'noreferrer');
     }
     log.mutate(
       {
