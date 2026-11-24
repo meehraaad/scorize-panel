@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
@@ -13,9 +13,8 @@ import { ApiError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
-import { historyQuery, type HistoryEvent, type HistoryKind } from '../api';
+import { callRecordingsQuery, historyQuery, type HistoryEvent, type HistoryKind } from '../api';
 import { CallRecordingPlayer } from './CustomerCallRecordings';
-import { useCallRecordings } from './useCallRecordings';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
@@ -59,7 +58,10 @@ export function HistoryCard({ customer }: { customer: number }) {
   );
   const kinds: readonly HistoryKind[] | null = FILTERS[filter];
   const showsRecordings = (filter === 'all' || filter === 'contact') && !q;
-  const { data: recordings, error: recordingsError } = useCallRecordings(customer, showsRecordings);
+  const { data: recordings, error: recordingsError } = useQuery({
+    ...callRecordingsQuery(customer),
+    enabled: showsRecordings,
+  });
   const history = data?.pages.flatMap((page) => page.results) ?? [];
   const events = history.filter((event) => kinds === null || kinds.includes(event.kind));
   // Older recordings enter the timeline as history pages are loaded.
