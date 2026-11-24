@@ -37,6 +37,7 @@ import {
   rulesQuery,
 } from '@/features/hr/pay/api';
 import { hrPath } from '@/features/hr/paths';
+import { teamQuery, teamsQuery } from '@/features/hr/teams/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery, START_PATH } from '@/lib/auth/session';
@@ -172,8 +173,21 @@ export const hrPanel: PanelDefinition = {
       path: 'staff',
       ...lazyPage(() => import('@/features/hr/StaffPage'), ['hr'], {
         guard: hrOnly,
-        data: () => [staffQuery()],
+        // «تیم‌ها» (`?view=teams`): the teams' cards.
+        data: ({ request }) => [
+          staffQuery(),
+          new URL(request.url).searchParams.get('view') === 'teams' && teamsQuery,
+        ],
         skeleton: 'list',
+      }),
+    },
+    {
+      // One team: its people's tasks (canvas "وضعیت تیم‌ها").
+      path: 'staff/teams/:team',
+      ...lazyPage(() => import('@/features/hr/teams/TeamPage'), ['hr'], {
+        guard: hrOnly,
+        data: ({ params }) => [teamQuery(params.team ?? '')],
+        skeleton: 'detail',
       }),
     },
     {

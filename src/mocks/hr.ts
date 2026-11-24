@@ -12,8 +12,10 @@ import type {
   OpenMove,
   StaffFile,
   StaffRow,
+  TaskNumbers,
   Team,
 } from '@/features/hr/api';
+import type { TeamCard, TeamDetail, TeamsData, TeamState } from '@/features/hr/teams/api';
 import type {
   OnboardingAnswers,
   OnboardingFileKind,
@@ -396,6 +398,22 @@ function today(): HrToday {
       ).length,
     },
     attendance: { present: 1, late: 1, absent: 0, pending: 1 },
+    tasks: summed(active.map((row) => tasksOf(row.id))),
+    alerts: [
+      {
+        kind: 'team_overdue',
+        team: 'sales',
+        overdue: 4,
+        staff: { id: 1, name: 'علی رضایی', face: null },
+        staff_overdue: 3,
+      },
+      {
+        kind: 'old_overdue',
+        staff: { id: 1, name: 'علی رضایی', face: null },
+        team: 'sales',
+        days: 9,
+      },
+    ],
     moves: openMoves(),
     ending: active.flatMap((row) => {
       const contract = row.contracts[0];
@@ -408,6 +426,155 @@ function today(): HrToday {
       const day = `${now.slice(0, 4)}${row.birth_date.slice(4)}`;
       return day >= now && day <= week ? [{ staff: { id: row.id, name: row.name }, day }] : [];
     }),
+  };
+}
+
+// Each person's own tasks (lang api/hr/v1/teams.py): Ali is behind, Maryam on time, Bahar new.
+const TASKS: Record<number, TaskNumbers> = {
+  1: {
+    open: 9,
+    overdue: 3,
+    today: 1,
+    oldest_days: 9,
+    done: 14,
+    done_on_time: 9,
+    on_time: 0.64,
+    on_time_before: 0.75,
+  },
+  2: {
+    open: 5,
+    overdue: 1,
+    today: 2,
+    oldest_days: 2,
+    done: 18,
+    done_on_time: 17,
+    on_time: 0.9,
+    on_time_before: 0.86,
+  },
+  3: {
+    open: 2,
+    overdue: 0,
+    today: 1,
+    oldest_days: null,
+    done: 0,
+    done_on_time: 0,
+    on_time: null,
+    on_time_before: null,
+  },
+};
+const NO_TASKS: TaskNumbers = {
+  open: 0,
+  overdue: 0,
+  today: 0,
+  oldest_days: null,
+  done: 0,
+  done_on_time: 0,
+  on_time: null,
+  on_time_before: null,
+};
+const tasksOf = (id: number) => TASKS[id] ?? NO_TASKS;
+
+function summed(rows: TaskNumbers[]): TaskNumbers {
+  const add = (key: 'open' | 'overdue' | 'today' | 'done' | 'done_on_time') =>
+    rows.reduce((total, row) => total + row[key], 0);
+  const share = (key: 'on_time' | 'on_time_before') => {
+    const known = rows.flatMap((row) => (row[key] === null ? [] : [row[key]]));
+    return known.length
+      ? Math.round((known.reduce((a, b) => a + b, 0) / known.length) * 100) / 100
+      : null;
+  };
+  const oldest = rows.flatMap((row) => (row.oldest_days === null ? [] : [row.oldest_days]));
+  return {
+    open: add('open'),
+    overdue: add('overdue'),
+    today: add('today'),
+    oldest_days: oldest.length ? Math.max(...oldest) : null,
+    done: add('done'),
+    done_on_time: add('done_on_time'),
+    on_time: share('on_time'),
+    on_time_before: share('on_time_before'),
+  };
+}
+
+function stateOfTeam(tasks: TaskNumbers, people: number): TeamState {
+  const perPerson = people ? tasks.overdue / people : 0;
+  if (perPerson >= 2 || (tasks.on_time !== null && tasks.on_time < 0.7)) return 'behind';
+  if (perPerson >= 1 || (tasks.on_time !== null && tasks.on_time < 0.8)) return 'attention';
+  return 'good';
+}
+
+const briefOf = (row: MockStaff) => ({ id: row.id, name: row.name, face: row.face });
+const MANAGER = { id: 9, name: 'رضا کامرانی' };
+
+function teams(): TeamsData {
+  const active = staff.filter((row) => row.is_active);
+  const names = [...new Set(active.flatMap((row) => (row.team ? [row.team] : [])))];
+  const cards: TeamCard[] = names.map((team) => {
+    const members = active.filter((row) => row.team === team);
+    const tasks = summed(members.map((row) => tasksOf(row.id)));
+    const states = members.map(stateOf);
+    return {
+      team,
+      manager: MANAGER,
+      people: members.map(briefOf),
+      tasks,
+      state: stateOfTeam(tasks, members.length),
+      counts: {
+        trial: states.filter((state) => state === 'trial').length,
+        joining: states.filter((state) => state === 'joining').length,
+        leaving: states.filter((state) => state === 'leaving').length,
+        ending: members.filter((row) => row.contracts[0]?.end && row.contracts[0].end <= inDays(30))
+          .length,
+      },
+    };
+  });
+  return { teams: cards, no_team: active.filter((row) => !row.team).map(briefOf) };
+}
+
+function team(name: string): TeamDetail | null {
+  const members = staff.filter((row) => row.is_active && row.team === name);
+  if (!members.length) return null;
+  const tasks = summed(members.map((row) => tasksOf(row.id)));
+  const people = members
+    .map((row) => {
+      const contract = row.contracts[0];
+      const end = contract?.end && contract.end <= inDays(30) ? contract.end : null;
+      return {
+        ...briefOf(row),
+        position: row.position?.name ?? null,
+        tasks: tasksOf(row.id),
+        state: stateOf(row),
+        contract_end: end,
+        trial: contract?.kind === 'trial',
+      };
+    })
+    .sort((a, b) => b.tasks.overdue - a.tasks.overdue);
+  return {
+    team: name as Team,
+    manager: MANAGER,
+    tasks,
+    state: stateOfTeam(tasks, members.length),
+    months: [
+      { year: 1405, month: 9, first: '2026-11-22', on_time: tasks.on_time },
+      { year: 1405, month: 8, first: '2026-10-23', on_time: tasks.on_time_before },
+      { year: 1405, month: 7, first: '2026-09-23', on_time: 0.81 },
+      { year: 1405, month: 6, first: '2026-08-23', on_time: null },
+    ],
+    people,
+    overdue_tasks: members.flatMap((row) =>
+      tasksOf(row.id).overdue
+        ? [
+            {
+              id: 900 + row.id,
+              text: 'پیگیری مدارک سفارت',
+              days: tasksOf(row.id).oldest_days ?? 1,
+              owner: { id: row.id, name: row.name },
+            },
+          ]
+        : [],
+    ),
+    overdue_count: tasks.overdue,
+    coming: [],
   };
 }
 
@@ -516,6 +683,12 @@ const closed = () => HttpResponse.json({ detail: 'This form is closed.' }, { sta
 export const hrHandlers = [
   http.get(`${API}/today/`, () => (allowed() ? HttpResponse.json(today()) : forbidden())),
   http.get(`${API}/options/`, () => (allowed() ? HttpResponse.json(OPTIONS) : forbidden())),
+  http.get(`${API}/teams/`, () => (allowed() ? HttpResponse.json(teams()) : forbidden())),
+  http.get(`${API}/teams/:team/`, ({ params }) => {
+    if (!allowed()) return forbidden();
+    const detail = team(String(params.team));
+    return detail ? HttpResponse.json(detail) : notFound();
+  }),
   http.get(`${API}/calendar/`, ({ request }) => {
     if (!allowed()) return forbidden();
     const params = new URL(request.url).searchParams;
