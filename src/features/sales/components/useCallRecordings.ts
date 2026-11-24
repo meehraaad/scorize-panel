@@ -15,7 +15,8 @@ export function recordingsPath(customer: number) {
 export function useCallRecordings(customer: number, enabled: boolean) {
   return useQuery({
     queryKey: [...SALES_KEY, 'call-recordings', customer],
-    queryFn: ({ signal }) => api<{ results: CallRecording[] }>(recordingsPath(customer), { signal }),
+    queryFn: ({ signal }) =>
+      api<{ results: CallRecording[] }>(recordingsPath(customer), { signal }),
     enabled,
     retry: false,
   });
