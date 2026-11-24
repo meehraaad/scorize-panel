@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
+import { iconButtonClass } from '@/components/ui/buttonStyles';
+import { Icon } from '@/components/ui/Icon';
 import { API_BASE } from '@/lib/api/client';
 import { customerApi } from '../api/customer';
 
@@ -25,8 +26,14 @@ export function CallRecordingPlayer({
       src={`${API_BASE}${customerApi(customer)}/recordings/${encodeURIComponent(recording)}/`}
     />
   ) : (
-    <Button variant="outline" onClick={onPlay}>
-      {label}
-    </Button>
+    <button
+      type="button"
+      className={iconButtonClass('quiet')}
+      aria-label={label}
+      title={label}
+      onClick={onPlay}
+    >
+      <Icon name="play" size={26} className="text-primary-text" />
+    </button>
   );
 }
