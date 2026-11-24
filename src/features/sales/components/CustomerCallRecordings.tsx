@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { API_BASE } from '@/lib/api/client';
-import { recordingsPath } from './useCallRecordings';
+import { customerApi } from '../api/customer';
 
 export function CallRecordingPlayer({
   customer,
@@ -22,7 +22,7 @@ export function CallRecordingPlayer({
       controls
       autoPlay
       aria-label={label}
-      src={`${API_BASE}${recordingsPath(customer)}${encodeURIComponent(recording)}/`}
+      src={`${API_BASE}${customerApi(customer)}/recordings/${encodeURIComponent(recording)}/`}
     />
   ) : (
     <Button variant="outline" onClick={onPlay}>
