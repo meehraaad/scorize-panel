@@ -9,7 +9,7 @@ const customer = {
   id: 1240,
   name: 'سارا محمدی',
   items: [
-    { id: 124000, kind: 'admission', name: 'پذیرش', detail: 'آلمان', status: 'open', case: 1240 },
+    { id: 124000, kind: 'admission', name: 'پذیرش', detail: 'آلمان', status: 'open', case: 271 },
     { id: 1240, kind: 'writing', name: 'sop', detail: null, status: 'new', case: null },
   ],
 };

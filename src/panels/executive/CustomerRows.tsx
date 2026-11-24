@@ -1,39 +1,16 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { Avatar } from '@/components/ui/Avatar';
 import { Chip, StatusText, type ChipTone } from '@/components/ui/Chip';
-import { type WorkCustomer, workPath } from '@/features/executive/api';
+import type { WorkCustomer } from '@/features/executive/api';
 import { StageChip } from '@/features/supervisor/components/Chips';
-import { customerWorkspacePath } from './customer/paths';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { CustomerName } from './CustomerName';
 import type { CustomerCase, EmailState } from './customersApi';
 
 const EMAIL_TONE: Record<EmailState, ChipTone> = { on: 'good', off: 'danger', waiting: 'warn' };
 const DUE_TONE = { today: 'text-warn', late: 'text-danger' };
 
 const CELL = 'px-3 py-3 align-middle first:ps-5 last:pe-5';
-
-function CustomerName({ name, detail, to }: { name: string; detail?: string; to: string | null }) {
-  return (
-    <div className="flex min-w-0 items-center gap-3 text-start">
-      <Avatar name={name} shape="rounded" tone="primary" />
-      <div className="min-w-0">
-        {to ? (
-          <Link
-            to={to}
-            className="inline-flex min-h-11 items-center rounded-lg font-bold wrap-anywhere hover:text-primary-text hover:underline"
-          >
-            {name}
-          </Link>
-        ) : (
-          <span className="font-bold wrap-anywhere">{name}</span>
-        )}
-        {detail && <div className="text-label font-normal text-text-2">{detail}</div>}
-      </div>
-    </div>
-  );
-}
 
 function ServicePill({
   name,
@@ -90,7 +67,7 @@ export function CustomerRows({ rows }: { rows: CustomerCase[] }) {
             ]
               .filter(Boolean)
               .join(' · ')}
-            to={customerWorkspacePath(row.id, 'desk')}
+            id={row.id}
           />
         ),
         services: (
@@ -165,12 +142,7 @@ export function AssignedRows({ rows }: { rows: WorkCustomer[] }) {
     <ResponsiveList
       rows={rows.map((row) => ({
         id: row.id,
-        name: (
-          <CustomerName
-            name={row.name}
-            to={workPath(new URLSearchParams({ customer: String(row.id) }))}
-          />
-        ),
+        name: <CustomerName name={row.name} id={row.id} />,
         services: (
           <div className="flex flex-wrap gap-1">
             {row.items.map((item) => {
