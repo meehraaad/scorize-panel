@@ -5,6 +5,7 @@ import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
 import { customerWorkspaceRoute } from './customer/routes';
+import { managerNavItem, managerRoute } from './manager';
 
 export const executivePanel: PanelDefinition = {
   id: 'executive',
@@ -50,6 +51,8 @@ export const executivePanel: PanelDefinition = {
       tab: 'panels.executive.nav.tasks',
       icon: 'fileCheck',
     },
+    // Executive management: the supervisor manager's pages and the mail servers, by key.
+    managerNavItem,
   ],
   routes: [
     {
@@ -122,5 +125,6 @@ export const executivePanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
+    managerRoute,
   ],
 };

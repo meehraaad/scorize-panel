@@ -778,7 +778,7 @@
     "searchSoon": "The search tool (suggested programs and professors) will come here. For now, move the search on by its stages on this tab."
   },
   "manager": {
-    "nav": "Supervisor management sections",
+    "nav": "Executive management sections",
     "section": {
       "new": "New cases",
       "cases": "Team cases",
@@ -786,7 +786,8 @@
       "move": "Move cases",
       "services": "Service status",
       "scopes": "Supervisors",
-      "kinds": "Services"
+      "kinds": "Services",
+      "mail": "Email"
     },
     "cases": {
       "title": "Team cases",
