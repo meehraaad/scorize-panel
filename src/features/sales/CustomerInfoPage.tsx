@@ -10,8 +10,6 @@ import { Icon } from '@/components/ui/Icon';
 import { IconButton } from '@/components/ui/IconButton';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TextField } from '@/components/ui/TextField';
-import { copyText } from '@/lib/clipboard';
-import { toast } from '@/lib/toast';
 import { safeHref } from '@/lib/url';
 import {
   CHOICES,
@@ -23,6 +21,7 @@ import {
   type ExamEntry,
   type Option,
 } from './api';
+import { CopyTabletLink } from './components/CopyTabletLink';
 import { useCustomerId } from './useCustomerId';
 import { useInfoAutosave, type InfoDraft, type SectionName } from './useInfoAutosave';
 
@@ -482,28 +481,5 @@ function ExamsCard() {
         </fieldset>
       ))}
     </InfoForm>
-  );
-}
-
-/**
- * The tablet form's link to send a customer before they come in. It names no one: it opens with
- * whoever is logged in, so it can't show or change another customer's details.
- */
-function CopyTabletLink({ url }: { url: string }) {
-  const { t } = useTranslation('sales');
-  if (!url) return null;
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        copyText(url)
-          .then(() => toast.success(t('info.tablet.copied')))
-          .catch(() => toast.error(t('info.tablet.copyFailed')));
-      }}
-      className={buttonClass('outline', 'h-10 px-4 text-[13px]')}
-    >
-      <Icon name="paperclip" size={15} />
-      {t('info.tablet.copy')}
-    </button>
   );
 }

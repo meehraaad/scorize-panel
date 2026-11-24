@@ -75,6 +75,9 @@
   --color-hero-info: var(--hero-info);
   --color-hero-danger: var(--hero-danger);
   --color-toast: var(--toast);
+  --color-brand-whatsapp: var(--brand-whatsapp);
+  --color-brand-telegram: var(--brand-telegram);
+  --color-dock: var(--dock);
   --color-on-luxe-2: var(--on-luxe-2);
   --color-on-forest-2: var(--on-forest-2);
   --color-luxe-gold-light: var(--luxe-gold-light);
@@ -103,6 +106,7 @@
   --shadow-hero: var(--hero-shadow);
   --shadow-toast: var(--toast-shadow);
   --shadow-float: var(--float-shadow);
+  --shadow-dock: var(--dock-shadow);
   --shadow-luxe: var(--luxe-shadow);
 
   --container-page: var(--page-width);
@@ -298,6 +302,42 @@
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.22),
     0 10px 26px -10px var(--cta-glow);
+}
+/* A short label under an icon-only button, shown on hover and keyboard focus: put the text in
+   data-tip (the button keeps its aria-label for screen readers). Not on touch screens. */
+@utility tip {
+  position: relative;
+  &[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    z-index: 20;
+    translate: -50% -2px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: var(--toast);
+    color: var(--on-hero);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 0.12s,
+      translate 0.12s;
+  }
+  &[data-tip]:hover::after,
+  &[data-tip]:focus-visible::after {
+    opacity: 1;
+    translate: -50% 0;
+  }
+  @media (hover: none) {
+    &[data-tip]::after {
+      display: none;
+    }
+  }
 }
 @utility animate-drift {
   animation: drift 7s ease-in-out infinite;

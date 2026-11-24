@@ -34,9 +34,9 @@ describe('mail page', () => {
       await screen.findByRole('heading', { name: 'ایمیل‌های متقاضیان', level: 1 }),
     ).toBeInTheDocument();
     expect(
-      within(
-        screen.getByRole('navigation', { name: 'بخش‌های مدیریت اجرایی' }),
-      ).getByRole('link', { name: 'ایمیل‌ها' }),
+      within(screen.getByRole('navigation', { name: 'بخش‌های مدیریت اجرایی' })).getByRole('link', {
+        name: 'ایمیل‌ها',
+      }),
     ).toBeInTheDocument();
     const persia = screen.getByRole('region', { name: 'PersiaMail' });
     expect(within(persia).getByText('۲۰۸')).toBeInTheDocument();
