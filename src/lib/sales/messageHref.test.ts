@@ -12,8 +12,11 @@ describe('messageHref', () => {
     expect(new URL(href).searchParams.get('phone')).toBe('989121234567');
   });
 
-  it("Telegram: the customer's chat by number, no text (it can't carry one)", () => {
-    expect(messageHref('telegram', '09121234567', TEXT)).toBe('https://t.me/+989121234567');
+  it("Telegram: the customer's chat by number, with the draft encoded once", () => {
+    const href = messageHref('telegram', '09121234567', TEXT);
+    expect(href.startsWith('https://t.me/+989121234567?text=')).toBe(true);
+    expect(new URL(href).searchParams.get('text')).toBe(TEXT);
+    expect(messageHref('telegram', '09121234567')).toBe('https://t.me/+989121234567');
   });
 
   it('SMS: the text encoded once', () => {

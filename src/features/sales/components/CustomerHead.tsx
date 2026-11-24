@@ -333,9 +333,8 @@ function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () =>
 
 /**
  * "Message": WhatsApp or Telegram with the customer's chat. With ready messages it first asks which
- * one (the seller's own first, or none): WhatsApp gets it typed in, Telegram gets it copied to paste
- * (its link can't carry a text). Without any it opens the app in one click. SMS and logging a
- * message stay in the contact log ("Log a contact").
+ * one to type in (the seller's own first, or none); without any it opens the app in one click.
+ * SMS and logging a message stay in the contact log ("Log a contact").
  */
 function MessageButton({
   customer,

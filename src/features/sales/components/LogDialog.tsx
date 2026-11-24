@@ -191,9 +191,6 @@ export function LogDialog({
     const app = isMessage(channel) ? channel : appSend;
     if (app) {
       window.open(messageHref(app, customer.phone, chosen?.text), '_blank', 'noreferrer');
-      // A Telegram link can't carry the text: it waits on the clipboard to paste.
-      if (app === 'telegram' && chosen?.text)
-        void navigator.clipboard.writeText(chosen.text).catch(() => {});
     }
     log.mutate(
       {
