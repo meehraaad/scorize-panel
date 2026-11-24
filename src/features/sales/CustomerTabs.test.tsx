@@ -1,10 +1,13 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { getResponse, http, HttpResponse } from 'msw';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
+import { handlers } from '@/mocks/handlers';
 import { renderApp } from '@/test/renderApp';
+import type { CustomerData } from './api';
 import { scheduleComplete, scheduleTotal, spreadRest, suggestedSchedule } from './plan';
-import '@/test/server';
+import { server } from '@/test/server';
 import { toasts } from '@/test/toasts';
 
 const NIMA = 3;
@@ -164,6 +167,35 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     expect(write).toHaveBeenCalledWith('https://scorize.com/panel/background');
     expect(await toasts().findByText(/^لینک فرم تبلت کپی شد/)).toBeInTheDocument();
     expect(tablet).toHaveAttribute('data-tip', 'کپی شد');
+    write.mockRestore();
+  });
+
+  it('head: the tablet link shows from the overview alone, with no phone, and only when sent', async () => {
+    // The overview as the mock sends it, changed: no mobile number and no ready messages.
+    let share: string | undefined = 'https://scorize.com/panel/background';
+    server.use(
+      http.get('/api/sales/v1/customers/:id/', async ({ request }) => {
+        const answer = await getResponse(handlers, request);
+        const data = (await answer?.json()) as CustomerData;
+        return HttpResponse.json({ ...data, phone: '', templates: [], tablet_share_url: share });
+      }),
+    );
+    const user = userEvent.setup();
+    const write = vi.spyOn(navigator.clipboard, 'writeText');
+    // A direct load of the overview: the info tab (which has its own copy) is never opened.
+    renderApp(ERFAN);
+    let quick = await screen.findByRole('group', { name: 'دسترسی سریع' });
+    await user.click(within(quick).getByRole('button', { name: 'کپی لینک فرم تبلت' }));
+    // The generic link, never the office's customer-specific tablet_url.
+    expect(write).toHaveBeenCalledWith('https://scorize.com/panel/background');
+    cleanup();
+
+    // An overview without the link (a Django from before it was sent): the rest stays.
+    share = undefined;
+    renderApp(ERFAN);
+    quick = await screen.findByRole('group', { name: 'دسترسی سریع' });
+    expect(within(quick).queryByRole('button', { name: 'کپی لینک فرم تبلت' })).toBeNull();
+    expect(quick.querySelectorAll('a, button')).toHaveLength(3);
     write.mockRestore();
   });
 

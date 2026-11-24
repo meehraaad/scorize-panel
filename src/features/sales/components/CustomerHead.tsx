@@ -117,7 +117,8 @@ export function CustomerHead({
               {t('customer.log')}
             </button>
             {/* What everyone knows by its icon: chat apps by their logos, then the office ones. */}
-            <Dock label={t('customer.quick')} className="max-sm:order-3 max-sm:justify-between">
+            {/* Phones: as wide as its icons (not stretched across the row), so the groups stay together. */}
+            <Dock label={t('customer.quick')} className="max-sm:order-3 max-sm:justify-self-start">
               <MessageButton customer={customer} channel="whatsapp" />
               <MessageButton customer={customer} channel="telegram" />
               <DockDivider />
@@ -253,13 +254,17 @@ function Menu({
       <summary
         className={buttonClass(
           'outline',
-          `h-12 cursor-pointer list-none max-sm:w-full max-sm:px-4 [&::-webkit-details-marker]:hidden ${className}`,
+          `h-12 cursor-pointer list-none max-sm:size-12 max-sm:px-0 [&::-webkit-details-marker]:hidden ${className}`,
         )}
       >
         <Icon name={icon} size={17} />
-        {/* Phones: the icon alone, so the quick actions fit beside it. */}
+        {/* Phones: the icon alone (the label stays its name), so the quick actions fit beside it. */}
         <span className="max-sm:sr-only">{label}</span>
-        <Icon name="chevronDown" size={15} className="transition-transform group-open:rotate-180" />
+        <Icon
+          name="chevronDown"
+          size={15}
+          className="transition-transform group-open:rotate-180 max-sm:hidden"
+        />
       </summary>
       {/* A choice closes the menu. */}
       <div
