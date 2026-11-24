@@ -220,9 +220,9 @@ See [Phase 6 comparison](assessment/phase-6-comparison.md).
 
 ## Executive customer workspace
 
-Django advertises the workspace through `whoami.executive_customer_workspace`. The customer route
-uses the account ID. A workspace returns the applicant ID only when the staff member can open the
-case. Writing-only assignments use the existing writing order permissions.
+The expanded Customers list links directly to Work Desk using the account ID. Django authenticates
+that workspace request and returns the applicant ID only when the staff member can open the case.
+Writing-only assignments use the existing writing order permissions.
 
 The routes under `/api/executive/v1/customers/<user>/` cover the workspace summary, open and completed
 tasks, customer information, contract payments, and the case report. Documents, application

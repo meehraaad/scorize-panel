@@ -5,8 +5,6 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Chip, StatusText, type ChipTone } from '@/components/ui/Chip';
 import { type WorkCustomer, workPath } from '@/features/executive/api';
 import { StageChip } from '@/features/supervisor/components/Chips';
-import { casePath } from '@/features/supervisor/paths';
-import { useUser } from '@/lib/auth/session';
 import { customerWorkspacePath } from './customer/paths';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { CustomerCase, EmailState } from './customersApi';
@@ -75,7 +73,6 @@ export function CustomerRows({ rows }: { rows: CustomerCase[] }) {
   const { t } = useTranslation(['executive', 'supervisor']);
   const f = useFormat();
   const dash = t('supervisor:dash');
-  const workspace = useUser().executive_customer_workspace;
 
   return (
     <ResponsiveList
@@ -93,13 +90,7 @@ export function CustomerRows({ rows }: { rows: CustomerCase[] }) {
             ]
               .filter(Boolean)
               .join(' · ')}
-            to={
-              workspace
-                ? customerWorkspacePath(row.id)
-                : row.case_id === null
-                  ? null
-                  : casePath(row.case_id)
-            }
+            to={customerWorkspacePath(row.id, 'desk')}
           />
         ),
         services: (

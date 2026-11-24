@@ -45,8 +45,9 @@ it('opens the new Customers tab and uses the existing assigned-customer list', a
   expect(screen.queryByRole('button', { name: 'Upload CSV' })).not.toBeInTheDocument();
 });
 
-it('opens the expanded list when the live Django session advertises it', async () => {
+it('opens Work Desk from the expanded list without a workspace flag', async () => {
   flag.expanded = false;
+  const user = userEvent.setup();
   server.use(
     http.get('/api/profile/auth/v1/whoami/', () =>
       HttpResponse.json({
@@ -68,9 +69,19 @@ it('opens the expanded list when the live Django session advertises it', async (
       }),
     ),
   );
-  renderApp('/executive/customers');
+  const router = renderApp('/executive/customers');
   expect(await screen.findByRole('searchbox', { name: 'Search customers' })).toBeVisible();
   expect(await screen.findByRole('columnheader', { name: 'My next task' })).toBeInTheDocument();
+  const [customer] = await screen.findAllByRole('link', { name: 'سارا محمدی' });
+  if (!customer) throw new Error('Customer link did not render');
+  expect(customer).toHaveAttribute('href', '/executive/customers/1240/desk');
+  await user.click(customer);
+  const workspace = await screen.findByRole('navigation', { name: 'Customer workspace' });
+  expect(within(workspace).getByRole('link', { name: 'Work Desk' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  expect(router.state.location.pathname).toMatch(/^\/executive\/customers\/1240\/desk\b/);
 });
 
 it('switches scope, pages through customers and resets to page one when filtering by a queue', async () => {
@@ -79,11 +90,11 @@ it('switches scope, pages through customers and resets to page one when filterin
   await user.click(await screen.findByRole('button', { name: /My team/ }));
   await user.click(await screen.findByRole('button', { name: 'Go to page 2' }));
   const result = await screen.findAllByRole('link', { name: 'امید رضوانی' });
-  expect(result[0]).toHaveAttribute('href', '/executive/customers/1218');
+  expect(result[0]).toHaveAttribute('href', '/executive/customers/1218/desk');
   await user.click(screen.getByRole('button', { name: /Due today/ }));
   await waitFor(() => expect(router.state.location.search).toBe('?scope=team&queue=today'));
   const matching = await screen.findAllByRole('link', { name: 'سارا محمدی' });
-  expect(matching[0]).toHaveAttribute('href', '/executive/customers/1240');
+  expect(matching[0]).toHaveAttribute('href', '/executive/customers/1240/desk');
   expect(await screen.findByRole('link', { name: 'Export CSV' })).toHaveAttribute(
     'href',
     '/api/executive/v1/customers/export/?scope=team&queue=today',

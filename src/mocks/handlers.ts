@@ -104,7 +104,6 @@ const users: MockUser[] = [
     phone_number: '09120000001',
     password: MOCK_PASSWORD,
     executive_panel: true,
-    executive_customer_workspace: true,
     staff: { id: 7, full_name: 'مریم کاظمی', team: 1, is_active: true },
     applicant: null,
     is_country_supervisor: false,
