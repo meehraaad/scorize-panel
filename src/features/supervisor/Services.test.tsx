@@ -49,7 +49,7 @@ describe('client services (SVC2)', () => {
   });
 
   it('lists the open services nobody owns on the new-cases page', async () => {
-    renderApp('/supervisor/manager');
+    renderApp('/executive/manager');
     const card = await screen.findByRole('region', { name: 'خدمت‌های بی‌مسئول' });
     expect(within(card).getAllByRole('link', { name: 'سارا محمدی' })).toHaveLength(2);
     expect(within(card).getByText('ویزا · آلمان')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('client services (SVC2)', () => {
 
   it('chooses an owner right on the new-cases page', async () => {
     const user = userEvent.setup();
-    renderApp('/supervisor/manager');
+    renderApp('/executive/manager');
     const card = await screen.findByRole('region', { name: 'خدمت‌های بی‌مسئول' });
     await user.click(
       within(card).getByRole('button', { name: 'انتخاب مسئول ویزا · آلمان برای سارا محمدی' }),
@@ -132,7 +132,7 @@ describe('client services (SVC2)', () => {
 
   it('gives a supervisor a scope until nothing differs from today (SVC5)', async () => {
     const user = userEvent.setup();
-    renderApp('/supervisor/manager/scopes');
+    renderApp('/executive/manager/scopes');
     const differences = await screen.findByRole('region', { name: 'اختلاف با قاعده‌ی امروز' });
     expect(within(differences).getByText('۱ اختلاف')).toBeInTheDocument();
     expect(within(differences).getByRole('link', { name: 'رضا احمدی' })).toBeInTheDocument();
@@ -157,7 +157,7 @@ describe('client services (SVC2)', () => {
 
   it('shows how each team and owner answers, by period (SVC6)', async () => {
     const user = userEvent.setup();
-    renderApp('/supervisor/manager/services');
+    renderApp('/executive/manager/services');
     const teams = await screen.findByRole('region', { name: 'تیم‌ها' });
     expect(within(teams).getByText('تیم ویزا')).toBeInTheDocument();
     const owners = screen.getByRole('region', { name: 'مسئول‌ها' });

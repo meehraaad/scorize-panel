@@ -22,7 +22,7 @@ describe('service settings', () => {
   });
 
   it("shows each service's team, tool and stages", async () => {
-    renderApp('/supervisor/manager/kinds');
+    renderApp('/executive/manager/kinds');
     await screen.findByRole('heading', { name: 'تنظیم خدمت‌ها', level: 1 });
     const visa = screen.getByRole('listitem', { name: 'ویزا' });
     expect(visa).toHaveTextContent('تیم ویزا');
@@ -37,7 +37,7 @@ describe('service settings', () => {
 
   it('makes a simple service and gives it stages', async () => {
     const user = userEvent.setup();
-    renderApp('/supervisor/manager/kinds');
+    renderApp('/executive/manager/kinds');
     await user.click(await screen.findByRole('button', { name: 'خدمت تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'خدمت تازه' });
     await user.click(within(dialog).getByRole('button', { name: 'ساختن خدمت' }));
@@ -74,7 +74,7 @@ describe('service settings', () => {
 
   it("keeps a stage the system moves services to, and a built-in service's country rule", async () => {
     const user = userEvent.setup();
-    renderApp('/supervisor/manager/kinds');
+    renderApp('/executive/manager/kinds');
     const admission = await screen.findByRole('listitem', { name: 'پذیرش' });
     await user.click(within(admission).getByRole('button', { name: 'مرحله‌ها' }));
     const stages = await screen.findByRole('dialog', { name: 'مرحله‌های پذیرش' });

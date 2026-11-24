@@ -595,7 +595,7 @@ To deploy: add `activity` to the production
 ## Mail servers and the email bot's rules (2026-11-01)
 
 Managers run our own mail servers (PersiaMail, GradNexus) and the applicants' mailboxes from the supervisor panel's
-mail page (`/supervisor/mail`, `src/features/mail/`, permission `mail_server.manage_mailboxes`), and a case's bot
+mail page (`/executive/manager/mail`, moved from `/supervisor/mail`, `src/features/mail/`, permission `mail_server.manage_mailboxes`), and a case's bot
 gets its own settings inside the managers' rules (the bot bar of the applications tab). Built on scorize-revolution
 #40 (`claude/project-thread-qyb5p5`, docs/mail-servers.md there), tested, not deployed. Off in `onServer.ts`
 (`mailServers`) until it is: no mail page, and the bot bar has no settings. To deploy: `makemigrations mail_server`
@@ -649,7 +649,7 @@ While Django has it off, `services` and `unassigned_services` are null and the p
 
 ## Supervisor manager's section (2026-11-22)
 
-The supervisor panel's «مدیریت سرپرستی» tab (`/supervisor/manager`, `can_assign_supervisor`): new cases, team cases,
+The executive panel's «مدیریت اجرایی» tab (`/executive/manager`, moved from `/supervisor/manager`, `can_assign_supervisor`): new cases, team cases,
 team, service status and supervisors as sub-tabs. Backend: `api/supervisor/v1/manager.py` in `shamrad/lang`.
 
 | #   | Change                                                                                                                                                                                                                                                            | State |

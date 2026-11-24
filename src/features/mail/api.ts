@@ -1,13 +1,14 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
+import { MAILBOXES_PERMISSION } from '@/lib/auth/roles';
 
 /**
  * Our own mail servers (PersiaMail, GradNexus) and the applicants' mailboxes on them, and the
  * rules every applicant's email bot runs inside. Django: scorize-revolution `api/mail/v1/`,
  * docs/mail-servers.md there. Managers with `mail_server.manage_mailboxes` only.
  */
-export const MAIL_PERMISSION = 'manage_mailboxes';
+export const MAIL_PERMISSION = MAILBOXES_PERMISSION;
 export const MAIL_API = '/mail/v1';
 export const MAIL_KEY = ['mail'] as const;
 

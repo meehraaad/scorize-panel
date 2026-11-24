@@ -29,6 +29,12 @@ export type Role =
 export const FOUNDERS_PERMISSION = 'use_founders_assistant';
 
 /**
+ * mail_server.manage_mailboxes: our mail servers and the applicants' mailboxes (executive panel >
+ * executive management > mail).
+ */
+export const MAILBOXES_PERMISSION = 'manage_mailboxes';
+
+/**
  * The two keys of management > messages (user_profile.manage_system_messages / _ready_): the
  * automatic messages and the ready ones. Given on management > access.
  */

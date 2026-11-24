@@ -34,9 +34,7 @@
         "tickets": "Tickets",
         "reports": "Reports",
         "tasks": "My tasks",
-        "mail": "Mailboxes",
-        "services": "My services",
-        "manager": "Management"
+        "services": "My services"
       },
       "tabs": {
         "today": "Today",
@@ -70,7 +68,8 @@
         "customers": "Customers",
         "work": "Work Table",
         "tickets": "Tickets",
-        "tasks": "Tasks"
+        "tasks": "Tasks",
+        "manager": "Executive management"
       }
     },
     "writer": {
