@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { NavLink, Navigate, Outlet, useOutletContext, useParams } from 'react-router';
+import { NavLink, Outlet, useOutletContext, useParams } from 'react-router';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageStack } from '@/components/ui/PageColumns';
@@ -17,13 +17,6 @@ export default function CustomerWorkDesk() {
   const { services, writing, id } = workspace;
   const tabs = services.filter((service) => workspace.service_tabs.includes(service.id));
   const canReadWriting = writing.length > 0;
-  if (!active) {
-    const first =
-      tabs.find((service) => service.owner?.id === staff) ?? (canReadWriting ? null : tabs[0]);
-    const key = first ? String(first.id) : canReadWriting ? 'writing' : '';
-    if (key) return <Navigate replace to={customerWorkspacePath(id, `desk/${key}`)} />;
-  }
-
   return (
     <PageStack>
       {(tabs.length > 0 || canReadWriting) && (
