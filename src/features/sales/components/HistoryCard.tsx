@@ -13,6 +13,7 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { historyQuery, type HistoryEvent, type HistoryKind } from '../api';
+import { CustomerCallRecordings } from './CustomerCallRecordings';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
@@ -87,6 +88,7 @@ export function HistoryCard({ customer }: { customer: number }) {
         </div>
       }
     >
+      <CustomerCallRecordings key={customer} customer={customer} />
       {isPending ? (
         <SkeletonRows rows={4} />
       ) : events.length === 0 ? (
