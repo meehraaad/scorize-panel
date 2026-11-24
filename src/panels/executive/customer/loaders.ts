@@ -58,7 +58,7 @@ export const loadWorkspacePage: WorkspaceLoader = async (page, { params }) => {
   const id = idParam(params.id);
   if (id === null) return null;
   const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
-  if (!user?.executive_customer_workspace || !getRoles(user).includes('executive')) return null;
+  if (!user || !getRoles(user).includes('executive')) return null;
 
   const workspace = await queryClient.query(workspaceQuery(id));
   if (!workspace) return null;
@@ -70,8 +70,12 @@ export const loadWorkspacePage: WorkspaceLoader = async (page, { params }) => {
 
   if (page === 'frame') return null;
   if (page === 'desk') {
-    if (file && workspace.service_tabs.length === 0 && workspace.writing.length === 0)
-      prefetchQueries([applicationsQuery(file.id)]);
+    const services = workspace.services.filter(({ id }) => workspace.service_tabs.includes(id));
+    const owned = services.find(({ owner }) => owner?.id === user.staff?.id);
+    const service = owned?.id ?? (workspace.writing.length > 0 ? 'writing' : services[0]?.id);
+    if (service !== undefined)
+      return redirect(customerWorkspacePath(id, `desk/${String(service)}`));
+    if (file) prefetchQueries([applicationsQuery(file.id)]);
   } else if (page === 'service') {
     prefetchQueries(serviceQueries(workspace, params.service));
   } else if (page === 'tasks') {
