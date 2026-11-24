@@ -52,10 +52,15 @@ export const CHANNEL_ICON = { whatsapp: 'whatsapp', telegram: 'telegram', sms: '
 /** 09xxxxxxxxx → 989xxxxxxxxx (international, no plus). */
 const international = (phone: string) => `98${phone.replace(/^0/, '')}`;
 
-/** A link that opens the messaging app with `text` ready to send. */
+/**
+ * A link that opens the messaging app with `text` ready to send. Telegram can't carry a text to a
+ * phone number: the caller copies it for the seller to paste.
+ */
 export function messageHref(channel: MessageChannel, phone: string, text = '') {
   const body = encodeURIComponent(text);
-  if (channel === 'whatsapp') return `https://wa.me/${international(phone)}?text=${body}`;
+  // The long form, not wa.me: wa.me redirects here and the redirect turns emoji (🌹) into "?".
+  if (channel === 'whatsapp')
+    return `https://api.whatsapp.com/send?phone=${international(phone)}&text=${body}`;
   if (channel === 'telegram') return `https://t.me/+${international(phone)}`;
   return `sms:${phone}${text ? `?body=${body}` : ''}`;
 }

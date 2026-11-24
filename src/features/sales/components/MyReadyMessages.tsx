@@ -194,6 +194,8 @@ function MyReadyDialog({
           onChange={setText}
           variables={variables}
           variablesLabel={t('myReady.addVariable')}
+          hint={t('myReady.stickerHint')}
+          imagePastedHint={t('myReady.stickerPasted')}
         />
         {text.trim() && (
           <VariablePreview label={t('myReady.preview')} text={text} variables={variables} />

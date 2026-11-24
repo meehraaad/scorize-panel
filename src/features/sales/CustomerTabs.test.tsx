@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import { scheduleComplete, scheduleTotal, spreadRest, suggestedSchedule } from './plan';
@@ -122,6 +122,20 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await user.clear(city);
     await user.type(city, 'تهران');
     expect(await within(personal).findByText('همهٔ تغییرات ذخیره شد')).toBeInTheDocument();
+  });
+
+  it('details: copies the tablet form link to send (it names no customer)', async () => {
+    const user = userEvent.setup();
+    const write = vi.spyOn(navigator.clipboard, 'writeText');
+    renderApp(`${ERFAN}/info`);
+    await user.click(await screen.findByRole('button', { name: 'کپی لینک فرم تبلت' }));
+    expect(write).toHaveBeenCalledWith('https://scorize.com/panel/background');
+    expect(await toasts().findByText(/^لینک فرم تبلت کپی شد/)).toBeInTheDocument();
+    write.mockRejectedValueOnce(new Error('denied'));
+    await user.click(screen.getByRole('button', { name: 'کپی لینک فرم تبلت' }));
+    expect(await toasts().findByText('لینک کپی نشد. دوباره امتحان کنید.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'باز کردن فرم تبلت' })).toBeInTheDocument();
+    write.mockRestore();
   });
 
   it('purchases: one row per Django invoice, filtered by kind', async () => {

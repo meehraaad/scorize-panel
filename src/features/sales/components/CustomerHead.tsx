@@ -27,7 +27,7 @@ const VisitDialog = lazy(() =>
   import('./VisitDialog').then((module) => ({ default: module.VisitDialog })),
 );
 
-// Opens on a click: which ready message to send on WhatsApp.
+// Opens on a click: which ready message to send on WhatsApp or Telegram.
 const WhatsAppPicker = lazy(() =>
   import('./WhatsAppPicker').then((module) => ({ default: module.WhatsAppPicker })),
 );
@@ -112,7 +112,8 @@ export function CustomerHead({
               {t('customer.log')}
             </button>
             <VisitButton customer={customer} onLog={() => onLog('call')} />
-            <WhatsAppButton customer={customer} />
+            <MessageButton customer={customer} channel="whatsapp" />
+            <MessageButton customer={customer} channel="telegram" />
             <NewSaleMenu onSell={onSell} onContract={onContract} />
             {side && (
               <SheetButton
@@ -331,26 +332,33 @@ function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () =>
 }
 
 /**
- * "Message": WhatsApp with the customer's chat. With ready messages it first asks which one to
- * type in (the seller's own first, or none); without any it opens WhatsApp in one click.
- * Telegram, SMS and logging a message stay in the contact log ("Log a contact").
+ * "Message": WhatsApp or Telegram with the customer's chat. With ready messages it first asks which
+ * one (the seller's own first, or none): WhatsApp gets it typed in, Telegram gets it copied to paste
+ * (its link can't carry a text). Without any it opens the app in one click. SMS and logging a
+ * message stay in the contact log ("Log a contact").
  */
-function WhatsAppButton({ customer }: { customer: CustomerData }) {
+function MessageButton({
+  customer,
+  channel,
+}: {
+  customer: CustomerData;
+  channel: 'whatsapp' | 'telegram';
+}) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
   const [picking, setPicking] = useState(false);
-  const label = t('messageTo', { channel: t('channel.whatsapp'), name: named(customer.name) });
+  const label = t('messageTo', { channel: t(`channel.${channel}`), name: named(customer.name) });
   const className = buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg');
   const content = (
     <>
-      <Icon name="send" size={17} />
-      {t('channel.whatsapp')}
+      <Icon name={channel === 'telegram' ? 'telegram' : 'send'} size={17} />
+      {t(`channel.${channel}`)}
     </>
   );
   if (customer.templates.length === 0)
     return (
       <a
-        href={messageHref('whatsapp', customer.phone)}
+        href={messageHref(channel, customer.phone)}
         target="_blank"
         rel="noreferrer"
         aria-label={label}
@@ -372,7 +380,7 @@ function WhatsAppButton({ customer }: { customer: CustomerData }) {
       </button>
       {picking && (
         <Suspense fallback={null}>
-          <WhatsAppPicker customer={customer} onClose={() => setPicking(false)} />
+          <WhatsAppPicker customer={customer} channel={channel} onClose={() => setPicking(false)} />
         </Suspense>
       )}
     </>

@@ -1222,6 +1222,9 @@
       "remove": "Remove test {{n}}"
     },
     "tablet": {
+      "copy": "Copy the tablet form link",
+      "copied": "Tablet form link copied. Send it to the customer; it opens with their own account.",
+      "copyFailed": "Couldn't copy the link. Try again.",
       "open": "Open the tablet form"
     },
     "notFound": "“{{value}}” wasn’t found. Write the name as it is on the site.",
@@ -3251,8 +3254,10 @@
     "dayChip": "Day only, no time"
   },
   "myReady": {
+    "stickerHint": "Emoji (🌹) are kept, stickers aren't. Send a sticker in WhatsApp or Telegram once the chat opens.",
+    "stickerPasted": "A sticker or picture can't go in a ready message. Send it in WhatsApp or Telegram once the chat opens; emoji (🌹) can go here.",
     "title": "My ready messages",
-    "intro": "Write the messages you send often here once. On a customer's page, the WhatsApp button and the contact log let you pick one, with the customer's name and the other variables filled in. Only you see these.",
+    "intro": "Write the messages you send often here once. On a customer's page, the WhatsApp and Telegram buttons and the contact log let you pick one, with the customer's name and the other variables filled in. Only you see these.",
     "add": "New message",
     "new": "New ready message",
     "subtitle": "Only for you",
@@ -3287,6 +3292,13 @@
     "blank": "No ready message",
     "make": "Make a ready message in settings",
     "close": "Close"
+  },
+  "telegramPicker": {
+    "title": "Which message to copy for Telegram?",
+    "note": "Telegram can't type the text in: tapping a message copies it and opens the customer's chat in Telegram. Paste it there and send.",
+    "copied": "Message copied. Paste it in Telegram and send.",
+    "copyFailed": "Couldn't copy the message. Telegram is open: copy the text below yourself and paste it there.",
+    "text": "Message text"
   },
   "whenPicker": {
     "days": "Day",

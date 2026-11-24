@@ -54,6 +54,8 @@
     }
   },
   "detail": {
+    "stickerHint": "Emoji (🌹) are kept, stickers aren't. Send a sticker in WhatsApp or Telegram once the chat opens.",
+    "stickerPasted": "A sticker or picture can't go in a ready message. Send it in WhatsApp or Telegram once the chat opens; emoji (🌹) can go here.",
     "when": "When",
     "audience": "Recipient",
     "channels": "Channels",

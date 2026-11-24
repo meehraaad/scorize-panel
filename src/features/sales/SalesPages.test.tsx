@@ -315,7 +315,7 @@ describe('sales panel, seller pages', () => {
       expect(within(dialog).queryByText(/^سلام عرفان عزیز/)).not.toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'ثبت و ساختن پیگیری' }));
       expect(open).toHaveBeenCalledWith(
-        expect.stringMatching(/^https:\/\/wa\.me\//),
+        expect.stringMatching(/^https:\/\/api\.whatsapp\.com\/send\?phone=/),
         '_blank',
         'noreferrer',
       );

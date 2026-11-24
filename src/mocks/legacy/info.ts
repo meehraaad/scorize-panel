@@ -67,6 +67,7 @@ export interface CustomerInfo {
   countries_list?: Option[];
   /** The office tablet form for this customer (the old site's tablet wizard). */
   tablet_url: string;
+  tablet_share_url: string;
 }
 
 /**
@@ -138,6 +139,7 @@ function infoOf(
       .map((country) => ({ value: countryName(country), label: countryName(country) }))
       .sort((a, b) => a.label.localeCompare(b.label)),
     tablet_url: `/profile/tablet-wizard/${String(user.id)}/`,
+    tablet_share_url: 'https://scorize.com/panel/background',
   } satisfies CustomerInfo;
 }
 
