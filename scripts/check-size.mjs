@@ -25,8 +25,8 @@ import { gzipSync } from 'node:zlib';
 // under 0.1 KB locally, plus CI's Node 24 margin (2026-11-23).
 // JS 197.4: the Executive customer workspace's nested route definitions and preload entries.
 // The workspace screens, data loaders, and styles stay lazy.
-// JS 196.4 on main: sales call-rating navigation and routes. Their page and query code stay lazy (2026-11-23).
-// JS 197.6: test (197.4) and main's call-rating routes (+0.2) together (2026-11-24).
+// JS 196.4: sales call-rating navigation and routes. Their page and query code stay lazy (2026-11-23).
+// JS 197.6: both of the above together, after test and main merged (2026-11-24).
 const BUDGET_KB = { js: 197.6, css: 22.4 };
 const DIST = 'dist';
 
