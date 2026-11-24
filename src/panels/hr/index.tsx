@@ -1,4 +1,4 @@
-import { redirect } from 'react-router';
+import { Navigate, redirect } from 'react-router';
 import {
   STAFF_ACCESS_PERMISSION,
   groupsQuery,
@@ -31,12 +31,12 @@ import {
   catalogQuery,
   kpisQuery,
   payMonth,
-  paySettingsQuery,
   payrollQuery,
   plansQuery,
   resultsQuery,
   rulesQuery,
 } from '@/features/hr/pay/api';
+import { hrPath } from '@/features/hr/paths';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery, START_PATH } from '@/lib/auth/session';
@@ -238,7 +238,7 @@ export const hrPanel: PanelDefinition = {
         {
           index: true,
           ...lazyPage(() => import('@/features/hr/pay/MonthPage'), [], {
-            data: () => [resultsQuery(payMonth(-1))],
+            data: () => [resultsQuery(payMonth(-1)), payrollQuery(payMonth(-1))],
             skeleton: 'list',
           }),
         },
@@ -256,13 +256,9 @@ export const hrPanel: PanelDefinition = {
             skeleton: 'detail',
           }),
         },
-        {
-          path: 'payroll',
-          ...lazyPage(() => import('@/features/hr/pay/PayrollPage'), [], {
-            data: () => [payrollQuery(payMonth())],
-            skeleton: 'list',
-          }),
-        },
+        // The month's pay and the settings once had their own pages: both are on «ماه» now.
+        { path: 'payroll', element: <Navigate to={hrPath('pay')} replace /> },
+        { path: 'settings', element: <Navigate to={hrPath('pay')} replace /> },
         {
           path: 'results',
           ...lazyPage(() => import('@/features/hr/pay/ResultsPage'), [], {
@@ -282,13 +278,6 @@ export const hrPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/hr/pay/RulesPage'), [], {
             data: () => [rulesQuery, kpisQuery, optionsQuery, catalogQuery],
             skeleton: 'list',
-          }),
-        },
-        {
-          path: 'settings',
-          ...lazyPage(() => import('@/features/hr/pay/SettingsPage'), [], {
-            data: () => [paySettingsQuery],
-            skeleton: 'detail',
           }),
         },
       ],

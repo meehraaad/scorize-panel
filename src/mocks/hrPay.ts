@@ -14,6 +14,7 @@ import type {
   PaySettings,
   Payroll,
   ResultDetail,
+  LineKind,
   ResultInput,
   Slip,
   SlipLine,
@@ -40,6 +41,9 @@ interface MockSlip extends Pick<
 > {
   id: number;
   staff: number;
+  /** Lines added by hand (kept when the month is worked out again). */
+  hand?: (SlipLine & { id: number; kind: LineKind })[];
+  seen_at?: string | null;
 }
 
 interface MockMonth extends PayMonth {
@@ -82,6 +86,7 @@ const DEFAULT_SETTINGS: PaySettings = {
     { upto: null, rate: 30 },
   ],
   penalty_cap_percent: 10,
+  objection_days: 3,
 };
 
 const MEASURED = 80;
@@ -274,8 +279,20 @@ function slipOf(month: MockMonth, row: MockSlip): Slip | null {
   const { own, values } = mine(month, person);
   const score = scoreOf(own, values);
   const base = person.salary;
-  const lines = linesOf(month, person, score);
-  const adjustment = lines.reduce((sum, line) => sum + (line.trial ? 0 : line.amount), 0);
+  const hand = row.hand ?? [];
+  const after = hand
+    .filter((line) => line.kind === 'advance' || line.kind === 'deduction')
+    .reduce((sum, line) => sum - line.amount, 0);
+  const before = hand
+    .filter((line) => line.kind !== 'advance' && line.kind !== 'deduction')
+    .reduce((sum, line) => sum + line.amount, 0);
+  const lines = [
+    ...linesOf(month, person, score).map((line) => ({ ...line, kind: 'rule' as const })),
+    ...hand,
+  ];
+  const adjustment =
+    lines.reduce((sum, line) => sum + (line.trial || line.kind !== 'rule' ? 0 : line.amount), 0) +
+    before;
   const bonus =
     settings.kpi_affects_pay && score !== null
       ? Math.round((((base * settings.kpi_bonus_percent) / 100) * score) / 100)
@@ -301,7 +318,9 @@ function slipOf(month: MockMonth, row: MockSlip): Slip | null {
     tax,
     deduction: row.deduction,
     deduction_note: row.deduction_note,
-    net: gross - insurance - tax - row.deduction,
+    after_tax: after,
+    net: gross - insurance - tax - row.deduction - after,
+    seen_at: row.seen_at ?? null,
   };
 }
 
@@ -314,6 +333,7 @@ const TOTALS: (keyof Totals)[] = [
   'insurance',
   'tax',
   'deduction',
+  'after_tax',
   'net',
 ];
 
@@ -331,8 +351,34 @@ function payrollOf(month: PayMonth): Payroll {
     finalized_at: row?.finalized_at ?? null,
     finalized_by: row?.status === 'final' ? 'امیر عابدی' : null,
     slips,
+    seen: slips.filter((slip) => slip.seen_at).length,
     totals,
   };
+}
+
+const HAND_LABELS: Record<LineKind, string> = {
+  rule: 'قاعده',
+  overtime: 'اضافه‌کار',
+  bonus: 'پاداش دستی',
+  advance: 'مساعده',
+  deduction: 'کسر دیگر',
+  correction: 'اصلاح ماه قبل',
+};
+
+function findSlip(id: number) {
+  const month = months.find((item) => item.slips.some((slip) => slip.id === id));
+  const slip = month?.slips.find((item) => item.id === id);
+  return month && slip ? { month, slip } : null;
+}
+
+function slipAnswer(month: MockMonth, slip: MockSlip, status = 200) {
+  const row = slipOf(month, slip);
+  return row
+    ? HttpResponse.json(
+        { ...row, year: month.year, month: month.month, status: month.status },
+        { status },
+      )
+    : notFound();
 }
 
 const isFinal = (month: PayMonth) =>
@@ -435,15 +481,17 @@ function myMonth(month: PayMonth): MyMonth {
   const score = scoreOf(own, values);
   const payroll = months.find((item) => item.year === month.year && item.month === month.month);
   const saved = payroll?.slips.find((slip) => slip.staff === me.id);
-  const slip = final && payroll && saved ? slipOf(payroll, saved) : null;
+  const shown = (final || review.closed) && payroll && saved;
+  if (shown) saved.seen_at ??= new Date().toISOString();
+  const slip = shown ? slipOf(payroll, saved) : null;
   return {
     ...base,
     worked: true,
     can_object: !final && until !== null && until >= new Date().toISOString().slice(0, 10),
     kpis: own.map((kpi) => ({ ...kpi, detail: details[String(kpi.id)] ?? null })),
     score,
-    lines: linesOf(month, me, score),
-    slip,
+    lines: slip ? slip.lines : linesOf(month, me, score),
+    slip: slip && { ...slip, final },
     disputes: disputesOf(month)
       .filter((row) => row.staff === me.id)
       .map(({ staff: _staff, year: _year, month: _month, resolved_by: _by, ...row }) => row),
@@ -493,6 +541,10 @@ function planOf(key: string, name: string, people: number, scope: Scoped): Plan 
         rule.method === 'per_unit' &&
         rule.amount_unit === 'toman',
     ) ?? null;
+  const commission = own.find(
+    (rule) => rule.basis === 'calculator' && rule.calculator === 'sales.commission',
+  );
+  const team = own.find((rule) => rule.pooled && rule.basis === 'kpi' && ids.has(rule.kpi ?? 0));
   return {
     key,
     name,
@@ -501,7 +553,17 @@ function planOf(key: string, name: string, people: number, scope: Scoped): Plan 
     goals,
     reward,
     penalty,
-    others: own.filter((rule) => rule !== reward && rule !== penalty),
+    commission: commission !== undefined,
+    team_bonus: team
+      ? {
+          goal: goals.findIndex((kpi) => kpi.id === team.kpi),
+          at_least: team.steps[0]?.from ?? 0,
+          amount: team.steps[0]?.amount ?? 0,
+        }
+      : null,
+    others: own.filter(
+      (rule) => rule !== reward && rule !== penalty && rule !== commission && rule !== team,
+    ),
     trial: goals.length > 0 && goals.every((kpi) => kpi.trial),
   };
 }
@@ -549,6 +611,7 @@ function savePlan(body: PlanBody) {
     id: id ?? ++nextId,
   }));
   kpis = [...kpis.filter((kpi) => !sameScope(kpi, scope)), ...saved];
+  const before = planOf('', '', 0, scope);
   rules = rules.filter(
     (rule) => !sameScope(rule, scope) || (!isReward(rule) && rule.basis !== 'kpi'),
   );
@@ -579,6 +642,45 @@ function savePlan(body: PlanBody) {
       method: 'per_unit',
       amount: body.penalty.amount,
       above: goal.target,
+      minimum: null,
+      amount_unit: 'toman',
+    });
+  const commission = body.commission ?? before.commission;
+  rules = rules.filter(
+    (rule) =>
+      !sameScope(rule, scope) ||
+      !(rule.basis === 'calculator' && rule.calculator === 'sales.commission'),
+  );
+  if (commission)
+    rules.push({
+      ...base,
+      id: ++nextId,
+      name: 'پورسانت فروش',
+      effect: 'reward',
+      basis: 'calculator',
+      kpi: null,
+      calculator: 'sales.commission',
+      method: 'per_unit',
+      amount: 0,
+      above: 0,
+      minimum: null,
+      amount_unit: 'toman',
+    });
+  const team = body.team_bonus === undefined ? before.team_bonus : body.team_bonus;
+  const teamGoal = team ? saved[team.goal] : undefined;
+  if (team && teamGoal)
+    rules.push({
+      ...base,
+      id: ++nextId,
+      name: 'پاداش تیمی',
+      effect: 'reward',
+      basis: 'kpi',
+      kpi: teamGoal.id,
+      method: 'steps',
+      steps: [{ from: team.at_least, to: null, amount: team.amount }],
+      pooled: true,
+      amount: 0,
+      above: 0,
       minimum: null,
       amount_unit: 'toman',
     });
@@ -694,9 +796,10 @@ export const hrPayHandlers = [
   }),
   http.post(`${API}/kpi-months/close/`, async ({ request }) => {
     if (!hrAllowed()) return forbidden();
-    const body = (await request.json()) as PayMonth & { days: number };
+    const body = (await request.json()) as PayMonth & { days?: number };
     if (isFinal(body)) return finalConflict();
-    const until = new Date(Date.now() + body.days * 86_400_000).toISOString().slice(0, 10);
+    const days = body.days ?? settings.objection_days;
+    const until = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
     reviews.set(monthKey(body), { closed_at: new Date().toISOString(), disputes_until: until });
     return HttpResponse.json(resultsOf(body));
   }),
@@ -870,6 +973,82 @@ export const hrPayHandlers = [
     row.status = 'final';
     row.finalized_at = new Date().toISOString();
     return HttpResponse.json(payrollOf(row));
+  }),
+  http.post(`${API}/payslips/:id/lines/`, async ({ params, request }) => {
+    if (!hrAllowed()) return forbidden();
+    const found = findSlip(Number(params.id));
+    if (!found) return notFound();
+    if (found.month.status === 'final') return finalConflict();
+    const body = (await request.json()) as { kind: LineKind; amount: number; note: string };
+    const off = body.kind === 'advance' || body.kind === 'deduction';
+    (found.slip.hand ??= []).push({
+      id: ++nextId,
+      kind: body.kind,
+      label: HAND_LABELS[body.kind],
+      amount: off ? -Math.abs(body.amount) : Math.abs(body.amount),
+      detail: body.note,
+      trial: false,
+    });
+    return slipAnswer(found.month, found.slip, 201);
+  }),
+  http.delete(`${API}/payslip-lines/:id/`, ({ params }) => {
+    if (!hrAllowed()) return forbidden();
+    const id = Number(params.id);
+    const month = months.find((item) =>
+      item.slips.some((slip) => slip.hand?.some((line) => line.id === id)),
+    );
+    const slip = month?.slips.find((item) => item.hand?.some((line) => line.id === id));
+    if (!month || !slip) return notFound();
+    if (month.status === 'final') return finalConflict();
+    slip.hand = slip.hand?.filter((line) => line.id !== id) ?? [];
+    return slipAnswer(month, slip);
+  }),
+  http.post(`${API}/payslips/:id/correction/`, async ({ params, request }) => {
+    if (!hrAllowed()) return forbidden();
+    const found = findSlip(Number(params.id));
+    if (!found) return notFound();
+    if (found.month.status !== 'final')
+      return HttpResponse.json({ detail: 'Not final.', code: 'draft' }, { status: 409 });
+    const body = (await request.json()) as { amount: number; note: string };
+    const next =
+      found.month.month === 12
+        ? { year: found.month.year + 1, month: 1 }
+        : { year: found.month.year, month: found.month.month + 1 };
+    let row = months.find((item) => item.year === next.year && item.month === next.month);
+    if (!row) {
+      row = { ...next, id: ++nextId, status: 'draft', finalized_at: null, slips: [] };
+      months.push(row);
+    }
+    let target = row.slips.find((slip) => slip.staff === found.slip.staff);
+    if (!target) {
+      target = {
+        id: ++nextId,
+        staff: found.slip.staff,
+        addition: 0,
+        addition_note: '',
+        deduction: 0,
+        deduction_note: '',
+      };
+      row.slips.push(target);
+    }
+    (target.hand ??= []).push({
+      id: ++nextId,
+      kind: 'correction',
+      label: 'اصلاح ماه قبل',
+      amount: body.amount,
+      detail: body.note,
+      trial: false,
+    });
+    return slipAnswer(row, target, 201);
+  }),
+  http.get(`${API}/payroll/:id/export/`, ({ params }) => {
+    if (!hrAllowed()) return forbidden();
+    const row = months.find((item) => item.id === Number(params.id));
+    if (!row) return notFound();
+    const lines = payrollOf(row).slips.map((slip) => `${slip.staff.name},${String(slip.net)}`);
+    return new HttpResponse(['نام,خالص پرداختی', ...lines].join('\n'), {
+      headers: { 'Content-Type': 'text/csv; charset=utf-8' },
+    });
   }),
   http.patch(`${API}/payslips/:id/`, async ({ params, request }) => {
     if (!hrAllowed()) return forbidden();

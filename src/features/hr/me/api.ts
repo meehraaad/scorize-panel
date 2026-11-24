@@ -36,13 +36,17 @@ export interface MySlip {
   insurance: number;
   tax: number;
   deduction: number;
+  /** Advances and other deductions added by hand (after tax). */
+  after_tax: number;
   net: number;
+  /** Paid: no longer changes. Before that the slip can still change (objections). */
+  final: boolean;
 }
 
 export interface MyMonth extends PayMonth {
   /** Worked here that month. */
   worked: boolean;
-  /** The month's pay is final: `lines` are the slip's and `slip` is set. */
+  /** The month's pay is final. Once the month is shown to staff (`closed`), `lines` are the slip's and `slip` is set. */
   final: boolean;
   /** Closed for review: values no longer measured. */
   closed: boolean;

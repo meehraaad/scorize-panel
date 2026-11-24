@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { api, API_BASE } from '@/lib/api/client';
 import { fromCalendar, toCalendar } from '@/lib/calendar';
 import type { Face } from '@/lib/face/api';
 import { HR_API, HR_KEY } from '../api';
@@ -169,6 +169,8 @@ export interface PaySettings {
   tax_brackets: TaxBracket[];
   /** The most penalties take in a month, in percent of the base; null: no cap. */
   penalty_cap_percent: number | null;
+  /** Days staff have to object once the month is shown to them. */
+  objection_days: number;
 }
 
 export type Effect = 'reward' | 'penalty';
@@ -204,7 +206,18 @@ export interface PayRule extends Scoped {
   trial: boolean;
 }
 
+/**
+ * `rule`: worked out from a rule (again with the slip). The others are added by hand and kept:
+ * overtime, a bonus and a correction of a paid month count before tax; an advance and another
+ * deduction come off what is left.
+ */
+export type LineKind = 'rule' | 'overtime' | 'bonus' | 'advance' | 'deduction' | 'correction';
+export const HAND_KINDS = ['overtime', 'bonus', 'advance', 'deduction'] as const;
+export type HandKind = (typeof HAND_KINDS)[number];
+
 export interface SlipLine {
+  id?: number;
+  kind?: LineKind;
   label: string;
   /** Plus: a reward; minus: a penalty. */
   amount: number;
@@ -231,7 +244,11 @@ export interface Slip {
   tax: number;
   deduction: number;
   deduction_note: string;
+  /** What the lines added by hand after tax take (an advance, another deduction). */
+  after_tax: number;
   net: number;
+  /** When the person first opened it in «من» (once the month was shown to staff). */
+  seen_at: string | null;
 }
 
 export type Totals = Pick<
@@ -244,6 +261,7 @@ export type Totals = Pick<
   | 'insurance'
   | 'tax'
   | 'deduction'
+  | 'after_tax'
   | 'net'
 >;
 
@@ -254,8 +272,14 @@ export interface Payroll extends PayMonth {
   finalized_at: string | null;
   finalized_by: string | null;
   slips: Slip[];
+  /** How many have opened their slip in «من». */
+  seen: number;
   totals: Totals;
 }
+
+/** The accountant's spreadsheet of a month's payments (CSV). */
+export const payrollExportUrl = (id: number) =>
+  `${API_BASE}${HR_API}/payroll/${String(id)}/export/`;
 
 export interface SlipDetail extends Slip, PayMonth {
   status: 'draft' | 'final';
@@ -334,8 +358,18 @@ export interface Plan extends Scoped {
   /** `amount` Tomans for each unit of `kpi` over `above` (the goal's target). */
   penalty: PayRule | null;
   others: PayRule[];
+  /** The sales commission is paid to the group (its rule). */
+  commission: boolean;
+  /** «اگر کل گروه به `at_least` برسد، به هر نفر `amount` تومان» on goal `goal` (an index). */
+  team_bonus: TeamBonus | null;
   /** Every goal on trial: shown, not paid. */
   trial: boolean;
+}
+
+export interface TeamBonus {
+  goal: number;
+  at_least: number;
+  amount: number;
 }
 
 export interface GoalInput extends Omit<KpiInput, keyof Scoped | 'trial'> {
@@ -353,6 +387,9 @@ export interface PlanInput {
   reward: { percent: number; minimum: number | null } | null;
   /** `goal`: index in `goals`. */
   penalty: { goal: number; amount: number } | null;
+  /** Left out: kept as it is. */
+  commission?: boolean;
+  team_bonus?: TeamBonus | null;
   trial: boolean;
 }
 
