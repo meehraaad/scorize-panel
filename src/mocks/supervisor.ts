@@ -884,6 +884,12 @@ function caseData(item: MockCase): CaseData {
   };
 }
 
+export function mockCase(id: number): CaseData | null {
+  const records = casesOrError();
+  const item = records instanceof Map ? records.get(id) : undefined;
+  return item ? caseData(item) : null;
+}
+
 const docCount = (item: MockCase) => ({
   uploaded: item.documents.filter((doc) => doc.state === 'approved' || doc.state === 'review')
     .length,

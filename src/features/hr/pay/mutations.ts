@@ -18,6 +18,7 @@ import {
   type RuleInput,
   type Plan,
   type PlanInput,
+  type HandKind,
 } from './api';
 
 /**
@@ -99,3 +100,26 @@ export const useEditSlip = (id: number) =>
 
 export const useSavePlan = () =>
   usePayMutation((body: PlanInput) => api<Plan>(`${HR_API}/kpi-plans/`, { method: 'PUT', body }));
+
+export const useAddSlipLine = (slip: number) =>
+  usePayMutation((body: { kind: HandKind; amount: number; note: string }) =>
+    api<SlipDetail>(`${HR_API}/payslips/${String(slip)}/lines/`, { method: 'POST', body }),
+  );
+
+export const useRemoveSlipLine = () =>
+  usePayMutation((id: number) =>
+    api<SlipDetail>(`${HR_API}/payslip-lines/${String(id)}/`, { method: 'DELETE' }),
+  );
+
+/** A paid month's slip is corrected on the person's slip of the month after. */
+export const useCorrectSlip = (slip: number) =>
+  usePayMutation((body: { amount: number; note: string }) =>
+    api<SlipDetail>(`${HR_API}/payslips/${String(slip)}/correction/`, { method: 'POST', body }),
+  );
+
+/** Shows a month to staff: closes its values for objections and works its pay out. */
+export const useShowMonth = () =>
+  usePayMutation(async (month: PayMonth) => {
+    await api<KpiResults>(`${HR_API}/kpi-months/close/`, { method: 'POST', body: month });
+    return api<Payroll>(`${HR_API}/payroll/`, { method: 'POST', body: month });
+  });

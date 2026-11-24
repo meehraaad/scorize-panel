@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
-import type { AccessKey, KeyArea } from '../api';
+import type { AccessKey, KeyArea } from '@/lib/access/api';
 
 /**
  * Keys to tick, by area, with a search (name, meaning or code). `locked`: keys already held some

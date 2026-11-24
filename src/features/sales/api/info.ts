@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { type QueryKey, queryOptions } from '@tanstack/react-query';
 import { ApiError, api } from '@/lib/api/client';
 import { SALES_API } from '@/lib/sales/api';
 import { customerKey } from './customer';
@@ -69,6 +69,11 @@ export interface CustomerInfo {
 
 const infoApi = (id: number) => `${SALES_API}/customers/${String(id)}/info/`;
 
+export interface InfoSource {
+  endpoint: string;
+  queryKey: QueryKey;
+}
+
 export const infoQuery = (id: number) =>
   queryOptions({
     queryKey: [...customerKey(id), 'info'],
@@ -113,9 +118,12 @@ function unknownName(section: InfoSection, body: unknown): string | null {
   return null;
 }
 
-export async function saveSection(id: number, section: InfoSection) {
+export async function saveSection(id: number, section: InfoSection, source?: InfoSource) {
   try {
-    return await api<CustomerInfo>(infoApi(id), { method: 'PATCH', body: section });
+    return await api<CustomerInfo>(source?.endpoint ?? infoApi(id), {
+      method: 'PATCH',
+      body: section,
+    });
   } catch (error) {
     const name =
       error instanceof ApiError && error.status === 400 && unknownName(section, error.body);

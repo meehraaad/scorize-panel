@@ -16,6 +16,27 @@ export function useLogContact(customer: number) {
   });
 }
 
+export interface ContactNote {
+  notes: string;
+  version: string;
+}
+
+const contactNotePath = (customer: number, contact: number) =>
+  `${customerApi(customer)}/contacts/${contact}/`;
+
+export function readContactNote(customer: number, contact: number) {
+  return api<ContactNote>(contactNotePath(customer, contact));
+}
+
+export function useEditContactNote(customer: number, contact: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (note: ContactNote) =>
+      api<ContactNote>(contactNotePath(customer, contact), { method: 'PATCH', body: note }),
+    onSuccess: () => client.invalidateQueries({ queryKey: customerKey(customer) }),
+  });
+}
+
 /** A caller's other number kept as the customer's second phone; 409 `taken`: another account's. */
 export function useSetSecondPhone() {
   const client = useQueryClient();

@@ -21,8 +21,14 @@ import { gzipSync } from 'node:zlib';
 // JS 196.1, CSS 22.3: what `test` weighed when the HR new-hire form merged in (195.3 / 22.201)
 // plus the form's 0.5 KB, as CI measures it on Node 24 (2026-11-23, docs/performance.md).
 // JS 196.2, CSS 22.4: enable the PWA build in CI and add the mobile install guide (2026-11-23).
+// JS 196.5: the new-staff dialog's account-lookup flag and the hiring follow-ups in shared blocks,
+// under 0.1 KB locally, plus CI's Node 24 margin (2026-11-23).
+// JS 196.7: main's call-rating routes and test's hiring follow-ups together (+0.2 and +0.3 on 196.2).
+// JS 197.4: the Executive customer workspace's nested route definitions and preload entries.
+// The workspace screens, data loaders, and styles stay lazy.
 // JS 196.4: sales call-rating navigation and routes. Their page and query code stay lazy (2026-11-23).
-const BUDGET_KB = { js: 196.4, css: 22.4 };
+// JS 197.6: both of the above together, after test and main merged (2026-11-24).
+const BUDGET_KB = { js: 197.6, css: 22.4 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

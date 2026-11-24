@@ -226,6 +226,19 @@ export const accessHandlers = [
     return HttpResponse.json(paged(rows, Number(params.get('page')) || 1));
   }),
 
+  // One person (the staff file's access tab): Django finds any active account, so an account the
+  // sample list hasn't got yet (an HR staff file's) is added with no access.
+  http.get(`${API}/people/:id/`, ({ params }) => {
+    if (!allowed()) return forbidden();
+    const id = Number(params.id);
+    let row = staff.find((item) => item.id === id);
+    if (!row) {
+      row = person(id, `کاربر ${String(id)}`, null);
+      staff.push(row);
+    }
+    return HttpResponse.json(row);
+  }),
+
   http.patch(`${API}/people/:id/`, async ({ params, request }) => {
     if (!allowed()) return forbidden();
     const row = staff.find((item) => item.id === Number(params.id));

@@ -27,7 +27,7 @@ import { salesCustomerHandlers } from './salesCustomer';
 import { managerHandlers, resetManagerMocks } from './salesManager';
 import { resetSupervisorMocks, supervisorHandlers } from './supervisor';
 import { resetTaskMocks, taskHandlers } from './tasks';
-import { executiveHandlers } from './executive';
+import { executiveHandlers, resetExecutiveMocks } from './executive';
 import { storage } from './session';
 import { phoneCallHandlers, resetPhoneMocks } from './phoneCalls';
 import { resetSessionSummaries, sessionSummaryHandlers } from './sessionSummaries';
@@ -442,6 +442,7 @@ export const handlers = [
 
 /** Test helper: forget the mock login session and server-side flow. */
 export function resetMockSession() {
+  resetExecutiveMocks();
   resetAssessmentMocks();
   resetWorkflowMocks();
   resetCalculatorMocks();

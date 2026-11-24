@@ -36,6 +36,15 @@ export function InviteCard({ name, phone }: { name: string; phone: string }) {
       () => toast.error(t('onboarding.invite.failed')),
     );
   };
+  // The phone's share sheet (WhatsApp first, mostly); desktops without one copy instead.
+  const canShare = typeof navigator.share === 'function';
+  const share = () => {
+    navigator.share({ text: message }).catch((error: unknown) => {
+      // Closing the sheet is not a failure.
+      if (!(error instanceof DOMException && error.name === 'AbortError'))
+        toast.error(t('onboarding.invite.shareFailed'));
+    });
+  };
   return (
     <Card aria-label={t('onboarding.invite.title')} className="flex flex-col gap-4 p-5 lg:p-7">
       <div className="flex flex-col gap-1">
@@ -46,7 +55,13 @@ export function InviteCard({ name, phone }: { name: string; phone: string }) {
         {message}
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => copy(message)}>
+        {canShare && (
+          <Button onClick={share}>
+            <Icon name="send" size={18} />
+            {t('onboarding.invite.share')}
+          </Button>
+        )}
+        <Button variant={canShare ? 'outline' : 'primary'} onClick={() => copy(message)}>
           <Icon name="chat" size={18} />
           {t('onboarding.invite.copyMessage')}
         </Button>

@@ -9,8 +9,9 @@ import { useMetricNames } from './metricNames';
 import { useScopeName } from './scope';
 
 /**
- * «برنامه‌های امتیاز» (canvas "KPI ساده" 1): every group (everyone, each position, and each team
- * or person with goals of its own) with what its plan asks, one tile each. A tile opens the plan.
+ * «قاعده‌ها» (canvas "حقوق و پاداش ساده", rules): every group (everyone, each position, and each
+ * team or person with goals of its own) with its rule in one sentence: what it asks, and what it
+ * pays or takes. A tile opens the rule.
  */
 export default function PlansPage() {
   const { t } = useTranslation('hr');
@@ -33,11 +34,24 @@ function PlanTile({ plan }: { plan: Plan }) {
   const names = useMetricNames();
   const scopeName = useScopeName();
   const goals = plan.goals.map((goal) => goal.name || names.metric(goal.metric));
+  const penalty = plan.goals.find((goal) => goal.id === plan.penalty?.kpi);
+  // One sentence: what it asks, and what it pays or takes.
+  const pays = [
+    plan.reward &&
+      t('pay.plans.says.reward', { n: f.number(Math.round(plan.reward.amount * 1000) / 10) }),
+    penalty && t('pay.plans.says.penalty', { name: penalty.name }),
+    plan.commission && t('pay.plans.says.commission'),
+    plan.team_bonus && t('pay.plans.says.team'),
+  ].filter((part): part is string => typeof part === 'string');
+  const text =
+    goals.length > 0
+      ? [t('pay.plans.says.goals', { goals: f.list(goals.slice(0, 4)) }), ...pays].join(' · ')
+      : t('pay.plans.noGoals');
   return (
     <LinkTile
       to={planPath(plan.key)}
       title={plan.name || scopeName(plan)}
-      text={goals.length > 0 ? f.list(goals.slice(0, 4)) : t('pay.plans.noGoals')}
+      text={text}
       end={
         <span className="flex items-center gap-2 text-[13px] text-text-2">
           {t('pay.plans.people', { n: f.number(plan.people) })}

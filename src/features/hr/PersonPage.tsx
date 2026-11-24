@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -12,7 +12,10 @@ import { Icon } from '@/components/ui/Icon';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { STAFF_ACCESS_PERMISSION } from '@/lib/access/api';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { hasPermission } from '@/lib/auth/roles';
+import { useUser } from '@/lib/auth/session';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { idParam } from '@/lib/router/lazyPage';
@@ -20,10 +23,10 @@ import { safeHref } from '@/lib/url';
 import { fileQuery, type HistoryRow, type StaffFile } from './api';
 import { Facts } from './components/Facts';
 import { MoveCard } from './components/MoveCard';
-import { CONTRACT_TONE, STATE_TONE, dayOf, isPhoneName } from './format';
+import { CONTRACT_TONE, STATE_TONE, dayOf, isPhoneName, waitsForForm } from './format';
 import { useAnswerText } from './onboarding/answerText';
 import { EMPTY_ANSWERS, type FieldKey } from './onboarding/fields';
-import { hrPath } from './paths';
+import { hrPath, planPath } from './paths';
 
 const dialogs = () => import('./components/FileDialogs');
 const InfoDialog = lazy(() => dialogs().then((module) => ({ default: module.InfoDialog })));
@@ -35,8 +38,10 @@ const DocumentDialog = lazy(() => dialogs().then((module) => ({ default: module.
 
 // The new-hire form's tab is HR's own chunk, opened only on that tab.
 const OnboardingTab = lazy(() => import('./onboarding/components/OnboardingTab'));
+// The access tab too: HR's access section's form, for this person.
+const AccessTab = lazy(() => import('./components/AccessTab'));
 
-type Tab = 'info' | 'form' | 'work' | 'documents' | 'moves' | 'history';
+type Tab = 'info' | 'form' | 'work' | 'documents' | 'moves' | 'history' | 'access';
 /** «فرم استخدام» only once Django serves the form (`ON_SERVER.hrOnboarding`). */
 const TABS: readonly Tab[] = ON_SERVER.hrOnboarding
   ? ['info', 'form', 'work', 'documents', 'moves', 'history']
@@ -82,7 +87,8 @@ function PersonFile({ id }: { id: number }) {
   const { t } = useTranslation('hr');
   const f = useFormat();
   const { data: file } = useSuspenseQuery(fileQuery(id));
-  const pending = isPhoneName(file.name);
+  const phoneName = isPhoneName(file.name);
+  const pending = waitsForForm(file.name, file.onboarding);
   // Just made (the new staff dialog asks for the form's tab: the invite to send), or a form waiting
   // for HR, come first; then a joining or leaving under way.
   const opened = (useLocation().state as { tab?: Tab } | null)?.tab;
@@ -94,6 +100,10 @@ function PersonFile({ id }: { id: number }) {
         : 'info',
   );
   const [open, setOpen] = useState<Open>(null);
+  // «دسترسی‌ها» last: for whoever gives staff access (HR's key or a superuser), while they work here.
+  const me = useUser();
+  const tabs: readonly Tab[] =
+    file.is_active && hasPermission(me, STAFF_ACCESS_PERMISSION) ? [...TABS, 'access'] : TABS;
   const leaving = file.moves.some((move) => move.kind === 'exit' && move.status === 'open');
   const sub = [file.position?.name, file.team && t(`team.${file.team}`), file.manager?.name]
     .filter(Boolean)
@@ -104,8 +114,8 @@ function PersonFile({ id }: { id: number }) {
     <PageStack>
       <BackLink to={hrPath('staff')}>{t('person.back')}</BackLink>
       <PageHeader
-        // Named by the phone until the hire's form is approved: the number, and why.
-        title={pending ? f.digits(file.name) : file.name}
+        // A file made before names were asked is named by the phone until its form is approved.
+        title={phoneName ? f.digits(file.name) : file.name}
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
             {sub && <span>{sub}</span>}
@@ -140,7 +150,7 @@ function PersonFile({ id }: { id: number }) {
         label={t('person.tabs')}
         value={tab}
         onChange={setTab}
-        options={TABS.map((value) => ({ value, label: t(`person.tab.${value}`) }))}
+        options={tabs.map((value) => ({ value, label: t(`person.tab.${value}`) }))}
       />
       {tab === 'info' && <InfoTab file={file} />}
       {tab === 'work' && (
@@ -203,6 +213,11 @@ function PersonFile({ id }: { id: number }) {
         </Suspense>
       )}
       {tab === 'history' && <HistoryTab rows={file.history} />}
+      {tab === 'access' && tabs.includes('access') && (
+        <Suspense fallback={<SkeletonRows rows={4} />}>
+          <AccessTab file={file} />
+        </Suspense>
+      )}
       {open && (
         <Suspense fallback={null}>
           {open === 'info' && <InfoDialog file={file} onClose={close} />}
@@ -396,6 +411,20 @@ function WorkTab({
             ))}
           </ul>
         )}
+        <p className="m-0 flex flex-wrap gap-x-5 border-t border-hair px-5 py-2 text-[14px] lg:px-8">
+          <Link
+            className="min-h-11 content-center font-semibold text-primary-text"
+            to={planPath(`person:${String(file.id)}`)}
+          >
+            {t('person.ownRule')}
+          </Link>
+          <Link
+            className="min-h-11 content-center font-semibold text-primary-text"
+            to={hrPath('pay')}
+          >
+            {t('person.slips')}
+          </Link>
+        </p>
       </SectionCard>
     </>
   );

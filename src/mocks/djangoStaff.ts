@@ -399,6 +399,8 @@ export interface DjangoStudyField {
   id: number;
   name: string;
   name_persian: string | null;
+  /** The field it is a sub-field of (null at the top). */
+  parent?: { id: number; name: string; name_persian: string | null } | null;
 }
 
 export const COUNTRIES_API = '/apply/v1/countries';

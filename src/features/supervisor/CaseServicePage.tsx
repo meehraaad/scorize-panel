@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
@@ -41,17 +41,21 @@ export default function CaseServicePage() {
   const service = Number(useParams()['service']);
   const { data: file } = useSuspenseQuery(caseQuery(id));
   const { data } = useSuspenseQuery(serviceQuery(id, service));
-  return <Service caseId={id} name={file?.name ?? ''} detail={data} />;
+  return <CaseService caseId={id} name={file?.name ?? ''} detail={data} />;
 }
 
-function Service({
+export function CaseService({
   caseId,
   name,
   detail,
+  children,
+  hideDefaultTool = false,
 }: {
   caseId: number;
   name: string;
   detail: ServiceDetail;
+  children?: ReactNode;
+  hideDefaultTool?: boolean;
 }) {
   const { t } = useTranslation('supervisor');
   const user = useUser();
@@ -102,7 +106,8 @@ function Service({
         )}
         {detail.editable && <StagePicker caseId={caseId} detail={detail} />}
       </SectionCard>
-      <Tool caseId={caseId} detail={detail} />
+      {children}
+      {!hideDefaultTool && <Tool caseId={caseId} detail={detail} />}
       {choosing && (
         <OwnerDialog caseId={caseId} service={service} onClose={() => setChoosing(false)} />
       )}

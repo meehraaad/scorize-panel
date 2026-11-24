@@ -155,6 +155,13 @@ const STUDY_FIELDS: DjangoStudyField[] = [
   { id: 3, name: 'Artificial Intelligence', name_persian: 'هوش مصنوعی' },
   { id: 4, name: 'Electrical Engineering', name_persian: 'مهندسی برق' },
   { id: 5, name: 'Civil Engineering', name_persian: 'مهندسی عمران' },
+  // A sub-field: the new-hire form suggests top-level majors only.
+  {
+    id: 6,
+    name: 'Software Engineering',
+    name_persian: 'مهندسی کامپیوتر - نرم‌افزار',
+    parent: { id: 1, name: 'Computer Engineering', name_persian: 'مهندسی کامپیوتر' },
+  },
 ];
 
 const CONSULTATION_TYPES: DjangoConsultationType[] = [
@@ -851,6 +858,16 @@ function examScoreOf(body: Record<string, unknown>, current: DjangoExamScore | n
 
 const TYPE_LABEL = ['تماس تلفنی', 'جلسه مشاوره', 'پیام رسان', 'ایمیل', 'تیکت', 'تماس بی پاسخ'];
 
+export function contactNoteRow(customer: number, contact: number) {
+  return data().contacts.find((row) => row.user === customer && row.data.id === contact)?.data;
+}
+
+export function canEditContactNote(row: DjangoContact) {
+  return (
+    isSeller() && (isManager() || row.support_staves.some((staff) => staff.id === meStaff()?.id))
+  );
+}
+
 /** user_profile.classes.ContactHistory → HistorySerializer. */
 const contactItem = (row: StaffDb['contacts'][number]): DjangoHistoryItem => ({
   unique_id: `contact-${String(row.data.id)}`,
@@ -1049,10 +1066,14 @@ export const staffHandlers = [
     );
   }),
   http.get(`${API}/apply/v1/study-fields/`, ({ request }) => {
-    const search = new URL(request.url).searchParams.get('search');
+    const params = new URL(request.url).searchParams;
+    const search = params.get('search');
+    const top = params.get('top') === '1';
     return paginate(
       request,
-      STUDY_FIELDS.filter((item) => matches(search, [item.name, item.name_persian])),
+      STUDY_FIELDS.filter(
+        (item) => (!top || !item.parent) && matches(search, [item.name, item.name_persian]),
+      ),
       30,
     );
   }),

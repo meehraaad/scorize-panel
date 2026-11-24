@@ -1,22 +1,26 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Chip } from '@/components/ui/Chip';
 import { TextAreaField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { FileTile } from '@/components/ui/Files';
+import { FilterTabs } from '@/components/ui/Filters';
+import { FileDrop, FileTile } from '@/components/ui/Files';
 import { Icon } from '@/components/ui/Icon';
 import { PageColumns } from '@/components/ui/PageColumns';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { TagList } from '@/components/ui/Tags';
+import { uploadFile } from '@/lib/upload';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { percentOf } from '@/lib/progress';
 import { safeHref } from '@/lib/url';
 import {
   documentsQuery,
+  SUPERVISOR_API,
+  useSupervisorMutation,
   documentsZipHref,
   useReviewDocument,
   type CaseDocument,
@@ -27,12 +31,20 @@ import { RequestDocumentDialog } from './components/RequestDocumentDialog';
 import { useCaseId } from './useCaseId';
 import { toast } from '@/lib/toast';
 
+const DOCUMENT_STATES = ['all', 'review', 'missing', 'returned', 'approved'] as const;
+
 /**
  * What the applicant was asked for and what they sent: check each upload (accept, or send it back
  * with a reason they will see), ask for another document; the writing orders and research
  * interests the professor-email bot searches with. Canvas V1 "پرونده و مدارک".
  */
-export default function CaseDocumentsPage() {
+export default function CaseDocumentsPage({
+  staffUpload = false,
+  extraFiles,
+}: {
+  staffUpload?: boolean;
+  extraFiles?: ReactNode;
+}) {
   const { t } = useTranslation('supervisor');
   const id = useCaseId();
   const { data } = useSuspenseQuery(documentsQuery(id));
@@ -41,8 +53,9 @@ export default function CaseDocumentsPage() {
       asideLabel={t('documents.aside')}
       main={
         <>
-          <Documents caseId={id} documents={data.documents} />
+          <Documents caseId={id} documents={data.documents} staffUpload={staffUpload} />
           {data.writing && <Writing orders={data.writing} />}
+          {extraFiles}
         </>
       }
       aside={
@@ -61,14 +74,25 @@ export default function CaseDocumentsPage() {
   );
 }
 
-function Documents({ caseId, documents }: { caseId: number; documents: CaseDocument[] }) {
+function Documents({
+  caseId,
+  documents,
+  staffUpload,
+}: {
+  caseId: number;
+  documents: CaseDocument[];
+  staffUpload: boolean;
+}) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const [asking, setAsking] = useState(false);
+  const [state, setState] = useState<'all' | CaseDocument['state']>('all');
   const done = documents.filter((doc) => doc.state === 'approved' || doc.state === 'review').length;
   // Uploads to check come first, then what is still missing.
   const ORDER = { review: 0, returned: 1, missing: 2, approved: 3 } as const;
-  const sorted = documents.toSorted((a, b) => ORDER[a.state] - ORDER[b.state]);
+  const sorted = documents
+    .filter((document) => state === 'all' || document.state === state)
+    .toSorted((a, b) => ORDER[a.state] - ORDER[b.state]);
 
   return (
     <SectionCard
@@ -101,12 +125,25 @@ function Documents({ caseId, documents }: { caseId: number; documents: CaseDocum
           tone={done >= documents.length ? 'good' : 'primary'}
         />
       </div>
-      {documents.length === 0 ? (
+      {staffUpload && (
+        <div className="px-5 pb-2 lg:px-8">
+          <FilterTabs
+            label={t('documents.title')}
+            value={state}
+            options={DOCUMENT_STATES.map((value) => ({
+              value,
+              label: value === 'all' ? t('documents.all') : t(`documents.state.${value}`),
+            }))}
+            onChange={setState}
+          />
+        </div>
+      )}
+      {sorted.length === 0 ? (
         <EmptyState>{t('documents.empty')}</EmptyState>
       ) : (
         <ul className="m-0 list-none p-0 pb-2">
           {sorted.map((doc) => (
-            <DocumentRow key={doc.id} caseId={caseId} doc={doc} />
+            <DocumentRow key={doc.id} caseId={caseId} doc={doc} staffUpload={staffUpload} />
           ))}
         </ul>
       )}
@@ -120,7 +157,15 @@ function Documents({ caseId, documents }: { caseId: number; documents: CaseDocum
   );
 }
 
-function DocumentRow({ caseId, doc }: { caseId: number; doc: CaseDocument }) {
+function DocumentRow({
+  caseId,
+  doc,
+  staffUpload,
+}: {
+  caseId: number;
+  doc: CaseDocument;
+  staffUpload: boolean;
+}) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const review = useReviewDocument(caseId);
@@ -150,6 +195,7 @@ function DocumentRow({ caseId, doc }: { caseId: number; doc: CaseDocument }) {
           meta={t('documents.uploaded', { when: f.timeAgo(doc.file.uploaded_at) })}
         />
       )}
+      {staffUpload && !doc.file && <StaffDocumentUpload caseId={caseId} doc={doc} />}
       {doc.state === 'returned' && doc.note && (
         <p className="m-0 text-sm leading-6 text-danger">
           {t('documents.returnedNote', { note: doc.note })}
@@ -210,6 +256,33 @@ function DocumentRow({ caseId, doc }: { caseId: number; doc: CaseDocument }) {
           </div>
         ))}
     </li>
+  );
+}
+
+function StaffDocumentUpload({ caseId, doc }: { caseId: number; doc: CaseDocument }) {
+  const { t } = useTranslation('supervisor');
+  const upload = useSupervisorMutation((file: File) => {
+    const body = new FormData();
+    body.set('file', file);
+    return uploadFile(
+      `${SUPERVISOR_API}/cases/${String(caseId)}/documents/${String(doc.id)}/upload/`,
+      body,
+      file,
+    );
+  });
+  return (
+    <FileDrop
+      id={`staff-doc-${String(doc.id)}`}
+      accept={['.pdf', '.jpg', '.jpeg', '.png']}
+      compact
+      keepLabel
+      disabled={upload.isPending}
+      chooseLabel={t('documents.uploadForCustomer')}
+      inputLabel={t('documents.uploadNamed', { name: doc.name })}
+      onFile={(file) => {
+        if (file) upload.mutate(file);
+      }}
+    />
   );
 }
 

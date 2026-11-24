@@ -42,6 +42,7 @@ import { StatGrid } from '@/components/ui/StatGrid';
 import { DateTile } from '@/components/ui/DateTile';
 import { TagList } from '@/components/ui/Tags';
 import { SearchSelect, type SearchOption } from '@/components/ui/SearchSelect';
+import { SuggestField } from '@/components/ui/SuggestField';
 import { TimeSelect } from '@/components/ui/TimeSelect';
 import { TextField } from '@/components/ui/TextField';
 import { Toast } from '@/components/ui/Toast';
@@ -63,6 +64,7 @@ export default function ComponentsPage() {
   const [query, setQuery] = useState('');
   const [fieldText, setFieldText] = useState('');
   const [field, setField] = useState<SearchOption | null>(null);
+  const [major, setMajor] = useState('');
   const [page, setPage] = useState(1);
   const [demoCards, setDemoCards] = useState([
     { id: 1, lane: 1, title: 'سری «یک روز در دانشگاه»' },
@@ -548,6 +550,15 @@ export default function ComponentsPage() {
               )}
               listLabel="رشته‌های پیدا شده"
               changeLabel="تغییر"
+            />
+            <SuggestField
+              label="SuggestField: رشته (متن آزاد با پیشنهاد)"
+              value={major}
+              onValue={setMajor}
+              suggestions={['مهندسی کامپیوتر', 'مهندسی عمران', 'مدیریت'].filter(
+                (one) => major.trim() && one.includes(major.trim()),
+              )}
+              listLabel="پیشنهادها"
             />
             <OtpInput
               length={5}

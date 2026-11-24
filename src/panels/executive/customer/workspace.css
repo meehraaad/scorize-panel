@@ -1,0 +1,31 @@
+.customer-workspace-tabs {
+  display: flex;
+  overflow-x: auto;
+  border-block-end: 1px solid var(--line-2);
+  scrollbar-width: thin;
+}
+.customer-workspace-tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 3.25rem;
+  padding-inline: 1rem;
+  border-block-end: 2px solid transparent;
+  color: var(--text-2);
+  font-weight: 600;
+}
+.customer-workspace-tab:hover,
+.customer-workspace-tab[aria-current='page'] {
+  color: var(--primary-text);
+}
+.customer-workspace-tab[aria-current='page'] {
+  border-block-end-color: var(--primary);
+}
+
+.customer-service-tabs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-block: 0.25rem;
+}

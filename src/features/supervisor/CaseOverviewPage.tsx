@@ -32,10 +32,10 @@ export default function CaseOverviewPage() {
       asideLabel={t('overview.aside')}
       main={
         <>
-          <Progress data={data} />
-          <Contract data={data} />
+          <CaseProgress data={data} />
+          <CaseContract data={data} />
           {data.services && <ServicesCard caseId={data.id} services={data.services} />}
-          <Installments data={data} />
+          <CaseInstallments data={data} />
         </>
       }
       aside={
@@ -44,7 +44,7 @@ export default function CaseOverviewPage() {
             url={`${SUPERVISOR_API}/cases/${String(data.id)}/notebook/`}
             name={data.name.split(' ')[0] ?? data.name}
           />
-          <Tasks data={data} />
+          <CaseTasksCard data={data} />
           <Activity data={data} />
         </>
       }
@@ -52,7 +52,7 @@ export default function CaseOverviewPage() {
   );
 }
 
-function Progress({ data }: { data: CaseData }) {
+export function CaseProgress({ data }: { data: CaseData }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const { progress } = data;
@@ -77,7 +77,7 @@ function Progress({ data }: { data: CaseData }) {
   );
 }
 
-function Contract({ data }: { data: CaseData }) {
+export function CaseContract({ data }: { data: CaseData }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const { contract } = data;
@@ -148,7 +148,7 @@ const INSTALLMENT_TONE: Record<InstallmentStatus, ChipTone> = {
   upcoming: 'neutral',
 };
 
-function Installments({ data }: { data: CaseData }) {
+export function CaseInstallments({ data }: { data: CaseData }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const overdue = data.installments.some((item) => item.status === 'overdue');
@@ -195,7 +195,7 @@ function Installments({ data }: { data: CaseData }) {
   );
 }
 
-function Tasks({ data }: { data: CaseData }) {
+export function CaseTasksCard({ data }: { data: CaseData }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const [open, setOpen] = useState(false);

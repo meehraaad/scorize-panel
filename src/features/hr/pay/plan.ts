@@ -35,8 +35,28 @@ export interface PlanDraft {
   penaltyGoal: number | null;
   /** Tomans for each unit over the target. */
   penaltyAmount: number;
+  /** The sales commission is paid to the group. */
+  commission: boolean;
+  /** The team bonus's goal (an index of a goal where more is better), or null for none. */
+  teamGoal: number | null;
+  /** The group's total on that goal that pays it. */
+  teamAtLeast: number;
+  /** Tomans to each person. */
+  teamAmount: number;
   trial: boolean;
 }
+
+/** A plan's extras when it starts: no commission, no team bonus. */
+export const NO_EXTRAS = {
+  commission: false,
+  teamGoal: null,
+  teamAtLeast: 10,
+  teamAmount: 1_000_000,
+} as const satisfies Partial<PlanDraft>;
+
+/** The goal index `goal` after the goal at `removed` is taken out (null when it was that one). */
+export const afterRemoving = (goal: number | null, removed: number) =>
+  goal === null || goal === removed ? null : goal > removed ? goal - 1 : goal;
 
 export const importanceOf = (weight: number): Importance =>
   weight <= 1 ? 1 : weight === 2 ? 2 : 3;
@@ -110,6 +130,10 @@ export function draftOfPlan(plan: Plan): PlanDraft {
     minimum: plan.reward?.minimum ?? 0,
     penaltyGoal: penaltyGoal >= 0 ? penaltyGoal : null,
     penaltyAmount: plan.penalty?.amount ?? 200_000,
+    commission: plan.commission,
+    teamGoal: plan.team_bonus?.goal ?? null,
+    teamAtLeast: plan.team_bonus?.at_least ?? NO_EXTRAS.teamAtLeast,
+    teamAmount: plan.team_bonus?.amount ?? NO_EXTRAS.teamAmount,
     trial: plan.goals.length === 0 ? true : plan.trial,
   };
 }

@@ -103,13 +103,25 @@
     "salaryHint": "In tomans, no decimals",
     "required": "Fill this in",
     "phone": "This mobile number isn't right",
-    "mobileHint": "They log in with this number and an SMS code."
+    "mobileHint": "They log in with this number and an SMS code.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "persian": "Use Persian letters",
+    "hasFile": "This number already has a staff file",
+    "emailBad": "Enter a valid email",
+    "salaryZero": "The salary must be more than zero",
+    "endBefore": "The contract ends before the first day"
   },
   "newStaff": {
     "title": "New staff member",
-    "subtitle": "Enter only their mobile and contract; they type their names, ID card number and the rest in the personal details form. Their panel account and file are made and their joining checklist opens.",
+    "subtitle": "Enter their names, mobile and contract; they type their ID card number and the rest in the personal details form. Their panel account and file are made and their joining checklist opens.",
     "save": "Create file",
-    "saved": "File created; send them the invite."
+    "saved": "File created; send them the invite.",
+    "exists": "This staff member was just added. Check the list.",
+    "openFile": "Open their file",
+    "account": "This number belongs to {{name}}’s account on the site; the names and email came from it.",
+    "accounts": "Accounts with this number",
+    "onStaff": "{{name}} · already on staff"
   },
   "move": {
     "entry": "Joining",
@@ -155,7 +167,8 @@
       "documents": "Documents",
       "moves": "Joining and leaving",
       "history": "History",
-      "form": "Hiring form"
+      "form": "Hiring form",
+      "access": "Access"
     },
     "personal": "Personal details",
     "workContact": "Work and contact",
@@ -180,7 +193,9 @@
     "documents": "Documents",
     "addDocument": "Add document",
     "noDocuments": "No documents yet.",
-    "noMoves": "No joining or leaving checklist."
+    "noMoves": "No joining or leaving checklist.",
+    "ownRule": "This person's own score rule",
+    "slips": "Slips in «Pay and rewards»"
   },
   "info": {
     "full_name": "Full name",
@@ -271,17 +286,16 @@
     }
   },
   "pay": {
-    "title": "Pay & KPIs",
-    "subtitle": "KPIs, the month's values, rewards and penalties, and the month's pay with insurance and tax",
-    "nav": "Pay & KPI sections",
+    "title": "Pay and rewards",
+    "subtitle": "Each person's score, rewards and deductions, and each month's pay",
+    "nav": "Pay sections",
     "section": {
-      "payroll": "Monthly pay",
       "results": "KPI results",
       "kpis": "KPIs",
       "settings": "Settings",
       "rules": "Rewards and penalties",
-      "month": "This month",
-      "plans": "Score plans"
+      "month": "Month",
+      "plans": "Rules"
     },
     "previous": "Previous month",
     "next": "Next month",
@@ -425,7 +439,12 @@
       "hint": "Saving works out draft months again.",
       "saved": "Pay settings saved.",
       "penaltyCap": "Monthly penalty cap (% of base salary)",
-      "penaltyCapHint": "No more than this is taken off; empty: no cap."
+      "penaltyCapHint": "No more than this is taken off; empty: no cap.",
+      "title": "Pay settings",
+      "intro": "Set these once; they stay for every month.",
+      "days": "Days to object",
+      "daysHint": "After the month is shown to staff",
+      "more": "More"
     },
     "trial": "Trial",
     "scope": {
@@ -593,15 +612,15 @@
       "rules": "Every reward and penalty rule, such as commission and team rewards"
     },
     "plans": {
-      "hint": "Each group has a plan: a few simple goals, and what reaching them pays. The system measures them every night.",
-      "noGoals": "No plan yet",
+      "hint": "Each group has one rule: a few simple goals, what reaching them pays and what missing them takes. The system measures them every night.",
+      "noGoals": "No rule yet",
       "people": "{{n}} people",
       "live": "Live",
       "open": "View and change",
-      "make": "Make a plan",
-      "back": "Score plans",
+      "make": "Make a rule",
+      "back": "All rules",
       "notFound": "This group wasn't found",
-      "title": "{{name}}'s score plan",
+      "title": "Rule for {{name}}",
       "trialChip": "On trial: shown, not paid yet",
       "goalNames": {
         "quality": "Quality of work"
@@ -620,10 +639,10 @@
       "templateReward": "Reward up to {{n}}% of pay",
       "useTemplate": "Use this plan",
       "copyTitle": "Copy another group's",
-      "copyFrom": "From the plan of",
+      "copyFrom": "From the rule of",
       "pickGroup": "Pick a group",
       "copy": "Copy",
-      "copyNone": "No other group has a plan yet.",
+      "copyNone": "No other group has a rule yet.",
       "blank": "From scratch",
       "less": "Lower {{what}}",
       "more": "Raise {{what}}",
@@ -649,10 +668,10 @@
       "others": "This group has other rules that don't change here: {{names}}.",
       "trial": "On trial for now",
       "trialHint": "Scores and rewards are shown to everyone but not paid or taken yet.",
-      "save": "Save plan",
-      "saved": "Plan saved.",
+      "save": "Save rule",
+      "saved": "Rule saved.",
       "needName": "Name the goals entered by hand.",
-      "previewTitle": "Had this plan been in place last month",
+      "previewTitle": "If this rule had applied last month",
       "previewHint": "With this group's real values of {{month}}",
       "previewEmpty": "Add a goal to see what it does.",
       "avgScore": "Average score",
@@ -685,41 +704,111 @@
       "capOf": "{{name}} highest score",
       "addGoal": "Add a goal from the list",
       "manualGoal": "A number a manager enters",
-      "manualGoalHint": "Such as quality, one number a month"
+      "manualGoalHint": "Such as quality, one number a month",
+      "commission": "Sales commission",
+      "commissionHint": "The commission on sales contracts, from the system's commission rule, goes on this group's slips.",
+      "team": "Team bonus",
+      "teamHint": "When the group's total reaches a number, everyone gets a bonus.",
+      "teamNone": "Add a goal where more is better first.",
+      "teamGoal": "Team bonus goal",
+      "teamBefore": "If the whole group's total of “{{name}}” reaches",
+      "teamAtLeast": "Team bonus threshold",
+      "teamMiddle": ", each person gets",
+      "teamAmount": "Team bonus amount",
+      "teamAfter": "as a bonus.",
+      "says": {
+        "goals": "Goals: {{goals}}",
+        "reward": "Reward up to {{n}}%",
+        "penalty": "Penalty on “{{name}}”",
+        "commission": "Commission",
+        "team": "Team bonus"
+      }
     },
     "month": {
-      "none": "No score plan yet",
-      "noneHint": "Make plans for the groups first; each month's scores come here.",
-      "makePlans": "Make plans",
-      "summary": "{{people}} people · average score {{score}}",
+      "none": "No rules yet",
+      "noneHint": "Make the groups' rules first; then each month's scores come here.",
+      "makePlans": "Make rules",
       "steps": "The month's steps",
-      "step": {
-        "measured": "Measured",
-        "measuredHint": "Every night, by itself",
-        "review": "You check",
-        "reviewHint": "Look over the values and close the month",
-        "todo": "{{n}} things to do",
-        "objections": "Staff see it",
-        "objectionsHint": "A few days to object",
-        "until": "Objections until {{date}}",
-        "final": "Final pay",
-        "finalHint": "In “Month's pay”"
-      },
       "missingTitle": "Values the system doesn't know",
       "missingHint": "Enter them before closing the month.",
       "missingLabel": "{{name}}: {{kpi}}",
-      "people": "Everyone's score",
-      "objection": "Objection",
-      "ready": "Ready",
-      "details": "Details",
+      "people": "Everyone's score and pay",
       "fix": "Correct",
       "newValue": "Correct value",
-      "closeTitle": "Close the month",
-      "closeReady": "Once closed, everyone sees their score and has a few days to object. Then make the month's pay final.",
-      "closeBlocked": "Enter the {{n}} values above first.",
-      "closeObjecting": "The month is closed. Staff can object until {{date}}.",
-      "closeDone": "The month is closed. Now make the month's pay final.",
-      "closeFinal": "This month's pay is final."
+      "label": "Pay month",
+      "step": {
+        "check": "Check the numbers",
+        "show": "Staff see it",
+        "pay": "Pay"
+      },
+      "state": {
+        "check": "Checking",
+        "shown": "Shown to staff",
+        "paid": "Paid"
+      },
+      "stat": {
+        "net": "Net pay (Tomans)",
+        "plus": "Rewards and extras (Tomans)",
+        "score": "Average score",
+        "people": "People"
+      },
+      "checkHint": "Check the numbers and slips. Once shown, everyone sees their score and slip under «Me» and has a few days to object.",
+      "checkBlocked": "Enter the {{n}} values above first.",
+      "show": "Show to staff",
+      "shown": "The month is shown to staff.",
+      "objectUntil": "Objections until {{date}}",
+      "seen": "{{n}} of {{of}} have seen their slip",
+      "answerFirst": "Answer {{n}} objections first",
+      "hide": "Back to checking",
+      "pay": "Finalise and pay",
+      "payConfirm": "Finalise this month's pay, {{amount}} Tomans in all? Slips won't change after this; mistakes are corrected on next month's slip.",
+      "payYes": "Yes, finalise",
+      "paidBy": "Finalised by {{name}} on {{date}}. A mistake? Open the person's slip and correct it next month.",
+      "paidHint": "This month is paid and locked.",
+      "export": "Accounting file",
+      "working": "Working out this month's pay…",
+      "open": "{{name}}'s slip",
+      "col": {
+        "person": "Name",
+        "score": "Score",
+        "base": "Base",
+        "plus": "Extra",
+        "minus": "Taken",
+        "net": "Net"
+      },
+      "tomanNote": "All amounts are in Tomans. Tap a name for the slip and the reasons for the score."
+    },
+    "sheet": {
+      "score": "This month's score",
+      "slip": "Slip",
+      "file": "This person's file",
+      "exception": "A separate rule for this person",
+      "removeLine": "Remove “{{label}}”",
+      "removed": "Line removed and the slip worked out again.",
+      "addLine": "Add a line",
+      "kind": "Kind of line",
+      "kinds": {
+        "overtime": "Overtime",
+        "bonus": "Bonus",
+        "advance": "Advance",
+        "deduction": "Other deduction"
+      },
+      "amount": "Amount (Tomans)",
+      "addedHint": "Added to earnings, before insurance and tax.",
+      "takenHint": "Taken off the net pay.",
+      "note": "Note",
+      "noteHint": "The person sees it too.",
+      "add": "Add to slip",
+      "added": "Line added to the slip.",
+      "locked": "This month is paid and its slip won't change. A mistake is corrected on next month's slip.",
+      "correct": "Correct next month",
+      "direction": "Correction",
+      "plus": "Should have had more",
+      "minus": "Had too much",
+      "correctHint": "Goes on next month's slip, before insurance and tax.",
+      "correctSave": "Save correction",
+      "corrected": "Correction added to next month's slip.",
+      "correctFailed": "Couldn't: next month's pay may be final too."
     }
   },
   "me": {
@@ -764,7 +853,11 @@
     "trialMoney": "The plan is still on trial; for real it would be about {{amount}}.",
     "tipHigher": "For a higher score: bring “{{name}}” from {{value}} to {{target}} {{unit}}.",
     "tipLower": "For a higher score: bring “{{name}}” from {{value}} down to {{target}} {{unit}} or less.",
-    "history": "Earlier months"
+    "history": "Earlier months",
+    "slipDraft": "Until it is paid, it may change if an objection is accepted.",
+    "slipPaid": "Paid",
+    "slipShown": "Before payment",
+    "afterTax": "Advances and other deductions"
   },
   "onboarding": {
     "title": "Personal details form",
@@ -821,9 +914,10 @@
       "national_code": "10 digits",
       "id_number": "Up to 10 digits; on newer cards it is the national code",
       "birth_date": "As on your national card",
-      "iban": "IR and 24 digits",
+      "iban": "24 digits; with or without IR in front",
       "email": "Preferably the Gmail you use for work",
-      "number_of_children": "Leave at zero if none"
+      "number_of_children": "Leave at zero if none",
+      "field_of_study": "Type it, or pick a suggested major"
     },
     "gender": {
       "male": "Male",
@@ -867,7 +961,8 @@
       "badType": "PDF, JPG or PNG only",
       "tooBig": "The file is larger than 10 MB",
       "open": "Open",
-      "missing": "Not uploaded"
+      "missing": "Not uploaded",
+      "limit": "You can send up to 10 files. Remove one to add another."
     },
     "problem": {
       "required": "Complete this field",
@@ -879,7 +974,9 @@
       "mobile": "This mobile number isn't valid",
       "email": "This email isn't valid",
       "future": "This date hasn't come yet",
-      "files": "Upload your birth certificate and national card"
+      "age": "The age must be from 15 to 100 years",
+      "special": "Remove the special characters",
+      "file": "Upload this document"
     },
     "fix": "Some answers are missing or not valid; each one says why.",
     "draft": {
@@ -931,7 +1028,8 @@
       "cancelConfirm": "Cancel the form? They won't see it anymore.",
       "cancelled": "Form cancelled",
       "differs": "In the file: {{value}}",
-      "files": "Documents"
+      "files": "Documents",
+      "changed": "This form was already reviewed or cancelled. Showing it as it is now."
     },
     "today": "Forms to review",
     "personal": "More details",
@@ -943,8 +1041,12 @@
       "copyMessage": "Copy message",
       "copyLink": "Copy link",
       "copied": "Copied",
-      "failed": "Couldn't copy; select the text and copy it."
+      "failed": "Couldn't copy; select the text and copy it.",
+      "share": "Share",
+      "shareFailed": "Couldn’t share; copy the message instead."
     },
-    "pending": "Waiting for their form"
+    "pending": "Waiting for their form",
+    "changed": "The form changed meanwhile. The page is up to date now.",
+    "majors": "Suggested majors"
   }
 }

@@ -17,18 +17,18 @@ describe('preload on intent', () => {
 
   it('starts the next page’s data when its link is focused, before the click', async () => {
     const router = renderApp('/sales');
-    const [nav] = await screen.findAllByRole('navigation', {
-      name: i18n.t('panels.sales.nav.label'),
-    });
-    if (!nav) throw new Error('No panel nav');
+    const navigation = { name: i18n.t('panels.sales.nav.label') };
+    await screen.findAllByRole('navigation', navigation);
     expect(queryClient.getQueryState(boardQuery.queryKey)).toBeUndefined();
 
-    within(nav)
-      .getByRole('link', { name: i18n.t('panels.sales.nav.board') })
-      .focus();
-
-    // The board's request has started (it may still be on its way).
+    // The board's request has started (it may still be on its way). The link is looked up on each
+    // try: the panel frame can re-render while it loads, and a link found earlier can be detached.
     await waitFor(() => {
+      const [nav] = screen.getAllByRole('navigation', navigation);
+      if (!nav) throw new Error('No panel nav');
+      within(nav)
+        .getByRole('link', { name: i18n.t('panels.sales.nav.board') })
+        .focus();
       expect(queryClient.getQueryState(boardQuery.queryKey)).toBeDefined();
     });
     // Nothing navigated: the data waits in the cache for the click.

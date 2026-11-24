@@ -530,6 +530,19 @@
       "dayHint": "Due by the end of that day; not late before then."
     },
     "history": {
+      "edit": {
+        "label": "Edit description: {{title}}",
+        "save": "Save",
+        "cancel": "Cancel",
+        "saved": "Description saved.",
+        "failed": "Couldn't save the description. Try again.",
+        "tooLong": "Use 5,000 characters or fewer.",
+        "conflict": "This description changed. Review the current version before saving your draft.",
+        "reload": "Load current description",
+        "reloadFailed": "Couldn't load the current description. Try again.",
+        "reviewed": "Keep my draft",
+        "empty": "The current description is empty."
+      },
       "title": "History",
       "subtitle": "Calls, messages, sessions, purchases and payments in one place",
       "more": "Older entries",
@@ -701,6 +714,9 @@
       }
     },
     "logDialog": {
+      "copyPhone": "Copy number",
+      "phoneCopied": "Phone number copied.",
+      "phoneCopyFailed": "Couldn't copy the phone number.",
       "board": {
         "legend": "Where is it now?",
         "lost": "Lost",

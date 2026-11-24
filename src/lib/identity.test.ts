@@ -12,6 +12,7 @@ describe('national code', () => {
     expect(normalizeNationalCode('0499370899')).toBe('0499370899');
     expect(normalizeNationalCode('۰۴۹۹۳۷۰۸۹۹')).toBe('0499370899');
     expect(normalizeNationalCode('049-937-0899')).toBe('0499370899');
+    expect(normalizeNationalCode('(049) 937 0899')).toBe('0499370899');
   });
 
   it('refuses a wrong check digit, a short code and ten equal digits', () => {

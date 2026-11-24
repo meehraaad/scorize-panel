@@ -1,5 +1,5 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -14,14 +14,21 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar, StepDot } from '@/components/ui/Progress';
 import { SaveBar } from '@/components/ui/SaveBar';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { SuggestField } from '@/components/ui/SuggestField';
 import { TextAreaField, TextField } from '@/components/ui/TextField';
 import { fieldErrors } from '@/lib/api/fieldErrors';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { Facts } from '../components/Facts';
-import { dayOf, todayValue } from '../format';
-import type { Onboarding, OnboardingAnswers, OnboardingStatus } from './api';
+import { dayOf } from '../format';
+import {
+  majorsQuery,
+  type Onboarding,
+  type OnboardingAnswers,
+  type OnboardingFileKind,
+  type OnboardingStatus,
+} from './api';
 import { myOnboardingQuery } from './me';
 import { AnswersSummary } from './components/AnswersSummary';
 import { STATUS_TONE } from './status';
@@ -30,22 +37,29 @@ import {
   EDUCATIONS,
   EMPTY_ANSWERS,
   FIELDS,
+  FILE_KINDS,
   GENDERS,
   MARITAL,
   MILITARY,
+  MAX_AGE,
   MAX_CHILDREN,
+  MIN_AGE,
   SECTIONS,
   checkAnswers,
+  fileKey,
   isAsked,
   sectionProgress,
+  yearsAgo,
   type FieldKey,
   type FieldSpec,
   type Problem,
 } from './fields';
-import { useSaveDraft, useSubmitOnboarding } from './mutations';
+import { isGone, useSaveDraft, useSubmitOnboarding } from './mutations';
 
 /** Wait this long after the last keystroke before saving the draft. */
 const DRAFT_DELAY_MS = 1200;
+/** A field being typed in shows its problem only once typing pauses this long. */
+const PROBLEM_DELAY_MS = 600;
 
 const AUTOCOMPLETE: Partial<Record<FieldKey, string>> = {
   first_name: 'given-name',
@@ -109,16 +123,18 @@ function SentForm({ form }: { form: Onboarding }) {
 const initialAnswers = (form: Onboarding): OnboardingAnswers => ({
   ...EMPTY_ANSWERS,
   ...form.answers,
+  ...form.suggested_answers,
   // A stepper always shows a number: zero children until told otherwise.
   number_of_children: form.answers.number_of_children ?? 0,
 });
 
-/** `YYYY-MM-DD` the given number of years before today. */
-const yearsAgo = (years: number) => {
-  const day = new Date();
-  day.setFullYear(day.getFullYear() - years);
-  return `${String(day.getFullYear())}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-};
+const changedAnswers = (
+  previous: OnboardingAnswers,
+  current: OnboardingAnswers,
+): Partial<OnboardingAnswers> =>
+  Object.fromEntries(
+    Object.entries(current).filter(([key, value]) => previous[key as FieldKey] !== value),
+  );
 
 const focusField = (id: string) => {
   const target = document.getElementById(id);
@@ -131,70 +147,113 @@ function OnboardingForm({ form }: { form: Onboarding }) {
   const f = useFormat();
   const save = useSaveDraft();
   const submit = useSubmitOnboarding();
+  // `disabled` comes with the next render: a quick second click must not send it twice.
+  const sendingRef = useRef(false);
   const [answers, setAnswers] = useState(() => initialAnswers(form));
-  const [savedBody, setSavedBody] = useState(() => JSON.stringify(form.answers));
+  // The initial display includes suggestions. Only edits to it belong in a draft PATCH.
+  const [savedAnswers, setSavedAnswers] = useState(answers);
+  const lastDraftAttempt = useRef<OnboardingAnswers | null>(null);
   const [touched, setTouched] = useState<ReadonlySet<FieldKey>>(new Set());
   const [attempted, setAttempted] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
+  /** The field typed in last, until it is left: its problem waits for a pause. */
+  const [editing, setEditing] = useState<FieldKey | null>(null);
 
   const { problems } = useMemo(
     () => checkAnswers(answers, form.files, attempted),
     [answers, form.files, attempted],
   );
-  const body = JSON.stringify(answers);
-  const dirty = body !== savedBody;
+  const paused = useDebouncedValue(answers, PROBLEM_DELAY_MS);
+  const pausedProblems = useMemo(
+    () => checkAnswers(paused, form.files, attempted).problems,
+    [paused, form.files, attempted],
+  );
+  const dirty = Object.keys(changedAnswers(savedAnswers, answers)).length > 0;
 
   // The draft follows the typing: saved once it pauses.
   const settled = useDebouncedValue(answers, DRAFT_DELAY_MS);
   const saveDraft = save.mutate;
+  const saving = save.isPending;
   const sending = submit.isPending;
+  const saveChanges = useCallback(
+    (current: OnboardingAnswers) => {
+      const patch = changedAnswers(savedAnswers, current);
+      if (Object.keys(patch).length === 0) return;
+      lastDraftAttempt.current = current;
+      saveDraft(patch, { onSuccess: () => setSavedAnswers(current) });
+    },
+    [savedAnswers, saveDraft],
+  );
   useEffect(() => {
-    const next = JSON.stringify(settled);
-    if (next === savedBody || sending) return;
-    saveDraft(settled, { onSuccess: () => setSavedBody(next) });
-  }, [settled, savedBody, sending, saveDraft]);
+    if (saving || sending || settled !== answers || settled === lastDraftAttempt.current) return;
+    saveChanges(settled);
+  }, [answers, settled, saving, sending, saveChanges]);
 
   const set = <K extends FieldKey>(key: K, value: OnboardingAnswers[K]) => {
     setAnswers((current) => ({ ...current, [key]: value }));
+    setEditing(key);
     if (serverErrors[key]) setServerErrors(({ [key]: _gone, ...rest }) => rest);
   };
   const touch = (key: FieldKey) => {
     setTouched((current) => (current.has(key) ? current : new Set(current).add(key)));
+    setEditing((current) => (current === key ? null : current));
   };
-  const errorOf = (key: FieldKey | 'files'): string | undefined => {
+  const errorOf = (key: FieldKey): string | undefined => {
     if (serverErrors[key]) return serverErrors[key];
-    const problem: Problem | undefined = problems[key];
+    // While typing (an IBAN, a national code), only once it pauses: not at every keystroke. A
+    // value made right clears its error at once.
+    const problem: Problem | undefined =
+      editing === key && !pausedProblems[key] ? undefined : problems[key];
     if (!problem) return undefined;
-    return attempted || (key !== 'files' && touched.has(key))
-      ? t(`onboarding.problem.${problem}`)
-      : undefined;
+    return attempted || touched.has(key) ? t(`onboarding.problem.${problem}`) : undefined;
   };
+  // A missing document: under its own kind, after a send (Django's one `files` error goes under
+  // each kind still missing).
+  const fileErrors = Object.fromEntries(
+    FILE_KINDS.map((kind) => {
+      const missing = !form.files.some((file) => file.kind === kind);
+      const error =
+        (missing && serverErrors.files) ||
+        (attempted && problems[fileKey(kind)] ? t('onboarding.problem.file') : undefined);
+      return [kind, error];
+    }),
+  ) as Record<OnboardingFileKind, string | undefined>;
 
   const progress = SECTIONS.map((section) => sectionProgress(section, answers, form.files));
   const complete = progress.filter(({ done, total }) => done === total).length;
 
   const send = () => {
+    if (sendingRef.current) return;
     setAttempted(true);
     const checked = checkAnswers(answers, form.files, true);
     const first = FIELDS.find((field) => checked.problems[field.key]);
-    if (first || checked.problems.files) {
-      focusField(first ? `onb-${first.key}` : 'onb-files');
+    const missing = FILE_KINDS.find((kind) => checked.problems[fileKey(kind)]);
+    if (first || missing) {
+      focusField(first ? `onb-${first.key}` : `onb-files-${missing ?? ''}`);
       return;
     }
     // Sent, the form gives way to the summary: `mutateAsync` still reports after it unmounts
     // (a callback passed to `mutate` would be dropped).
+    sendingRef.current = true;
     void submit.mutateAsync(checked.answers).then(
       () => {
+        sendingRef.current = false;
         toast.success(t('onboarding.submitted'));
         window.scrollTo({ top: 0 });
       },
       (error: unknown) => {
+        sendingRef.current = false;
+        // Sent or cancelled meanwhile: the mutation says so and the page catches up.
+        if (isGone(error)) return;
         const fields = fieldErrors(error);
         setServerErrors(fields);
         const bad = FIELDS.find((field) => fields[field.key]);
         if (bad) focusField(`onb-${bad.key}`);
-        else if (fields.files) focusField('onb-files');
-        else toast.error(t('error'));
+        else if (fields.files) {
+          // Django names no kind: the page knows which one is missing.
+          const kind = FILE_KINDS.find((one) => !form.files.some((file) => file.kind === one));
+          focusField(`onb-files-${kind ?? 'birth_certificate'}`);
+        } else toast.error(t('error'));
       },
     );
   };
@@ -250,16 +309,13 @@ function OnboardingForm({ form }: { form: Onboarding }) {
           </div>
         </SectionCard>
       ))}
-      <DocumentsSection files={form.files} error={errorOf('files')} />
+      <DocumentsSection files={form.files} errors={fileErrors} />
       {attempted && Object.keys(problems).length > 0 && (
         <Notice tone="warn">{t('onboarding.fix')}</Notice>
       )}
       <SaveBar message={draftMessage} dirty={dirty}>
         {save.isError && dirty && (
-          <Button
-            variant="outline"
-            onClick={() => saveDraft(answers, { onSuccess: () => setSavedBody(body) })}
-          >
+          <Button variant="outline" disabled={sending} onClick={() => saveChanges(answers)}>
             {t('onboarding.draft.retry')}
           </Button>
         )}
@@ -358,8 +414,9 @@ function Field({
           label={label}
           value={(answers[key] as string | null) ?? ''}
           onChange={(value) => onChange(key, value || null)}
-          max={todayValue()}
-          // Nobody is born today: open on the years around 30 years ago.
+          min={yearsAgo(MAX_AGE)}
+          max={yearsAgo(MIN_AGE)}
+          // Open on the years around 30 years ago.
           openOn={yearsAgo(30)}
           openView="years"
           hint={hint}
@@ -426,6 +483,18 @@ function Field({
 
   const value = (answers[key] as string | null) ?? '';
   const change = (next: string) => onChange(key, next as OnboardingAnswers[typeof key]);
+  if (key === 'field_of_study')
+    return (
+      <MajorField
+        id={id}
+        label={label}
+        value={value}
+        max={field.max}
+        error={error}
+        onValue={change}
+        onBlur={onBlur}
+      />
+    );
   if (field.kind === 'longtext')
     return (
       <div className="sm:col-span-2">
@@ -450,11 +519,50 @@ function Field({
       error={error}
       value={value}
       dir={field.ltr ? 'ltr' : undefined}
+      // Typed left to right (numbers, the IBAN, email): Persian digits become Latin as typed.
+      latinDigits={field.ltr === true}
       inputMode={INPUT_MODE[key]}
       autoComplete={AUTOCOMPLETE[key] ?? 'off'}
       maxLength={field.max}
       onChange={(event) => change(event.target.value)}
       onBlur={onBlur}
+    />
+  );
+}
+
+/** The major, typed freely, with the site's majors suggested once typing pauses. */
+function MajorField({
+  id,
+  label,
+  value,
+  max,
+  error,
+  onValue,
+  onBlur,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  max: number | undefined;
+  error: string | undefined;
+  onValue: (value: string) => void;
+  onBlur: () => void;
+}) {
+  const { t } = useTranslation('hr');
+  const search = useDebouncedValue(value.trim());
+  const majors = useQuery({ ...majorsQuery(search), enabled: search.length >= 2 });
+  return (
+    <SuggestField
+      id={id}
+      label={label}
+      hint={t('onboarding.hint.field_of_study')}
+      value={value}
+      maxLength={max}
+      error={error}
+      onValue={onValue}
+      onBlur={onBlur}
+      suggestions={search === value.trim() ? (majors.data ?? []).slice(0, 8) : []}
+      listLabel={t('onboarding.majors')}
     />
   );
 }

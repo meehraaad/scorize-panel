@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui/IconButton';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { SearchField } from '@/components/ui/Filters';
@@ -14,7 +15,9 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { callRecordingsQuery, historyQuery, type HistoryEvent, type HistoryKind } from '../api';
+import { ContactNoteEditor } from './ContactNoteEditor';
 import { CallRecordingPlayer } from './CustomerCallRecordings';
+import { ContactNoteEditor } from './ContactNoteEditor';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
@@ -130,7 +133,8 @@ export function HistoryCard({ customer }: { customer: number }) {
       ) : (
         <ol className="m-0 list-none p-0">
           {timeline.map((event) => {
-            if (event.kind !== 'recording') return <EventRow key={event.id} event={event} />;
+            if (event.kind !== 'recording')
+              return <EventRow key={event.id} event={event} customer={customer} />;
 
             const key = `${customer}:${event.id}`;
             return (
@@ -172,8 +176,10 @@ export function HistoryCard({ customer }: { customer: number }) {
   );
 }
 
-function EventRow({ event }: { event: HistoryEvent }) {
+function EventRow({ event, customer }: { event: HistoryEvent; customer: number }) {
   const { t } = useTranslation('sales');
+  const [editing, setEditing] = useState(false);
+  const editButton = useRef<HTMLButtonElement>(null);
   const author = event.author ?? t('customer.history.system');
   // Django's history doesn't say who a lead went to.
   const session = event.kind === 'assign' && event.subject === 'consultation';
@@ -210,7 +216,42 @@ function EventRow({ event }: { event: HistoryEvent }) {
           </Chip>
         </span>
       )}
-      {event.text && <p className="m-0 text-sm leading-7 text-neutral">{event.text}</p>}
+      {editing && event.contact_edit ? (
+        <ContactNoteEditor
+          customer={customer}
+          contact={event.contact_edit.id}
+          version={event.contact_edit.version}
+          text={event.text}
+          onClose={() => {
+            setEditing(false);
+            // The button is back after this render.
+            requestAnimationFrame(() => editButton.current?.focus());
+          }}
+        />
+      ) : event.contact_edit ? (
+        // The description on one side, its pencil at the other end (left in RTL).
+        <div className="flex items-start justify-between gap-3">
+          <p className="m-0 min-w-0 text-sm leading-7 break-words whitespace-pre-wrap text-neutral">
+            {event.text}
+          </p>
+          <IconButton
+            ref={editButton}
+            icon="pen"
+            tone="muted"
+            iconSize={18}
+            className="-my-2 -me-2"
+            aria-label={t('customer.history.edit.label', { title })}
+            title={t('customer.history.edit.label', { title })}
+            onClick={() => setEditing(true)}
+          />
+        </div>
+      ) : (
+        event.text && (
+          <p className="m-0 text-sm leading-7 break-words whitespace-pre-wrap text-neutral">
+            {event.text}
+          </p>
+        )
+      )}
       {event.customer_summary && (
         <div className="rounded-xl bg-info-tint p-3">
           <span className="text-xs font-semibold text-text-2">
