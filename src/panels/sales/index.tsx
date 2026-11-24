@@ -25,6 +25,7 @@ import {
   leadsQuery,
   healthQuery,
   historyQuery,
+  callRecordingsQuery,
   infoQuery,
   leadFilterOf,
   handoffQuery,
@@ -259,7 +260,9 @@ export const salesPanel: PanelDefinition = {
             data: (args) => {
               const id = customerOf(args);
               // The contract card (S71): the open offer, or the approved contract.
-              return id === null ? [] : [historyQuery(id), offerQuery(id), handoffQuery(id)];
+              return id === null
+                ? []
+                : [historyQuery(id), callRecordingsQuery(id), offerQuery(id), handoffQuery(id)];
             },
           }),
         },
