@@ -19,6 +19,7 @@ import {
   phoneTeamsQuery,
   teamBreaksQuery,
   type PhoneTeam,
+  type PhoneTeamRouting,
   type TeamBreakPerson,
   type TeamPerson,
 } from '@/lib/sales/phoneCalls';
@@ -28,6 +29,7 @@ import { toast } from '@/lib/toast';
 import { teamEntrances, type KeyPlace } from './phoneMap';
 import { useMenuName } from './phoneNames';
 import { WhoRings } from './WhoRings';
+import { PhoneTeamRoutingFields } from './PhoneTeamRoutingFields';
 
 const MOBILE = /^09\d{9}$/;
 const NAME = /^[^\r\n;,|\\[\]"<>]{1,40}$/;
@@ -209,6 +211,8 @@ function TeamCard({
   const [members, setMembers] = useState(team.members);
   const [outside, setOutside] = useState(team.outside_numbers);
   const [typed, setTyped] = useState('');
+  const [routing, setRouting] = useState<PhoneTeamRouting>();
+  const teamRouting = routing ?? team.routing_override ?? team.routing;
   const [nameError, setNameError] = useState<string>();
   const [phoneError, setPhoneError] = useState<string>();
 
@@ -228,10 +232,26 @@ function TeamCard({
       document.getElementById(`team-${team.number}-name`)?.focus();
       return;
     }
+    const phone = phoneOf(typed);
+    if (phone && !MOBILE.test(phone)) {
+      setPhoneError(t('manager.teams.phoneHint'));
+      return;
+    }
+    const outsideNumbers = phone ? [...new Set([...outside, phone])] : outside;
     save.mutate(
-      { number: team.number, name: name.trim(), members, outside_numbers: outside },
       {
-        onSuccess: () => toast.success(t('manager.teams.saved', { name: name.trim() })),
+        number: team.number,
+        name: name.trim(),
+        members,
+        outside_numbers: outsideNumbers,
+        ...(routing && { routing }),
+      },
+      {
+        onSuccess: () => {
+          setOutside(outsideNumbers);
+          setTyped('');
+          toast.success(t('manager.teams.saved', { name: name.trim() }));
+        },
         onError: (error) =>
           toast.error(
             error instanceof ApiError && error.status === 400
@@ -356,6 +376,7 @@ function TeamCard({
             {t('manager.teams.dynamic', { list: f.digits(team.dynamic.join('، ')) })}
           </p>
         )}
+        {teamRouting && <PhoneTeamRoutingFields value={teamRouting} onChange={setRouting} />}
         <div className="flex justify-end">
           <Button type="submit" disabled={save.isPending}>
             {t('manager.teams.save')}

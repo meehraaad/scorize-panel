@@ -127,6 +127,7 @@ const PAGES: PageCase[] = [
   ...[
     '/sales/leads',
     '/sales/leads?stage=new',
+    '/sales/call-ratings',
     '/sales/calendar',
     '/sales/board',
     '/sales/tasks',
@@ -168,6 +169,7 @@ const PAGES: PageCase[] = [
     '/sales/manager/phone/teams',
     '/sales/manager/phone/menus',
     '/sales/manager/phone/voices',
+    '/sales/manager/phone/ratings',
   ].map((path) => ({ path, user: REZA })),
   // Supervisor panel.
   ...[
