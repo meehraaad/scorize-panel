@@ -658,13 +658,15 @@ describe('sales panel, seller pages', () => {
       ),
     );
     renderApp(`/sales/customers/${ERFAN}`);
-    const first = (await screen.findAllByText('تماس تلفنی ضبط‌شده'))[0].closest('li')!;
+    const [newer, older] = await screen.findAllByText('تماس تلفنی ضبط‌شده');
+    const first = newer?.closest('li');
+    const second = older?.closest('li');
+    if (!first || !second) throw new Error('Expected two recorded call cards');
     await user.click(within(first).getByRole('button', { name: 'پخش ضبط تماس' }));
     expect(within(first).getByLabelText('پخش ضبط تماس')).toHaveAttribute(
       'src',
       `/api/sales/v1/customers/${ERFAN}/recordings/recording-newer/`,
     );
-    const second = screen.getAllByText('تماس تلفنی ضبط‌شده')[1].closest('li')!;
     await user.click(within(second).getByRole('button', { name: 'پخش ضبط تماس' }));
     expect(within(first).getByRole('button', { name: 'پخش ضبط تماس' })).toBeInTheDocument();
     expect(within(second).getByLabelText('پخش ضبط تماس')).toHaveAttribute(
