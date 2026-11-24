@@ -168,7 +168,7 @@ function Next({ formId, disabled }: { formId: string; disabled: boolean }) {
 
 /**
  * Large answers; a click or the option's number on the keyboard picks it and moves on. `initial`:
- * the answer given before going back, shown picked; on phones "next" keeps it (`actions` draws the
+ * a remembered or prefilled answer, shown picked; "next" keeps it (`actions` draws the
  * buttons around that "next").
  */
 export function OptionsAnswer<T extends string>({
@@ -222,20 +222,21 @@ export function OptionsAnswer<T extends string>({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [options]);
-  // Phones: "next" waits for an answer (a tap moves on by itself; after going back it keeps one).
-  const next = wide ? null : (
-    <Button
-      size="lg"
-      className={`px-8 ${MAIN_ON_PHONE}`}
-      disabled={busy || selected === null || picked !== null}
-      onClick={() => {
-        if (selected !== null) pick(selected);
-      }}
-    >
-      {t('next')}
-      <Forward />
-    </Button>
-  );
+  // Phones always show Next. On desktop it also appears when there is an answer to keep.
+  const next =
+    wide && selected === null ? null : (
+      <Button
+        size="lg"
+        className={`px-8 ${MAIN_ON_PHONE}`}
+        disabled={busy || selected === null || picked !== null}
+        onClick={() => {
+          if (selected !== null) pick(selected);
+        }}
+      >
+        {t('next')}
+        <Forward />
+      </Button>
+    );
   return (
     <>
       <AnswerGroup
@@ -252,7 +253,7 @@ export function OptionsAnswer<T extends string>({
           ),
         }))}
         value={selected}
-        onChange={pick}
+        onPick={pick}
       />
       {actions?.(next)}
     </>
@@ -493,7 +494,7 @@ function CountriesAnswer({
     ready: boolean,
     back: (() => void) | undefined,
     picking: boolean,
-    /** Yes or no: phones' "next". */
+    /** Next button for the yes/no question. */
     next?: ReactNode,
   ) => ReactNode;
 }) {

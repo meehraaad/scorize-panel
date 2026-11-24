@@ -204,6 +204,25 @@ function teamErrors(body: PhoneTeamInput) {
 }
 
 export const phoneCallHandlers = [
+  http.get('/api/sales/v1/calls/ratings/mine/', () => {
+    const user = storage.get();
+    if (user !== 3 && user !== 4) return forbidden();
+    const total = user === 3 ? { count: 2, average: 4.5 } : { count: 0, average: null };
+    return HttpResponse.json({
+      total,
+      queues: total.count ? [{ queue: 1000, ...total }] : [],
+      agents: [],
+    });
+  }),
+  http.get('/api/sales/v1/calls/ratings/team/', () => {
+    if (storage.get() !== 4) return forbidden();
+    const total = { count: 2, average: 4.5 };
+    return HttpResponse.json({
+      total,
+      queues: [{ queue: 1000, ...total }],
+      agents: [{ queue: 1000, staff_id: 8, extension: 104, agent: 'نیما رضایی', ...total }],
+    });
+  }),
   // A seller's break from team calls.
   http.get('/api/sales/v1/calls/break/', () => {
     const user = storage.get();

@@ -13,5 +13,6 @@ export const PHONE_SECTIONS = (
     { id: 'teams', path: 'teams', on: ON_SERVER.phoneTeams },
     { id: 'menus', path: 'menus', on: ON_SERVER.phoneMenus },
     { id: 'voices', path: 'voices', on: ON_SERVER.phoneVoices },
+    { id: 'ratings', path: 'ratings', on: true },
   ] as const
 ).filter((section) => section.on);

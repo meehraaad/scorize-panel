@@ -44,12 +44,12 @@ export function AnswerGroup<T extends string>({
   legend,
   options,
   value,
-  onChange,
+  onPick,
 }: {
   legend: string;
   options: readonly Answer<T>[];
   value: T | null;
-  onChange: (value: T) => void;
+  onPick: (value: T) => void;
 }) {
   const name = useId();
   return (
@@ -63,7 +63,11 @@ export function AnswerGroup<T extends string>({
               name={name}
               value={option.value}
               checked={value === option.value}
-              onChange={() => onChange(option.value)}
+              onChange={() => onPick(option.value)}
+              onClick={() => {
+                // Activating an already-checked radio does not fire a change event.
+                if (value === option.value) onPick(option.value);
+              }}
               className="sr-only"
             />
             {option.icon && (
