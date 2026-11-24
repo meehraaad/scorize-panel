@@ -2,7 +2,6 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
-import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -13,10 +12,11 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { overviewQuery, workPath, workQuery, type WorkItem } from '@/features/executive/api';
-import { casePath } from '@/features/supervisor/paths';
 import { orderPath } from '@/features/writer/paths';
 import { pagesOf } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { CustomerName } from './CustomerName';
+import { customerWorkDeskPath } from './customer/paths';
 
 const statusTone: Record<WorkItem['status'], ChipTone> = {
   open: 'info',
@@ -110,12 +110,7 @@ export default function WorkPage() {
               {data.results.map((customer) => (
                 <tr key={customer.id} className="border-b border-hair align-top last:border-0">
                   <th scope="row" className="px-4 py-4 text-start font-semibold sm:px-6 lg:px-8">
-                    <div className="flex items-center gap-3">
-                      <span className="hidden flex-none sm:block">
-                        <Avatar name={customer.name} />
-                      </span>
-                      <span className="min-w-0 wrap-anywhere">{customer.name}</span>
-                    </div>
+                    <CustomerName name={customer.name} id={customer.id} />
                   </th>
                   <td className="px-4 py-1 sm:px-6 lg:px-8">
                     <ul className="m-0 list-none divide-y divide-hair p-0">
@@ -127,7 +122,11 @@ export default function WorkPage() {
                           <div className="min-w-0 flex-[1_1_11rem]">
                             <Link
                               className="inline-flex min-h-11 items-center gap-1.5 rounded-lg font-semibold wrap-anywhere text-primary-text hover:underline"
-                              to={item.case === null ? orderPath(item.id) : casePath(item.case)}
+                              to={
+                                item.case === null
+                                  ? orderPath(item.id)
+                                  : customerWorkDeskPath(customer.id)
+                              }
                             >
                               {item.case === null
                                 ? t(`writer:type.${item.name}`)

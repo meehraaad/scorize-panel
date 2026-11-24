@@ -40,7 +40,7 @@ it('opens the new Customers tab and uses the existing assigned-customer list', a
   const list = await screen.findByRole('region', { name: 'Customer list' });
   expect((await within(list).findAllByRole('link', { name: 'سارا محمدی' }))[0]).toHaveAttribute(
     'href',
-    '/executive/work?customer=1240',
+    '/executive/customers/1240/desk',
   );
   expect(screen.queryByRole('button', { name: 'Upload CSV' })).not.toBeInTheDocument();
 });

@@ -26,9 +26,15 @@ it('groups the customer’s services and opens a filtered Work Table from the su
   await user.click(screen.getByRole('button', { name: 'All services' }));
   expect(await within(table).findByRole('link', { name: 'پذیرش' })).toHaveAttribute(
     'href',
-    '/supervisor/files/1240',
+    '/executive/customers/1240/desk',
   );
   expect(within(table).getAllByRole('rowheader')).toHaveLength(1);
+  await user.click(within(table).getByRole('link', { name: 'سارا محمدی' }));
+  const workspace = await screen.findByRole('navigation', { name: 'Customer workspace' });
+  expect(within(workspace).getByRole('link', { name: 'Work Desk' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
 });
 
 it('switches departments and opens the writing message on its existing order thread', async () => {
