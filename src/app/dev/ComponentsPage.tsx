@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { FileDrop, FileTile, PickedFile } from '@/components/ui/Files';
 import { FilterTabs, SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
+import { Dock, DockDivider } from '@/components/ui/Dock';
 import { IconButton, IconLink } from '@/components/ui/IconButton';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { LinkTile, TileGrid } from '@/components/ui/LinkTile';
@@ -147,6 +148,13 @@ export default function ComponentsPage() {
             <IconButton icon="trash" tone="danger" aria-label="حذف" />
             <IconLink icon="download" href="#" aria-label="دانلود" />
           </div>
+          <Dock label="دسترسی سریع (Dock)" className="self-start">
+            <IconLink icon="whatsapp" tone="whatsapp" href="#" aria-label="واتساپ" tip="واتساپ" />
+            <IconButton icon="telegram" tone="telegram" aria-label="تلگرام" tip="تلگرام" />
+            <DockDivider />
+            <IconButton icon="copy" aria-label="کپی" tip="کپی" />
+            <IconButton icon="check" tone="done" aria-label="کپی شد" tip="کپی شد" />
+          </Dock>
           <div className="flex flex-wrap items-center gap-2 rounded-3xl p-4 shadow-luxe bg-luxe">
             <Button variant="gold">طلایی (gold)</Button>
             <Button variant="onLuxe">روی luxe (onLuxe)</Button>

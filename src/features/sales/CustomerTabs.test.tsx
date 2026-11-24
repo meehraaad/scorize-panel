@@ -128,13 +128,42 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     const user = userEvent.setup();
     const write = vi.spyOn(navigator.clipboard, 'writeText');
     renderApp(`${ERFAN}/info`);
-    await user.click(await screen.findByRole('button', { name: 'کپی لینک فرم تبلت' }));
+    const quick = await screen.findByRole('group', { name: 'دسترسی سریع' });
+    // The info tab's own button (the head's quick one is checked below).
+    const copy = () =>
+      screen
+        .getAllByRole('button', { name: 'کپی لینک فرم تبلت' })
+        .find((button) => !quick.contains(button)) as HTMLElement;
+    await waitFor(() => expect(copy()).toBeDefined());
+    await user.click(copy());
     expect(write).toHaveBeenCalledWith('https://scorize.com/panel/background');
     expect(await toasts().findByText(/^لینک فرم تبلت کپی شد/)).toBeInTheDocument();
     write.mockRejectedValueOnce(new Error('denied'));
-    await user.click(screen.getByRole('button', { name: 'کپی لینک فرم تبلت' }));
+    await user.click(copy());
     expect(await toasts().findByText('لینک کپی نشد. دوباره امتحان کنید.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'باز کردن فرم تبلت' })).toBeInTheDocument();
+    write.mockRestore();
+  });
+
+  it('head: the quick actions are icons, and the tablet link copies from there too', async () => {
+    const user = userEvent.setup();
+    const write = vi.spyOn(navigator.clipboard, 'writeText');
+    renderApp(ERFAN);
+    const quick = await screen.findByRole('group', { name: 'دسترسی سریع' });
+    // Every quick action is an icon with a name, no visible text.
+    // WhatsApp, Telegram, the tablet link and the in-person meeting.
+    const items = quick.querySelectorAll('a, button');
+    expect(items).toHaveLength(4);
+    for (const item of items) {
+      expect(item).toHaveAccessibleName();
+      expect(item.textContent).toBe('');
+    }
+    const tablet = within(quick).getByRole('button', { name: 'کپی لینک فرم تبلت' });
+    expect(tablet).toHaveAttribute('data-tip', 'کپی لینک فرم تبلت');
+    await user.click(tablet);
+    expect(write).toHaveBeenCalledWith('https://scorize.com/panel/background');
+    expect(await toasts().findByText(/^لینک فرم تبلت کپی شد/)).toBeInTheDocument();
+    expect(tablet).toHaveAttribute('data-tip', 'کپی شد');
     write.mockRestore();
   });
 

@@ -213,6 +213,8 @@ export interface CustomerData {
   attribution?: { first_contact: string | null; won_by: string | null };
   /** The "missed call" SMS as this customer gets it, shown when the seller picks SMS. */
   no_answer_sms_text?: string;
+  /** The tablet form's link to send the customer (names no one); the head copies it. */
+  tablet_share_url?: string;
 }
 
 export const customerKey = (id: number) => [...SALES_KEY, 'customer', id] as const;

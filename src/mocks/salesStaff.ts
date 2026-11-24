@@ -415,6 +415,7 @@ export const salesStaffHandlers = [
         pathway_check: customerPathwayCheck(data.id),
         // conf/notifications.json's crm_unanswered_call, with the customer's first name.
         no_answer_sms_text: `سلام ${data.name.split(' ')[0] ?? ''} عزیز\nمتأسفانه مشاوران اسکورایز موفق به تماس با شما نشدند، لطفا جهت ارتباط با موسسه با شماره زیرتماس بگیرید.\n\nتیم اسکورایز - ۰۲۱۹۱۰۱۸۴۵7`,
+        tablet_share_url: 'https://scorize.com/panel/background',
       })),
     ),
   ),

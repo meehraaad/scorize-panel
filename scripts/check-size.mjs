@@ -29,7 +29,9 @@ import { gzipSync } from 'node:zlib';
 // JS 196.4: sales call-rating navigation and routes. Their page and query code stay lazy (2026-11-23).
 // JS 197.6: both of the above together, after test and main merged (2026-11-24).
 // JS 197.7: 197.6 rounded up; the merged build measures just over 197.6 (2026-11-24).
-const BUDGET_KB = { js: 197.7, css: 22.4 };
+// CSS 22.7: the customer head's quick actions: the hover label under icon-only buttons (`tip`),
+// the dock and the chat apps' brand colours, 0.3 KB on 22.3 plus CI's Node 24 margin (2026-11-24).
+const BUDGET_KB = { js: 197.7, css: 22.7 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

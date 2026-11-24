@@ -2,19 +2,22 @@ import { lazy, Suspense, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CustomerFace } from '@/components/customers/CustomerFace';
 import { buttonClass } from '@/components/ui/buttonStyles';
+import { Dock, DockDivider } from '@/components/ui/Dock';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { IconButton, IconLink } from '@/components/ui/IconButton';
 import { StepBar } from '@/components/ui/Progress';
 import { SheetButton } from '@/components/ui/Sheet';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { toast } from '@/lib/toast';
-import { SALES_API, type Channel } from '@/lib/sales/api';
+import { CHANNEL_ICON, SALES_API, type Channel } from '@/lib/sales/api';
 import { messageHref } from '@/lib/sales/messageLink';
 import { customerKey, type CustomerData, type MoveSteps } from '../api';
 import { useMoveBoardCard } from '../api/boardMutations';
 import { boardMoveTargets, laneOf, lanesOf, type Lane } from '../boardLanes';
 import { useSalesFormat } from '../format';
+import { CopyTabletLink } from './CopyTabletLink';
 import { CustomerTags } from './CustomerTags';
 import { ScoreChip, StageChip } from './LeadChips';
 
@@ -103,18 +106,24 @@ export function CustomerHead({
               {line.length > 0 && <span className="text-sm text-text-2">{line.join(' · ')}</span>}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 max-sm:grid max-sm:w-full max-sm:grid-cols-[1fr_1fr_auto]">
+          {/* Phones: "log" beside the side sheet, then the quick actions beside "sale". */}
+          <div className="flex flex-wrap items-center gap-2.5 max-sm:grid max-sm:w-full max-sm:grid-cols-[minmax(0,1fr)_auto] max-sm:gap-2">
             <button
               type="button"
               onClick={() => onLog('call')}
-              className={buttonClass('premium', 'h-13 max-sm:col-span-2', 'lg')}
+              className={buttonClass('premium', 'h-12 max-sm:order-1')}
             >
-              <Icon name="phone" size={19} />
+              <Icon name="phone" size={18} />
               {t('customer.log')}
             </button>
-            <VisitButton customer={customer} onLog={() => onLog('call')} />
-            <MessageButton customer={customer} channel="whatsapp" />
-            <MessageButton customer={customer} channel="telegram" />
+            {/* What everyone knows by its icon: chat apps by their logos, then the office ones. */}
+            <Dock label={t('customer.quick')} className="max-sm:order-3 max-sm:justify-between">
+              <MessageButton customer={customer} channel="whatsapp" />
+              <MessageButton customer={customer} channel="telegram" />
+              <DockDivider />
+              <CopyTabletLink url={customer.tablet_share_url ?? ''} iconOnly />
+              <VisitButton customer={customer} onLog={() => onLog('call')} />
+            </Dock>
             <NewSaleMenu onSell={onSell} onContract={onContract} />
             {side && (
               <SheetButton
@@ -122,6 +131,7 @@ export function CustomerHead({
                 label={t('side.open')}
                 title={t('side.title')}
                 closeLabel={t('side.close')}
+                className="size-12 max-sm:order-2"
               >
                 <div className="flex flex-col gap-4">{side}</div>
               </SheetButton>
@@ -235,7 +245,7 @@ function Menu({
   return (
     <details
       ref={menu}
-      className="group relative max-sm:min-w-0"
+      className="group relative max-sm:order-4 max-sm:min-w-0"
       onKeyDown={(event) => {
         if (event.key === 'Escape') close();
       }}
@@ -243,17 +253,17 @@ function Menu({
       <summary
         className={buttonClass(
           'outline',
-          `h-13 cursor-pointer list-none max-sm:w-full max-sm:px-4 [&::-webkit-details-marker]:hidden ${className}`,
-          'lg',
+          `h-12 cursor-pointer list-none max-sm:w-full max-sm:px-4 [&::-webkit-details-marker]:hidden ${className}`,
         )}
       >
         <Icon name={icon} size={17} />
-        {label}
+        {/* Phones: the icon alone, so the quick actions fit beside it. */}
+        <span className="max-sm:sr-only">{label}</span>
         <Icon name="chevronDown" size={15} className="transition-transform group-open:rotate-180" />
       </summary>
       {/* A choice closes the menu. */}
       <div
-        className="absolute end-0 top-14 z-10 flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-1 rounded-card-sm bg-surface p-2 shadow-panel"
+        className="absolute end-0 top-13 z-10 flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-1 rounded-card-sm bg-surface p-2 shadow-panel"
         onClickCapture={(event) => {
           if ((event.target as HTMLElement).closest('button, a')) close();
         }}
@@ -290,15 +300,12 @@ function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () =>
   };
   return (
     <>
-      <button
-        type="button"
+      <IconButton
+        icon="building"
         onClick={() => setOpen('meeting')}
         aria-label={t('visit.openAria', { name: named(customer.name) })}
-        className={buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg')}
-      >
-        <Icon name="building" size={17} />
-        <span className="max-sm:sr-only">{t('visit.open')}</span>
-      </button>
+        tip={t('visit.open')}
+      />
       {open === 'meeting' && (
         <Suspense fallback={null}>
           <VisitDialog
@@ -349,45 +356,34 @@ function MessageButton({
   const named = useDisplayName();
   const [picking, setPicking] = useState(false);
   const label = t('messageTo', { channel: t(`channel.${channel}`), name: named(customer.name) });
-  const className = buttonClass('outline', 'h-13 max-sm:min-w-0 max-sm:px-4', 'lg');
-  const content = (
-    <>
-      <Icon name={channel === 'telegram' ? 'telegram' : 'send'} size={17} />
-      {t(`channel.${channel}`)}
-    </>
-  );
+  const look = { icon: CHANNEL_ICON[channel], tone: channel, iconSize: 21 } as const;
   if (customer.templates.length === 0) {
     const href = messageHref(channel, customer.phone);
     // No mobile number and no ready message: nothing to open or copy.
     if (!href)
       return (
-        <button
-          type="button"
-          disabled
-          aria-label={label}
-          title={t('whatsAppPicker.noPhoneShort')}
-          className={className}
-        >
-          {content}
-        </button>
+        <IconButton {...look} disabled aria-label={label} tip={t('whatsAppPicker.noPhoneShort')} />
       );
     return (
-      <a href={href} target="_blank" rel="noreferrer" aria-label={label} className={className}>
-        {content}
-      </a>
+      <IconLink
+        {...look}
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={label}
+        tip={t(`channel.${channel}`)}
+      />
     );
   }
   return (
     <>
-      <button
-        type="button"
+      <IconButton
+        {...look}
         aria-label={label}
         aria-haspopup="dialog"
-        className={className}
+        tip={t(`channel.${channel}`)}
         onClick={() => setPicking(true)}
-      >
-        {content}
-      </button>
+      />
       {picking && (
         <Suspense fallback={null}>
           <WhatsAppPicker customer={customer} channel={channel} onClose={() => setPicking(false)} />
