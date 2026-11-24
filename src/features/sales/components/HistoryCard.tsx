@@ -132,7 +132,8 @@ export function HistoryCard({ customer }: { customer: number }) {
       ) : (
         <ol className="m-0 list-none p-0">
           {timeline.map((event) => {
-            if (event.kind !== 'recording') return <EventRow key={event.id} event={event} customer={customer} />;
+            if (event.kind !== 'recording')
+              return <EventRow key={event.id} event={event} customer={customer} />;
 
             const key = `${customer}:${event.id}`;
             return (
