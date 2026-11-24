@@ -143,7 +143,12 @@ export const managerRoute: RouteObject = {
       path: 'mail',
       ...lazyPage(() => import('@/features/mail/MailPage'), ['mail'], {
         guard: mailManagersOnly,
-        data: () => [serversQuery, gmailStatusQuery, botRulesQuery, mailboxesQuery(FIRST_MAILBOXES)],
+        data: () => [
+          serversQuery,
+          gmailStatusQuery,
+          botRulesQuery,
+          mailboxesQuery(FIRST_MAILBOXES),
+        ],
         skeleton: 'list',
       }),
     },

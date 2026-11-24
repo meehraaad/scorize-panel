@@ -11,6 +11,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { FloatingPanel } from '@/components/ui/FloatingPanel';
@@ -429,14 +430,16 @@ export function LogDialog({
         />
       )}
       {call && !liveCall && customer.phone && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1">
           <a href={callHref(customer.phone, linphone)} className={buttonClass('outline')}>
             <Icon name="phone" size={18} />
             <span dir="ltr">{f.digits(customer.phone)}</span>
           </a>
-          <Button
-            type="button"
-            variant="quiet"
+          <IconButton
+            icon="copy"
+            tone="muted"
+            aria-label={t('customer.logDialog.copyPhone')}
+            tip={t('customer.logDialog.copyPhone')}
             onClick={(event) =>
               void copyText(
                 toLatinDigits(customer.phone),
@@ -446,9 +449,7 @@ export function LogDialog({
                 () => toast.error(t('customer.logDialog.phoneCopyFailed')),
               )
             }
-          >
-            {t('customer.logDialog.copyPhone')}
-          </Button>
+          />
         </div>
       )}
       {message && customer.templates.length > 0 && (

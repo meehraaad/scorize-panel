@@ -462,6 +462,7 @@
     "summary": "Customer summary",
     "noFollowUp": "Not set",
     "lostBecause": "Lost: {{reason}}",
+    "quick": "Quick actions",
     "log": "Call and log",
     "stages": "Sales stages",
     "tasks": {
@@ -1225,6 +1226,7 @@
       "copy": "Copy the tablet form link",
       "copied": "Tablet form link copied. Send it to the customer; it opens with their own account.",
       "copyFailed": "Couldn't copy the link. Try again.",
+      "copiedShort": "Copied",
       "open": "Open the tablet form"
     },
     "notFound": "“{{value}}” wasn’t found. Write the name as it is on the site.",

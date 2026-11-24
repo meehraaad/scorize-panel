@@ -15,14 +15,7 @@ export const MANAGER_ROOT = '/executive/manager';
 
 /** Sub-tabs of the executive management section; 'new' is its first page. */
 export type ManagerSection =
-  | 'new'
-  | 'cases'
-  | 'team'
-  | 'move'
-  | 'services'
-  | 'scopes'
-  | 'kinds'
-  | 'mail';
+  'new' | 'cases' | 'team' | 'move' | 'services' | 'scopes' | 'kinds' | 'mail';
 
 export const managerPath = (section: ManagerSection = 'new') =>
   `${MANAGER_ROOT}${section === 'new' ? '' : `/${section}`}`;
