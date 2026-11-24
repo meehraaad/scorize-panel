@@ -17,6 +17,7 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { callRecordingsQuery, historyQuery, type HistoryEvent, type HistoryKind } from '../api';
 import { ContactNoteEditor } from './ContactNoteEditor';
 import { CallRecordingPlayer } from './CustomerCallRecordings';
+import { ContactNoteEditor } from './ContactNoteEditor';
 
 const LOOK: Record<HistoryKind, { icon: IconName; tone: string }> = {
   call: { icon: 'phone', tone: 'bg-tint text-primary-text' },
