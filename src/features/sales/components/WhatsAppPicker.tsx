@@ -10,35 +10,41 @@ import type { CustomerData } from '../api';
 const rowClass =
   'flex w-full items-start gap-3 rounded-2xl px-4 py-3.5 text-start shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-canvas';
 
+export type PickerChannel = 'whatsapp' | 'telegram';
+
 /**
- * WhatsApp from the customer's page: pick a ready message (the seller's own first, then
- * management's, filled in for this customer) or none. Each is a link, so WhatsApp opens on the tap
- * with the text typed in, and the dialog closes.
+ * WhatsApp or Telegram from the customer's page: pick a ready message (the seller's own first,
+ * then management's, filled in for this customer) or none. Each is a link, so the app opens on the
+ * tap with the text typed in, and the dialog closes.
  */
 export function WhatsAppPicker({
   customer,
   onClose,
+  channel = 'whatsapp',
 }: {
   customer: CustomerData;
   onClose: () => void;
+  channel?: PickerChannel;
 }) {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
+  const key = channel === 'telegram' ? 'telegramPicker' : 'whatsAppPicker';
 
   return (
     <Dialog
       open
       onClose={onClose}
-      title={t('whatsAppPicker.title')}
+      title={t(`${key}.title`)}
       subtitle={named(customer.name)}
       closeLabel={t('whatsAppPicker.close')}
     >
       <div className="flex flex-col gap-3">
+        <p className="m-0 text-[13px] leading-6 text-text-2">{t(`${key}.note`)}</p>
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {customer.templates.map((template) => (
             <li key={template.id}>
               <a
-                href={messageHref('whatsapp', customer.phone, template.text)}
+                href={messageHref(channel, customer.phone, template.text)}
                 target="_blank"
                 rel="noreferrer"
                 onClick={onClose}
@@ -63,7 +69,7 @@ export function WhatsAppPicker({
           ))}
           <li>
             <a
-              href={messageHref('whatsapp', customer.phone)}
+              href={messageHref(channel, customer.phone)}
               target="_blank"
               rel="noreferrer"
               onClick={onClose}

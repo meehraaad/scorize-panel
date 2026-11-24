@@ -55,8 +55,12 @@ const international = (phone: string) => `98${phone.replace(/^0/, '')}`;
 /** A link that opens the messaging app with `text` ready to send. */
 export function messageHref(channel: MessageChannel, phone: string, text = '') {
   const body = encodeURIComponent(text);
-  if (channel === 'whatsapp') return `https://wa.me/${international(phone)}?text=${body}`;
-  if (channel === 'telegram') return `https://t.me/+${international(phone)}`;
+  // The long form, not wa.me: wa.me redirects here and the redirect turns emoji (🌹) into "?".
+  if (channel === 'whatsapp')
+    return `https://api.whatsapp.com/send?phone=${international(phone)}&text=${body}`;
+  // Telegram's phone link takes a draft too (core.telegram.org/api/links, phone number links).
+  if (channel === 'telegram')
+    return `https://t.me/+${international(phone)}${text ? `?text=${body}` : ''}`;
   return `sms:${phone}${text ? `?body=${body}` : ''}`;
 }
 

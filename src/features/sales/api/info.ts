@@ -65,6 +65,8 @@ export interface CustomerInfo {
   countries_list?: Option[];
   /** The office tablet form for this customer (the old site's tablet wizard). */
   tablet_url: string;
+  /** The tablet form's link to send the customer (names no one: opens with their own login). */
+  tablet_share_url: string;
 }
 
 const infoApi = (id: number) => `${SALES_API}/customers/${String(id)}/info/`;
