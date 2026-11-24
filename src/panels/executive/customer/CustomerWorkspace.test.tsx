@@ -14,10 +14,13 @@ beforeEach(async () => {
 it('opens a customer on Work Desk and lets staff see completed tasks separately', async () => {
   const user = userEvent.setup();
   const router = renderApp('/executive/customers/1240');
-  const navigation = await screen.findByRole('navigation', { name: 'Customer workspace' });
   await waitFor(() =>
     expect(router.state.location.pathname).toBe('/executive/customers/1240/desk/124000'),
   );
+  // Look the tabs up once the first service's desk has rendered: the workspace frame re-renders on
+  // the way there, and an element found earlier can be detached (clicking it does nothing).
+  await screen.findByText(/Applications in/);
+  const navigation = await screen.findByRole('navigation', { name: 'Customer workspace' });
   expect(within(navigation).getByRole('link', { name: 'Work Desk' })).toHaveAttribute(
     'aria-current',
     'page',
