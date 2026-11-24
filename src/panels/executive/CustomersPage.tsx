@@ -227,7 +227,6 @@ function CustomerSearch({ value, onSearch }: { value: string; onSearch: (value: 
   );
 }
 
-
 function ListCard({
   data,
   pending,
