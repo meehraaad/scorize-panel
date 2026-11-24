@@ -22,7 +22,6 @@ describe('features by what Django serves', () => {
       ['clientErrors', false],
       // Behind Django's SCORIZE_CLIENT_SERVICES (backend-changes.md SVC4, SVC5).
       ['clientServices', false],
-      ['executiveCustomers', false],
       ['turkey', false],
       ['assistantOrganize', false],
     ]);

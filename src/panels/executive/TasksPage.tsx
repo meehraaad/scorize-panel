@@ -1,11 +1,11 @@
-import { workPath } from '@/features/executive/api';
+import { customerWorkspacePath } from './customer/paths';
 import type { TasksConfig } from '@/features/tasks/config';
 import { TasksPage } from '@/features/tasks/TasksPage';
 
 const config: TasksConfig = {
   panel: 'executive',
   homePath: '/executive',
-  personPath: (id) => workPath(new URLSearchParams({ customer: String(id) })),
+  personPath: (id) => customerWorkspacePath(id),
   person: 'customer',
 };
 

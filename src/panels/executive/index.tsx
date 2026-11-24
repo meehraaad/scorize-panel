@@ -1,3 +1,4 @@
+import { redirect } from 'react-router';
 import { queryClient } from '@/lib/api/queryClient';
 import { getRoles } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
@@ -17,25 +18,11 @@ export const executivePanel: PanelDefinition = {
   navLabel: 'panels.executive.nav.label',
   navigation: [
     {
-      id: 'table',
-      to: '',
-      label: 'panels.executive.nav.table',
-      tab: 'panels.executive.nav.table',
-      icon: 'home',
-    },
-    {
       id: 'customers',
       to: 'customers',
       label: 'panels.executive.nav.customers',
       tab: 'panels.executive.nav.customers',
       icon: 'user',
-    },
-    {
-      id: 'work',
-      to: 'work',
-      label: 'panels.executive.nav.work',
-      tab: 'panels.executive.nav.work',
-      icon: 'folder',
     },
     {
       id: 'tickets',
@@ -55,17 +42,9 @@ export const executivePanel: PanelDefinition = {
     managerNavItem,
   ],
   routes: [
-    {
-      index: true,
-      ...lazyPage(() => import('@/features/executive/OverviewPage'), ['executive'], {
-        skeleton: 'list',
-      }),
-      loader: async () => {
-        const { overviewQuery } = await import('@/features/executive/api');
-        prefetchQueries([overviewQuery]);
-        return null;
-      },
-    },
+    // The panel opens on its customers (the old overview and work table were removed).
+    { index: true, loader: () => redirect('/executive/customers') },
+    { path: 'work', loader: () => redirect('/executive/customers') },
     {
       path: 'customers',
       ...lazyPage(() => import('./CustomersPage'), ['executive', 'supervisor', 'writer'], {
@@ -77,25 +56,12 @@ export const executivePanel: PanelDefinition = {
           import('./customersApi'),
         ]);
         if (user && getRoles(user).includes('executive')) {
-          prefetchQueries(
-            customerListQueries(new URL(request.url).searchParams, user.executive_customers),
-          );
+          prefetchQueries(customerListQueries(new URL(request.url).searchParams));
         }
         return null;
       },
     },
     customerWorkspaceRoute,
-    {
-      path: 'work',
-      ...lazyPage(() => import('./WorkPage'), ['executive', 'writer'], {
-        skeleton: 'list',
-      }),
-      loader: async ({ request }) => {
-        const { overviewQuery, workQuery } = await import('@/features/executive/api');
-        prefetchQueries([overviewQuery, workQuery(new URL(request.url).searchParams)]);
-        return null;
-      },
-    },
     {
       path: 'tickets',
       ...lazyPage(() => import('./TicketsPage'), ['executive', 'supervisor', 'writer'], {

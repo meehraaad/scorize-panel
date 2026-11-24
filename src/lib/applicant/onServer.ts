@@ -50,7 +50,6 @@ export type ServerFeature =
   | 'marketing'
   | 'dayFollowUps'
   | 'clientServices'
-  | 'executiveCustomers'
   | 'clientErrors';
 
 const DEFAULTS: Record<ServerFeature, boolean> = {
@@ -69,8 +68,6 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
    * service conversations need no switch here: they show when Django sends them.
    */
   clientServices: false,
-  /** Expanded Executive Customers list and CSV actions (backend-changes EC1–EC3). */
-  executiveCustomers: false,
   /**
    * `follow_up_on` (a day with no hour) on `POST /sales/v1/customers/<id>/contacts/` and
    * `leads/bulk/` (lang `claude/inspiring-dirac-6lpa16`). Off: the follow-up picker asks a time.

@@ -64,9 +64,7 @@
       "description": "Assigned customer work, tickets and tasks",
       "nav": {
         "label": "Executive Panel menu",
-        "table": "Table",
         "customers": "Customers",
-        "work": "Work Table",
         "tickets": "Tickets",
         "tasks": "Tasks",
         "manager": "Executive management"

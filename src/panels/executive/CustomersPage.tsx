@@ -1,4 +1,4 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
@@ -11,24 +11,20 @@ import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { overviewQuery } from '@/features/executive/api';
 import { pagesOf, useClampPage, type Page } from '@/lib/api/page';
-import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SEARCH_DELAY_MS } from '@/lib/useDebouncedValue';
 import {
-  assignedCustomersQuery,
   customerPageOf,
   customersExportHref,
   customersQuery,
-  hasExpandedCustomers,
   CUSTOMER_ORDERS,
   CUSTOMER_QUEUES,
   CUSTOMER_SCOPES,
   CUSTOMER_STAGES,
 } from './customersApi';
 import { CustomerImport } from './CustomerImport';
-import { AssignedRows, CustomerRows } from './CustomerRows';
+import { CustomerRows } from './CustomerRows';
 import './customers.css';
 
 const QUEUE_COLOR = {
@@ -40,8 +36,7 @@ const QUEUE_COLOR = {
 };
 
 export default function CustomersPage() {
-  const user = useUser();
-  return hasExpandedCustomers(user.executive_customers) ? <CustomerList /> : <AssignedCustomers />;
+  return <CustomerList />;
 }
 
 function useCustomerListParams() {
@@ -232,47 +227,6 @@ function CustomerSearch({ value, onSearch }: { value: string; onSearch: (value: 
   );
 }
 
-/** The Executive work endpoint already lists real customers grouped by assignment. */
-function AssignedCustomers() {
-  const { t } = useTranslation(['executive', 'common']);
-  const { params, set, page, setPage } = useCustomerListParams();
-  const { data: overview } = useSuspenseQuery(overviewQuery);
-  const { data, error, isPlaceholderData } = useQuery(assignedCustomersQuery(params));
-  if (error && !data) throw error;
-
-  return (
-    <PageStack>
-      <PageHeader
-        title={t('common:panels.executive.nav.customers')}
-        subtitle={t('customers.scope.mine')}
-        compact
-      />
-      <ListCard
-        data={data}
-        pending={isPlaceholderData}
-        page={page}
-        setPage={setPage}
-        filters={
-          <FilterTabs
-            label={t('service')}
-            value={params.get('service') ?? ''}
-            options={[
-              { value: '', label: t('all') },
-              ...overview.services.map(({ key, name }) => ({
-                value: key,
-                label: name ?? t(key === 'writing' ? 'writing' : 'caseFile'),
-              })),
-            ]}
-            onChange={(value) => set('service', value)}
-            look="pills"
-          />
-        }
-      >
-        {data && <AssignedRows rows={data.results} />}
-      </ListCard>
-    </PageStack>
-  );
-}
 
 function ListCard({
   data,

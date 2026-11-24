@@ -31,7 +31,6 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       phoneMenus: true,
       phoneVoices: true,
       hrOnboarding: true,
-      executiveCustomers: true,
     },
   };
 });
@@ -195,8 +194,6 @@ const PAGES: PageCase[] = [
   ].map((path) => ({ path, user: MARYAM })),
   // Writer panel.
   ...[
-    '/executive',
-    '/executive/work',
     '/executive/customers',
     '/executive/customers/1240/desk/124000',
     '/executive/customers/1240/desk/writing',

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chip, StatusText, type ChipTone } from '@/components/ui/Chip';
-import type { WorkCustomer } from '@/features/executive/api';
 import { StageChip } from '@/features/supervisor/components/Chips';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { CustomerName } from './CustomerName';
@@ -130,33 +129,6 @@ export function CustomerRows({ rows }: { rows: CustomerCase[] }) {
           </time>
         ) : (
           dash
-        ),
-      }))}
-    />
-  );
-}
-
-export function AssignedRows({ rows }: { rows: WorkCustomer[] }) {
-  const { t } = useTranslation(['executive', 'writer']);
-  return (
-    <ResponsiveList
-      rows={rows.map((row) => ({
-        id: row.id,
-        name: <CustomerName name={row.name} id={row.id} />,
-        services: (
-          <div className="flex flex-wrap gap-1">
-            {row.items.map((item) => {
-              const name =
-                item.case === null ? t(`writer:type.${item.name}`) : item.name || t('caseFile');
-              return (
-                <ServicePill
-                  key={`${item.kind}:${String(item.id)}`}
-                  name={item.detail ? `${name} · ${item.detail}` : name}
-                  owner={{ name: '', mine: true }}
-                />
-              );
-            })}
-          </div>
         ),
       }))}
     />
