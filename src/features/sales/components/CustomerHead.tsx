@@ -9,7 +9,8 @@ import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { toast } from '@/lib/toast';
-import { messageHref, SALES_API, type Channel } from '@/lib/sales/api';
+import { SALES_API, type Channel } from '@/lib/sales/api';
+import { messageHref } from '@/lib/sales/messageLink';
 import { customerKey, type CustomerData, type MoveSteps } from '../api';
 import { useMoveBoardCard } from '../api/boardMutations';
 import { boardMoveTargets, laneOf, lanesOf, type Lane } from '../boardLanes';
@@ -334,6 +335,7 @@ function VisitButton({ customer, onLog }: { customer: CustomerData; onLog: () =>
 /**
  * "Message": WhatsApp or Telegram with the customer's chat. With ready messages it first asks which
  * one to type in (the seller's own first, or none); without any it opens the app in one click.
+ * Without a mobile number no app opens: the picker offers the texts to copy instead.
  * SMS and logging a message stay in the contact log ("Log a contact").
  */
 function MessageButton({
@@ -354,18 +356,27 @@ function MessageButton({
       {t(`channel.${channel}`)}
     </>
   );
-  if (customer.templates.length === 0)
+  if (customer.templates.length === 0) {
+    const href = messageHref(channel, customer.phone);
+    // No mobile number and no ready message: nothing to open or copy.
+    if (!href)
+      return (
+        <button
+          type="button"
+          disabled
+          aria-label={label}
+          title={t('whatsAppPicker.noPhoneShort')}
+          className={className}
+        >
+          {content}
+        </button>
+      );
     return (
-      <a
-        href={messageHref(channel, customer.phone)}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={label}
-        className={className}
-      >
+      <a href={href} target="_blank" rel="noreferrer" aria-label={label} className={className}>
         {content}
       </a>
     );
+  }
   return (
     <>
       <button

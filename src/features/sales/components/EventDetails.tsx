@@ -9,7 +9,7 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { eventColor } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
-import { messageHref } from '@/lib/sales/api';
+import { messageHref } from '@/lib/sales/messageLink';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { formatPhone } from '@/lib/site';
 import { toast } from '@/lib/toast';
@@ -192,38 +192,31 @@ export function EventDetails({
         {t('consultations.log')}
       </ContactLogButton>
     );
-    const formLink = !consultation.form && (
-      <a
-        href={messageHref(
-          'whatsapp',
-          consultation.phone,
-          t('consultationCalendar.formText', {
-            name: consultation.name,
-            url: `${window.location.origin}${FORM_URL}`,
-          }),
-        )}
-        target="_blank"
-        rel="noreferrer"
-        className={outline}
-      >
+    // No mobile number: neither the form nor the reminder can go on WhatsApp.
+    const formHref = messageHref(
+      'whatsapp',
+      consultation.phone,
+      t('consultationCalendar.formText', {
+        name: consultation.name,
+        url: `${window.location.origin}${FORM_URL}`,
+      }),
+    );
+    const remindHref = messageHref(
+      'whatsapp',
+      consultation.phone,
+      t('consultations.remindText', {
+        name: consultation.name,
+        type: type?.name ?? '',
+        when: `${f.weekday(start)} ${f.time(start)}`,
+      }),
+    );
+    const formLink = !consultation.form && formHref && (
+      <a href={formHref} target="_blank" rel="noreferrer" className={outline}>
         {t('consultationCalendar.sendForm')}
       </a>
     );
-    const reminder = (
-      <a
-        href={messageHref(
-          'whatsapp',
-          consultation.phone,
-          t('consultations.remindText', {
-            name: consultation.name,
-            type: type?.name ?? '',
-            when: `${f.weekday(start)} ${f.time(start)}`,
-          }),
-        )}
-        target="_blank"
-        rel="noreferrer"
-        className={outline}
-      >
+    const reminder = remindHref && (
+      <a href={remindHref} target="_blank" rel="noreferrer" className={outline}>
         {t('consultationCalendar.remind')}
       </a>
     );
