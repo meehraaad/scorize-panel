@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
-import { SelectField } from '@/components/ui/Choices';
+import { SelectField, TogglePill } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Notice } from '@/components/ui/Notice';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
+import { Switch } from '@/components/ui/Switch';
 import { ApiError } from '@/lib/api/client';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
@@ -17,6 +18,7 @@ import {
   useAddScope,
   useRemoveScope,
   useScopesFromCountries,
+  useSetScopeLead,
   type Scope,
   type ScopesData,
 } from './api';
@@ -115,6 +117,7 @@ function People({ data }: { data: ScopesData }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const remove = useRemoveScope();
+  const lead = useSetScopeLead();
   const every = { kind: t('scopes.everyKind'), country: t('scopes.everyCountry') };
   const withScopes = data.people.filter((person) =>
     data.scopes.some((scope) => scope.staff === person.id),
@@ -149,6 +152,26 @@ function People({ data }: { data: ScopesData }) {
                         className="flex items-center gap-1 rounded-full bg-canvas ps-3.5 text-sm"
                       >
                         {label}
+                        <TogglePill
+                          label={t('scopes.people.lead')}
+                          checked={scope.leads}
+                          disabled={lead.isPending}
+                          onChange={(leads) =>
+                            lead.mutate(
+                              { id: scope.id, leads },
+                              {
+                                onSuccess: () =>
+                                  toast.success(
+                                    t(leads ? 'scopes.people.leadOn' : 'scopes.people.leadOff', {
+                                      name: person.name,
+                                      scope: label,
+                                    }),
+                                  ),
+                                onError: () => toast.error(t('saveError')),
+                              },
+                            )
+                          }
+                        />
                         <Button
                           variant="danger"
                           className="h-11 px-3 text-sm"
@@ -187,12 +210,13 @@ function AddScope({ data }: { data: ScopesData }) {
   const [staff, setStaff] = useState(String(data.people[0]?.id ?? ''));
   const [kind, setKind] = useState(EVERY);
   const [country, setCountry] = useState(EVERY);
+  const [leads, setLeads] = useState(false);
   const person = data.people.find((entry) => String(entry.id) === staff);
 
   const submit = () => {
     if (!person) return;
     add.mutate(
-      { staff: person.id, kind: kind || null, country: country ? Number(country) : null },
+      { staff: person.id, kind: kind || null, country: country ? Number(country) : null, leads },
       {
         onSuccess: (scope) =>
           toast.success(
@@ -243,6 +267,12 @@ function AddScope({ data }: { data: ScopesData }) {
             ]}
           />
         </div>
+        <Switch
+          label={t('scopes.add.leads')}
+          description={t('scopes.add.leadsHint')}
+          checked={leads}
+          onChange={setLeads}
+        />
         <div>
           <Button disabled={!person || add.isPending} onClick={submit}>
             {t('scopes.add.save')}
