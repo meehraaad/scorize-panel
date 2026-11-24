@@ -1,25 +1,47 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ProgressBar, StepBar } from '@/components/ui/Progress';
+import { Icon } from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui/IconButton';
+import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
-import { PersonLink } from '../components/PersonLink';
+import { Avatar } from '@/components/ui/Avatar';
 import { hrPath } from '../paths';
-import { MANUAL, payMonth, resultsQuery, type Kpi, type KpiResults, type ResultRow } from './api';
+import {
+  firstDayOf,
+  MANUAL,
+  payMonth,
+  payrollExportUrl,
+  payrollQuery,
+  resultsQuery,
+  type Kpi,
+  type KpiResults,
+  type PayMonth,
+  type Payroll,
+  type ResultRow,
+  type Slip,
+} from './api';
 import { Disputes } from './components/Disputes';
-import { MonthBar } from './components/MonthBar';
-import { MonthReview } from './components/MonthReview';
-import { useSaveResults } from './mutations';
+import {
+  useFinalPayroll,
+  useReopenMonth,
+  useSaveResults,
+  useShowMonth,
+  useStartPayroll,
+} from './mutations';
 import { parseNumber } from './numbers';
+
+const PersonSheet = lazy(() => import('./components/PersonSheet'));
 
 /** A manual value nobody has entered yet. */
 interface Missing {
@@ -27,25 +49,103 @@ interface Missing {
   kpi: Kpi;
 }
 
+/** The month's step: 0 the numbers are checked, 1 staff see them, 2 paid. */
+type Step = 0 | 1 | 2;
+const STATES = ['check', 'shown', 'paid'] as const;
+
 /**
- * «این ماه» (canvas "KPI ساده" 3): a month's scores in four steps (measured, you check, people can
- * object, final pay), what still needs a hand before closing (manual values, open objections),
- * everyone's score with their goals, and closing the month for objections. Last month by default:
- * that is the one to check.
+ * «ماه» (canvas "حقوق و پاداش ساده"): a month's scores and pay on one page, in three steps
+ * (check the numbers, show staff, pay). What still needs a hand (manual values, objections) sits
+ * above one table of everyone's score and pay; a row opens the person's slip. Last month by
+ * default: that is the one to pay. A month that has begun and isn't paid has its pay worked out
+ * as a draft, so the numbers are there from the start.
  */
 export default function MonthPage() {
-  const { t } = useTranslation('hr');
   const [shift, setShift] = useState(-1);
   const month = payMonth(shift);
-  const { data } = useQuery(resultsQuery(month));
+  const results = useQuery(resultsQuery(month));
+  const payroll = useQuery(payrollQuery(month));
+  useDraftPay(month, shift, results.data, payroll.data);
+  return (
+    <div className="flex flex-col gap-5">
+      {!results.data || !payroll.data ? (
+        <Card className="p-5">
+          <SkeletonRows rows={6} />
+        </Card>
+      ) : (
+        <Month
+          key={`${String(month.year)}-${String(month.month)}`}
+          month={month}
+          shift={shift}
+          onShift={setShift}
+          results={results.data}
+          payroll={payroll.data}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Works a month's pay out as a draft once, when it has begun and has none yet. */
+function useDraftPay(
+  month: PayMonth,
+  shift: number,
+  results: KpiResults | undefined,
+  payroll: Payroll | undefined,
+) {
+  const start = useStartPayroll();
+  const asked = useRef(new Set<string>());
+  const key = `${String(month.year)}-${String(month.month)}`;
+  const needed = shift <= 0 && !!results && !!payroll && payroll.id === null && !results.final;
+  useEffect(() => {
+    if (!needed || asked.current.has(key)) return;
+    asked.current.add(key);
+    start.mutate(month);
+  }, [needed, key, month, start]);
+}
+
+function Month({
+  month,
+  shift,
+  onShift,
+  results,
+  payroll,
+}: {
+  month: PayMonth;
+  shift: number;
+  onShift: (shift: number) => void;
+  results: KpiResults;
+  payroll: Payroll;
+}) {
+  const { t } = useTranslation('hr');
+  const [open, setOpen] = useState<number | null>(null);
+  const kpis = new Map(results.kpis.map((kpi) => [kpi.id, kpi]));
+  const rows = new Map(results.rows.map((row) => [row.staff.id, row]));
+  const missing: Missing[] = results.rows.flatMap((row) =>
+    row.kpis.flatMap((id) => {
+      const kpi = kpis.get(id);
+      return kpi && kpi.metric === MANUAL && !kpi.trial && row.results[String(id)] === undefined
+        ? [{ row, kpi }]
+        : [];
+    }),
+  );
+  const openDisputes = results.disputes.filter((row) => row.status === 'open').length;
+  const step: Step = payroll.status === 'final' || results.final ? 2 : results.closed ? 1 : 0;
+  const opened = open === null ? undefined : payroll.slips.find((slip) => slip.id === open);
+
   return (
     <>
-      <MonthBar month={month} shift={shift} onShift={setShift} />
-      {!data ? (
-        <Card className="p-5">
-          <SkeletonRows rows={5} />
-        </Card>
-      ) : data.kpis.length === 0 ? (
+      <Hero
+        month={month}
+        shift={shift}
+        onShift={onShift}
+        step={step}
+        results={results}
+        payroll={payroll}
+        missing={missing.length}
+        openDisputes={openDisputes}
+      />
+      {results.kpis.length === 0 && step === 0 && (
         <EmptyState
           variant="card"
           title={t('pay.month.none')}
@@ -57,78 +157,269 @@ export default function MonthPage() {
         >
           {t('pay.month.noneHint')}
         </EmptyState>
-      ) : (
-        <Month key={`${String(month.year)}-${String(month.month)}`} data={data} />
+      )}
+      {step === 0 && missing.length > 0 && <MissingValues data={results} missing={missing} />}
+      <Disputes disputes={results.disputes} readOnly={step === 2} />
+      <People payroll={payroll} rows={rows} onOpen={setOpen} />
+      {opened && (
+        <Suspense fallback={null}>
+          <PersonSheet
+            slip={opened}
+            month={month}
+            row={rows.get(opened.staff.id)}
+            kpis={kpis}
+            results={results}
+            paid={step === 2}
+            onClose={() => setOpen(null)}
+          />
+        </Suspense>
       )}
     </>
   );
 }
 
-function Month({ data }: { data: KpiResults }) {
+/** The month on the dark card: its numbers, the three steps and the one thing to do next. */
+function Hero({
+  month,
+  shift,
+  onShift,
+  step,
+  results,
+  payroll,
+  missing,
+  openDisputes,
+}: {
+  month: PayMonth;
+  shift: number;
+  onShift: (shift: number) => void;
+  step: Step;
+  results: KpiResults;
+  payroll: Payroll;
+  missing: number;
+  openDisputes: number;
+}) {
   const { t } = useTranslation('hr');
   const f = useFormat();
-  const kpis = new Map(data.kpis.map((kpi) => [kpi.id, kpi]));
-  const rows = data.rows.filter((row) => row.kpis.length > 0);
-  const missing: Missing[] = rows.flatMap((row) =>
-    row.kpis.flatMap((id) => {
-      const kpi = kpis.get(id);
-      return kpi && kpi.metric === MANUAL && !kpi.trial && row.results[String(id)] === undefined
-        ? [{ row, kpi }]
-        : [];
-    }),
-  );
-  const openDisputes = data.disputes.filter((row) => row.status === 'open').length;
-  const today = new Date().toISOString().slice(0, 10);
-  const objecting = data.closed && !!data.disputes_until && data.disputes_until >= today;
-  const current = data.final ? 3 : !data.closed ? 1 : objecting || openDisputes > 0 ? 2 : 3;
-  const scored = rows.filter((row) => row.score !== null);
+  const scored = results.rows.filter((row) => row.score !== null);
   const average = scored.length
     ? scored.reduce((sum, row) => sum + (row.score ?? 0), 0) / scored.length
     : null;
-  const todo = missing.length + openDisputes;
+  const totals = payroll.totals;
+  const stats = [
+    { key: 'net', label: t('pay.month.stat.net'), value: f.number(totals.net) },
+    {
+      key: 'plus',
+      label: t('pay.month.stat.plus'),
+      value: f.number(Math.max(totals.gross - totals.base, 0)),
+    },
+    {
+      key: 'score',
+      label: t('pay.month.stat.score'),
+      value: average === null ? '—' : f.number(Math.round(average)),
+    },
+    { key: 'people', label: t('pay.month.stat.people'), value: f.number(payroll.slips.length) },
+  ];
+  const steps = [
+    { key: 'check', label: t('pay.month.step.check') },
+    { key: 'show', label: t('pay.month.step.show') },
+    { key: 'pay', label: t('pay.month.step.pay') },
+  ];
+  return (
+    <section
+      aria-label={t('pay.month.label')}
+      className="flex flex-col gap-5 rounded-card bg-hero p-5 text-on-hero lg:p-7"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1">
+          <IconButton
+            icon="chevronEnd"
+            tone="inherit"
+            aria-label={t('pay.previous')}
+            onClick={() => onShift(shift - 1)}
+          />
+          <h2 className="m-0 min-w-36 text-center text-lead font-extrabold" aria-live="polite">
+            {f.monthYear(firstDayOf(month))}
+          </h2>
+          <IconButton
+            icon="chevronStart"
+            tone="inherit"
+            aria-label={t('pay.next')}
+            disabled={shift >= 1}
+            onClick={() => onShift(shift + 1)}
+          />
+        </div>
+        <Chip tone={step === 2 ? 'good' : step === 1 ? 'info' : 'warn'} dot>
+          {t(`pay.month.state.${STATES[step]}`)}
+        </Chip>
+      </div>
+      <dl className="m-0 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <div key={stat.key} className="flex flex-col gap-1 rounded-2xl bg-hero-raised px-4 py-3">
+            <dt className="text-[13px] text-on-hero-2">{stat.label}</dt>
+            <dd className="m-0 text-[22px] font-extrabold tabular-nums">{stat.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <ol aria-label={t('pay.month.steps')} className="m-0 grid list-none gap-2 p-0 sm:grid-cols-3">
+        {steps.map((item, index) => (
+          <li
+            key={item.key}
+            aria-current={index === step ? 'step' : undefined}
+            className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${
+              index === step ? 'bg-hero-raised' : ''
+            }`}
+          >
+            <span
+              className={`flex size-8 flex-none items-center justify-center rounded-full text-[14px] font-extrabold ${
+                index < step || (index === 2 && step === 2)
+                  ? 'bg-good text-on-primary'
+                  : index === step
+                    ? 'bg-hero-current text-hero'
+                    : 'border border-hero-line text-on-hero-3'
+              }`}
+            >
+              {index < step || (index === 2 && step === 2) ? (
+                <Icon name="check" size={16} />
+              ) : (
+                f.number(index + 1)
+              )}
+            </span>
+            <span className={index > step ? 'text-on-hero-3' : 'font-bold'}>{item.label}</span>
+          </li>
+        ))}
+      </ol>
+      <NextAction
+        month={month}
+        step={step}
+        results={results}
+        payroll={payroll}
+        missing={missing}
+        openDisputes={openDisputes}
+      />
+    </section>
+  );
+}
+
+function NextAction({
+  month,
+  step,
+  results,
+  payroll,
+  missing,
+  openDisputes,
+}: {
+  month: PayMonth;
+  step: Step;
+  results: KpiResults;
+  payroll: Payroll;
+  missing: number;
+  openDisputes: number;
+}) {
+  const { t } = useTranslation('hr');
+  const f = useFormat();
+  const show = useShowMonth();
+  const reopen = useReopenMonth();
+  const final = useFinalPayroll();
+  const [confirming, setConfirming] = useState(false);
+  const hint = 'text-[14px] leading-6 text-on-hero-2';
+
+  if (step === 0)
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hero-line pt-4">
+        <p className={`m-0 max-w-2xl ${hint}`}>
+          {missing > 0
+            ? t('pay.month.checkBlocked', { n: f.number(missing) })
+            : t('pay.month.checkHint')}
+        </p>
+        <Button
+          disabled={missing > 0 || show.isPending || payroll.slips.length === 0}
+          onClick={() =>
+            show.mutate(month, {
+              onSuccess: () => toast.success(t('pay.month.shown')),
+              onError: () => toast.error(t('error')),
+            })
+          }
+        >
+          {t('pay.month.show')}
+        </Button>
+      </div>
+    );
+
+  if (step === 1)
+    return (
+      <div className="flex flex-col gap-3 border-t border-hero-line pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className={`m-0 max-w-2xl ${hint}`}>
+            {[
+              results.disputes_until &&
+                t('pay.month.objectUntil', { date: f.date(results.disputes_until) }),
+              t('pay.month.seen', {
+                n: f.number(payroll.seen),
+                of: f.number(payroll.slips.length),
+              }),
+              openDisputes > 0 && t('pay.month.answerFirst', { n: f.number(openDisputes) }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="onLuxe"
+              disabled={reopen.isPending}
+              onClick={() =>
+                reopen.mutate(month, {
+                  onSuccess: () => toast.success(t('pay.review.reopened')),
+                  onError: () => toast.error(t('error')),
+                })
+              }
+            >
+              {t('pay.month.hide')}
+            </Button>
+            {!confirming && (
+              <Button
+                disabled={openDisputes > 0 || payroll.id === null}
+                onClick={() => setConfirming(true)}
+              >
+                {t('pay.month.pay')}
+              </Button>
+            )}
+          </div>
+        </div>
+        {confirming && payroll.id !== null && (
+          <InlineConfirm
+            message={t('pay.month.payConfirm', { amount: f.number(payroll.totals.net) })}
+            confirmLabel={t('pay.month.payYes')}
+            cancelLabel={t('me.cancel')}
+            pending={final.isPending}
+            onCancel={() => setConfirming(false)}
+            onConfirm={() =>
+              payroll.id !== null &&
+              final.mutate(payroll.id, {
+                onSuccess: () => toast.success(t('pay.payroll.finalDone')),
+                onError: () => toast.error(t('error')),
+              })
+            }
+          />
+        )}
+      </div>
+    );
 
   return (
-    <>
-      <p className="m-0 text-[15px] text-text-2">
-        {t('pay.month.summary', {
-          people: f.number(rows.length),
-          score: average === null ? '—' : f.number(Math.round(average)),
-        })}
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hero-line pt-4">
+      <p className={`m-0 max-w-2xl ${hint}`}>
+        {payroll.finalized_at
+          ? t('pay.month.paidBy', {
+              name: payroll.finalized_by ?? '',
+              date: f.date(payroll.finalized_at),
+            })
+          : t('pay.month.paidHint')}
       </p>
-      <StepBar
-        label={t('pay.month.steps')}
-        tone="plum"
-        current={current}
-        finished={data.final}
-        steps={[
-          {
-            key: 'measured',
-            label: t('pay.month.step.measured'),
-            hint: t('pay.month.step.measuredHint'),
-          },
-          {
-            key: 'review',
-            label: t('pay.month.step.review'),
-            hint:
-              todo > 0
-                ? t('pay.month.step.todo', { n: f.number(todo) })
-                : t('pay.month.step.reviewHint'),
-          },
-          {
-            key: 'objections',
-            label: t('pay.month.step.objections'),
-            hint: data.disputes_until
-              ? t('pay.month.step.until', { date: f.date(data.disputes_until) })
-              : t('pay.month.step.objectionsHint'),
-          },
-          { key: 'final', label: t('pay.month.step.final'), hint: t('pay.month.step.finalHint') },
-        ]}
-      />
-      {!data.final && missing.length > 0 && <MissingValues data={data} missing={missing} />}
-      <Disputes disputes={data.disputes} readOnly={data.final} />
-      <People data={data} rows={rows} kpis={kpis} />
-      <CloseBar data={data} blocked={missing.length} objecting={objecting} />
-    </>
+      {payroll.id !== null && (
+        <a href={payrollExportUrl(payroll.id)} download className={buttonClass('onLuxe')}>
+          {t('pay.month.export')}
+        </a>
+      )}
+    </div>
   );
 }
 
@@ -198,239 +489,108 @@ function MissingValues({ data, missing }: { data: KpiResults; missing: Missing[]
   );
 }
 
+/** What a slip takes off: insurance, tax and the deductions before and after tax. */
+const takenOf = (slip: Slip) => slip.insurance + slip.tax + slip.deduction + slip.after_tax;
+
+/** Everyone's score and pay, one row each; a row opens the person's slip. */
 function People({
-  data,
+  payroll,
   rows,
-  kpis,
+  onOpen,
 }: {
-  data: KpiResults;
-  rows: ResultRow[];
-  kpis: Map<number, Kpi>;
+  payroll: Payroll;
+  rows: Map<number, ResultRow>;
+  onOpen: (id: number) => void;
 }) {
   const { t } = useTranslation('hr');
-  const [open, setOpen] = useState<number | null>(null);
-  const sorted = [...rows].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  const f = useFormat();
+  if (payroll.slips.length === 0)
+    return (
+      <Card className="p-5">
+        <p className="m-0 text-text-2">
+          {payroll.id === null ? t('pay.month.working') : t('pay.payroll.empty')}
+        </p>
+      </Card>
+    );
+  const slips = [...payroll.slips].sort((a, b) => (b.kpi_score ?? -1) - (a.kpi_score ?? -1));
+  const cell = 'px-3 py-3 text-end tabular-nums';
   return (
     <SectionCard id="month-people" variant="panel" size="lg" title={t('pay.month.people')}>
-      <ul aria-label={t('pay.month.people')} className="m-0 flex list-none flex-col p-0">
-        {sorted.map((row) => (
-          <PersonRow
-            key={row.staff.id}
-            row={row}
-            data={data}
-            kpis={row.kpis.flatMap((id) => kpis.get(id) ?? [])}
-            open={open === row.staff.id}
-            onToggle={() => setOpen(open === row.staff.id ? null : row.staff.id)}
-          />
-        ))}
-      </ul>
+      <div className="-mx-2 overflow-x-auto">
+        <table className="w-full min-w-[720px] border-collapse text-[15px]">
+          <caption className="sr-only">{t('pay.month.people')}</caption>
+          <thead>
+            <tr className="text-[13px] text-text-2">
+              <th className="px-3 py-2 text-start font-semibold">{t('pay.month.col.person')}</th>
+              <th className="px-3 py-2 text-end font-semibold">{t('pay.month.col.score')}</th>
+              <th className="px-3 py-2 text-end font-semibold">{t('pay.month.col.base')}</th>
+              <th className="px-3 py-2 text-end font-semibold">{t('pay.month.col.plus')}</th>
+              <th className="px-3 py-2 text-end font-semibold">{t('pay.month.col.minus')}</th>
+              <th className="px-3 py-2 text-end font-semibold">{t('pay.month.col.net')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {slips.map((slip) => {
+              const row = rows.get(slip.staff.id);
+              const plus = slip.gross - slip.base;
+              return (
+                <tr key={slip.id} className="border-t border-hair">
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="flex min-h-11 items-center gap-3 text-start"
+                      aria-label={t('pay.month.open', { name: slip.staff.name })}
+                      onClick={() => onOpen(slip.id)}
+                    >
+                      <Avatar name={slip.staff.name} face={slip.staff.face} size="sm" />
+                      <span className="flex flex-col">
+                        <span className="font-semibold">{slip.staff.name}</span>
+                        <span className="text-[13px] text-text-2">
+                          {slip.position ?? ''}
+                          {row && row.missing > 0 && (
+                            <span className="ms-2 text-warn">
+                              {t('pay.results.missing', { n: f.number(row.missing) })}
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                    </button>
+                  </td>
+                  <td className={`${cell} font-bold`}>
+                    {slip.kpi_score === null ? '—' : f.number(Math.round(slip.kpi_score))}
+                  </td>
+                  <td className={`${cell} text-text-2`}>{f.number(slip.base)}</td>
+                  <td className={`${cell} ${plus > 0 ? 'text-good' : 'text-text-2'}`}>
+                    {plus > 0 ? `+${f.number(plus)}` : f.number(plus)}
+                  </td>
+                  <td className={`${cell} text-text-2`}>
+                    {takenOf(slip) > 0 ? `−${f.number(takenOf(slip))}` : f.number(0)}
+                  </td>
+                  <td className={`${cell} font-extrabold`}>{f.number(slip.net)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-hair font-bold">
+              <td className="px-3 py-3">{t('pay.payroll.totals')}</td>
+              <td className={cell} />
+              <td className={cell}>{f.number(payroll.totals.base)}</td>
+              <td className={cell}>{f.number(payroll.totals.gross - payroll.totals.base)}</td>
+              <td className={cell}>
+                {f.number(
+                  payroll.totals.insurance +
+                    payroll.totals.tax +
+                    payroll.totals.deduction +
+                    payroll.totals.after_tax,
+                )}
+              </td>
+              <td className={`${cell} font-extrabold`}>{f.number(payroll.totals.net)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <p className="m-0 mt-2 text-[13px] text-text-2">{t('pay.month.tomanNote')}</p>
     </SectionCard>
-  );
-}
-
-function PersonRow({
-  row,
-  data,
-  kpis,
-  open,
-  onToggle,
-}: {
-  row: ResultRow;
-  data: KpiResults;
-  kpis: Kpi[];
-  open: boolean;
-  onToggle: () => void;
-}) {
-  const { t } = useTranslation('hr');
-  const f = useFormat();
-  const objection = data.disputes.some(
-    (dispute) => dispute.staff.id === row.staff.id && dispute.status === 'open',
-  );
-  return (
-    <li className="flex flex-col gap-3 border-t border-hair py-3 first:border-t-0 first:pt-0">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="min-w-0 flex-[1_1_200px]">
-          <PersonLink id={row.staff.id} name={row.staff.name} face={row.staff.face} />
-        </span>
-        <span className="flex flex-[1_1_220px] items-center gap-3">
-          <ProgressBar
-            className="flex-1"
-            value={row.score === null ? 0 : Math.min(row.score, 100)}
-          />
-          <b className="min-w-8 text-[17px]">
-            {row.score === null ? '—' : f.number(Math.round(row.score))}
-          </b>
-        </span>
-        <span className="flex items-center gap-2">
-          {objection ? (
-            <Chip tone="primary" small>
-              {t('pay.month.objection')}
-            </Chip>
-          ) : row.missing > 0 ? (
-            <Chip tone="warn" small>
-              {t('pay.results.missing', { n: f.number(row.missing) })}
-            </Chip>
-          ) : (
-            <Chip tone="good" small>
-              {t('pay.month.ready')}
-            </Chip>
-          )}
-          <Button variant="outline" aria-expanded={open} onClick={onToggle}>
-            {open ? t('close') : t('pay.month.details')}
-          </Button>
-        </span>
-      </div>
-      {open && (
-        <ul className="m-0 flex list-none flex-col rounded-2xl bg-canvas px-4 py-1">
-          {kpis.map((kpi) => (
-            <GoalValue key={kpi.id} kpi={kpi} row={row} data={data} />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
-
-function GoalValue({ kpi, row, data }: { kpi: Kpi; row: ResultRow; data: KpiResults }) {
-  const { t } = useTranslation('hr');
-  const f = useFormat();
-  const save = useSaveResults();
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState('');
-  const [note, setNote] = useState('');
-  const detail = row.details[String(kpi.id)];
-  const manual = kpi.metric === MANUAL;
-  const parsed = parseNumber(value);
-  const shown = detail ? `${f.number(detail.value)} ${kpi.unit}`.trim() : t('me.noValue');
-  return (
-    <li className="flex flex-col gap-2 border-t border-hair py-2.5 text-[14px] first:border-t-0">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <span className="flex-[1_1_220px] font-semibold">
-          {kpi.name}
-          {kpi.trial && (
-            <span className="ms-2">
-              <Chip tone="warn" small>
-                {t('pay.trial')}
-              </Chip>
-            </span>
-          )}
-        </span>
-        <span className="flex-[0_1_220px] text-text-2">
-          <span className="text-text">{shown}</span>
-          {' / '}
-          {t(kpi.direction === 'lower' ? 'pay.kpis.targetAtMost' : 'pay.kpis.targetIs', {
-            target: f.number(kpi.target),
-            unit: kpi.unit,
-          })}
-        </span>
-        <b className="min-w-12">
-          {detail?.part == null ? '—' : t('me.percent', { n: f.number(detail.part) })}
-        </b>
-        {!data.final && !editing && (
-          <button
-            type="button"
-            className="min-h-11 font-semibold text-primary-text"
-            onClick={() => {
-              setValue(detail ? String(detail.value) : '');
-              setEditing(true);
-            }}
-          >
-            {t('pay.month.fix')}
-          </button>
-        )}
-      </div>
-      {detail?.source === 'override' && detail.note && (
-        <p className="m-0 text-[13px] text-text-2">{t('pay.results.why', { note: detail.note })}</p>
-      )}
-      {editing && (
-        <div className="flex flex-wrap items-end gap-3">
-          <TextField
-            label={t('pay.month.newValue')}
-            inputMode="decimal"
-            dir="ltr"
-            value={value}
-            error={value.trim() && parsed === null ? t('pay.results.notNumber') : undefined}
-            onChange={(event) => setValue(event.target.value)}
-          />
-          {!manual && (
-            <TextField
-              label={t('pay.results.note')}
-              placeholder={t('pay.results.notePlaceholder')}
-              value={note}
-              maxLength={256}
-              onChange={(event) => setNote(event.target.value)}
-            />
-          )}
-          <Button
-            disabled={parsed === null || (!manual && !note.trim()) || save.isPending}
-            onClick={() =>
-              save.mutate(
-                {
-                  year: data.year,
-                  month: data.month,
-                  results: [
-                    { staff: row.staff.id, kpi: kpi.id, result: parsed, note: note.trim() },
-                  ],
-                },
-                {
-                  onSuccess: () => {
-                    setEditing(false);
-                    setNote('');
-                    toast.success(t('pay.results.saved'));
-                  },
-                  onError: () => toast.error(t('error')),
-                },
-              )
-            }
-          >
-            {t('pay.save')}
-          </Button>
-          <Button variant="outline" onClick={() => setEditing(false)}>
-            {t('me.cancel')}
-          </Button>
-        </div>
-      )}
-    </li>
-  );
-}
-
-function CloseBar({
-  data,
-  blocked,
-  objecting,
-}: {
-  data: KpiResults;
-  blocked: number;
-  objecting: boolean;
-}) {
-  const { t } = useTranslation('hr');
-  const f = useFormat();
-  const message = data.final
-    ? t('pay.month.closeFinal')
-    : data.closed
-      ? objecting && data.disputes_until
-        ? t('pay.month.closeObjecting', { date: f.date(data.disputes_until) })
-        : t('pay.month.closeDone')
-      : blocked > 0
-        ? t('pay.month.closeBlocked', { n: f.number(blocked) })
-        : t('pay.month.closeReady');
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-hero px-5 py-4 text-on-hero">
-      <span className="flex max-w-2xl flex-col gap-1">
-        <span className="font-bold">{t('pay.month.closeTitle')}</span>
-        <span className="text-[14px] text-on-hero-2">{message}</span>
-      </span>
-      <span className="flex flex-wrap items-center gap-2">
-        <MonthReview month={data} data={data} disabled={blocked > 0} />
-        {data.closed && (
-          <Link
-            to={hrPath('pay/payroll')}
-            className="inline-flex min-h-11 items-center font-semibold text-on-hero underline"
-          >
-            {t('pay.section.payroll')}
-          </Link>
-        )}
-      </span>
-    </div>
   );
 }
