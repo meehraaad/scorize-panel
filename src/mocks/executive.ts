@@ -1,4 +1,7 @@
 import { http, HttpResponse } from 'msw';
+import type { ContractState } from '@/panels/executive/customer/api';
+import { fetchInfo } from './legacy/info';
+import { mockCase } from './supervisor';
 import { storage } from './session';
 
 const api = '/api/executive/v1';
@@ -45,6 +48,9 @@ const customerCases = [
 
 const forStaff = (body: object) =>
   storage.get() === 2 ? HttpResponse.json(body) : new HttpResponse(null, { status: 403 });
+
+const contractStates = new Map<number, ContractState>();
+export const resetExecutiveMocks = () => contractStates.clear();
 
 export const executiveHandlers = [
   http.get(`${api}/overview/`, () =>
@@ -102,6 +108,61 @@ export const executiveHandlers = [
     forStaff({ token: 'customer-preview', ready: 1, skipped: 1 }),
   ),
   http.post(`${api}/customers/import/`, () => forStaff({ updated: 1 })),
+  http.get(`${api}/customers/:id/workspace/`, ({ params }) => {
+    const id = Number(params.id);
+    const file = mockCase(id);
+    if (!file) return new HttpResponse(null, { status: 404 });
+    const services = file.services ?? [];
+    return forStaff({
+      id,
+      name: file.name,
+      case: file,
+      services,
+      service_tabs: services.map((entry) => entry.id),
+      writing: id === 1240 ? [{ id: 1240, kind: 'sop', state: 'new' }] : [],
+      open_tasks: 1,
+      next_task: {
+        id: 123,
+        text: 'Review the documents',
+        due_at: '2026-11-24T14:30:00Z',
+        status: 'open',
+        done_at: null,
+        can_complete: true,
+      },
+      contract_state: contractStates.get(id) ?? { status: 'accepted', termination_reason: null },
+      can_change_contract: true,
+      can_edit_information: true,
+    });
+  }),
+  http.get(`${api}/customers/:id/tasks/`, ({ request }) => {
+    const done = new URL(request.url).searchParams.get('state') === 'completed';
+    return forStaff({
+      count: 1,
+      page_size: 15,
+      open: 1,
+      completed: 1,
+      results: [
+        {
+          id: done ? 124 : 123,
+          text: done ? 'Saved the contract' : 'Review the documents',
+          due_at: '2026-11-24T14:30:00Z',
+          status: done ? 'done' : 'open',
+          done_at: done ? '2026-11-24T14:30:00Z' : null,
+          can_complete: !done,
+        },
+      ],
+    });
+  }),
+  http.get(`${api}/customers/:id/information/`, async () => forStaff(await fetchInfo(105))),
+  http.get(`${api}/customers/:id/finance/`, () => forStaff({ payments: [], purchases: [] })),
+  http.get(`${api}/customers/:id/report/`, () =>
+    forStaff({ services: [], answered: 0, waiting: 0, slow: 0 }),
+  ),
+  http.patch(`${api}/customers/:id/contract-status/`, async ({ params, request }) => {
+    const state = (await request.json()) as ContractState;
+    contractStates.set(Number(params.id), state);
+    return forStaff(state);
+  }),
   http.get(`${api}/tickets/:department/`, ({ params }) => {
     const writing = params.department === 'writing';
     const last = {

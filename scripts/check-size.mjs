@@ -25,7 +25,10 @@ import { gzipSync } from 'node:zlib';
 // JS 196.5: the new-staff dialog's account-lookup flag and the hiring follow-ups in shared blocks,
 // under 0.1 KB locally, plus CI's Node 24 margin (2026-11-23).
 // JS 196.7: main's call-rating routes and test's hiring follow-ups together (+0.2 and +0.3 on 196.2).
-const BUDGET_KB = { js: 196.7, css: 22.4 };
+// JS 197.4: the Executive customer workspace's nested route definitions and preload entries.
+// The workspace screens, data loaders, and styles stay lazy.
+// JS 197.6: the call-rating routes (+0.2) together with the Executive workspace (2026-11-24).
+const BUDGET_KB = { js: 197.6, css: 22.4 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

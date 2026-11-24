@@ -1,20 +1,25 @@
 import { hashKey, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SALES_KEY } from '@/lib/sales/api';
 import { customerKey } from './customer';
-import { infoQuery, type InfoSection, saveSection } from './info';
+import { infoQuery, type InfoSection, type InfoSource, saveSection } from './info';
 
 /**
  * The mutations of `./info`, apart from its queries: the routes' page data imports those, so
  * this code stays out of the first load and comes with the pages that change something.
  */
 /** Saves one section and answers the stored info. */
-export function useSaveInfo(id: number) {
+export function useSaveInfo(id: number, source?: InfoSource) {
   const client = useQueryClient();
   return useMutation({
     // Fail visibly when offline; the editor retains input and retries on reconnection.
     networkMode: 'always',
-    mutationFn: (section: InfoSection) => saveSection(id, section),
+    mutationFn: (section: InfoSection) => saveSection(id, section, source),
     onSuccess: (data) => {
+      if (source) {
+        client.setQueryData(source.queryKey, data);
+        void client.invalidateQueries({ queryKey: source.queryKey.slice(0, -1), exact: true });
+        return;
+      }
       const info = infoQuery(id).queryKey;
       const before = client.getQueryData(info)?.personal;
       client.setQueryData(info, data);

@@ -16,6 +16,7 @@ import {
   UnknownNameError,
   infoQuery,
   type CustomerInfo,
+  type InfoSource,
   type EducationEntry,
   type ExamEntry,
   type Option,
@@ -77,28 +78,52 @@ export default function CustomerInfoPage() {
   return <CustomerInfoEditor key={id} id={id} initial={data} />;
 }
 
-function CustomerInfoEditor({ id, initial }: { id: number; initial: CustomerInfo }) {
+export function CustomerInfoEditor({
+  id,
+  initial,
+  source,
+  readOnly = false,
+}: {
+  id: number;
+  initial: CustomerInfo;
+  source?: InfoSource;
+  readOnly?: boolean;
+}) {
   const { t } = useTranslation('sales');
-  const autosave = useInfoAutosave(id, initial);
+  const autosave = useInfoAutosave(id, initial, source);
   const { draft: data, blocker } = autosave;
   return (
     <AutosaveContext value={autosave}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-sm text-text-2">{t('info.shared')}</span>
-        <a
-          href={safeHref(data.tablet_url)}
-          target="_blank"
-          rel="noreferrer"
-          className={buttonClass('outline', 'h-10 px-4 text-[13px]')}
-        >
-          <Icon name="expand" size={15} />
-          {t('info.tablet.open')}
-        </a>
-      </div>
-      <PersonalCard />
-      <GoalCard />
-      <EducationCard />
-      <ExamsCard />
+      {!source && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm text-text-2">{t('info.shared')}</span>
+          <a
+            href={safeHref(data.tablet_url)}
+            target="_blank"
+            rel="noreferrer"
+            className={buttonClass('outline', 'h-10 px-4 text-[13px]')}
+          >
+            <Icon name="expand" size={15} />
+            {t('info.tablet.open')}
+          </a>
+        </div>
+      )}
+      <fieldset disabled={readOnly} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+        <PersonalCard />
+        {source ? (
+          <>
+            <EducationCard />
+            <ExamsCard />
+            <GoalCard />
+          </>
+        ) : (
+          <>
+            <GoalCard />
+            <EducationCard />
+            <ExamsCard />
+          </>
+        )}
+      </fieldset>
       <Dialog
         open={blocker.state === 'blocked'}
         onClose={() => blocker.state === 'blocked' && blocker.reset()}
