@@ -1,5 +1,6 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -9,6 +10,7 @@ import { FilterTabs, SearchField } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SkeletonRows } from '@/components/ui/Skeleton';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { matchesSearch } from '@/lib/text';
@@ -18,21 +20,32 @@ import { PersonLink } from './components/PersonLink';
 import { CONTRACT_TONE, STATE_TONE, dayOf } from './format';
 
 const NewStaffDialog = lazy(() => import('./components/NewStaffDialog'));
+const TeamsView = lazy(() => import('./teams/TeamsView'));
 
 type Filter = 'all' | Exclude<StaffState, 'active'>;
 const FILTERS: readonly Filter[] = ['all', 'trial', 'joining', 'leaving', 'inactive'];
-type View = 'list' | 'chart';
-const VIEWS: readonly View[] = ['list', 'chart'];
+type View = 'list' | 'chart' | 'teams';
+const VIEWS: readonly View[] = ['list', 'chart', 'teams'];
+/** The view in the address (`?view=teams`), so a team's page links back to it. */
+const viewOf = (params: URLSearchParams): View => {
+  const value = params.get('view');
+  return VIEWS.find((view) => view === value) ?? 'list';
+};
 
 /**
  * Everyone who works here (canvas "کارکنان"): position, team, direct manager, the contract in
  * force, whether the attendance terminal knows them, and a joining or leaving under way. "Left"
- * also lists the people who no longer work here. A new staff member starts here.
+ * also lists the people who no longer work here. A new staff member starts here. «تیم‌ها»: each
+ * team's state from its people's tasks (teams/TeamsView.tsx).
  */
 export default function StaffPage() {
   const { t } = useTranslation('hr');
   const f = useFormat();
-  const [view, setView] = useState<View>('list');
+  const [params, setParams] = useSearchParams();
+  const view = viewOf(params);
+  const setView = (value: View) => {
+    setParams(value === 'list' ? {} : { view: value }, { replace: true });
+  };
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
@@ -76,7 +89,11 @@ export default function StaffPage() {
         onChange={setView}
         options={VIEWS.map((value) => ({ value, label: t(`staff.views.${value}`) }))}
       />
-      {view === 'chart' ? (
+      {view === 'teams' ? (
+        <Suspense fallback={<SkeletonRows rows={4} />}>
+          <TeamsView />
+        </Suspense>
+      ) : view === 'chart' ? (
         <Card aria-label={t('chart.label')}>
           <OrgChart staff={data.results} />
         </Card>
