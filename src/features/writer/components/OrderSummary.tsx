@@ -1,12 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { buttonClass } from '@/components/ui/buttonStyles';
+import { Button } from '@/components/ui/Button';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
 import type { OrderData, OrderState } from '../api';
-import { orderPath } from '../paths';
+import { openOrderChat } from '@/lib/supervisor/caseChats';
 import { useOrderText } from './useOrderText';
 
 const TONE: Record<OrderState, ChipTone> = {
@@ -71,7 +70,9 @@ export function OrderSummary({ order }: { order: OrderData }) {
         )}
       </div>
       <div className="flex flex-wrap gap-2">
-        <Link to={orderPath(order.id, 'tickets')} className={buttonClass('primary')}>
+        <Button
+          onClick={() => openOrderChat(order.id, order.applicant.name, `writing/${order.type}`)}
+        >
           <Icon name="chat" size={18} />
           {t('order.chat')}
           {order.unread > 0 && (
@@ -79,7 +80,7 @@ export function OrderSummary({ order }: { order: OrderData }) {
               {f.number(order.unread)}
             </span>
           )}
-        </Link>
+        </Button>
         {order.form_pdf && (
           <a
             href={safeHref(order.form_pdf)}

@@ -1,16 +1,15 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
-import type { TicketsEndpoint, WritingDepartment } from '@/lib/tickets/api';
+import type { WritingDepartment } from '@/lib/tickets/api';
+import { orderKey, WRITER_API, WRITER_KEY } from '@/lib/tickets/writing';
+
+export { orderTickets, WRITER_API, WRITER_INBOX_KEY, WRITER_KEY } from '@/lib/tickets/writing';
 
 /**
  * The writer panel: writing orders (SOP, CV, letters, …) assigned to the logged-in writer.
  * Shapes: docs/backend-changes.md WR1–WR6. Mock: src/mocks/writer.ts.
  */
-
-export const WRITER_KEY = ['writer'] as const;
-export const WRITER_INBOX_KEY = [...WRITER_KEY, 'inbox'] as const;
-export const WRITER_API = '/writer/v1';
 
 /**
  * Where an order is: `new` (the form is final, nothing written yet), `drafting` (a draft is being
@@ -117,8 +116,6 @@ export interface OrderData {
   messages: { id: number; author: string; mine: boolean; at: string; text: string }[];
 }
 
-export const orderKey = (id: number) => [...WRITER_KEY, 'order', id] as const;
-
 export const orderQuery = (id: number) =>
   queryOptions({
     queryKey: orderKey(id),
@@ -133,10 +130,3 @@ export const VERSION_FILE = {
   ],
   maxBytes: 10 * 1024 * 1024,
 } as const;
-
-/** One order's conversation with the applicant, for the shared tickets page (`viewer: 'staff'`). */
-export const orderTickets = (id: number): TicketsEndpoint => ({
-  api: `${WRITER_API}/orders/${String(id)}/tickets`,
-  queryKey: orderKey(id),
-  invalidateKeys: [WRITER_INBOX_KEY],
-});

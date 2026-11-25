@@ -19,7 +19,7 @@ import {
 } from '@/lib/tickets/api';
 import { useSendMessage } from '@/lib/tickets/mutations';
 import { toast } from '@/lib/toast';
-import type { TicketsConfig } from '@/lib/tickets/api';
+import type { TicketConversationConfig } from '@/lib/tickets/api';
 
 /**
  * New message in the open thread. "Very urgent" needs its rules accepted first (as on the old site).
@@ -33,7 +33,7 @@ export function TicketComposer({
   initialText = '',
   onTextChange,
 }: {
-  config: TicketsConfig;
+  config: TicketConversationConfig;
   thread: string;
   compact?: boolean;
   initialText?: string;

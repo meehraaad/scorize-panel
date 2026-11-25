@@ -3,24 +3,25 @@ import { queryClient } from '@/lib/api/queryClient';
 import { sessionQuery } from '@/lib/auth/session';
 
 /**
- * The supervisor's chat windows: one applicant's tickets in a floating window that stays open
- * while the supervisor moves around the panel (like the seller panel's call drafts). One window is
+ * Case and writing order tickets in floating windows that stay open while staff move around
+ * the panel (like the seller panel's call drafts). One window is
  * open; the others wait minimized at the bottom of the screen with their unsent text.
  */
-export interface CaseChat {
-  /** The case (applicant) id. */
-  case: number;
+type ChatTarget = { case: number } | { order: number };
+type ChatKey = number | `order:${number}`;
+
+export type CaseChat = ChatTarget & {
   name: string;
   /** The thread shown ('supervisor', 'writing/sop'); null: the case's first thread. */
   thread: string | null;
   /** Text typed and not sent yet. */
   draft: string;
-}
+};
 
 interface Dock {
   owner: number | null;
   chats: CaseChat[];
-  active: number | null;
+  active: ChatKey | null;
 }
 
 /** More than this many windows: the oldest minimized one without unsent text closes. */
@@ -46,7 +47,7 @@ const isChat = (value: unknown): value is CaseChat => {
   if (typeof value !== 'object' || value === null) return false;
   const chat = value as Record<string, unknown>;
   return (
-    Number.isSafeInteger(chat.case) &&
+    ('order' in chat ? Number.isSafeInteger(chat.order) : Number.isSafeInteger(chat.case)) &&
     typeof chat.name === 'string' &&
     (chat.thread === null || typeof chat.thread === 'string') &&
     typeof chat.draft === 'string'
@@ -74,25 +75,38 @@ export function clearCaseChats() {
 
 /** Opens (or brings back) the chat with this applicant, on `thread` when given. */
 export function openCaseChat(id: number, name: string, thread: string | null = null) {
+  openChat({ case: id }, name, thread);
+}
+
+export function openOrderChat(id: number, name: string, thread: string | null = null) {
+  openChat({ order: id }, name, thread);
+}
+
+export function chatKey(target: ChatTarget): ChatKey {
+  return 'order' in target ? `order:${target.order}` : target.case;
+}
+
+function openChat(target: ChatTarget, name: string, thread: string | null) {
+  const id = chatKey(target);
   const user = queryClient.getQueryData(sessionQuery.queryKey);
   if (!user) return;
   restoreCaseChats(user.id);
-  const known = state.chats.find((chat) => chat.case === id);
+  const known = state.chats.find((chat) => chatKey(chat) === id);
   if (known) {
     commit({
       ...state,
       chats: state.chats.map((chat) =>
-        chat.case === id ? { ...chat, name, thread: thread ?? chat.thread } : chat,
+        chatKey(chat) === id ? { ...chat, name, thread: thread ?? chat.thread } : chat,
       ),
       active: id,
     });
     return;
   }
-  let chats = [...state.chats, { case: id, name, thread, draft: '' }];
+  let chats = [...state.chats, { ...target, name, thread, draft: '' }];
   while (chats.length > MAX_CHATS) {
     const drop =
-      chats.find((chat) => chat.case !== id && !chat.draft.trim()) ??
-      chats.find((chat) => chat.case !== id);
+      chats.find((chat) => chatKey(chat) !== id && !chat.draft.trim()) ??
+      chats.find((chat) => chatKey(chat) !== id);
     if (!drop) break;
     chats = chats.filter((chat) => chat !== drop);
   }
@@ -100,31 +114,31 @@ export function openCaseChat(id: number, name: string, thread: string | null = n
 }
 
 /** Shows this chat's window (null: minimizes the open one). */
-export function activateCaseChat(id: number | null) {
+export function activateCaseChat(id: ChatKey | null) {
   commit({ ...state, active: id });
 }
 
-export function closeCaseChat(id: number) {
+export function closeCaseChat(id: ChatKey) {
   commit({
     ...state,
-    chats: state.chats.filter((chat) => chat.case !== id),
+    chats: state.chats.filter((chat) => chatKey(chat) !== id),
     active: state.active === id ? null : state.active,
   });
 }
 
-export function setCaseChatThread(id: number, thread: string) {
+export function setCaseChatThread(id: ChatKey, thread: string) {
   commit({
     ...state,
-    chats: state.chats.map((chat) => (chat.case === id ? { ...chat, thread } : chat)),
+    chats: state.chats.map((chat) => (chatKey(chat) === id ? { ...chat, thread } : chat)),
   });
 }
 
-export function setCaseChatDraft(id: number, draft: string) {
-  const chat = state.chats.find((item) => item.case === id);
+export function setCaseChatDraft(id: ChatKey, draft: string) {
+  const chat = state.chats.find((item) => chatKey(item) === id);
   if (!chat || chat.draft === draft) return;
   commit({
     ...state,
-    chats: state.chats.map((item) => (item.case === id ? { ...item, draft } : item)),
+    chats: state.chats.map((item) => (chatKey(item) === id ? { ...item, draft } : item)),
   });
 }
 

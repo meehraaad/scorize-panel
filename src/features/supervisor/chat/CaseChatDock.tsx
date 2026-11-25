@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Suspense, useEffect, useMemo } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ThreadMessages } from '@/components/tickets/ThreadMessages';
@@ -17,6 +17,7 @@ import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
 import {
   activateCaseChat,
+  chatKey,
   closeCaseChat,
   restoreCaseChats,
   setCaseChatDraft,
@@ -24,8 +25,9 @@ import {
   useCaseChats,
   type CaseChat,
 } from '@/lib/supervisor/caseChats';
-import { ticketsQuery, type TicketThread, type TicketsConfig } from '@/lib/tickets/api';
+import { ticketsQuery, type TicketThread, type TicketConversationConfig } from '@/lib/tickets/api';
 import { useMarkSeen } from '@/lib/tickets/mutations';
+import { orderTickets } from '@/lib/tickets/writing';
 import { caseTickets } from '../api';
 import { casePath } from '../paths';
 
@@ -37,19 +39,21 @@ const TRAY_MS = 60_000;
 const ICON_BUTTON =
   'inline-flex size-11 flex-none items-center justify-center rounded-full text-text-2 hover:bg-canvas';
 
-const staffConfig = (id: number, customer?: string): TicketsConfig => ({
-  ...caseTickets(id),
-  path: casePath(id),
-  viewer: 'staff',
-  customer,
-  caseId: id,
-});
+const staffConfig = (chat: CaseChat): TicketConversationConfig =>
+  'order' in chat
+    ? { ...orderTickets(chat.order), viewer: 'staff', customer: chat.name }
+    : {
+        ...caseTickets(chat.case),
+        viewer: 'staff',
+        customer: chat.name,
+        caseId: chat.case,
+      };
 
 const unreadOf = (threads: readonly TicketThread[] | undefined) =>
   (threads ?? []).reduce((sum, thread) => sum + thread.unread, 0);
 
 /**
- * The supervisor's chats with applicants, over every page of the panel: the open one in a
+ * Staff chats with applicants, over every page of the panel: the open one in a
  * floating window, the others minimized at the bottom with their unread count and unsent text.
  * Design: canvas "Supervisor chat popup".
  */
@@ -61,11 +65,11 @@ export default function CaseChatDock({ owner }: { owner: number }) {
     restoreCaseChats(owner);
   }, [owner]);
   if (restored !== owner || chats.length === 0) return null;
-  const current = chats.find((chat) => chat.case === active);
-  const waiting = chats.filter((chat) => chat.case !== active);
+  const current = chats.find((chat) => chatKey(chat) === active);
+  const waiting = chats.filter((chat) => chatKey(chat) !== active);
   return (
     <>
-      {current && <ChatWindow key={current.case} chat={current} />}
+      {current && <ChatWindow key={chatKey(current)} chat={current} />}
       {waiting.length > 0 && (
         <aside
           aria-label={t('chat.tray')}
@@ -74,7 +78,7 @@ export default function CaseChatDock({ owner }: { owner: number }) {
           }`}
         >
           {waiting.map((chat) => (
-            <TrayChip key={chat.case} chat={chat} />
+            <TrayChip key={chatKey(chat)} chat={chat} />
           ))}
         </aside>
       )}
@@ -85,7 +89,7 @@ export default function CaseChatDock({ owner }: { owner: number }) {
 function TrayChip({ chat }: { chat: CaseChat }) {
   const { t } = useTranslation('supervisor');
   const f = useFormat();
-  const config = useMemo(() => staffConfig(chat.case), [chat.case]);
+  const config = staffConfig(chat);
   const { data } = useQuery({ ...ticketsQuery(config), refetchInterval: TRAY_MS });
   const unread = unreadOf(data?.threads);
   const label = [
@@ -98,7 +102,7 @@ function TrayChip({ chat }: { chat: CaseChat }) {
   return (
     <Button
       variant="outline"
-      onClick={() => activateCaseChat(chat.case)}
+      onClick={() => activateCaseChat(chatKey(chat))}
       aria-label={label}
       className="max-w-full bg-surface ps-1.5 shadow-panel"
     >
@@ -117,7 +121,7 @@ function TrayChip({ chat }: { chat: CaseChat }) {
 function ChatWindow({ chat }: { chat: CaseChat }) {
   const { t } = useTranslation('supervisor');
   const { t: tt } = useTranslation('tickets');
-  const config = useMemo(() => staffConfig(chat.case, chat.name), [chat.case, chat.name]);
+  const config = staffConfig(chat);
   const overview = useQuery({ ...ticketsQuery(config), refetchInterval: LIVE_MS });
   const threads = overview.data?.threads ?? [];
   // An old address may name a department ('writing') instead of a thread.
@@ -140,17 +144,19 @@ function ChatWindow({ chat }: { chat: CaseChat }) {
       onClose={() => activateCaseChat(null)}
       actions={
         <>
-          <Link
-            to={casePath(chat.case)}
-            aria-label={t('chat.openCase', { name: chat.name })}
-            title={t('chat.openCase', { name: chat.name })}
-            className={ICON_BUTTON}
-          >
-            <Icon name="folder" size={20} />
-          </Link>
+          {'case' in chat && (
+            <Link
+              to={casePath(chat.case)}
+              aria-label={t('chat.openCase', { name: chat.name })}
+              title={t('chat.openCase', { name: chat.name })}
+              className={ICON_BUTTON}
+            >
+              <Icon name="folder" size={20} />
+            </Link>
+          )}
           <button
             type="button"
-            onClick={() => closeCaseChat(chat.case)}
+            onClick={() => closeCaseChat(chatKey(chat))}
             aria-label={t('chat.close')}
             title={t('chat.close')}
             className={ICON_BUTTON}
@@ -190,7 +196,7 @@ function ChatThread({
   threads,
   thread,
 }: {
-  config: TicketsConfig;
+  config: TicketConversationConfig;
   chat: CaseChat;
   threads: readonly TicketThread[];
   thread: TicketThread;
@@ -208,7 +214,7 @@ function ChatThread({
   const tabs = threads.map((item) => ({
     key: item.id,
     label: item.writing ? t(`writing.${item.writing}`) : t(`department.${item.department}`),
-    onSelect: () => setCaseChatThread(chat.case, item.id),
+    onSelect: () => setCaseChatThread(chatKey(chat), item.id),
     active: item.id === thread.id,
     badge: item.id !== thread.id && item.unread > 0 ? f.number(item.unread) : undefined,
   }));
@@ -230,7 +236,7 @@ function ChatThread({
         thread={thread.id}
         compact
         initialText={chat.draft}
-        onTextChange={(text) => setCaseChatDraft(chat.case, text)}
+        onTextChange={(text) => setCaseChatDraft(chatKey(chat), text)}
       />
     </>
   );

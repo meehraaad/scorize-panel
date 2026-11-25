@@ -1,10 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { safeHref } from '@/lib/url';
 import type { OrderData } from '../api';
-import { orderPath } from '../paths';
+import { openOrderChat } from '@/lib/supervisor/caseChats';
 
 /** Beside the order: the program's rules, the case's files, the latest messages. */
 export function OrderSide({ order }: { order: OrderData }) {
@@ -83,9 +82,13 @@ export function OrderSide({ order }: { order: OrderData }) {
             ))}
           </ul>
         )}
-        <Link to={orderPath(order.id, 'tickets')} className="text-sm font-medium">
+        <button
+          type="button"
+          onClick={() => openOrderChat(order.id, order.applicant.name, `writing/${order.type}`)}
+          className="min-h-11 self-start text-sm font-medium"
+        >
           {t('side.toChat')}
-        </Link>
+        </button>
       </SectionCard>
     </>
   );

@@ -5,6 +5,7 @@ import InboxPage from '@/features/supervisor/InboxPage';
 import { orderPath } from '@/features/writer/paths';
 import { getRoles } from '@/lib/auth/roles';
 import { useUser } from '@/lib/auth/session';
+import { openOrderChat } from '@/lib/supervisor/caseChats';
 import type { WritingDepartment } from '@/lib/tickets/api';
 import { caseInboxQuery, ticketDepartment, writingInboxQuery } from './tickets';
 
@@ -34,7 +35,7 @@ export default function ExecutiveTicketsPage() {
           ? t(`writer:type.${item.thread.slice('writing/'.length) as WritingDepartment}`)
           : t('writing')
       }
-      threadPath={(item) => orderPath(item.applicant.id, 'tickets')}
+      onOpenThread={(item) => openOrderChat(item.applicant.id, item.applicant.name, item.thread)}
       detailPath={(item) => orderPath(item.applicant.id)}
     />
   ) : (

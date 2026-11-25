@@ -23,14 +23,8 @@ export interface TicketsEndpoint {
   invalidateKeys?: readonly QueryKey[];
 }
 
-/**
- * What a panel passes to the tickets page. The page itself is panel-neutral: the applicant panel
- * passes its endpoint today; the supervisor and writer panels can pass theirs (one applicant's
- * threads) later, with `viewer: 'staff'`.
- */
-export interface TicketsConfig extends TicketsEndpoint {
-  /** Router path of the page ('/tickets'). The first thread opens there, others at `<path>/<thread id>`. */
-  path: string;
+/** The endpoint and viewer information shared by ticket pages and floating conversations. */
+export interface TicketConversationConfig extends TicketsEndpoint {
   /**
    * `applicant`: picks a priority (with the very-urgent rules) and rates staff replies.
    * `staff`: neither; sees the applicant's ratings.
@@ -40,6 +34,11 @@ export interface TicketsConfig extends TicketsEndpoint {
   customer?: string | undefined;
   /** Staff on a case's chat: the case (Applicant id), so a ready reply comes filled in for it. */
   caseId?: number | undefined;
+}
+
+export interface TicketsConfig extends TicketConversationConfig {
+  /** Router path of the page ('/tickets'). The first thread opens there, others at `<path>/<thread id>`. */
+  path: string;
 }
 
 /** Ticket.Priority. */

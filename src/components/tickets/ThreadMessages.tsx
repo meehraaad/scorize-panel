@@ -8,7 +8,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { URGENT, messagesOf, messagesQuery, type TicketMessage } from '@/lib/tickets/api';
 import { useRateMessage } from '@/lib/tickets/mutations';
 import { daysAgo, withDays } from '@/lib/tickets/thread';
-import type { TicketsConfig } from '@/lib/tickets/api';
+import type { TicketConversationConfig } from '@/lib/tickets/api';
 
 const MAX_RATING = 5;
 
@@ -22,7 +22,7 @@ export function ThreadMessages({
   compact = false,
   refetchInterval,
 }: {
-  config: TicketsConfig;
+  config: TicketConversationConfig;
   thread: string;
   compact?: boolean;
   refetchInterval?: number | undefined;

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
@@ -27,7 +27,7 @@ export interface InboxPageProps {
   query?: typeof inboxQuery;
   controls?: ReactNode;
   threadLabel?: (item: InboxItem) => string;
-  threadPath?: (item: InboxItem) => string;
+  onOpenThread?: (item: InboxItem) => void;
   detailPath?: (item: InboxItem) => string;
 }
 
@@ -35,10 +35,9 @@ export default function InboxPage({
   query = inboxQuery,
   controls,
   threadLabel,
-  threadPath,
+  onOpenThread,
   detailPath,
 }: InboxPageProps) {
-  const navigate = useNavigate();
   const { t } = useTranslation('supervisor');
   const f = useFormat();
   const [filter, setFilter] = useState<InboxFilter>('waiting');
@@ -94,7 +93,7 @@ export default function InboxPage({
                   type="button"
                   // The longest-waiting conversation (a service's, or the general one).
                   onClick={() => {
-                    if (threadPath) void navigate(threadPath(item));
+                    if (onOpenThread) onOpenThread(item);
                     else openCaseChat(item.applicant.id, item.applicant.name, item.thread ?? null);
                   }}
                   className="flex min-w-0 flex-1 items-start gap-3 py-4 ps-5 pe-2 text-start text-text hover:bg-canvas lg:ps-8"

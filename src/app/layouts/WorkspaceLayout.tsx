@@ -35,7 +35,7 @@ export function WorkspaceLayout() {
           <SalesWorkspace key={user.id} owner={user.id} />
         </Suspense>
       )}
-      {user && roles.includes('supervisor') && (
+      {user && (roles.includes('supervisor') || roles.includes('writer')) && (
         <Suspense fallback={null}>
           <CaseChatDock key={user.id} owner={user.id} />
         </Suspense>

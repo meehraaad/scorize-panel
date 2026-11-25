@@ -5,12 +5,14 @@ import { beforeEach, expect, it } from 'vitest';
 import { Team } from '@/lib/auth/roles';
 import type { SessionUser } from '@/lib/auth/session';
 import i18n from '@/lib/i18n';
+import { clearCaseChats } from '@/lib/supervisor/caseChats';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 import type { CustomerWorkspace } from './api';
 
 beforeEach(async () => {
   localStorage.clear();
+  clearCaseChats();
   localStorage.setItem('scorize.mock.session', '2');
   await i18n.changeLanguage('en');
 });
@@ -77,6 +79,7 @@ it('uses the shared header and keeps empty case tabs in place for managers', asy
 
 it('keeps case tabs hidden and redirects direct links for staff without case access', async () => {
   mockWritingOnlyWorkspace();
+  const user = userEvent.setup();
   server.use(
     http.get('/api/profile/auth/v1/whoami/', () =>
       HttpResponse.json({
@@ -107,6 +110,11 @@ it('keeps case tabs hidden and redirects direct links for staff without case acc
       .map((link) => link.textContent),
   ).toEqual(['Work Desk', 'Tasks']);
   expect(screen.getByRole('region', { name: 'File summary' })).toBeVisible();
+
+  await user.click(screen.getByRole('button', { name: /^Talk to the applicant/ }));
+  const dialog = await screen.findByRole('dialog', { name: 'سارا محمدی' });
+  expect(await within(dialog).findByText(/فقط پاراگراف آخر هم کمی کوتاه‌تر شود/)).toBeVisible();
+  expect(router.state.location.pathname).toBe('/executive/customers/1240/desk/writing');
 });
 
 it('opens a customer on Work Desk and lets staff see completed tasks separately', async () => {
