@@ -3,10 +3,11 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { whatIfPathways, type FinderGiven, type PathwayResult } from '@/lib/applicant/pathways';
+import type { FinderGiven, PathwayResult } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { key } from './keys';
+import { whatIfPathways } from './whatIfApi';
 import { whatIfChanges, whatIfLines, type WhatIfChange, type WhatIfLine } from './whatIfPlan';
 
 /**
