@@ -30,7 +30,9 @@
     "technical": "Technical",
     "writing": "Writing",
     "search": "Search",
-    "language": "Language"
+    "language": "Language",
+    "visa": "Visa",
+    "admin": "Admin and finance"
   },
   "marital": {
     "single": "Single",

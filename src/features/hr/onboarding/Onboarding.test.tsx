@@ -527,14 +527,13 @@ describe('new-hire form', () => {
     renderApp('/hr/staff/3');
     await user.click(await screen.findByRole('button', { name: 'دسترسی‌ها' }));
     const card = await screen.findByRole('region', { name: 'دسترسی‌ها' });
-    const group = await within(card).findByRole('checkbox', { name: 'Founders' });
-    await user.click(group);
+    await user.click(await within(card).findByRole('switch', { name: /^منابع انسانی/ }));
     await user.click(within(card).getByRole('button', { name: 'ذخیره' }));
     expect(await toasts().findByText(/ذخیره شد/)).toBeInTheDocument();
     await waitFor(() => {
       expect(
-        within(screen.getByRole('region', { name: 'دسترسی‌ها' })).getByRole('checkbox', {
-          name: 'Founders',
+        within(screen.getByRole('region', { name: 'دسترسی‌ها' })).getByRole('switch', {
+          name: /^منابع انسانی/,
         }),
       ).toBeChecked();
     });

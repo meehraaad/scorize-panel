@@ -12,6 +12,8 @@ import type { OnboardingBrief, PersonalInfo } from './onboarding/api';
  * file does.
  */
 export const HR_PERMISSION = 'can_manage_support_staff';
+/** human_resource.manage_pay: «حقوق و پاداش» (KPIs, rules, the month's pay), apart from the rest of HR. */
+export const PAY_PERMISSION = 'manage_pay';
 export const HR_API = '/hr/v1';
 export const HR_KEY = ['hr'] as const;
 
