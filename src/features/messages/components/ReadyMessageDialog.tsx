@@ -111,6 +111,8 @@ export function ReadyMessageDialog({
           onChange={setText}
           variables={variables}
           variablesLabel={t('detail.addVariable')}
+          hint={t('detail.stickerHint')}
+          imagePastedHint={t('detail.stickerPasted')}
         />
         {text.trim() && (
           <VariablePreview label={t('detail.preview')} text={text} variables={variables} />

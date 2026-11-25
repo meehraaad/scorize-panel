@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
-import { messageHref } from '@/lib/sales/api';
+import { messageHref } from '@/lib/sales/messageLink';
 import { useCallHref } from '@/lib/sales/dial';
 import { formatPhone } from '@/lib/site';
 import { safeHref } from '@/lib/url';
@@ -117,6 +117,8 @@ function ConsultationRow({
     type: item.type.name,
     when: `${f.weekday(item.starts_at)} ${f.time(item.starts_at)}`,
   });
+  // No mobile number: no reminder to send.
+  const remindHref = messageHref('whatsapp', item.phone, reminder);
   return (
     <li
       className={`flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4 shadow-[inset_0_1px_0_var(--hair)] lg:flex-nowrap lg:px-8 ${status === 'need' ? 'bg-row-highlight' : ''}`}
@@ -204,9 +206,9 @@ function ConsultationRow({
             {t('consultations.log')}
           </ContactLogButton>
         )}
-        {status === 'upcoming' && !sellers && (
+        {status === 'upcoming' && !sellers && remindHref && (
           <a
-            href={messageHref('whatsapp', item.phone, reminder)}
+            href={remindHref}
             target="_blank"
             rel="noreferrer"
             aria-label={action(t('consultations.remind'))}

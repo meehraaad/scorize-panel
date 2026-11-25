@@ -225,6 +225,7 @@ function NewTaskForm({
             label={t('customer.newTask.peer')}
             searchLabel={t('customer.newTask.peerSearch')}
             noMatch={t('customer.newTask.peerNoMatch')}
+            suggestedTitle={t('customer.newTask.peerSuggested')}
             describedBy={peerHint}
           />
           <span id={peerHint} className="text-sm leading-6 text-text-2">

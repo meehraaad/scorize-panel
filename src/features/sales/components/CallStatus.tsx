@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { callDuration, callSeconds, type ObservedCall } from '@/lib/sales/phoneCalls';
-import { useNow } from '../useNow';
+import { useNow } from '@/lib/useNow';
 
 export function CallStatus({ call, compact = false }: { call: ObservedCall; compact?: boolean }) {
   const { t } = useTranslation('sales');

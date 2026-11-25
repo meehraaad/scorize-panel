@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { FaceDot } from '@/components/customers/FaceDot';
 import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
@@ -10,20 +9,21 @@ import { SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { parseValue, sameDay } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type MyTask, type TaskSource } from '@/lib/tasks/api';
 import { useTaskChange } from '@/lib/tasks/changes';
 import { quickWhen, type QuickWhen } from '@/lib/when';
 import type { TasksConfig } from '../config';
+import { PersonRef } from './PersonRef';
+import { personLinkOf } from './personLink';
 import { DoneDialog } from './DoneDialog';
 import { RequestDialog } from './RequestDialog';
 import { TickButton } from './StatusMark';
+import { useDueLabel } from './due';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 
 const GROUPS = ['late', 'now', 'today'] as const;
 type Group = (typeof GROUPS)[number];
 const SOON = 60 * 60_000;
-const DAY = 86_400_000;
 
 const SOURCE_TONE: Record<TaskSource, ChipTone> = {
   system: 'info',
@@ -173,13 +173,12 @@ function TaskRow({
   onOpen: () => void;
 }) {
   const { t } = useTranslation('tasks');
-  const named = useDisplayName();
   const f = useFormat();
   const change = useTaskChange();
   const [snoozing, setSnoozing] = useState(false);
   const [reason, setReason] = useState<(typeof REASONS)[number]>('customer_later');
-  const daysLate = Math.max(1, Math.floor((now - new Date(task.due_at).getTime()) / DAY));
-  const lateToday = late && now - new Date(task.due_at).getTime() < DAY;
+  const due = useDueLabel()(task, now);
+  const personLink = task.person ? personLinkOf(task.person) : null;
   const meetingAhead =
     ON_SERVER.visitFollowUp && !!task.visit && new Date(task.visit.starts_at).getTime() > now;
 
@@ -196,11 +195,7 @@ function TaskRow({
     >
       <div className="flex w-20 flex-none flex-col">
         <span className={`text-base font-bold tabular-nums ${late ? 'text-urgent' : 'text-text'}`}>
-          {late && !lateToday
-            ? t('mine.daysLate', { n: f.number(daysLate) })
-            : task.timed === false
-              ? t('mine.allDay')
-              : f.time(task.due_at)}
+          {due.text}
         </span>
         {late && <span className="text-xs text-urgent">{t('mine.late')}</span>}
       </div>
@@ -215,13 +210,7 @@ function TaskRow({
         </button>
         {task.person && (
           <span className="text-[13px] text-text-2">
-            <Link
-              to={config.personPath(task.person.id)}
-              className="inline-flex items-center gap-1.5 align-middle font-medium text-primary-text"
-            >
-              <FaceDot name={task.person.name} face={task.person.face} size="sm" />
-              {named(task.person.name)}
-            </Link>
+            <PersonRef person={task.person} config={config} />
             {task.person.context && ` · ${task.person.context}`}
           </span>
         )}
@@ -270,24 +259,27 @@ function TaskRow({
       <div className="flex flex-none flex-wrap items-start gap-2">
         {task.action !== 'open' &&
           task.person &&
+          personLink !== null &&
           (config.onContact ? (
             <Button
               variant="outline"
               className="h-11 px-4 text-sm"
               onClick={() => {
                 if (task.person && task.action !== 'open')
-                  config.onContact?.(task.person.id, task.person.name, task.action);
+                  config.onContact?.(personLink, task.person.name, task.action);
               }}
             >
               {t(`mine.action.${task.action}`)}
             </Button>
           ) : (
-            <Link
-              to={config.personPath(task.person.id, task.action)}
-              className={buttonClass('outline', 'h-11 px-4 text-sm')}
-            >
-              {t(`mine.action.${task.action}`)}
-            </Link>
+            config.personPath && (
+              <Link
+                to={config.personPath(personLink, task.action)}
+                className={buttonClass('outline', 'h-11 px-4 text-sm')}
+              >
+                {t(`mine.action.${task.action}`)}
+              </Link>
+            )
           ))}
         <TickButton label={t('mine.doneFor', { text: task.text })} onClick={onDone} />
         {/* A meeting at the office ahead (S79) moves with the meeting, not by snoozing. */}

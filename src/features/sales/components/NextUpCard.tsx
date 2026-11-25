@@ -4,12 +4,8 @@ import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { IconLink } from '@/components/ui/IconButton';
 import { useFormat } from '@/lib/i18n/useFormat';
-import {
-  FIRST_CALL_TARGET_MINUTES,
-  CHANNEL_ICON,
-  MESSAGE_CHANNELS,
-  messageHref,
-} from '@/lib/sales/api';
+import { FIRST_CALL_TARGET_MINUTES, CHANNEL_ICON, MESSAGE_CHANNELS } from '@/lib/sales/api';
+import { messageHref } from '@/lib/sales/messageLink';
 import { openContactLog, type ContactValues } from '@/lib/sales/contactDrafts';
 import { dialWithLinphone } from '@/lib/sales/dial';
 import type { AgendaItem } from '../agenda';
@@ -124,18 +120,24 @@ export function NextUpCard({
             {t('callName', { name })}
           </button>
           <div className="flex items-center justify-end gap-1">
-            {MESSAGE_CHANNELS.map((channel) => (
-              <IconLink
-                key={channel}
-                href={messageHref(channel, phone)}
-                target="_blank"
-                rel="noreferrer"
-                icon={CHANNEL_ICON[channel]}
-                aria-label={t('messageTo', { channel: t(`channel.${channel}`), name })}
-                tone="inherit"
-                className="text-on-hero hover:bg-hero-raised"
-              />
-            ))}
+            {MESSAGE_CHANNELS.map((channel) => {
+              // No mobile number: no chat to open.
+              const href = messageHref(channel, phone);
+              return (
+                href && (
+                  <IconLink
+                    key={channel}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    icon={CHANNEL_ICON[channel]}
+                    aria-label={t('messageTo', { channel: t(`channel.${channel}`), name })}
+                    tone="inherit"
+                    className="text-on-hero hover:bg-hero-raised"
+                  />
+                )
+              );
+            })}
           </div>
         </div>
       </div>

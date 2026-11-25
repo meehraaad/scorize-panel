@@ -6,6 +6,7 @@ import {
   keysQuery,
   peopleFilterOf,
   peopleQuery,
+  sectionsQuery,
 } from '@/features/access/api';
 import {
   ATTENDANCE_PERMISSION,
@@ -20,6 +21,7 @@ import {
 } from '@/features/attendance/api';
 import {
   HR_PERMISSION,
+  PAY_PERMISSION,
   calendarQuery,
   fileQuery,
   movesQuery,
@@ -37,6 +39,7 @@ import {
   rulesQuery,
 } from '@/features/hr/pay/api';
 import { hrPath } from '@/features/hr/paths';
+import { teamQuery, teamsQuery } from '@/features/hr/teams/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery, START_PATH } from '@/lib/auth/session';
@@ -44,7 +47,7 @@ import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
-import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
+import { hubAddressFor } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
 
 /**
@@ -62,6 +65,7 @@ const holders = (permission: string) => async () => {
   return redirect(START_PATH);
 };
 const hrOnly = holders(HR_PERMISSION);
+const payOnly = holders(PAY_PERMISSION);
 const attendanceOnly = holders(ATTENDANCE_PERMISSION);
 const accessOnly = holders(STAFF_ACCESS_PERMISSION);
 
@@ -87,14 +91,6 @@ export const hrPanel: PanelDefinition = {
       label: 'panels.hr.nav.today',
       tab: 'panels.hr.tabs.today',
       icon: 'home',
-    },
-    {
-      id: 'tasks',
-      permission: HR_PERMISSION,
-      to: 'tasks',
-      label: 'panels.hr.nav.tasks',
-      tab: 'panels.hr.tabs.tasks',
-      icon: 'check',
     },
     {
       id: 'calendar',
@@ -131,7 +127,7 @@ export const hrPanel: PanelDefinition = {
       to: 'pay',
       label: 'panels.hr.nav.pay',
       icon: 'chart',
-      permission: HR_PERMISSION,
+      permission: PAY_PERMISSION,
     },
     {
       id: 'access',
@@ -151,14 +147,8 @@ export const hrPanel: PanelDefinition = {
         skeleton: 'dashboard',
       }),
     },
-    {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        guard: hrOnly,
-        data: ({ request }) => [tasksQuery('hr'), openingTaskList('hr', request.url)],
-        skeleton: 'list',
-      }),
-    },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('hr', request.url)) },
     {
       path: 'calendar',
       // `tasks`: a click on a day opens the new-task composer.
@@ -172,8 +162,21 @@ export const hrPanel: PanelDefinition = {
       path: 'staff',
       ...lazyPage(() => import('@/features/hr/StaffPage'), ['hr'], {
         guard: hrOnly,
-        data: () => [staffQuery()],
+        // «تیم‌ها» (`?view=teams`): the teams' cards.
+        data: ({ request }) => [
+          staffQuery(),
+          new URL(request.url).searchParams.get('view') === 'teams' && teamsQuery,
+        ],
         skeleton: 'list',
+      }),
+    },
+    {
+      // One team: its people's tasks (canvas "وضعیت تیم‌ها").
+      path: 'staff/teams/:team',
+      ...lazyPage(() => import('@/features/hr/teams/TeamPage'), ['hr'], {
+        guard: hrOnly,
+        data: ({ params }) => [teamQuery(params.team ?? '')],
+        skeleton: 'detail',
       }),
     },
     {
@@ -233,7 +236,7 @@ export const hrPanel: PanelDefinition = {
     // the detailed pages (values, KPIs, rules) stay reachable from them.
     {
       path: 'pay',
-      ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: hrOnly }),
+      ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: payOnly }),
       children: [
         {
           index: true,
@@ -295,8 +298,7 @@ export const hrPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/access/PeoplePage'), [], {
             data: ({ request }) => [
               peopleQuery(peopleFilterOf(new URL(request.url).searchParams)),
-              groupsQuery,
-              keysQuery(),
+              sectionsQuery,
             ],
             skeleton: 'list',
           }),

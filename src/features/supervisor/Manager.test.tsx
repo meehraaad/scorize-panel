@@ -12,7 +12,7 @@ const NIMA = 3; // seller
 const loginAs = (id: number) => {
   localStorage.setItem('scorize.mock.session', String(id));
 };
-const sections = () => screen.getByRole('navigation', { name: 'بخش‌های مدیریت سرپرستی' });
+const sections = () => screen.getByRole('navigation', { name: 'بخش‌های مدیریت اجرایی' });
 const table = () => screen.getByRole('table');
 
 describe('supervisor manager section', () => {
@@ -24,7 +24,7 @@ describe('supervisor manager section', () => {
   it("shows the team's load and opens one person's cases", async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    const router = renderApp('/supervisor/manager/team');
+    const router = renderApp('/executive/manager/team');
     expect(await screen.findByRole('heading', { name: 'تیم', level: 1 })).toBeInTheDocument();
     expect(within(sections()).getByRole('link', { name: 'تیم' })).toHaveAttribute(
       'aria-current',
@@ -45,22 +45,24 @@ describe('supervisor manager section', () => {
   it('lists every case with its supervisors, and the ones nobody supervises', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/manager/cases');
+    renderApp('/executive/manager/cases');
     await screen.findByRole('heading', { name: 'پرونده‌های تیم', level: 1 });
     expect(within(table()).getByRole('columnheader', { name: 'سرپرست' })).toBeInTheDocument();
     const sara = within(table()).getByRole('link', { name: 'سارا محمدی' }).closest('tr');
     expect(sara).toHaveTextContent('مریم کاظمی');
 
     await user.selectOptions(screen.getByLabelText('سرپرست'), 'none');
-    expect(await within(table()).findByText('بدون سرپرست')).toBeInTheDocument();
-    expect(within(table()).queryByRole('link', { name: 'سارا محمدی' })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(table()).queryByRole('link', { name: 'سارا محمدی' })).not.toBeInTheDocument(),
+    );
+    expect(within(table()).getByText('بدون سرپرست')).toBeInTheDocument();
     expect(within(table()).getByRole('link', { name: 'علی نوری' })).toBeInTheDocument();
   });
 
   it("moves all of one person's open cases from the team page", async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/manager/team');
+    renderApp('/executive/manager/team');
     const ali = (await screen.findByRole('link', { name: 'علی نوری' })).closest(
       'li',
     ) as HTMLElement;
@@ -78,7 +80,7 @@ describe('supervisor manager section', () => {
   it("gives one person's chosen cases to someone else from their list", async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/manager/cases?supervisor=7');
+    renderApp('/executive/manager/cases?supervisor=7');
     const sara = await within(await screen.findByRole('table')).findByRole('link', {
       name: 'سارا محمدی',
     });
@@ -99,12 +101,12 @@ describe('supervisor manager section', () => {
   it('opens a move from the move page', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/manager/move');
+    renderApp('/executive/manager/move');
     await screen.findByRole('heading', { name: 'انتقال پرونده‌ها', level: 1 });
     await user.selectOptions(screen.getByLabelText('پرونده‌های چه کسی؟'), '11');
     expect(screen.getByRole('link', { name: 'انتخاب چند پرونده' })).toHaveAttribute(
       'href',
-      '/supervisor/manager/cases?supervisor=11',
+      '/executive/manager/cases?supervisor=11',
     );
     await user.click(screen.getByRole('button', { name: /^انتقال همه‌ی .+ پرونده‌ی فعال$/ }));
     expect(
@@ -114,8 +116,17 @@ describe('supervisor manager section', () => {
 
   it('is only for those who assign supervisors', async () => {
     loginAs(NIMA);
-    const router = renderApp('/supervisor/manager/team');
+    const router = renderApp('/executive/manager/team');
     await screen.findByRole('heading', { level: 1 });
-    expect(router.state.location.pathname).not.toBe('/supervisor/manager/team');
+    expect(router.state.location.pathname).not.toBe('/executive/manager/team');
+  });
+
+  it("moved from the supervisor panel: the old addresses open the executive panel's tab", async () => {
+    loginAs(MARYAM);
+    const router = renderApp('/supervisor/manager/cases?supervisor=11');
+    expect(await screen.findByRole('heading', { name: 'پرونده‌های تیم', level: 1 })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/executive/manager/cases');
+    expect(router.state.location.search).toBe('?supervisor=11');
+    expect(within(sections()).getByRole('link', { name: 'ایمیل‌ها' })).toBeInTheDocument();
   });
 });

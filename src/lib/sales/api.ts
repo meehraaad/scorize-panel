@@ -49,17 +49,6 @@ export type MessageChannel = (typeof MESSAGE_CHANNELS)[number];
 /** Each channel's icon: WhatsApp and Telegram by their logos. */
 export const CHANNEL_ICON = { whatsapp: 'whatsapp', telegram: 'telegram', sms: 'chat' } as const;
 
-/** 09xxxxxxxxx → 989xxxxxxxxx (international, no plus). */
-const international = (phone: string) => `98${phone.replace(/^0/, '')}`;
-
-/** A link that opens the messaging app with `text` ready to send. */
-export function messageHref(channel: MessageChannel, phone: string, text = '') {
-  const body = encodeURIComponent(text);
-  if (channel === 'whatsapp') return `https://wa.me/${international(phone)}?text=${body}`;
-  if (channel === 'telegram') return `https://t.me/+${international(phone)}`;
-  return `sms:${phone}${text ? `?body=${body}` : ''}`;
-}
-
 /**
  * "0912 ••• 4418": enough to recognise a number on screen, not to copy it. Wrapped in a
  * left-to-right isolate so it keeps its order inside Persian text.

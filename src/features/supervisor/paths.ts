@@ -6,11 +6,19 @@ export const SUPERVISOR_ROOT = '/supervisor';
 
 export const supervisorPath = (to = '') => (to ? `${SUPERVISOR_ROOT}/${to}` : SUPERVISOR_ROOT);
 
-/** Sub-tabs of the manager's section (`can_assign_supervisor`); 'new' is its first page. */
-export type ManagerSection = 'new' | 'cases' | 'team' | 'move' | 'services' | 'scopes' | 'kinds';
+/**
+ * The executive management section of the executive panel (/executive/manager): the supervisor
+ * manager's pages (`can_assign_supervisor`) and the mail servers (`manage_mailboxes`). It moved here
+ * from the supervisor panel, which is to go; its old addresses redirect.
+ */
+export const MANAGER_ROOT = '/executive/manager';
+
+/** Sub-tabs of the executive management section; 'new' is its first page. */
+export type ManagerSection =
+  'new' | 'cases' | 'team' | 'move' | 'services' | 'scopes' | 'kinds' | 'mail';
 
 export const managerPath = (section: ManagerSection = 'new') =>
-  `${SUPERVISOR_ROOT}/manager${section === 'new' ? '' : `/${section}`}`;
+  `${MANAGER_ROOT}${section === 'new' ? '' : `/${section}`}`;
 
 /** Tabs of a case file; '' is the overview. */
 export type CaseTab = '' | 'documents' | 'applications' | 'tickets' | 'activity';

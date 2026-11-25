@@ -1,52 +1,18 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { beforeEach, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
 import { server } from '@/test/server';
 
-const flag = vi.hoisted(() => ({ expanded: true }));
-
-vi.mock('@/lib/applicant/onServer', async (original) => {
-  const module = await original<{ ON_SERVER: Record<string, boolean> }>();
-  return {
-    ON_SERVER: {
-      ...module.ON_SERVER,
-      get executiveCustomers() {
-        return flag.expanded;
-      },
-    },
-  };
-});
-
 beforeEach(async () => {
-  flag.expanded = true;
   localStorage.clear();
   localStorage.setItem('scorize.mock.session', '2');
   await i18n.changeLanguage('en');
 });
 
-it('opens the new Customers tab and uses the existing assigned-customer list', async () => {
-  flag.expanded = false;
-  const user = userEvent.setup();
-  renderApp('/executive');
-  const navigation = (
-    await screen.findAllByRole('navigation', { name: 'Executive Panel menu' })
-  )[0];
-  if (!navigation) throw new Error('Executive navigation did not render');
-  await user.click(within(navigation).getByRole('link', { name: 'Customers' }));
-  await screen.findByRole('heading', { name: 'Customers' });
-  const list = await screen.findByRole('region', { name: 'Customer list' });
-  expect((await within(list).findAllByRole('link', { name: 'سارا محمدی' }))[0]).toHaveAttribute(
-    'href',
-    '/executive/customers/1240/desk',
-  );
-  expect(screen.queryByRole('button', { name: 'Upload CSV' })).not.toBeInTheDocument();
-});
-
-it('opens Work Desk from the expanded list without a workspace flag', async () => {
-  flag.expanded = false;
+it('opens Work Desk from the customer list', async () => {
   const user = userEvent.setup();
   server.use(
     http.get('/api/profile/auth/v1/whoami/', () =>
@@ -134,4 +100,13 @@ it('hides CSV upload whenever the account lacks the supervisor-service capabilit
   renderApp('/executive/customers');
   await screen.findByText('No customers match these filters.');
   expect(screen.queryByRole('button', { name: 'Upload CSV' })).not.toBeInTheDocument();
+});
+
+it('sends the removed overview and work table addresses to the customers', async () => {
+  for (const path of ['/executive', '/executive/work?service=writing']) {
+    const router = renderApp(path);
+    expect(await screen.findByRole('searchbox', { name: 'Search customers' })).toBeVisible();
+    expect(router.state.location.pathname).toBe('/executive/customers');
+    router.dispose();
+  }
 });

@@ -31,6 +31,12 @@ const READY_VARIABLES = [
   { name: 'meeting_type', label: 'نوع جلسه', sample: 'مشاوره تحصیلی حضوری' },
   { name: 'summary', label: 'خلاصه‌ی آخرین تماس یا جلسه', sample: 'مدارک زبان را آماده کنید.' },
   { name: 'panel', label: 'لینک پنل', sample: 'https://scorize.com/panel/' },
+  {
+    name: 'office',
+    label: 'آدرس و لوکیشن دفتر',
+    sample: 'برج کاج، طبقه ۷\nنشان: https://neshan.org/maps/places/sbvQBz2x491G',
+  },
+  { name: 'tablet_form', label: 'لینک فرم تبلت', sample: 'https://scorize.com/panel/background' },
 ];
 
 interface MockSystem extends SystemMessage {

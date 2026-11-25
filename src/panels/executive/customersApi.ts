@@ -1,9 +1,8 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
-import { ON_SERVER } from '@/lib/applicant/onServer';
 import { API_BASE, api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { CASE_STAGES, type DocCount } from '@/features/supervisor/api/common';
-import { EXECUTIVE_API, EXECUTIVE_KEY, overviewQuery, workQuery } from '@/features/executive/api';
+import { EXECUTIVE_API, EXECUTIVE_KEY } from '@/features/executive/api';
 
 export const CUSTOMER_STAGES = [...CASE_STAGES, 'emailing'] as const;
 export const CUSTOMER_SCOPES = ['mine', 'team', 'all'] as const;
@@ -68,20 +67,8 @@ export function customersQuery(search: URLSearchParams) {
   });
 }
 
-export function assignedCustomersQuery(search: URLSearchParams) {
-  const params = new URLSearchParams({ page: String(customerPageOf(search)) });
-  const service = search.get('service');
-  if (service) params.set('service', service);
-  return workQuery(params);
-}
-
-export const hasExpandedCustomers = (capability?: boolean) =>
-  capability === true || ON_SERVER.executiveCustomers;
-
-export function customerListQueries(search: URLSearchParams, capability?: boolean) {
-  return hasExpandedCustomers(capability)
-    ? [customersQuery(search)]
-    : [overviewQuery, assignedCustomersQuery(search)];
+export function customerListQueries(search: URLSearchParams) {
+  return [customersQuery(search)];
 }
 
 export const customersExportHref = (search: URLSearchParams) =>

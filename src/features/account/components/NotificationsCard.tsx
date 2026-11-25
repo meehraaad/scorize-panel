@@ -56,7 +56,7 @@ export function NotificationsCard() {
       ) : (
         <ul className="m-0 list-none p-0">
           {items.map((item) => (
-            <Item
+            <NotificationRow
               key={item.id}
               item={item}
               onOpen={() => !item.read && markRead.mutate([item.id])}
@@ -79,7 +79,19 @@ export function NotificationsCard() {
   );
 }
 
-function Item({ item, onOpen }: { item: Notification; onOpen: () => void }) {
+/**
+ * One notification: unread ones bold on a tint. Opening it (a link in the panel stays in the app)
+ * calls `onOpen`, which marks it read. `compact`: the bell's popup (tighter sides).
+ */
+export function NotificationRow({
+  item,
+  onOpen,
+  compact = false,
+}: {
+  item: Notification;
+  onOpen: () => void;
+  compact?: boolean;
+}) {
   const { t } = useTranslation('account');
   const f = useFormat();
   const body = (
@@ -102,7 +114,7 @@ function Item({ item, onOpen }: { item: Notification; onOpen: () => void }) {
       </span>
     </>
   );
-  const row = `flex gap-3 px-5 py-4 text-text shadow-[inset_0_1px_0_var(--hair)] lg:px-8 ${
+  const row = `flex gap-3 text-text shadow-[inset_0_1px_0_var(--hair)] ${compact ? 'px-4 py-3' : 'px-5 py-4 lg:px-8'} ${
     item.read ? '' : 'bg-row-highlight'
   }`;
   // Links inside the panel stay in the app; others (the main site) load normally.

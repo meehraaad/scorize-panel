@@ -6,13 +6,8 @@ import {
   casesQuery,
   documentsQuery,
   firstCasesQuery,
-  handoffsQuery,
   inboxQuery,
-  managerTeamQuery,
   myServicesQuery,
-  scopesQuery,
-  serviceKindsQuery,
-  servicesReportQuery,
   serviceQuery,
   reportsQuery,
   todayBoardQuery,
@@ -22,46 +17,16 @@ import {
 import { prefetchTickets } from '@/features/tickets/config';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { notebookQuery } from '@/lib/notes/api';
-import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
-import { ASSIGN_PERMISSION, SUPERVISOR_API } from '@/features/supervisor/api';
-import {
-  botRulesQuery,
-  MAIL_PERMISSION,
-  mailboxesQuery,
-  FIRST_MAILBOXES,
-  gmailStatusQuery,
-  serversQuery,
-} from '@/features/mail/api';
+import { hubAddressFor } from '@/lib/tasks/api';
+import { SUPERVISOR_API } from '@/features/supervisor/api';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { queryClient } from '@/lib/api/queryClient';
-import { hasPermission } from '@/lib/auth/roles';
-import { sessionQuery } from '@/lib/auth/session';
 import { redirect } from 'react-router';
 import { managerPath } from '@/features/supervisor/paths';
 import type { PanelDefinition } from '../types';
 
-/** Supervisors who don't assign new cases are sent back to the panel's home. */
-async function assignersOnly() {
-  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
-  return user && hasPermission(user, ASSIGN_PERMISSION) ? null : redirect('/supervisor');
-}
-
 /** The services page waits for Django's client services. */
 function servicesOn() {
   return Promise.resolve(ON_SERVER.clientServices ? null : redirect('/supervisor'));
-}
-
-/** The manager's pages about services wait for Django's client services. */
-function managerServicesOn() {
-  return Promise.resolve(ON_SERVER.clientServices ? null : redirect(managerPath()));
-}
-
-/** The mail page is for managers with `mail_server.manage_mailboxes`, once Django serves it. */
-async function mailManagersOnly() {
-  const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
-  return ON_SERVER.mailServers && user && hasPermission(user, MAIL_PERMISSION)
-    ? null
-    : redirect('/supervisor');
 }
 
 /**
@@ -98,13 +63,6 @@ export const supervisorPanel: PanelDefinition = {
       tab: 'panels.supervisor.tabs.tickets',
       icon: 'chat',
     },
-    {
-      id: 'tasks',
-      to: 'tasks',
-      label: 'panels.supervisor.nav.tasks',
-      tab: 'panels.supervisor.tabs.tasks',
-      icon: 'check',
-    },
     ...(ON_SERVER.clientServices
       ? [
           {
@@ -116,25 +74,6 @@ export const supervisorPanel: PanelDefinition = {
         ]
       : []),
     { id: 'reports', to: 'reports', label: 'panels.supervisor.nav.reports', icon: 'chart' },
-    ...(ON_SERVER.mailServers
-      ? [
-          {
-            id: 'mail',
-            to: 'mail',
-            label: 'panels.supervisor.nav.mail',
-            icon: 'mail',
-            permission: MAIL_PERMISSION,
-          } as const,
-        ]
-      : []),
-    // The manager's section (can_assign_supervisor), its pages are sub-tabs (ManagerLayout).
-    {
-      id: 'manager',
-      to: 'manager',
-      label: 'panels.supervisor.nav.manager',
-      icon: 'settings',
-      permission: ASSIGN_PERMISSION,
-    },
   ],
   routes: [
     {
@@ -232,87 +171,18 @@ export const supervisorPanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('supervisor', request.url)) },
+    // Old addresses of the manager's pages (links in tasks and messages). The section and the mail
+    // page moved to the executive panel's management tab (/executive/manager).
     {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: ({ request }) => [
-          tasksQuery('supervisor'),
-          openingTaskList('supervisor', request.url),
-        ],
-        skeleton: 'list',
-      }),
+      path: 'manager/*',
+      loader: ({ params, request }) =>
+        redirect(
+          `${managerPath()}${params['*'] ? `/${params['*']}` : ''}${new URL(request.url).search}`,
+        ),
     },
-    // The manager's section (can_assign_supervisor): sub-tabs in ManagerLayout.
-    {
-      path: 'manager',
-      loader: assignersOnly,
-      ...lazyPage(() => import('@/features/supervisor/manager/ManagerLayout'), ['supervisor']),
-      children: [
-        // New cases waiting for a supervisor, and services waiting for an owner.
-        {
-          index: true,
-          ...lazyPage(() => import('@/features/supervisor/HandoffsPage'), [], {
-            data: () => [handoffsQuery],
-            skeleton: 'list',
-          }),
-        },
-        // Every case with its supervisors (`?supervisor=`: one person's, from the team page).
-        {
-          path: 'cases',
-          ...lazyPage(() => import('@/features/supervisor/manager/TeamCasesPage'), [], {
-            data: ({ request }) => [
-              casesQuery(firstCasesQuery(new URL(request.url).searchParams, true)),
-              managerTeamQuery,
-            ],
-            skeleton: 'list',
-          }),
-        },
-        // Each supervisor's and visa expert's load.
-        {
-          path: 'team',
-          ...lazyPage(() => import('@/features/supervisor/manager/TeamPage'), [], {
-            data: () => [managerTeamQuery],
-            skeleton: 'list',
-          }),
-        },
-        // Moving one person's cases to another.
-        {
-          path: 'move',
-          ...lazyPage(() => import('@/features/supervisor/manager/MovePage'), [], {
-            data: () => [managerTeamQuery],
-            skeleton: 'form',
-          }),
-        },
-        // How the services are answered, per team and owner (SVC6).
-        {
-          path: 'services',
-          ...lazyPage(() => import('@/features/supervisor/ServicesReportPage'), [], {
-            guard: managerServicesOn,
-            data: () => [servicesReportQuery('month')],
-            skeleton: 'list',
-          }),
-        },
-        // Supervisors' scopes and where they differ from today's rule (SVC5).
-        {
-          path: 'scopes',
-          ...lazyPage(() => import('@/features/supervisor/ScopesPage'), [], {
-            guard: managerServicesOn,
-            data: () => [scopesQuery],
-            skeleton: 'list',
-          }),
-        },
-        // The services: name, team, country rule, stages; new simple ones.
-        {
-          path: 'kinds',
-          ...lazyPage(() => import('@/features/supervisor/manager/KindsPage'), [], {
-            guard: managerServicesOn,
-            data: () => [serviceKindsQuery],
-            skeleton: 'list',
-          }),
-        },
-      ],
-    },
-    // Old addresses of the manager's pages (links in tasks and messages).
+    { path: 'mail', loader: () => redirect(managerPath('mail')) },
     { path: 'new', loader: () => redirect(managerPath()) },
     { path: 'scopes', loader: () => redirect(managerPath('scopes')) },
     { path: 'services/report', loader: () => redirect(managerPath('services')) },
@@ -330,20 +200,6 @@ export const supervisorPanel: PanelDefinition = {
       ...lazyPage(() => import('@/features/supervisor/ReportsPage'), ['supervisor'], {
         data: () => [reportsQuery('month')],
         skeleton: 'dashboard',
-      }),
-    },
-    // Our mail servers and the applicants' mailboxes (managers with manage_mailboxes).
-    {
-      path: 'mail',
-      ...lazyPage(() => import('@/features/mail/MailPage'), ['mail'], {
-        guard: mailManagersOnly,
-        data: () => [
-          serversQuery,
-          gmailStatusQuery,
-          botRulesQuery,
-          mailboxesQuery(FIRST_MAILBOXES),
-        ],
-        skeleton: 'list',
       }),
     },
   ],

@@ -27,7 +27,7 @@ export default function PublicInvoicePage() {
   if (!data || data.other_account) return <NotFound otherAccount={data?.other_account ?? false} />;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-synthetic-checkout={data.status}>
       {data.status === 'paid' ? (
         <Paid invoice={data} login={login} />
       ) : data.status === 'failed' ? (

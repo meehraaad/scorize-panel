@@ -39,9 +39,67 @@ describe("a seller's own ready messages", () => {
     const links = within(picker).getAllByRole('link');
     // Own first (filled in), then management's, then none.
     expect(within(links[0] as HTMLElement).getByText('پیام من')).toBeInTheDocument();
-    expect(links[0]).toHaveAttribute('href', expect.stringMatching(/^https:\/\/wa\.me\/.*\?text=/));
+    // The long form: wa.me's redirect turns emoji into "?".
+    expect(links[0]).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^https:\/\/api\.whatsapp\.com\/send\?phone=98\d+&text=/),
+    );
     expect(decodeURIComponent(links[0]?.getAttribute('href') ?? '')).not.toContain('{customer}');
     expect(within(picker).getByText('بعد از تماس اول')).toBeInTheDocument();
     expect(within(picker).getByRole('link', { name: 'بدون پیام آماده' })).toBeInTheDocument();
+  });
+
+  it("Telegram: the picked message is typed into the customer's chat, like WhatsApp", async () => {
+    const user = userEvent.setup();
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    await user.click(await screen.findByRole('button', { name: /^واتساپ به / }));
+    const whatsapp = await screen.findByRole('dialog', { name: 'کدام پیام در واتساپ نوشته شود؟' });
+    expect(within(whatsapp).getByText(/پیش‌نمایش اول واتساپ/)).toBeInTheDocument();
+    await user.click(within(whatsapp).getByRole('button', { name: 'بستن' }));
+
+    await user.click(await screen.findByRole('button', { name: /^تلگرام به / }));
+    const picker = await screen.findByRole('dialog', { name: 'کدام پیام در تلگرام نوشته شود؟' });
+    expect(
+      within(picker).getByText(/چت مشتری در تلگرام با همین متن باز می‌شود/),
+    ).toBeInTheDocument();
+    const [first] = within(picker).getAllByRole('link');
+    const href = new URL(first?.getAttribute('href') ?? '');
+    expect(`${href.origin}${href.pathname}`).toMatch(/^https:\/\/t\.me\/\+98\d+$/);
+    expect(href.searchParams.get('text')).toContain('سلام');
+    expect(href.searchParams.get('text')).not.toContain('{customer}');
+    expect(within(picker).getByRole('link', { name: 'بدون پیام آماده' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^https:\/\/t\.me\/\+98\d+$/),
+    );
+  });
+
+  it('keeps emoji and says a pasted sticker cannot be kept', async () => {
+    const user = userEvent.setup();
+    renderApp('/settings');
+    const section = await screen.findByRole('region', { name: 'پیام‌های آماده‌ی من' });
+    await user.click(await within(section).findByRole('button', { name: 'پیام تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'پیام آماده‌ی تازه' });
+    const box = within(dialog).getByLabelText('متن پیام');
+    expect(
+      within(dialog).getByText(/ایموجی‌ها \(🌹\) ذخیره می‌شوند، استیکر نه/),
+    ).toBeInTheDocument();
+    // A sticker copies as a picture with no text.
+    await user.click(box);
+    await user.paste({
+      files: [new File(['x'], 'sticker.webp', { type: 'image/webp' })],
+      getData: () => '',
+    } as unknown as DataTransfer);
+    expect(await within(dialog).findByRole('status')).toHaveTextContent(
+      'استیکر یا عکس در پیام آماده جا نمی‌گیرد',
+    );
+    await user.type(box, 'سلام 🌹');
+    expect(within(dialog).queryByRole('status')).not.toBeInTheDocument();
+    // The office and tablet form variables are buttons too.
+    await user.click(within(dialog).getByRole('button', { name: 'آدرس و لوکیشن دفتر' }));
+    await user.click(within(dialog).getByRole('button', { name: 'لینک فرم تبلت' }));
+    expect(box).toHaveValue('سلام 🌹{office}{tablet_form}');
+    expect(
+      within(dialog).getByRole('region', { name: 'پیش‌نمایش با یک مشتری نمونه' }),
+    ).toHaveTextContent('https://scorize.com/panel/background');
   });
 });

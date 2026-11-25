@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '@/components/ui/Icon';
 import type { SessionUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
+import { useDismiss } from '@/lib/useDismiss';
 import type { PanelDefinition } from '@/panels/types';
 import { PanelChoices } from './PanelChoices';
 
@@ -48,21 +49,15 @@ export function PanelSwitcher({ user, panel, panels }: Props) {
   };
 
   // Desktop dropdown is non-modal: close it on Esc and on a click outside.
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (event: PointerEvent) => {
-      if (dialog.current?.open && !root.current?.contains(event.target as Node)) close();
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close();
-    };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useDismiss(
+    open,
+    root,
+    // Closing gives focus back to the button (the dialog's `close` event).
+    () => {
+      if (dialog.current?.open) close();
+    },
+    dialog,
+  );
 
   if (panels.length < 2) return null;
 

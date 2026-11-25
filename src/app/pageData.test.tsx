@@ -22,6 +22,8 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       ...ON_SERVER,
       turkey: true,
       foundersAssistant: true,
+      siteHealth: true,
+      acquisition: true,
       customerTags: true,
       mailServers: true,
       clientServices: true,
@@ -31,7 +33,6 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       phoneMenus: true,
       phoneVoices: true,
       hrOnboarding: true,
-      executiveCustomers: true,
     },
   };
 });
@@ -130,7 +131,6 @@ const PAGES: PageCase[] = [
     '/sales/call-ratings',
     '/sales/calendar',
     '/sales/board',
-    '/sales/tasks',
     `/sales/customers/${String(ERFAN)}`,
     `/sales/customers/${String(ERFAN)}/money`,
     `/sales/customers/${String(ERFAN)}/info`,
@@ -181,22 +181,19 @@ const PAGES: PageCase[] = [
     '/supervisor/files/1227/activity',
     '/supervisor/files/1240/services/124050',
     '/supervisor/tickets',
-    '/supervisor/tasks',
     '/supervisor/services',
-    '/supervisor/manager',
-    '/supervisor/manager/cases',
-    '/supervisor/manager/team',
-    '/supervisor/manager/move',
-    '/supervisor/manager/scopes',
-    '/supervisor/manager/kinds',
-    '/supervisor/manager/services',
+    '/executive/manager',
+    '/executive/manager/cases',
+    '/executive/manager/team',
+    '/executive/manager/move',
+    '/executive/manager/scopes',
+    '/executive/manager/kinds',
+    '/executive/manager/services',
     '/supervisor/reports',
-    '/supervisor/mail',
+    '/executive/manager/mail',
   ].map((path) => ({ path, user: MARYAM })),
   // Writer panel.
   ...[
-    '/executive',
-    '/executive/work',
     '/executive/customers',
     '/executive/customers/1240/desk/124000',
     '/executive/customers/1240/desk/writing',
@@ -208,7 +205,6 @@ const PAGES: PageCase[] = [
     '/executive/customers/1240/reports',
     '/executive/tickets',
     '/executive/tickets?department=writing',
-    '/executive/tasks',
   ].map((path) => ({ path, user: MARYAM })),
   ...['/writer', '/writer/orders/1240'].map((path) => ({ path, user: MARYAM })),
   // Tickets pages: the thread's messages are chained after the list in the loader. (A case's
@@ -219,7 +215,10 @@ const PAGES: PageCase[] = [
     later: [{ key: '"messages"', why: "the thread's id comes from the list (backend item H55)" }],
   })),
   // Founders panel.
-  ...['/founders', '/founders/conversations/900'].map((path) => ({ path, user: BAHAR })),
+  ...['/founders', '/founders/conversations/900', '/founders/site-health'].map((path) => ({
+    path,
+    user: BAHAR,
+  })),
   // Management > messages and access.
   ...[
     '/founders/messages',
@@ -232,9 +231,10 @@ const PAGES: PageCase[] = [
   // HR panel (src/mocks/hr.ts, attendance: src/mocks/attendance.ts): Bahar (3) is joining, the tasks are Amir's (src/mocks/tasks.ts).
   ...[
     '/hr',
-    '/hr/tasks',
     '/hr/calendar',
     '/hr/staff',
+    '/hr/staff?view=teams',
+    '/hr/staff/teams/sales',
     '/hr/staff/3',
     '/hr/moves',
     '/hr/attendance',
@@ -262,9 +262,9 @@ const PAGES: PageCase[] = [
     '/marketing',
     '/marketing/board',
     '/marketing/leads',
-    '/marketing/tasks',
     '/marketing/calendar',
     '/marketing/performance',
+    '/marketing/acquisition',
   ].map((path) => ({ path, user: ELHAM })),
   // The marketing manager's area (src/mocks/marketingBoard.ts): Amir holds the key.
   ...[
@@ -281,6 +281,10 @@ const PAGES: PageCase[] = [
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },
   { path: '/me', user: AMIR },
+  // Staff's tasks and notifications (the bell's page): whose tasks follow the address.
+  { path: '/tasks', user: MARYAM },
+  { path: '/tasks?panel=sales', user: NIMA },
+  { path: '/tasks?tab=notifications', user: ELHAM },
   { path: '/me/sales', user: NIMA },
 ];
 

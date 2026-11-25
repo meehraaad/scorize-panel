@@ -21,6 +21,7 @@ import {
   type ExamEntry,
   type Option,
 } from './api';
+import { CopyTabletLink } from './components/CopyTabletLink';
 import { useCustomerId } from './useCustomerId';
 import { useInfoAutosave, type InfoDraft, type SectionName } from './useInfoAutosave';
 
@@ -97,15 +98,18 @@ export function CustomerInfoEditor({
       {!source && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm text-text-2">{t('info.shared')}</span>
-          <a
-            href={safeHref(data.tablet_url)}
-            target="_blank"
-            rel="noreferrer"
-            className={buttonClass('outline', 'h-10 px-4 text-[13px]')}
-          >
-            <Icon name="expand" size={15} />
-            {t('info.tablet.open')}
-          </a>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={safeHref(data.tablet_url)}
+              target="_blank"
+              rel="noreferrer"
+              className={buttonClass('outline', 'h-10 px-4 text-[13px]')}
+            >
+              <Icon name="expand" size={15} />
+              {t('info.tablet.open')}
+            </a>
+            <CopyTabletLink url={data.tablet_share_url} />
+          </div>
         </div>
       )}
       <fieldset disabled={readOnly} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">

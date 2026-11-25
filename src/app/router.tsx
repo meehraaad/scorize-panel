@@ -24,9 +24,10 @@ import { ApiError, api } from '@/lib/api/client';
 import type { SessionUser } from '@/lib/auth/session';
 import { safeNextPath, toRouterPath } from '@/features/auth/next';
 import { accountQuery, notificationsQuery, unreadQuery } from '@/lib/account/api';
+import { openingTaskList, openTaskQueries, taskPanelOf, tasksQuery } from '@/lib/tasks/api';
 import { publicInvoiceQuery } from '@/lib/applicant/publicInvoice';
 import { restoreCacheFor } from '@/lib/api/persist';
-import { getRoles } from '@/lib/auth/roles';
+import { getRoles, isActiveStaff } from '@/lib/auth/roles';
 import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
@@ -39,6 +40,7 @@ import { AuthLayout } from './layouts/AuthLayout';
 import { MeLayout } from './layouts/MeLayout';
 import { PanelLayout } from './layouts/PanelLayout';
 import { WorkspaceLayout } from './layouts/WorkspaceLayout';
+import { hubPanelOf, inboxTabOf } from './tasks/inbox';
 import { BootFallback, PanelBootFallback, SharedLayout } from './layouts/SharedLayout';
 
 /*
@@ -65,11 +67,15 @@ const hasOpenForm = (user: SessionUser) =>
   ON_SERVER.hrOnboarding &&
   (user.staff?.onboarding === 'draft' || user.staff?.onboarding === 'returned');
 
-/** The data of a panel's frame (header badge, locked sections), started with the page's own. */
-const prefetchFrame = (panel: PanelDefinition, user: { id: number }) => {
+/**
+ * The data of a panel's frame (the bell's count: notifications, and staff's tasks waiting; locked
+ * sections), started with the page's own.
+ */
+const prefetchFrame = (panel: PanelDefinition, user: SessionUser) => {
   // Before the page renders: it opens from this tab's last answers, if they were this user's.
   restoreCacheFor(user.id);
-  prefetchQueries([unreadQuery, ...(panel.data?.() ?? [])]);
+  const tasks = isActiveStaff(user) ? openTaskQueries(taskPanelOf(user, panel.id)) : [];
+  prefetchQueries([unreadQuery, ...tasks, ...(panel.data?.() ?? [])]);
 };
 
 const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -195,6 +201,26 @@ const pageRoutes: RouteObject[] = [
             ...lazyPage(() => import('@/features/account/AccountPage'), ['account'], {
               data: () => [accountQuery, notificationsQuery],
               skeleton: 'dashboard',
+            }),
+          },
+          {
+            // Staff's tasks and notifications, whatever panel they work in (the bell's page).
+            path: 'tasks',
+            ...lazyPage(() => import('./tasks/TasksHubPage'), ['tasks', 'account'], {
+              skeleton: 'dashboard',
+              guard: async ({ request }) => {
+                const user = await currentUser();
+                if (!user || !isActiveStaff(user)) return redirect('/account#notifications');
+                // Its data depends on whose tasks it shows: the address's panel, else the last one used.
+                const query = new URL(request.url).searchParams;
+                const panel = hubPanelOf(user, query);
+                prefetchQueries(
+                  inboxTabOf(query.get('tab')) === 'notifications'
+                    ? [notificationsQuery]
+                    : [tasksQuery(panel), openingTaskList(panel, request.url)],
+                );
+                return null;
+              },
             }),
           },
           {

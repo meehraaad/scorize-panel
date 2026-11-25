@@ -7,7 +7,7 @@ import type { CaseService } from '@/features/supervisor/api/services';
 import { ApiError, api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import type { WritingDepartment } from '@/lib/tickets/api';
-import type { WorkItem } from '@/features/executive/api';
+import type { WritingState } from '@/features/executive/api';
 import { TASKS_KEY } from '@/lib/tasks/api';
 
 export const CONTRACT_STATUSES = [
@@ -44,7 +44,7 @@ export interface CustomerWorkspace {
   writing: {
     id: number;
     kind: WritingDepartment;
-    state: Extract<WorkItem, { case: null }>['status'];
+    state: WritingState;
   }[];
   next_task: CustomerTask | null;
   open_tasks: number;

@@ -24,6 +24,7 @@ const info: CustomerInfo = {
   exams: [],
   exams_list: [],
   tablet_url: '',
+  tablet_share_url: '',
 };
 
 function setup() {

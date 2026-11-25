@@ -29,6 +29,12 @@ export type Role =
 export const FOUNDERS_PERMISSION = 'use_founders_assistant';
 
 /**
+ * mail_server.manage_mailboxes: our mail servers and the applicants' mailboxes (executive panel >
+ * executive management > mail).
+ */
+export const MAILBOXES_PERMISSION = 'manage_mailboxes';
+
+/**
  * The two keys of management > messages (user_profile.manage_system_messages / _ready_): the
  * automatic messages and the ready ones. Given on management > access.
  */
@@ -126,7 +132,8 @@ export function getRoles(user: SessionUser): Role[] {
   // The management panel: the founders' assistant, the messages (either key) and access
   // (superusers). Each section checks its own key.
   if (
-    (ON_SERVER.foundersAssistant && hasPermission(user, FOUNDERS_PERMISSION)) ||
+    ((ON_SERVER.foundersAssistant || ON_SERVER.siteHealth) &&
+      hasPermission(user, FOUNDERS_PERMISSION)) ||
     (ON_SERVER.messageCenter && hasAnyPermission(user, MESSAGES_PERMISSIONS)) ||
     (ON_SERVER.accessPage && user.is_superuser)
   )

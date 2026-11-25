@@ -69,7 +69,7 @@ export default function CaseChatDock({ owner }: { owner: number }) {
       {waiting.length > 0 && (
         <aside
           aria-label={t('chat.tray')}
-          className={`fixed start-3 end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex max-h-32 flex-wrap justify-end gap-2 overflow-y-auto lg:start-auto lg:bottom-5 lg:max-w-[50vw] ${
+          className={`pointer-events-none fixed start-3 end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex max-h-32 flex-wrap justify-end gap-2 overflow-y-auto *:pointer-events-auto lg:start-auto lg:bottom-5 lg:max-w-[50vw] ${
             current ? 'max-lg:hidden lg:end-[456px]' : 'lg:end-5'
           }`}
         >

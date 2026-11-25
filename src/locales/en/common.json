@@ -34,9 +34,7 @@
         "tickets": "Tickets",
         "reports": "Reports",
         "tasks": "My tasks",
-        "mail": "Mailboxes",
-        "services": "My services",
-        "manager": "Management"
+        "services": "My services"
       },
       "tabs": {
         "today": "Today",
@@ -52,12 +50,14 @@
         "label": "Management panel menu",
         "assistant": "Analysis assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "siteHealth": "Site Health"
       },
       "tabs": {
         "assistant": "Assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "siteHealth": "Site Health"
       },
       "description": "Analysis assistant, messages and access"
     },
@@ -66,11 +66,10 @@
       "description": "Assigned customer work, tickets and tasks",
       "nav": {
         "label": "Executive Panel menu",
-        "table": "Table",
         "customers": "Customers",
-        "work": "Work Table",
         "tickets": "Tickets",
-        "tasks": "Tasks"
+        "tasks": "Tasks",
+        "manager": "Executive management"
       }
     },
     "writer": {
@@ -139,7 +138,8 @@
         "performance": "My performance",
         "board": "Board",
         "manage": "Marketing management",
-        "leads": "Leads"
+        "leads": "Leads",
+        "acquisition": "Acquisition & Conversions"
       },
       "tabs": {
         "today": "Today",
@@ -147,7 +147,8 @@
         "calendar": "Calendar",
         "performance": "Performance",
         "board": "Board",
-        "leads": "Leads"
+        "leads": "Leads",
+        "acquisition": "Acquisition & Conversions"
       }
     }
   },
@@ -158,7 +159,9 @@
   "header": {
     "notifications": "Notifications",
     "notificationsUnread": "Notifications, {{n}} unread",
-    "customerSearch": "Search all customers"
+    "customerSearch": "Search all customers",
+    "tasks": "Tasks and notifications",
+    "tasksWaiting": "Tasks and notifications, {{n}} waiting"
   },
   "account": {
     "menu": "Account",
@@ -481,5 +484,8 @@
     "wrong": "The password is wrong.",
     "tooMany": "Too many wrong tries. Try again in 15 minutes.",
     "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens."
+  },
+  "colleagues": {
+    "others": "Other colleagues"
   }
 }

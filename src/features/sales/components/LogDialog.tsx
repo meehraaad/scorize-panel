@@ -11,6 +11,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { FloatingPanel } from '@/components/ui/FloatingPanel';
@@ -30,7 +31,8 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { copyText } from '@/lib/clipboard';
 import { toLatinDigits } from '@/lib/text';
-import { LOST_REASONS, messageHref, type Channel } from '@/lib/sales/api';
+import { LOST_REASONS, type Channel } from '@/lib/sales/api';
+import { messageHref } from '@/lib/sales/messageLink';
 import { callHref, useLinphoneDial } from '@/lib/sales/dial';
 import { type CallOutcome, type CustomerData } from '../api';
 import { useLogContact } from '../api/customerMutations';
@@ -38,7 +40,7 @@ import { toast } from '@/lib/toast';
 import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
 import { customerPath } from '../paths';
-import { useNow } from '../useNow';
+import { useNow } from '@/lib/useNow';
 import { useSalesFormat } from '../format';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { followAtOf, followOnOf, isVisitConflict, meetingAhead } from '../followUp';
@@ -190,10 +192,16 @@ export function LogDialog({
     // Open the app first: a window opened after the request would be blocked as a popup.
     const app = isMessage(channel) ? channel : appSend;
     if (app) {
-      window.open(messageHref(app, customer.phone, chosen?.text), '_blank', 'noreferrer');
-      // A Telegram link can't carry the text: it waits on the clipboard to paste.
-      if (app === 'telegram' && chosen?.text)
-        void navigator.clipboard.writeText(chosen.text).catch(() => {});
+      const href = messageHref(app, customer.phone, chosen?.text);
+      // The text also waits on the clipboard (copied first, while the page still has focus):
+      // Telegram may not find the customer or take the draft, and with no mobile number no app opens.
+      if (chosen?.text && (app === 'telegram' || !href))
+        copyText(chosen.text, event.currentTarget)
+          .then(() =>
+            toast.success(t(href ? 'whatsAppPicker.copied' : 'whatsAppPicker.noPhoneCopied')),
+          )
+          .catch(() => toast.error(t('whatsAppPicker.copyFailed')));
+      if (href) window.open(href, '_blank', 'noreferrer');
     }
     log.mutate(
       {
@@ -422,14 +430,16 @@ export function LogDialog({
         />
       )}
       {call && !liveCall && customer.phone && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1">
           <a href={callHref(customer.phone, linphone)} className={buttonClass('outline')}>
             <Icon name="phone" size={18} />
             <span dir="ltr">{f.digits(customer.phone)}</span>
           </a>
-          <Button
-            type="button"
-            variant="quiet"
+          <IconButton
+            icon="copy"
+            tone="muted"
+            aria-label={t('customer.logDialog.copyPhone')}
+            tip={t('customer.logDialog.copyPhone')}
             onClick={(event) =>
               void copyText(
                 toLatinDigits(customer.phone),
@@ -439,9 +449,7 @@ export function LogDialog({
                 () => toast.error(t('customer.logDialog.phoneCopyFailed')),
               )
             }
-          >
-            {t('customer.logDialog.copyPhone')}
-          </Button>
+          />
         </div>
       )}
       {message && customer.templates.length > 0 && (

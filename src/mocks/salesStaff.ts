@@ -44,7 +44,7 @@ import { customerTemplates } from './messages';
 import { tagsOfCustomer } from './salesTags';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { canEditContactNote, contactNoteRow } from './staff';
-import { overviewOf, taskListOf } from './tasks';
+import { overviewOf, summaryOf as tasksSummaryOf, taskListOf } from './tasks';
 
 /**
  * The sales panel's endpoints (`/api/sales/v1/` S11–S22, `/api/staff/v1/tasks/` for sales staff),
@@ -415,6 +415,7 @@ export const salesStaffHandlers = [
         pathway_check: customerPathwayCheck(data.id),
         // conf/notifications.json's crm_unanswered_call, with the customer's first name.
         no_answer_sms_text: `سلام ${data.name.split(' ')[0] ?? ''} عزیز\nمتأسفانه مشاوران اسکورایز موفق به تماس با شما نشدند، لطفا جهت ارتباط با موسسه با شماره زیرتماس بگیرید.\n\nتیم اسکورایز - ۰۲۱۹۱۰۱۸۴۵7`,
+        tablet_share_url: 'https://scorize.com/panel/background',
       })),
     ),
   ),
@@ -570,6 +571,9 @@ export const salesStaffHandlers = [
   ),
   http.get(`${TASKS}/lists/:list/`, async ({ params, request }) =>
     isSeller() ? taskListOf(request, await tasksOverview(), String(params.list)) : undefined,
+  ),
+  http.get(`${TASKS}/summary/`, async () =>
+    isSeller() ? HttpResponse.json(tasksSummaryOf(await tasksOverview())) : undefined,
   ),
   http.get(`${TASKS}/:id/`, ({ params }) =>
     isSeller() ? answer(() => taskRequest(id(params))) : undefined,

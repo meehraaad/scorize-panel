@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { lazy, Suspense, useCallback, useSyncExternalStore } from 'react';
 import { Outlet } from 'react-router';
+import { DockTray } from '@/components/ui/DockTray';
 import { sessionQuery, type SessionUser } from '@/lib/auth/session';
 import { getRoles } from '@/lib/auth/roles';
 
@@ -10,7 +11,7 @@ const CaseChatDock = lazy(() => import('@/features/supervisor/chat/CaseChatDock'
 /**
  * Outside page boundaries: staff drafts, sellers' live calls and supervisors' chat windows survive
  * navigation, including account and panel switches. Both load after the page, for their role only,
- * and put back this tab's drafts and windows.
+ * and put back this tab's drafts and windows. Minimized ones wait in the bottom tray (DockTray).
  */
 export function WorkspaceLayout() {
   const client = useQueryClient();
@@ -27,7 +28,7 @@ export function WorkspaceLayout() {
   const user = useSyncExternalStore(subscribe, snapshot, snapshot);
   const roles = user ? getRoles(user) : [];
   return (
-    <>
+    <DockTray>
       <Outlet />
       {user && roles.includes('sales') && (
         <Suspense fallback={null}>
@@ -39,6 +40,6 @@ export function WorkspaceLayout() {
           <CaseChatDock key={user.id} owner={user.id} />
         </Suspense>
       )}
-    </>
+    </DockTray>
   );
 }

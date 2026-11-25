@@ -1,10 +1,12 @@
-import { useId, useRef, type ReactNode } from 'react';
+import { useId, useRef, useState, type ClipboardEvent, type ReactNode } from 'react';
 import { PLACEHOLDER, type FieldVariable } from '@/lib/messageVariables';
 import { Icon } from './Icon';
 
 /**
  * A message text with its variables one tap away: a row of buttons above the box, each puts its
  * `{name}` where the cursor is (no braces to type). Every word comes from the caller.
+ * `imagePastedHint` is shown when a paste brings only a picture (a WhatsApp or Telegram sticker
+ * copies as an image): a text box can't keep it.
  */
 export function VariableField({
   label,
@@ -16,6 +18,7 @@ export function VariableField({
   variablesLabel,
   rows = 6,
   disabled = false,
+  imagePastedHint,
 }: {
   label: string;
   hint?: string | undefined;
@@ -27,10 +30,17 @@ export function VariableField({
   variablesLabel: string;
   rows?: number;
   disabled?: boolean;
+  imagePastedHint?: string | undefined;
 }) {
   const id = useId();
   const box = useRef<HTMLTextAreaElement>(null);
-  const message = error ?? hint;
+  const [imagePasted, setImagePasted] = useState(false);
+  const message = error ?? (imagePasted ? imagePastedHint : undefined) ?? hint;
+
+  const paste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const data = event.clipboardData;
+    setImagePasted(data.files.length > 0 && data.getData('text/plain') === '');
+  };
 
   const insert = (name: string) => {
     const element = box.current;
@@ -73,7 +83,11 @@ export function VariableField({
         rows={rows}
         value={value}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          setImagePasted(false);
+          onChange(event.target.value);
+        }}
+        onPaste={imagePastedHint ? paste : undefined}
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? `${id}-message` : undefined}
         className="w-full resize-y rounded-2xl bg-surface px-4 py-3 text-base leading-8 text-text shadow-[inset_0_0_0_1px_var(--line-2)] transition-shadow outline-none hover:shadow-[inset_0_0_0_1px_var(--line-3)] focus-visible:shadow-[inset_0_0_0_2px_var(--focus)] disabled:bg-canvas disabled:text-text-2 aria-invalid:shadow-[inset_0_0_0_1.5px_var(--danger)]"
@@ -81,6 +95,7 @@ export function VariableField({
       {message && (
         <p
           id={`${id}-message`}
+          role={imagePasted && !error ? 'status' : undefined}
           className={`m-0 text-sm leading-6 ${error ? 'text-danger' : 'text-text-2'}`}
         >
           {message}

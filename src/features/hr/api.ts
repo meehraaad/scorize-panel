@@ -12,6 +12,8 @@ import type { OnboardingBrief, PersonalInfo } from './onboarding/api';
  * file does.
  */
 export const HR_PERMISSION = 'can_manage_support_staff';
+/** human_resource.manage_pay: «حقوق و پاداش» (KPIs, rules, the month's pay), apart from the rest of HR. */
+export const PAY_PERMISSION = 'manage_pay';
 export const HR_API = '/hr/v1';
 export const HR_KEY = ['hr'] as const;
 
@@ -24,7 +26,8 @@ export type Team =
   | 'technical'
   | 'writing'
   | 'search'
-  | 'language';
+  | 'language'
+  | 'visa';
 export type ContractKind = 'trial' | 'fixed' | 'permanent' | 'project';
 export type StaffState = 'active' | 'trial' | 'joining' | 'leaving' | 'inactive';
 export type MoveKind = 'entry' | 'exit';
@@ -157,7 +160,37 @@ export interface StaffFile extends StaffRow {
   personal?: PersonalInfo | null;
 }
 
+/**
+ * A person's (or a team's summed) tasks (lang `api/hr/v1/teams.py`): open, overdue (past its due
+ * time), due today, the oldest overdue one's age in days, this month's done (on time or late), and
+ * the on-time share of the tasks due this month and last (0–1; null when none counted).
+ */
+export interface TaskNumbers {
+  open: number;
+  overdue: number;
+  today: number;
+  oldest_days: number | null;
+  done: number;
+  done_on_time: number;
+  on_time: number | null;
+  on_time_before: number | null;
+}
+
+export interface Brief extends Named {
+  face: Face | null;
+}
+
+/** What HR's day names as worth a look (at most four). */
+export type HrAlert =
+  | { kind: 'team_overdue'; team: Team; overdue: number; staff: Brief; staff_overdue: number }
+  | { kind: 'old_overdue'; staff: Brief; team: Team | null; days: number }
+  | { kind: 'contract_ending'; staff: Brief; team: Team | null; day: string; days: number }
+  | { kind: 'no_team'; count: number };
+
 export interface HrToday {
+  /** Everyone's tasks summed (absent on a server from before the team page). */
+  tasks?: TaskNumbers;
+  alerts?: HrAlert[];
   counts: Record<'active' | 'trial' | 'joining' | 'leaving' | 'total' | 'no_device', number> & {
     /** New-hire forms waiting for HR (OB5; absent until shipped). */
     forms_to_review?: number;

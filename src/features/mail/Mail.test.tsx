@@ -29,14 +29,14 @@ describe('mail page', () => {
   it('shows the servers and the mailboxes, with their problems', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/mail');
+    renderApp('/executive/manager/mail');
     expect(
       await screen.findByRole('heading', { name: 'ایمیل‌های متقاضیان', level: 1 }),
     ).toBeInTheDocument();
     expect(
-      within(
-        screen.getAllByRole('navigation', { name: 'منوی پنل سوپروایزر' })[0] as HTMLElement,
-      ).getByRole('link', { name: 'ایمیل‌ها' }),
+      within(screen.getByRole('navigation', { name: 'بخش‌های مدیریت اجرایی' })).getByRole('link', {
+        name: 'ایمیل‌ها',
+      }),
     ).toBeInTheDocument();
     const persia = screen.getByRole('region', { name: 'PersiaMail' });
     expect(within(persia).getByText('۲۰۸')).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('mail page', () => {
   it('opens the Gmail login failures and their queued recipients', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/mail');
+    renderApp('/executive/manager/mail');
     const card = await screen.findByRole('region', { name: 'جیمیل' });
     await user.click(within(card).getByRole('button', { name: /ورود ناموفق/ }));
 
@@ -80,7 +80,7 @@ describe('mail page', () => {
   it('creates a mailbox for an applicant and shows its password once', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/mail');
+    renderApp('/executive/manager/mail');
     await user.click(await screen.findByRole('button', { name: 'صندوق تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'صندوق تازه' });
     await user.type(within(dialog).getByLabelText('نام آدرس'), 'Amir.H');
@@ -109,7 +109,7 @@ describe('mail page', () => {
   it('sets a new password and deletes a mailbox, each after a confirm', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/mail');
+    renderApp('/executive/manager/mail');
     await user.click(
       await screen.findByRole('button', { name: 'جزئیات full.box@persian-mail.com' }),
     );
@@ -129,7 +129,7 @@ describe('mail page', () => {
   it('saves the bot rules and refuses a gap that ends before it starts', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/mail');
+    renderApp('/executive/manager/mail');
     await user.click(await screen.findByRole('button', { name: 'قانون‌های ربات' }));
     const daily = await screen.findByLabelText('سقف روزانه‌ی هر صندوق');
     await user.clear(daily);
@@ -147,7 +147,7 @@ describe('mail page', () => {
   it('takes an address off the suppressed list', async () => {
     const user = userEvent.setup();
     loginAs(MARYAM);
-    renderApp('/supervisor/mail');
+    renderApp('/executive/manager/mail');
     await user.click(await screen.findByRole('button', { name: 'آدرس‌های مسدود' }));
     await user.click(await screen.findByRole('button', { name: 'برداشتن j.smith@old-uni.edu' }));
     await user.click(screen.getByRole('button', { name: 'بردار' }));
@@ -158,9 +158,9 @@ describe('mail page', () => {
 
   it('is only for managers', async () => {
     loginAs(NIMA);
-    const router = renderApp('/supervisor/mail');
+    const router = renderApp('/executive/manager/mail');
     await waitFor(() => {
-      expect(router.state.location.pathname).not.toBe('/supervisor/mail');
+      expect(router.state.location.pathname).not.toBe('/executive/manager/mail');
     });
   });
 });

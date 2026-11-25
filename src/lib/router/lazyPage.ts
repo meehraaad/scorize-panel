@@ -51,8 +51,9 @@ export interface PageOptions {
   /**
    * Only some users may open the page: answers a redirect for the others, before the page's data
    * starts. (A route's own `loader` beside `...lazyPage()` would be replaced by the data loader.)
+   * It may also start data that depends on who the user is (it has the session and the address).
    */
-  guard?: () => Promise<Response | null>;
+  guard?: (args: LoaderFunctionArgs) => Promise<Response | null>;
 }
 
 /** What a route's `handle` holds for the panel frame. */
@@ -91,7 +92,7 @@ export function lazyPage(
   };
   return {
     ...(guard
-      ? { loader: async (args: LoaderFunctionArgs) => (await guard()) ?? start(args) }
+      ? { loader: async (args: LoaderFunctionArgs) => (await guard(args)) ?? start(args) }
       : data && { loader: start }),
     ...(skeleton && { handle: { skeleton } satisfies PageHandle }),
     lazy: async () => {

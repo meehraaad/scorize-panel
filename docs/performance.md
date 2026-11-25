@@ -127,7 +127,9 @@ downloads are ignored.
   form, its checks and HR's tab load only with their pages. CI measures on Node 24 (`.nvmrc`), about 0.15 KB more than Node 26's gzip. JS 196.2 → 196.5 on
   2026-11-23 for the hiring follow-ups: the account-lookup flag and small additions to shared
   blocks, under 0.1 KB (the lookup and access-tab queries stay in their lazy modules), plus that
-  Node 24 margin. Worth winning back: making the HR,
+  Node 24 margin. JS 197.7 → 197.9 and CSS 22.4 → 22.8 on 2026-11-24 for the customer head's
+  quick actions: the hover label under icon-only buttons (`tip`), the dock, the copy and tablet icons
+  and the chat apps' brand colours, +0.2 JS and +0.3 CSS locally; CI's Node 24 measured 197.7 / 22.7. Worth winning back: making the HR,
   access, attendance and Executive panels' routes lazy). Raise a
   budget only on purpose, in review.
 - **Real users** (`src/lib/vitals.ts`): LCP, INP, CLS, FCP and TTFB per page pattern, sent with
@@ -136,10 +138,10 @@ downloads are ignored.
 
 ## Still to do
 
-| Where  | Work                                                                                                                                                                            |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Django | backend-changes H55 (tickets in one request), V1 (speed reports; then set `VITALS_ON_SERVER`), V2 (p95 under 300 ms, `Server-Timing`), V3 (no N+1), V4 (compressed API answers) |
-| Panel  | Brotli next to the pre-gzipped assets needs an nginx image with the brotli module (the `Dockerfile` uses `nginx-unprivileged`)                                                  |
+| Where  | Work                                                                                                                                                                                           |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Django | backend-changes H55 (tickets in one request), V1 (speed reports; then enable the `siteHealth` build feature), V2 (p95 under 300 ms, `Server-Timing`), V3 (no N+1), V4 (compressed API answers) |
+| Panel  | Brotli next to the pre-gzipped assets needs an nginx image with the brotli module (the `Dockerfile` uses `nginx-unprivileged`)                                                                 |
 
 ## Libraries load with their page
 

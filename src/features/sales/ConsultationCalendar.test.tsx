@@ -60,7 +60,7 @@ describe('sales: my consultations on a week calendar', () => {
     expect(within(card).getByText('فرم تبلت را هنوز پر نکرده')).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: 'فرستادن لینک فرم' })).toHaveAttribute(
       'href',
-      expect.stringContaining('https://wa.me/'),
+      expect.stringContaining('https://api.whatsapp.com/send?phone='),
     );
     await user.click(within(card).getByRole('button', { name: 'مشتری رسید' }));
     expect(await toasts().findByText(/ثبت شد\.$/)).toBeInTheDocument();

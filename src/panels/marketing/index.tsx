@@ -1,7 +1,9 @@
 import { redirect } from 'react-router';
+import { acquisitionQuery } from '@/features/marketing/acquisitionApi';
 import { attendanceQuery, calendarQuery, monthRange, todayQuery } from '@/features/marketing/api';
 import { MARKETING_MANAGER_PERMISSION, boardQuery, teamQuery } from '@/features/marketing/boardApi';
 import { sourcesQuery } from '@/features/marketing/sourcesApi';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
@@ -9,9 +11,9 @@ import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { lazyPage } from '@/lib/router/lazyPage';
-import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
+import { hubAddressFor, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import { pathwayRoutes } from '../pathwayRoutes';
-import type { PanelDefinition } from '../types';
+import type { NavItem, PanelDefinition } from '../types';
 
 /** The manager's pages check the key too: the menu only hides them. */
 async function managerOnly() {
@@ -57,19 +59,23 @@ export const marketingPanel: PanelDefinition = {
       icon: 'user',
     },
     {
-      id: 'tasks',
-      to: 'tasks',
-      label: 'panels.marketing.nav.tasks',
-      tab: 'panels.marketing.tabs.tasks',
-      icon: 'check',
-    },
-    {
       id: 'calendar',
       to: 'calendar',
       label: 'panels.marketing.nav.calendar',
       tab: 'panels.marketing.tabs.calendar',
       icon: 'calendar',
     },
+    ...(ON_SERVER.acquisition
+      ? [
+          {
+            id: 'acquisition',
+            to: 'acquisition',
+            label: 'panels.marketing.nav.acquisition',
+            tab: 'panels.marketing.tabs.acquisition',
+            icon: 'chart',
+          } satisfies NavItem,
+        ]
+      : []),
     {
       id: 'performance',
       to: 'performance',
@@ -108,13 +114,8 @@ export const marketingPanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
-    {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: ({ request }) => [tasksQuery('marketing'), openingTaskList('marketing', request.url)],
-        skeleton: 'list',
-      }),
-    },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('marketing', request.url)) },
     {
       path: 'calendar',
       // `tasks`: a click on a day opens the new-task composer.
@@ -123,6 +124,17 @@ export const marketingPanel: PanelDefinition = {
         skeleton: 'board',
       }),
     },
+    ...(ON_SERVER.acquisition
+      ? [
+          {
+            path: 'acquisition',
+            ...lazyPage(() => import('@/features/marketing/AcquisitionPage'), ['telemetry'], {
+              data: () => [acquisitionQuery()],
+              skeleton: 'dashboard',
+            }),
+          },
+        ]
+      : []),
     {
       path: 'performance',
       ...lazyPage(() => import('@/features/marketing/PerformancePage'), ['marketing'], {

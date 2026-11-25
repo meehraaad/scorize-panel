@@ -1,17 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { ProgressBar, StepBar } from '@/components/ui/Progress';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type RequestDetail } from '@/lib/tasks/api';
 import { requestQuery, useTaskChange } from '@/lib/tasks/changes';
 import type { TasksConfig } from '../config';
+import { PersonRef } from './PersonRef';
 import { ReactionBar } from './Reactions';
 import { StatusMark } from './StatusMark';
 import { toast } from '@/lib/toast';
@@ -41,7 +40,6 @@ export function RequestDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
-  const named = useDisplayName();
   const f = useFormat();
   const { data } = useQuery({ ...requestQuery(config.panel, id ?? 0), enabled: id !== null });
   const change = useTaskChange();
@@ -127,9 +125,7 @@ export function RequestDialog({
             {data.person && (
               <span>
                 {t('requests.about')}{' '}
-                <Link to={config.personPath(data.person.id)} className="text-primary-text">
-                  {named(data.person.name)}
-                </Link>
+                <PersonRef person={data.person} config={config} face={false} />
               </span>
             )}
             <span>

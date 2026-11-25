@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { FaceDot } from '@/components/customers/FaceDot';
 import { Button } from '@/components/ui/Button';
+import { InTray } from '@/components/ui/DockTray';
 import { FloatingPanel } from '@/components/ui/FloatingPanel';
 import { Icon } from '@/components/ui/Icon';
 import { Notice } from '@/components/ui/Notice';
@@ -25,7 +26,6 @@ export default function ContactWorkspace() {
   const { t } = useTranslation('sales');
   const named = useDisplayName();
   const { drafts, active, unknownCalls, activeUnknown } = useContactDrafts();
-  const current = drafts.find((draft) => draft.key === active);
   const unknown = unknownCalls.find((call) => call.id === activeUnknown);
   return (
     <>
@@ -35,65 +35,64 @@ export default function ContactWorkspace() {
         </div>
       ))}
       {unknown && <UnknownCallPanel key={unknown.id} call={unknown} />}
-      <aside
-        aria-label={t('contactDraft.tray')}
-        className={`fixed start-3 end-3 bottom-[calc(88px+env(safe-area-inset-bottom))] z-40 flex max-h-32 flex-wrap gap-2 overflow-y-auto lg:start-5 lg:end-auto lg:bottom-5 lg:max-w-[calc(100vw-490px)] ${current || unknown ? 'hidden lg:flex' : ''}`}
-      >
-        {drafts
-          .filter((draft) => draft.key !== active)
-          .map((draft) => {
-            const live = !!draft.call && draft.call.ended_at === null;
-            return (
+      <InTray>
+        <aside aria-label={t('contactDraft.tray')} className="flex max-w-full flex-wrap gap-2">
+          {drafts
+            .filter((draft) => draft.key !== active)
+            .map((draft) => {
+              const live = !!draft.call && draft.call.ended_at === null;
+              return (
+                <Button
+                  key={draft.key}
+                  variant={live ? 'dark' : 'outline'}
+                  onClick={() => activateContactDraft(draft.key)}
+                  aria-label={t('contactDraft.resume', { name: named(draft.name) })}
+                  className={`max-w-full shadow-panel ${live ? '' : 'bg-warn-tint'}`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`size-2.5 flex-none rounded-full ${live ? 'bg-live' : 'bg-warn'}`}
+                  />
+                  <Icon name={draft.start.channel === 'meeting' ? 'calendar' : 'phone'} size={18} />
+                  <DraftFace draft={draft} />
+                  <span className="truncate">
+                    {live
+                      ? named(draft.name)
+                      : t('contactDraft.unsaved', { name: named(draft.name) })}
+                  </span>
+                  {draft.call && <CallStatus call={draft.call} compact />}
+                </Button>
+              );
+            })}
+          {unknownCalls
+            .filter((call) => call.id !== activeUnknown)
+            .map((call) => (
               <Button
-                key={draft.key}
-                variant={live ? 'dark' : 'outline'}
-                onClick={() => activateContactDraft(draft.key)}
-                aria-label={t('contactDraft.resume', { name: named(draft.name) })}
-                className={`max-w-full shadow-panel ${live ? '' : 'bg-warn-tint'}`}
+                key={call.id}
+                variant={call.ended_at === null ? 'dark' : 'outline'}
+                onClick={() => activateUnknownCall(call.id)}
+                aria-label={t('phoneCall.resumeUnknown', { phone: call.phone })}
+                className="shadow-panel"
               >
                 <span
                   aria-hidden="true"
-                  className={`size-2.5 flex-none rounded-full ${live ? 'bg-live' : 'bg-warn'}`}
+                  className={`size-2.5 flex-none rounded-full ${
+                    call.ended_at === null
+                      ? 'bg-live'
+                      : call.status === 'missed'
+                        ? 'bg-danger'
+                        : 'bg-text-3'
+                  }`}
                 />
-                <Icon name={draft.start.channel === 'meeting' ? 'calendar' : 'phone'} size={18} />
-                <DraftFace draft={draft} />
-                <span className="truncate">
-                  {live
-                    ? named(draft.name)
-                    : t('contactDraft.unsaved', { name: named(draft.name) })}
+                <Icon name="phone" size={18} />
+                <span>
+                  {t(call.status === 'missed' ? 'callStrip.missedTitle' : 'phoneCall.unknown')}
                 </span>
-                {draft.call && <CallStatus call={draft.call} compact />}
+                <CallStatus call={call} compact />
               </Button>
-            );
-          })}
-        {unknownCalls
-          .filter((call) => call.id !== activeUnknown)
-          .map((call) => (
-            <Button
-              key={call.id}
-              variant={call.ended_at === null ? 'dark' : 'outline'}
-              onClick={() => activateUnknownCall(call.id)}
-              aria-label={t('phoneCall.resumeUnknown', { phone: call.phone })}
-              className="shadow-panel"
-            >
-              <span
-                aria-hidden="true"
-                className={`size-2.5 flex-none rounded-full ${
-                  call.ended_at === null
-                    ? 'bg-live'
-                    : call.status === 'missed'
-                      ? 'bg-danger'
-                      : 'bg-text-3'
-                }`}
-              />
-              <Icon name="phone" size={18} />
-              <span>
-                {t(call.status === 'missed' ? 'callStrip.missedTitle' : 'phoneCall.unknown')}
-              </span>
-              <CallStatus call={call} compact />
-            </Button>
-          ))}
-      </aside>
+            ))}
+        </aside>
+      </InTray>
     </>
   );
 }
