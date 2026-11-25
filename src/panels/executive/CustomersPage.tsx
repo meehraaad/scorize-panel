@@ -42,9 +42,10 @@ export default function CustomersPage() {
 function useCustomerListParams() {
   const [params, setParams] = useSearchParams();
   const set = useCallback(
-    (key: string, value: string, replace = false) => {
+    (key: string, value: string, replace = false, clear: string[] = []) => {
       const next = new URLSearchParams(params);
       next.delete('page');
+      for (const other of clear) next.delete(other);
       if (value) next.set(key, value);
       else next.delete(key);
       setParams(next, { replace, preventScrollReset: true });
@@ -60,7 +61,7 @@ function useCustomerListParams() {
 }
 
 function CustomerList() {
-  const { t } = useTranslation(['executive', 'supervisor', 'common']);
+  const { t } = useTranslation(['executive', 'supervisor', 'common', 'writer']);
   const f = useFormat();
   const { params, set, page, setPage } = useCustomerListParams();
   const { data, error, isPlaceholderData } = useQuery(customersQuery(params));
@@ -183,9 +184,24 @@ function CustomerList() {
               label={t('service')}
               value={params.get('service') ?? ''}
               options={[{ value: '', label: t('all') }, ...(data?.options.service ?? [])]}
-              onChange={(value) => set('service', value)}
+              onChange={(value) => set('service', value, false, ['writing'])}
               look="pills"
             />
+            {params.get('service') === 'writing' && (data?.options.writing.length ?? 0) > 1 && (
+              <FilterTabs
+                label={t('customers.writingKind')}
+                value={params.get('writing') ?? ''}
+                options={[
+                  { value: '', label: t('customers.anyWriting') },
+                  ...(data?.options.writing ?? []).map(({ value }) => ({
+                    value,
+                    label: t(`writer:type.${value}`),
+                  })),
+                ]}
+                onChange={(value) => set('writing', value)}
+                look="pills"
+              />
+            )}
           </>
         }
       >

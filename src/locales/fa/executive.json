@@ -24,6 +24,8 @@
     "searchPlaceholder": "نام، شمارهٔ پرونده، تلفن یا ایمیل…",
     "country": "کشور",
     "anyCountry": "کشور · همه",
+    "anyWriting": "همه‌ی نگارش‌ها",
+    "writingKind": "نوع نگارش",
     "stage": "وضعیت پرونده",
     "contract": "نوع قرارداد",
     "order": "مرتب‌سازی مشتری‌ها",
