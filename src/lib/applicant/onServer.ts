@@ -50,7 +50,9 @@ export type ServerFeature =
   | 'marketing'
   | 'dayFollowUps'
   | 'clientServices'
-  | 'clientErrors';
+  | 'clientErrors'
+  | 'siteHealth'
+  | 'acquisition';
 
 const DEFAULTS: Record<ServerFeature, boolean> = {
   /** Voice messages in tickets: Django checks audio attachments (shamrad/lang `common/uploads.py`). */
@@ -61,6 +63,8 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
    * docs/request-ids.md). Off: crashes show no code. Server errors show theirs either way.
    */
   clientErrors: false,
+  siteHealth: false,
+  acquisition: false,
   /**
    * `GET /supervisor/v1/services/mine/`: the services a supervisor or visa expert owns (lang
    * `claude/ecstatic-edison-jzr50i`, docs/client-services.md phase 4), behind Django's
@@ -263,8 +267,7 @@ const DEFAULTS: Record<ServerFeature, boolean> = {
 
 /**
  * Entries one build turns on, from `VITE_SERVER_FEATURES` (comma-separated names, e.g.
- * "clientServices"): the test server (build.scorize.com) tries a feature whose Django switch is on
- * only there. Production builds don't set it, so they keep the defaults above.
+ * "clientServices"): use after the matching Django endpoint is live on the target environment.
  */
 function buildFeatures(list: string | undefined): Partial<Record<ServerFeature, boolean>> {
   const names = (list ?? '').split(',').map((name) => name.trim());

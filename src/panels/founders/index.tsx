@@ -17,6 +17,7 @@ import {
   readyVariablesQuery,
   systemMessagesQuery,
 } from '@/features/messages/api';
+import { siteHealthQuery } from '@/features/site-health/api';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { queryClient } from '@/lib/api/queryClient';
 import { FOUNDERS_PERMISSION, MESSAGES_PERMISSIONS, hasPermission } from '@/lib/auth/roles';
@@ -34,6 +35,8 @@ export function managementHome(user: SessionUser) {
   if (ON_SERVER.messageCenter && hasPermission(user, READY_PERMISSION))
     return `${MESSAGES_PATH}/ready`;
   if (ON_SERVER.accessPage && user.is_superuser) return '/founders/access';
+  if (ON_SERVER.siteHealth && hasPermission(user, FOUNDERS_PERMISSION))
+    return '/founders/site-health';
   return null;
 }
 
@@ -58,6 +61,18 @@ const NAVIGATION: NavItem[] = [
           label: 'panels.founders.nav.assistant',
           tab: 'panels.founders.tabs.assistant',
           icon: 'chat',
+          permission: FOUNDERS_PERMISSION,
+        } satisfies NavItem,
+      ]
+    : []),
+  ...(ON_SERVER.siteHealth
+    ? [
+        {
+          id: 'site-health',
+          to: 'site-health',
+          label: 'panels.founders.nav.siteHealth',
+          tab: 'panels.founders.tabs.siteHealth',
+          icon: 'chart',
           permission: FOUNDERS_PERMISSION,
         } satisfies NavItem,
       ]
@@ -126,6 +141,18 @@ export const foundersPanel: PanelDefinition = {
         skeleton: 'assistant',
       }),
     },
+    ...(ON_SERVER.siteHealth
+      ? [
+          {
+            path: 'site-health',
+            ...lazyPage(() => import('@/features/site-health/SiteHealthPage'), ['telemetry'], {
+              guard: assistantOnly,
+              data: () => [siteHealthQuery()],
+              skeleton: 'dashboard',
+            }),
+          },
+        ]
+      : []),
     ...(ON_SERVER.messageCenter
       ? [
           {

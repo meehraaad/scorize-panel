@@ -140,7 +140,7 @@ downloads are ignored.
 
 | Where  | Work                                                                                                                                                                            |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Django | backend-changes H55 (tickets in one request), V1 (speed reports; then set `VITALS_ON_SERVER`), V2 (p95 under 300 ms, `Server-Timing`), V3 (no N+1), V4 (compressed API answers) |
+| Django | backend-changes H55 (tickets in one request), V1 (speed reports; then enable the `siteHealth` build feature), V2 (p95 under 300 ms, `Server-Timing`), V3 (no N+1), V4 (compressed API answers) |
 | Panel  | Brotli next to the pre-gzipped assets needs an nginx image with the brotli module (the `Dockerfile` uses `nginx-unprivileged`)                                                  |
 
 ## Libraries load with their page
