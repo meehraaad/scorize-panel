@@ -12,6 +12,7 @@ import { StatGrid } from '@/components/ui/StatGrid';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { todayQuery } from './api';
+import { Alerts, TaskSummary } from './components/TaskStatus';
 import { PersonLink } from './components/PersonLink';
 import { CONTRACT_TONE, dayOf, daysUntil } from './format';
 import { hrPath } from './paths';
@@ -21,7 +22,9 @@ const ATTENDANCE = ['present', 'late', 'absent', 'pending'] as const;
 /**
  * HR's day (canvas "امروز منابع انسانی"): how many work here and how, today's attendance from the
  * office terminal, the joinings and leavings under way, contracts and trials ending within a month
- * and the week's birthdays.
+ * and the week's birthdays. Above them, everyone's tasks summed and what is worth a look (canvas
+ * "وضعیت تیم‌ها"): a team with many overdue tasks, an old overdue task, a contract ending, people
+ * with no team.
  */
 export default function TodayPage() {
   const { t } = useTranslation('hr');
@@ -166,6 +169,8 @@ export default function TodayPage() {
             : []),
         ]}
       />
+      {data.tasks && <TaskSummary tasks={data.tasks} />}
+      {data.alerts && <Alerts alerts={data.alerts} />}
       <PageColumns main={main} aside={aside} asideLabel={t('today.aside')} />
     </PageStack>
   );

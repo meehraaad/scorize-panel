@@ -25,3 +25,16 @@ export function useSavePerson(id: number) {
     onSuccess: () => client.invalidateQueries({ queryKey: ACCESS_KEY }),
   });
 }
+
+/** Switches a person's sections (the whole list, and the kinds of writing). */
+export function useSaveSections(id: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (change: { sections: string[]; writing: string[] }) =>
+      api<AccessPerson>(`${ACCESS_API}/people/${String(id)}/sections/`, {
+        method: 'PUT',
+        body: change,
+      }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ACCESS_KEY }),
+  });
+}

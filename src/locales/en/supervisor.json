@@ -712,7 +712,10 @@
       "today": "Countries today: {{countries}}",
       "remove": "Remove the {{scope}} scope from {{name}}",
       "removeShort": "Remove",
-      "removed": "Removed the {{scope}} scope from {{name}}."
+      "removed": "Removed the {{scope}} scope from {{name}}.",
+      "lead": "Domain lead",
+      "leadOn": "{{name}} now leads {{scope}}.",
+      "leadOff": "{{name}} no longer leads {{scope}}."
     },
     "add": {
       "title": "New scope",
@@ -721,7 +724,9 @@
       "country": "Country",
       "save": "Add the scope",
       "done": "Gave {{name}} the {{scope}} scope.",
-      "exists": "This supervisor already has this scope."
+      "exists": "This supervisor already has this scope.",
+      "leads": "Also lead this domain",
+      "leadsHint": "Chooses the owners of this domain's services and gets the task about those nobody owns. Applies at once."
     }
   },
   "servicesReport": {

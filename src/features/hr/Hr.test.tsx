@@ -31,6 +31,39 @@ describe('HR panel', () => {
     expect(within(birthdays).getByRole('link', { name: /مریم کریمی/ })).toBeInTheDocument();
   });
 
+  it('sums everyone’s tasks on HR’s day and names what is worth a look', async () => {
+    loginAs(AMIR);
+    renderApp('/hr');
+    const summary = await screen.findByRole('region', { name: 'کارهای همه' });
+    expect(within(summary).getByText('۱۶')).toBeInTheDocument();
+    expect(within(summary).getByText('۴ عقب‌افتاده')).toBeInTheDocument();
+    const alerts = screen.getByRole('region', { name: 'این‌ها را ببینید' });
+    expect(
+      within(alerts).getByRole('link', { name: /تیم فروش ۴ کار عقب‌افتاده دارد/ }),
+    ).toHaveAttribute('href', '/hr/staff/teams/sales');
+  });
+
+  it('shows each team’s state on the staff page and opens a team’s people', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/staff');
+    await user.click(await screen.findByRole('button', { name: 'تیم‌ها' }));
+    const teams = await screen.findByRole('list', { name: 'تیم‌ها' });
+    const sales = within(teams).getByRole('link', { name: 'باز کردن تیم فروش' });
+    expect(within(sales).getByText('عقب مانده')).toBeInTheDocument();
+    await user.click(sales);
+    expect(await screen.findByRole('heading', { name: 'تیم فروش', level: 1 })).toBeInTheDocument();
+    const people = screen.getByRole('list', { name: 'افراد تیم' });
+    const [first] = within(people).getAllByRole('listitem');
+    if (!first) throw new Error('no people in the team');
+    expect(within(first).getByRole('link', { name: /علی رضایی/ })).toBeInTheDocument();
+    expect(within(first).getByText('۳ کار عقب')).toBeInTheDocument();
+    const overdue = screen.getByRole('region', { name: 'کارهای عقب‌افتاده‌ی تیم' });
+    expect(within(overdue).getAllByText('پیگیری مدارک سفارت')).toHaveLength(2);
+    await user.click(screen.getByRole('link', { name: /تیم‌ها/ }));
+    expect(await screen.findByRole('list', { name: 'تیم‌ها' })).toBeInTheDocument();
+  });
+
   it('keeps people without the key out', async () => {
     loginAs(NIMA);
     renderApp('/hr/staff');

@@ -39,11 +39,13 @@ export function ServicesCard({ caseId, services }: { caseId: number; services: C
   const manager = hasPermission(user, ASSIGN_PERMISSION);
   const [editing, setEditing] = useState<CaseService | null>(null);
   const [staging, setStaging] = useState<CaseService | null>(null);
-  // The owner or a manager works on a service's stage (SVC4).
+  // A manager, or the lead of the service's domain, chooses its owner.
+  const mayChoose = (service: CaseService) => manager || Boolean(service.assignable);
+  // The owner, a manager or the domain's lead works on a service's stage (SVC4).
   const mayStage = (service: CaseService) =>
     Boolean(service.stage) &&
     !FOLLOWS_CASE.includes(service.kind) &&
-    (manager || service.owner?.id === user.staff?.id);
+    (mayChoose(service) || service.owner?.id === user.staff?.id);
 
   return (
     <SectionCard id="case-services" title={t('services.title')}>
@@ -87,7 +89,7 @@ export function ServicesCard({ caseId, services }: { caseId: number; services: C
                   {t('services.stage.open', { service: serviceTitle(service) })}
                 </Button>
               )}
-              {manager && (
+              {mayChoose(service) && (
                 <Button
                   variant="outline"
                   className="h-11 px-4 text-sm"
@@ -112,7 +114,7 @@ export function ServicesCard({ caseId, services }: { caseId: number; services: C
   );
 }
 
-/** Choose a service's owner (managers): on the case page and on the new-cases page. */
+/** Choose a service's owner (managers and the service's domain lead): on the case page and on the new-cases page. */
 export function OwnerDialog({
   caseId,
   service,

@@ -19,7 +19,7 @@ describe('management > access', () => {
     await i18n.changeLanguage('fa');
   });
 
-  it('lists who has what and gives someone a key', async () => {
+  it('lists who has which sections and switches one on', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);
     renderApp('/founders/access');
@@ -27,15 +27,31 @@ describe('management > access', () => {
       await screen.findByRole('heading', { name: 'چه کسی چه دسترسی دارد', level: 1 }),
     ).toBeInTheDocument();
     const list = screen.getByRole('region', { name: 'فهرست افراد' });
-    expect(within(list).getByText('مدیر کل (همه‌ی کلیدها)')).toBeInTheDocument();
+    expect(await within(list).findByText('هیئت مدیره · همه‌ی بخش‌ها')).toBeInTheDocument();
+    // Some kinds of writing only: named on the row.
+    expect(within(list).getByText('نوشتن: رزومه')).toBeInTheDocument();
     // Nima holds nothing yet: found by a search.
     expect(within(list).queryByText('نیما رستمی')).toBeNull();
     await user.type(screen.getByLabelText('جست‌وجوی افراد'), 'نیما');
     await user.click(await screen.findByRole('button', { name: 'باز کردن دسترسی‌های نیما رستمی' }));
     const dialog = await screen.findByRole('dialog', { name: 'نیما رستمی' });
-    await user.click(await within(dialog).findByRole('checkbox', { name: /پیام‌های آماده/ }));
+    // What the team gives, without a switch
+    expect(within(dialog).getByText(/پنل فروش، مشتری‌های خودش/)).toBeInTheDocument();
+    await user.click(await within(dialog).findByRole('switch', { name: /^مالی/ }));
+    // Writing opens its kinds, all on; none chosen can't be saved
+    await user.click(within(dialog).getByRole('switch', { name: /^نوشتن/ }));
+    const kinds = within(dialog).getByRole('group', { name: 'نوع‌های نگارش' });
+    for (const kind of within(kinds).getAllByRole('checkbox')) await user.click(kind);
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('دست‌کم یک نوع نگارش');
+    expect(within(dialog).getByRole('button', { name: 'ذخیره' })).toBeDisabled();
+    await user.click(within(kinds).getByRole('checkbox', { name: 'رزومه' }));
     await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
     expect(await toasts().findByText('دسترسی‌های نیما رستمی ذخیره شد.')).toBeInTheDocument();
+    await user.clear(screen.getByLabelText('جست‌وجوی افراد'));
+    await user.selectOptions(screen.getByLabelText('بخش'), 'finance');
+    expect(
+      await within(list).findByRole('button', { name: 'باز کردن دسترسی‌های نیما رستمی' }),
+    ).toBeInTheDocument();
   });
 
   it('leaves superusers to Django admin', async () => {
@@ -51,6 +67,7 @@ describe('management > access', () => {
     await user.click(await screen.findByRole('button', { name: 'باز کردن دسترسی‌های مریم کاظمی' }));
     const dialog = await screen.findByRole('dialog', { name: 'مریم کاظمی' });
     expect(within(dialog).queryByRole('switch', { name: /مدیر کل/ })).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('switch', { name: /^مدیریت اجرا/ })).toBeChecked();
   });
 
   it("shows a group's keys as held, not as a separate key", async () => {
@@ -58,6 +75,9 @@ describe('management > access', () => {
     loginAs(AMIR);
     renderApp('/founders/access');
     await user.click(await screen.findByRole('button', { name: 'باز کردن دسترسی‌های بهار نوری' }));
+    const sections = await screen.findByRole('dialog', { name: 'بهار نوری' });
+    // The raw groups and keys: superusers' «پیشرفته»
+    await user.click(within(sections).getByRole('button', { name: 'پیشرفته: گروه‌ها و کلیدها' }));
     const dialog = await screen.findByRole('dialog', { name: 'بهار نوری' });
     const key = await within(dialog).findByRole('checkbox', { name: /دستیار بنیان‌گذاران/ });
     expect(key).toBeChecked();

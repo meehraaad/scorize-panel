@@ -30,6 +30,11 @@ export interface CaseService {
   owner: ServiceOwner | null;
   /** Where it stands (SVC4); null for a kind without stages yet. Missing from an older Django. */
   stage?: ServiceStage | null;
+  /**
+   * On the case page: the viewer chooses its owner (a manager, or the lead of its domain,
+   * «سرپرست دامنه»). Missing from an older Django: managers only, as before.
+   */
+  assignable?: boolean;
 }
 
 /** One of a kind's stages, as staff named them in Django's admin. */
@@ -93,6 +98,8 @@ export interface ServiceDetail {
   editable: boolean;
   /** Its stage is read from the case's (admission, SVC6): changed there, not here. */
   follows_case?: boolean;
+  /** The viewer chooses its owner: a manager, or its domain's lead. Missing from an older Django. */
+  assignable?: boolean;
   /** Visa services: the country's results; null for other kinds. */
   visa: ServiceVisaResult[] | null;
   /** The embassies a result can name; null unless the viewer records results (owner or manager). */
