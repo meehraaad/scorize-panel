@@ -3,6 +3,7 @@ import { API_BASE, api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { CASE_STAGES, type DocCount } from '@/features/supervisor/api/common';
 import { EXECUTIVE_API, EXECUTIVE_KEY } from '@/features/executive/api';
+import type { WritingDepartment } from '@/lib/tickets/api';
 
 export const CUSTOMER_STAGES = [...CASE_STAGES, 'emailing'] as const;
 export const CUSTOMER_SCOPES = ['mine', 'team', 'all'] as const;
@@ -35,7 +36,12 @@ export interface CustomerCase {
 interface CustomerList extends Page<CustomerCase> {
   scopes: Partial<Record<Scope, number>>;
   queues: Record<Queue, number>;
-  options: { country: Option[]; contract: Option[]; service: Option[] };
+  options: {
+    country: Option[];
+    contract: Option[];
+    service: Option[];
+    writing: { value: WritingDepartment; label: string }[];
+  };
   can_export: boolean;
   can_import: boolean;
 }
@@ -47,7 +53,16 @@ export const customerPageOf = (search: URLSearchParams) => {
 
 function listParams(search: URLSearchParams) {
   const params = new URLSearchParams({ scope: search.get('scope') ?? 'mine' });
-  for (const key of ['search', 'queue', 'country', 'stage', 'contract', 'service', 'order']) {
+  for (const key of [
+    'search',
+    'queue',
+    'country',
+    'stage',
+    'contract',
+    'service',
+    'writing',
+    'order',
+  ]) {
     const value = search.get(key)?.trim();
     if (value) params.set(key, value);
   }

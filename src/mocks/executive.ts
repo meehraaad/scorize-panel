@@ -71,7 +71,14 @@ export const executiveHandlers = [
           { value: 'phd', label: 'دکترا' },
           { value: 'masters', label: 'ارشد' },
         ],
-        service: [{ value: 'admission', label: 'پذیرش' }],
+        service: [
+          { value: 'admission', label: 'پذیرش' },
+          { value: 'writing', label: 'نگارش' },
+        ],
+        writing: [
+          { value: 'sop', label: 'SOP' },
+          { value: 'cv', label: 'CV' },
+        ],
       },
       can_export: true,
       can_import: true,

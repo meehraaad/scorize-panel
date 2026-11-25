@@ -24,6 +24,8 @@
     "searchPlaceholder": "Name, case number, phone or email…",
     "country": "Country",
     "anyCountry": "Country · All",
+    "anyWriting": "All writing",
+    "writingKind": "Writing kind",
     "stage": "Case status",
     "contract": "Contract type",
     "order": "Sort customers",

@@ -88,7 +88,7 @@ it('hides CSV upload whenever the account lacks the supervisor-service capabilit
       HttpResponse.json({
         scopes: { mine: 0 },
         queues: { today: 0, late: 0, review: 0, reply: 0, unassigned: 0 },
-        options: { country: [], contract: [], service: [] },
+        options: { country: [], contract: [], service: [], writing: [] },
         can_export: false,
         can_import: false,
         count: 0,
@@ -109,4 +109,16 @@ it('sends the removed overview and work table addresses to the customers', async
     expect(router.state.location.pathname).toBe('/executive/customers');
     router.dispose();
   }
+});
+
+it('narrows writing to one kind and drops that choice when the service changes', async () => {
+  const user = userEvent.setup();
+  const router = renderApp('/executive/customers');
+  expect(screen.queryByRole('button', { name: 'All writing' })).not.toBeInTheDocument();
+  await user.click(await screen.findByRole('button', { name: 'نگارش' }));
+  await user.click(await screen.findByRole('button', { name: 'CV' }));
+  await waitFor(() => expect(router.state.location.search).toBe('?service=writing&writing=cv'));
+  await user.click(screen.getByRole('button', { name: 'پذیرش' }));
+  await waitFor(() => expect(router.state.location.search).toBe('?service=admission'));
+  expect(screen.queryByRole('button', { name: 'All writing' })).not.toBeInTheDocument();
 });
