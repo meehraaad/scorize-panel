@@ -16,22 +16,22 @@ import { pagesOf, useClampPage } from '@/lib/api/page';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import {
-  groupsQuery,
-  heldKeys,
   keysQuery,
   peopleFilterOf,
   peopleQuery,
-  type AccessGroup,
+  sectionsQuery,
+  WRITE_SECTION,
   type AccessPerson,
+  type SectionList,
 } from './api';
 import { PersonDialog } from './components/PersonDialog';
 
 const ALL = 'all';
 
 /**
- * Who has what: everyone holding a key or a group (superusers first), or the holders of one key or
- * the members of one group. A search also finds staff who hold nothing yet. A row opens the
- * person's groups and keys.
+ * Who has what, in sections: everyone holding something (the board first), a team's people, or
+ * who has one section (the keys and groups pages still link here by key or group). A search also
+ * finds staff who hold nothing yet. A row shows the person's sections; it opens them as switches.
  */
 export default function PeoplePage() {
   const { t } = useTranslation('access');
@@ -42,11 +42,12 @@ export default function PeoplePage() {
   const searched = useDebouncedValue(search.trim());
   const page = filter.page ?? 1;
   const people = useQuery(peopleQuery({ ...filter, ...(searched ? { search: searched } : {}) }));
-  const keys = useQuery(keysQuery());
-  const groups = useQuery(groupsQuery);
+  const sections = useQuery(sectionsQuery);
+  // Only to name the key the keys page linked here with.
+  const keys = useQuery({ ...keysQuery(), enabled: Boolean(filter.key) });
   const [open, setOpen] = useState<AccessPerson | null>(null);
 
-  const setFilter = (name: 'key' | 'group' | 'page', value: string | null) =>
+  const setFilter = (name: 'key' | 'group' | 'section' | 'team' | 'page', value: string | null) =>
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
@@ -59,7 +60,7 @@ export default function PeoplePage() {
     );
   useClampPage(people.data, page, (to) => setFilter('page', to > 1 ? String(to) : null));
 
-  const keyLabel = (id: string) => keys.data?.keys.find((key) => key.id === id)?.label ?? id;
+  const clearable = filter.key ?? (filter.group !== undefined ? String(filter.group) : null);
 
   return (
     <PageStack>
@@ -76,22 +77,49 @@ export default function PeoplePage() {
         />
         <SelectField
           inline
-          label={t('people.byGroup')}
-          value={filter.group === undefined ? ALL : String(filter.group)}
-          onChange={(value) => setFilter('group', value === ALL ? null : value)}
+          label={t('people.byTeam')}
+          value={filter.team === undefined ? ALL : String(filter.team)}
+          onChange={(value) => setFilter('team', value === ALL ? null : value)}
           options={[
-            { value: ALL, label: t('people.anyGroup') },
-            ...(groups.data ?? []).map((group) => ({ value: String(group.id), label: group.name })),
+            { value: ALL, label: t('people.anyTeam') },
+            ...(sections.data?.teams ?? []).map((team) => ({
+              value: String(team.id),
+              label: team.label,
+            })),
           ]}
         />
-        {filter.key && (
+        <SelectField
+          inline
+          label={t('people.bySection')}
+          value={filter.section ?? ALL}
+          onChange={(value) => setFilter('section', value === ALL ? null : value)}
+          options={[
+            { value: ALL, label: t('people.anySection') },
+            ...(sections.data?.sections ?? []).map((section) => ({
+              value: section.id,
+              label: section.label,
+            })),
+          ]}
+        />
+        {clearable !== null && (
           <button
             type="button"
-            onClick={() => setFilter('key', null)}
-            aria-label={t('people.clearKey', { key: keyLabel(filter.key) })}
+            onClick={() =>
+              setParams(
+                (current) => {
+                  const next = new URLSearchParams(current);
+                  for (const name of ['key', 'group', 'page']) next.delete(name);
+                  return next;
+                },
+                { replace: true },
+              )
+            }
+            aria-label={t('people.clearFilter')}
             className="inline-flex h-11 items-center gap-2 rounded-full bg-tint px-4 text-sm font-medium text-primary-text"
           >
-            {t('people.withKey', { key: keyLabel(filter.key) })}
+            {t(filter.key ? 'people.withKey' : 'people.inGroup', {
+              key: keys.data?.keys.find((key) => key.id === filter.key)?.label ?? filter.key,
+            })}
             <Icon name="close" size={16} />
           </button>
         )}
@@ -109,7 +137,7 @@ export default function PeoplePage() {
               <li key={person.id}>
                 <PersonRow
                   person={person}
-                  groups={groups.data ?? []}
+                  sections={sections.data}
                   first={index === 0}
                   onOpen={() => setOpen(person)}
                 />
@@ -134,19 +162,32 @@ export default function PeoplePage() {
 
 function PersonRow({
   person,
-  groups,
+  sections,
   first,
   onOpen,
 }: {
   person: AccessPerson;
-  groups: readonly AccessGroup[];
+  sections: SectionList | undefined;
   first: boolean;
   onOpen: () => void;
 }) {
   const { t } = useTranslation('access');
-  const f = useFormat();
-  const held = heldKeys(person, groups).size;
-  const memberOf = groups.filter((group) => person.groups.includes(group.id));
+  const write = sections?.sections.find((section) => section.id === WRITE_SECTION);
+  const label = (id: string) => {
+    const section = sections?.sections.find((one) => one.id === id);
+    if (!section) return id;
+    const kinds = person.writing ?? [];
+    // Some kinds of writing, not all: name them («نوشتن: رزومه»).
+    if (id === WRITE_SECTION && write && kinds.length < write.options.length)
+      return t('people.writeKinds', {
+        kinds: write.options
+          .filter((option) => kinds.includes(option.id))
+          .map((option) => option.label)
+          .join(t('separator')),
+      });
+    return section.label;
+  };
+  const on = person.sections ?? [];
   return (
     <button
       type="button"
@@ -157,27 +198,22 @@ function PersonRow({
       }`}
     >
       <span className="flex min-w-0 flex-[1_1_220px] flex-col gap-0.5">
-        <span className="text-[15px] font-semibold">{person.name}</span>
-        <span className="truncate text-[13px] text-text-2">{person.team ?? person.email}</span>
+        <span className="text-body font-semibold">{person.name}</span>
+        <span className="truncate text-label text-text-2">{person.team ?? person.email}</span>
       </span>
-      <span className="flex flex-[1_1_260px] flex-wrap items-center gap-1.5">
+      <span className="flex flex-[1_1_320px] flex-wrap items-center gap-1.5">
         {person.is_superuser ? (
           <Chip tone="primary" small>
-            {t('people.superuser')}
+            {t('people.board')}
           </Chip>
+        ) : on.length > 0 ? (
+          on.map((id) => (
+            <Chip key={id} tone="info" small>
+              {label(id)}
+            </Chip>
+          ))
         ) : (
-          <>
-            {memberOf.map((group) => (
-              <Chip key={group.id} tone="info" small>
-                {group.name}
-              </Chip>
-            ))}
-            <span className="text-[13px] text-text-2">
-              {held === 0
-                ? t('people.noKeys')
-                : t('people.keys', { count: held, n: f.number(held) })}
-            </span>
-          </>
+          <span className="text-label text-text-2">{t('people.baseOnly')}</span>
         )}
       </span>
       <Icon name="chevronEnd" size={18} className="text-text-3" />

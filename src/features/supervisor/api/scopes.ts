@@ -26,6 +26,11 @@ export interface Scope {
   staff: number;
   kind: ScopeKind | null;
   country: ScopeCountry | null;
+  /**
+   * «سرپرست دامنه»: also chooses the owners of this domain's services and gets the task about
+   * those nobody owns. Applies at once, unlike plain scopes.
+   */
+  leads: boolean;
 }
 
 export interface ScopePerson {
@@ -57,6 +62,7 @@ export interface NewScope {
   staff: number;
   kind: string | null;
   country: number | null;
+  leads: boolean;
 }
 
 export const scopesQuery = queryOptions({
@@ -67,6 +73,11 @@ export const scopesQuery = queryOptions({
 export const useAddScope = () =>
   useSupervisorMutation((scope: NewScope) =>
     api<Scope>(`${SUPERVISOR_API}/scopes/`, { method: 'POST', body: scope }),
+  );
+
+export const useSetScopeLead = () =>
+  useSupervisorMutation(({ id, leads }: { id: number; leads: boolean }) =>
+    api<Scope>(`${SUPERVISOR_API}/scopes/${String(id)}/`, { method: 'PATCH', body: { leads } }),
   );
 
 export const useRemoveScope = () =>

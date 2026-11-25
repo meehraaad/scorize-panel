@@ -5,6 +5,7 @@ import type {
   AccessKey,
   AccessPerson,
   KeyArea,
+  SectionList,
 } from '@/features/access/api';
 import { forbidden, notFound, storage } from './session';
 
@@ -75,6 +76,72 @@ const groups = (): AccessGroup[] => [
   },
 ];
 
+// The 14 sections and the teams' bases (Django `user_profile/access_sections.py`), keys shortened.
+const section = (
+  id: string,
+  label: string,
+  area: string,
+  keys: string[],
+  extra: Partial<SectionList['sections'][number]> = {},
+) => ({
+  id,
+  label,
+  about: `${label}: توضیح کوتاه.`,
+  area,
+  keys,
+  options: [],
+  protected: false,
+  ...extra,
+});
+const WRITING_KINDS = [
+  { id: 'sop', label: 'انگیزه‌نامه' },
+  { id: 'cv', label: 'رزومه' },
+  { id: 'recome', label: 'توصیه‌نامه' },
+  { id: 'ps', label: 'اظهارنامه شخصی' },
+  { id: 'ds', label: 'اظهارنامه تنوع' },
+  { id: 'pl', label: 'لیست اساتید' },
+];
+export const SECTIONS: SectionList = {
+  areas: [
+    { id: 'work', label: 'کار' },
+    { id: 'manage', label: 'مدیریت تیم‌ها' },
+    { id: 'money', label: 'پول و همکاران' },
+    { id: 'system', label: 'سیستم' },
+  ],
+  sections: [
+    section('cases', 'همه‌ی پرونده‌ها', 'work', ['apply.can_manage_applicant']),
+    section(
+      'write',
+      'نوشتن',
+      'work',
+      WRITING_KINDS.map((kind) => `user_profile.can_write_${kind.id}`),
+      { options: WRITING_KINDS },
+    ),
+    section('executive', 'مدیریت اجرا', 'manage', ['apply.can_assign_supervisor']),
+    section('writing', 'مدیریت نگارش', 'manage', ['user_profile.can_manage_sop_resume_writer']),
+    section('sales', 'مدیریت فروش', 'manage', ['apply.can_assign_to_seller']),
+    section('marketing', 'مدیریت مارکتینگ', 'manage', ['apply.can_manage_marketing']),
+    section('finance', 'مالی', 'money', ['finance.can_manage_all_income']),
+    section('hr', 'منابع انسانی', 'money', ['apply.can_manage_support_staff']),
+    section('pay', 'حقوق و پاداش', 'money', ['human_resource.manage_pay']),
+    section('access', 'دسترسی‌ها', 'system', ['user_profile.manage_staff_access'], {
+      protected: true,
+    }),
+    section('messages', 'پیام‌ها', 'system', ['user_profile.manage_system_messages']),
+    section('mail', 'ایمیل‌ها', 'system', ['mail_server.manage_mailboxes']),
+    section('ai', 'هوش مصنوعی', 'system', ['ai.use_founders_assistant'], { protected: true }),
+    section('site', 'محتوای سایت', 'system', ['blog.can_manage_redirect'], { protected: true }),
+  ],
+  teams: [
+    { id: 0, label: 'تیم فروش', base: 'پنل فروش، مشتری‌های خودش و دیدن رزروهای مشاوره', keys: [] },
+    { id: 1, label: 'تیم اجرا', base: 'پنل اجرا و پرونده‌هایی که مسئولشان است', keys: [] },
+    { id: 3, label: 'تیم مدیریت', base: 'پنل خودش؛ هیئت مدیره همه‌ی بخش‌ها را دارد', keys: [] },
+    { id: 10, label: 'تیم اداری و مالی', base: 'پنل خودش (امروز، کارها، من)', keys: [] },
+  ],
+};
+const baseOf = (team: number | null) =>
+  SECTIONS.teams.find((row) => row.id === team)?.base ?? 'پنل خودش (امروز، کارها، من)';
+
 const person = (
   id: number,
   name: string,
@@ -85,6 +152,10 @@ const person = (
   name,
   email: `user${String(id)}@scorize.local`,
   team,
+  team_id: null,
+  base: baseOf(rest.team_id ?? null),
+  sections: [],
+  writing: [],
   is_superuser: false,
   groups: [],
   keys: [],
@@ -92,10 +163,19 @@ const person = (
 });
 
 const people = (): AccessPerson[] => [
-  person(SUPERUSER, AMIR.name, 'تیم مدیریت', { is_superuser: true }),
-  person(2, 'مریم کاظمی', 'تیم اجرایی', { keys: ['apply.can_assign_supervisor'] }),
-  person(3, 'نیما رستمی', 'تیم فروش'),
-  person(4, 'رضا کامرانی', 'تیم فروش', { keys: ['apply.can_assign_to_seller'] }),
+  person(SUPERUSER, AMIR.name, 'تیم مدیریت', { is_superuser: true, team_id: 3 }),
+  person(2, 'مریم کاظمی', 'تیم اجرا', {
+    team_id: 1,
+    keys: ['apply.can_assign_supervisor'],
+    sections: ['executive', 'write'],
+    writing: ['cv'],
+  }),
+  person(3, 'نیما رستمی', 'تیم فروش', { team_id: 0 }),
+  person(4, 'رضا کامرانی', 'تیم فروش', {
+    team_id: 0,
+    keys: ['apply.can_assign_to_seller'],
+    sections: ['sales'],
+  }),
   person(5, 'بهار نوری', null, { groups: [1] }),
 ];
 
@@ -113,7 +193,10 @@ export function resetAccessMocks() {
 
 const allowed = () => storage.get() === SUPERUSER;
 const holdsSomething = (row: AccessPerson) =>
-  row.is_superuser || row.keys.length > 0 || row.groups.length > 0;
+  row.is_superuser ||
+  row.keys.length > 0 ||
+  row.groups.length > 0 ||
+  (row.sections ?? []).length > 0;
 const holds = (row: AccessPerson, id: string) =>
   row.is_superuser ||
   row.keys.includes(id) ||
@@ -216,13 +299,18 @@ export const accessHandlers = [
     const search = params.get('search') ?? '';
     const keyId = params.get('key');
     const group = Number(params.get('group'));
+    const sectionId = params.get('section');
+    const team = params.get('team');
     let rows = search
       ? staff.filter((row) => row.name.includes(search) || row.email.includes(search))
-      : keyId || group
+      : keyId || group || sectionId || team
         ? staff
         : staff.filter(holdsSomething);
     if (keyId) rows = rows.filter((row) => holds(row, keyId));
     if (group) rows = rows.filter((row) => row.groups.includes(group));
+    if (sectionId)
+      rows = rows.filter((row) => row.is_superuser || (row.sections ?? []).includes(sectionId));
+    if (team) rows = rows.filter((row) => row.team_id === Number(team));
     return HttpResponse.json(paged(rows, Number(params.get('page')) || 1));
   }),
 
@@ -257,6 +345,39 @@ export const accessHandlers = [
         log({ action: 'take', key: id, user: short(row), group: null });
     }
     Object.assign(row, body);
+    return HttpResponse.json(row);
+  }),
+
+  http.get(`${API}/sections/`, () => (allowed() ? HttpResponse.json(SECTIONS) : forbidden())),
+
+  // Django: the whole list; `write` only with its kinds; never a superuser's (they have everything).
+  http.put(`${API}/people/:id/sections/`, async ({ params, request }) => {
+    if (!allowed()) return forbidden();
+    const row = staff.find((item) => item.id === Number(params.id));
+    if (!row) return notFound();
+    if (row.is_superuser) return forbidden();
+    const body = (await request.json()) as { sections: string[]; writing?: string[] };
+    const writing = body.writing ?? [];
+    if (body.sections.includes('write') !== writing.length > 0)
+      return HttpResponse.json(
+        { writing: ['Choose the kinds of writing, or switch writing off.'] },
+        { status: 400 },
+      );
+    for (const id of body.sections)
+      if (!(row.sections ?? []).includes(id))
+        log({ action: 'join', key: '', user: short(row), group: { id: null, name: `بخش: ${id}` } });
+    for (const id of row.sections ?? [])
+      if (!body.sections.includes(id))
+        log({
+          action: 'leave',
+          key: '',
+          user: short(row),
+          group: { id: null, name: `بخش: ${id}` },
+        });
+    row.sections = SECTIONS.sections
+      .map((one) => one.id)
+      .filter((id) => body.sections.includes(id));
+    row.writing = WRITING_KINDS.map((kind) => kind.id).filter((id) => writing.includes(id));
     return HttpResponse.json(row);
   }),
 

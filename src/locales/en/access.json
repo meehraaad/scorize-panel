@@ -8,13 +8,13 @@
   "nav": "Access sections",
   "section": {
     "people": "People",
-    "groups": "Groups",
-    "keys": "All keys",
+    "groups": "Groups (advanced)",
+    "keys": "Keys (advanced)",
     "history": "History"
   },
   "people": {
     "title": "Who has what",
-    "subtitle": "Everyone with a key or a group. Open someone to change their groups and keys.",
+    "subtitle": "Everyone has their base from their team. Switch more sections on or off.",
     "search": "Search people",
     "searchPlaceholder": "Name, email or number",
     "byGroup": "Group",
@@ -31,7 +31,16 @@
     "noKeys": "No keys",
     "keys_one": "{{n}} key",
     "keys_other": "{{n}} keys",
-    "locked": "Superusers only"
+    "locked": "Superusers only",
+    "byTeam": "Team",
+    "anyTeam": "All teams",
+    "bySection": "Section",
+    "anySection": "All sections",
+    "inGroup": "Members of a group",
+    "clearFilter": "Clear filter",
+    "board": "Board · every section",
+    "baseOnly": "Team base only",
+    "writeKinds": "Writing: {{kinds}}"
   },
   "person": {
     "groups": "Groups",
@@ -117,5 +126,16 @@
       "superuser_off": "{{name}} is no longer a superuser"
     }
   },
-  "loadError": "Couldn’t load their access. Try again."
+  "loadError": "Couldn’t load their access. Try again.",
+  "sections": {
+    "fromTeam": "From their team, no key",
+    "boardBase": "Board",
+    "noTeam": "Their own panel (today, tasks, me)",
+    "board": "Board members have every section; there is nothing to switch here. The board is set only in Django admin.",
+    "superusersOnly": "Only the board gives this section.",
+    "kinds": "Kinds of writing",
+    "pickKinds": "Choose at least one kind of writing, or switch writing off.",
+    "advanced": "Advanced: groups and keys",
+    "backToSections": "Back to sections"
+  }
 }

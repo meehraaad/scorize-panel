@@ -5,6 +5,7 @@ import {
   keysQuery,
   peopleFilterOf,
   peopleQuery,
+  sectionsQuery,
 } from '@/features/access/api';
 import { assistantsQuery, conversationQuery, conversationsQuery } from '@/features/assistant/api';
 import {
@@ -163,8 +164,7 @@ export const foundersPanel: PanelDefinition = {
                 ...lazyPage(() => import('@/features/access/PeoplePage'), [], {
                   data: ({ request }) => [
                     peopleQuery(peopleFilterOf(new URL(request.url).searchParams)),
-                    groupsQuery,
-                    keysQuery(),
+                    sectionsQuery,
                   ],
                   skeleton: 'list',
                 }),

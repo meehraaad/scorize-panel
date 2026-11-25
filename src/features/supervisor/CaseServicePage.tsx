@@ -92,7 +92,7 @@ export function CaseService({
               <Icon name="chat" size={18} />
               {t('serviceTab.conversation')}
             </Button>
-            {manager && service.status !== 'closed' && (
+            {(manager || detail.assignable) && service.status !== 'closed' && (
               <Button variant="outline" onClick={() => setChoosing(true)}>
                 {t(service.owner ? 'services.change' : 'services.choose', { service: title })}
               </Button>
