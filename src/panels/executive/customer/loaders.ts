@@ -22,6 +22,7 @@ import {
   type CustomerWorkspace,
 } from './api';
 import { customerWorkspacePath } from './paths';
+import { canOpenCaseTabs } from './caseTabs';
 import { mailWorkspaceQuery, searchWorkspaceQuery } from './serviceToolsApi';
 
 type Page =
@@ -89,7 +90,7 @@ export const loadWorkspacePage: WorkspaceLoader = async (page, { params }) => {
       reports: [customerReportQuery(id), activityQuery(file.id, 1)],
     };
     prefetchQueries(requests[page]);
-  } else {
+  } else if (!canOpenCaseTabs(user, workspace)) {
     return redirect(customerWorkspacePath(id, 'desk'));
   }
   return null;

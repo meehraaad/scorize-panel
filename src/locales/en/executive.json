@@ -97,6 +97,13 @@
       "documents": "Documents",
       "reports": "Reports"
     },
+    "empty": {
+      "summary": "There is no case summary for this customer yet.",
+      "contract": "There is no case contract or case payment history to show.",
+      "information": "There is no case information for this customer yet.",
+      "documents": "There are no case documents for this customer yet.",
+      "reports": "There are no case reports for this customer yet."
+    },
     "call": "Call",
     "nextDue": "My next task · {{when}}",
     "myTasks": "All my tasks · {{n}}",
