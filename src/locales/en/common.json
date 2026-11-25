@@ -50,12 +50,14 @@
         "label": "Management panel menu",
         "assistant": "Analysis assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "siteHealth": "Site Health"
       },
       "tabs": {
         "assistant": "Assistant",
         "messages": "Messages",
-        "access": "Access"
+        "access": "Access",
+        "siteHealth": "Site Health"
       },
       "description": "Analysis assistant, messages and access"
     },
@@ -136,7 +138,8 @@
         "performance": "My performance",
         "board": "Board",
         "manage": "Marketing management",
-        "leads": "Leads"
+        "leads": "Leads",
+        "acquisition": "Acquisition & Conversions"
       },
       "tabs": {
         "today": "Today",
@@ -144,7 +147,8 @@
         "calendar": "Calendar",
         "performance": "Performance",
         "board": "Board",
-        "leads": "Leads"
+        "leads": "Leads",
+        "acquisition": "Acquisition & Conversions"
       }
     }
   },

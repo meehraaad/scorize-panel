@@ -132,7 +132,8 @@ export function getRoles(user: SessionUser): Role[] {
   // The management panel: the founders' assistant, the messages (either key) and access
   // (superusers). Each section checks its own key.
   if (
-    (ON_SERVER.foundersAssistant && hasPermission(user, FOUNDERS_PERMISSION)) ||
+    ((ON_SERVER.foundersAssistant || ON_SERVER.siteHealth) &&
+      hasPermission(user, FOUNDERS_PERMISSION)) ||
     (ON_SERVER.messageCenter && hasAnyPermission(user, MESSAGES_PERMISSIONS)) ||
     (ON_SERVER.accessPage && user.is_superuser)
   )

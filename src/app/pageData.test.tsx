@@ -22,6 +22,8 @@ vi.mock('@/lib/applicant/onServer', async (original) => {
       ...ON_SERVER,
       turkey: true,
       foundersAssistant: true,
+      siteHealth: true,
+      acquisition: true,
       customerTags: true,
       mailServers: true,
       clientServices: true,
@@ -216,7 +218,10 @@ const PAGES: PageCase[] = [
     later: [{ key: '"messages"', why: "the thread's id comes from the list (backend item H55)" }],
   })),
   // Founders panel.
-  ...['/founders', '/founders/conversations/900'].map((path) => ({ path, user: BAHAR })),
+  ...['/founders', '/founders/conversations/900', '/founders/site-health'].map((path) => ({
+    path,
+    user: BAHAR,
+  })),
   // Management > messages and access.
   ...[
     '/founders/messages',
@@ -264,6 +269,7 @@ const PAGES: PageCase[] = [
     '/marketing/tasks',
     '/marketing/calendar',
     '/marketing/performance',
+    '/marketing/acquisition',
   ].map((path) => ({ path, user: ELHAM })),
   // The marketing manager's area (src/mocks/marketingBoard.ts): Amir holds the key.
   ...[

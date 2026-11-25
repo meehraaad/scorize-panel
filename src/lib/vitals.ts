@@ -1,16 +1,12 @@
 import type { Metric } from 'web-vitals';
-import { API_BASE } from '@/lib/api/client';
+import { ON_SERVER } from '@/lib/applicant/onServer';
+import { submitTelemetry, telemetryAllowed, telemetryPage } from '@/lib/browserTelemetry';
 
 /*
  * Real users' speed (docs/performance.md, "Measure"): Core Web Vitals (LCP: main content shown,
  * INP: answer to a tap, CLS: layout jumps) plus FCP and TTFB, per page, sent to Django when the tab
  * is hidden. Pages are sent as patterns (`/sales/customers/:id`), never with ids.
  */
-
-/** Off until Django's endpoint ships (backend-changes.md V1): nothing loads or is sent. */
-export const VITALS_ON_SERVER: boolean = false;
-
-const ENDPOINT = `${API_BASE}/metrics/v1/vitals/`;
 
 interface Report {
   name: Metric['name'];
@@ -20,28 +16,18 @@ interface Report {
   page: string;
 }
 
-/** A path without record ids: `/sales/customers/105/payments` → `/sales/customers/:id/payments`. */
-export const pagePattern = (path: string) => path.replace(/\/\d+(?=\/|$)/g, '/:id');
-
-export function reportWebVitals() {
-  if (!VITALS_ON_SERVER) return;
+export function reportWebVitals(pathname: string) {
+  if (!ON_SERVER.siteHealth || !telemetryAllowed()) return;
+  // Core Web Vitals describe this document load. SPA route changes do not reset the observers.
+  const page = telemetryPage(pathname);
   const queue: Report[] = [];
-
   const flush = () => {
-    if (queue.length === 0) return;
-    const body = JSON.stringify({
-      build: import.meta.env.VITE_APP_BUILD,
-      metrics: queue.splice(0),
-    });
-    // sendBeacon survives the tab closing; fetch with keepalive is the fallback.
-    if (!navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' })))
-      void fetch(ENDPOINT, {
-        method: 'POST',
-        body,
-        keepalive: true,
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-      }).catch(() => undefined);
+    if (queue.length > 0) {
+      submitTelemetry('vitals/', {
+        build: import.meta.env.VITE_APP_BUILD,
+        metrics: queue.splice(0),
+      });
+    }
   };
   const add = (metric: Metric) => {
     queue.push({
@@ -49,15 +35,19 @@ export function reportWebVitals() {
       value: metric.value,
       rating: metric.rating,
       navigation: metric.navigationType,
-      page: pagePattern(window.location.pathname),
+      page,
     });
   };
 
   // Its own chunk: never part of the first load.
-  void import('web-vitals').then(({ onCLS, onFCP, onINP, onLCP, onTTFB }) => {
-    for (const on of [onCLS, onFCP, onINP, onLCP, onTTFB]) on(add);
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flush();
-  });
+  void import('web-vitals')
+    .then(({ onCLS, onFCP, onINP, onLCP, onTTFB }) => {
+      for (const on of [onCLS, onFCP, onINP, onLCP, onTTFB]) on(add);
+      // The observers flush their own final measurements on visibilitychange first.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') flush();
+      });
+      window.addEventListener('pagehide', flush);
+    })
+    .catch(() => undefined);
 }

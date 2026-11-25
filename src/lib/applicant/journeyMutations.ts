@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ON_SERVER } from '@/lib/applicant/onServer';
 import { api } from '@/lib/api/client';
 import { APPLICANT_KEY } from '@/lib/applicant/approval';
 import { uploadFile, type UploadMessages } from '@/lib/upload';
@@ -64,11 +65,17 @@ export function useSaveBackground() {
 export function useBookConsultation() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: { type: number; starts_at: string }) =>
-      api<{ consultation: number; payment_id: number; paid: boolean }>(
+    mutationFn: (body: { type: number; starts_at: string }) => {
+      if (ON_SERVER.acquisition) {
+        void import('@/lib/acquisition')
+          .then(({ reportConsultationStart }) => reportConsultationStart())
+          .catch(() => undefined);
+      }
+      return api<{ consultation: number; payment_id: number; paid: boolean }>(
         `${BASE}/consultations/book/`,
         { method: 'POST', body },
-      ),
+      );
+    },
     // Paid by credit, the session is in the consultations list now; a taken time leaves the offers.
     onSettled: () => client.invalidateQueries({ queryKey: APPLICANT_KEY }),
   });

@@ -50,12 +50,14 @@
         "label": "منوی پنل مدیریت",
         "assistant": "دستیار تحلیلی",
         "messages": "پیام‌ها",
-        "access": "دسترسی‌ها"
+        "access": "دسترسی‌ها",
+        "siteHealth": "سلامت سایت"
       },
       "tabs": {
         "assistant": "دستیار",
         "messages": "پیام‌ها",
-        "access": "دسترسی"
+        "access": "دسترسی",
+        "siteHealth": "سلامت سایت"
       },
       "description": "دستیار تحلیلی، پیام‌ها و دسترسی‌ها"
     },
@@ -136,7 +138,8 @@
         "performance": "عملکرد من",
         "board": "بُرد",
         "manage": "مدیریت مارکتینگ",
-        "leads": "لیدها"
+        "leads": "لیدها",
+        "acquisition": "جذب و تبدیل"
       },
       "tabs": {
         "today": "امروز",
@@ -144,7 +147,8 @@
         "calendar": "تقویم",
         "performance": "عملکرد",
         "board": "بُرد",
-        "leads": "لیدها"
+        "leads": "لیدها",
+        "acquisition": "جذب و تبدیل"
       }
     }
   },

@@ -49,6 +49,7 @@ export const NAMESPACES = [
   'leads',
   'pathways',
   'pwa',
+  'telemetry',
 ] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
