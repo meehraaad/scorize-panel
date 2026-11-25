@@ -235,6 +235,16 @@
         "18_plus": "18 or more",
         "unsure": "I don't know"
       }
+    },
+    "nomination": {
+      "title": "Has a state or region of Australia nominated you, or will it?",
+      "help": "Subclass 190 needs a state's nomination, and 491 a regional area's (or a relative living there). None? Pick \"No\" to see where you can go without one.",
+      "options": {
+        "none": "No",
+        "state": "Yes, a state (for 190)",
+        "regional": "Yes, a regional area or a relative there (for 491)",
+        "unsure": "I don't know"
+      }
     }
   },
   "fit": {
@@ -304,7 +314,8 @@
     "monthly_income_eur": "Monthly income (EUR)",
     "children": "Children coming",
     "remote_months": "Months with the company",
-    "employer_years": "Company's years in business"
+    "employer_years": "Company's years in business",
+    "nomination": "State or regional nomination"
   },
   "choices": {
     "education": {
@@ -343,6 +354,11 @@
       "skilled": "Skilled partner",
       "english": "Partner with English",
       "other": "Other"
+    },
+    "nomination": {
+      "none": "No nomination",
+      "state": "State nomination",
+      "regional": "Regional nomination"
     }
   },
   "manage": {
@@ -460,7 +476,19 @@
     "add_or": "+ Or (another option instead)",
     "family_help": "If the minimum rises with the family (Spain's digital nomad visa, say): what is added for people coming along. Empty: the same for everyone.",
     "per_first": "Added for the first person coming (partner, or a child)",
-    "per_more": "Added for each one after"
+    "per_more": "Added for each one after",
+    "ranking": "Ranking after passing",
+    "rankings": {
+      "none": "None",
+      "crs": "Canada's Express Entry score (CRS)"
+    },
+    "ranking_help": "If the country invites by a ranking score once the pass mark is met, customers see their estimated score.",
+    "cutoff": "Latest draw",
+    "cutoff_help": "After each draw, enter its lowest invited score. Customers see it beside their own. The route stays published.",
+    "cutoff_score": "Lowest invited score",
+    "cutoff_on": "Draw day",
+    "cutoff_save": "Save the draw",
+    "cutoff_saved": "Draw saved"
   },
   "intro": {
     "eyebrow": "Pathway finder",
@@ -589,5 +617,23 @@
     "similar": "Admissions of people like you",
     "similar_row": "{{university}} · {{field}} · {{year}}",
     "similar_row_no_field": "{{university}} · {{year}}"
+  },
+  "ranking": {
+    "title": "Express Entry ranking score (estimate)",
+    "value": "{{score}} of {{max}}",
+    "cutoff": "Lowest score invited in the latest draw ({{date}}): {{cutoff}}.",
+    "cutoff_undated": "Lowest score invited in the latest draw: {{cutoff}}.",
+    "above": "Yours is higher.",
+    "below": "Yours is {{gap}} points lower.",
+    "note": "Canada invites the people with the highest scores. A partner's points, Canadian work or study and French aren't counted here, so your real score may be higher."
+  },
+  "whatif": {
+    "title": "What if…",
+    "body": "Change one thing and see what it opens. Your real answers stay as they are.",
+    "nothing": "With this change, nothing changes for your routes.",
+    "opens": "Opens",
+    "points": "Points from {{from}} to {{to}}",
+    "ranking": "Ranking score from {{from}} to {{to}}",
+    "separator": ", "
   }
 }

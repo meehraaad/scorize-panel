@@ -49,6 +49,7 @@ const FACTORS = [
   { name: 'remote_months', kind: 'number', choices: [] },
   { name: 'employer_years', kind: 'number', choices: [] },
   { name: 'children', kind: 'number', choices: [] },
+  { name: 'nomination', kind: 'choice', choices: ['none', 'state', 'regional'] },
 ] as const;
 
 const now = () => new Date().toISOString();
@@ -69,6 +70,9 @@ function seed(): PathwayDetail[] {
     after_study: '',
     verified_by: 'امیر عابدی',
     updated_at: '2026-11-19T10:00:00Z',
+    ranking: '' as const,
+    cutoff: null,
+    cutoff_on: null,
   };
   return [
     {
@@ -402,6 +406,8 @@ const NO_PREFILL: FinderPrefill = {
 let prefill = NO_PREFILL;
 /** The last body the finder sent to `check/`. */
 let lastCheck: object | null = null;
+/** The what-if checks sent since the last reset (Django stores none of them). */
+export const whatIfs: CheckBody[] = [];
 /** How many occupation searches came in, by text. */
 let searches: string[] = [];
 
@@ -446,6 +452,7 @@ export function resetPathwayMocks() {
   noOccupationAnswers = false;
   prefill = NO_PREFILL;
   lastCheck = null;
+  whatIfs.length = 0;
   searches = [];
 }
 export function withOccupationRoutes(kind: 'occupation' | 'field' = 'occupation') {
@@ -461,6 +468,11 @@ export function setFinderPrefill(next: Partial<FinderPrefill>) {
   prefill = { ...NO_PREFILL, ...next };
 }
 export const lastPathwayCheck = () => lastCheck;
+/** Canada's route ranked by the CRS (Django `Pathway.ranking`), with the latest draw staff entered. */
+export function withRankedCanada(cutoff: number | null = null, cutoffOn: string | null = null) {
+  const canada = pathways.find((p) => p.country.id === CANADA.id && p.goal === 'work');
+  if (canada) Object.assign(canada, { ranking: 'crs', cutoff, cutoff_on: cutoffOn });
+}
 export const occupationSearches = () => searches;
 
 /** Django: what the occupation says for each of the route's occupation factors. */
@@ -590,6 +602,49 @@ function evaluate(p: PathwayDetail, given: Answers): PathwayResult {
   };
 }
 
+interface CheckBody {
+  answers: Answers;
+  by_country?: Record<string, Answers>;
+  budget?: FinderBudget | null;
+  income?: { amount: number; currency: 'toman' | 'eur' | 'usd' } | null;
+  occupation?: string | null;
+  gpa?: number | null;
+}
+
+/** Django's CRS estimate, simplified: a passing ranked route's score from English and years of work. */
+const rankingOf = (p: PathwayDetail, answers: Answers, qualifies: boolean) =>
+  p.ranking === 'crs' && qualifies
+    ? {
+        kind: 'crs' as const,
+        score:
+          350 +
+          (Number(answers.english_ielts ?? 0) >= 7 ? 40 : 0) +
+          5 * Number(answers.work_years ?? 0),
+        maximum: 1200,
+        cutoff: p.cutoff,
+        cutoff_on: p.cutoff_on,
+      }
+    : null;
+
+function resultsFor(body: CheckBody): PathwayResult[] {
+  // Answers about one country count for that country's routes only (Django: `by_country`).
+  return usable()
+    .map((p) => {
+      // Django: the occupation answers the route's list questions itself.
+      const derived = oldServer ? undefined : derivedFor(p, body.occupation);
+      const given = { ...body.answers, ...body.by_country?.[String(p.country.id)], ...derived };
+      const result = evaluate(p, given);
+      return {
+        ...result,
+        study: studyOf(p, body.budget ?? null),
+        admission: admissionOf(p, body.answers, body.gpa),
+        ranking: rankingOf(p, given, result.qualifies),
+        ...(derived ? { derived } : {}),
+      };
+    })
+    .sort((a, b) => Number(b.qualifies) - Number(a.qualifies));
+}
+
 const usable = () => occupationRoutes ?? pathways.filter((p) => p.status === 'published');
 const status = (p: PathwayDetail): PathwayStatus =>
   !p.is_active ? 'off' : p.verified_at === null ? 'draft' : 'published';
@@ -698,24 +753,33 @@ export const pathwayHandlers = [
       body.answers.monthly_income_eur =
         income.currency === 'eur' ? income.amount : Math.round(tomans / (TOMANS.e ?? 1));
     }
-    // Answers about one country count for that country's routes only (Django: `by_country`).
-    const results = usable()
-      .map((p) => {
-        // Django: the occupation answers the route's list questions itself.
-        const derived = oldServer ? undefined : derivedFor(p, body.occupation);
-        return {
-          ...evaluate(p, {
-            ...body.answers,
-            ...body.by_country?.[String(p.country.id)],
-            ...derived,
-          }),
-          study: studyOf(p, body.budget ?? null),
-          admission: admissionOf(p, body.answers, body.gpa),
-          ...(derived ? { derived } : {}),
-        };
-      })
-      .sort((a, b) => Number(b.qualifies) - Number(a.qualifies));
-    return HttpResponse.json({ id: 1, created_at: now(), results }, { status: 201 });
+    return HttpResponse.json(
+      { id: 1, created_at: now(), results: resultsFor(body) },
+      { status: 201 },
+    );
+  }),
+  // Django: the same evaluation, nothing stored and no lead.
+  http.post('/api/applicant/v1/pathways/what-if/', async ({ request }) => {
+    if (!storage.get()) return forbidden();
+    const body = (await request.json()) as CheckBody;
+    whatIfs.push(body);
+    return HttpResponse.json({ results: resultsFor(body) });
+  }),
+  http.post('/api/staff/v1/pathways/:id/cutoff/', async ({ request, params }) => {
+    if (!manages()) return forbidden();
+    const row = pathways.find((p) => p.id === Number(params.id));
+    if (!row) return notFound();
+    if (!row.ranking)
+      return HttpResponse.json({ detail: ['This pathway has no ranking score.'] }, { status: 400 });
+    const draw = (await request.json()) as { cutoff: number | null; cutoff_on: string | null };
+    if (draw.cutoff !== null && !draw.cutoff_on)
+      return HttpResponse.json({ cutoff_on: ['The day of the draw.'] }, { status: 400 });
+    // Django: not a rule, so the route stays checked.
+    Object.assign(row, {
+      cutoff: draw.cutoff,
+      cutoff_on: draw.cutoff === null ? null : draw.cutoff_on,
+    });
+    return HttpResponse.json(row);
   }),
 
   http.get('/api/staff/v1/pathways/', () => {
@@ -743,6 +807,8 @@ export const pathwayHandlers = [
       ...body.pathway,
       id: 0,
       country: COUNTRIES.find((c) => c.id === body.pathway.country) ?? GERMANY,
+      cutoff: null,
+      cutoff_on: null,
       status: 'draft',
       verified_at: null,
       verified_by: null,
@@ -776,6 +842,8 @@ export const pathwayHandlers = [
           ...input,
           id,
           country: COUNTRIES.find((c) => c.id === input.country) ?? GERMANY,
+          cutoff: pathways.find((p) => p.id === id)?.cutoff ?? null,
+          cutoff_on: pathways.find((p) => p.id === id)?.cutoff_on ?? null,
           status: 'draft',
           verified_at: null,
           verified_by: null,

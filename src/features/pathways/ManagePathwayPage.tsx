@@ -29,6 +29,7 @@ import {
 import { STATUS_TONE, emptyInput, inputOf } from './manageForm';
 import {
   useCreatePathway,
+  useSetCutoff,
   useTryPathway,
   useUpdatePathway,
   useVerifyPathway,
@@ -426,6 +427,18 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
                   error={error('pass_mark')}
                 />
               )}
+              {form.kind === 'points' && (
+                <SelectField
+                  label={t('edit.ranking')}
+                  options={(['', 'crs'] as const).map((value) => ({
+                    value,
+                    label: t(key(`edit.rankings.${value || 'none'}`)),
+                  }))}
+                  value={form.ranking}
+                  onChange={(value) => set('ranking', value)}
+                  hint={t('edit.ranking_help')}
+                />
+              )}
             </div>
             {form.kind === 'points' &&
               form.criteria.map((criterion, index) => {
@@ -641,6 +654,7 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
         </div>
 
         <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-5">
+          {detail?.ranking && <CutoffCard detail={detail} />}
           <SectionCard id="pathway-asks" variant="panel" title={t('edit.asks')}>
             <span className="text-sm text-text-2">{t('edit.asks_help')}</span>
             <div className="flex flex-wrap gap-2">
@@ -699,6 +713,55 @@ function Editor({ detail }: { detail: PathwayDetail | null }) {
         </aside>
       </div>
     </PageStack>
+  );
+}
+
+/**
+ * The latest draw of a ranked pool (Canada's Express Entry): its lowest invited score, which customers see beside
+ * their own. Saved on its own, after each draw: it is not a rule, so the route stays published.
+ */
+function CutoffCard({ detail }: { detail: PathwayDetail }) {
+  const { t } = useTranslation('pathways');
+  const [cutoff, setCutoff] = useState(detail.cutoff === null ? '' : String(detail.cutoff));
+  const [day, setDay] = useState(detail.cutoff_on ?? '');
+  const save = useSetCutoff(detail.id);
+  const score = numberOrNull(cutoff);
+  return (
+    <SectionCard
+      id="pathway-cutoff"
+      variant="panel"
+      title={t('edit.cutoff')}
+      subtitle={t('edit.cutoff_help')}
+    >
+      <TextField
+        label={t('edit.cutoff_score')}
+        inputMode="numeric"
+        value={cutoff}
+        onChange={(event) => setCutoff(event.target.value)}
+      />
+      <LazyDatePicker
+        label={t('edit.cutoff_on')}
+        value={day}
+        onChange={setDay}
+        only="past"
+        clearable
+      />
+      <Button
+        variant="outline"
+        disabled={save.isPending || (score !== null && !day)}
+        onClick={() =>
+          save.mutate(
+            { cutoff: score, cutoff_on: score === null ? null : day || null },
+            {
+              onSuccess: () => toast.success(t('edit.cutoff_saved')),
+              onError: () => toast.error(t('edit.check_fields')),
+            },
+          )
+        }
+      >
+        {t('edit.cutoff_save')}
+      </Button>
+    </SectionCard>
   );
 }
 

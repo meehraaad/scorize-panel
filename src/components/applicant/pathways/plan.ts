@@ -170,6 +170,18 @@ export const ASKS: readonly Ask[] = [
     ],
   },
   { id: 'skills_assessment', factors: ['skills_assessment'], input: 'countries' },
+  {
+    // A state or a region of the destination nominating them (Australia 190: a state, 491: a regional area).
+    id: 'nomination',
+    factors: ['nomination'],
+    input: 'options',
+    options: [
+      { id: 'none', set: { nomination: 'none' } },
+      { id: 'state', set: { nomination: 'state' } },
+      { id: 'regional', set: { nomination: 'regional' } },
+      { id: 'unsure', set: {} },
+    ],
+  },
   { id: 'stay_months', factors: ['stay_months'], input: 'countries', detail: 'years' },
   {
     id: 'partner',
