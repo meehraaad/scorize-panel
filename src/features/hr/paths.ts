@@ -13,3 +13,9 @@ export const planPath = (key: string) => `${HR_ROOT}/pay/plans/${encodeURICompon
 
 /** The new hire's own form, under «من» (outside the HR panel: every staff member may have one). */
 export const ONBOARDING_PATH = '/me/onboarding';
+
+/** A team's page (`apply.types.TeamType`'s name, lower case). */
+export const teamPath = (team: string) => `${HR_ROOT}/staff/teams/${encodeURIComponent(team)}`;
+
+/** The staff page on its teams view. */
+export const teamsPath = `${HR_ROOT}/staff?view=teams`;

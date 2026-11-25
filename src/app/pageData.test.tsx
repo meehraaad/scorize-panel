@@ -232,6 +232,8 @@ const PAGES: PageCase[] = [
     '/hr/tasks',
     '/hr/calendar',
     '/hr/staff',
+    '/hr/staff?view=teams',
+    '/hr/staff/teams/sales',
     '/hr/staff/3',
     '/hr/moves',
     '/hr/attendance',
