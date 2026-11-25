@@ -6,6 +6,7 @@ import {
   keysQuery,
   peopleFilterOf,
   peopleQuery,
+  sectionsQuery,
 } from '@/features/access/api';
 import {
   ATTENDANCE_PERMISSION,
@@ -20,6 +21,7 @@ import {
 } from '@/features/attendance/api';
 import {
   HR_PERMISSION,
+  PAY_PERMISSION,
   calendarQuery,
   fileQuery,
   movesQuery,
@@ -37,6 +39,7 @@ import {
   rulesQuery,
 } from '@/features/hr/pay/api';
 import { hrPath } from '@/features/hr/paths';
+import { teamQuery, teamsQuery } from '@/features/hr/teams/api';
 import { queryClient } from '@/lib/api/queryClient';
 import { hasPermission } from '@/lib/auth/roles';
 import { sessionQuery, START_PATH } from '@/lib/auth/session';
@@ -62,6 +65,7 @@ const holders = (permission: string) => async () => {
   return redirect(START_PATH);
 };
 const hrOnly = holders(HR_PERMISSION);
+const payOnly = holders(PAY_PERMISSION);
 const attendanceOnly = holders(ATTENDANCE_PERMISSION);
 const accessOnly = holders(STAFF_ACCESS_PERMISSION);
 
@@ -123,7 +127,7 @@ export const hrPanel: PanelDefinition = {
       to: 'pay',
       label: 'panels.hr.nav.pay',
       icon: 'chart',
-      permission: HR_PERMISSION,
+      permission: PAY_PERMISSION,
     },
     {
       id: 'access',
@@ -158,8 +162,21 @@ export const hrPanel: PanelDefinition = {
       path: 'staff',
       ...lazyPage(() => import('@/features/hr/StaffPage'), ['hr'], {
         guard: hrOnly,
-        data: () => [staffQuery()],
+        // «تیم‌ها» (`?view=teams`): the teams' cards.
+        data: ({ request }) => [
+          staffQuery(),
+          new URL(request.url).searchParams.get('view') === 'teams' && teamsQuery,
+        ],
         skeleton: 'list',
+      }),
+    },
+    {
+      // One team: its people's tasks (canvas "وضعیت تیم‌ها").
+      path: 'staff/teams/:team',
+      ...lazyPage(() => import('@/features/hr/teams/TeamPage'), ['hr'], {
+        guard: hrOnly,
+        data: ({ params }) => [teamQuery(params.team ?? '')],
+        skeleton: 'detail',
       }),
     },
     {
@@ -219,7 +236,7 @@ export const hrPanel: PanelDefinition = {
     // the detailed pages (values, KPIs, rules) stay reachable from them.
     {
       path: 'pay',
-      ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: hrOnly }),
+      ...lazyPage(() => import('@/features/hr/pay/PayLayout'), ['hr'], { guard: payOnly }),
       children: [
         {
           index: true,
@@ -281,8 +298,7 @@ export const hrPanel: PanelDefinition = {
           ...lazyPage(() => import('@/features/access/PeoplePage'), [], {
             data: ({ request }) => [
               peopleQuery(peopleFilterOf(new URL(request.url).searchParams)),
-              groupsQuery,
-              keysQuery(),
+              sectionsQuery,
             ],
             skeleton: 'list',
           }),

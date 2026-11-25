@@ -90,7 +90,9 @@ function write() {
   if (user === null) return;
   const state = dehydrate(queryClient, {
     shouldDehydrateQuery: (query) =>
-      query.state.status === 'success' && query.queryKey[0] !== 'session',
+      query.state.status === 'success' &&
+      query.queryKey[0] !== 'session' &&
+      query.meta?.persist !== false,
   });
   const value: Saved = { build: BUILD, user, language: i18n.language, savedAt: Date.now(), state };
   try {

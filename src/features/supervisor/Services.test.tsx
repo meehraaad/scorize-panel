@@ -147,6 +147,14 @@ describe('client services (SVC2)', () => {
     expect(await within(differences).findByText('بدون اختلاف')).toBeInTheDocument();
 
     const people = screen.getByRole('region', { name: 'سرپرست‌ها' });
+    // A domain lead («سرپرست دامنه») also chooses the owners of its services.
+    const lead = within(people).getByRole('checkbox', { name: 'سرپرست دامنه' });
+    expect(lead).not.toBeChecked();
+    await user.click(lead);
+    expect(
+      await toasts().findByText('علی نوری سرپرست همه‌ی خدمت‌ها · ایتالیا شد.'),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(lead).toBeChecked());
     await user.click(
       within(people).getByRole('button', {
         name: 'حذف محدوده‌ی همه‌ی خدمت‌ها · ایتالیا از علی نوری',

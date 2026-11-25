@@ -1623,6 +1623,7 @@ export const supervisorHandlers = [
       staff: number;
       kind: string | null;
       country: number | null;
+      leads?: boolean;
     };
     if (
       mockScopes.some(
@@ -1638,9 +1639,19 @@ export const supervisorHandlers = [
       staff: body.staff,
       kind: body.kind ? { key: body.kind, name: body.kind === 'visa' ? 'ویزا' : 'پذیرش' } : null,
       country: SCOPE_COUNTRIES.find((country) => country.id === body.country) ?? null,
+      leads: body.leads ?? false,
     };
     mockScopes.push(scope);
     return HttpResponse.json(scope, { status: 201 });
+  }),
+
+  // A domain lead («سرپرست دامنه») chooses the owners of its services.
+  http.patch(`${API}/scopes/:scope/`, async ({ params, request }) => {
+    if (storage.get() !== SUPERVISOR) return forbidden();
+    const scope = mockScopes.find((entry) => entry.id === Number(params['scope']));
+    if (!scope) return HttpResponse.json({ detail: 'Not found.' }, { status: 404 });
+    scope.leads = ((await request.json()) as { leads: boolean }).leads;
+    return HttpResponse.json(scope);
   }),
 
   http.delete(`${API}/scopes/:scope/`, ({ params }) => {

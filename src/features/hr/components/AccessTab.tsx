@@ -4,14 +4,15 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonRows } from '@/components/ui/Skeleton';
-import { usePersonAccess } from '@/components/access/PersonAccess';
+import { useSectionsAccess } from '@/components/access/SectionsAccess';
 import type { AccessPerson } from '@/lib/access/api';
 import { personQuery } from '@/lib/access/people';
 import type { StaffFile } from '../api';
 
 /**
- * The staff file's «دسترسی‌ها» tab: the person's groups and keys, given right here once they are
- * hired (the same form as HR's access section, without searching for them there). Django
+ * The staff file's «دسترسی‌ها» tab: what their team gives them and their sections, switched right
+ * here once they are hired (the same form as HR's access section, without searching for them
+ * there). Django
  * `access/v1/people/<user>/`, with HR's limits (no superusers, not oneself, no protected keys).
  */
 export default function AccessTab({ file }: { file: StaffFile }) {
@@ -25,7 +26,7 @@ export default function AccessTab({ file }: { file: StaffFile }) {
 
 function PersonAccessCard({ person }: { person: AccessPerson }) {
   const { t } = useTranslation('access');
-  const access = usePersonAccess(person);
+  const access = useSectionsAccess(person);
   return (
     <Card aria-label={t('person.title')} className="flex flex-col gap-5 p-5 lg:p-7">
       {access.fields}

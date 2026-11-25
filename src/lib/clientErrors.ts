@@ -1,5 +1,6 @@
 import { API_BASE, ApiError, NetworkError } from '@/lib/api/client';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { telemetryAllowed, telemetryError, telemetryPage } from '@/lib/browserTelemetry';
 import { isStaleBuildError } from '@/lib/router/staleBuild';
 
 /*
@@ -30,9 +31,13 @@ const sent = new WeakMap<Error, Promise<string | null>>();
 
 async function send(error: Error): Promise<string | null> {
   const body = {
-    message: `${error.name}: ${error.message}`.slice(0, 500) || error.name,
-    stack: (error.stack ?? '').slice(0, 4000),
-    page: safePage(window.location.pathname),
+    ...(ON_SERVER.siteHealth
+      ? telemetryError(error)
+      : {
+          message: `${error.name}: ${error.message}`.slice(0, 500) || error.name,
+          stack: (error.stack ?? '').slice(0, 4000),
+        }),
+    page: ON_SERVER.siteHealth ? telemetryPage() : safePage(window.location.pathname),
     build: import.meta.env.VITE_APP_BUILD ?? '',
   };
   try {
@@ -41,6 +46,7 @@ async function send(error: Error): Promise<string | null> {
     const response = await fetch(CLIENT_ERRORS_ENDPOINT, {
       method: 'POST',
       credentials: 'same-origin',
+      referrerPolicy: 'origin',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(10_000),
@@ -55,11 +61,25 @@ async function send(error: Error): Promise<string | null> {
 
 /** Reports a crash once and resolves to its support code, or null (not a crash, off, failed). */
 export function reportClientCrash(error: unknown): Promise<string | null> {
-  if (!ON_SERVER.clientErrors || !isClientCrash(error)) return Promise.resolve(null);
+  if (
+    !(ON_SERVER.clientErrors || ON_SERVER.siteHealth) ||
+    !telemetryAllowed() ||
+    !isClientCrash(error)
+  )
+    return Promise.resolve(null);
   let pending = sent.get(error);
   if (!pending) {
     pending = send(error);
     sent.set(error, pending);
   }
   return pending;
+}
+
+export function watchClientCrashes() {
+  window.addEventListener('error', (event) => {
+    if (event.error) void reportClientCrash(event.error);
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    void reportClientCrash(event.reason);
+  });
 }

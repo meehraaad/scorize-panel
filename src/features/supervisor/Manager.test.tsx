@@ -52,8 +52,10 @@ describe('supervisor manager section', () => {
     expect(sara).toHaveTextContent('مریم کاظمی');
 
     await user.selectOptions(screen.getByLabelText('سرپرست'), 'none');
-    expect(await within(table()).findByText('بدون سرپرست')).toBeInTheDocument();
-    expect(within(table()).queryByRole('link', { name: 'سارا محمدی' })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(within(table()).queryByRole('link', { name: 'سارا محمدی' })).not.toBeInTheDocument(),
+    );
+    expect(within(table()).getByText('بدون سرپرست')).toBeInTheDocument();
     expect(within(table()).getByRole('link', { name: 'علی نوری' })).toBeInTheDocument();
   });
 

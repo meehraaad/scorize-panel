@@ -58,6 +58,33 @@ export interface AccessGroup {
   protected?: boolean;
 }
 
+/**
+ * One of the 14 sections a person's access is made of (Django `user_profile/access_sections.py`):
+ * a named bundle of keys, switched on or off for a person. The writing section goes by kind of
+ * document (`options`).
+ */
+export interface AccessSection {
+  id: string;
+  label: string;
+  about: string;
+  /** Its heading on the person's page (`SectionList.areas`). */
+  area: string;
+  keys: string[];
+  options: { id: string; label: string }[];
+  /** Only superusers switch it (the access page, the assistant, admin's content). */
+  protected: boolean;
+}
+
+export interface SectionList {
+  areas: KeyArea[];
+  sections: AccessSection[];
+  /** What each team has without any section. */
+  teams: { id: number; label: string; base: string; keys: string[] }[];
+}
+
+/** The writing section: on through its kinds of document. */
+export const WRITE_SECTION = 'write';
+
 /** One person's access. `is_superuser` is only shown: it is changed in Django admin. */
 export interface AccessPerson {
   id: number;
@@ -65,6 +92,13 @@ export interface AccessPerson {
   email: string;
   /** The staff team's name; null for someone without an active staff record. */
   team: string | null;
+  team_id?: number | null;
+  /** What their team gives them without any section. */
+  base?: string;
+  /** The sections switched on (`write` when any kind of writing is). */
+  sections?: string[];
+  /** The kinds of writing of the writing section. */
+  writing?: string[];
   is_superuser: boolean;
   groups: number[];
   /** Held directly; each group adds its own. */
@@ -110,29 +144,42 @@ export const groupsQuery = queryOptions({
   queryFn: ({ signal }) => api<AccessGroup[]>(`${ACCESS_API}/groups/`, { signal }),
 });
 
+export const sectionsQuery = queryOptions({
+  queryKey: [...ACCESS_KEY, 'sections'],
+  queryFn: ({ signal }) => api<SectionList>(`${ACCESS_API}/sections/`, { signal }),
+  staleTime: 'static',
+});
+
 export interface PeopleFilter {
   search?: string;
   key?: string;
   group?: number;
+  section?: string;
+  team?: number;
   page?: number;
 }
 
-function peopleParams({ search, key, group, page }: PeopleFilter) {
+function peopleParams({ search, key, group, section, team, page }: PeopleFilter) {
   const params = new URLSearchParams();
   if (search) params.set('search', search);
   if (key) params.set('key', key);
   if (group !== undefined) params.set('group', String(group));
+  if (section) params.set('section', section);
+  if (team !== undefined) params.set('team', String(team));
   if (page && page > 1) params.set('page', String(page));
   return params.toString();
 }
 
-/** `?key=` / `?group=` / `?page=` of the address (the keys and groups pages link here). */
+/** `?key=` / `?group=` / `?section=` / `?team=` / `?page=` of the address. */
 export function peopleFilterOf(params: URLSearchParams): PeopleFilter {
   const group = Number(params.get('group'));
   const page = Number(params.get('page'));
+  const team = params.get('team');
   return {
     ...(params.get('key') ? { key: params.get('key') ?? '' } : {}),
     ...(group > 0 ? { group } : {}),
+    ...(params.get('section') ? { section: params.get('section') ?? '' } : {}),
+    ...(team !== null && /^\d+$/.test(team) ? { team: Number(team) } : {}),
     ...(page > 1 ? { page } : {}),
   };
 }

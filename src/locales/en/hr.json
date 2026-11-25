@@ -30,7 +30,9 @@
     "technical": "Technical",
     "writing": "Writing",
     "search": "Search",
-    "language": "Language"
+    "language": "Language",
+    "visa": "Visa",
+    "admin": "Admin and finance"
   },
   "marital": {
     "single": "Single",
@@ -79,7 +81,8 @@
     "view": "Staff view",
     "views": {
       "list": "List",
-      "chart": "Org chart"
+      "chart": "Org chart",
+      "teams": "Teams"
     }
   },
   "chart": {
@@ -1048,5 +1051,100 @@
     "pending": "Waiting for their form",
     "changed": "The form changed meanwhile. The page is up to date now.",
     "majors": "Suggested majors"
+  },
+  "tasks": {
+    "summary": "Everyone’s tasks",
+    "open": "Open tasks",
+    "overdue": "{{n}} overdue",
+    "today": "{{n}} due today",
+    "onSchedule": "{{n}} on schedule",
+    "onTime": "On time this month",
+    "onTimeHint": "Of the tasks due this month",
+    "done": "Done this month",
+    "doneSplit": "{{onTime}} on time · {{late}} late",
+    "none": "—",
+    "up": "▲ {{n}}",
+    "down": "▼ {{n}}"
+  },
+  "alerts": {
+    "title": "Worth a look",
+    "teamOverdue": "{{team}} team has {{n}} overdue tasks",
+    "teamOverdueSub": "Most are {{name}}’s ({{n}})",
+    "oldOverdue": "{{name}}’s task is {{n}} days overdue",
+    "contractEnding": "{{name}}’s contract ends in {{n}} days",
+    "contractEndingSub": "{{team}} · {{day}}",
+    "noTeam": "{{n}} people have no team",
+    "noTeamSub": "Set a team on their file"
+  },
+  "teams": {
+    "title": "Teams",
+    "filter": "Show",
+    "filters": {
+      "all": "All",
+      "notGood": "Needs attention",
+      "good": "On track"
+    },
+    "none": "No team",
+    "noneHint": "{{n}} people have no team on their file",
+    "setTeam": "Set their team",
+    "empty": "No team in this state.",
+    "openTeam": "Open the {{team}} team",
+    "name": "{{team}} team",
+    "manager": "Manager in the chart: {{name}}",
+    "noManager": "No manager in the chart",
+    "people": "{{n}} people",
+    "open": "Open tasks",
+    "overdue": "Overdue",
+    "dueToday": "{{n}} due today",
+    "onTime": "On time",
+    "done": "{{n}} done this month",
+    "counts": {
+      "trial": "{{n}} on trial",
+      "joining": "{{n}} joining",
+      "leaving": "{{n}} leaving",
+      "ending": "{{n}} contracts ending"
+    },
+    "details": "Team details",
+    "state": {
+      "good": "On track",
+      "attention": "Needs attention",
+      "behind": "Behind"
+    },
+    "peopleTitle": "Team members",
+    "nobody": "Nobody in this list.",
+    "onTimeHint": "“On time”: of each person’s tasks due this month, the share done by their due time. A team’s numbers are only its people’s own tasks summed.",
+    "months": "On time, month by month",
+    "overdueTasks": "The team’s overdue tasks",
+    "noOverdue": "No overdue tasks.",
+    "daysLate": "{{n}} days",
+    "moreOverdue": "and {{n}} more",
+    "coming": "Coming up",
+    "nothingComing": "Nothing within a month.",
+    "event": {
+      "contract_end": "{{name}}’s contract ends · {{day}}",
+      "trial_end": "{{name}}’s trial ends · {{day}}",
+      "entry": "{{name}}’s first day · {{day}}",
+      "exit": "{{name}}’s last day · {{day}}",
+      "birthday": "{{name}}’s birthday · {{day}}"
+    },
+    "back": "Teams",
+    "numbers": "The team’s numbers",
+    "oldest": "Oldest: {{n}} days",
+    "before": "Last month: {{value}}",
+    "doneMonth": "Done this month",
+    "aside": "Month by month and coming up",
+    "days": "{{n}} days",
+    "member": {
+      "open": "Open",
+      "overdue": "Overdue",
+      "oldest": "Oldest",
+      "done": "Done this month",
+      "onTime": "On time"
+    },
+    "chip": {
+      "overdue": "{{n}} overdue",
+      "trial": "Trial until {{day}}",
+      "contract": "Contract until {{day}}"
+    }
   }
 }

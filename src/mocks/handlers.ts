@@ -21,6 +21,7 @@ import { messagesHandlers, resetMessagesMocks } from './messages';
 import { pathwayHandlers, resetPathwayMocks } from './pathways';
 import { accessHandlers, resetAccessMocks } from './access';
 import { clientErrorHandlers } from './clientErrors';
+import { telemetryHandlers } from './telemetry';
 import { resetSalesMocks, salesHandlers } from './sales';
 import { agreementHandlers, resetAgreementMocks } from './agreement';
 import { salesCustomerHandlers } from './salesCustomer';
@@ -432,6 +433,7 @@ export const handlers = [
   ...pathwayHandlers,
   ...accessHandlers,
   ...clientErrorHandlers,
+  ...telemetryHandlers,
   ...attendanceHandlers,
   ...hrHandlers,
   ...marketingHandlers,

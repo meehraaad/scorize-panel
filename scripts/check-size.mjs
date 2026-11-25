@@ -32,10 +32,12 @@ import { gzipSync } from 'node:zlib';
 // JS 197.9, CSS 22.8: the customer head's quick actions: the hover label under icon-only buttons
 // (`tip`), the dock, the copy and tablet icons and the chat apps' brand colours, +0.2 JS and +0.3
 // CSS locally on test's 197.2 / 22.3; CI's Node 24 measured the merge at 197.7 / 22.7 (2026-11-24).
-// JS 198.7: staff's tasks above the panels: the bell's combined count with its popup trigger and the
-// /tasks route, the bottom tray minimized windows share, and the shared dismiss hook; +1.4 KB on
-// test's 197.2. The popup, the dock and the page stay lazy (2026-11-25).
-const BUDGET_KB = { js: 198.7, css: 22.8 };
+// Site Health and Acquisition register two routes, one telemetry entry point and report layout styles.
+// The report pages, collectors, and Web Vitals library load in separate chunks.
+// Staff's tasks above the panels: the bell's combined count with its popup trigger and the /tasks route,
+// the bottom tray minimized windows share, and the shared dismiss hook. The popup, the dock and the
+// page stay lazy: +1.0 KB JS on test's 198.6 (2026-11-25).
+const BUDGET_KB = { js: 199.6, css: 22.9 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
