@@ -1,0 +1,93 @@
+{
+  "missing": "—",
+  "empty": "No measurements in this period.",
+  "failed": "The report could not be loaded. Refresh to try again.",
+  "period": {
+    "label": "Reporting period",
+    "days7": "Last 7 days",
+    "days30": "Last 30 days",
+    "refresh": "Refresh"
+  },
+  "health": {
+    "title": "Site Health",
+    "updated": "Updated {{at}}",
+    "summary": "Health summary",
+    "errorRate": "{{surface}} server error rate",
+    "sampled": "{{value}} samples",
+    "lastHour": "Last hour",
+    "crashes": "Browser crashes",
+    "probes": "External availability checks",
+    "target": "Surface",
+    "status": "Status",
+    "availability": "Availability",
+    "lastCheck": "Last check",
+    "dependencies": "Service dependencies",
+    "routes": "Server requests",
+    "routesNote": "Slow routes and routes with the most recorded 5xx responses. Latency uses sampled Django requests.",
+    "route": "Route",
+    "p95": "p95 latency",
+    "samples": "Samples",
+    "errors": "Errors",
+    "vitals": "Real-user speed",
+    "vitalsNote": "75th percentile by page. A dash means no measurements for that metric.",
+    "page": "Page",
+    "release": "Release",
+    "lastSeen": "Last seen",
+    "supportCode": "Support code",
+    "milliseconds": "{{value}} ms",
+    "percent": "{{value}}%",
+    "state": {
+      "up": "Healthy",
+      "down": "Failing",
+      "stale": "Stale",
+      "unknown": "Awaiting data"
+    },
+    "targets": {
+      "site": "Public site",
+      "panel": "Panel",
+      "api": "API",
+      "login": "Login",
+      "consultation": "Consultation",
+      "checkout": "Checkout"
+    },
+    "dependenciesNames": {
+      "database": "PostgreSQL",
+      "session_cache": "Session cache",
+      "celery": "Celery jobs",
+      "realtime": "Realtime queue",
+      "ai": "AI queue"
+    },
+    "providers": {
+      "login_sms": "Failed login messages",
+      "payment_start": "Payment start failures",
+      "payment_verify": "Payment verification failures"
+    }
+  },
+  "acquisition": {
+    "title": "Acquisition & Conversions",
+    "description": "See which campaigns bring people from their first visit to a paid consultation.",
+    "summary": "Consultation conversion summary",
+    "steps": {
+      "visits": "First visits",
+      "cta": "Clicked a consultation link",
+      "started": "Started booking",
+      "reserved": "Created a reservation",
+      "paid": "Paid for a consultation"
+    },
+    "bookings": "Reservations",
+    "paidBookings": "Paid consultations",
+    "revenue": "Confirmed revenue",
+    "paidRate": "{{value}} of tracked visitors paid",
+    "funnel": "Consultation funnel",
+    "funnelNote": "Share of first-time tracked browsers in this period that reached each step. Visitors can skip steps.",
+    "campaigns": "Campaign and landing pages",
+    "campaignNote": "Up to 50 groups ranked by first visits. Conversion is the share of browsers with at least one confirmed payment.",
+    "source": "Source",
+    "campaign": "Campaign",
+    "landing": "Landing page group",
+    "conversion": "Paid conversion",
+    "direct": "Untagged",
+    "toman": "{{value}} toman",
+    "unit": "toman"
+  }
+}

@@ -35,7 +35,11 @@ import { gzipSync } from 'node:zlib';
 // JS 198.7: staff's tasks above the panels: the bell's combined count with its popup trigger and the
 // /tasks route, the bottom tray minimized windows share, and the shared dismiss hook; +1.4 KB on
 // test's 197.2. The popup, the dock and the page stay lazy (2026-11-25).
-const BUDGET_KB = { js: 198.7, css: 22.8 };
+// Site Health and Acquisition register two routes, one telemetry entry point and report layout styles.
+// The report pages, collectors, and Web Vitals library load in separate chunks.
+// JS 199.8, CSS 23.1: the tasks hub and Site Health / Acquisition together, measured 199.4 / 23.0
+// locally after merging both into test (2026-11-25).
+const BUDGET_KB = { js: 199.8, css: 23.1 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
