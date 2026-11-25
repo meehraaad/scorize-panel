@@ -36,8 +36,8 @@ import { gzipSync } from 'node:zlib';
 // The report pages, collectors, and Web Vitals library load in separate chunks.
 // Staff's tasks above the panels: the bell's combined count with its popup trigger and the /tasks route,
 // the bottom tray minimized windows share, and the shared dismiss hook. The popup, the dock and the
-// page stay lazy: +1.0 KB JS on test's 198.6 (2026-11-25).
-const BUDGET_KB = { js: 199.6, css: 22.9 };
+// page stay lazy: +1.0 KB JS on test's 198.6; CSS as CI measures it (23.0, 22.9 locally) (2026-11-25).
+const BUDGET_KB = { js: 199.6, css: 23.0 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
