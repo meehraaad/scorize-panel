@@ -39,6 +39,12 @@ describe('sales panel, seller pages', () => {
     loginAs(NIMA);
   });
 
+  it('redirects the old call ratings address to Me', async () => {
+    const router = renderApp('/sales/call-ratings');
+    expect(await screen.findByRole('heading', { name: 'امتیاز تماس‌های من' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/me/call-ratings');
+  });
+
   it('today: the next person, then the whole day in one timetable', async () => {
     const user = userEvent.setup();
     renderApp('/sales');

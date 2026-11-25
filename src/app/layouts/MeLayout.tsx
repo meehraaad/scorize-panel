@@ -8,8 +8,8 @@ import { useUser } from '@/lib/auth/session';
 
 /**
  * «من» (/me): a staff member's own pages. Everyone has their KPIs and pay; sellers also have their
- * sales month (the sales panel's «عملکرد», opened with their password), and a new hire their
- * personal details form while it is open, each as another tab.
+ * sales month (opened with their password) and call ratings. New hires also have their personal
+ * details form while it is open.
  */
 export function MeLayout() {
   const { t } = useTranslation();
@@ -17,7 +17,10 @@ export function MeLayout() {
   const sections = [
     { id: 'pay', to: '/me', label: t('me.pay') },
     ...(getRoles(user).includes('sales')
-      ? [{ id: 'sales', to: '/me/sales', label: t('me.sales') }]
+      ? [
+          { id: 'sales', to: '/me/sales', label: t('me.sales') },
+          { id: 'call-ratings', to: '/me/call-ratings', label: t('me.callRatings') },
+        ]
       : []),
     ...(ON_SERVER.hrOnboarding && user.staff?.onboarding
       ? [{ id: 'onboarding', to: ONBOARDING_PATH, label: t('me.onboarding') }]

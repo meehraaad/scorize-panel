@@ -128,7 +128,6 @@ const PAGES: PageCase[] = [
   ...[
     '/sales/leads',
     '/sales/leads?stage=new',
-    '/sales/call-ratings',
     '/sales/calendar',
     '/sales/board',
     `/sales/customers/${String(ERFAN)}`,
@@ -286,6 +285,7 @@ const PAGES: PageCase[] = [
   { path: '/tasks?panel=sales', user: NIMA },
   { path: '/tasks?tab=notifications', user: ELHAM },
   { path: '/me/sales', user: NIMA },
+  { path: '/me/call-ratings', user: NIMA },
 ];
 
 /** Queries first loaded while `path` opens, and whether the load began after the route had. */
