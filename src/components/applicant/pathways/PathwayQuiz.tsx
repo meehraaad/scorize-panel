@@ -338,6 +338,7 @@ export function PathwayQuiz({ host, onClose }: { host: QuizHost; onClose?: () =>
           onEdit={restart}
           consulting={check.isPending}
           consulted={consulted}
+          given={answers}
           onConsult={() =>
             check.mutate(
               { given: answers, contact: { channel: 'call', time: 'now' } },

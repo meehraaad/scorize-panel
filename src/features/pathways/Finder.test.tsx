@@ -2,7 +2,13 @@ import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
-import { lastPathwayCheck, setFinderPrefill, withAdmissions } from '@/mocks/pathways';
+import {
+  lastPathwayCheck,
+  setFinderPrefill,
+  whatIfs,
+  withAdmissions,
+  withRankedCanada,
+} from '@/mocks/pathways';
 import { renderApp } from '@/test/renderApp';
 import '@/test/server';
 import { onDesktop } from '@/test/viewport';
@@ -89,6 +95,40 @@ describe('pathway finder', () => {
     // The call is the one button at the bottom; once asked, it says so instead.
     await user.click(screen.getByRole('button', { name: 'می‌خواهم با من تماس بگیرند' }));
     expect(await screen.findByText('درخواستت ثبت شد، به‌زودی تماس می‌گیریم')).toBeInTheDocument();
+  });
+
+  it("shows Canada's ranking beside the latest draw, and what a change would do", async () => {
+    withRankedCanada(480, '2026-11-20');
+    loginAs(SARA);
+    const user = userEvent.setup();
+    renderApp('/pathways');
+    await user.click(await screen.findByRole('button', { name: 'شروع کن' }));
+    await user.click(await screen.findByRole('radio', { name: /^کار/ }));
+    await user.click(await screen.findByRole('radio', { name: 'کارشناسی' }));
+    await screen.findByRole('heading', { name: 'انگلیسی‌ات چطور است؟' });
+    await user.keyboard('4');
+    await screen.findByRole('heading', { name: 'چند سالت است؟' });
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await screen.findByRole('heading', { name: 'چند سال سابقه کار مرتبط با رشته‌ات داری؟' });
+    await user.click(screen.getByRole('button', { name: 'یکی بیشتر' }));
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await screen.findByRole('heading', {
+      name: 'پیشنهاد کار رسمی از یک کارفرمای خارج از ایران داری؟',
+    });
+    await user.click(screen.getByRole('radio', { name: 'بله، دارم' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'کانادا' }));
+    await user.click(screen.getByRole('button', { name: 'بعدی' }));
+    await screen.findByRole('heading', { name: 'کار ماهر فدرال' });
+    // The fake Django's estimate: 350 + 40 (IELTS 7.5) + 5 × 4 years = 410, 70 under the draw's 480.
+    expect(screen.getByText('عدد رقابتی اکسپرس انتری (تخمینی)')).toBeInTheDocument();
+    expect(screen.getByText('۴۱۰ از ۱٬۲۰۰')).toBeInTheDocument();
+    expect(screen.getByText('۷۰ امتیاز کمتر است.')).toBeInTheDocument();
+    // What if: a year more of work. Nothing is stored; the answer shows under the choice.
+    const whatIf = screen.getByRole('region', { name: 'اگه…' });
+    await user.click(within(whatIf).getByRole('radio', { name: 'وقتی سابقهٔ کارت به ۵ سال برسد' }));
+    expect(await within(whatIf).findByText('عدد رقابتی از ۴۱۰ به ۴۱۵')).toBeInTheDocument();
+    expect(whatIfs.at(-1)).toMatchObject({ answers: { work_years: 5 } });
+    expect(whatIfs.at(-1)).not.toHaveProperty('contact');
   });
 
   it('opens from the home in a popup, and closes', async () => {
@@ -271,6 +311,17 @@ describe('pathway finder', () => {
     expect(screen.getAllByText('یا')).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: '+ شرط لازم دیگر' }));
     expect(screen.getByText('شرط لازم ۴')).toBeInTheDocument();
+  });
+
+  it("a ranked route's latest draw is saved on its own, and the route stays published", async () => {
+    withRankedCanada();
+    loginAs(AMIR);
+    const user = userEvent.setup();
+    renderApp('/marketing/manage/pathways/2');
+    const draw = await screen.findByRole('region', { name: 'آخرین قرعه‌کشی' });
+    await user.type(within(draw).getByRole('textbox', { name: 'کمترین عدد دعوت‌شده' }), '489');
+    // A score needs its day.
+    expect(within(draw).getByRole('button', { name: 'ذخیره‌ی قرعه‌کشی' })).toBeDisabled();
   });
 
   it('the sales manager edits the same routes, and the old management address leads there', async () => {

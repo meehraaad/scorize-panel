@@ -99,13 +99,20 @@ export interface PathwayInput {
   post_study_months: number | null;
   after_study: string;
   review_by: string | null;
+  /** `crs`: once the pass mark is met, customers see their estimated Express Entry score (Canada). */
+  ranking: PathwayRanking;
   is_active: boolean;
   requirements: RequirementInput[];
   criteria: CriterionInput[];
 }
 
+export type PathwayRanking = '' | 'crs';
+
 export interface PathwayDetail extends Omit<PathwayInput, 'country'> {
   id: number;
+  /** The latest draw's lowest invited score (a ranked route), kept apart from the rules: saving it keeps the check. */
+  cutoff: number | null;
+  cutoff_on: string | null;
   country: { id: number; name: string };
   status: PathwayStatus;
   verified_at: string | null;

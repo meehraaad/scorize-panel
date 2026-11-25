@@ -39,6 +39,12 @@ export const useVerifyPathway = (id: number) =>
     }),
   );
 
+/** The latest draw of a ranked route (null clears it): the route stays checked. */
+export const useSetCutoff = (id: number) =>
+  useSave((draw: { cutoff: number | null; cutoff_on: string | null }) =>
+    api<PathwayDetail>(`${MANAGE_PATHWAYS_API}/${id}/cutoff/`, { method: 'POST', body: draw }),
+  );
+
 export const useTryPathway = () =>
   useMutation({
     mutationFn: ({ pathway, answers }: { pathway: PathwayInput; answers: Answers }) =>
