@@ -67,23 +67,12 @@
       "nav": {
         "label": "Executive Panel menu",
         "customers": "Customers",
+        "writing": "Writing orders",
+        "orders": "Orders",
         "tickets": "Tickets",
         "tasks": "Tasks",
         "manager": "Executive management"
       }
-    },
-    "writer": {
-      "name": "Writing panel",
-      "nav": {
-        "label": "Writing panel menu",
-        "queue": "Writing orders",
-        "tickets": "Writing tickets"
-      },
-      "tabs": {
-        "queue": "Orders",
-        "tickets": "Tickets"
-      },
-      "description": "Statements of purpose, CVs and recommendation letters"
     },
     "sales": {
       "name": "Sales panel",

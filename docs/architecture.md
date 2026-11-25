@@ -25,7 +25,7 @@ src/
 │   ├── registry.ts        All panels (order = default priority), panelsFor(user), preferredPanel()
 │   ├── applicant/         /panel/            every account (guest state without a contract)
 │   ├── supervisor/        /panel/supervisor/
-│   ├── writer/            /panel/writer/
+│   ├── executive/        /panel/executive/   includes Writing orders
 │   ├── founders/          /panel/founders/   the partners' analysis assistant (features/assistant)
 │   └── sales/             /panel/sales/
 ├── features/<section>/    Pages and their logic (auth, home, settings, …): Page.tsx (default
@@ -175,12 +175,10 @@ Design: canvas "Scorize Seller Panel", row 11 (اعلان بارگذاری).
 (blocks) ← `features/tickets` (the page: a chat screen on phones with the composer above the bottom
 tabs and the FAQ in a sheet; `tickets` dictionary, `TicketsConfig`: endpoint, page
 path, `viewer: applicant | staff`) ← `panels/<panel>/` (passes its config; the applicant panel's is
-`panels/applicant/tickets.ts`). Writing tickets are threads of the same page, not a copy. The
-supervisor panel passes one applicant's threads with `viewer: 'staff'` and `embedded` (inside the
-case file: no page header, no full-screen chat; `panels/supervisor/CaseTicketsPage.tsx`). Staff pick no
-priority, see the applicant's rating under staff replies, no FAQ or opening hours, and their own
-thread subtitle and empty state. The writer panel does the same for one order's conversation
-(`panels/writer/OrderTicketsPage.tsx`, endpoint `writer/v1/orders/<id>/tickets`).
+`panels/applicant/tickets.ts`). Staff open case and writing order conversations in the floating
+chat (`features/supervisor/chat/CaseChatDock.tsx`). Executive's Writing orders use the
+`writer/v1/orders/<id>/tickets` endpoint. Old `/panel/writer/` links redirect into Executive,
+where bookmarked conversations open over their order.
 
 ### Writing forms
 

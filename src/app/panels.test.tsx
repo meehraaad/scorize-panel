@@ -31,11 +31,7 @@ describe('panels', () => {
     expect(router.state.location.pathname).toBe('/choose');
     // Work panels only: Maryam has no applicant file of her own. Each card opens its panel.
     const cards = within(screen.getByRole('navigation', { name: 'پنل‌ها' })).getAllByRole('link');
-    expect(cards.map((card) => card.getAttribute('href'))).toEqual([
-      '/supervisor',
-      '/writer',
-      '/executive',
-    ]);
+    expect(cards.map((card) => card.getAttribute('href'))).toEqual(['/supervisor', '/executive']);
     expect(screen.getByRole('link', { name: 'ورود به پنل به‌عنوان کاربر عادی' })).toHaveAttribute(
       'href',
       '/',
@@ -43,15 +39,16 @@ describe('panels', () => {
 
     await user.click(
       within(screen.getByRole('navigation', { name: 'پنل‌ها' })).getByRole('link', {
-        name: /پنل نگارش/,
+        name: /پنل اجرا/,
       }),
     );
-    expect(
-      await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
-    ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/writer');
+    expect(await screen.findByRole('heading', { name: 'مشتری‌ها' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/executive/customers');
     await waitFor(() => {
-      expect(mockWorkspace(MARYAM)).toEqual({ last_workspace: 'writer', workspace_mode: 'last' });
+      expect(mockWorkspace(MARYAM)).toEqual({
+        last_workspace: 'executive',
+        workspace_mode: 'last',
+      });
     });
   });
 
@@ -75,10 +72,11 @@ describe('panels', () => {
 
     setMockWorkspace(MARYAM, { last_workspace: 'writer', workspace_mode: 'always' });
     router = renderApp('/start');
-    expect(
-      await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
-    ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/writer');
+    expect(await screen.findByRole('heading', { name: 'مشتری‌ها' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/executive/customers');
+    await waitFor(() => {
+      expect(mockWorkspace(MARYAM)).toEqual({ last_workspace: 'executive', workspace_mode: 'always' });
+    });
   });
 
   it('switches panels from the button beside the logo and remembers the choice', async () => {
@@ -92,7 +90,6 @@ describe('panels', () => {
     const links = within(switcher).getAllByRole('link');
     expect(links.map((link) => link.getAttribute('href'))).toEqual([
       '/supervisor',
-      '/writer',
       '/executive',
       '/',
     ]);
@@ -103,12 +100,10 @@ describe('panels', () => {
       expect(mockWorkspace(MARYAM).workspace_mode).toBe('ask');
     });
 
-    await user.click(within(switcher).getByRole('link', { name: /پنل نگارش/ }));
-    expect(
-      await screen.findByRole('heading', { name: 'سلام مریم، ۴ سفارش منتظر شماست' }),
-    ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/writer');
-    // Opening the supervisor panel saved it as the last one; under "always ask" the writer panel
+    await user.click(within(switcher).getByRole('link', { name: /پنل اجرا/ }));
+    expect(await screen.findByRole('heading', { name: 'مشتری‌ها' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/executive/customers');
+    // Opening the supervisor panel saved it as the last one; under "always ask" the Executive panel
     // isn't saved over it.
     expect(mockWorkspace(MARYAM)).toEqual({ last_workspace: 'supervisor', workspace_mode: 'ask' });
   });
@@ -210,7 +205,7 @@ describe('panels', () => {
     expect(await screen.findByRole('heading', { name: 'تنظیمات' })).toBeInTheDocument();
     // jsdom applies no CSS, so the desktop menu (header) is the one to check.
     expect(
-      within(screen.getByRole('banner')).getByRole('navigation', { name: 'منوی پنل نگارش' }),
+      within(screen.getByRole('banner')).getByRole('navigation', { name: 'منوی پنل اجرا' }),
     ).toBeInTheDocument();
   });
 

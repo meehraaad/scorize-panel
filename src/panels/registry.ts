@@ -10,7 +10,6 @@ import { marketingPanel } from './marketing';
 import { salesPanel } from './sales';
 import { supervisorPanel } from './supervisor';
 import type { PanelDefinition } from './types';
-import { writerPanel } from './writer';
 
 /**
  * Every panel of the site. Adding a panel = a folder in src/panels/ + one line here.
@@ -18,7 +17,6 @@ import { writerPanel } from './writer';
  */
 export const PANELS: readonly PanelDefinition[] = [
   supervisorPanel,
-  writerPanel,
   executivePanel,
   salesPanel,
   marketingPanel,
@@ -39,9 +37,15 @@ type Workspace = Pick<SessionUser, 'last_workspace' | 'workspace_mode'>;
 const saveWorkspace = (change: Partial<Workspace>) =>
   api('/profile/auth/v1/workspace/', { method: 'PATCH', body: change });
 
+const savedPanel = (user: SessionUser) =>
+  user.last_workspace === 'writer' ? 'executive' : user.last_workspace;
+
+const hasPanelRole = (roles: Role[], panel: PanelDefinition) =>
+  roles.includes(panel.id) || (panel.id === 'executive' && roles.includes('writer'));
+
 export function panelsFor(user: SessionUser): PanelDefinition[] {
   const roles = getRoles(user);
-  return PANELS.filter((panel) => roles.includes(panel.id));
+  return PANELS.filter((panel) => hasPanelRole(roles, panel));
 }
 
 /**
@@ -49,30 +53,32 @@ export function panelsFor(user: SessionUser): PanelDefinition[] {
  * link even when it isn't one of their listed panels. Other panels need their role.
  */
 export function canOpen(user: SessionUser, panel: PanelDefinition) {
-  return panel.id === applicantPanel.id || getRoles(user).includes(panel.id);
+  return panel.id === applicantPanel.id || hasPanelRole(getRoles(user), panel);
 }
 
 /**
- * The panel just opened becomes the "last used" one, unless the user pinned another. Only the
+ * The panel just opened becomes the "last used" one, unless the user pinned another.
+ * An old Writer pin becomes an Executive pin when Executive opens. Only the
  * server is told: it matters at the next login, and changing the cached session would re-render
  * every page. A failed save keeps the previous panel, so it isn't reported.
  */
 export function rememberPanel(user: SessionUser, panel: PanelDefinition) {
-  if (user.workspace_mode !== 'last' || user.last_workspace === panel.id) return;
+  const retiredWriterPin =
+    user.workspace_mode === 'always' && user.last_workspace === 'writer' && panel.id === 'executive';
+  if (!retiredWriterPin && (user.workspace_mode !== 'last' || user.last_workspace === panel.id))
+    return;
   saveWorkspace({ last_workspace: panel.id }).catch(() => undefined);
 }
 
 /** The panel used last (if still allowed), else the highest-priority one the user can open. */
 export function preferredPanel(user: SessionUser): PanelDefinition {
   const available = panelsFor(user);
-  return (
-    available.find((panel) => panel.id === user.last_workspace) ?? available[0] ?? applicantPanel
-  );
+  return available.find((panel) => panel.id === savedPanel(user)) ?? available[0] ?? applicantPanel;
 }
 
 export function startPreference(user: SessionUser): StartPreference {
   if (user.workspace_mode === 'ask') return 'ask';
-  const pinned = PANELS.find((panel) => panel.id === user.last_workspace);
+  const pinned = PANELS.find((panel) => panel.id === savedPanel(user));
   return user.workspace_mode === 'always' && pinned ? pinned.id : 'last';
 }
 
@@ -94,5 +100,5 @@ export function startTarget(user: SessionUser): PanelDefinition | 'choose' {
   const available = panelsFor(user);
   if (available.length <= 1) return available[0] ?? applicantPanel;
   if (startPreference(user) === 'ask') return 'choose';
-  return available.find((panel) => panel.id === user.last_workspace) ?? 'choose';
+  return available.find((panel) => panel.id === savedPanel(user)) ?? 'choose';
 }

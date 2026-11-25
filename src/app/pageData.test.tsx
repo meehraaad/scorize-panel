@@ -192,7 +192,7 @@ const PAGES: PageCase[] = [
     '/supervisor/reports',
     '/executive/manager/mail',
   ].map((path) => ({ path, user: MARYAM })),
-  // Writer panel.
+  // Executive panel.
   ...[
     '/executive/customers',
     '/executive/customers/1240/desk/124000',
@@ -206,13 +206,9 @@ const PAGES: PageCase[] = [
     '/executive/tickets',
     '/executive/tickets?department=writing',
   ].map((path) => ({ path, user: MARYAM })),
-  ...['/writer', '/writer/orders/1240'].map((path) => ({ path, user: MARYAM })),
-  // Tickets pages: the thread's messages are chained after the list in the loader. (A case's
-  // tickets address in the supervisor panel opens the chat window: Supervisor.test.tsx.)
-  ...['/writer/orders/1240/tickets'].map((path) => ({
+  ...['/executive/writing', '/executive/writing/orders/1240'].map((path) => ({
     path,
     user: MARYAM,
-    later: [{ key: '"messages"', why: "the thread's id comes from the list (backend item H55)" }],
   })),
   // Founders panel.
   ...['/founders', '/founders/conversations/900', '/founders/site-health'].map((path) => ({

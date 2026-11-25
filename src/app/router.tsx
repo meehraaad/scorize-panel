@@ -33,6 +33,7 @@ import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import { setPreloadRoutes } from '@/lib/router/preload';
 import { toPathways } from '@/panels/pathwayRoutes';
+import { writerRedirects } from '@/panels/executive/writing';
 import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panels/registry';
 import { panelHref, type PanelDefinition } from '@/panels/types';
 import { ErrorPage, NotFoundPage, SectionError } from './ErrorPage';
@@ -283,6 +284,7 @@ const pageRoutes: RouteObject[] = [
   // Migration pathways: from the management panel to the sales and the marketing manager's areas.
   { path: 'founders/pathways', loader: toPathways },
   { path: 'founders/pathways/:id', loader: toPathways },
+  ...writerRedirects,
   ...PANELS.map(panelRoutes),
   // The assessment preview pages: development, and the test server's build
   // (VITE_ASSESSMENT_PREVIEW=true). Production builds drop them; Django also refuses
