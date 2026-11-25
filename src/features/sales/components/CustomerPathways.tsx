@@ -19,6 +19,7 @@ const CHOICE_FACTORS = new Set([
   'english_level',
   'german_level',
   'partner',
+  'nomination',
 ]);
 
 /** The answers tab's groups, in order; a factor not listed goes in the last one. */

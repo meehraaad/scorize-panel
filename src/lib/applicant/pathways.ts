@@ -166,6 +166,22 @@ export interface PathwayResult {
   derived?: PathwayDerived;
   /** A study route: the chance of admission there; null without the GPA and field, or no outcomes. */
   admission?: PathwayAdmission | null;
+  /**
+   * A route whose pool invites by a ranking score (Canada's Express Entry: CRS), once its pass mark is met: the
+   * person's estimated score beside the latest draw's lowest. null otherwise; absent on older servers.
+   */
+  ranking?: PathwayRanking | null;
+}
+
+export interface PathwayRanking {
+  kind: 'crs';
+  /** Estimated from the answers, rounded down where they are coarse. */
+  score: number;
+  maximum: number;
+  /** The latest draw's lowest invited score, as staff entered it; null when not entered. */
+  cutoff: number | null;
+  /** ISO day of that draw. */
+  cutoff_on: string | null;
 }
 
 /** The yes/no factors the occupation answers by itself. */
@@ -277,6 +293,33 @@ export const checkPathways = (
       ...(occupation === undefined ? {} : { occupation }),
       ...(typeof extra.gpa === 'number' ? { gpa: extra.gpa } : {}),
       ...(extra.goal ? { goal: extra.goal } : {}),
+    },
+  });
+
+/** The body `check/` and `what-if/` take, without the contact. */
+export interface FinderGiven {
+  answers: Answers;
+  byCountry: CountryAnswers;
+  budget: FinderBudget | null;
+  income: FinderIncome | null;
+  occupation?: string | null | undefined;
+  gpa?: number | null;
+}
+
+/**
+ * "What if my IELTS were 7?": the same evaluation as `check/` for changed answers. Django stores nothing and
+ * makes no sales lead, so what sales sees stays what the person really answered.
+ */
+export const whatIfPathways = (given: FinderGiven) =>
+  api<{ results: PathwayResult[] }>(`${PATHWAYS_API}/what-if/`, {
+    method: 'POST',
+    body: {
+      answers: given.answers,
+      by_country: given.byCountry,
+      budget: given.budget,
+      income: given.income,
+      ...(given.occupation === undefined ? {} : { occupation: given.occupation }),
+      ...(typeof given.gpa === 'number' ? { gpa: given.gpa } : {}),
     },
   });
 

@@ -6,8 +6,10 @@ import { ProgressBar } from '@/components/ui/Progress';
 import { CURRENCY_CODE, FIT_TONE } from '@/lib/applicant/study';
 import {
   OCCUPATION_FACTORS,
+  type FinderGiven,
   type FinderStudy,
   type PathwayAdmission,
+  type PathwayRanking,
   type PathwayResult,
 } from '@/lib/applicant/pathways';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -17,6 +19,7 @@ import { QuizIcon, SmallFlag, type QuizIconName } from './art';
 import { key } from './keys';
 import { BarContext } from './pinned';
 import { verdict } from './verdict';
+import { WhatIf } from './whatIf';
 
 /** The factors a suggestion can name (Django `pathways.rules.IMPROVABLE`), and those named by a choice. */
 const IMPROVE_FACTORS = new Set([
@@ -222,6 +225,45 @@ function Derived({ result }: { result: PathwayResult }) {
   );
 }
 
+/**
+ * A pool that invites by score (Canada's Express Entry): the person's estimated score beside the latest draw's
+ * lowest, and how far apart they are.
+ */
+function Ranking({ ranking }: { ranking: PathwayRanking }) {
+  const { t } = useTranslation('pathways');
+  const f = useFormat();
+  const { score, cutoff } = ranking;
+  const max = Math.max(ranking.maximum, 1);
+  return (
+    <div className="flex flex-col gap-2.5 rounded-2xl bg-canvas p-4 lg:px-5">
+      <div className="flex justify-between gap-3 text-sm">
+        <span className="font-semibold">{t('ranking.title')}</span>
+        <span className="tabular-nums">
+          {t('ranking.value', { score: f.number(score), max: f.number(ranking.maximum) })}
+        </span>
+      </div>
+      <ProgressBar
+        value={Math.min(100, (score / max) * 100)}
+        {...(cutoff !== null ? { mark: (cutoff / max) * 100 } : {})}
+        tone={cutoff === null || score >= cutoff ? 'good' : 'warn'}
+      />
+      {cutoff !== null && (
+        <p className="m-0 text-small">
+          {ranking.cutoff_on
+            ? t('ranking.cutoff', { cutoff: f.number(cutoff), date: f.date(ranking.cutoff_on) })
+            : t('ranking.cutoff_undated', { cutoff: f.number(cutoff) })}{' '}
+          <strong className={score >= cutoff ? 'text-good' : 'text-warn'}>
+            {score >= cutoff
+              ? t('ranking.above')
+              : t('ranking.below', { gap: f.number(cutoff - score) })}
+          </strong>
+        </p>
+      )}
+      <p className="m-0 text-label text-text-2">{t('ranking.note')}</p>
+    </div>
+  );
+}
+
 export function RouteCard({ result, lead = false }: { result: PathwayResult; lead?: boolean }) {
   const { t } = useTranslation('pathways');
   const f = useFormat();
@@ -273,6 +315,7 @@ export function RouteCard({ result, lead = false }: { result: PathwayResult; lea
           />
         </div>
       )}
+      {result.ranking && <Ranking ranking={result.ranking} />}
       <Derived result={result} />
       {result.admission && <Admission admission={result.admission} />}
       {result.study && <StudyCosts study={result.study} />}
@@ -385,8 +428,11 @@ export function Results({
   consulting,
   consulted,
   onConsult,
+  given,
 }: {
   results: PathwayResult[];
+  /** The answers the results are for: "what if" changes one of them. */
+  given?: FinderGiven;
   canAskMore: boolean;
   onMore: () => void;
   onEdit: () => void;
@@ -470,6 +516,7 @@ export function Results({
           </ul>
         </section>
       )}
+      {given && <WhatIf results={results} given={given} />}
       {wide ? (
         <section className="grid items-center gap-10 rounded-3xl bg-primary p-10 text-on-primary lg:grid-cols-[minmax(0,1fr)_auto]">
           <div className="flex flex-col gap-2">
