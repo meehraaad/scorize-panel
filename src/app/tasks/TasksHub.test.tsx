@@ -1,6 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ParseKeys } from 'i18next';
 import i18n from '@/lib/i18n';
 import { resetTaskMocks } from '@/mocks/tasks';
@@ -23,6 +23,7 @@ const bellButton = () => screen.findByRole('button', { name: new RegExp(`^${t('h
 describe('staff tasks and notifications', () => {
   beforeEach(async () => {
     localStorage.clear();
+    sessionStorage.clear();
     resetTaskMocks();
     await i18n.changeLanguage('fa');
     await i18n.loadNamespaces(['tasks', 'account']);
@@ -128,9 +129,85 @@ describe('staff tasks and notifications', () => {
     await user.click(within(dock).getByRole('button', { name: tasks('dock.minimize') }));
     expect(screen.queryByRole('region', { name: tasks('dock.title') })).not.toBeInTheDocument();
 
-    await router.navigate('/supervisor/tasks');
+    await router.navigate('/tasks?panel=supervisor');
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: /^کارهای امروز:/ })).not.toBeInTheDocument();
     });
+  });
+
+  it('the dock stays open from page to page and after a reload of the tab', async () => {
+    const user = userEvent.setup();
+    loginAs(MARYAM);
+    const router = renderApp('/supervisor');
+    await user.click(await screen.findByRole('button', { name: /^کارهای امروز:/ }));
+    await screen.findByRole('region', { name: tasks('dock.title') });
+    await router.navigate('/supervisor/cases');
+    expect(await screen.findByRole('region', { name: tasks('dock.title') })).toBeInTheDocument();
+
+    cleanup();
+    renderApp('/supervisor');
+    expect(await screen.findByRole('region', { name: tasks('dock.title') })).toBeInTheDocument();
+  });
+
+  it("a panel's old tasks page opens the shared one with the same list and day", async () => {
+    loginAs(MARYAM);
+    const router = renderApp('/supervisor/tasks?view=requests&day=2026-11-25');
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/tasks');
+    });
+    expect(Object.fromEntries(new URLSearchParams(router.state.location.search))).toEqual({
+      panel: 'supervisor',
+      view: 'requests',
+      day: '2026-11-25',
+    });
+  });
+
+  it("a notification's link opens its task; one that is gone leaves the page as it is", async () => {
+    loginAs(MARYAM);
+    const router = renderApp('/tasks?panel=supervisor&task=211');
+    const dialog = await screen.findByRole('dialog', { name: /زهرا موسوی خدمات ویزا/ });
+    expect(dialog).toHaveAttribute('open');
+
+    await router.navigate('/tasks?panel=supervisor&task=987654');
+    await waitFor(() => {
+      expect(new URLSearchParams(router.state.location.search).get('task')).toBeNull();
+    });
+  });
+});
+
+describe('the panel switcher on a desktop', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('Esc closes it, though focus is inside its own dropdown', async () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: query === '(min-width: 1024px)',
+          media: query,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          onchange: null,
+          dispatchEvent: () => false,
+        }) as unknown as MediaQueryList,
+    );
+    const user = userEvent.setup();
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+    loginAs(MARYAM);
+    renderApp('/supervisor');
+    const trigger = await waitFor(() => {
+      const found = screen
+        .getAllByRole('button')
+        .find((button) => button.getAttribute('aria-haspopup') === 'dialog');
+      expect(found).toBeDefined();
+      return found as HTMLElement;
+    });
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    await user.keyboard('{Escape}');
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).toHaveFocus();
   });
 });

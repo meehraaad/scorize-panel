@@ -64,7 +64,7 @@ import {
   teamBreaksQuery,
 } from '@/lib/sales/phoneCalls';
 import { PHONE_SECTIONS } from '@/features/sales/manager/phoneSections';
-import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
+import { hubAddressFor, taskListQuery } from '@/lib/tasks/api';
 import type { LoaderFunctionArgs } from 'react-router';
 import { pathwayRoutes } from '../pathwayRoutes';
 import type { PanelDefinition } from '../types';
@@ -141,13 +141,6 @@ export const salesPanel: PanelDefinition = {
       label: 'panels.sales.nav.leads',
       tab: 'panels.sales.tabs.leads',
       icon: 'user',
-    },
-    {
-      id: 'tasks',
-      to: 'tasks',
-      label: 'panels.sales.nav.tasks',
-      tab: 'panels.sales.tabs.tasks',
-      icon: 'check',
     },
     {
       id: 'call-ratings',
@@ -567,12 +560,7 @@ export const salesPanel: PanelDefinition = {
         { path: 'phone-voices', loader: () => redirect('/sales/manager/phone/voices') },
       ],
     },
-    {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: ({ request }) => [tasksQuery('sales'), openingTaskList('sales', request.url)],
-        skeleton: 'list',
-      }),
-    },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('sales', request.url)) },
   ],
 };

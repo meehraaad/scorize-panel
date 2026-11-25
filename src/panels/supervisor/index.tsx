@@ -17,7 +17,7 @@ import {
 import { prefetchTickets } from '@/features/tickets/config';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
 import { notebookQuery } from '@/lib/notes/api';
-import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
+import { hubAddressFor } from '@/lib/tasks/api';
 import { SUPERVISOR_API } from '@/features/supervisor/api';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { redirect } from 'react-router';
@@ -62,13 +62,6 @@ export const supervisorPanel: PanelDefinition = {
       label: 'panels.supervisor.nav.tickets',
       tab: 'panels.supervisor.tabs.tickets',
       icon: 'chat',
-    },
-    {
-      id: 'tasks',
-      to: 'tasks',
-      label: 'panels.supervisor.nav.tasks',
-      tab: 'panels.supervisor.tabs.tasks',
-      icon: 'check',
     },
     ...(ON_SERVER.clientServices
       ? [
@@ -178,16 +171,8 @@ export const supervisorPanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
-    {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: ({ request }) => [
-          tasksQuery('supervisor'),
-          openingTaskList('supervisor', request.url),
-        ],
-        skeleton: 'list',
-      }),
-    },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('supervisor', request.url)) },
     // Old addresses of the manager's pages (links in tasks and messages). The section and the mail
     // page moved to the executive panel's management tab (/executive/manager).
     {

@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
@@ -12,6 +12,8 @@ import { parseValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { pagesOf, useClampPage } from '@/lib/api/page';
+import { requestQuery } from '@/lib/tasks/changes';
+import { toast } from '@/lib/toast';
 import {
   taskListQuery,
   tasksAddressOf,
@@ -26,6 +28,7 @@ import { Orphans } from './components/Orphans';
 import { Requests } from './components/Requests';
 import { NewTaskButton } from '@/components/tasks/NewTask';
 import { SentCard } from './components/SideCards';
+import { RequestDialog } from './components/RequestDialog';
 import { TeamQueue } from './components/TeamQueue';
 import { ViewTabs, type View } from './components/ViewTabs';
 import type { TasksConfig } from './config';
@@ -34,7 +37,8 @@ import type { TasksConfig } from './config';
  * "Today's tasks": my follow-ups (nobody is left without a next step), colleagues' requests to
  * me, and my teams' queues. Tasks about a person are created on that person's page; «کار تازه»
  * here makes one about nobody, for me, colleagues or a team. Canvas "پیگیری‌ها" / "کارها".
- * `nav`: shown in place of the way back (the shared page's tabs, `/tasks`).
+ * `nav`: shown in place of the way back (the shared page's tabs, `/tasks`). `?task=<id>`: that
+ * task open over the page (a notification's link).
  */
 export function TasksPage({ config, nav }: { config: TasksConfig; nav?: ReactNode }) {
   const { t } = useTranslation('tasks');
@@ -42,8 +46,8 @@ export function TasksPage({ config, nav }: { config: TasksConfig; nav?: ReactNod
   const f = useFormat();
   // The list and the day live in the address (`?view=`, `?day=`): the calendar's day row links here.
   const [params, setParams] = useSearchParams();
-  const { view, day } = tasksAddressOf(params);
-  const change = (key: 'view' | 'day', value: string | null) => {
+  const { view, day, task } = tasksAddressOf(params);
+  const change = (key: 'view' | 'day' | 'task', value: string | null) => {
     const next = new URLSearchParams(params);
     if (value === null) next.delete(key);
     else next.set(key, value);
@@ -96,7 +100,45 @@ export function TasksPage({ config, nav }: { config: TasksConfig; nav?: ReactNod
         }
         aside={<SentCard sent={data.sent} config={config} />}
       />
+      {task !== null && (
+        <TaskFromAddress id={task} config={config} onClose={() => change('task', null)} />
+      )}
     </PageStack>
+  );
+}
+
+/**
+ * The task a notification links to (`?task=`), open with its conversation: as a request to me, one
+ * I sent, or a follow-up of mine. Gone or not mine to see: a note, and the page as it is.
+ */
+function TaskFromAddress({
+  id,
+  config,
+  onClose,
+}: {
+  id: number;
+  config: TasksConfig;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('tasks');
+  const { data, isError } = useQuery({ ...requestQuery(config.panel, id), retry: false });
+  useEffect(() => {
+    if (!isError) return;
+    toast.error(t('requests.gone'));
+    onClose();
+    // Once per failure: `onClose` changes the address.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isError]);
+  if (!data) return null;
+  return (
+    <RequestDialog
+      id={id}
+      config={config}
+      // Only who does it finishes or refuses it: a sent one, or another's, is to follow and talk.
+      sent={data.role === 'creator' || data.role === 'viewer'}
+      followUp={data.kind !== undefined && data.kind !== 'request'}
+      onClose={onClose}
+    />
   );
 }
 

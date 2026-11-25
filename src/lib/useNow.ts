@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/** The current time, updated every `interval` ms (waiting timers). */
+/** The current time, updated every `interval` ms (waiting timers, what is late by now). */
 export function useNow(interval = 1000) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {

@@ -9,6 +9,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import type { MyTask, TaskRequest } from '@/lib/tasks/api';
 import { useOpenTasks } from '@/lib/tasks/useOpenTasks';
+import { useNow } from '@/lib/useNow';
 import type { TasksConfig } from '../config';
 import { DoneDialog } from './DoneDialog';
 import { useDueLabel } from './due';
@@ -29,8 +30,8 @@ export function TaskPeek({ config, limit = 5 }: { config: TasksConfig; limit?: n
   const named = useDisplayName();
   const dueOf = useDueLabel();
   const { mine, requests, count } = useOpenTasks(config.panel);
-  // Read once: rows don't change group while the popup is open.
-  const [now] = useState(() => Date.now());
+  // A live clock: a row turns late while the popup stays open.
+  const now = useNow(30_000);
   const [done, setDone] = useState<MyTask | null>(null);
   const [open, setOpen] = useState<Row | null>(null);
 

@@ -454,6 +454,8 @@ function followUpDetail(overview: FullTasks, id: number, me: string): RequestDet
     reactions: [],
     people: [],
     body: task?.note ?? '',
+    kind: task ? 'mine' : 'team',
+    role: task ? 'owner' : 'viewer',
     watchers: [],
     thread: [],
   };
@@ -467,7 +469,27 @@ const CHANGE_KIND: Record<string, TaskChange['kind']> = {
   comments: 'comment',
 };
 
+/** `GET tasks/summary/`: the bell's and the dock's counts (Django `tasks_summary`). */
+export function summaryOf(overview: FullTasks) {
+  const now = Date.now();
+  const tonight = new Date(now).setHours(23, 59, 59, 999);
+  const today = [
+    ...overview.mine,
+    ...overview.requests.filter((task) => new Date(task.due_at).getTime() <= tonight),
+  ];
+  return {
+    waiting: overview.mine.length + overview.requests.length,
+    today: today.length,
+    late: today.filter((task) => new Date(task.due_at).getTime() < now).length,
+  };
+}
+
 export const taskHandlers = [
+  http.get(`${TASKS}/summary/`, () => {
+    const data = tasksOrError();
+    return data instanceof Response ? data : HttpResponse.json(summaryOf(data.tasks.overview));
+  }),
+
   http.get(`${TASKS}/`, () => {
     const data = tasksOrError();
     return data instanceof Response ? data : HttpResponse.json(overviewOf(data.tasks.overview));

@@ -49,9 +49,15 @@ export function PanelSwitcher({ user, panel, panels }: Props) {
   };
 
   // Desktop dropdown is non-modal: close it on Esc and on a click outside.
-  useDismiss(open, root, () => {
-    if (dialog.current?.open) close();
-  });
+  useDismiss(
+    open,
+    root,
+    // Closing gives focus back to the button (the dialog's `close` event).
+    () => {
+      if (dialog.current?.open) close();
+    },
+    dialog,
+  );
 
   if (panels.length < 2) return null;
 

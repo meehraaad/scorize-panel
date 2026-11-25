@@ -8,12 +8,14 @@ type Part = RefObject<HTMLElement | null>;
  * going to another page calls `onDismiss` with how it closed, so Esc can give focus back to the
  * button that opened it. `root`
  * may be several parts (a button rendered elsewhere and its popup). A dialog opened from inside
- * the popup is part of it (its <dialog> stays inside), and takes its own Esc.
+ * the popup is part of it (its <dialog> stays inside), and takes its own Esc. `own`: the popup's
+ * own <dialog>, when it is one: Esc inside it closes the popup.
  */
 export function useDismiss(
   open: boolean,
   root: Part | readonly Part[],
   onDismiss: (how: 'outside' | 'escape' | 'navigate') => void,
+  own?: RefObject<HTMLDialogElement | null>,
 ) {
   const dismiss = useEffectEvent(onDismiss);
   const inside = useEffectEvent((node: Node | null) =>
@@ -33,8 +35,12 @@ export function useDismiss(
       if (!inside(event.target as Node)) dismiss('outside');
     };
     const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      // A dialog opened from inside takes its own Esc, but not the popup's own <dialog> (`own`:
+      // the panel switcher's dropdown is one, focused as it opens).
       const dialog = event.target instanceof Element ? event.target.closest('dialog') : null;
-      if (event.key === 'Escape' && !inside(dialog)) dismiss('escape');
+      if (dialog && dialog !== own?.current && inside(dialog)) return;
+      dismiss('escape');
     };
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -42,5 +48,5 @@ export function useDismiss(
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, own]);
 }

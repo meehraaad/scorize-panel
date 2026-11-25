@@ -91,7 +91,8 @@
     "tomorrow": "Tomorrow: {{n}} follow-ups",
     "doneToday": "Done today: {{n}}",
     "emptyDay": "No follow-ups on {{day}}.",
-    "allDay": "Any time today"
+    "allDay": "Any time today",
+    "dayAndTime": "{{day}}, {{time}}"
   },
   "done": {
     "title": "Follow-up done",
@@ -187,6 +188,7 @@
       "in_progress": "Done"
     },
     "loading": "Request",
+    "gone": "This task is no longer there, or it isn't yours to see.",
     "from": "From {{name}} ({{role}}) to you · {{when}}",
     "watchers": "Watching: {{names}}",
     "steps": "Request status",

@@ -13,8 +13,17 @@ import type { TaskEmoji } from './reactions';
  * - `request`: I ask a colleague; they see it, work on it, finish or refuse it
  * - `team`: sent to a team's queue; whoever takes it becomes its owner
  * Panel-neutral: both panels use `/api/staff/v1/tasks/` (backend-changes.md T1–T12); `panel`
- * decides whose ids `person` carries (User for sales, Applicant for supervisor).
+ * decides whose ids `person` carries (User for sales, Applicant for supervisor), and `person.link`
+ * the page this panel may open for them (null: their name only).
  */
+
+/** The person a task is about. `link`: their page's id in the reader's panel; null or absent: no link. */
+export interface TaskPerson {
+  id: number;
+  link?: number | null;
+  name: string;
+  face?: Face | null;
+}
 
 export const TASKS_KEY = ['tasks'] as const;
 export const TASKS_API = '/staff/v1/tasks';
@@ -122,7 +131,7 @@ export interface MyTask {
   /** False: due some time that day (`due_at` is its 23:59), no hour set. Absent from an older Django. */
   timed?: boolean;
   /** Null for an internal task about nobody. */
-  person: { id: number; name: string; context: string; face?: Face | null } | null;
+  person: (TaskPerson & { context: string }) | null;
   source: TaskSource;
   /** How many times it was pushed back. */
   snoozed: number;
@@ -151,7 +160,7 @@ export interface TaskRequest {
   from: { name: string; role: string };
   created_at: string;
   text: string;
-  person: { id: number; name: string; face?: Face | null } | null;
+  person: TaskPerson | null;
   due_at: string;
   /** False: due some time that day (`due_at` is its 23:59), no hour set. Absent from an older Django. */
   timed?: boolean;
@@ -166,7 +175,7 @@ export interface QueueItem {
   team: TaskTeam | 'sales';
   automatic: boolean;
   text: string;
-  person: { id: number; name: string; face?: Face | null } | null;
+  person: TaskPerson | null;
   queued_at: string;
   /** Taken by me (it moved to my follow-ups), or by someone else. */
   taken: 'me' | 'other' | null;
@@ -224,12 +233,18 @@ export interface TaskListRow {
  * What the tasks page's address asks for: `?view=mine | requests | team` (the list it opens on) and
  * `?day=YYYY-MM-DD` (only what's due that day; the seller calendar's day row links here).
  */
-export function tasksAddressOf(params: URLSearchParams): { view: TaskList; day: string | null } {
+export function tasksAddressOf(params: URLSearchParams): {
+  view: TaskList;
+  day: string | null;
+  task: number | null;
+} {
   const view = params.get('view');
   const day = params.get('day') ?? '';
+  const task = Number(params.get('task'));
   return {
     view: view === 'requests' || view === 'team' ? view : 'mine',
     day: /^\d{4}-\d{2}-\d{2}$/.test(day) && parseValue(day) ? day : null,
+    task: Number.isSafeInteger(task) && task > 0 ? task : null,
   };
 }
 
@@ -261,15 +276,54 @@ export const taskListQuery = <L extends TaskList>(
     placeholderData: keepPreviousData,
   });
 
-/** What waits for me now (the bell and the dock): the first page of my follow-ups and of requests. */
+/**
+ * A panel's own tasks page from before the shared one (`/sales/tasks?view=…`, old links and
+ * bookmarks): the shared page (`/tasks`) on that panel's tasks, the same list, day and task.
+ */
+export function hubAddressFor(panel: TasksPanel, url: string) {
+  const from = new URL(url).searchParams;
+  const query = new URLSearchParams({ panel });
+  for (const key of ['view', 'day', 'task']) {
+    const value = from.get(key);
+    if (value) query.set(key, value);
+  }
+  return `/tasks?${query.toString()}`;
+}
+
+/** How often the bell and the dock ask again while the tab is in view: a request can arrive any time. */
+export const OPEN_TASKS_POLL = 60_000;
+
+export interface TasksSummary {
+  /** My follow-ups due by today and every open request to me (the bell). */
+  waiting: number;
+  /** What is due by the end of today, follow-ups and requests (the dock). */
+  today: number;
+  /** Of `today`, those past their time. */
+  late: number;
+}
+
+/** The bell's and the dock's counts, from the server (the lists only send a page of rows). */
+export const tasksSummaryQuery = queryOptions({
+  queryKey: [...TASKS_KEY, 'summary'],
+  queryFn: ({ signal }) => api<TasksSummary>(`${TASKS_API}/summary/`, { signal }),
+});
+
+/** What waits for me now (the bell and the dock): the counts and the first page of each list. */
 export const openTaskQueries = (panel: TasksPanel) =>
-  [taskListQuery(panel, 'mine', 1), taskListQuery(panel, 'requests', 1)] as const;
+  [
+    tasksSummaryQuery,
+    taskListQuery(panel, 'mine', 1),
+    taskListQuery(panel, 'requests', 1),
+  ] as const;
 
 export interface RequestDetail extends TaskRequest {
   reactions: ReactionDetail[];
   /** Sent to several people: each one's copy and how far it got (empty for one person). */
   people: { name: string; status: TaskStatus }[];
   body: string;
+  /** What the task is, and mine to do (`owner`), one I sent (`creator`) or another's (`viewer`). Absent from an older Django. */
+  kind?: TaskKind;
+  role?: 'owner' | 'creator' | 'viewer';
   watchers: string[];
   thread: { id: number; author: string; mine: boolean; at: string; text: string }[];
 }

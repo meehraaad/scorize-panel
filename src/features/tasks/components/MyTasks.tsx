@@ -14,6 +14,7 @@ import { useTaskChange } from '@/lib/tasks/changes';
 import { quickWhen, type QuickWhen } from '@/lib/when';
 import type { TasksConfig } from '../config';
 import { PersonRef } from './PersonRef';
+import { personLinkOf } from './personLink';
 import { DoneDialog } from './DoneDialog';
 import { RequestDialog } from './RequestDialog';
 import { TickButton } from './StatusMark';
@@ -177,6 +178,7 @@ function TaskRow({
   const [snoozing, setSnoozing] = useState(false);
   const [reason, setReason] = useState<(typeof REASONS)[number]>('customer_later');
   const due = useDueLabel()(task, now);
+  const personLink = task.person ? personLinkOf(task.person) : null;
   const meetingAhead =
     ON_SERVER.visitFollowUp && !!task.visit && new Date(task.visit.starts_at).getTime() > now;
 
@@ -257,13 +259,14 @@ function TaskRow({
       <div className="flex flex-none flex-wrap items-start gap-2">
         {task.action !== 'open' &&
           task.person &&
+          personLink !== null &&
           (config.onContact ? (
             <Button
               variant="outline"
               className="h-11 px-4 text-sm"
               onClick={() => {
                 if (task.person && task.action !== 'open')
-                  config.onContact?.(task.person.id, task.person.name, task.action);
+                  config.onContact?.(personLink, task.person.name, task.action);
               }}
             >
               {t(`mine.action.${task.action}`)}
@@ -271,7 +274,7 @@ function TaskRow({
           ) : (
             config.personPath && (
               <Link
-                to={config.personPath(task.person.id, task.action)}
+                to={config.personPath(personLink, task.action)}
                 className={buttonClass('outline', 'h-11 px-4 text-sm')}
               >
                 {t(`mine.action.${task.action}`)}

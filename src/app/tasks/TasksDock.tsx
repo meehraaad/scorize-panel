@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useId, useRef, useState } from 'react';
+import { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { NewTaskButton } from '@/components/tasks/NewTask';
@@ -11,42 +11,48 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { taskPanelOf, tasksQuery } from '@/lib/tasks/api';
 import { useOpenTasks } from '@/lib/tasks/useOpenTasks';
 import { useDismiss } from '@/lib/useDismiss';
+import { useNow } from '@/lib/useNow';
 import { TASK_CONTEXTS } from '@/panels/taskContexts';
 import { inboxHref } from './inbox';
+import { useDockOpen } from './dockState';
 
 /** A panel's tasks page or the shared one: the dock would only repeat it. */
 const TASKS_PAGE = /(^|\/)tasks\/?$/;
 
 /**
- * Today's tasks, always at hand: an ink pill in the bottom tray (how many wait, how many are late,
- * the next one's hour) that opens a small window above it with the list, done from its tick, and a
- * new task. It lines up with a seller's minimized logs and calls (DockTray); open windows such as
+ * Today's tasks, always at hand: an ink pill in the bottom tray (how many are due by tonight, how
+ * many are late, the next one's hour; the server's counts, not a page of rows) that opens a small
+ * window above it with the list, done from its tick, and a new task. Open or not is kept per tab. It lines up with a seller's minimized logs and calls (DockTray); open windows such as
  * a log take the other corner, so the two never cover each other.
  */
 export default function TasksDock({ user, panel }: { user: SessionUser; panel: string }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const tasksPanel = taskPanelOf(user, panel);
-  const { mine, requests, count } = useOpenTasks(tasksPanel);
-  const [open, setOpen] = useState(false);
+  const { summary, mine, requests, today: count, late } = useOpenTasks(tasksPanel);
+  const [open, setOpen] = useDockOpen(user.id);
+  const now = useNow(30_000);
   const overview = useQuery({ ...tasksQuery(tasksPanel), enabled: open });
   const pill = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLElement>(null);
   const titleId = useId();
   const { pathname } = useLocation();
   useDismiss(open, [pill, popup], (how) => {
+    // Like the chat dock it stays open from page to page; a press outside or Esc closes it.
+    if (how === 'navigate') return;
     setOpen(false);
     if (how === 'escape') pill.current?.focus();
   });
 
-  if (TASKS_PAGE.test(pathname) || !mine.data || !requests.data) return null;
+  if (TASKS_PAGE.test(pathname) || !summary.data || !mine.data || !requests.data) return null;
 
-  // "Now" is when the lists were read: they refresh on focus, and the counts follow them.
-  const now = Math.max(mine.dataUpdatedAt, requests.dataUpdatedAt);
-  const waiting = [...mine.data.results, ...requests.data.results];
-  const late = waiting.filter((task) => new Date(task.due_at).getTime() < now).length;
-  const next = waiting
-    .filter((task) => task.timed !== false && new Date(task.due_at).getTime() >= now)
+  // The next hour still to come today (a request due on a later day is not today's).
+  const tonight = new Date(now).setHours(23, 59, 59, 999);
+  const next = [...mine.data.results, ...requests.data.results]
+    .filter((task) => {
+      const due = new Date(task.due_at).getTime();
+      return task.timed !== false && due >= now && due <= tonight;
+    })
     .sort((a, b) => a.due_at.localeCompare(b.due_at))[0];
   const status =
     late > 0
@@ -65,7 +71,7 @@ export default function TasksDock({ user, panel }: { user: SessionUser; panel: s
           aria-expanded={open}
           aria-controls={open ? titleId : undefined}
           aria-label={t('dock.label', { open: f.number(count), late: f.number(late) })}
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => setOpen(!open)}
           className={`inline-flex h-12 max-w-full items-center gap-2.5 rounded-full bg-hero ps-2 pe-4 text-on-hero shadow-float transition-shadow [body:has([data-workspace-fullscreen])_&]:hidden ${
             open ? 'ring-3 ring-hero-accent' : ''
           }`}

@@ -3,12 +3,14 @@ import { FaceDot } from '@/components/customers/FaceDot';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import type { MyTask } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
+import { personLinkOf } from './personLink';
 
-type Person = Pick<NonNullable<MyTask['person']>, 'id' | 'name' | 'face'>;
+type Person = Pick<NonNullable<MyTask['person']>, 'id' | 'link' | 'name' | 'face'>;
 
 /**
  * The person a task is about: a link to their page in this panel, or just their face and name
- * where the reader has no page of theirs (the shared tasks page: a task doesn't open a customer).
+ * where the reader has no page of theirs or may not open it (the shared tasks page, a case that
+ * isn't mine).
  */
 export function PersonRef({
   person,
@@ -27,8 +29,9 @@ export function PersonRef({
     </>
   );
   const className = 'inline-flex items-center gap-1.5 align-middle font-medium';
-  return config.personPath ? (
-    <Link to={config.personPath(person.id)} className={`${className} text-primary-text`}>
+  const link = personLinkOf(person);
+  return config.personPath && link !== null ? (
+    <Link to={config.personPath(link)} className={`${className} text-primary-text`}>
       {body}
     </Link>
   ) : (

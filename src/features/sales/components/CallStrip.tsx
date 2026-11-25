@@ -7,7 +7,7 @@ import type { Face } from '@/lib/face/api';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { callDuration, callSeconds, type ObservedCall } from '@/lib/sales/phoneCalls';
 import { initialOf } from '@/lib/text';
-import { useNow } from '../useNow';
+import { useNow } from '@/lib/useNow';
 
 /** The status dot's color: amber while it rings, green in a call, grey once it is over. */
 const DOT = {

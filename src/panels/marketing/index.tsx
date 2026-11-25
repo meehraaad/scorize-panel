@@ -9,7 +9,7 @@ import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { lazyPage } from '@/lib/router/lazyPage';
-import { openingTaskList, taskListQuery, tasksQuery } from '@/lib/tasks/api';
+import { hubAddressFor, taskListQuery, tasksQuery } from '@/lib/tasks/api';
 import { pathwayRoutes } from '../pathwayRoutes';
 import type { PanelDefinition } from '../types';
 
@@ -57,13 +57,6 @@ export const marketingPanel: PanelDefinition = {
       icon: 'user',
     },
     {
-      id: 'tasks',
-      to: 'tasks',
-      label: 'panels.marketing.nav.tasks',
-      tab: 'panels.marketing.tabs.tasks',
-      icon: 'check',
-    },
-    {
       id: 'calendar',
       to: 'calendar',
       label: 'panels.marketing.nav.calendar',
@@ -108,13 +101,8 @@ export const marketingPanel: PanelDefinition = {
         skeleton: 'list',
       }),
     },
-    {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: ({ request }) => [tasksQuery('marketing'), openingTaskList('marketing', request.url)],
-        skeleton: 'list',
-      }),
-    },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('marketing', request.url)) },
     {
       path: 'calendar',
       // `tasks`: a click on a day opens the new-task composer.

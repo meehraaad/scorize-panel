@@ -40,7 +40,7 @@ import { toast } from '@/lib/toast';
 import { CallBrief } from './CallBrief';
 import { CallSteps, CallStrip } from './CallStrip';
 import { customerPath } from '../paths';
-import { useNow } from '../useNow';
+import { useNow } from '@/lib/useNow';
 import { useSalesFormat } from '../format';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { followAtOf, followOnOf, isVisitConflict, meetingAhead } from '../followUp';
