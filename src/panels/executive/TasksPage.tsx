@@ -1,14 +1,7 @@
-import { customerWorkspacePath } from './customer/paths';
-import type { TasksConfig } from '@/features/tasks/config';
 import { TasksPage } from '@/features/tasks/TasksPage';
+import { TASK_CONTEXTS } from '../taskContexts';
 
-const config: TasksConfig = {
-  panel: 'executive',
-  homePath: '/executive',
-  personPath: (id) => customerWorkspacePath(id),
-  person: 'customer',
-};
-
+/** /executive/tasks: this panel's follow-ups, colleagues' requests and team queues. */
 export default function ExecutiveTasksPage() {
-  return <TasksPage config={config} />;
+  return <TasksPage config={TASK_CONTEXTS.executive} />;
 }

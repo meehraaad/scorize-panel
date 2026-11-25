@@ -1,18 +1,7 @@
-import { openContactLog } from '@/lib/sales/contactDrafts';
-import { customerPath, salesPath } from '@/features/sales/paths';
-import type { TasksConfig } from '@/features/tasks/config';
 import { TasksPage } from '@/features/tasks/TasksPage';
+import { TASK_CONTEXTS } from '../taskContexts';
 
-const salesTasks: TasksConfig = {
-  panel: 'sales',
-  homePath: salesPath(),
-  onContact: (id, name, action) =>
-    openContactLog(id, name, { channel: action === 'message' ? 'whatsapp' : 'call' }),
-  personPath: (id, action) => customerPath(id, action),
-  person: 'customer',
-};
-
-/** /sales/tasks: the seller's follow-ups, requests and team queue. */
+/** /sales/tasks: this panel's follow-ups, colleagues' requests and team queues. */
 export default function SalesTasksPage() {
-  return <TasksPage config={salesTasks} />;
+  return <TasksPage config={TASK_CONTEXTS.sales} />;
 }

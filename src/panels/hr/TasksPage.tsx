@@ -1,16 +1,7 @@
-import { hrPath, personPath } from '@/features/hr/paths';
-import type { TasksConfig } from '@/features/tasks/config';
 import { TasksPage } from '@/features/tasks/TasksPage';
+import { TASK_CONTEXTS } from '../taskContexts';
 
-const hrTasks: TasksConfig = {
-  panel: 'hr',
-  homePath: hrPath(),
-  // A task about a staff member opens their file.
-  personPath: (id) => personPath(id),
-  person: 'employee',
-};
-
-/** /hr/tasks: HR's own tasks, colleagues' requests and the joining and leaving checklists' steps. */
+/** /hr/tasks: this panel's follow-ups, colleagues' requests and team queues. */
 export default function HrTasksPage() {
-  return <TasksPage config={hrTasks} />;
+  return <TasksPage config={TASK_CONTEXTS.hr} />;
 }

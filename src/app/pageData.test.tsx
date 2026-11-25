@@ -278,6 +278,10 @@ const PAGES: PageCase[] = [
   { path: '/account', user: SARA },
   { path: '/settings', user: SARA },
   { path: '/me', user: AMIR },
+  // Staff's tasks and notifications (the bell's page): whose tasks follow the address.
+  { path: '/tasks', user: MARYAM },
+  { path: '/tasks?panel=sales', user: NIMA },
+  { path: '/tasks?tab=notifications', user: ELHAM },
   { path: '/me/sales', user: NIMA },
 ];
 

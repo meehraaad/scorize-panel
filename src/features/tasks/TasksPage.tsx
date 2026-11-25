@@ -34,8 +34,9 @@ import type { TasksConfig } from './config';
  * "Today's tasks": my follow-ups (nobody is left without a next step), colleagues' requests to
  * me, and my teams' queues. Tasks about a person are created on that person's page; «کار تازه»
  * here makes one about nobody, for me, colleagues or a team. Canvas "پیگیری‌ها" / "کارها".
+ * `nav`: shown in place of the way back (the shared page's tabs, `/tasks`).
  */
-export function TasksPage({ config }: { config: TasksConfig }) {
+export function TasksPage({ config, nav }: { config: TasksConfig; nav?: ReactNode }) {
   const { t } = useTranslation('tasks');
   const { data } = useSuspenseQuery(tasksQuery(config.panel));
   const f = useFormat();
@@ -55,7 +56,7 @@ export function TasksPage({ config }: { config: TasksConfig }) {
 
   return (
     <PageStack>
-      <BackLink to={config.homePath}>{t('back')}</BackLink>
+      {nav ?? <BackLink to={config.homePath}>{t('back')}</BackLink>}
       <PageHeader
         title={t('title')}
         subtitle={t(`subtitle.${config.person}`)}

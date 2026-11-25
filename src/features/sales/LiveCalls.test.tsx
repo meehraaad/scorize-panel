@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router';
+import { DockTray } from '@/components/ui/DockTray';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
@@ -58,11 +59,12 @@ const snapshot = (calls: PhoneCall[], connected = true): PhoneSnapshot => ({
 
 function Workspace() {
   useContactDrafts();
+  // As in the app (WorkspaceLayout): minimized calls wait in the bottom tray.
   return (
-    <>
+    <DockTray>
       <LiveCalls owner={3} />
       <ContactWorkspace />
-    </>
+    </DockTray>
   );
 }
 

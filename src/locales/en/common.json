@@ -155,7 +155,9 @@
   "header": {
     "notifications": "Notifications",
     "notificationsUnread": "Notifications, {{n}} unread",
-    "customerSearch": "Search all customers"
+    "customerSearch": "Search all customers",
+    "tasks": "Tasks and notifications",
+    "tasksWaiting": "Tasks and notifications, {{n}} waiting"
   },
   "account": {
     "menu": "Account",
@@ -478,5 +480,8 @@
     "wrong": "The password is wrong.",
     "tooMany": "Too many wrong tries. Try again in 15 minutes.",
     "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens."
+  },
+  "colleagues": {
+    "others": "Other colleagues"
   }
 }

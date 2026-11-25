@@ -1,17 +1,15 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { FaceDot } from '@/components/customers/FaceDot';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Notice } from '@/components/ui/Notice';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type QueueItem } from '@/lib/tasks/api';
 import { useTaskChange } from '@/lib/tasks/changes';
 import type { TasksConfig } from '../config';
+import { PersonRef } from './PersonRef';
 import { RequestDialog } from './RequestDialog';
 
 /** Tasks given to a team, not a person: whoever takes one first owns it. */
@@ -26,7 +24,6 @@ export function TeamQueue({
   config: TasksConfig;
 }) {
   const { t } = useTranslation('tasks');
-  const named = useDisplayName();
   const f = useFormat();
   const change = useTaskChange();
   const [open, setOpen] = useState<number | null>(null);
@@ -66,14 +63,7 @@ export function TeamQueue({
                 <span className="text-[13px] text-text-2">
                   {item.person && (
                     <>
-                      {t('requests.about')}{' '}
-                      <Link
-                        to={config.personPath(item.person.id)}
-                        className="inline-flex items-center gap-1.5 align-middle text-primary-text"
-                      >
-                        <FaceDot name={item.person.name} face={item.person.face} size="sm" />
-                        {named(item.person.name)}
-                      </Link>
+                      {t('requests.about')} <PersonRef person={item.person} config={config} />
                       {' · '}
                     </>
                   )}

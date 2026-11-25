@@ -1,16 +1,14 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { FaceDot } from '@/components/customers/FaceDot';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { type TaskRequest } from '@/lib/tasks/api';
 import { useTaskChange } from '@/lib/tasks/changes';
 import type { TasksConfig } from '../config';
+import { PersonRef } from './PersonRef';
 import { ReactionSummary } from './Reactions';
 import { RequestDialog } from './RequestDialog';
 import { StatusMark, TickButton } from './StatusMark';
@@ -30,7 +28,6 @@ export function Requests({
   config: TasksConfig;
 }) {
   const { t } = useTranslation('tasks');
-  const named = useDisplayName();
   const f = useFormat();
   const change = useTaskChange();
   const [open, setOpen] = useState<number | null>(null);
@@ -68,14 +65,7 @@ export function Requests({
                 <span className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-text-2">
                   {request.person && (
                     <span>
-                      {t('requests.about')}{' '}
-                      <Link
-                        to={config.personPath(request.person.id)}
-                        className="inline-flex items-center gap-1.5 align-middle font-medium text-primary-text"
-                      >
-                        <FaceDot name={request.person.name} face={request.person.face} size="sm" />
-                        {named(request.person.name)}
-                      </Link>
+                      {t('requests.about')} <PersonRef person={request.person} config={config} />
                     </span>
                   )}
                   <span>

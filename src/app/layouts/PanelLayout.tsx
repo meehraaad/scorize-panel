@@ -1,13 +1,9 @@
 import { Logo } from '@/components/ui/Logo';
-import { useQuery } from '@tanstack/react-query';
-import { Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router';
-import { Icon } from '@/components/ui/Icon';
 import { PageSkeleton } from '@/components/ui/Skeleton';
-import { unreadQuery } from '@/lib/account/api';
-import { useFormat } from '@/lib/i18n/useFormat';
-import { hasAnyPermission } from '@/lib/auth/roles';
+import { hasAnyPermission, isActiveStaff } from '@/lib/auth/roles';
 import { loginHref, useSession } from '@/lib/auth/session';
 import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { useIdlePreload, useIntentPreload } from '@/lib/router/preload';
@@ -19,6 +15,9 @@ import { NavigationProgress } from './NavigationProgress';
 import { BottomTabs } from './BottomTabs';
 import { PanelFooter } from './PanelFooter';
 import { PanelSwitcher } from './PanelSwitcher';
+import { TasksBell } from '../tasks/TasksBell';
+
+const TasksDock = lazy(() => import('../tasks/TasksDock'));
 
 // Inactive items are quiet text; the current page is a dark pill with a small accent dot.
 const navLink = ({ isActive }: { isActive: boolean }) =>
@@ -36,8 +35,6 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
   const { t } = useTranslation();
   const user = useSession();
   const location = useLocation();
-  const format = useFormat();
-  const { data: unread = 0 } = useQuery({ ...unreadQuery, enabled: Boolean(user) });
   const useHidden = panel.useHiddenNav ?? useNoHiddenNav;
   const hidden = useHidden();
   const HeaderAction = panel.headerAction;
@@ -128,23 +125,7 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
           <div className="flex flex-none items-center lg:gap-1.5">
             <span aria-hidden="true" className="me-1 hidden h-6 w-px bg-hair xl:block" />
             {HeaderAction && <HeaderAction />}
-            <Link
-              to="/account#notifications"
-              className="relative inline-flex size-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-canvas hover:text-text"
-              aria-label={
-                unread
-                  ? t('header.notificationsUnread', { n: format.number(unread) })
-                  : t('header.notifications')
-              }
-            >
-              <Icon name="bell" size={18} />
-              {unread > 0 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute end-2.5 top-2.5 size-2.5 rounded-full bg-primary shadow-[0_0_0_2px_var(--surface)]"
-                />
-              )}
-            </Link>
+            <TasksBell user={user} panel={panel.id} />
             <AccountMenu
               user={user}
               customerLink={customerLink}
@@ -170,6 +151,13 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
       <PanelFooter />
 
       <BottomTabs panel={visible} />
+
+      {/* Staff's tasks wait in the bottom corner on every work panel (not as a customer). */}
+      {isActiveStaff(user) && panel.id !== applicantPanel.id && (
+        <Suspense fallback={null}>
+          <TasksDock user={user} panel={panel.id} />
+        </Suspense>
+      )}
     </div>
   );
 }

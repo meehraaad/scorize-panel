@@ -1,5 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { getRoles } from '@/lib/auth/roles';
+import type { SessionUser } from '@/lib/auth/session';
 import type { Face } from '@/lib/face/api';
 import { parseValue } from '@/lib/calendar';
 import type { Page } from '@/lib/api/page';
@@ -17,7 +19,24 @@ import type { TaskEmoji } from './reactions';
 export const TASKS_KEY = ['tasks'] as const;
 export const TASKS_API = '/staff/v1/tasks';
 
-export type TasksPanel = 'sales' | 'supervisor' | 'hr' | 'marketing' | 'executive';
+/** The panels with tasks of their own, in the panels' order. */
+const PANELS_WITH_TASKS = ['supervisor', 'executive', 'sales', 'marketing', 'hr'] as const;
+
+/** `staff`: the shared tasks page (`/tasks`) of a staff member outside these panels (no people's pages). */
+export type TasksPanel = (typeof PANELS_WITH_TASKS)[number] | 'staff';
+
+/** The panels whose tasks a user reads (`staff` alone for anyone without one). */
+export function taskPanelsOf(user: SessionUser): TasksPanel[] {
+  const roles: readonly string[] = getRoles(user);
+  const own = PANELS_WITH_TASKS.filter((panel) => roles.includes(panel));
+  return own.length > 0 ? own : ['staff'];
+}
+
+/** The tasks of `panel` when the user has them, else of their first panel with tasks, else `staff`. */
+export function taskPanelOf(user: SessionUser, panel?: string | null): TasksPanel {
+  const allowed = taskPanelsOf(user);
+  return allowed.find((own) => own === panel) ?? allowed[0] ?? 'staff';
+}
 
 export type TaskKind = 'mine' | 'request' | 'team';
 export type TaskStatus = 'open' | 'sent' | 'seen' | 'in_progress' | 'done' | 'rejected' | 'queued';
@@ -47,8 +66,12 @@ export interface TaskSummary {
 export interface Colleague {
   id: number;
   name: string;
-  /** "Consultant of this customer", "Supervisor": localized by the server. */
+  /** "Consultant of this customer" when suggested, else their team: localized by the server. */
   role: string;
+  /** Their team's name (lists are grouped by it); absent from an older Django. */
+  team?: string;
+  /** The people on this customer's case and the sales managers: listed first. */
+  suggested?: boolean;
 }
 
 export interface NewTask {
@@ -237,6 +260,10 @@ export const taskListQuery = <L extends TaskList>(
     },
     placeholderData: keepPreviousData,
   });
+
+/** What waits for me now (the bell and the dock): the first page of my follow-ups and of requests. */
+export const openTaskQueries = (panel: TasksPanel) =>
+  [taskListQuery(panel, 'mine', 1), taskListQuery(panel, 'requests', 1)] as const;
 
 export interface RequestDetail extends TaskRequest {
   reactions: ReactionDetail[];
