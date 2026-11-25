@@ -110,7 +110,10 @@ export async function colleagues(signal?: AbortSignal): Promise<Colleague[]> {
   ]);
   return staves
     .filter((item) => item.id !== me)
-    .map((item) => ({ id: item.id, name: item.full_name, role: item.team_display ?? '' }));
+    .map((item) => {
+      const team = item.team_display ?? '';
+      return { id: item.id, name: item.full_name, role: team, team };
+    });
 }
 
 const ACTION: Partial<Record<number, MyTask['action']>> = {

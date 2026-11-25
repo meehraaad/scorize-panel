@@ -47,7 +47,7 @@ import { weekOf, weekStart } from '@/lib/calendar';
 import i18n from '@/lib/i18n';
 import { calendarKind } from '@/lib/i18n/useCalendar';
 import { idParam, lazyPage } from '@/lib/router/lazyPage';
-import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
+import { hubAddressFor } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
 
 /**
@@ -91,14 +91,6 @@ export const hrPanel: PanelDefinition = {
       label: 'panels.hr.nav.today',
       tab: 'panels.hr.tabs.today',
       icon: 'home',
-    },
-    {
-      id: 'tasks',
-      permission: HR_PERMISSION,
-      to: 'tasks',
-      label: 'panels.hr.nav.tasks',
-      tab: 'panels.hr.tabs.tasks',
-      icon: 'check',
     },
     {
       id: 'calendar',
@@ -155,14 +147,8 @@ export const hrPanel: PanelDefinition = {
         skeleton: 'dashboard',
       }),
     },
-    {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        guard: hrOnly,
-        data: ({ request }) => [tasksQuery('hr'), openingTaskList('hr', request.url)],
-        skeleton: 'list',
-      }),
-    },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('hr', request.url)) },
     {
       path: 'calendar',
       // `tasks`: a click on a day opens the new-task composer.

@@ -3,7 +3,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { getRoles } from '@/lib/auth/roles';
 import { sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
-import { openingTaskList, tasksQuery } from '@/lib/tasks/api';
+import { hubAddressFor } from '@/lib/tasks/api';
 import type { PanelDefinition } from '../types';
 import { customerWorkspaceRoute } from './customer/routes';
 import { managerNavItem, managerRoute } from './manager';
@@ -30,13 +30,6 @@ export const executivePanel: PanelDefinition = {
       label: 'panels.executive.nav.tickets',
       tab: 'panels.executive.nav.tickets',
       icon: 'chat',
-    },
-    {
-      id: 'tasks',
-      to: 'tasks',
-      label: 'panels.executive.nav.tasks',
-      tab: 'panels.executive.nav.tasks',
-      icon: 'fileCheck',
     },
     // Executive management: the supervisor manager's pages and the mail servers, by key.
     managerNavItem,
@@ -84,13 +77,8 @@ export const executivePanel: PanelDefinition = {
         return null;
       },
     },
-    {
-      path: 'tasks',
-      ...lazyPage(() => import('./TasksPage'), ['tasks'], {
-        data: ({ request }) => [tasksQuery('executive'), openingTaskList('executive', request.url)],
-        skeleton: 'list',
-      }),
-    },
+    // Its tasks are on the shared page now: old links and bookmarks open them there.
+    { path: 'tasks', loader: ({ request }) => redirect(hubAddressFor('executive', request.url)) },
     managerRoute,
   ],
 };

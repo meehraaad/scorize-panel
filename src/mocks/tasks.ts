@@ -200,9 +200,9 @@ function supervisorTasksState(): TasksState {
         },
       ],
       colleagues: [
-        { id: 23, name: 'علی رضایی', role: 'سوپروایزر' },
-        { id: 22, name: 'الهام رضوی', role: 'سرپرست تیم نگارش' },
-        { id: 8, name: 'نیما رستمی', role: 'فروش' },
+        { id: 23, name: 'علی رضایی', role: 'سوپروایزر', team: 'سوپروایزر' },
+        { id: 22, name: 'الهام رضوی', role: 'سرپرست تیم نگارش', team: 'سرپرست تیم نگارش' },
+        { id: 8, name: 'نیما رستمی', role: 'فروش', team: 'فروش' },
       ],
     },
     details: new Map(details.map((detail) => [detail.id, detail])),
@@ -240,8 +240,8 @@ function hrTasksState(): TasksState {
       team: [],
       sent: [],
       colleagues: [
-        { id: 7, name: 'مریم کاظمی', role: 'سوپروایزر' },
-        { id: 9, name: 'رضا کامرانی', role: 'مدیر فروش' },
+        { id: 7, name: 'مریم کاظمی', role: 'سوپروایزر', team: 'سوپروایزر' },
+        { id: 9, name: 'رضا کامرانی', role: 'مدیر فروش', team: 'مدیر فروش' },
       ],
     },
     details: new Map(),
@@ -279,9 +279,27 @@ function marketingTasksState(): TasksState {
       team: [],
       sent: [],
       colleagues: [
-        { id: 12, name: 'مینا صادقی', role: 'تیم مارکتینگ' },
-        { id: 13, name: 'پویا فرهادی', role: 'تیم مارکتینگ' },
+        { id: 12, name: 'مینا صادقی', role: 'تیم مارکتینگ', team: 'تیم مارکتینگ' },
+        { id: 13, name: 'پویا فرهادی', role: 'تیم مارکتینگ', team: 'تیم مارکتینگ' },
       ],
+    },
+    details: new Map(),
+  };
+}
+
+/** Bahar, a new hire with no panel yet (`?panel=staff`, the shared page): nothing waits for her. */
+function emptyTasksState(): TasksState {
+  return {
+    overview: {
+      on_time: null,
+      orphans: [],
+      mine: [],
+      tomorrow: 0,
+      done_today: 0,
+      requests: [],
+      team: [],
+      sent: [],
+      colleagues: [{ id: 7, name: 'مریم کاظمی', role: 'تیم اجرا', team: 'تیم اجرا' }],
     },
     details: new Map(),
   };
@@ -289,7 +307,9 @@ function marketingTasksState(): TasksState {
 
 const HR_USER = 6;
 const MARKETING_USER = 7;
+const NEW_HIRE = 603;
 let hrTasks: TasksState | null = null;
+let hireTasks: TasksState | null = null;
 let marketingTasks: TasksState | null = null;
 let supervisorTasks: TasksState | null = null;
 
@@ -309,6 +329,10 @@ function tasksOrError(): TasksContext | Response {
   if (storage.get() === MARKETING_USER) {
     marketingTasks ??= marketingTasksState();
     return { tasks: marketingTasks, me: 'الهام نوری', onPerson: () => undefined };
+  }
+  if (storage.get() === NEW_HIRE) {
+    hireTasks ??= emptyTasksState();
+    return { tasks: hireTasks, me: 'بهار نیکو', onPerson: () => undefined };
   }
   if (storage.get() !== SUPERVISOR) return forbidden();
   supervisorTasks ??= supervisorTasksState();
@@ -430,6 +454,8 @@ function followUpDetail(overview: FullTasks, id: number, me: string): RequestDet
     reactions: [],
     people: [],
     body: task?.note ?? '',
+    kind: task ? 'mine' : 'team',
+    role: task ? 'owner' : 'viewer',
     watchers: [],
     thread: [],
   };
@@ -443,7 +469,27 @@ const CHANGE_KIND: Record<string, TaskChange['kind']> = {
   comments: 'comment',
 };
 
+/** `GET tasks/summary/`: the bell's and the dock's counts (Django `tasks_summary`). */
+export function summaryOf(overview: FullTasks) {
+  const now = Date.now();
+  const tonight = new Date(now).setHours(23, 59, 59, 999);
+  const today = [
+    ...overview.mine,
+    ...overview.requests.filter((task) => new Date(task.due_at).getTime() <= tonight),
+  ];
+  return {
+    waiting: overview.mine.length + overview.requests.length,
+    today: today.length,
+    late: today.filter((task) => new Date(task.due_at).getTime() < now).length,
+  };
+}
+
 export const taskHandlers = [
+  http.get(`${TASKS}/summary/`, () => {
+    const data = tasksOrError();
+    return data instanceof Response ? data : HttpResponse.json(summaryOf(data.tasks.overview));
+  }),
+
   http.get(`${TASKS}/`, () => {
     const data = tasksOrError();
     return data instanceof Response ? data : HttpResponse.json(overviewOf(data.tasks.overview));
@@ -557,5 +603,6 @@ export function resetTaskMocks() {
   supervisorTasks = null;
   hrTasks = null;
   marketingTasks = null;
+  hireTasks = null;
   resetTaskReactionMocks();
 }

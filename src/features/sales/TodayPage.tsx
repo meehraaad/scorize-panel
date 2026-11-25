@@ -19,7 +19,7 @@ import { NextUpCard, type NextUp } from './components/NextUpCard';
 import { TodayAgenda } from './components/TodayAgenda';
 import { TodayAside } from './components/TodaySide';
 import { salesPath } from './paths';
-import { useNow } from './useNow';
+import { useNow } from '@/lib/useNow';
 
 const MINUTE = 60_000;
 

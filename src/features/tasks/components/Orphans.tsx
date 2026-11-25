@@ -47,7 +47,7 @@ export function Orphans({
             <Avatar key={person.id} name={person.name} size="sm" stacked />
           ))}
         </span>
-        {first && (
+        {first && config.personPath && (
           <Link to={config.personPath(first.id)} className={buttonClass('outline')}>
             {t('orphans.action')}
           </Link>

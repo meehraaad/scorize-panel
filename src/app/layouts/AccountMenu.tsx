@@ -1,10 +1,11 @@
-import { Suspense, useEffect, useId, useRef, useState } from 'react';
+import { Suspense, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 import { Icon } from '@/components/ui/Icon';
 import { ONBOARDING_PATH } from '@/features/hr/paths';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { logout } from '@/lib/auth/logout';
+import { useDismiss } from '@/lib/useDismiss';
 import { applicantPanel } from '@/panels/applicant';
 import { panelHref } from '@/panels/types';
 import type { SessionUser } from '@/lib/auth/session';
@@ -45,7 +46,6 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
   const menuId = useId();
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const location = useLocation();
 
   const name = `${user.first_name} ${user.last_name}`.trim() || user.email || user.phone_number;
   const switching = panels.length > 1;
@@ -55,31 +55,10 @@ export function AccountMenu({ user, customerLink, extra, panel, panels }: Props)
     ON_SERVER.hrOnboarding &&
     (user.staff?.onboarding === 'draft' || user.staff?.onboarding === 'returned');
 
-  // Close after navigating.
-  const [lastPath, setLastPath] = useState(location.pathname);
-  if (lastPath !== location.pathname) {
-    setLastPath(location.pathname);
+  useDismiss(open, root, (how) => {
     setOpen(false);
-  }
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpen(false);
-        button.current?.focus();
-      }
-    };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+    if (how === 'escape') button.current?.focus();
+  });
 
   return (
     <div ref={root} className="relative">

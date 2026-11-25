@@ -503,6 +503,7 @@
       "peer": "Which colleague?",
       "peerSearch": "Search colleagues by name or role",
       "peerNoMatch": "No colleague matches that name or role.",
+      "peerSuggested": "Suggested for this customer",
       "peerHint": "They get an SMS. When they mark it seen or done, you're told.",
       "team": "Which team?",
       "teamHint": "Goes to the team's queue; whoever takes it owns it.",
