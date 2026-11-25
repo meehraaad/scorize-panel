@@ -54,9 +54,10 @@ describe('HR panel', () => {
     await user.click(sales);
     expect(await screen.findByRole('heading', { name: 'تیم فروش', level: 1 })).toBeInTheDocument();
     const people = screen.getByRole('list', { name: 'افراد تیم' });
-    const rows = within(people).getAllByRole('listitem');
-    expect(within(rows[0]!).getByRole('link', { name: /علی رضایی/ })).toBeInTheDocument();
-    expect(within(rows[0]!).getByText('۳ کار عقب')).toBeInTheDocument();
+    const [first] = within(people).getAllByRole('listitem');
+    if (!first) throw new Error('no people in the team');
+    expect(within(first).getByRole('link', { name: /علی رضایی/ })).toBeInTheDocument();
+    expect(within(first).getByText('۳ کار عقب')).toBeInTheDocument();
     const overdue = screen.getByRole('region', { name: 'کارهای عقب‌افتاده‌ی تیم' });
     expect(within(overdue).getAllByText('پیگیری مدارک سفارت')).toHaveLength(2);
     await user.click(screen.getByRole('link', { name: /تیم‌ها/ }));
