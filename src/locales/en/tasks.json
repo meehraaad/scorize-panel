@@ -279,7 +279,10 @@
     "calendarTitle": "Pick a time on the calendar",
     "calendarHint": "Tap a free spot to make that hour the task’s due time.",
     "onBoard": "On a board",
-    "board": { "mine": "My board", "team": "Team board" },
+    "board": {
+      "mine": "My board",
+      "team": "Team board"
+    },
     "noColumn": "List only"
   },
   "reactions": {
@@ -423,6 +426,15 @@
     "cardHint": "Moving or removing a card never changes the task itself.",
     "column": "Column",
     "openTask": "Open task",
-    "remove": "Take off the board"
+    "remove": "Take off the board",
+    "teamSuggested": {
+      "queue": "Queue",
+      "doing": "In progress",
+      "done": "Done"
+    },
+    "teamStart": {
+      "title": "Set up the team board",
+      "text": "You make the columns and the whole team sees them. Put the panel’s tasks on it; each person moves their own card."
+    }
   }
 }

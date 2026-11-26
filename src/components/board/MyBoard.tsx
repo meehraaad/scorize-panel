@@ -265,11 +265,14 @@ function EmptyBoard({ panel, scope }: { panel: BoardPanel; scope: BoardScope }) 
     change.mutate(
       {
         kind: 'add',
-        names: [
-          t('board.suggested.today'),
-          t('board.suggested.week'),
-          t('board.suggested.waiting'),
-        ],
+        names:
+          scope === 'team'
+            ? [
+                t('board.teamSuggested.queue'),
+                t('board.teamSuggested.doing'),
+                t('board.teamSuggested.done'),
+              ]
+            : [t('board.suggested.today'), t('board.suggested.week'), t('board.suggested.waiting')],
       },
       { onError: () => toast.error(t('board.failed')) },
     );
@@ -290,9 +293,13 @@ function EmptyBoard({ panel, scope }: { panel: BoardPanel; scope: BoardScope }) 
           />
         </div>
         <aside className="flex max-w-md flex-col gap-3.5 rounded-card bg-hero p-6 text-on-hero">
-          <h2 className="m-0 font-display text-lead font-bold">{t('board.empty.title')}</h2>
-          <p className="m-0 text-sm leading-7 text-on-hero-2">{t('board.empty.text')}</p>
-          <ul className="m-0 flex list-none flex-col gap-2.5 p-0 text-sm">
+          <h2 className="m-0 font-display text-lead font-bold">
+            {t(scope === 'team' ? 'board.teamStart.title' : 'board.empty.title')}
+          </h2>
+          <p className="m-0 text-sm leading-7 text-on-hero-2">
+            {t(scope === 'team' ? 'board.teamStart.text' : 'board.empty.text')}
+          </p>
+          <ul hidden={scope === 'team'} className="m-0 flex list-none flex-col gap-2.5 p-0 text-sm">
             {EMPTY_POINTS.map((point) => (
               <li key={point} className="flex items-center gap-2.5">
                 <span

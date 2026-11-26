@@ -176,7 +176,7 @@ describe('my board', () => {
       const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
       await user.type(within(dialog).getByLabelText('چه کاری؟'), 'بررسی فرم‌ها');
       const board = await within(dialog).findByRole('group', { name: 'روی برد' });
-      await user.click(within(board).getByRole('button', { name: 'این هفته' }));
+      await user.click(within(board).getByRole('button', { name: 'در حال انجام' }));
       await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
       await waitFor(() => expect(sent).toMatchObject({ panel: 'supervisor', kind: 'mine' }));
       expect(typeof sent?.['team_column']).toBe('number');
