@@ -1003,7 +1003,7 @@
     "seller": "Assigned to {{name}}",
     "noSeller": "Not assigned",
     "tasks": {
-      "add": "All-day task on {{day}}",
+      "add": "Task with no hour on {{day}}",
       "row": "Tasks"
     },
     "taskBlock": "task",
@@ -1742,7 +1742,7 @@
       "stale": "The stages were changed somewhere else meanwhile. Reload the page.",
       "failed": "Could not save. Try again.",
       "list": "Board stages",
-      "listHint": "Change the order with the up and down buttons. Locked stages are fixed because the contract and payment move them.",
+      "listHint": "Change the order with the up and down buttons. System stages can be moved and renamed, but not removed.",
       "fixed": {
         "new": "First stage",
         "draft": "Manager approval",
@@ -1794,7 +1794,7 @@
         "phases": "Each of “Contacted”, “Consulted” and “Offer sent” needs at least one stage.",
         "moves": "Choose where the cards of {{names}} go, at the bottom of the page."
       },
-      "system": "The system fills this column (contracts and reports); it can’t be removed.",
+      "system": "A system stage; it can’t be removed.",
       "systemHint": "Leave empty to keep the default name."
     },
     "tags": {

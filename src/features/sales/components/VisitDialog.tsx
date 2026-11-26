@@ -408,6 +408,7 @@ export function VisitForm({
                 {/* Asking a colleague gives them a task: the sales admin's (meeting0). */}
                 <ColleagueSearch
                   label={t('visit.colleague')}
+                  panel="sales"
                   picked={colleague ? [colleague] : []}
                   onChange={(picked) => setColleague(picked[0] ?? null)}
                   hint={t('visit.colleagueHint')}

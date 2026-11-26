@@ -70,7 +70,7 @@ export function FollowUpWhen({
               <Icon name="calendar" size={16} />
               {follow === 'other' && followAt
                 ? t('customer.logDialog.followWhen', {
-                    day: f.weekdayName(followAt),
+                    day: f.weekday(followAt),
                     time: f.time(followAt),
                   })
                 : t('customer.logDialog.fromCalendar')}

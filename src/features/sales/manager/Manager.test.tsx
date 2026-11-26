@@ -672,7 +672,7 @@ describe('board stages (S48)', () => {
     await user.click(screen.getByRole('switch', { name: /^اجباری/ }));
     await user.click(screen.getByRole('button', { name: 'ذخیره' }));
     expect(
-      await screen.findByText('مرحله‌ها ذخیره شد و تابلوی همه‌ی تیم به‌روز شد.'),
+      await screen.findByText('مرحله‌ها ذخیره شد و برد همه‌ی تیم به‌روز شد.'),
     ).toBeInTheDocument();
 
     cleanup();
@@ -703,7 +703,7 @@ describe('board stages (S48)', () => {
     );
     await user.click(screen.getByRole('button', { name: 'ذخیره' }));
     expect(
-      await screen.findByText('مرحله‌ها ذخیره شد و تابلوی همه‌ی تیم به‌روز شد.'),
+      await screen.findByText('مرحله‌ها ذخیره شد و برد همه‌ی تیم به‌روز شد.'),
     ).toBeInTheDocument();
   });
 });
@@ -726,7 +726,7 @@ describe('system columns (meeting0 round 2)', () => {
     await user.click(screen.getByRole('button', { name: 'بردن امضا شد به بالا' }));
     await user.click(screen.getByRole('button', { name: 'ذخیره' }));
     expect(
-      await screen.findByText('مرحله‌ها ذخیره شد و تابلوی همه‌ی تیم به‌روز شد.'),
+      await screen.findByText('مرحله‌ها ذخیره شد و برد همه‌ی تیم به‌روز شد.'),
     ).toBeInTheDocument();
 
     cleanup();

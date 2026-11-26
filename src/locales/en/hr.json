@@ -252,10 +252,11 @@
     "save": "Start leaving",
     "saved": "Leaving checklist opened",
     "person": "Colleague",
-    "personHint": "Type the name of someone who still works here.",
+    "personHint": "An active colleague",
     "noMatch": "No active colleague with this name.",
     "change": "Change",
-    "saveFor": "Start {{name}}’s leaving"
+    "saveFor": "Start {{name}}’s leaving",
+    "loading": "Loading colleagues…"
   },
   "returnDialog": {
     "title": "Bring back",

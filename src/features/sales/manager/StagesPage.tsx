@@ -251,15 +251,15 @@ export default function StagesPage() {
                     type="button"
                     aria-current={key === selected ? 'true' : undefined}
                     onClick={() => setSelected(key)}
-                    className={`flex min-h-14 min-w-0 flex-1 flex-col justify-center rounded-xl px-3 text-start text-sm shadow-[inset_0_0_0_1px_var(--line-2)] ${key === selected ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]' : 'bg-surface'}`}
+                    className={`flex min-h-14 min-w-0 flex-1 flex-col justify-center rounded-xl px-3 text-start text-sm ${key === selected ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]' : 'bg-surface shadow-[inset_0_0_0_1px_var(--line-2)]'}`}
                   >
-                    <span className="flex items-center gap-1.5 truncate font-medium">
+                    <span className="flex min-w-0 items-center gap-1.5 font-medium">
                       {system && (
                         <span title={t('manager.stages.system')} className="flex text-info">
                           <Icon name="settings" size={14} />
                         </span>
                       )}
-                      {name}
+                      <span className="truncate">{name}</span>
                     </span>
                     <span className="text-xs text-text-2">
                       {system

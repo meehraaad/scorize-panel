@@ -165,7 +165,7 @@ function Board({
               className="mx-2.5 mb-2.5 flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-surface hover:text-text focus-visible:outline-2 focus-visible:outline-focus"
             >
               <Icon name="plus" size={16} />
-              {t('board.addTask')}
+              {t(scope === 'team' ? 'board.team.addTask' : 'board.addTask')}
             </button>
           )
         }
@@ -513,7 +513,7 @@ function AddTaskDialog({
       open
       onClose={onClose}
       title={t('board.addTitle', { name: column.name })}
-      subtitle={t('board.addHint')}
+      subtitle={t(scope === 'team' ? 'board.team.addHint' : 'board.addHint')}
       closeLabel={t('close')}
     >
       <div className="flex flex-col gap-4">

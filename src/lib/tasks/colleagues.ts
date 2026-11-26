@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { TASKS_API, TASKS_KEY, type Colleague, type TasksPanel } from './api';
+import { TASKS_API, type Colleague, type TasksPanel } from './api';
 
 /* The colleague search: only the task forms ask it, so it stays out of `./api.ts` (first load). */
 
@@ -13,7 +13,8 @@ export const COLLEAGUE_SEARCH_MIN = 2;
  */
 export const colleagueSearchQuery = (search: string, panel?: TasksPanel) =>
   queryOptions({
-    queryKey: [...TASKS_KEY, 'colleagues', panel ?? 'all', search],
+    // Outside the tasks key: a change to a task doesn't refetch the searches.
+    queryKey: ['colleagues', panel ?? 'all', search],
     queryFn: ({ signal }) => {
       const query = new URLSearchParams({ search });
       if (panel && panel !== 'staff') query.set('panel', panel);

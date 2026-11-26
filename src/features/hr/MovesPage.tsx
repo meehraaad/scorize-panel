@@ -39,11 +39,15 @@ export default function MovesPage() {
         title={t('moves.title')}
         subtitle={t('moves.subtitle')}
         actions={
-          <div role="group" className="flex rounded-full bg-surface p-1 shadow-panel">
+          <div
+            role="group"
+            aria-label={t('moves.title')}
+            className="flex rounded-full bg-surface p-1 shadow-panel"
+          >
             <button
               type="button"
               onClick={() => setStarting('entry')}
-              className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-on-primary"
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               <Icon name="plus" size={18} />
               {t('staff.new')}
@@ -51,7 +55,7 @@ export default function MovesPage() {
             <button
               type="button"
               onClick={() => setStarting('exit')}
-              className="inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-urgent hover:bg-tint"
+              className="inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-urgent hover:bg-tint focus-visible:outline-2 focus-visible:outline-focus"
             >
               {t('person.exit')}
             </button>

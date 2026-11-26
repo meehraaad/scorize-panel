@@ -269,7 +269,7 @@ describe('tasks page (sales panel)', () => {
     await openTasks();
     await user.click(screen.getByRole('button', { name: 'کار تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
-    expect(within(dialog).getByText('شما مدیر این پنل هستید')).toBeInTheDocument();
+    expect(within(dialog).getByText('مدیر این پنل')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
     await user.type(within(dialog).getByLabelText('چه کاری؟'), 'نمونه قرارداد ترکیه را بفرست');
     await user.click(within(dialog).getByRole('button', { name: 'فرستادن درخواست' }));

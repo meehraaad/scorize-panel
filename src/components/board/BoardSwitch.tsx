@@ -16,7 +16,7 @@ export function BoardSwitch({
   const { t } = useTranslation('tasks');
   const pill = (on: boolean) =>
     `inline-flex min-h-10 items-center rounded-full px-4 text-sm font-bold focus-visible:outline-2 focus-visible:outline-focus ${
-      on ? 'bg-hero text-on-hero' : 'text-text-2 hover:text-text'
+      on ? 'bg-hero text-on-hero dark:bg-tint' : 'text-text-2 hover:text-text'
     }`;
   return (
     <nav aria-label={t('board.which')} className="flex rounded-full bg-surface p-1 shadow-panel">

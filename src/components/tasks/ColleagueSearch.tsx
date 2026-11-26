@@ -108,7 +108,7 @@ export function ColleagueSearch({
                 >
                   {colleague.name.charAt(0)}
                 </span>
-                {colleague.name}
+                <span className="max-w-40 truncate">{colleague.name}</span>
                 <button
                   type="button"
                   onClick={() => onChange(picked.filter((one) => one.id !== colleague.id))}

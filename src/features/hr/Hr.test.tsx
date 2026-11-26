@@ -220,7 +220,9 @@ describe('HR panel', () => {
           .filter((link) => /\/tasks\?view=mine&day=/.test(link.getAttribute('href') ?? '')),
       ).not.toHaveLength(0),
     );
-    const add = within(row).getAllByRole('button', { name: /^کار کل‌روز برای / })[0] as HTMLElement;
+    const add = within(row).getAllByRole('button', {
+      name: /^کار بدون ساعت برای /,
+    })[0] as HTMLElement;
     await user.click(add);
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
     expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();

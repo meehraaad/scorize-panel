@@ -21,6 +21,8 @@ type Row =
 
 /** What still waits on a request I sent: not yet done by everyone, nor refused. */
 const waiting = (request: SentRequest) => request.status !== 'done';
+/** Rows shown before «more»: a long backlog shouldn't push the day's list off the screen. */
+const FIRST_ROWS = 8;
 
 /**
  * «نیازمند توجه» (meeting0, canvas 1A): my overdue follow-ups and the requests I sent that are not
@@ -35,6 +37,7 @@ export function AttentionCard({ sent, config }: { sent: SentRequest[]; config: T
   const dueLabel = useDueLabel();
   const [now] = useState(() => Date.now());
   const [filter, setFilter] = useState<Filter>('all');
+  const [expanded, setExpanded] = useState(false);
   const [done, setDone] = useState<MyTask | null>(null);
   const [open, setOpen] = useState<{ id: number; sent: boolean } | null>(null);
   const mine = useQuery(taskListQuery(config.panel, 'mine', 1));
@@ -47,7 +50,9 @@ export function AttentionCard({ sent, config }: { sent: SentRequest[]; config: T
     .map((request) => ({ kind: 'sent', due: new Date(request.due_at).getTime(), request }));
   const all = [...late, ...asked].sort((a, b) => a.due - b.due);
   if (all.length === 0) return null;
-  const rows = filter === 'all' ? all : all.filter((row) => row.kind === filter);
+  const matching = filter === 'all' ? all : all.filter((row) => row.kind === filter);
+  const rows = expanded ? matching : matching.slice(0, FIRST_ROWS);
+  const hidden = matching.length - rows.length;
   const count = { all: all.length, late: late.length, sent: asked.length };
   const whom = (request: SentRequest) =>
     'team' in request.to
@@ -87,7 +92,7 @@ export function AttentionCard({ sent, config }: { sent: SentRequest[]; config: T
         <span>{t('attention.column.who')}</span>
         <span className="text-end">{t('attention.column.state')}</span>
       </div>
-      {rows.length === 0 ? (
+      {matching.length === 0 ? (
         <p className="m-0 px-5 py-6 text-sm text-text-2 lg:px-8">{t('attention.none')}</p>
       ) : (
         <ul className="m-0 list-none p-0">
@@ -173,6 +178,15 @@ export function AttentionCard({ sent, config }: { sent: SentRequest[]; config: T
             );
           })}
         </ul>
+      )}
+      {hidden > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="min-h-11 w-full cursor-pointer px-5 text-sm font-semibold text-primary-text hover:bg-surface focus-visible:outline-2 focus-visible:outline-focus lg:px-8"
+        >
+          {t('attention.more', { n: f.number(hidden) })}
+        </button>
       )}
       <DoneDialog
         key={done?.id ?? 'closed'}

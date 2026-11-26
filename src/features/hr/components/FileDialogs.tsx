@@ -273,9 +273,15 @@ export function ExitDialog({
           onSearch={setSearch}
           options={options}
           message={
-            search.trim() && staff.data && options.length === 0
-              ? t('exitDialog.noMatch')
-              : undefined
+            !search.trim()
+              ? undefined
+              : staff.isError
+                ? t('error')
+                : !staff.data
+                  ? t('exitDialog.loading')
+                  : options.length === 0
+                    ? t('exitDialog.noMatch')
+                    : undefined
           }
           listLabel={t('exitDialog.person')}
           changeLabel={t('exitDialog.change')}

@@ -436,7 +436,7 @@ describe('sales panel, seller pages', () => {
 
   it('board: deals by stage', async () => {
     renderApp('/sales/board');
-    expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'برد فروش' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'پیش‌نویس، منتظر مدیر' })).toHaveTextContent(
       'مدیر بررسی می‌کند',
     );
@@ -497,7 +497,7 @@ describe('sales panel, seller pages', () => {
       }),
     );
     const router = renderApp('/sales/board');
-    await screen.findByRole('heading', { name: 'تابلوی فروش' });
+    await screen.findByRole('heading', { name: 'برد فروش' });
     const card = screen
       .getAllByRole('link')
       .find((link) => link.getAttribute('href') === '/sales/customers/101');
@@ -507,7 +507,7 @@ describe('sales panel, seller pages', () => {
       await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/sales\/customers\//));
       // The customer page's shape (PageSkeleton), not the board.
       expect(await screen.findByRole('status', { name: /در حال بارگذاری/ })).toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: 'تابلوی فروش' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'برد فروش' })).not.toBeInTheDocument();
     } finally {
       release();
     }
@@ -543,7 +543,7 @@ describe('sales panel, seller pages', () => {
     const { router } = await openMonth();
     expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();
     await router.navigate('/sales/board');
-    expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'برد فروش' })).toBeInTheDocument();
     await router.navigate('/me/sales');
     expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /^ماه من · / })).not.toBeInTheDocument();

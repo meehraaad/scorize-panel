@@ -75,7 +75,7 @@ export function CalendarSlots<T, K extends QueryKey>({
   const thisWeek = weekOf(now, startDay);
   const picked = parseValue(value);
   const [week, setWeek] = useState(() => weekOf(picked ?? now, startDay));
-  const { data, isPending } = useQuery(query(week));
+  const { data, isPending, isError } = useQuery(query(week));
   const busy = busyOf(data);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const dayTasks = new Map<string, DayTask[]>();
@@ -116,6 +116,11 @@ export function CalendarSlots<T, K extends QueryKey>({
         />
       </div>
       <p className="m-0 text-xs text-text-2">{hint}</p>
+      {isError && (
+        <p role="alert" className="m-0 text-xs text-urgent">
+          {t('slots.failed')}
+        </p>
+      )}
       <EventCalendar
         label={label}
         week={week}
@@ -221,7 +226,7 @@ export function PickChip({
       aria-haspopup="dialog"
       className={`inline-flex min-h-11 flex-none cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
         on
-          ? 'bg-hero text-on-hero'
+          ? 'bg-hero text-on-hero dark:bg-tint'
           : 'text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint'
       }`}
     >

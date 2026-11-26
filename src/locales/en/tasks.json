@@ -198,13 +198,13 @@
     "by": "From",
     "dueLabel": "Due",
     "penalty": "Late penalty",
-    "penaltyOn": "Pay deduction",
+    "penaltyOn": "Deducted from pay",
     "penaltyOff": "None",
     "you": "You",
     "sending": "Sending…",
     "notSent": "The message was not sent.",
     "retry": "Send again",
-    "startThread": "No messages yet. Write a question or news here.",
+    "startThread": "No messages yet.",
     "due": "Due: {{when}}"
   },
   "team": {
@@ -238,12 +238,12 @@
       "person": "For a colleague",
       "team": "For the whole team"
     },
-    "meHint": "It shows in “My follow-ups” from the day it is due, and reminds you then. Until that day it is only counted under later tasks.",
+    "meHint": "Shows in «My follow-ups» from its due day.",
     "people": "Colleague",
     "pickSomeone": "Choose at least one colleague.",
     "several": "You can choose several people.",
     "eachOwn": "Each of them does it separately, and you see how far each one got.",
-    "teamHint": "Each member of this panel’s team gets their own copy, and you follow everyone in one row.",
+    "teamHint": "Each person gets their own copy.",
     "due": "Due",
     "other": "Another date and time",
     "date": "Date and time",
@@ -269,11 +269,11 @@
       "person": "One or more people",
       "team": "Each gets a copy"
     },
-    "admin": "You are this panel’s admin",
+    "admin": "Admin of this panel",
     "selfOnly": "This task is for you. The panel’s admin sends tasks to a colleague or the whole team.",
     "whatAbout": "New task about {{name}}",
     "penalty": "Late penalty",
-    "penaltyHint": "Done after its due time, it counts in the month’s record.",
+    "penaltyHint": "If done late, it is deducted from the month’s pay.",
     "fromCalendar": "From the calendar",
     "picked": "{{day}} at {{time}}",
     "calendarTitle": "Pick a time on the calendar",
@@ -313,7 +313,7 @@
     "openCount": "{{n}} open tasks this day",
     "pickDay": "Pick {{day}}, no hour",
     "task": "My task",
-    "add": "All-day task on {{day}}",
+    "add": "Task with no hour on {{day}}",
     "more": "+{{n}} more",
     "dayCount": "{{n}} open tasks that day; open the tasks page",
     "chipDone": "(done)"
@@ -364,18 +364,20 @@
     "me": "Me",
     "penalty": "With penalty",
     "progress": "{{done}} of {{total}}",
-    "none": "Nothing here."
+    "none": "Nothing here.",
+    "more": "Show {{n}} more"
   },
   "slots": {
     "label": "My week, to pick a task time",
-    "hint": "Tap a free spot to pick that hour. Your other timed tasks show too.",
+    "hint": "Tap a free spot to pick that hour.",
     "picked": "Picked time: {{day}} at {{time}}",
-    "past": "That time has passed. Pick one from now on."
+    "past": "That time has passed. Pick one from now on.",
+    "failed": "The week didn’t load. Try again."
   },
   "board": {
     "teamTitle": "Team board",
     "teamHint": "The whole team sees it; each moves their own cards.",
-    "teamEmpty": "The panel's admin hasn't made any columns yet.",
+    "teamEmpty": "The panel’s admin hasn’t made any columns yet.",
     "title": "My board",
     "private": "Only you see this board.",
     "which": "Which board",
@@ -387,7 +389,7 @@
     "newColumn": "New column",
     "openCard": "Card: {{text}}",
     "due": "{{day}} · {{time}}",
-    "dueDay": "{{day}} · all day",
+    "dueDay": "{{day}} · no hour",
     "tag": {
       "done": "Done",
       "late": "Late",
@@ -401,8 +403,8 @@
     },
     "empty": {
       "title": "Arrange your tasks your way",
-      "text": "The columns are yours: you name and order them. Each card is one of your tasks; moving it never changes the task's due time, status or conversation.",
-      "fromNew": "Put a task straight into a column from «New task»",
+      "text": "Make your own columns and arrange them.",
+      "fromNew": "Put a task straight into a column from “New task”",
       "sent": "Add the requests you sent, to follow them",
       "remove": "Removing a card never deletes the task",
       "start": "Start with three suggested columns"
@@ -412,9 +414,9 @@
     "create": "Create",
     "save": "Save",
     "columnTitle": "Column {{name}}",
-    "earlier": "Move earlier",
-    "later": "Move later",
-    "deleteHint": "Deleting the column takes its {{n}} cards off the board; the tasks themselves stay.",
+    "earlier": "One column to the right",
+    "later": "One column to the left",
+    "deleteHint": "{{n}} cards come off the board; the tasks stay.",
     "delete": "Delete column",
     "deleteSure": "Yes, delete it",
     "addTitle": "Put a task in “{{name}}”",
@@ -423,7 +425,7 @@
     "loading": "Loading…",
     "noCandidates": "No open task off the board was found.",
     "added": "Put in “{{name}}”.",
-    "cardHint": "Moving or removing a card never changes the task itself.",
+    "cardHint": "Moving or removing a card never changes the task.",
     "column": "Column",
     "openTask": "Open task",
     "remove": "Take off the board",
@@ -434,7 +436,11 @@
     },
     "teamStart": {
       "title": "Set up the team board",
-      "text": "You make the columns and the whole team sees them. Put the panel’s tasks on it; each person moves their own card."
+      "text": "Make the columns and put the panel’s tasks on it."
+    },
+    "team": {
+      "addTask": "Add a team task",
+      "addHint": "The panel’s open tasks not on the board yet."
     }
   }
 }

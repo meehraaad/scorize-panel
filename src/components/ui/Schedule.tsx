@@ -109,7 +109,7 @@ function DayRowCell({
           aria-label={row.addLabel?.(day)}
           title={row.addLabel?.(day)}
           onClick={() => add(day)}
-          className="mt-auto inline-flex size-8 items-center justify-center self-end rounded-full text-text-2 hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
+          className="mt-auto inline-flex size-10 items-center justify-center self-end rounded-full text-text-2 hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
         >
           <Icon name="plus" size={16} />
         </button>

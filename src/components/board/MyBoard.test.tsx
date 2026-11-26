@@ -24,7 +24,7 @@ describe('my board', () => {
     const user = userEvent.setup();
     renderApp('/sales/board');
     const switcher = await screen.findByRole('navigation', { name: 'کدام برد' });
-    expect(within(switcher).getByRole('link', { name: 'تابلوی فروش' })).toHaveAttribute(
+    expect(within(switcher).getByRole('link', { name: 'برد فروش' })).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -104,7 +104,7 @@ describe('my board', () => {
         .map((h) => h.textContent);
     await user.click(within(board).getByRole('button', { name: 'تنظیم ستون امروز' }));
     let dialog = await screen.findByRole('dialog', { name: 'ستون امروز' });
-    await user.click(within(dialog).getByRole('button', { name: 'یک ستون جلوتر' }));
+    await user.click(within(dialog).getByRole('button', { name: 'یک ستون به چپ' }));
     await waitFor(() => expect(names()).toEqual(['این هفته', 'امروز', 'منتظر دیگران']));
     const field = within(dialog).getByLabelText('نام ستون');
     await user.clear(field);

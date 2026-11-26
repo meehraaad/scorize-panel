@@ -11,7 +11,7 @@ import { useUser } from '@/lib/auth/session';
 import { BOARDS_KEY, columnChoicesQuery } from '@/lib/boards/api';
 import { parseValue, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { TASKS_KEY, type Colleague, type NewTask, type TasksPanel } from '@/lib/tasks/api';
+import { type Colleague, type NewTask, type TasksPanel } from '@/lib/tasks/api';
 import { useCreateTask } from '@/lib/tasks/changes';
 import { canAssignTasks, canPenalize } from '@/lib/tasks/rights';
 import { toast } from '@/lib/toast';
@@ -68,7 +68,7 @@ export function NewTaskDialog({
   day: dueDay,
   slots: PickSlots,
   onCreated,
-  also = TASKS_KEY,
+  also,
 }: {
   open: boolean;
   panel: TasksPanel;
@@ -164,7 +164,7 @@ export function NewTaskDialog({
       onSuccess: () => {
         onCreated?.();
         if (task.column || task.team_column)
-          void client.invalidateQueries({ queryKey: BOARDS_KEY });
+          void client.invalidateQueries({ queryKey: [...BOARDS_KEY, panel] });
         toast.success(
           target === 'person'
             ? t('new.sent.people', { n: f.number(n) })
@@ -239,7 +239,7 @@ export function NewTaskDialog({
             <PickChip on={pickedAt !== null} onClick={() => setPicking(true)}>
               <Icon name="calendar" size={16} />
               {pickedAt
-                ? t('new.picked', { day: f.weekdayName(pickedAt), time: f.time(pickedAt) })
+                ? t('new.picked', { day: f.weekday(pickedAt), time: f.time(pickedAt) })
                 : t('new.fromCalendar')}
             </PickChip>
           }
@@ -305,9 +305,9 @@ export function NewTaskDialog({
                     type="button"
                     aria-pressed={on}
                     onClick={() => setPick({ board, column: String(choice.id) })}
-                    className={`min-h-11 rounded-full px-4 text-sm ${
+                    className={`min-h-11 max-w-full truncate rounded-full px-4 text-sm ${
                       on
-                        ? 'bg-hero font-bold text-on-hero'
+                        ? 'bg-hero font-bold text-on-hero dark:bg-tint'
                         : 'shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-tint'
                     }`}
                   >

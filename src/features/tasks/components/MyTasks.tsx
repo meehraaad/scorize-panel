@@ -73,8 +73,14 @@ export function MyTasks({
         {date ? t('mine.emptyDay', { day: f.weekday(date) }) : t('mine.empty')}
       </EmptyState>
     );
+  // Everything on this page is overdue (shown above): the pager still reaches the later pages.
   if (lateAbove && all.every((task) => groupOf(task, now) === 'late'))
-    return <EmptyState variant="card">{t('mine.onlyLate')}</EmptyState>;
+    return (
+      <>
+        <EmptyState variant="card">{t('mine.onlyLate')}</EmptyState>
+        {pager}
+      </>
+    );
 
   return (
     <Card aria-label={t('view.mine.label')}>

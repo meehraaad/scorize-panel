@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useRef, useState, type SubmitEvent } from 'react';
+import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
@@ -109,6 +109,16 @@ export function RequestDialog({
         !followUp &&
         (refusing ? (
           <>
+            {/* The reason sits with its button, where the eye already is (not under the conversation). */}
+            <div className="basis-full">
+              <TextAreaField
+                label={t('requests.reason')}
+                rows={2}
+                autoFocus
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </div>
             <Button
               variant="danger"
               className="flex-1"
@@ -286,14 +296,6 @@ export function RequestDialog({
               </form>
             )}
           </section>
-          {refusing && (
-            <TextAreaField
-              label={t('requests.reason')}
-              rows={2}
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-            />
-          )}
         </>
       )}
     </Dialog>
@@ -307,8 +309,18 @@ const EMOJIS = ['👍', '✅', '🙏', '❤️', '👀', '🎉', '😊', '😂',
 function EmojiButton({ onPick }: { onPick: (emoji: string) => void }) {
   const { t } = useTranslation('tasks');
   const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    box.current?.querySelector<HTMLButtonElement>('[role="group"] button')?.focus();
+    const away = (event: PointerEvent) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', away);
+    return () => document.removeEventListener('pointerdown', away);
+  }, [open]);
   return (
-    <div className="relative flex-none">
+    <div ref={box} className="relative flex-none">
       <button
         type="button"
         aria-expanded={open}
@@ -323,7 +335,12 @@ function EmojiButton({ onPick }: { onPick: (emoji: string) => void }) {
         <div
           role="group"
           aria-label={t('requests.emoji')}
-          onKeyDown={(event) => event.key === 'Escape' && setOpen(false)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Escape') return;
+            // Inside a dialog: Escape closes the grid, not the whole dialog.
+            event.stopPropagation();
+            setOpen(false);
+          }}
           className="absolute start-0 bottom-14 z-20 grid w-max grid-cols-7 gap-1 rounded-2xl bg-surface p-1.5 shadow-panel"
         >
           {EMOJIS.map((emoji) => (
