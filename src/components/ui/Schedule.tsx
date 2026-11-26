@@ -643,8 +643,12 @@ function Week({
   const onKey = (event: KeyboardEvent) => {
     if (event.key === 'Escape' && value) onChange(null);
   };
-  const narrowOf = (day: ScheduleDay) =>
-    !loading && day.items.length === 0 && !dayRow?.keepsWide?.(day.date) && !isZoomed(day);
+  const isEmpty = (day: ScheduleDay) =>
+    day.items.length === 0 && !dayRow?.keepsWide?.(day.date) && !isZoomed(day);
+  // An empty day shrinks to give the busy ones room; a week with nothing on it keeps every day
+  // full width rather than huddling at one side (a panel with no timed tasks).
+  const allEmpty = days.every(isEmpty);
+  const narrowOf = (day: ScheduleDay) => !loading && !allEmpty && isEmpty(day);
   const widthOf = (day: ScheduleDay) =>
     isZoomed(day)
       ? 'min-w-0 flex-[4]'

@@ -318,8 +318,9 @@ describe('tasks page (supervisor panel)', () => {
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
     await user.click(within(dialog).getByRole('button', { name: 'از تقویم' }));
     const picker = await screen.findByRole('dialog', { name: /تقویم/ });
-    // The «کارها» row: a narrow week shows a day's tasks with no hour as a count.
-    expect(await within(picker).findByTitle('۱ کار باز این روز')).toBeInTheDocument();
+    // The «کارها» row: the day's task with no hour, as a chip (a week with nothing timed keeps
+    // every day full width).
+    expect(await within(picker).findByTitle('جمع‌بندی پرونده‌های هفته')).toBeInTheDocument();
   });
 
   it('a request to several colleagues: how many have done it, and each one', async () => {

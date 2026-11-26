@@ -104,14 +104,17 @@ export function CalendarSlots<T, K extends QueryKey>({
 
   return (
     <div className="flex flex-col gap-2">
-      <WeekNav
-        week={week}
-        onWeekChange={setWeek}
-        thisWeek={thisWeek}
-        min={thisWeek}
-        max={addDays(thisWeek, 7 * WEEKS_AHEAD)}
-        large={false}
-      />
+      {/* Its buttons and title in one row, as on the calendar pages. */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <WeekNav
+          week={week}
+          onWeekChange={setWeek}
+          thisWeek={thisWeek}
+          min={thisWeek}
+          max={addDays(thisWeek, 7 * WEEKS_AHEAD)}
+          large={false}
+        />
+      </div>
       <p className="m-0 text-xs text-text-2">{hint}</p>
       <EventCalendar
         label={label}
