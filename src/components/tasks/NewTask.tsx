@@ -16,7 +16,8 @@ import { useCreateTask } from '@/lib/tasks/changes';
 import { canAssignTasks, canPenalize } from '@/lib/tasks/rights';
 import { toast } from '@/lib/toast';
 import { fromLocalInput, quickWhen } from '@/lib/when';
-import { PickChip, type Slots } from './CalendarSlots';
+import { taskCalendarQuery } from '@/lib/tasks/calendar';
+import { PickChip, TaskSlots, type Slots } from './CalendarSlots';
 import { ColleagueSearch } from './ColleagueSearch';
 
 const TARGETS = ['me', 'person', 'team'] as const;
@@ -78,7 +79,7 @@ export function NewTaskDialog({
   due?: Date | undefined;
   /** Opened on a day of the calendar: due that day, with no hour (one can be set). */
   day?: Date | undefined;
-  /** Each panel's picker of a time on its week; without one there is no «از تقویم». */
+  /** Each panel's picker of a time on its week; without one, my tasks of the panel (`TaskSlots`). */
   slots?: Slots | undefined;
   /** After it is saved (the opener refreshes what shows the new task). */
   onCreated?: (() => void) | undefined;
@@ -104,6 +105,16 @@ export function NewTaskDialog({
   const [day, setDay] = useState(dueDay ? toValue(dueDay, false) : '');
   const [checked, setChecked] = useState(false);
   const [picking, setPicking] = useState(false);
+  const pickTime = (value: string) => {
+    setWhen('other');
+    setDate(value);
+    setPicking(false);
+  };
+  const pickDay = (value: string) => {
+    setWhen('day');
+    setDay(value);
+    setPicking(false);
+  };
   const pickedAt = when === 'other' ? parseValue(date) : null;
 
   // The boards' columns, read when the composer opens (the shared page has no board).
@@ -225,14 +236,12 @@ export function NewTaskDialog({
           value={when}
           onChange={setWhen}
           extra={
-            PickSlots && (
-              <PickChip on={pickedAt !== null} onClick={() => setPicking(true)}>
-                <Icon name="calendar" size={16} />
-                {pickedAt
-                  ? t('new.picked', { day: f.weekdayName(pickedAt), time: f.time(pickedAt) })
-                  : t('new.fromCalendar')}
-              </PickChip>
-            )
+            <PickChip on={pickedAt !== null} onClick={() => setPicking(true)}>
+              <Icon name="calendar" size={16} />
+              {pickedAt
+                ? t('new.picked', { day: f.weekdayName(pickedAt), time: f.time(pickedAt) })
+                : t('new.fromCalendar')}
+            </PickChip>
           }
           options={WHENS.map((value) => ({
             value,
@@ -320,35 +329,31 @@ export function NewTaskDialog({
           </div>
         )}
       </form>
-      {PickSlots && (
-        <Dialog
-          open={picking}
-          onClose={() => setPicking(false)}
-          size="wide"
-          title={t('new.calendarTitle')}
-          subtitle={t('new.calendarHint')}
-          closeLabel={t('close')}
-        >
-          {picking && (
-            // The picker's calendar loads with it, not with the composer.
-            <Suspense fallback={null}>
-              <PickSlots
+      <Dialog
+        open={picking}
+        onClose={() => setPicking(false)}
+        size="wide"
+        title={t('new.calendarTitle')}
+        subtitle={t('new.calendarHint')}
+        closeLabel={t('close')}
+      >
+        {picking && (
+          // The picker's calendar loads with it, not with the composer. A panel with no week of
+          // its own (supervisor, executive, the shared page) shows my tasks of that panel.
+          <Suspense fallback={null}>
+            {PickSlots ? (
+              <PickSlots value={pickedAt ? date : ''} onChange={pickTime} onDayPick={pickDay} />
+            ) : (
+              <TaskSlots
                 value={pickedAt ? date : ''}
-                onChange={(value) => {
-                  setWhen('other');
-                  setDate(value);
-                  setPicking(false);
-                }}
-                onDayPick={(value) => {
-                  setWhen('day');
-                  setDay(value);
-                  setPicking(false);
-                }}
+                onChange={pickTime}
+                onDayPick={pickDay}
+                query={taskCalendarQuery(panel)}
               />
-            </Suspense>
-          )}
-        </Dialog>
-      )}
+            )}
+          </Suspense>
+        )}
+      </Dialog>
     </Dialog>
   );
 }

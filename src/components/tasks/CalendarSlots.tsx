@@ -15,6 +15,7 @@ export const TASK_MINUTES = 30;
 export const TASK_COLOR = 'var(--cal-5)';
 
 const PICKED = 'picked';
+
 /** How far ahead the picker's weeks go. */
 const WEEKS_AHEAD = 8;
 

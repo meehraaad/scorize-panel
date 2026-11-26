@@ -508,6 +508,26 @@ export function summaryOf(overview: FullTasks) {
 export const taskHandlers = [
   http.get(`${TASKS}/colleagues/`, ({ request }) => colleaguesFound(request)),
 
+  // The composer's «از تقویم» in panels with no calendar of their own: one day-only task this week.
+  http.get(`${TASKS}/calendar/`, ({ request }) => {
+    const from = new URL(request.url).searchParams.get('from') ?? '';
+    return HttpResponse.json({
+      tasks: [],
+      task_rows: [
+        {
+          id: 9901,
+          kind: 'mine',
+          text: 'جمع‌بندی پرونده‌های هفته',
+          due_at: `${from}T20:29:00Z`,
+          timed: false,
+          done: false,
+          customer: null,
+          name: '',
+        },
+      ],
+    });
+  }),
+
   http.get(`${TASKS}/summary/`, () => {
     const data = tasksOrError();
     return data instanceof Response ? data : HttpResponse.json(summaryOf(data.tasks.overview));
