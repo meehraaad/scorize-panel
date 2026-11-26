@@ -157,18 +157,22 @@ function Board({
             </button>
           )
         }
-        laneFooter={(lane) =>
-          manage && (
+        laneFooter={(lane) => {
+          if (!manage) return null;
+          // A plus is enough here (as on the calendar's day row); its words are its name and tooltip.
+          const label = t(scope === 'team' ? 'board.team.addTask' : 'board.addTask');
+          return (
             <button
               type="button"
               onClick={() => setAdding(columns.find((column) => column.id === lane.id) ?? null)}
-              className="mx-2.5 mb-2.5 flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-surface hover:text-text focus-visible:outline-2 focus-visible:outline-focus"
+              aria-label={label}
+              title={label}
+              className="mx-2.5 mb-2.5 inline-flex size-10 cursor-pointer items-center justify-center self-end rounded-full text-text-2 hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
             >
-              <Icon name="plus" size={16} />
-              {t(scope === 'team' ? 'board.team.addTask' : 'board.addTask')}
+              <Icon name="plus" size={18} />
             </button>
-          )
-        }
+          );
+        }}
         after={
           manage &&
           columns.length < MAX_COLUMNS && (
