@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { hrPath, personPath as staffFilePath } from '@/features/hr/paths';
 import { marketingPath } from '@/features/marketing/paths';
 import { customerPath, salesPath } from '@/features/sales/paths';
@@ -6,6 +7,21 @@ import { openContactLog } from '@/lib/sales/contactDrafts';
 import type { TasksPanel } from '@/lib/tasks/api';
 import { customerWorkspacePath } from './executive/customer/paths';
 import type { TasksConfig } from '@/features/tasks/config';
+
+// Each panel's week picker for the composer's «از تقویم»: loaded when that window opens.
+const salesSlots = lazy(() =>
+  import('@/features/sales/components/FollowUpWhen').then((module) => ({
+    default: module.FollowUpSlots,
+  })),
+);
+const hrSlots = lazy(() =>
+  import('@/features/hr/CalendarPage').then((module) => ({ default: module.HrSlots })),
+);
+const marketingSlots = lazy(() =>
+  import('@/features/marketing/CalendarPage').then((module) => ({
+    default: module.MarketingSlots,
+  })),
+);
 
 /**
  * Each panel's tasks: who they are about and where those people's pages are. One list for the
@@ -20,6 +36,7 @@ export const TASK_CONTEXTS: Record<TasksPanel, TasksConfig> = {
       openContactLog(id, name, { channel: action === 'message' ? 'whatsapp' : 'call' }),
     personPath: (id, action) => customerPath(id, action),
     person: 'customer',
+    slots: salesSlots,
   },
   supervisor: {
     panel: 'supervisor',
@@ -34,6 +51,7 @@ export const TASK_CONTEXTS: Record<TasksPanel, TasksConfig> = {
     // A task about a staff member opens their file.
     personPath: (id) => staffFilePath(id),
     person: 'employee',
+    slots: hrSlots,
   },
   marketing: {
     panel: 'marketing',
@@ -42,6 +60,7 @@ export const TASK_CONTEXTS: Record<TasksPanel, TasksConfig> = {
     // the tasks page itself.
     personPath: () => marketingPath('tasks'),
     person: 'employee',
+    slots: marketingSlots,
   },
   executive: {
     panel: 'executive',

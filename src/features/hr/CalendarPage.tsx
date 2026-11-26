@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TaskSlots, type SlotsProps } from '@/components/tasks/CalendarSlots';
 import { TaskCalendar, type DayMark } from '@/components/tasks/TaskCalendar';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -57,8 +58,14 @@ export default function CalendarPage() {
           label: t(`calendar.kind.${kind}`),
         }))}
         marksOf={marksOf}
+        slots={HrSlots}
         onCreated={() => void client.invalidateQueries({ queryKey: [...HR_KEY, 'calendar'] })}
       />
     </PageStack>
   );
+}
+
+/** A new HR task's «از تقویم»: my week of this calendar (the same request as the page). */
+export function HrSlots(props: SlotsProps) {
+  return <TaskSlots {...props} query={calendarQuery} />;
 }

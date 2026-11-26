@@ -9,24 +9,12 @@ import { toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { TaskCalendarData } from '@/lib/tasks/calendar';
 import type { TasksPanel } from '@/lib/tasks/api';
-
-const TASK_MINUTES = 30;
-const TASK_COLOR = 'var(--cal-5)';
-/** A task added on a day without a time is due at this hour (or the next full hour, today). */
-const TASK_HOUR = 10;
+import { TASK_COLOR, TASK_MINUTES, type Slots } from './CalendarSlots';
 
 // Only when a day is clicked.
 const NewTaskDialog = lazy(() =>
   import('./NewTask').then((module) => ({ default: module.NewTaskDialog })),
 );
-
-const dueOn = (day: Date, now: Date) => {
-  const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), TASK_HOUR);
-  if (at > now) return at;
-  const next = new Date(now);
-  next.setHours(now.getHours() + 1, 0, 0, 0);
-  return next;
-};
 
 /** Something above a day besides my tasks (a first day of work, a campaign starting). */
 export interface DayMark {
@@ -50,9 +38,9 @@ export interface LegendItem {
 /**
  * A panel's week of my tasks (the HR and marketing calendars; the sales calendar adds calls and
  * consultations on its own): my tasks with an hour on the week, and above each day the panel's own
- * marks with how many of my tasks are left that day (a link to that day on the tasks page). A
- * click on a day or an empty future hour opens the new-task composer. The page owns the week and
- * its query, so the route's loader can start the first week with the page.
+ * marks and my tasks of that day with no hour (canvas 4A). «+ کار کل‌روز» on a day adds one due
+ * that day with no hour; an empty future hour, one due then. The page owns the week and its
+ * query, so the route's loader can start the first week with the page.
  * Needs the `tasks` namespace on the route.
  */
 export function TaskCalendar({
@@ -68,6 +56,7 @@ export function TaskCalendar({
   tasksPath,
   legend,
   marksOf,
+  slots,
   onCreated,
 }: {
   /** The calendar's name (the page's title). */
@@ -88,13 +77,17 @@ export function TaskCalendar({
   legend: readonly LegendItem[];
   /** The marks above a day (`YYYY-MM-DD`). */
   marksOf: (day: string) => readonly DayMark[];
+  /** The composer's «از تقویم»: the panel's week picker. */
+  slots?: Slots | undefined;
   /** After a task is created from the calendar (refresh the week). */
   onCreated: () => void;
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const [chosen, setChosen] = useState<string | null>(null);
-  const [newTaskOn, setNewTaskOn] = useState<Date | null>(null);
+  /** The composer is open: due at an hour, or on a day with no hour. */
+  const [newTask, setNewTask] = useState<{ due: Date } | { day: Date } | null>(null);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const events: CalendarEvent[] = (data?.task_rows ?? [])
     .filter((row) => row.timed)
@@ -117,18 +110,36 @@ export function TaskCalendar({
   const dayCell = (day: Date, compact: boolean) => {
     const value = toValue(day, false);
     const marks = marksOf(value);
-    const tasks = data?.tasks.find((row) => row.day === value);
-    const open = tasks ? tasks.mine + tasks.requests : 0;
-    if (marks.length === 0 && open === 0) return null;
+    const tasks = (data?.task_rows ?? []).filter(
+      (row) => !row.timed && toValue(new Date(row.due_at), false) === value,
+    );
+    if (marks.length === 0 && tasks.length === 0) return null;
+    const dayOf = (view: 'mine' | 'requests') =>
+      `${tasksPath}?${new URLSearchParams({ view, day: value }).toString()}`;
+    const chips = (
+      <DayTasks
+        compact={compact}
+        late={day < today}
+        moreTo={dayOf(tasks.every((row) => row.kind === 'request') ? 'requests' : 'mine')}
+        items={tasks.map((row) => ({
+          key: String(row.id),
+          text: row.text,
+          tone: row.kind,
+          done: row.done,
+          to: dayOf(row.kind === 'request' ? 'requests' : 'mine'),
+        }))}
+      />
+    );
     if (compact)
-      return (
+      return marks.length > 0 ? (
         <span className="flex min-h-11 items-center justify-center text-xs font-bold text-text-2">
-          {f.number(marks.length + open)}
+          {f.number(marks.length + tasks.filter((row) => !row.done).length)}
         </span>
+      ) : (
+        chips
       );
-    const view = tasks && tasks.mine === 0 ? 'requests' : 'mine';
     return (
-      <span className="flex min-w-0 flex-col gap-1 py-1">
+      <div className="flex min-w-0 flex-col gap-1 py-1">
         {marks.map((mark) => {
           const body = (
             <>
@@ -159,16 +170,8 @@ export function TaskCalendar({
             </span>
           );
         })}
-        {open > 0 && (
-          <Link
-            to={`${tasksPath}?${new URLSearchParams({ view, day: value }).toString()}`}
-            className="flex min-h-11 items-center gap-1 rounded-md bg-tint px-1.5 text-[11px] font-bold text-primary-text"
-          >
-            <Icon name="check" size={12} />
-            {t('calendar.tasks', { n: f.number(open) })}
-          </Link>
-        )}
-      </span>
+        {chips}
+      </div>
     );
   };
 
@@ -194,23 +197,25 @@ export function TaskCalendar({
           onChange={setChosen}
           loading={loading}
           now={now}
-          onSlotPick={(start) => start.getTime() >= Date.now() && setNewTaskOn(start)}
+          onSlotPick={(start) => start.getTime() >= Date.now() && setNewTask({ due: start })}
           dayRow={{
             label: dayRowLabel,
             cell: dayCell,
-            onAdd: (day) => setNewTaskOn(dueOn(day, new Date())),
+            onAdd: (day) => setNewTask({ day }),
             addLabel: (day) => t('calendar.add', { day: f.weekday(day) }),
+            addText: t('calendar.addDay'),
             keepsWide: (day) => marksOf(toValue(day, false)).length > 0,
           }}
         />
       </Card>
-      {newTaskOn && (
+      {newTask && (
         <Suspense fallback={null}>
           <NewTaskDialog
             open
-            due={newTaskOn}
+            {...newTask}
             panel={panel}
-            onClose={() => setNewTaskOn(null)}
+            slots={slots}
+            onClose={() => setNewTask(null)}
             onCreated={onCreated}
           />
         </Suspense>
@@ -225,5 +230,94 @@ function Legend({ color, children }: { color: string; children: ReactNode }) {
       <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: color }} />
       {children}
     </li>
+  );
+}
+
+/** Chips shown on a day before «+N more». */
+const SHOWN = 3;
+
+/** What a chip's dot says: my own task, a colleague's request, a customer's follow-up call. */
+const TONE = { mine: 'var(--cal-5)', request: 'var(--cal-1)', call: 'var(--text-2)' } as const;
+
+/** Something due on a day with no hour: a chip on the calendar's «کارها» row. */
+export interface DayTask {
+  key: string;
+  text: string;
+  tone: keyof typeof TONE;
+  done: boolean;
+  /** Where it opens (its list on the tasks page, the customer's page). */
+  to: string;
+}
+
+/**
+ * A day's tasks with no hour on the calendar's «کارها» row (canvas 4A): a chip each (its dot, done
+ * ones struck), the first few and «+N more» to the tasks page on that day; on a past day the open
+ * ones are late. A narrow day shows only how many are open. Nothing due: nothing.
+ * Needs the `tasks` namespace on the route.
+ */
+export function DayTasks({
+  items,
+  compact,
+  late,
+  moreTo,
+}: {
+  items: readonly DayTask[];
+  compact: boolean;
+  /** The day has passed: what is still open is late. */
+  late: boolean;
+  /** The tasks page on that day. */
+  moreTo: string;
+}) {
+  const { t } = useTranslation('tasks');
+  const f = useFormat();
+  if (items.length === 0) return null;
+  const open = items.filter((item) => !item.done).length;
+  if (compact)
+    return (
+      <Link
+        to={moreTo}
+        aria-label={t('calendar.dayCount', { n: f.number(open) })}
+        className="flex min-h-11 items-center justify-center rounded-md text-xs font-bold text-text-2 hover:bg-tint focus-visible:outline-2 focus-visible:outline-focus"
+      >
+        {f.number(open)}
+      </Link>
+    );
+  const hidden = items.length - SHOWN;
+  return (
+    <ul className="m-0 flex min-w-0 list-none flex-col gap-1 p-0">
+      {items.slice(0, hidden > 0 ? SHOWN : items.length).map((item) => (
+        <li key={item.key} className="min-w-0">
+          <Link
+            to={item.to}
+            title={item.text}
+            className={`flex min-h-8 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-focus ${
+              item.done
+                ? 'text-text-2 line-through hover:bg-tint'
+                : late
+                  ? 'bg-warn-tint text-urgent hover:brightness-95'
+                  : 'bg-canvas text-text hover:bg-tint'
+            }`}
+          >
+            <span
+              aria-hidden="true"
+              className="size-2 flex-none rounded-full"
+              style={{ background: item.done ? 'var(--good)' : TONE[item.tone] }}
+            />
+            <span className="truncate">{item.text}</span>
+            {item.done && <span className="sr-only">{t('calendar.chipDone')}</span>}
+          </Link>
+        </li>
+      ))}
+      {hidden > 0 && (
+        <li>
+          <Link
+            to={moreTo}
+            className="flex min-h-8 items-center px-2 text-xs font-semibold text-primary-text hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+          >
+            {t('calendar.more', { n: f.number(hidden) })}
+          </Link>
+        </li>
+      )}
+    </ul>
   );
 }

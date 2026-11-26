@@ -272,7 +272,11 @@
     "selfOnly": "This task is for you. The panel’s admin sends tasks to a colleague or the whole team.",
     "whatAbout": "New task about {{name}}",
     "penalty": "Late penalty",
-    "penaltyHint": "Done after its due time, it counts in the month’s record (a pay deduction)."
+    "penaltyHint": "Done after its due time, it counts in the month’s record (a pay deduction).",
+    "fromCalendar": "From the calendar",
+    "picked": "{{day}} at {{time}}",
+    "calendarTitle": "Pick a time on the calendar",
+    "calendarHint": "Tap a free spot to make that hour the task’s due time."
   },
   "reactions": {
     "label": "Reactions",
@@ -299,8 +303,11 @@
   },
   "calendar": {
     "task": "My task",
-    "tasks": "{{n}} tasks",
-    "add": "New task for {{day}}"
+    "add": "All-day task on {{day}}",
+    "addDay": "All-day task",
+    "more": "+{{n}} more",
+    "dayCount": "{{n}} open tasks that day; open the tasks page",
+    "chipDone": "(done)"
   },
   "hub": {
     "title": "Tasks",
@@ -349,5 +356,11 @@
     "penalty": "With penalty",
     "progress": "{{done}} of {{total}}",
     "none": "Nothing here."
+  },
+  "slots": {
+    "label": "My week, to pick a task time",
+    "hint": "Tap a free spot to pick that hour. Your other timed tasks show too.",
+    "picked": "Picked time: {{day}} at {{time}}",
+    "past": "That time has passed. Pick one from now on."
   }
 }

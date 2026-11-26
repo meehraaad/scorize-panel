@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CalendarSlots, PickChip, type SlotsProps } from '@/components/tasks/CalendarSlots';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Icon } from '@/components/ui/Icon';
@@ -8,7 +9,8 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { parseValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { FOLLOWS, followAtOf, followOnOf, type Follow } from '../followUp';
-import { FollowUpSlots } from './FollowUpSlots';
+import { sellerCalendarQuery } from '../api';
+import { useSellerBlocks } from './useSellerBusy';
 
 /**
  * When to follow up, the same everywhere a seller sets one: a few quick times, «از تقویم» (a day
@@ -120,29 +122,28 @@ export function FollowUpWhen({
   );
 }
 
-/** A chip beside the quick times that opens a picker's window; pressed once something is picked there. */
-function PickChip({
-  on,
-  onClick,
-  children,
-}: {
-  on: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+const CALL_MINUTES = 15;
+
+/**
+ * Picking a follow-up (or a task's) time on the seller's own week: their sessions, office meetings,
+ * follow-up calls and timed tasks show, and a tap on a free spot picks that time.
+ */
+export function FollowUpSlots({ value, onChange }: SlotsProps) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const blocks = useSellerBlocks();
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={on}
-      aria-haspopup="dialog"
-      className={`inline-flex min-h-11 flex-none items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-        on
-          ? 'bg-hero text-on-hero'
-          : 'text-primary-text shadow-[inset_0_0_0_1px_var(--primary)] hover:bg-tint'
-      }`}
-    >
-      {children}
-    </button>
+    <CalendarSlots
+      value={value}
+      onChange={onChange}
+      query={sellerCalendarQuery}
+      busyOf={blocks}
+      label={t('followUpSlots.label')}
+      hint={t('followUpSlots.hint')}
+      pickedTitle={t('followUpSlots.picked')}
+      pickedAria={(at) => t('followUpSlots.pickedAria', { day: f.weekday(at), time: f.time(at) })}
+      past={t('followUpDialog.past')}
+      minutes={CALL_MINUTES}
+    />
   );
 }

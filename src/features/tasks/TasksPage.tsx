@@ -67,7 +67,7 @@ export function TasksPage({ config, nav }: { config: TasksConfig; nav?: ReactNod
         actions={
           <>
             {data.on_time && <OnTime onTime={data.on_time} />}
-            <NewTaskButton panel={config.panel} />
+            <NewTaskButton panel={config.panel} slots={config.slots} />
           </>
         }
       />

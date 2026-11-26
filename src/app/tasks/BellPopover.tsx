@@ -53,7 +53,7 @@ export default function BellPopover({ panel }: { panel: TasksPanel }) {
         <Link to={inboxHref(tab, panel)} className={buttonClass('quiet')}>
           {t(tab === 'tasks' ? 'hub.all' : 'hub.allNotifications')}
         </Link>
-        {tab === 'tasks' && <NewTaskButton panel={panel} />}
+        {tab === 'tasks' && <NewTaskButton panel={panel} slots={TASK_CONTEXTS[panel].slots} />}
       </div>
     </>
   );

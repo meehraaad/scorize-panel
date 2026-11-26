@@ -1003,15 +1003,9 @@
     "seller": "Assigned to {{name}}",
     "noSeller": "Not assigned",
     "tasks": {
-      "add": "New task on {{day}}",
+      "add": "All-day task on {{day}}",
       "row": "Tasks",
-      "open": "{{n}} to do",
-      "late": "{{n}} overdue",
-      "allDone": "All done",
-      "requests": "{{n}} from colleagues",
-      "done": "{{n}} done",
-      "ariaMine": "{{n}} open follow-ups",
-      "aria": "Tasks on {{day}}: {{parts}}. Go to tasks"
+      "addDay": "All-day task"
     },
     "taskBlock": "task",
     "assign": {

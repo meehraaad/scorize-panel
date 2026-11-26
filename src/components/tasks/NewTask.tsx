@@ -1,5 +1,5 @@
 import type { QueryKey } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
+import { Suspense, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
@@ -8,21 +8,22 @@ import { Icon } from '@/components/ui/Icon';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { Switch } from '@/components/ui/Switch';
 import { useUser } from '@/lib/auth/session';
-import { toValue } from '@/lib/calendar';
+import { parseValue, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { TASKS_KEY, type Colleague, type NewTask, type TasksPanel } from '@/lib/tasks/api';
 import { useCreateTask } from '@/lib/tasks/changes';
 import { canAssignTasks, canPenalize } from '@/lib/tasks/rights';
 import { toast } from '@/lib/toast';
 import { fromLocalInput, quickWhen } from '@/lib/when';
+import { PickChip, type Slots } from './CalendarSlots';
 import { ColleagueSearch } from './ColleagueSearch';
 
 const TARGETS = ['me', 'person', 'team'] as const;
 type Target = (typeof TARGETS)[number];
 const WHENS = ['evening', 'tomorrow', 'week', 'day', 'other'] as const;
 
-/** «کار تازه» in a page header: opens the composer for `panel`'s tasks. */
-export function NewTaskButton({ panel }: { panel: TasksPanel }) {
+/** «کار تازه» in a page header: opens the composer for `panel`'s tasks (`slots`: its week picker). */
+export function NewTaskButton({ panel, slots }: { panel: TasksPanel; slots?: Slots | undefined }) {
   const { t } = useTranslation('tasks');
   const [open, setOpen] = useState(false);
   return (
@@ -35,6 +36,7 @@ export function NewTaskButton({ panel }: { panel: TasksPanel }) {
         key={open ? 'open' : 'closed'}
         open={open}
         panel={panel}
+        slots={slots}
         onClose={() => setOpen(false)}
       />
     </>
@@ -45,6 +47,7 @@ export function NewTaskButton({ panel }: { panel: TasksPanel }) {
  * A new task of `panel` (meeting0, canvas «کار تازه» 2A): for me, and for the panel's admin also for
  * colleagues (found by name, each gets their own copy) or the whole team; the server checks the
  * same rule. `about`: the customer it is about (their page), whose own people are `suggested`.
+ * `slots`: the panel's week to pick a time on («از تقویم»; the seller's sessions, my tasks).
  */
 export function NewTaskDialog({
   open,
@@ -53,6 +56,8 @@ export function NewTaskDialog({
   about,
   suggested,
   due,
+  day: dueDay,
+  slots: PickSlots,
   onCreated,
   also = TASKS_KEY,
 }: {
@@ -61,8 +66,12 @@ export function NewTaskDialog({
   onClose: () => void;
   about?: { id: number; name: string } | undefined;
   suggested?: readonly Colleague[] | undefined;
-  /** Opened on a day of the calendar: a task for me that day (no hour; one can be set). */
+  /** Opened on an hour of the calendar: due then (another can be set). */
   due?: Date | undefined;
+  /** Opened on a day of the calendar: due that day, with no hour (one can be set). */
+  day?: Date | undefined;
+  /** Each panel's picker of a time on its week; without one there is no «از تقویم». */
+  slots?: Slots | undefined;
   /** After it is saved (the opener refreshes what shows the new task). */
   onCreated?: (() => void) | undefined;
   /** What else shows the new task (the customer's page). */
@@ -78,10 +87,14 @@ export function NewTaskDialog({
   const [target, setTarget] = useState<Target>('me');
   const [people, setPeople] = useState<Colleague[]>([]);
   const [penalty, setPenalty] = useState(false);
-  const [when, setWhen] = useState<(typeof WHENS)[number]>(due ? 'day' : 'tomorrow');
+  const [when, setWhen] = useState<(typeof WHENS)[number]>(
+    due ? 'other' : dueDay ? 'day' : 'tomorrow',
+  );
   const [date, setDate] = useState(due ? toValue(due, true) : '');
-  const [day, setDay] = useState(due ? toValue(due, false) : '');
+  const [day, setDay] = useState(dueDay ? toValue(dueDay, false) : '');
   const [checked, setChecked] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const pickedAt = when === 'other' ? parseValue(date) : null;
 
   const n = people.length;
   const dueAt =
@@ -184,6 +197,16 @@ export function NewTaskDialog({
           legend={t('new.due')}
           value={when}
           onChange={setWhen}
+          extra={
+            PickSlots && (
+              <PickChip on={pickedAt !== null} onClick={() => setPicking(true)}>
+                <Icon name="calendar" size={16} />
+                {pickedAt
+                  ? t('new.picked', { day: f.weekdayName(pickedAt), time: f.time(pickedAt) })
+                  : t('new.fromCalendar')}
+              </PickChip>
+            )
+          }
           options={WHENS.map((value) => ({
             value,
             label:
@@ -226,6 +249,30 @@ export function NewTaskDialog({
           </div>
         )}
       </form>
+      {PickSlots && (
+        <Dialog
+          open={picking}
+          onClose={() => setPicking(false)}
+          size="wide"
+          title={t('new.calendarTitle')}
+          subtitle={t('new.calendarHint')}
+          closeLabel={t('close')}
+        >
+          {picking && (
+            // The picker's calendar loads with it, not with the composer.
+            <Suspense fallback={null}>
+              <PickSlots
+                value={pickedAt ? date : ''}
+                onChange={(value) => {
+                  setWhen('other');
+                  setDate(value);
+                  setPicking(false);
+                }}
+              />
+            </Suspense>
+          )}
+        </Dialog>
+      )}
     </Dialog>
   );
 }

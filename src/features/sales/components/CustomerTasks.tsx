@@ -9,6 +9,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import type { TaskKind, TaskStatus, TaskSummary } from '@/lib/tasks/api';
 import { customerKey, type CustomerData } from '../api';
 import { salesPath } from '../paths';
+import { FollowUpSlots } from './FollowUpWhen';
 
 const NewTaskDialog = lazy(() =>
   import('@/components/tasks/NewTask').then((module) => ({ default: module.NewTaskDialog })),
@@ -69,6 +70,7 @@ export function CustomerTasks({ customer }: { customer: CustomerData }) {
             about={{ id: customer.id, name: first }}
             suggested={customer.colleagues}
             also={customerKey(customer.id)}
+            slots={FollowUpSlots}
             onClose={() => setAdding(false)}
           />
         </Suspense>

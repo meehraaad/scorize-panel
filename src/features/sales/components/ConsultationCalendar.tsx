@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Suspense, lazy, useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaceDot } from '@/components/customers/FaceDot';
+import { DayTasks, type DayTask } from '@/components/tasks/TaskCalendar';
+import { TASK_COLOR, TASK_MINUTES } from '@/components/tasks/CalendarSlots';
 import { Card } from '@/components/ui/Card';
 import { TogglePill } from '@/components/ui/Choices';
 import { FilterTabs } from '@/components/ui/Filters';
@@ -30,14 +32,16 @@ import {
   type Status,
 } from '../consultationStatus';
 import { EventDetails, StartAction } from './EventDetails';
-import { TASK_COLOR, TASK_MINUTES } from './useSellerBusy';
 import { useSalesFormat } from '../format';
 import { FollowUpDialog } from './FollowUpDialog';
-import { TaskBrief } from './TaskBrief';
+import { FollowUpSlots } from './FollowUpWhen';
+import { customerPath, salesPath } from '../paths';
 
 const MINUTE = 60_000;
-/** A task added on a day without a time is due at this hour (or the next full hour, today). */
-const TASK_HOUR = 10;
+
+/** The tasks page on one day's list (`view`: my follow-ups or colleagues' requests). */
+const tasksOn = (view: 'mine' | 'requests', day: string) =>
+  `${salesPath('tasks')}?${new URLSearchParams({ view, day }).toString()}`;
 /** In-person meetings at the office (S75): their own colour on the calendar. */
 const VISIT_COLOR = 'var(--cal-7)';
 
@@ -45,15 +49,6 @@ const VISIT_COLOR = 'var(--cal-7)';
 const NewTaskDialog = lazy(() =>
   import('@/components/tasks/NewTask').then((module) => ({ default: module.NewTaskDialog })),
 );
-
-/** When a task added on `day` is due: 10:00 that day, or the next full hour once 10:00 has passed. */
-const dueOn = (day: Date, now: Date) => {
-  const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), TASK_HOUR);
-  if (at > now) return at;
-  const next = new Date(now);
-  next.setHours(now.getHours() + 1, 0, 0, 0);
-  return next;
-};
 
 /** The follow-up dialog: a new one at a time, or a customer's moved (`lead`). */
 interface Setting {
@@ -110,7 +105,7 @@ export function ConsultationCalendar() {
   const { data, isPending } = useQuery(sellerCalendarQuery(week));
   const setFollowUp = useSetFollowUp();
   const [setting, setSetting] = useState<Setting | null>(null);
-  /** A day of the tasks row was clicked: a new task due then. */
+  /** «+ کار کل‌روز» on a day of the tasks row: a new task due that day, with no hour. */
   const [newTaskOn, setNewTaskOn] = useState<Date | null>(null);
   const client = useQueryClient();
   /** A time picked or dropped on the calendar, unless it has passed. */
@@ -141,7 +136,6 @@ export function ConsultationCalendar() {
   };
 
   const types = new Map((data?.types ?? []).map((type) => [type.id, type]));
-  const taskDays = new Map((data?.tasks ?? []).map((row) => [row.day, row]));
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const nowTime = now.getTime();
   const consultations = (data?.consultations ?? []).filter(
@@ -159,6 +153,34 @@ export function ConsultationCalendar() {
   // The seller's own tasks with an hour, at that hour; those without one stay on the day row.
   const taskRows =
     !shows('tasks') || onlyUnlogged ? [] : (data?.task_rows ?? []).filter((item) => item.timed);
+  // What is due on a day with no hour: chips on the day row (canvas 4A), never at 23:59.
+  const dayTasks = new Map<string, DayTask[]>();
+  const onDay = (at: string, item: DayTask) => {
+    const day = toValue(new Date(at), false);
+    dayTasks.set(day, [...(dayTasks.get(day) ?? []), item]);
+  };
+  for (const item of data?.task_rows ?? [])
+    if (!item.timed)
+      onDay(item.due_at, {
+        key: `t${String(item.id)}`,
+        text: item.name ? `${item.text} · ${named(item.name)}` : item.text,
+        tone: item.kind,
+        done: item.done,
+        to: tasksOn(
+          item.kind === 'request' ? 'requests' : 'mine',
+          toValue(new Date(item.due_at), false),
+        ),
+      });
+  if (shows('calls'))
+    for (const item of data?.calls ?? [])
+      if (item.timed === false)
+        onDay(item.follow_up_at, {
+          key: `l${String(item.lead)}`,
+          text: named(item.name),
+          tone: 'call',
+          done: false,
+          to: customerPath(item.customer),
+        });
   // In-person meetings at the office (S75): held in person, so "online only" hides them.
   const visits = !shows('visits') || onlyUnlogged || mode === 'online' ? [] : (data?.visits ?? []);
 
@@ -429,19 +451,23 @@ export function ConsultationCalendar() {
               shows('tasks')
                 ? {
                     label: t('consultationCalendar.tasks.row'),
-                    cell: (day, compact) => (
-                      <TaskBrief
-                        day={day}
-                        tasks={taskDays.get(toValue(day, false))}
-                        today={today}
-                        compact={compact}
-                      />
-                    ),
+                    cell: (day, compact) => {
+                      const value = toValue(day, false);
+                      return (
+                        <DayTasks
+                          items={dayTasks.get(value) ?? []}
+                          compact={compact}
+                          late={day < today}
+                          moreTo={tasksOn('mine', value)}
+                        />
+                      );
+                    },
                     onAdd: (day) => {
                       setChosenId(null);
-                      setNewTaskOn(dueOn(day, new Date()));
+                      setNewTaskOn(day);
                     },
                     addLabel: (day) => t('consultationCalendar.tasks.add', { day: f.weekday(day) }),
+                    addText: t('consultationCalendar.tasks.addDay'),
                   }
                 : undefined
             }
@@ -473,8 +499,9 @@ export function ConsultationCalendar() {
         <Suspense fallback={null}>
           <NewTaskDialog
             open
-            due={newTaskOn}
+            day={newTaskOn}
             panel="sales"
+            slots={FollowUpSlots}
             onClose={() => setNewTaskOn(null)}
             onCreated={() => void client.invalidateQueries({ queryKey: CALENDAR_KEY })}
           />

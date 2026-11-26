@@ -207,6 +207,26 @@ describe('HR panel', () => {
     expect(await screen.findAllByRole('link', { name: /استخدام بهار نیکو/ })).not.toHaveLength(0);
   });
 
+  it('lists my tasks with no hour on the calendar’s day row and adds one for a day', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/calendar');
+    const row = await screen.findByRole('group', { name: 'روزهای کارکنان و کارها' });
+    // An open move's steps are due today with no hour: chips, never at an hour.
+    await waitFor(() =>
+      expect(
+        within(row)
+          .getAllByRole('link')
+          .filter((link) => /\/tasks\?view=mine&day=/.test(link.getAttribute('href') ?? '')),
+      ).not.toHaveLength(0),
+    );
+    const add = within(row).getAllByRole('button', { name: /^کار کل‌روز برای / })[0] as HTMLElement;
+    await user.click(add);
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
+    expect(within(dialog).getByRole('button', { name: 'از تقویم' })).toBeInTheDocument();
+  });
+
   it('shows the org chart: each position under the one it reports to', async () => {
     const user = userEvent.setup();
     loginAs(AMIR);

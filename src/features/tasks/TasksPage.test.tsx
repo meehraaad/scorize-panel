@@ -1,6 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ON_SERVER } from '@/lib/applicant/onServer';
 import { api } from '@/lib/api/client';
 import { toValue } from '@/lib/calendar';
@@ -221,6 +221,46 @@ describe('tasks page (sales panel)', () => {
       await screen.findByText(/^به کارهای شما اضافه شد\. .+ در «پیگیری‌های من» می‌آید\.$/),
     ).toBeInTheDocument();
     expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
+  });
+
+  it('new task: «از تقویم» picks its time on the seller’s week', async () => {
+    // Tuesday 5 Aban 1405, noon.
+    vi.useFakeTimers({ now: new Date(2026, 9, 27, 12, 0), toFake: ['Date'] });
+    let sent: Record<string, unknown> | null = null;
+    server.use(
+      http.post('/api/staff/v1/tasks/', async ({ request }) => {
+        sent = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ id: 1 }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    try {
+      await openTasks();
+      await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+      const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+      await user.type(within(dialog).getByLabelText('چه کاری؟'), 'گزارش هفته را بنویس');
+      await user.click(within(dialog).getByRole('button', { name: 'از تقویم' }));
+      const picker = await screen.findByRole('dialog', { name: 'انتخاب وقت از تقویم' });
+      // The seller's week loads with the window.
+      await user.click(await within(picker).findByRole('button', { name: 'هفته‌ی بعد' }));
+      // Next Wednesday's column (Saturday first); the grid starts at 9, an hour is 44px: 14:00.
+      fireEvent.click(within(picker).getAllByTestId('schedule-slot')[4] as HTMLElement, {
+        clientY: 220,
+      });
+      await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1));
+      expect(within(dialog).getByRole('button', { pressed: true })).toHaveTextContent(/۱۴:۰۰$/);
+      expect(within(dialog).getByRole('radio', { name: 'تاریخ و ساعت دیگر' })).toBeChecked();
+      await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
+      await waitFor(() =>
+        expect(sent).toMatchObject({
+          panel: 'sales',
+          kind: 'mine',
+          due_at: new Date(2026, 10, 4, 14, 0).toISOString(),
+        }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('new task: the sales manager sends one to a colleague found by name, and it needs someone', async () => {

@@ -74,6 +74,11 @@ export interface DayRow {
   onAdd?: ((day: Date) => void) | undefined;
   addLabel?: ((day: Date) => string) | undefined;
   /**
+   * The add button's words, shown under a wide day's brief («+ کار کل‌روز»; `addLabel` holds them):
+   * then only that button adds. Without them the whole cell is the add button.
+   */
+  addText?: string | undefined;
+  /**
    * A day with no items whose brief has things to read (HR's first days, birthdays) keeps its
    * full width on the wide week instead of shrinking.
    */
@@ -95,6 +100,21 @@ function DayRowCell({
   const brief = row.cell(day, compact);
   if (!row.onAdd || !canAdd) return brief;
   const add = row.onAdd;
+  if (row.addText && !compact)
+    return (
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {brief}
+        <button
+          type="button"
+          aria-label={row.addLabel?.(day)}
+          onClick={() => add(day)}
+          className="mt-auto flex min-h-11 cursor-pointer items-center justify-center gap-1 rounded-lg text-xs font-semibold text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
+        >
+          <Icon name="plus" size={14} />
+          {row.addText}
+        </button>
+      </div>
+    );
   return (
     <div className="group relative flex min-h-11 min-w-0 flex-1 flex-col justify-center">
       <button

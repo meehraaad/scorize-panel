@@ -1123,7 +1123,8 @@ function calendarOf(data: SalesState, from: string, to: string) {
     // Reza (manager) can give a consultation to someone.
     sellers: storage.get() === NIMA ? [] : [{ id: 8, name: NIMA_NAME }],
     visits: visits.filter((visit) => inRange(visit.starts_at)),
-    // The seller's own tasks (S50 rows): tomorrow at 11 one with an hour, in two days one for the day only.
+    // The seller's own tasks (S50 rows): tomorrow at 11 one with an hour; in two days four for the
+    // day only (one done; the day row shows three and «+1»); yesterday one left undone.
     task_rows: [
       {
         id: 9101,
@@ -1145,6 +1146,23 @@ function calendarOf(data: SalesState, from: string, to: string) {
         customer: null,
         name: '',
       },
+      ...(
+        [
+          [9103, 'نظافت دفتر', 2, false],
+          [9104, 'گزارش هفتگی', 2, true],
+          [9105, 'بستن پرونده‌های رد شده', 2, false],
+          [9106, 'پیگیری قسط', -1, false],
+        ] as const
+      ).map(([id, text, days, done]) => ({
+        id,
+        kind: 'mine',
+        text,
+        due_at: new Date(startOfToday() + days * DAY + DAY - 60_000).toISOString(),
+        timed: false,
+        done,
+        customer: null,
+        name: '',
+      })),
     ].filter((row) => inRange(row.due_at)),
     calls: todayOf(data)
       .calls.filter((row) => inRange(row.follow_up_at))
