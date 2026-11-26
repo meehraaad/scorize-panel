@@ -3307,18 +3307,6 @@
     "title": "Which message to type in Telegram?",
     "note": "Tapping a message opens the customer's Telegram chat with that text. If the customer doesn't let people find them by number in Telegram, the chat won't open; use the copy button beside the message."
   },
-  "whenPicker": {
-    "days": "Day",
-    "hours": "Time",
-    "hint": "Your own items are under each hour. An hour with your consultation or office meeting can’t be picked.",
-    "dayHint": "Tap a day; the follow-up shows in “Today” that day, with no time.",
-    "kind": {
-      "session": "Consultation",
-      "visit": "In person",
-      "task": "Task",
-      "call": "Follow-up"
-    }
-  },
   "nextStep": {
     "pickCustomer": "Pick the customer first to see the office hours."
   },

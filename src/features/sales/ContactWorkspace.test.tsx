@@ -1,8 +1,7 @@
-import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { toValue } from '@/lib/calendar';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { clearContactDrafts } from '@/lib/sales/contactDrafts';
 import { renderApp } from '@/test/renderApp';
@@ -40,7 +39,10 @@ describe('persistent contact workspace', () => {
     await waitFor(() => expect(notes()).toBeInTheDocument());
     await user.type(notes(), 'Follow up on funding');
     await minimize(user);
-    const resume = await screen.findByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' });
+    // Minimized, it just hides: no bubble piles up in the corner.
+    expect(
+      screen.queryByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' }),
+    ).not.toBeInTheDocument();
     await user.click(first(await screen.findAllByRole('button', { name: 'تماس با پویا عسگری' })));
     await screen.findByRole('dialog', { name: 'ثبت ارتباط با پویا عسگری' });
     await waitFor(() => expect(notes()).toBeInTheDocument());
@@ -51,21 +53,24 @@ describe('persistent contact workspace', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'ثبت ارتباط با پویا عسگری' })).toBeInTheDocument();
     await minimize(user);
-    await user.click(resume);
-    expect(within(screen.getByRole('dialog')).getByLabelText('چه گذشت؟')).toHaveValue(
-      'Follow up on funding',
-    );
+    // The customer's own button brings the same draft back.
+    await act(() => router.navigate('/sales'));
+    await user.click(first(await screen.findAllByRole('button', { name: 'تماس با کیانا رضوی' })));
+    expect(
+      within(
+        await screen.findByRole('dialog', { name: 'ثبت ارتباط با کیانا رضوی' }),
+      ).getByLabelText('چه گذشت؟'),
+    ).toHaveValue('Follow up on funding');
     await user.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: /^ثبت · پیگیری/ }),
     );
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await user.click(first(screen.getAllByRole('button', { name: 'تماس با پویا عسگری' })));
     expect(
-      screen.queryByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' }),
-    ).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'ادامه‌ی ثبت ارتباط با پویا عسگری' }));
-    expect(within(screen.getByRole('dialog')).getByLabelText('چه گذشت؟')).toHaveValue(
-      'Second customer',
-    );
+      within(
+        await screen.findByRole('dialog', { name: 'ثبت ارتباط با پویا عسگری' }),
+      ).getByLabelText('چه گذشت؟'),
+    ).toHaveValue('Second customer');
     await minimize(user);
     await act(() => router.navigate('/sales/customers/101'));
     const history = await screen.findByRole('region', { name: 'تاریخچه' });
@@ -102,9 +107,12 @@ describe('persistent contact workspace', () => {
     if (!saved) throw new Error('Expected a saved draft');
     sessionStorage.setItem('scorize.contact-drafts.v1', saved);
     renderApp('/settings');
-    await user.click(
-      await screen.findByRole('button', { name: 'ادامه‌ی ثبت ارتباط با عرفان ملکی' }),
-    );
+    await screen.findByRole('heading', { level: 1 });
+    expect(
+      screen.queryByRole('button', { name: 'ادامه‌ی ثبت ارتباط با عرفان ملکی' }),
+    ).not.toBeInTheDocument();
+    cleanup();
+    renderApp('/sales/customers/105?log=call');
     dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
     expect(within(dialog).getByLabelText('چه گذشت؟')).toHaveValue('Keep this draft');
     expect(
@@ -149,16 +157,9 @@ describe('persistent contact workspace', () => {
     expect(notes()).toBeDisabled();
     await minimize(user);
     await act(() => router.navigate('/settings'));
-    expect(
-      await screen.findByRole('button', { name: 'ادامه‌ی ثبت ارتباط با عرفان ملکی' }),
-    ).toBeInTheDocument();
+    expect(sessionStorage.getItem('scorize.contact-drafts.v1')).not.toBeNull();
     finish();
-    await waitFor(() =>
-      expect(
-        screen.queryByRole('button', { name: 'ادامه‌ی ثبت ارتباط با عرفان ملکی' }),
-      ).not.toBeInTheDocument(),
-    );
-    expect(sessionStorage.getItem('scorize.contact-drafts.v1')).toBeNull();
+    await waitFor(() => expect(sessionStorage.getItem('scorize.contact-drafts.v1')).toBeNull());
   });
 
   it('does not restore another account’s drafts', async () => {
@@ -181,6 +182,9 @@ describe('session log: the next step on the board', () => {
     clearContactDrafts();
     localStorage.setItem('scorize.mock.session', '3');
     await i18n.changeLanguage('fa');
+  });
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('starts on "consulted", shows the card with its follow-up, and sends the stage', async () => {
@@ -344,31 +348,33 @@ describe('session log: the next step on the board', () => {
     );
   });
 
-  it("picks another date's follow-up time on the seller's week, folded until asked", async () => {
+  it("«از تقویم» opens the seller's week calendar over the log; a free spot fills the follow-up", async () => {
+    // Tuesday 5 Aban 1405, noon.
+    vi.useFakeTimers({ now: new Date(2026, 9, 27, 12, 0), toFake: ['Date'] });
     const user = userEvent.setup();
     renderApp('/sales/customers/105?log=call');
     const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
-    // The week stays folded: the log is long enough already.
-    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
-    const toggle = await within(dialog).findByRole('button', { name: 'از تقویم' });
-    await user.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await user.click(within(dialog).getByRole('button', { name: 'هفته‌ی بعد' }));
-    // The first day of next week, then 14:00; the pick folds the week again.
-    const days = within(dialog).getByRole('group', { name: 'روز' });
-    await user.click(first(within(days).getAllByRole('button')));
-    await user.click(
-      within(within(dialog).getByRole('group', { name: 'ساعت' })).getByRole('button', {
-        name: /^۱۴:۰۰/,
-      }),
-    );
-    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
-    expect(
-      within(dialog).getByRole('button', { expanded: false, name: /۱۴:۰۰$/ }),
-    ).toBeInTheDocument();
+    await user.click(await within(dialog).findByRole('button', { name: 'از تقویم' }));
+    let picker = await screen.findByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' });
+    // Closing it keeps what the log had.
+    await user.click(within(picker).getByRole('button', { name: 'بستن' }));
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1));
+    expect(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' })).toBeChecked();
+
+    await user.click(within(dialog).getByRole('button', { name: 'از تقویم' }));
+    picker = await screen.findByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' });
+    await user.click(within(picker).getByRole('button', { name: 'هفته‌ی بعد' }));
+    // Next Wednesday's column (Saturday first); the grid starts at 9, an hour is 44px here: 14:00.
+    fireEvent.click(within(picker).getAllByTestId('schedule-slot')[4] as HTMLElement, {
+      clientY: 220,
+    });
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1));
+    expect(within(dialog).getByRole('button', { pressed: true })).toHaveTextContent(/۱۴:۰۰$/);
+    expect(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' })).not.toBeChecked();
   });
 
-  it('sets a follow-up for a day with no hour, picked on the week in the log', async () => {
+  it('sets a follow-up for a day with no hour, picked in its own window', async () => {
+    vi.useFakeTimers({ now: new Date(2026, 9, 27, 12, 0), toFake: ['Date'] });
     let sent: Record<string, unknown> | null = null;
     server.use(
       http.post('/api/sales/v1/customers/:id/contacts/', async ({ request }) => {
@@ -379,20 +385,15 @@ describe('session log: the next step on the board', () => {
     const user = userEvent.setup();
     renderApp('/sales/customers/105?log=call');
     const dialog = await screen.findByRole('dialog', { name: 'ثبت ارتباط با عرفان ملکی' });
-    const chip = await within(dialog).findByRole('button', { name: 'فقط روز، بدون ساعت' });
-    await user.click(chip);
-    expect(chip).toHaveAttribute('aria-expanded', 'true');
-    // A day only: the strip, no hours.
-    expect(within(dialog).queryByRole('group', { name: 'ساعت' })).toBeNull();
-    const days = within(dialog).getByRole('group', { name: 'روز' });
-    const today = within(days)
-      .getAllByRole('button')
-      .find((day) => !(day as HTMLButtonElement).disabled) as HTMLElement;
-    await user.click(today);
-    expect(within(dialog).getByRole('button', { name: /، بدون ساعت$/ })).toBeInTheDocument();
+    await user.click(await within(dialog).findByRole('button', { name: 'فقط روز، بدون ساعت' }));
+    const picker = await screen.findByRole('dialog', { name: 'پیگیری عرفان ملکی کی باشد؟' });
+    await user.click(within(picker).getByRole('button', { name: /^روز پیگیری/ }));
+    await user.click(screen.getByRole('button', { name: '۶ آبان ۱۴۰۵' }));
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1));
+    expect(within(dialog).getByRole('button', { pressed: true })).toHaveTextContent(/۶ آبان/);
     await user.click(first(within(dialog).getAllByRole('button', { name: /^ثبت/ })));
     await waitFor(() => expect(sent).not.toBeNull());
-    expect(sent).toMatchObject({ follow_up_at: null, follow_up_on: toValue(new Date(), false) });
+    expect(sent).toMatchObject({ follow_up_at: null, follow_up_on: '2026-10-28' });
   });
 
   it('logs a talk with no follow-up once the seller writes why', async () => {

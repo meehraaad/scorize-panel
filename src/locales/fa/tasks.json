@@ -75,19 +75,6 @@
     },
     "done": "انجام شد",
     "doneFor": "انجام شد: {{text}}",
-    "snooze": "عقب بینداز",
-    "snoozeLabel": "عقب انداختن پیگیری",
-    "snoozeOption": {
-      "tomorrow": "فردا ۱۰:۰۰",
-      "week": "هفته‌ی بعد",
-      "twoHours": "۲ ساعت دیگر"
-    },
-    "reason": "علت",
-    "reasonOption": {
-      "customer_later": "مشتری خواست بعداً",
-      "waiting": "منتظر مدرک یا جواب",
-      "no_time": "وقت نشد"
-    },
     "tomorrow": "فردا: {{n}} پیگیری",
     "doneToday": "انجام‌شده‌های امروز: {{n}}",
     "emptyDay": "برای {{day}} پیگیری‌ای ندارید.",

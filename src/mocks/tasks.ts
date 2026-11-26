@@ -375,16 +375,6 @@ function applyChange(
       }
       return null;
     }
-    case 'snooze': {
-      if (!task) return notFound();
-      task.snoozed += 1;
-      task.due_at = change.until;
-      if (new Date(change.until).toDateString() !== new Date().toDateString()) {
-        overview.mine = overview.mine.filter((item) => item !== task);
-        overview.tomorrow += 1;
-      }
-      return null;
-    }
     case 'claim': {
       if (!queued) return notFound();
       if (queued.taken) return HttpResponse.json({ detail: 'Already taken.' }, { status: 409 });
@@ -463,7 +453,6 @@ function followUpDetail(overview: FullTasks, id: number, me: string): RequestDet
 
 const CHANGE_KIND: Record<string, TaskChange['kind']> = {
   done: 'done',
-  snooze: 'snooze',
   claim: 'claim',
   status: 'status',
   comments: 'comment',

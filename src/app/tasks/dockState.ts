@@ -1,3 +1,4 @@
+/** @deprecated Archived with `TasksDock` (meeting0, 2026-11): unused, removed in a later cleanup. */
 import { useState } from 'react';
 
 const KEY = 'scorize-tasks-dock';

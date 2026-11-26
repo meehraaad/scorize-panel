@@ -241,7 +241,6 @@ export function FollowUpDialog({
               <span className="text-sm font-semibold text-text-2">{t('followUpDialog.date')}</span>
               <FollowUpWhen
                 legend={t('followUpDialog.date')}
-                calendar="dialog"
                 name={name}
                 follow={follow}
                 date={date}

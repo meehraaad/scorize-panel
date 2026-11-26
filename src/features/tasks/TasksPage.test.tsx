@@ -104,16 +104,10 @@ describe('tasks page (sales panel)', () => {
     expect(await within(dialog).findByText('شماره‌ی دوم را امتحان کردم')).toBeInTheDocument();
   });
 
-  it('pushes a follow-up to tomorrow', async () => {
-    const user = userEvent.setup();
+  it('task rows carry no snooze button', async () => {
     await openTasks();
-    const row = (
-      await screen.findByText('بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود')
-    ).closest('li');
-    if (!row) throw new Error('row not found');
-    await user.click(within(row).getByRole('button', { name: 'عقب بینداز' }));
-    await user.click(within(row).getByRole('button', { name: 'فردا ۱۰:۰۰' }));
-    expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
+    await screen.findByText('بعد از مشاوره زنگ بزن؛ نگرانی‌اش هزینه‌ی زندگی بود');
+    expect(screen.queryByRole('button', { name: 'عقب بینداز' })).toBeNull();
   });
 
   it('requests: starts one, answers in its conversation, finishes it', async () => {
@@ -375,8 +369,6 @@ describe('tasks page, server refuses', () => {
       await user.click(
         await screen.findByRole('button', { name: 'انجام شد: جلسه حضوری با عرفان ملکی' }),
       );
-      // Once it started, it can still be pushed back like any follow-up.
-      expect(screen.getByRole('button', { name: 'عقب بینداز' })).toBeInTheDocument();
       const dialog = await screen.findByRole('dialog', { name: 'پیگیری انجام شد' });
       expect(within(dialog).getByRole('radio', { name: 'جلسه برگزار شد' })).toBeChecked();
       expect(within(dialog).queryByRole('radio', { name: 'صحبت کردیم' })).toBeNull();
@@ -389,15 +381,6 @@ describe('tasks page, server refuses', () => {
         next: { text: 'تماس برای گذاشتن جلسه‌ی تازه' },
       });
       await waitFor(() => expect(queryClient.isMutating()).toBe(0));
-    });
-
-    it('a meeting still ahead has no snooze: it moves with the meeting', async () => {
-      meetingTask(-30);
-      await openTasks();
-      expect(
-        await screen.findByRole('button', { name: 'انجام شد: جلسه حضوری با عرفان ملکی' }),
-      ).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'عقب بینداز' })).toBeNull();
     });
   });
 });

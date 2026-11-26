@@ -19,7 +19,7 @@ const BellPopover = lazy(() => import('./BellPopover'));
 const MOST = 99;
 
 const bellClass =
-  'relative inline-flex size-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-canvas hover:text-text aria-expanded:bg-tint aria-expanded:text-primary-text';
+  'relative inline-flex size-11 cursor-pointer items-center justify-center rounded-full text-text-2 transition-colors hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-expanded:bg-tint aria-expanded:text-primary-text';
 
 /**
  * The header's bell: how much waits for me (unread notifications, and for staff the tasks waiting:

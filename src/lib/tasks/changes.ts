@@ -41,7 +41,6 @@ export const requestQuery = (panel: TasksPanel, id: number) =>
 
 const CHANGE_PATH: Record<TaskChange['kind'], string> = {
   done: 'done',
-  snooze: 'snooze',
   claim: 'claim',
   status: 'status',
   comment: 'comments',
@@ -53,7 +52,7 @@ const isMineList = (queryKey: readonly unknown[]) =>
 
 /**
  * Everything done to a task from the tasks page (T3–T8). A task marked done leaves "my tasks" at
- * once (optimistic; a snoozed one may stay today, so it waits for the server); the lists come back as they were if the server refuses.
+ * once (optimistic); the lists come back as they were if the server refuses.
  */
 export function useTaskChange() {
   const client = useQueryClient();

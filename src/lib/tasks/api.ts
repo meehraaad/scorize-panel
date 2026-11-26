@@ -340,7 +340,6 @@ export type TaskChange =
       next: { text: string; due_at: string } | null;
       end_reason?: 'won' | 'lost' | 'finished';
     }
-  | { kind: 'snooze'; until: string; reason: 'customer_later' | 'waiting' | 'no_time' }
   | { kind: 'claim' }
   | { kind: 'status'; status: 'in_progress' | 'done' | 'rejected'; reason?: string }
   | { kind: 'comment'; text: string };

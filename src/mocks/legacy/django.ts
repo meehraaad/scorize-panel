@@ -284,11 +284,6 @@ export async function changeTask(id: number, change: TaskChange) {
       }
       return;
     }
-    case 'snooze':
-      return api(`${TODOS}/${String(id)}/`, {
-        method: 'PATCH',
-        body: { deadline: djangoDate(change.until) },
-      });
     case 'status':
       if (change.status === 'in_progress')
         return api(`${TODOS}/${String(id)}/add_view/`, { method: 'PATCH' });

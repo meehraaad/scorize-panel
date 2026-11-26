@@ -342,6 +342,7 @@ export function LogDialog({
       {asksFollowUp && (
         <FollowUpWhen
           legend={t('customer.logDialog.followUp')}
+          name={named(customer.name)}
           follow={follow}
           date={date}
           onChange={(next) => updateContactDraft(draft.key, next)}

@@ -75,19 +75,6 @@
     },
     "done": "Done",
     "doneFor": "Done: {{text}}",
-    "snooze": "Push back",
-    "snoozeLabel": "Push the follow-up back",
-    "snoozeOption": {
-      "tomorrow": "Tomorrow 10:00",
-      "week": "Next week",
-      "twoHours": "In 2 hours"
-    },
-    "reason": "Reason",
-    "reasonOption": {
-      "customer_later": "Customer asked for later",
-      "waiting": "Waiting for a document or answer",
-      "no_time": "Didn't get to it"
-    },
     "tomorrow": "Tomorrow: {{n}} follow-ups",
     "doneToday": "Done today: {{n}}",
     "emptyDay": "No follow-ups on {{day}}.",
