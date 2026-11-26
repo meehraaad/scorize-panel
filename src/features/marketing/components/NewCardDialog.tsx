@@ -7,7 +7,8 @@ import { Dialog } from '@/components/ui/Dialog';
 import { TextField } from '@/components/ui/TextField';
 import { fieldErrors } from '@/lib/api/fieldErrors';
 import { toast } from '@/lib/toast';
-import { useNewCard, type BoardData } from '../boardApi';
+import { useUser } from '@/lib/auth/session';
+import { ownerChoices, useNewCard, type BoardData } from '../boardApi';
 
 const NONE = 'none';
 
@@ -25,6 +26,7 @@ export default function NewCardDialog({
   onCreated: (id: number) => void;
 }) {
   const { t } = useTranslation('marketing');
+  const user = useUser();
   const create = useNewCard();
   const types = board.types.filter((item) => item.is_active);
   const [title, setTitle] = useState('');
@@ -96,7 +98,10 @@ export default function NewCardDialog({
         onChange={setOwner}
         options={[
           { value: NONE, label: t('card.noOwner') },
-          ...board.people.map((person) => ({ value: String(person.id), label: person.name })),
+          ...ownerChoices(board.people, user).map((person) => ({
+            value: String(person.id),
+            label: person.name,
+          })),
         ]}
       />
       <SelectField

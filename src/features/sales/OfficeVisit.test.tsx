@@ -7,6 +7,8 @@ import { toasts } from '@/test/toasts';
 import '@/test/server';
 
 const NIMA = 3;
+/** Rezā, the sales manager: only the sales admin asks a colleague to join (meeting0). */
+const REZA = 4;
 
 /*
  * The mock office (src/mocks/sales.ts): open 9 to 18, two rooms, tomorrow (Wednesday) at 10 both
@@ -69,8 +71,17 @@ describe('sales: an in-person meeting at the office (S75)', () => {
     ).toBeInTheDocument();
   });
 
+  it('a seller is not offered to ask a colleague', async () => {
+    renderApp('/sales/customers/105');
+    fireEvent.click(await screen.findByRole('button', { name: /^جلسه حضوری با / }));
+    const dialog = await screen.findByRole('dialog', { name: /^جلسه حضوری با / });
+    await within(dialog).findByRole('region', { name: 'ساعت‌های جلسه حضوری' });
+    expect(within(dialog).queryByRole('switch', { name: /درخواست حضور از همکار/ })).toBeNull();
+  });
+
   it('asks for a time first, and for a colleague when asking one', async () => {
     const user = userEvent.setup();
+    localStorage.setItem('scorize.mock.session', String(REZA));
     renderApp('/sales/customers/105');
     await user.click(await screen.findByRole('button', { name: /^جلسه حضوری با / }));
     const dialog = await screen.findByRole('dialog', { name: /^جلسه حضوری با / });

@@ -1,5 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { hasPermission } from '@/lib/auth/roles';
+import type { SessionUser } from '@/lib/auth/session';
 import type { Face } from '@/lib/face/api';
 import { MARKETING_API, MARKETING_KEY, type AttendanceDay } from './api';
 
@@ -11,6 +13,19 @@ import { MARKETING_API, MARKETING_KEY, type AttendanceDay } from './api';
  * manager's (`apply.can_manage_marketing`).
  */
 export const MARKETING_MANAGER_PERMISSION = 'can_manage_marketing';
+
+/**
+ * Whom a card can be given to: the manager gives it to anyone on the team; anyone else only takes
+ * it themselves (meeting0; the server refuses the rest). `current`: the card's owner, kept listed.
+ */
+export function ownerChoices(
+  people: readonly Person[],
+  user: SessionUser,
+  current: number | null = null,
+): readonly Person[] {
+  if (hasPermission(user, MARKETING_MANAGER_PERMISSION)) return people;
+  return people.filter((person) => person.id === user.staff?.id || person.id === current);
+}
 
 export const STAGE_COLORS = ['gray', 'blue', 'amber', 'plum', 'green', 'ink'] as const;
 export type StageColor = (typeof STAGE_COLORS)[number];

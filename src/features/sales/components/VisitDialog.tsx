@@ -19,7 +19,9 @@ import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { ON_SERVER } from '@/lib/applicant/onServer';
+import { useUser } from '@/lib/auth/session';
 import type { Colleague } from '@/lib/tasks/api';
+import { canAssignTasks } from '@/lib/tasks/rights';
 import { toast } from '@/lib/toast';
 import {
   customerVisitsQuery,
@@ -239,6 +241,7 @@ export function VisitForm({
   const [note, setNote] = useState('');
   const [sms, setSms] = useState(true);
   const [asking, setAsking] = useState(false);
+  const invites = canAssignTasks(useUser(), 'sales');
   const [colleague, setColleague] = useState<Colleague | null>(null);
   const [colleagueNote, setColleagueNote] = useState('');
   const [checked, setChecked] = useState(false);
@@ -392,33 +395,35 @@ export function VisitForm({
             onChange={setSms}
           />
         </div>
-        <div className="flex flex-col gap-3">
-          <Switch
-            label={t('visit.ask')}
-            description={t('visit.askHint')}
-            checked={asking}
-            onChange={setAsking}
-          />
-          {asking && (
-            <>
-              {/* A meeting's guest may be anyone active (an invitation, not a task an admin gives). */}
-              <ColleagueSearch
-                label={t('visit.colleague')}
-                picked={colleague ? [colleague] : []}
-                onChange={(picked) => setColleague(picked[0] ?? null)}
-                hint={t('visit.colleagueHint')}
-                error={checked && colleague === null ? t('visit.pickColleague') : undefined}
-              />
-              <TextAreaField
-                label={t('visit.colleagueNote')}
-                rows={2}
-                value={colleagueNote}
-                maxLength={2000}
-                onChange={(event) => setColleagueNote(event.target.value)}
-              />
-            </>
-          )}
-        </div>
+        {invites && (
+          <div className="flex flex-col gap-3">
+            <Switch
+              label={t('visit.ask')}
+              description={t('visit.askHint')}
+              checked={asking}
+              onChange={setAsking}
+            />
+            {asking && (
+              <>
+                {/* Asking a colleague gives them a task: the sales admin's (meeting0). */}
+                <ColleagueSearch
+                  label={t('visit.colleague')}
+                  picked={colleague ? [colleague] : []}
+                  onChange={(picked) => setColleague(picked[0] ?? null)}
+                  hint={t('visit.colleagueHint')}
+                  error={checked && colleague === null ? t('visit.pickColleague') : undefined}
+                />
+                <TextAreaField
+                  label={t('visit.colleagueNote')}
+                  rows={2}
+                  value={colleagueNote}
+                  maxLength={2000}
+                  onChange={(event) => setColleagueNote(event.target.value)}
+                />
+              </>
+            )}
+          </div>
+        )}
       </div>
     </form>
   );
