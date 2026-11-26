@@ -47,7 +47,9 @@ import { gzipSync } from 'node:zlib';
 // JS 200.4, CSS 23.1: the branch measured 200.018 / 23.010 on Node 26 before meeting0 round 2; its
 // team boards add a «برد» route and nav item to the supervisor, executive and HR panels (pages
 // lazy), 200.300 locally (2026-11-26).
-const BUDGET_KB = { js: 200.4, css: 23.1 };
+// CSS 23.2: the pre-PR audit's dark-mode pills, truncation and focus outlines; CI (Linux) measured
+// 23.1x where the local build rounds to 23.0 (2026-11-26).
+const BUDGET_KB = { js: 200.4, css: 23.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
