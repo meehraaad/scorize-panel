@@ -7,6 +7,8 @@ import { notFound, storage } from './session';
  * Fake «برد من» (lang `api/boards/v1/`): one board per mock user and panel, made empty when first
  * asked for; the same rules as Django (the column cap, a task once per board, a card before
  * another or at a column's end). The tasks that can go on it are a few fixed open ones.
+ * `scope=team`: the panel's team board (owner null), kept by its admin (Maryam, 2: she hands out
+ * supervisor cases; the superuser, 6); anyone else moves only cards of their own (`mine` tasks).
  */
 
 const API = '/api/boards/v1';
@@ -28,21 +30,46 @@ const TASKS: BoardTask[] = [
   penalty: false,
 }));
 
-let boards: (MyBoard & { owner: number })[] = [];
+type Stored = MyBoard & { owner: number | null };
+let boards: Stored[] = [];
 let nextId = 1;
+const TEAM_ADMINS = new Set([2, 6]);
+const TEAM_PANELS = new Set(['supervisor', 'executive', 'hr']);
+const admin = () => TEAM_ADMINS.has(storage.get() ?? 0);
 
-const boardOf = (panel: string) => {
-  const owner = storage.get() ?? 0;
-  let board = boards.find((item) => item.owner === owner && item.panel === panel);
-  if (!board) {
-    board = { id: nextId++, owner, panel: panel as MyBoard['panel'], columns: [] };
-    boards.push(board);
-  }
+const boardOf = (panel: string, scope: string | null = 'mine'): Stored => {
+  const owner = scope === 'team' ? null : (storage.get() ?? 0);
+  const found = boards.find((item) => item.owner === owner && item.panel === panel);
+  if (found) return found;
+  const board: Stored = {
+    id: nextId++,
+    owner,
+    panel: panel as MyBoard['panel'],
+    scope: owner === null ? 'team' : 'mine',
+    can_manage: true,
+    columns: [],
+  };
+  boards.push(board);
   return board;
 };
 
-const mine = () => boards.filter((board) => board.owner === (storage.get() ?? 0));
-const answer = ({ owner: _owner, ...board }: MyBoard & { owner: number }) => board;
+const mine = () =>
+  boards.filter((board) => board.owner === (storage.get() ?? 0) || board.owner === null);
+const manages = (board: Stored) => board.owner !== null || admin();
+const answer = ({ owner, ...board }: Stored): MyBoard => {
+  const manage = manages({ owner, ...board });
+  return {
+    ...board,
+    can_manage: manage,
+    columns: board.columns.map((column) => ({
+      ...column,
+      cards: column.cards.map((card) => ({
+        ...card,
+        can_move: manage || card.task.kind === 'mine',
+      })),
+    })),
+  };
+};
 const columnOf = (id: number) =>
   mine()
     .flatMap((board) => board.columns.map((column) => ({ board, column })))
@@ -62,13 +89,30 @@ export function resetBoardMocks() {
 }
 
 export const boardHandlers = [
-  http.get(`${API}/board/`, ({ request }) =>
-    HttpResponse.json(answer(boardOf(new URL(request.url).searchParams.get('panel') ?? ''))),
-  ),
+  http.get(`${API}/board/`, ({ request }) => {
+    const params = new URL(request.url).searchParams;
+    const panel = params.get('panel') ?? '';
+    if (params.get('scope') === 'team' && !TEAM_PANELS.has(panel))
+      return HttpResponse.json({ scope: ['This panel has its own team board.'] }, { status: 400 });
+    return HttpResponse.json(answer(boardOf(panel, params.get('scope'))));
+  }),
+
+  http.get(`${API}/columns/`, ({ request }) => {
+    const panel = new URL(request.url).searchParams.get('panel') ?? '';
+    const names = (board?: Stored) =>
+      (board?.columns ?? []).map((column) => ({ id: column.id, name: column.name }));
+    const own = boards.find((item) => item.owner === storage.get() && item.panel === panel);
+    const team = boards.find((item) => item.owner === null && item.panel === panel);
+    return HttpResponse.json({
+      mine: names(own),
+      team: TEAM_PANELS.has(panel) ? names(team) : null,
+      can_team: TEAM_PANELS.has(panel) && admin(),
+    });
+  }),
 
   http.get(`${API}/candidates/`, ({ request }) => {
     const params = new URL(request.url).searchParams;
-    const board = boardOf(params.get('panel') ?? '');
+    const board = boardOf(params.get('panel') ?? '', params.get('scope'));
     const placed = new Set(
       board.columns.flatMap((column) => column.cards.map((card) => card.task.id)),
     );
@@ -81,8 +125,9 @@ export const boardHandlers = [
   }),
 
   http.post(`${API}/columns/`, async ({ request }) => {
-    const body = (await request.json()) as { panel: string; names: string[] };
-    const board = boardOf(body.panel);
+    const body = (await request.json()) as { panel: string; scope?: string; names: string[] };
+    const board = boardOf(body.panel, body.scope);
+    if (!manages(board)) return HttpResponse.json({ detail: 'Forbidden.' }, { status: 403 });
     if (board.columns.length + body.names.length > MAX_COLUMNS)
       return HttpResponse.json({ names: ['A board has at most 20 columns.'] }, { status: 400 });
     for (const name of body.names)
@@ -91,8 +136,9 @@ export const boardHandlers = [
   }),
 
   http.post(`${API}/columns/order/`, async ({ request }) => {
-    const body = (await request.json()) as { panel: string; ids: number[] };
-    const board = boardOf(body.panel);
+    const body = (await request.json()) as { panel: string; scope?: string; ids: number[] };
+    const board = boardOf(body.panel, body.scope);
+    if (!manages(board)) return HttpResponse.json({ detail: 'Forbidden.' }, { status: 403 });
     const byId = new Map(board.columns.map((column) => [column.id, column]));
     if (body.ids.length !== byId.size || body.ids.some((id) => !byId.has(id)))
       return HttpResponse.json({ detail: 'The board changed; reload it.' }, { status: 409 });
@@ -121,7 +167,8 @@ export const boardHandlers = [
     if (!found || !task) return notFound();
     if (found.board.columns.some((column) => column.cards.some((card) => card.task.id === task.id)))
       return HttpResponse.json({ detail: 'This task is already on your board.' }, { status: 409 });
-    const card = { id: nextId++, column: found.column.id, task };
+    if (!manages(found.board)) return HttpResponse.json({ detail: 'Forbidden.' }, { status: 403 });
+    const card = { id: nextId++, column: found.column.id, task, can_move: true, who: '' };
     found.column.cards.push(card);
     return HttpResponse.json(card, { status: 201 });
   }),

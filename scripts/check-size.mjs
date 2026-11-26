@@ -44,7 +44,10 @@ import { gzipSync } from 'node:zlib';
 // JS 200.0: meeting0's calendar picker in the task composer and the tasks row's chips: their code stays
 // lazy; the first load gains only the routes' module-map entries for the shared picker chunk, 199.896 → 199.943
 // locally (2026-11-26).
-const BUDGET_KB = { js: 200.0, css: 23.0 };
+// JS 200.4, CSS 23.1: the branch measured 200.018 / 23.010 on Node 26 before meeting0 round 2; its
+// team boards add a «برد» route and nav item to the supervisor, executive and HR panels (pages
+// lazy), 200.300 locally (2026-11-26).
+const BUDGET_KB = { js: 200.4, css: 23.1 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

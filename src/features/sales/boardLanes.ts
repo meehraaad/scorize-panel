@@ -29,13 +29,14 @@ export interface Lane {
  * (`supports.columns`), each middle stage is one lane, as the board's defaults are.
  */
 export function lanesOf(
-  customer: Pick<CustomerData, 'columns' | 'supports'>,
+  customer: Pick<CustomerData, 'columns' | 'supports' | 'fixed_names'>,
   t: TFunction<'sales'>,
 ): Lane[] {
+  // In the order a lead moves through them (the stage bar's), with the manager's names.
   const fixed = (stage: 'new' | 'draft' | 'won'): Lane => ({
     key: stage,
-    label: t(`stageShort.${stage}`),
-    name: t(`stage.${stage}`),
+    label: customer.fixed_names?.[stage] || t(`stageShort.${stage}`),
+    name: customer.fixed_names?.[stage] || t(`stage.${stage}`),
     stage,
     column: null,
     activities: [],

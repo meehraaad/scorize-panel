@@ -1004,8 +1004,7 @@
     "noSeller": "Not assigned",
     "tasks": {
       "add": "All-day task on {{day}}",
-      "row": "Tasks",
-      "addDay": "All-day task"
+      "row": "Tasks"
     },
     "taskBlock": "task",
     "assign": {
@@ -1273,6 +1272,7 @@
     },
     "nothingPicked": "Pick at least one product.",
     "slot": "Time for {{product}}",
+    "pickSlot": "Pick a time",
     "slotRequired": "Pick a consultation time.",
     "slotEmpty": "No free times this week.",
     "slotNextFree": "First free week",
@@ -1793,7 +1793,9 @@
         "order": "Put the “Contacted” stages first, then “Consulted”, then “Offer sent”.",
         "phases": "Each of “Contacted”, “Consulted” and “Offer sent” needs at least one stage.",
         "moves": "Choose where the cards of {{names}} go, at the bottom of the page."
-      }
+      },
+      "system": "The system fills this column (contracts and reports); it can’t be removed.",
+      "systemHint": "Leave empty to keep the default name."
     },
     "tags": {
       "title": "Customer tags",

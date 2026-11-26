@@ -11,6 +11,7 @@ import {
   type StagesData,
   stagesQuery,
   type StageInput,
+  type FixedColumnKey,
   type CommissionRule,
   type CommissionRuleInput,
   type BuilderPrice,
@@ -118,8 +119,11 @@ export function useManageTask() {
 export function useSaveStages() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (body: { stages: StageInput[]; moves: { source: number; to: number }[] }) =>
-      api<StagesData>(`${MANAGER_API}/stages/`, { method: 'PUT', body }),
+    mutationFn: (body: {
+      stages: StageInput[];
+      fixed?: { key: FixedColumnKey; name: string; position: number }[];
+      moves: { source: number; to: number }[];
+    }) => api<StagesData>(`${MANAGER_API}/stages/`, { method: 'PUT', body }),
     onSuccess: (data) => {
       client.setQueryData(stagesQuery.queryKey, data);
       // The customer page's stage bar and the contact log show the same columns as the board.

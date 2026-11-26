@@ -21,6 +21,7 @@ import {
   type BoardCard,
   type BoardColumn,
   type BoardPanel,
+  type BoardScope,
   type BoardTask,
 } from '@/lib/boards/api';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -48,19 +49,24 @@ const taskHref = (panel: BoardPanel, task: number) =>
  */
 export function MyBoardView({
   panel,
+  scope = 'mine',
   top,
   switcher,
   slots,
 }: {
   panel: BoardPanel;
+  /** `team`: the panel's team board (meeting0 round 2): its admin keeps it, each moves their own. */
+  scope?: BoardScope;
   top?: ReactNode;
   switcher?: ReactNode;
   /** The composer's «از تقویم» (the panel's week). */
   slots?: Slots | undefined;
 }) {
   const { t } = useTranslation('tasks');
-  const { data, isPending, isError } = useQuery(myBoardQuery(panel));
+  const { data, isPending, isError } = useQuery(myBoardQuery(panel, scope));
   const columns = data?.columns ?? [];
+  const manage = data?.can_manage ?? false;
+  const team = scope === 'team';
 
   return (
     <PageWorkspace fullscreen={false} onExitFullscreen={() => undefined}>
@@ -68,16 +74,12 @@ export function MyBoardView({
         {top}
         <PageHeader
           size="workspace"
-          title={t('board.title')}
-          subtitle={t('board.private')}
+          title={t(team ? 'board.teamTitle' : 'board.title')}
+          subtitle={t(team ? 'board.teamHint' : 'board.private')}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {switcher}
-              <NewTaskButton
-                panel={panel}
-                slots={slots}
-                columns={columns.map(({ id, name }) => ({ id, name }))}
-              />
+              {(!team || manage) && <NewTaskButton panel={panel} slots={slots} />}
             </div>
           }
         />
@@ -89,17 +91,31 @@ export function MyBoardView({
       ) : isPending ? (
         <div aria-busy="true" className="flex-1 animate-pulse bg-board" />
       ) : columns.length === 0 ? (
-        <EmptyBoard panel={panel} />
+        manage ? (
+          <EmptyBoard panel={panel} scope={scope} />
+        ) : (
+          <p className="m-0 flex-1 bg-board p-6 text-sm text-text-2">{t('board.teamEmpty')}</p>
+        )
       ) : (
-        <Board panel={panel} columns={columns} />
+        <Board panel={panel} scope={scope} manage={manage} columns={columns} />
       )}
     </PageWorkspace>
   );
 }
 
-function Board({ panel, columns }: { panel: BoardPanel; columns: BoardColumn[] }) {
+function Board({
+  panel,
+  scope,
+  manage,
+  columns,
+}: {
+  panel: BoardPanel;
+  scope: BoardScope;
+  manage: boolean;
+  columns: BoardColumn[];
+}) {
   const { t } = useTranslation('tasks');
-  const move = useCardChange(panel);
+  const move = useCardChange(panel, scope);
   const [editing, setEditing] = useState<BoardColumn | null>(null);
   const [adding, setAdding] = useState<BoardColumn | null>(null);
   const [opened, setOpened] = useState<BoardCard | null>(null);
@@ -110,7 +126,7 @@ function Board({ panel, columns }: { panel: BoardPanel; columns: BoardColumn[] }
   return (
     <>
       <KanbanBoard
-        label={t('board.title')}
+        label={t(scope === 'team' ? 'board.teamTitle' : 'board.title')}
         sortable
         lanes={columns.map((column, index) => ({
           id: column.id,
@@ -119,6 +135,7 @@ function Board({ panel, columns }: { panel: BoardPanel; columns: BoardColumn[] }
         }))}
         cards={cards}
         laneOf={(card) => card.column}
+        canDrag={(card) => card.can_move}
         onMove={(card, column, before) =>
           move.mutate(
             { kind: 'move', card: card.id, column, before: before?.id ?? null },
@@ -128,27 +145,32 @@ function Board({ panel, columns }: { panel: BoardPanel; columns: BoardColumn[] }
         renderCard={(card) => <CardFace card={card} now={now} onOpen={() => setOpened(card)} />}
         emptyText={t('board.emptyColumn')}
         limitLabel={(count) => count}
-        laneActions={(lane) => (
-          <button
-            type="button"
-            onClick={() => setEditing(columns.find((column) => column.id === lane.id) ?? null)}
-            aria-label={t('board.columnMenu', { name: lane.title })}
-            className="flex size-9 cursor-pointer items-center justify-center rounded-full text-text-2 hover:bg-surface focus-visible:outline-2 focus-visible:outline-focus"
-          >
-            <Icon name="more" size={18} />
-          </button>
-        )}
-        laneFooter={(lane) => (
-          <button
-            type="button"
-            onClick={() => setAdding(columns.find((column) => column.id === lane.id) ?? null)}
-            className="mx-2.5 mb-2.5 flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-surface hover:text-text focus-visible:outline-2 focus-visible:outline-focus"
-          >
-            <Icon name="plus" size={16} />
-            {t('board.addTask')}
-          </button>
-        )}
+        laneActions={(lane) =>
+          manage && (
+            <button
+              type="button"
+              onClick={() => setEditing(columns.find((column) => column.id === lane.id) ?? null)}
+              aria-label={t('board.columnMenu', { name: lane.title })}
+              className="flex size-9 cursor-pointer items-center justify-center rounded-full text-text-2 hover:bg-surface focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              <Icon name="more" size={18} />
+            </button>
+          )
+        }
+        laneFooter={(lane) =>
+          manage && (
+            <button
+              type="button"
+              onClick={() => setAdding(columns.find((column) => column.id === lane.id) ?? null)}
+              className="mx-2.5 mb-2.5 flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-surface hover:text-text focus-visible:outline-2 focus-visible:outline-focus"
+            >
+              <Icon name="plus" size={16} />
+              {t('board.addTask')}
+            </button>
+          )
+        }
         after={
+          manage &&
           columns.length < MAX_COLUMNS && (
             <button
               type="button"
@@ -165,17 +187,27 @@ function Board({ panel, columns }: { panel: BoardPanel; columns: BoardColumn[] }
         <ColumnDialog
           key={editing.id}
           panel={panel}
+          scope={scope}
           column={editing}
           columns={columns}
           onClose={() => setEditing(null)}
         />
       )}
-      <NewColumnDialog panel={panel} open={naming} onClose={() => setNaming(false)} />
-      {adding && <AddTaskDialog panel={panel} column={adding} onClose={() => setAdding(null)} />}
+      <NewColumnDialog panel={panel} scope={scope} open={naming} onClose={() => setNaming(false)} />
+      {adding && (
+        <AddTaskDialog
+          panel={panel}
+          scope={scope}
+          column={adding}
+          onClose={() => setAdding(null)}
+        />
+      )}
       {opened && (
         <CardDialog
           key={opened.id}
           panel={panel}
+          scope={scope}
+          manage={manage}
           card={opened}
           columns={columns}
           onClose={() => setOpened(null)}
@@ -215,6 +247,7 @@ function CardFace({ card, now, onOpen }: { card: BoardCard; now: number; onOpen:
           {t(`board.tag.${tag}`)}
         </span>
         <span className="text-xs text-text-2">
+          {card.who && `${card.who} · `}
           {task.timed
             ? t('board.due', { day: f.dateShort(task.due_at), time: f.time(task.due_at) })
             : t('board.dueDay', { day: f.dateShort(task.due_at) })}
@@ -225,9 +258,9 @@ function CardFace({ card, now, onOpen }: { card: BoardCard; now: number; onOpen:
 }
 
 /** 6B: no columns yet. Name the first one, or start with the three suggested. */
-function EmptyBoard({ panel }: { panel: BoardPanel }) {
+function EmptyBoard({ panel, scope }: { panel: BoardPanel; scope: BoardScope }) {
   const { t } = useTranslation('tasks');
-  const change = useColumnChange(panel);
+  const change = useColumnChange(panel, scope);
   const start = () =>
     change.mutate(
       {
@@ -245,7 +278,7 @@ function EmptyBoard({ panel }: { panel: BoardPanel }) {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="grid gap-3.5 sm:grid-cols-3">
           <div className="rounded-2xl bg-board-lane p-3.5 shadow-[inset_0_0_0_2px_var(--focus)]">
-            <ColumnForm panel={panel} />
+            <ColumnForm panel={panel} scope={scope} />
           </div>
           <span
             aria-hidden="true"
@@ -285,9 +318,17 @@ function EmptyBoard({ panel }: { panel: BoardPanel }) {
 }
 
 /** A new column's name (the empty board's form and the new-column window). */
-function ColumnForm({ panel, onDone }: { panel: BoardPanel; onDone?: () => void }) {
+function ColumnForm({
+  panel,
+  scope,
+  onDone,
+}: {
+  panel: BoardPanel;
+  scope: BoardScope;
+  onDone?: () => void;
+}) {
   const { t } = useTranslation('tasks');
-  const change = useColumnChange(panel);
+  const change = useColumnChange(panel, scope);
   const [name, setName] = useState('');
   const [checked, setChecked] = useState(false);
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -317,17 +358,19 @@ function ColumnForm({ panel, onDone }: { panel: BoardPanel; onDone?: () => void 
 
 function NewColumnDialog({
   panel,
+  scope,
   open,
   onClose,
 }: {
   panel: BoardPanel;
+  scope: BoardScope;
   open: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
   return (
     <Dialog open={open} onClose={onClose} title={t('board.newColumn')} closeLabel={t('close')}>
-      {open && <ColumnForm panel={panel} onDone={onClose} />}
+      {open && <ColumnForm panel={panel} scope={scope} onDone={onClose} />}
     </Dialog>
   );
 }
@@ -335,17 +378,19 @@ function NewColumnDialog({
 /** A column's window: rename it, move it earlier or later, or delete it (its cards; not their tasks). */
 function ColumnDialog({
   panel,
+  scope,
   column,
   columns,
   onClose,
 }: {
   panel: BoardPanel;
+  scope: BoardScope;
   column: BoardColumn;
   columns: BoardColumn[];
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
-  const change = useColumnChange(panel);
+  const change = useColumnChange(panel, scope);
   const [name, setName] = useState(column.name);
   const [deleting, setDeleting] = useState(false);
   const at = columns.findIndex((item) => item.id === column.id);
@@ -432,10 +477,12 @@ function ColumnDialog({
 /** «+ گذاشتن یکی از کارهایم»: my open tasks not on the board, found by text, into this column. */
 function AddTaskDialog({
   panel,
+  scope,
   column,
   onClose,
 }: {
   panel: BoardPanel;
+  scope: BoardScope;
   column: BoardColumn;
   onClose: () => void;
 }) {
@@ -444,8 +491,8 @@ function AddTaskDialog({
   const [text, setText] = useState('');
   const typed = text.trim();
   const search = useDebouncedValue(typed.length >= SEARCH_MIN ? typed : '');
-  const found = useQuery(candidatesQuery(panel, search));
-  const add = useCardChange(panel);
+  const found = useQuery(candidatesQuery(panel, search, scope));
+  const add = useCardChange(panel, scope);
   const put = (task: BoardTask) =>
     add.mutate(
       { kind: 'add', column: column.id, task: task.id },
@@ -501,17 +548,22 @@ function AddTaskDialog({
 /** A card's window: its task (open it on the tasks page), its column, or off the board. */
 function CardDialog({
   panel,
+  scope,
+  manage,
   card,
   columns,
   onClose,
 }: {
   panel: BoardPanel;
+  scope: BoardScope;
+  /** Takes cards off (the team board: its admin). */
+  manage: boolean;
   card: BoardCard;
   columns: BoardColumn[];
   onClose: () => void;
 }) {
   const { t } = useTranslation('tasks');
-  const change = useCardChange(panel);
+  const change = useCardChange(panel, scope);
   const fail = () => toast.error(t('board.failed'));
   return (
     <Dialog
@@ -522,17 +574,19 @@ function CardDialog({
       closeLabel={t('close')}
     >
       <div className="flex flex-col gap-5">
-        <SelectField
-          label={t('board.column')}
-          value={String(card.column)}
-          onChange={(value) =>
-            change.mutate(
-              { kind: 'move', card: card.id, column: Number(value), before: null },
-              { onSuccess: onClose, onError: fail },
-            )
-          }
-          options={columns.map((column) => ({ value: String(column.id), label: column.name }))}
-        />
+        {card.can_move && (
+          <SelectField
+            label={t('board.column')}
+            value={String(card.column)}
+            onChange={(value) =>
+              change.mutate(
+                { kind: 'move', card: card.id, column: Number(value), before: null },
+                { onSuccess: onClose, onError: fail },
+              )
+            }
+            options={columns.map((column) => ({ value: String(column.id), label: column.name }))}
+          />
+        )}
         <div className="flex flex-wrap gap-2">
           <Link
             to={taskHref(panel, card.task.id)}
@@ -540,18 +594,20 @@ function CardDialog({
           >
             {t('board.openTask')}
           </Link>
-          <Button
-            variant="outline"
-            disabled={change.isPending}
-            onClick={() =>
-              change.mutate(
-                { kind: 'remove', card: card.id },
-                { onSuccess: onClose, onError: fail },
-              )
-            }
-          >
-            {t('board.remove')}
-          </Button>
+          {manage && (
+            <Button
+              variant="outline"
+              disabled={change.isPending}
+              onClick={() =>
+                change.mutate(
+                  { kind: 'remove', card: card.id },
+                  { onSuccess: onClose, onError: fail },
+                )
+              }
+            >
+              {t('board.remove')}
+            </Button>
+          )}
         </div>
       </div>
     </Dialog>

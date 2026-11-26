@@ -34,7 +34,8 @@
         "tickets": "Tickets",
         "reports": "Reports",
         "tasks": "My tasks",
-        "services": "My services"
+        "services": "My services",
+        "board": "Board"
       },
       "tabs": {
         "today": "Today",
@@ -71,7 +72,8 @@
         "orders": "Orders",
         "tickets": "Tickets",
         "tasks": "Tasks",
-        "manager": "Executive management"
+        "manager": "Executive management",
+        "board": "Board"
       }
     },
     "sales": {
@@ -107,7 +109,8 @@
         "moves": "Joining and leaving",
         "attendance": "Attendance",
         "pay": "Pay and rewards",
-        "access": "Access"
+        "access": "Access",
+        "board": "Board"
       },
       "tabs": {
         "today": "Today",

@@ -23,6 +23,7 @@ import {
   type StageActivity,
   type StageInput,
   type StagePhase,
+  type FixedColumnKey,
   type StagesData,
 } from '../api';
 import { useSaveStages } from '../api/managerMutations';
@@ -41,8 +42,29 @@ interface Draft {
 const DAYS = [0, 1, 2, 3, 7] as const;
 const HOURS = [9, 10, 12, 16, 18] as const;
 const TIMED: readonly ActivityKind[] = ['follow_up', 'task'];
-const FIXED_START = ['new'] as const;
-const FIXED_END = ['draft', 'won', 'lost'] as const;
+/** The columns the system fills, where they sit by default (an older Django lists none). */
+const FIXED_KEYS: readonly FixedColumnKey[] = ['new', 'draft', 'won', 'lost'];
+const fixedKey = (key: FixedColumnKey) => `fixed:${key}`;
+const isFixed = (key: string) => key.startsWith('fixed:');
+
+/** Every column in its place: the system ones (`fixed:<key>`) and the team ones (their draft key). */
+const orderOf = (data: StagesData, drafts: Draft[]): string[] => {
+  const fixed = data.fixed ?? [
+    { key: 'new' as const, name: null, position: 0 },
+    ...(['draft', 'won', 'lost'] as const).map((key, index) => ({
+      key,
+      name: null,
+      position: drafts.length + 1 + index,
+    })),
+  ];
+  const order = drafts.map((draft) => draft.key);
+  for (const column of [...fixed].sort((a, b) => a.position - b.position))
+    order.splice(column.position, 0, fixedKey(column.key));
+  return order;
+};
+/** The manager's names for the system columns ('' : the panel's own word). */
+const fixedNamesOf = (data: StagesData): Partial<Record<FixedColumnKey, string>> =>
+  Object.fromEntries((data.fixed ?? []).map((column) => [column.key, column.name ?? '']));
 
 const toInput = (activity: StageActivity): ActivityInput => ({
   kind: activity.kind,
@@ -86,9 +108,9 @@ function problemOf(drafts: Draft[]): 'name' | 'duplicate' | 'order' | 'phases' |
 }
 
 /**
- * The team's board columns and what each asks for when a card enters it (S48). Only the middle
- * columns change; new, contract draft, contract and lost stay fixed. Canvas "تنظیم مرحله‌ها و
- * فعالیت‌ها (مدیر)".
+ * The team's board columns and what each asks for when a card enters it (S48). Every column is
+ * renamed and moved; new, contract draft, won and lost (the system fills them, meeting0 round 2)
+ * can't be removed. Canvas "تنظیم مرحله‌ها و فعالیت‌ها (مدیر)".
  */
 export default function StagesPage() {
   const { t } = useTranslation('sales');
@@ -96,6 +118,8 @@ export default function StagesPage() {
   const { data } = useSuspenseQuery(stagesQuery);
   const save = useSaveStages();
   const [drafts, setDrafts] = useState(() => draftsOf(data));
+  const [order, setOrder] = useState(() => orderOf(data, draftsOf(data)));
+  const [fixedNames, setFixedNames] = useState(() => fixedNamesOf(data));
   const [selected, setSelected] = useState(drafts[0]?.key ?? '');
   const [moves, setMoves] = useState<Record<number, number>>({});
   const [removed, setRemoved] = useState<Draft[]>([]);
@@ -103,7 +127,13 @@ export default function StagesPage() {
   const [checked, setChecked] = useState(false);
 
   const current = drafts.find((draft) => draft.key === selected);
-  const problem = problemOf(drafts);
+  const currentFixed = FIXED_KEYS.find((key) => fixedKey(key) === selected);
+  // The team columns in the order shown (the system ones between them don't count).
+  const ordered = order
+    .filter((key) => !isFixed(key))
+    .map((key) => drafts.find((draft) => draft.key === key))
+    .filter((draft) => draft !== undefined);
+  const problem = problemOf(ordered);
   const waiting = removed.filter(
     (draft) => draft.id !== null && draft.cards > 0 && !(draft.id in moves),
   );
@@ -118,16 +148,18 @@ export default function StagesPage() {
     });
   };
   const shift = (index: number, by: -1 | 1) =>
-    setDrafts((list) => {
+    setOrder((list) => {
       const next = [...list];
       const [item] = next.splice(index, 1);
       if (item) next.splice(index + by, 0, item);
       return next;
     });
+  const fixedName = (key: FixedColumnKey) => fixedNames[key] || t(`stage.${key}`);
 
   function remove(draft: Draft) {
     const rest = drafts.filter((item) => item.key !== draft.key);
     setDrafts(rest);
+    setOrder((list) => list.filter((key) => key !== draft.key));
     if (draft.id !== null) setRemoved((list) => [...list, draft]);
     setSelected(rest[0]?.key ?? '');
   }
@@ -135,7 +167,7 @@ export default function StagesPage() {
   function submit() {
     setChecked(true);
     if (problem || waiting.length) return;
-    const stages: StageInput[] = drafts.map((draft) => ({
+    const stages: StageInput[] = ordered.map((draft) => ({
       id: draft.id,
       name: draft.name.trim(),
       phase: draft.phase,
@@ -145,17 +177,31 @@ export default function StagesPage() {
     save.mutate(
       {
         stages,
+        // An older Django has no system columns to set: they stay where it keeps them.
+        ...(data.fixed && {
+          fixed: FIXED_KEYS.map((key) => ({
+            key,
+            name: (fixedNames[key] ?? '').trim(),
+            position: order.indexOf(fixedKey(key)),
+          })),
+        }),
         moves: Object.entries(moves).map(([source, to]) => ({ source: Number(source), to })),
       },
       {
         onSuccess: (saved) => {
           const next = draftsOf(saved);
           setDrafts(next);
+          setOrder(orderOf(saved, next));
+          setFixedNames(fixedNamesOf(saved));
           setRemoved([]);
           setMoves({});
           setChecked(false);
           setSelected(
-            next.find((draft) => draft.name === current?.name.trim())?.key ?? next[0]?.key ?? '',
+            currentFixed
+              ? selected
+              : (next.find((draft) => draft.name === current?.name.trim())?.key ??
+                  next[0]?.key ??
+                  ''),
           );
           toast.success(t('manager.stages.saved'));
         },
@@ -168,17 +214,6 @@ export default function StagesPage() {
       },
     );
   }
-
-  const fixed = (stage: (typeof FIXED_START)[number] | (typeof FIXED_END)[number]) => (
-    <li
-      key={stage}
-      className="flex min-h-14 items-center gap-2.5 rounded-xl bg-track px-3 text-sm text-text-2"
-    >
-      <Icon name="lock" size={14} />
-      <span className="flex-1">{t(`stage.${stage}`)}</span>
-      <span className="text-xs">{t(`manager.stages.fixed.${stage}`)}</span>
-    </li>
-  );
 
   return (
     <>
@@ -204,40 +239,53 @@ export default function StagesPage() {
         <SectionCard id="stages-list" variant="panel" title={t('manager.stages.list')}>
           <p className="m-0 text-[13px] leading-6 text-text-2">{t('manager.stages.listHint')}</p>
           <ol className="m-0 flex list-none flex-col gap-2 p-0">
-            {FIXED_START.map(fixed)}
-            {drafts.map((draft, index) => (
-              <li key={draft.key} className="flex items-center gap-1">
-                <button
-                  type="button"
-                  aria-current={draft.key === selected ? 'true' : undefined}
-                  onClick={() => setSelected(draft.key)}
-                  className={`flex min-h-14 min-w-0 flex-1 flex-col justify-center rounded-xl px-3 text-start text-sm shadow-[inset_0_0_0_1px_var(--line-2)] ${draft.key === selected ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]' : 'bg-surface'}`}
-                >
-                  <span className="truncate font-medium">
-                    {draft.name.trim() || t('manager.stages.unnamed')}
-                  </span>
-                  <span className="text-xs text-text-2">
-                    {t('manager.stages.info', {
-                      n: f.number(draft.activities.length),
-                      phase: t(`stage.${draft.phase}`),
-                    })}
-                  </span>
-                </button>
-                <IconButton
-                  icon="chevronDown"
-                  className="rotate-180"
-                  aria-label={t('manager.stages.up', { name: draft.name })}
-                  disabled={index === 0}
-                  onClick={() => shift(index, -1)}
-                />
-                <IconButton
-                  icon="chevronDown"
-                  aria-label={t('manager.stages.down', { name: draft.name })}
-                  disabled={index === drafts.length - 1}
-                  onClick={() => shift(index, 1)}
-                />
-              </li>
-            ))}
+            {order.map((key, index) => {
+              const draft = drafts.find((item) => item.key === key);
+              const system = FIXED_KEYS.find((item) => fixedKey(item) === key);
+              const name = system
+                ? fixedName(system)
+                : draft?.name.trim() || t('manager.stages.unnamed');
+              return (
+                <li key={key} className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    aria-current={key === selected ? 'true' : undefined}
+                    onClick={() => setSelected(key)}
+                    className={`flex min-h-14 min-w-0 flex-1 flex-col justify-center rounded-xl px-3 text-start text-sm shadow-[inset_0_0_0_1px_var(--line-2)] ${key === selected ? 'bg-tint shadow-[inset_0_0_0_1.5px_var(--primary)]' : 'bg-surface'}`}
+                  >
+                    <span className="flex items-center gap-1.5 truncate font-medium">
+                      {system && (
+                        <span title={t('manager.stages.system')} className="flex text-info">
+                          <Icon name="settings" size={14} />
+                        </span>
+                      )}
+                      {name}
+                    </span>
+                    <span className="text-xs text-text-2">
+                      {system
+                        ? t(`manager.stages.fixed.${system}`)
+                        : t('manager.stages.info', {
+                            n: f.number(draft?.activities.length ?? 0),
+                            phase: t(`stage.${draft?.phase ?? 'contacted'}`),
+                          })}
+                    </span>
+                  </button>
+                  <IconButton
+                    icon="chevronDown"
+                    className="rotate-180"
+                    aria-label={t('manager.stages.up', { name })}
+                    disabled={index === 0}
+                    onClick={() => shift(index, -1)}
+                  />
+                  <IconButton
+                    icon="chevronDown"
+                    aria-label={t('manager.stages.down', { name })}
+                    disabled={index === order.length - 1}
+                    onClick={() => shift(index, 1)}
+                  />
+                </li>
+              );
+            })}
             <li>
               <Button
                 variant="outline"
@@ -246,6 +294,11 @@ export default function StagesPage() {
                 onClick={() => {
                   const key = `new-${String(added)}`;
                   setAdded(added + 1);
+                  setOrder((list) => {
+                    // After the last team column, before the system ones that follow it.
+                    const last = list.findLastIndex((item) => !isFixed(item));
+                    return [...list.slice(0, last + 1), key, ...list.slice(last + 1)];
+                  });
                   setDrafts([
                     ...drafts,
                     {
@@ -265,11 +318,23 @@ export default function StagesPage() {
                 {t('manager.stages.add')}
               </Button>
             </li>
-            {FIXED_END.map(fixed)}
           </ol>
         </SectionCard>
 
-        {current ? (
+        {currentFixed ? (
+          <SectionCard id="stage-editor" variant="panel" title={fixedName(currentFixed)}>
+            <TextField
+              label={t('manager.stages.name')}
+              hint={t('manager.stages.systemHint')}
+              value={fixedNames[currentFixed] ?? ''}
+              placeholder={t(`stage.${currentFixed}`)}
+              maxLength={40}
+              onChange={(event) =>
+                setFixedNames((names) => ({ ...names, [currentFixed]: event.target.value }))
+              }
+            />
+          </SectionCard>
+        ) : current ? (
           <SectionCard
             id="stage-editor"
             variant="panel"

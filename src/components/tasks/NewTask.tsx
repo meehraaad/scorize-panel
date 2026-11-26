@@ -1,14 +1,14 @@
-import { useQueryClient, type QueryKey } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Suspense, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
+import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { Switch } from '@/components/ui/Switch';
 import { useUser } from '@/lib/auth/session';
-import { BOARDS_KEY } from '@/lib/boards/api';
+import { BOARDS_KEY, columnChoicesQuery } from '@/lib/boards/api';
 import { parseValue, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { TASKS_KEY, type Colleague, type NewTask, type TasksPanel } from '@/lib/tasks/api';
@@ -22,26 +22,16 @@ import { ColleagueSearch } from './ColleagueSearch';
 const TARGETS = ['me', 'person', 'team'] as const;
 type Target = (typeof TARGETS)[number];
 const WHENS = ['evening', 'tomorrow', 'week', 'day', 'other'] as const;
+const BOARDS = ['mine', 'team'] as const;
 
-/** A column of my board, which a new task for me can go on. */
-interface BoardColumnChoice {
-  id: number;
-  name: string;
+/** Where a new task also goes: a column of my board or of the team board ('' none: the list only). */
+interface BoardPick {
+  board: 'mine' | 'team';
+  column: string;
 }
 
-/**
- * «کار تازه» in a page header: opens the composer for `panel`'s tasks (`slots`: its week picker;
- * `columns`: my board's, on its page).
- */
-export function NewTaskButton({
-  panel,
-  slots,
-  columns,
-}: {
-  panel: TasksPanel;
-  slots?: Slots | undefined;
-  columns?: readonly BoardColumnChoice[] | undefined;
-}) {
+/** «کار تازه» in a page header: opens the composer for `panel`'s tasks (`slots`: its week picker). */
+export function NewTaskButton({ panel, slots }: { panel: TasksPanel; slots?: Slots | undefined }) {
   const { t } = useTranslation('tasks');
   const [open, setOpen] = useState(false);
   return (
@@ -55,7 +45,6 @@ export function NewTaskButton({
         open={open}
         panel={panel}
         slots={slots}
-        columns={columns}
         onClose={() => setOpen(false)}
       />
     </>
@@ -77,7 +66,6 @@ export function NewTaskDialog({
   due,
   day: dueDay,
   slots: PickSlots,
-  columns = [],
   onCreated,
   also = TASKS_KEY,
 }: {
@@ -92,8 +80,6 @@ export function NewTaskDialog({
   day?: Date | undefined;
   /** Each panel's picker of a time on its week; without one there is no «از تقویم». */
   slots?: Slots | undefined;
-  /** My board's columns (opened on it): a task for me can go on one. */
-  columns?: readonly BoardColumnChoice[] | undefined;
   /** After it is saved (the opener refreshes what shows the new task). */
   onCreated?: (() => void) | undefined;
   /** What else shows the new task (the customer's page). */
@@ -106,7 +92,7 @@ export function NewTaskDialog({
   const penalizes = admin && canPenalize(user);
   const create = useCreateTask(also);
   const client = useQueryClient();
-  const [column, setColumn] = useState('');
+  const [pick, setPick] = useState<BoardPick>({ board: 'mine', column: '' });
   const [text, setText] = useState('');
   const [target, setTarget] = useState<Target>('me');
   const [people, setPeople] = useState<Colleague[]>([]);
@@ -120,6 +106,19 @@ export function NewTaskDialog({
   const [picking, setPicking] = useState(false);
   const pickedAt = when === 'other' ? parseValue(date) : null;
 
+  // The boards' columns, read when the composer opens (the shared page has no board).
+  const choices = useQuery({
+    ...columnChoicesQuery(panel === 'staff' ? 'sales' : panel),
+    enabled: open && panel !== 'staff',
+  }).data;
+  const boards = {
+    mine: target === 'me' ? (choices?.mine ?? []) : [],
+    team: choices?.can_team ? (choices.team ?? []) : [],
+  };
+  // The board shown: the one picked while it has columns, else whichever has.
+  const board =
+    boards[pick.board].length > 0 ? pick.board : boards.mine.length > 0 ? 'mine' : 'team';
+  const column = pick.board === board ? pick.column : '';
   const n = people.length;
   const dueAt =
     when === 'day' ? null : when === 'other' ? fromLocalInput(date) : quickWhen(when).toISOString();
@@ -146,13 +145,15 @@ export function NewTaskDialog({
       ...(target === 'person' && { assignees: people.map((colleague) => colleague.id) }),
       ...(target === 'team' && { everyone: true }),
       ...(penalty && target !== 'me' && { penalty: true }),
-      ...(column && target === 'me' && { column: Number(column) }),
+      ...(column && board === 'mine' && target === 'me' && { column: Number(column) }),
+      ...(column && board === 'team' && { team_column: Number(column) }),
     };
     create.mutate(task, {
       onError: () => toast.error(t('error')),
       onSuccess: () => {
         onCreated?.();
-        if (task.column) void client.invalidateQueries({ queryKey: BOARDS_KEY });
+        if (task.column || task.team_column)
+          void client.invalidateQueries({ queryKey: BOARDS_KEY });
         toast.success(
           target === 'person'
             ? t('new.sent.people', { n: f.number(n) })
@@ -264,16 +265,49 @@ export function NewTaskDialog({
             error={checked && !day ? t('new.dayRequired') : undefined}
           />
         )}
-        {target === 'me' && columns.length > 0 && (
-          <SelectField
-            label={t('new.column')}
-            value={column}
-            onChange={setColumn}
-            options={[
-              { value: '', label: t('new.noColumn') },
-              ...columns.map((choice) => ({ value: String(choice.id), label: choice.name })),
-            ]}
-          />
+        {boards[board].length > 0 && (
+          <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
+            <legend className="mb-2.5 text-sm font-semibold">{t('new.onBoard')}</legend>
+            {boards.mine.length > 0 && boards.team.length > 0 && (
+              <div role="group" className="flex self-start rounded-full bg-canvas p-1">
+                {BOARDS.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={board === value}
+                    onClick={() => setPick({ board: value, column: '' })}
+                    className={`inline-flex min-h-10 items-center rounded-full px-4 text-sm ${
+                      board === value
+                        ? 'bg-hero font-bold text-on-hero dark:bg-tint'
+                        : 'font-semibold text-text-2 hover:text-text'
+                    }`}
+                  >
+                    {t(`new.board.${value}`)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {[{ id: '', name: t('new.noColumn') }, ...boards[board]].map((choice) => {
+                const on = column === String(choice.id);
+                return (
+                  <button
+                    key={choice.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setPick({ board, column: String(choice.id) })}
+                    className={`min-h-11 rounded-full px-4 text-sm ${
+                      on
+                        ? 'bg-hero font-bold text-on-hero'
+                        : 'shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-tint'
+                    }`}
+                  >
+                    {choice.name}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
         )}
         {penalizes && target !== 'me' && (
           <div className="rounded-card-sm bg-warn-tint px-3">
@@ -303,6 +337,11 @@ export function NewTaskDialog({
                 onChange={(value) => {
                   setWhen('other');
                   setDate(value);
+                  setPicking(false);
+                }}
+                onDayPick={(value) => {
+                  setWhen('day');
+                  setDay(value);
                   setPicking(false);
                 }}
               />

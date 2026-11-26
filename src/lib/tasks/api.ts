@@ -106,6 +106,8 @@ export interface NewTask {
   due_on?: string;
   /** A task for me: also on my board of the panel, at the end of this column of it. */
   column?: number;
+  /** The panel's admin: also on the team board, at the end of this column (each copy). */
+  team_column?: number;
 }
 
 /** When a new task is due: its time, or the 23:59 of its day (as Django reads a day-only task). */

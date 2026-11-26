@@ -132,10 +132,13 @@ describe('my board', () => {
     await user.click(screen.getByRole('button', { name: 'کار تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
     await user.type(within(dialog).getByLabelText('چه کاری؟'), 'نظافت دفتر');
-    await user.selectOptions(
-      within(dialog).getByRole('combobox', { name: 'روی برد من هم بگذار' }),
-      'این هفته',
+    // The board's columns as chips; «فقط فهرست کارها» until one is picked.
+    const board = await within(dialog).findByRole('group', { name: 'روی برد' });
+    expect(within(board).getByRole('button', { name: 'فقط فهرست کارها' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
     );
+    await user.click(within(board).getByRole('button', { name: 'این هفته' }));
     await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
     await waitFor(() => expect(sent).toMatchObject({ panel: 'sales', kind: 'mine' }));
     expect(typeof sent?.['column']).toBe('number');
@@ -152,5 +155,74 @@ describe('my board', () => {
     expect(
       await screen.findByRole('button', { name: 'شروع با سه ستون پیشنهادی' }),
     ).toBeInTheDocument();
+  });
+
+  describe('team board (meeting0 round 2)', () => {
+    it('the admin keeps it and sends a task straight into one of its columns', async () => {
+      let sent: Record<string, unknown> | null = null;
+      server.use(
+        http.post('/api/staff/v1/tasks/', async ({ request }) => {
+          sent = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({ id: 1 }, { status: 201 });
+        }),
+      );
+      loginAs(SUPERVISOR);
+      const user = userEvent.setup();
+      renderApp('/supervisor/board');
+      await screen.findByRole('heading', { level: 1, name: 'برد تیم' });
+      await user.click(await screen.findByRole('button', { name: 'شروع با سه ستون پیشنهادی' }));
+      await screen.findByRole('region', { name: 'برد تیم' });
+      await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+      const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+      await user.type(within(dialog).getByLabelText('چه کاری؟'), 'بررسی فرم‌ها');
+      const board = await within(dialog).findByRole('group', { name: 'روی برد' });
+      await user.click(within(board).getByRole('button', { name: 'این هفته' }));
+      await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
+      await waitFor(() => expect(sent).toMatchObject({ panel: 'supervisor', kind: 'mine' }));
+      expect(typeof sent?.['team_column']).toBe('number');
+      expect(sent?.['column']).toBeUndefined();
+    });
+
+    it('a member sees it but has no tools; only their own cards drag', async () => {
+      server.use(
+        http.get('/api/boards/v1/board/', () =>
+          HttpResponse.json({
+            id: 1,
+            panel: 'supervisor',
+            scope: 'team',
+            can_manage: false,
+            columns: [
+              {
+                id: 5,
+                name: 'در حال انجام',
+                cards: [7, 8].map((id) => ({
+                  id,
+                  column: 5,
+                  can_move: id === 7,
+                  who: id === 7 ? 'شما' : 'الهام رضوی',
+                  task: {
+                    id: 100 + id,
+                    text: id === 7 ? 'کار من' : 'کار همکار',
+                    due_at: '2026-11-30T10:00:00Z',
+                    timed: true,
+                    kind: 'mine',
+                    status: 'open',
+                    done: false,
+                    penalty: false,
+                  },
+                })),
+              },
+            ],
+          }),
+        ),
+      );
+      loginAs(SUPERVISOR);
+      renderApp('/supervisor/board');
+      const board = await screen.findByRole('region', { name: 'برد تیم' });
+      expect(screen.queryByRole('button', { name: 'کار تازه' })).toBeNull();
+      expect(within(board).queryByRole('button', { name: /ستون تازه/ })).toBeNull();
+      expect(within(board).queryByRole('button', { name: /^منوی ستون/ })).toBeNull();
+      expect(within(board).getByText(/الهام رضوی/)).toBeInTheDocument();
+    });
   });
 });
