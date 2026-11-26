@@ -67,6 +67,7 @@ export function MyBoardView({
   const columns = data?.columns ?? [];
   const manage = data?.can_manage ?? false;
   const team = scope === 'team';
+  const [naming, setNaming] = useState(false);
 
   return (
     <PageWorkspace fullscreen={false} onExitFullscreen={() => undefined}>
@@ -79,6 +80,13 @@ export function MyBoardView({
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {switcher}
+              {/* A new column from the header, so the board keeps its width for the columns. */}
+              {manage && columns.length > 0 && columns.length < MAX_COLUMNS && (
+                <Button variant="outline" onClick={() => setNaming(true)}>
+                  <Icon name="plus" size={18} />
+                  {t('board.newColumn')}
+                </Button>
+              )}
               {(!team || manage) && <NewTaskButton panel={panel} slots={slots} />}
             </div>
           }
@@ -99,6 +107,7 @@ export function MyBoardView({
       ) : (
         <Board panel={panel} scope={scope} manage={manage} columns={columns} />
       )}
+      <NewColumnDialog panel={panel} scope={scope} open={naming} onClose={() => setNaming(false)} />
     </PageWorkspace>
   );
 }
@@ -119,7 +128,6 @@ function Board({
   const [editing, setEditing] = useState<BoardColumn | null>(null);
   const [adding, setAdding] = useState<BoardColumn | null>(null);
   const [opened, setOpened] = useState<BoardCard | null>(null);
-  const [naming, setNaming] = useState(false);
   const [now] = useState(() => Date.now());
   const cards = columns.flatMap((column) => column.cards);
 
@@ -167,25 +175,12 @@ function Board({
               onClick={() => setAdding(columns.find((column) => column.id === lane.id) ?? null)}
               aria-label={label}
               title={label}
-              className="mx-2.5 mb-2.5 inline-flex size-10 cursor-pointer items-center justify-center self-end rounded-full text-text-2 hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
+              className="mx-2.5 mt-auto mb-2.5 inline-flex size-10 flex-none cursor-pointer items-center justify-center self-end rounded-full text-text-2 hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
             >
               <Icon name="plus" size={18} />
             </button>
           );
         }}
-        after={
-          manage &&
-          columns.length < MAX_COLUMNS && (
-            <button
-              type="button"
-              onClick={() => setNaming(true)}
-              className="flex min-h-28 cursor-pointer items-center justify-center gap-1.5 self-start rounded-2xl font-bold text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:bg-surface hover:text-text focus-visible:outline-2 focus-visible:outline-focus"
-            >
-              <Icon name="plus" size={18} />
-              {t('board.newColumn')}
-            </button>
-          )
-        }
       />
       {editing && (
         <ColumnDialog
@@ -197,7 +192,6 @@ function Board({
           onClose={() => setEditing(null)}
         />
       )}
-      <NewColumnDialog panel={panel} scope={scope} open={naming} onClose={() => setNaming(false)} />
       {adding && (
         <AddTaskDialog
           panel={panel}
