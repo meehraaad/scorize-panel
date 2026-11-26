@@ -16,12 +16,15 @@ export function NewTaskDialog({
   name,
   open,
   onClose,
+  panel = 'supervisor',
 }: {
   caseId: number;
   user: number;
   name: string;
   open: boolean;
   onClose: () => void;
+  /** Whose task it is: the supervisor panel's, or the executive panel's (its customer pages). */
+  panel?: 'supervisor' | 'executive';
 }) {
   const { t } = useTranslation('supervisor');
   const create = useCreateTask(caseKey(caseId));
@@ -44,7 +47,7 @@ export function NewTaskDialog({
             onClick={() => {
               if (!dueAt) return;
               create.mutate(
-                { user, text: text.trim(), kind: 'mine', due_at: dueAt },
+                { panel, user, text: text.trim(), kind: 'mine', due_at: dueAt },
                 { onError: () => toast.error(t('saveError')), onSuccess: onClose },
               );
             }}

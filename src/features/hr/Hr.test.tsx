@@ -138,12 +138,30 @@ describe('HR panel', () => {
     renderApp('/hr/staff/1');
     await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
     const dialog = await screen.findByRole('dialog', { name: 'شروع جدایی' });
-    await user.click(within(dialog).getByRole('button', { name: 'شروع جدایی' }));
+    await user.click(within(dialog).getByRole('button', { name: /^شروع جدایی / }));
     expect(await toasts().findByText('چک‌لیست جدایی باز شد')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'استخدام و جدایی' }));
     expect(
       await screen.findByRole('progressbar', { name: '۰ از ۷ انجام شده' }),
     ).toBeInTheDocument();
+  });
+
+  it('starts a joining or a leaving from the moves page, the colleague found by name', async () => {
+    const NAME = 'علی رضایی';
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/moves');
+    await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'شروع جدایی' });
+    const save = within(dialog).getByRole('button', { name: 'شروع جدایی' });
+    expect(save).toBeDisabled();
+    const people = within(dialog).getByRole('combobox', { name: 'همکار' });
+    await user.type(people, NAME.slice(0, 3));
+    await user.click(await within(dialog).findByRole('option', { name: new RegExp(NAME) }));
+    await user.click(within(dialog).getByRole('button', { name: `شروع جدایی ${NAME}` }));
+    expect(await toasts().findByText('چک‌لیست جدایی باز شد')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'کارمند جدید' }));
+    expect(await screen.findByRole('dialog', { name: 'کارمند جدید' })).toBeInTheDocument();
   });
 
   it('ends someone’s work and brings them back with a reason', async () => {
@@ -152,7 +170,7 @@ describe('HR panel', () => {
     renderApp('/hr/staff/1');
     await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
     const exit = await screen.findByRole('dialog', { name: 'شروع جدایی' });
-    await user.click(within(exit).getByRole('button', { name: 'شروع جدایی' }));
+    await user.click(within(exit).getByRole('button', { name: /^شروع جدایی / }));
     await user.click(await screen.findByRole('button', { name: 'استخدام و جدایی' }));
     await user.click(await screen.findByRole('button', { name: 'پایان همکاری' }));
     const confirm = await screen.findByRole('group', { name: /همکاری تمام شود/ });

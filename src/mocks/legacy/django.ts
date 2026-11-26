@@ -18,7 +18,6 @@ import {
   type Page,
 } from '../djangoStaff';
 import type {
-  Colleague,
   MyTask,
   NewTask,
   RequestDetail,
@@ -27,7 +26,6 @@ import type {
   TaskRequest,
   TaskStatus,
   TaskSummary,
-  TaskTeam,
 } from '@/lib/tasks/api';
 import { dueAtOf } from '@/lib/tasks/api';
 
@@ -47,21 +45,6 @@ import { dueAtOf } from '@/lib/tasks/api';
 
 const TODOS = `${STAFF_API}/todos`;
 // Booleans in filters are Python's: Django's BooleanField reads `False` / `0`, not `false`.
-
-/** Who works on a team's tasks today (apply.types.TeamType). */
-const TEAM_OF: Record<TaskTeam, number> = {
-  writing: TEAM.writing,
-  language: TEAM.language,
-  documents: TEAM.executive,
-  finance: TEAM.management,
-};
-
-const TYPE_OF_TEAM: Record<TaskTeam, number> = {
-  writing: TODO_TYPE.writing_follow_up,
-  language: TODO_TYPE.language_follow_up,
-  documents: TODO_TYPE.applicant_contact,
-  finance: TODO_TYPE.payment_follow_up,
-};
 
 const owns = (todo: DjangoTodo, me: number) => todo.support_staves.some((item) => item.id === me);
 const dueOf = (todo: DjangoTodo) => endOfDay(todo.deadline);
@@ -102,20 +85,6 @@ export async function personTasks(user: number, signal?: AbortSignal): Promise<T
   return todos.map((todo) => taskSummaryOf(todo, me));
 }
 
-/** Active colleagues (staves/), for "ask a colleague". */
-export async function colleagues(signal?: AbortSignal): Promise<Colleague[]> {
-  const [me, staves] = await Promise.all([
-    myStaffId(),
-    allPages<DjangoStaff>(`${STAFF_API}/staves/`, signal),
-  ]);
-  return staves
-    .filter((item) => item.id !== me)
-    .map((item) => {
-      const team = item.team_display ?? '';
-      return { id: item.id, name: item.full_name, role: team, team };
-    });
-}
-
 const ACTION: Partial<Record<number, MyTask['action']>> = {
   [TODO_TYPE.lead_follow_up]: 'call',
   [TODO_TYPE.applicant_contact]: 'call',
@@ -136,6 +105,7 @@ function myTaskOf(todo: DjangoTodo): MyTask {
     suggested_next: '',
     follow_up: !!todo.user && todo.type === TODO_TYPE.lead_follow_up,
     receipt: null,
+    penalty: false,
   };
 }
 
@@ -152,6 +122,7 @@ const requestOf = (todo: DjangoTodo, me: number): TaskRequest => ({
   status: statusOf(todo, me),
   comments: todo.comments_count ?? 0,
   reactions: [],
+  penalty: false,
 });
 
 /** The detail (with `views`) of each request, for its status: the list doesn't carry views. */
@@ -161,13 +132,12 @@ const withViews = (todos: DjangoTodo[], signal?: AbortSignal) =>
 /** The tasks page (T3) from the open tasks I'm on and the ones I sent. */
 export async function tasksOverview(signal?: AbortSignal): Promise<FullTasks> {
   const me = await myStaffId();
-  const [onMe, sentPage, peers] = await Promise.all([
+  const [onMe, sentPage] = await Promise.all([
     allPages<DjangoTodo>(
       `${TODOS}/?support_staves=${String(me)}&is_done=False&ordering=deadline`,
       signal,
     ),
     api<Page<DjangoTodo>>(`${TODOS}/?creator=${String(me)}&ordering=-id&page_size=20`, { signal }),
-    colleagues(signal),
   ]);
   const endOfToday = endOfDay(djangoDate(new Date().toISOString()));
   const endOfTomorrow = endOfDay(djangoDate(new Date(Date.now() + 86_400_000).toISOString()));
@@ -186,6 +156,8 @@ export async function tasksOverview(signal?: AbortSignal): Promise<FullTasks> {
         others: Math.max(0, todo.support_staves.length - 1),
       },
       at: todo.creation_date,
+      due_at: dueOf(todo),
+      timed: false,
       status: todo.is_done ? 'done' : 'sent',
       comments: 0,
       reactions: [],
@@ -201,7 +173,6 @@ export async function tasksOverview(signal?: AbortSignal): Promise<FullTasks> {
     requests: requests.map((todo) => requestOf(todo, me)),
     team: [],
     sent,
-    colleagues: peers,
   };
 }
 
@@ -217,6 +188,8 @@ export async function taskRequest(id: number, signal?: AbortSignal): Promise<Req
     reactions: reactionDetails(id),
     people: [],
     body: '',
+    origin: !todo.creator ? 'system' : todo.creator.id === me ? 'self' : 'assigned',
+    panel: 'sales',
     watchers: todo.support_staves.filter((item) => item.id !== me).map((item) => item.full_name),
     thread: comments
       .map((comment) => ({
@@ -233,23 +206,17 @@ export async function taskRequest(id: number, signal?: AbortSignal): Promise<Req
 /** A task about a person, or an internal request (T2). */
 export async function createTask(task: NewTask) {
   const me = await myStaffId();
+  // The whole team: everyone on sales but me (Django gives each a copy; here one todo for all).
   const owners =
     task.kind === 'mine'
       ? [me]
-      : task.kind === 'request'
-        ? [...new Set([...(task.assignee ? [task.assignee] : []), ...(task.assignees ?? [])])]
-        : (
-            await allPages<DjangoStaff>(
-              `${STAFF_API}/staves/?team=${String(TEAM_OF[task.team ?? 'writing'])}`,
-            )
-          ).map((item) => item.id);
+      : task.everyone
+        ? (await allPages<DjangoStaff>(`${STAFF_API}/staves/?team=${String(TEAM.sales)}`))
+            .map((item) => item.id)
+            .filter((id) => id !== me)
+        : [...new Set(task.assignees ?? [])];
   const body: DjangoTodoWrite = {
-    type:
-      task.kind === 'team'
-        ? TYPE_OF_TEAM[task.team ?? 'writing']
-        : task.user
-          ? TODO_TYPE.lead_follow_up
-          : TODO_TYPE.normal,
+    type: task.user ? TODO_TYPE.lead_follow_up : TODO_TYPE.normal,
     user: task.user,
     support_staves: owners,
     description: task.text,

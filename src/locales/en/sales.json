@@ -492,45 +492,6 @@
       "documents": "Documents team",
       "finance": "Finance"
     },
-    "newTask": {
-      "label": "New task about {{name}}",
-      "for": "For",
-      "forOption": {
-        "mine": "Me",
-        "request": "A colleague",
-        "team": "A team"
-      },
-      "peer": "Which colleague?",
-      "peerSearch": "Search colleagues by name or role",
-      "peerNoMatch": "No colleague matches that name or role.",
-      "peerSuggested": "Suggested for this customer",
-      "peerHint": "They get an SMS. When they mark it seen or done, you're told.",
-      "team": "Which team?",
-      "teamHint": "Goes to the team's queue; whoever takes it owns it.",
-      "when": "When",
-      "whenOption": {
-        "hour": "In 1 hour",
-        "evening": "This evening",
-        "tomorrow": "Tomorrow 10:00",
-        "other": "Another date",
-        "day": "Day only"
-      },
-      "date": "Date and time",
-      "cta": {
-        "mine": "Set a reminder for me",
-        "request": "Send the request",
-        "team": "Send to the team queue"
-      },
-      "placeholder": {
-        "mine": "E.g. send the instalment offer",
-        "request": "E.g. set up a second consultation",
-        "team": "E.g. prepare a sample SOP"
-      },
-      "required": "Write what needs to be done.",
-      "created": "Task created.",
-      "day": "Day",
-      "dayHint": "Due by the end of that day; not late before then."
-    },
     "history": {
       "edit": {
         "label": "Edit description: {{title}}",

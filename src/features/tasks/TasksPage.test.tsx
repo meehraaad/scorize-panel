@@ -28,9 +28,13 @@ describe('tasks page (sales panel)', () => {
 
   // Tasks are Django's StaffToDo (src/mocks/staff.ts): a deadline is a date, there are no team
   // queues or "no next step" lists yet (backend-changes T3–T8).
-  it('groups my follow-ups by day and links the person', async () => {
+  it('overdue follow-ups lead «نیازمند توجه» and link the person', async () => {
     await openTasks();
-    expect(await screen.findByRole('heading', { name: /^عقب‌افتاده/ })).toBeInTheDocument();
+    const attention = await screen.findByRole('region', { name: 'نیازمند توجه' });
+    const late = 'زنگ بزن و جواب خانواده درباره‌ی پیشنهاد اپلای آلمان را بگیر';
+    expect(await within(attention).findByText(late)).toBeInTheDocument();
+    // Not twice: the list below keeps only what is still ahead today.
+    expect(screen.getAllByText(late)).toHaveLength(1);
     expect(screen.getByText('تماس دوم؛ دیروز جواب نداد')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'سمیرا نوروزی' })).toHaveAttribute(
       'href',
@@ -152,7 +156,7 @@ describe('tasks page (sales panel)', () => {
     expect(screen.queryByRole('button', { name: 'نمایش همه‌ی روزها' })).not.toBeInTheDocument();
   });
 
-  it('sent requests: one name and a count, a tick when done, and they open', async () => {
+  it('sent requests wait in «نیازمند توجه»: one name and a count, progress, and they open', async () => {
     const user = userEvent.setup();
     const overview = await api<TasksOverview>('/staff/v1/tasks/?panel=sales');
     const requests = await api<{ results: { id: number }[] }>(
@@ -160,88 +164,84 @@ describe('tasks page (sales panel)', () => {
     );
     const request = requests.results[0];
     if (!request) throw new Error('no request in the mock');
+    const sent = (id: number, text: string, status: string) => ({
+      id,
+      text,
+      to: { name: 'مهران درمنکی', others: 45 },
+      at: new Date().toISOString(),
+      due_at: new Date(Date.now() + 3_600_000).toISOString(),
+      timed: true,
+      status,
+      comments: 3,
+      reactions: [],
+      progress: { done: 18, total: 46 },
+    });
     server.use(
       http.get('/api/staff/v1/tasks/', () =>
         HttpResponse.json({
           ...overview,
           sent: [
-            {
-              id: request.id,
-              text: 'نصب سافت‌فون',
-              to: { name: 'مهران درمنکی', others: 45 },
-              at: new Date().toISOString(),
-              status: 'done',
-              comments: 3,
-              reactions: [{ emoji: '👍', count: 18, mine: true }],
-              progress: { done: 18, total: 46 },
-            },
+            sent(request.id, 'نصب سافت‌فون', 'in_progress'),
+            sent(request.id + 1, 'تمام شده', 'done'),
           ],
         }),
       ),
     );
     await openTasks();
-    const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
-    expect(
-      within(sent).getByText(
-        /^به مهران درمنکی و ۴۵ نفر دیگر · .* · ۱۸ از ۴۶ نفر انجام داده‌اند · ۳ پیام$/,
-      ),
-    ).toBeInTheDocument();
-    expect(within(sent).getByRole('img', { name: 'موافق: ۱۸ نفر' })).toBeInTheDocument();
-    expect(within(sent).getByRole('img', { name: 'انجام شد' })).toBeInTheDocument();
-    await user.click(within(sent).getByRole('button', { name: /نصب سافت‌فون/ }));
+    const attention = screen.getByRole('region', { name: 'نیازمند توجه' });
+    await user.click(within(attention).getByRole('button', { name: /^فرستاده‌ام/ }));
+    const row = within(attention).getByText('نصب سافت‌فون').closest('li');
+    if (!row) throw new Error('row not found');
+    expect(within(row).getByText('مهران درمنکی و ۴۵ نفر دیگر')).toBeInTheDocument();
+    expect(within(row).getByText('۱۸ از ۴۶')).toBeInTheDocument();
+    // A request everyone has done no longer waits.
+    expect(within(attention).queryByText('تمام شده')).toBeNull();
+    // Only overdue: the sent one steps aside.
+    await user.click(within(attention).getByRole('button', { name: /^عقب‌افتاده/ }));
+    expect(within(attention).queryByText('نصب سافت‌فون')).toBeNull();
+    await user.click(within(attention).getByRole('button', { name: /^همه/ }));
+    await user.click(within(attention).getByRole('button', { name: 'باز کردن: نصب سافت‌فون' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).queryByRole('button', { name: /خبر بده/ })).not.toBeInTheDocument();
   });
 
-  it('new task: several colleagues get one row with their names, and it needs someone', async () => {
+  it('new task: a seller adds one for themselves only, and it lands in their follow-ups', async () => {
     const user = userEvent.setup();
     await openTasks();
     await user.click(screen.getByRole('button', { name: 'کار تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
-    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'نمونه قرارداد ترکیه را بفرست');
-    await user.click(within(dialog).getByRole('button', { name: 'فرستادن درخواست' }));
-    expect(within(dialog).getByText('دست‌کم یک همکار را انتخاب کنید.')).toBeInTheDocument();
-
-    const boxes = within(dialog).getAllByRole('checkbox');
-    const [first, second] = boxes;
-    if (!first || !second) throw new Error('fewer than two colleagues in the mock');
-    await user.click(first);
-    await user.click(second);
-    expect(
-      within(dialog).getByText('هر کدام جداگانه انجامش می‌دهند و شما پیشرفت هر نفر را می‌بینید.'),
-    ).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به ۲ نفر' }));
-    expect(await screen.findByText('برای ۲ نفر فرستاده شد.')).toBeInTheDocument();
-    const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
-    const row = (await within(sent).findByText('نمونه قرارداد ترکیه را بفرست')).closest('button');
-    if (!row) throw new Error('row not found');
-    expect(within(row).getByText(/ و ۱ نفر دیگر · /)).toBeInTheDocument();
-  });
-
-  it('new task for me lands in my follow-ups; one for a team goes to its queue', async () => {
-    const user = userEvent.setup();
-    await openTasks();
-    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
-    let dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    expect(within(dialog).queryByRole('radio', { name: /^برای همکارم/ })).toBeNull();
     await user.type(within(dialog).getByLabelText('چه کاری؟'), 'گزارش هفته را بنویس');
-    await user.click(within(dialog).getByRole('radio', { name: 'خودم' }));
     await user.click(within(dialog).getByRole('radio', { name: 'تاریخ و ساعت دیگر' }));
-    await user.click(within(dialog).getByRole('button', { name: 'افزودن به کارهای من' }));
+    await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
     expect(await within(dialog).findByText('تاریخ و ساعت را انتخاب کنید.')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('radio', { name: 'فردا ۱۰:۰۰' }));
-    await user.click(within(dialog).getByRole('button', { name: 'افزودن به کارهای من' }));
+    await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
     expect(
       await screen.findByText(/^به کارهای شما اضافه شد\. .+ در «پیگیری‌های من» می‌آید\.$/),
     ).toBeInTheDocument();
     expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
+  });
 
+  it('new task: the sales manager sends one to a colleague found by name, and it needs someone', async () => {
+    localStorage.setItem('scorize.mock.session', '4');
+    const user = userEvent.setup();
+    await openTasks();
     await user.click(screen.getByRole('button', { name: 'کار تازه' }));
-    dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
-    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'ترجمه‌ی ریزنمرات');
-    await user.click(within(dialog).getByRole('radio', { name: 'یک تیم' }));
-    await user.click(within(dialog).getByRole('radio', { name: 'تیم مدارک' }));
-    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به صف تیم' }));
-    expect(await screen.findByText('در صف تیم گذاشته شد.')).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    expect(within(dialog).getByText('شما مدیر این پنل هستید')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
+    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'نمونه قرارداد ترکیه را بفرست');
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن درخواست' }));
+    expect(within(dialog).getByText('دست‌کم یک همکار را انتخاب کنید.')).toBeInTheDocument();
+    const search = within(dialog).getByRole('combobox', { name: 'همکار' });
+    await user.type(search, 'ن');
+    expect(within(dialog).getByText('از دو حرف به بعد جست‌وجو می‌شود.')).toBeInTheDocument();
+    await user.type(search, 'یما');
+    await user.click(await within(dialog).findByRole('option', { name: /نیما رستمی/ }));
+    expect(within(dialog).getByRole('button', { name: 'برداشتن نیما رستمی' })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به نیما رستمی' }));
+    expect(await screen.findByText('برای ۱ نفر فرستاده شد.')).toBeInTheDocument();
   });
 
   it('reactions: adds mine from the popup, shows who, and the row counts it', async () => {
@@ -275,18 +275,50 @@ describe('tasks page (supervisor panel)', () => {
     await screen.findByRole('heading', { level: 1, name: 'کارهای امروز' });
     await user.click(screen.getByRole('button', { name: 'کار تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
     await user.type(within(dialog).getByLabelText('چه کاری؟'), 'فرم جدید را امضا کنید');
-    await user.type(within(dialog).getByRole('searchbox'), 'رض');
-    for (const box of within(dialog).getAllByRole('checkbox')) await user.click(box);
+    const search = within(dialog).getByRole('combobox', { name: 'همکار' });
+    for (const name of ['علی رضایی', 'الهام رضوی']) {
+      await user.type(search, 'رض');
+      await user.click(await within(dialog).findByRole('option', { name: new RegExp(name) }));
+    }
+    expect(
+      within(dialog).getByText('هر کدام جداگانه انجامش می‌دهند و شما پیشرفت هر نفر را می‌بینید.'),
+    ).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'فرستادن به ۲ نفر' }));
-    const sent = screen.getByRole('region', { name: 'درخواست‌هایی که فرستاده‌ام' });
-    await user.click(await within(sent).findByRole('button', { name: /فرم جدید را امضا کنید/ }));
+    const attention = await screen.findByRole('region', { name: 'نیازمند توجه' });
+    await user.click(
+      await within(attention).findByRole('button', { name: 'باز کردن: فرم جدید را امضا کنید' }),
+    );
     const popup = await screen.findByRole('dialog', { name: 'فرم جدید را امضا کنید' });
     expect(
       await within(popup).findByRole('heading', { name: '۰ از ۲ نفر انجام داده‌اند' }),
     ).toBeInTheDocument();
     expect(within(popup).getByText('علی رضایی')).toBeInTheDocument();
     expect(within(popup).getByText('الهام رضوی')).toBeInTheDocument();
+  });
+});
+
+describe('tasks page (supervisor panel): the whole team', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+    localStorage.setItem('scorize.mock.session', String(SUPERVISOR));
+  });
+
+  it('the admin sends one to the whole team: each gets a copy, no colleague to pick', async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/tasks');
+    await screen.findByRole('heading', { level: 1, name: 'کارهای امروز' });
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: /^برای کل تیم/ }));
+    expect(within(dialog).queryByRole('combobox', { name: 'همکار' })).toBeNull();
+    // No penalty key: no penalty switch.
+    expect(within(dialog).queryByRole('switch', { name: /جریمه/ })).toBeNull();
+    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'جلسه‌ی هفتگی پرونده‌ها');
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به کل تیم' }));
+    expect(await screen.findByText('برای کل تیم فرستاده شد.')).toBeInTheDocument();
   });
 });
 
@@ -341,6 +373,7 @@ describe('tasks page, server refuses', () => {
         suggested_next: '',
         follow_up: true,
         receipt: null,
+        penalty: false,
         visit: { id: 7, starts_at: at },
       };
       const sent: unknown[] = [];

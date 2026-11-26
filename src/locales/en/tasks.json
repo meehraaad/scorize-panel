@@ -2,12 +2,11 @@
   "back": "Today",
   "title": "Today's tasks",
   "subtitle": {
-    "customer": "Create new tasks on the customer's own page. This page is for seeing and doing them.",
-    "applicant": "Create new tasks on the applicant's own file. This page is for seeing and doing them.",
+    "customer": "Add a task about a customer from their own page; any other from “New task” here.",
+    "applicant": "Add a task about an applicant from their own file; any other from “New task” here.",
     "employee": "Staff joining and leaving, contracts and colleagues' requests. Add a task here or from the calendar.",
     "person": "Your follow-ups, colleagues' requests and your team's queue, wherever you work."
   },
-  "aside": "New task and my requests",
   "close": "Close",
   "cancel": "Cancel",
   "error": "That didn't work. Please try again.",
@@ -79,7 +78,8 @@
     "doneToday": "Done today: {{n}}",
     "emptyDay": "No follow-ups on {{day}}.",
     "allDay": "Any time today",
-    "dayAndTime": "{{day}}, {{time}}"
+    "dayAndTime": "{{day}}, {{time}}",
+    "onlyLate": "Nothing else for today; the overdue ones are under “Needs attention”."
   },
   "done": {
     "title": "Follow-up done",
@@ -166,7 +166,6 @@
   "requests": {
     "empty": "No requests from colleagues.",
     "about": "About",
-    "due": "Due: {{when}}",
     "comments": "{{n}} messages",
     "openFor": "Open: {{text}}",
     "cta": {
@@ -176,8 +175,6 @@
     },
     "loading": "Request",
     "gone": "This task is no longer there, or it isn't yours to see.",
-    "from": "From {{name}} ({{role}}) to you · {{when}}",
-    "watchers": "Watching: {{names}}",
     "steps": "Request status",
     "thread": "Conversation",
     "noThread": "No messages yet.",
@@ -189,7 +186,25 @@
     "reason": "Why can't it be done? (for the requester)",
     "watchersMany": "Watching: {{names}} and {{n}} others",
     "messageSent": "Your message",
-    "doneFor": "Done: {{text}}"
+    "doneFor": "Done: {{text}}",
+    "summary": "Task summary",
+    "origin": {
+      "system": "System",
+      "self": "My own reminder",
+      "assigned": "From the panel admin"
+    },
+    "to": "For",
+    "by": "From",
+    "dueLabel": "Due",
+    "penalty": "Late penalty",
+    "penaltyOn": "Pay deduction",
+    "penaltyOff": "None",
+    "you": "You",
+    "sending": "Sending…",
+    "notSent": "The message was not sent.",
+    "retry": "Send again",
+    "startThread": "No messages yet. Write a question or news here.",
+    "due": "Due: {{when}}"
   },
   "team": {
     "note": "Tasks given to a team, not a person. The first to press \"I'll take it\" owns it and it leaves the queue for everyone else.",
@@ -210,11 +225,7 @@
     }
   },
   "sent": {
-    "title": "Requests I sent",
-    "empty": "You haven't sent any requests.",
-    "to": "To {{to}} · {{when}}",
-    "toMany": "{{name}} and {{n}} others",
-    "progress": "{{done}} of {{total}} done"
+    "toMany": "{{name}} and {{n}} others"
   },
   "new": {
     "title": "New task",
@@ -222,40 +233,46 @@
     "required": "Write what needs doing.",
     "for": "Who is it for?",
     "target": {
-      "me": "Me",
-      "people": "Colleagues",
-      "team": "A team"
+      "me": "For myself",
+      "person": "For a colleague",
+      "team": "For the whole team"
     },
     "meHint": "It shows in “My follow-ups” from the day it is due, and reminds you then. Until that day it is only counted under later tasks.",
-    "people": "Colleagues",
-    "picked": "Chosen",
-    "remove": "Remove {{name}}",
-    "search": "Search colleagues",
-    "noMatch": "No colleague by that name.",
+    "people": "Colleague",
     "pickSomeone": "Choose at least one colleague.",
     "several": "You can choose several people.",
     "eachOwn": "Each of them does it separately, and you see how far each one got.",
-    "team": "Which team?",
-    "teamHint": "Whoever takes it first owns it.",
+    "teamHint": "Each member of this panel’s team gets their own copy, and you follow everyone in one row.",
     "due": "Due",
     "other": "Another date and time",
     "date": "Date and time",
     "dateRequired": "Choose a date and time.",
     "send": {
-      "me": "Add to my tasks",
+      "me": "Add for myself",
       "people": "Send request",
-      "team": "Send to the team queue",
+      "person": "Send to {{name}}",
+      "team": "Send to the whole team",
       "many": "Send to {{n}} people"
     },
     "sent": {
       "me": "Added to your tasks. It shows in “My follow-ups” on {{when}}.",
-      "team": "Put in the team queue.",
+      "team": "Sent to the whole team.",
       "people": "Sent to {{n}} people."
     },
     "dayOnly": "Day only (no time)",
     "day": "Day",
     "dayHint": "Due by the end of that day; not late before then.",
-    "dayRequired": "Choose the day."
+    "dayRequired": "Choose the day.",
+    "targetHint": {
+      "me": "A personal reminder",
+      "person": "One or more people",
+      "team": "Each gets a copy"
+    },
+    "admin": "You are this panel’s admin",
+    "selfOnly": "This task is for you. The panel’s admin sends tasks to a colleague or the whole team.",
+    "whatAbout": "New task about {{name}}",
+    "penalty": "Late penalty",
+    "penaltyHint": "Done after its due time, it counts in the month’s record (a pay deduction)."
   },
   "reactions": {
     "label": "Reactions",
@@ -308,5 +325,29 @@
     "page": "Open the tasks page",
     "minimize": "Minimize",
     "done": "{{n}} done today"
+  },
+  "attention": {
+    "title": "Needs attention",
+    "subtitle": "Your overdue tasks and the requests still waiting for an answer",
+    "filter": "Show",
+    "show": {
+      "all": "All",
+      "late": "Overdue",
+      "sent": "Sent by me"
+    },
+    "column": {
+      "due": "Due",
+      "task": "Task",
+      "who": "With whom",
+      "state": "Status"
+    },
+    "kind": {
+      "late": "Overdue",
+      "sent": "Sent by me"
+    },
+    "me": "Me",
+    "penalty": "With penalty",
+    "progress": "{{done}} of {{total}}",
+    "none": "Nothing here."
   }
 }

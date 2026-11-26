@@ -292,7 +292,9 @@ describe('sales: my consultations on a week calendar', () => {
         within(calendar).getByRole('button', { name: 'کار تازه برای چهارشنبه ۶ آبان' }),
       );
       const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
-      expect(within(dialog).getByRole('radio', { name: 'خودم' })).toBeChecked();
+      // A seller (not the sales admin) adds tasks for themselves only.
+      expect(within(dialog).queryByRole('radio', { name: 'برای همکارم' })).toBeNull();
+      expect(within(dialog).getByText(/این کار برای خودتان است/)).toBeInTheDocument();
       // That day, with no hour (one can still be set with «تاریخ و ساعت دیگر»).
       expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
       expect(within(dialog).getByRole('button', { name: /^روز/ })).toHaveTextContent('۶ آبان');

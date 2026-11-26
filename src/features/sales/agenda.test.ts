@@ -65,6 +65,7 @@ const task = (id: number, due: string): MyTask => ({
   suggested_next: '',
   follow_up: false,
   receipt: null,
+  penalty: false,
 });
 const request = (id: number, due: string, status: TaskRequest['status']): TaskRequest => ({
   id,
@@ -76,6 +77,7 @@ const request = (id: number, due: string, status: TaskRequest['status']): TaskRe
   status,
   comments: 0,
   reactions: [],
+  penalty: false,
 });
 
 const empty: AgendaSources = {

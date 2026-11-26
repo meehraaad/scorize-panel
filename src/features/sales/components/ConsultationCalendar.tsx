@@ -13,7 +13,6 @@ import { addDays, eventColor, sameDay, toValue, weekOf, weekStart } from '@/lib/
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
-import { tasksQuery } from '@/lib/tasks/api';
 import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/Button';
 import {
@@ -113,7 +112,6 @@ export function ConsultationCalendar() {
   const [setting, setSetting] = useState<Setting | null>(null);
   /** A day of the tasks row was clicked: a new task due then. */
   const [newTaskOn, setNewTaskOn] = useState<Date | null>(null);
-  const colleagues = useQuery({ ...tasksQuery('sales'), enabled: newTaskOn !== null });
   const client = useQueryClient();
   /** A time picked or dropped on the calendar, unless it has passed. */
   const ahead = (start: Date) => {
@@ -476,7 +474,7 @@ export function ConsultationCalendar() {
           <NewTaskDialog
             open
             due={newTaskOn}
-            colleagues={colleagues.data?.colleagues ?? []}
+            panel="sales"
             onClose={() => setNewTaskOn(null)}
             onCreated={() => void client.invalidateQueries({ queryKey: CALENDAR_KEY })}
           />

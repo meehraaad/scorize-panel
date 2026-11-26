@@ -42,6 +42,7 @@ export function MyTasks({
   day = null,
   tomorrow,
   doneToday,
+  lateAbove = false,
   pager,
   config,
 }: {
@@ -50,6 +51,8 @@ export function MyTasks({
   day?: string | null;
   tomorrow: number;
   doneToday: number | null;
+  /** The overdue ones are in «نیازمند توجه» above (the first page of today's list): not again here. */
+  lateAbove?: boolean;
   /** Under the list, when it has more than one page. */
   pager?: ReactNode;
   config: TasksConfig;
@@ -70,6 +73,8 @@ export function MyTasks({
         {date ? t('mine.emptyDay', { day: f.weekday(date) }) : t('mine.empty')}
       </EmptyState>
     );
+  if (lateAbove && all.every((task) => groupOf(task, now) === 'late'))
+    return <EmptyState variant="card">{t('mine.onlyLate')}</EmptyState>;
 
   return (
     <Card aria-label={t('view.mine.label')}>
@@ -98,7 +103,7 @@ export function MyTasks({
         </section>
       )}
       {GROUPS.map((group) => {
-        if (otherDay) return null;
+        if (otherDay || (lateAbove && group === 'late')) return null;
         const tasks = all.filter((task) => groupOf(task, now) === group);
         if (tasks.length === 0) return null;
         return (

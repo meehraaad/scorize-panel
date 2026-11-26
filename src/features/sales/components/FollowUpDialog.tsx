@@ -114,6 +114,7 @@ export function FollowUpDialog({
     if (noLead) {
       createTask.mutate(
         {
+          panel: 'sales',
           user: noLead.customer,
           kind: 'mine',
           ...(when ? { due_at: when } : { due_on: on ?? '' }),

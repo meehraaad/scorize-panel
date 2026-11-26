@@ -96,6 +96,7 @@ export default function CustomerTasksPage() {
       {workspace.case && creating && (
         <NewTaskDialog
           caseId={workspace.case.id}
+          panel="executive"
           user={workspace.id}
           name={workspace.name}
           open

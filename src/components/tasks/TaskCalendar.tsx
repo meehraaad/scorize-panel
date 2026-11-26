@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -9,7 +8,7 @@ import { WeekNav } from '@/components/ui/WeekNav';
 import { toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { TaskCalendarData } from '@/lib/tasks/calendar';
-import { tasksQuery, type TasksPanel } from '@/lib/tasks/api';
+import type { TasksPanel } from '@/lib/tasks/api';
 
 const TASK_MINUTES = 30;
 const TASK_COLOR = 'var(--cal-5)';
@@ -81,7 +80,7 @@ export function TaskCalendar({
   now: Date;
   data: TaskCalendarData | undefined;
   loading: boolean;
-  /** Whose colleagues the composer offers. */
+  /** Whose tasks the composer adds. */
   panel: TasksPanel;
   /** The panel's tasks page: a day's count links to it with `?view=&day=`. */
   tasksPath: string;
@@ -96,7 +95,6 @@ export function TaskCalendar({
   const f = useFormat();
   const [chosen, setChosen] = useState<string | null>(null);
   const [newTaskOn, setNewTaskOn] = useState<Date | null>(null);
-  const colleagues = useQuery({ ...tasksQuery(panel), enabled: newTaskOn !== null });
 
   const events: CalendarEvent[] = (data?.task_rows ?? [])
     .filter((row) => row.timed)
@@ -211,7 +209,7 @@ export function TaskCalendar({
           <NewTaskDialog
             open
             due={newTaskOn}
-            colleagues={colleagues.data?.colleagues ?? []}
+            panel={panel}
             onClose={() => setNewTaskOn(null)}
             onCreated={onCreated}
           />

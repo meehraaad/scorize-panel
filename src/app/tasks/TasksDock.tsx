@@ -153,7 +153,7 @@ export default function TasksDock({ user, panel }: { user: SessionUser; panel: s
           </div>
           {overview.data && (
             <footer className="flex justify-end px-4 py-3 shadow-[inset_0_1px_0_var(--hair)]">
-              <NewTaskButton colleagues={overview.data.colleagues} />
+              <NewTaskButton panel={tasksPanel} />
             </footer>
           )}
         </section>

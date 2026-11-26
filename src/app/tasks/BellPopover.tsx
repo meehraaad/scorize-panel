@@ -7,7 +7,7 @@ import { buttonClass } from '@/components/ui/buttonStyles';
 import { NotificationPeek } from '@/features/account/components/NotificationPeek';
 import { TaskPeek } from '@/features/tasks/components/TaskPeek';
 import { unreadQuery } from '@/lib/account/api';
-import { tasksQuery, type TasksPanel } from '@/lib/tasks/api';
+import type { TasksPanel } from '@/lib/tasks/api';
 import { useOpenTasks } from '@/lib/tasks/useOpenTasks';
 import { TASK_CONTEXTS } from '@/panels/taskContexts';
 import { INBOX_TABS, inboxHref, pillClass, type InboxTab } from './inbox';
@@ -22,7 +22,6 @@ export default function BellPopover({ panel }: { panel: TasksPanel }) {
   const [tab, setTab] = useState<InboxTab>('tasks');
   const { count } = useOpenTasks(panel);
   const { data: unread = 0 } = useQuery(unreadQuery);
-  const overview = useQuery({ ...tasksQuery(panel), enabled: tab === 'tasks' });
   const counts: Record<InboxTab, number> = { tasks: count, notifications: unread };
 
   return (
@@ -54,9 +53,7 @@ export default function BellPopover({ panel }: { panel: TasksPanel }) {
         <Link to={inboxHref(tab, panel)} className={buttonClass('quiet')}>
           {t(tab === 'tasks' ? 'hub.all' : 'hub.allNotifications')}
         </Link>
-        {tab === 'tasks' && overview.data && (
-          <NewTaskButton colleagues={overview.data.colleagues} />
-        )}
+        {tab === 'tasks' && <NewTaskButton panel={panel} />}
       </div>
     </>
   );

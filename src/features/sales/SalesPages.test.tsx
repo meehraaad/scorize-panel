@@ -403,18 +403,35 @@ describe('sales panel, seller pages', () => {
     });
   });
 
-  it('customer: asks a colleague for something', async () => {
+  it('customer: a seller adds a task about them for themselves only', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
     const tasks = await screen.findByRole('region', { name: 'کارهای باز عرفان' });
-    expect(within(tasks).getAllByRole('listitem')).toHaveLength(4);
+    const before = within(tasks).getAllByRole('listitem').length;
+    await user.click(within(tasks).getByRole('button', { name: 'کار تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    expect(within(dialog).queryByRole('radio', { name: 'برای همکارم' })).toBeNull();
+    await user.type(within(dialog).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
+    await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
+    await waitFor(() => expect(within(tasks).getAllByRole('listitem')).toHaveLength(before + 1));
+  });
+
+  it('customer: the sales manager asks a colleague, found by name', async () => {
+    loginAs(4);
+    const user = userEvent.setup();
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    const tasks = await screen.findByRole('region', { name: 'کارهای باز عرفان' });
     const sent = within(tasks).getAllByText('فرستاده شد').length;
     await user.click(within(tasks).getByRole('button', { name: 'کار تازه' }));
-    await user.type(within(tasks).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
-    await user.click(within(tasks).getByRole('radio', { name: 'یک همکار' }));
-    await user.click(within(tasks).getByRole('button', { name: 'فرستادن درخواست به همکار' }));
-    expect(await within(tasks).findByText('نمونه‌ی پذیرش هلند')).toBeInTheDocument();
-    expect(within(tasks).getAllByText('فرستاده شد')).toHaveLength(sent + 1);
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
+    await user.type(within(dialog).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن درخواست' }));
+    expect(within(dialog).getByText('دست‌کم یک همکار را انتخاب کنید.')).toBeInTheDocument();
+    await user.type(within(dialog).getByRole('combobox', { name: 'همکار' }), 'نیما');
+    await user.click(await within(dialog).findByRole('option', { name: /نیما رستمی/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به نیما رستمی' }));
+    await waitFor(() => expect(within(tasks).getAllByText('فرستاده شد')).toHaveLength(sent + 1));
   });
 
   it('board: deals by stage', async () => {

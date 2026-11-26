@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
-import { PageColumns, PageStack } from '@/components/ui/PageColumns';
+import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Pager } from '@/components/ui/Pager';
 import { Card } from '@/components/ui/Card';
@@ -27,7 +27,7 @@ import { OnTime } from './components/OnTime';
 import { Orphans } from './components/Orphans';
 import { Requests } from './components/Requests';
 import { NewTaskButton } from '@/components/tasks/NewTask';
-import { SentCard } from './components/SideCards';
+import { AttentionCard } from './components/AttentionCard';
 import { RequestDialog } from './components/RequestDialog';
 import { TeamQueue } from './components/TeamQueue';
 import { ViewTabs, type View } from './components/ViewTabs';
@@ -67,7 +67,7 @@ export function TasksPage({ config, nav }: { config: TasksConfig; nav?: ReactNod
         actions={
           <>
             {data.on_time && <OnTime onTime={data.on_time} />}
-            <NewTaskButton colleagues={data.colleagues} />
+            <NewTaskButton panel={config.panel} />
           </>
         }
       />
@@ -87,18 +87,13 @@ export function TasksPage({ config, nav }: { config: TasksConfig; nav?: ReactNod
       {view === 'mine' && data.orphans.length > 0 && (
         <Orphans orphans={data.orphans} config={config} />
       )}
-      <PageColumns
-        asideLabel={t('aside')}
-        main={
-          <TaskListView
-            key={`${view}-${dayShown ?? ''}`}
-            list={view}
-            day={dayShown}
-            overview={data}
-            config={config}
-          />
-        }
-        aside={<SentCard sent={data.sent} config={config} />}
+      {!day && <AttentionCard sent={data.sent} config={config} />}
+      <TaskListView
+        key={`${view}-${dayShown ?? ''}`}
+        list={view}
+        day={dayShown}
+        overview={data}
+        config={config}
       />
       {task !== null && (
         <TaskFromAddress id={task} config={config} onClose={() => change('task', null)} />
@@ -177,6 +172,7 @@ function TaskListView({
       day={day}
       tomorrow={overview.tomorrow}
       doneToday={overview.done_today}
+      lateAbove={!day && page === 1}
       pager={pager}
       config={config}
     />

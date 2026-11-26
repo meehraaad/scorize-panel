@@ -6,12 +6,14 @@ import { TextField } from './TextField';
  * a suggestion only fills it in. Unlike `SearchSelect`, nothing outside the list is refused, so a
  * new name (a major nobody listed) is kept as typed. The caller finds the suggestions (after a
  * pause in typing); the list shows while the field has the focus. Arrows move, Enter picks,
- * Escape closes.
+ * Escape closes. `onPick`: a suggestion stands for something (a colleague's id) instead of text: it
+ * goes there, and the field keeps what was typed.
  */
 export function SuggestField({
   suggestions,
   listLabel,
   describe,
+  onPick,
   value,
   onValue,
   onFocus,
@@ -27,6 +29,8 @@ export function SuggestField({
   listLabel: string;
   /** How an option reads, when more than its value (a number with its owner's name). */
   describe?: (suggestion: string) => ReactNode;
+  /** Picking a suggestion calls this instead of filling the field with it. */
+  onPick?: (suggestion: string) => void;
 }) {
   const id = useId();
   const listId = `${id}-list`;
@@ -40,7 +44,8 @@ export function SuggestField({
 
   const pick = (suggestion: string | undefined) => {
     if (suggestion === undefined) return;
-    onValue(suggestion);
+    if (onPick) onPick(suggestion);
+    else onValue(suggestion);
     setClosed(true);
     setActive(-1);
   };

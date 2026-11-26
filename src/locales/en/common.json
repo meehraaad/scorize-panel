@@ -475,6 +475,13 @@
     "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens."
   },
   "colleagues": {
-    "others": "Other colleagues"
+    "placeholder": "Type a colleague’s name",
+    "found": "Colleagues found",
+    "picked": "Chosen colleagues",
+    "remove": "Remove {{name}}",
+    "typeMore": "Search starts from two letters.",
+    "searching": "Searching…",
+    "noMatch": "No colleague with this name.",
+    "failed": "The search failed. Type again."
   }
 }
