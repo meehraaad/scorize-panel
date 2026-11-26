@@ -48,6 +48,7 @@ export interface MyBoard {
 export const MAX_COLUMNS = 20;
 
 const boardKey = (panel: BoardPanel) => [...BOARDS_KEY, panel] as const;
+const candidatesKey = (panel: BoardPanel) => [...boardKey(panel), 'candidates'] as const;
 
 /** My board of `panel` (made empty the first time it is asked for). */
 export const myBoardQuery = (panel: BoardPanel) =>
@@ -61,7 +62,7 @@ export const myBoardQuery = (panel: BoardPanel) =>
 /** My open tasks of `panel` not on the board yet (`search`: from two letters). */
 export const candidatesQuery = (panel: BoardPanel, search: string) =>
   queryOptions({
-    queryKey: [...boardKey(panel), 'candidates', search],
+    queryKey: [...candidatesKey(panel), search],
     queryFn: ({ signal }) =>
       api<BoardTask[]>(
         `${BOARDS_API}/candidates/?${new URLSearchParams({ panel, search }).toString()}`,
@@ -75,7 +76,10 @@ export type ColumnChange =
   | { kind: 'remove'; id: number }
   | { kind: 'order'; ids: number[] };
 
-/** What is done to the columns: the server answers with the whole board, which replaces the cached one. */
+/**
+ * What is done to the columns: the server answers with the whole board, which replaces the cached
+ * one; a deleted column (no answer) leaves the cache with its cards.
+ */
 export function useColumnChange(panel: BoardPanel) {
   const client = useQueryClient();
   return useMutation({
@@ -102,10 +106,18 @@ export function useColumnChange(panel: BoardPanel) {
           });
       }
     },
-    onSuccess: (board) =>
-      board
-        ? client.setQueryData(boardKey(panel), board)
-        : client.invalidateQueries({ queryKey: boardKey(panel) }),
+    onSuccess: (board, change) => {
+      if (board) client.setQueryData(boardKey(panel), board);
+      else if (change.kind === 'remove') {
+        client.setQueryData<MyBoard>(
+          boardKey(panel),
+          (old) =>
+            old && { ...old, columns: old.columns.filter((column) => column.id !== change.id) },
+        );
+        // Its cards' tasks can go on the board again.
+        void client.invalidateQueries({ queryKey: candidatesKey(panel) });
+      }
+    },
   });
 }
 
@@ -134,8 +146,10 @@ function moved(board: MyBoard, card: number, column: number, before: number | nu
 }
 
 /**
- * What is done to cards. A move or a removal shows at once and comes back if the server refuses;
- * an added card arrives with the server's answer (it carries the task).
+ * What is done to cards, without asking for the board again: a move or a removal shows at once
+ * (the server places a card the same way) and comes back if the server refuses; an added card
+ * arrives with the server's answer, which carries its task. Adding or removing one changes which
+ * tasks can still go on the board.
  */
 export function useCardChange(panel: BoardPanel) {
   const client = useQueryClient();
@@ -143,16 +157,16 @@ export function useCardChange(panel: BoardPanel) {
   return useMutation({
     mutationFn: (change: CardChange) =>
       change.kind === 'add'
-        ? api(`${BOARDS_API}/cards/`, {
+        ? api<BoardCard>(`${BOARDS_API}/cards/`, {
             method: 'POST',
             body: { column: change.column, task: change.task },
           })
         : change.kind === 'move'
-          ? api(`${BOARDS_API}/cards/${String(change.card)}/`, {
+          ? api<BoardCard>(`${BOARDS_API}/cards/${String(change.card)}/`, {
               method: 'PATCH',
               body: { column: change.column, before: change.before },
             })
-          : api(`${BOARDS_API}/cards/${String(change.card)}/`, { method: 'DELETE' }),
+          : api<undefined>(`${BOARDS_API}/cards/${String(change.card)}/`, { method: 'DELETE' }),
     onMutate: async (change) => {
       if (change.kind === 'add') return undefined;
       await client.cancelQueries({ queryKey: key, exact: true });
@@ -172,10 +186,24 @@ export function useCardChange(panel: BoardPanel) {
         );
       return before;
     },
+    onSuccess: (answer, change) => {
+      if (change.kind === 'add' && answer)
+        client.setQueryData<MyBoard>(
+          key,
+          (old) =>
+            old && {
+              ...old,
+              columns: old.columns.map((lane) =>
+                lane.id === answer.column ? { ...lane, cards: [...lane.cards, answer] } : lane,
+              ),
+            },
+        );
+      if (change.kind !== 'move') void client.invalidateQueries({ queryKey: candidatesKey(panel) });
+    },
+    // Refused (or the board changed elsewhere): what the server has.
     onError: (_error, _change, before) => {
       if (before) client.setQueryData(key, before);
+      void client.invalidateQueries({ queryKey: key, exact: true });
     },
-    // The board and its candidates (a task put on or taken off it leaves or rejoins them).
-    onSettled: () => client.invalidateQueries({ queryKey: key }),
   });
 }
