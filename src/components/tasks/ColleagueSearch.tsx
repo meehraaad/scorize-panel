@@ -59,7 +59,7 @@ export function ColleagueSearch({
         : typed && search.isError
           ? t('colleagues.failed')
           : typed && found.length === 0
-            ? t('colleagues.noMatch')
+            ? t(panel && panel !== 'staff' ? 'colleagues.noMatchPanel' : 'colleagues.noMatch')
             : undefined;
 
   return (
