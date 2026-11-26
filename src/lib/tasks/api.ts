@@ -84,20 +84,30 @@ export interface Colleague {
 }
 
 export interface NewTask {
+  /**
+   * Whose task it is (meeting0): only that panel's admin gives it to others, and only to its people.
+   * `staff`: the shared page of staff with no panel (a task for themselves).
+   */
+  panel: TasksPanel;
   /** The person the task is about (User id); null for an internal request. */
   user: number | null;
   text: string;
-  kind: TaskKind;
-  /** `request`: the colleague (SupportStaff id). */
-  assignee?: number;
-  /** `request` to several colleagues: each gets their own copy, one conversation (T13). */
+  /** `mine` for myself or `request` for colleagues (a team's queue is filled by the system). */
+  kind: Exclude<TaskKind, 'team'>;
+  /** `request` to colleagues (SupportStaff ids): each gets their own copy, one conversation (T13). */
   assignees?: number[];
-  /** `team`: the queue. */
-  team?: TaskTeam;
+  /** `request` to the panel's whole team: each member but me gets a copy. */
+  everyone?: boolean;
+  /** Late counts against pay (`can_define_todo_penalty`). */
+  penalty?: boolean;
   /** When it is due; or `due_on` alone. */
   due_at?: string;
   /** `YYYY-MM-DD`: a day with no hour, due by its end. */
   due_on?: string;
+  /** A task for me: also on my board of the panel, at the end of this column of it. */
+  column?: number;
+  /** The panel's admin: also on the team board, at the end of this column (each copy). */
+  team_column?: number;
 }
 
 /** When a new task is due: its time, or the 23:59 of its day (as Django reads a day-only task). */
@@ -152,6 +162,8 @@ export interface MyTask {
   receipt: number | null;
   /** S79: the meeting at the office this follow-up is; done once it starts, with `met` / `no_show`. */
   visit?: { id: number; starts_at: string; minutes?: number } | null;
+  /** Late counts against pay. */
+  penalty: boolean;
 }
 
 /** A colleague's request to me. */
@@ -167,6 +179,8 @@ export interface TaskRequest {
   status: TaskStatus;
   comments: number;
   reactions: Reaction[];
+  /** Late counts against pay. */
+  penalty: boolean;
 }
 
 /** A task in a team queue I belong to. */
@@ -187,6 +201,9 @@ export interface SentRequest {
   /** A team, or the first colleague it went to and how many more (old rows name dozens). */
   to: { name: string; others: number } | { team: TaskTeam };
   at: string;
+  due_at: string;
+  /** False: due some time that day (`due_at` is its 23:59), no hour set. */
+  timed: boolean;
   /** For several people: done once all are, in progress once anyone started. */
   status: TaskStatus;
   comments: number;
@@ -207,7 +224,6 @@ export interface TasksOverview {
   /** Null until the server records when a task was done (T3). */
   done_today: number | null;
   sent: SentRequest[];
-  colleagues: Colleague[];
 }
 
 export const tasksQuery = (panel: TasksPanel) =>
@@ -302,16 +318,18 @@ export interface TasksSummary {
   late: number;
 }
 
-/** The bell's and the dock's counts, from the server (the lists only send a page of rows). */
-export const tasksSummaryQuery = queryOptions({
-  queryKey: [...TASKS_KEY, 'summary'],
-  queryFn: ({ signal }) => api<TasksSummary>(`${TASKS_API}/summary/`, { signal }),
-});
+/** The bell's counts for a panel's tasks, from the server (the lists only send a page of rows). */
+export const tasksSummaryQuery = (panel: TasksPanel) =>
+  queryOptions({
+    queryKey: [...TASKS_KEY, panel, 'summary'],
+    queryFn: ({ signal }) =>
+      api<TasksSummary>(`${TASKS_API}/summary/?panel=${encodeURIComponent(panel)}`, { signal }),
+  });
 
-/** What waits for me now (the bell and the dock): the counts and the first page of each list. */
+/** What waits for me now (the bell): the counts and the first page of each list. */
 export const openTaskQueries = (panel: TasksPanel) =>
   [
-    tasksSummaryQuery,
+    tasksSummaryQuery(panel),
     taskListQuery(panel, 'mine', 1),
     taskListQuery(panel, 'requests', 1),
   ] as const;
@@ -324,6 +342,10 @@ export interface RequestDetail extends TaskRequest {
   /** What the task is, and mine to do (`owner`), one I sent (`creator`) or another's (`viewer`). Absent from an older Django. */
   kind?: TaskKind;
   role?: 'owner' | 'creator' | 'viewer';
+  /** Who set it: the system, the owner for themselves, or someone who gave it to them (an admin). */
+  origin: 'system' | 'self' | 'assigned';
+  /** The panel it belongs to; null for an older task of no panel. */
+  panel: Exclude<TasksPanel, 'staff'> | null;
   watchers: string[];
   thread: { id: number; author: string; mine: boolean; at: string; text: string }[];
 }
@@ -340,7 +362,6 @@ export type TaskChange =
       next: { text: string; due_at: string } | null;
       end_reason?: 'won' | 'lost' | 'finished';
     }
-  | { kind: 'snooze'; until: string; reason: 'customer_later' | 'waiting' | 'no_time' }
   | { kind: 'claim' }
   | { kind: 'status'; status: 'in_progress' | 'done' | 'rejected'; reason?: string }
   | { kind: 'comment'; text: string };

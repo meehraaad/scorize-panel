@@ -222,7 +222,8 @@ export const salesPanel: PanelDefinition = {
     },
     {
       path: 'board',
-      ...lazyPage(() => import('@/features/sales/BoardPage'), ['sales'], {
+      // `tasks`: «برد من» (`?board=mine`) and its composer.
+      ...lazyPage(() => import('@/features/sales/BoardPage'), ['sales', 'tasks'], {
         data: () => [boardQuery],
         skeleton: 'board',
       }),

@@ -403,23 +403,40 @@ describe('sales panel, seller pages', () => {
     });
   });
 
-  it('customer: asks a colleague for something', async () => {
+  it('customer: a seller adds a task about them for themselves only', async () => {
     const user = userEvent.setup();
     renderApp(`/sales/customers/${String(ERFAN)}`);
     const tasks = await screen.findByRole('region', { name: 'کارهای باز عرفان' });
-    expect(within(tasks).getAllByRole('listitem')).toHaveLength(4);
+    const before = within(tasks).getAllByRole('listitem').length;
+    await user.click(within(tasks).getByRole('button', { name: 'کار تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    expect(within(dialog).queryByRole('radio', { name: 'برای همکارم' })).toBeNull();
+    await user.type(within(dialog).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
+    await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
+    await waitFor(() => expect(within(tasks).getAllByRole('listitem')).toHaveLength(before + 1));
+  });
+
+  it('customer: the sales manager asks a colleague, found by name', async () => {
+    loginAs(4);
+    const user = userEvent.setup();
+    renderApp(`/sales/customers/${String(ERFAN)}`);
+    const tasks = await screen.findByRole('region', { name: 'کارهای باز عرفان' });
     const sent = within(tasks).getAllByText('فرستاده شد').length;
     await user.click(within(tasks).getByRole('button', { name: 'کار تازه' }));
-    await user.type(within(tasks).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
-    await user.click(within(tasks).getByRole('radio', { name: 'یک همکار' }));
-    await user.click(within(tasks).getByRole('button', { name: 'فرستادن درخواست به همکار' }));
-    expect(await within(tasks).findByText('نمونه‌ی پذیرش هلند')).toBeInTheDocument();
-    expect(within(tasks).getAllByText('فرستاده شد')).toHaveLength(sent + 1);
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
+    await user.type(within(dialog).getByLabelText('کار تازه درباره‌ی عرفان'), 'نمونه‌ی پذیرش هلند');
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن درخواست' }));
+    expect(within(dialog).getByText('دست‌کم یک همکار را انتخاب کنید.')).toBeInTheDocument();
+    await user.type(within(dialog).getByRole('combobox', { name: 'همکار' }), 'نیما');
+    await user.click(await within(dialog).findByRole('option', { name: /نیما رستمی/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'فرستادن به نیما رستمی' }));
+    await waitFor(() => expect(within(tasks).getAllByText('فرستاده شد')).toHaveLength(sent + 1));
   });
 
   it('board: deals by stage', async () => {
     renderApp('/sales/board');
-    expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'برد فروش' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'پیش‌نویس، منتظر مدیر' })).toHaveTextContent(
       'مدیر بررسی می‌کند',
     );
@@ -480,7 +497,7 @@ describe('sales panel, seller pages', () => {
       }),
     );
     const router = renderApp('/sales/board');
-    await screen.findByRole('heading', { name: 'تابلوی فروش' });
+    await screen.findByRole('heading', { name: 'برد فروش' });
     const card = screen
       .getAllByRole('link')
       .find((link) => link.getAttribute('href') === '/sales/customers/101');
@@ -490,7 +507,7 @@ describe('sales panel, seller pages', () => {
       await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/sales\/customers\//));
       // The customer page's shape (PageSkeleton), not the board.
       expect(await screen.findByRole('status', { name: /در حال بارگذاری/ })).toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: 'تابلوی فروش' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'برد فروش' })).not.toBeInTheDocument();
     } finally {
       release();
     }
@@ -526,7 +543,7 @@ describe('sales panel, seller pages', () => {
     const { router } = await openMonth();
     expect(await screen.findByRole('heading', { name: /^ماه من · / })).toBeInTheDocument();
     await router.navigate('/sales/board');
-    expect(await screen.findByRole('heading', { name: 'تابلوی فروش' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'برد فروش' })).toBeInTheDocument();
     await router.navigate('/me/sales');
     expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /^ماه من · / })).not.toBeInTheDocument();

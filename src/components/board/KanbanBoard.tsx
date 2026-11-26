@@ -8,6 +8,7 @@ import {
   useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
 } from '@dnd-kit/core';
 import { useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -32,7 +33,8 @@ export interface KanbanLane {
  * limit), cards dragged by their grip to another lane with a mouse or a finger. Keyboard and
  * screen-reader users move a card from its details (the card face is the page's own button), so the
  * grip is for pointers only. The page decides what a card looks like and what a drop does
- * (`onMove`, which may refuse it).
+ * (`onMove`, which may refuse it). `sortable`: a card dropped on another goes before it, in that
+ * lane or its own (a personal board's order); dropped elsewhere in a lane, at its end.
  */
 export function KanbanBoard<T extends { id: number }>({
   label,
@@ -45,6 +47,10 @@ export function KanbanBoard<T extends { id: number }>({
   emptyText,
   limitLabel,
   busy = false,
+  sortable = false,
+  laneActions,
+  laneFooter,
+  after,
 }: {
   label: string;
   lanes: readonly KanbanLane[];
@@ -54,11 +60,19 @@ export function KanbanBoard<T extends { id: number }>({
   renderCard: (card: T) => ReactNode;
   /** False: the card has no grip (not the viewer's to move from here). */
   canDrag?: (card: T) => boolean;
-  onMove: (card: T, toLane: number) => void;
+  /** `before`: the card it was dropped on (`sortable`); null at the lane's end. */
+  onMove: (card: T, toLane: number, before: T | null) => void;
   emptyText: string;
   /** "3 of 6": a lane's count against its limit. */
   limitLabel: (count: string, limit: string) => string;
   busy?: boolean;
+  sortable?: boolean;
+  /** Beside a lane's count (its menu). */
+  laneActions?: ((lane: KanbanLane) => ReactNode) | undefined;
+  /** Under a lane's cards (add one). */
+  laneFooter?: ((lane: KanbanLane) => ReactNode) | undefined;
+  /** After the last lane (a new lane). */
+  after?: ReactNode;
 }) {
   const f = useFormat();
   const [active, setActive] = useState<T | null>(null);
@@ -67,17 +81,30 @@ export function KanbanBoard<T extends { id: number }>({
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
   );
   const byId = new Map(cards.map((card) => [card.id, card]));
+  // A card under the pointer wins over the lane around it.
+  const collisions: CollisionDetection = (args) => {
+    const hits = pointerWithin(args);
+    const card = hits.find((hit) => String(hit.id).startsWith(CARD));
+    return card ? [card] : hits;
+  };
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={sortable ? collisions : pointerWithin}
       onDragStart={({ active: picked }) => setActive(byId.get(Number(picked.id)) ?? null)}
       onDragCancel={() => setActive(null)}
       onDragEnd={({ active: picked, over }) => {
         setActive(null);
         const card = byId.get(Number(picked.id));
-        if (card && over && Number(over.id) !== laneOf(card)) onMove(card, Number(over.id));
+        if (!card || !over) return;
+        const target = String(over.id).startsWith(CARD)
+          ? byId.get(Number(String(over.id).slice(CARD.length)))
+          : undefined;
+        if (target) {
+          if (target.id !== card.id) onMove(card, laneOf(target), target);
+        } else if (sortable || Number(over.id) !== laneOf(card))
+          onMove(card, Number(over.id), null);
       }}
     >
       {/* Paint containment keeps the lanes' width inside the scroller: without it a phone's page
@@ -111,6 +138,7 @@ export function KanbanBoard<T extends { id: number }>({
                         <span className="sr-only">{lane.locked}</span>
                       </span>
                     )}
+                    {laneActions?.(lane)}
                     <span
                       className={`inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-hair bg-surface px-1.5 text-[11px] font-medium tabular-nums ${
                         lane.limit && inLane.length > lane.limit ? 'text-urgent' : 'text-text-2'
@@ -135,6 +163,7 @@ export function KanbanBoard<T extends { id: number }>({
                         key={card.id}
                         id={card.id}
                         draggable={!busy && (canDrag?.(card) ?? true)}
+                        droppable={sortable && !busy}
                         dragging={active?.id === card.id}
                       >
                         {renderCard(card)}
@@ -142,9 +171,11 @@ export function KanbanBoard<T extends { id: number }>({
                     ))}
                   </ul>
                 )}
+                {laneFooter?.(lane)}
               </Lane>
             );
           })}
+          {after}
         </div>
       </div>
       {createPortal(
@@ -187,14 +218,19 @@ function Lane({
   );
 }
 
+/** A card's drop id (`sortable`): lanes are numbers. */
+const CARD = 'card-';
+
 function DraggableCard({
   id,
   draggable,
+  droppable,
   dragging,
   children,
 }: {
   id: number;
   draggable: boolean;
+  droppable: boolean;
   dragging: boolean;
   children: ReactNode;
 }) {
@@ -202,8 +238,17 @@ function DraggableCard({
     id,
     disabled: !draggable,
   });
+  const drop = useDroppable({ id: `${CARD}${String(id)}`, disabled: !droppable });
   return (
-    <li ref={setNodeRef} className={`relative flex-none ${dragging ? 'opacity-30' : ''}`}>
+    <li
+      ref={(node) => {
+        setNodeRef(node);
+        drop.setNodeRef(node);
+      }}
+      className={`relative flex-none rounded-xl ${dragging ? 'opacity-30' : ''} ${
+        drop.isOver && !dragging ? 'ring-2 ring-primary' : ''
+      }`}
+    >
       {children}
       {draggable && (
         <span

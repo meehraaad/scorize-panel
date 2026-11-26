@@ -12,6 +12,8 @@ import type {
   PendingReceipt,
   StageActivity,
   StageInput,
+  FixedColumn,
+  FixedColumnKey,
   StagesData,
   TodayData,
 } from '@/features/sales/api';
@@ -546,6 +548,8 @@ export interface SalesState {
   /** The manager's comment on a returned offer, by customer. */
   returnComments: Map<number, string>;
   stages: MockStage[];
+  /** The system columns' names and places (meeting0 round 2; Django's SalesFixedColumn). */
+  fixed: FixedColumn[];
   /** Receipts sellers recorded on instalments (sales/v1/tabs.py InstalmentReceiptView), by instalment. */
   instalmentReceipts: Map<number, 'review' | 'paid'>;
 }
@@ -557,6 +561,12 @@ const salesState = (): SalesState => ({
   offerStates: new Map(),
   returnComments: new Map(),
   stages: defaultStages(),
+  fixed: [
+    { key: 'new', name: null, position: 0 },
+    { key: 'draft', name: null, position: 4 },
+    { key: 'won', name: null, position: 5 },
+    { key: 'lost', name: null, position: 6 },
+  ],
   instalmentReceipts: new Map(),
 });
 
@@ -735,22 +745,22 @@ function boardOf(data: SalesState, manager: boolean): BoardData {
   const fixed = (stage: 'new' | 'draft' | 'won') => ({
     stage,
     id: null,
-    name: null,
+    name: data.fixed.find((item) => item.key === stage)?.name ?? null,
     max_days: null,
     activities: [],
   });
-  const keys: Omit<BoardColumn, 'count' | 'value' | 'cards'>[] = [
-    fixed('new'),
-    ...data.stages.map(({ id, name, phase, max_days, activities }) => ({
+  // The manager's order: the team columns, the system ones at their places (lost is no lane).
+  const keys: Omit<BoardColumn, 'count' | 'value' | 'cards'>[] = data.stages.map(
+    ({ id, name, phase, max_days, activities }) => ({
       stage: phase,
       id,
       name,
       max_days,
       activities,
-    })),
-    fixed('draft'),
-    fixed('won'),
-  ];
+    }),
+  );
+  for (const item of [...data.fixed].sort((a, b) => a.position - b.position))
+    if (item.key !== 'lost') keys.splice(Math.min(item.position, keys.length), 0, fixed(item.key));
   const columns = keys.map((column) => {
     const key = column.id === null ? column.stage : String(column.id);
     const items = data.customers.filter((item) => columnOf(data, item.lead) === key);
@@ -791,6 +801,7 @@ export function stagesOf(data: SalesState): StagesData {
       ...stage,
       cards: data.customers.filter((item) => columnOf(data, item.lead) === String(stage.id)).length,
     })),
+    fixed: data.fixed,
     templates: MESSAGE_TEMPLATES.map(({ id, title }) => ({ id, title })),
   };
 }
@@ -799,8 +810,13 @@ let stageId = 600;
 /** Saves the whole list like Django's StagesView.put; an error code, or null. */
 export function saveStages(
   data: SalesState,
-  body: { stages: StageInput[]; moves: { source: number; to: number }[] },
+  body: {
+    stages: StageInput[];
+    fixed?: { key: FixedColumnKey; name: string; position: number }[];
+    moves: { source: number; to: number }[];
+  },
 ): string | null {
+  if (body.fixed && new Set(body.fixed.map((item) => item.key)).size !== 4) return 'fixed_required';
   const order = ['contacted', 'consulted', 'offer'];
   const phases = body.stages.map((stage) => order.indexOf(stage.phase));
   if (phases.some((value, index) => index > 0 && value < (phases[index - 1] ?? 0))) return 'order';
@@ -828,6 +844,8 @@ export function saveStages(
       : [{ kind: 'follow_up' as const, required: true }, ...stage.activities]
     ).map(activityOf),
   }));
+  if (body.fixed)
+    data.fixed = body.fixed.map((item) => ({ ...item, name: item.name.trim() || null }));
   return null;
 }
 
@@ -1123,7 +1141,8 @@ function calendarOf(data: SalesState, from: string, to: string) {
     // Reza (manager) can give a consultation to someone.
     sellers: storage.get() === NIMA ? [] : [{ id: 8, name: NIMA_NAME }],
     visits: visits.filter((visit) => inRange(visit.starts_at)),
-    // The seller's own tasks (S50 rows): tomorrow at 11 one with an hour, in two days one for the day only.
+    // The seller's own tasks (S50 rows): tomorrow at 11 one with an hour; in two days four for the
+    // day only (one done; the day row shows three and «+1»); yesterday one left undone.
     task_rows: [
       {
         id: 9101,
@@ -1145,6 +1164,23 @@ function calendarOf(data: SalesState, from: string, to: string) {
         customer: null,
         name: '',
       },
+      ...(
+        [
+          [9103, 'نظافت دفتر', 2, false],
+          [9104, 'گزارش هفتگی', 2, true],
+          [9105, 'بستن پرونده‌های رد شده', 2, false],
+          [9106, 'پیگیری قسط', -1, false],
+        ] as const
+      ).map(([id, text, days, done]) => ({
+        id,
+        kind: 'mine',
+        text,
+        due_at: new Date(startOfToday() + days * DAY + DAY - 60_000).toISOString(),
+        timed: false,
+        done,
+        customer: null,
+        name: '',
+      })),
     ].filter((row) => inRange(row.due_at)),
     calls: todayOf(data)
       .calls.filter((row) => inRange(row.follow_up_at))

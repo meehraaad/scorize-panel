@@ -2,12 +2,11 @@
   "back": "Today",
   "title": "Today's tasks",
   "subtitle": {
-    "customer": "Create new tasks on the customer's own page. This page is for seeing and doing them.",
-    "applicant": "Create new tasks on the applicant's own file. This page is for seeing and doing them.",
+    "customer": "Add a task about a customer from their own page; any other from “New task” here.",
+    "applicant": "Add a task about an applicant from their own file; any other from “New task” here.",
     "employee": "Staff joining and leaving, contracts and colleagues' requests. Add a task here or from the calendar.",
     "person": "Your follow-ups, colleagues' requests and your team's queue, wherever you work."
   },
-  "aside": "New task and my requests",
   "close": "Close",
   "cancel": "Cancel",
   "error": "That didn't work. Please try again.",
@@ -75,24 +74,12 @@
     },
     "done": "Done",
     "doneFor": "Done: {{text}}",
-    "snooze": "Push back",
-    "snoozeLabel": "Push the follow-up back",
-    "snoozeOption": {
-      "tomorrow": "Tomorrow 10:00",
-      "week": "Next week",
-      "twoHours": "In 2 hours"
-    },
-    "reason": "Reason",
-    "reasonOption": {
-      "customer_later": "Customer asked for later",
-      "waiting": "Waiting for a document or answer",
-      "no_time": "Didn't get to it"
-    },
     "tomorrow": "Tomorrow: {{n}} follow-ups",
     "doneToday": "Done today: {{n}}",
     "emptyDay": "No follow-ups on {{day}}.",
     "allDay": "Any time today",
-    "dayAndTime": "{{day}}, {{time}}"
+    "dayAndTime": "{{day}}, {{time}}",
+    "onlyLate": "Nothing else for today; the overdue ones are under “Needs attention”."
   },
   "done": {
     "title": "Follow-up done",
@@ -177,9 +164,9 @@
     "queued": "Queued"
   },
   "requests": {
+    "emoji": "Emoji",
     "empty": "No requests from colleagues.",
     "about": "About",
-    "due": "Due: {{when}}",
     "comments": "{{n}} messages",
     "openFor": "Open: {{text}}",
     "cta": {
@@ -189,8 +176,6 @@
     },
     "loading": "Request",
     "gone": "This task is no longer there, or it isn't yours to see.",
-    "from": "From {{name}} ({{role}}) to you · {{when}}",
-    "watchers": "Watching: {{names}}",
     "steps": "Request status",
     "thread": "Conversation",
     "noThread": "No messages yet.",
@@ -202,7 +187,25 @@
     "reason": "Why can't it be done? (for the requester)",
     "watchersMany": "Watching: {{names}} and {{n}} others",
     "messageSent": "Your message",
-    "doneFor": "Done: {{text}}"
+    "doneFor": "Done: {{text}}",
+    "summary": "Task summary",
+    "origin": {
+      "system": "System",
+      "self": "My own reminder",
+      "assigned": "From the panel admin"
+    },
+    "to": "For",
+    "by": "From",
+    "dueLabel": "Due",
+    "penalty": "Late penalty",
+    "penaltyOn": "Deducted from pay",
+    "penaltyOff": "None",
+    "you": "You",
+    "sending": "Sending…",
+    "notSent": "The message was not sent.",
+    "retry": "Send again",
+    "startThread": "No messages yet.",
+    "due": "Due: {{when}}"
   },
   "team": {
     "note": "Tasks given to a team, not a person. The first to press \"I'll take it\" owns it and it leaves the queue for everyone else.",
@@ -223,11 +226,7 @@
     }
   },
   "sent": {
-    "title": "Requests I sent",
-    "empty": "You haven't sent any requests.",
-    "to": "To {{to}} · {{when}}",
-    "toMany": "{{name}} and {{n}} others",
-    "progress": "{{done}} of {{total}} done"
+    "toMany": "{{name}} and {{n}} others"
   },
   "new": {
     "title": "New task",
@@ -235,40 +234,56 @@
     "required": "Write what needs doing.",
     "for": "Who is it for?",
     "target": {
-      "me": "Me",
-      "people": "Colleagues",
-      "team": "A team"
+      "me": "For myself",
+      "person": "For a colleague",
+      "team": "For the whole team"
     },
-    "meHint": "It shows in “My follow-ups” from the day it is due, and reminds you then. Until that day it is only counted under later tasks.",
-    "people": "Colleagues",
-    "picked": "Chosen",
-    "remove": "Remove {{name}}",
-    "search": "Search colleagues",
-    "noMatch": "No colleague by that name.",
+    "meHint": "Shows in «My follow-ups» from its due day.",
+    "people": "Colleague",
     "pickSomeone": "Choose at least one colleague.",
     "several": "You can choose several people.",
     "eachOwn": "Each of them does it separately, and you see how far each one got.",
-    "team": "Which team?",
-    "teamHint": "Whoever takes it first owns it.",
+    "teamHint": "Each person gets their own copy.",
     "due": "Due",
     "other": "Another date and time",
     "date": "Date and time",
     "dateRequired": "Choose a date and time.",
     "send": {
-      "me": "Add to my tasks",
+      "me": "Add for myself",
       "people": "Send request",
-      "team": "Send to the team queue",
+      "person": "Send to {{name}}",
+      "team": "Send to the whole team",
       "many": "Send to {{n}} people"
     },
     "sent": {
       "me": "Added to your tasks. It shows in “My follow-ups” on {{when}}.",
-      "team": "Put in the team queue.",
+      "team": "Sent to the whole team.",
       "people": "Sent to {{n}} people."
     },
     "dayOnly": "Day only (no time)",
     "day": "Day",
     "dayHint": "Due by the end of that day; not late before then.",
-    "dayRequired": "Choose the day."
+    "dayRequired": "Choose the day.",
+    "targetHint": {
+      "me": "A personal reminder",
+      "person": "One or more people",
+      "team": "Each gets a copy"
+    },
+    "admin": "Admin of this panel",
+    "selfOnly": "This task is for you. The panel’s admin sends tasks to a colleague or the whole team.",
+    "whatAbout": "New task about {{name}}",
+    "penalty": "Late penalty",
+    "penaltyHint": "If done late, it is deducted from the month’s pay.",
+    "fromCalendar": "From the calendar",
+    "picked": "{{day}} at {{time}}",
+    "calendarTitle": "Pick a time on the calendar",
+    "calendarHint": "Tap a free spot to make that hour the task’s due time.",
+    "onBoard": "On a board",
+    "board": {
+      "mine": "My board",
+      "team": "Team board"
+    },
+    "noColumn": "List only"
   },
   "reactions": {
     "label": "Reactions",
@@ -294,9 +309,14 @@
     "clear": "Show all days"
   },
   "calendar": {
+    "row": "Tasks",
+    "openCount": "{{n}} open tasks this day",
+    "pickDay": "Pick {{day}}, no hour",
     "task": "My task",
-    "tasks": "{{n}} tasks",
-    "add": "New task for {{day}}"
+    "add": "Task with no hour on {{day}}",
+    "more": "+{{n}} more",
+    "dayCount": "{{n}} open tasks that day; open the tasks page",
+    "chipDone": "(done)"
   },
   "hub": {
     "title": "Tasks",
@@ -321,5 +341,106 @@
     "page": "Open the tasks page",
     "minimize": "Minimize",
     "done": "{{n}} done today"
+  },
+  "attention": {
+    "title": "Needs attention",
+    "subtitle": "Your overdue tasks and the requests still waiting for an answer",
+    "filter": "Show",
+    "show": {
+      "all": "All",
+      "late": "Overdue",
+      "sent": "Sent by me"
+    },
+    "column": {
+      "due": "Due",
+      "task": "Task",
+      "who": "With whom",
+      "state": "Status"
+    },
+    "kind": {
+      "late": "Overdue",
+      "sent": "Sent by me"
+    },
+    "me": "Me",
+    "penalty": "With penalty",
+    "progress": "{{done}} of {{total}}",
+    "none": "Nothing here.",
+    "more": "Show {{n}} more"
+  },
+  "slots": {
+    "label": "My week, to pick a task time",
+    "hint": "Tap a free spot to pick that hour.",
+    "picked": "Picked time: {{day}} at {{time}}",
+    "past": "That time has passed. Pick one from now on.",
+    "failed": "The week didn’t load. Try again."
+  },
+  "board": {
+    "teamTitle": "Team board",
+    "teamHint": "The whole team sees it; each moves their own cards.",
+    "teamEmpty": "The panel’s admin hasn’t made any columns yet.",
+    "title": "My board",
+    "private": "Only you see this board.",
+    "which": "Which board",
+    "error": "The board did not load.",
+    "failed": "That did not work. Try again.",
+    "emptyColumn": "No cards here. Drag one in or add one.",
+    "columnMenu": "Column settings: {{name}}",
+    "addTask": "Put one of my tasks here",
+    "newColumn": "New column",
+    "openCard": "Card: {{text}}",
+    "due": "{{day}} · {{time}}",
+    "dueDay": "{{day}} · no hour",
+    "tag": {
+      "done": "Done",
+      "late": "Late",
+      "mine": "Mine",
+      "request": "Request"
+    },
+    "suggested": {
+      "today": "Today",
+      "week": "This week",
+      "waiting": "Waiting on others"
+    },
+    "empty": {
+      "title": "Arrange your tasks your way",
+      "text": "Make your own columns and arrange them.",
+      "fromNew": "Put a task straight into a column from “New task”",
+      "sent": "Add the requests you sent, to follow them",
+      "remove": "Removing a card never deletes the task",
+      "start": "Start with three suggested columns"
+    },
+    "columnName": "Column name",
+    "nameRequired": "Write a name.",
+    "create": "Create",
+    "save": "Save",
+    "columnTitle": "Column {{name}}",
+    "earlier": "One column to the right",
+    "later": "One column to the left",
+    "deleteHint": "{{n}} cards come off the board; the tasks stay.",
+    "delete": "Delete column",
+    "deleteSure": "Yes, delete it",
+    "addTitle": "Put a task in “{{name}}”",
+    "addHint": "Your open tasks that are not on the board yet.",
+    "search": "Search tasks",
+    "loading": "Loading…",
+    "noCandidates": "No open task off the board was found.",
+    "added": "Put in “{{name}}”.",
+    "cardHint": "Moving or removing a card never changes the task.",
+    "column": "Column",
+    "openTask": "Open task",
+    "remove": "Take off the board",
+    "teamSuggested": {
+      "queue": "Queue",
+      "doing": "In progress",
+      "done": "Done"
+    },
+    "teamStart": {
+      "title": "Set up the team board",
+      "text": "Make the columns and put the panel’s tasks on it."
+    },
+    "team": {
+      "addTask": "Add a team task",
+      "addHint": "The panel’s open tasks not on the board yet."
+    }
   }
 }

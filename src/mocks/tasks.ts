@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import type {
+  Colleague,
   MyTask,
   NewTask,
   QueueItem,
@@ -8,6 +9,7 @@ import type {
   TaskList,
   TaskRequest,
   TasksOverview,
+  TasksPanel,
 } from '@/lib/tasks/api';
 import { dueAtOf } from '@/lib/tasks/api';
 import { forbidden, notFound, pageOf, storage } from './session';
@@ -117,6 +119,9 @@ function supervisorTasksState(): TasksState {
       thread: [],
       reactions: [],
       people: [],
+      origin: 'assigned',
+      panel: 'supervisor',
+      penalty: false,
     },
   ];
   return {
@@ -140,6 +145,7 @@ function supervisorTasksState(): TasksState {
           suggested_next: 'رسید پرداخت را در پرونده بگذار',
           follow_up: false,
           receipt: null,
+          penalty: false,
         },
         {
           id: 112,
@@ -154,6 +160,7 @@ function supervisorTasksState(): TasksState {
           suggested_next: 'نظرها را برای تیم نگارش بفرست',
           follow_up: false,
           receipt: null,
+          penalty: false,
         },
         {
           id: 113,
@@ -168,6 +175,7 @@ function supervisorTasksState(): TasksState {
           suggested_next: '',
           follow_up: false,
           receipt: null,
+          penalty: false,
         },
       ],
       tomorrow: 4,
@@ -193,16 +201,13 @@ function supervisorTasksState(): TasksState {
           text: 'نسخه‌ی دوم SOP نگار احمدی',
           to: { team: 'writing' },
           at: ago(2 * DAY),
+          due_at: later(DAY),
+          timed: false,
           status: 'in_progress',
           comments: 0,
           reactions: [],
           progress: null,
         },
-      ],
-      colleagues: [
-        { id: 23, name: 'علی رضایی', role: 'سوپروایزر', team: 'سوپروایزر' },
-        { id: 22, name: 'الهام رضوی', role: 'سرپرست تیم نگارش', team: 'سرپرست تیم نگارش' },
-        { id: 8, name: 'نیما رستمی', role: 'فروش', team: 'فروش' },
       ],
     },
     details: new Map(details.map((detail) => [detail.id, detail])),
@@ -225,6 +230,7 @@ function hrTasksState(): TasksState {
     suggested_next: '',
     follow_up: false,
     receipt: null,
+    penalty: false,
   });
   return {
     overview: {
@@ -239,10 +245,6 @@ function hrTasksState(): TasksState {
       requests: [],
       team: [],
       sent: [],
-      colleagues: [
-        { id: 7, name: 'مریم کاظمی', role: 'سوپروایزر', team: 'سوپروایزر' },
-        { id: 9, name: 'رضا کامرانی', role: 'مدیر فروش', team: 'مدیر فروش' },
-      ],
     },
     details: new Map(),
   };
@@ -264,6 +266,7 @@ function marketingTasksState(): TasksState {
     suggested_next: '',
     follow_up: false,
     receipt: null,
+    penalty: false,
   });
   return {
     overview: {
@@ -278,10 +281,6 @@ function marketingTasksState(): TasksState {
       requests: [],
       team: [],
       sent: [],
-      colleagues: [
-        { id: 12, name: 'مینا صادقی', role: 'تیم مارکتینگ', team: 'تیم مارکتینگ' },
-        { id: 13, name: 'پویا فرهادی', role: 'تیم مارکتینگ', team: 'تیم مارکتینگ' },
-      ],
     },
     details: new Map(),
   };
@@ -299,10 +298,39 @@ function emptyTasksState(): TasksState {
       requests: [],
       team: [],
       sent: [],
-      colleagues: [{ id: 7, name: 'مریم کاظمی', role: 'تیم اجرا', team: 'تیم اجرا' }],
     },
     details: new Map(),
   };
+}
+
+/** The staff the colleague search finds (`GET tasks/colleagues/`), with the panels each is in. */
+const COLLEAGUES: (Colleague & { panels: TasksPanel[] })[] = [
+  { id: 23, name: 'علی رضایی', role: 'سوپروایزر', panels: ['supervisor', 'executive'] },
+  { id: 22, name: 'الهام رضوی', role: 'سرپرست تیم نگارش', panels: ['supervisor', 'executive'] },
+  { id: 7, name: 'مریم کاظمی', role: 'سوپروایزر', panels: ['supervisor', 'executive'] },
+  { id: 8, name: 'نیما رستمی', role: 'فروش', panels: ['sales'] },
+  { id: 9, name: 'رضا کامرانی', role: 'مدیر فروش', panels: ['sales'] },
+  { id: 12, name: 'مینا صادقی', role: 'تیم مارکتینگ', panels: ['marketing'] },
+  { id: 13, name: 'پویا فرهادی', role: 'تیم مارکتینگ', panels: ['marketing'] },
+];
+
+/** `GET tasks/colleagues/?search=&panel=`: by name, up to eight (Django `ColleagueSearchView`). */
+export function colleaguesFound(request: Request) {
+  const query = new URL(request.url).searchParams;
+  const search = (query.get('search') ?? '').trim();
+  if (search.length < 2) return HttpResponse.json({ search: ['too short'] }, { status: 400 });
+  const panel = query.get('panel') as TasksPanel | null;
+  return HttpResponse.json(
+    COLLEAGUES.filter(
+      (person) => person.name.includes(search) && (!panel || person.panels.includes(panel)),
+    )
+      .slice(0, 8)
+      .map(({ panels: _panels, ...person }) => ({
+        ...person,
+        team: person.role,
+        suggested: false,
+      })),
+  );
 }
 
 const HR_USER = 6;
@@ -375,16 +403,6 @@ function applyChange(
       }
       return null;
     }
-    case 'snooze': {
-      if (!task) return notFound();
-      task.snoozed += 1;
-      task.due_at = change.until;
-      if (new Date(change.until).toDateString() !== new Date().toDateString()) {
-        overview.mine = overview.mine.filter((item) => item !== task);
-        overview.tomorrow += 1;
-      }
-      return null;
-    }
     case 'claim': {
       if (!queued) return notFound();
       if (queued.taken) return HttpResponse.json({ detail: 'Already taken.' }, { status: 409 });
@@ -404,6 +422,7 @@ function applyChange(
           suggested_next: '',
           follow_up: false,
           receipt: null,
+          penalty: false,
         });
       return null;
     }
@@ -456,6 +475,9 @@ function followUpDetail(overview: FullTasks, id: number, me: string): RequestDet
     body: task?.note ?? '',
     kind: task ? 'mine' : 'team',
     role: task ? 'owner' : 'viewer',
+    origin: task?.source === 'me' ? 'self' : 'system',
+    panel: null,
+    penalty: task?.penalty ?? false,
     watchers: [],
     thread: [],
   };
@@ -463,7 +485,6 @@ function followUpDetail(overview: FullTasks, id: number, me: string): RequestDet
 
 const CHANGE_KIND: Record<string, TaskChange['kind']> = {
   done: 'done',
-  snooze: 'snooze',
   claim: 'claim',
   status: 'status',
   comments: 'comment',
@@ -485,6 +506,28 @@ export function summaryOf(overview: FullTasks) {
 }
 
 export const taskHandlers = [
+  http.get(`${TASKS}/colleagues/`, ({ request }) => colleaguesFound(request)),
+
+  // The composer's «از تقویم» in panels with no calendar of their own: one day-only task this week.
+  http.get(`${TASKS}/calendar/`, ({ request }) => {
+    const from = new URL(request.url).searchParams.get('from') ?? '';
+    return HttpResponse.json({
+      tasks: [],
+      task_rows: [
+        {
+          id: 9901,
+          kind: 'mine',
+          text: 'جمع‌بندی پرونده‌های هفته',
+          due_at: `${from}T20:29:00Z`,
+          timed: false,
+          done: false,
+          customer: null,
+          name: '',
+        },
+      ],
+    });
+  }),
+
   http.get(`${TASKS}/summary/`, () => {
     const data = tasksOrError();
     return data instanceof Response ? data : HttpResponse.json(summaryOf(data.tasks.overview));
@@ -534,11 +577,10 @@ export const taskHandlers = [
     const task = (await request.json()) as NewTask;
     if (!task.text.trim()) return HttpResponse.json({ text: ['required'] }, { status: 400 });
     const { overview, details } = data.tasks;
-    // Several colleagues: one copy each, one row for me with their progress (T13).
-    const ids = [
-      ...new Set([...(task.assignee ? [task.assignee] : []), ...(task.assignees ?? [])]),
-    ];
-    const people = ids.flatMap((id) => overview.colleagues.filter((item) => item.id === id));
+    // Colleagues or the panel's whole team: one copy each, one row for me with their progress (T13).
+    const people = task.everyone
+      ? COLLEAGUES.filter((person) => person.panels.includes(task.panel))
+      : COLLEAGUES.filter((person) => task.assignees?.includes(person.id));
     if (task.kind === 'request' && people.length === 0)
       return HttpResponse.json({ assignee: ['required'] }, { status: 400 });
     const now = new Date().toISOString();
@@ -562,17 +604,18 @@ export const taskHandlers = [
         suggested_next: '',
         follow_up: false,
         receipt: null,
+        penalty: false,
       });
     else if (task.kind === 'mine') overview.tomorrow += 1;
-    if (task.kind !== 'mine') {
-      const status = task.kind === 'team' ? 'queued' : 'sent';
+    if (task.kind === 'request') {
+      const status = 'sent';
       overview.sent.unshift({
         id,
         text: task.text,
-        to: task.team
-          ? { team: task.team }
-          : { name: people[0]?.name ?? '', others: people.length - 1 },
+        to: { name: people[0]?.name ?? '', others: people.length - 1 },
         at: now,
+        due_at: dueAtOf(task),
+        timed: task.due_at !== undefined,
         status,
         comments: 0,
         reactions: [],
@@ -590,6 +633,9 @@ export const taskHandlers = [
         reactions: [],
         people: people.length > 1 ? people.map(({ name }) => ({ name, status })) : [],
         body: '',
+        origin: 'assigned',
+        panel: task.panel === 'staff' ? null : task.panel,
+        penalty: task.penalty ?? false,
         watchers: [],
         thread: [],
       });

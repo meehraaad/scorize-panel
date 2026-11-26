@@ -17,6 +17,7 @@ import { toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { uploadFile } from '@/lib/upload';
+import { useUser } from '@/lib/auth/session';
 import { MARKETING_KEY } from '../api';
 import {
   cardPath,
@@ -29,6 +30,7 @@ import {
   type BoardData,
   type CardDetail,
   type MoveRefusal,
+  ownerChoices,
   type StageNeed,
 } from '../boardApi';
 
@@ -70,6 +72,7 @@ function CardForm({
 }) {
   const { t } = useTranslation('marketing');
   const f = useFormat();
+  const user = useUser();
   const client = useQueryClient();
   const edit = useEditCard();
   const move = useMoveCard();
@@ -332,7 +335,10 @@ function CardForm({
           onChange={set('owner')}
           options={[
             { value: NONE, label: t('card.noOwner') },
-            ...board.people.map((person) => ({ value: String(person.id), label: person.name })),
+            ...ownerChoices(board.people, user, card.owner?.id ?? null).map((person) => ({
+              value: String(person.id),
+              label: person.name,
+            })),
           ]}
         />
       </div>

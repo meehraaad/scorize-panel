@@ -250,7 +250,13 @@
     "day": "Last day of work",
     "reason": "Reason",
     "save": "Start leaving",
-    "saved": "Leaving checklist opened"
+    "saved": "Leaving checklist opened",
+    "person": "Colleague",
+    "personHint": "An active colleague",
+    "noMatch": "No active colleague with this name.",
+    "change": "Change",
+    "saveFor": "Start {{name}}’s leaving",
+    "loading": "Loading colleagues…"
   },
   "returnDialog": {
     "title": "Bring back",

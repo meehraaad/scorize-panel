@@ -75,7 +75,10 @@ describe('panels', () => {
     expect(await screen.findByRole('heading', { name: 'مشتری‌ها' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/executive/customers');
     await waitFor(() => {
-      expect(mockWorkspace(MARYAM)).toEqual({ last_workspace: 'executive', workspace_mode: 'always' });
+      expect(mockWorkspace(MARYAM)).toEqual({
+        last_workspace: 'executive',
+        workspace_mode: 'always',
+      });
     });
   });
 

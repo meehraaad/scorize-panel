@@ -1,3 +1,8 @@
+import { queryOptions } from '@tanstack/react-query';
+import { api } from '@/lib/api/client';
+import { addDays, toValue } from '@/lib/calendar';
+import { TASKS_API, TASKS_KEY, type TasksPanel } from './api';
+
 /**
  * My tasks on a calendar: the shape every panel's calendar endpoint answers (lang
  * `api/sales/v1/calendar.py` seller_tasks, used by sales, HR and marketing).
@@ -34,3 +39,20 @@ export interface TaskCalendarData {
   tasks: CalendarTaskDay[];
   task_rows: CalendarTaskRow[];
 }
+
+/**
+ * A week of my tasks of `panel` (lang `tasks/calendar/`): the picker's week where the panel has no
+ * calendar of its own (supervisor, executive, the shared page).
+ */
+export const taskCalendarQuery = (panel: TasksPanel) => (week: Date) => {
+  const from = toValue(week, false);
+  const to = toValue(addDays(week, 6), false);
+  return queryOptions({
+    queryKey: [...TASKS_KEY, panel, 'calendar', from],
+    queryFn: ({ signal }) =>
+      api<TaskCalendarData>(
+        `${TASKS_API}/calendar/?${new URLSearchParams({ panel, from, to }).toString()}`,
+        { signal },
+      ),
+  });
+};

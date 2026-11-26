@@ -12,7 +12,7 @@ import { writingRoutes } from './writing';
 
 const session = () => queryClient.query({ ...sessionQuery, staleTime: 'static' });
 const HIDE_WRITING = new Set(['writing']);
-const WRITING_ONLY = new Set(['customers', 'tickets', 'manager']);
+const WRITING_ONLY = new Set(['customers', 'tickets', 'manager', 'board']);
 const NO_HIDDEN = new Set<string>();
 
 export const executivePanel: PanelDefinition = {
@@ -51,6 +51,7 @@ export const executivePanel: PanelDefinition = {
       tab: 'panels.executive.nav.tickets',
       icon: 'chat',
     },
+    { id: 'board', to: 'board', label: 'panels.executive.nav.board', icon: 'grid' },
     // Executive management: the supervisor manager's pages and the mail servers, by key.
     managerNavItem,
   ],
@@ -65,6 +66,17 @@ export const executivePanel: PanelDefinition = {
       },
     },
     { path: 'work', loader: () => redirect('/executive') },
+    {
+      path: 'board',
+      ...lazyPage(
+        () =>
+          import('@/features/tasks/TeamBoardPage').then((module) => ({
+            default: module.ExecutiveBoard,
+          })),
+        ['tasks'],
+        { skeleton: 'board' },
+      ),
+    },
     ...writingRoutes,
     // The Writer APIs also serve writers without Executive customer access.
     {

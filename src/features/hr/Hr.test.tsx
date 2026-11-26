@@ -138,12 +138,30 @@ describe('HR panel', () => {
     renderApp('/hr/staff/1');
     await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
     const dialog = await screen.findByRole('dialog', { name: 'شروع جدایی' });
-    await user.click(within(dialog).getByRole('button', { name: 'شروع جدایی' }));
+    await user.click(within(dialog).getByRole('button', { name: /^شروع جدایی / }));
     expect(await toasts().findByText('چک‌لیست جدایی باز شد')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'استخدام و جدایی' }));
     expect(
       await screen.findByRole('progressbar', { name: '۰ از ۷ انجام شده' }),
     ).toBeInTheDocument();
+  });
+
+  it('starts a joining or a leaving from the moves page, the colleague found by name', async () => {
+    const NAME = 'علی رضایی';
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/moves');
+    await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
+    const dialog = await screen.findByRole('dialog', { name: 'شروع جدایی' });
+    const save = within(dialog).getByRole('button', { name: 'شروع جدایی' });
+    expect(save).toBeDisabled();
+    const people = within(dialog).getByRole('combobox', { name: 'همکار' });
+    await user.type(people, NAME.slice(0, 3));
+    await user.click(await within(dialog).findByRole('option', { name: new RegExp(NAME) }));
+    await user.click(within(dialog).getByRole('button', { name: `شروع جدایی ${NAME}` }));
+    expect(await toasts().findByText('چک‌لیست جدایی باز شد')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'کارمند جدید' }));
+    expect(await screen.findByRole('dialog', { name: 'کارمند جدید' })).toBeInTheDocument();
   });
 
   it('ends someone’s work and brings them back with a reason', async () => {
@@ -152,7 +170,7 @@ describe('HR panel', () => {
     renderApp('/hr/staff/1');
     await user.click(await screen.findByRole('button', { name: 'شروع جدایی' }));
     const exit = await screen.findByRole('dialog', { name: 'شروع جدایی' });
-    await user.click(within(exit).getByRole('button', { name: 'شروع جدایی' }));
+    await user.click(within(exit).getByRole('button', { name: /^شروع جدایی / }));
     await user.click(await screen.findByRole('button', { name: 'استخدام و جدایی' }));
     await user.click(await screen.findByRole('button', { name: 'پایان همکاری' }));
     const confirm = await screen.findByRole('group', { name: /همکاری تمام شود/ });
@@ -187,6 +205,28 @@ describe('HR panel', () => {
     renderApp('/hr/calendar');
     expect(await screen.findByRole('heading', { name: 'تقویم', level: 1 })).toBeInTheDocument();
     expect(await screen.findAllByRole('link', { name: /استخدام بهار نیکو/ })).not.toHaveLength(0);
+  });
+
+  it('lists my tasks with no hour on the calendar’s day row and adds one for a day', async () => {
+    const user = userEvent.setup();
+    loginAs(AMIR);
+    renderApp('/hr/calendar');
+    const row = await screen.findByRole('group', { name: 'روزهای کارکنان و کارها' });
+    // An open move's steps are due today with no hour: chips, never at an hour.
+    await waitFor(() =>
+      expect(
+        within(row)
+          .getAllByRole('link')
+          .filter((link) => /\/tasks\?view=mine&day=/.test(link.getAttribute('href') ?? '')),
+      ).not.toHaveLength(0),
+    );
+    const add = within(row).getAllByRole('button', {
+      name: /^کار بدون ساعت برای /,
+    })[0] as HTMLElement;
+    await user.click(add);
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
+    expect(within(dialog).getByRole('button', { name: 'از تقویم' })).toBeInTheDocument();
   });
 
   it('shows the org chart: each position under the one it reports to', async () => {

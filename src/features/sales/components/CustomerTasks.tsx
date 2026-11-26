@@ -1,28 +1,19 @@
-import { useId, useState, type SubmitEvent } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { ColleaguePicker } from '@/components/tasks/ColleaguePicker';
-import { Button } from '@/components/ui/Button';
-import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
-import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { SectionCard } from '@/components/ui/SectionCard';
-import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
-import {
-  TASK_TEAMS,
-  type TaskKind,
-  type TaskStatus,
-  type TaskSummary,
-  type TaskTeam,
-} from '@/lib/tasks/api';
-import { useCreateTask } from '@/lib/tasks/changes';
+import type { TaskKind, TaskStatus, TaskSummary } from '@/lib/tasks/api';
 import { customerKey, type CustomerData } from '../api';
 import { salesPath } from '../paths';
-import { fromLocalInput, quickWhen } from '@/lib/when';
-import { toast } from '@/lib/toast';
+import { FollowUpSlots } from './FollowUpWhen';
+
+const NewTaskDialog = lazy(() =>
+  import('@/components/tasks/NewTask').then((module) => ({ default: module.NewTaskDialog })),
+);
 
 const STATUS_TONE: Record<TaskStatus, ChipTone> = {
   open: 'primary',
@@ -34,11 +25,7 @@ const STATUS_TONE: Record<TaskStatus, ChipTone> = {
   queued: 'info',
 };
 
-const KINDS = ['mine', 'request', 'team'] as const satisfies readonly TaskKind[];
-const WHENS = ['hour', 'evening', 'tomorrow', 'day', 'other'] as const;
-type When = (typeof WHENS)[number];
-
-/** Open tasks about this customer, and a form to add one (for me, a colleague or a team). */
+/** Open tasks about this customer, and the shared «کار تازه» panel about them (their people first). */
 export function CustomerTasks({ customer }: { customer: CustomerData }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -65,17 +52,29 @@ export function CustomerTasks({ customer }: { customer: CustomerData }) {
           </Link>
           <button
             type="button"
-            aria-expanded={adding}
-            onClick={() => setAdding((open) => !open)}
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-tint px-4 text-[13px] font-semibold text-primary-text"
+            aria-haspopup="dialog"
+            onClick={() => setAdding(true)}
+            className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-tint px-4 text-[13px] font-semibold text-primary-text"
           >
-            <Icon name={adding ? 'close' : 'plus'} size={15} />
-            {t(adding ? 'cancel' : 'customer.tasks.add')}
+            <Icon name="plus" size={15} />
+            {t('customer.tasks.add')}
           </button>
         </span>
       }
     >
-      {adding && <NewTaskForm customer={customer} name={first} onDone={() => setAdding(false)} />}
+      {adding && (
+        <Suspense fallback={null}>
+          <NewTaskDialog
+            open
+            panel="sales"
+            about={{ id: customer.id, name: first }}
+            suggested={customer.colleagues}
+            also={customerKey(customer.id)}
+            slots={FollowUpSlots}
+            onClose={() => setAdding(false)}
+          />
+        </Suspense>
+      )}
       <TaskList tasks={customer.tasks} />
     </SectionCard>
   );
@@ -140,140 +139,5 @@ function TaskList({ tasks }: { tasks: TaskSummary[] }) {
         );
       })}
     </ul>
-  );
-}
-
-function NewTaskForm({
-  customer,
-  name,
-  onDone,
-}: {
-  customer: CustomerData;
-  name: string;
-  onDone: () => void;
-}) {
-  const { t } = useTranslation('sales');
-  const create = useCreateTask(customerKey(customer.id));
-  const [text, setText] = useState('');
-  const [kind, setKind] = useState<TaskKind>('mine');
-  const [peer, setPeer] = useState(customer.colleagues[0]?.id);
-  const peerHint = useId();
-  const [team, setTeam] = useState<TaskTeam>('writing');
-  const [when, setWhen] = useState<When>('evening');
-  const [date, setDate] = useState('');
-  const [day, setDay] = useState('');
-  const [missing, setMissing] = useState(false);
-
-  const dueAt =
-    when === 'day' ? null : when === 'other' ? fromLocalInput(date) : quickWhen(when).toISOString();
-
-  const submit = (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!text.trim() || (when === 'day' ? !day : !dueAt)) {
-      setMissing(true);
-      return;
-    }
-    create.mutate(
-      {
-        user: customer.id,
-        text: text.trim(),
-        kind,
-        ...(dueAt ? { due_at: dueAt } : { due_on: day }),
-        ...(kind === 'request' && peer !== undefined ? { assignee: peer } : {}),
-        ...(kind === 'team' ? { team } : {}),
-      },
-      {
-        onError: () => toast.error(t('error')),
-        onSuccess: () => {
-          setText('');
-          setMissing(false);
-          toast.success(t('customer.newTask.created'));
-          onDone();
-        },
-      },
-    );
-  };
-
-  return (
-    <form
-      noValidate
-      onSubmit={submit}
-      className="mx-5 mb-4 flex flex-col gap-4 rounded-2xl bg-canvas p-5 lg:mx-8"
-    >
-      <TextField
-        label={t('customer.newTask.label', { name })}
-        placeholder={t(`customer.newTask.placeholder.${kind}`)}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        error={missing && !text.trim() ? t('customer.newTask.required') : undefined}
-      />
-      <ChoiceGroup
-        legend={t('customer.newTask.for')}
-        value={kind}
-        onChange={setKind}
-        options={KINDS.map((value) => ({ value, label: t(`customer.newTask.forOption.${value}`) }))}
-      />
-      {kind === 'request' && customer.colleagues.length > 0 && (
-        <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 text-sm font-semibold text-text-2">
-            {t('customer.newTask.peer')}
-          </legend>
-          <ColleaguePicker
-            colleagues={customer.colleagues}
-            picked={peer === undefined ? [] : [peer]}
-            onToggle={setPeer}
-            label={t('customer.newTask.peer')}
-            searchLabel={t('customer.newTask.peerSearch')}
-            noMatch={t('customer.newTask.peerNoMatch')}
-            suggestedTitle={t('customer.newTask.peerSuggested')}
-            describedBy={peerHint}
-          />
-          <span id={peerHint} className="text-sm leading-6 text-text-2">
-            {t('customer.newTask.peerHint')}
-          </span>
-        </fieldset>
-      )}
-      {kind === 'team' && (
-        <SelectField
-          label={t('customer.newTask.team')}
-          hint={t('customer.newTask.teamHint')}
-          value={team}
-          onChange={setTeam}
-          options={TASK_TEAMS.map((value) => ({ value, label: t(`customer.team.${value}`) }))}
-        />
-      )}
-      <ChoiceGroup
-        legend={t('customer.newTask.when')}
-        value={when}
-        onChange={setWhen}
-        options={WHENS.map((value) => ({
-          value,
-          label: t(`customer.newTask.whenOption.${value}`),
-        }))}
-      />
-      {when === 'other' && (
-        <LazyDatePicker
-          time
-          only="future"
-          label={t('customer.newTask.date')}
-          value={date}
-          onChange={setDate}
-          error={missing && !dueAt ? t('customer.newTask.date') : undefined}
-        />
-      )}
-      {when === 'day' && (
-        <LazyDatePicker
-          only="future"
-          label={t('customer.newTask.day')}
-          hint={t('customer.newTask.dayHint')}
-          value={day}
-          onChange={setDay}
-          error={missing && !day ? t('customer.newTask.day') : undefined}
-        />
-      )}
-      <Button type="submit" className="self-start" disabled={create.isPending}>
-        {t(`customer.newTask.cta.${kind}`)}
-      </Button>
-    </form>
   );
 }

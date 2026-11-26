@@ -492,45 +492,6 @@
       "documents": "Documents team",
       "finance": "Finance"
     },
-    "newTask": {
-      "label": "New task about {{name}}",
-      "for": "For",
-      "forOption": {
-        "mine": "Me",
-        "request": "A colleague",
-        "team": "A team"
-      },
-      "peer": "Which colleague?",
-      "peerSearch": "Search colleagues by name or role",
-      "peerNoMatch": "No colleague matches that name or role.",
-      "peerSuggested": "Suggested for this customer",
-      "peerHint": "They get an SMS. When they mark it seen or done, you're told.",
-      "team": "Which team?",
-      "teamHint": "Goes to the team's queue; whoever takes it owns it.",
-      "when": "When",
-      "whenOption": {
-        "hour": "In 1 hour",
-        "evening": "This evening",
-        "tomorrow": "Tomorrow 10:00",
-        "other": "Another date",
-        "day": "Day only"
-      },
-      "date": "Date and time",
-      "cta": {
-        "mine": "Set a reminder for me",
-        "request": "Send the request",
-        "team": "Send to the team queue"
-      },
-      "placeholder": {
-        "mine": "E.g. send the instalment offer",
-        "request": "E.g. set up a second consultation",
-        "team": "E.g. prepare a sample SOP"
-      },
-      "required": "Write what needs to be done.",
-      "created": "Task created.",
-      "day": "Day",
-      "dayHint": "Due by the end of that day; not late before then."
-    },
     "history": {
       "edit": {
         "label": "Edit description: {{title}}",
@@ -1042,15 +1003,8 @@
     "seller": "Assigned to {{name}}",
     "noSeller": "Not assigned",
     "tasks": {
-      "add": "New task on {{day}}",
-      "row": "Tasks",
-      "open": "{{n}} to do",
-      "late": "{{n}} overdue",
-      "allDone": "All done",
-      "requests": "{{n}} from colleagues",
-      "done": "{{n}} done",
-      "ariaMine": "{{n}} open follow-ups",
-      "aria": "Tasks on {{day}}: {{parts}}. Go to tasks"
+      "add": "Task with no hour on {{day}}",
+      "row": "Tasks"
     },
     "taskBlock": "task",
     "assign": {
@@ -1318,6 +1272,7 @@
     },
     "nothingPicked": "Pick at least one product.",
     "slot": "Time for {{product}}",
+    "pickSlot": "Pick a time",
     "slotRequired": "Pick a consultation time.",
     "slotEmpty": "No free times this week.",
     "slotNextFree": "First free week",
@@ -1787,7 +1742,7 @@
       "stale": "The stages were changed somewhere else meanwhile. Reload the page.",
       "failed": "Could not save. Try again.",
       "list": "Board stages",
-      "listHint": "Change the order with the up and down buttons. Locked stages are fixed because the contract and payment move them.",
+      "listHint": "Change the order with the up and down buttons. System stages can be moved and renamed, but not removed.",
       "fixed": {
         "new": "First stage",
         "draft": "Manager approval",
@@ -1838,7 +1793,9 @@
         "order": "Put the “Contacted” stages first, then “Consulted”, then “Offer sent”.",
         "phases": "Each of “Contacted”, “Consulted” and “Offer sent” needs at least one stage.",
         "moves": "Choose where the cards of {{names}} go, at the bottom of the page."
-      }
+      },
+      "system": "A system stage; it can’t be removed.",
+      "systemHint": "Leave empty to keep the default name."
     },
     "tags": {
       "title": "Customer tags",
@@ -3306,18 +3263,6 @@
   "telegramPicker": {
     "title": "Which message to type in Telegram?",
     "note": "Tapping a message opens the customer's Telegram chat with that text. If the customer doesn't let people find them by number in Telegram, the chat won't open; use the copy button beside the message."
-  },
-  "whenPicker": {
-    "days": "Day",
-    "hours": "Time",
-    "hint": "Your own items are under each hour. An hour with your consultation or office meeting can’t be picked.",
-    "dayHint": "Tap a day; the follow-up shows in “Today” that day, with no time.",
-    "kind": {
-      "session": "Consultation",
-      "visit": "In person",
-      "task": "Task",
-      "call": "Follow-up"
-    }
   },
   "nextStep": {
     "pickCustomer": "Pick the customer first to see the office hours."

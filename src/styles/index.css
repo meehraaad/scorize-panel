@@ -344,6 +344,13 @@
 }
 
 @layer base {
+  /* Anything clickable shows the hand (Tailwind v4 leaves buttons at the default arrow). */
+  button:not(:disabled),
+  [role='button'],
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
   /* A customer's picked colour (face colour) as --hue, for gradients lit in it (bg-aurora). */
   [data-hue='plum'] {
     --hue: var(--hue-plum);

@@ -102,7 +102,13 @@ describe('seller contact dictation', () => {
       })[0];
       if (!close) throw new Error('Missing minimize button');
       await user.click(close);
-      await user.click(screen.getByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' }));
+      // No bubble: the customer's own log button brings the draft back.
+      expect(
+        screen.queryByRole('button', { name: 'ادامه‌ی ثبت ارتباط با کیانا رضوی' }),
+      ).not.toBeInTheDocument();
+      await user.click(
+        screen.getByRole('button', { name: i18n.t('customer.log', { ns: 'sales' }) }),
+      );
       expect(await screen.findByLabelText(name)).toHaveValue(
         'متن قبلی\nبرای جلسهٔ بعد تماس بگیرید.',
       );

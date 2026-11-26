@@ -37,8 +37,10 @@ export default function ContactWorkspace() {
       {unknown && <UnknownCallPanel key={unknown.id} call={unknown} />}
       <InTray>
         <aside aria-label={t('contactDraft.tray')} className="flex max-w-full flex-wrap gap-2">
+          {/* A minimized log just hides (the customer's «ثبت تماس» brings it back), so the tray
+              doesn't fill up with customers. A phone call's log stays here: it has no other way back. */}
           {drafts
-            .filter((draft) => draft.key !== active)
+            .filter((draft) => draft.key !== active && !!draft.call)
             .map((draft) => {
               const live = !!draft.call && draft.call.ended_at === null;
               return (

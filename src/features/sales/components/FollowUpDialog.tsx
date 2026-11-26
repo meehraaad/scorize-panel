@@ -114,6 +114,7 @@ export function FollowUpDialog({
     if (noLead) {
       createTask.mutate(
         {
+          panel: 'sales',
           user: noLead.customer,
           kind: 'mine',
           ...(when ? { due_at: when } : { due_on: on ?? '' }),
@@ -241,7 +242,6 @@ export function FollowUpDialog({
               <span className="text-sm font-semibold text-text-2">{t('followUpDialog.date')}</span>
               <FollowUpWhen
                 legend={t('followUpDialog.date')}
-                calendar="dialog"
                 name={name}
                 follow={follow}
                 date={date}

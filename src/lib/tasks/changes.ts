@@ -16,8 +16,8 @@ import {
  * their first data, so it is in the first-load bundle and keeps only types and route queries.
  */
 
-/** Creates a task about a person. Refreshes the tasks pages and the `also` keys (the page it came from). */
-export function useCreateTask(also: QueryKey) {
+/** Creates a task about a person. Refreshes the tasks pages and, if given, the `also` keys (the page it came from). */
+export function useCreateTask(also?: QueryKey) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (task: NewTask) => api(`${TASKS_API}/`, { method: 'POST', body: task }),
@@ -25,7 +25,7 @@ export function useCreateTask(also: QueryKey) {
       Promise.all([
         client.invalidateQueries({ queryKey: TASKS_KEY }),
         client.invalidateQueries({ queryKey: ['sales', 'today', 'activity'] }),
-        client.invalidateQueries({ queryKey: also }),
+        also && client.invalidateQueries({ queryKey: also }),
       ]),
   });
 }
@@ -41,7 +41,6 @@ export const requestQuery = (panel: TasksPanel, id: number) =>
 
 const CHANGE_PATH: Record<TaskChange['kind'], string> = {
   done: 'done',
-  snooze: 'snooze',
   claim: 'claim',
   status: 'status',
   comment: 'comments',
@@ -53,7 +52,7 @@ const isMineList = (queryKey: readonly unknown[]) =>
 
 /**
  * Everything done to a task from the tasks page (T3–T8). A task marked done leaves "my tasks" at
- * once (optimistic; a snoozed one may stay today, so it waits for the server); the lists come back as they were if the server refuses.
+ * once (optimistic); the lists come back as they were if the server refuses.
  */
 export function useTaskChange() {
   const client = useQueryClient();

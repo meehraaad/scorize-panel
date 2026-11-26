@@ -1,7 +1,8 @@
 import { keepPreviousData, useQuery, useSuspenseQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
+import { BoardSwitch } from '@/components/board/BoardSwitch';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
 import { Icon } from '@/components/ui/Icon';
@@ -16,11 +17,35 @@ import { NewLeadDialog } from './components/NewLeadDialog';
 import { useSalesFormat } from './format';
 import { salesPath } from './paths';
 
+// «برد من» (`?board=mine`) and its composer's week: loaded when asked for.
+const MyBoardView = lazy(() =>
+  import('@/components/board/MyBoard').then((module) => ({ default: module.MyBoardView })),
+);
+const FollowUpSlots = lazy(() =>
+  import('./components/FollowUpWhen').then((module) => ({ default: module.FollowUpSlots })),
+);
+
+/**
+ * The sales board, with a capsule to my own board (canvas 6A): `?board=mine`.
+ */
+export default function BoardPage() {
+  const { t } = useTranslation('sales');
+  const [params] = useSearchParams();
+  const mine = params.get('board') === 'mine';
+  const switcher = <BoardSwitch team={t('board.title')} teamTo={salesPath('board')} mine={mine} />;
+  if (!mine) return <TeamBoard switcher={switcher} />;
+  return (
+    <Suspense fallback={null}>
+      <MyBoardView panel="sales" switcher={switcher} slots={FollowUpSlots} />
+    </Suspense>
+  );
+}
+
 /**
  * Deals in the team's columns (S48), oldest-in-column flagged, with lost reasons below. A sales
  * manager sees everyone's cards, or one seller's. Canvas "تابلوی فروش با مرحله‌های تیمی".
  */
-export default function BoardPage() {
+function TeamBoard({ switcher }: { switcher: ReactNode }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const s = useSalesFormat();
@@ -54,6 +79,7 @@ export default function BoardPage() {
           })}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              {switcher}
               {manager && (
                 <>
                   <SelectField

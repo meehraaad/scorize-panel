@@ -34,7 +34,8 @@
         "tickets": "Tickets",
         "reports": "Reports",
         "tasks": "My tasks",
-        "services": "My services"
+        "services": "My services",
+        "board": "Board"
       },
       "tabs": {
         "today": "Today",
@@ -71,7 +72,8 @@
         "orders": "Orders",
         "tickets": "Tickets",
         "tasks": "Tasks",
-        "manager": "Executive management"
+        "manager": "Executive management",
+        "board": "Board"
       }
     },
     "sales": {
@@ -107,7 +109,8 @@
         "moves": "Joining and leaving",
         "attendance": "Attendance",
         "pay": "Pay and rewards",
-        "access": "Access"
+        "access": "Access",
+        "board": "Board"
       },
       "tabs": {
         "today": "Today",
@@ -475,6 +478,14 @@
     "noPassword": "Your account has no password. Make one with “Forgot password” on the login page, then this page opens."
   },
   "colleagues": {
-    "others": "Other colleagues"
+    "placeholder": "Type a colleague’s name",
+    "found": "Colleagues found",
+    "picked": "Chosen colleagues",
+    "remove": "Remove {{name}}",
+    "typeMore": "Search starts from two letters.",
+    "searching": "Searching…",
+    "noMatch": "No colleague with this name.",
+    "noMatchPanel": "No one in this panel has this name.",
+    "failed": "The search failed. Type again."
   }
 }

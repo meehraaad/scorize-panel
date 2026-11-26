@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -9,25 +8,16 @@ import { WeekNav } from '@/components/ui/WeekNav';
 import { toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import type { TaskCalendarData } from '@/lib/tasks/calendar';
-import { tasksQuery, type TasksPanel } from '@/lib/tasks/api';
+import type { TasksPanel } from '@/lib/tasks/api';
+import { TASK_COLOR, TASK_MINUTES, type Slots } from './CalendarSlots';
+import { DayTasks } from './DayTasks';
 
-const TASK_MINUTES = 30;
-const TASK_COLOR = 'var(--cal-5)';
-/** A task added on a day without a time is due at this hour (or the next full hour, today). */
-const TASK_HOUR = 10;
+export { DayTasks, type DayTask } from './DayTasks';
 
 // Only when a day is clicked.
 const NewTaskDialog = lazy(() =>
   import('./NewTask').then((module) => ({ default: module.NewTaskDialog })),
 );
-
-const dueOn = (day: Date, now: Date) => {
-  const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), TASK_HOUR);
-  if (at > now) return at;
-  const next = new Date(now);
-  next.setHours(now.getHours() + 1, 0, 0, 0);
-  return next;
-};
 
 /** Something above a day besides my tasks (a first day of work, a campaign starting). */
 export interface DayMark {
@@ -51,9 +41,9 @@ export interface LegendItem {
 /**
  * A panel's week of my tasks (the HR and marketing calendars; the sales calendar adds calls and
  * consultations on its own): my tasks with an hour on the week, and above each day the panel's own
- * marks with how many of my tasks are left that day (a link to that day on the tasks page). A
- * click on a day or an empty future hour opens the new-task composer. The page owns the week and
- * its query, so the route's loader can start the first week with the page.
+ * marks and my tasks of that day with no hour (canvas 4A). «+ کار کل‌روز» on a day adds one due
+ * that day with no hour; an empty future hour, one due then. The page owns the week and its
+ * query, so the route's loader can start the first week with the page.
  * Needs the `tasks` namespace on the route.
  */
 export function TaskCalendar({
@@ -69,6 +59,7 @@ export function TaskCalendar({
   tasksPath,
   legend,
   marksOf,
+  slots,
   onCreated,
 }: {
   /** The calendar's name (the page's title). */
@@ -81,7 +72,7 @@ export function TaskCalendar({
   now: Date;
   data: TaskCalendarData | undefined;
   loading: boolean;
-  /** Whose colleagues the composer offers. */
+  /** Whose tasks the composer adds. */
   panel: TasksPanel;
   /** The panel's tasks page: a day's count links to it with `?view=&day=`. */
   tasksPath: string;
@@ -89,14 +80,17 @@ export function TaskCalendar({
   legend: readonly LegendItem[];
   /** The marks above a day (`YYYY-MM-DD`). */
   marksOf: (day: string) => readonly DayMark[];
+  /** The composer's «از تقویم»: the panel's week picker. */
+  slots?: Slots | undefined;
   /** After a task is created from the calendar (refresh the week). */
   onCreated: () => void;
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const [chosen, setChosen] = useState<string | null>(null);
-  const [newTaskOn, setNewTaskOn] = useState<Date | null>(null);
-  const colleagues = useQuery({ ...tasksQuery(panel), enabled: newTaskOn !== null });
+  /** The composer is open: due at an hour, or on a day with no hour. */
+  const [newTask, setNewTask] = useState<{ due: Date } | { day: Date } | null>(null);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const events: CalendarEvent[] = (data?.task_rows ?? [])
     .filter((row) => row.timed)
@@ -119,18 +113,36 @@ export function TaskCalendar({
   const dayCell = (day: Date, compact: boolean) => {
     const value = toValue(day, false);
     const marks = marksOf(value);
-    const tasks = data?.tasks.find((row) => row.day === value);
-    const open = tasks ? tasks.mine + tasks.requests : 0;
-    if (marks.length === 0 && open === 0) return null;
+    const tasks = (data?.task_rows ?? []).filter(
+      (row) => !row.timed && toValue(new Date(row.due_at), false) === value,
+    );
+    if (marks.length === 0 && tasks.length === 0) return null;
+    const dayOf = (view: 'mine' | 'requests') =>
+      `${tasksPath}?${new URLSearchParams({ view, day: value }).toString()}`;
+    const chips = (
+      <DayTasks
+        compact={compact}
+        late={day < today}
+        moreTo={dayOf(tasks.every((row) => row.kind === 'request') ? 'requests' : 'mine')}
+        items={tasks.map((row) => ({
+          key: String(row.id),
+          text: row.text,
+          tone: row.kind,
+          done: row.done,
+          to: dayOf(row.kind === 'request' ? 'requests' : 'mine'),
+        }))}
+      />
+    );
     if (compact)
-      return (
+      return marks.length > 0 ? (
         <span className="flex min-h-11 items-center justify-center text-xs font-bold text-text-2">
-          {f.number(marks.length + open)}
+          {f.number(marks.length + tasks.filter((row) => !row.done).length)}
         </span>
+      ) : (
+        chips
       );
-    const view = tasks && tasks.mine === 0 ? 'requests' : 'mine';
     return (
-      <span className="flex min-w-0 flex-col gap-1 py-1">
+      <div className="flex min-w-0 flex-col gap-1 py-1">
         {marks.map((mark) => {
           const body = (
             <>
@@ -161,16 +173,8 @@ export function TaskCalendar({
             </span>
           );
         })}
-        {open > 0 && (
-          <Link
-            to={`${tasksPath}?${new URLSearchParams({ view, day: value }).toString()}`}
-            className="flex min-h-11 items-center gap-1 rounded-md bg-tint px-1.5 text-[11px] font-bold text-primary-text"
-          >
-            <Icon name="check" size={12} />
-            {t('calendar.tasks', { n: f.number(open) })}
-          </Link>
-        )}
-      </span>
+        {chips}
+      </div>
     );
   };
 
@@ -196,23 +200,25 @@ export function TaskCalendar({
           onChange={setChosen}
           loading={loading}
           now={now}
-          onSlotPick={(start) => start.getTime() >= Date.now() && setNewTaskOn(start)}
+          onSlotPick={(start) => start.getTime() >= Date.now() && setNewTask({ due: start })}
           dayRow={{
             label: dayRowLabel,
             cell: dayCell,
-            onAdd: (day) => setNewTaskOn(dueOn(day, new Date())),
+            onAdd: (day) => setNewTask({ day }),
             addLabel: (day) => t('calendar.add', { day: f.weekday(day) }),
+            addButton: true,
             keepsWide: (day) => marksOf(toValue(day, false)).length > 0,
           }}
         />
       </Card>
-      {newTaskOn && (
+      {newTask && (
         <Suspense fallback={null}>
           <NewTaskDialog
             open
-            due={newTaskOn}
-            colleagues={colleagues.data?.colleagues ?? []}
-            onClose={() => setNewTaskOn(null)}
+            {...newTask}
+            panel={panel}
+            slots={slots}
+            onClose={() => setNewTask(null)}
             onCreated={onCreated}
           />
         </Suspense>

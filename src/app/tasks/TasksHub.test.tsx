@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ParseKeys } from 'i18next';
@@ -118,35 +118,12 @@ describe('staff tasks and notifications', () => {
     ).toHaveAttribute('href', '/account#notifications');
   });
 
-  it("the dock waits in the corner, opens today's tasks, and steps aside on the tasks page", async () => {
-    const user = userEvent.setup();
+  it('the archived tasks dock no longer waits in the corner', async () => {
     loginAs(MARYAM);
-    const router = renderApp('/supervisor');
-    const pill = await screen.findByRole('button', { name: /^کارهای امروز:/ });
-    await user.click(pill);
-    const dock = await screen.findByRole('region', { name: tasks('dock.title') });
-    expect(await within(dock).findByText(/بررسی SOP نسخه‌ی دوم/)).toBeInTheDocument();
-    await user.click(within(dock).getByRole('button', { name: tasks('dock.minimize') }));
-    expect(screen.queryByRole('region', { name: tasks('dock.title') })).not.toBeInTheDocument();
-
-    await router.navigate('/tasks?panel=supervisor');
-    await waitFor(() => {
-      expect(screen.queryByRole('button', { name: /^کارهای امروز:/ })).not.toBeInTheDocument();
-    });
-  });
-
-  it('the dock stays open from page to page and after a reload of the tab', async () => {
-    const user = userEvent.setup();
-    loginAs(MARYAM);
-    const router = renderApp('/supervisor');
-    await user.click(await screen.findByRole('button', { name: /^کارهای امروز:/ }));
-    await screen.findByRole('region', { name: tasks('dock.title') });
-    await router.navigate('/supervisor/cases');
-    expect(await screen.findByRole('region', { name: tasks('dock.title') })).toBeInTheDocument();
-
-    cleanup();
     renderApp('/supervisor');
-    expect(await screen.findByRole('region', { name: tasks('dock.title') })).toBeInTheDocument();
+    await bellButton();
+    expect(screen.queryByRole('button', { name: /^کارهای امروز:/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: tasks('dock.title') })).not.toBeInTheDocument();
   });
 
   it("a panel's old tasks page opens the shared one with the same list and day", async () => {

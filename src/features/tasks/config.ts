@@ -1,3 +1,4 @@
+import type { Slots } from '@/components/tasks/CalendarSlots';
 import type { TasksPanel } from '@/lib/tasks/api';
 
 /**
@@ -19,4 +20,6 @@ export interface TasksConfig {
    * or anyone (the shared page).
    */
   person: 'customer' | 'applicant' | 'employee' | 'person';
+  /** The new-task composer's «از تقویم»: the panel's week picker (absent: no calendar there). */
+  slots?: Slots;
 }

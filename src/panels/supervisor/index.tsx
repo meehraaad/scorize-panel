@@ -73,9 +73,21 @@ export const supervisorPanel: PanelDefinition = {
           } as const,
         ]
       : []),
+    { id: 'board', to: 'board', label: 'panels.supervisor.nav.board', icon: 'grid' },
     { id: 'reports', to: 'reports', label: 'panels.supervisor.nav.reports', icon: 'chart' },
   ],
   routes: [
+    {
+      path: 'board',
+      ...lazyPage(
+        () =>
+          import('@/features/tasks/TeamBoardPage').then((module) => ({
+            default: module.SupervisorBoard,
+          })),
+        ['tasks'],
+        { skeleton: 'board' },
+      ),
+    },
     {
       index: true,
       ...lazyPage(() => import('@/features/supervisor/TodayPage'), ['supervisor'], {

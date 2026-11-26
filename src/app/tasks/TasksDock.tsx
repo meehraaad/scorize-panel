@@ -20,6 +20,9 @@ import { useDockOpen } from './dockState';
 const TASKS_PAGE = /(^|\/)tasks\/?$/;
 
 /**
+ * @deprecated Archived (meeting0, 2026-11): no longer mounted anywhere; the bell and `/tasks` replace
+ * it. Kept until a later cleanup removes it with `dockState.ts` and its `dock.*` texts.
+ *
  * Today's tasks, always at hand: an ink pill in the bottom tray (how many are due by tonight, how
  * many are late, the next one's hour; the server's counts, not a page of rows) that opens a small
  * window above it with the list, done from its tick, and a new task. Open or not is kept per tab. It lines up with a seller's minimized logs and calls (DockTray); open windows such as
@@ -150,7 +153,7 @@ export default function TasksDock({ user, panel }: { user: SessionUser; panel: s
           </div>
           {overview.data && (
             <footer className="flex justify-end px-4 py-3 shadow-[inset_0_1px_0_var(--hair)]">
-              <NewTaskButton colleagues={overview.data.colleagues} />
+              <NewTaskButton panel={tasksPanel} />
             </footer>
           )}
         </section>

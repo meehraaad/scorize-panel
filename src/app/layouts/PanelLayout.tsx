@@ -1,9 +1,9 @@
 import { Logo } from '@/components/ui/Logo';
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router';
 import { PageSkeleton } from '@/components/ui/Skeleton';
-import { hasAnyPermission, isActiveStaff } from '@/lib/auth/roles';
+import { hasAnyPermission } from '@/lib/auth/roles';
 import { loginHref, useSession } from '@/lib/auth/session';
 import { usePageSkeleton } from '@/lib/router/lazyPage';
 import { useIdlePreload, useIntentPreload } from '@/lib/router/preload';
@@ -16,8 +16,6 @@ import { BottomTabs } from './BottomTabs';
 import { PanelFooter } from './PanelFooter';
 import { PanelSwitcher } from './PanelSwitcher';
 import { TasksBell } from '../tasks/TasksBell';
-
-const TasksDock = lazy(() => import('../tasks/TasksDock'));
 
 // Inactive items are quiet text; the current page is a dark pill with a small accent dot.
 const navLink = ({ isActive }: { isActive: boolean }) =>
@@ -151,13 +149,6 @@ export function PanelLayout({ panel }: { panel: PanelDefinition }) {
       <PanelFooter />
 
       <BottomTabs panel={visible} />
-
-      {/* Staff's tasks wait in the bottom corner on every work panel (not as a customer). */}
-      {isActiveStaff(user) && panel.id !== applicantPanel.id && (
-        <Suspense fallback={null}>
-          <TasksDock user={user} panel={panel.id} />
-        </Suspense>
-      )}
     </div>
   );
 }

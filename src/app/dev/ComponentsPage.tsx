@@ -388,7 +388,7 @@ export default function ComponentsPage() {
         <Group name="KanbanBoard">
           <div className="flex h-[420px] flex-col overflow-hidden rounded-card-sm">
             <KanbanBoard
-              label="بُرد نمونه"
+              label="برد نمونه"
               lanes={[
                 { id: 1, title: 'ایده‌ها', dot: 'bg-neutral' },
                 { id: 2, title: 'در حال تولید', dot: 'bg-warn', limit: 2, note: 'لازم: مسئول' },

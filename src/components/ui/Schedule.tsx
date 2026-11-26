@@ -74,6 +74,11 @@ export interface DayRow {
   onAdd?: ((day: Date) => void) | undefined;
   addLabel?: ((day: Date) => string) | undefined;
   /**
+   * A small plus under a wide day's brief (named by `addLabel`): then only that button adds.
+   * Without it the whole cell is the add button.
+   */
+  addButton?: boolean | undefined;
+  /**
    * A day with no items whose brief has things to read (HR's first days, birthdays) keeps its
    * full width on the wide week instead of shrinking.
    */
@@ -95,6 +100,21 @@ function DayRowCell({
   const brief = row.cell(day, compact);
   if (!row.onAdd || !canAdd) return brief;
   const add = row.onAdd;
+  if (row.addButton && !compact)
+    return (
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        {brief}
+        <button
+          type="button"
+          aria-label={row.addLabel?.(day)}
+          title={row.addLabel?.(day)}
+          onClick={() => add(day)}
+          className="mt-auto inline-flex size-10 items-center justify-center self-end rounded-full text-text-2 hover:bg-tint hover:text-primary-text focus-visible:outline-2 focus-visible:outline-focus"
+        >
+          <Icon name="plus" size={16} />
+        </button>
+      </div>
+    );
   return (
     <div className="group relative flex min-h-11 min-w-0 flex-1 flex-col justify-center">
       <button
@@ -623,8 +643,12 @@ function Week({
   const onKey = (event: KeyboardEvent) => {
     if (event.key === 'Escape' && value) onChange(null);
   };
-  const narrowOf = (day: ScheduleDay) =>
-    !loading && day.items.length === 0 && !dayRow?.keepsWide?.(day.date) && !isZoomed(day);
+  const isEmpty = (day: ScheduleDay) =>
+    day.items.length === 0 && !dayRow?.keepsWide?.(day.date) && !isZoomed(day);
+  // An empty day shrinks to give the busy ones room; a week with nothing on it keeps every day
+  // full width rather than huddling at one side (a panel with no timed tasks).
+  const allEmpty = days.every(isEmpty);
+  const narrowOf = (day: ScheduleDay) => !loading && !allEmpty && isEmpty(day);
   const widthOf = (day: ScheduleDay) =>
     isZoomed(day)
       ? 'min-w-0 flex-[4]'

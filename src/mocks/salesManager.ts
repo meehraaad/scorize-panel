@@ -17,7 +17,6 @@ import type {
   FunnelData,
   HealthData,
   HealthTeam,
-  StageInput,
   TeamData,
   TeamRange,
 } from '@/features/sales/api';
@@ -1626,10 +1625,7 @@ export const managerHandlers = [
   http.put(`${BASE}/stages/`, async ({ request }) => {
     const data = managerOrError();
     if (data instanceof Response) return data;
-    const body = (await request.json()) as {
-      stages: StageInput[];
-      moves: { source: number; to: number }[];
-    };
+    const body = (await request.json()) as Parameters<typeof saveStages>[1];
     const error = saveStages(data.sales, body);
     return error
       ? HttpResponse.json({ stages: [error] }, { status: 400 })

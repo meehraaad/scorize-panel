@@ -124,9 +124,10 @@ describe('sales: my consultations on a week calendar', () => {
     await user.click(screen.getByRole('checkbox', { name: /^مشاوره[\s۰-۹]*$/ }));
     expect(sessions()).toHaveLength(0);
     expect(screen.getByRole('checkbox', { name: /مشاوره‌ی ویزای تحصیلی/ })).toBeDisabled();
-    expect(within(calendar).getAllByRole('link', { name: /^کارهای / }).length).toBeGreaterThan(0);
+    expect(within(calendar).getByRole('group', { name: 'کارها' })).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: /^کار[\s۰-۹]*$/ }));
-    expect(within(calendar).queryAllByRole('link', { name: /^کارهای / })).toHaveLength(0);
+    // Tasks hidden: their day row goes too.
+    expect(within(calendar).queryByRole('group', { name: 'کارها' })).toBeNull();
   });
 
   it('only in person, or only online', async () => {
@@ -165,20 +166,27 @@ describe('sales: my consultations on a week calendar', () => {
     );
   });
 
-  it("briefs each day's tasks and opens the tasks page", async () => {
+  it('lists each day’s tasks with no hour on the tasks row (4A)', async () => {
     const user = userEvent.setup();
     const calendar = await open();
-    const brief = (day: string) =>
-      within(calendar).getByRole('link', { name: new RegExp(`^کارهای ${day}`) });
-    expect(within(calendar).getAllByRole('link', { name: /^کارهای / })).toHaveLength(3);
-    expect(brief('دوشنبه')).toHaveTextContent('۱ کار عقب‌افتاده');
-    expect(brief('سه‌شنبه')).toHaveTextContent('۴ کار مانده');
-    expect(brief('سه‌شنبه')).toHaveTextContent('۱ درخواست همکار · ۲ انجام شد');
-    expect(brief('پنجشنبه')).toHaveTextContent('۲ کار مانده');
-    expect(brief('سه‌شنبه')).toHaveAttribute('href', '/sales/tasks?view=mine&day=2026-10-27');
-    await user.click(brief('سه‌شنبه'));
-    expect(await screen.findByRole('heading', { name: 'کارهای امروز' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'نمایش همه‌ی روزها' })).toBeInTheDocument();
+    const row = within(calendar).getByRole('group', { name: 'کارها' });
+    // Thursday: four for the day only, three shown (the done one struck) and «+1» to that day.
+    const chip = (name: string) => within(row).getByRole('link', { name: new RegExp(name) });
+    expect(chip('آماده کردن فهرست قیمت')).toHaveAttribute(
+      'href',
+      '/sales/tasks?view=requests&day=2026-10-29',
+    );
+    expect(chip('گزارش هفتگی')).toHaveClass('line-through');
+    expect(chip('گزارش هفتگی')).toHaveTextContent('(انجام شد)');
+    expect(within(row).queryByRole('link', { name: /بستن پرونده‌های رد شده/ })).toBeNull();
+    const more = within(row).getByRole('link', { name: '+۱ کار دیگر' });
+    expect(more).toHaveAttribute('href', '/sales/tasks?view=mine&day=2026-10-29');
+    // Yesterday's, still open: late.
+    expect(chip('پیگیری قسط')).toHaveClass('text-urgent');
+    // Never at an hour.
+    expect(within(calendar).queryByRole('button', { name: /نظافت دفتر/ })).toBeNull();
+    await user.click(more);
+    expect(await screen.findByRole('button', { name: 'نمایش همه‌ی روزها' })).toBeInTheDocument();
   });
 
   it('pages weeks and switches to the list', async () => {
@@ -285,17 +293,45 @@ describe('sales: my consultations on a week calendar', () => {
       expect(wednesday).toHaveTextContent('');
     });
 
-    it("a click on a day's tasks cell adds a task for me that day", async () => {
+    it('the «کارها» plus adds a task for me that day, with no hour', async () => {
       const user = userEvent.setup();
       const calendar = await open();
-      await user.click(
-        within(calendar).getByRole('button', { name: 'کار تازه برای چهارشنبه ۶ آبان' }),
-      );
+      const add = within(calendar).getByRole('button', {
+        name: 'کار بدون ساعت برای چهارشنبه ۶ آبان',
+      });
+      // An icon only: its name is read out, no words in the cell.
+      expect(add).toHaveTextContent('');
+      // A day that has passed takes none.
+      expect(
+        within(calendar).queryByRole('button', { name: 'کار بدون ساعت برای دوشنبه ۴ آبان' }),
+      ).toBeNull();
+      await user.click(add);
       const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
-      expect(within(dialog).getByRole('radio', { name: 'خودم' })).toBeChecked();
+      // A seller (not the sales admin) adds tasks for themselves only.
+      expect(within(dialog).queryByRole('radio', { name: 'برای همکارم' })).toBeNull();
+      expect(within(dialog).getByText(/این کار برای خودتان است/)).toBeInTheDocument();
       // That day, with no hour (one can still be set with «تاریخ و ساعت دیگر»).
       expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
       expect(within(dialog).getByRole('button', { name: /^روز/ })).toHaveTextContent('۶ آبان');
+    });
+
+    it("the composer's calendar window shows the «کارها» row; its plus picks a day with no hour", async () => {
+      const user = userEvent.setup();
+      const calendar = await open();
+      await user.click(
+        within(calendar).getByRole('button', { name: 'کار بدون ساعت برای چهارشنبه ۶ آبان' }),
+      );
+      const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+      await user.click(within(dialog).getByRole('button', { name: 'از تقویم' }));
+      const picker = await screen.findByRole('dialog', { name: /تقویم/ });
+      // What is due that week with no hour shows above the days, only to read.
+      const chip = await within(picker).findByText(/آماده کردن فهرست قیمت/);
+      expect(chip.closest('a')).toBeNull();
+      await user.click(
+        within(picker).getByRole('button', { name: 'انتخاب پنجشنبه ۷ آبان بدون ساعت' }),
+      );
+      expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
+      expect(within(dialog).getByRole('button', { name: /^روز/ })).toHaveTextContent('۷ آبان');
     });
 
     it('a task with an hour is drawn at it; one for the day only is not', async () => {

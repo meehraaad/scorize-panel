@@ -50,10 +50,13 @@ export function ReactionBar({
   panel,
   id,
   reactions,
+  compact = false,
 }: {
   panel: TasksPanel;
   id: number;
   reactions: ReactionDetail[];
+  /** Under a chat message: small chips, who reacted in each chip's tooltip. */
+  compact?: boolean;
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
@@ -79,7 +82,10 @@ export function ReactionBar({
   });
 
   return (
-    <section aria-label={t('reactions.label')} className="flex flex-col gap-2">
+    <section
+      aria-label={t('reactions.label')}
+      className={`flex flex-col gap-2 ${compact ? 'items-[inherit]' : ''}`}
+    >
       <div className="flex flex-wrap items-center gap-1.5">
         {reactions.map((reaction) => (
           <button
@@ -90,9 +96,10 @@ export function ReactionBar({
               name: t(`reactions.name.${NAME[reaction.emoji]}`),
               n: f.number(reaction.count),
             })}
+            title={compact ? who.find((line) => line.emoji === reaction.emoji)?.text : undefined}
             disabled={toggle.isPending}
             onClick={() => react(reaction.emoji)}
-            className={`min-h-11 px-3 text-sm ${chip(reaction.mine)}`}
+            className={`${compact ? 'min-h-8' : 'min-h-11 px-3 text-sm'} ${chip(reaction.mine)}`}
           >
             {`${reaction.emoji} ${f.number(reaction.count)}`}
           </button>
@@ -104,9 +111,9 @@ export function ReactionBar({
             aria-label={t('reactions.add')}
             title={t('reactions.add')}
             onClick={() => setPicking((value) => !value)}
-            className="inline-flex size-11 items-center justify-center rounded-full text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:text-text"
+            className={`inline-flex items-center justify-center rounded-full text-text-2 shadow-[inset_0_0_0_1px_var(--line-2)] hover:text-text ${compact ? 'size-8' : 'size-11'}`}
           >
-            <Icon name="plus" size={18} />
+            <Icon name="plus" size={compact ? 16 : 18} />
           </button>
         )}
       </div>
@@ -127,7 +134,7 @@ export function ReactionBar({
           ))}
         </div>
       )}
-      {who.length > 0 && (
+      {!compact && who.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-0.5 p-0 text-xs leading-6 text-text-2">
           {who.map((line) => (
             <li key={line.emoji}>{`${line.emoji} ${line.text}`}</li>

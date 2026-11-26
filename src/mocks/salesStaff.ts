@@ -44,7 +44,7 @@ import { customerTemplates } from './messages';
 import { tagsOfCustomer } from './salesTags';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { canEditContactNote, contactNoteRow } from './staff';
-import { overviewOf, summaryOf as tasksSummaryOf, taskListOf } from './tasks';
+import { colleaguesFound, overviewOf, summaryOf as tasksSummaryOf, taskListOf } from './tasks';
 
 /**
  * The sales panel's endpoints (`/api/sales/v1/` S11–S22, `/api/staff/v1/tasks/` for sales staff),
@@ -575,6 +575,8 @@ export const salesStaffHandlers = [
   http.get(`${TASKS}/summary/`, async () =>
     isSeller() ? HttpResponse.json(tasksSummaryOf(await tasksOverview())) : undefined,
   ),
+  // Not a task's id: the colleague search is the same for everyone (src/mocks/tasks.ts).
+  http.get(`${TASKS}/colleagues/`, ({ request }) => colleaguesFound(request)),
   http.get(`${TASKS}/:id/`, ({ params }) =>
     isSeller() ? answer(() => taskRequest(id(params))) : undefined,
   ),

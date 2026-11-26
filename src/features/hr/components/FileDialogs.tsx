@@ -10,11 +10,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import { uploadFile } from '@/lib/upload';
+import { SearchSelect, type SearchOption } from '@/components/ui/SearchSelect';
+import { matchesSearch } from '@/lib/text';
 import {
   documentPath,
   fileQuery,
   HR_KEY,
   optionsQuery,
+  staffQuery,
   type ContractKind,
   type StaffFile,
 } from '../api';
@@ -22,6 +25,8 @@ import { useEditStaff, useNewContract, useNewSalary, useStartExit, useReturn } f
 import { fieldErrors, parseAmount, todayValue } from '../format';
 
 const CONTRACTS: readonly ContractKind[] = ['trial', 'fixed', 'permanent', 'project'];
+/** How many colleagues the leaving's search offers at once. */
+const PEOPLE_SHOWN = 8;
 
 interface DialogProps {
   file: StaffFile;
@@ -198,13 +203,38 @@ export function SalaryDialog({ file, onClose }: DialogProps) {
   );
 }
 
-/** Starts someone's leaving: their last day and why; opens the leaving checklist. */
-export function ExitDialog({ file, onClose }: DialogProps) {
+/**
+ * Starts someone's leaving: their last day and why; opens the leaving checklist. `file` null (the
+ * page of joinings and leavings): the colleague is found by name first, among those still working
+ * here with no leaving under way.
+ */
+export function ExitDialog({
+  file,
+  onClose,
+}: {
+  file: Pick<StaffFile, 'id' | 'name'> | null;
+  onClose: () => void;
+}) {
   const { t } = useTranslation('hr');
-  const save = useStartExit(file.id);
+  const [picked, setPicked] = useState<SearchOption | null>(null);
+  const [search, setSearch] = useState('');
+  const staff = useQuery({ ...staffQuery(), enabled: file === null });
+  const person = file ?? (picked && { id: Number(picked.value), name: picked.label });
+  const save = useStartExit(person?.id ?? 0);
   const [day, setDay] = useState(todayValue());
   const [reason, setReason] = useState('');
+  const options = (staff.data?.results ?? [])
+    .filter(
+      (row) =>
+        row.is_active &&
+        row.state !== 'leaving' &&
+        search.trim() &&
+        matchesSearch(search, row.name),
+    )
+    .slice(0, PEOPLE_SHOWN)
+    .map((row) => ({ value: String(row.id), label: row.name, hint: row.position?.name }));
   const submit = () =>
+    person &&
     save.mutate(
       { day, reason: reason.trim() },
       {
@@ -220,18 +250,43 @@ export function ExitDialog({ file, onClose }: DialogProps) {
       open
       onClose={onClose}
       title={t('exitDialog.title')}
-      subtitle={file.name}
+      subtitle={file?.name}
       closeLabel={t('close')}
       footer={
         <Footer
-          saveLabel={t('exitDialog.save')}
+          saveLabel={person ? t('exitDialog.saveFor', { name: person.name }) : t('exitDialog.save')}
           pending={save.isPending}
+          disabled={!person}
           onSave={submit}
           onClose={onClose}
         />
       }
     >
       <p className="m-0 text-[15px] leading-7 text-text-2">{t('exitDialog.text')}</p>
+      {file === null && (
+        <SearchSelect
+          label={t('exitDialog.person')}
+          hint={t('exitDialog.personHint')}
+          value={picked}
+          onChange={setPicked}
+          search={search}
+          onSearch={setSearch}
+          options={options}
+          message={
+            !search.trim()
+              ? undefined
+              : staff.isError
+                ? t('error')
+                : !staff.data
+                  ? t('exitDialog.loading')
+                  : options.length === 0
+                    ? t('exitDialog.noMatch')
+                    : undefined
+          }
+          listLabel={t('exitDialog.person')}
+          changeLabel={t('exitDialog.change')}
+        />
+      )}
       <DatePicker
         label={t('exitDialog.day')}
         value={day}

@@ -64,7 +64,9 @@ export function canOpen(user: SessionUser, panel: PanelDefinition) {
  */
 export function rememberPanel(user: SessionUser, panel: PanelDefinition) {
   const retiredWriterPin =
-    user.workspace_mode === 'always' && user.last_workspace === 'writer' && panel.id === 'executive';
+    user.workspace_mode === 'always' &&
+    user.last_workspace === 'writer' &&
+    panel.id === 'executive';
   if (!retiredWriterPin && (user.workspace_mode !== 'last' || user.last_workspace === panel.id))
     return;
   saveWorkspace({ last_workspace: panel.id }).catch(() => undefined);

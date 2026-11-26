@@ -41,7 +41,15 @@ import { gzipSync } from 'node:zlib';
 // JS 199.8: main's personal call ratings under Me and test's pathway finder (Australia's nomination question,
 // Canada's ranking, what-if) merged measure 199.7; none of the finder's code is in the first load (its what-if
 // request has its own file), the rest is the shared chunks' module map (2026-11-25).
-const BUDGET_KB = { js: 199.9, css: 23.0 };
+// JS 200.0: meeting0's calendar picker in the task composer and the tasks row's chips: their code stays
+// lazy; the first load gains only the routes' module-map entries for the shared picker chunk, 199.896 → 199.943
+// locally (2026-11-26).
+// JS 200.4, CSS 23.1: the branch measured 200.018 / 23.010 on Node 26 before meeting0 round 2; its
+// team boards add a «برد» route and nav item to the supervisor, executive and HR panels (pages
+// lazy), 200.300 locally (2026-11-26).
+// CSS 23.2: the pre-PR audit's dark-mode pills, truncation and focus outlines; CI (Linux) measured
+// 23.1x where the local build rounds to 23.0 (2026-11-26).
+const BUDGET_KB = { js: 200.4, css: 23.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

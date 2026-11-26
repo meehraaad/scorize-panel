@@ -262,13 +262,6 @@
       "all": "All activity"
     }
   },
-  "taskDialog": {
-    "title": "New task about this applicant",
-    "text": "What needs doing?",
-    "placeholder": "For example: review the second SOP draft",
-    "due": "Due",
-    "save": "Save task"
-  },
   "documents": {
     "aside": "Research interests",
     "title": "Requested documents",

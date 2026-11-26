@@ -33,7 +33,7 @@ import {
   type DjangoUserInvoice,
   type Page,
 } from '../djangoStaff';
-import { colleagues, personTasks } from './django';
+import { personTasks } from './django';
 import type { Colleague, TaskSummary } from '@/lib/tasks/api';
 import { invoiceTitle, PAYMENT_STATUSES } from './payments';
 
@@ -225,7 +225,7 @@ const PURCHASE_STATUS = {
  * and ready messages (S7).
  */
 export async function fetchCustomer(id: number, signal?: AbortSignal): Promise<CustomerData> {
-  const [user, personal, info, exams, education, similar, invoices, payments, tasks, peers] =
+  const [user, personal, info, exams, education, similar, invoices, payments, tasks] =
     await Promise.all([
       api<DjangoUserDetail>(`${userApi(id)}/`, { signal }),
       api<DjangoPersonal[]>(`${userApi(id)}/personal-information/`, { signal }),
@@ -239,12 +239,10 @@ export async function fetchCustomer(id: number, signal?: AbortSignal): Promise<C
       api<Page<DjangoUserInvoice>>(`${userApi(id)}/invoices/?ordering=-id&page_size=5`, { signal }),
       api<Page<unknown>>(`${userApi(id)}/payments/?page_size=1`, { signal }),
       personTasks(id, signal),
-      colleagues(signal),
     ]);
   const lead = await newestLead(user, signal);
   const details = personal[0] ?? null;
   const userInfo = info[0] ?? null;
-  const me = await myStaffId();
   const followUp = tasks.find((task) => task.kind === 'mine' && task.status !== 'done');
   return {
     id: user.id,
@@ -280,8 +278,8 @@ export async function fetchCustomer(id: number, signal?: AbortSignal): Promise<C
     counts: { purchases: invoices.count, payments: payments.count },
     tasks,
     templates: [],
-    // The seller themself isn't someone to ask.
-    colleagues: peers.filter((peer) => peer.id !== me),
+    // The customer's own people (Django suggests them); the old staff endpoints know none.
+    colleagues: [],
     // The old staff endpoints have no review files.
     review_files: [],
     supports: { stages: false, no_answer_sms: false },

@@ -38,6 +38,7 @@ import { resetTagMocks, tagHandlers } from './salesTags';
 import { consultationTypeHandlers, resetConsultationTypeMocks } from './salesConsultationTypes';
 import { taskReactionHandlers } from './taskReactions';
 import { resetStaffMocks, staffHandlers } from './staff';
+import { boardHandlers, resetBoardMocks } from './boards';
 
 /**
  * Fake Django for the integration tests (src/test/server.ts); the app itself always talks to Django.
@@ -241,6 +242,7 @@ const login = (user: MockUser) => {
 
 const AUTH = '/profile/authentication';
 export const handlers = [
+  ...boardHandlers,
   ...assessmentHandlers,
   ...workflowHandlers,
   ...destinationHandlers,
@@ -291,6 +293,7 @@ export const handlers = [
     resetTagMocks();
     resetConsultationTypeMocks();
     resetTaskMocks();
+    resetBoardMocks();
     resetManagerMocks();
     resetHandoffMocks();
     resetWriterMocks();
@@ -463,6 +466,7 @@ export function resetMockSession() {
   resetTagMocks();
   resetConsultationTypeMocks();
   resetTaskMocks();
+  resetBoardMocks();
   resetManagerMocks();
   resetSupervisorMocks();
   resetHandoffMocks();

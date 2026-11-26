@@ -101,6 +101,13 @@ export const hrPanel: PanelDefinition = {
       icon: 'calendar',
     },
     {
+      id: 'board',
+      permission: HR_PERMISSION,
+      to: 'board',
+      label: 'panels.hr.nav.board',
+      icon: 'grid',
+    },
+    {
       id: 'staff',
       permission: HR_PERMISSION,
       to: 'staff',
@@ -157,6 +164,15 @@ export const hrPanel: PanelDefinition = {
         data: () => [calendarQuery(weekOf(new Date(), weekStart(calendarKind(i18n.language))))],
         skeleton: 'board',
       }),
+    },
+    {
+      path: 'board',
+      ...lazyPage(
+        () =>
+          import('@/features/tasks/TeamBoardPage').then((module) => ({ default: module.HrBoard })),
+        ['tasks', 'hr'],
+        { guard: hrOnly, skeleton: 'board' },
+      ),
     },
     {
       path: 'staff',

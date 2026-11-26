@@ -357,8 +357,20 @@ export interface StageSettings {
   activities: StageActivity[];
 }
 
+/** A column the system fills (new, contract draft, won, lost): renamed and moved, never removed. */
+export type FixedColumnKey = 'new' | 'draft' | 'won' | 'lost';
+export interface FixedColumn {
+  key: FixedColumnKey;
+  /** The manager's name; null: the panel's own word. */
+  name: string | null;
+  /** Its place among all the columns. */
+  position: number;
+}
+
 export interface StagesData {
   stages: StageSettings[];
+  /** Absent from an older Django: new first, the rest last, with the panel's words. */
+  fixed?: FixedColumn[];
   /** Ready messages a `message` activity can send. */
   templates: { id: number; title: string }[];
 }

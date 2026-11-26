@@ -5,13 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
-import { SelectField } from '@/components/ui/Choices';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { parseValue, sameDay } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { type MyTask, type TaskSource } from '@/lib/tasks/api';
-import { useTaskChange } from '@/lib/tasks/changes';
-import { quickWhen, type QuickWhen } from '@/lib/when';
 import type { TasksConfig } from '../config';
 import { PersonRef } from './PersonRef';
 import { personLinkOf } from './personLink';
@@ -19,7 +16,6 @@ import { DoneDialog } from './DoneDialog';
 import { RequestDialog } from './RequestDialog';
 import { TickButton } from './StatusMark';
 import { useDueLabel } from './due';
-import { ON_SERVER } from '@/lib/applicant/onServer';
 
 const GROUPS = ['late', 'now', 'today'] as const;
 type Group = (typeof GROUPS)[number];
@@ -30,8 +26,6 @@ const SOURCE_TONE: Record<TaskSource, ChipTone> = {
   me: 'neutral',
   chain: 'primary',
 };
-const SNOOZES = ['twoHours', 'tomorrow', 'week'] as const satisfies readonly QuickWhen[];
-const REASONS = ['customer_later', 'waiting', 'no_time'] as const;
 
 const groupOf = (task: MyTask, now: number): Group => {
   const due = new Date(task.due_at).getTime();
@@ -48,6 +42,7 @@ export function MyTasks({
   day = null,
   tomorrow,
   doneToday,
+  lateAbove = false,
   pager,
   config,
 }: {
@@ -56,6 +51,8 @@ export function MyTasks({
   day?: string | null;
   tomorrow: number;
   doneToday: number | null;
+  /** The overdue ones are in «نیازمند توجه» above (the first page of today's list): not again here. */
+  lateAbove?: boolean;
   /** Under the list, when it has more than one page. */
   pager?: ReactNode;
   config: TasksConfig;
@@ -75,6 +72,14 @@ export function MyTasks({
       <EmptyState variant="card">
         {date ? t('mine.emptyDay', { day: f.weekday(date) }) : t('mine.empty')}
       </EmptyState>
+    );
+  // Everything on this page is overdue (shown above): the pager still reaches the later pages.
+  if (lateAbove && all.every((task) => groupOf(task, now) === 'late'))
+    return (
+      <>
+        <EmptyState variant="card">{t('mine.onlyLate')}</EmptyState>
+        {pager}
+      </>
     );
 
   return (
@@ -104,7 +109,7 @@ export function MyTasks({
         </section>
       )}
       {GROUPS.map((group) => {
-        if (otherDay) return null;
+        if (otherDay || (lateAbove && group === 'late')) return null;
         const tasks = all.filter((task) => groupOf(task, now) === group);
         if (tasks.length === 0) return null;
         return (
@@ -174,20 +179,8 @@ function TaskRow({
 }) {
   const { t } = useTranslation('tasks');
   const f = useFormat();
-  const change = useTaskChange();
-  const [snoozing, setSnoozing] = useState(false);
-  const [reason, setReason] = useState<(typeof REASONS)[number]>('customer_later');
   const due = useDueLabel()(task, now);
   const personLink = task.person ? personLinkOf(task.person) : null;
-  const meetingAhead =
-    ON_SERVER.visitFollowUp && !!task.visit && new Date(task.visit.starts_at).getTime() > now;
-
-  const snooze = (choice: (typeof SNOOZES)[number]) => {
-    change.mutate({
-      id: task.id,
-      change: { kind: 'snooze', until: quickWhen(choice).toISOString(), reason },
-    });
-  };
 
   return (
     <li
@@ -229,32 +222,6 @@ function TaskRow({
             </Chip>
           )}
         </span>
-        {snoozing && (
-          <div
-            role="group"
-            aria-label={t('mine.snoozeLabel')}
-            className="mt-2 flex flex-wrap items-end gap-2 rounded-2xl bg-canvas p-3"
-          >
-            <SelectField
-              inline
-              label={t('mine.reason')}
-              value={reason}
-              onChange={setReason}
-              options={REASONS.map((value) => ({ value, label: t(`mine.reasonOption.${value}`) }))}
-            />
-            {SNOOZES.map((choice) => (
-              <Button
-                key={choice}
-                variant="outline"
-                className="h-11 px-4 text-sm"
-                disabled={change.isPending}
-                onClick={() => snooze(choice)}
-              >
-                {t(`mine.snoozeOption.${choice}`)}
-              </Button>
-            ))}
-          </div>
-        )}
       </div>
       <div className="flex flex-none flex-wrap items-start gap-2">
         {task.action !== 'open' &&
@@ -282,17 +249,6 @@ function TaskRow({
             )
           ))}
         <TickButton label={t('mine.doneFor', { text: task.text })} onClick={onDone} />
-        {/* A meeting at the office ahead (S79) moves with the meeting, not by snoozing. */}
-        {!meetingAhead && (
-          <Button
-            variant="outline"
-            className="h-11 px-4 text-sm"
-            aria-expanded={snoozing}
-            onClick={() => setSnoozing(!snoozing)}
-          >
-            {t('mine.snooze')}
-          </Button>
-        )}
       </div>
     </li>
   );

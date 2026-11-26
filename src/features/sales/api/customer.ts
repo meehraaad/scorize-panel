@@ -148,6 +148,8 @@ export interface CustomerData {
   } | null;
   /** The board's team columns in the manager's order (S48, `supports.columns`). */
   columns?: CustomerColumn[];
+  /** The manager's names for the system columns ('' or absent: the panel's own word; meeting0 round 2). */
+  fixed_names?: Partial<Record<'new' | 'draft' | 'won' | 'lost', string>>;
   /** The line under the name. */
   headline: {
     degree: Degree | null;

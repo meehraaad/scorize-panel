@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { PickChip } from '@/components/tasks/CalendarSlots';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
@@ -164,7 +165,7 @@ export function SellDialog({
         {checked && chosen.length === 0 && <Notice tone="error">{t('sell.nothingPicked')}</Notice>}
 
         {consultation && (
-          <SlotSchedule
+          <SlotPicker
             key={consultation.id}
             product={consultation}
             value={slot}
@@ -248,6 +249,60 @@ export function SellDialog({
 }
 
 /**
+ * The consultation's time as a chip (the chosen time, or «انتخاب زمان») that opens its free times
+ * in a window over the sale, like every other calendar pick; a pick closes it, closing keeps the old.
+ */
+function SlotPicker({
+  product,
+  value,
+  onChange,
+  error,
+}: {
+  product: Product;
+  value: string;
+  onChange: (slot: string) => void;
+  error: boolean;
+}) {
+  const { t } = useTranslation('sales');
+  const f = useFormat();
+  const [open, setOpen] = useState(false);
+  const chosen = product.slots.find((item) => String(item.id) === value);
+  const label = t('sell.slot', { product: product.title });
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-semibold">{label}</span>
+      <span className="flex">
+        <PickChip on={chosen !== undefined} onClick={() => setOpen(true)}>
+          <Icon name="calendar" size={16} />
+          {chosen
+            ? `${f.weekday(chosen.starts_at)} · ${f.time(chosen.starts_at)}`
+            : t('sell.pickSlot')}
+        </PickChip>
+      </span>
+      {error && <Notice tone="error">{t('sell.slotRequired')}</Notice>}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        size="wide"
+        title={label}
+        closeLabel={t('close')}
+      >
+        {open && (
+          <SlotSchedule
+            product={product}
+            value={value}
+            onChange={(slot) => {
+              onChange(slot);
+              if (slot) setOpen(false);
+            }}
+          />
+        )}
+      </Dialog>
+    </div>
+  );
+}
+
+/**
  * The consultation's free times on the schedule, in its "picking a time" shape: in the sell
  * window it is narrow, so a day strip and the day's times, each with its consultant.
  */
@@ -255,13 +310,11 @@ function SlotSchedule({
   product,
   value,
   onChange,
-  error,
 }: {
   product: Product;
   /** The chosen slot's id, '' before a choice. */
   value: string;
   onChange: (slot: string) => void;
-  error: boolean;
 }) {
   const { t } = useTranslation('sales');
   const f = useFormat();
@@ -279,7 +332,6 @@ function SlotSchedule({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-semibold">{t('sell.slot', { product: product.title })}</span>
       <WeekCalendar
         label={t('sell.slot', { product: product.title })}
         week={week}
@@ -322,7 +374,6 @@ function SlotSchedule({
           </div>
         }
       />
-      {error && <Notice tone="error">{t('sell.slotRequired')}</Notice>}
     </div>
   );
 }

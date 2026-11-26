@@ -127,7 +127,7 @@ describe('marketing board', () => {
   it('shows the manager’s stages as lanes with their cards', async () => {
     loginAs(ELHAM);
     renderApp('/marketing/board');
-    const board = await screen.findByRole('region', { name: 'مرحله‌های بُرد' });
+    const board = await screen.findByRole('region', { name: 'مرحله‌های برد' });
     const making = within(board).getByRole('region', { name: 'در حال تولید' });
     expect(
       within(making).getByRole('button', { name: 'باز کردن «ریلز «پذیرش بدون آیلتس در آلمان»»' }),

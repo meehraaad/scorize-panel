@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useId, useState, type ReactNode, type SubmitEvent } from 'react';
+import { useState, type ReactNode, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ColleaguePicker } from '@/components/tasks/ColleaguePicker';
+import { ColleagueSearch } from '@/components/tasks/ColleagueSearch';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
@@ -19,7 +19,9 @@ import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
 import { ON_SERVER } from '@/lib/applicant/onServer';
-import { tasksQuery } from '@/lib/tasks/api';
+import { useUser } from '@/lib/auth/session';
+import type { Colleague } from '@/lib/tasks/api';
+import { canAssignTasks } from '@/lib/tasks/rights';
 import { toast } from '@/lib/toast';
 import {
   customerVisitsQuery,
@@ -239,11 +241,10 @@ export function VisitForm({
   const [note, setNote] = useState('');
   const [sms, setSms] = useState(true);
   const [asking, setAsking] = useState(false);
-  const colleagues = useQuery({ ...tasksQuery('sales'), enabled: asking });
-  const [colleague, setColleague] = useState<number | null>(null);
+  const invites = canAssignTasks(useUser(), 'sales');
+  const [colleague, setColleague] = useState<Colleague | null>(null);
   const [colleagueNote, setColleagueNote] = useState('');
   const [checked, setChecked] = useState(false);
-  const hintId = useId();
   const seller = useSellerBusy(week);
   const times = slots.data?.slots ?? [];
   const minutes = slots.data?.minutes ?? 60;
@@ -307,7 +308,7 @@ export function VisitForm({
         note: note.trim(),
         sms,
         ...(asking && colleague !== null
-          ? { colleague, colleague_note: colleagueNote.trim() }
+          ? { colleague: colleague.id, colleague_note: colleagueNote.trim() }
           : {}),
       },
       {
@@ -394,33 +395,25 @@ export function VisitForm({
             onChange={setSms}
           />
         </div>
-        <div className="flex flex-col gap-3">
-          <Switch
-            label={t('visit.ask')}
-            description={t('visit.askHint')}
-            checked={asking}
-            onChange={setAsking}
-          />
-          {asking &&
-            (colleagues.data ? (
+        {invites && (
+          <div className="flex flex-col gap-3">
+            <Switch
+              label={t('visit.ask')}
+              description={t('visit.askHint')}
+              checked={asking}
+              onChange={setAsking}
+            />
+            {asking && (
               <>
-                <ColleaguePicker
-                  colleagues={colleagues.data.colleagues}
-                  picked={colleague === null ? [] : [colleague]}
-                  onToggle={setColleague}
+                {/* Asking a colleague gives them a task: the sales admin's (meeting0). */}
+                <ColleagueSearch
                   label={t('visit.colleague')}
-                  searchLabel={t('customer.newTask.peerSearch')}
-                  noMatch={t('customer.newTask.peerNoMatch')}
-                  describedBy={hintId}
+                  panel="sales"
+                  picked={colleague ? [colleague] : []}
+                  onChange={(picked) => setColleague(picked[0] ?? null)}
+                  hint={t('visit.colleagueHint')}
+                  error={checked && colleague === null ? t('visit.pickColleague') : undefined}
                 />
-                <span
-                  id={hintId}
-                  className={`text-sm leading-6 ${checked && colleague === null ? 'text-danger' : 'text-text-2'}`}
-                >
-                  {checked && colleague === null
-                    ? t('visit.pickColleague')
-                    : t('visit.colleagueHint')}
-                </span>
                 <TextAreaField
                   label={t('visit.colleagueNote')}
                   rows={2}
@@ -429,10 +422,9 @@ export function VisitForm({
                   onChange={(event) => setColleagueNote(event.target.value)}
                 />
               </>
-            ) : (
-              <SkeletonRows rows={3} />
-            ))}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </form>
   );

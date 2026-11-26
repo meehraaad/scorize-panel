@@ -672,7 +672,7 @@ describe('board stages (S48)', () => {
     await user.click(screen.getByRole('switch', { name: /^اجباری/ }));
     await user.click(screen.getByRole('button', { name: 'ذخیره' }));
     expect(
-      await screen.findByText('مرحله‌ها ذخیره شد و تابلوی همه‌ی تیم به‌روز شد.'),
+      await screen.findByText('مرحله‌ها ذخیره شد و برد همه‌ی تیم به‌روز شد.'),
     ).toBeInTheDocument();
 
     cleanup();
@@ -703,8 +703,38 @@ describe('board stages (S48)', () => {
     );
     await user.click(screen.getByRole('button', { name: 'ذخیره' }));
     expect(
-      await screen.findByText('مرحله‌ها ذخیره شد و تابلوی همه‌ی تیم به‌روز شد.'),
+      await screen.findByText('مرحله‌ها ذخیره شد و برد همه‌ی تیم به‌روز شد.'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('system columns (meeting0 round 2)', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    await i18n.changeLanguage('fa');
+  });
+
+  it('the manager renames «برنده» and moves it; it can not be removed', async () => {
+    const user = userEvent.setup();
+    loginAs(REZA);
+    renderApp('/sales/manager/stages');
+    const won = await screen.findByRole('button', { name: /^قرارداد شد/ });
+    await user.click(won);
+    expect(screen.queryByRole('button', { name: 'حذف مرحله' })).toBeNull();
+    const name = screen.getByLabelText('نام مرحله');
+    await user.type(name, 'امضا شد');
+    await user.click(screen.getByRole('button', { name: 'بردن امضا شد به بالا' }));
+    await user.click(screen.getByRole('button', { name: 'ذخیره' }));
+    expect(
+      await screen.findByText('مرحله‌ها ذخیره شد و برد همه‌ی تیم به‌روز شد.'),
+    ).toBeInTheDocument();
+
+    cleanup();
+    renderApp('/sales/board');
+    const signed = await screen.findByRole('region', { name: 'امضا شد' });
+    const draft = screen.getByRole('region', { name: /^پیش‌نویس، منتظر مدیر/ });
+    // Before the contract draft now.
+    expect(signed.compareDocumentPosition(draft) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 
