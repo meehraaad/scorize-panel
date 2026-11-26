@@ -294,7 +294,8 @@ describe('tasks page (sales panel)', () => {
     await user.click(within(dialog).getByRole('button', { name: 'ممنون' }));
     const mine = await within(dialog).findByRole('button', { name: 'ممنون: ۱ نفر' });
     expect(mine).toHaveAttribute('aria-pressed', 'true');
-    expect(within(dialog).getByText('🙏 شما')).toBeInTheDocument();
+    // Under the task's message in the chat; who reacted is the chip's tooltip.
+    expect(mine).toHaveAttribute('title', 'شما');
     await user.click(within(dialog).getByRole('button', { name: 'بستن' }));
     const row = (await screen.findAllByText(/^پذیرش Uppsala/))[0]?.closest('li');
     if (!row) throw new Error('row not found');

@@ -10,6 +10,9 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import type { TaskCalendarData } from '@/lib/tasks/calendar';
 import type { TasksPanel } from '@/lib/tasks/api';
 import { TASK_COLOR, TASK_MINUTES, type Slots } from './CalendarSlots';
+import { DayTasks } from './DayTasks';
+
+export { DayTasks, type DayTask } from './DayTasks';
 
 // Only when a day is clicked.
 const NewTaskDialog = lazy(() =>
@@ -203,7 +206,7 @@ export function TaskCalendar({
             cell: dayCell,
             onAdd: (day) => setNewTask({ day }),
             addLabel: (day) => t('calendar.add', { day: f.weekday(day) }),
-            addText: t('calendar.addDay'),
+            addButton: true,
             keepsWide: (day) => marksOf(toValue(day, false)).length > 0,
           }}
         />
@@ -230,94 +233,5 @@ function Legend({ color, children }: { color: string; children: ReactNode }) {
       <span aria-hidden="true" className="size-2.5 rounded-full" style={{ background: color }} />
       {children}
     </li>
-  );
-}
-
-/** Chips shown on a day before «+N more». */
-const SHOWN = 3;
-
-/** What a chip's dot says: my own task, a colleague's request, a customer's follow-up call. */
-const TONE = { mine: 'var(--cal-5)', request: 'var(--cal-1)', call: 'var(--text-2)' } as const;
-
-/** Something due on a day with no hour: a chip on the calendar's «کارها» row. */
-export interface DayTask {
-  key: string;
-  text: string;
-  tone: keyof typeof TONE;
-  done: boolean;
-  /** Where it opens (its list on the tasks page, the customer's page). */
-  to: string;
-}
-
-/**
- * A day's tasks with no hour on the calendar's «کارها» row (canvas 4A): a chip each (its dot, done
- * ones struck), the first few and «+N more» to the tasks page on that day; on a past day the open
- * ones are late. A narrow day shows only how many are open. Nothing due: nothing.
- * Needs the `tasks` namespace on the route.
- */
-export function DayTasks({
-  items,
-  compact,
-  late,
-  moreTo,
-}: {
-  items: readonly DayTask[];
-  compact: boolean;
-  /** The day has passed: what is still open is late. */
-  late: boolean;
-  /** The tasks page on that day. */
-  moreTo: string;
-}) {
-  const { t } = useTranslation('tasks');
-  const f = useFormat();
-  if (items.length === 0) return null;
-  const open = items.filter((item) => !item.done).length;
-  if (compact)
-    return (
-      <Link
-        to={moreTo}
-        aria-label={t('calendar.dayCount', { n: f.number(open) })}
-        className="flex min-h-11 items-center justify-center rounded-md text-xs font-bold text-text-2 hover:bg-tint focus-visible:outline-2 focus-visible:outline-focus"
-      >
-        {f.number(open)}
-      </Link>
-    );
-  const hidden = items.length - SHOWN;
-  return (
-    <ul className="m-0 flex min-w-0 list-none flex-col gap-1 p-0">
-      {items.slice(0, hidden > 0 ? SHOWN : items.length).map((item) => (
-        <li key={item.key} className="min-w-0">
-          <Link
-            to={item.to}
-            title={item.text}
-            className={`flex min-h-8 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-focus ${
-              item.done
-                ? 'text-text-2 line-through hover:bg-tint'
-                : late
-                  ? 'bg-warn-tint text-urgent hover:brightness-95'
-                  : 'bg-canvas text-text hover:bg-tint'
-            }`}
-          >
-            <span
-              aria-hidden="true"
-              className="size-2 flex-none rounded-full"
-              style={{ background: item.done ? 'var(--good)' : TONE[item.tone] }}
-            />
-            <span className="truncate">{item.text}</span>
-            {item.done && <span className="sr-only">{t('calendar.chipDone')}</span>}
-          </Link>
-        </li>
-      ))}
-      {hidden > 0 && (
-        <li>
-          <Link
-            to={moreTo}
-            className="flex min-h-8 items-center px-2 text-xs font-semibold text-primary-text hover:underline focus-visible:outline-2 focus-visible:outline-focus"
-          >
-            {t('calendar.more', { n: f.number(hidden) })}
-          </Link>
-        </li>
-      )}
-    </ul>
   );
 }

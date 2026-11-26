@@ -293,11 +293,12 @@ describe('sales: my consultations on a week calendar', () => {
       expect(wednesday).toHaveTextContent('');
     });
 
-    it('«+ کار کل‌روز» adds a task for me that day, with no hour', async () => {
+    it('the «کارها» plus adds a task for me that day, with no hour', async () => {
       const user = userEvent.setup();
       const calendar = await open();
       const add = within(calendar).getByRole('button', { name: 'کار کل‌روز برای چهارشنبه ۶ آبان' });
-      expect(add).toHaveTextContent('کار کل‌روز');
+      // An icon only: its name is read out, no words in the cell.
+      expect(add).toHaveTextContent('');
       // A day that has passed takes none.
       expect(
         within(calendar).queryByRole('button', { name: 'کار کل‌روز برای دوشنبه ۴ آبان' }),
@@ -310,6 +311,25 @@ describe('sales: my consultations on a week calendar', () => {
       // That day, with no hour (one can still be set with «تاریخ و ساعت دیگر»).
       expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
       expect(within(dialog).getByRole('button', { name: /^روز/ })).toHaveTextContent('۶ آبان');
+    });
+
+    it("the composer's calendar window shows the «کارها» row; its plus picks a day with no hour", async () => {
+      const user = userEvent.setup();
+      const calendar = await open();
+      await user.click(
+        within(calendar).getByRole('button', { name: 'کار کل‌روز برای چهارشنبه ۶ آبان' }),
+      );
+      const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+      await user.click(within(dialog).getByRole('button', { name: 'از تقویم' }));
+      const picker = await screen.findByRole('dialog', { name: /تقویم/ });
+      // What is due that week with no hour shows above the days, only to read.
+      const chip = await within(picker).findByText(/آماده کردن فهرست قیمت/);
+      expect(chip.closest('a')).toBeNull();
+      await user.click(
+        within(picker).getByRole('button', { name: 'انتخاب پنجشنبه ۷ آبان بدون ساعت' }),
+      );
+      expect(within(dialog).getByRole('radio', { name: 'فقط روز (بدون ساعت)' })).toBeChecked();
+      expect(within(dialog).getByRole('button', { name: /^روز/ })).toHaveTextContent('۷ آبان');
     });
 
     it('a task with an hour is drawn at it; one for the day only is not', async () => {

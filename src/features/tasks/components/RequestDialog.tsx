@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
+import { useRef, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { TextAreaField } from '@/components/ui/Choices';
@@ -45,6 +45,7 @@ export function RequestDialog({
   const { data } = useQuery({ ...requestQuery(config.panel, id ?? 0), enabled: id !== null });
   const change = useTaskChange();
   const [message, setMessage] = useState('');
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const [refusing, setRefusing] = useState(false);
   const [reason, setReason] = useState('');
   // Read once: whether it is late doesn't need to move while it is open.
@@ -188,13 +189,7 @@ export function RequestDialog({
               </div>
             </dl>
           </section>
-          {data.body && (
-            <p className="m-0 text-[15px] leading-8 [overflow-wrap:anywhere] whitespace-pre-line">
-              {data.body}
-            </p>
-          )}
           {data.people.length > 0 && <People people={data.people} />}
-          <ReactionBar panel={config.panel} id={data.id} reactions={data.reactions} />
           <section
             aria-labelledby="request-thread"
             className="-mx-5 -mb-6 flex flex-1 flex-col gap-3 bg-canvas px-5 pt-4 lg:-mx-7 lg:px-7"
@@ -202,12 +197,23 @@ export function RequestDialog({
             <h3 id="request-thread" className="m-0 text-sm font-semibold text-text-2">
               {t('requests.thread')}
             </h3>
-            {data.thread.length === 0 && pending === null && (
+            {data.thread.length === 0 && pending === null && !data.body && (
               <p className="m-0 py-4 text-center text-sm text-text-2">
                 {t(closed ? 'requests.noThread' : 'requests.startThread')}
               </p>
             )}
             <ul className="m-0 flex list-none flex-col gap-3 p-0">
+              {/* What the task says opens the conversation, with its reactions under it. */}
+              {data.body && (
+                <Bubble
+                  mine={data.role === 'creator'}
+                  meta={data.role === 'creator' ? t('requests.you') : between}
+                  text={data.body}
+                />
+              )}
+              <li className={data.body && data.role === 'creator' ? 'me-10' : 'ms-10 self-end'}>
+                <ReactionBar panel={config.panel} id={data.id} reactions={data.reactions} compact />
+              </li>
               {data.thread.map((comment) => (
                 <Bubble
                   key={comment.id}
@@ -244,7 +250,20 @@ export function RequestDialog({
                     ? t('requests.messageSent')
                     : t('requests.message', { name: first })}
                 </label>
+                <EmojiButton
+                  onPick={(emoji) => {
+                    const field = messageRef.current;
+                    const at = field?.selectionStart ?? message.length;
+                    const end = field?.selectionEnd ?? at;
+                    setMessage(message.slice(0, at) + emoji + message.slice(end));
+                    requestAnimationFrame(() => {
+                      field?.focus();
+                      field?.setSelectionRange(at + emoji.length, at + emoji.length);
+                    });
+                  }}
+                />
                 <textarea
+                  ref={messageRef}
                   id="request-message-text"
                   rows={1}
                   value={message}
@@ -278,6 +297,51 @@ export function RequestDialog({
         </>
       )}
     </Dialog>
+  );
+}
+
+/** Emojis the composer offers: the reactions first, then a few everyday ones. */
+const EMOJIS = ['👍', '✅', '🙏', '❤️', '👀', '🎉', '😊', '😂', '👌', '🙌', '🔥', '⏰', '📞', '✍️'];
+
+/** The composer's emoji: a face that opens a small grid; a pick goes in at the caret. */
+function EmojiButton({ onPick }: { onPick: (emoji: string) => void }) {
+  const { t } = useTranslation('tasks');
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative flex-none">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-label={t('requests.emoji')}
+        title={t('requests.emoji')}
+        onClick={() => setOpen((value) => !value)}
+        className="flex size-12 items-center justify-center rounded-full text-xl text-text-2 hover:bg-tint"
+      >
+        <span aria-hidden="true">🙂</span>
+      </button>
+      {open && (
+        <div
+          role="group"
+          aria-label={t('requests.emoji')}
+          onKeyDown={(event) => event.key === 'Escape' && setOpen(false)}
+          className="absolute start-0 bottom-14 z-20 grid w-max grid-cols-7 gap-1 rounded-2xl bg-surface p-1.5 shadow-panel"
+        >
+          {EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => {
+                onPick(emoji);
+                setOpen(false);
+              }}
+              className="size-10 rounded-xl text-xl hover:bg-canvas"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

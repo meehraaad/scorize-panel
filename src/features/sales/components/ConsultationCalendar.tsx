@@ -467,7 +467,7 @@ export function ConsultationCalendar() {
                       setNewTaskOn(day);
                     },
                     addLabel: (day) => t('consultationCalendar.tasks.add', { day: f.weekday(day) }),
-                    addText: t('consultationCalendar.tasks.addDay'),
+                    addButton: true,
                   }
                 : undefined
             }

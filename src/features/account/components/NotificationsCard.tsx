@@ -102,7 +102,10 @@ export function NotificationRow({
       />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex flex-wrap items-baseline justify-between gap-x-3">
-          <span className={`text-[15px] ${item.read ? 'font-medium' : 'font-bold'}`}>
+          <span
+            title={compact ? item.title : undefined}
+            className={`text-[15px] ${item.read ? 'font-medium' : 'font-bold'} ${compact ? 'line-clamp-1' : ''}`}
+          >
             {!item.read && <span className="sr-only">{`${t('notifications.unread')}: `}</span>}
             {item.title}
           </span>
@@ -110,7 +113,12 @@ export function NotificationRow({
             {f.timeAgo(item.created_at)}
           </time>
         </span>
-        <span className="text-sm leading-7 text-text-2">{item.text}</span>
+        <span
+          title={compact ? item.text : undefined}
+          className={`text-sm leading-7 text-text-2 ${compact ? 'line-clamp-2' : ''}`}
+        >
+          {item.text}
+        </span>
       </span>
     </>
   );

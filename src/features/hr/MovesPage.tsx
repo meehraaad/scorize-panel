@@ -1,7 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { Suspense, lazy, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { FilterTabs } from '@/components/ui/Filters';
@@ -40,15 +39,23 @@ export default function MovesPage() {
         title={t('moves.title')}
         subtitle={t('moves.subtitle')}
         actions={
-          <>
-            <Button variant="danger" onClick={() => setStarting('exit')}>
-              {t('person.exit')}
-            </Button>
-            <Button onClick={() => setStarting('entry')}>
+          <div role="group" className="flex rounded-full bg-surface p-1 shadow-panel">
+            <button
+              type="button"
+              onClick={() => setStarting('entry')}
+              className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-on-primary"
+            >
               <Icon name="plus" size={18} />
               {t('staff.new')}
-            </Button>
-          </>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStarting('exit')}
+              className="inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold text-urgent hover:bg-tint"
+            >
+              {t('person.exit')}
+            </button>
+          </div>
         }
       />
       {starting && (

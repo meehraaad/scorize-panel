@@ -103,16 +103,25 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await user.click(screen.getByRole('button', { name: /^فروش محصول/ }));
     const dialog = await screen.findByRole('dialog', { name: 'فروش محصول به عرفان ملکی' });
     await user.click(await within(dialog).findByRole('checkbox', { name: /اپلای ارشد/ }));
-    const times = within(dialog).getByRole('region', { name: /^زمان مشاوره‌ی اپلای ارشد/ });
+    // No calendar inside the sale: a chip opens it in its own window.
+    expect(within(dialog).queryByRole('region', { name: /^زمان مشاوره‌ی اپلای ارشد/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'ساختن پرداخت و ارسال فاکتور با پیامک' }));
     expect(await within(dialog).findByText('زمان مشاوره را انتخاب کنید.')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'انتخاب زمان' }));
+    const picker = await screen.findByRole('dialog', { name: /^زمان مشاوره‌ی اپلای ارشد/ });
+    const times = within(picker).getByRole('region', { name: /^زمان مشاوره‌ی اپلای ارشد/ });
 
-    // Each free time is a block naming its consultant; the chosen one is summed up beside it.
+    // Each free time is a block naming its consultant; a pick closes the window, the chip names it.
     const [block] = within(times).getAllByRole('button', { name: /حسین رحیمی/ });
     if (!block) throw new Error('no free time');
     await user.click(block);
-    expect(block).toHaveAttribute('aria-pressed', 'true');
-    expect(within(times).getByText(/· حسین رحیمی$/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: /^زمان مشاوره‌ی اپلای ارشد/ })).toBeNull(),
+    );
+    expect(within(dialog).getByRole('button', { name: /·/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await user.click(screen.getByRole('button', { name: 'ساختن پرداخت و ارسال فاکتور با پیامک' }));
     await waitFor(() => expect(router.state.location.pathname).toBe(`${ERFAN}/money`));
   });

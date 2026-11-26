@@ -6,8 +6,9 @@ import { WeekNav } from '@/components/ui/WeekNav';
 import { addDays, parseValue, toValue, weekOf, weekStart } from '@/lib/calendar';
 import { useCalendar } from '@/lib/i18n/useCalendar';
 import { useFormat } from '@/lib/i18n/useFormat';
-import type { TaskCalendarData } from '@/lib/tasks/calendar';
+import type { CalendarTaskRow, TaskCalendarData } from '@/lib/tasks/calendar';
 import { toast } from '@/lib/toast';
+import { DayTasks, type DayTask } from './DayTasks';
 
 /** A task with an hour on a calendar: drawn this long, in its own colour (every panel's calendar). */
 export const TASK_MINUTES = 30;
@@ -22,6 +23,8 @@ export interface SlotsProps {
   /** `YYYY-MM-DDTHH:mm` (a time field's value); '' before a pick. */
   value: string;
   onChange: (value: string) => void;
+  /** A day with no hour picked on the «کارها» row (`YYYY-MM-DD`); without it that row only shows. */
+  onDayPick?: ((day: string) => void) | undefined;
 }
 
 /** Each panel's own picker: whose week it reads (the seller's sessions, my tasks). */
@@ -36,7 +39,9 @@ export type Slots = ComponentType<SlotsProps>;
 export function CalendarSlots<T, K extends QueryKey>({
   value,
   onChange,
+  onDayPick,
   query,
+  untimedOf,
   busyOf,
   label,
   hint,
@@ -48,6 +53,8 @@ export function CalendarSlots<T, K extends QueryKey>({
   query: (week: Date) => UseQueryOptions<T, Error, T, K>;
   /** The week's blocks from its data. */
   busyOf: (data: T | undefined) => CalendarEvent[];
+  /** The week's tasks with no hour, shown on the «کارها» row above the days. */
+  untimedOf?: ((data: T | undefined) => readonly CalendarTaskRow[]) | undefined;
   /** The week's name, read out ("My week, to pick a follow-up time"). */
   label: string;
   hint: string;
@@ -59,6 +66,7 @@ export function CalendarSlots<T, K extends QueryKey>({
   /** How long the picked block is drawn. */
   minutes: number;
 }) {
+  const { t } = useTranslation('tasks');
   const f = useFormat();
   const cal = useCalendar();
   const startDay = weekStart(cal.kind);
@@ -68,6 +76,15 @@ export function CalendarSlots<T, K extends QueryKey>({
   const [week, setWeek] = useState(() => weekOf(picked ?? now, startDay));
   const { data, isPending } = useQuery(query(week));
   const busy = busyOf(data);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayTasks = new Map<string, DayTask[]>();
+  for (const row of untimedOf?.(data) ?? []) {
+    const day = toValue(new Date(row.due_at), false);
+    dayTasks.set(day, [
+      ...(dayTasks.get(day) ?? []),
+      { key: String(row.id), text: row.text, tone: row.kind, done: row.done },
+    ]);
+  }
   const events = picked
     ? [
         ...busy,
@@ -110,6 +127,23 @@ export function CalendarSlots<T, K extends QueryKey>({
           if (start.getTime() < Date.now()) toast.error(past);
           else onChange(toValue(start, true));
         }}
+        dayRow={
+          untimedOf
+            ? {
+                label: t('calendar.row'),
+                cell: (day, compact) => (
+                  <DayTasks
+                    items={dayTasks.get(toValue(day, false)) ?? []}
+                    compact={compact}
+                    late={day < today}
+                  />
+                ),
+                onAdd: onDayPick && ((day) => onDayPick(toValue(day, false))),
+                addLabel: (day) => t('calendar.pickDay', { day: f.weekday(day) }),
+                addButton: true,
+              }
+            : undefined
+        }
       />
     </div>
   );
@@ -123,6 +157,7 @@ export function CalendarSlots<T, K extends QueryKey>({
 export function TaskSlots<T extends TaskCalendarData, K extends QueryKey>({
   value,
   onChange,
+  onDayPick,
   query,
 }: SlotsProps & { query: (week: Date) => UseQueryOptions<T, Error, T, K> }) {
   const { t } = useTranslation('tasks');
@@ -131,7 +166,9 @@ export function TaskSlots<T extends TaskCalendarData, K extends QueryKey>({
     <CalendarSlots
       value={value}
       onChange={onChange}
+      onDayPick={onDayPick}
       query={query}
+      untimedOf={(data) => (data?.task_rows ?? []).filter((row) => !row.timed)}
       busyOf={(data) =>
         (data?.task_rows ?? [])
           .filter((row) => row.timed && !row.done)

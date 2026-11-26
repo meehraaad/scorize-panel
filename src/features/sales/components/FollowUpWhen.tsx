@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarSlots, PickChip, type SlotsProps } from '@/components/tasks/CalendarSlots';
 import { ChoiceGroup } from '@/components/ui/Choices';
@@ -97,7 +97,14 @@ export function FollowUpWhen({
           <div className="flex flex-col gap-4">
             {picking === 'time' ? (
               <>
-                <FollowUpSlots value={followAt && follow === 'other' ? date : ''} onChange={pick} />
+                {/* Its «کارها» row reads the `tasks` namespace, loaded with the window. */}
+                <Suspense fallback={null}>
+                  <FollowUpSlots
+                    value={followAt && follow === 'other' ? date : ''}
+                    onChange={pick}
+                    onDayPick={ON_SERVER.dayFollowUps ? pick : undefined}
+                  />
+                </Suspense>
                 <DatePicker
                   time
                   only="future"
@@ -128,7 +135,7 @@ const CALL_MINUTES = 15;
  * Picking a follow-up (or a task's) time on the seller's own week: their sessions, office meetings,
  * follow-up calls and timed tasks show, and a tap on a free spot picks that time.
  */
-export function FollowUpSlots({ value, onChange }: SlotsProps) {
+export function FollowUpSlots({ value, onChange, onDayPick }: SlotsProps) {
   const { t } = useTranslation('sales');
   const f = useFormat();
   const blocks = useSellerBlocks();
@@ -136,8 +143,10 @@ export function FollowUpSlots({ value, onChange }: SlotsProps) {
     <CalendarSlots
       value={value}
       onChange={onChange}
+      onDayPick={onDayPick}
       query={sellerCalendarQuery}
       busyOf={blocks}
+      untimedOf={(data) => (data?.task_rows ?? []).filter((row) => !row.timed)}
       label={t('followUpSlots.label')}
       hint={t('followUpSlots.hint')}
       pickedTitle={t('followUpSlots.picked')}

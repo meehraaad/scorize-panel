@@ -85,11 +85,16 @@ export function TaskPeek({ config, limit = 5 }: { config: TasksConfig; limit?: n
                   type="button"
                   onClick={() => setOpen(row)}
                   aria-label={t('requests.openFor', { text: row.task.text })}
+                  title={row.task.text}
                   className="truncate text-start text-sm font-semibold hover:text-primary-text"
                 >
                   {row.task.text}
                 </button>
-                {who && <span className="truncate text-xs text-text-2">{who}</span>}
+                {who && (
+                  <span title={who} className="truncate text-xs text-text-2">
+                    {who}
+                  </span>
+                )}
               </span>
               <span
                 className={`flex-none text-xs font-semibold tabular-nums ${due.late ? 'text-urgent' : 'text-text-2'}`}
