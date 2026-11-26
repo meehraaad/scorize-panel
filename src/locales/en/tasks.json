@@ -276,7 +276,9 @@
     "fromCalendar": "From the calendar",
     "picked": "{{day}} at {{time}}",
     "calendarTitle": "Pick a time on the calendar",
-    "calendarHint": "Tap a free spot to make that hour the task’s due time."
+    "calendarHint": "Tap a free spot to make that hour the task’s due time.",
+    "column": "Also put it on my board",
+    "noColumn": "No, only in my tasks"
   },
   "reactions": {
     "label": "Reactions",
@@ -362,5 +364,58 @@
     "hint": "Tap a free spot to pick that hour. Your other timed tasks show too.",
     "picked": "Picked time: {{day}} at {{time}}",
     "past": "That time has passed. Pick one from now on."
+  },
+  "board": {
+    "title": "My board",
+    "private": "Only you see this board.",
+    "which": "Which board",
+    "error": "The board did not load.",
+    "failed": "That did not work. Try again.",
+    "emptyColumn": "No cards here. Drag one in or add one.",
+    "columnMenu": "Column settings: {{name}}",
+    "addTask": "Put one of my tasks here",
+    "newColumn": "New column",
+    "openCard": "Card: {{text}}",
+    "due": "{{day}} · {{time}}",
+    "dueDay": "{{day}} · all day",
+    "tag": {
+      "done": "Done",
+      "late": "Late",
+      "mine": "Mine",
+      "request": "Request"
+    },
+    "suggested": {
+      "today": "Today",
+      "week": "This week",
+      "waiting": "Waiting on others"
+    },
+    "empty": {
+      "title": "Arrange your tasks your way",
+      "text": "The columns are yours: you name and order them. Each card is one of your tasks; moving it never changes the task's due time, status or conversation.",
+      "fromNew": "Put a task straight into a column from «New task»",
+      "sent": "Add the requests you sent, to follow them",
+      "remove": "Removing a card never deletes the task",
+      "start": "Start with three suggested columns"
+    },
+    "columnName": "Column name",
+    "nameRequired": "Write a name.",
+    "create": "Create",
+    "save": "Save",
+    "columnTitle": "Column {{name}}",
+    "earlier": "Move earlier",
+    "later": "Move later",
+    "deleteHint": "Deleting the column takes its {{n}} cards off the board; the tasks themselves stay.",
+    "delete": "Delete column",
+    "deleteSure": "Yes, delete it",
+    "addTitle": "Put a task in “{{name}}”",
+    "addHint": "Your open tasks that are not on the board yet.",
+    "search": "Search tasks",
+    "loading": "Loading…",
+    "noCandidates": "No open task off the board was found.",
+    "added": "Put in “{{name}}”.",
+    "cardHint": "Moving or removing a card never changes the task itself.",
+    "column": "Column",
+    "openTask": "Open task",
+    "remove": "Take off the board"
   }
 }

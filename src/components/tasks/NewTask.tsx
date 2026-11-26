@@ -1,13 +1,14 @@
-import type { QueryKey } from '@tanstack/react-query';
+import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { Suspense, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
+import { ChoiceGroup, SelectField, TextAreaField } from '@/components/ui/Choices';
 import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
 import { Switch } from '@/components/ui/Switch';
 import { useUser } from '@/lib/auth/session';
+import { BOARDS_KEY } from '@/lib/boards/api';
 import { parseValue, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { TASKS_KEY, type Colleague, type NewTask, type TasksPanel } from '@/lib/tasks/api';
@@ -22,8 +23,25 @@ const TARGETS = ['me', 'person', 'team'] as const;
 type Target = (typeof TARGETS)[number];
 const WHENS = ['evening', 'tomorrow', 'week', 'day', 'other'] as const;
 
-/** «کار تازه» in a page header: opens the composer for `panel`'s tasks (`slots`: its week picker). */
-export function NewTaskButton({ panel, slots }: { panel: TasksPanel; slots?: Slots | undefined }) {
+/** A column of my board, which a new task for me can go on. */
+interface BoardColumnChoice {
+  id: number;
+  name: string;
+}
+
+/**
+ * «کار تازه» in a page header: opens the composer for `panel`'s tasks (`slots`: its week picker;
+ * `columns`: my board's, on its page).
+ */
+export function NewTaskButton({
+  panel,
+  slots,
+  columns,
+}: {
+  panel: TasksPanel;
+  slots?: Slots | undefined;
+  columns?: readonly BoardColumnChoice[] | undefined;
+}) {
   const { t } = useTranslation('tasks');
   const [open, setOpen] = useState(false);
   return (
@@ -37,6 +55,7 @@ export function NewTaskButton({ panel, slots }: { panel: TasksPanel; slots?: Slo
         open={open}
         panel={panel}
         slots={slots}
+        columns={columns}
         onClose={() => setOpen(false)}
       />
     </>
@@ -58,6 +77,7 @@ export function NewTaskDialog({
   due,
   day: dueDay,
   slots: PickSlots,
+  columns = [],
   onCreated,
   also = TASKS_KEY,
 }: {
@@ -72,6 +92,8 @@ export function NewTaskDialog({
   day?: Date | undefined;
   /** Each panel's picker of a time on its week; without one there is no «از تقویم». */
   slots?: Slots | undefined;
+  /** My board's columns (opened on it): a task for me can go on one. */
+  columns?: readonly BoardColumnChoice[] | undefined;
   /** After it is saved (the opener refreshes what shows the new task). */
   onCreated?: (() => void) | undefined;
   /** What else shows the new task (the customer's page). */
@@ -83,6 +105,8 @@ export function NewTaskDialog({
   const admin = canAssignTasks(user, panel);
   const penalizes = admin && canPenalize(user);
   const create = useCreateTask(also);
+  const client = useQueryClient();
+  const [column, setColumn] = useState('');
   const [text, setText] = useState('');
   const [target, setTarget] = useState<Target>('me');
   const [people, setPeople] = useState<Colleague[]>([]);
@@ -122,11 +146,13 @@ export function NewTaskDialog({
       ...(target === 'person' && { assignees: people.map((colleague) => colleague.id) }),
       ...(target === 'team' && { everyone: true }),
       ...(penalty && target !== 'me' && { penalty: true }),
+      ...(column && target === 'me' && { column: Number(column) }),
     };
     create.mutate(task, {
       onError: () => toast.error(t('error')),
       onSuccess: () => {
         onCreated?.();
+        if (task.column) void client.invalidateQueries({ queryKey: BOARDS_KEY });
         toast.success(
           target === 'person'
             ? t('new.sent.people', { n: f.number(n) })
@@ -236,6 +262,17 @@ export function NewTaskDialog({
             value={day}
             onChange={setDay}
             error={checked && !day ? t('new.dayRequired') : undefined}
+          />
+        )}
+        {target === 'me' && columns.length > 0 && (
+          <SelectField
+            label={t('new.column')}
+            value={column}
+            onChange={setColumn}
+            options={[
+              { value: '', label: t('new.noColumn') },
+              ...columns.map((choice) => ({ value: String(choice.id), label: choice.name })),
+            ]}
           />
         )}
         {penalizes && target !== 'me' && (

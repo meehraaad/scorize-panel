@@ -1,7 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
+import { BoardSwitch } from '@/components/board/BoardSwitch';
 import { KanbanBoard } from '@/components/board/KanbanBoard';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -31,12 +32,36 @@ import { marketingPath } from './paths';
 const CardDialog = lazy(() => import('./components/CardDialog'));
 const NewCardDialog = lazy(() => import('./components/NewCardDialog'));
 
+// «برد من» (`?board=mine`) and its composer's week: loaded when asked for.
+const MyBoardView = lazy(() =>
+  import('@/components/board/MyBoard').then((module) => ({ default: module.MyBoardView })),
+);
+const MarketingSlots = lazy(() =>
+  import('./CalendarPage').then((module) => ({ default: module.MarketingSlots })),
+);
+
+/** The marketing board, with a capsule to my own board (canvas 6A): `?board=mine`. */
+export default function BoardPage() {
+  const { t } = useTranslation('marketing');
+  const [params] = useSearchParams();
+  const mine = params.get('board') === 'mine';
+  const switcher = (
+    <BoardSwitch team={t('board.title')} teamTo={marketingPath('board')} mine={mine} />
+  );
+  if (!mine) return <TeamBoard switcher={switcher} />;
+  return (
+    <Suspense fallback={null}>
+      <MyBoardView panel="marketing" switcher={switcher} slots={MarketingSlots} />
+    </Suspense>
+  );
+}
+
 /**
  * The marketing board (canvas "مارکتینگ · بُرد"): the manager's stages as lanes, cards dragged by
  * their grip or moved from their details (`?card=<id>` opens one). A stage that asks for something
  * refuses the card until it has it; out of a manager-only stage only the manager moves cards.
  */
-export default function BoardPage() {
+function TeamBoard({ switcher }: { switcher: ReactNode }) {
   const { t } = useTranslation('marketing');
   const f = useFormat();
   const user = useUser();
@@ -67,6 +92,7 @@ export default function BoardPage() {
           subtitle={t('board.subtitle', { n: f.number(data.cards.length) })}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              {switcher}
               <FilterTabs
                 label={t('board.show')}
                 value={who}

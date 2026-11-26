@@ -104,6 +104,8 @@ export interface NewTask {
   due_at?: string;
   /** `YYYY-MM-DD`: a day with no hour, due by its end. */
   due_on?: string;
+  /** A task for me: also on my board of the panel, at the end of this column of it. */
+  column?: number;
 }
 
 /** When a new task is due: its time, or the 23:59 of its day (as Django reads a day-only task). */

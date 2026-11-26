@@ -101,7 +101,8 @@ export const marketingPanel: PanelDefinition = {
     },
     {
       path: 'board',
-      ...lazyPage(() => import('@/features/marketing/BoardPage'), ['marketing'], {
+      // `tasks`: «برد من» (`?board=mine`) and its composer.
+      ...lazyPage(() => import('@/features/marketing/BoardPage'), ['marketing', 'tasks'], {
         data: () => [boardQuery],
         skeleton: 'board',
       }),
