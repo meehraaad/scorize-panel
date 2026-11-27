@@ -617,8 +617,7 @@
     "detailed": {
       "title": "Detailed pages",
       "results": "Every value of the month, one by one, with the reason for each change",
-      "kpis": "Every KPI in full (for anyone and any team)",
-      "rules": "Every reward and penalty rule, such as commission and team rewards"
+      "kpis": "Every KPI in full (for anyone and any team)"
     },
     "plans": {
       "hint": "Each group has one rule: a few simple goals, what reaching them pays and what missing them takes. The system measures them every night.",
