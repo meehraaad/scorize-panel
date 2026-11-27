@@ -53,7 +53,12 @@ export function startCachePersistence() {
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
-  queryClient.getQueryCache().subscribe(() => {
+  queryClient.getQueryCache().subscribe((event) => {
+    // Only a change to what would be saved: not fetch starts, observers coming and going, or the
+    // queries kept out of it (the phone poll, every 2 s), each of which serialized the whole cache.
+    if (event.query.meta?.persist === false) return;
+    if (event.type === 'updated' && event.action.type !== 'success') return;
+    if (event.type !== 'updated' && event.type !== 'removed') return;
     clearTimeout(timer);
     timer = setTimeout(write, WRITE_MS);
   });

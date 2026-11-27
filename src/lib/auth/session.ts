@@ -58,12 +58,20 @@ export const START_PATH = '/start';
  */
 export const sessionQuery = queryOptions({
   queryKey: ['session'],
-  queryFn: async ({ signal }): Promise<SessionUser | null> => {
+  queryFn: async ({ signal, client }): Promise<SessionUser | null> => {
     try {
-      return await api<SessionUser>('/profile/auth/v1/whoami/', { signal });
+      // `lean=1`: without the old site's purchase counts and GPA (two counts and a write per load);
+      // the panel reads them elsewhere. index.html preloads this same URL.
+      return await api<SessionUser>('/profile/auth/v1/whoami/?lean=1', { signal });
     } catch (error) {
       // DRF session auth answers 403 (not 401) when nobody is logged in.
       if (error instanceof ApiError && (error.status === 401 || error.status === 403)) return null;
+      // Rate-limited: says nothing about the session. Keep the user we know instead of swapping
+      // the whole panel for the error page (a busy minute of polling tabs can reach the limit).
+      if (error instanceof ApiError && error.status === 429) {
+        const known = client.getQueryData<SessionUser | null>(['session']);
+        if (known) return known;
+      }
       throw error;
     }
   },

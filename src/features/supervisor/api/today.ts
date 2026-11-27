@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import type { Page } from '@/lib/api/page';
 import { api } from '@/lib/api/client';
 import type { Degree } from '@/lib/applicant/approval';
@@ -45,6 +45,8 @@ export const todayBoardQuery = (page: number) =>
     queryFn: ({ signal }) =>
       api<Page<BoardItem>>(`${SUPERVISOR_API}/today/board/?page=${String(page)}`, { signal }),
     refetchInterval: 5 * 60_000,
+    // Paging keeps the current rows until the next page arrives (no skeleton flash).
+    placeholderData: keepPreviousData,
   });
 export const todayWaitingQuery = (page: number) =>
   queryOptions({
@@ -52,6 +54,7 @@ export const todayWaitingQuery = (page: number) =>
     queryFn: ({ signal }) =>
       api<Page<WaitingCase>>(`${SUPERVISOR_API}/today/waiting/?page=${String(page)}`, { signal }),
     refetchInterval: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
 export const todayCountsQuery = queryOptions({
   queryKey: [...SUPERVISOR_KEY, 'today', 'counts'],

@@ -44,8 +44,12 @@ export default function TodayPage() {
   const requests = useQuery(taskListQuery('sales', 'requests', 1));
   const insights = useQuery({ ...insightsQuery, enabled: asideSeen });
   // Same query as the workspace's live-call listener, so this adds no request.
-  const phone = useQuery({ ...phoneCallsQuery(user.id), enabled: ON_SERVER.livePhoneCalls });
-  const needsExtension = phone.data?.available === true && !phone.data.extension;
+  // Only this flag: the snapshot itself changes on every poll (server_time), which re-rendered the whole page.
+  const { data: needsExtension = false } = useQuery({
+    ...phoneCallsQuery(user.id),
+    enabled: ON_SERVER.livePhoneCalls,
+    select: (data) => data.available && !data.extension,
+  });
 
   const agenda = agendaOf(
     {

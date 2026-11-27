@@ -49,7 +49,9 @@ import { gzipSync } from 'node:zlib';
 // lazy), 200.300 locally (2026-11-26).
 // CSS 23.2: the pre-PR audit's dark-mode pills, truncation and focus outlines; CI (Linux) measured
 // 23.1x where the local build rounds to 23.0 (2026-11-26).
-const BUDGET_KB = { js: 200.4, css: 23.2 };
+// JS 200.6: the speed pass keeps the session through a rate limit (429), retries a short one once and
+// saves the cache only on real changes; 200.3 → 200.52 locally (2026-11-27).
+const BUDGET_KB = { js: 200.6, css: 23.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');

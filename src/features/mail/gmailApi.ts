@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import type { Page } from '@/lib/api/page';
 import { MAIL_KEY, type MailboxApplicant } from './api';
@@ -45,6 +45,7 @@ export const gmailAccountsQuery = (view: GmailAccountFilter, page: number) =>
       api<Page<GmailAccount>>(`/mail/v1/gmail-accounts/?view=${view}&page=${String(page)}`, {
         signal,
       }),
+    placeholderData: keepPreviousData,
   });
 
 export const gmailQueueQuery = (id: number, page: number) =>

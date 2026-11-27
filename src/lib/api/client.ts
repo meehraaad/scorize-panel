@@ -40,6 +40,8 @@ export class ApiError extends Error {
     readonly body: unknown,
     /** Finds this request in the server's logs; null when the answer had none. */
     readonly requestId: string | null = null,
+    /** Seconds to wait before asking again (`Retry-After`, sent with 429); null without one. */
+    readonly retryAfter: number | null = null,
   ) {
     super(`HTTP ${status}`);
     this.name = 'ApiError';
@@ -67,6 +69,7 @@ export interface RawResponse {
   status: number;
   data: unknown;
   requestId: string | null;
+  retryAfter: number | null;
 }
 
 /** Sends a request and returns status + parsed JSON without throwing on HTTP errors. */
@@ -103,13 +106,17 @@ export async function request(
     status: response.status,
     data,
     requestId: response.headers.get(REQUEST_ID_HEADER),
+    // Seconds; NaN for an unreadable one, which no wait check accepts.
+    retryAfter: response.headers.has('Retry-After')
+      ? Number(response.headers.get('Retry-After'))
+      : null,
   };
 }
 
 /** REST API call under /api: returns the JSON body or throws ApiError / NetworkError. */
 export async function api<T>(path: string, options?: RequestOptions) {
-  const { ok, status, data, requestId } = await request(`${API_BASE}${path}`, options);
-  if (!ok) throw new ApiError(status, data, requestId);
+  const { ok, status, data, requestId, retryAfter } = await request(`${API_BASE}${path}`, options);
+  if (!ok) throw new ApiError(status, data, requestId, retryAfter);
   return data as T;
 }
 

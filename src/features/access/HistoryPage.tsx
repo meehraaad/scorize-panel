@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
@@ -16,7 +16,10 @@ export default function HistoryPage() {
   const { t } = useTranslation('access');
   const f = useFormat();
   const [page, setPage] = useState(1);
-  const { data, isFetching } = useQuery(historyQuery(page));
+  const { data, isFetching } = useQuery({
+    ...historyQuery(page),
+    placeholderData: keepPreviousData,
+  });
   const keys = useQuery(keysQuery());
   const label = (id: string) => keys.data?.keys.find((key) => key.id === id)?.label ?? id;
 
