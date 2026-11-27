@@ -17,8 +17,8 @@ import { hrPath } from '../paths';
 import { paySettingsQuery, type PaySettings } from './api';
 import { useSavePaySettings } from './mutations';
 
-/** The detailed pages, out of the section's tabs. */
-const DETAILED = ['results', 'kpis', 'rules'] as const;
+/** The detailed pages, out of the section's tabs («پاداش و تنبیه» is a tab). */
+const DETAILED = ['results', 'kpis'] as const;
 
 interface Bracket {
   upto: string;
