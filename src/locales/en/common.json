@@ -485,7 +485,6 @@
     "typeMore": "Search starts from two letters.",
     "searching": "Searching…",
     "noMatch": "No colleague with this name.",
-    "noMatchPanel": "No one in this panel has this name.",
     "failed": "The search failed. Type again."
   }
 }

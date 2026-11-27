@@ -323,6 +323,17 @@ describe('tasks page (supervisor panel)', () => {
     expect(await within(picker).findByTitle('جمع‌بندی پرونده‌های هفته')).toBeInTheDocument();
   });
 
+  it("the panel's admin finds colleagues of other panels too", async () => {
+    const user = userEvent.setup();
+    renderApp('/supervisor/tasks');
+    await screen.findByRole('heading', { level: 1, name: 'کارهای امروز' });
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
+    await user.type(within(dialog).getByRole('combobox', { name: 'همکار' }), 'صادق');
+    expect(await within(dialog).findByRole('option', { name: /مینا صادقی/ })).toBeInTheDocument();
+  });
+
   it('a request to several colleagues: how many have done it, and each one', async () => {
     const user = userEvent.setup();
     renderApp('/supervisor/tasks');

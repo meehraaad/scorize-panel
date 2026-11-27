@@ -8,8 +8,9 @@ import { TASKS_API, type Colleague, type TasksPanel } from './api';
 export const COLLEAGUE_SEARCH_MIN = 2;
 
 /**
- * Colleagues whose name has `search`: up to eight, nothing loaded before typing. `panel`: only its
- * people (whom its tasks may go to); without it any active colleague (a meeting's guest).
+ * Colleagues whose name has `search`: up to eight, nothing loaded before typing. `panel`: the panel
+ * the search is for (its admin finds every panel's people, anyone else only its own); without it any
+ * active colleague (a meeting's guest).
  */
 export const colleagueSearchQuery = (search: string, panel?: TasksPanel) =>
   queryOptions({
