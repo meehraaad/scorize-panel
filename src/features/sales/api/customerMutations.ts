@@ -12,7 +12,8 @@ export function useLogContact(customer: number) {
   return useMutation({
     mutationFn: (log: ContactLog) =>
       api(`${customerApi(customer)}/contacts/`, { method: 'POST', body: log }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 

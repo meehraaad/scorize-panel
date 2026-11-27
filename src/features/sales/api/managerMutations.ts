@@ -64,7 +64,8 @@ export function useAssignLeads() {
         method: 'POST',
         body: { assignments },
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 
@@ -85,7 +86,8 @@ export function useDecideDraft() {
         method: 'POST',
         body: { action, comment },
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 
@@ -98,7 +100,8 @@ export function useMoveContract() {
         method: 'POST',
         body: { seller, reason },
       }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 
@@ -164,7 +167,8 @@ function useBuilderMutation<T, R = unknown>(send: (body: T) => Promise<R>) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: send,
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 
