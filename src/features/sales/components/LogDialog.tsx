@@ -440,7 +440,6 @@ export function LogDialog({
             icon="copy"
             tone="muted"
             aria-label={t('customer.logDialog.copyPhone')}
-            tip={t('customer.logDialog.copyPhone')}
             onClick={(event) =>
               void copyText(
                 toLatinDigits(customer.phone),

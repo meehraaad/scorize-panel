@@ -149,11 +149,11 @@ export default function ComponentsPage() {
             <IconLink icon="download" href="#" aria-label="دانلود" />
           </div>
           <Dock label="دسترسی سریع (Dock)" className="self-start">
-            <IconLink icon="whatsapp" tone="whatsapp" href="#" aria-label="واتساپ" tip="واتساپ" />
-            <IconButton icon="telegram" tone="telegram" aria-label="تلگرام" tip="تلگرام" />
+            <IconLink icon="whatsapp" tone="whatsapp" href="#" aria-label="واتساپ" />
+            <IconButton icon="telegram" tone="telegram" aria-label="تلگرام" />
             <DockDivider />
-            <IconButton icon="copy" aria-label="کپی" tip="کپی" />
-            <IconButton icon="check" tone="done" aria-label="کپی شد" tip="کپی شد" />
+            <IconButton icon="copy" aria-label="کپی" />
+            <IconButton icon="check" tone="done" aria-label="کپی شد" />
           </Dock>
           <div className="flex flex-wrap items-center gap-2 rounded-3xl p-4 shadow-luxe bg-luxe">
             <Button variant="gold">طلایی (gold)</Button>

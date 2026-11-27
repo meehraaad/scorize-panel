@@ -9,7 +9,8 @@ interface IconButtonProps extends Omit<ComponentProps<'button'>, 'children'> {
   tone?: keyof typeof TONES;
   iconSize?: number;
   shape?: 'round' | 'rounded';
-  /** A short label shown under it on hover and focus (the `tip` utility); aria-label stays the name. */
+  /** The label shown under it on hover and focus (the `tip` utility): its aria-label unless given;
+   *  `''` for none (where the icon's meaning is plain, e.g. a dialog's close). */
   tip?: string;
 }
 
@@ -37,13 +38,14 @@ export function IconButton({
   shape = 'round',
   className = '',
   type = 'button',
-  tip,
+  tip: givenTip,
   ...props
 }: IconButtonProps) {
+  const tip = givenTip ?? props['aria-label'];
   return (
     <button
       type={type}
-      data-tip={tip}
+      data-tip={tip || undefined}
       className={`flex size-11 flex-none items-center justify-center transition-colors ${shape === 'round' ? 'rounded-full' : 'rounded-xl'} ${tip ? 'tip' : ''} ${TONES[tone]} ${className}`}
       {...props}
     >
@@ -59,7 +61,7 @@ export function IconLink({
   iconSize = 20,
   className = '',
   href,
-  tip,
+  tip: givenTip,
   ...props
 }: Omit<ComponentProps<'a'>, 'children'> & {
   icon: IconName;
@@ -67,11 +69,13 @@ export function IconLink({
   tone?: keyof typeof TONES;
   iconSize?: number;
   shape?: 'round' | 'rounded';
+  /** As on `IconButton`: its aria-label unless given, `''` for none. */
   tip?: string;
 }) {
+  const tip = givenTip ?? props['aria-label'];
   return (
     <a
-      data-tip={tip}
+      data-tip={tip || undefined}
       className={`flex size-11 flex-none items-center justify-center rounded-full transition-colors ${tip ? 'tip' : ''} ${TONES[tone]} ${className}`}
       href={safeHref(href)}
       {...props}
