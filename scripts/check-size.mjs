@@ -51,7 +51,9 @@ import { gzipSync } from 'node:zlib';
 // 23.1x where the local build rounds to 23.0 (2026-11-26).
 // JS 200.6: the speed pass keeps the session through a rate limit (429), retries a short one once and
 // saves the cache only on real changes; 200.3 → 200.52 locally (2026-11-27).
-const BUDGET_KB = { js: 200.6, css: 23.2 };
+// JS 200.7: PageHeader isolates a Latin name in Persian titles (<bdi>), which is in the first load; 200.61
+// locally (2026-11-27).
+const BUDGET_KB = { js: 200.7, css: 23.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
