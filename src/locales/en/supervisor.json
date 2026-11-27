@@ -694,7 +694,7 @@
       "new_only": "Would see it with scopes, doesn't today"
     },
     "fromCountries": {
-      "button": "Make scopes from today's countries",
+      "button": "Make from countries",
       "hint": "Each country supervisor gets an «every service» scope in each of their countries.",
       "done": "{{n}} scopes made."
     },

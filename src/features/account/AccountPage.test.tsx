@@ -41,7 +41,7 @@ describe('account and notifications', () => {
 
     await user.click(
       within(notifications()).getByRole('button', {
-        name: 'علامت‌گذاری همه به‌عنوان خوانده‌شده',
+        name: 'خواندن همه',
       }),
     );
     expect(await screen.findByRole('link', { name: 'اعلان‌ها' })).toBeInTheDocument();

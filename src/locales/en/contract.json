@@ -131,7 +131,7 @@
     "paidAt": "Paid on",
     "amount": "Amount to pay",
     "redirecting": "Going to the payment gateway…",
-    "toReceipt": "Pay by card transfer and upload the receipt",
+    "toReceipt": "Pay by card transfer",
     "gateway": "Paid through a secure bank gateway",
     "onlineError": "Couldn't reach the payment gateway. Try again in a moment.",
     "declined": {

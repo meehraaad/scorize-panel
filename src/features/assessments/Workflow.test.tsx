@@ -72,7 +72,7 @@ it('retains a failed save and retries the exact request key and content', async 
   await screen.findByText(/This assessment changed. Your input is preserved/);
   expect(attempts).toHaveLength(2);
   expect(attempts[0]).toEqual(attempts[1]);
-  await user.click(screen.getByRole('button', { name: 'Reload and keep my input' }));
+  await user.click(screen.getByRole('button', { name: 'Reload' }));
   expect(screen.getByLabelText('Birth date for shared evidence')).toHaveValue('1990-01-01');
 });
 
@@ -145,7 +145,7 @@ it('keeps a conflicted draft when reload advances the automatic question (F06)',
   );
   await user.type(screen.getByLabelText('Birth date for shared evidence'), '1990-01-01');
   await user.click(screen.getByRole('button', { name: 'Save answer' }));
-  await user.click(await screen.findByRole('button', { name: 'Reload and keep my input' }));
+  await user.click(await screen.findByRole('button', { name: 'Reload' }));
   await waitFor(() =>
     expect(queryClient.getQueryData(['assessment-workflow', id])).toMatchObject({
       revision: changed.revision,
