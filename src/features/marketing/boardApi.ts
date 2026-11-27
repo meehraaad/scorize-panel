@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { api, ApiError } from '@/lib/api/client';
 import { hasPermission } from '@/lib/auth/roles';
 import type { SessionUser } from '@/lib/auth/session';
 import type { Face } from '@/lib/face/api';
@@ -173,11 +173,17 @@ export interface TypeFields {
   is_active?: boolean;
 }
 
-/** A refused move (409): `manager_only`, `needs` (with `missing`), `same`, `board`. */
+/** A refused move or new card (409): `manager_only`, `needs` (with `missing`), `limit` (the stage
+ *  is full), `same`, `board`. */
 export interface MoveRefusal {
   detail: string;
-  code: 'manager_only' | 'needs' | 'same' | 'board';
+  code: 'manager_only' | 'needs' | 'limit' | 'same' | 'board';
   missing: StageNeed[];
+}
+
+/** The refusal in a failed move or new card, if that is what it was. */
+export function refusalOf(error: unknown): MoveRefusal | null {
+  return error instanceof ApiError && error.status === 409 ? (error.body as MoveRefusal) : null;
 }
 
 export const boardQuery = queryOptions({
