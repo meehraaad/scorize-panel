@@ -13,6 +13,7 @@ import type { TasksConfig } from '../config';
 import { PersonRef } from './PersonRef';
 import { personLinkOf } from './personLink';
 import { DoneDialog } from './DoneDialog';
+import { useDone } from './useDone';
 import { RequestDialog } from './RequestDialog';
 import { TickButton } from './StatusMark';
 import { useDueLabel } from './due';
@@ -61,7 +62,7 @@ export function MyTasks({
   const f = useFormat();
   // Read once: the groups don't need to move while the page is open.
   const [now] = useState(() => Date.now());
-  const [done, setDone] = useState<MyTask | null>(null);
+  const { done, finish, close } = useDone();
   const [open, setOpen] = useState<number | null>(null);
 
   const date = day ? parseValue(day) : null;
@@ -101,7 +102,7 @@ export function MyTasks({
                 late={new Date(task.due_at).getTime() < now}
                 now={now}
                 config={config}
-                onDone={() => setDone(task)}
+                onDone={() => finish(task)}
                 onOpen={() => setOpen(task.id)}
               />
             ))}
@@ -129,7 +130,7 @@ export function MyTasks({
                   late={group === 'late'}
                   now={now}
                   config={config}
-                  onDone={() => setDone(task)}
+                  onDone={() => finish(task)}
                   onOpen={() => setOpen(task.id)}
                 />
               ))}
@@ -144,12 +145,7 @@ export function MyTasks({
           {doneToday !== null && <span>{t('mine.doneToday', { n: f.number(doneToday) })}</span>}
         </p>
       )}
-      <DoneDialog
-        key={done?.id ?? 'closed'}
-        task={done}
-        config={config}
-        onClose={() => setDone(null)}
-      />
+      <DoneDialog key={done?.id ?? 'closed'} task={done} config={config} onClose={close} />
       <RequestDialog
         key={open ?? 'none'}
         id={open}
