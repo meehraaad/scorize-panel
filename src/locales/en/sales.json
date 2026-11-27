@@ -437,8 +437,6 @@
       "noteLabel": "Note",
       "noTemplate": "The manager hasn't chosen a message for this stage yet.",
       "copy": "Copy message",
-      "copied": "Message copied.",
-      "copyFailed": "Could not copy. Select the text yourself.",
       "open": {
         "offer": "Send the offer from the customer's offer page.",
         "sell": "Sell or book a session from the customer's page.",
@@ -652,8 +650,6 @@
       },
       "note": "The answers the customer gave in the finder; it doesn't change their profile.",
       "copyLink": "Copy finder link",
-      "copied": "Finder link copied.",
-      "copyFailed": "Couldn't copy. Try again.",
       "chances": {
         "title": "Chance of admission by country",
         "for": "For {{degree}} · GPA {{gpa}}",
@@ -1094,7 +1090,6 @@
     "wallet": "Destination account (for receipts)",
     "sendFactor": "Text the invoice",
     "copyLink": "Copy payment link",
-    "copied": "Link copied",
     "factorOpened": "Invoice last sent {{when}} · the customer opened the link",
     "factorNotOpened": "Invoice last sent {{when}} · the customer hasn't opened the link",
     "paid": "Paid in full.",

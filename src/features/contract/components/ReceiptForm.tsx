@@ -1,6 +1,7 @@
-import { useEffect, useState, type SubmitEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { FileDrop, PickedFile } from '@/components/ui/Files';
 import { Notice } from '@/components/ui/Notice';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -130,21 +131,6 @@ export function ReceiptForm({
 /** A number to copy into the banking app (card, IBAN). */
 function CopyRow({ label, value }: { label: string; value: string }) {
   const { t } = useTranslation('contract');
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
-  }, [copied]);
-
-  const copy = () => {
-    void navigator.clipboard
-      .writeText(value.replace(/\s/g, ''))
-      .then(() => setCopied(true))
-      .catch(() => undefined);
-  };
-
   return (
     <div className="flex items-center gap-2.5 rounded-2xl bg-canvas px-3.5 py-3">
       <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -156,16 +142,10 @@ function CopyRow({ label, value }: { label: string; value: string }) {
           {value}
         </span>
       </span>
-      <Button
-        variant="outline"
-        className="flex-none px-3.5 text-[13px]"
-        aria-label={t('payment.receipt.copyLabel', { name: label })}
-        onClick={copy}
-      >
-        <span aria-live="polite">
-          {copied ? t('payment.receipt.copied') : t('payment.receipt.copy')}
-        </span>
-      </Button>
+      <CopyButton
+        text={value.replace(/\s/g, '')}
+        label={t('payment.receipt.copyLabel', { name: label })}
+      />
     </div>
   );
 }

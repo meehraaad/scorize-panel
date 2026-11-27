@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterTabs } from '@/components/ui/Filters';
 import { Icon } from '@/components/ui/Icon';
@@ -94,16 +95,8 @@ export default function CaseApplicationsPage() {
 function Logins({ credentials }: { credentials: Credential[] }) {
   const { t } = useTranslation('supervisor');
   const [shown, setShown] = useState<ReadonlySet<string>>(new Set());
-  const [copied, setCopied] = useState<string | null>(null);
 
   if (credentials.length === 0) return <EmptyState variant="card">{t('logins.empty')}</EmptyState>;
-
-  const copy = (item: Credential) => {
-    void navigator.clipboard
-      .writeText(item.value)
-      .then(() => setCopied(item.label))
-      .catch(() => setCopied(null));
-  };
 
   return (
     <Card aria-label={t('applications.view.logins')}>
@@ -136,20 +129,16 @@ function Logins({ credentials }: { credentials: Credential[] }) {
                     }
                   />
                 )}
-                <IconButton
-                  icon={copied === item.label ? 'check' : 'document'}
+                <CopyButton
+                  text={item.value}
                   tone="muted"
-                  aria-label={t('logins.copy', { label: item.label })}
-                  onClick={() => copy(item)}
+                  label={t('logins.copy', { label: item.label })}
                 />
               </dd>
             </div>
           );
         })}
       </dl>
-      <p aria-live="polite" className="sr-only">
-        {copied ? t('logins.copied', { label: copied }) : ''}
-      </p>
     </Card>
   );
 }

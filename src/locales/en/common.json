@@ -486,5 +486,9 @@
     "searching": "Searching…",
     "noMatch": "No colleague with this name.",
     "failed": "The search failed. Type again."
+  },
+  "copy": {
+    "copied": "Copied",
+    "failed": "Couldn't copy; select the text and copy it yourself"
   }
 }

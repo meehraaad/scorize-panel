@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, TextAreaField } from '@/components/ui/Choices';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { Dialog } from '@/components/ui/Dialog';
 import { Icon } from '@/components/ui/Icon';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
@@ -10,7 +11,6 @@ import { Switch } from '@/components/ui/Switch';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { useDisplayName } from '@/lib/i18n/useDisplayName';
-import { toast } from '@/lib/toast';
 import { fromLocalInput, quickWhen } from '@/lib/when';
 import type { BoardCard, BoardColumn, MoveSteps, StageActivity } from '../api';
 import { customerPath, salesPath } from '../paths';
@@ -258,22 +258,12 @@ export function EnterStageDialog({
             const text = render(template.text, card.name, seller);
             return section(
               <>
-                <p className="m-0 rounded-2xl bg-canvas px-3.5 py-3 text-sm leading-7 whitespace-pre-line">
-                  {text}
-                </p>
-                <Button
-                  variant="outline"
-                  className="self-start"
-                  onClick={() => {
-                    void navigator.clipboard
-                      .writeText(text)
-                      .then(() => toast.success(t('board.enter.copied')))
-                      .catch(() => toast.error(t('board.enter.copyFailed')));
-                  }}
-                >
-                  <Icon name="document" size={16} />
-                  {t('board.enter.copy')}
-                </Button>
+                <div className="flex items-start gap-1 rounded-2xl bg-canvas py-1 ps-3.5 pe-1">
+                  <p className="m-0 min-w-0 flex-1 py-2 text-sm leading-7 whitespace-pre-line">
+                    {text}
+                  </p>
+                  <CopyButton text={text} tone="muted" label={t('board.enter.copy')} />
+                </div>
               </>,
             );
           }

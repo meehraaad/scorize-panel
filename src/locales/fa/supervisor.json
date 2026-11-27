@@ -374,8 +374,7 @@
     "hidden": "••••••••",
     "show": "نمایش {{label}}",
     "hide": "پنهان کردن {{label}}",
-    "copy": "کپی {{label}}",
-    "copied": "{{label}} کپی شد"
+    "copy": "کپی {{label}}"
   },
   "activity": {
     "title": "فعالیت‌ها",

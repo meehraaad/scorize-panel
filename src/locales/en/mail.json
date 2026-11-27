@@ -143,7 +143,6 @@
     "title": "Password of {{address}}",
     "once": "This password is shown only this once. Send it to the applicant or keep it somewhere safe; the bot has its own copy.",
     "copy": "Copy password",
-    "copied": "Password copied",
     "new": "New password",
     "confirm": "Change the password of {{address}}? The old one stops working.",
     "confirmButton": "Make a new password",

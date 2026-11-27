@@ -374,8 +374,7 @@
     "hidden": "••••••••",
     "show": "Show {{label}}",
     "hide": "Hide {{label}}",
-    "copy": "Copy {{label}}",
-    "copied": "{{label}} copied"
+    "copy": "Copy {{label}}"
   },
   "activity": {
     "title": "Activity",
