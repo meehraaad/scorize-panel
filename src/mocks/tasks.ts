@@ -314,16 +314,16 @@ const COLLEAGUES: (Colleague & { panels: TasksPanel[] })[] = [
   { id: 13, name: 'پویا فرهادی', role: 'تیم مارکتینگ', panels: ['marketing'] },
 ];
 
-/** `GET tasks/colleagues/?search=&panel=`: by name, up to eight (Django `ColleagueSearchView`). */
+/**
+ * `GET tasks/colleagues/?search=&panel=`: by name, up to eight (Django `ColleagueSearchView`). Only a
+ * panel's admin searches here (their tasks go to any panel's people), so `panel` narrows nothing.
+ */
 export function colleaguesFound(request: Request) {
   const query = new URL(request.url).searchParams;
   const search = (query.get('search') ?? '').trim();
   if (search.length < 2) return HttpResponse.json({ search: ['too short'] }, { status: 400 });
-  const panel = query.get('panel') as TasksPanel | null;
   return HttpResponse.json(
-    COLLEAGUES.filter(
-      (person) => person.name.includes(search) && (!panel || person.panels.includes(panel)),
-    )
+    COLLEAGUES.filter((person) => person.name.includes(search))
       .slice(0, 8)
       .map(({ panels: _panels, ...person }) => ({
         ...person,

@@ -9,8 +9,8 @@ import { useDebouncedValue } from '@/lib/useDebouncedValue';
 
 /**
  * Pick colleagues by name (meeting0): nothing is loaded before typing. From two letters, after a
- * pause, the server sends up to eight (`panel`: only its people, whom its tasks may go to; without
- * it anyone active, a meeting's guest). The customer's own people (`suggested`) show on focus, before
+ * pause, the server sends up to eight active colleagues (`panel`: for its admin, whose tasks may go
+ * to anyone, every panel's people; without it anyone active, a meeting's guest). The customer's own people (`suggested`) show on focus, before
  * any typing. The picked ones are chips under the field; `multiple`: several, else one replaces the
  * other. An answer for an older search never shows (only the one for what is typed now).
  */
@@ -59,7 +59,7 @@ export function ColleagueSearch({
         : typed && search.isError
           ? t('colleagues.failed')
           : typed && found.length === 0
-            ? t(panel && panel !== 'staff' ? 'colleagues.noMatchPanel' : 'colleagues.noMatch')
+            ? t('colleagues.noMatch')
             : undefined;
 
   return (
