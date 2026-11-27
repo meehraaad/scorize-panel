@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { IconButton } from '@/components/ui/IconButton';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { Switch } from '@/components/ui/Switch';
@@ -162,12 +162,10 @@ function TagRow({ tag }: { tag: ManagerTag }) {
           }))}
         />
         {tag.customers === 0 && (
-          <IconButton
-            icon="trash"
-            tone="danger"
+          <ConfirmIconButton
             aria-label={t('manager.tags.delete', { name: tag.name })}
             disabled={remove.isPending}
-            onClick={() =>
+            onConfirm={() =>
               remove.mutate(tag.id, {
                 onSuccess: () => toast.success(t('manager.tags.deleted')),
                 onError: () => toast.error(t('error')),

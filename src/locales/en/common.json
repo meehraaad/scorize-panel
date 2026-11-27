@@ -487,6 +487,10 @@
     "noMatch": "No colleague with this name.",
     "failed": "The search failed. Type again."
   },
+  "confirm": {
+    "archive": "Yes, archive",
+    "delete": "Yes, delete"
+  },
   "copy": {
     "copied": "Copied",
     "failed": "Couldn't copy; select the text and copy it yourself"
