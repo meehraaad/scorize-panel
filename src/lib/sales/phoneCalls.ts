@@ -40,11 +40,17 @@ export const phoneCallsQuery = (owner: number) =>
     refetchInterval: (query) => {
       const error = query.state.error;
       if (error instanceof ApiError && [401, 403, 404].includes(error.status)) return false;
-      return query.state.data?.enabled === false ? 60_000 : 2000;
+      if (query.state.data?.enabled === false) return 60_000;
+      // A hidden tab still hears of calls, less often; coming back to it refetches at once (focus).
+      return typeof document !== 'undefined' && document.visibilityState === 'hidden'
+        ? 30_000
+        : 2000;
     },
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     retry: false,
+    // Changes every 2 s and is useless after a reload: not worth saving with the cache.
+    meta: { persist: false },
   });
 
 /**

@@ -1,6 +1,19 @@
 import type { ReactNode } from 'react';
 import { useDocumentTitle } from '@/lib/useDocumentTitle';
 
+// A Persian title with a Latin run in it (a name, «سلام Admin، ۱۷ کار …»): the Latin word, the comma and the digits
+// after it would form one left-to-right run, so the name and the number swap places. Each Latin run is isolated
+// (<bdi>), which leaves the text (accessible name, tab title) unchanged.
+const PERSIAN = /[\u0600-\u06FF]/;
+const LATIN_RUN = /([A-Za-z][\w.'-]*(?:\s+[A-Za-z][\w.'-]*)*)/;
+
+function isolateLatin(title: string): ReactNode {
+  if (!PERSIAN.test(title)) return title;
+  return title
+    .split(LATIN_RUN)
+    .map((part, index) => (index % 2 === 1 ? <bdi key={index}>{part}</bdi> : part));
+}
+
 interface PageHeaderProps {
   title: string;
   subtitle?: ReactNode;
@@ -29,7 +42,7 @@ export function PageHeader({
         <h1
           className={`m-0 leading-snug font-bold ${size === 'workspace' ? 'text-xl tracking-tight' : 'font-display text-xl lg:text-[32px]'}`}
         >
-          {title}
+          {isolateLatin(title)}
         </h1>
         {subtitle && (
           <p

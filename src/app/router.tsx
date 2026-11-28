@@ -300,7 +300,7 @@ const pageRoutes: RouteObject[] = [
               queryKey: ['assessment-management', 'viewer'],
               queryFn: async () => {
                 try {
-                  return await api<SessionUser>('/profile/auth/v1/whoami/');
+                  return await api<SessionUser>('/profile/auth/v1/whoami/?lean=1');
                 } catch (error) {
                   if (error instanceof ApiError && (error.status === 401 || error.status === 403))
                     return null;

@@ -13,7 +13,8 @@ export function useBulkLeads() {
   return useMutation({
     mutationFn: ({ ids, change }: { ids: number[]; change: BulkChange }) =>
       api(`${SALES_API}/leads/bulk/`, { method: 'POST', body: { ids, ...change } }),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 
@@ -21,6 +22,7 @@ export function useCreateLead() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: createLead,
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }

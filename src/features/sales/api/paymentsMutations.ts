@@ -37,7 +37,8 @@ export function usePaymentAction(customer: number) {
           });
       }
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }
 
@@ -69,6 +70,7 @@ export function useInstalmentReceipt() {
         messages,
       );
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }

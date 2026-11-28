@@ -61,7 +61,11 @@ export const loadWorkspacePage: WorkspaceLoader = async (page, { params }) => {
   const user = await queryClient.query({ ...sessionQuery, staleTime: 'static' });
   if (!user || !getRoles(user).includes('executive')) return null;
 
-  const workspace = await queryClient.query(workspaceQuery(id));
+  // A tab change doesn't wait for the network when this customer is already in the cache: the
+  // answer we have opens the tab, and a stale one is refreshed behind it (the page reads it too).
+  const options = workspaceQuery(id);
+  const workspace = await queryClient.query({ ...options, staleTime: 'static' });
+  void queryClient.query(options).catch(() => undefined);
   if (!workspace) return null;
   const file = workspace.case;
   if (file) {

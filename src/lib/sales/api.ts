@@ -68,6 +68,7 @@ export function useConfirmReceipt() {
         `/profile/staff/v1/users/${String(customer)}/payments/${String(payment)}/confirm_receipt/`,
         { method: 'PATCH' },
       ),
-    onSuccess: () => client.invalidateQueries({ queryKey: SALES_KEY }),
+    // Not awaited: the action is done when Django answers; the sales lists refresh behind it.
+    onSuccess: () => void client.invalidateQueries({ queryKey: SALES_KEY }),
   });
 }

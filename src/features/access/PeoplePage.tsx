@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
@@ -41,7 +41,11 @@ export default function PeoplePage() {
   const [search, setSearch] = useState('');
   const searched = useDebouncedValue(search.trim());
   const page = filter.page ?? 1;
-  const people = useQuery(peopleQuery({ ...filter, ...(searched ? { search: searched } : {}) }));
+  // Filters, search and paging keep the current rows until the new ones arrive (no skeleton flash).
+  const people = useQuery({
+    ...peopleQuery({ ...filter, ...(searched ? { search: searched } : {}) }),
+    placeholderData: keepPreviousData,
+  });
   const sections = useQuery(sectionsQuery);
   // Only to name the key the keys page linked here with.
   const keys = useQuery({ ...keysQuery(), enabled: Boolean(filter.key) });
