@@ -57,7 +57,9 @@ import { gzipSync } from 'node:zlib';
 // every panel reads, and icon buttons naming themselves in a tooltip (2026-11-27).
 // JS 201.2: main's personal call ratings under «من» (a route in the Me layout) merged with the
 // automation pass; CI (Node 24) measured 201.1, 200.9 locally (2026-11-28).
-const BUDGET_KB = { js: 201.2, css: 23.2 };
+// JS 201.5: the executive customer page's case-file links (#212) merged after the budget above;
+// 201.169 → 201.230 locally, CI (Node 24) measures ~0.2 more (2026-11-28).
+const BUDGET_KB = { js: 201.5, css: 23.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
