@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { resetFaces } from '@/mocks/face';
 import { renderApp } from '@/test/renderApp';
+import { withoutExecutivePanel } from '@/mocks/handlers';
 import '@/test/server';
 import { toasts } from '@/test/toasts';
 
@@ -54,6 +55,7 @@ describe("customer's emoji and color (S66)", () => {
   it('a supervisor sets it on the case', async () => {
     loginAs(MARYAM);
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // its case files open here only without it
     renderApp('/supervisor/files/1240');
     await user.click(await screen.findByRole('button', { name: 'تغییر ایموجی و رنگ سارا محمدی' }));
     const dialog = await screen.findByRole('dialog', { name: 'ایموجی و رنگ مشتری' });

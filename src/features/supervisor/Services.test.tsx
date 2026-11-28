@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
+import { withoutExecutivePanel } from '@/mocks/handlers';
 import '@/test/server';
 import { toasts } from '@/test/toasts';
 
@@ -23,6 +24,7 @@ describe('client services (SVC2)', () => {
 
   it('lists the case services and hands the visa to the visa team', async () => {
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // case files open here only without it
     renderApp('/supervisor/files/1240');
     const card = await screen.findByRole('region', { name: 'خدمت‌ها' });
     const rows = within(card).getAllByRole('listitem');
@@ -57,6 +59,7 @@ describe('client services (SVC2)', () => {
 
   it('opens a tab per service with its owner, stages and tool (SVC9)', async () => {
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // case files open here only without it
     renderApp('/supervisor/files/1240');
     const nav = await screen.findByRole('navigation', { name: 'خدمت‌های این پرونده' });
     await user.click(within(nav).getByRole('link', { name: /ویزا · کانادا/ }));
@@ -71,6 +74,7 @@ describe('client services (SVC2)', () => {
 
   it('an admission tab lists its country’s applications and adds one for that country', async () => {
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // case files open here only without it
     renderApp('/supervisor/files/1240/services/124001');
     const tool = await screen.findByRole('region', { name: 'اپلای‌های آلمان' });
     const before = within(tool).getAllByRole('row').length;
@@ -99,6 +103,7 @@ describe('client services (SVC2)', () => {
 
   it('moves a visa service to another stage and shows its visa results (SVC4)', async () => {
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // case files open here only without it
     renderApp('/supervisor/files/1240');
     const card = await screen.findByRole('region', { name: 'خدمت‌ها' });
     expect(within(card).getAllByText('مدارک ویزا')).toHaveLength(2);
@@ -178,6 +183,7 @@ describe('client services (SVC2)', () => {
   });
 
   it('shows the admission stage, read from the case, without a stage button (SVC6)', async () => {
+    withoutExecutivePanel(MARYAM); // case files open here only without it
     renderApp('/supervisor/files/1240');
     const card = await screen.findByRole('region', { name: 'خدمت‌ها' });
     expect(within(card).getAllByText('اپلای')).toHaveLength(2);
@@ -186,6 +192,7 @@ describe('client services (SVC2)', () => {
 
   it('records a visa result and the visa service moves on', async () => {
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // case files open here only without it
     renderApp('/supervisor/files/1240');
     const card = await screen.findByRole('region', { name: 'خدمت‌ها' });
     await user.click(within(card).getByRole('button', { name: 'مرحله‌ی ویزا · کانادا' }));
