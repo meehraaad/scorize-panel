@@ -250,6 +250,27 @@ describe('tasks page (sales panel)', () => {
     expect(sent).not.toHaveProperty('penalty');
   });
 
+  it('new task: the penalty key (not the admin’s) fines only this panel’s people', async () => {
+    const me = await api<Record<string, unknown>>('/profile/auth/v1/whoami/');
+    server.use(
+      http.get('/api/profile/auth/v1/whoami/', () =>
+        HttpResponse.json({ ...me, permissions: [{ codename: 'can_define_todo_penalty' }] }),
+      ),
+    );
+    const user = userEvent.setup();
+    await openTasks();
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
+    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'پست اینستاگرام را بررسی کن');
+    await user.type(within(dialog).getByRole('combobox', { name: 'همکار' }), 'مینا');
+    await user.click(await within(dialog).findByRole('option', { name: /مینا صادقی/ }));
+    await user.click(within(dialog).getByRole('switch', { name: /جریمه/ }));
+    await user.click(within(dialog).getByRole('button', { name: /^فرستادن به/ }));
+    expect(await screen.findByText(/جریمه فقط برای همکاران همین پنل است/)).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'کار تازه' })).toBeInTheDocument();
+  });
+
   it('new task: «از تقویم» picks its time on the seller’s week', async () => {
     // Tuesday 5 Aban 1405, noon.
     vi.useFakeTimers({ now: new Date(2026, 9, 27, 12, 0), toFake: ['Date'] });

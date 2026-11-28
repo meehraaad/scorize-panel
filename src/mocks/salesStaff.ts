@@ -44,7 +44,13 @@ import { customerTemplates } from './messages';
 import { tagsOfCustomer } from './salesTags';
 import { forbidden, notFound, pageOf, storage } from './session';
 import { canEditContactNote, contactNoteRow } from './staff';
-import { colleaguesFound, overviewOf, summaryOf as tasksSummaryOf, taskListOf } from './tasks';
+import {
+  colleaguesFound,
+  overviewOf,
+  penaltyRefused,
+  summaryOf as tasksSummaryOf,
+  taskListOf,
+} from './tasks';
 
 /**
  * The sales panel's endpoints (`/api/sales/v1/` S11–S22, `/api/staff/v1/tasks/` for sales staff),
@@ -583,7 +589,7 @@ export const salesStaffHandlers = [
   http.post(`${TASKS}/`, async ({ request }) => {
     if (!isSeller()) return undefined;
     const task = (await request.clone().json()) as NewTask;
-    return answer(() => createTask(task).then(() => ({ id: 1 })), 201);
+    return penaltyRefused(task) ?? answer(() => createTask(task).then(() => ({ id: 1 })), 201);
   }),
   http.post(`${TASKS}/:id/:action/`, async ({ params, request }) => {
     if (!isSeller() || ['remind', 'reassign'].includes(String(params.action))) return undefined;
