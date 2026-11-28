@@ -51,8 +51,9 @@ const isMineList = (queryKey: readonly unknown[]) =>
   queryKey[0] === TASKS_KEY[0] && queryKey[2] === 'list' && queryKey[3] === 'mine';
 
 /**
- * Everything done to a task from the tasks page (T3–T8). A task marked done leaves "my tasks" at
- * once (optimistic); the lists come back as they were if the server refuses.
+ * Everything done to a task from the tasks page (T3–T8). A task marked done (with an outcome, or
+ * simply) leaves "my tasks" at once (optimistic); the lists come back as they were if the server
+ * refuses.
  */
 export function useTaskChange() {
   const client = useQueryClient();
@@ -62,7 +63,8 @@ export function useTaskChange() {
       return api(`${TASKS_API}/${String(id)}/${CHANGE_PATH[kind]}/`, { method: 'POST', body });
     },
     onMutate: async ({ id, change }) => {
-      if (change.kind !== 'done') return undefined;
+      if (change.kind !== 'done' && !(change.kind === 'status' && change.status === 'done'))
+        return undefined;
       const filters = {
         predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => isMineList(queryKey),
       };

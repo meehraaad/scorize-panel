@@ -8,7 +8,7 @@ import { TextField } from '@/components/ui/TextField';
 import { fieldErrors } from '@/lib/api/fieldErrors';
 import { toast } from '@/lib/toast';
 import { useUser } from '@/lib/auth/session';
-import { ownerChoices, useNewCard, type BoardData } from '../boardApi';
+import { ownerChoices, refusalOf, useNewCard, type BoardData } from '../boardApi';
 
 const NONE = 'none';
 
@@ -53,7 +53,8 @@ export default function NewCardDialog({
         },
         onError: (error) => {
           setErrors(fieldErrors(error));
-          if (Object.keys(fieldErrors(error)).length === 0) toast.error(t('card.error'));
+          if (refusalOf(error)?.code === 'limit') toast.error(t('board.full'));
+          else if (Object.keys(fieldErrors(error)).length === 0) toast.error(t('card.error'));
         },
       },
     );

@@ -131,7 +131,7 @@
     "paidAt": "Paid on",
     "amount": "Amount to pay",
     "redirecting": "Going to the payment gateway…",
-    "toReceipt": "Pay by card transfer and upload the receipt",
+    "toReceipt": "Pay by card transfer",
     "gateway": "Paid through a secure bank gateway",
     "onlineError": "Couldn't reach the payment gateway. Try again in a moment.",
     "declined": {
@@ -144,9 +144,7 @@
       "subtitle": "Transfer the amount to the account below and upload the receipt.",
       "card": "Card number",
       "iban": "IBAN (Sheba)",
-      "copy": "Copy",
       "copyLabel": "Copy {{name}}",
-      "copied": "Copied",
       "holder": "Account holder:",
       "file": "Receipt file",
       "choose": "Choose the receipt file",

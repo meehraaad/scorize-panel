@@ -55,10 +55,14 @@ describe('marketing panel', () => {
     expect(await within(own).findByText('تلگرام')).toBeInTheDocument();
     expect(await toasts().findByText('منبع اضافه شد.')).toBeInTheDocument();
 
-    // Unused: deleted. Used: archived instead.
+    // Unused: deleted. Used: archived instead. Each asks once first.
     await user.click(within(own).getByRole('button', { name: 'حذف منبع تلگرام' }));
+    await user.click(within(own).getByRole('button', { name: 'حذف منبع تلگرام: بله، حذف' }));
     await waitFor(() => expect(within(own).queryByText('تلگرام')).toBeNull());
     await user.click(within(own).getByRole('button', { name: 'بایگانی منبع اینستاگرام' }));
+    await user.click(
+      within(own).getByRole('button', { name: 'بایگانی منبع اینستاگرام: بله، بایگانی' }),
+    );
     expect(
       await toasts().findByText('لیدهایی این منبع را دارند، پس بایگانی شد.'),
     ).toBeInTheDocument();

@@ -12,6 +12,8 @@ import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField, TextAreaField, TogglePill } from '@/components/ui/Choices';
 import { Chip, StatusText } from '@/components/ui/Chip';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -146,14 +148,16 @@ export default function ComponentsPage() {
             </Button>
             <IconButton icon="pen" aria-label="ویرایش" />
             <IconButton icon="trash" tone="danger" aria-label="حذف" />
+            <ConfirmIconButton aria-label="حذف با تأیید" onConfirm={() => undefined} />
+            <CopyButton text="IR120000000000000000000001" label="کپی شبا" />
             <IconLink icon="download" href="#" aria-label="دانلود" />
           </div>
           <Dock label="دسترسی سریع (Dock)" className="self-start">
-            <IconLink icon="whatsapp" tone="whatsapp" href="#" aria-label="واتساپ" tip="واتساپ" />
-            <IconButton icon="telegram" tone="telegram" aria-label="تلگرام" tip="تلگرام" />
+            <IconLink icon="whatsapp" tone="whatsapp" href="#" aria-label="واتساپ" />
+            <IconButton icon="telegram" tone="telegram" aria-label="تلگرام" />
             <DockDivider />
-            <IconButton icon="copy" aria-label="کپی" tip="کپی" />
-            <IconButton icon="check" tone="done" aria-label="کپی شد" tip="کپی شد" />
+            <IconButton icon="copy" aria-label="کپی" />
+            <IconButton icon="check" tone="done" aria-label="کپی شد" />
           </Dock>
           <div className="flex flex-wrap items-center gap-2 rounded-3xl p-4 shadow-luxe bg-luxe">
             <Button variant="gold">طلایی (gold)</Button>

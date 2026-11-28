@@ -121,9 +121,7 @@ it('keeps unsaved input across a tab conflict and refreshes the revision', async
   await user.click(area.getByText('Study', { exact: true }));
   await user.click(area.getByRole('button', { name: 'Save Migration goals' }));
   await area.findByText(/The assessment or reference catalog changed/);
-  await user.click(
-    area.getByRole('button', { name: 'Discard pending request and reload its status' }),
-  );
+  await user.click(area.getByRole('button', { name: 'Discard the request' }));
   await waitFor(() =>
     expect(area.getByRole('button', { name: 'Save Migration goals' })).toBeEnabled(),
   );

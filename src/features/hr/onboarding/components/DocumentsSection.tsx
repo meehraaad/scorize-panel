@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
 import { FileDrop, FileTile } from '@/components/ui/Files';
-import { IconButton } from '@/components/ui/IconButton';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { checkFile, extensionOf, type FileProblem, type FileRule } from '@/lib/files';
 import { toast } from '@/lib/toast';
@@ -105,12 +105,10 @@ function KindFiles({
           href={file.url ?? ''}
           meta={t('onboarding.file.open')}
           actions={
-            <IconButton
-              icon="trash"
-              iconSize={18}
+            <ConfirmIconButton
               aria-label={t('onboarding.file.remove', { name: file.name })}
               disabled={remove.isPending}
-              onClick={() =>
+              onConfirm={() =>
                 remove.mutate(file.id, {
                   onSuccess: () => toast.success(t('onboarding.file.removed')),
                   // A 404 or 409: the form changed elsewhere, and the mutation says so.

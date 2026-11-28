@@ -32,6 +32,7 @@ import { queryClient } from '@/lib/api/queryClient';
 import { START_PATH, loginHref, sessionQuery } from '@/lib/auth/session';
 import { lazyPage, prefetchQueries } from '@/lib/router/lazyPage';
 import { setPreloadRoutes } from '@/lib/router/preload';
+import { callRatingsQuery } from '@/lib/sales/callRatings';
 import { toPathways } from '@/panels/pathwayRoutes';
 import { writerRedirects } from '@/panels/executive/writing';
 import { PANELS, canOpen, panelsFor, preferredPanel, startTarget } from '@/panels/registry';
@@ -62,6 +63,11 @@ const CHOOSE_PATH = '/choose';
 
 // Loaders run in parallel, so each one asks for the session; React Query sends a single request.
 const currentUser = () => queryClient.query({ ...sessionQuery, staleTime: 'static' });
+
+async function sellerOnlyInMe() {
+  const user = await currentUser();
+  return user && getRoles(user).includes('sales') ? null : redirect('/me');
+}
 
 /** A new hire whose form is still theirs to fill (whoami OB5): it opens first after login. */
 const hasOpenForm = (user: SessionUser) =>
@@ -229,7 +235,7 @@ const pageRoutes: RouteObject[] = [
             ...lazyPage(() => import('@/features/settings/SettingsPage'), [], { skeleton: 'form' }),
           },
           {
-            // A staff member's own pages: KPIs and pay, and a seller's sales month.
+            // A staff member's own pages: KPIs and pay, plus sales performance and call ratings.
             path: 'me',
             Component: MeLayout,
             children: [
@@ -254,10 +260,15 @@ const pageRoutes: RouteObject[] = [
                 // No data on open: the month is read only after the seller types their password.
                 ...lazyPage(() => import('@/features/sales/MonthPage'), ['sales'], {
                   skeleton: 'form',
-                  guard: async () => {
-                    const user = await currentUser();
-                    return user && getRoles(user).includes('sales') ? null : redirect('/me');
-                  },
+                  guard: sellerOnlyInMe,
+                }),
+              },
+              {
+                path: 'call-ratings',
+                ...lazyPage(() => import('@/features/sales/CallRatingsPage'), ['sales'], {
+                  data: () => [callRatingsQuery('mine')],
+                  skeleton: 'list',
+                  guard: sellerOnlyInMe,
                 }),
               },
             ],

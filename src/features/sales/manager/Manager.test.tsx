@@ -312,7 +312,7 @@ describe('sales manager section', () => {
     await user.click(screen.getByRole('button', { name: 'بازگرداندن به فروشنده' }));
     expect(screen.getByText('برای بازگرداندن یا رد، توضیح بنویسید.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'تأیید و ارسال به پنل مشتری' }));
+    await user.click(screen.getByRole('button', { name: 'تأیید و ارسال' }));
     expect(
       await screen.findByRole('heading', { name: 'پیش‌نویسی منتظر نیست' }),
     ).toBeInTheDocument();
@@ -340,9 +340,7 @@ describe('sales manager section', () => {
     await user.type(within(clauses).getByLabelText('عنوان ماده'), 'بورسیه');
     await user.type(within(clauses).getByLabelText('متن بند'), 'با بورسیه، قسط آخر ۱۰٪ کمتر.');
     await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
-    await user.click(
-      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'ارسال برای تأیید مدیر' }));
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
 
     cleanup();
@@ -370,9 +368,7 @@ describe('sales manager section', () => {
     await user.clear(applies);
     await user.type(applies, '4');
     await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
-    await user.click(
-      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'ارسال برای تأیید مدیر' }));
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
 
     cleanup();
@@ -1028,9 +1024,7 @@ describe('contract builder and agreement desk (S64)', () => {
     const preview = await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' });
     expect(within(preview).getByText('15')).toBeInTheDocument();
     expect(within(preview).getAllByText('عرفان ملکی').length).toBeGreaterThan(1); // the parties and the clause
-    await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'ارسال برای تأیید مدیر' }));
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
     server.events.removeListener('request:start', listen);
     const body = posts.at(-1) as { variables: Record<string, string>; clauses: unknown[] };
@@ -1108,9 +1102,7 @@ describe('office phone hours', () => {
     const week = await screen.findByRole('region', { name: 'ساعت پاسخ‌گویی' });
     await user.click(within(week).getByRole('button', { name: 'ساعت‌های یکشنبه' }));
     await user.selectOptions(within(week).getByLabelText('یکشنبه، از ساعت'), '09:00');
-    await user.click(
-      within(week).getByRole('button', { name: 'همین ساعت‌ها برای همه‌ی روزهای باز' }),
-    );
+    await user.click(within(week).getByRole('button', { name: 'برای همه‌ی روزها' }));
     expect(within(week).getByRole('switch', { name: /^دوشنبه/ })).toHaveAccessibleName(
       /۰۹:۰۰–۱۹:۰۰/,
     );

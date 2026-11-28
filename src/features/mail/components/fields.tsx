@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { IconButton } from '@/components/ui/IconButton';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -136,7 +137,6 @@ export function ApplicantPicker({
 /** A password answered once: shown with a copy button and the warning that it won't be again. */
 export function PasswordReveal({ password }: { password: string }) {
   const { t } = useTranslation('mail');
-  const [copied, setCopied] = useState(false);
   return (
     <div className="flex flex-col gap-2 rounded-2xl bg-warn-tint p-4">
       <p className="m-0 text-sm leading-7 text-warn">{t('password.once')}</p>
@@ -147,21 +147,8 @@ export function PasswordReveal({ password }: { password: string }) {
         >
           {password}
         </code>
-        <IconButton
-          icon={copied ? 'check' : 'document'}
-          tone="muted"
-          aria-label={t('password.copy')}
-          onClick={() => {
-            void navigator.clipboard
-              .writeText(password)
-              .then(() => setCopied(true))
-              .catch(() => setCopied(false));
-          }}
-        />
+        <CopyButton text={password} tone="muted" label={t('password.copy')} />
       </div>
-      <p aria-live="polite" className="sr-only">
-        {copied ? t('password.copied') : ''}
-      </p>
     </div>
   );
 }

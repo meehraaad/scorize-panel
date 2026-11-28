@@ -58,7 +58,7 @@ it('keeps the same start request for an uncertain network retry', async () => {
   );
   const { user, guide } = await open();
   await user.click(await guide.findByRole('button', { name: 'Start or resume guided questions' }));
-  await user.click(await guide.findByRole('button', { name: 'Retry the same interview request' }));
+  await user.click(await guide.findByRole('button', { name: 'Try again' }));
   await waitFor(() => expect(requests).toHaveLength(2));
   expect(requests[1]).toEqual(requests[0]);
 });
@@ -104,7 +104,7 @@ it('refreshes both interview revision and guidance after an external revision co
   );
   const { user, guide } = await open();
   await user.click(await guide.findByRole('button', { name: 'Start or resume guided questions' }));
-  await guide.findByRole('button', { name: 'Retry the same interview request' });
+  await guide.findByRole('button', { name: 'Try again' });
   await user.click(guide.getByRole('button', { name: 'Refresh interview guidance' }));
   await waitFor(() =>
     expect(guide.getByRole('button', { name: 'Start or resume guided questions' })).toBeEnabled(),

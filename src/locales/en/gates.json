@@ -51,11 +51,9 @@
     "show": "Show",
     "hide": "Hide",
     "copy": "Copy {{name}}",
-    "copied": "Copied",
     "next": "We're here for your next degree too",
     "nextText": "Share your experience with friends, or book a consultation for your PhD.",
     "consult": "Book a consultation for your next degree",
-    "copyShort": "Copy",
     "support": "Questions? Email <email>{{email}}</email>."
   },
   "nps": {

@@ -161,9 +161,7 @@ it('refreshes both comparison and interview context after another tab changes re
   );
   await user.click(area.getByRole('button', { name: 'Save comparison routes' }));
   await area.findByText(/Answers, sources or versions changed/);
-  await user.click(
-    area.getByRole('button', { name: 'Discard pending request and reload its status' }),
-  );
+  await user.click(area.getByRole('button', { name: 'Discard the request' }));
   await waitFor(() =>
     expect(area.getByRole('button', { name: 'Save comparison routes' })).toBeEnabled(),
   );

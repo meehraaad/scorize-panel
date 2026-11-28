@@ -39,6 +39,12 @@ describe('sales panel, seller pages', () => {
     loginAs(NIMA);
   });
 
+  it('redirects the old call ratings address to Me', async () => {
+    const router = renderApp('/sales/call-ratings');
+    expect(await screen.findByRole('heading', { name: 'امتیاز تماس‌های من' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/me/call-ratings');
+  });
+
   it('today: the next person, then the whole day in one timetable', async () => {
     const user = userEvent.setup();
     renderApp('/sales');
@@ -197,7 +203,7 @@ describe('sales panel, seller pages', () => {
     const dialog = await screen.findByRole('dialog', { name: 'ثبت لید دستی' });
     await user.type(within(dialog).getByLabelText('نام'), 'رضا');
     await user.type(within(dialog).getByLabelText('شماره‌ی موبایل'), '0912 000 1234');
-    await user.click(screen.getByRole('button', { name: 'ثبت و باز کردن صفحه‌ی مشتری' }));
+    await user.click(screen.getByRole('button', { name: 'ثبت و باز کردن' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'رضا' })).toBeInTheDocument();
     expect(router.state.location.pathname).toMatch(/^\/sales\/customers\/\d+$/);
   });

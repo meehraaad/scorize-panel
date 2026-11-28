@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { SelectField, TogglePill } from '@/components/ui/Choices';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Notice } from '@/components/ui/Notice';
 import { PageStack } from '@/components/ui/PageColumns';
@@ -172,15 +173,13 @@ function People({ data }: { data: ScopesData }) {
                             )
                           }
                         />
-                        <Button
-                          variant="danger"
-                          className="h-11 px-3 text-sm"
+                        <ConfirmIconButton
                           aria-label={t('scopes.people.remove', {
                             name: person.name,
                             scope: label,
                           })}
                           disabled={remove.isPending}
-                          onClick={() =>
+                          onConfirm={() =>
                             remove.mutate(scope.id, {
                               onSuccess: () =>
                                 toast.success(
@@ -189,9 +188,7 @@ function People({ data }: { data: ScopesData }) {
                               onError: () => toast.error(t('saveError')),
                             })
                           }
-                        >
-                          {t('scopes.people.removeShort')}
-                        </Button>
+                        />
                       </li>
                     );
                   })}

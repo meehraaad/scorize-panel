@@ -321,7 +321,7 @@
       "phone": "Mobile number",
       "note": "Where did they come from?",
       "notePlaceholder": "E.g. referred by a former applicant",
-      "save": "Add and open the customer page",
+      "save": "Add and open",
       "phoneInvalid": "That mobile number isn't valid (09…).",
       "phoneExists": "This number is already registered.",
       "nameRequired": "Enter a first name."
@@ -437,8 +437,6 @@
       "noteLabel": "Note",
       "noTemplate": "The manager hasn't chosen a message for this stage yet.",
       "copy": "Copy message",
-      "copied": "Message copied.",
-      "copyFailed": "Could not copy. Select the text yourself.",
       "open": {
         "offer": "Send the offer from the customer's offer page.",
         "sell": "Sell or book a session from the customer's page.",
@@ -652,8 +650,6 @@
       },
       "note": "The answers the customer gave in the finder; it doesn't change their profile.",
       "copyLink": "Copy finder link",
-      "copied": "Finder link copied.",
-      "copyFailed": "Couldn't copy. Try again.",
       "chances": {
         "title": "Chance of admission by country",
         "for": "For {{degree}} · GPA {{gpa}}",
@@ -1094,7 +1090,6 @@
     "wallet": "Destination account (for receipts)",
     "sendFactor": "Text the invoice",
     "copyLink": "Copy payment link",
-    "copied": "Link copied",
     "factorOpened": "Invoice last sent {{when}} · the customer opened the link",
     "factorNotOpened": "Invoice last sent {{when}} · the customer hasn't opened the link",
     "paid": "Paid in full.",
@@ -1351,8 +1346,8 @@
         "text": "With the first instalment paid, the file goes to a supervisor"
       }
     },
-    "submit": "Send the contract draft for approval",
-    "send": "Send only the offer to the customer (SMS and WhatsApp)",
+    "submit": "Send for approval",
+    "send": "Send the offer only",
     "save": "Save draft",
     "incomplete": "Pick at least one service and one country.",
     "done": {
@@ -1563,7 +1558,7 @@
       "comment": "Note for the seller (required to return or reject)",
       "commentPlaceholder": "E.g. bring the discount to 10% and send it again",
       "commentRequired": "Write a note to return or reject.",
-      "approve": "Approve and send to the customer's panel",
+      "approve": "Approve and send",
       "return": "Return to the seller",
       "reject": "Reject {{name}}'s draft",
       "conflict": "Not approved: this customer has an open contract or the offer's terms no longer hold. See the checks or return it to the seller.",
@@ -2219,7 +2214,7 @@
       "editDay": "Hours of {{day}}",
       "directFrom": "{{day}}, direct calls from",
       "directTo": "{{day}}, direct calls until",
-      "copyToAll": "Use these hours for every open day",
+      "copyToAll": "Use for every day",
       "copied": "Hours of {{day}} set for every open day; remember to save",
       "unsaved": "Changes not saved yet",
       "allSaved": "Everything is saved",

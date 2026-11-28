@@ -85,7 +85,6 @@
         "calendar": "My calendar",
         "leads": "Customers",
         "tasks": "My tasks",
-        "callRatings": "My call ratings",
         "manager": "Sales management"
       },
       "tabs": {
@@ -467,6 +466,7 @@
     "nav": "My sections",
     "pay": "Score and pay",
     "sales": "Sales performance",
+    "callRatings": "My call ratings",
     "onboarding": "Personal details form"
   },
   "passwordGate": {
@@ -486,5 +486,13 @@
     "searching": "Searching…",
     "noMatch": "No colleague with this name.",
     "failed": "The search failed. Type again."
+  },
+  "confirm": {
+    "archive": "Yes, archive",
+    "delete": "Yes, delete"
+  },
+  "copy": {
+    "copied": "Copied",
+    "failed": "Couldn't copy; select the text and copy it yourself"
   }
 }

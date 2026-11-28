@@ -80,7 +80,7 @@ export const hrPanel: PanelDefinition = {
   path: 'hr',
   name: 'panels.hr.name',
   description: 'panels.hr.description',
-  icon: 'user',
+  icon: 'users',
   tone: 'info',
   navLabel: 'panels.hr.nav.label',
   navigation: [

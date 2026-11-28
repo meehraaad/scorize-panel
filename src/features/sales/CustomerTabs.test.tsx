@@ -290,12 +290,8 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
     await user.click(screen.getByRole('button', { name: 'بعدی: متن و متغیرها' }));
     await user.click(await screen.findByRole('button', { name: 'بعدی: پیش‌نمایش و ارسال' }));
     expect(await screen.findByRole('region', { name: 'پیش‌نمایش قرارداد' })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'فقط ارسال پیشنهاد به مشتری (پیامک و واتساپ)' }),
-    ).toBeDisabled();
-    await user.click(
-      screen.getByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    );
+    expect(screen.getByRole('button', { name: 'فقط ارسال پیشنهاد' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'ارسال برای تأیید مدیر' }));
     await screen.findByRole('heading', { level: 1, name: 'عرفان ملکی' });
     expect(router.state.location.pathname).toBe(ERFAN);
   });
@@ -327,9 +323,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
 
     // On the last step the send button follows the same rule.
     await user.click(screen.getByRole('button', { name: 'رفتن به «پیش‌نمایش و ارسال»' }));
-    expect(
-      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    ).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'ارسال برای تأیید مدیر' })).toBeEnabled();
   });
 
   it('new contract: the seller picks a kind on the customer page, then builds it step by step (S71)', async () => {
@@ -362,9 +356,7 @@ describe('sales panel, customer sub-tabs, sale and offer', () => {
   it('the summary shows the contract on its way, and the chooser offers to continue it (S71)', async () => {
     const user = userEvent.setup();
     renderApp(`${ERFAN}/offer?step=4`);
-    await user.click(
-      await screen.findByRole('button', { name: 'ارسال پیش‌نویس قرارداد برای تأیید مدیر' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'ارسال برای تأیید مدیر' }));
     const card = await screen.findByRole('region', { name: 'قرارداد · قرارداد استاندارد' });
     expect(within(card).getByText('منتظر تأیید مدیر')).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: 'پیش‌نمایش' })).toHaveAttribute(

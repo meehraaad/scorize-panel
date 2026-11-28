@@ -412,6 +412,41 @@ describe('tasks page, server refuses', () => {
     expect(await screen.findByText(text)).toBeInTheDocument();
   });
 
+  it('a task about no one (a card step, a checklist step) is simply done, with no outcome to ask', async () => {
+    const user = userEvent.setup();
+    const task: MyTask = {
+      id: 9002,
+      text: 'نوشتن کپشن · ریلز آلمان',
+      due_at: new Date().toISOString(),
+      timed: false,
+      person: null,
+      source: 'system',
+      snoozed: 0,
+      step: null,
+      action: 'call',
+      note: '',
+      suggested_next: '',
+      follow_up: false,
+      receipt: null,
+      penalty: false,
+    };
+    const sent: unknown[] = [];
+    server.use(
+      http.get('/api/staff/v1/tasks/lists/mine/', () =>
+        HttpResponse.json({ count: 1, page_size: 20, next: null, previous: null, results: [task] }),
+      ),
+      http.post('/api/staff/v1/tasks/9002/status/', async ({ request }) => {
+        sent.push(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    await openTasks();
+    await user.click(await screen.findByRole('button', { name: `انجام شد: ${task.text}` }));
+    expect(screen.queryByRole('dialog', { name: 'پیگیری انجام شد' })).toBeNull();
+    await waitFor(() => expect(sent).toEqual([{ status: 'done' }]));
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+  });
+
   describe('S79: a meeting at the office is the follow-up', () => {
     const flags = ON_SERVER as { visitFollowUp: boolean };
     beforeEach(() => {

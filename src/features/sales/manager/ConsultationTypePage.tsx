@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router';
 import { BackLink } from '@/components/ui/BackLink';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup, SelectField } from '@/components/ui/Choices';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { LazyDatePicker } from '@/components/ui/LazyDatePicker';
@@ -815,12 +816,10 @@ function Closures({ item }: { item: ConsultationTypeRow }) {
                         : t('manager.consultations.closures.allDay')}
                     </span>
                   </span>
-                  <IconButton
-                    icon="trash"
-                    tone="danger"
+                  <ConfirmIconButton
                     aria-label={t('manager.consultations.closures.remove', { day: label })}
                     disabled={remove.isPending}
-                    onClick={() =>
+                    onConfirm={() =>
                       remove.mutate(closure.id, {
                         onSuccess: () => toast.success(t('manager.consultations.closures.removed')),
                         onError: () => toast.error(t('error')),

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { SelectField } from '@/components/ui/Choices';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Dialog } from '@/components/ui/Dialog';
 import { FileDrop, FileTile } from '@/components/ui/Files';
@@ -448,15 +449,13 @@ function CardForm({
             href={card.file}
             meta={t('card.openFile')}
             actions={
-              <Button
-                variant="outline"
+              <ConfirmIconButton
+                aria-label={t('card.removeFile')}
                 disabled={removeFile.isPending}
-                onClick={() =>
+                onConfirm={() =>
                   removeFile.mutate(card.id, { onError: () => toast.error(t('card.error')) })
                 }
-              >
-                {t('card.removeFile')}
-              </Button>
+              />
             }
           />
         ) : (

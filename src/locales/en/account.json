@@ -4,7 +4,7 @@
   "notifications": {
     "title": "Notifications",
     "new": "{{n}} new",
-    "readAll": "Mark all as read",
+    "readAll": "Mark all read",
     "older": "Older notifications",
     "loading": "Loading…",
     "empty": "Case updates, ticket replies and reminders show up here.",

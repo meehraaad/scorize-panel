@@ -52,7 +52,7 @@ it('preserves unsaved input after a revision conflict and blocks recording it', 
   await screen.findByText(/The session changed/);
   expect(screen.getByLabelText('Birth date')).toHaveValue('1996-11-12');
   expect(screen.getByRole('button', { name: 'Record draft result' })).toBeDisabled();
-  await user.click(screen.getByRole('button', { name: 'Reload revision and keep input' }));
+  await user.click(screen.getByRole('button', { name: 'Reload' }));
   expect(screen.getByLabelText('Birth date')).toHaveValue('1996-11-12');
 });
 

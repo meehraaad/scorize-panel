@@ -68,7 +68,7 @@ it('preserves unrelated program edits and blocks recording until they are saved 
   expect(area.getByLabelText('Synthetic age')).toHaveValue(31);
   expect(screen.getByRole('button', { name: 'Record this destination shortlist' })).toBeDisabled();
   expect(screen.getByLabelText('Answer status — Migration goals')).toBeDisabled();
-  await user.click(screen.getByRole('button', { name: 'Discard all unsaved program answers' }));
+  await user.click(screen.getByRole('button', { name: 'Discard all changes' }));
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Record this destination shortlist' })).toBeEnabled(),
   );
@@ -77,11 +77,9 @@ it('retains an invalid blank numeric answer after a controlled 400 and allows an
   const { user, area } = await open();
   await user.selectOptions(area.getByLabelText('Answer status — Synthetic age'), 'known');
   await user.click(area.getByRole('button', { name: 'Save program answer — Synthetic age' }));
-  await screen.findByRole('button', { name: 'Discard pending request and reload its status' });
+  await screen.findByRole('button', { name: 'Discard the request' });
   expect(area.getByLabelText('Synthetic age')).toHaveValue(null);
-  await user.click(
-    screen.getByRole('button', { name: 'Discard pending request and reload its status' }),
-  );
+  await user.click(screen.getByRole('button', { name: 'Discard the request' }));
   await waitFor(() => expect(area.getByLabelText('Synthetic age')).toBeEnabled());
   await user.type(area.getByLabelText('Synthetic age'), '30');
   await user.click(area.getByRole('button', { name: 'Save program answer — Synthetic age' }));
