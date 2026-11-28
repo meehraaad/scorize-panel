@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
+import { withoutExecutivePanel } from '@/mocks/handlers';
 import '@/test/server';
 import { toasts } from '@/test/toasts';
 
@@ -174,6 +175,7 @@ describe('a case bot settings', () => {
 
   it('changes the sending hours inside the rules', async () => {
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // its case files open here only without it
     renderApp('/supervisor/files/1240/applications');
     await user.click(await screen.findByRole('button', { name: 'تنظیمات ربات' }));
     const dialog = await screen.findByRole('dialog', { name: 'تنظیمات ربات ایمیل' });
@@ -191,6 +193,7 @@ describe('a case bot settings', () => {
 
   it('resumes a bot that paused itself for bounces', async () => {
     const user = userEvent.setup();
+    withoutExecutivePanel(MARYAM); // its case files open here only without it
     renderApp('/supervisor/files/1215/applications');
     expect(await screen.findByText(/خودش متوقف شد/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'ادامه‌ی ارسال' }));

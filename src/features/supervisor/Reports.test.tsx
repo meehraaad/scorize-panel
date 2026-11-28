@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
+import { withoutExecutivePanel } from '@/mocks/handlers';
 import '@/test/server';
 
 const MARYAM = 2; // supervisor (src/mocks/supervisor.ts)
@@ -12,6 +13,8 @@ describe('supervisor reports and CSV import', () => {
     localStorage.clear();
     await i18n.changeLanguage('fa');
     localStorage.setItem('scorize.mock.session', String(MARYAM));
+    // Her case files open here only without the executive panel (panels/supervisor/toExecutive.ts).
+    withoutExecutivePanel(MARYAM);
   });
 
   it('reports the month: numbers, chart, countries, follow-ups', async () => {

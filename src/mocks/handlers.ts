@@ -241,6 +241,9 @@ const login = (user: MockUser) => {
 };
 
 const AUTH = '/profile/authentication';
+// Each account's executive panel flag as seeded, put back after a test changes it.
+const executivePanels = new Map(users.map((user) => [user.id, user.executive_panel]));
+
 export const handlers = [
   ...boardHandlers,
   ...assessmentHandlers,
@@ -457,7 +460,12 @@ export function resetMockSession() {
   resetActivityMocks();
   storage.set(null);
   flow = null;
-  for (const user of users) Object.assign(user, workspace());
+  for (const user of users) {
+    Object.assign(user, workspace());
+    const executive = executivePanels.get(user.id);
+    if (executive === undefined) delete user.executive_panel;
+    else user.executive_panel = executive;
+  }
   resetApplicantMocks();
   resetAccountMocks();
   resetSalesMocks();
@@ -499,4 +507,13 @@ export function mockWorkspace(id: number): Workspace {
 export function setMockWorkspace(id: number, change: Partial<Workspace>) {
   const user = users.find((candidate) => candidate.id === id);
   if (user) Object.assign(user, change);
+}
+
+/**
+ * Test helper: an account without the executive panel (whoami `executive_panel` false), so its case
+ * files stay in the supervisor panel instead of opening the customer's page there.
+ */
+export function withoutExecutivePanel(id: number) {
+  const user = users.find((candidate) => candidate.id === id);
+  if (user) user.executive_panel = false;
 }

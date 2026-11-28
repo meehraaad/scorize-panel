@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { clearCaseChats } from '@/lib/supervisor/caseChats';
 import { renderApp } from '@/test/renderApp';
+import { withoutExecutivePanel } from '@/mocks/handlers';
 import '@/test/server';
 import { SUPERVISOR_NAME } from '@/mocks/supervisor';
 
@@ -17,6 +18,8 @@ describe('supervisor panel', () => {
     clearCaseChats();
     await i18n.changeLanguage('fa');
     localStorage.setItem('scorize.mock.session', String(MARYAM));
+    // Her case files open here only without the executive panel (panels/supervisor/toExecutive.ts).
+    withoutExecutivePanel(MARYAM);
   });
 
   it('today: deadlines board, waiting cases and links by stage', async () => {
@@ -296,5 +299,30 @@ describe('supervisor panel', () => {
   it('says so when the case is not one of hers', async () => {
     renderApp('/supervisor/files/9999');
     expect(await screen.findByRole('heading', { name: 'پرونده پیدا نشد' })).toBeInTheDocument();
+  });
+});
+
+describe('case file links for the executive panel', () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    clearCaseChats();
+    await i18n.changeLanguage('fa');
+    localStorage.setItem('scorize.mock.session', String(MARYAM));
+  });
+
+  it.each([
+    ['', 'summary'],
+    ['/documents', 'documents'],
+    ['/activity', 'reports'],
+    ['/services/124001', 'desk/124001'],
+  ])('opens %s of a case file on the customer page', async (tab, target) => {
+    const router = renderApp(`${SARA_CASE}${tab}`);
+    await waitFor(() => {
+      expect(router.state.location.pathname).toMatch(
+        new RegExp(`^/executive/customers/51240/${target.split('/')[0] ?? ''}`),
+      );
+    });
+    if (target.includes('/')) expect(router.state.location.pathname).toContain(target);
   });
 });

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { queryClient } from '@/lib/api/queryClient';
 import i18n from '@/lib/i18n';
 import { renderApp } from '@/test/renderApp';
+import { withoutExecutivePanel } from '@/mocks/handlers';
 import '@/test/server';
 
 /*
@@ -328,6 +329,8 @@ describe('page data loads with the page, not after it', () => {
 
   it.each(PAGES)('$path', async ({ path, user, later = [] }) => {
     localStorage.setItem('scorize.mock.session', String(user));
+    // A case file opens in the supervisor panel only for people without the executive panel.
+    if (path.startsWith('/supervisor/files/')) withoutExecutivePanel(user);
     const { fetches, location } = await openAndRecord(path);
 
     // The page itself opened (no redirect to login or elsewhere).
