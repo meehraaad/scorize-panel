@@ -205,12 +205,14 @@ describe('tasks page (sales panel)', () => {
     expect(within(dialog).queryByRole('button', { name: /خبر بده/ })).not.toBeInTheDocument();
   });
 
-  it('new task: a seller adds one for themselves only, and it lands in their follow-ups', async () => {
+  it('new task: a seller adds one for themselves, and it lands in their follow-ups', async () => {
     const user = userEvent.setup();
     await openTasks();
     await user.click(screen.getByRole('button', { name: 'کار تازه' }));
     const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
-    expect(within(dialog).queryByRole('radio', { name: /^برای همکارم/ })).toBeNull();
+    // A colleague, of any panel, but not the whole team (the sales admin's).
+    expect(within(dialog).getByRole('radio', { name: /^برای همکارم/ })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('radio', { name: /^برای کل تیم/ })).toBeNull();
     await user.type(within(dialog).getByLabelText('چه کاری؟'), 'گزارش هفته را بنویس');
     await user.click(within(dialog).getByRole('radio', { name: 'تاریخ و ساعت دیگر' }));
     await user.click(within(dialog).getByRole('button', { name: 'ثبت برای خودم' }));
@@ -221,6 +223,31 @@ describe('tasks page (sales panel)', () => {
       await screen.findByText(/^به کارهای شما اضافه شد\. .+ در «پیگیری‌های من» می‌آید\.$/),
     ).toBeInTheDocument();
     expect(await screen.findByText('فردا: ۲ پیگیری')).toBeInTheDocument();
+  });
+
+  it('new task: a seller sends one to another panel’s colleague', async () => {
+    let sent: Record<string, unknown> | null = null;
+    server.use(
+      http.post('/api/staff/v1/tasks/', async ({ request }) => {
+        sent = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ id: 1 }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    await openTasks();
+    await user.click(screen.getByRole('button', { name: 'کار تازه' }));
+    const dialog = await screen.findByRole('dialog', { name: 'کار تازه' });
+    await user.click(within(dialog).getByRole('radio', { name: /^برای همکارم/ }));
+    await user.type(within(dialog).getByLabelText('چه کاری؟'), 'پست اینستاگرام را بررسی کن');
+    await user.type(within(dialog).getByRole('combobox', { name: 'همکار' }), 'مینا');
+    await user.click(await within(dialog).findByRole('option', { name: /مینا صادقی/ }));
+    // No penalty key: no penalty switch.
+    expect(within(dialog).queryByRole('switch', { name: /جریمه/ })).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: /^فرستادن به/ }));
+    await waitFor(() =>
+      expect(sent).toMatchObject({ panel: 'sales', kind: 'request', assignees: [12] }),
+    );
+    expect(sent).not.toHaveProperty('penalty');
   });
 
   it('new task: «از تقویم» picks its time on the seller’s week', async () => {

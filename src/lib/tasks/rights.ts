@@ -3,8 +3,9 @@ import type { SessionUser } from '@/lib/auth/session';
 import { taskPanelsOf, type TasksPanel } from './api';
 
 /**
- * Who gives a panel's tasks to others (meeting0): its admin, as Django's `api/staff/v1/panels.py`
- * (`ADMIN_PERMISSION`) decides; the server checks it again on every task.
+ * A panel's admin (meeting0), as Django's `api/staff/v1/panels.py` (`ADMIN_PERMISSION`) decides; the
+ * server checks it again on every task. Anyone sends a task to any colleague, of any panel; only the
+ * admin sends one to the panel's whole team or puts it on the team board.
  */
 const ADMIN_PERMISSION: Record<Exclude<TasksPanel, 'staff'>, string> = {
   sales: 'can_assign_to_seller',
@@ -17,7 +18,7 @@ const ADMIN_PERMISSION: Record<Exclude<TasksPanel, 'staff'>, string> = {
 /** Manages every panel's tasks (and the shared page's): superusers and task managers. */
 const managesAll = (user: SessionUser) => hasPermission(user, 'can_manage_staff_todo');
 
-/** May give `panel`'s tasks to a colleague or the whole team (anyone may add their own). */
+/** May send `panel`'s tasks to its whole team (anyone sends one to a colleague). */
 export function canAssignTasks(user: SessionUser, panel: TasksPanel): boolean {
   if (managesAll(user)) return true;
   return (

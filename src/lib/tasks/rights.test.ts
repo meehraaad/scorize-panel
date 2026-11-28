@@ -20,8 +20,8 @@ const staff = (team: number, ...codenames: string[]): SessionUser => ({
 });
 
 /** The same rule as Django's `api/staff/v1/panels.py`, which checks it again on every task. */
-describe('who gives a panel’s tasks to others', () => {
-  it('a seller adds tasks for themselves only; the sales manager gives them too', () => {
+describe('who sends a panel’s tasks to its whole team', () => {
+  it('a seller sends to colleagues only; the sales manager to the whole team too', () => {
     expect(canAssignTasks(staff(Team.SALES), 'sales')).toBe(false);
     expect(canAssignTasks(staff(Team.SALES, 'can_assign_to_seller'), 'sales')).toBe(true);
   });

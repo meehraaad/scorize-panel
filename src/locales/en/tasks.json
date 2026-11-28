@@ -270,7 +270,6 @@
       "team": "Each gets a copy"
     },
     "admin": "Admin of this panel",
-    "selfOnly": "This task is for you. The panel’s admin sends tasks to a colleague or the whole team.",
     "whatAbout": "New task about {{name}}",
     "penalty": "Late penalty",
     "penaltyHint": "If done late, it is deducted from the month’s pay.",

@@ -315,8 +315,8 @@ const COLLEAGUES: (Colleague & { panels: TasksPanel[] })[] = [
 ];
 
 /**
- * `GET tasks/colleagues/?search=&panel=`: by name, up to eight (Django `ColleagueSearchView`). Only a
- * panel's admin searches here (their tasks go to any panel's people), so `panel` narrows nothing.
+ * `GET tasks/colleagues/?search=&panel=`: by name, up to eight (Django `ColleagueSearchView`). Anyone's
+ * task goes to any panel's people, so `panel` narrows nothing.
  */
 export function colleaguesFound(request: Request) {
   const query = new URL(request.url).searchParams;

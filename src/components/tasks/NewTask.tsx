@@ -89,7 +89,9 @@ export function NewTaskDialog({
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const user = useUser();
+  // Anyone sends a task to any colleague; only the panel's admin to its whole team.
   const admin = canAssignTasks(user, panel);
+  const targets = admin ? TARGETS : TARGETS.filter((value) => value !== 'team');
   const penalizes = admin && canPenalize(user);
   const create = useCreateTask(also);
   const client = useQueryClient();
@@ -196,22 +198,18 @@ export function NewTaskDialog({
       }
     >
       <form id="new-task" noValidate onSubmit={submit} className="flex flex-col gap-6">
-        {admin ? (
-          <ChoiceGroup
-            legend={t('new.for')}
-            look="trio"
-            value={target}
-            onChange={setTarget}
-            options={TARGETS.map((value) => ({
-              value,
-              label: t(`new.target.${value}`),
-              hint: t(`new.targetHint.${value}`),
-            }))}
-            hint={target === 'team' ? t('new.teamHint') : undefined}
-          />
-        ) : (
-          <p className="m-0 text-sm leading-6 text-text-2">{t('new.selfOnly')}</p>
-        )}
+        <ChoiceGroup
+          legend={t('new.for')}
+          look={admin ? 'trio' : 'duo'}
+          value={target}
+          onChange={setTarget}
+          options={targets.map((value) => ({
+            value,
+            label: t(`new.target.${value}`),
+            hint: t(`new.targetHint.${value}`),
+          }))}
+          hint={target === 'team' ? t('new.teamHint') : undefined}
+        />
         {target === 'person' && (
           <ColleagueSearch
             label={t('new.people')}

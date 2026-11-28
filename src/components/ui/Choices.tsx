@@ -32,6 +32,8 @@ const LOOKS = {
   tiles: { list: 'grid gap-2 sm:grid-cols-2', item: tile },
   /** Three tiles in one row (who a task is for). */
   trio: { list: 'grid grid-cols-3 gap-2', item: tile },
+  /** Two tiles in one row (who a task is for, without the whole team). */
+  duo: { list: 'grid grid-cols-2 gap-2', item: tile },
   squares: { list: 'grid grid-cols-2 gap-2 sm:grid-cols-4', item: square },
   cards: { list: 'grid gap-2.5 sm:grid-cols-2', item: card },
   segmented: {
@@ -68,7 +70,7 @@ export function ChoiceGroup<T extends string>({
   value: T | null;
   onChange: (value: T) => void;
   /**
-   * `pills`: a wrapping row of short labels; `chips`: the same for longer labels, each wrapping inside; `tiles`: a grid of labelled boxes (`trio`: three in a row); `cards`: tiles with
+   * `pills`: a wrapping row of short labels; `chips`: the same for longer labels, each wrapping inside; `tiles`: a grid of labelled boxes (`trio`: three in a row, `duo`: two); `cards`: tiles with
    * a radio dot; `squares`: short centred labels, four in a row; `segmented`: a few short labels
    * on one track. (A quiz's large answers: `AnswerGroup`.)
    */
