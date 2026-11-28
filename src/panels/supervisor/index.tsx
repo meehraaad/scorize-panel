@@ -23,7 +23,6 @@ import { ON_SERVER } from '@/lib/applicant/onServer';
 import { redirect } from 'react-router';
 import { managerPath } from '@/features/supervisor/paths';
 import type { PanelDefinition } from '../types';
-import { caseFileToExecutive } from './toExecutive';
 
 /** The services page waits for Django's client services. */
 function servicesOn() {
@@ -106,7 +105,8 @@ export const supervisorPanel: PanelDefinition = {
     {
       path: 'files/:id',
       ...lazyPage(() => import('@/features/supervisor/CaseLayout'), ['supervisor', 'notes'], {
-        guard: caseFileToExecutive,
+        // Loaded with the case file, so the first load stays small.
+        guard: async (args) => (await import('./toExecutive')).caseFileToExecutive(args),
         data: ({ params }) => {
           const id = idParam(params.id);
           return [id !== null && caseQuery(id)];
