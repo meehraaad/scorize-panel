@@ -197,7 +197,7 @@ describe('sales panel, seller pages', () => {
     const dialog = await screen.findByRole('dialog', { name: 'ثبت لید دستی' });
     await user.type(within(dialog).getByLabelText('نام'), 'رضا');
     await user.type(within(dialog).getByLabelText('شماره‌ی موبایل'), '0912 000 1234');
-    await user.click(screen.getByRole('button', { name: 'ثبت و باز کردن صفحه‌ی مشتری' }));
+    await user.click(screen.getByRole('button', { name: 'ثبت و باز کردن' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'رضا' })).toBeInTheDocument();
     expect(router.state.location.pathname).toMatch(/^\/sales\/customers\/\d+$/);
   });

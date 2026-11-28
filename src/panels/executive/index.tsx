@@ -20,7 +20,8 @@ export const executivePanel: PanelDefinition = {
   path: 'executive',
   name: 'panels.executive.name',
   description: 'panels.executive.description',
-  icon: 'fileCheck',
+  // Its own icon: the supervisor panel's is fileCheck, and people in both tell them apart in the switcher.
+  icon: 'list',
   tone: 'info',
   navLabel: 'panels.executive.nav.label',
   useHiddenNav: () => {

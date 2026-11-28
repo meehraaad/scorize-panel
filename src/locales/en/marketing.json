@@ -116,7 +116,8 @@
     "open": "Open “{{title}}”",
     "moved": "“{{title}}” moved to “{{stage}}”",
     "notMoved": "Not moved: {{reason}}",
-    "needsList": "First it needs: {{list}}"
+    "needsList": "First it needs: {{list}}",
+    "full": "This stage is full; move one of its cards on first"
   },
   "card": {
     "close": "Close",

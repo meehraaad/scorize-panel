@@ -144,7 +144,7 @@ export function MoveCard({
           <div className="flex flex-wrap gap-2">
             {move.kind === 'exit' && (
               <Button
-                variant="outline"
+                variant="danger"
                 disabled={days > 0}
                 title={days > 0 ? t('move.finishLater') : undefined}
                 onClick={() => setConfirm('finish')}
@@ -152,7 +152,8 @@ export function MoveCard({
                 {t('move.finish')}
               </Button>
             )}
-            <Button variant="danger" onClick={() => setConfirm('cancel')}>
+            {/* Ending the work takes away all access: that is the red one, not dropping a checklist. */}
+            <Button variant="quiet" onClick={() => setConfirm('cancel')}>
               {t('move.cancel')}
             </Button>
           </div>

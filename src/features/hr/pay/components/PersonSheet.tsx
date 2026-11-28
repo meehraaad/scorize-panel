@@ -4,8 +4,8 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Chip } from '@/components/ui/Chip';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
 import { Dialog } from '@/components/ui/Dialog';
-import { IconButton } from '@/components/ui/IconButton';
 import { ProgressBar } from '@/components/ui/Progress';
 import { TextField } from '@/components/ui/TextField';
 import { useFormat } from '@/lib/i18n/useFormat';
@@ -297,12 +297,11 @@ function SlipLineRow({ line, editable }: { line: SlipLine; editable: boolean }) 
       trial={line.trial}
       end={
         editable && hand && line.id !== undefined ? (
-          <IconButton
+          <ConfirmIconButton
             icon="close"
-            tone="muted"
             aria-label={t('pay.sheet.removeLine', { label: line.label })}
             disabled={remove.isPending}
-            onClick={() =>
+            onConfirm={() =>
               line.id !== undefined &&
               remove.mutate(line.id, {
                 onSuccess: () => toast.success(t('pay.sheet.removed')),

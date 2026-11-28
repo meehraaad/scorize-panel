@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { IconButton } from '@/components/ui/IconButton';
 import { InlineConfirm } from '@/components/ui/InlineConfirm';
 import { Notice } from '@/components/ui/Notice';
@@ -24,7 +25,6 @@ function CopyRow({
   secret?: { shown: boolean; toggle: () => void };
 }) {
   const { t } = useTranslation('sales');
-  const [copied, setCopied] = useState(false);
   const shown = !secret || secret.shown;
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
@@ -48,20 +48,11 @@ function CopyRow({
             onClick={secret.toggle}
           />
         )}
-        <IconButton
-          icon={copied ? 'check' : 'document'}
+        <CopyButton
+          text={value}
           tone="muted"
           iconSize={18}
-          aria-label={t('mobileExtension.copy', { label })}
-          onClick={() => {
-            void navigator.clipboard
-              .writeText(value)
-              .then(() => {
-                setCopied(true);
-                window.setTimeout(() => setCopied(false), 2000);
-              })
-              .catch(() => setCopied(false));
-          }}
+          label={t('mobileExtension.copy', { label })}
         />
       </dd>
     </div>

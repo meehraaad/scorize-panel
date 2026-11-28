@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
@@ -153,7 +154,6 @@ function PaymentDetail({
   const action = usePaymentAction(customer);
   const [declining, setDeclining] = useState(false);
   const [reason, setReason] = useState('');
-  const [copied, setCopied] = useState(false);
   const wallet = wallets.find((item) => item.id === payment.wallet)?.name ?? '';
   const paid = payment.status === 'paid' || payment.status === 'paid_by_receipt';
 
@@ -305,14 +305,7 @@ function PaymentDetail({
               {t('payments.sendFactor')}
             </Button>
             {payment.pay_url && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  void navigator.clipboard.writeText(payment.pay_url).then(() => setCopied(true));
-                }}
-              >
-                {copied ? t('payments.copied') : t('payments.copyLink')}
-              </Button>
+              <CopyButton text={payment.pay_url} label={t('payments.copyLink')} />
             )}
           </div>
           {payment.factor && (

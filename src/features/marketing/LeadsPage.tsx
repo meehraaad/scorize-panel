@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { LeadImportDialog } from '@/components/leads/LeadImportDialog';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
-import { IconButton } from '@/components/ui/IconButton';
+import { ConfirmIconButton } from '@/components/ui/ConfirmIconButton';
 import { PageStack } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -221,12 +221,11 @@ function SourceRow({ source }: { source: LeadSourceRow }) {
           }}
           error={error ?? undefined}
         />
-        <IconButton
-          icon="trash"
-          tone="danger"
+        <ConfirmIconButton
           aria-label={t(used ? 'leads.archive' : 'leads.delete', { name: source.name })}
+          action={used ? 'archive' : 'delete'}
           disabled={remove.isPending || (used && !source.active)}
-          onClick={() =>
+          onConfirm={() =>
             remove.mutate(id, {
               onSuccess: (result) =>
                 toast.success(t(result ? 'leads.archivedDone' : 'leads.deleted')),

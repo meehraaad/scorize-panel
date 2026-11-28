@@ -2,14 +2,13 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Flag } from '@/components/applicant/pathways/art';
-import { Button } from '@/components/ui/Button';
 import { ChoiceGroup } from '@/components/ui/Choices';
 import { Chip, type ChipTone } from '@/components/ui/Chip';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { Icon } from '@/components/ui/Icon';
 import { ProgressBar } from '@/components/ui/Progress';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { useFormat } from '@/lib/i18n/useFormat';
-import { toast } from '@/lib/toast';
 import type { CustomerPathwayCheck, CustomerPathwayRoute, PathwayAnswer } from '../api';
 
 /** Factors whose values are names the pathways namespace words (`choices.<factor>.<value>`). */
@@ -173,17 +172,7 @@ export function CustomerPathways({
         <p className="m-0 max-w-sm text-caption leading-6 text-text-2">
           {t('customer.pathways.note')}
         </p>
-        <Button
-          variant="outline"
-          onClick={() => {
-            void navigator.clipboard
-              .writeText(finderLink())
-              .then(() => toast.success(t('customer.pathways.copied')))
-              .catch(() => toast.error(t('customer.pathways.copyFailed')));
-          }}
-        >
-          {t('customer.pathways.copyLink')}
-        </Button>
+        <CopyButton text={finderLink()} label={t('customer.pathways.copyLink')} />
       </div>
     </SectionCard>
   );

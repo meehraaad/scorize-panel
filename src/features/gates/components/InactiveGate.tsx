@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
+import { CopyButton } from '@/components/ui/CopyButton';
+import { IconButton } from '@/components/ui/IconButton';
 import { buttonClass } from '@/components/ui/buttonStyles';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
@@ -84,20 +85,6 @@ export function InactiveGate({ inactive }: { inactive: Inactive }) {
 function Credential({ label, value, secret }: Inactive['credentials'][number]) {
   const { t } = useTranslation('gates');
   const [shown, setShown] = useState(!secret);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
-  }, [copied]);
-
-  const copy = () => {
-    void navigator.clipboard
-      .writeText(value)
-      .then(() => setCopied(true))
-      .catch(() => undefined);
-  };
 
   return (
     <div className="flex flex-wrap items-center gap-2.5 rounded-2xl bg-canvas px-3.5 py-3">
@@ -107,25 +94,17 @@ function Credential({ label, value, secret }: Inactive['credentials'][number]) {
           {shown ? value : '••••••••'}
         </span>
       </span>
-      <span className="flex flex-none gap-2">
+      <span className="flex flex-none">
         {secret && (
-          <Button
-            variant="outline"
-            className="px-3.5 text-[13px]"
+          <IconButton
+            icon={shown ? 'eyeOff' : 'eye'}
+            tone="muted"
+            aria-label={shown ? t('inactive.hide') : t('inactive.show')}
             aria-pressed={shown}
             onClick={() => setShown((value) => !value)}
-          >
-            {shown ? t('inactive.hide') : t('inactive.show')}
-          </Button>
+          />
         )}
-        <Button
-          variant="outline"
-          className="px-3.5 text-[13px]"
-          aria-label={t('inactive.copy', { name: label })}
-          onClick={copy}
-        >
-          <span aria-live="polite">{copied ? t('inactive.copied') : t('inactive.copyShort')}</span>
-        </Button>
+        <CopyButton text={value} tone="muted" label={t('inactive.copy', { name: label })} />
       </span>
     </div>
   );

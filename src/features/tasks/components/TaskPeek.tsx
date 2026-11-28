@@ -12,6 +12,7 @@ import { useOpenTasks } from '@/lib/tasks/useOpenTasks';
 import { useNow } from '@/lib/useNow';
 import type { TasksConfig } from '../config';
 import { DoneDialog } from './DoneDialog';
+import { useDone } from './useDone';
 import { useDueLabel } from './due';
 import { RequestDialog } from './RequestDialog';
 import { TickButton } from './StatusMark';
@@ -32,7 +33,7 @@ export function TaskPeek({ config, limit = 5 }: { config: TasksConfig; limit?: n
   const { mine, requests, count } = useOpenTasks(config.panel);
   // A live clock: a row turns late while the popup stays open.
   const now = useNow(30_000);
-  const [done, setDone] = useState<MyTask | null>(null);
+  const { done, finish, close } = useDone();
   const [open, setOpen] = useState<Row | null>(null);
 
   if (mine.isError || requests.isError) return <Notice tone="error">{t('hub.error')}</Notice>;
@@ -104,7 +105,7 @@ export function TaskPeek({ config, limit = 5 }: { config: TasksConfig; limit?: n
               {row.kind === 'mine' && (
                 <TickButton
                   label={t('mine.doneFor', { text: row.task.text })}
-                  onClick={() => setDone(row.task)}
+                  onClick={() => finish(row.task)}
                 />
               )}
             </li>
@@ -116,12 +117,7 @@ export function TaskPeek({ config, limit = 5 }: { config: TasksConfig; limit?: n
           {t('hub.more', { n: f.number(count - rows.length) })}
         </p>
       )}
-      <DoneDialog
-        key={done?.id ?? 'closed'}
-        task={done}
-        config={config}
-        onClose={() => setDone(null)}
-      />
+      <DoneDialog key={done?.id ?? 'closed'} task={done} config={config} onClose={close} />
       <RequestDialog
         key={open ? `${open.kind}-${String(open.task.id)}` : 'none'}
         id={open?.task.id ?? null}

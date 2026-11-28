@@ -115,7 +115,7 @@ export const foundersPanel: PanelDefinition = {
   path: 'founders',
   name: 'panels.founders.name',
   description: 'panels.founders.description',
-  icon: 'chart',
+  icon: 'building',
   tone: 'primary',
   navLabel: 'panels.founders.nav.label',
   navigation: NAVIGATION,

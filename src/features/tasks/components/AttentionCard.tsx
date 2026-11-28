@@ -8,6 +8,7 @@ import { useFormat } from '@/lib/i18n/useFormat';
 import { taskListQuery, type MyTask, type SentRequest } from '@/lib/tasks/api';
 import type { TasksConfig } from '../config';
 import { DoneDialog } from './DoneDialog';
+import { useDone } from './useDone';
 import { PersonRef } from './PersonRef';
 import { RequestDialog } from './RequestDialog';
 import { StatusMark, TickButton } from './StatusMark';
@@ -38,7 +39,7 @@ export function AttentionCard({ sent, config }: { sent: SentRequest[]; config: T
   const [now] = useState(() => Date.now());
   const [filter, setFilter] = useState<Filter>('all');
   const [expanded, setExpanded] = useState(false);
-  const [done, setDone] = useState<MyTask | null>(null);
+  const { done, finish, close } = useDone();
   const [open, setOpen] = useState<{ id: number; sent: boolean } | null>(null);
   const mine = useQuery(taskListQuery(config.panel, 'mine', 1));
 
@@ -168,7 +169,7 @@ export function AttentionCard({ sent, config }: { sent: SentRequest[]; config: T
                   {isLate ? (
                     <TickButton
                       label={t('mine.doneFor', { text: row.task.text })}
-                      onClick={() => setDone(row.task)}
+                      onClick={() => finish(row.task)}
                     />
                   ) : (
                     <StatusMark status={row.request.status} />
@@ -188,12 +189,7 @@ export function AttentionCard({ sent, config }: { sent: SentRequest[]; config: T
           {t('attention.more', { n: f.number(hidden) })}
         </button>
       )}
-      <DoneDialog
-        key={done?.id ?? 'closed'}
-        task={done}
-        config={config}
-        onClose={() => setDone(null)}
-      />
+      <DoneDialog key={done?.id ?? 'closed'} task={done} config={config} onClose={close} />
       <RequestDialog
         key={open?.id ?? 'none'}
         id={open?.id ?? null}

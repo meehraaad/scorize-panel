@@ -45,7 +45,7 @@ describe('payment page', () => {
     await user.click(amountCard());
     expect(screen.queryByRole('button', { name: 'افزودن کد' })).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'پرداخت با کارت‌به‌کارت و آپلود رسید' }));
+    await user.click(screen.getByRole('button', { name: 'پرداخت کارت‌به‌کارت' }));
     const form = screen.getByRole('region', { name: 'پرداخت با رسید' });
     expect(within(form).getByRole('button', { name: 'کپی شماره شبا' })).toBeInTheDocument();
 

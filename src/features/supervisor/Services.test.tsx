@@ -155,11 +155,11 @@ describe('client services (SVC2)', () => {
       await toasts().findByText('علی نوری سرپرست همه‌ی خدمت‌ها · ایتالیا شد.'),
     ).toBeInTheDocument();
     await waitFor(() => expect(lead).toBeChecked());
-    await user.click(
-      within(people).getByRole('button', {
-        name: 'حذف محدوده‌ی همه‌ی خدمت‌ها · ایتالیا از علی نوری',
-      }),
-    );
+    const remove = 'حذف محدوده‌ی همه‌ی خدمت‌ها · ایتالیا از علی نوری';
+    await user.click(within(people).getByRole('button', { name: remove }));
+    // It asks once before removing.
+    expect(within(people).queryByText('هنوز محدوده‌ای تعریف نشده.')).toBeNull();
+    await user.click(within(people).getByRole('button', { name: `${remove}: بله، حذف` }));
     expect(await within(people).findByText('هنوز محدوده‌ای تعریف نشده.')).toBeInTheDocument();
   });
 

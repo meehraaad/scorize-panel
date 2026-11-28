@@ -112,9 +112,7 @@ describe('login', () => {
       'sara.ahmadi@scorize.local',
     );
     await user.click(screen.getByRole('button', { name: 'ادامه' }));
-    await user.click(
-      await screen.findByRole('button', { name: 'ورود با کد پیامکی به‌جای گذرواژه' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'ورود با کد پیامکی' }));
     expect(await screen.findByRole('status')).toHaveTextContent('شماره موبایل حسابتان');
     expect(screen.getByLabelText('شماره موبایل یا ایمیل')).toHaveValue('');
   });

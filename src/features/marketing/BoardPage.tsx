@@ -13,16 +13,15 @@ import { Icon } from '@/components/ui/Icon';
 import { PageWorkspace } from '@/components/ui/PageColumns';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProgressBar } from '@/components/ui/Progress';
-import { ApiError } from '@/lib/api/client';
 import { useUser } from '@/lib/auth/session';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { toast } from '@/lib/toast';
 import {
   boardQuery,
+  refusalOf,
   useMoveCard,
   type BoardCard,
   type BoardData,
-  type MoveRefusal,
   type StageNeed,
 } from './boardApi';
 import { STAGE_DOT, TYPE_TONE } from './format';
@@ -152,16 +151,15 @@ function TeamBoard({ switcher }: { switcher: ReactNode }) {
               onSuccess: () =>
                 toast.success(t('board.moved', { title: card.title, stage: stageName(stage) })),
               onError: (error) => {
-                const refusal =
-                  error instanceof ApiError && error.status === 409
-                    ? (error.body as MoveRefusal)
-                    : null;
+                const refusal = refusalOf(error);
                 toast.error(
                   refusal?.code === 'needs'
                     ? t('board.needsList', { list: needs(refusal.missing) })
-                    : refusal
-                      ? t('board.notMoved', { reason: refusal.detail })
-                      : t('card.error'),
+                    : refusal?.code === 'limit'
+                      ? t('board.full')
+                      : refusal
+                        ? t('board.notMoved', { reason: refusal.detail })
+                        : t('card.error'),
                 );
               },
             },

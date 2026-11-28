@@ -93,7 +93,7 @@ describe('pathway finder', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'کار ماهر فدرال' })).toBeInTheDocument();
     // The call is the one button at the bottom; once asked, it says so instead.
-    await user.click(screen.getByRole('button', { name: 'می‌خواهم با من تماس بگیرند' }));
+    await user.click(screen.getByRole('button', { name: 'با من تماس بگیرید' }));
     expect(await screen.findByText('درخواستت ثبت شد، به‌زودی تماس می‌گیریم')).toBeInTheDocument();
   });
 

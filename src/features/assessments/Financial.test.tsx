@@ -150,9 +150,7 @@ it('preserves input through a tab conflict and refreshes both revisions before r
   await user.click(area.getByRole('button', { name: 'Save Willingness to spend' }));
   await area.findByText(/This assessment or financial policy changed/);
   expect(amount).toHaveValue(200);
-  await user.click(
-    area.getByRole('button', { name: 'Discard pending request and reload its status' }),
-  );
+  await user.click(area.getByRole('button', { name: 'Discard the request' }));
   await waitFor(() =>
     expect(area.getByRole('button', { name: 'Save Willingness to spend' })).toBeEnabled(),
   );
