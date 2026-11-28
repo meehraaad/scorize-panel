@@ -314,9 +314,20 @@ const COLLEAGUES: (Colleague & { panels: TasksPanel[] })[] = [
   { id: 13, name: 'پویا فرهادی', role: 'تیم مارکتینگ', panels: ['marketing'] },
 ];
 
+/** A penalty only on the task's own panel's people (Django `panels.penalizes`): the 400, if any. */
+export function penaltyRefused(task: NewTask) {
+  const people = task.assignees ?? [];
+  const outside = COLLEAGUES.some(
+    (person) => people.includes(person.id) && !person.panels.includes(task.panel),
+  );
+  return task.penalty && outside
+    ? HttpResponse.json({ penalty: ['other panel'] }, { status: 400 })
+    : null;
+}
+
 /**
- * `GET tasks/colleagues/?search=&panel=`: by name, up to eight (Django `ColleagueSearchView`). Only a
- * panel's admin searches here (their tasks go to any panel's people), so `panel` narrows nothing.
+ * `GET tasks/colleagues/?search=&panel=`: by name, up to eight (Django `ColleagueSearchView`). Anyone's
+ * task goes to any panel's people, so `panel` narrows nothing.
  */
 export function colleaguesFound(request: Request) {
   const query = new URL(request.url).searchParams;
@@ -583,6 +594,8 @@ export const taskHandlers = [
       : COLLEAGUES.filter((person) => task.assignees?.includes(person.id));
     if (task.kind === 'request' && people.length === 0)
       return HttpResponse.json({ assignee: ['required'] }, { status: 400 });
+    const refused = penaltyRefused(task);
+    if (refused) return refused;
     const now = new Date().toISOString();
     const id = newId();
     if (

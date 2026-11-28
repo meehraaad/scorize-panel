@@ -13,6 +13,7 @@ import { parseValue, toValue } from '@/lib/calendar';
 import { useFormat } from '@/lib/i18n/useFormat';
 import { type Colleague, type NewTask, type TasksPanel } from '@/lib/tasks/api';
 import { useCreateTask } from '@/lib/tasks/changes';
+import { fieldErrors } from '@/lib/api/fieldErrors';
 import { canAssignTasks, canPenalize } from '@/lib/tasks/rights';
 import { toast } from '@/lib/toast';
 import { fromLocalInput, quickWhen } from '@/lib/when';
@@ -89,8 +90,11 @@ export function NewTaskDialog({
   const { t } = useTranslation('tasks');
   const f = useFormat();
   const user = useUser();
+  // Anyone sends a task to any colleague; only the panel's admin to its whole team.
   const admin = canAssignTasks(user, panel);
-  const penalizes = admin && canPenalize(user);
+  const targets = admin ? TARGETS : TARGETS.filter((value) => value !== 'team');
+  // The penalty key, admin or not; the server keeps it to this panel's people.
+  const penalizes = canPenalize(user);
   const create = useCreateTask(also);
   const client = useQueryClient();
   const [pick, setPick] = useState<BoardPick>({ board: 'mine', column: '' });
@@ -160,7 +164,8 @@ export function NewTaskDialog({
       ...(column && board === 'team' && { team_column: Number(column) }),
     };
     create.mutate(task, {
-      onError: () => toast.error(t('error')),
+      onError: (error) =>
+        toast.error(fieldErrors(error).penalty ? t('new.penaltyOtherPanel') : t('error')),
       onSuccess: () => {
         onCreated?.();
         if (task.column || task.team_column)
@@ -196,22 +201,18 @@ export function NewTaskDialog({
       }
     >
       <form id="new-task" noValidate onSubmit={submit} className="flex flex-col gap-6">
-        {admin ? (
-          <ChoiceGroup
-            legend={t('new.for')}
-            look="trio"
-            value={target}
-            onChange={setTarget}
-            options={TARGETS.map((value) => ({
-              value,
-              label: t(`new.target.${value}`),
-              hint: t(`new.targetHint.${value}`),
-            }))}
-            hint={target === 'team' ? t('new.teamHint') : undefined}
-          />
-        ) : (
-          <p className="m-0 text-sm leading-6 text-text-2">{t('new.selfOnly')}</p>
-        )}
+        <ChoiceGroup
+          legend={t('new.for')}
+          look={admin ? 'trio' : 'duo'}
+          value={target}
+          onChange={setTarget}
+          options={targets.map((value) => ({
+            value,
+            label: t(`new.target.${value}`),
+            hint: t(`new.targetHint.${value}`),
+          }))}
+          hint={target === 'team' ? t('new.teamHint') : undefined}
+        />
         {target === 'person' && (
           <ColleagueSearch
             label={t('new.people')}
