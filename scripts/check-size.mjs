@@ -55,7 +55,9 @@ import { gzipSync } from 'node:zlib';
 // locally (2026-11-27).
 // JS 201.0: the shared copy and two-step delete strings (common.json «کپی شد», «بله، حذف»), which
 // every panel reads, and icon buttons naming themselves in a tooltip (2026-11-27).
-const BUDGET_KB = { js: 201.0, css: 23.2 };
+// JS 201.2: main's personal call ratings under «من» (a route in the Me layout) merged with the
+// automation pass; CI (Node 24) measured 201.1, 200.9 locally (2026-11-28).
+const BUDGET_KB = { js: 201.2, css: 23.2 };
 const DIST = 'dist';
 
 const html = readFileSync(join(DIST, 'index.html'), 'utf8');
