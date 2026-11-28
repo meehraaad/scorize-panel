@@ -170,25 +170,33 @@ describe('HR pay and KPIs', () => {
     expect(await within(objections).findByText('پذیرفته شد')).toBeInTheDocument();
   });
 
-  it('shows a seller their sales month on «من», behind their password', async () => {
+  it('shows a seller their sales month and call ratings on «من»', async () => {
     const user = userEvent.setup();
     loginAs(3); // Nima, a seller (src/mocks/handlers.ts)
     const router = renderApp('/me');
     const tabs = await screen.findByRole('navigation', { name: 'بخش‌های من' });
     await user.click(within(tabs).getByRole('link', { name: 'عملکرد فروش' }));
-    // My pay has a password field too: wait for the sales month before looking for its own.
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/me/sales');
-    });
-    expect(await screen.findByLabelText('رمز عبور')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'باز کردن ماه من' })).toBeInTheDocument();
+    expect(screen.getByLabelText('رمز عبور')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/me/sales');
+
+    const monthTabs = screen.getByRole('navigation', { name: 'بخش‌های من' });
+    await user.click(within(monthTabs).getByRole('link', { name: 'امتیاز تماس‌های من' }));
+    expect(await screen.findByRole('heading', { name: 'امتیاز تماس‌های من' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/me/call-ratings');
   });
 
-  it('sends a non-seller from the sales month back to their pay', async () => {
-    loginAs(2); // Maryam: staff, not a seller
-    renderApp('/me/sales');
-    expect(await screen.findByRole('heading', { name: 'امتیاز و پرداخت من' })).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'بخش‌های من' })).not.toBeInTheDocument();
-  });
+  it.each(['/me/sales', '/me/call-ratings'])(
+    'sends a non-seller from %s back to their pay',
+    async (path) => {
+      loginAs(2); // Maryam: staff, not a seller
+      renderApp(path);
+      expect(
+        await screen.findByRole('heading', { name: 'امتیاز و پرداخت من' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'بخش‌های من' })).not.toBeInTheDocument();
+    },
+  );
 
   it('opens my pay only with my password', async () => {
     const user = userEvent.setup();
